@@ -64,7 +64,7 @@
                     
                         <a
                             class="link user-link "
-                            href="https://github.com/stuartjamesmcnicholas/Moorhen"
+                            href="https://github.com/moorhen-coot/Moorhen"
                         >
                             Github
                         </a>
@@ -852,7 +852,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1970">line 1970</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line2004">line 2004</a>
             </span>
         </p>
     
@@ -1027,7 +1027,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1875">line 1875</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1909">line 1909</a>
             </span>
         </p>
     
@@ -1259,7 +1259,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1860">line 1860</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1894">line 1894</a>
             </span>
         </p>
     
@@ -1304,6 +1304,330 @@ molecule.delete();</code></pre>
                 
         </div>
     </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="addRepresentation">
+        <a class="href-link" href="#addRepresentation">#</a>
+        
+            
+                <span class='tag'>async</span>
+            
+        
+        <span class="code-name">
+            
+                addRepresentation<span class="signature">(style, cid, isCustom<span class="signature-attributes">opt</span>, colourRules<span class="signature-attributes">opt</span>, bondOptions<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        Add a representation to the molecule
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+            <th>Attributes</th>
+            
+
+            
+            <th>Default</th>
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>style</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">string</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+      </td>
+  
+
+  <td class="description last">The style of the new representation</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>cid</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">string</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+      </td>
+  
+
+  <td class="description last">The CID selection for the residues included in the new representation</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>isCustom</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">boolean</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          false
+      
+      </td>
+  
+
+  <td class="description last">Indicates if the representation is considered "custom"</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>colourRules</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Array.&lt;moorhen.ColourRule></code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+      </td>
+  
+
+  <td class="description last">A list of colour rules that will be applied to the new representation</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>bondOptions</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">moorhen.cootBondOptions</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+      </td>
+  
+
+  <td class="description last">An object that describes bond width, atom/bond ratio and other bond settings.</td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
+            <span>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1785">line 1785</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1379,7 +1703,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1842">line 1842</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1876">line 1876</a>
             </span>
         </p>
     
@@ -1522,7 +1846,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1792">line 1792</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1826">line 1826</a>
             </span>
         </p>
     
@@ -1756,7 +2080,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1740">line 1740</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1755">line 1755</a>
             </span>
         </p>
     
@@ -1988,7 +2312,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1749">line 1749</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1764">line 1764</a>
             </span>
         </p>
     
@@ -2188,7 +2512,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1558">line 1558</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1572">line 1572</a>
             </span>
         </p>
     
@@ -2336,7 +2660,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1779">line 1779</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1813">line 1813</a>
             </span>
         </p>
     
@@ -2433,7 +2757,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1952">line 1952</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1986">line 1986</a>
             </span>
         </p>
     
@@ -2497,7 +2821,7 @@ molecule.delete();</code></pre>
         
         <span class="code-name">
             
-                copyFragmentUsingCid<span class="signature">(cid, doRecentre<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {Promise.&lt;moorhen.Molecule>}</span>
+                copyFragmentUsingCid<span class="signature">(cid, doRecentre<span class="signature-attributes">opt</span>, style<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {Promise.&lt;moorhen.Molecule>}</span>
             
         </span>
     </h4>
@@ -2622,6 +2946,47 @@ molecule.delete();</code></pre>
 
 
         
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>style</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">boolean</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          "CBs"
+      
+      </td>
+  
+
+  <td class="description last">Indicates the style used to draw the copied fragment (only takes effect if doRecentre=true)</td>
+</tr>
+
+
+        
         </tbody>
     </table>
 </div>
@@ -2665,7 +3030,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1660">line 1660</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1675">line 1675</a>
             </span>
         </p>
     
@@ -2791,7 +3156,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1651">line 1651</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1665">line 1665</a>
             </span>
         </p>
     
@@ -2917,7 +3282,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1644">line 1644</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1658">line 1658</a>
             </span>
         </p>
     
@@ -3149,7 +3514,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1815">line 1815</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1849">line 1849</a>
             </span>
         </p>
     
@@ -3324,7 +3689,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1806">line 1806</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1840">line 1840</a>
             </span>
         </p>
     
@@ -3519,7 +3884,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1595">line 1595</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1609">line 1609</a>
             </span>
         </p>
     
@@ -3643,7 +4008,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1798">line 1798</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1832">line 1832</a>
             </span>
         </p>
     
@@ -3873,7 +4238,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1759">line 1759</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1774">line 1774</a>
             </span>
         </p>
     
@@ -3997,7 +4362,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1917">line 1917</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1951">line 1951</a>
             </span>
         </p>
     
@@ -4149,7 +4514,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1731">line 1731</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1746">line 1746</a>
             </span>
         </p>
     
@@ -4273,7 +4638,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1587">line 1587</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1601">line 1601</a>
             </span>
         </p>
     
@@ -4624,7 +4989,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1982">line 1982</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line2016">line 2016</a>
             </span>
         </p>
     
@@ -4801,7 +5166,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1904">line 1904</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1938">line 1938</a>
             </span>
         </p>
     
@@ -4994,7 +5359,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1946">line 1946</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1980">line 1980</a>
             </span>
         </p>
     
@@ -5185,7 +5550,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1717">line 1717</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1732">line 1732</a>
             </span>
         </p>
     
@@ -5358,7 +5723,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1867">line 1867</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1901">line 1901</a>
             </span>
         </p>
     
@@ -5610,7 +5975,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1625">line 1625</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1639">line 1639</a>
             </span>
         </p>
     
@@ -5732,7 +6097,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1614">line 1614</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1628">line 1628</a>
             </span>
         </p>
     
@@ -5897,7 +6262,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1911">line 1911</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1945">line 1945</a>
             </span>
         </p>
     
@@ -5959,7 +6324,7 @@ molecule.delete();</code></pre>
         
         <span class="code-name">
             
-                hide<span class="signature">(style)</span><span class="type-signature"></span>
+                hide<span class="signature">(style, cid<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span>
             
         </span>
     </h4>
@@ -5993,6 +6358,8 @@ molecule.delete();</code></pre>
             <th>Type</th>
 
             
+            <th>Attributes</th>
+            
 
             
 
@@ -6019,10 +6386,53 @@ molecule.delete();</code></pre>
   </td>
 
   
+      <td class="attributes">
+      
+
+      
+
+      
+      </td>
+  
 
   
 
   <td class="description last">The representation style to hide</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>cid</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">string</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+
+  <td class="description last">The CID selection for the representation</td>
 </tr>
 
 
@@ -6070,7 +6480,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1773">line 1773</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1807">line 1807</a>
             </span>
         </p>
     
@@ -6222,7 +6632,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1925">line 1925</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1959">line 1959</a>
             </span>
         </p>
     
@@ -6342,7 +6752,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1637">line 1637</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1651">line 1651</a>
             </span>
         </p>
     
@@ -6544,7 +6954,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1695">line 1695</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1710">line 1710</a>
             </span>
         </p>
     
@@ -6668,7 +7078,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1702">line 1702</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1717">line 1717</a>
             </span>
         </p>
     
@@ -6845,7 +7255,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1677">line 1677</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1692">line 1692</a>
             </span>
         </p>
     
@@ -7047,7 +7457,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1686">line 1686</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1701">line 1701</a>
             </span>
         </p>
     
@@ -7249,7 +7659,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1669">line 1669</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1684">line 1684</a>
             </span>
         </p>
     
@@ -7483,7 +7893,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1851">line 1851</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1885">line 1885</a>
             </span>
         </p>
     
@@ -7603,7 +8013,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1631">line 1631</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1645">line 1645</a>
             </span>
         </p>
     
@@ -7727,7 +8137,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1889">line 1889</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1923">line 1923</a>
             </span>
         </p>
     
@@ -7851,7 +8261,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1822">line 1822</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1856">line 1856</a>
             </span>
         </p>
     
@@ -7896,6 +8306,158 @@ molecule.delete();</code></pre>
                 
         </div>
     </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="redrawRepresentation">
+        <a class="href-link" href="#redrawRepresentation">#</a>
+        
+            
+                <span class='tag'>async</span>
+            
+        
+        <span class="code-name">
+            
+                redrawRepresentation<span class="signature">(id)</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        Redraw a molecule representation
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>id</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">string</code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">Unique identifier for the representation of interest</td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
+            <span>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1792">line 1792</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -8072,7 +8634,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1961">line 1961</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1995">line 1995</a>
             </span>
         </p>
     
@@ -8243,7 +8805,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1785">line 1785</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1819">line 1819</a>
             </span>
         </p>
     
@@ -8420,7 +8982,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1567">line 1567</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1581">line 1581</a>
             </span>
         </p>
     
@@ -8616,7 +9178,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1939">line 1939</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1973">line 1973</a>
             </span>
         </p>
     
@@ -8788,7 +9350,7 @@ next time the molecule is redrawn.
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1710">line 1710</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1725">line 1725</a>
             </span>
         </p>
     
@@ -8959,7 +9521,7 @@ next time the molecule is redrawn.
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1601">line 1601</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1615">line 1615</a>
             </span>
         </p>
     
@@ -9107,7 +9669,7 @@ next time the molecule is redrawn.
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1580">line 1580</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1594">line 1594</a>
             </span>
         </p>
     
@@ -9323,7 +9885,7 @@ next time the molecule is redrawn.
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1767">line 1767</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1800">line 1800</a>
             </span>
         </p>
     
@@ -9443,7 +10005,7 @@ next time the molecule is redrawn.
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1573">line 1573</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1587">line 1587</a>
             </span>
         </p>
     
@@ -9614,7 +10176,7 @@ next time the molecule is redrawn.
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1829">line 1829</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1863">line 1863</a>
             </span>
         </p>
     
@@ -9740,7 +10302,7 @@ next time the molecule is redrawn.
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1882">line 1882</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1916">line 1916</a>
             </span>
         </p>
     
@@ -9864,7 +10426,7 @@ next time the molecule is redrawn.
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1931">line 1931</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1965">line 1965</a>
             </span>
         </p>
     
@@ -9965,7 +10527,7 @@ next time the molecule is redrawn.
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1723">line 1723</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1738">line 1738</a>
             </span>
         </p>
     
@@ -10066,7 +10628,7 @@ next time the molecule is redrawn.
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1608">line 1608</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1622">line 1622</a>
             </span>
         </p>
     
@@ -10190,7 +10752,7 @@ next time the molecule is redrawn.
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1896">line 1896</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1930">line 1930</a>
             </span>
         </p>
     
@@ -10365,7 +10927,7 @@ next time the molecule is redrawn.
         <p class="tag-source">
             <a href="utils_MoorhenMolecule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1837">line 1837</a>
+                <a href="utils_MoorhenMolecule.ts.html">utils/MoorhenMolecule.ts</a>, <a href="utils_MoorhenMolecule.ts.html#line1871">line 1871</a>
             </span>
         </p>
     

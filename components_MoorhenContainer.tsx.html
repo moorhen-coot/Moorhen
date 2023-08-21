@@ -66,7 +66,7 @@
                     
                         <a
                             class="link user-link "
-                            href="https://github.com/stuartjamesmcnicholas/Moorhen"
+                            href="https://github.com/moorhen-coot/Moorhen"
                         >
                             Github
                         </a>
@@ -372,7 +372,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 command: 'set_make_backups',
                 commandArgs: [context.makeBackups],
                 returnType: "status"
-            })
+            }, false)
         }
 
         if (commandCentre.current &amp;&amp; context.makeBackups !== null &amp;&amp; cootInitialized) {
@@ -387,7 +387,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 command: 'set_draw_missing_residue_loops',
                 commandArgs: [context.drawMissingLoops],
                 returnType: "status"
-            })
+            }, false)
         }
 
         if (commandCentre.current &amp;&amp; context.drawMissingLoops !== null &amp;&amp; cootInitialized) {
@@ -398,14 +398,13 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     useEffect(() => {
         setWindowDimensions()
-        commandCentre.current = new MoorhenCommandCentre({
+        commandCentre.current = new MoorhenCommandCentre(urlPrefix, glRef, timeCapsuleRef, {
             onActiveMessagesChanged: (newActiveMessages) => {
                 setBusy(newActiveMessages.length !== 0)
             },
             onCootInitialized: () => {
                 setCootInitialized(true)
             },
-            urlPrefix: urlPrefix
         })
         window.addEventListener('resize', setWindowDimensions)
         return () => {
@@ -477,7 +476,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 returnType: "status",
                 command: "set_imol_refinement_map",
                 commandArgs: [activeMap.molNo]
-            })
+            }, false)
         }
     }, [activeMap])
 
