@@ -40,11 +40,13 @@ export class MoorhenMap implements moorhen.Map {
     
     type: string
     name: string
+    isEM: boolean
     molNo: number
     commandCentre: React.RefObject<moorhen.CommandCentre>
     glRef: React.RefObject<webGL.MGWebGL>
     mapCentre: [number, number, number]
     suggestedContourLevel: number
+    suggestedRadius: number
     contourLevel: number
     mapRadius: number
     mapColour: [number, number, number, number]
@@ -70,6 +72,7 @@ export class MoorhenMap implements moorhen.Map {
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>) {
         this.type = 'map'
         this.name = "unnamed"
+        this.isEM = false
         this.molNo = null
         this.commandCentre = commandCentre
         this.glRef = glRef
@@ -88,6 +91,7 @@ export class MoorhenMap implements moorhen.Map {
         this.uniqueId = guid()
         this.mapRmsd = null
         this.suggestedContourLevel = null
+        this.suggestedRadius = 13
         this.mapCentre = null
         this.diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] }
         this.rgba = {
@@ -608,7 +612,7 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     /**
-     * Get the suggested level for this map instance
+     * Get the suggested level for this map instance (only for MX maps)
      * @returns {number} The suggested map contour level
      */
     async fetchSuggestedLevel(): Promise<number> {
@@ -629,7 +633,7 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     /**
-     * Get the suggested map centre for this map instance
+     * Get the suggested map centre for this map instance (it will also fetch suggested level for EM maps)
      * @returns {number[]} The map centre
      */
     async fetchMapCentre(): Promise<[number, number, number]> {
@@ -641,6 +645,10 @@ export class MoorhenMap implements moorhen.Map {
         
         if (response.data.result.result.success) {
             this.mapCentre = response.data.result.result.updated_centre.map(coord => -coord) as [number, number, number]
+            if (this.isEM) {
+                this.suggestedContourLevel = response.data.result.result.suggested_contour_level
+                this.suggestedRadius = response.data.result.result.suggested_radius
+            }
         } else {
             console.log('Problem finding map centre')
             this.mapCentre = null
@@ -650,13 +658,22 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     /**
-     * Get suggested contour level and map centre for this map instance
+     * Get suggested contour level, radius and map centre for this map instance
      */
     async getSuggestedSettings(): Promise<void> {
+
+        const response = await this.commandCentre.current.cootCommand({
+            command: 'is_EM_map',
+            commandArgs: [this.molNo],
+            returnType: "boolean"
+        }, false) as moorhen.WorkerResponse<boolean>
+        
+        this.isEM = response.data.result.result
+       
         await Promise.all([
             this.fetchMapRmsd(),
-            this.fetchSuggestedLevel(),
-            this.fetchMapCentre()
+            this.fetchMapCentre(),
+            !this.isEM && this.fetchSuggestedLevel()
         ])
     }
 
