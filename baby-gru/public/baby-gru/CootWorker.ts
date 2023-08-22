@@ -359,6 +359,7 @@ const mapMoleculeCentreInfoToJSObject = (mapMoleculeCentreInfo: libcootApi.MapMo
             updatedCentre.z()
         ] as [number, number, number],
         success: mapMoleculeCentreInfo.success,
+        suggested_radius: mapMoleculeCentreInfo.suggested_radius,
         suggested_contour_level: mapMoleculeCentreInfo.suggested_contour_level
     }
     updatedCentre.delete()

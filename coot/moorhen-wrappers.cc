@@ -333,6 +333,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     value_object<coot::util::map_molecule_centre_info_t>("map_molecule_centre_info_t")
     .field("success", &coot::util::map_molecule_centre_info_t::success)
     .field("updated_centre", &coot::util::map_molecule_centre_info_t::updated_centre)
+    .field("suggested_radius", &coot::util::map_molecule_centre_info_t::suggested_radius)
     .field("suggested_contour_level", &coot::util::map_molecule_centre_info_t::suggested_contour_level)
     ;
     class_<clipper::Cell_descr>("Cell_descr")
@@ -527,6 +528,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("is_EM_map",&molecules_container_t::is_EM_map)
     .function("get_mesh_for_ligand_validation_vs_dictionary",&molecules_container_t::get_mesh_for_ligand_validation_vs_dictionary)
     .function("clear_refinement",&molecules_container_t::clear_refinement)
     .function("get_suggested_initial_contour_level",&molecules_container_t::get_suggested_initial_contour_level)

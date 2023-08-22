@@ -314,7 +314,9 @@ export namespace moorhen {
         getMap(): Promise<WorkerResponse>;
         loadToCootFromMtzURL(url: RequestInfo | URL, name: string, selectedColumns: selectedMtzColumns): Promise<Map>;
         loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap?: boolean): Promise<Map>
+        isEM: boolean
         suggestedContourLevel: number;
+        suggestedRadius: number;
         mapCentre: [number, number, number];
         type: string;
         name: string;

@@ -41,7 +41,7 @@ export const MoorhenMapsModal = (props: MoorhenMapsModalProps) => {
             index={map.molNo}
             map={map}
             initialContour={map.suggestedContourLevel ? map.suggestedContourLevel : 0.8}
-            initialRadius={13}
+            initialRadius={map.suggestedRadius ? map.suggestedRadius : 13}
             currentDropdownMolNo={currentDropdownMolNo}
             setCurrentDropdownMolNo={setCurrentDropdownMolNo}
             {...props} />

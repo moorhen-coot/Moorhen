@@ -200,12 +200,14 @@ export namespace libcootApi {
         success: boolean;
         updated_centre: ClipperCoordOrth;
         suggested_contour_level: number;
+        suggested_radius: number;
         sum_of_densities: number;
     }
     type MapMoleculeCentreInfoJS = {
         success: boolean;
         updated_centre: [number, number, number];
         suggested_contour_level: number;
+        suggested_radius: number;
     }
     interface ResidueSpecT extends emscriptem.instance<ResidueSpecT> {
         model_number: number;
