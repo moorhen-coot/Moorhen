@@ -123,7 +123,7 @@ export namespace moorhen {
         centreOn: (selectionCid?: string, animate?: boolean) => Promise<void>;
         drawHover: (cid: string) => Promise<void>;
         clearBuffersOfStyle: (style: string) => void;
-        loadToCootFromURL: (inputFile: string, molName: string) => Promise<_moorhen.Molecule>;
+        loadToCootFromURL: (inputFile: string, molName: string) => Promise<Molecule>;
         applyTransform: () => Promise<void>;
         getAtoms(format?: string): Promise<WorkerResponse>;
         hide: (style: string, cid?: string) => void;
@@ -313,6 +313,7 @@ export namespace moorhen {
         fetchReflectionData(): Promise<WorkerResponse<Uint8Array>>;
         getMap(): Promise<WorkerResponse>;
         loadToCootFromMtzURL(url: RequestInfo | URL, name: string, selectedColumns: selectedMtzColumns): Promise<Map>;
+        loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap?: boolean): Promise<Map>
         suggestedContourLevel: number;
         mapCentre: [number, number, number];
         type: string;

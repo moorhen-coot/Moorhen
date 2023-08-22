@@ -23,15 +23,17 @@ declare module 'moorhen' {
 
     class MoorhenMolecule implements _moorhen.Molecule {
         constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibrary: string)
+        fitLigandHere(mapMolNo: number, ligandMolNo: number, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<_moorhen.Molecule[]>;
+        isLigand(): boolean;
+        removeRepresentation(representationId: string): void;
+        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: _moorhen.ColourRule[], bondOptions?: _moorhen.cootBondOptions): Promise<void>;
         getNeighborResiduesCids(selectionCid: string, radius: number, minDist: number, maxDist: number): Promise<string[]>;
-        drawWithStyleFromMesh(style: string, meshObjects: any[], newBufferAtoms?: _moorhen.AtomInfo[]): Promise<void>;
+        drawWithStyleFromMesh(style: string, meshObjects: any[], cid?: string): Promise<void>;
         updateWithMovedAtoms(movedResidues: _moorhen.AtomInfo[][]): Promise<void>;
         transformedCachedAtomsAsMovedAtoms(selectionCid?: string): _moorhen.AtomInfo[][];
-        drawWithStyleFromAtoms(style: string): Promise<void>;
-        copyFragmentUsingCid(cid: string, backgroundColor: [number, number, number, number], defaultBondSmoothness: number, doRecentre?: boolean, style?: string): Promise<moorhen.Molecule>;
+        copyFragmentUsingCid(cid: string, doRecentre?: boolean, style?: string): Promise<_moorhen.Molecule>;
         hideCid(cid: string): Promise<void>;
         unhideAll(): Promise<void>;
-        drawSelection(cid: string): Promise<void>;
         drawUnitCell(): void;
         gemmiAtomsForCid: (cid: string) => Promise<_moorhen.AtomInfo[]>;
         mergeMolecules(otherMolecules: _moorhen.Molecule[], doHide?: boolean): Promise<void>;
@@ -48,33 +50,38 @@ declare module 'moorhen' {
         refineResiduesUsingAtomCid(cid: string, mode: string, ncyc: number): Promise<_moorhen.WorkerResponse>;
         redo(): Promise<void>;
         undo(): Promise<void>;
-        show(style: string): Promise<void>;
+        show(style: string, cid?: string): void;
         setSymmetryRadius(radius: number): Promise<void>;
         drawSymmetry: (fetchSymMatrix?: boolean) => Promise<void>;
         getUnitCellParams():  { a: number; b: number; c: number; alpha: number; beta: number; gamma: number; };
         replaceModelWithFile(fileUrl: string, molName: string): Promise<void>
         delete(): Promise<_moorhen.WorkerResponse> 
-        setColourRules(ruleList: _moorhen.ColourRule[], redraw?: boolean): Promise<void>;
-        fetchCurrentColourRules(): Promise<void>;
+        fetchDefaultColourRules(): Promise<void>;
         fetchIfDirtyAndDraw(arg0: string): Promise<void>;
-        drawGemmiAtomPairs: (gemmiAtomPairs: any[], style: string,  colour: number[], labelled?: boolean, clearBuffers?: boolean) => void;
-        drawEnvironment: (chainID: string, resNo: number,  altLoc: string, labelled?: boolean) => Promise<void>;
+        drawEnvironment: (cid: string, labelled?: boolean) => Promise<void>;
         centreOn: (selectionCid?: string, animate?: boolean) => Promise<void>;
         drawHover: (cid: string) => Promise<void>;
         clearBuffersOfStyle: (style: string) => void;
         loadToCootFromURL: (inputFile: string, molName: string) => Promise<_moorhen.Molecule>;
+        applyTransform: () => Promise<void>;
+        getAtoms(format?: string): Promise<_moorhen.WorkerResponse>;
+        hide: (style: string, cid?: string) => void;
+        redraw: () => Promise<void>;
+        setAtomsDirty: (newVal: boolean) => void;
+        hasVisibleBuffers: (excludeBuffers?: string[]) => boolean;
+        centreAndAlignViewOn(selectionCid: string, animate?: boolean): Promise<void>;
+        buffersInclude: (bufferIn: { id: string; }) => boolean;
+        redrawRepresentation: (id: string) => Promise<void>;
         type: string;
+        excludedCids: string[];
         commandCentre: React.RefObject<_moorhen.CommandCentre>;
         glRef: React.RefObject<webGL.MGWebGL>;
-        HBondsAssigned: boolean;
         atomsDirty: boolean;
         isVisible: boolean;
         name: string;
         molNo: number;
         gemmiStructure: gemmi.Structure;
         sequences: _moorhen.Sequence[];
-        colourRules: _moorhen.ColourRule[];
-        customRepresentations: { style: string; cidSelection: string; id: string; buffers: moorhen.DisplayObject[]; }[];
         ligands: _moorhen.LigandInfo[];
         ligandDicts: {[comp_id: string]: string};
         connectedToMaps: number[];
@@ -88,48 +95,24 @@ declare module 'moorhen' {
             boxRadius: number;
             gridScale: number;
         };
-        cootBondsOptions: _moorhen.cootBondOptions;
-        customDisplayRules: {[x: string]: moorhen.DisplayObject[]};
-        displayObjects: {
-            CBs: _moorhen.DisplayObject[];
-            CAs: _moorhen.DisplayObject[];
-            CRs: _moorhen.DisplayObject[];
-            ligands: _moorhen.DisplayObject[];
-            gaussian: _moorhen.DisplayObject[];
-            MolecularSurface: _moorhen.DisplayObject[];
-            VdWSurface: _moorhen.DisplayObject[];
-            DishyBases: _moorhen.DisplayObject[];
-            VdwSpheres: _moorhen.DisplayObject[];
-            rama: _moorhen.DisplayObject[];
-            rotamer: _moorhen.DisplayObject[];
-            CDs: _moorhen.DisplayObject[];
-            allHBonds: _moorhen.DisplayObject[];
-            glycoBlocks: _moorhen.DisplayObject[];
-            hover: _moorhen.DisplayObject[];
-            selection: _moorhen.DisplayObject[];
-            originNeighbours: _moorhen.DisplayObject[];
-            originNeighboursHBond: _moorhen.DisplayObject[];
-            originNeighboursBump: _moorhen.DisplayObject[];
-        };
+        isDarkBackground: boolean;
+        representations: _moorhen.MoleculeRepresentation[];
+        defaultBondOptions: _moorhen.cootBondOptions;
         displayObjectsTransformation: { origin: [number, number, number], quat: any, centre: [number, number, number] }
         uniqueId: string;
+        defaultColourRules: _moorhen.ColourRule[];
         monomerLibraryPath: string;
-        applyTransform: () => Promise<void>;
-        getAtoms(format?: string): Promise<_moorhen.WorkerResponse>;
-        hide: (style: string) => void;
-        redraw: () => Promise<void>;
-        setAtomsDirty: (newVal: boolean) => void;
-        hasVisibleBuffers: (excludeBuffers?: string[]) => boolean;
-        centreAndAlignViewOn(selectionCid: string, animate?: boolean): Promise<void>;
-        buffersInclude: (bufferIn: { id: string; }) => boolean;
+        hoverRepresentation: _moorhen.MoleculeRepresentation;
+        unitCellRepresentation: _moorhen.MoleculeRepresentation;
+        environmentRepresentation: _moorhen.MoleculeRepresentation;
     }
     module.exports.MoorhenMolecule = MoorhenMolecule
     
     class MoorhenMap implements _moorhen.Map {
         constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>)
         setAlpha(alpha: number, redraw?: boolean): Promise<void>;
-        getSuggestedSettings(): Promise<void>;
         centreOnMap(): Promise<void>;
+        getSuggestedSettings(): Promise<void>;
         duplicate(): Promise<_moorhen.Map>;
         makeCootUnlive(): void;
         makeCootLive(): void;
@@ -145,6 +128,7 @@ declare module 'moorhen' {
         fetchReflectionData(): Promise<_moorhen.WorkerResponse<Uint8Array>>;
         getMap(): Promise<_moorhen.WorkerResponse>;
         loadToCootFromMtzURL(url: RequestInfo | URL, name: string, selectedColumns: _moorhen.selectedMtzColumns): Promise<_moorhen.Map>;
+        loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap?: boolean): Promise<_moorhen.Map>;
         suggestedContourLevel: number;
         mapCentre: [number, number, number];
         type: string;
