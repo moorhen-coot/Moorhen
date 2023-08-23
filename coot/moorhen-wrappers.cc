@@ -529,6 +529,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
     .function("is_EM_map",&molecules_container_t::is_EM_map)
+    .function("set_map_sampling_rate",&molecules_container_t::set_map_sampling_rate)
     .function("get_mesh_for_ligand_validation_vs_dictionary",&molecules_container_t::get_mesh_for_ligand_validation_vs_dictionary)
     .function("clear_refinement",&molecules_container_t::clear_refinement)
     .function("get_suggested_initial_contour_level",&molecules_container_t::get_suggested_initial_contour_level)

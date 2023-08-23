@@ -307,7 +307,7 @@ export namespace moorhen {
         fetchSuggestedLevel(): Promise<number>;
         fetchMapCentre(): Promise<[number, number, number]>;
         replaceMapWithMtzFile(fileUrl: RequestInfo | URL, name: string, selectedColumns: selectedMtzColumns, mapColour?: { [type: string]: {r: number, g: number, b: number} }): Promise<void>;
-        associateToReflectionData (selectedColumns: selectedMtzColumns, reflectionData: Uint8Array | ArrayBuffer): Promise<WorkerResponse>;
+        associateToReflectionData (selectedColumns: selectedMtzColumns, reflectionData: Uint8Array | ArrayBuffer): Promise<void>;
         delete(): Promise<void> 
         doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number): Promise<void>;
         fetchReflectionData(): Promise<WorkerResponse<Uint8Array>>;
