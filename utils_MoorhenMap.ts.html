@@ -326,6 +326,7 @@ export class MoorhenMap implements moorhen.Map {
                 return Promise.reject(reply.data.result.consoleMessage)
             }
             this.molNo = reply.data.result.result
+            this.selectedColumns = selectedColumns
             if (Object.keys(selectedColumns).includes('isDifference')) {
                 this.isDifference = selectedColumns.isDifference
             }
