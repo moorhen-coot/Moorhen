@@ -70,6 +70,7 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
                 obj[map.molNo] = map
                 return obj
             }, {}),
+            glRef: this.glRef,
             rigid_body_fit: this.doRigidBodyFit,
             generate_self_restraints: this.doGenerateSelfRestraints,
             clear_extra_restraints: this.doClearExtraRestraints,
