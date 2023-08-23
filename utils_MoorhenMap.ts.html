@@ -648,9 +648,10 @@ export class MoorhenMap implements moorhen.Map {
      * @param {Uint8Array} reflectionData - The reflection data that will be associates to this map
      * @returns {Promise&lt;moorhen.WorkerResponse>} - Void promise
      */
-    async associateToReflectionData (selectedColumns: moorhen.selectedMtzColumns, reflectionData: Uint8Array | ArrayBuffer): Promise&lt;moorhen.WorkerResponse> {
+    async associateToReflectionData (selectedColumns: moorhen.selectedMtzColumns, reflectionData: Uint8Array | ArrayBuffer): Promise&lt;void> {
         if (!selectedColumns.Fobs || !selectedColumns.SigFobs || !selectedColumns.FreeR) {
-            return Promise.reject('Missing column data')
+            console.warn('WARNING: Missing column data, cannot associate reflection data with map')
+            return Promise.resolve()
         }
 
         const commandArgs = [
@@ -669,7 +670,7 @@ export class MoorhenMap implements moorhen.Map {
             this.selectedColumns = selectedColumns
             this.associatedReflectionFileName = response.data.result.result
         } else {
-            console.log('Unable to associate reflection data with map')
+            console.warn('Unable to associate reflection data with map')
         }
     }
 
