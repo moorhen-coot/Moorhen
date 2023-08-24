@@ -196,22 +196,20 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     
     useEffect(() => {
         const onCootInitialized = async () => {
-            if (cootInitialized) {
+            if (cootInitialized && context.isMounted) {
                 await commandCentre.current.cootCommand({
                     command: 'set_map_sampling_rate',
                     commandArgs: [context.defaultMapSamplingRate],
                     returnType: 'status'
                 }, false)
     
-                if (context.isMounted) {
-                    const shortCut = JSON.parse(context.shortCuts as string).show_shortcuts
-                    setToastContent(
-                        <h4 style={{margin: 0}}>
-                            {`Press ${getTooltipShortcutLabel(shortCut)} to show help`}
-                        </h4>
-                    )    
-                }
-    
+                const shortCut = JSON.parse(context.shortCuts as string).show_shortcuts
+                setToastContent(
+                    <h4 style={{margin: 0}}>
+                        {`Press ${getTooltipShortcutLabel(shortCut)} to show help`}
+                    </h4>
+                )
+
                 if (forwardControls) {
                     forwardControls(collectedProps)
                 }
