@@ -57,6 +57,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             this.cid =  "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O)"
         }
     }
+
     setUseDefaultColourRules(newVal: boolean) {
         this.useDefaultColourRules = newVal
     }

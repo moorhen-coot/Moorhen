@@ -201,7 +201,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             return
         } else if (!Object.hasOwn(sessionData, 'version') || props.timeCapsuleRef.current.version !== sessionData.version) {
             props.setToastContent(getWarningToast(`Failed to read backup (deprecated format)`))
-            console.log('Outdated session backup version, wont load...')
+            console.warn('Outdated session backup version, wont load...')
             return
         }
         
@@ -257,7 +257,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         newMolecules.forEach((molecule, moleculeIndex) => {
             const storedMoleculeData = sessionData.moleculeData[moleculeIndex]
             molecule.defaultBondOptions = storedMoleculeData.defaultBondOptions
-            storedMoleculeData.representations.forEach(item => molecule.addRepresentation(item.style, item.cid))
+            storedMoleculeData.representations.forEach(item => molecule.addRepresentation(item.style, item.cid, item.isCustom, item.colourRules, item.bondOptions))
         })
 
         // Associate maps to reflection data
@@ -376,7 +376,6 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             console.log(err)
             props.setToastContent(getWarningToast("Error loading session"))
         }
-        
     }
 
     const getSession = async () => {        
