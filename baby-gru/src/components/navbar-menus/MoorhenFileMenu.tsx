@@ -376,7 +376,6 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             console.log(err)
             props.setToastContent(getWarningToast("Error loading session"))
         }
-        
     }
 
     const getSession = async () => {        
