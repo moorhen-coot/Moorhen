@@ -359,7 +359,7 @@ export namespace moorhen {
         name: string;
         molNo: number;
         pdbData: string;
-        representations: {cid: string, style: string}[];
+        representations: {cid: string, style: string, isCustom: boolean, colourRules: ColourRule[], bondOptions: cootBondOptions }[];
         defaultBondOptions: cootBondOptions;
         connectedToMaps: number[];
     }
