@@ -181,14 +181,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         }
     }
 
-    //The purpose here is to return the functions that define and control MoorhenContainer state to a 
-    //containing React component
-    useEffect(() => {
-        if (cootInitialized && forwardControls) {
-            forwardControls(collectedProps)
-        }
-    }, [cootInitialized, forwardControls])
-
     useEffect(() => {
         const initTimeCapsule = async () => {
             if (context.isMounted) {
@@ -203,15 +195,32 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     }, [context.isMounted])
     
     useEffect(() => {
-        if (cootInitialized && context.isMounted) {
-            const shortCut = JSON.parse(context.shortCuts as string).show_shortcuts
-            setToastContent(
-                <h4 style={{margin: 0}}>
-                    {`Press ${getTooltipShortcutLabel(shortCut)} to show help`}
-                </h4>
-            )
+        const onCootInitialized = async () => {
+            if (cootInitialized) {
+                await commandCentre.current.cootCommand({
+                    command: 'set_map_sampling_rate',
+                    commandArgs: [context.defaultMapSamplingRate],
+                    returnType: 'status'
+                }, false)
+    
+                if (context.isMounted) {
+                    const shortCut = JSON.parse(context.shortCuts as string).show_shortcuts
+                    setToastContent(
+                        <h4 style={{margin: 0}}>
+                            {`Press ${getTooltipShortcutLabel(shortCut)} to show help`}
+                        </h4>
+                    )    
+                }
+    
+                if (forwardControls) {
+                    forwardControls(collectedProps)
+                }
+            }
         }
-    }, [cootInitialized, context.isMounted])
+        
+        onCootInitialized()
+
+    }, [cootInitialized, context.isMounted, forwardControls])
 
     useEffect(() => {
         if (context.isMounted && context.defaultBackgroundColor !== backgroundColor) {

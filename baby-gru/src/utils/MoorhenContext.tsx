@@ -39,7 +39,7 @@ const updateStoredContext = async (key: string, value: any): Promise<void> => {
  */
 const getDefaultContextValues = (): moorhen.ContextValues => {
     return {
-        version: 'v28',
+        version: 'v29',
         transparentModalsOnMouseOut: true,
         defaultBackgroundColor: [1, 1, 1, 1], 
         atomLabelDepthMode: true, 
@@ -54,6 +54,7 @@ const getDefaultContextValues = (): moorhen.ContextValues => {
         drawInteractions: false,
         doPerspectiveProjection: false,
         useOffScreenBuffers: false,
+        defaultMapSamplingRate: 1.8,
         depthBlurRadius: 3.0,
         depthBlurDepth: 0.2,
         doShadowDepthDebug: false,
@@ -311,6 +312,7 @@ const MoorhenContext = createContext(undefined);
  */
 const MoorhenContextProvider = ({ children }) => {
     const [isMounted, setIsMounted] = useState<boolean>(false)
+    const [defaultMapSamplingRate, setDefaultMapSamplingRate] = useState<number | null>(null)
     const [defaultBackgroundColor, setDefaultBackgroundColor] = useState<null | [number, number, number, number]>(null)
     const [enableTimeCapsule, setEnableTimeCapsule] = useState<null | boolean>(null)
     const [atomLabelDepthMode, setAtomLabelDepthMode] = useState<null | boolean>(null)
@@ -391,6 +393,7 @@ const MoorhenContextProvider = ({ children }) => {
         37: { label: "depthBlurRadius", value: depthBlurRadius, valueSetter: setDepthBlurRadius},
         38: { label: "depthBlurDepth", value: depthBlurDepth, valueSetter: setDepthBlurDepth},
         39: { label: "transparentModalsOnMouseOut", value: transparentModalsOnMouseOut, valueSetter: setTransparentModalsOnMouseOut},
+        40: { label: "defaultMapSamplingRate", value: defaultMapSamplingRate, valueSetter: setDefaultMapSamplingRate},
     }
 
     const restoreDefaults = (defaultValues: moorhen.ContextValues)=> {
@@ -453,6 +456,16 @@ const MoorhenContextProvider = ({ children }) => {
        
         updateStoredContext('transparentModalsOnMouseOut', transparentModalsOnMouseOut);
     }, [transparentModalsOnMouseOut]);
+
+
+    useMemo(() => {
+
+        if (defaultMapSamplingRate === null) {
+            return
+        }
+       
+        updateStoredContext('defaultMapSamplingRate', defaultMapSamplingRate);
+    }, [defaultMapSamplingRate]);
 
     useMemo(() => {
 
@@ -802,8 +815,8 @@ const MoorhenContextProvider = ({ children }) => {
         enableRefineAfterMod, setEnableRefineAfterMod, mouseSensitivity, setMouseSensitivity, drawCrosshairs, 
         setDrawCrosshairs, drawMissingLoops, setDrawMissingLoops, mapLineWidth, setMapLineWidth, transparentModalsOnMouseOut,
         makeBackups, setMakeBackups, showShortcutToast, setShowShortcutToast, defaultMapSurface, setTransparentModalsOnMouseOut,
-        setDefaultMapSurface, defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, 
-        setShowScoresToast, defaultUpdatingScores, setDefaultUpdatingScores, drawFPS, setDrawFPS,
+        setDefaultMapSurface, defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, defaultMapSamplingRate,
+        setShowScoresToast, defaultUpdatingScores, setDefaultUpdatingScores, drawFPS, setDrawFPS, setDefaultMapSamplingRate,
         zoomWheelSensitivityFactor, setZoomWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom,
         resetClippingFogging, setResetClippingFogging, maxBackupCount, setMaxBackupCount, setContourWheelSensitivityFactor,
         modificationCountBackupThreshold, setModificationCountBackupThreshold, isMounted, contourWheelSensitivityFactor,

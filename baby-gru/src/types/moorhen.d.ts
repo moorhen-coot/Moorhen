@@ -314,7 +314,7 @@ export namespace moorhen {
         getMap(): Promise<WorkerResponse>;
         loadToCootFromMtzURL(url: RequestInfo | URL, name: string, selectedColumns: selectedMtzColumns): Promise<Map>;
         loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap?: boolean): Promise<Map>
-        isEM: boolean
+        isEM: boolean;
         suggestedContourLevel: number;
         suggestedRadius: number;
         mapCentre: [number, number, number];
@@ -496,6 +496,7 @@ export namespace moorhen {
     }
 
     interface ContextSetters {
+        setDefaultMapSamplingRate: React.Dispatch<React.SetStateAction<number>>;
         setDoShadowDepthDebug: React.Dispatch<React.SetStateAction<boolean>>;
         setDefaultBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
         setDoShadow: React.Dispatch<React.SetStateAction<boolean>>;
@@ -543,8 +544,9 @@ export namespace moorhen {
     
     interface ContextValues {
         version?: string;
-        transparentModalsOnMouseOut: boolean;
         isMounted?: boolean;
+        defaultMapSamplingRate: number;
+        transparentModalsOnMouseOut: boolean;
         defaultBackgroundColor: [number, number, number, number];
         atomLabelDepthMode: boolean; 
         enableTimeCapsule: boolean;
