@@ -120,9 +120,12 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.uniqueId = guid()
         this.monomerLibraryPath = monomerLibraryPath
         this.defaultColourRules = null
-        this.hoverRepresentation = null
-        this.unitCellRepresentation = null
-        this.environmentRepresentation = null
+        this.unitCellRepresentation = new MoorhenMoleculeRepresentation('unitCell', '/*/*/*/*', this.commandCentre, this.glRef)
+        this.unitCellRepresentation.setParentMolecule(this)
+        this.environmentRepresentation = new MoorhenMoleculeRepresentation('environment', null, this.commandCentre, this.glRef)
+        this.environmentRepresentation.setParentMolecule(this)
+        this.hoverRepresentation = new MoorhenMoleculeRepresentation('hover', null, this.commandCentre, this.glRef)
+        this.hoverRepresentation.setParentMolecule(this)
     }
 
     /**
@@ -438,6 +441,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * Delete this molecule instance
      */
     async delete(): Promise<moorhen.WorkerResponse> {
+        this.hoverRepresentation?.deleteBuffers()
+        this.unitCellRepresentation?.deleteBuffers()
+        this.environmentRepresentation?.deleteBuffers()
         this.representations.forEach(representation => representation.deleteBuffers())
         this.glRef.current.drawScene()
         const inputData = { message: "delete", molNo: this.molNo }
@@ -972,10 +978,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if (this.unitCellRepresentation && this.unitCellRepresentation.buffers?.length > 0) {
             this.unitCellRepresentation.show()
         } else {
-            const unitCellRepresentation = new MoorhenMoleculeRepresentation('unitCell', '/*/*/*/*', this.commandCentre, this.glRef)
-            unitCellRepresentation.setParentMolecule(this)
-            await unitCellRepresentation.draw()
-            this.unitCellRepresentation = unitCellRepresentation
+            await this.unitCellRepresentation.draw()
         }
     }
 
@@ -985,15 +988,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
      */
     async drawHover(selectionString: string): Promise<void> {
         if (typeof selectionString === 'string') {
-            if (this.hoverRepresentation) {
-                this.hoverRepresentation.cid = selectionString
-                this.hoverRepresentation.redraw()
-            } else {
-                const hoverRepresentation = new MoorhenMoleculeRepresentation('hover', selectionString, this.commandCentre, this.glRef)
-                hoverRepresentation.setParentMolecule(this)
-                await hoverRepresentation.draw()
-                this.hoverRepresentation = hoverRepresentation
-            }
+            this.hoverRepresentation.cid = selectionString
+            this.hoverRepresentation.redraw()
         }
     }
 
@@ -1004,15 +1000,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
      */
     async drawEnvironment(selectionCid: string, labelled: boolean = false): Promise<void> {
         if (typeof selectionCid === 'string') {
-            if (this.environmentRepresentation) {
-                this.environmentRepresentation.cid = selectionCid
-                this.environmentRepresentation.redraw()
-            } else {
-                const environmentRepresentation = new MoorhenMoleculeRepresentation('environment', selectionCid, this.commandCentre, this.glRef)
-                environmentRepresentation.setParentMolecule(this)
-                await environmentRepresentation.draw()
-                this.environmentRepresentation = environmentRepresentation
-            }
+            this.environmentRepresentation.cid = selectionCid
+            this.environmentRepresentation.redraw()
         }
     }
 

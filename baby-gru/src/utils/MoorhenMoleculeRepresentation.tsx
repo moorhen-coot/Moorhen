@@ -119,7 +119,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         const objects = await this.getBufferObjects()
         this.deleteBuffers()
         this.buildBuffers(objects)
-        if(this.styleHasAtomBuffers) {
+        if (this.styleHasAtomBuffers) {
             let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.cid)
             if (atomBuffers.length > 0 && this.buffers.length > 0) {
                 this.setAtomBuffers(atomBuffers)
@@ -128,19 +128,21 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     deleteBuffers() {
-        this.buffers.forEach(buffer => {
-            if ("clearBuffers" in buffer) {
-                buffer.clearBuffers()
-                if (this.glRef.current.displayBuffers) {
-                    this.glRef.current.displayBuffers = this.glRef.current.displayBuffers.filter(glBuffer => glBuffer !== buffer)
+        if (this.buffers?.length > 0) {
+            this.buffers.forEach(buffer => {
+                if ("clearBuffers" in buffer) {
+                    buffer.clearBuffers()
+                    if (this.glRef.current.displayBuffers) {
+                        this.glRef.current.displayBuffers = this.glRef.current.displayBuffers.filter(glBuffer => glBuffer !== buffer)
+                    }
+                } else if ("labels" in buffer) {
+                    this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels)
                 }
-            } else if ("labels" in buffer) {
-                this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels)
-            }
-        })
-        this.glRef.current.buildBuffers()
-        this.glRef.current.drawScene()
-        this.buffers = []
+            })
+            this.glRef.current.buildBuffers()
+            this.glRef.current.drawScene()
+            this.buffers = []   
+        }
     }
 
     show() {
