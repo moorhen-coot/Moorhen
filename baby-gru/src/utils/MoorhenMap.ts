@@ -91,7 +91,7 @@ export class MoorhenMap implements moorhen.Map {
         this.uniqueId = guid()
         this.mapRmsd = null
         this.suggestedContourLevel = null
-        this.suggestedRadius = 13
+        this.suggestedRadius = null
         this.mapCentre = null
         this.diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] }
         this.rgba = {
