@@ -7,6 +7,7 @@ import { MoorhenGLFontMenuItem } from '../menu-item/MoorhenGLFontMenuItem'
 import { MoorhenScoresToastPreferencesMenuItem } from "../menu-item/MoorhenScoresToastPreferencesMenuItem"
 import { MoorhenBackupPreferencesMenuItem } from "../menu-item/MoorhenBackupPreferencesMenuItem"
 import { MoorhenDefaultBondSmoothnessPreferencesMenuItem } from "../menu-item/MoorhenDefaultBondSmoothnessPreferencesMenuItem"
+import { MoorhenMapSamplingMenuItem } from "../menu-item/MoorhenMapSamplingMenuItem"
 import MoorhenSlider from '../misc/MoorhenSlider' 
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
@@ -17,14 +18,14 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
         setDefaultMapLitLines, enableRefineAfterMod, setEnableRefineAfterMod, mouseSensitivity, contourWheelSensitivityFactor,
         mapLineWidth, setMapLineWidth, makeBackups, setMakeBackups, timeCapsuleRef, setContourWheelSensitivityFactor,
         showShortcutToast, setShowShortcutToast, defaultMapSurface, setDefaultMapSurface, devMode, setDevMode,
-        defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, setShowScoresToast,
+        defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, setShowScoresToast, defaultMapSamplingRate,
         defaultUpdatingScores, setDefaultUpdatingScores, zoomWheelSensitivityFactor, setEnableTimeCapsule,
         setZoomWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom, maxBackupCount, 
-        setMaxBackupCount, modificationCountBackupThreshold, setModificationCountBackupThreshold, 
+        setMaxBackupCount, modificationCountBackupThreshold, setModificationCountBackupThreshold, setDefaultMapSamplingRate
      } = props;
 
-    const [showModal, setShowModal] = useState<boolean | null>(null);
-    const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
+     const [showModal, setShowModal] = useState<boolean | null>(null);
+     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
 
     useEffect(() => {
         if (timeCapsuleRef.current) {
@@ -141,6 +142,14 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
                         defaultBondSmoothness={defaultBondSmoothness}
                         setDefaultBondSmoothness={setDefaultBondSmoothness}
                         setPopoverIsShown={setPopoverIsShown}
+                    />
+                    <MoorhenMapSamplingMenuItem
+                        maps={props.maps}
+                        glRef={props.glRef}
+                        commandCentre={props.commandCentre}
+                        setPopoverIsShown={setPopoverIsShown}
+                        defaultMapSamplingRate={defaultMapSamplingRate}
+                        setDefaultMapSamplingRate={setDefaultMapSamplingRate}
                     />
                     <MenuItem id="configure-shortcuts-menu-item" onClick={() => setShowModal(true)} style={{marginTop:'0rem'}}>
                         Configure shortcuts...

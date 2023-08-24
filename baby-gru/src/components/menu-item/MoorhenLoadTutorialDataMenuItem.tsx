@@ -22,9 +22,9 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
     const tutorialNumberSelectorRef = useRef<HTMLSelectElement | null>(null);
     const allTutorialNumbers = ['1', '2', '3']
     const tutorialMtzColumnNames = {
-        1: { F: "FWT", PHI: "PHWT", Fobs: 'FP', SigFobs: 'SIGFP', FreeR: 'FREE' },
-        2: { F: "FWT", PHI: "PHWT", Fobs: 'FP', SigFobs: 'SIGFP', FreeR: 'FREE' },
-        3: { F: "FWT", PHI: "PHWT", Fobs: 'F', SigFobs: 'SIGF', FreeR: 'FREER' }
+        1: { Fobs: 'FP', SigFobs: 'SIGFP', FreeR: 'FREE' },
+        2: { Fobs: 'FP', SigFobs: 'SIGFP', FreeR: 'FREE' },
+        3: { Fobs: 'F', SigFobs: 'SIGF', FreeR: 'FREER' }
     }
 
     const panelContent = <>
@@ -55,12 +55,12 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
         await newMap.loadToCootFromMtzURL(
             `${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`,
             `map-${tutorialNumber}`,
-            { isDifference: false, useWeight: false, calcStructFact: true, ...tutorialMtzColumnNames[tutorialNumber] }
+            { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: true, ...tutorialMtzColumnNames[tutorialNumber] }
         )
         await newDiffMap.loadToCootFromMtzURL(
             `${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`,
             `diff-map-${tutorialNumber}`,
-            { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false }
+            { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false, calcStructFact: true, ...tutorialMtzColumnNames[tutorialNumber] }
         )
         props.changeMaps({ action: 'AddList', items: [newMap, newDiffMap] })
         props.setActiveMap(newMap)
