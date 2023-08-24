@@ -127,7 +127,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     
             const mol: moorhen.Molecule = props.molecules.find(molecule => molecule.molNo === moleculeMolNo)
             if(typeof mol !== 'undefined') {
-                mol.drawEnvironment(residueCid, true)
+                await mol.drawEnvironment(residueCid, true)
             }
             
             busyDrawingHBonds.current = false
