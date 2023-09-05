@@ -15,17 +15,19 @@ export const MoorhenRigidBodyFitButton = (props: moorhen.EditButtonProps | moorh
 
     const rigidBodyFitFormatArgs = (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string, activeMapMolNo: number) => {
         const selectedSequence = molecule.sequences.find(sequence => sequence.chain === chosenAtom.chain_id)
-        let selectedResidueIndex: number = 0
+        let selectedResidueIndex: number = -1
         let commandArgs: [number, string, number]
         let start: number
         let stop: number
     
-        if (typeof selectedSequence === 'undefined') {
-            selectedMode = 'SINGLE'
-        } else {
+        if (typeof selectedSequence !== 'undefined') {
             selectedResidueIndex = selectedSequence.sequence.findIndex(residue => residue.resNum === chosenAtom.res_no)
         }
-    
+        
+        if (selectedResidueIndex === -1) {
+            selectedMode = 'SINGLE'
+        }
+
         switch (selectedMode) {
             case 'SINGLE':
                 commandArgs = [
