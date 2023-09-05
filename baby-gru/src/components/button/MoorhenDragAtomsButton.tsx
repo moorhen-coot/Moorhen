@@ -46,15 +46,17 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
 
     const startDragging = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, dragMode: string) => {
         const selectedSequence = molecule.sequences.find(sequence => sequence.chain === chosenAtom.chain_id)
-        let selectedResidueIndex: number;
+        let selectedResidueIndex: number = -1;
         let start: number
         let stop: number
         let sphereResidueCids: string[]
 
-        if (typeof selectedSequence === 'undefined') {
-            dragMode = 'SINGLE'
-        } else {
+        if (typeof selectedSequence !== 'undefined') {
             selectedResidueIndex = selectedSequence.sequence.findIndex(residue => residue.resNum === chosenAtom.res_no)
+        }
+
+        if (selectedResidueIndex === -1) {
+            dragMode = 'SINGLE'
         }
 
         switch (dragMode) {
