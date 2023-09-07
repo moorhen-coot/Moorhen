@@ -9,7 +9,7 @@ import { Chip, FormGroup, hexToRgb } from "@mui/material";
 import { getNameLabel } from "./cardUtils"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { AddOutlined, DeleteOutlined, FormatColorFillOutlined, SettingsOutlined } from '@mui/icons-material';
+import { AddOutlined, DeleteOutlined, FormatColorFillOutlined, SettingsOutlined, EditOutlined } from '@mui/icons-material';
 import { MoorhenAddCustomRepresentationCard } from "./MoorhenAddCustomRepresentationCard"
 import { MoorhenMoleculeRepresentationSettingsCard } from "./MoorhenMoleculeRepresentationSettingsCard"
 import { MoorhenModifyColourRulesCard } from './MoorhenModifyColourRulesCard';
@@ -468,7 +468,17 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                             {props.molecule.representations.some(representation => representation.isCustom) ?
                                 <FormGroup style={{ margin: "0px", padding: "0px" }} row>
                                     {props.molecule.representations.filter(representation => representation.isCustom).map(representation => {
-                                        return <CustomRepresentationChip isDark={props.isDark} key={representation.uniqueId} molecule={props.molecule} representation={representation} isVisible={isVisible} changeCustomRepresentationList={changeCustomRepresentationList}/>
+                                        return <CustomRepresentationChip
+                                                    key={representation.uniqueId}
+                                                    urlPrefix={props.urlPrefix}
+                                                    glRef={props.glRef}
+                                                    addColourRulesAnchorDivRef={addColourRulesAnchorDivRef}
+                                                    isDark={props.isDark}
+                                                    molecule={props.molecule}
+                                                    molecules={props.molecules}
+                                                    representation={representation}
+                                                    isVisible={isVisible}
+                                                    changeCustomRepresentationList={changeCustomRepresentationList}/>
                                     })}
                                 </FormGroup>
                             :
@@ -619,8 +629,12 @@ const RepresentationCheckbox = (props: {
 }
 
 const CustomRepresentationChip = (props: {
+    urlPrefix: string;
+    addColourRulesAnchorDivRef: React.RefObject<HTMLDivElement>;
+    glRef: React.RefObject<webGL.MGWebGL>;
     isDark: boolean;
     isVisible: boolean;
+    molecules: moorhen.Molecule[];
     molecule: moorhen.Molecule;
     representation: moorhen.MoleculeRepresentation; 
     changeCustomRepresentationList: (arg0: {action: "Add" | "Remove"; item: moorhen.MoleculeRepresentation}) => void;
@@ -629,6 +643,7 @@ const CustomRepresentationChip = (props: {
     const { representation, molecule, isVisible } = props
 
     const [representationIsVisible, setRepresentationIsVisible] = useState<boolean>(true)
+    const [showEditRepresentation, setShowEditRepresentation] = useState<boolean>(false)
     
     const chipStyle = getChipStyle(representation.colourRules, representationIsVisible, props.isDark)
     
@@ -636,21 +651,44 @@ const CustomRepresentationChip = (props: {
         representationIsVisible ? representation.show() : representation.hide()
     }, [representationIsVisible])
 
-    const handleClick = useCallback(() => {
+    const handleVisibility = useCallback(() => {
         if (isVisible) {
             setRepresentationIsVisible(!representationIsVisible)
         }
     }, [isVisible, representationIsVisible])
 
+    const handleDelete = useCallback(() => {
+        molecule.removeRepresentation(representation.uniqueId)
+        props.changeCustomRepresentationList({action: "Remove", item: props.representation})
+    }, [molecule, props.changeCustomRepresentationList])
+
     return <Chip
         style={chipStyle}
         variant={"outlined"}
         label={`${representationLabelMapping[representation.style]} ${representation.cid}`}
-        deleteIcon={<DeleteOutlined style={{color: props.isDark ? 'white' : 'black'}}/>}
-        onDelete={() => {
-            molecule.removeRepresentation(representation.uniqueId)
-            props.changeCustomRepresentationList({action: "Remove", item: props.representation})
-        }}
-        onClick={handleClick}
+        deleteIcon={
+            <div>
+                <EditOutlined style={{color: props.isDark ? 'white' : '#696969'}} onClick={() => setShowEditRepresentation(true)}/>
+                <DeleteOutlined style={{color: props.isDark ? 'white' : '#696969'}} onClick={handleDelete}/>
+                <MoorhenAddCustomRepresentationCard
+                    mode='edit'
+                    representationId={props.representation.uniqueId}
+                    glRef={props.glRef}
+                    urlPrefix={props.urlPrefix}
+                    molecules={props.molecules}
+                    isDark={props.isDark}
+                    molecule={props.molecule}
+                    anchorEl={props.addColourRulesAnchorDivRef}
+                    initialRepresentationStyleValue={props.representation.style}
+                    initialRuleType='cid'
+                    initialUseDefaultBondSettings={props.representation.useDefaultBondOptions}
+                    initialUseDefaultColoursValue={props.representation.useDefaultColourRules}
+                    initialCid={props.representation.cid}
+                    show={showEditRepresentation}
+                    setShow={setShowEditRepresentation}/>
+            </div>
+        }
+        onClick={handleVisibility}
+        onDelete={() => {}}
     />
 }

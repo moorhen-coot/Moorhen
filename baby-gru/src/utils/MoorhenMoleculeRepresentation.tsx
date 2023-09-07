@@ -58,6 +58,33 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         }
     }
 
+    setBondOptions(bondOptions: moorhen.cootBondOptions) {
+        if (bondOptions) {
+            this.useDefaultBondOptions = false
+            this.bondOptions = bondOptions
+        } else {
+            this.useDefaultBondOptions = true
+        }
+    }
+
+    setStyle(style: moorhen.RepresentationStyles) {
+        this.style = style
+        this.styleHasAtomBuffers = ![
+            'contact_dots', 'ligand_validation', 'chemical_features', 'unitCell', 'MolecularSurface', 'VdWSurface', 
+            'gaussian', 'allHBonds', 'rotamer', 'rama', 'environment', 'ligand_environment', 'hover', 'CDs'
+        ].includes(style)
+        this.styleHasSymmetry = ![
+            'hover', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'
+        ].includes(style)
+        this.styleHasColourRules = ![
+            'allHBonds', 'rama', 'rotamer', 'unitCell', 'hover', 'environment', 'ligand_environment',
+            'contact_dots', 'chemical_features', 'ligand_validation'
+        ].includes(style)
+        if (style === "ligands" && (typeof this.cid !== 'string' || this.cid === '/*/*/*/*')) {
+            this.cid =  "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O)"
+        }
+    }
+
     setUseDefaultColourRules(newVal: boolean) {
         this.useDefaultColourRules = newVal
     }
