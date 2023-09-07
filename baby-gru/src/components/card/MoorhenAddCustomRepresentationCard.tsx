@@ -20,6 +20,15 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     molecules: moorhen.Molecule[];
     urlPrefix: string;
     glRef: React.RefObject<webGL.MGWebGL>;
+    mode?: "add" | "edit";
+    representationId?: string;
+    initialUseDefaultBondSettings?: boolean;
+    initialUseDefaultColoursValue?: boolean;
+    initialRepresentationStyleValue?: string;
+    initialRuleType?: string;
+    initialColour?: string;
+    initialColourMode?: string;
+    initialCid?: string;
 }) => {
 
     const useDefaultColoursSwitchRef = useRef<HTMLInputElement | null>(null)
@@ -31,13 +40,13 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const colourModeSelectRef = useRef<HTMLSelectElement | null>(null)
     const colourSwatchRef = useRef<HTMLDivElement | null>(null)
     const residueRangeSelectRef = useRef<any>()
-    const [representationStyle, setRepresentationStyle] = useState<string>('CBs')
-    const [colourMode, setColourMode] = useState<string>('custom')
+    const [representationStyle, setRepresentationStyle] = useState<string>(props.initialRepresentationStyleValue)
+    const [colourMode, setColourMode] = useState<string>(props.initialColourMode)
     const [showColourPicker, setShowColourPicker] = useState<boolean>(false)
-    const [ruleType, setRuleType] = useState<string>('molecule')
-    const [colour, setColour] = useState<string>('#47d65f')
-    const [useDefaultColours, setUseDefaultColours] = useState<boolean>(true)
-    const [useDefaultBondSettings, setUseDefaultBondSettings] = useState<boolean>(true)
+    const [ruleType, setRuleType] = useState<string>(props.initialRuleType)
+    const [colour, setColour] = useState<string>(props.initialColour)
+    const [useDefaultColours, setUseDefaultColours] = useState<boolean>(props.initialUseDefaultColoursValue)
+    const [useDefaultBondSettings, setUseDefaultBondSettings] = useState<boolean>(props.initialUseDefaultBondSettings)
     const [sequenceRangeSelect, setSequenceRangeSelect] = useState(null)
     const [selectedChain, setSelectedChain] = useState<string>(null)
     const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState<number>(props.molecule.defaultBondOptions.atomRadiusBondRatio)
@@ -131,9 +140,22 @@ export const MoorhenAddCustomRepresentationCard = (props: {
             }
         }
 
-        props.molecule.addRepresentation(styleSelectRef.current.value, cidSelection, true, colourRules, bondOptions)
+        if (props.mode === 'add') {
+            props.molecule.addRepresentation(styleSelectRef.current.value, cidSelection, true, colourRules, bondOptions)
+        } else if (props.mode === 'edit' && props.representationId) {
+            const representation = props.molecule.representations.find(item => item.uniqueId === props.representationId)
+            if (representation) {
+                representation.cid = cidSelection
+                representation.setStyle(styleSelectRef.current.value)
+                representation.setUseDefaultColourRules(!colourRules || colourRules?.length === 0)
+                representation.setColourRules(colourRules)
+                representation.setBondOptions(bondOptions)
+                representation.redraw()
+            }
+        }
+
         props.setShow(false)
-    }, [colour, props.molecule, bondWidth, atomRadiusBondRatio, bondSmoothness])
+    }, [colour, props.molecule, props.representationId, props.mode, bondWidth, atomRadiusBondRatio, bondSmoothness])
 
     const increaseWidthButton = <IconButton onClick={() => setBondWidth(bondWidth + 0.1)} style={{padding: 0, color: props.isDark ? 'white' : 'grey'}}>
                                     <AddCircleOutline/>
@@ -177,7 +199,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 </Form.Group>
                 <div style={{justifyContent: 'center', display: 'flex'}}>
                     {(ruleType === 'chain' || ruleType === 'residue-range')  && <MoorhenChainSelect molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={props.molecule.molNo} ref={chainSelectRef} allowedTypes={[1, 2]}/>}
-                    {ruleType === 'cid' && <Form.Control ref={cidFormRef} size="sm" type='text' placeholder={'Atom selection'} style={{margin: '0.5rem'}}/> }
+                    {ruleType === 'cid' && <Form.Control ref={cidFormRef} defaultValue={props.initialCid} size="sm" type='text' placeholder={'Atom selection'} style={{margin: '0.5rem'}}/> }
                 </div>
                 {ruleType === 'residue-range' && 
                     <div style={{width: '100%'}}>
@@ -293,12 +315,16 @@ export const MoorhenAddCustomRepresentationCard = (props: {
 
                 </Popover>
                 </>
-                
                 }
                 <Button onClick={handleCreateRepresentation}>
-                    Create
+                    {props.mode === 'add' ? 'Create' : 'Apply'}
                 </Button>
             </Stack>
         </Popover>
- 
+}
+
+MoorhenAddCustomRepresentationCard.defaultProps = { 
+    mode: 'add', initialColourMode: 'custom', initialRepresentationStyleValue: 'CBs', 
+    initialUseDefaultColoursValue: true, initialRuleType: 'molecule', initialColour: '#47d65f',
+    initialCid: '', initialUseDefaultBondSettings: true
 }

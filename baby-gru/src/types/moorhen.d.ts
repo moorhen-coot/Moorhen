@@ -173,6 +173,8 @@ export namespace moorhen {
     'ligand_environment' | 'contact_dots' | 'chemical_features' | 'ligand_validation' | 'glycoBlocks'
 
     interface MoleculeRepresentation {
+        setBondOptions(bondOptions: cootBondOptions): void;
+        setStyle(style: string): void;
         setUseDefaultColourRules(arg0: boolean): void;
         setColourRules(ruleList: ColourRule[]): void;
         buildBuffers(arg0: DisplayObject[]): Promise<void>;
