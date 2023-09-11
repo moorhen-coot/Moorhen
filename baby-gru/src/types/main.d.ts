@@ -15,6 +15,18 @@ declare module 'moorhen' {
     let MoorhenContext: React.Context<any>;
     module.exports = MoorhenContext;
 
+    function loadSessionData(sessionDataString: string,
+        monomerLibraryPath: string,
+        molecules: _moorhen.Molecule[],
+        changeMolecules: (arg0: _moorhen.MolChange<_moorhen.Molecule>) => void,
+        maps: _moorhen.Map[],
+        changeMaps: (arg0: _moorhen.MolChange<_moorhen.Map>) => void,
+        setActiveMap: (arg0: _moorhen.Map) => void,
+        commandCentre: React.RefObject<_moorhen.CommandCentre>,
+        timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule>,
+        glRef: React.RefObject<webGL.MGWebGL>): Promise<number>;
+    module.exports = loadSessionData;
+
     function itemReducer<T extends _moorhen.Molecule | _moorhen.Map> (oldList: T[], change: _moorhen.MolChange<T>): T[];
     module.exports = itemReducer;
 
