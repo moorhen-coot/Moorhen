@@ -12,7 +12,7 @@ import { MoorhenImportMapCoefficientsMenuItem } from "../menu-item/MoorhenImport
 import { MoorhenDeleteEverythingMenuItem } from "../menu-item/MoorhenDeleteEverythingMenuItem"
 import { MenuItem } from "@mui/material";
 import { WarningOutlined } from "@mui/icons-material";
-import { convertViewtoPx, doDownload, readTextFile, getMultiColourRuleArgs, loadSessionJSON } from "../../utils/MoorhenUtils";
+import { convertViewtoPx, doDownload, readTextFile, getMultiColourRuleArgs, loadSessionData } from "../../utils/MoorhenUtils";
 import { getBackupLabel } from "../../utils/MoorhenTimeCapsule"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { moorhen } from "../../types/moorhen";
@@ -193,30 +193,33 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         }
     }
 
-    const loadSessionData = async (sessionDataString: string): Promise<void> => {
-        const status = await loadSessionJSON(
-            sessionDataString,
-            props.monomerLibraryPath,
-            props.molecules, 
-            props.changeMolecules,
-            props.maps,
-            props.changeMaps,
-            props.setActiveMap,
-            props.commandCentre,
-            props.timeCapsuleRef,
-            props.glRef
-        )
-
-        if (status === -1) {
-            props.setToastContent(getWarningToast(`Failed to read backup (deprecated format)`))
+    const handleSessionUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        try {
+            const sessionData = await readTextFile(e.target.files[0]) as string
+            await loadSession(sessionData) 
+        } catch (err) {
+            console.log(err)
+            props.setToastContent(getWarningToast("Error loading session"))
         }
-
     }
 
-    const loadSession = async (file: Blob) => {
+    const loadSession = async (sessionData: string) => {
         try {
-            let sessionData = await readTextFile(file)
-            await loadSessionData(sessionData as string)
+            const status = await loadSessionData(
+                sessionData as string,
+                props.monomerLibraryPath,
+                props.molecules, 
+                props.changeMolecules,
+                props.maps,
+                props.changeMaps,
+                props.setActiveMap,
+                props.commandCentre,
+                props.timeCapsuleRef,
+                props.glRef
+            )
+            if (status === -1) {
+                props.setToastContent(getWarningToast(`Failed to read backup (deprecated format)`))
+            }
         } catch (err) {
             console.log(err)
             props.setToastContent(getWarningToast("Error loading session"))
@@ -289,7 +292,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     {!props.disableFileUploads && 
                     <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="upload-session-form" className="mb-3">
                         <Form.Label>Load from stored session</Form.Label>
-                        <Form.Control type="file" accept=".json" multiple={false} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { loadSession(e.target.files[0]) }}/>
+                        <Form.Control type="file" accept=".json" multiple={false} onChange={handleSessionUpload}/>
                     </Form.Group>
                     }
                     
@@ -323,7 +326,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                         Save backup
                     </MenuItem>
                     
-                    <MoorhenBackupsMenuItem {...menuItemProps} disabled={!props.enableTimeCapsule} loadSessionJSON={loadSessionData} />
+                    <MoorhenBackupsMenuItem {...menuItemProps} disabled={!props.enableTimeCapsule} loadSession={loadSession} />
 
                     {props.extraFileMenuItems && props.extraFileMenuItems.map( menu => menu)}
                     

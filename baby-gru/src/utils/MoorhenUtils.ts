@@ -34,7 +34,7 @@ export function sequenceIsValid(sequence: moorhen.ResidueInfo[]): boolean {
     return true
 }
 /**
- * A function to load a session JSON
+ * A function to load session data
  * @param {string} sessionDataString - A JSON string representation of the object containing session data
  * @param {string} monomerLibraryPath - Path to the monomer library
  * @param {moorhen.Molecule[]} molecules - State containing current molecules loaded in the session
@@ -47,7 +47,7 @@ export function sequenceIsValid(sequence: moorhen.ResidueInfo[]): boolean {
  * @param {React.RefObject<webGL.MGWebGL>} glRef - React reference to the webGL renderer
  * @returns {number} Returns -1 if there was an error loading the session otherwise 0
  */
-export async function loadSessionJSON(
+export async function loadSessionData(
     sessionDataString: string,
     monomerLibraryPath: string,
     molecules: moorhen.Molecule[],

@@ -8,7 +8,7 @@ export const MoorhenBackupsMenuItem = (props: {
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
     disabled: boolean;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    loadSessionJSON: (sessionDataString: string) => Promise<void>;
+    loadSession: (sessionDataString: string) => Promise<void>;
 }) => {
     
     const backupSelectRef = useRef<null | HTMLSelectElement>(null)
@@ -17,8 +17,8 @@ export const MoorhenBackupsMenuItem = (props: {
         if (backupSelectRef.current.value) {
             try {
                 const key = backupSelectRef.current.value
-                let backup = await props.timeCapsuleRef.current.retrieveBackup(key) as string
-                props.loadSessionJSON(backup)
+                let backupData = await props.timeCapsuleRef.current.retrieveBackup(key) as string
+                props.loadSession(backupData)
             } catch (err) {
                 console.log(err)
             }
@@ -26,7 +26,7 @@ export const MoorhenBackupsMenuItem = (props: {
 
         document.body.click()
 
-    }, [props.setPopoverIsShown, props.loadSessionJSON, props.timeCapsuleRef])
+    }, [props.setPopoverIsShown, props.loadSession, props.timeCapsuleRef])
 
     const panelContent = <>
         <Row style={{ width: '30rem', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
