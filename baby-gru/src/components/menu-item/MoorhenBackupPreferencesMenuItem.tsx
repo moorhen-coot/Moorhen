@@ -18,7 +18,7 @@ export const MoorhenBackupPreferencesMenuItem = (props: {
 
     const panelContent =
         <>
-            <Form.Group style={{ width: '25rem' }}>
+            <Form.Group style={{ maxWidth: '25rem' }}>
                 <Form.Check
                     type="switch"
                     checked={enableTimeCapsule}

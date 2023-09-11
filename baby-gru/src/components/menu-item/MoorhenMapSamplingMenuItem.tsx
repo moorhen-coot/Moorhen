@@ -4,6 +4,23 @@ import { useEffect, useState } from "react";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 
+const convertPercentageToSamplingRate = (oldValue: number, reverse: boolean = false) => {
+    let [oldMax, oldMin, newMax, newMin]: number[] = []
+    if (reverse) {
+        [oldMax, oldMin, newMax, newMin] = [4.0, 1.5, 100, 1]
+    } else {
+        [oldMax, oldMin, newMax, newMin] = [100, 1, 4.0, 1.5]
+    }
+    
+    const oldRange = (oldMax - oldMin)
+    const newRange = (newMax - newMin)
+    const newValue = (((oldValue - oldMin) * newRange) / oldRange) + newMin
+
+    return newValue
+}
+
+const samplingRateMarks = [1, 13, 25, 40, 60, 80, 100]
+
 export const MoorhenMapSamplingMenuItem = (props: {
     setDefaultMapSamplingRate: React.Dispatch<React.SetStateAction<number>>;
     defaultMapSamplingRate: number;
@@ -14,25 +31,11 @@ export const MoorhenMapSamplingMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
-    const [mapSampling, setMapSampling] = useState<number>(props.defaultMapSamplingRate === 1.8 ? 1 : props.defaultMapSamplingRate === 2.5 ? 50 : 100);
+    const [mapSampling, setMapSampling] = useState<number>(convertPercentageToSamplingRate(props.defaultMapSamplingRate, true))
 
     useEffect(() => {
         const setMapSamplingRate = async () => {
-            let newSamplingRate: number
-            switch (mapSampling) {
-                case 1:
-                    newSamplingRate = 1.8
-                    break
-                case 50:
-                    newSamplingRate = 2.5
-                    break
-                case 100:
-                    newSamplingRate = 4.0
-                    break
-                default:
-                    newSamplingRate = 1.8
-                    break
-            }
+            let newSamplingRate = convertPercentageToSamplingRate(mapSampling)
 
             if (newSamplingRate !== props.defaultMapSamplingRate) {
                 await props.commandCentre.current.cootCommand({
@@ -64,44 +67,30 @@ export const MoorhenMapSamplingMenuItem = (props: {
      }, [mapSampling])
     
     const panelContent =
-        <div style={{width: '15rem', padding: '1rem'}}>
+        <div style={{width: '17rem', padding: '1rem'}}>
+            <span>Map sampling rate</span>
             <Slider
                 aria-label="Map sampling rate"
                 value={mapSampling}
                 onChange={(evt, value: number) => { setMapSampling(value) }}
                 valueLabelFormat={(value) => {
-                    switch(value) {
-                        case 1:
-                            return "Coarse"
-                        case 50:
-                            return "Nice"
-                        default: 
-                            return "Smooth"
-                    }
+                    const samplingRate = convertPercentageToSamplingRate(value)
+                    return samplingRate.toFixed(1).toString()
                 }}
                 getAriaValueText={(value) => {
-                    switch(value) {
-                        case 1:
-                            return "Coarse"
-                        case 50:
-                            return "Nice"
-                        default: 
-                            return "Smooth"
-                    }
+                    const samplingRate = convertPercentageToSamplingRate(value)
+                    return samplingRate.toFixed(1).toString()
                 }}
                 step={null}
                 valueLabelDisplay="auto"
-                marks={[
-                    {value: 1, label: 'Coarse'},
-                    {value: 50, label: 'Nice'},
-                    {value: 100, label: 'Smooth'}
-                ]}
+                marks={samplingRateMarks.map(mark => {return {value: mark, label:  convertPercentageToSamplingRate(mark).toFixed(1).toString()}})}
             />
         </div>
 
     return <MoorhenBaseMenuItem
         popoverPlacement={props.popoverPlacement}
         popoverContent={panelContent}
+        showOkButton={false}
         menuItemText={"Set map sampling rate..."}
         setPopoverIsShown={props.setPopoverIsShown}
         onCompleted={() => {}}
