@@ -127,6 +127,20 @@ export const MoorhenContextMenu = (props: {
   const [opacity, setOpacity] = useState<number>(1.0)
   const [toolTip, setToolTip] = useState<string>('')
   
+  const handleContextMenu = useCallback((evt) => {
+    evt.stopPropagation()
+    evt.preventDefault()
+    evt.stopImmediatePropagation()
+  }, [])
+
+  useEffect(() => {
+    const domNode = contextMenuRef.current
+    domNode.addEventListener("contextmenu", handleContextMenu)
+    return () => {
+      domNode.removeEventListener("contextmenu", handleContextMenu)
+    }
+  }, [handleContextMenu, contextMenuRef]);
+
   let selectedMolecule: moorhen.Molecule
   let chosenAtom: moorhen.ResidueSpec
   if (props.showContextMenu && props.showContextMenu.buffer){
