@@ -134,11 +134,12 @@ export const MoorhenContextMenu = (props: {
   }, [])
 
   useEffect(() => {
-    contextMenuRef.current?.addEventListener("contextmenu", handleContextMenu)
+    const domNode = contextMenuRef.current
+    domNode.addEventListener("contextmenu", handleContextMenu)
     return () => {
-      contextMenuRef.current?.removeEventListener("contextmenu", handleContextMenu)
+      domNode.removeEventListener("contextmenu", handleContextMenu)
     }
-  }, [handleContextMenu, contextMenuRef.current]);
+  }, [handleContextMenu, contextMenuRef]);
 
   let selectedMolecule: moorhen.Molecule
   let chosenAtom: moorhen.ResidueSpec
