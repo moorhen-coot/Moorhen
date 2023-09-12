@@ -20,6 +20,7 @@ export const MoorhenAboutMenuItem = (props: { setPopoverIsShown: React.Dispatch<
         popoverContent={panelContent}
         menuItemText="About..."
         onCompleted={() => { }}
+        showOkButton={false}
         setPopoverIsShown={props.setPopoverIsShown}
     />
 }
