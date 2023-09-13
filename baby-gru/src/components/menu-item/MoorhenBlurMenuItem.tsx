@@ -16,7 +16,7 @@ export const MoorhenBlurMenuItem = (props: {
 }) => {
 
     const panelContent = <div>
-                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                    <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"
                             checked={props.useOffScreenBuffers}

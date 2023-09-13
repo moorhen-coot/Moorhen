@@ -279,21 +279,21 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                     <MenuItem onClick={() => setShowHistory(true)}>
                         Do history test
                     </MenuItem>
-                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                    <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"
                             checked={props.doShadow}
                             onChange={() => { props.setDoShadow(!props.doShadow) }}
                             label="Shadows"/>
                     </InputGroup>
-                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                    <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"
                             checked={props.doOutline}
                             onChange={() => { props.setDoOutline(!props.doOutline) }}
                             label="Outlines"/>
                     </InputGroup>
-                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                    <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"
                             checked={props.doSpinTest}

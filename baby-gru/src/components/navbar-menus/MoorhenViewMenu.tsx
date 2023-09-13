@@ -12,42 +12,42 @@ export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const menuItemProps = {setPopoverIsShown, ...props}
 
     return <>
-                <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                <InputGroup className='moorhen-input-group-check'>
                     <Form.Check 
                         type="switch"
                         checked={props.drawFPS}
                         onChange={() => { props.setDrawFPS(!props.drawFPS) }}
                         label="Show frames per second counter"/>
                 </InputGroup>
-                <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                <InputGroup className='moorhen-input-group-check'>
                     <Form.Check 
                         type="switch"
                         checked={props.drawCrosshairs}
                         onChange={() => { props.setDrawCrosshairs(!props.drawCrosshairs) }}
                         label="Show crosshairs"/>
                 </InputGroup>
-                <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                <InputGroup className='moorhen-input-group-check'>
                     <Form.Check 
                         type="switch"
                         checked={props.drawAxes}
                         onChange={() => { props.setDrawAxes(!props.drawAxes) }}
                         label="Show axes"/>
                 </InputGroup>
-                <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                <InputGroup className='moorhen-input-group-check'>
                     <Form.Check 
                         type="switch"
                         checked={props.drawMissingLoops}
                         onChange={() => { props.setDrawMissingLoops(!props.drawMissingLoops) }}
                         label="Show missing loops"/>
                 </InputGroup>
-                <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                <InputGroup className='moorhen-input-group-check'>
                     <Form.Check 
                         type="switch"
                         checked={props.drawInteractions}
                         onChange={() => { props.setDrawInteractions(!props.drawInteractions) }}
                         label="Show Environment Distances"/>
                 </InputGroup>
-                <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                <InputGroup className='moorhen-input-group-check'>
                     <Form.Check 
                         type="switch"
                         checked={props.doPerspectiveProjection}

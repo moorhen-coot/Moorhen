@@ -131,10 +131,10 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
     if (props.mode === 'context') {
 
         const contextMenuOverride = (
-            <Draggable>
-            <Card style={{position: 'absolute', width: '15rem', cursor: 'move'}} onMouseOver={() => props.setOpacity(1)} onMouseOut={() => props.setOpacity(0.5)}>
-            <Card.Header>Accept rotate/translate ?</Card.Header>
-            <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
+            <Draggable nodeRef={draggableRef} handle=".inner-drag-handle">
+            <Card ref={draggableRef} className="moorhen-draggable-action-card" onMouseOver={() => props.setOpacity(1)} onMouseOut={() => props.setOpacity(0.5)}>
+            <Card.Header className="inner-drag-handle">Accept rotate/translate ?</Card.Header>
+            <Card.Body>
                 <em>{"Hold <Shift><Alt> to translate"}</em>
                 <br></br>
                 <em>{props.shortCuts ? `Hold ${getTooltipShortcutLabel(JSON.parse(props.shortCuts as string).residue_camera_wiggle)} to move view` : null}</em>
@@ -167,7 +167,7 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
         }
 
         return <MoorhenContextButtonBase 
-                    icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} alt="rotate/translate" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rtz.svg`}/>}
+                    icon={<img alt="rotate/translate" className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rtz.svg`}/>}
                     toolTipLabel="Rotate/Translate zone"
                     nonCootCommand={nonCootCommand}
                     popoverSettings={{

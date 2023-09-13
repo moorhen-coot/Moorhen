@@ -28,7 +28,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
 
     const getWarningToast = (message: string) => <>
         <WarningOutlined style={{margin: 0}}/>
-            <h4 style={{marginTop: '0.1rem', marginBottom: '0.1rem', marginLeft: '0.5rem', marginRight: '0.5rem'}}>
+            <h4 className="moorhen-warning-toast">
                 {message}
             </h4>
         <WarningOutlined style={{margin: 0}}/>
@@ -248,12 +248,12 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     return <>
                 <div style={{maxHeight: convertViewtoPx(65, props.windowHeight), overflowY: 'auto'}}>
                     {!props.disableFileUploads && 
-                    <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="upload-coordinates-form" className="mb-3">
+                    <Form.Group className='moorhen-form-group' controlId="upload-coordinates-form">
                         <Form.Label>Coordinates</Form.Label>
                         <Form.Control type="file" accept=".pdb, .mmcif, .cif, .ent" multiple={true} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { loadPdbFiles(e.target.files) }}/>
                     </Form.Group>
                     }
-                    <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="fetch-pdbe-form" className="mb-3">
+                    <Form.Group className='moorhen-form-group' controlId="fetch-pdbe-form">
                         <Form.Label>Fetch coords from online services</Form.Label>
                         <InputGroup>
                             <SplitButton title={remoteSource} id="fetch-coords-online-source-select">
@@ -285,7 +285,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                         <Form.Check style={{ marginTop: '0.5rem' }} ref={fetchMapDataCheckRef} label={'fetch map data'} name={`fetchMapData`} type="checkbox" />
                     </Form.Group>
                     {!props.disableFileUploads && 
-                    <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="upload-session-form" className="mb-3">
+                    <Form.Group className='moorhen-form-group' controlId="upload-session-form">
                         <Form.Label>Load from stored session</Form.Label>
                         <Form.Control type="file" accept=".json" multiple={false} onChange={handleSessionUpload}/>
                     </Form.Group>

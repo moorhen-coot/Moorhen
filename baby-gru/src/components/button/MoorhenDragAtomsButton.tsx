@@ -241,10 +241,10 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
     if (props.mode === 'context') {
 
         const contextMenuOverride = (
-            <Draggable>
-                <Card style={{position: 'absolute', width: '15rem', cursor: 'move'}} onMouseOver={() => props.setOpacity(1)} onMouseOut={() => props.setOpacity(0.5)}>
-                <Card.Header>Atom dragging mode</Card.Header>
-                <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
+            <Draggable nodeRef={draggableRef} handle=".inner-drag-handle">
+                <Card ref={draggableRef} className="moorhen-draggable-action-card" onMouseOver={() => props.setOpacity(1)} onMouseOut={() => props.setOpacity(0.5)}>
+                <Card.Header className="inner-drag-handle">Atom dragging mode</Card.Header>
+                <Card.Body>
                     <Stack gap={2} direction="vertical" style={{ alignItems: 'center'}}>
                         <span>Accept dragging ?</span>
                         <Stack gap={2} direction="horizontal" style={{ alignItems: 'center',  alignContent: 'center', justifyContent: 'center'}}>
@@ -292,7 +292,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
         }
 
         return <MoorhenContextButtonBase 
-                    icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} alt="drag atoms" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/drag.svg`}/>}
+                    icon={<img alt="drag atoms" className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/drag.svg`}/>}
                     toolTipLabel="Drag atoms"
                     refineAfterMod={false}
                     needsMapData={true}

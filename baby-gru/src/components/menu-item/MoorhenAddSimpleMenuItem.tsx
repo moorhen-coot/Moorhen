@@ -17,7 +17,7 @@ export const MoorhenAddSimpleMenuItem = (props: {
     const molTypes = ['HOH', 'SO4', 'PO4', 'GOL', 'CIT', 'EDO', 'IOD', 'NA', 'CA']
 
     const panelContent = <>
-        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="MoorhenAddSimpleMenuItem" className="mb-3">
+        <Form.Group className='moorhen-form-group' controlId="MoorhenAddSimpleMenuItem">
             <Form.Label>Add...</Form.Label>
             <FormSelect size="sm" ref={molTypeSelectRef} defaultValue={'HOH'}>
                 {molTypes.map(type => {return <option value={type} key={type}>{type}</option>})}

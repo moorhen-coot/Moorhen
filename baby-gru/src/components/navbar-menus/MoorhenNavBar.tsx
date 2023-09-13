@@ -77,10 +77,10 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
         'Calculate': { icon: <CalculateOutlined/>, name: 'Calculate', ref: calcualteSpeedDialActionRef},
         'View': { icon: <VisibilityOutlined/>, name: 'View', ref: viewDialActionRef},
         'Validation': { icon: <FactCheckOutlined />, name: 'Validation', ref: validationSpeedDialActionRef},
-        'Ligand': { icon:  <img src={`${props.urlPrefix}/baby-gru/pixmaps/moorhen-ligand.svg`} alt='Ligand' style={{height: '1.6rem', marginRight: '0.3rem', marginLeft: '0.3rem'}} />, name: 'Ligand', ref: ligandSpeedDialActionRef},
+        'Ligand': { icon:  <img className='moorhen-navbar-menu-item-icon' src={`${props.urlPrefix}/baby-gru/pixmaps/moorhen-ligand.svg`} alt='Ligand'/>, name: 'Ligand', ref: ligandSpeedDialActionRef},
         'Cryo': { icon: <AcUnitOutlined/>, name: 'Cryo', ref: cryoDialActionRef},
-        'Models': { icon: <img src={`${props.urlPrefix}/baby-gru/pixmaps/secondary-structure-grey.svg`} alt='Model' style={{height: '1.6rem', marginRight: '0.3rem', marginLeft: '0.3rem'}} />, name: 'Models', ref: modelsSpeedDialActionRef},
-        'Maps': { icon: <img src={`${props.urlPrefix}/baby-gru/pixmaps/map-grey.svg`} alt='Map' style={{height: '1.6rem', marginRight: '0.3rem', marginLeft: '0.3rem'}} />, name: 'Maps', ref: mapsSpeedDialActionRef},
+        'Models': { icon: <img className='moorhen-navbar-menu-item-icon' src={`${props.urlPrefix}/baby-gru/pixmaps/secondary-structure-grey.svg`} alt='Model' />, name: 'Models', ref: modelsSpeedDialActionRef},
+        'Maps': { icon: <img className='moorhen-navbar-menu-item-icon' src={`${props.urlPrefix}/baby-gru/pixmaps/map-grey.svg`} alt='Map'/>, name: 'Maps', ref: mapsSpeedDialActionRef},
         'Preferences': { icon: <SettingsSuggestOutlined/>, name: 'Preferences', ref: preferencesDialActionRef},
         'Help': { icon: <HelpOutlineOutlined/>, name: 'Help', ref: helpDialActionRef},
     }
@@ -160,7 +160,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
             }}
         >
             { (speedDialOpen) ? <CloseOutlined style={{color: 'black'}}/> : <MenuOutlined style={{color: 'black'}}/> }
-            <img src={`${props.urlPrefix}/baby-gru/pixmaps/MoorhenLogo.png`} alt='Moorhen' style={{height: '1.6rem', marginRight: '0.3rem', marginLeft: '0.3rem'}} /> 
+            <img className='moorhen-navbar-menu-item-icon' src={`${props.urlPrefix}/baby-gru/pixmaps/MoorhenLogo.png`} alt='Moorhen' /> 
         </Fab>
         <ClickAwayListener onClickAway={() => { setCurrentDropdownId('-1') }}>
         <Popper open={speedDialOpen} anchorEl={speedDialRef.current} placement='bottom-start'>
@@ -171,16 +171,10 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
                 return <MenuItem
                     ref={action.ref}
                     key={action.name}
+                    className='moorhen-navbar-menu-item'
                     onClick={() => handleDialActionClick(action.name)}
                     style={{
-                        marginBottom: '0.5rem',
-                        marginRight: '0.5rem',
-                        marginLeft: '0.5rem',
                         backgroundColor: props.isDark ? (currentDropdownId === action.name ? '#a8a8a8' : 'grey') : (currentDropdownId === action.name ? '#d4d4d4' : 'white') ,
-                        justifyContent: 'left',
-                        display: 'flex',
-                        borderRadius: '2rem',
-                        boxShadow: '0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12)'
                     }}>
                         <Stack gap={2} direction='horizontal' style={{display: 'flex', verticalAlign: 'middle'}}>
                             {action.name}
@@ -193,14 +187,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
             </MenuList>
             </Grow>
             <Overlay placement='right' show={currentDropdownId !== '-1'} target={currentDropdownId !== '-1' ? popoverTargetRef : null}>
-                <Popover style={{
-                    borderWidth: 0,
-                    marginLeft: '1.5rem',
-                    maxWidth: convertViewtoPx(35, props.windowWidth),
-                    overflowX: 'auto',
-                    borderRadius: '1.5rem',
-                    boxShadow: '0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12)'
-                }}>
+                <Popover className='moorhen-nav-popover' style={{maxWidth: convertViewtoPx(35, props.windowWidth)}}>
                     <Popover.Body>
                         { currentDropdownId === 'File' && <MoorhenFileMenu dropdownId="File" {...collectedProps} /> }
                         { currentDropdownId === 'Edit' && <MoorhenEditMenu dropdownId="Edit" {...collectedProps} /> }
@@ -276,9 +263,9 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
             }
         }}
     >
-        {props.hoveredAtom.cid && <Form.Control style={{ height: '2rem', width: "20rem", borderRadius: '1.5rem', borderColor: 'black'}} type="text" readOnly={true} value={`${props.hoveredAtom.molecule.name}:${props.hoveredAtom.cid}`} />}
-        {props.busy && <Spinner animation="border" variant={props.isDark ? 'light' : 'dark'} style={{ height: '2rem', marginRight: '0.5rem', marginLeft: '0.5rem' }} />}
-        {showSaveIcon && <SaveOutlined style={{padding: 0, margin: 0, color: 'black'}}/>}
+        {props.hoveredAtom.cid && <Form.Control className='moorhen-hovered-atom-form' type="text" readOnly={true} value={`${props.hoveredAtom.molecule.name}:${props.hoveredAtom.cid}`} />}
+        {props.busy && <Spinner className='moorhen-spinner' animation="border" variant={props.isDark ? 'light' : 'dark'} />}
+        {showSaveIcon && <SaveOutlined style={{ padding: 0, margin: 0, color: 'black' }}/>}
     </Fab>
     </>
 })

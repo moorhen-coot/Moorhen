@@ -21,7 +21,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
     const selectRef = useRef<HTMLSelectElement | null>(null)
 
     const panelContent = <>
-        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="MoorhenGetMonomerMenuItem" className="mb-3">
+        <Form.Group className='moorhen-form-group' controlId="MoorhenGetMonomerMenuItem">
             <Form.Label>Monomer identifier</Form.Label>
             <Form.Control ref={tlcRef} type="text" />
         </Form.Group>

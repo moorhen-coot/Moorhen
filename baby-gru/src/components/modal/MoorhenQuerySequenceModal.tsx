@@ -58,7 +58,7 @@ export const MoorhenQuerySequenceModal = (props: {
             props.setToastContent(
                 <>
                     <WarningOutlined style={{margin: 0}}/>
-                        <h4 style={{marginTop: '0.1rem', marginBottom: '0.1rem', marginLeft: '0.5rem', marginRight: '0.5rem'}}>
+                        <h4 className="moorhen-warning-toast">
                             Failed to read molecule
                         </h4>
                     <WarningOutlined style={{margin: 0}}/>

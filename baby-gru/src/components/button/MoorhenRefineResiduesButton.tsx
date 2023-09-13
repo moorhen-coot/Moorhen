@@ -33,7 +33,7 @@ export const MoorhenRefineResiduesButton = (props: moorhen.EditButtonProps | moo
     if (props.mode === 'context') {
 
         return <MoorhenContextButtonBase 
-                    icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/refine-1.svg`} alt='Refine Residues'/>}
+                    icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/refine-1.svg`} alt='Refine Residues'/>}
                     needsMapData={true}
                     refineAfterMod={false}
                     toolTipLabel={toolTipLabel}
