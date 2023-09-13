@@ -90,7 +90,12 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     setColourRules(colourRules: moorhen.ColourRule[]) {
-        this.colourRules = colourRules
+        if (colourRules && colourRules.length > 0) {
+            this.colourRules = colourRules
+            this.useDefaultColourRules = false
+        } else {
+            this.useDefaultColourRules = true
+        }
     }
 
     setBuffers(buffers: moorhen.DisplayObject[]) {

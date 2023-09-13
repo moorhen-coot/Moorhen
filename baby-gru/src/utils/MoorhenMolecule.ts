@@ -854,14 +854,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
         const representation = new MoorhenMoleculeRepresentation(style, cid, this.commandCentre, this.glRef)
         representation.isCustom = isCustom
         representation.setParentMolecule(this)
-        if(colourRules && colourRules.length > 0) {
-            representation.setColourRules(colourRules)
-            representation.setUseDefaultColourRules(false)
-        }
-        if(bondOptions) {
-            representation.useDefaultBondOptions = false
-            representation.bondOptions = bondOptions
-        }
+        representation.setColourRules(colourRules)
+        representation.setBondOptions(bondOptions)
         await representation.draw()
         this.representations.push(representation)
         await this.drawSymmetry(false)
