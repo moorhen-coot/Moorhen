@@ -116,44 +116,43 @@ export async function loadSessionData(
     const loadPromises = await Promise.all([...newMoleculePromises, ...newMapPromises])
     const newMolecules = loadPromises.filter(item => item.type === 'molecule') as moorhen.Molecule[] 
     const newMaps = loadPromises.filter(item => item.type === 'map') as moorhen.Map[] 
-
-    // Draw the molecules with the styles stored in session
-    let drawPromises: Promise<void>[] = []
-    newMolecules.forEach((molecule, moleculeIndex) => {
-        const storedMoleculeData = sessionData.moleculeData[moleculeIndex]
+    
+    // Draw the molecules with the styles stored in session (needs to be done sequentially due to colour rules)
+    for (let i = 0; i < newMolecules.length; i++) {
+        const molecule = newMolecules[i]
+        const storedMoleculeData = sessionData.moleculeData[i]
         molecule.defaultColourRules = storedMoleculeData.defaultColourRules
         molecule.defaultBondOptions = storedMoleculeData.defaultBondOptions
-        // This might cause problems. In the future we might need to add representations sequentially (each of them removes previous colour rules)
-        storedMoleculeData.representations.forEach(item => 
-            drawPromises.push(molecule.addRepresentation(item.style, item.cid, item.isCustom, item.colourRules, item.bondOptions))
-        )
-    })
-
-    // Associate maps to reflection data
-    const associateReflectionsPromises = newMaps.map((map, index) => {
-        const storedMapData = sessionData.mapData[index]
-        if (sessionData.includesAdditionalMapData && storedMapData.reflectionData) {
-            return map.associateToReflectionData(
-                storedMapData.selectedColumns, 
-                Uint8Array.from(Object.values(storedMapData.reflectionData))
-            )
-        } else if(storedMapData.associatedReflectionFileName && storedMapData.selectedColumns) {
-            return timeCapsuleRef.current.retrieveBackup(
-                JSON.stringify({
-                    type: 'mtzData',
-                    name: storedMapData.associatedReflectionFileName
-                })
-                ).then(reflectionData => {
-                    return map.associateToReflectionData(
-                        storedMapData.selectedColumns, 
-                        Uint8Array.from(Object.values(reflectionData))
-                    )
-                })
+        for (const item of storedMoleculeData.representations) {
+            await molecule.addRepresentation(item.style, item.cid, item.isCustom, item.colourRules, item.bondOptions)
         }
-        return Promise.resolve()
-    })
+    }
     
-    await Promise.all([...drawPromises, ...associateReflectionsPromises])
+    // Associate maps to reflection data
+    await Promise.all(
+        newMaps.map((map, index) => {
+            const storedMapData = sessionData.mapData[index]
+            if (sessionData.includesAdditionalMapData && storedMapData.reflectionData) {
+                return map.associateToReflectionData(
+                    storedMapData.selectedColumns, 
+                    Uint8Array.from(Object.values(storedMapData.reflectionData))
+                )
+            } else if(storedMapData.associatedReflectionFileName && storedMapData.selectedColumns) {
+                return timeCapsuleRef.current.retrieveBackup(
+                    JSON.stringify({
+                        type: 'mtzData',
+                        name: storedMapData.associatedReflectionFileName
+                    })
+                    ).then(reflectionData => {
+                        return map.associateToReflectionData(
+                            storedMapData.selectedColumns, 
+                            Uint8Array.from(Object.values(reflectionData))
+                        )
+                    })
+            }
+            return Promise.resolve()
+        })
+    )
 
     // Change props.molecules
     newMolecules.forEach(molecule => {
