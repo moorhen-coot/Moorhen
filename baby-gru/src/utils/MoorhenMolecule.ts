@@ -1477,12 +1477,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         
         response.data.result.result.forEach(rule => {
             rules.push({
-                commandInput: {
-                    message: 'coot_command',
-                    command: 'add_colour_rule',
-                    returnType: 'status',
-                    commandArgs: [this.molNo, rule.first, rule.second]
-                },
+                args: [rule.first, rule.second],
                 isMultiColourRule: false,
                 ruleType: 'chain',
                 color: rule.second,

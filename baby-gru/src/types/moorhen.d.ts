@@ -71,12 +71,7 @@ export namespace moorhen {
     }
     
     type ColourRule = {
-        commandInput: {
-            message: string;
-            command: string;
-            returnType: string;
-            commandArgs: [number, string, string?];
-        };
+        args: (string | number)[];
         color?: string;
         isMultiColourRule: boolean;
         ruleType: string;
@@ -363,6 +358,7 @@ export namespace moorhen {
         pdbData: string;
         representations: {cid: string, style: string, isCustom: boolean, colourRules: ColourRule[], bondOptions: cootBondOptions }[];
         defaultBondOptions: cootBondOptions;
+        defaultColourRules: ColourRule[];
         connectedToMaps: number[];
     }
     

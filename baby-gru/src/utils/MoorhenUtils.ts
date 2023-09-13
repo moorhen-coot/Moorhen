@@ -121,8 +121,12 @@ export async function loadSessionData(
     let drawPromises: Promise<void>[] = []
     newMolecules.forEach((molecule, moleculeIndex) => {
         const storedMoleculeData = sessionData.moleculeData[moleculeIndex]
+        molecule.defaultColourRules = storedMoleculeData.defaultColourRules
         molecule.defaultBondOptions = storedMoleculeData.defaultBondOptions
-        storedMoleculeData.representations.forEach(item => molecule.addRepresentation(item.style, item.cid, item.isCustom, item.colourRules, item.bondOptions))
+        // This might cause problems. In the future we might need to add representations sequentially (each of them removes previous colour rules)
+        storedMoleculeData.representations.forEach(item => 
+            drawPromises.push(molecule.addRepresentation(item.style, item.cid, item.isCustom, item.colourRules, item.bondOptions))
+        )
     })
 
     // Associate maps to reflection data
@@ -762,18 +766,17 @@ const getPlddtColourRules = (plddtList: { cid: string; bFactor: number; }[]): st
     return plddtList.map(item => `${item.cid}^${getColour(item.bFactor)}`).join('|')
 }
 
-export const getMultiColourRuleArgs = (molecule: moorhen.Molecule, ruleType: string): [number, string] => {
+export const getMultiColourRuleArgs = (molecule: moorhen.Molecule, ruleType: string): string => {
 
-    let multiRulesArgs: [number, string]
-
+    let multiRulesArgs: string
     switch (ruleType) {
         case 'b-factor':
             const bFactors = getMoleculeBfactors(molecule.gemmiStructure.clone())
-            multiRulesArgs = [molecule.molNo, getBfactorColourRules(bFactors)]
+            multiRulesArgs = getBfactorColourRules(bFactors)
             break;
         case 'af2-plddt':
             const plddt = getMoleculeBfactors(molecule.gemmiStructure.clone())
-            multiRulesArgs = [molecule.molNo, getPlddtColourRules(plddt)]
+            multiRulesArgs = getPlddtColourRules(plddt)
             break;
         default:
             console.log('Unrecognised colour rule...')

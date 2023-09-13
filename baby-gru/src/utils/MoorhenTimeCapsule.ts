@@ -48,7 +48,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         this.modificationCount = 0
         this.modificationCountBackupThreshold = 5
         this.maxBackupCount = 10
-        this.version = 'v12'
+        this.version = 'v13'
         this.disableBackups = false
         this.storageInstance = null    
     }
@@ -184,9 +184,10 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                     cid: item.cid,
                     style: item.style,
                     isCustom: item.isCustom,
-                    colourRules: item.colourRules,
+                    colourRules: item.useDefaultColourRules ? null : item.colourRules,
                     bondOptions: item.bondOptions
                 }}),
+                defaultColourRules: molecule.defaultColourRules,
                 defaultBondOptions: molecule.defaultBondOptions,
                 connectedToMaps: molecule.connectedToMaps
             }

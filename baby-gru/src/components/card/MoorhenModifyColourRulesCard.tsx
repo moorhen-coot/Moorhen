@@ -170,12 +170,7 @@ export const MoorhenModifyColourRulesCard = (props: {
             }
             if (cidLabel) {
                 newRule = {
-                    commandInput: {
-                        message:'coot_command',
-                        command: 'add_colour_rule', 
-                        returnType:'status',
-                        commandArgs: [props.molecule.molNo, cidLabel, selectedColour]
-                    },
+                    args: [cidLabel, selectedColour],
                     isMultiColourRule: false,
                     ruleType: `${ruleType}`,
                     color: selectedColour,
@@ -184,12 +179,7 @@ export const MoorhenModifyColourRulesCard = (props: {
             }
         } else {
             newRule = {
-                commandInput: {
-                    message:'coot_command',
-                    command: 'add_colour_rules_multi', 
-                    returnType:'status',
-                    commandArgs: getMultiColourRuleArgs(props.molecule, ruleSelectRef.current.value)
-                },
+                args: [getMultiColourRuleArgs(props.molecule, ruleSelectRef.current.value)],
                 isMultiColourRule: true,
                 ruleType: `${ruleSelectRef.current.value}`,
                 label: `${ruleSelectRef.current.value}`,

@@ -98,14 +98,9 @@ export const MoorhenAddCustomRepresentationCard = (props: {
             switch(colourModeSelectRef.current.value) {
                 case "custom":
                     colourRules = [{
-                        commandInput: {
-                            message: 'coot_command',
-                            command: 'add_colour_rule',
-                            returnType: 'status',
-                            commandArgs: [props.molecule.molNo, cidSelection, colour]
-                        },
+                        args: [cidSelection, colour],
                         isMultiColourRule: false,
-                        ruleType: 'chain',
+                        ruleType: ruleSelectRef.current.value,
                         color: colour,
                         label: cidSelection
                     }]
@@ -113,12 +108,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 case "b-factor":
                 case "af2-plddt":
                     colourRules = [{
-                        commandInput: {
-                            message:'coot_command',
-                            command: 'add_colour_rules_multi', 
-                            returnType:'status',
-                            commandArgs: getMultiColourRuleArgs(props.molecule, colourModeSelectRef.current.value)
-                        },
+                        args: [getMultiColourRuleArgs(props.molecule, colourModeSelectRef.current.value)],
                         isMultiColourRule: true,
                         color: colour,
                         ruleType: `${colourModeSelectRef.current.value}`,

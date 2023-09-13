@@ -127,12 +127,7 @@ export const MoorhenQuerySequenceModal = (props: {
         const newMolecule = await fetchMoleculeFromURL(coordUrl, polimerEntity)
         if (source === 'AFDB') {
             const newRule = {
-                commandInput: {
-                    message:'coot_command',
-                    command: 'add_colour_rules_multi', 
-                    returnType:'status',
-                    commandArgs: getMultiColourRuleArgs(newMolecule, 'af2-plddt')
-                },
+                args: [getMultiColourRuleArgs(newMolecule, 'af2-plddt')],
                 isMultiColourRule: true,
                 ruleType: 'af2-plddt',
                 label: `//*`
