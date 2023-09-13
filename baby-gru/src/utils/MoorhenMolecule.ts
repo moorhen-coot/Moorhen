@@ -865,6 +865,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         await representation.draw()
         this.representations.push(representation)
         await this.drawSymmetry(false)
+        return representation
     }
 
     /**

@@ -82,7 +82,7 @@ export namespace moorhen {
         fitLigandHere(mapMolNo: number, ligandMolNo: number, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<Molecule[]>;
         isLigand(): boolean;
         removeRepresentation(representationId: string): void;
-        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: ColourRule[], bondOptions?: cootBondOptions): Promise<void>;
+        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: ColourRule[], bondOptions?: cootBondOptions): Promise<MoleculeRepresentation>;
         getNeighborResiduesCids(selectionCid: string, radius: number, minDist: number, maxDist: number): Promise<string[]>;
         drawWithStyleFromMesh(style: string, meshObjects: any[], cid?: string): Promise<void>;
         updateWithMovedAtoms(movedResidues: AtomInfo[][]): Promise<void>;
@@ -356,7 +356,7 @@ export namespace moorhen {
         name: string;
         molNo: number;
         pdbData: string;
-        representations: {cid: string, style: string, isCustom: boolean, colourRules: ColourRule[], bondOptions: cootBondOptions }[];
+        representations: { cid: string, style: string, isCustom: boolean, colourRules: ColourRule[], bondOptions: cootBondOptions }[];
         defaultBondOptions: cootBondOptions;
         defaultColourRules: ColourRule[];
         connectedToMaps: number[];
