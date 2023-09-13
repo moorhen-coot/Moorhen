@@ -189,7 +189,7 @@ export const MoorhenContextMenu = (props: {
                     :              
                     selectedMolecule && chosenAtom &&
                      <div style={{ display:'flex', justifyContent: 'center' }}>
-                     <Tooltip title={toolTip}>
+                     <Tooltip className="moorhen-tooltip" title={toolTip}>
                      <FormGroup ref={quickActionsFormGroupRef} style={{ justifyContent: 'center', margin: "0px", padding: "0px", width: '18rem' }} row>
                       <MoorhenAutofitRotamerButton mode='context' {...collectedProps} />
                       <MoorhenFlipPeptideButton mode='context' {...collectedProps}/>

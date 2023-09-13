@@ -18,7 +18,7 @@ export const MoorhenSharpenBlurMapMenuItem = (props: {
     const selectRef = useRef<HTMLSelectElement>(null)
 
     const panelContent = <>
-        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="MoorhenBlurMapMenuItem" className="mb-3">
+        <Form.Group className='moorhen-form-group' controlId="MoorhenBlurMapMenuItem">
             <Form.Label>B-factor to apply</Form.Label>
             <Form.Control ref={factorRef} type="number" defaultValue={50.} />
         </Form.Group>

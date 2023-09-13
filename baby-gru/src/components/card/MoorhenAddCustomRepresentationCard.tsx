@@ -199,7 +199,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                     </div>
                 }
                 {['CBs', 'CAs', 'ligands'].includes(representationStyle) && 
-                <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                <InputGroup className='moorhen-input-group-check'>
                     <Form.Check 
                         ref={useDefaultBondSettingsSwitchRef}
                         type="switch"
@@ -254,7 +254,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 </Stack>
                 </>
                 }
-                <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                <InputGroup className='moorhen-input-group-check'>
                     <Form.Check 
                         ref={useDefaultColoursSwitchRef}
                         type="switch"

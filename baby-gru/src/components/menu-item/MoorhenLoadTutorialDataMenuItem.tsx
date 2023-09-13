@@ -28,7 +28,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
     }
 
     const panelContent = <>
-        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="loadTutorialData" className="mb-3">
+        <Form.Group className='moorhen-form-group' controlId="loadTutorialData">
             <Form.Label>Select tutorial number</Form.Label>
             <Form.Select ref={tutorialNumberSelectorRef} >
                 {allTutorialNumbers.map(tutorialNumber => {

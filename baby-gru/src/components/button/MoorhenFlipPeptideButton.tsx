@@ -33,7 +33,7 @@ export const MoorhenFlipPeptideButton = (props: moorhen.EditButtonProps | moorhe
     if (props.mode === 'context') {
 
         return <MoorhenContextButtonBase 
-                    icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} src={`${props.urlPrefix}/baby-gru/pixmaps/flip-peptide.svg`} alt='Flip peptide'/>}
+                    icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/flip-peptide.svg`} alt='Flip peptide'/>}
                     needsMapData={true}
                     toolTipLabel={toolTipLabel}
                     cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}

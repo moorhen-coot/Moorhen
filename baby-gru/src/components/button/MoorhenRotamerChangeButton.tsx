@@ -103,10 +103,10 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
             const rotamerRank = rotamerInfo.data.result.result.rank
             const rotamerProbability = rotamerInfo.data.result.result.richardson_probability
 
-            return <Draggable>
-                    <Card style={{position: 'absolute', width: '15rem', cursor: 'move'}} onMouseOver={() => props.setOpacity(1)} onMouseOut={() => props.setOpacity(0.5)}>
-                      <Card.Header>Accept new rotamer ?</Card.Header>
-                      <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
+            return <Draggable nodeRef={draggableRef} handle=".inner-drag-handle">
+                    <Card ref={draggableRef} className="moorhen-draggable-action-card" onMouseOver={() => props.setOpacity(1)} onMouseOut={() => props.setOpacity(0.5)}>
+                      <Card.Header className="inner-drag-handle">Accept new rotamer ?</Card.Header>
+                      <Card.Body>
                       <span>Current rotamer: {rotamerName} ({rotamerRank+1}<sup>{rotamerRank === 0 ? 'st' : rotamerRank === 1 ? 'nd' : rotamerRank === 2 ? 'rd' : 'th'}</sup>)</span>
                       <br></br>
                       <span>Probability: {rotamerProbability}%</span>
@@ -150,7 +150,7 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
         }
 
         return <MoorhenContextButtonBase 
-                    icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} alt="change rotamer" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rotamers.svg`}/>}
+                    icon={<img alt="change rotamer" className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rotamers.svg`}/>}
                     toolTipLabel="Change rotamers"
                     nonCootCommand={nonCootCommand}
                     {...props}

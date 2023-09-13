@@ -17,7 +17,7 @@ export const MoorhenAddAltConfButton = (props: moorhen.EditButtonProps | moorhen
     if (props.mode === 'context') {
 
         return <MoorhenContextButtonBase 
-                    icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} className="baby-gru-button-icon" alt="Add side chain" src={`${props.urlPrefix}/baby-gru/pixmaps/add-alt-conf.svg`}/>}
+                    icon={<img className="moorhen-context-button__icon" alt="Add side chain" src={`${props.urlPrefix}/baby-gru/pixmaps/add-alt-conf.svg`}/>}
                     refineAfterMod={false}
                     toolTipLabel="Add alternative conformation"
                     cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}

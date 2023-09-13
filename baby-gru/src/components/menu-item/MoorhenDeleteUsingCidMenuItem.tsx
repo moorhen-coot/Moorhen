@@ -18,7 +18,7 @@ export const MoorhenDeleteUsingCidMenuItem = (props: {
 
     const panelContent = <>
         <MoorhenMoleculeSelect {...props} label="From molecule" allowAny={false} ref={fromRef} />
-        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="cid" className="mb-3">
+        <Form.Group className='moorhen-form-group' controlId="cid">
             <Form.Label>Selection to delete</Form.Label>
             <Form.Control ref={cidRef} type="text" value={cid} onChange={(e) => {
                 setCid(e.target.value)

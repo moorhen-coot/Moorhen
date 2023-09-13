@@ -36,7 +36,7 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
     }, [maxBackupCount, modificationCountBackupThreshold, enableTimeCapsule])
 
     return <div style={{maxHeight: convertViewtoPx(65, props.windowHeight), overflowY: 'auto'}}>
-                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                    <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"
                             label="Expand display cards after file upload"
@@ -44,7 +44,7 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
                             onChange={() => { setDefaultExpandDisplayCards(!defaultExpandDisplayCards) }}
                         />
                     </InputGroup>
-                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                    <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"
                             label="Make modals transparent on mouse out"
@@ -52,56 +52,56 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
                             onChange={() => { setTransparentModalsOnMouseOut(!transparentModalsOnMouseOut) }}
                         />
                     </InputGroup>
-                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                    <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"
                             checked={atomLabelDepthMode}
                             onChange={() => { setAtomLabelDepthMode(!atomLabelDepthMode) }}
                             label="Depth cue atom labels"/>
                     </InputGroup>
-                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                    <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"
                             checked={defaultMapLitLines}
                             onChange={() => { setDefaultMapLitLines(!defaultMapLitLines) }}
                             label="Activate map lit lines by default"/>
                     </InputGroup>
-                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                    <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"
                             checked={defaultMapSurface}
                             onChange={() => { setDefaultMapSurface(!defaultMapSurface) }}
                             label="Show maps as surface by default"/>
                     </InputGroup>
-                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                    <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"
                             checked={enableRefineAfterMod}
                             onChange={() => { setEnableRefineAfterMod(!enableRefineAfterMod) }}
                             label="Automatic triple refine post-modification"/>
                     </InputGroup>
-                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                    <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"
                             checked={showShortcutToast}
                             onChange={() => { setShowShortcutToast(!showShortcutToast) }}
                             label="Show shortcut popup"/>
                     </InputGroup>
-                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                    <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"
                             checked={makeBackups}
                             onChange={() => { setMakeBackups(!makeBackups) }}
                             label="Enable molecule undo/redo backups"/>
                     </InputGroup>
-                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                    <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"
                             checked={shortcutOnHoveredAtom}
                             onChange={() => { setShortcutOnHoveredAtom(!shortcutOnHoveredAtom) }}
                             label="Hover on residue to use shortcuts"/>
                     </InputGroup>
-                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                    <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"
                             checked={devMode}

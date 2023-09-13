@@ -49,7 +49,7 @@ export const MoorhenMapMaskingMenuItem = (props: {
         {maskTypeSelectRef.current?.value === 'cid' && <MoorhenCidInputForm {...props} width='20rem' margin='0.5rem' ref={cidInputRef} />}
         {maskTypeSelectRef.current?.value === 'chain' && <MoorhenChainSelect {...props} molecules={props.molecules} selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)} ref={chainSelectRef} />}
         {maskTypeSelectRef.current?.value === 'ligand' && <MoorhenLigandSelect {...props} molecules={props.molecules} selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)} ref={ligandSelectRef} />}
-        <Form.Group style={{ width: '20rem', margin: '0.5rem' }}>
+        <Form.Group className='moorhen-form-group'>
             <Form.Check
                 ref={invertFlagRef}
                 type="switch"

@@ -161,7 +161,7 @@ export const MoorhenRigidBodyFitButton = (props: moorhen.EditButtonProps | moorh
     if (props.mode === 'context') {
 
         return <MoorhenContextButtonBase 
-                    icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rigid-body.svg`} alt='Rigid body fit'/>}
+                    icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rigid-body.svg`} alt='Rigid body fit'/>}
                     refineAfterMod={false}
                     needsMapData={true}
                     toolTipLabel="Rigid body fit"

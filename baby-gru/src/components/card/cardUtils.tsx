@@ -7,15 +7,7 @@ export const getNameLabel = (item: moorhen.Molecule | moorhen.Map) => {
                 key={item.molNo}
                 placement="top"
                 overlay={
-                    <Tooltip
-                    id="name-label-tooltip" 
-                    style={{
-                        zIndex: 9999,
-                        backgroundColor: 'rgba(0, 0, 0, 0.85)',
-                        padding: '2px 10px',
-                        color: 'white',
-                        borderRadius: 3,
-                    }}>
+                    <Tooltip id="name-label-tooltip" className="moorhen-tooltip">
                         <div>
                             {item.name}
                         </div>
