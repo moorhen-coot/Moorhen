@@ -118,12 +118,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             fetchMoleculeFromURL(coordUrl, `${uniprotID}`)
                 .then(newMolecule => {
                     const newRule = {
-                        commandInput: {
-                            message:'coot_command',
-                            command: 'add_colour_rules_multi', 
-                            returnType:'status',
-                            commandArgs: getMultiColourRuleArgs(newMolecule, 'af2-plddt')
-                        },
+                        args: [getMultiColourRuleArgs(newMolecule, 'af2-plddt')],
                         isMultiColourRule: true,
                         ruleType: 'af2-plddt',
                         label: `//*`

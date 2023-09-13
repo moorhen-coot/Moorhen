@@ -90,7 +90,12 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     setColourRules(colourRules: moorhen.ColourRule[]) {
-        this.colourRules = colourRules
+        if (colourRules && colourRules.length > 0) {
+            this.colourRules = colourRules
+            this.useDefaultColourRules = false
+        } else {
+            this.useDefaultColourRules = true
+        }
     }
 
     setBuffers(buffers: moorhen.DisplayObject[]) {
@@ -674,9 +679,19 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
 
         if (this.colourRules?.length > 0) {
             if (['CBs', 'VdwSpheres', 'ligands', 'CAs'].includes(this.style)) {
-                const colourObjectList = this.colourRules.map(rule => {
-                    const [r, g, b] = hexToRgb(rule.color).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
-                    return { cid: rule.label, rgb: [r / 255, g / 255, b / 255] }
+                let colourObjectList: {cid: string, rgb: number[]}[] = []
+                this.colourRules.forEach(rule => {
+                    if(rule.isMultiColourRule) {
+                        const allColours = rule.args[0] as string
+                        allColours.split('|').forEach(colour => {
+                            const [cid, hex] = colour.split('^')
+                            const [r, g, b] = hexToRgb(hex).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+                            colourObjectList.push({ cid: cid, rgb: [r / 255, g / 255, b / 255] })
+                        })
+                    } else {
+                        const [r, g, b] = hexToRgb(rule.color).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+                        colourObjectList.push({ cid: rule.label, rgb: [r / 255, g / 255, b / 255] })
+                    }
                 })
                 await this.commandCentre.current.cootCommand({
                     message: 'coot_command',
@@ -686,7 +701,14 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 }, false)
             } else {
                 await Promise.all(
-                    this.colourRules.map(rule => this.commandCentre.current.cootCommand(rule.commandInput, false))
+                    this.colourRules.map(rule => {
+                        return this.commandCentre.current.cootCommand({
+                            message: 'coot_command',
+                            command: rule.isMultiColourRule ? 'add_colour_rules_multi' : 'add_colour_rule',
+                            returnType: 'status',
+                            commandArgs: [this.parentMolecule.molNo, ...rule.args]
+                        }, false)
+                    })
                 )
             }
         }
