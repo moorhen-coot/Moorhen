@@ -89,13 +89,30 @@ export class MoorhenHistory implements moorhen.History {
     entries: moorhen.HistoryEntry[];
     headId: string;
     headIsDetached: boolean;
+    skipTracking: boolean;
 
     constructor(glRef: React.RefObject<webGL.MGWebGL>, timeCapsule: React.RefObject<moorhen.TimeCapsule>) {
         this.glRef = glRef
         this.timeCapsule = timeCapsule
+        this.reset()
+    }
+
+    /**
+     * Clear current history and start recording from the begining
+     */
+    reset() {
         this.entries = []
         this.headId = null
         this.headIsDetached = false
+        this.skipTracking = false
+    }
+
+    /**
+     * If set to true then new entries will be ignored
+     * @param {boolean} newVal - The new value
+     */
+    setSkipTracking(newVal: boolean) {
+        this.skipTracking = newVal
     }
 
     /**
@@ -121,6 +138,10 @@ export class MoorhenHistory implements moorhen.History {
      * @param {moorhen.cootCommandKwargs} newEntry - The new entry that will be added
      */
     async addEntry(newEntry: moorhen.cootCommandKwargs) {
+        if(this.skipTracking) {
+            return
+        }
+
         if(this.headIsDetached) {
             this.rebase(this.headId)
             this.headIsDetached = false

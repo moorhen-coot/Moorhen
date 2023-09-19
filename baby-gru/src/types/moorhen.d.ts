@@ -206,6 +206,8 @@ export namespace moorhen {
     }
 
     interface History {
+        reset(): void;
+        setSkipTracking(arg0: boolean): void;
         setCurrentHead(uniqueId: string): void;
         setCommandCentre(arg0: CommandCentre): void;
         addEntry: (newEntry: cootCommandKwargs) => Promise<void>;
