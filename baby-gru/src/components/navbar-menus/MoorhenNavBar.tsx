@@ -5,7 +5,7 @@ import { MoorhenPreferencesMenu } from './MoorhenPreferencesMenu';
 import { MoorhenHelpMenu } from './MoorhenHelpMenu';
 import { MoorhenViewMenu } from './MoorhenViewMenu';
 import { MoorhenLigandMenu } from './MoorhenLigandMenu';
-import { MoorhenHistoryMenu } from './MoorhenHistory';
+import { MoorhenHistoryMenu } from './MoorhenHistoryMenu';
 import { MoorhenEditMenu } from './MoorhenEditMenu';
 import { MoorhenDevMenu } from './MoorhenDevMenu';
 import { MoorhenCryoMenu } from './MoorhenCryoMenu';

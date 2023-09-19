@@ -6,6 +6,7 @@ import { moorhen } from "../../types/moorhen"
 
 export const MoorhenBackupsMenuItem = (props: {
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
     disabled: boolean;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     loadSession: (sessionDataString: string) => Promise<void>;
@@ -18,6 +19,7 @@ export const MoorhenBackupsMenuItem = (props: {
             try {
                 const key = backupSelectRef.current.value
                 let backupData = await props.timeCapsuleRef.current.retrieveBackup(key) as string
+                props.commandCentre.current.history.reset()
                 props.loadSession(backupData)
             } catch (err) {
                 console.log(err)
