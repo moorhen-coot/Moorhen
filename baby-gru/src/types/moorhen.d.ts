@@ -206,11 +206,24 @@ export namespace moorhen {
     }
 
     interface History {
+        reset(): void;
+        setSkipTracking(arg0: boolean): void;
+        setCurrentHead(uniqueId: string): void;
         setCommandCentre(arg0: CommandCentre): void;
-        entries: cootCommandKwargs[];
         addEntry: (newEntry: cootCommandKwargs) => Promise<void>;
         getEntriesForMolNo: (molNo: number) => cootCommandKwargs[];
         getModifiedMolNo: () => number[];
+        lastModifiedMolNo: () => number;
+        rebase: (id: string) => void;
+        entries: HistoryEntry[];
+        headId: string;
+        headIsDetached: boolean;
+    }
+
+    interface HistoryEntry extends cootCommandKwargs{
+        uniqueId: string;
+        associatedBackupKey: string;
+        label: string;
     }
 
     interface CommandCentre {
@@ -230,7 +243,7 @@ export namespace moorhen {
         extendConsoleMessage: (msg: string) => void;
     }
     
-    type cootCommandKwargs = { 
+    interface cootCommandKwargs { 
         message?: string;
         data?: {};
         returnType?: string;

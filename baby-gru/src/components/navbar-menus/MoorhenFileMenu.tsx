@@ -191,6 +191,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const handleSessionUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         try {
             const sessionData = await readTextFile(e.target.files[0]) as string
+            props.commandCentre.current.history.reset()
             await loadSession(sessionData) 
         } catch (err) {
             console.log(err)
@@ -200,6 +201,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
 
     const loadSession = async (sessionData: string) => {
         try {
+            props.commandCentre.current.history.reset()
             const status = await loadSessionData(
                 sessionData as string,
                 props.monomerLibraryPath,
