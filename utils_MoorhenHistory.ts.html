@@ -113,20 +113,121 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import { moorhen } from '../types/moorhen';
+            <pre class="prettyprint source linenums"><code>import { guid } from './MoorhenUtils';
+import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
+
+const formatCommandString = (command: string) => {
+    if(command === 'fill_partial_residue') {
+        return 'Auto-fit Rotamer'
+    } else if (command === 'flipPeptide_cid') {
+        return 'Flip Peptide CID'
+    }
+    const stringWithSpaces = command.replaceAll('_', ' ').replaceAll('shim', '')
+    const words = stringWithSpaces.split(' ')
+    const formattedWords = words.map(word => {
+        if (word.length > 0) {
+            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        }
+        return ''
+    })
+    let formattedString = formattedWords.join(' ');
+    return formattedString
+}
+
+const formatCommandArgsString = (command: string, commandArgs: (number | string)[]) => {
+    let formattedString: string = ''
+
+    // TODO: Maybe do this in such way that we simply show all command args as list by default
+    switch(command) {
+        case 'add_hydrogen_atoms':
+        case 'delete_hydrogen_atoms':
+        case 'get_monomer_and_position_at':
+        case 'add_waters':
+        case 'flip_hand':
+        case 'redo':
+        case 'undo':
+        case 'shim_replace_map_by_mtz_from_file':
+        case 'shim_replace_molecule_by_model_from_file':
+            formattedString = `${commandArgs[0]}`
+            break
+        case 'fill_partial_residue':
+        case 'auto_fit_rotamer':
+            formattedString = `/1/${commandArgs[1]}/${commandArgs[2]}/*`
+            break
+        case 'replace_fragment':
+        case 'fit_ligand_right_here':
+            formattedString = `${commandArgs[0]},  ${commandArgs[1]},  ${commandArgs[2]}`
+            break
+        case 'mutate':
+        case 'refine_residues_using_atom_cid':
+        case 'rename_chain':
+            formattedString = `${commandArgs[1]},  ${commandArgs[2]}`
+            break
+        case 'shim_new_positions_for_residue_atoms':
+        case 'shim_auto_open_mtz':
+            formattedString = ''
+            break
+        case 'refine_residue_range':
+            formattedString = `/1/${commandArgs[1]}/${commandArgs[2]}-${commandArgs[3]}/*`
+            break
+        case 'SSM_superpose':
+            formattedString = `${commandArgs[0]},  ${commandArgs[1]},  ${commandArgs[2]},  ${commandArgs[3]}`
+            break
+        case 'sharpen_blur_map':
+        case 'merge_molecules_return':
+            formattedString = `${commandArgs[0]},  ${commandArgs[1]}`
+            break
+        default:
+            formattedString = `${commandArgs[1]}`
+            break
+    }
+
+    return formattedString
+}
+
+const getCommandLabel = (command: string, commandArgs: (string | number)[]) => {
+    try {
+        const formattedCommand = formatCommandString(command)
+        const formattedCommandArgs = formatCommandArgsString(command, commandArgs)
+        return `${formattedCommand} [ ${formattedCommandArgs} ]`
+    } catch(err) {
+        console.log(err)
+    }
+}
 
 export class MoorhenHistory implements moorhen.History {
     
     commandCentre: moorhen.CommandCentre;
     glRef: React.RefObject&lt;webGL.MGWebGL>;
     timeCapsule: React.RefObject&lt;moorhen.TimeCapsule>;
-    entries: moorhen.cootCommandKwargs[];
+    entries: moorhen.HistoryEntry[];
+    headId: string;
+    headIsDetached: boolean;
+    skipTracking: boolean;
 
     constructor(glRef: React.RefObject&lt;webGL.MGWebGL>, timeCapsule: React.RefObject&lt;moorhen.TimeCapsule>) {
         this.glRef = glRef
         this.timeCapsule = timeCapsule
+        this.reset()
+    }
+
+    /**
+     * Clear current history and start recording from the begining
+     */
+    reset() {
         this.entries = []
+        this.headId = null
+        this.headIsDetached = false
+        this.skipTracking = false
+    }
+
+    /**
+     * If set to true then new entries will be ignored
+     * @param {boolean} newVal - The new value
+     */
+    setSkipTracking(newVal: boolean) {
+        this.skipTracking = newVal
     }
 
     /**
@@ -138,17 +239,42 @@ export class MoorhenHistory implements moorhen.History {
     }
 
     /**
+     * Set the current head to a given history entry
+     * @param {string} id - The ID of the history entry to be used as current head
+     * @param {string} detach - Wether the history should enter a detached state
+     */
+    setCurrentHead(id: string, detach: boolean = true) {
+        this.headIsDetached = detach
+        this.headId = id
+    }
+
+    /**
      * Add an entry to the history
      * @param {moorhen.cootCommandKwargs} newEntry - The new entry that will be added
      */
     async addEntry(newEntry: moorhen.cootCommandKwargs) {
+        if(this.skipTracking) {
+            return
+        }
+
+        if(this.headIsDetached) {
+            this.rebase(this.headId)
+            this.headIsDetached = false
+        }
+
+        newEntry.associatedBackupKey = null
+        newEntry.uniqueId = guid()
+        newEntry.label = getCommandLabel(newEntry.command, newEntry.commandArgs)
+
         if (newEntry.changesMolecules?.length > 0) {
             const backupKey = await this.timeCapsule.current.addModification()
             if (backupKey) {
-                newEntry['associatedBackupKey'] = backupKey
+                newEntry.associatedBackupKey = backupKey
             }
         }
-        this.entries.push(newEntry)
+
+        this.entries.push(newEntry as moorhen.HistoryEntry)
+        this.headId = newEntry.uniqueId
     }
 
     /**
@@ -176,6 +302,37 @@ export class MoorhenHistory implements moorhen.History {
         const uniqueModifiedMolNo: number[] = [...new Set(modifiedMolNo)]
         return uniqueModifiedMolNo
     }
+
+    /**
+     * Returns the imol that was last modified
+     * @returns {number} - The imol of the molecule that was last modified
+     */
+    lastModifiedMolNo(): number {
+        const modifications = this.entries.filter(item => item.changesMolecules?.length > 0)
+        if (modifications.length > 0) {
+            const lastAction = modifications[modifications.length]
+            return lastAction.changesMolecules[0]
+        } else {
+            console.warn('Could not find the last modified imol in moorhen history')
+            return -1
+        }
+    }
+
+    /**
+     * Rebase the history to a given entry
+     * @param {string} id - Unique ID for the entry used to rebase history
+     */
+    rebase(id: string) {
+        const newBaseIndex = this.entries.findIndex(entry => entry.uniqueId === id)
+        if (newBaseIndex !== -1) {
+            const newHead = this.entries[newBaseIndex]
+            this.headId = newHead.uniqueId
+            this.entries = this.entries.slice(0, newBaseIndex + 1)
+        } else {
+            console.warn('Could not find the new base index to rebase moorhen history')
+        }
+    }
+
 }
 </code></pre>
         </article>
