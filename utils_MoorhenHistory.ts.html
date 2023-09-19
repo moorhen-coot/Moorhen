@@ -310,7 +310,7 @@ export class MoorhenHistory implements moorhen.History {
     lastModifiedMolNo(): number {
         const modifications = this.entries.filter(item => item.changesMolecules?.length > 0)
         if (modifications.length > 0) {
-            const lastAction = modifications[modifications.length]
+            const lastAction = modifications[modifications.length - 1]
             return lastAction.changesMolecules[0]
         } else {
             console.warn('Could not find the last modified imol in moorhen history')
