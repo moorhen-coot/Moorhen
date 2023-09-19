@@ -39,7 +39,7 @@ const updateStoredContext = async (key: string, value: any): Promise<void> => {
  */
 const getDefaultContextValues = (): moorhen.ContextValues => {
     return {
-        version: 'v29',
+        version: 'v30',
         transparentModalsOnMouseOut: true,
         defaultBackgroundColor: [1, 1, 1, 1], 
         atomLabelDepthMode: true, 
@@ -144,6 +144,18 @@ const getDefaultContextValues = (): moorhen.ContextValues => {
                 modifiers: ["shiftKey"],
                 keyPress: "e",
                 label: "Eigen flip ligand",
+                viewOnly: false
+            },
+            "undo": {
+                modifiers: ["ctrlKey"],
+                keyPress: "z",
+                label: "Undo last action",
+                viewOnly: false
+            },
+            "redo": {
+                modifiers: ["ctrlKey", "shiftKey"],
+                keyPress: "z",
+                label: "Redo previous action",
                 viewOnly: false
             },
             "show_shortcuts": {

@@ -118,6 +118,26 @@ export const babyGruKeyPress = (event: KeyboardEvent, collectedProps: moorhen.Co
         return doShortCut('refine_residues_using_atom_cid', formatArgs)
     }
 
+    else if ((action === 'undo' || action === 'redo') && !viewOnly) {
+        const selectedMolNo = commandCentre.current.history.lastModifiedMolNo()
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedMolNo)
+        let promise: Promise<void>
+        if(!selectedMolecule) {
+            return true
+        } else if (action === 'undo') {
+            promise = selectedMolecule.undo()
+        } else {
+            promise = selectedMolecule.redo()
+        }
+        promise.then(_ => {
+            const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", {
+                detail: { origin: glRef.current.origin, modifiedMolecule: selectedMolecule.molNo } 
+            })
+            document.dispatchEvent(scoresUpdateEvent)        
+        })
+        return false
+    }
+
     else if (action === 'flip_peptide' && activeMap && !viewOnly) {
         const formatArgs = (chosenMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
