@@ -348,7 +348,7 @@ export const MoorhenImportDictionaryMenuItem = (props: {
                 <Form.Control value={tlc}
                     onChange={(e) => {
                         setTlc(e.target.value)
-                        tlcValueRef.current = e.target.value
+                        tlcValueRef.current = e.target.value.toUpperCase()
                     }}
                     type="text" />
             </Form.Group>
