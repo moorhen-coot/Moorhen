@@ -523,6 +523,19 @@ describe('Testing molecules_container_js', () => {
         expect(simpleMesh.triangles.size()).toBeCloseTo(174034, -3)
     })
 
+    test("Test ligand surface", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const resSpec = molecules_container.residue_cid_to_residue_spec(coordMolNo, '/1/B/2(BGC)/*')
+        const ligand = molecules_container.get_residue(coordMolNo, resSpec)
+        expect(ligand.nAtoms).toBe(11)
+        const simpleMesh = molecules_container.get_molecular_representation_mesh(
+            0, "/1/B/2(BGC)/*", "colorRampChainsScheme", "MolecularSurface"
+        )
+        expect(simpleMesh.vertices.size()).toBeCloseTo(1457, -3)
+        expect(simpleMesh.triangles.size()).toBeCloseTo(2137, -3)
+    })
+
 })
 
 const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h_no_ligand.pdb', 'LZA.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
