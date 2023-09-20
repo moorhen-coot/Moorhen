@@ -71,7 +71,6 @@
     "build-npm-registry": "npm run prebuild && webpack --mode production --devtool inline-source-map --env destination='npmRegistry'",
     "build-cloud-dev": "npm run prebuild && webpack  --mode development --devtool inline-source-map --env destination='ccp4Cloud'",
     "build-cloud": "npm run prebuild && webpack --mode production --env destination='ccp4Cloud'",
-    "test": "react-scripts test",
     "eject": "react-scripts eject",
     "dev": "concurrently -k \"BROWSER=none npm start\" \"npm:electron\"",
     "electron": "wait-on tcp:3000 && electron-forge start",
@@ -79,7 +78,8 @@
     "make-mac": "npm run build && electron-forge make --platform darwin",
     "make-linux": "npm run build && electron-forge make --platform linux",
     "make-win32": "npm run build && electron-forge make --platform win32",
-    "create-docs": "npx genversion -e -p ./package.json -d -s ./src/version.js && npx jsdoc -c jsdoc.json"
+    "create-docs": "npx genversion -e -p ./package.json -d -s ./src/version.js && npx jsdoc -c jsdoc.json",
+    "test": "node --experimental-wasm-threads node_modules/jest/bin/jest.js"
   },
   "eslintConfig": {
     "extends": [

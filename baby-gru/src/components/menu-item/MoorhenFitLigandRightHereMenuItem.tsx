@@ -1,7 +1,6 @@
 import { TextField } from "@mui/material";
 import { useRef, useState } from "react";
 import { Form } from "react-bootstrap";
-import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
