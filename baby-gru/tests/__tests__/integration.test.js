@@ -8,13 +8,7 @@ const createCootModule = require('../../public/baby-gru/wasm/moorhen')
 let cootModule;
 let cleanUpVariables = []
 
-beforeAll(() => {
-    fs.symlink(path.join(__dirname, '..', '..', 'public', 'baby-gru', 'wasm', 'moorhen.data'), 'moorhen.data', 'file', (err) => {
-        if (err) {
-            console.log(err);
-        }
-    })
-    
+beforeAll(() => {   
     return createCootModule({
         print(t) { async () => await console.log(["output", t]) },
         printErr(t) { async () => await console.log(["output", t]); }
@@ -26,7 +20,6 @@ beforeAll(() => {
 })
 
 afterAll(() => {
-    fs.unlink("moorhen.data", (err) => { if(err) console.log(err) })
     setupFunctions.removeTestDataFromFauxFS()
 })
 
