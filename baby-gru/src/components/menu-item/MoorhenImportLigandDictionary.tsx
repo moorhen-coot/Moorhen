@@ -83,9 +83,12 @@ const MoorhenImportLigandDictionary = (props: {
                 newMolecule.name = instanceName
                 newMolecule.setBackgroundColour(backgroundColor)
                 newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
-                await newMolecule.addDict(fileContent)
-                changeMolecules({ action: "Add", item: newMolecule })
+                await Promise.all([
+                    newMolecule.fetchDefaultColourRules(),
+                    newMolecule.addDict(fileContent)
+                ])
                 await newMolecule.fetchIfDirtyAndDraw("CBs")
+                changeMolecules({ action: "Add", item: newMolecule })
                 if (addToMoleculeValueRef.current !== -1) {
                     const toMolecule = molecules.find(molecule => molecule.molNo === addToMoleculeValueRef.current)
                     if (typeof toMolecule !== 'undefined') {
