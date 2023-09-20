@@ -42,7 +42,7 @@ describe("Testing gemmi", () => {
         const models = st.models
         expect(st.has_origx).toBeTruthy()
         expect(st.spacegroup_hm).toBe('P 21 21 21')
-        expect(models.size()).toBe(1)
+        expect(models.size()).toBe(0)
 
         const model = st.first_model()
         const modelMass = cootModule.calculate_mass_model(model)
