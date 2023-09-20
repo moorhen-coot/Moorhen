@@ -1,7 +1,8 @@
 name: Nightly tests
 
 on:
-  push:
+  schedule:
+  - cron: "0 0 * * *"
   
 jobs:
   runTests:
