@@ -219,6 +219,28 @@ describe('Testing molecules_container_js', () => {
         expect(result.size()).toBeGreaterThan(0)
     })
 
+    test("Test close_molecule", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        expect(coordMolNo).toBe(0)
+        const isValid_1 = molecules_container.is_valid_model_molecule(coordMolNo)
+        expect(isValid_1).toBeTruthy()
+        molecules_container.close_molecule(coordMolNo)
+        const isValid_2 = molecules_container.is_valid_model_molecule(coordMolNo)
+        expect(isValid_2).toBeFalsy()
+    })
+
+    test("Test close_map", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const imol_map = molecules_container.read_mtz("./rnasa-1.8-all_refmac1.mtz", "FWT", "PHWT", "W", false, false)
+        expect(imol_map).toBe(0)
+        const isValid_1 = molecules_container.is_valid_map_molecule(imol_map)
+        expect(isValid_1).toBeTruthy()
+        molecules_container.close_molecule(imol_map)
+        const isValid_2 = molecules_container.is_valid_map_molecule(imol_map)
+        expect(isValid_2).toBeFalsy()
+    })
+
     test('Test delete methods', () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')

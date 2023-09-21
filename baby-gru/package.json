@@ -144,6 +144,7 @@
     "localforage": "^1.10.0",
     "nested-worker": "git+https://github.com/johanholmerin/nested-worker.git#semver:^1.0.0",
     "nightingale-linegraph-track": "^3.8.10",
+    "node-fetch": "^2.7.0",
     "nodemon": "^2.0.22",
     "pako": "^2.0.4",
     "parcel-bundler": "^1.12.5",
