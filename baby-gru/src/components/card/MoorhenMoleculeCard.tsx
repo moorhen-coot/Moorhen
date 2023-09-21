@@ -356,7 +356,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
 
     const handleDownload = async () => {
         let response = await props.molecule.getAtoms()
-        doDownload([response.data.result.pdbData], `${props.molecule.name}`)
+        doDownload([response.data.result.result], `${props.molecule.name}`)
         props.setCurrentDropdownMolNo(-1)
     }
 

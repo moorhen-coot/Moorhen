@@ -241,7 +241,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             this.gemmiStructure.delete()
         }
         let response = await this.getAtoms()
-        this.gemmiStructure = readGemmiStructure(response.data.result.pdbData, this.name)
+        this.gemmiStructure = readGemmiStructure(response.data.result.result, this.name)
         window.CCP4Module.gemmi_setup_entities(this.gemmiStructure)
         this.parseSequences()
         this.updateLigands()
@@ -446,8 +446,11 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.environmentRepresentation?.deleteBuffers()
         this.representations.forEach(representation => representation.deleteBuffers())
         this.glRef.current.drawScene()
-        const inputData = { message: "delete", molNo: this.molNo }
-        const response = await this.commandCentre.current.postMessage(inputData)
+        const response = await this.commandCentre.current.cootCommand({
+            returnType: "status",
+            command: 'close_molecule',
+            commandArgs: [this.molNo]
+        }, true) as moorhen.WorkerResponse<number>
         if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
             this.gemmiStructure.delete()
         }
@@ -468,7 +471,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         let response = await this.commandCentre.current.cootCommand({
             returnType: "status",
             command: 'shim_read_pdb',
-            commandArgs: [moleculeAtoms.data.result.pdbData, newMolecule.name]
+            commandArgs: [moleculeAtoms.data.result.result, newMolecule.name]
         }, true) as moorhen.WorkerResponse<number>
 
         newMolecule.molNo = response.data.result.result
@@ -661,40 +664,35 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} [format='pdb'] - Indicate the file format
      * @returns {Promise<moorhen.WorkerResponse>}  A worker response with the file contents
      */
-    getAtoms(format: string = 'pdb'): Promise<moorhen.WorkerResponse> {
-        const $this = this;
-        return $this.commandCentre.current.postMessage({
-            message: "get_atoms",
-            molNo: $this.molNo,
-            format: format
-        })
+    async getAtoms(format: string = 'pdb'): Promise<moorhen.WorkerResponse<string>> {
+        const response = await this.commandCentre.current.cootCommand({
+            returnType: "string",
+            command: 'shim_get_atoms',
+            commandArgs: [this.molNo, format],
+        }, false) as moorhen.WorkerResponse<string>
+        return response
     }
 
     /**
      * Update the cached atoms with the latest information from the libcoot api
      */
     async updateAtoms() {
-        const $this = this;
-        if ($this.gemmiStructure && !$this.gemmiStructure.isDeleted()) {
-            $this.gemmiStructure.delete()
+        if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
+            this.gemmiStructure.delete()
         }
-        return $this.getAtoms().then((result) => {
-            return new Promise<void>((resolve, reject) => {
-                try {
-                    $this.gemmiStructure = readGemmiStructure(result.data.result.pdbData, $this.name)
-                    window.CCP4Module.gemmi_setup_entities($this.gemmiStructure)
-                    $this.parseSequences()
-                    $this.updateLigands()
-                }
-                catch (err) {
-                    console.log('Issue parsing coordinates into Gemmi structure', result.data.result.pdbData)
-                    reject()
-                }
-                $this.atomsDirty = false
-                resolve()
-            })
-        })
-    }
+        const result = await this.getAtoms()
+        try {
+            this.gemmiStructure = readGemmiStructure(result.data.result.result, this.name)
+            window.CCP4Module.gemmi_setup_entities(this.gemmiStructure)
+            this.parseSequences()
+            this.updateLigands()
+        }
+        catch (err) {
+            console.log(err)
+            console.warn('Issue parsing coordinates into Gemmi structure', result.data.result.result)
+        }
+        this.atomsDirty = false
+}
 
     /**
      * Draw the molecule with a particular style. If the molecule atoms are marked as "dirty" then fetch new atoms.

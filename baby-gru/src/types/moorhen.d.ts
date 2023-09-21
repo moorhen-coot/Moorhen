@@ -266,6 +266,7 @@ export namespace moorhen {
             result: T;
             [key: string]: any;
         }
+        command: string;
         messageId: string;
         myTimeStamp: string;
         message: string;
