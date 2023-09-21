@@ -10,8 +10,8 @@ let cleanUpVariables = []
 
 beforeAll(() => {   
     return createCootModule({
-        print(t) { async () => await console.log(["output", t]) },
-        printErr(t) { async () => await console.log(["output", t]); }
+        print(t) { () => console.log(["output", t]) },
+        printErr(t) { () => console.log(["output", t]); }
     }).then(moduleCreated => {
         cootModule = moduleCreated
         setupFunctions.copyTestDataToFauxFS()
@@ -26,7 +26,11 @@ afterAll(() => {
 describe("Testing gemmi", () => {
 
     afterEach(() => {
-        cleanUpVariables.map(item => item.delete())
+        cleanUpVariables.forEach(item => {
+            if (typeof item.delete === 'function' && !item.isDeleted()) {
+                item.delete()
+            }
+        })
         cleanUpVariables = []
     })
 
@@ -126,7 +130,11 @@ describe("Testing gemmi", () => {
 
 describe('Testing molecules_container_js', () => {
     afterEach(() => {
-        cleanUpVariables.map(item => item.delete())
+        cleanUpVariables.forEach(item => {
+            if (typeof item.delete === 'function' && !item.isDeleted()) {
+                item.delete()
+            }
+        })
         cleanUpVariables = []
     })
 
@@ -269,6 +277,7 @@ describe('Testing molecules_container_js', () => {
             const psi = phi_psi.psi()
             expect(phi).toBeCloseTo(-54.90, 1)
             expect(psi).toBeCloseTo(-57.35, 1)
+            cleanUpVariables.push(ri, phi_psi)
             break
         }
         cleanUpVariables.push(rama_info)
@@ -341,6 +350,7 @@ describe('Testing molecules_container_js', () => {
         expect(atomUpdate.x).toBeCloseTo(2.468, 3)
         expect(atomUpdate.y).toBeCloseTo(26.274, 3)
         expect(atomUpdate.z).toBeCloseTo(12.957, 3)
+        cleanUpVariables.push(atom, res, movedVector)
     })
 
     test('Test get_single_letter_codes_for_chain', () => {
@@ -375,6 +385,7 @@ describe('Testing molecules_container_js', () => {
         const dd = (CZatom.x - CZatom_x) * (CZatom.x - CZatom_x) + (CZatom.y - CZatom_y) * (CZatom.y - CZatom_y) + (CZatom.z - CZatom_z) * (CZatom.z - CZatom_z)
         const d = Math.sqrt(dd)
         expect(d).toBeCloseTo(7.28975, 5)
+        cleanUpVariables.push(res, resSpec)
     })
 
     test('Test Rama mesh', () => {
@@ -430,6 +441,7 @@ describe('Testing molecules_container_js', () => {
         expect(atom2.x).toBeCloseTo(67.271, 3)
         expect(atom2.y).toBeCloseTo(45.492, 3)
         expect(atom2.z).toBeCloseTo(24.559, 3)
+        cleanUpVariables.push(resSpec)
     })
 
     test('Test flip_peptide by residue spec', () => {
@@ -451,6 +463,8 @@ describe('Testing molecules_container_js', () => {
         const atomSpecFalse = new cootModule.atom_spec_t("A", 999, "", " N  ", "");
         const failedStatus = molecules_container.flipPeptide(coordMolNo, atomSpecFalse, "")
         expect(failedStatus).toBe(0)
+        
+        cleanUpVariables.push(atomSpec, atomSpecFalse)
     })
 
     test('Create Density Map Mesh', () => {
@@ -470,6 +484,7 @@ describe('Testing molecules_container_js', () => {
         //It seems that the number of vertices can vary depending on number of threads?
         //expect(Math.abs(nVerticesDirect - 55000)).toBeLessThanOrEqual(3000)
         expect(Math.abs(nTriangles - 47024)).toBeLessThanOrEqual(3000)
+        cleanUpVariables.push(p, nVerticesDirect, nTriangles, map_mesh, vertices, triangles)
     })
 
     test('Create test origin', () => {
