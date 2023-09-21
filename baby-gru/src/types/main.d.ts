@@ -76,7 +76,7 @@ declare module 'moorhen' {
         clearBuffersOfStyle: (style: string) => void;
         loadToCootFromURL: (inputFile: string, molName: string) => Promise<_moorhen.Molecule>;
         applyTransform: () => Promise<void>;
-        getAtoms(format?: string): Promise<_moorhen.WorkerResponse>;
+        getAtoms(format?: string): Promise<_moorhen.WorkerResponse<string>>;
         hide: (style: string, cid?: string) => void;
         redraw: () => Promise<void>;
         setAtomsDirty: (newVal: boolean) => void;

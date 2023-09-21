@@ -111,9 +111,11 @@ export class MoorhenMap implements moorhen.Map {
         })
         this.glRef.current.drawScene()
         const promises = [
-            this.commandCentre.current.postMessage({
-                message: "delete", molNo: this.molNo
-            }),
+            this.commandCentre.current.cootCommand({
+                returnType: "status",
+                command: 'close_molecule',
+                commandArgs: [this.molNo]
+            }, true),
             this.hasReflectionData ?
                 this.commandCentre.current.postMessage({
                     message: 'delete_file_name', fileName: this.associatedReflectionFileName

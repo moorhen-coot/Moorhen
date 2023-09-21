@@ -820,6 +820,22 @@ const doColourTest = (imol: number) => {
     colourMap.delete()
 }
 
+const get_atoms = (molNo: number, format: string) => {
+    const theGuid = guid()
+    const tempFilename = `./${theGuid}.pdb`
+    if (format === 'pdb') {
+        molecules_container.writePDBASCII(molNo, tempFilename)
+    } else if (format === 'mmcif') {
+        molecules_container.writeCIFASCII(molNo, tempFilename)
+    } else {
+        console.log(`Unrecognised format... ${format}`)
+    }
+
+    const pdbData = cootModule.FS.readFile(tempFilename, { encoding: 'utf8' });
+    cootModule.FS_unlink(tempFilename)
+    return pdbData
+}
+
 const doCootCommand = (messageData: { 
     myTimeStamp: number;
     chainID?: string;
@@ -836,6 +852,9 @@ const doCootCommand = (messageData: {
 
         let cootResult
         switch (command) {
+            case 'shim_get_atoms': 
+                cootResult = get_atoms(...commandArgs as [number, string])
+                break
             case 'shim_read_pdb':
                 cootResult = read_pdb(...commandArgs as [string, string])
                 break
@@ -952,7 +971,7 @@ const doCootCommand = (messageData: {
         }
 
         return {
-            messageId, messageSendTime: Date.now(),
+            messageId, messageSendTime: Date.now(), command: command,
             consoleMessage: `Completed ${command} in ${Date.now() - myTimeStamp} ms`,
             result: { status: 'Completed', result: returnResult }
         }
@@ -1007,28 +1026,6 @@ onmessage = function (e) {
             });
     }
 
-    else if (e.data.message === 'get_atoms') {
-        const theGuid = guid()
-        const tempFilename = `./${theGuid}.pdb`
-        if (e.data.format === 'pdb') {
-            molecules_container.writePDBASCII(e.data.molNo, tempFilename)
-        } else if (e.data.format === 'mmcif') {
-            molecules_container.writeCIFASCII(e.data.molNo, tempFilename)
-        } else {
-            console.log(`Unrecognised format... ${e.data.format}`)
-        }
-
-        const pdbData = cootModule.FS.readFile(tempFilename, { encoding: 'utf8' });
-        cootModule.FS_unlink(tempFilename)
-        postMessage({
-            messageId: e.data.messageId,
-            myTimeStamp: e.data.myTimeStamp,
-            consoleMessage: `Fetched coordinates of molecule ${e.data.molNo}`,
-            message: e.data.message,
-            result: { molNo: e.data.molNo, pdbData: pdbData }
-        })
-    }
-
     else if (e.data.message === 'get_mtz_data') {
         const mtzData = cootModule.FS.readFile(e.data.fileName, { encoding: 'binary' });
         postMessage({
@@ -1053,79 +1050,6 @@ onmessage = function (e) {
             consoleMessage: `Fetched map of map ${e.data.molNo}`,
             message: e.data.message,
             result: { molNo: e.data.molNo, mapData: mapData.buffer }
-        })
-    }
-
-    else if (e.data.message === 'read_mtz') {
-        try {
-            const theGuid = guid()
-            cootModule.FS_createDataFile(".", `${theGuid}.mtz`, e.data.data, true, true, true);
-            const tempFilename = `./${theGuid}.mtz`
-            const molNo = molecules_container.read_mtz(tempFilename, 'FWT', 'PHWT', "", false, false)
-            cootModule.FS_unlink(tempFilename)
-            postMessage({
-                messageId: e.data.messageId,
-                myTimeStamp: e.data.myTimeStamp,
-                consoleMessage: `Read map MTZ as molecule ${molNo}`,
-                message: e.data.message,
-                result: { molNo: molNo, name: e.data.name }
-            })
-        }
-        catch (err) {
-            print(err)
-        }
-    }
-
-    else if (e.data.message === 'get_rama') {
-        const theGuid = guid()
-        const tempFilename = `./${theGuid}.pdb`
-        molecules_container.writePDBASCII(e.data.molNo, tempFilename)
-        const result = cootModule.getRamachandranData(tempFilename, e.data.chainId);
-        cootModule.FS_unlink(tempFilename)
-        let resInfo: {
-            chainId: string;
-            insCode: string;
-            seqNum: number;
-            restype: string;
-            phi: number;
-            psi: number;
-            isOutlier: boolean;
-            is_pre_pro: boolean;
-        }[] = [];
-        for (let ir = 0; ir < result.size(); ir++) {
-            const cppres = result.get(ir);
-            //TODO - Is there a nicer way to do this?
-            const jsres = { chainId: cppres.chainId, insCode: cppres.insCode, seqNum: cppres.seqNum, restype: cppres.restype, phi: cppres.phi, psi: cppres.psi, isOutlier: cppres.isOutlier, is_pre_pro: cppres.is_pre_pro };
-            resInfo.push(jsres);
-        }
-
-        postMessage({
-            messageId: e.data.messageId,
-            myTimeStamp: e.data.myTimeStamp,
-            messageTag: "result",
-            result: resInfo,
-        })
-    }
-
-    else if (e.data.message === 'copy_fragment') {
-        const newmolNo = molecules_container.copy_fragment_using_residue_range(e.data.molNo, e.data.chainId, e.data.res_no_start, e.data.res_no_end)
-
-        postMessage({
-            messageId: e.data.messageId,
-            myTimeStamp: e.data.myTimeStamp,
-            messageTag: "result",
-            result: newmolNo,
-        })
-    }
-
-    else if (e.data.message === 'delete') {
-        const result = molecules_container.close_molecule(e.data.molNo)
-
-        postMessage({
-            messageId: e.data.messageId,
-            myTimeStamp: e.data.myTimeStamp,
-            messageTag: "result",
-            result: result,
         })
     }
 

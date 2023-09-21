@@ -549,7 +549,7 @@ export default class MoorhenWrapper {
     const moleculeAtoms = await Promise.all(selectedMolecules.map(molecule => molecule.getAtoms()))
 
     const molData = selectedMolecules.map((molecule, index) => {
-        return {molName: molecule.name, pdbData: moleculeAtoms[index].data.result.pdbData}
+        return {molName: molecule.name, pdbData: moleculeAtoms[index].data.result.result}
     })
 
     const viewData: moorhen.viewDataSession = {
