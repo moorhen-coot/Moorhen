@@ -79,7 +79,7 @@
     "make-linux": "npm run build && electron-forge make --platform linux",
     "make-win32": "npm run build && electron-forge make --platform win32",
     "create-docs": "npx genversion -e -p ./package.json -d -s ./src/version.js && npx jsdoc -c jsdoc.json",
-    "test": "npm run prebuild && npx tsc && node --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js"
+    "test": "npm run prebuild && npx tsc && node --trace-warnings --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js"
   },
   "eslintConfig": {
     "extends": [
