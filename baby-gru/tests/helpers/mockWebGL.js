@@ -1,10 +1,19 @@
 
 export class MockWebGL {
     constructor() {
-        this.renderHistory = []
+        this.buffers = []
     }
 
-    async cootCommand(...args) {
-        this.commandHistory.push(args)
+    buildBuffers() {
+        //do nothing...
+    }
+
+    appendOtherData(jsondata, skipRebuild, name) {
+        this.buffers.push(jsondata)
+        return [ ]
+    }
+
+    drawScene() {
+        // do nothing...
     }
 }
