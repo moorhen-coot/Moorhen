@@ -64,6 +64,7 @@
   "dependencies": {},
   "scripts": {
     "transpile-ts-worker": "npx tsc --module es2015 --lib webworker --skipLibCheck public/baby-gru/CootWorker.ts && sed -i.bak '/export {}/d' public/baby-gru/CootWorker.js && rm public/baby-gru/CootWorker.js.bak",
+    "transpile-ts-worker-jest": "npx tsc --module es2015 --lib webworker --skipLibCheck public/baby-gru/CootWorker.ts && sed -i.bak 's/export {}/export { doCootCommand, setModules }/g' public/baby-gru/CootWorker.js && sed -i.bak '/importScripts.*;/d' public/baby-gru/CootWorker.js && sed -i.bak 's/onmessage/function setModules(arg0, arg1) { molecules_container = arg0; cootModule = arg1 }; let postMessage = () => {}; let onmessage/g' public/baby-gru/CootWorker.js && rm public/baby-gru/CootWorker.js.bak",
     "prestart": "npx genversion -e -p ./package.json -d -s ./src/version.js && npm run transpile-ts-worker",
     "start": "react-scripts start",
     "prebuild": "npx genversion -e -p ./package.json -d -s ./src/version.js && npm run transpile-ts-worker",
@@ -79,7 +80,7 @@
     "make-linux": "npm run build && electron-forge make --platform linux",
     "make-win32": "npm run build && electron-forge make --platform win32",
     "create-docs": "npx genversion -e -p ./package.json -d -s ./src/version.js && npx jsdoc -c jsdoc.json",
-    "test": "npm run prebuild && npx tsc && node --trace-warnings --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js"
+    "test": "npx tsc && npm run transpile-ts-worker-jest && node --trace-warnings --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js"
   },
   "eslintConfig": {
     "extends": [
