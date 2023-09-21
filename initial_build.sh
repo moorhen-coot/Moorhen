@@ -91,13 +91,6 @@ cd ${SOURCE_DIR}/baby-gru/
 npm install
 cd ${BUILD_DIR}
 
-cd ${SOURCE_DIR}/tests/
-npm install
-ln -s ${BUILD_DIR}/moorhen_build/coot/moorhen.data
-ln -s ${BUILD_DIR}/moorhen_build/coot/moorhen.js
-ln -s ${BUILD_DIR}/moorhen_build/coot/moorhen.wasm
-cd ${BUILD_DIR}
-
 #*This link must be removed before building electron app!*
 #Links cause confusion in Linux/Mac, and are followed on Windows making huge packages that take forever to build.
 cd ${SOURCE_DIR}/baby-gru/public/baby-gru
