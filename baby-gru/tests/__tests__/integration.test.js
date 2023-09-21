@@ -3,105 +3,136 @@ jest.setTimeout(40000)
 
 const fs = require('fs')
 const path = require('path')
-const createCootModule = require('../moorhen.js')
+const createCootModule = require('../../public/baby-gru/wasm/moorhen')
 
 let cootModule;
+let cleanUpVariables = []
 
-beforeAll(() => {
+beforeAll(() => {   
     return createCootModule({
         print(t) { async () => await console.log(["output", t]) },
         printErr(t) { async () => await console.log(["output", t]); }
     }).then(moduleCreated => {
         cootModule = moduleCreated
+        setupFunctions.copyTestDataToFauxFS()
         return Promise.resolve()
     })
 })
 
-describe('Testing molecules_container_js', () => {
+afterAll(() => {
+    setupFunctions.removeTestDataFromFauxFS()
+})
 
-    beforeAll(() => {
-        setupFunctions.copyExampleDataToFauxFS()
+describe("Testing gemmi", () => {
+
+    afterEach(() => {
+        cleanUpVariables.map(item => item.delete())
+        cleanUpVariables = []
     })
 
-    test('Test glycoblocks', async () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
-        const coordMolNo = molecules_container.read_pdb('./5fjj.pdb')
-        const glyco_mesh = molecules_container.DrawGlycoBlocks(coordMolNo,"/")
-    })
-
-    test('Test copy fragment', async () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
-        const coordMolNo = await molecules_container.read_pdb('./5a3h.pdb')
-        const coordMolNo2 = await molecules_container.copy_fragment_using_cid(coordMolNo, "//A/32-33/*");
-    })
-
-    test('Test gemmi', () => {
-        console.log(cootModule.CoorFormat.Pdb)
-        console.log(cootModule.CoorFormat.ChemComp)
+    test("Test read structure file", () => {
         const st = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
-        console.log("structure", st)
-        console.log("has_origx", st.has_origx)
-        console.log("has_origx", st.has_origx)
-        console.log("size", st.models.size())
-        const model = st.first_model()
-        console.log("mass of model", cootModule.calculate_mass_model(model))
-        //cootModule.assign_cis_flags_structure(st)
-        const chains = model.chains
-        console.log("chains", chains)
-        console.log("chains.size", chains.size())
-        const sgp1 = cootModule.get_spacegroup_by_name('P1')
-        console.log(sgp1)
-        console.log("hm", cootModule.getSpaceGroupHMAsString(sgp1))
-        console.log("hm(oo)", sgp1.hm())
-        console.log("hall", cootModule.getSpaceGroupHallAsString(sgp1))
-        console.log("hall(oo)", sgp1.hall())
-        console.log("qualifier", cootModule.getSpaceGroupQualifierAsString(sgp1))
-        console.log("qualifier(oo)", sgp1.qualifier())
-        console.log("st.spacegroup_hm", st.spacegroup_hm)
+        const models = st.models
+        expect(st.has_origx).toBeTruthy()
+        expect(st.spacegroup_hm).toBe('P 21 21 21')
+        expect(models.size()).toBe(1)
 
-        for (let i = 0; i < chains.size(); i++) {
-            const ch = chains.get(i)
-            console.log("chain mass", cootModule.calculate_mass_chain(ch))
-            console.log("chain name", ch.name)
-            const residues = ch.residues
-            console.log(residues, residues.size())
-            if (residues.size() > 0) {
-                const res = residues.get(0)
-                console.log(res)
-                console.log(res.name)
-                const atoms = res.atoms
-                console.log(atoms, atoms.size())
-                if (atoms.size() > 0) {
-                    const at = atoms.get(0)
-                    console.log("atom", at)
-                    console.log("atom name", at.name)
-                    console.log("atom element name", cootModule.getElementNameAsString(at.element))
-                    console.log("atom serial no.", at.serial)
-                    console.log("atom pos", at.pos.x, at.pos.y, at.pos.z)
-                    console.log("atom occ", at.occ)
-                    console.log("atom b_iso", at.b_iso)
-                    console.log("atom padded name", at.padded_name())
-                    const anisoRow0 = at.aniso.as_mat33().row_copy(0)
-                    const anisoRow1 = at.aniso.as_mat33().row_copy(1)
-                    const anisoRow2 = at.aniso.as_mat33().row_copy(2)
-                    console.log("atom aniso row 1", anisoRow0.x, anisoRow0.y, anisoRow0.z)
-                    console.log("atom aniso row 2", anisoRow1.x, anisoRow1.y, anisoRow1.z)
-                    console.log("atom aniso row 3", anisoRow2.x, anisoRow2.y, anisoRow2.z)
-                }
-            }
-            const waters = ch.get_waters_const()
-            console.log(waters, waters.length())
-            if (waters.length() > 0) {
-                console.log("water", waters.at(0))
-                console.log("water subchain_id", waters.subchain_id())
-                const seq = waters.extract_sequence()
-            }
-            const ligands = ch.get_ligands_const()
-            if (ligands.length() > 0) {
-                console.log("ligand", ligands.at(0))
-                console.log("ligand subchain_id", ligands.subchain_id())
-            }
-        }
+        const model = st.first_model()
+        const modelMass = cootModule.calculate_mass_model(model)
+        expect(modelMass).toBeCloseTo(37224.72, 1)
+        
+        const chains = model.chains
+        expect(chains.size()).toBe(3)
+
+        const chain = chains.get(0)
+        expect(cootModule.calculate_mass_chain(chain)).toBeCloseTo(31365.81, 1)
+        expect(chain.name).toBe('A')
+
+        const residues = chain.residues
+        expect(residues.size()).toBe(300)
+
+        const residue = residues.get(0)
+        expect(residue.name).toBe('SER')
+
+        const atoms = residue.atoms
+        expect(atoms.size()).toBe(6)
+
+        const atom = atoms.get(0)
+        expect(atom.name).toBe('N')
+        expect(cootModule.getElementNameAsString(atom.element)).toBe('N')
+        cleanUpVariables.push(st, model, models, chain, chains, residue, residues, atom, atoms)
+    })
+
+    test("Test ligands", () => {
+        const st = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
+        cootModule.gemmi_setup_entities(st)
+        const model = st.first_model()
+        const chains = model.chains
+        
+        const chain = chains.get(1)
+        expect(chain.name).toBe('B')
+        
+        const ligands = chain.get_ligands_const()
+        expect(ligands.size()).toBe(2)
+
+        const ligand = ligands.at(0)
+        expect(ligand.name).toBe('G2F')
+
+        cleanUpVariables.push(st, model, chain, chains, ligand, ligands)
+    })
+
+    test("Test waters", () => {
+        const st = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
+        cootModule.gemmi_setup_entities(st)
+        const model = st.first_model()
+        const chains = model.chains
+        
+        const chain = chains.get(2)
+        expect(chain.name).toBe('A')
+        
+        const waters = chain.get_waters_const()
+        expect(waters.size()).toBe(348)
+
+        const water = waters.at(0)
+        expect(water.name).toBe('HOH')
+        const waterSeqId = water.seqid
+        expect(waterSeqId.str()).toBe('901')
+        
+        cleanUpVariables.push(st, model, chain, chains, water, waters, waterSeqId)
+
+    })
+
+    test("Test remove waters and ligands", () => {
+        const st = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
+        cootModule.gemmi_setup_entities(st)
+        cootModule.remove_ligands_and_waters_structure(st)
+        st.remove_empty_chains()
+        const model = st.first_model()
+        const chains = model.chains
+        expect(chains.size()).toBe(1)
+        cleanUpVariables.push(st, model, chains)
+    })
+
+    test("Test spacegroups", () => {
+        const sgp1 = cootModule.get_spacegroup_by_name('P1')
+        expect(cootModule.getSpaceGroupHMAsString(sgp1)).toBe('P 1')
+        expect(sgp1.hm()).toBe('P 1')
+        expect(cootModule.getSpaceGroupHallAsString(sgp1)).toBe('P 1')
+        expect(cootModule.getSpaceGroupHallAsString(sgp1)).toBe('P 1')
+        cleanUpVariables.push(sgp1)
+    })
+
+})
+
+describe('Testing molecules_container_js', () => {
+    afterEach(() => {
+        cleanUpVariables.map(item => item.delete())
+        cleanUpVariables = []
+    })
+
+    test('Test fill_rotamer_probability_tables', () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.fill_rotamer_probability_tables()
     })
 
     test('Test add', () => {
@@ -110,72 +141,137 @@ describe('Testing molecules_container_js', () => {
         expect(ret).toBe(1)
     })
 
+    test('Create residue_spec_t', () => {
+        const resSpec = new cootModule.residue_spec_t("A", 217, "")
+    })
+
+    test("Test read PDB", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const atomCount = molecules_container.get_number_of_atoms(coordMolNo)
+        expect(coordMolNo).toBe(0)
+        expect(atomCount).toBe(2765)
+    })
+
+    test("Test read MTZ", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
+        expect(mapMolNo).toBe(0)
+        
+        const isEM = molecules_container.is_EM_map(mapMolNo)
+        expect(isEM).toBeFalsy()
+        
+        const rmsd = molecules_container.get_map_rmsd_approx(mapMolNo)
+        expect(rmsd).toBeCloseTo(0.35, 1)
+        
+        const mapCentre = molecules_container.get_map_molecule_centre(mapMolNo)
+        expect(mapCentre.updated_centre.x()).toBeCloseTo(-1.09, 1)
+        expect(mapCentre.updated_centre.y()).toBeCloseTo(0.17, 1)
+        expect(mapCentre.updated_centre.z()).toBeCloseTo(-2.94, 1)
+        
+        const suggestedLevel = molecules_container.get_suggested_initial_contour_level(mapMolNo)
+        expect(suggestedLevel).toBeCloseTo(0.56, 1)
+    })
+
+    test('Test glycoblocks', async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo = molecules_container.read_pdb('./5fjj.pdb')
+        const glyco_mesh = molecules_container.DrawGlycoBlocks(coordMolNo,"/")
+    })
+
+    test('Test copy fragment', () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
+        const coordMolNo_2 = molecules_container.copy_fragment_using_cid(coordMolNo_1, "//A/32-33/*");
+        const atomCount = molecules_container.get_number_of_atoms(coordMolNo_2)
+        expect(coordMolNo_2).not.toBe(-1)
+        expect(atomCount).toBe(14)
+    })
+
+    test('Test ligand methods', () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        
+        const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', -999999)
+        expect(result_import_dict).toBe(1)
+
+        const coords = [0, 0, 0]
+        const tlc = 'LZA'
+        const ligandMolNo = molecules_container.get_monomer_and_position_at(
+            tlc, -999999, ...coords
+        )
+        expect(ligandMolNo).toBe(0)
+
+        const useConformers = false
+        const conformerCount = 100
+        const coordMolNo = molecules_container.read_pdb('./5a3h_no_ligand.pdb')
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
+        const result = molecules_container.fit_ligand_right_here(
+            coordMolNo, mapMolNo, ligandMolNo, ...coords, 1., useConformers, conformerCount
+        )
+        expect(result.size()).toBeGreaterThan(0)
+    })
+
     test('Test delete methods', () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
-        const ret = molecules_container.delete_using_cid(coordMolNo, "A/4-104", "LITERAL");
-        const ret_side = molecules_container.delete_side_chain(coordMolNo, "A", 154, "");
-        console.log(ret);
-        console.log(ret_side);
+        
+        const result_cid = molecules_container.delete_using_cid(coordMolNo, "A/32-33/*", "LITERAL")
+        const resSpec = new cootModule.residue_spec_t("A", 32, "")
+        const deletedResidue = molecules_container.get_residue(coordMolNo, resSpec)
+        expect(result_cid.first).toBe(1)
+        expect(result_cid.second).toBe(2751)
+        expect(deletedResidue).toBe(null)
+
+        const result_sideChain = molecules_container.delete_side_chain(coordMolNo, "A", 154, "");
+        expect(result_sideChain.first).toBe(1)
+        expect(result_sideChain.second).toBe(2744)
     })
 
     test('Test add_terminal_residue methods', () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
-        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz',
-            'FWT', 'PHWT', "", false, false)
-        const setMapRes = molecules_container.set_imol_refinement_map(mapMolNo)
-        const resSpec = new cootModule.residue_spec_t("A", 100, "");
-        const res = molecules_container.get_residue(coordMolNo, resSpec)
-        expect(res.nAtoms).toBe(14)
-        console.log('nAtoms is', res.nAtoms)
-        const ret = molecules_container.delete_using_cid(coordMolNo, "A/100-104", "LITERAL");
-        const res1 = molecules_container.get_residue(coordMolNo, resSpec)
-        expect(res1).toBe(null)
-        const ret1 = molecules_container.add_terminal_residue_directly_using_cid(coordMolNo, "/*/A/99")
-        const res2 = molecules_container.get_residue(coordMolNo, resSpec)
-        expect(res2).not.toBe(null)
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
+        molecules_container.set_imol_refinement_map(mapMolNo)
+
+        molecules_container.delete_using_cid(coordMolNo, "A/100-101/*", "LITERAL")
+        const residueSpec = new cootModule.residue_spec_t("A", 100, "")
+        const deletedResidue = molecules_container.get_residue(coordMolNo, residueSpec)
+        expect(deletedResidue).toBe(null)
+
+        const result = molecules_container.add_terminal_residue_directly_using_cid(coordMolNo, "A/99")
+        const resSpec = new cootModule.residue_spec_t("A", 100, "")
+        const addedResidue = molecules_container.get_residue(coordMolNo, resSpec)
+        expect(addedResidue.nAtoms).toBe(5)
+        expect(result).not.toBe(-1)
     })
 
     test('Test merge molecules', () => {
         const molecules_container = new cootModule.molecules_container_js(false)
-        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
-        const coordMolNo2 = molecules_container.read_pdb('./tm-A.pdb')
-        const mergeMols = coordMolNo2.toString()
-        const merge_info = molecules_container.merge_molecules(coordMolNo, mergeMols)
+        const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
+        const coordMolNo_2 = molecules_container.read_pdb('./tm-A.pdb')
+        const mergeMols = coordMolNo_2.toString()
+        const merge_info = molecules_container.merge_molecules(coordMolNo_1, mergeMols)
         expect(merge_info.second.size()).toBe(1)
         const mi0 = merge_info.second.get(0)
         expect(mi0.chain_id).toBe("C")
     })
 
-    test('Get new rama info', () => {
+    test('Test ramachandran_validation', () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const rama_info = molecules_container.ramachandran_validation(coordMolNo)
-        for (let i = 0; i < rama_info.size(); i++) {
+        const rama_info_size = rama_info.size()
+        expect(rama_info_size).toBe(298)
+        for (let i = 0; i < rama_info_size; i++) {
             const ri = rama_info.get(i)
-            const cart = ri.position
             const phi_psi = ri.phi_psi
-            //console.log(cart.x(), cart.y(), cart.z())
-            //console.log(phi_psi.phi(), phi_psi.psi())
+            const phi = phi_psi.phi()
+            const psi = phi_psi.psi()
+            expect(phi).toBeCloseTo(-54.90, 1)
+            expect(psi).toBeCloseTo(-57.35, 1)
+            break
         }
-    })
-
-    test('Test read_pdb from faux file system', () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
-        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
-        expect(coordMolNo).toBe(0)
-    })
-
-    test('Test read_mtz from faux file system', () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
-        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz',
-            'FWT', 'PHWT', "", false, false)
-        expect(mapMolNo).toBe(0)
-    })
-
-    test('Create res spec', () => {
-        const resSpec = new cootModule.residue_spec_t("A", 217, "");
+        cleanUpVariables.push(rama_info)
     })
 
     test('Test get_residue', () => {
@@ -247,20 +343,20 @@ describe('Testing molecules_container_js', () => {
         expect(atomUpdate.z).toBeCloseTo(12.957, 3)
     })
 
-    test('Test Fill Rotamer tables', () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
-        molecules_container.fill_rotamer_probability_tables()
-    })
-
     test('Test get_single_letter_codes_for_chain', () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.geometry_init_standard()
         const imol = molecules_container.read_pdb('./tm-A.pdb')
         const codes = molecules_container.get_single_letter_codes_for_chain(imol, "A")
-        console.log(codes)
-        for (let ic = 0; ic < codes.size(); ic++) {
-            console.log(codes.get(ic).first.chain_id, codes.get(ic).second)
+        const codesSize = codes.size()
+        let sequence = []
+        for (let ic = 0; ic < codesSize; ic++) {
+            const code = codes.get(ic)
+            expect(code.first.chain_id).toBe('A')
+            sequence.push(code.second)
         }
+        expect(sequence.join('')).toBe('DVSGTVCLSALPPEATDTLNLIASDGPFPYSQDGVVFQNRESVLPTQSYGYYHEYTVITPGARTRGTRRIICGEATQEDYYTGDHYATFSLID')
+        cleanUpVariables.push(codes)
     })
 
     test('Test Auto-fit rotamer', () => {
@@ -275,6 +371,7 @@ describe('Testing molecules_container_js', () => {
         const CZatom_y = CZatom.y;
         const CZatom_z = CZatom.z;
         const result = molecules_container.auto_fit_rotamer(imol, "A", 89, "", "", imol_map)
+        expect(result).toBe(1)
         const dd = (CZatom.x - CZatom_x) * (CZatom.x - CZatom_x) + (CZatom.y - CZatom_y) * (CZatom.y - CZatom_y) + (CZatom.z - CZatom_z) * (CZatom.z - CZatom_z)
         const d = Math.sqrt(dd)
         expect(d).toBeCloseTo(7.28975, 5)
@@ -286,6 +383,7 @@ describe('Testing molecules_container_js', () => {
         const simpleMesh = molecules_container.get_ramachandran_validation_markup_mesh(coordMolNo);
         expect(simpleMesh.vertices.size()).toBe(22052)
         expect(simpleMesh.triangles.size()).toBe(38144)
+        cleanUpVariables.push(simpleMesh)
     })
 
     test('Test Dodo mesh', () => {
@@ -294,6 +392,7 @@ describe('Testing molecules_container_js', () => {
         const simpleMesh = molecules_container.get_rotamer_dodecs(coordMolNo);
         expect(simpleMesh.vertices.size()).toBe(39000)
         expect(simpleMesh.triangles.size()).toBe(23400)
+        cleanUpVariables.push(simpleMesh)
     })
 
     test('Test Dodo instanced mesh', () => {
@@ -307,18 +406,6 @@ describe('Testing molecules_container_js', () => {
             expect(inst.triangles.size()).toBe(36)
             expect(inst.instancing_data_A.size()).toBe(0)
             expect(inst.instancing_data_B.size()).toBe(0)
-            for (let j = 0; j < inst.vertices.size(); j++) {
-                const vert = inst.vertices.get(j)
-                //console.log(vert)
-                //console.log(vert.pos)
-                //console.log(vert.normal)
-            }
-            for (let j = 0; j < inst.instancing_data_A.size(); j++) {
-                const inst_data = inst.instancing_data_A.get(j)
-                //console.log("pos:",inst_data.position)
-                //console.log("col",inst_data.colour)
-                //console.log("size",inst_data.size)
-            }
         }
     })
 
@@ -343,7 +430,6 @@ describe('Testing molecules_container_js', () => {
         expect(atom2.x).toBeCloseTo(67.271, 3)
         expect(atom2.y).toBeCloseTo(45.492, 3)
         expect(atom2.z).toBeCloseTo(24.559, 3)
-        const auto_res = molecules_container.auto_fit_rotamer(coordMolNo, "A", 89, "", "", mapMolNo)
     })
 
     test('Test flip_peptide by residue spec', () => {
@@ -351,8 +437,7 @@ describe('Testing molecules_container_js', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         expect(coordMolNo).toBe(0)
 
-        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz',
-            'FWT', 'PHWT', "", false, false)
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
         expect(mapMolNo).toBe(1)
 
         const atomSpec = new cootModule.atom_spec_t("A", 217, "", " N  ", "");
@@ -362,7 +447,6 @@ describe('Testing molecules_container_js', () => {
         const writeStatus = molecules_container.writePDBASCII(coordMolNo, flippedFileName)
         expect(writeStatus).toBe(0)
         const flippedFile = cootModule.FS.readFile(flippedFileName, { encoding: 'utf8' });
-        //console.log(flippedFile)
 
         const atomSpecFalse = new cootModule.atom_spec_t("A", 999, "", " N  ", "");
         const failedStatus = molecules_container.flipPeptide(coordMolNo, atomSpecFalse, "")
@@ -439,20 +523,42 @@ describe('Testing molecules_container_js', () => {
         expect(simpleMesh.triangles.size()).toBeCloseTo(174034, -3)
     })
 
+    test("Test ligand surface", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const resSpec = molecules_container.residue_cid_to_residue_spec(coordMolNo, '/1/B/2(BGC)/*')
+        const ligand = molecules_container.get_residue(coordMolNo, resSpec)
+        expect(ligand.nAtoms).toBe(11)
+        const simpleMesh = molecules_container.get_molecular_representation_mesh(
+            0, "/1/B/2(BGC)/*", "colorRampChainsScheme", "MolecularSurface"
+        )
+        expect(simpleMesh.vertices.size()).toBeCloseTo(1457, -3)
+        expect(simpleMesh.triangles.size()).toBeCloseTo(2137, -3)
+    })
+
 })
 
+const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h_no_ligand.pdb', 'LZA.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
+
 const setupFunctions = {
-    copyExampleDataToFauxFS: () => {
-        const coordData_5fjj = fs.readFileSync(path.join(__dirname, '..', '..', 'example', '5fjj.pdb'), { encoding: 'utf8', flag: 'r' })
-        cootModule.FS_createDataFile(".", '5fjj.pdb', coordData_5fjj, true, true);
-        const coordData = fs.readFileSync(path.join(__dirname, '..', '..', 'example', '5a3h.pdb'), { encoding: 'utf8', flag: 'r' })
-        cootModule.FS_createDataFile(".", '5a3h.pdb', coordData, true, true);
-        const sigmaaData = fs.readFileSync(path.join(__dirname, '..', '..', 'example', '5a3h_sigmaa.mtz'), { encoding: null, flag: 'r' })
-        cootModule.FS_createDataFile(".", '5a3h_sigmaa.mtz', sigmaaData, true, true);
-        const rnaseSigmaaData = fs.readFileSync(path.join(__dirname, '..', '..', 'checkout', 'coot-1.0', 'data', 'rnasa-1.8-all_refmac1.mtz'), { encoding: null, flag: 'r' })
-        cootModule.FS_createDataFile(".", 'rnasa-1.8-all_refmac1.mtz', rnaseSigmaaData, true, true);
-        const tmCoordData = fs.readFileSync(path.join(__dirname, '..', '..', 'checkout', 'coot-1.0', 'api', 'tm-A.pdb'), { encoding: 'utf8', flag: 'r' })
-        cootModule.FS_createDataFile(".", 'tm-A.pdb', tmCoordData, true, true);
+    removeTestDataFromFauxFS: () => {
+        testDataFiles.forEach(fileName => {
+            cootModule.FS_unlink(fileName)
+        })
+    },
+    copyTestDataToFauxFS: () => {
+        testDataFiles.forEach(fileName => {
+            let dirName
+            if (fileName === 'rnasa-1.8-all_refmac1.mtz') {
+                dirName = path.join(__dirname, '..', '..', '..', 'checkout', 'coot-1.0', 'data')
+            } else if (fileName === 'tm-A.pdb') {
+                dirName = path.join(__dirname, '..', '..', '..', 'checkout', 'coot-1.0', 'api')
+            } else {
+                dirName = path.join(__dirname, '..', 'test_data')
+            }
+            const coordData = fs.readFileSync(path.join(dirName, fileName), { encoding: fileName.includes('mtz') ? null : 'utf8', flag: 'r' })
+            cootModule.FS_createDataFile(".", fileName, coordData, true, true);
+        })
         cootModule.FS.mkdir("COOT_BACKUP");
     }
 }
