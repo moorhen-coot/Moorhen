@@ -2,6 +2,7 @@
 export class MockWebGL {
     constructor() {
         this.buffers = []
+        this.origin = [0, 0, 0]
     }
 
     buildBuffers() {
