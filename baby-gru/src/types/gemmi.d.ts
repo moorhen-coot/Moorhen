@@ -43,6 +43,10 @@ export namespace gemmi {
         matches_chain: (chain: Chain) => boolean;
         matches_residue: (residue: Residue) => boolean;
         matches_atom: (atom: Atom) => boolean;
+        models: (struct: Structure) => emscriptem.vector<Model>;
+        chains: (model: Model) => emscriptem.vector<Chain>;
+        residues: (chain: Chain) => emscriptem.vector<Residue>;
+        atoms: (res: Residue) => emscriptem.vector<Atom>;
         chain_ids: SelectionChainList;
         to_seqid: SelectionSeqId;
         from_seqid: SelectionSeqId;
