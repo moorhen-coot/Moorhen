@@ -590,9 +590,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} newTlc - Three letter code for the monomer
      * @param {number} attachToMolecule - Molecule number for which the dicitonary will be associated
      */
-    async loadMissingMonomer(newTlc: string, attachToMolecule: number): Promise<moorhen.WorkerResponse> {
-        const $this = this
-        let response: Response = await fetch(`${$this.monomerLibraryPath}/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
+    async loadMissingMonomer(newTlc: string, attachToMolecule: number): Promise<string> {
+        let response: Response = await fetch(`${this.monomerLibraryPath}/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
         const fileContent = await response.text()
         let dictContent: string
 
@@ -613,41 +612,41 @@ export class MoorhenMolecule implements moorhen.Molecule {
             dictContent = fileContent
         }
 
-        return $this.commandCentre.current.cootCommand({
+        await this.commandCentre.current.cootCommand({
             returnType: "status",
             command: 'shim_read_dictionary',
             commandArgs: [dictContent, attachToMolecule],
         }, false)
+        
+        return dictContent
     }
 
     /**
      * Attempt to load dictionaries for all missing monomers present in the molecule
      * @returns {Promise<moorhen.Molecule>} This molecule instance
      */
-    async loadMissingMonomers(): Promise<moorhen.Molecule> {
-        const $this = this
-        const response = await $this.commandCentre.current.cootCommand({
+    async loadMissingMonomers(): Promise<void> {
+        const response = await this.commandCentre.current.cootCommand({
             returnType: "string_array",
             command: 'get_residue_names_with_no_dictionary',
-            commandArgs: [$this.molNo],
+            commandArgs: [this.molNo],
         }, false) as moorhen.WorkerResponse<string[]>
 
         if (response.data.result.status === 'Completed') {
-            let monomerPromises = []
-            response.data.result.result.forEach(newTlc => {
-                const newPromise = $this.loadMissingMonomer(newTlc, -999999)
-                monomerPromises.push(newPromise)
-            })
             try {
-                await Promise.all(monomerPromises)
+                const ligandDicts = await Promise.all(
+                    response.data.result.result.map(newTlc => {
+                        return this.loadMissingMonomer(newTlc, -999999)
+                    })
+                )
+                ligandDicts.forEach(ligandDict => this.addDictShim(ligandDict))
             } catch (err) {
-                console.log('Error in loadMissingMonomers...', err);
+                console.log(err)
+                console.warn('Error in loadMissingMonomers...')
             }
         } else {
             console.log('Error in loadMissingMonomers...');
         }
-
-        return $this
     }
 
     /**
@@ -1436,7 +1435,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         selection.delete()
         model.delete()
 
-        return Promise.resolve(result)
+        return result
     }
 
     /**

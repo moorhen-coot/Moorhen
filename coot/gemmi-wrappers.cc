@@ -1720,6 +1720,11 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("set_atom_flags",&gemmi::Selection::set_atom_flags)
     .function("remove_selected_residue",&GemmiSelectionRemoveSelectedResidue)
     .function("remove_not_selected_residue",&GemmiSelectionRemoveNotSelectedResidue)
+    .function("first",&gemmi::Selection::first)
+    .function("chains",&gemmi::Selection::chains)
+    .function("models",&gemmi::Selection::models)
+    .function("residues",&gemmi::Selection::residues)
+    .function("atoms",&gemmi::Selection::atoms)
     //I have no ide what is wrong with these 2.
     //.function("remove_not_selected_atom",select_overload<void(gemmi::Atom&)const>(&gemmi::Selection::remove_not_selected))
     //.function("remove_not_selected_residue",select_overload<void(gemmi::Residue&)const>(&gemmi::Selection::remove_not_selected))

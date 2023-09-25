@@ -72,7 +72,7 @@ describe("Testing MoorhenMolecule", () => {
         expect(isValid).toBeFalsy()
     })
 
-    test("Test get_atoms", async() => {
+    test("Test get_atoms", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
@@ -87,7 +87,7 @@ describe("Testing MoorhenMolecule", () => {
         expect(coordData.data.result.result).toHaveLength(258718)
     }) 
 
-    test("Test replaceModelWithFile", async() => {
+    test("Test replaceModelWithFile", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const fileUrl_2 = path.join(__dirname, '..', 'test_data', '5fjj.pdb')
@@ -110,7 +110,7 @@ describe("Testing MoorhenMolecule", () => {
         expect(coordData_1.data.result.result).toBe(coordData_2.data.result.result)
     })
 
-    test("Test copyMolecule", async() => {
+    test("Test copyMolecule", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
@@ -128,7 +128,165 @@ describe("Testing MoorhenMolecule", () => {
         const coordData_2 = await molecule_2.getAtoms('pdb')
 
         expect(coordData_1.data.result.result).toBe(coordData_2.data.result.result)
+    })
 
+    test("Test copyFragmentUsingCid", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+
+        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule_1.loadToCootFromURL(fileUrl, 'mol-test')
+        const molecule_2 = await molecule_1.copyFragmentUsingCid("//A/32-33/*", false)
+        const atomCount = molecules_container.get_number_of_atoms(molecule_2.molNo)
+        expect(molecule_2.molNo).not.toBe(-1)
+        expect(atomCount).toBe(14)
+    })
+
+    test("Test mergeMolecules", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+
+        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule_1.loadToCootFromURL(fileUrl_1, 'mol-test')
+        const atom_count_1 = molecules_container.get_number_of_atoms(molecule_1.molNo)
+
+        const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', -999999)
+        expect(result_import_dict).toBe(1)
+        const ligandMolNo = molecules_container.get_monomer_and_position_at(
+            'LZA', -999999, 0, 0, 0
+        )
+        expect(ligandMolNo).toBe(1)
+        const atom_count_2 = molecules_container.get_number_of_atoms(ligandMolNo)
+
+        await molecule_1.mergeMolecules([{ molNo: ligandMolNo, representations: [], ligandDicts: {} }], false)
+        const atom_count_merged = molecules_container.get_number_of_atoms(molecule_1.molNo)
+        expect(atom_count_merged).toBe(atom_count_1 + atom_count_2)
+    })
+
+    test("Test addLigandOfType", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
+        const atom_count_1 = molecules_container.get_number_of_atoms(molecule.molNo)
+
+        const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', -999999)
+        expect(result_import_dict).toBe(1)
+        const ligandMolNo = molecules_container.get_monomer_and_position_at(
+            'LZA', -999999, 0, 0, 0
+        )
+        expect(ligandMolNo).toBe(1)
+        const atom_count_2 = molecules_container.get_number_of_atoms(ligandMolNo)
+
+        expect(molecule.ligands).toHaveLength(0)
+        await molecule.addLigandOfType('LZA')
+        const atom_count_merged = molecules_container.get_number_of_atoms(molecule.molNo)
+        expect(atom_count_merged).toBe(atom_count_1 + atom_count_2)
+        expect(molecule.ligands).toHaveLength(1)
+        expect(molecule.ligands).toEqual([{"chainName": "B", "cid": "/1/B/1(LZA)", "modelName": "1", "resName": "LZA", "resNum": "1"}])
+    })
+
+    test("Test loadMissingMonomers", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const f_1 = jest.spyOn(molecule, 'loadMissingMonomers')
+        const f_2 = jest.spyOn(molecule, 'loadMissingMonomer')
+        await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
+        expect(f_1).toHaveBeenCalled()
+        expect(f_2).toHaveBeenCalledTimes(2)
+        expect(Object.keys(molecule.ligandDicts).sort()).toEqual([ 'BGC', 'G2F' ])
+    })
+
+    test("Test gemmiAtomsForCid", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const f = jest.spyOn(molecule, 'updateAtoms')
+        await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
+        molecule.setAtomsDirty(true)
+        const gemmiAtoms = await molecule.gemmiAtomsForCid('//A/30-31/CA')
+        expect(f).toHaveBeenCalled()
+        expect(gemmiAtoms).toHaveLength(2)
+        expect(gemmiAtoms.map(atomInfo => atomInfo.label)).toEqual([ "/1/A/30(LYS)/CA", "/1/A/31(GLY)/CA" ])
+    })
+
+    test("Test updateGemmiStructure", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl, 'mol-test')
+        
+        const sequence_1 = molecule.sequences.find(seq => seq.chain === 'A')
+        const length_1 = sequence_1.sequence.length
+        molecules_container.delete_using_cid(molecule.molNo, "A/32-33/*", "LITERAL")
+        await molecule.updateGemmiStructure()
+        const sequence_2 = molecule.sequences.find(seq => seq.chain === 'A')
+        expect(sequence_2.sequence).toHaveLength(length_1 - 2)
+       
+        molecules_container.delete_using_cid(molecule.molNo, "//B", "LITERAL")
+        await molecule.updateGemmiStructure()
+        expect(molecule.ligands).toHaveLength(0)
+    })
+
+    test("Test isLigand", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl, 'mol-test')
+        
+        const result_cid = molecules_container.delete_using_cid(molecule.molNo, "//A", "LITERAL")
+        expect(result_cid.first).toBe(1)
+
+        await molecule.updateGemmiStructure()
+        const isLigand = molecule.isLigand()
+        expect(isLigand).toBeTruthy()
     })
 
 })
