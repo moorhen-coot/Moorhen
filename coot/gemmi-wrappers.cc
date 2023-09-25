@@ -224,6 +224,13 @@ std::vector<SequenceChain> parseSequences(const gemmi::Structure &structure, con
 
 }
 
+void GemmiSelectionRemoveSelectedResidue(gemmi::Selection &s, gemmi::Residue &r){
+    s.remove_selected(r);
+}
+
+void GemmiSelectionRemoveNotSelectedResidue(gemmi::Selection &s, gemmi::Residue &r){
+    s.remove_not_selected(r);
+}
 
 EMSCRIPTEN_BINDINGS(gemmi_module) {
     //complex could be generally useful, but only used by gemmi at present?
@@ -1711,8 +1718,12 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("first_in_model",&gemmi::Selection::first_in_model)
     .function("set_residue_flags",&gemmi::Selection::set_residue_flags)
     .function("set_atom_flags",&gemmi::Selection::set_atom_flags)
+    .function("remove_selected_residue",&GemmiSelectionRemoveSelectedResidue)
+    .function("remove_not_selected_residue",&GemmiSelectionRemoveNotSelectedResidue)
     //I have no ide what is wrong with these 2.
-    //.function("remove_not_selected",select_overload<void(gemmi::Atom&)const>(&gemmi::Selection::remove_not_selected))
+    //.function("remove_not_selected_atom",select_overload<void(gemmi::Atom&)const>(&gemmi::Selection::remove_not_selected))
+    //.function("remove_not_selected_residue",select_overload<void(gemmi::Residue&)const>(&gemmi::Selection::remove_not_selected))
+    //.function("remove_selected_residue",select_overload<void(gemmi::Residue&)const>(&gemmi::Selection::remove_selected))
     //.function("add_matching_children",select_overload<void(const gemmi::Atom&, gemmi::Atom&)const>(&gemmi::Selection::add_matching_children))
     ;
 
