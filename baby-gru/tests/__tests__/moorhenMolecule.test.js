@@ -244,6 +244,51 @@ describe("Testing MoorhenMolecule", () => {
         expect(gemmiAtoms.map(atomInfo => atomInfo.label)).toEqual([ "/1/A/30(LYS)/CA", "/1/A/31(GLY)/CA" ])
     })
 
+    test("Test updateGemmiStructure", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl, 'mol-test')
+        
+        const sequence_1 = molecule.sequences.find(seq => seq.chain === 'A')
+        const length_1 = sequence_1.sequence.length
+        molecules_container.delete_using_cid(molecule.molNo, "A/32-33/*", "LITERAL")
+        await molecule.updateGemmiStructure()
+        const sequence_2 = molecule.sequences.find(seq => seq.chain === 'A')
+        expect(sequence_2.sequence).toHaveLength(length_1 - 2)
+       
+        molecules_container.delete_using_cid(molecule.molNo, "//B", "LITERAL")
+        await molecule.updateGemmiStructure()
+        expect(molecule.ligands).toHaveLength(0)
+    })
+
+    test("Test isLigand", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl, 'mol-test')
+        
+        const result_cid = molecules_container.delete_using_cid(molecule.molNo, "//A", "LITERAL")
+        expect(result_cid.first).toBe(1)
+
+        await molecule.updateGemmiStructure()
+        const isLigand = molecule.isLigand()
+        expect(isLigand).toBeTruthy()
+    })
+
 })
 
 const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h_no_ligand.pdb', 'LZA.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
