@@ -126,6 +126,39 @@ describe("Testing gemmi", () => {
         cleanUpVariables.push(sgp1)
     })
 
+    test("Test count_residues_in_selection", () => {
+        const selection = new cootModule.Selection('//A/31-33/*')
+        const st = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
+        const residue_count = cootModule.count_residues_in_selection(st, selection)
+        expect(residue_count).toBe(3)
+        cleanUpVariables.push(st)
+    })
+
+    test("Test remove_non_selected_residues", () => {
+        const selection = new cootModule.Selection('//A/31-33/*')
+        const st_1 = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
+        cootModule.gemmi_setup_entities(st_1)
+        const st_2 = cootModule.remove_non_selected_residues(st_1, selection)
+
+        const model_1 = st_1.first_model()
+        const chains_1 = model_1.chains
+        // Expect the original structure to be unchanged
+        expect(chains_1.size()).toBe(3)
+
+        const model_2 = st_2.first_model()
+        const chains_2 = model_2.chains
+        const chain_2 = chains_2.get(0)
+        const residues_2 = chain_2.residues
+        const residue_2 = residues_2.get(0)
+        const residue_2_seqId = residue_2.seqid
+        expect(chains_2.size()).toBe(1)
+        expect(chain_2.name).toBe('A')
+        expect(residues_2.size()).toBe(3)
+        expect(residue_2_seqId.str()).toBe('31')
+
+        cleanUpVariables.push(st_1, st_2, model_1, chains_1, model_2, chains_2, chain_2, residues_2, residue_2_seqId, residue_2)
+    })
+
 })
 
 describe('Testing molecules_container_js', () => {

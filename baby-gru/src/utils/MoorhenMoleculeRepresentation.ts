@@ -1,6 +1,6 @@
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
-import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid } from './MoorhenUtils';
+import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, countResiduesInSelection, copyStructureSelection } from './MoorhenUtils';
 import { libcootApi } from '../types/libcoot';
 import { hexToRgb } from '@mui/material';
 
@@ -361,7 +361,20 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         }
 
         if(cidSelection) {
-            m2tSelection = `{${m2tSelection} & {${cidSelection}}}`
+            const struct_1 = copyStructureSelection(this.parentMolecule.gemmiStructure, cidSelection)
+            const count_1 = countResiduesInSelection(struct_1)
+
+            const struct_2 = copyStructureSelection(struct_1, m2tSelection)
+            const count_2 = countResiduesInSelection(struct_2)
+
+            struct_1.delete()
+            struct_2.delete()
+
+            if (count_1 > 0 && count_2 === 0) {
+                m2tSelection = cidSelection
+            } else {
+                m2tSelection = `{${m2tSelection} & {${cidSelection}}}`
+            }
         }
 
         if (this.parentMolecule.excludedCids.length > 0) {
