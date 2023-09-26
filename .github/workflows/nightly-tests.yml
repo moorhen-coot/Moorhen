@@ -30,7 +30,7 @@ jobs:
            ./get_sources
            ./initial_build.sh
        - name: Run tests
-         working-directory: /home/runner/work/Moorhen/ccp4_wasm       
+         working-directory: /home/runner/work/Moorhen/ccp4_wasm/baby-gru
          run: |             
            cd /home/runner/work/Moorhen/ccp4_wasm/baby-gru
            source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
