@@ -612,9 +612,15 @@ describe('Testing molecules_container_js', () => {
         expect(simpleMesh.triangles.size()).toBeGreaterThan(100)
     })
 
+    test("Test SmilesToPDB", () => {
+        const result_1 = cootModule.SmilesToPDB('c1ccccc1', 'LIG', 10, 100)
+        const fileContents_1 = fs.readFileSync(path.join(__dirname, '..', 'test_data', 'benzene.cif'), { encoding: 'utf8', flag: 'r' })
+        expect(result_1.second).toBe(fileContents_1)
+    })
+
 })
 
-const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h_no_ligand.pdb', 'LZA.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
+const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h_no_ligand.pdb', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
 
 const setupFunctions = {
     removeTestDataFromFauxFS: () => {
