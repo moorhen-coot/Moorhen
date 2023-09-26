@@ -1284,6 +1284,21 @@ export function getCubeLines(unitCell: gemmi.UnitCell): [{ pos: [number, number,
 
     return lines;
 }
+
+export const countResiduesInSelection = (gemmiStructure: gemmi.Structure, cidSelection?: string) => {
+    const selection = new window.CCP4Module.Selection(cidSelection ? cidSelection : '/*/*/*')
+    const count = window.CCP4Module.count_residues_in_selection(gemmiStructure, selection)
+    selection.delete()
+    return count    
+}
+
+export const copyStructureSelection = (gemmiStructure: gemmi.Structure, cidSelection?: string) => {
+    const selection = new window.CCP4Module.Selection(cidSelection ? cidSelection : '/*/*/*')
+    const newStruct = window.CCP4Module.remove_non_selected_residues(gemmiStructure, selection)
+    selection.delete()
+    return newStruct
+}
+
 </code></pre>
         </article>
     </section>
