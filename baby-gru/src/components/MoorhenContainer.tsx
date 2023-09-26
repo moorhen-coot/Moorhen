@@ -450,7 +450,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                         onAtomHovered={onAtomHovered}
                         onKeyPress={onKeyPress}
                         hoveredAtom={hoveredAtom}
-                        context={context}
                         windowHeight={windowHeight}
                         windowWidth={windowWidth}
                         urlPrefix={urlPrefix}
