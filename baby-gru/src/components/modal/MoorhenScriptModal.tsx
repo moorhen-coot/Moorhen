@@ -21,11 +21,10 @@ export const MoorhenScriptModal = (props: {
     show: boolean;
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
     code?: string;
-    transparentModalsOnMouseOut: boolean;
 }) => {
 
     const [code, setCode] = useState<string>("")
-    
+
     const handleScriptExe = useCallback(async () => {
         try {
             const scriptApi = new MoorhenScriptApi(props.molecules, props.maps, props.glRef)
@@ -43,7 +42,6 @@ export const MoorhenScriptModal = (props: {
     }, [])
 
     return <MoorhenDraggableModalBase
-                transparentOnMouseOut={props.transparentModalsOnMouseOut}
                 headerTitle="Interactive scripting"
                 body={
                     <div style={{backgroundColor: props.isDark ? 'white' : '#e6e6e6', borderColor:'black'}}>

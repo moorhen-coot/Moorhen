@@ -1,8 +1,10 @@
 import { Form, InputGroup } from "react-bootstrap";
-import { useRef, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import { MenuItem } from "@mui/material";
 import { cidToSpec } from "../../utils/MoorhenUtils";
+import { MoorhenContext } from "../../utils/MoorhenContext";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
+import { moorhen } from "../../types/moorhen";
 
 var TRIAL_COUNT = 0
 
@@ -55,7 +57,10 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
     const [popoverIsShown, setPopoverIsShown] = useState(false)
     const customCid = useRef<string>('')
     const moleculeSelectRef = useRef<HTMLSelectElement>()
+    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
+
     const menuItemProps = {setPopoverIsShown, customCid, moleculeSelectRef, ...props}
+    const { doShadow, setDoShadow, doOutline, setDoOutline, doSpinTest, setDoSpinTest } = context
 
     return <>
                     <MenuItem onClick={() => doTest(menuItemProps)}>
@@ -64,22 +69,22 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                     <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"
-                            checked={props.doShadow}
-                            onChange={() => { props.setDoShadow(!props.doShadow) }}
+                            checked={doShadow}
+                            onChange={() => { setDoShadow(!doShadow) }}
                             label="Shadows"/>
                     </InputGroup>
                     <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"
-                            checked={props.doOutline}
-                            onChange={() => { props.setDoOutline(!props.doOutline) }}
+                            checked={doOutline}
+                            onChange={() => { setDoOutline(!doOutline) }}
                             label="Outlines"/>
                     </InputGroup>
                     <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"
-                            checked={props.doSpinTest}
-                            onChange={() => { props.setDoSpinTest(!props.doSpinTest) }}
+                            checked={doSpinTest}
+                            onChange={() => { setDoSpinTest(!doSpinTest) }}
                             label="Spin test"/>
                     </InputGroup>
         </>

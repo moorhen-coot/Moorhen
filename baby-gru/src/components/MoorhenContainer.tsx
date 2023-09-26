@@ -70,6 +70,7 @@ const initialMapsState: moorhen.Map[] = []
  * }
  */
 export const MoorhenContainer = (props: moorhen.ContainerProps) => {
+    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
     const innerGlRef = useRef<null | webGL.MGWebGL>(null)
     const innerTimeCapsuleRef = useRef<null | moorhen.TimeCapsule>(null);
     const innnerCommandCentre = useRef<null | moorhen.CommandCentre>(null)
@@ -79,7 +80,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const innerConsoleDivRef = useRef<null | HTMLDivElement>(null)
     const innerLastHoveredAtom = useRef<null | moorhen.HoveredAtom>(null)
     const innerPrevActiveMoleculeRef = useRef<null |  moorhen.Molecule>(null)
-    const innerContext = useContext<undefined | moorhen.Context>(MoorhenContext);
     const [innerActiveMap, setInnerActiveMap] = useState<null | moorhen.Map>(null)
     const [innerActiveMolecule, setInnerActiveMolecule] = useState<null|  moorhen.Molecule>(null)
     const [innerHoveredAtom, setInnerHoveredAtom] = useState<null | moorhen.HoveredAtom>({ molecule: null, cid: null })
@@ -133,7 +133,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         glRef: innerGlRef, timeCapsuleRef: innerTimeCapsuleRef, commandCentre: innnerCommandCentre,
         moleculesRef: innerMoleculesRef, mapsRef: innerMapsRef, activeMapRef: innerActiveMapRef,
         consoleDivRef: innerConsoleDivRef, lastHoveredAtom: innerLastHoveredAtom, 
-        prevActiveMoleculeRef: innerPrevActiveMoleculeRef, context: innerContext,
+        prevActiveMoleculeRef: innerPrevActiveMoleculeRef, setAvailableFonts: setInnerAvailableFonts,
         activeMap: innerActiveMap, setActiveMap: setInnerActiveMap, activeMolecule: innerActiveMolecule,
         setActiveMolecule: setInnerActiveMolecule, hoveredAtom: innerHoveredAtom, setHoveredAtom: setInnerHoveredAtom,
         consoleMessage: innerConsoleMessage, setConsoleMessage: setInnerConsoleMessage, cursorStyle: innerCursorStyle,
@@ -145,7 +145,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         setCootInitialized: setInnerCootInitialized, theme: innerTheme, setTheme: setInnerTheme,
         showToast: innerShowToast, setShowToast: setInnerShowToast, toastContent: innerToastContent, 
         setToastContent: setInnerToastContent, availableFonts: innerAvailableFonts,
-        setAvailableFonts: setInnerAvailableFonts,
     }
 
     let states = {} as moorhen.ContainerStates
@@ -154,14 +153,13 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     })
 
     const { glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef,
-        consoleDivRef, lastHoveredAtom, prevActiveMoleculeRef, context, activeMap, 
+        consoleDivRef, lastHoveredAtom, prevActiveMoleculeRef, activeMap, maps, changeMaps,
         setActiveMap, activeMolecule, setActiveMolecule, hoveredAtom, setHoveredAtom,
         consoleMessage, setConsoleMessage, cursorStyle, setCursorStyle, busy, setBusy,
         windowWidth, setWindowWidth, windowHeight, setWindowHeight, molecules, 
         backgroundColor, setBackgroundColor, availableFonts, setAvailableFonts,
         appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
         showToast, setShowToast, toastContent, setToastContent, changeMolecules,
-        maps, changeMaps
     } = states
 
     const {
@@ -334,7 +332,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     //Make this so that the keyPress returns true or false, depending on whether mgWebGL is to continue processing event
     const onKeyPress = useCallback((event: KeyboardEvent) => {
-        return babyGruKeyPress(event, collectedProps, JSON.parse(context.shortCuts as string))
+        return babyGruKeyPress(event, collectedProps, context, JSON.parse(context.shortCuts as string))
     }, [molecules, activeMolecule, activeMap, hoveredAtom, viewOnly, context])
 
     useEffect(() => {
@@ -408,7 +406,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         setToastContent, hoveredAtom, setHoveredAtom, showToast, setShowToast, windowWidth, windowHeight,
         timeCapsuleRef, isDark, disableFileUploads, urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems,
         extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, extraEditMenuItems, 
-        extraDraggableModals, aceDRGInstance, availableFonts, ...context
+        extraDraggableModals, aceDRGInstance, availableFonts
     }
 
     return <> 

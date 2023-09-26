@@ -22,7 +22,7 @@ export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterfa
                  }}>Interactive scripting...</MenuItem>
             </>
             }
-            {props.extraCalculateMenuItems && props.extraCalculateMenuItems.map( menu => menu)}
+            {props.extraCalculateMenuItems && props.extraCalculateMenuItems.map(menu => menu)}
     </>
 }
 

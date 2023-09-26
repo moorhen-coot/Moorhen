@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from "react"
+import React, { useCallback, useContext, useEffect, useRef, useState } from "react"
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
+import { MoorhenContext } from "../../utils/MoorhenContext"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { Dropdown, Form, InputGroup, SplitButton } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
@@ -17,7 +18,6 @@ const MoorhenImportLigandDictionary = (props: {
     molecules: moorhen.Molecule[];
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    defaultBondSmoothness: number;
     monomerLibraryPath: string;
     backgroundColor: [number, number, number, number];
     panelContent: JSX.Element;
@@ -34,11 +34,13 @@ const MoorhenImportLigandDictionary = (props: {
     moleculeSelectValueRef: React.MutableRefObject<string>;
 }) => {
 
+    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
+
     const {
         createInstance, setCreateInstance, addToMolecule, fetchLigandDict, panelContent,
         setAddToMolecule, tlcValueRef, createRef, moleculeSelectRef, addToRef,moleculeSelectValueRef,
         addToMoleculeValueRef, setPopoverIsShown, molecules, glRef, commandCentre, menuItemText,
-        changeMolecules, backgroundColor, monomerLibraryPath, defaultBondSmoothness, id
+        changeMolecules, backgroundColor, monomerLibraryPath, id
     } = props
 
     const handleFileContent = useCallback(async (fileContent: string) => {
@@ -82,7 +84,7 @@ const MoorhenImportLigandDictionary = (props: {
                 newMolecule.molNo = result.data.result.result
                 newMolecule.name = instanceName
                 newMolecule.setBackgroundColour(backgroundColor)
-                newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
+                newMolecule.defaultBondOptions.smoothness = context.defaultBondSmoothness
                 await Promise.all([
                     newMolecule.fetchDefaultColourRules(),
                     newMolecule.addDict(fileContent)
@@ -106,7 +108,7 @@ const MoorhenImportLigandDictionary = (props: {
 
         setPopoverIsShown(false)
 
-    }, [moleculeSelectValueRef, createRef, setPopoverIsShown, molecules, commandCentre, glRef, tlcValueRef, monomerLibraryPath, backgroundColor, defaultBondSmoothness, changeMolecules, addToMoleculeValueRef])
+    }, [moleculeSelectValueRef, createRef, setPopoverIsShown, molecules, commandCentre, glRef, tlcValueRef, monomerLibraryPath, backgroundColor, context.defaultBondSmoothness, changeMolecules, addToMoleculeValueRef])
 
     const popoverContent = <>
             {panelContent}
@@ -165,7 +167,6 @@ export const MoorhenSMILESToLigandMenuItem = (props: {
     molecules: moorhen.Molecule[];
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    defaultBondSmoothness: number;
     monomerLibraryPath: string;
     backgroundColor: [number, number, number, number];
 }) => {
@@ -285,7 +286,6 @@ export const MoorhenImportDictionaryMenuItem = (props: {
     molecules: moorhen.Molecule[];
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    defaultBondSmoothness: number;
     monomerLibraryPath: string;
     backgroundColor: [number, number, number, number];
  }) => {

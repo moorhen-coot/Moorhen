@@ -1,15 +1,18 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { MenuItem } from "@mui/material";
+import { MoorhenContext } from "../../utils/MoorhenContext";
 import { MoorhenCopyFragmentUsingCidMenuItem } from "../menu-item/MoorhenCopyFragmentUsingCidMenuItem";
 import { MoorhenDeleteUsingCidMenuItem } from "../menu-item/MoorhenDeleteUsingCidMenuItem"
 import { MoorhenGoToMenuItem } from "../menu-item/MoorhenGoToMenuItem"
 import { MoorhenMergeMoleculesMenuItem } from "../menu-item/MoorhenMergeMoleculesMenuItem"
-import { MoorhenAddRemoveHydrogenAtomsMenuItem } from "../menu-item/MoorhenAddRemoveHydrogenAtomsMenuItem"
-import { MenuItem } from "@mui/material";
-import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MoorhenAddSimpleMenuItem } from "../menu-item/MoorhenAddSimpleMenuItem";
+import { MoorhenAddRemoveHydrogenAtomsMenuItem } from "../menu-item/MoorhenAddRemoveHydrogenAtomsMenuItem"
+import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
+import { moorhen } from "../../types/moorhen";
 
 export const MoorhenEditMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
+    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
     const menuItemProps = { setPopoverIsShown, ...props }
 
     return <>
@@ -19,7 +22,7 @@ export const MoorhenEditMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             <MoorhenDeleteUsingCidMenuItem key="delete" {...menuItemProps} />
             <MoorhenCopyFragmentUsingCidMenuItem key="copy_fragment" {...menuItemProps} />
             <MoorhenGoToMenuItem key="go_to_cid" {...menuItemProps} />
-            {props.devMode &&
+            {context.devMode &&
                 <MenuItem onClick={() => {
                     props.setShowCreateAcedrgLinkModal(true)
                     document.body.click()

@@ -1,7 +1,8 @@
 import { Form, Button, InputGroup, SplitButton, Dropdown } from "react-bootstrap";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenMap } from "../../utils/MoorhenMap";
-import { useState, useRef } from "react";
+import { MoorhenContext } from "../../utils/MoorhenContext";
+import { useState, useRef, useContext } from "react";
 import { MoorhenLoadTutorialDataMenuItem } from "../menu-item/MoorhenLoadTutorialDataMenuItem"
 import { MoorhenAssociateReflectionsToMap } from "../menu-item/MoorhenAssociateReflectionsToMap";
 import { MoorhenAutoOpenMtzMenuItem } from "../menu-item/MoorhenAutoOpenMtzMenuItem"
@@ -20,6 +21,7 @@ import { moorhen } from "../../types/moorhen";
 export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
 
     const { changeMolecules, changeMaps, commandCentre, glRef, monomerLibraryPath } = props;
+    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
     const [remoteSource, setRemoteSource] = useState<string>("PDBe")
     const [isValidPdbId, setIsValidPdbId] = useState<boolean>(true)
@@ -64,7 +66,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const readPdbFile = async (file: File): Promise<moorhen.Molecule> => {
         const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
         newMolecule.setBackgroundColour(props.backgroundColor)
-        newMolecule.defaultBondOptions.smoothness = props.defaultBondSmoothness
+        newMolecule.defaultBondOptions.smoothness = context.defaultBondSmoothness
         await newMolecule.loadToCootFromFile(file)        
         return newMolecule        
     }
@@ -147,7 +149,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const fetchMoleculeFromURL = async (url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> => {
         const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
         newMolecule.setBackgroundColour(props.backgroundColor)
-        newMolecule.defaultBondOptions.smoothness = props.defaultBondSmoothness
+        newMolecule.defaultBondOptions.smoothness = context.defaultBondSmoothness
         try {
             await newMolecule.loadToCootFromURL(url, molName)
             if (newMolecule.molNo === -1) throw new Error("Cannot read the fetched molecule...")
@@ -319,11 +321,11 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                         Download session
                     </MenuItem>
 
-                    <MenuItem id='save-session-menu-item' onClick={createBackup} disabled={!props.enableTimeCapsule}>
+                    <MenuItem id='save-session-menu-item' onClick={createBackup} disabled={!context.enableTimeCapsule}>
                         Save backup
                     </MenuItem>
                     
-                    <MoorhenBackupsMenuItem {...menuItemProps} disabled={!props.enableTimeCapsule} loadSession={loadSession} />
+                    <MoorhenBackupsMenuItem {...menuItemProps} disabled={!context.enableTimeCapsule} loadSession={loadSession} />
 
                     {props.extraFileMenuItems && props.extraFileMenuItems.map( menu => menu)}
                     

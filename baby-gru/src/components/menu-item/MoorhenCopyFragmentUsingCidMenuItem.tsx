@@ -1,8 +1,7 @@
 import { useRef, useState } from "react"
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { Form } from "react-bootstrap"
+import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 
@@ -12,8 +11,6 @@ export const MoorhenCopyFragmentUsingCidMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     monomerLibraryPath: string;
-    defaultBondSmoothness: number;
-    backgroundColor: [number, number, number, number];
     changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
 }) => {
 

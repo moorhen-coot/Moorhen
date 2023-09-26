@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useState, useRef, useCallback } from 'react';
+import { forwardRef, useEffect, useState, useRef, useCallback, useContext } from 'react';
 import { Spinner, Form, Overlay, Popover, Stack } from 'react-bootstrap';
 import { MoorhenFileMenu } from './MoorhenFileMenu';
 import { MoorhenPreferencesMenu } from './MoorhenPreferencesMenu';
@@ -12,6 +12,7 @@ import { MoorhenCryoMenu } from './MoorhenCryoMenu';
 import { MoorhenCalculateMenu } from './MoorhenCalculateMenu';
 import { ClickAwayListener, Fab, MenuItem, IconButton, MenuList, Popper, Grow } from "@mui/material";
 import { convertRemToPx, convertViewtoPx } from '../../utils/MoorhenUtils';
+import { MoorhenContext } from "../../utils/MoorhenContext";
 import { MoorhenModelsModal } from '../modal/MoorhenModelsModal';
 import { MoorhenCreateAcedrgLinkModal } from '../modal/MoorhenCreateAcedrgLinkModal';
 import { MoorhenMapsModal } from '../modal/MoorhenMapsModal';
@@ -38,6 +39,7 @@ export interface MoorhenNavBarExtendedControlsInterface extends MoorhenNavBarPro
 }
 
 export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface>((props, ref) => {
+    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
     const [speedDialOpen, setSpeedDialOpen] = useState<boolean>(false)
     const [currentDropdownId, setCurrentDropdownId] = useState<string>('-1')
     const [showSaveIcon, setShowSaveIcon] = useState<boolean>(false)
@@ -88,7 +90,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
         'Help': { icon: <HelpOutlineOutlined/>, name: 'Help', ref: helpDialActionRef},
     }
 
-    if (props.devMode) {
+    if (context.devMode) {
         actions['Dev'] = { icon: <ScienceOutlined/>, name: 'Dev', ref: devDialActionRef}
     }
 

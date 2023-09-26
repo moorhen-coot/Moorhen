@@ -1,4 +1,6 @@
+import { useContext } from "react";
 import { Card, Col, Modal, Row } from "react-bootstrap";
+import { MoorhenContext } from "../../utils/MoorhenContext";
 import { MoorhenNavBarExtendedControlsInterface } from "../navbar-menus/MoorhenNavBar";
 import { moorhen } from "../../types/moorhen";
 
@@ -20,7 +22,9 @@ interface MoorhenControlsModalPropsInterface extends MoorhenNavBarExtendedContro
 }
 
 export const MoorhenControlsModal = (props: MoorhenControlsModalPropsInterface) => {
-    const shortCuts: moorhen.Shortcut[] = props.shortCuts ? JSON.parse(props.shortCuts as string) : null
+    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
+
+    const shortCuts: moorhen.Shortcut[] = context.shortCuts ? JSON.parse(context.shortCuts as string) : null
     if (shortCuts) {
         shortCuts['pan_view'] = {modifiers: ['shiftKey', 'altKey'], keyPress: '', label: 'Pan view'}
         shortCuts['rotate_view'] = {modifiers: ['shiftKey'], keyPress: '', label: 'Rotate view'} 

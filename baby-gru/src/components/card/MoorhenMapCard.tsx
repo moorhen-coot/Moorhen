@@ -1,14 +1,15 @@
-import { forwardRef, useImperativeHandle, useEffect, useState, useRef, useCallback, useMemo, Fragment } from "react";
-import { Card, Form, Button, Col, DropdownButton, Stack, OverlayTrigger, ToggleButton } from "react-bootstrap";
-import { doDownload } from '../../utils/MoorhenUtils';
+import { forwardRef, useImperativeHandle, useEffect, useState, useRef, useCallback, useMemo, Fragment, useContext } from "react"
+import { Card, Form, Button, Col, DropdownButton, Stack, OverlayTrigger, ToggleButton } from "react-bootstrap"
+import { doDownload } from '../../utils/MoorhenUtils'
+import { MoorhenContext } from "../../utils/MoorhenContext"
 import { getNameLabel } from "./cardUtils"
 import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings, FileCopyOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined, AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
 import { MoorhenMapSettingsMenuItem } from "../menu-item/MoorhenMapSettingsMenuItem";
 import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem"
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
 import MoorhenSlider from "../misc/MoorhenSlider";
-import { IconButton, MenuItem, Popover, Tooltip } from "@mui/material";
-import { RgbColorPicker } from "react-colorful";
+import { IconButton, MenuItem, Popover, Tooltip } from "@mui/material"
+import { RgbColorPicker } from "react-colorful"
 import { moorhen } from "../../types/moorhen"
 
 type ActionButtonType = {
@@ -35,13 +36,14 @@ interface MoorhenMapCardPropsInterface extends moorhen.Controls {
 }
 
 export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((props, cardRef) => {
+    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
     const [cootContour, setCootContour] = useState<boolean>(true)
     const [mapRadius, setMapRadius] = useState<number>(props.initialRadius)
     const [mapContourLevel, setMapContourLevel] = useState<number>(props.initialContour)
-    const [mapLitLines, setMapLitLines] = useState<boolean>(props.defaultMapLitLines)
-    const [mapSolid, setMapSolid] = useState<boolean>(props.defaultMapSurface)
+    const [mapLitLines, setMapLitLines] = useState<boolean>(context.defaultMapLitLines)
+    const [mapSolid, setMapSolid] = useState<boolean>(context.defaultMapSurface)
     const [mapOpacity, setMapOpacity] = useState<number>(1.0)
-    const [isCollapsed, setIsCollapsed] = useState<boolean>(!props.defaultExpandDisplayCards);
+    const [isCollapsed, setIsCollapsed] = useState<boolean>(!context.defaultExpandDisplayCards);
     const [currentName, setCurrentName] = useState<string>(props.map.name);
     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
     const [mapColour, setMapColour] = useState<{ r: number; g: number; b: number; } | null>(null)
@@ -261,9 +263,9 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         let newMapContourLevel: number
         if (props.map.cootContour && props.map.molNo === props.activeMap.molNo) {
             if (evt.detail.factor > 1) {
-                newMapContourLevel = mapContourLevel + props.contourWheelSensitivityFactor
+                newMapContourLevel = mapContourLevel + context.contourWheelSensitivityFactor
             } else {
-                newMapContourLevel = mapContourLevel - props.contourWheelSensitivityFactor
+                newMapContourLevel = mapContourLevel - context.contourWheelSensitivityFactor
             }
             
             setMapContourLevel(newMapContourLevel)
@@ -332,10 +334,10 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
 
     }, [mapRadius, mapContourLevel, mapLitLines, mapSolid])
 
-    const increaseLevelButton = <IconButton onClick={() => setMapContourLevel(mapContourLevel + props.contourWheelSensitivityFactor)} style={{padding: 0, color: props.isDark ? 'white' : 'black'}}>
+    const increaseLevelButton = <IconButton onClick={() => setMapContourLevel(mapContourLevel + context.contourWheelSensitivityFactor)} style={{padding: 0, color: props.isDark ? 'white' : 'black'}}>
                                     <AddCircleOutline/>
                                 </IconButton>
-    const decreaseLevelButton = <IconButton onClick={() => setMapContourLevel(mapContourLevel - props.contourWheelSensitivityFactor)} style={{padding: 0, color: props.isDark ? 'white' : 'black'}}>
+    const decreaseLevelButton = <IconButton onClick={() => setMapContourLevel(mapContourLevel - context.contourWheelSensitivityFactor)} style={{padding: 0, color: props.isDark ? 'white' : 'black'}}>
                                     <RemoveCircleOutline/>
                                 </IconButton>
     const increaseRadiusButton = <IconButton onClick={() => setMapRadius(mapRadius + 2)} style={{padding: 0, color: props.isDark ? 'white' : 'black'}}>

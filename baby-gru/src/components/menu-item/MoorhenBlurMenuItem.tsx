@@ -1,30 +1,28 @@
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react"
-import { Form, InputGroup, NavDropdown } from "react-bootstrap";
+import { Dispatch, SetStateAction, useContext } from "react"
+import { Form, InputGroup } from "react-bootstrap";
 import MoorhenSlider from "../misc/MoorhenSlider"
-import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { webGL } from "../../types/mgWebGL";
+import { MoorhenContext } from "../../utils/MoorhenContext";
+import { moorhen } from "../../types/moorhen";
 
 export const MoorhenBlurMenuItem = (props: {
     setPopoverIsShown: Dispatch<SetStateAction<boolean>> ;
-    depthBlurDepth: number;
-    depthBlurRadius: number;
-    setDepthBlurDepth: React.Dispatch<React.SetStateAction<number>>;
-    setDepthBlurRadius: React.Dispatch<React.SetStateAction<number>>;
-    setUseOffScreenBuffers: React.Dispatch<React.SetStateAction<boolean>>;
-    useOffScreenBuffers: boolean;
 }) => {
+
+    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
+    
+    const { useOffScreenBuffers, setUseOffScreenBuffers, depthBlurDepth, setDepthBlurDepth, depthBlurRadius, setDepthBlurRadius } = context
 
     const panelContent = <div>
                     <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"
-                            checked={props.useOffScreenBuffers}
-                            onChange={() => { props.setUseOffScreenBuffers(!props.useOffScreenBuffers) }}
+                            checked={useOffScreenBuffers}
+                            onChange={() => { setUseOffScreenBuffers(!useOffScreenBuffers) }}
                             label="Do Depth Blur"/>
                     </InputGroup>
-                    <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false} sliderTitle="Blur depth" initialValue={props.depthBlurDepth} externalValue={props.depthBlurDepth} setExternalValue={props.setDepthBlurDepth}/>
-                    <MoorhenSlider minVal={2} maxVal={16} logScale={false} sliderTitle="Blur radius" initialValue={props.depthBlurRadius} externalValue={props.depthBlurRadius} allowFloats={false} setExternalValue={props.setDepthBlurRadius}/>
+                    <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false} sliderTitle="Blur depth" initialValue={depthBlurDepth} externalValue={depthBlurDepth} setExternalValue={setDepthBlurDepth}/>
+                    <MoorhenSlider minVal={2} maxVal={16} logScale={false} sliderTitle="Blur radius" initialValue={depthBlurRadius} externalValue={depthBlurRadius} allowFloats={false} setExternalValue={setDepthBlurRadius}/>
     </div>
 
     return <MoorhenBaseMenuItem

@@ -1,6 +1,7 @@
-import { useEffect, useState, useRef, useReducer, useCallback, useImperativeHandle, forwardRef } from 'react';
+import { useEffect, useState, useRef, useReducer, useCallback, useImperativeHandle, forwardRef, useContext } from 'react';
 import { Card, Row, Col, Accordion, Stack, Button } from "react-bootstrap";
 import { doDownload, sequenceIsValid, representationLabelMapping } from '../../utils/MoorhenUtils';
+import { MoorhenContext } from "../../utils/MoorhenContext";
 import { isDarkBackground } from '../../WebGLgComponents/mgWebGL'
 import { MoorhenSequenceViewer } from "../sequence-viewer/MoorhenSequenceViewer";
 import { MoorhenMoleculeCardButtonBar } from "../button-bar/MoorhenMoleculeCardButtonBar"
@@ -62,6 +63,7 @@ export type clickedResidueType = {
 }
 
 export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInterface>((props, cardRef) => {
+    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
     const addColourRulesAnchorDivRef = useRef<HTMLDivElement | null>(null)
     const busyRedrawing = useRef<boolean>(false)
     const isDirty = useRef<boolean>(false)
@@ -72,7 +74,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const [customRepresentationList, changeCustomRepresentationList] = useReducer(customRepReducer, initialCustomRep)
     const [selectedResidues, setSelectedResidues] = useState<[number, number] | null>(null);
     const [clickedResidue, setClickedResidue] = useState<clickedResidueType | null>(null);
-    const [isCollapsed, setIsCollapsed] = useState<boolean>(!props.defaultExpandDisplayCards);
+    const [isCollapsed, setIsCollapsed] = useState<boolean>(!context.defaultExpandDisplayCards);
     const [isVisible, setIsVisible] = useState<boolean>(true)
     const [bondWidth, setBondWidth] = useState<number>(props.molecule.defaultBondOptions.width)
     const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState<number>(props.molecule.defaultBondOptions.atomRadiusBondRatio)
@@ -137,7 +139,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     }, [props.molecule, props.glRef])
 
     useEffect(() => {
-        if (props.drawMissingLoops === null) {
+        if (context.drawMissingLoops === null) {
             return
         }
 
@@ -148,7 +150,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             props.molecule.redraw()
         }
 
-    }, [props.drawMissingLoops])
+    }, [context.drawMissingLoops])
 
     useEffect(() => {
         if (props.backgroundColor === null) {
@@ -440,7 +442,6 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                         selectedResidues={selectedResidues}
                         currentDropdownMolNo={props.currentDropdownMolNo}
                         setCurrentDropdownMolNo={props.setCurrentDropdownMolNo}
-                        backupsEnabled={props.makeBackups}
                         {...handleProps}
                     />
                 </Col>
