@@ -90,12 +90,7 @@ int count_residues_in_selection(const gemmi::Structure &Structure, const gemmi::
 }
 
 gemmi::Structure remove_non_selected_residues(const gemmi::Structure &Structure, const gemmi::Selection &Selection) {
-    std::ostringstream oss;
-    gemmi::write_pdb(Structure, oss);
-    std::string pdb_string = oss.str();
-    char *c_data = (char *)pdb_string.c_str();
-    size_t size = pdb_string.length();
-    auto new_structure = gemmi::read_structure_from_char_array(c_data, size, "copy");
+    auto new_structure = Structure;
 
     gemmi::vector_remove_if(new_structure.models, [&](const gemmi::Model& model) { return !Selection.matches(model); });
     for (auto modelIndex = 0; modelIndex < new_structure.models.size(); modelIndex++) {
