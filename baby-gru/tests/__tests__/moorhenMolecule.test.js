@@ -289,9 +289,78 @@ describe("Testing MoorhenMolecule", () => {
         expect(isLigand).toBeTruthy()
     })
 
+    test("Test importing ligands with same name", async () => {
+        /**
+         * First create a molecules_container_js and load nitrobenzene so that we
+         * get the "correct" bonds mesh.
+         */
+        const molecules_container_1 = new cootModule.molecules_container_js(false)
+        const commandCentre_1 = {
+            current: new MockMoorhenCommandCentre(molecules_container_1, cootModule)
+        }
+
+        const coordMolNo_1 = molecules_container_1.read_pdb('./5a3h.pdb')
+        const result_import_dict_1 = molecules_container_1.import_cif_dictionary('./nitrobenzene.cif', coordMolNo_1)
+        expect(result_import_dict_1).toBe(1)
+        const ligandMolNo_1 = molecules_container_1.get_monomer_and_position_at(
+            'LIG', coordMolNo_1, 0, 0, 0
+        )
+        // This bond mesh contains the "correct" bonds for the ligand
+        const simpleMesh_1 = await commandCentre_1.current.cootCommand({
+            returnType: 'instanced_mesh',
+            command: "get_bonds_mesh_instanced",
+            commandArgs: [
+                ligandMolNo_1,
+                'COLOUR-BY-CHAIN-AND-DICTIONARY',
+                false, 0.1, 1, 1
+            ]
+        })
+
+        
+        /**
+         * Create new molecules_container_js and import two dictionaries for two different ligands
+         * that share the same name "LIG". Each ligand is added to a different molecule. You 
+         * would expect that the nitrobenzene here would have the same bonds as the ones
+         * we got previously.
+         */
+        const molecules_container_2 = new cootModule.molecules_container_js(false)
+        const commandCentre_2 = {
+            current: new MockMoorhenCommandCentre(molecules_container_2, cootModule)
+        }
+
+        const coordMolNo_2 = molecules_container_2.read_pdb('./5a3h.pdb')
+        const result_import_dict_2 = molecules_container_2.import_cif_dictionary('./benzene.cif', coordMolNo_2)
+        expect(result_import_dict_2).toBe(1)
+        
+        const coordMolNo_3 = molecules_container_2.read_pdb('./5a3h.pdb')
+        const result_import_dict_3 = molecules_container_2.import_cif_dictionary('./nitrobenzene.cif', coordMolNo_3)
+        expect(result_import_dict_3).toBe(1)
+        const ligandMolNo_3 = molecules_container_2.get_monomer_and_position_at(
+            'LIG', coordMolNo_3, 0, 0, 0
+        )
+        // This bond mesh contains "weird" bonds that do not correspond with nitrobenzene
+        const simpleMesh_3 = await commandCentre_2.current.cootCommand({
+            returnType: 'instanced_mesh',
+            command: "get_bonds_mesh_instanced",
+            commandArgs: [
+                ligandMolNo_3,
+                'COLOUR-BY-CHAIN-AND-DICTIONARY',
+                false, 0.1, 1, 1
+            ]
+        })
+
+        expect(simpleMesh_3.data.result.result.idx_tri[0][0]).toEqual(simpleMesh_1.data.result.result.idx_tri[0][0])
+        expect(simpleMesh_3.data.result.result.vert_tri[0][0]).toEqual(simpleMesh_1.data.result.result.vert_tri[0][0])
+        expect(simpleMesh_3.data.result.result.norm_tri[0][0]).toEqual(simpleMesh_1.data.result.result.norm_tri[0][0])
+        expect(simpleMesh_3.data.result.result.instance_origins[0][0]).toEqual(simpleMesh_1.data.result.result.instance_origins[0][0])
+        expect(simpleMesh_3.data.result.result.instance_orientations[0][0]).toEqual(simpleMesh_1.data.result.result.instance_orientations[0][0])
+        expect(simpleMesh_3.data.result.result.instance_sizes[0][0]).toEqual(simpleMesh_1.data.result.result.instance_sizes[0][0])
+    })
+
+
 })
 
-const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h_no_ligand.pdb', 'LZA.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
+const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h_no_ligand.pdb', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
 
 const setupFunctions = {
     removeTestDataFromFauxFS: () => {

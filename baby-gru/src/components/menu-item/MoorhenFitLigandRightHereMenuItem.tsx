@@ -1,6 +1,7 @@
 import { TextField } from "@mui/material";
-import { useRef, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import { Form } from "react-bootstrap";
+import { MoorhenContext } from "../../utils/MoorhenContext";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
@@ -10,7 +11,6 @@ import { webGL } from "../../types/mgWebGL";
 export const MoorhenFitLigandRightHereMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     popoverPlacement?: 'left' | 'right';
-    defaultBondSmoothness: number;
     glRef: React.RefObject<webGL.MGWebGL>;  
     maps: moorhen.Map[];
     molecules: moorhen.Molecule[];
@@ -18,9 +18,9 @@ export const MoorhenFitLigandRightHereMenuItem = (props: {
     changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
     backgroundColor: [number, number, number, number];
     monomerLibraryPath: string;
-    devMode?: boolean;
 }) => {
 
+    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
     const intoMoleculeRef = useRef<HTMLSelectElement | null>(null)
     const ligandMoleculeRef = useRef<HTMLSelectElement | null>(null)
     const mapSelectRef = useRef<HTMLSelectElement | null>(null)
@@ -33,7 +33,7 @@ export const MoorhenFitLigandRightHereMenuItem = (props: {
         <MoorhenMapSelect {...props} label="Map" ref={mapSelectRef} />
         <MoorhenMoleculeSelect {...props} label="Protein molecule" allowAny={false} ref={intoMoleculeRef} />
         <MoorhenMoleculeSelect {...props} label="Ligand molecule" allowAny={false} ref={ligandMoleculeRef} />
-        {props.devMode && 
+        {context.devMode && 
          <Form.Check
             style={{margin: '0.5rem'}} 
             type="switch"

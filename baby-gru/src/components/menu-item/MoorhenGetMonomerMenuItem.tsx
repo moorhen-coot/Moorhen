@@ -1,8 +1,9 @@
-import { useRef } from "react";
+import { useContext, useRef } from "react";
 import { Form } from "react-bootstrap";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
+import { MoorhenContext } from "../../utils/MoorhenContext";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 
@@ -10,13 +11,13 @@ export const MoorhenGetMonomerMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>
     popoverPlacement?: 'left' | 'right'
     molecules: moorhen.Molecule[];
-    defaultBondSmoothness: number;
     changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     monomerLibraryPath: string;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 
+    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
     const tlcRef = useRef<HTMLInputElement>()
     const selectRef = useRef<HTMLSelectElement | null>(null)
 
@@ -59,7 +60,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
             newMolecule.molNo = result.data.result.result
             newMolecule.name = newTlc
             newMolecule.setBackgroundColour(props.glRef.current.background_colour)
-            newMolecule.defaultBondOptions.smoothness = props.defaultBondSmoothness
+            newMolecule.defaultBondOptions.smoothness = context.defaultBondSmoothness
             const fromMolecule = props.molecules.find(molecule => molecule.molNo === fromMolNo)
             if (typeof fromMolecule !== 'undefined') {
                 const ligandDict = fromMolecule.getDict(newTlc)

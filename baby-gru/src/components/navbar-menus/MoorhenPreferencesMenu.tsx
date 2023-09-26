@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Form, InputGroup } from "react-bootstrap";
 import { MoorhenShortcutConfigModal } from "../modal/MoorhenShortcutConfigModal"
 import { MenuItem } from "@mui/material";
@@ -10,28 +10,32 @@ import { MoorhenDefaultBondSmoothnessPreferencesMenuItem } from "../menu-item/Mo
 import { MoorhenMapSamplingMenuItem } from "../menu-item/MoorhenMapSamplingMenuItem"
 import MoorhenSlider from '../misc/MoorhenSlider' 
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
+import { MoorhenContext } from "../../utils/MoorhenContext";
+import { moorhen } from "../../types/moorhen";
 
 export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
+    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
+
     const { 
         atomLabelDepthMode, setAtomLabelDepthMode, setMouseSensitivity, enableTimeCapsule, setTransparentModalsOnMouseOut,
         defaultExpandDisplayCards, setDefaultExpandDisplayCards, defaultMapLitLines, transparentModalsOnMouseOut,
         setDefaultMapLitLines, enableRefineAfterMod, setEnableRefineAfterMod, mouseSensitivity, contourWheelSensitivityFactor,
-        mapLineWidth, setMapLineWidth, makeBackups, setMakeBackups, timeCapsuleRef, setContourWheelSensitivityFactor,
-        showShortcutToast, setShowShortcutToast, defaultMapSurface, setDefaultMapSurface, devMode, setDevMode,
+        mapLineWidth, setMapLineWidth, makeBackups, setMakeBackups, setContourWheelSensitivityFactor, setGLLabelsFontFamily,
+        showShortcutToast, setShowShortcutToast, defaultMapSurface, setDefaultMapSurface, devMode, setDevMode, setGLLabelsFontSize,
         defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, setShowScoresToast, defaultMapSamplingRate,
-        defaultUpdatingScores, setDefaultUpdatingScores, zoomWheelSensitivityFactor, setEnableTimeCapsule,
-        setZoomWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom, maxBackupCount, 
+        defaultUpdatingScores, setDefaultUpdatingScores, zoomWheelSensitivityFactor, setEnableTimeCapsule, GLLabelsFontSize,
+        setZoomWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom, maxBackupCount, GLLabelsFontFamily,
         setMaxBackupCount, modificationCountBackupThreshold, setModificationCountBackupThreshold, setDefaultMapSamplingRate
-     } = props;
+     } = context;
 
      const [showModal, setShowModal] = useState<boolean | null>(null);
      const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
 
     useEffect(() => {
-        if (timeCapsuleRef.current) {
-            timeCapsuleRef.current.disableBackups = !enableTimeCapsule
-            timeCapsuleRef.current.maxBackupCount = maxBackupCount
-            timeCapsuleRef.current.modificationCountBackupThreshold = modificationCountBackupThreshold
+        if (props.timeCapsuleRef.current) {
+            props.timeCapsuleRef.current.disableBackups = !enableTimeCapsule
+            props.timeCapsuleRef.current.maxBackupCount = maxBackupCount
+            props.timeCapsuleRef.current.modificationCountBackupThreshold = modificationCountBackupThreshold
         }
     }, [maxBackupCount, modificationCountBackupThreshold, enableTimeCapsule])
 
@@ -154,13 +158,13 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
                     <MenuItem id="configure-shortcuts-menu-item" onClick={() => setShowModal(true)} style={{marginTop:'0rem'}}>
                         Configure shortcuts...
                     </MenuItem>
-                    <MoorhenShortcutConfigModal showModal={showModal} setShowModal={setShowModal} setShortCuts={props.setShortCuts} shortCuts={JSON.parse(props.shortCuts as string)}/>
+                    <MoorhenShortcutConfigModal showModal={showModal} setShowModal={setShowModal} setShortCuts={context.setShortCuts} shortCuts={JSON.parse(context.shortCuts as string)}/>
                     <MoorhenGLFontMenuItem
-                        GLLabelsFontFamily={props.GLLabelsFontFamily}
-                        setGLLabelsFontFamily={props.setGLLabelsFontFamily}
+                        GLLabelsFontFamily={GLLabelsFontFamily}
+                        setGLLabelsFontFamily={setGLLabelsFontFamily}
                         availableFonts={props.availableFonts}
-                        GLLabelsFontSize={props.GLLabelsFontSize}
-                        setGLLabelsFontSize={props.setGLLabelsFontSize}
+                        GLLabelsFontSize={GLLabelsFontSize}
+                        setGLLabelsFontSize={setGLLabelsFontSize}
                         setPopoverIsShown={setPopoverIsShown}
                     />
             </div>

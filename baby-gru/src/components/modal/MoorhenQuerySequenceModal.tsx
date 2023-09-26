@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useContext } from "react";
 import { Backdrop } from '@mui/material';
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined, FirstPageOutlined, WarningOutlined } from "@mui/icons-material";
 import { getMultiColourRuleArgs } from '../../utils/MoorhenUtils';
@@ -7,6 +7,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
+import { MoorhenContext } from "../../utils/MoorhenContext";
 import { MoorhenDraggableModalBase } from "../modal/MoorhenDraggableModalBase"
 import MoorhenSlider from "../misc/MoorhenSlider";
 import { webGL } from "../../types/mgWebGL";
@@ -20,11 +21,9 @@ export const MoorhenQuerySequenceModal = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     backgroundColor: [number, number, number, number];
-    defaultBondSmoothness: number;
     monomerLibraryPath: string;
     changeMolecules: (arg0: moorhen.MolChange<MoorhenMolecule>) => void;
     setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
-    transparentModalsOnMouseOut: boolean;
 }) => {
 
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
@@ -42,11 +41,14 @@ export const MoorhenQuerySequenceModal = (props: {
     const moleculeSelectRef = useRef<HTMLSelectElement>();
     const chainSelectRef = useRef<HTMLSelectElement>();
     const sourceSelectRef =  useRef<HTMLSelectElement>();
+    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
+
+    const { defaultBondSmoothness } = context
 
     const fetchMoleculeFromURL = async (url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> => {
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath)
         newMolecule.setBackgroundColour(props.backgroundColor)
-        newMolecule.defaultBondOptions.smoothness = props.defaultBondSmoothness
+        newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         try {
             await newMolecule.loadToCootFromURL(url, molName)
             if (newMolecule.molNo === -1) throw new Error("Cannot read the fetched molecule...")
@@ -281,7 +283,6 @@ export const MoorhenQuerySequenceModal = (props: {
     }, [numberOfHits])
 
     return <MoorhenDraggableModalBase
-        transparentOnMouseOut={props.transparentModalsOnMouseOut}
         additionalChildren={
             <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={busy}>
                 <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>

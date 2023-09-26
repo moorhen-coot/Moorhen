@@ -1,7 +1,8 @@
-import { useRef } from "react";
+import { useContext, useRef } from "react";
 import { Form } from "react-bootstrap";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
+import { MoorhenContext } from "../../utils/MoorhenContext";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
@@ -10,7 +11,6 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     monomerLibraryPath: string;
     backgroundColor: [number, number, number, number];
-    defaultBondSmoothness: number;
     urlPrefix: string;
     glRef: React.RefObject<webGL.MGWebGL>;
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
@@ -19,6 +19,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 
+    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
     const tutorialNumberSelectorRef = useRef<HTMLSelectElement | null>(null);
     const allTutorialNumbers = ['1', '2', '3']
     const tutorialMtzColumnNames = {
@@ -45,7 +46,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
         const tutorialNumber = tutorialNumberSelectorRef.current.value
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath)
         newMolecule.setBackgroundColour(props.backgroundColor)
-        newMolecule.defaultBondOptions.smoothness = props.defaultBondSmoothness
+        newMolecule.defaultBondOptions.smoothness = context.defaultBondSmoothness
         const newMap = new MoorhenMap(props.commandCentre, props.glRef)
         const newDiffMap = new MoorhenMap(props.commandCentre, props.glRef)
         await newMolecule.loadToCootFromURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `mol-${tutorialNumber}`)

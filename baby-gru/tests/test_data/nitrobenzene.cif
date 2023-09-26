@@ -1,0 +1,71 @@
+global_
+_lib_name         ?
+_lib_version      ?
+_lib_update       ?
+# ------------------------------------------------
+#
+# ---   LIST OF MONOMERS ---
+#
+data_comp_list
+loop_
+_chem_comp.id
+_chem_comp.three_letter_code
+_chem_comp.name
+_chem_comp.group
+_chem_comp.number_atoms_all
+_chem_comp.number_atoms_nh
+_chem_comp.desc_level
+LIG      LIG 'UNKNOWN LIGAND                      ' non-polymer        14 9 .
+# ------------------------------------------------------
+# ------------------------------------------------------
+#
+# --- DESCRIPTION OF MONOMERS ---
+#
+data_comp_LIG
+#
+loop_
+_chem_comp_atom.comp_id
+_chem_comp_atom.atom_id
+_chem_comp_atom.type_symbol
+_chem_comp_atom.type_energy
+_chem_comp_atom.charge
+_chem_comp_atom.x
+_chem_comp_atom.y
+_chem_comp_atom.z
+LIG           C1 C C 0 0.233823 -1.1922 0.0300888
+LIG           C2 C C 0 0.884567 0.0538686 -0.0339838
+LIG           N1 N NT 1 2.32117 0.123154 -0.0885867
+LIG           O1 O O -1 3.07754 -1.0265 -0.0789225
+LIG           O2 O O 0 2.90398 1.22594 -0.145542
+LIG           C3 C C 0 0.107116 1.22818 -0.0436802
+LIG           C4 C C 0 -1.28832 1.15393 0.00958262
+LIG           C5 C C 0 -1.92224 -0.088914 0.0729381
+LIG           C6 C C 0 -1.16199 -1.26046 0.083172
+LIG           H1 H H 0 0.802519 -2.11293 0.0391822
+LIG           H2 H H 0 0.577239 2.20197 -0.0923522
+LIG           H3 H H 0 -1.87853 2.06122 0.00171007
+LIG           H4 H H 0 -3.00241 -0.144168 0.114096
+LIG           H5 H H 0 -1.65447 -2.22309 0.132297
+loop_
+_chem_comp_bond.comp_id
+_chem_comp_bond.atom_id_1
+_chem_comp_bond.atom_id_2
+_chem_comp_bond.type
+_chem_comp_bond.aromatic
+_chem_comp_bond.value_dist
+_chem_comp_bond.value_dist_esd
+LIG      C1 C2 DOUBLE y 1.40721  0.020
+LIG      C2 N1 SINGLE n 1.43931  0.020
+LIG      N1 O1 SINGLE n 1.37619  0.020
+LIG      N1 O2 DOUBLE n 1.24862  0.020
+LIG      C2 C3 SINGLE y 1.40838  0.020
+LIG      C3 C4 DOUBLE y 1.39842  0.020
+LIG      C4 C5 SINGLE y 1.39661  0.020
+LIG      C5 C6 DOUBLE y 1.39664  0.020
+LIG      C6 C1 SINGLE y 1.39849  0.020
+LIG      C1 H1 SINGLE n 1.08224  0.020
+LIG      C3 H2 SINGLE n 1.08243  0.020
+LIG      C4 H3 SINGLE n 1.0824  0.020
+LIG      C5 H4 SINGLE n 1.08236  0.020
+LIG      C6 H5 SINGLE n 1.08241  0.020
+# ------------------------------------------------------

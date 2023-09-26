@@ -677,7 +677,7 @@ export namespace moorhen {
         aceDRGInstance: AceDRGInstance | null; 
     }
     
-    interface Controls extends Context, ContainerOptionalProps {
+    interface Controls extends ContainerOptionalProps {
         isDark: boolean;
         molecules: Molecule[];
         changeMolecules: (arg0: MolChange<Molecule>) => void;
@@ -717,7 +717,6 @@ export namespace moorhen {
         consoleDivRef: React.MutableRefObject<null | HTMLDivElement>;
         lastHoveredAtom: React.MutableRefObject<null | HoveredAtom>;
         prevActiveMoleculeRef: React.MutableRefObject<null | Molecule>;
-        context: Context;
         activeMap: Map;
         setActiveMap: React.Dispatch<React.SetStateAction<Map>>;
         activeMolecule: Molecule;

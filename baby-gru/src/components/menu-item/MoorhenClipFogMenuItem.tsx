@@ -1,22 +1,24 @@
-import { useEffect, useState } from "react"
+import { useContext, useEffect, useState } from "react"
 import MoorhenSlider from "../misc/MoorhenSlider"
 import { Form, InputGroup } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { MoorhenContext } from "../../utils/MoorhenContext";
 import { webGL } from "../../types/mgWebGL";
+import { moorhen } from "../../types/moorhen";
 
 export const MoorhenClipFogMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
-    resetClippingFogging: boolean;
-    setResetClippingFogging: React.Dispatch<React.SetStateAction<boolean>>;
-    clipCap: boolean;
-    setClipCap: React.Dispatch<React.SetStateAction<boolean>>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 
+    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
     const [zclipFront, setZclipFront] = useState<number>(props.glRef.current.fogClipOffset + props.glRef.current.gl_clipPlane0[3])
     const [zclipBack, setZclipBack] = useState<number>(props.glRef.current.gl_clipPlane1[3] - props.glRef.current.fogClipOffset)
     const [zfogFront, setZfogFront] = useState<number>(props.glRef.current.fogClipOffset - props.glRef.current.gl_fog_start)
     const [zfogBack, setZfogBack] = useState<number>(props.glRef.current.gl_fog_end - props.glRef.current.fogClipOffset)
+
+
+    const { clipCap, setClipCap, resetClippingFogging, setResetClippingFogging } = context
 
     useEffect(() => {
         if (props.glRef.current && props.glRef.current.gl_clipPlane0 && props.glRef.current.gl_clipPlane1) {
@@ -67,15 +69,15 @@ export const MoorhenClipFogMenuItem = (props: {
         <InputGroup style={{ paddingLeft: '0.1rem', paddingBottom: '0.5rem' }}>
             <Form.Check
                 type="switch"
-                checked={props.resetClippingFogging}
-                onChange={() => { props.setResetClippingFogging(!props.resetClippingFogging) }}
+                checked={resetClippingFogging}
+                onChange={() => { setResetClippingFogging(!resetClippingFogging) }}
                 label="Reset clipping and fogging on zoom" />
         </InputGroup>
         <InputGroup style={{ paddingLeft: '0.1rem', paddingBottom: '0.5rem' }}>
             <Form.Check
                 type="switch"
-                checked={props.clipCap}
-                onChange={() => { props.setClipCap(!props.clipCap) }}
+                checked={clipCap}
+                onChange={() => { setClipCap(!clipCap) }}
                 label="'Clip-cap' perfect spheres" />
         </InputGroup>
     </div>
