@@ -10,6 +10,8 @@ declare global {
 
 export namespace libcootApi {
     type CCP4ModuleType = {
+        count_residues_in_selection(gemmiStructure: gemmi.Structure, selection: gemmi.Selection): number;
+        remove_non_selected_residues(gemmiStructure: gemmi.Structure, selection: gemmi.Selection): gemmi.Structure;
         check_polymer_type(polymerConst: emscriptem.instance<number>): {value: number};
         remove_ligands_and_waters_chain(chain: gemmi.Chain): void;
         gemmi_setup_entities(gemmiStructure: gemmi.Structure): void;

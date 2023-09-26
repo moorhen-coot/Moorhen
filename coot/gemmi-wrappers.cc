@@ -32,6 +32,7 @@
 #include <gemmi/modify.hpp>
 #include <gemmi/assembly.hpp>
 #include <gemmi/calculate.hpp>
+#include <gemmi/util.hpp>
 
 using namespace emscripten;
 
@@ -60,6 +61,48 @@ std::vector<int> get_nearest_image_pbc_shift(const gemmi::NearestImage &ni){
     ret.push_back(ni.pbc_shift[1]);
     ret.push_back(ni.pbc_shift[2]);
     return ret;
+}
+
+int count_residues_in_selection(const gemmi::Structure &Structure, const gemmi::Selection &Selection) {
+    int result = 0;
+    auto models = Structure.models;
+    for (auto modelIndex = 0; modelIndex < models.size(); modelIndex++) {
+        const auto model = models[modelIndex];
+        if (!Selection.matches(model)) {
+            continue;
+        }
+        const auto chains = model.chains;
+        for (auto chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
+            auto chain = chains[chainIndex];
+            if (!Selection.matches(chain)) {
+                continue;
+            }
+            const auto residues = chain.residues;
+            for (auto residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
+                const auto residue = residues[residueIndex];
+                if (Selection.matches(residue)) {
+                    result += 1;
+                }
+            }
+        }
+    }
+    return result;
+}
+
+gemmi::Structure remove_non_selected_residues(const gemmi::Structure &Structure, const gemmi::Selection &Selection) {
+    auto new_structure = Structure;
+
+    gemmi::vector_remove_if(new_structure.models, [&](const gemmi::Model& model) { return !Selection.matches(model); });
+    for (auto modelIndex = 0; modelIndex < new_structure.models.size(); modelIndex++) {
+        gemmi::vector_remove_if(new_structure.models[modelIndex].chains, [&](const gemmi::Chain& chain) { return !Selection.matches(chain); });
+        for (auto chainIndex = 0; chainIndex < new_structure.models[modelIndex].chains.size(); chainIndex++) {
+            gemmi::vector_remove_if(new_structure.models[modelIndex].chains[chainIndex].residues, [&](const gemmi::Residue& res) { return !Selection.matches(res); });
+        }
+    }
+    
+    new_structure.remove_empty_chains();
+
+    return new_structure;
 }
 
 void set_cif_item_pair(gemmi::cif::Item &item, const gemmi::cif::Pair pair){
@@ -2221,6 +2264,8 @@ GlobWalk
     */
 
     //TODO Here we need to put *lots* of gemmi functions
+    function("remove_non_selected_residues",&remove_non_selected_residues);
+    function("count_residues_in_selection",&count_residues_in_selection);
     function("get_pdb_string_from_gemmi_struct",&get_pdb_string_from_gemmi_struct);
     function("read_structure_from_string",&read_structure_from_string);
     function("read_structure_file",&gemmi::read_structure_file);
