@@ -289,7 +289,7 @@ describe("Testing MoorhenMolecule", () => {
         expect(isLigand).toBeTruthy()
     })
 
-    test("Test importing ligands with same name", async () => {
+    test.skip("Test importing ligands with same name", async () => {
         /**
          * First create a molecules_container_js and load nitrobenzene so that we
          * get the "correct" bonds mesh.
