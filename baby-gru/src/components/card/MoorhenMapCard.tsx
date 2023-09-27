@@ -458,6 +458,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         <Card.Body style={{ display: isCollapsed ? 'none' : '', padding: '0.5rem' }}>
             <Stack direction='horizontal' gap={4}>
                 <ToggleButton
+                    id={`active-map-toggle-${props.map.molNo}`}
                     type="checkbox"
                     variant={props.isDark ? "outline-light" : "outline-primary"}
                     checked={props.map === props.activeMap}
