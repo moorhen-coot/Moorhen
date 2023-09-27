@@ -81,7 +81,7 @@
     "make-linux": "npm run build && electron-forge make --platform linux",
     "make-win32": "npm run build && electron-forge make --platform win32",
     "create-docs": "npm run create-version && npx jsdoc -c jsdoc.json",
-    "test": "npm run create-version && npx tsc && npm run transpile-ts-worker-jest && node --trace-warnings --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js"
+    "test": "npm run create-version && npx tsc && npm run transpile-ts-worker-jest && ln -s ./public/baby-gru/wasm/moorhen.data ./moorhen.data && node --trace-warnings --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --forceExit --runInBand"
   },
   "eslintConfig": {
     "extends": [
