@@ -121,6 +121,7 @@ export async function loadSessionData(
     for (let i = 0; i < newMolecules.length; i++) {
         const molecule = newMolecules[i]
         const storedMoleculeData = sessionData.moleculeData[i]
+        await Promise.all(Object.keys(storedMoleculeData.ligandDicts).map(compId => molecule.addDict(storedMoleculeData.ligandDicts[compId])))
         molecule.defaultColourRules = storedMoleculeData.defaultColourRules
         molecule.defaultBondOptions = storedMoleculeData.defaultBondOptions
         for (const item of storedMoleculeData.representations) {

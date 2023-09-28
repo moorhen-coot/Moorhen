@@ -374,6 +374,7 @@ export namespace moorhen {
         defaultBondOptions: cootBondOptions;
         defaultColourRules: ColourRule[];
         connectedToMaps: number[];
+        ligandDicts: {[comp_id: string]: string};
     }
     
     type mapDataSession = {
