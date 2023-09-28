@@ -108,11 +108,15 @@ export const MoorhenLigandList = (props: {
                 modelName: string;
             }[] = []
 
-            for (const ligand of props.molecule.ligands) {
-                const ligandSVG = await getLigandSVG(props.molecule.molNo, ligand.resName)
-                ligandList.push({svg: ligandSVG, ...ligand})
+            if (props.molecule.ligands.length > 50) {
+                ligandList = props.molecule.ligands.map(ligand => { return {...ligand, svg: null} })
+            } else {
+                for (const ligand of props.molecule.ligands) {
+                    const ligandSVG = await getLigandSVG(props.molecule.molNo, ligand.resName)
+                    ligandList.push({svg: ligandSVG, ...ligand})
+                }
             }
-    
+
             setLigandList(ligandList)
         }
 

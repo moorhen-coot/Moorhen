@@ -67,6 +67,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const addColourRulesAnchorDivRef = useRef<HTMLDivElement | null>(null)
     const busyRedrawing = useRef<boolean>(false)
     const isDirty = useRef<boolean>(false)
+    const innerDrawMissingLoopsRef = useRef<boolean>(null)
     const [showColourRulesModal, setShowColourRulesModal] = useState<boolean>(false)
     const [showCreateCustomRepresentation, setShowCreateCustomRepresentation] = useState<boolean>(false)
     const [showCreateRepresentationSettingsModal, setShowCreateRepresentationSettingsModal] = useState<boolean>(false)
@@ -139,17 +140,21 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     }, [props.molecule, props.glRef])
 
     useEffect(() => {
-        if (context.drawMissingLoops === null) {
+        if (!context.isMounted || context.drawMissingLoops === null) {
             return
+        } else if (innerDrawMissingLoopsRef.current === null) {
+            innerDrawMissingLoopsRef.current = context.drawMissingLoops
+            return
+        } else if (innerDrawMissingLoopsRef.current !== context.drawMissingLoops) {
+            innerDrawMissingLoopsRef.current = context.drawMissingLoops
+            const representations = props.molecule.representations.filter(representation => representation.visible && ['CBs', 'ligands'].includes(representation.style))
+            if (isVisible && representations.length > 0) {
+                isDirty.current = true
+                if (!busyRedrawing.current) {
+                    redrawMolIfDirty(representations.map(representation => representation.uniqueId))
+                }
+            }
         }
-
-        const representations = props.molecule.representations.filter(representation => representation.visible && ['CBs', 'ligands'].includes(representation.style))
-
-        if (isVisible && representations.length > 0) {
-            props.molecule.setAtomsDirty(true)
-            props.molecule.redraw()
-        }
-
     }, [context.drawMissingLoops])
 
     useEffect(() => {
@@ -163,8 +168,10 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             const newBackgroundIsDark = isDarkBackground(...props.backgroundColor)
             if (props.molecule.isDarkBackground !== newBackgroundIsDark) {
                 props.molecule.isDarkBackground = newBackgroundIsDark
-                props.molecule.setAtomsDirty(true)
-                props.molecule.redraw()
+                isDirty.current = true
+                if (!busyRedrawing.current) {
+                    redrawMolIfDirty(representations.map(representation => representation.uniqueId))
+                }
             }
         }
 
@@ -604,12 +611,12 @@ const RepresentationCheckbox = (props: {
     const [repState, setRepState] = useState<boolean>(false)
 
     const chipStyle = getChipStyle(props.molecule.defaultColourRules, repState, props.isDark)
-
     const disabled: boolean = (
         !props.isVisible 
         || (props.repKey === 'ligands' && props.molecule.ligands.length === 0) 
         || (props.repKey === 'DishyBases' && !props.molecule.hasDNA) 
         || (props.repKey === 'glycoBlocks' && !props.molecule.hasGlycans)
+        || (['rama', 'rotamer'].includes(props.repKey) && props.molecule.sequences.every(sequence => [3, 4, 5].includes(sequence.type)))
     )
     
     if (disabled) {

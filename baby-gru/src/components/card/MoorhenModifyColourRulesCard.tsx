@@ -78,7 +78,7 @@ export const MoorhenModifyColourRulesCard = (props: {
     const [selectedChain, setSelectedChain] = useState<string>(null)
     const [cid, setCid] = useState<string>(null)
     const [sequenceRangeSelect, setSequenceRangeSelect] = useState(null)
-    const [ruleList, setRuleList] = useReducer(itemReducer, initialRuleState)
+    const [ruleList, setRuleList] = useReducer(itemReducer, initialRuleState, () => { return props.molecule.defaultColourRules })
 
     const handleChainChange = (evt) => {
         setSelectedChain(evt.target.value)
@@ -124,6 +124,9 @@ export const MoorhenModifyColourRulesCard = (props: {
 
     const applyRules = useCallback(async () => {
         if (props.molecule?.defaultColourRules) {
+            if (JSON.stringify(props.molecule.defaultColourRules) === JSON.stringify(ruleList)) {
+                return
+            }
             props.molecule.defaultColourRules = ruleList
             await Promise.all(
                 props.molecule.representations.filter(representation => representation.useDefaultColourRules).map(representation => {
@@ -136,7 +139,7 @@ export const MoorhenModifyColourRulesCard = (props: {
                 })
             )
         }
-    }, [ruleList])
+    }, [ruleList, props.molecule])
 
     useEffect(() => {
         applyRules()
