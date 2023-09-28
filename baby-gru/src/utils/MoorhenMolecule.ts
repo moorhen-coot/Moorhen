@@ -1647,4 +1647,20 @@ export class MoorhenMolecule implements moorhen.Molecule {
             return newMolecules
         }
     }
+
+    async hasDNA() {
+        if (this.atomsDirty) {
+            await this.updateAtoms()
+        }
+        return this.sequences.some(sequence => [3, 4, 5].includes(sequence.type))
+    }
+
+    async hasGlycans() {
+        const result = await this.commandCentre.current.cootCommand({
+            returnType: 'boolean',
+            command: 'model_has_glycans',
+            commandArgs: [this.molNo],
+        }, false) as moorhen.WorkerResponse<boolean>
+        return result.data.result.result
+    }
 }

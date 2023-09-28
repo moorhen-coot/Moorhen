@@ -132,6 +132,7 @@ struct moorhen_hbond {
 };
 
 coot::instanced_mesh_t DrawSugarBlocks(mmdb::Manager *molHnd, const std::string &cid_str);
+bool isSugar(const std::string &resName);
 
 class molecules_container_js : public molecules_container_t {
     public:
@@ -142,6 +143,26 @@ class molecules_container_js : public molecules_container_t {
         coot::instanced_mesh_t DrawGlycoBlocks(int imol, const std::string &cid_str) {
             mmdb::Manager *mol = get_mol(imol);
             return DrawSugarBlocks(mol,cid_str);
+        }
+
+        bool model_has_glycans(int imol) {
+            mmdb::Manager *mol = get_mol(imol);
+            int nmodels = mol->GetNumberOfModels();
+            for (int imodel=1; imodel <= nmodels; imodel++) {
+                mmdb::Model *model = mol->GetModel(imodel);
+                int nchains = model->GetNumberOfChains();
+                for (int ichain=0; ichain < nchains; ichain++) {
+                    mmdb::Chain *chain = model->GetChain(ichain);
+                    int nres = chain->GetNumberOfResidues();
+                    for (int ires=0; ires<nres; ires++) { 
+                        mmdb::Residue *residue = chain->GetResidue(ires);
+                        if (isSugar(residue->name)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
         }
 
         generic_3d_lines_bonds_box_t make_exportable_environment_bond_box(int imol, const std::string &chainID, int resNo,  const std::string &altLoc){
@@ -695,6 +716,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_neighbours_cid",&molecules_container_js::get_neighbours_cid)
     .function("make_exportable_environment_bond_box",&molecules_container_js::make_exportable_environment_bond_box)
     .function("DrawGlycoBlocks",&molecules_container_js::DrawGlycoBlocks)
+    .function("model_has_glycans",&molecules_container_js::model_has_glycans)
     ;
     class_<generic_3d_lines_bonds_box_t>("generic_3d_lines_bonds_box_t")
     .property("line_segments", &generic_3d_lines_bonds_box_t::line_segments)

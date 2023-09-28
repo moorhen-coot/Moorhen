@@ -79,6 +79,7 @@ export namespace moorhen {
     }
     
     interface Molecule {
+        hasGlycans(): Promise<boolean>;
         fitLigandHere(mapMolNo: number, ligandMolNo: number, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<Molecule[]>;
         isLigand(): boolean;
         removeRepresentation(representationId: string): void;

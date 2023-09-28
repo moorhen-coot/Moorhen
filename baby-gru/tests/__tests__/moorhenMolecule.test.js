@@ -15,6 +15,8 @@ const mockMonomerLibraryPath = "https://raw.githubusercontent.com/MRC-LMB-Comput
 global.fetch = (url) => {
     if (url.includes(mockMonomerLibraryPath)) {
         return fetch(url)
+    } else if (url.includes('https:/files.rcsb.org/download/')) {
+        return fetch(url)
     } else {
         const fileContents = fs.readFileSync(url, { encoding: 'utf8', flag: 'r' })
         return Promise.resolve({
@@ -442,8 +444,39 @@ describe("Testing MoorhenMolecule", () => {
         expect(instancedMesh_2.data.result.result.instance_sizes).toEqual(instancedMesh_4.data.result.result.instance_sizes)
     })
 
+    test("Test hasDNA", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join('https://files.rcsb.org/download/3L1P.pdb')
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+        const glRef = {
+            current: new MockWebGL()
+        }
 
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
+        expect(molecule.molNo).toBe(0)
+        const result = await molecule.hasDNA()
+        expect(result).toBeTruthy()
+    })
 
+    test("Test hasGlycans", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+        const glRef = {
+            current: new MockWebGL()
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
+        await molecule.addLigandOfType('NAG')
+        const result = await molecule.hasGlycans()
+        expect(result).toBeTruthy()
+    })
 })
 
 const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h_no_ligand.pdb', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
