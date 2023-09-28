@@ -84,6 +84,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
     hoverRepresentation: moorhen.MoleculeRepresentation;
     unitCellRepresentation: moorhen.MoleculeRepresentation;
     environmentRepresentation: moorhen.MoleculeRepresentation;
+    hasGlycans: boolean;
+    hasDNA: boolean;
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibraryPath = "./baby-gru/monomers") {
         this.type = 'molecule'
@@ -116,6 +118,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
             width: 0.1,
             atomRadiusBondRatio: 1
         }
+        this.hasDNA = false
+        this.hasGlycans = false
         this.displayObjectsTransformation = { origin: [0, 0, 0], quat: null, centre: [0, 0, 0] }
         this.uniqueId = guid()
         this.monomerLibraryPath = monomerLibraryPath
@@ -236,12 +240,11 @@ export class MoorhenMolecule implements moorhen.Molecule {
     /**
      * Update the cached gemmi structure for this molecule
      */
-    async updateGemmiStructure(): Promise<void> {
+    async updateGemmiStructure(pdbString: string): Promise<void> {
         if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
             this.gemmiStructure.delete()
         }
-        let response = await this.getAtoms()
-        this.gemmiStructure = readGemmiStructure(response.data.result.result, this.name)
+        this.gemmiStructure = readGemmiStructure(pdbString, this.name)
         window.CCP4Module.gemmi_setup_entities(this.gemmiStructure)
         this.parseSequences()
         this.updateLigands()
@@ -405,6 +408,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
 
         this.sequences = sequences
+        this.hasDNA = sequences.some(sequence => [3, 4, 5].includes(sequence.type))
     }
 
     /**
@@ -475,6 +479,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }, true) as moorhen.WorkerResponse<number>
 
         newMolecule.molNo = response.data.result.result
+        newMolecule.hasGlycans = this.hasGlycans
+        newMolecule.hasDNA = this.hasDNA
 
         await Promise.all(Object.keys(this.ligandDicts).map(key => newMolecule.addDict(this.ligandDicts[key])))
         await newMolecule.fetchDefaultColourRules()
@@ -504,6 +510,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         await Promise.all(Object.keys(this.ligandDicts).map(key => newMolecule.addDict(this.ligandDicts[key])))
         await newMolecule.fetchDefaultColourRules()
         if (doRecentre) {
+            newMolecule.setAtomsDirty(true)
             await newMolecule.fetchIfDirtyAndDraw(style)
             await newMolecule.centreOn()
         }
@@ -562,10 +569,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
 
         this.name = name.replace(pdbRegex, "").replace(entRegex, "").replace(cifRegex, "").replace(mmcifRegex, "");
-        this.gemmiStructure = readGemmiStructure(coordData, this.name)
-        window.CCP4Module.gemmi_setup_entities(this.gemmiStructure)
-        this.parseSequences()
-        this.updateLigands()
+        this.updateGemmiStructure(coordData as string)
         this.atomsDirty = false
 
         try {
@@ -577,6 +581,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             this.molNo = response.data.result.result
             await Promise.all([
                 this.loadMissingMonomers(),
+                this.checkHasGlycans(),
                 this.fetchDefaultColourRules()
             ])
             return this
@@ -673,18 +678,32 @@ export class MoorhenMolecule implements moorhen.Molecule {
     }
 
     /**
+     * Check if the current molecule has glycans
+     * @returns {Promise<boolean>} - True if the current molecule has glycans
+     */
+    async checkHasGlycans(): Promise<boolean> {
+        const result = await this.commandCentre.current.cootCommand({
+            returnType: 'boolean',
+            command: 'model_has_glycans',
+            commandArgs: [this.molNo],
+        }, false) as moorhen.WorkerResponse<boolean>
+        this.hasGlycans = result.data.result.result
+        return this.hasGlycans
+    }
+
+    /**
      * Update the cached atoms with the latest information from the libcoot api
      */
     async updateAtoms() {
         if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
             this.gemmiStructure.delete()
         }
-        const result = await this.getAtoms()
+        const [_, result] = await Promise.all([
+            this.checkHasGlycans(),
+            this.getAtoms()
+        ])
         try {
-            this.gemmiStructure = readGemmiStructure(result.data.result.result, this.name)
-            window.CCP4Module.gemmi_setup_entities(this.gemmiStructure)
-            this.parseSequences()
-            this.updateLigands()
+            this.updateGemmiStructure(result.data.result.result)
         }
         catch (err) {
             console.log(err)
@@ -1646,21 +1665,5 @@ export class MoorhenMolecule implements moorhen.Molecule {
             )
             return newMolecules
         }
-    }
-
-    async hasDNA() {
-        if (this.atomsDirty) {
-            await this.updateAtoms()
-        }
-        return this.sequences.some(sequence => [3, 4, 5].includes(sequence.type))
-    }
-
-    async hasGlycans() {
-        const result = await this.commandCentre.current.cootCommand({
-            returnType: 'boolean',
-            command: 'model_has_glycans',
-            commandArgs: [this.molNo],
-        }, false) as moorhen.WorkerResponse<boolean>
-        return result.data.result.result
     }
 }

@@ -246,7 +246,7 @@ describe("Testing MoorhenMolecule", () => {
         expect(gemmiAtoms.map(atomInfo => atomInfo.label)).toEqual([ "/1/A/30(LYS)/CA", "/1/A/31(GLY)/CA" ])
     })
 
-    test("Test updateGemmiStructure", async () => {
+    test("Test updateAtoms", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
@@ -262,12 +262,12 @@ describe("Testing MoorhenMolecule", () => {
         const sequence_1 = molecule.sequences.find(seq => seq.chain === 'A')
         const length_1 = sequence_1.sequence.length
         molecules_container.delete_using_cid(molecule.molNo, "A/32-33/*", "LITERAL")
-        await molecule.updateGemmiStructure()
+        await molecule.updateAtoms()
         const sequence_2 = molecule.sequences.find(seq => seq.chain === 'A')
         expect(sequence_2.sequence).toHaveLength(length_1 - 2)
        
         molecules_container.delete_using_cid(molecule.molNo, "//B", "LITERAL")
-        await molecule.updateGemmiStructure()
+        await molecule.updateAtoms()
         expect(molecule.ligands).toHaveLength(0)
     })
 
@@ -286,7 +286,8 @@ describe("Testing MoorhenMolecule", () => {
         const result_cid = molecules_container.delete_using_cid(molecule.molNo, "//A", "LITERAL")
         expect(result_cid.first).toBe(1)
 
-        await molecule.updateGemmiStructure()
+        molecule.setAtomsDirty(true)
+        await molecule.updateAtoms()
         const isLigand = molecule.isLigand()
         expect(isLigand).toBeTruthy()
     })
@@ -457,13 +458,12 @@ describe("Testing MoorhenMolecule", () => {
         const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
         expect(molecule.molNo).toBe(0)
-        const result = await molecule.hasDNA()
-        expect(result).toBeTruthy()
+        expect(molecule.hasDNA).toBeTruthy()
     })
 
     test("Test hasGlycans", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
-        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
         const commandCentre = {
             current: new MockMoorhenCommandCentre(molecules_container, cootModule)
         }
@@ -473,9 +473,9 @@ describe("Testing MoorhenMolecule", () => {
 
         const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
+        expect(molecule.hasGlycans).toBeFalsy()
         await molecule.addLigandOfType('NAG')
-        const result = await molecule.hasGlycans()
-        expect(result).toBeTruthy()
+        expect(molecule.hasGlycans).toBeTruthy()
     })
 })
 

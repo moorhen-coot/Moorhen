@@ -605,12 +605,23 @@ const RepresentationCheckbox = (props: {
 
     const chipStyle = getChipStyle(props.molecule.defaultColourRules, repState, props.isDark)
 
+    const disabled: boolean = (
+        !props.isVisible 
+        || (props.repKey === 'ligands' && props.molecule.ligands.length === 0) 
+        || (props.repKey === 'DishyBases' && !props.molecule.hasDNA) 
+        || (props.repKey === 'glycoBlocks' && !props.molecule.hasGlycans)
+    )
+    
+    if (disabled) {
+        chipStyle['opacity'] = '0.3'
+    }
+
     useEffect(() => {
         setRepState(props.showState[props.repKey] || false)
     }, [props.showState])
 
     const handleClick = useCallback(() => {
-        if (props.isVisible) {
+        if (!disabled) {
             if (repState) {
                 props.molecule.hide(props.repKey)
             }
@@ -619,7 +630,7 @@ const RepresentationCheckbox = (props: {
             }
             props.changeShowState({ key: props.repKey, state: !repState })
         }
-    }, [repState, props.isVisible])
+    }, [repState, disabled, props])
 
     return <Chip
                 style={chipStyle}

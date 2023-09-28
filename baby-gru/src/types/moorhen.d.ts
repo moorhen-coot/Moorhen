@@ -79,7 +79,7 @@ export namespace moorhen {
     }
     
     interface Molecule {
-        hasGlycans(): Promise<boolean>;
+        checkHasGlycans(): Promise<boolean>;
         fitLigandHere(mapMolNo: number, ligandMolNo: number, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<Molecule[]>;
         isLigand(): boolean;
         removeRepresentation(representationId: string): void;
@@ -162,6 +162,8 @@ export namespace moorhen {
         hoverRepresentation: moorhen.MoleculeRepresentation;
         unitCellRepresentation: moorhen.MoleculeRepresentation;
         environmentRepresentation: moorhen.MoleculeRepresentation;
+        hasDNA: boolean;
+        hasGlycans: boolean;
     }
 
     type RepresentationStyles = 'VdwSpheres' | 'ligands' | 'CAs' | 'CBs' | 'CDs' | 'gaussian' | 'allHBonds' | 'rama' | 
