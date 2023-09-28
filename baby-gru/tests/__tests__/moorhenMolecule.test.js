@@ -349,13 +349,99 @@ describe("Testing MoorhenMolecule", () => {
             ]
         })
 
-        expect(simpleMesh_3.data.result.result.idx_tri[0][0]).toEqual(simpleMesh_1.data.result.result.idx_tri[0][0])
-        expect(simpleMesh_3.data.result.result.vert_tri[0][0]).toEqual(simpleMesh_1.data.result.result.vert_tri[0][0])
-        expect(simpleMesh_3.data.result.result.norm_tri[0][0]).toEqual(simpleMesh_1.data.result.result.norm_tri[0][0])
-        expect(simpleMesh_3.data.result.result.instance_origins[0][0]).toEqual(simpleMesh_1.data.result.result.instance_origins[0][0])
-        expect(simpleMesh_3.data.result.result.instance_orientations[0][0]).toEqual(simpleMesh_1.data.result.result.instance_orientations[0][0])
-        expect(simpleMesh_3.data.result.result.instance_sizes[0][0]).toEqual(simpleMesh_1.data.result.result.instance_sizes[0][0])
+        expect(simpleMesh_3.data.result.result.idx_tri).toEqual(simpleMesh_1.data.result.result.idx_tri)
+        expect(simpleMesh_3.data.result.result.vert_tri).toEqual(simpleMesh_1.data.result.result.vert_tri)
+        expect(simpleMesh_3.data.result.result.norm_tri).toEqual(simpleMesh_1.data.result.result.norm_tri)
+        expect(simpleMesh_3.data.result.result.instance_origins).toEqual(simpleMesh_1.data.result.result.instance_origins)
+        expect(simpleMesh_3.data.result.result.instance_orientations).toEqual(simpleMesh_1.data.result.result.instance_orientations)
+        expect(simpleMesh_3.data.result.result.instance_sizes).toEqual(simpleMesh_1.data.result.result.instance_sizes)
     })
+
+    test.skip("Test hideCid", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+        const glRef = {
+            current: new MockWebGL()
+        }
+
+        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule_1.loadToCootFromURL(fileUrl, 'mol-test-1')
+        expect(molecule_1.molNo).toBe(0)
+        await molecule_1.hideCid("A/32-33/*")
+        expect(molecule_1.excludedSegments).toEqual([ "A/32-33/*" ])
+        expect(molecule_1.excludedCids).toEqual([ '//A/32/*', '//A/33/*' ])
+        const instancedMesh_1 = await commandCentre.current.cootCommand({
+            returnType: 'instanced_mesh',
+            command: "get_bonds_mesh_instanced",
+            commandArgs: [
+                molecule_1.molNo,
+                'COLOUR-BY-CHAIN-AND-DICTIONARY',
+                false, 0.1, 1, 1
+            ]
+        })
+        const instancedMesh_2 = await commandCentre.current.cootCommand({
+            returnType: 'instanced_mesh',
+            command: "get_bonds_mesh_for_selection_instanced",
+            commandArgs: [
+                molecule_1.molNo,
+                '//',
+                'COLOUR-BY-CHAIN-AND-DICTIONARY',
+                false, 0.1, 1, 1
+            ]
+        })
+
+        expect(instancedMesh_1.data.result.result.idx_tri).toEqual(instancedMesh_2.data.result.result.idx_tri)
+        expect(instancedMesh_1.data.result.result.vert_tri).toEqual(instancedMesh_2.data.result.result.vert_tri)
+        expect(instancedMesh_1.data.result.result.norm_tri).toEqual(instancedMesh_2.data.result.result.norm_tri)
+        expect(instancedMesh_1.data.result.result.instance_origins).toEqual(instancedMesh_2.data.result.result.instance_origins)
+        expect(instancedMesh_1.data.result.result.instance_orientations).toEqual(instancedMesh_2.data.result.result.instance_orientations)
+        expect(instancedMesh_1.data.result.result.instance_sizes).toEqual(instancedMesh_2.data.result.result.instance_sizes)
+
+        const molecule_2 = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule_2.loadToCootFromURL(fileUrl, 'mol-test-2')
+        expect(molecule_2.molNo).toBe(1)
+        const result_cid = molecules_container.delete_using_cid(molecule_2.molNo, "A/32-33/*", "LITERAL")
+        expect(result_cid.first).toBe(1)
+        
+        const instancedMesh_3 = await commandCentre.current.cootCommand({
+            returnType: 'instanced_mesh',
+            command: "get_bonds_mesh_instanced",
+            commandArgs: [
+                molecule_2.molNo,
+                'COLOUR-BY-CHAIN-AND-DICTIONARY',
+                false, 0.1, 1, 1
+            ]
+        })
+
+        expect(instancedMesh_1.data.result.result.idx_tri).toEqual(instancedMesh_3.data.result.result.idx_tri)
+        expect(instancedMesh_1.data.result.result.vert_tri).toEqual(instancedMesh_3.data.result.result.vert_tri)
+        expect(instancedMesh_1.data.result.result.norm_tri).toEqual(instancedMesh_3.data.result.result.norm_tri)
+        expect(instancedMesh_1.data.result.result.instance_origins).toEqual(instancedMesh_3.data.result.result.instance_origins)
+        expect(instancedMesh_1.data.result.result.instance_orientations).toEqual(instancedMesh_3.data.result.result.instance_orientations)
+        expect(instancedMesh_1.data.result.result.instance_sizes).toEqual(instancedMesh_3.data.result.result.instance_sizes)
+
+        const instancedMesh_4 = await commandCentre.current.cootCommand({
+            returnType: 'instanced_mesh',
+            command: "get_bonds_mesh_for_selection_instanced",
+            commandArgs: [
+                molecule_2.molNo,
+                '//',
+                'COLOUR-BY-CHAIN-AND-DICTIONARY',
+                false, 0.1, 1, 1
+            ]
+        })
+
+        expect(instancedMesh_2.data.result.result.idx_tri).toEqual(instancedMesh_4.data.result.result.idx_tri)
+        expect(instancedMesh_2.data.result.result.vert_tri).toEqual(instancedMesh_4.data.result.result.vert_tri)
+        expect(instancedMesh_2.data.result.result.norm_tri).toEqual(instancedMesh_4.data.result.result.norm_tri)
+        expect(instancedMesh_2.data.result.result.instance_origins).toEqual(instancedMesh_4.data.result.result.instance_origins)
+        expect(instancedMesh_2.data.result.result.instance_orientations).toEqual(instancedMesh_4.data.result.result.instance_orientations)
+        expect(instancedMesh_2.data.result.result.instance_sizes).toEqual(instancedMesh_4.data.result.result.instance_sizes)
+    })
+
 
 
 })
