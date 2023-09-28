@@ -111,10 +111,11 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
         if (this.onNewCommand) {
             this.onNewCommand(kwargs)
         }
+        const result = await this.postMessage({ message, ...kwargs })
         if (doJournal) {
             await this.history.addEntry(kwargs)
         }
-        return this.postMessage({ message, ...kwargs })
+        return result
     }
     
     async cootCommandList(commandList: moorhen.cootCommandKwargs[], doJournal: boolean = true): Promise<moorhen.WorkerResponse> {
