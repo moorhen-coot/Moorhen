@@ -186,6 +186,10 @@ div.darkly text.end-label {fill:#FFF !important;}
   padding-left: 0.5rem;
 }
 
+.moorhen-context-button:disabled > .moorhen-context-button__icon {
+  opacity: 0.15 !important;
+}
+
 .moorhen-context-button__icon {
   padding: 0.1rem;
   width: 100%;
