@@ -25,6 +25,13 @@ export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                 <InputGroup className='moorhen-input-group-check'>
                     <Form.Check 
                         type="switch"
+                        checked={props.enableAtomHovering}
+                        onChange={() => { props.setEnableAtomHovering(!props.enableAtomHovering) }}
+                        label="Enable atom hovering"/>
+                </InputGroup>
+                <InputGroup className='moorhen-input-group-check'>
+                    <Form.Check 
+                        type="switch"
                         checked={context.drawCrosshairs}
                         onChange={() => { context.setDrawCrosshairs(!context.drawCrosshairs) }}
                         label="Show crosshairs"/>

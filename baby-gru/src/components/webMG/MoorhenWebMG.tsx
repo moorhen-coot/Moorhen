@@ -28,6 +28,7 @@ interface MoorhenWebMGPropsInterface {
     windowWidth: number;
     urlPrefix: string;
     extraDraggableModals: JSX.Element[];
+    enableAtomHovering: boolean;
     onAtomHovered: (identifier: { buffer: { id: string; }; atom: { label: string; }; }) => void;
     onKeyPress: (event: KeyboardEvent) =>  boolean | Promise<boolean>;
 }
@@ -555,7 +556,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
                 <MGWebGL
                     ref={glRef}
-                    onAtomHovered={props.onAtomHovered}
+                    onAtomHovered={props.enableAtomHovering ? props.onAtomHovered : null}
                     onKeyPress={props.onKeyPress}
                     messageChanged={(d) => { }}
                     mouseSensitivityFactor={context.mouseSensitivity}
