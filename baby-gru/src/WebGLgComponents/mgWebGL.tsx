@@ -7996,7 +7996,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     doHover(event, self) {
-        return
         const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
         if (minidx > -1) {
             let theAtom : clickAtom = {
