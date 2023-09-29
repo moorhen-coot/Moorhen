@@ -31,6 +31,7 @@ export const MoorhenDraggableModalBase = (props: {
 
     return <Draggable nodeRef={draggableNodeRef} handle={`.${props.handleClassName}`} >
             <Card
+                className="moorhen-draggable-card"
                 ref={draggableNodeRef}
                 style={{ display: props.show ? 'block' : 'none', position: 'absolute', top: props.top, left: props.left, opacity: opacity, width: props.windowWidth ? convertViewtoPx(props.width, props.windowWidth) : `${props.width}wh`}}
                 onMouseOver={() => setOpacity(1.0)}

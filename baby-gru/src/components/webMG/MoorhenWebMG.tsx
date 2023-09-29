@@ -28,6 +28,7 @@ interface MoorhenWebMGPropsInterface {
     windowWidth: number;
     urlPrefix: string;
     extraDraggableModals: JSX.Element[];
+    enableAtomHovering: boolean;
     onAtomHovered: (identifier: { buffer: { id: string; }; atom: { label: string; }; }) => void;
     onKeyPress: (event: KeyboardEvent) =>  boolean | Promise<boolean>;
 }
@@ -161,7 +162,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         } else {
             clearHBonds()
         }
-    }, [context.drawInteractions, props.molecules])
+    }, [context.drawInteractions, props.molecules, props.backgroundColor])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
@@ -481,6 +482,14 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
             glRef.current.setTextFont(context.GLLabelsFontFamily,context.GLLabelsFontSize)
+            if (context.drawInteractions){
+                hBondsDirty.current = true
+                if (!busyDrawingHBonds.current) {
+                    drawHBonds()
+                }
+            } else {
+                clearHBonds()
+            }
         }
     }, [context.GLLabelsFontSize, context.GLLabelsFontFamily, glRef])
 
@@ -547,7 +556,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
                 <MGWebGL
                     ref={glRef}
-                    onAtomHovered={props.onAtomHovered}
+                    onAtomHovered={props.enableAtomHovering ? props.onAtomHovered : null}
                     onKeyPress={props.onKeyPress}
                     messageChanged={(d) => { }}
                     mouseSensitivityFactor={context.mouseSensitivity}

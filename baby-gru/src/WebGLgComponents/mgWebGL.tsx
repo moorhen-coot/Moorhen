@@ -3086,9 +3086,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.glTextFont = ""+size+"px "+family;
             this.updateLabels();
             this.labelsTextCanvasTexture.clearBigTexture();
-            //This forces redrawing of environemnt distances
-            const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} });
-            document.dispatchEvent(originUpdateEvent);
             this.drawScene();
         }
     }
@@ -3096,9 +3093,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     setBackground(col: [number, number, number, number]) : void {
         this.background_colour = col;
         this.updateLabels()
-        //This forces redrawing of environemnt distances
-        const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
-        document.dispatchEvent(originUpdateEvent);
         this.drawScene();
     }
 
@@ -8002,37 +7996,34 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     doHover(event, self) {
-        const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
-        if (minidx > -1) {
-            let theAtom : clickAtom = {
-               x: self.displayBuffers[minidx].atoms[minj].x,
-               y: self.displayBuffers[minidx].atoms[minj].y,
-               z: self.displayBuffers[minidx].atoms[minj].z,
-               charge: self.displayBuffers[minidx].atoms[minj].charge,
-               label: self.displayBuffers[minidx].atoms[minj].label,
-               symbol: self.displayBuffers[minidx].atoms[minj].symbol,
-               displayBuffer: self.displayBuffers[minidx]
-            };
-            let atx = theAtom.x;
-            let aty = theAtom.y;
-            let atz = theAtom.z;
-            let label = theAtom.label;
-            let tempFactorLabel = "";
-            if (self.displayBuffers[minidx].atoms[minj].tempFactor) {
-                tempFactorLabel = ", B: " + self.displayBuffers[minidx].atoms[minj].tempFactor;
-            }
-            this.props.messageChanged({ message: label + ", xyz:(" + atx + " " + aty + " " + atz + ")" + tempFactorLabel });
-
-            if (this.props.onAtomHovered) {
+        if (this.props.onAtomHovered) {
+            const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
+            if (minidx > -1) {
+                let theAtom : clickAtom = {
+                   x: self.displayBuffers[minidx].atoms[minj].x,
+                   y: self.displayBuffers[minidx].atoms[minj].y,
+                   z: self.displayBuffers[minidx].atoms[minj].z,
+                   charge: self.displayBuffers[minidx].atoms[minj].charge,
+                   label: self.displayBuffers[minidx].atoms[minj].label,
+                   symbol: self.displayBuffers[minidx].atoms[minj].symbol,
+                   displayBuffer: self.displayBuffers[minidx]
+                };
+                let atx = theAtom.x;
+                let aty = theAtom.y;
+                let atz = theAtom.z;
+                let label = theAtom.label;
+                let tempFactorLabel = "";
+                if (self.displayBuffers[minidx].atoms[minj].tempFactor) {
+                    tempFactorLabel = ", B: " + self.displayBuffers[minidx].atoms[minj].tempFactor;
+                }
+                this.props.messageChanged({ message: label + ", xyz:(" + atx + " " + aty + " " + atz + ")" + tempFactorLabel });
                 this.props.onAtomHovered({ atom: self.displayBuffers[minidx].atoms[minj], buffer: self.displayBuffers[minidx] });
             }
-        }
-        else {
-            if (this.props.onAtomHovered) {
+            else {
                 this.props.onAtomHovered(null)
             }
+            self.drawScene();    
         }
-        self.drawScene();
     }
 
     doWheel(event) {

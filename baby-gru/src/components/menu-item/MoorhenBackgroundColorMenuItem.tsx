@@ -19,7 +19,9 @@ export const MoorhenBackgroundColorMenuItem = (props: {
 
     useEffect(() => {
         try {
-            props.setBackgroundColor([ backgroundColor.r / 255., backgroundColor.g / 255., backgroundColor.b / 255., props.backgroundColor[3] ])
+            if (JSON.stringify(props.backgroundColor) !== JSON.stringify([backgroundColor.r / 255., backgroundColor.g / 255., backgroundColor.b / 255., props.backgroundColor[3]])) {
+                props.setBackgroundColor([ backgroundColor.r / 255., backgroundColor.g / 255., backgroundColor.b / 255., props.backgroundColor[3] ])
+            }
         } catch (err) {
             console.log(err)
         }    

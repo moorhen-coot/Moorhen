@@ -80,6 +80,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const innerConsoleDivRef = useRef<null | HTMLDivElement>(null)
     const innerLastHoveredAtom = useRef<null | moorhen.HoveredAtom>(null)
     const innerPrevActiveMoleculeRef = useRef<null |  moorhen.Molecule>(null)
+    const [innerEnableAtomHovering, setInnerEnableAtomHovering] = useState<boolean>(true)
     const [innerActiveMap, setInnerActiveMap] = useState<null | moorhen.Map>(null)
     const [innerActiveMolecule, setInnerActiveMolecule] = useState<null|  moorhen.Molecule>(null)
     const [innerHoveredAtom, setInnerHoveredAtom] = useState<null | moorhen.HoveredAtom>({ molecule: null, cid: null })
@@ -132,7 +133,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const innerStatesMap: moorhen.ContainerStates = {
         glRef: innerGlRef, timeCapsuleRef: innerTimeCapsuleRef, commandCentre: innnerCommandCentre,
         moleculesRef: innerMoleculesRef, mapsRef: innerMapsRef, activeMapRef: innerActiveMapRef,
-        consoleDivRef: innerConsoleDivRef, lastHoveredAtom: innerLastHoveredAtom, 
+        consoleDivRef: innerConsoleDivRef, lastHoveredAtom: innerLastHoveredAtom, setEnableAtomHovering: setInnerEnableAtomHovering,
         prevActiveMoleculeRef: innerPrevActiveMoleculeRef, setAvailableFonts: setInnerAvailableFonts,
         activeMap: innerActiveMap, setActiveMap: setInnerActiveMap, activeMolecule: innerActiveMolecule,
         setActiveMolecule: setInnerActiveMolecule, hoveredAtom: innerHoveredAtom, setHoveredAtom: setInnerHoveredAtom,
@@ -142,9 +143,9 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         changeMaps: innerChangeMaps, setWindowHeight: setInnerWindowHeight, molecules: innerMolecules as moorhen.Molecule[],
         changeMolecules: innerChangeMolecules, backgroundColor: innerBackgroundColor, setBackgroundColor: setInnerBackgroundColor,
         appTitle: innerAppTitle, setAppTitle: setInnerAppTitle, cootInitialized: innerCootInitialized, 
-        setCootInitialized: setInnerCootInitialized, theme: innerTheme, setTheme: setInnerTheme,
+        setCootInitialized: setInnerCootInitialized, theme: innerTheme, setTheme: setInnerTheme, 
         showToast: innerShowToast, setShowToast: setInnerShowToast, toastContent: innerToastContent, 
-        setToastContent: setInnerToastContent, availableFonts: innerAvailableFonts,
+        setToastContent: setInnerToastContent, availableFonts: innerAvailableFonts, enableAtomHovering: innerEnableAtomHovering,
     }
 
     let states = {} as moorhen.ContainerStates
@@ -157,9 +158,9 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         setActiveMap, activeMolecule, setActiveMolecule, hoveredAtom, setHoveredAtom,
         consoleMessage, setConsoleMessage, cursorStyle, setCursorStyle, busy, setBusy,
         windowWidth, setWindowWidth, windowHeight, setWindowHeight, molecules, 
-        backgroundColor, setBackgroundColor, availableFonts, setAvailableFonts,
+        backgroundColor, setBackgroundColor, availableFonts, setAvailableFonts, enableAtomHovering,
         appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
-        showToast, setShowToast, toastContent, setToastContent, changeMolecules,
+        showToast, setShowToast, toastContent, setToastContent, changeMolecules, setEnableAtomHovering
     } = states
 
     const {
@@ -406,7 +407,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         setToastContent, hoveredAtom, setHoveredAtom, showToast, setShowToast, windowWidth, windowHeight,
         timeCapsuleRef, isDark, disableFileUploads, urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems,
         extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, extraEditMenuItems, 
-        extraDraggableModals, aceDRGInstance, availableFonts
+        extraDraggableModals, aceDRGInstance, availableFonts, enableAtomHovering, setEnableAtomHovering
     }
 
     return <> 
@@ -435,6 +436,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                     }}>
                     <MoorhenWebMG
                         ref={glRef}
+                        enableAtomHovering={enableAtomHovering}
                         monomerLibraryPath={monomerLibraryPath}
                         timeCapsuleRef={timeCapsuleRef}
                         commandCentre={commandCentre}
