@@ -6,6 +6,7 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 
 export const MoorhenLigandList = (props: { 
+    setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     isDark: boolean; molecule: moorhen.Molecule;
     glRef: React.RefObject<webGL.MGWebGL>; 
@@ -18,7 +19,7 @@ export const MoorhenLigandList = (props: {
         chainName: string;
         resNum: string;
         modelName: string;
-    }[]>([])
+    }[]>(null)
 
     const getLigandSVG = async (imol: number, compId: string): Promise<string> => {
         const result = await props.commandCentre.current.cootCommand({
@@ -93,6 +94,7 @@ export const MoorhenLigandList = (props: {
 
     useEffect(() => {
         async function updateLigandList() {
+            props.setBusy(true)
             if (props.molecule.gemmiStructure === null || props.molecule.atomsDirty || props.molecule.ligands === null) {
                 await props.molecule.updateAtoms()
             }
@@ -108,16 +110,13 @@ export const MoorhenLigandList = (props: {
                 modelName: string;
             }[] = []
 
-            if (props.molecule.ligands.length > 50) {
-                ligandList = props.molecule.ligands.map(ligand => { return {...ligand, svg: null} })
-            } else {
-                for (const ligand of props.molecule.ligands) {
-                    const ligandSVG = await getLigandSVG(props.molecule.molNo, ligand.resName)
-                    ligandList.push({svg: ligandSVG, ...ligand})
-                }
+            for (const ligand of props.molecule.ligands) {
+                const ligandSVG = await getLigandSVG(props.molecule.molNo, ligand.resName)
+                ligandList.push({svg: ligandSVG, ...ligand})
             }
 
             setLigandList(ligandList)
+            props.setBusy(false)
         }
 
         updateLigandList()
@@ -125,7 +124,9 @@ export const MoorhenLigandList = (props: {
     }, [props.molecule.ligands])
 
     return <>
-            {ligandList.length > 0 ? 
+            {ligandList === null ?
+            null
+            : ligandList.length > 0 ? 
                 <>
                     <Row style={{ height: '100%' }}>
                         <Col style={{paddingLeft: '0.5rem', paddingRight: '0.5rem'}}>
@@ -135,7 +136,7 @@ export const MoorhenLigandList = (props: {
                                 const keyenv = `ligand_environment-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
                                 const keyval = `ligand_validation-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
                                 const keycf = `chemical_features-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
-                                return <Card key={index} style={{marginTop: '0.5rem'}}>
+                                return <Card key={index} style={{marginTop: '0.5rem', marginLeft: '0.2rem', marginRight: '0.2rem'}}>
                                             <Card.Body style={{padding:'0.5rem'}}>
                                                 <Stack direction="horizontal" gap={2} style={{alignItems: 'center' }}>
                                                             {ligand.svg ? parse(ligand.svg) : null}
@@ -245,3 +246,5 @@ export const MoorhenLigandList = (props: {
             }
         </>
 }
+
+MoorhenLigandList.defaultProps = { setBusy: () => {} }
