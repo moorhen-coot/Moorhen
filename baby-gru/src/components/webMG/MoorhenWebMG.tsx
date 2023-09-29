@@ -161,7 +161,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         } else {
             clearHBonds()
         }
-    }, [context.drawInteractions, props.molecules])
+    }, [context.drawInteractions, props.molecules, props.backgroundColor])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
@@ -481,6 +481,14 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
             glRef.current.setTextFont(context.GLLabelsFontFamily,context.GLLabelsFontSize)
+            if (context.drawInteractions){
+                hBondsDirty.current = true
+                if (!busyDrawingHBonds.current) {
+                    drawHBonds()
+                }
+            } else {
+                clearHBonds()
+            }
         }
     }, [context.GLLabelsFontSize, context.GLLabelsFontFamily, glRef])
 

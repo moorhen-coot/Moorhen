@@ -3086,9 +3086,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.glTextFont = ""+size+"px "+family;
             this.updateLabels();
             this.labelsTextCanvasTexture.clearBigTexture();
-            //This forces redrawing of environemnt distances
-            const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} });
-            document.dispatchEvent(originUpdateEvent);
             this.drawScene();
         }
     }
@@ -3096,9 +3093,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     setBackground(col: [number, number, number, number]) : void {
         this.background_colour = col;
         this.updateLabels()
-        //This forces redrawing of environemnt distances
-        const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
-        document.dispatchEvent(originUpdateEvent);
         this.drawScene();
     }
 
@@ -8002,6 +7996,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     doHover(event, self) {
+        return
         const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
         if (minidx > -1) {
             let theAtom : clickAtom = {
