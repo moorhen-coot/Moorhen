@@ -28,7 +28,9 @@ export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                         checked={props.enableAtomHovering}
                         onChange={() => { 
                             props.setEnableAtomHovering(!props.enableAtomHovering)
-                            props.setHoveredAtom({molecule: null, cid: null})
+                            if (props.enableAtomHovering) {
+                                props.setHoveredAtom({molecule: null, cid: null})
+                            }
                          }}
                         label="Enable atom hovering"/>
                 </InputGroup>
