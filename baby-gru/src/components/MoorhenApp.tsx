@@ -15,13 +15,11 @@ export const MoorhenApp = (props: { forwardControls: (controls: any) => any }) =
     const moleculesRef = useRef<null | moorhen.Molecule[]>(null)
     const mapsRef = useRef<null | moorhen.Map[]>(null)
     const activeMapRef = useRef<null | moorhen.Map>(null)
-    const consoleDivRef = useRef<null | HTMLDivElement>(null)
     const lastHoveredAtom = useRef<null | moorhen.HoveredAtom>(null)
     const prevActiveMoleculeRef = useRef<null | moorhen.Molecule>(null)
     const [activeMap, setActiveMap] = useState<null | moorhen.Map>(null)
     const [activeMolecule, setActiveMolecule] = useState<null | moorhen.Molecule>(null)
     const [hoveredAtom, setHoveredAtom] = useState<moorhen.HoveredAtom>({ molecule: null, cid: null })
-    const [consoleMessage, setConsoleMessage] = useState<string>("")
     const [cursorStyle, setCursorStyle] = useState<string>("default")
     const [busy, setBusy] = useState<boolean>(false)
     const [windowWidth, setWindowWidth] = useState<number>(window.innerWidth)
@@ -41,14 +39,13 @@ export const MoorhenApp = (props: { forwardControls: (controls: any) => any }) =
 
     const collectedProps = {
         glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef,
-        consoleDivRef, lastHoveredAtom, prevActiveMoleculeRef, activeMap, 
-        setActiveMap, activeMolecule, setActiveMolecule, hoveredAtom, setHoveredAtom,
-        consoleMessage, setConsoleMessage, cursorStyle, setCursorStyle, busy, setBusy,
+         lastHoveredAtom, prevActiveMoleculeRef, activeMap, hoveredAtom, setHoveredAtom,
+        setActiveMap, activeMolecule, setActiveMolecule, molecules: molecules as moorhen.Molecule[],
+        cursorStyle, setCursorStyle, busy, setBusy, maps: maps as moorhen.Map[],
         windowWidth, setWindowWidth, windowHeight, setWindowHeight, appTitle, setAppTitle,
         changeMolecules, changeMaps, backgroundColor, setBackgroundColor, cootInitialized,
         setCootInitialized, theme, setTheme, showToast, setShowToast, toastContent,
-        setToastContent, forwardControls: props.forwardControls, maps: maps as moorhen.Map[],
-        molecules: molecules as moorhen.Molecule[]
+        setToastContent, forwardControls: props.forwardControls
     }
 
     return <MoorhenContainer {...collectedProps}/>

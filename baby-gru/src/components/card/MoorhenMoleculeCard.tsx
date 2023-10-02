@@ -25,7 +25,6 @@ interface MoorhenMoleculeCardPropsInterface extends moorhen.Controls {
     sideBarWidth: number;
     showSideBar: boolean;
     busy: boolean;
-    consoleMessage: string;
     key: number;
     index: number;
     molecule: moorhen.Molecule;

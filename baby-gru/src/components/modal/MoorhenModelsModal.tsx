@@ -32,7 +32,6 @@ export const MoorhenModelsModal = (props: MoorhenModelsModalProps) => {
             ref={el => cardListRef.current[index] = el}
             showSideBar={true}
             busy={false}
-            consoleMessage="A"
             dropdownId={1}
             accordionDropdownId={1}
             setAccordionDropdownId={(arg0) => {}}

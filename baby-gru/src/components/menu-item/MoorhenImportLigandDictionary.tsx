@@ -226,7 +226,6 @@ export const MoorhenSMILESToLigandMenuItem = (props: {
             return result
         } else {
             console.log('Error creating molecule... Wrong SMILES?')
-            props.commandCentre.current.extendConsoleMessage('Error creating molecule... Wrong SMILES?')
         }
     }
 

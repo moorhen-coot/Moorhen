@@ -1244,7 +1244,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
             return newMolecule.delete()
         } else {
             console.log('Error getting monomer... Missing dictionary?')
-            this.commandCentre.current.extendConsoleMessage('Error getting monomer... Missing dictionary?')
         }
     }
 

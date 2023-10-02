@@ -24,7 +24,7 @@ export const MoorhenValidationToolsModal = (props: MoorhenValidationModalProps) 
     const toolsAccordionSelectRef = useRef<undefined | HTMLSelectElement>()
 
     const collectedProps = {
-        sideBarWidth: convertViewtoPx(35, props.windowWidth), dropdownId: 1, busy: false, consoleMessage: '', 
+        sideBarWidth: convertViewtoPx(35, props.windowWidth), dropdownId: 1, busy: false,
         accordionDropdownId: 1, setAccordionDropdownId: (arg0) => {}, showSideBar: true, ...props
     }
 
