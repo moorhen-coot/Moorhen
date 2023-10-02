@@ -312,7 +312,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 }, false) as Promise<moorhen.WorkerResponse<number>>
             }))
             const atomCount = responses.reduce((partialAtomCount, response) => partialAtomCount + response.data.result.result, 0)
-            console.log(atomCount)
             if (atomCount >= 80000) {
                 setEnableAtomHovering(false)
             }
