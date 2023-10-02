@@ -26,7 +26,12 @@ export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     <Form.Check 
                         type="switch"
                         checked={props.enableAtomHovering}
-                        onChange={() => { props.setEnableAtomHovering(!props.enableAtomHovering) }}
+                        onChange={() => { 
+                            props.setEnableAtomHovering(!props.enableAtomHovering)
+                            if (props.enableAtomHovering) {
+                                props.setHoveredAtom({molecule: null, cid: null})
+                            }
+                         }}
                         label="Enable atom hovering"/>
                 </InputGroup>
                 <InputGroup className='moorhen-input-group-check'>

@@ -232,7 +232,6 @@ export namespace moorhen {
     interface CommandCentre {
         urlPrefix: string;
         cootWorker: Worker;
-        consoleMessage: string;
         history: History;
         activeMessages: WorkerMessage[];
         unhook: () => void;
@@ -243,7 +242,6 @@ export namespace moorhen {
         cootCommandList(commandList: cootCommandKwargs[]): Promise<WorkerResponse>;
         cootCommand: (kwargs: cootCommandKwargs, doJournal?: boolean) => Promise<WorkerResponse>;
         postMessage: (kwargs: cootCommandKwargs) => Promise<WorkerResponse>;
-        extendConsoleMessage: (msg: string) => void;
     }
     
     interface cootCommandKwargs { 
@@ -720,7 +718,6 @@ export namespace moorhen {
         moleculesRef: React.MutableRefObject<null | Molecule[]>;
         mapsRef: React.MutableRefObject<null | Map[]>;
         activeMapRef: React.MutableRefObject<Map>;
-        consoleDivRef: React.MutableRefObject<null | HTMLDivElement>;
         lastHoveredAtom: React.MutableRefObject<null | HoveredAtom>;
         prevActiveMoleculeRef: React.MutableRefObject<null | Molecule>;
         enableAtomHovering: boolean;
@@ -731,8 +728,6 @@ export namespace moorhen {
         setActiveMolecule: React.Dispatch<React.SetStateAction<Molecule>>;
         hoveredAtom: null | HoveredAtom;
         setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtom>>;
-        consoleMessage: string;
-        setConsoleMessage: React.Dispatch<React.SetStateAction<string>>;
         cursorStyle: string;
         setCursorStyle: React.Dispatch<React.SetStateAction<string>>;
         busy: boolean;

@@ -25,7 +25,6 @@ interface MoorhenMoleculeCardPropsInterface extends moorhen.Controls {
     sideBarWidth: number;
     showSideBar: boolean;
     busy: boolean;
-    consoleMessage: string;
     key: number;
     index: number;
     molecule: moorhen.Molecule;
@@ -516,7 +515,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                 </Row>
             <div>
                     <Accordion disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }} style={{borderColor: "#f0f0f0", borderStyle: 'solid', borderWidth: '1px'}}>
-                        <AccordionSummary style={{backgroundColor: props.isDark ? '#adb5bd' : '#ecf0f1'}} expandIcon={busyLoadingSequences ? <Spinner /> : <ExpandMoreOutlined />} >
+                        <AccordionSummary style={{backgroundColor: props.isDark ? '#adb5bd' : '#ecf0f1'}} expandIcon={busyLoadingSequences ? <Spinner animation='border'/> : <ExpandMoreOutlined />} >
                             Sequences
                         </AccordionSummary>
                         <AccordionDetails style={{padding: '0.2rem', backgroundColor: props.isDark ? '#ced5d6' : 'white'}}>
@@ -534,7 +533,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                         </AccordionDetails>
                 </Accordion>
                 <Accordion disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }} style={{borderColor: "#f0f0f0", borderStyle: 'solid', borderWidth: '1px'}}>
-                    <AccordionSummary style={{backgroundColor: props.isDark ? '#adb5bd' : '#ecf0f1'}} expandIcon={busyLoadingLigands ? <Spinner /> : <ExpandMoreOutlined />} >
+                    <AccordionSummary style={{backgroundColor: props.isDark ? '#adb5bd' : '#ecf0f1'}} expandIcon={busyLoadingLigands ? <Spinner animation='border'/> : <ExpandMoreOutlined />} >
                         Ligands
                     </AccordionSummary>
                     <AccordionDetails style={{padding: '0.2rem', backgroundColor: props.isDark ? '#ced5d6' : 'white'}}>

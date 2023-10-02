@@ -25,7 +25,6 @@ interface MoorhenMapCardPropsInterface extends moorhen.Controls {
     sideBarWidth: number;
     showSideBar: boolean;
     busy: boolean;
-    consoleMessage: string;
     key: number;
     index: number;
     map: moorhen.Map;

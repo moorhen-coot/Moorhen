@@ -72,7 +72,6 @@ export const MoorhenGetMonomerMenuItem = (props: {
             props.changeMolecules({ action: "Add", item: newMolecule })
         } else {
             console.log('Error getting monomer... Missing dictionary?')
-            props.commandCentre.current.extendConsoleMessage('Error getting monomer... Missing dictionary?')
         }
     }
 

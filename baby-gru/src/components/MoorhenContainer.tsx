@@ -77,14 +77,12 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const innerMoleculesRef = useRef<null | moorhen.Molecule[]>(null)
     const innerMapsRef = useRef<null | moorhen.Map[]>(null)
     const innerActiveMapRef = useRef<null | moorhen.Map>(null)
-    const innerConsoleDivRef = useRef<null | HTMLDivElement>(null)
     const innerLastHoveredAtom = useRef<null | moorhen.HoveredAtom>(null)
     const innerPrevActiveMoleculeRef = useRef<null |  moorhen.Molecule>(null)
     const [innerEnableAtomHovering, setInnerEnableAtomHovering] = useState<boolean>(true)
     const [innerActiveMap, setInnerActiveMap] = useState<null | moorhen.Map>(null)
     const [innerActiveMolecule, setInnerActiveMolecule] = useState<null|  moorhen.Molecule>(null)
     const [innerHoveredAtom, setInnerHoveredAtom] = useState<null | moorhen.HoveredAtom>({ molecule: null, cid: null })
-    const [innerConsoleMessage, setInnerConsoleMessage] = useState<string>("")
     const [innerCursorStyle, setInnerCursorStyle] = useState<string>("default")
     const [innerBusy, setInnerBusy] = useState<boolean>(false)
     const [innerWindowWidth, setInnerWindowWidth] = useState<number>(window.innerWidth)
@@ -133,19 +131,19 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const innerStatesMap: moorhen.ContainerStates = {
         glRef: innerGlRef, timeCapsuleRef: innerTimeCapsuleRef, commandCentre: innnerCommandCentre,
         moleculesRef: innerMoleculesRef, mapsRef: innerMapsRef, activeMapRef: innerActiveMapRef,
-        consoleDivRef: innerConsoleDivRef, lastHoveredAtom: innerLastHoveredAtom, setEnableAtomHovering: setInnerEnableAtomHovering,
+        lastHoveredAtom: innerLastHoveredAtom, setEnableAtomHovering: setInnerEnableAtomHovering,
         prevActiveMoleculeRef: innerPrevActiveMoleculeRef, setAvailableFonts: setInnerAvailableFonts,
         activeMap: innerActiveMap, setActiveMap: setInnerActiveMap, activeMolecule: innerActiveMolecule,
         setActiveMolecule: setInnerActiveMolecule, hoveredAtom: innerHoveredAtom, setHoveredAtom: setInnerHoveredAtom,
-        consoleMessage: innerConsoleMessage, setConsoleMessage: setInnerConsoleMessage, cursorStyle: innerCursorStyle,
+        cursorStyle: innerCursorStyle, maps: innerMaps as moorhen.Map[], molecules: innerMolecules as moorhen.Molecule[],
         setCursorStyle: setInnerCursorStyle, busy: innerBusy, setBusy: setInnerBusy, windowHeight: innerWindowHeight, 
-        windowWidth: innerWindowWidth, setWindowWidth: setInnerWindowWidth, maps: innerMaps as moorhen.Map[],
-        changeMaps: innerChangeMaps, setWindowHeight: setInnerWindowHeight, molecules: innerMolecules as moorhen.Molecule[],
-        changeMolecules: innerChangeMolecules, backgroundColor: innerBackgroundColor, setBackgroundColor: setInnerBackgroundColor,
+        windowWidth: innerWindowWidth, setWindowWidth: setInnerWindowWidth, setBackgroundColor: setInnerBackgroundColor,
+        changeMaps: innerChangeMaps, setWindowHeight: setInnerWindowHeight, enableAtomHovering: innerEnableAtomHovering,
+        changeMolecules: innerChangeMolecules, backgroundColor: innerBackgroundColor, 
         appTitle: innerAppTitle, setAppTitle: setInnerAppTitle, cootInitialized: innerCootInitialized, 
         setCootInitialized: setInnerCootInitialized, theme: innerTheme, setTheme: setInnerTheme, 
         showToast: innerShowToast, setShowToast: setInnerShowToast, toastContent: innerToastContent, 
-        setToastContent: setInnerToastContent, availableFonts: innerAvailableFonts, enableAtomHovering: innerEnableAtomHovering,
+        setToastContent: setInnerToastContent, availableFonts: innerAvailableFonts
     }
 
     let states = {} as moorhen.ContainerStates
@@ -154,13 +152,13 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     })
 
     const { glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef,
-        consoleDivRef, lastHoveredAtom, prevActiveMoleculeRef, activeMap, maps, changeMaps,
+        lastHoveredAtom, prevActiveMoleculeRef, activeMap, maps, changeMaps,
         setActiveMap, activeMolecule, setActiveMolecule, hoveredAtom, setHoveredAtom,
-        consoleMessage, setConsoleMessage, cursorStyle, setCursorStyle, busy, setBusy,
+        cursorStyle, setCursorStyle, busy, setBusy, changeMolecules, setEnableAtomHovering,
         windowWidth, setWindowWidth, windowHeight, setWindowHeight, molecules, 
         backgroundColor, setBackgroundColor, availableFonts, setAvailableFonts, enableAtomHovering,
         appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
-        showToast, setShowToast, toastContent, setToastContent, changeMolecules, setEnableAtomHovering
+        showToast, setShowToast, toastContent, setToastContent
     } = states
 
     const {
@@ -305,10 +303,21 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     }, [])
 
     useEffect(() => {
-        if(consoleDivRef.current !== null) {
-            consoleDivRef.current.scrollTop = consoleDivRef.current.scrollHeight;
+        const checkMoleculeSizes = async () => {
+            const responses = await Promise.all(molecules.map(molecule => {
+                return commandCentre.current.cootCommand({
+                    command: 'get_number_of_atoms',
+                    commandArgs: [molecule.molNo],
+                    returnType: "status"
+                }, false) as Promise<moorhen.WorkerResponse<number>>
+            }))
+            const atomCount = responses.reduce((partialAtomCount, response) => partialAtomCount + response.data.result.result, 0)
+            if (atomCount >= 80000) {
+                setEnableAtomHovering(false)
+            }
         }
-    }, [consoleMessage])
+        checkMoleculeSizes()
+    }, [molecules])
 
     const onAtomHovered = useCallback((identifier: { buffer: { id: string; }; atom: { label: string; }; }) => {
         if (identifier == null) {

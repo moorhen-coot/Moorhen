@@ -38,7 +38,6 @@ import { webGL } from '../types/mgWebGL';
 export class MoorhenCommandCentre implements moorhen.CommandCentre {
     urlPrefix: string;
     cootWorker: Worker;
-    consoleMessage: string;
     activeMessages: moorhen.WorkerMessage[];
     history: moorhen.History;
     onCootInitialized: null | ( () => void );
@@ -47,7 +46,6 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
     onActiveMessagesChanged: null | ( (activeMessages: moorhen.WorkerMessage[]) => void );
 
     constructor(urlPrefix: string, glRef: React.RefObject<webGL.MGWebGL>, timeCapsule: React.RefObject<moorhen.TimeCapsule>, props: {[x: string]: any}) {
-        this.consoleMessage = ""
         this.activeMessages = []
         this.urlPrefix = urlPrefix
         this.history = new MoorhenHistory(glRef, timeCapsule)
@@ -66,16 +64,6 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
     }
     
     handleMessage(reply: moorhen.WorkerResponse) {
-        if (this.onConsoleChanged && reply.data.consoleMessage) {
-            let newMessage: string
-            if (reply.data.consoleMessage.length > 160) {
-                newMessage = `TRUNCATED TO [${reply.data.consoleMessage.substring(0, 160)}]`
-            }
-            else {
-                newMessage = reply.data.consoleMessage
-            }
-            this.extendConsoleMessage(newMessage)
-        }
         this.activeMessages.filter(
             message => message.messageId && (message.messageId === reply.data.messageId)
         ).forEach(message => {
@@ -87,11 +75,6 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
         if (this.onActiveMessagesChanged) {
             this.onActiveMessagesChanged(this.activeMessages)
         }
-    }
-    
-    extendConsoleMessage(newMessage: string) {
-        this.consoleMessage = this.consoleMessage.concat(">" + newMessage + "\n")
-        this.onConsoleChanged && this.onConsoleChanged(this.consoleMessage)
     }
     
     makeHandler(resolve) {
