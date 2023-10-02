@@ -4,11 +4,34 @@ import { MenuItem } from "@mui/material";
 import { cidToSpec } from "../../utils/MoorhenUtils";
 import { MoorhenContext } from "../../utils/MoorhenContext";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
+import { MoorhenSelfRestraintsMenuItem } from "../menu-item/MoorhenSelfRestraintsMenuItem"
+import { MoorhenClearSelfRestraintsMenuItem } from "../menu-item/MoorhenClearSelfRestraintsMenuItem"
+import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
+import { MoorhenMoleculeRepresentation } from "../../utils/MoorhenMoleculeRepresentation";
 import { moorhen } from "../../types/moorhen";
 
-var TRIAL_COUNT = 0
+const doRestraintsMeshTest = async (commandCentre, glRef, molecules, moleculeSelectRef) => {
+    const selectedMolecule = molecules.find(item => item.molNo === parseInt(moleculeSelectRef.current.value))
+    console.log(`Running test for imol - ${selectedMolecule.molNo}`)
+    
+    const result = await commandCentre.current.cootCommand({
+        returnType: 'instanced_mesh',
+        command: 'get_extra_restraints_mesh',
+        commandArgs: [selectedMolecule.molNo]
+    }, true)
+    console.log('Moorhen got this result:')
+    console.log(result.data.result.result)
+
+    const representation = new MoorhenMoleculeRepresentation('CBs', '//', commandCentre, glRef)
+    representation.isCustom = true
+    representation.setParentMolecule(selectedMolecule)
+    representation.setUseDefaultColourRules(true)
+    representation.useDefaultBondOptions = true
+    await representation.buildBuffers([result.data.result.result])
+}
 
 const doTest = async (props: any) => {
+    let TRIAL_COUNT = 0
     TRIAL_COUNT += 1
     console.log(`########################################## ${TRIAL_COUNT}`)
     const molecule = props.molecules.find(molecule => molecule.molNo === 0)
@@ -66,6 +89,26 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                     <MenuItem onClick={() => doTest(menuItemProps)}>
                         Do a timing test...
                     </MenuItem>
+                    <MoorhenSelfRestraintsMenuItem
+                        glRef={props.glRef}
+                        molecules={props.molecules}
+                        commandCentre={props.commandCentre}
+                        setPopoverIsShown={setPopoverIsShown}
+                    />
+                    <MoorhenClearSelfRestraintsMenuItem
+                        glRef={props.glRef}
+                        molecules={props.molecules}
+                        commandCentre={props.commandCentre}
+                        setPopoverIsShown={setPopoverIsShown}
+                    />  
+                    <hr></hr>
+                    <Form.Group>
+                        <MoorhenMoleculeSelect width="" molecules={props.molecules} ref={moleculeSelectRef}/>
+                        <MenuItem onClick={() => doRestraintsMeshTest(props.commandCentre, props.glRef, props.molecules, moleculeSelectRef)}>
+                            Do restraints mesh test
+                        </MenuItem>
+                    </Form.Group>
+                    <hr></hr>                  
                     <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"
