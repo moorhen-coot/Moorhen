@@ -39,6 +39,7 @@ export namespace gemmi {
         str: (arg0: number) => string;
     }
     interface Selection extends emscriptem.instance<Selection> {
+        residue_names: any;
         matches_model: (model: Model) => boolean;
         matches_chain: (chain: Chain) => boolean;
         matches_residue: (residue: Residue) => boolean;
@@ -50,6 +51,10 @@ export namespace gemmi {
         chain_ids: SelectionChainList;
         to_seqid: SelectionSeqId;
         from_seqid: SelectionSeqId;
+    }
+    interface SelectionResidueNamesList extends emscriptem.instance<SelectionResidueNamesList> {
+        str: () => string;
+        all: boolean;
     }
     interface SelectionChainList extends emscriptem.instance<SelectionChainList> {
         str: () => string;

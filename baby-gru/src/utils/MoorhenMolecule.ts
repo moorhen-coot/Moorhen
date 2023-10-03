@@ -1534,8 +1534,15 @@ export class MoorhenMolecule implements moorhen.Molecule {
                     }
                 }
             })
+        } else {
+            chainIdList.forEach(chainName => {
+                const currentSequence = this.sequences.find(sequence => sequence.chain === chainName)
+                currentSequence.sequence.forEach(residue => {
+                    this.excludedCids.push(`//${chainName}/${residue.resNum}/*`)                    
+                })
+            })
         }
-
+        
         chainIds.delete()
         toSeqId.delete()
         fromSeqId.delete()
