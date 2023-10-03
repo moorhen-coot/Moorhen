@@ -226,7 +226,7 @@ describe("Testing MoorhenMolecule", () => {
         expect(Object.keys(molecule.ligandDicts).sort()).toEqual([ 'BGC', 'G2F' ])
     })
 
-    test("Test gemmiAtomsForCid", async () => {
+    test("Test gemmiAtomsForCid 1", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
@@ -244,6 +244,26 @@ describe("Testing MoorhenMolecule", () => {
         expect(f).toHaveBeenCalled()
         expect(gemmiAtoms).toHaveLength(2)
         expect(gemmiAtoms.map(atomInfo => atomInfo.label)).toEqual([ "/1/A/30(LYS)/CA", "/1/A/31(GLY)/CA" ])
+    })
+
+    test("Test gemmiAtomsForCid 2", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const f = jest.spyOn(molecule, 'updateAtoms')
+        await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
+        molecule.setAtomsDirty(true)
+        await molecule.hideCid("/*/A/29-30/*")
+        const gemmiAtoms = await molecule.gemmiAtomsForCid('//A/30-31/CA', true)
+        expect(f).toHaveBeenCalled()
+        expect(gemmiAtoms.map(atomInfo => atomInfo.label)).toEqual([ "/1/A/31(GLY)/CA" ])
     })
 
     test("Test updateAtoms", async () => {
