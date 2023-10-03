@@ -122,7 +122,7 @@ export namespace moorhen {
         clearBuffersOfStyle: (style: string) => void;
         loadToCootFromURL: (inputFile: string, molName: string) => Promise<Molecule>;
         applyTransform: () => Promise<void>;
-        getAtoms(format?: string): Promise<WorkerResponse>;
+        getAtoms(format?: string): Promise<string>;
         hide: (style: string, cid?: string) => void;
         redraw: () => Promise<void>;
         setAtomsDirty: (newVal: boolean) => void;
@@ -141,6 +141,7 @@ export namespace moorhen {
         gemmiStructure: gemmi.Structure;
         sequences: Sequence[];
         ligands: LigandInfo[];
+        atomCount: number;
         ligandDicts: {[comp_id: string]: string};
         connectedToMaps: number[];
         excludedSelections: string[];

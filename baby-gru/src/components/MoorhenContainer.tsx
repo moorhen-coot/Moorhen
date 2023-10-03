@@ -304,7 +304,9 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     useEffect(() => {
         const checkMoleculeSizes = async () => {
-            const moleculeAtomCounts = await Promise.all(molecules.map(molecule => molecule.getNumberOfAtoms()))
+            const moleculeAtomCounts = await Promise.all(
+                molecules.filter(molecule => !molecule.atomCount).map(molecule => molecule.getNumberOfAtoms())
+            )
             const totalAtomCount = moleculeAtomCounts.reduce((partialAtomCount, atomCount) => partialAtomCount + atomCount, 0)
             if (totalAtomCount >= 80000) {
                 setEnableAtomHovering(false)

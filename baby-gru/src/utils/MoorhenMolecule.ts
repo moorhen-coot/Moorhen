@@ -52,6 +52,7 @@ import { libcootApi } from '../types/libcoot';
 export class MoorhenMolecule implements moorhen.Molecule {
 
     type: string;
+    atomCount: number;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     atomsDirty: boolean;
@@ -107,6 +108,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.symmetryRadius = 25
         this.symmetryMatrices = []
         this.isDarkBackground = false
+        this.atomCount = null
         this.gaussianSurfaceSettings = {
             sigma: 4.4,
             countourLevel: 4.0,
@@ -466,8 +468,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {moorhen.Molecule} New molecule instance
      */
     async copyMolecule(): Promise<moorhen.Molecule> {
-
-        let moleculeAtoms = await this.getAtoms()
+        let pdbString = await this.getAtoms()
         let newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.monomerLibraryPath)
         newMolecule.name = `${this.name}-placeholder`
         newMolecule.defaultBondOptions = this.defaultBondOptions
@@ -475,7 +476,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         let response = await this.commandCentre.current.cootCommand({
             returnType: "status",
             command: 'shim_read_pdb',
-            commandArgs: [moleculeAtoms.data.result.result, newMolecule.name]
+            commandArgs: [pdbString, newMolecule.name]
         }, true) as moorhen.WorkerResponse<number>
 
         newMolecule.molNo = response.data.result.result
@@ -580,6 +581,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             }, true)
             this.molNo = response.data.result.result
             await Promise.all([
+                this.getNumberOfAtoms(),
                 this.loadMissingMonomers(),
                 this.checkHasGlycans(),
                 this.fetchDefaultColourRules()
@@ -668,13 +670,13 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} [format='pdb'] - Indicate the file format
      * @returns {Promise<moorhen.WorkerResponse>}  A worker response with the file contents
      */
-    async getAtoms(format: string = 'pdb'): Promise<moorhen.WorkerResponse<string>> {
+    async getAtoms(format: string = 'pdb'): Promise<string> {
         const response = await this.commandCentre.current.cootCommand({
             returnType: "string",
             command: 'shim_get_atoms',
             commandArgs: [this.molNo, format],
         }, false) as moorhen.WorkerResponse<string>
-        return response
+        return response.data.result.result
     }
 
     /**
@@ -698,16 +700,16 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
             this.gemmiStructure.delete()
         }
-        const [_, result] = await Promise.all([
+        const [_hasGlycans, pdbString] = await Promise.all([
             this.checkHasGlycans(),
             this.getAtoms()
         ])
         try {
-            this.updateGemmiStructure(result.data.result.result)
+            this.updateGemmiStructure(pdbString)
         }
         catch (err) {
             console.log(err)
-            console.warn('Issue parsing coordinates into Gemmi structure', result.data.result.result)
+            console.warn('Issue parsing coordinates into Gemmi structure', pdbString)
         }
         this.atomsDirty = false
 }
@@ -1689,6 +1691,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             command: 'get_number_of_atoms',
             commandArgs: [this.molNo],
         }, false) as moorhen.WorkerResponse<number>
+        this.atomCount = result.data.result.result
         return result.data.result.result
     }
 }

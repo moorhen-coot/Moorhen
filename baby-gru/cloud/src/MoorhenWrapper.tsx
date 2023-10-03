@@ -308,8 +308,7 @@ export default class MoorhenWrapper {
         this.cachedLigandDictionaries.forEach(ligandDict => ligandDict && newMolecule.addDictShim(ligandDict))
         newMolecule.setBackgroundColour(this.controls.glRef.current.background_colour)
         await newMolecule.loadToCootFromURL(inputFile, molName)
-        const atomCount = await newMolecule.getNumberOfAtoms()
-        await newMolecule.fetchIfDirtyAndDraw(atomCount >= 50000 ? 'CRs' : 'CBs')
+        await newMolecule.fetchIfDirtyAndDraw(newMolecule.atomCount >= 50000 ? 'CRs' : 'CBs')
         this.controls.changeMolecules({ action: "Add", item: newMolecule })
         if (!this.viewSettings) {
           await newMolecule.centreOn()
@@ -550,7 +549,7 @@ export default class MoorhenWrapper {
     const moleculeAtoms = await Promise.all(selectedMolecules.map(molecule => molecule.getAtoms()))
 
     const molData = selectedMolecules.map((molecule, index) => {
-        return {molName: molecule.name, pdbData: moleculeAtoms[index].data.result.result}
+        return {molName: molecule.name, pdbData: moleculeAtoms[index]}
     })
 
     const viewData: moorhen.viewDataSession = {
