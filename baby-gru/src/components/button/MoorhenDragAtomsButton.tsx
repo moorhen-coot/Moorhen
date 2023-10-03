@@ -286,6 +286,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
             document.addEventListener('atomDragged', atomDraggedCallback)
             document.addEventListener('mouseup', mouseUpCallback)
             props.setOverrideMenuContents(contextMenuOverride)
+            props.setHoveredAtom({molecule: null, cid: null})
         }
 
         return <MoorhenContextButtonBase 

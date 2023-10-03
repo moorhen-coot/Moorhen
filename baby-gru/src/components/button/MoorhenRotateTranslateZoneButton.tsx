@@ -161,6 +161,7 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
             props.setShowOverlay(false)
             props.setOpacity(0.5)
             props.setOverrideMenuContents(contextMenuOverride)
+            props.setHoveredAtom({molecule: null, cid: null})
         }
 
         return <MoorhenContextButtonBase 

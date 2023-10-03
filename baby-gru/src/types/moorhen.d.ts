@@ -632,6 +632,7 @@ export namespace moorhen {
         changeMolecules: (arg0: MolChange<Molecule>) => void
         defaultActionButtonSettings: actionButtonSettings;
         setDefaultActionButtonSettings: (arg0: {key: string; value: string}) => void;     
+        setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtom>>;
     }
     
     type MolChange<T extends Molecule | Map> = {

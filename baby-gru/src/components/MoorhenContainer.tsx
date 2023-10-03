@@ -461,6 +461,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                         activeMap={activeMap}
                         viewOnly={viewOnly}
                         extraDraggableModals={extraDraggableModals}
+                        setHoveredAtom={setHoveredAtom}
                     />
                 </div>
             </Col>

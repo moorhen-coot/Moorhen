@@ -117,6 +117,7 @@ export const MoorhenContextMenu = (props: {
   monomerLibraryPath: string;
   defaultActionButtonSettings: moorhen.actionButtonSettings;
   setDefaultActionButtonSettings: (arg0: {key: string; value: string}) => void;
+  setHoveredAtom: React.Dispatch<React.SetStateAction<moorhen.HoveredAtom>>;
 }) => {
 
   const contextMenuRef = useRef(null)

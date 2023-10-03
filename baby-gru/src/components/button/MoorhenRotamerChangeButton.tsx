@@ -26,7 +26,6 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
         }, false) as moorhen.WorkerResponse<libcootApi.RotamerInfoJS>
         
         fragmentMolecule.current.atomsDirty = true
-        fragmentMolecule.current.clearBuffersOfStyle('selection')
         await fragmentMolecule.current.redraw()
         
         return rotamerInfo
@@ -145,6 +144,7 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
             const rotamerInfo = await doRotamerChange(molecule, chosenAtom, p)
             props.setOpacity(0.5)
             props.setOverrideMenuContents(getPopOverContents(rotamerInfo))
+            props.setHoveredAtom({molecule: null, cid: null})
         }
 
         return <MoorhenContextButtonBase 
