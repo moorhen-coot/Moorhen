@@ -699,6 +699,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("generate_chain_self_restraints",&molecules_container_t::generate_chain_self_restraints)
     .function("generate_local_self_restraints",&molecules_container_t::generate_local_self_restraints)
     .function("clear_extra_restraints",&molecules_container_t::clear_extra_restraints)
+    .function("get_extra_restraints_mesh",&molecules_container_t::get_extra_restraints_mesh)
     .function("unmodelled_blobs",&molecules_container_t::unmodelled_blobs)
     .function("get_map_molecule_centre",&molecules_container_t::get_map_molecule_centre)
     .function("get_cell",&molecules_container_t::get_cell)

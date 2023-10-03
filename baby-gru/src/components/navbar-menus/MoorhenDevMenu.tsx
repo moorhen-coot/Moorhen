@@ -17,7 +17,7 @@ const doRestraintsMeshTest = async (commandCentre, glRef, molecules, moleculeSel
     const result = await commandCentre.current.cootCommand({
         returnType: 'instanced_mesh',
         command: 'get_extra_restraints_mesh',
-        commandArgs: [selectedMolecule.molNo]
+        commandArgs: [selectedMolecule.molNo, 0]
     }, true)
     console.log('Moorhen got this result:')
     console.log(result.data.result.result)
