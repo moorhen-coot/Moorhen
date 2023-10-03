@@ -156,7 +156,8 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         try {
             await newMolecule.loadToCootFromURL(url, molName)
             if (newMolecule.molNo === -1) throw new Error("Cannot read the fetched molecule...")
-            await newMolecule.fetchIfDirtyAndDraw('CBs')
+            const atomCount = await newMolecule.getNumberOfAtoms()
+            await newMolecule.fetchIfDirtyAndDraw(atomCount >= 50000 ? 'CRs' : 'CBs')
             changeMolecules({ action: "Add", item: newMolecule })
             newMolecule.centreOn('/*/*/*/*', false)
             return newMolecule
