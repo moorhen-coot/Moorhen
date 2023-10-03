@@ -1678,4 +1678,17 @@ export class MoorhenMolecule implements moorhen.Molecule {
             return newMolecules
         }
     }
+
+    /**
+     * A function to get the number of atoms in the current molecule
+     * @returns {Promise<number>} The number of atoms in the molecule
+     */
+    async getNumberOfAtoms() {
+        const result = await this.commandCentre.current.cootCommand({
+            returnType: 'int',
+            command: 'get_number_of_atoms',
+            commandArgs: [this.molNo],
+        }, false) as moorhen.WorkerResponse<number>
+        return result.data.result.result
+    }
 }
