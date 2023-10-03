@@ -43,7 +43,6 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
         
         chosenMolecule.current.atomsDirty = true
         await chosenMolecule.current.redraw()
-        props.changeMolecules({ action: 'Remove', item: fragmentMolecule.current })
         fragmentMolecule.current.delete()
         chosenMolecule.current.unhideAll()
         
@@ -90,7 +89,6 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
                     }
             }))
             fragmentMolecule.current = newMolecule
-            props.changeMolecules({ action: "Add", item: newMolecule })
         }, 1)
         
         return rotamerInfo
