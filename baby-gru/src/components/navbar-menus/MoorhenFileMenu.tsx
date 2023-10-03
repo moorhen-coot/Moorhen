@@ -55,7 +55,10 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
 
         let drawPromises: Promise<void>[] = []
         for (const newMolecule of newMolecules) {
-            drawPromises.push(newMolecule.fetchIfDirtyAndDraw('CBs'))
+            drawPromises.push(
+                newMolecule.getNumberOfAtoms()
+                .then(atomCount => newMolecule.fetchIfDirtyAndDraw(atomCount >= 50000 ? 'CRs' : 'CBs'))
+            )
         }
         await Promise.all(drawPromises)
 
