@@ -135,10 +135,12 @@ export const MoorhenContextMenu = (props: {
   }, [])
 
   useEffect(() => {
-    const domNode = contextMenuRef.current
-    domNode.addEventListener("contextmenu", handleContextMenu)
-    return () => {
-      domNode.removeEventListener("contextmenu", handleContextMenu)
+    if (contextMenuRef.current) {
+      const domNode = contextMenuRef.current
+      domNode.addEventListener("contextmenu", handleContextMenu)
+      return () => {
+        domNode.removeEventListener("contextmenu", handleContextMenu)
+      }  
     }
   }, [handleContextMenu, contextMenuRef]);
 
