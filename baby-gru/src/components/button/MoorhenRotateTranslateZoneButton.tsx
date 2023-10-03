@@ -70,7 +70,7 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
                 break;
             case 'MOLECULE':
                 fragmentCid.current =
-                    `//`
+                    `/*/*`
                 break;
             case 'CUSTOM':
                 fragmentCid.current = customCid.current

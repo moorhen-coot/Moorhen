@@ -64,7 +64,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     ligands: moorhen.LigandInfo[];
     ligandDicts: { [comp_id: string]: string };
     connectedToMaps: number[];
-    excludedSegments: string[];
+    excludedSelections: string[];
     excludedCids: string[];
     symmetryOn: boolean;
     symmetryRadius: number;
@@ -101,7 +101,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.ligandDicts = {}
         this.connectedToMaps = null
         this.representations = []
-        this.excludedSegments = []
+        this.excludedSelections = []
         this.excludedCids = []
         this.symmetryOn = false
         this.symmetryRadius = 25
@@ -1370,16 +1370,21 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} cid - The CID selection
      * @returns {Promise<moorhen.AtomInfo[]>} JS objects containing atom information
      */
-    async gemmiAtomsForCid(cid: string): Promise<moorhen.AtomInfo[]> {
-        const $this = this
-
-        if ($this.atomsDirty) {
-            await $this.updateAtoms()
+    async gemmiAtomsForCid(cid: string, omitExcludedCids: boolean = false): Promise<moorhen.AtomInfo[]> {
+        if (this.atomsDirty) {
+            await this.updateAtoms()
+        }
+        
+        let excludedSelections: gemmi.Selection[] = []
+        if (omitExcludedCids) {
+            excludedSelections = this.excludedSelections.map(excludedCid => {
+                return new window.CCP4Module.Selection(excludedCid)
+            })
         }
 
         let result: moorhen.AtomInfo[] = []
         const selection = new window.CCP4Module.Selection(cid)
-        const model = $this.gemmiStructure.first_model()
+        const model = this.gemmiStructure.first_model()
 
         if (selection.matches_model(model)) {
             const modelName = model.name
@@ -1393,7 +1398,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                     const residuesSize = residues.size()
                     for (let j = 0; j < residuesSize; j++) {
                         const residue = residues.get(j)
-                        if (selection.matches_residue(residue)) {
+                        if (selection.matches_residue(residue) && excludedSelections.every(item => !item.matches_residue(residue))) {
                             const residueName = residue.name
                             const residueSeqId = residue.seqid
                             const resNum = residueSeqId.str()
@@ -1452,6 +1457,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         selection.delete()
         model.delete()
+        excludedSelections.forEach(item => item.delete())
 
         return result
     }
@@ -1511,7 +1517,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }, false)
 
         // A list with the segment CIDs
-        this.excludedSegments.push(cid)
+        this.excludedSelections.push(cid)
 
         // We also want a list with individual atom CIDs
         const selection = new window.CCP4Module.Selection(cid)
@@ -1562,7 +1568,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             returnType: 'status',
             commandArgs: [this.molNo],
         }, false)
-        this.excludedSegments = []
+        this.excludedSelections = []
         this.excludedCids = []
         await this.redraw()
     }

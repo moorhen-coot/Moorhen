@@ -374,7 +374,7 @@ describe("Testing MoorhenMolecule", () => {
         await molecule_1.loadToCootFromURL(fileUrl, 'mol-test-1')
         expect(molecule_1.molNo).toBe(0)
         await molecule_1.hideCid("A/32-33/*")
-        expect(molecule_1.excludedSegments).toEqual([ "A/32-33/*" ])
+        expect(molecule_1.excludedSelections).toEqual([ "A/32-33/*" ])
         expect(molecule_1.excludedCids).toEqual([ '//A/32/*', '//A/33/*' ])
         const instancedMesh_1 = await commandCentre.current.cootCommand({
             returnType: 'instanced_mesh',
