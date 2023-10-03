@@ -129,7 +129,7 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
 
         const contextMenuOverride = (
             <Draggable nodeRef={draggableRef} handle=".inner-drag-handle">
-            <Card ref={draggableRef} className="moorhen-draggable-action-card" onMouseOver={() => props.setOpacity(1)} onMouseOut={() => props.setOpacity(0.5)}>
+            <Card ref={draggableRef} className="moorhen-draggable-action-card" style={{position: 'absolute'}} onMouseOver={() => props.setOpacity(1)} onMouseOut={() => props.setOpacity(0.5)}>
             <Card.Header className="inner-drag-handle">Accept rotate/translate ?</Card.Header>
             <Card.Body>
                 <em>{"Hold <Shift><Alt> to translate"}</em>

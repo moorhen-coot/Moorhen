@@ -101,7 +101,7 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
             const rotamerProbability = rotamerInfo.data.result.result.richardson_probability
 
             return <Draggable nodeRef={draggableRef} handle=".inner-drag-handle">
-                    <Card ref={draggableRef} className="moorhen-draggable-action-card" onMouseOver={() => props.setOpacity(1)} onMouseOut={() => props.setOpacity(0.5)}>
+                    <Card ref={draggableRef} className="moorhen-draggable-action-card" style={{position: 'absolute'}} onMouseOver={() => props.setOpacity(1)} onMouseOut={() => props.setOpacity(0.5)}>
                       <Card.Header className="inner-drag-handle">Accept new rotamer ?</Card.Header>
                       <Card.Body>
                       <span>Current rotamer: {rotamerName} ({rotamerRank+1}<sup>{rotamerRank === 0 ? 'st' : rotamerRank === 1 ? 'nd' : rotamerRank === 2 ? 'rd' : 'th'}</sup>)</span>

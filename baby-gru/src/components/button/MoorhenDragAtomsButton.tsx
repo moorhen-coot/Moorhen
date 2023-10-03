@@ -239,7 +239,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
 
         const contextMenuOverride = (
             <Draggable nodeRef={draggableRef} handle=".inner-drag-handle">
-                <Card ref={draggableRef} className="moorhen-draggable-action-card" onMouseOver={() => props.setOpacity(1)} onMouseOut={() => props.setOpacity(0.5)}>
+                <Card ref={draggableRef} className="moorhen-draggable-action-card" style={{position: 'absolute'}} onMouseOver={() => props.setOpacity(1)} onMouseOut={() => props.setOpacity(0.5)}>
                 <Card.Header className="inner-drag-handle">Atom dragging mode</Card.Header>
                 <Card.Body>
                     <Stack gap={2} direction="vertical" style={{ alignItems: 'center'}}>
