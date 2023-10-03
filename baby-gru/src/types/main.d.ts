@@ -35,10 +35,12 @@ declare module 'moorhen' {
 
     class MoorhenMolecule implements _moorhen.Molecule {
         constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibrary: string)
+        getNumberOfAtoms(): Promise<number>;
+        checkHasGlycans(): Promise<boolean>;
         fitLigandHere(mapMolNo: number, ligandMolNo: number, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<_moorhen.Molecule[]>;
         isLigand(): boolean;
         removeRepresentation(representationId: string): void;
-        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: _moorhen.ColourRule[], bondOptions?: _moorhen.cootBondOptions): Promise<void>;
+        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: _moorhen.ColourRule[], bondOptions?: _moorhen.cootBondOptions): Promise<_moorhen.MoleculeRepresentation>;
         getNeighborResiduesCids(selectionCid: string, radius: number, minDist: number, maxDist: number): Promise<string[]>;
         drawWithStyleFromMesh(style: string, meshObjects: any[], cid?: string): Promise<void>;
         updateWithMovedAtoms(movedResidues: _moorhen.AtomInfo[][]): Promise<void>;
@@ -47,7 +49,7 @@ declare module 'moorhen' {
         hideCid(cid: string): Promise<void>;
         unhideAll(): Promise<void>;
         drawUnitCell(): void;
-        gemmiAtomsForCid: (cid: string) => Promise<_moorhen.AtomInfo[]>;
+        gemmiAtomsForCid: (cid: string, omitExcludedCids?: boolean) => Promise<_moorhen.AtomInfo[]>;
         mergeMolecules(otherMolecules: _moorhen.Molecule[], doHide?: boolean): Promise<void>;
         setBackgroundColour(backgroundColour: [number, number, number, number]): void;
         addDict(fileContent: string): Promise<void>;
@@ -95,6 +97,7 @@ declare module 'moorhen' {
         gemmiStructure: gemmi.Structure;
         sequences: _moorhen.Sequence[];
         ligands: _moorhen.LigandInfo[];
+        atomCount: number;
         ligandDicts: {[comp_id: string]: string};
         connectedToMaps: number[];
         excludedSelections: string[];
@@ -117,6 +120,8 @@ declare module 'moorhen' {
         hoverRepresentation: _moorhen.MoleculeRepresentation;
         unitCellRepresentation: _moorhen.MoleculeRepresentation;
         environmentRepresentation: _moorhen.MoleculeRepresentation;
+        hasDNA: boolean;
+        hasGlycans: boolean;
     }
     module.exports.MoorhenMolecule = MoorhenMolecule
     
@@ -134,14 +139,16 @@ declare module 'moorhen' {
         fetchSuggestedLevel(): Promise<number>;
         fetchMapCentre(): Promise<[number, number, number]>;
         replaceMapWithMtzFile(fileUrl: RequestInfo | URL, name: string, selectedColumns: _moorhen.selectedMtzColumns, mapColour?: { [type: string]: {r: number, g: number, b: number} }): Promise<void>;
-        associateToReflectionData (selectedColumns: _moorhen.selectedMtzColumns, reflectionData: Uint8Array | ArrayBuffer): Promise<_moorhen.WorkerResponse>;
+        associateToReflectionData (selectedColumns: _moorhen.selectedMtzColumns, reflectionData: Uint8Array | ArrayBuffer): Promise<void>;
         delete(): Promise<void> 
         doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number): Promise<void>;
         fetchReflectionData(): Promise<_moorhen.WorkerResponse<Uint8Array>>;
         getMap(): Promise<_moorhen.WorkerResponse>;
         loadToCootFromMtzURL(url: RequestInfo | URL, name: string, selectedColumns: _moorhen.selectedMtzColumns): Promise<_moorhen.Map>;
-        loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap?: boolean): Promise<_moorhen.Map>;
+        loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap?: boolean): Promise<_moorhen.Map>
+        isEM: boolean;
         suggestedContourLevel: number;
+        suggestedRadius: number;
         mapCentre: [number, number, number];
         type: string;
         name: string;
