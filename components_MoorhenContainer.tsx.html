@@ -419,15 +419,11 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     useEffect(() => {
         const checkMoleculeSizes = async () => {
-            const responses = await Promise.all(molecules.map(molecule => {
-                return commandCentre.current.cootCommand({
-                    command: 'get_number_of_atoms',
-                    commandArgs: [molecule.molNo],
-                    returnType: "status"
-                }, false) as Promise&lt;moorhen.WorkerResponse&lt;number>>
-            }))
-            const atomCount = responses.reduce((partialAtomCount, response) => partialAtomCount + response.data.result.result, 0)
-            if (atomCount >= 80000) {
+            const moleculeAtomCounts = await Promise.all(
+                molecules.filter(molecule => !molecule.atomCount).map(molecule => molecule.getNumberOfAtoms())
+            )
+            const totalAtomCount = moleculeAtomCounts.reduce((partialAtomCount, atomCount) => partialAtomCount + atomCount, 0)
+            if (totalAtomCount >= 80000) {
                 setEnableAtomHovering(false)
             }
         }
@@ -582,6 +578,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                         activeMap={activeMap}
                         viewOnly={viewOnly}
                         extraDraggableModals={extraDraggableModals}
+                        setHoveredAtom={setHoveredAtom}
                     />
                 &lt;/div>
             &lt;/Col>
