@@ -92,7 +92,7 @@ export namespace moorhen {
         hideCid(cid: string): Promise<void>;
         unhideAll(): Promise<void>;
         drawUnitCell(): void;
-        gemmiAtomsForCid: (cid: string) => Promise<AtomInfo[]>;
+        gemmiAtomsForCid: (cid: string, omitExcludedCids?: boolean) => Promise<AtomInfo[]>;
         mergeMolecules(otherMolecules: Molecule[], doHide?: boolean): Promise<void>;
         setBackgroundColour(backgroundColour: [number, number, number, number]): void;
         addDict(fileContent: string): Promise<void>;
@@ -142,7 +142,7 @@ export namespace moorhen {
         ligands: LigandInfo[];
         ligandDicts: {[comp_id: string]: string};
         connectedToMaps: number[];
-        excludedSegments: string[];
+        excludedSelections: string[];
         symmetryOn: boolean;
         symmetryRadius : number;
         symmetryMatrices: number[][][];

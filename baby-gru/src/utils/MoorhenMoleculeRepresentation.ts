@@ -103,12 +103,8 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     setAtomBuffers(atomBuffers: moorhen.AtomInfo[]) {
-        if (this.buffers.length > 0) {
-            this.buffers[0].atoms = atomBuffers.filter(atom => !this.parentMolecule.excludedCids.includes(`//${atom.chain_id}/${atom.res_no}/*`)).map(atom => {
-                const { pos, x, y, z, charge, label, symbol } = atom
-                const tempFactor = atom.tempFactor
-                return { pos, x, y, z, charge, tempFactor, symbol, label }
-            })
+        if (atomBuffers.length > 0 && this.buffers.length > 0) {
+            this.buffers[0].atoms = atomBuffers
         }
     }
 
@@ -139,10 +135,8 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         const objects = await this.getBufferObjects()
         this.buildBuffers(objects)
         if (this.styleHasAtomBuffers) {
-            let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.cid)
-            if (atomBuffers.length > 0 && this.buffers.length > 0) {
-                this.setAtomBuffers(atomBuffers)
-            }    
+            let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.cid, true)
+            this.setAtomBuffers(atomBuffers)
         }
     }
 
@@ -153,10 +147,8 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.deleteBuffers()
         this.buildBuffers(objects)
         if (this.styleHasAtomBuffers) {
-            let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.cid)
-            if (atomBuffers.length > 0 && this.buffers.length > 0) {
-                this.setAtomBuffers(atomBuffers)
-            }
+            let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.cid, true)
+            this.setAtomBuffers(atomBuffers)
         }
     }
 
@@ -377,8 +369,8 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             }
         }
 
-        if (this.parentMolecule.excludedCids.length > 0) {
-            m2tSelection = `{${m2tSelection} & !{${this.parentMolecule.excludedCids.join(' | ')}}}`
+        if (this.parentMolecule.excludedSelections.length > 0) {
+            m2tSelection = `{${m2tSelection} & !{${this.parentMolecule.excludedSelections.join(' | ')}}}`
         }
 
         const response = await this.commandCentre.current.cootCommand({

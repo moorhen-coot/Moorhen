@@ -97,7 +97,7 @@ declare module 'moorhen' {
         ligands: _moorhen.LigandInfo[];
         ligandDicts: {[comp_id: string]: string};
         connectedToMaps: number[];
-        excludedSegments: string[];
+        excludedSelections: string[];
         symmetryOn: boolean;
         symmetryRadius : number;
         symmetryMatrices: number[][][];
