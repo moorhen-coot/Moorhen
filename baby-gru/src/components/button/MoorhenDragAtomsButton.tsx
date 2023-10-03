@@ -120,7 +120,6 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
             moltenFragmentRef.current.setAtomsDirty(true)
             await moltenFragmentRef.current.fetchIfDirtyAndDraw('CBs')
             await animateRefine(moltenFragmentRef.current, 10, 5, 10)
-            props.changeMolecules({ action: "Add", item: newMolecule })
             props.glRef.current.setDraggableMolecule(newMolecule)        
         }, 1)
     }
@@ -134,7 +133,6 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
             return
         }    
         if (acceptTransform) {
-            console.log(chosenMolecule.current.molNo, moltenFragmentRef.current.molNo, fragmentCid.current.join('||'))
             await props.commandCentre.current.cootCommand({
                 returnType: 'status',
                 command: 'clear_refinement',
@@ -151,7 +149,6 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
             const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: chosenMolecule.current.molNo } })
             document.dispatchEvent(scoresUpdateEvent)
         }
-        props.changeMolecules({ action: 'Remove', item: moltenFragmentRef.current })
         moltenFragmentRef.current.delete()
         chosenMolecule.current.unhideAll()
     }
@@ -289,6 +286,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
             document.addEventListener('atomDragged', atomDraggedCallback)
             document.addEventListener('mouseup', mouseUpCallback)
             props.setOverrideMenuContents(contextMenuOverride)
+            props.setHoveredAtom({molecule: null, cid: null})
         }
 
         return <MoorhenContextButtonBase 

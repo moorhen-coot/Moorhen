@@ -52,7 +52,7 @@ export const MoorhenQuerySequenceModal = (props: {
         try {
             await newMolecule.loadToCootFromURL(url, molName)
             if (newMolecule.molNo === -1) throw new Error("Cannot read the fetched molecule...")
-            await newMolecule.fetchIfDirtyAndDraw('CBs')
+            await newMolecule.fetchIfDirtyAndDraw(newMolecule.atomCount >= 50000 ? 'CRs' : 'CBs')
             props.changeMolecules({ action: "Add", item: newMolecule })
             newMolecule.centreOn('/*/*/*/*', false)
             return newMolecule

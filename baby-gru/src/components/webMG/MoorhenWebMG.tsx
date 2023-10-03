@@ -9,6 +9,7 @@ import { webGL } from "../../types/mgWebGL";
 import { libcootApi } from '../../types/libcoot';
 
 interface MoorhenWebMGPropsInterface {
+    setHoveredAtom: React.Dispatch<React.SetStateAction<moorhen.HoveredAtom>>;
     monomerLibraryPath: string;
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -595,6 +596,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     windowHeight={props.windowHeight}
                     defaultActionButtonSettings={defaultActionButtonSettings}
                     setDefaultActionButtonSettings={setDefaultActionButtonSettings}
+                    setHoveredAtom={props.setHoveredAtom}
                 />}
                 
                 {props.extraDraggableModals && props.extraDraggableModals.map(modal => modal)}

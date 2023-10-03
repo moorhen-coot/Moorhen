@@ -86,7 +86,23 @@ describe("Testing MoorhenMolecule", () => {
         const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
         const coordData = await molecule.getAtoms('pdb')
-        expect(coordData.data.result.result).toHaveLength(258718)
+        expect(coordData).toHaveLength(258718)
+    }) 
+
+    test("Test get_number_of_atoms", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl, 'mol-test')
+        expect(molecule.atomCount).toBe(2765)
+        const atomCount = await molecule.getNumberOfAtoms()
+        expect(atomCount).toBe(2765)
     }) 
 
     test("Test replaceModelWithFile", async () => {
@@ -109,7 +125,7 @@ describe("Testing MoorhenMolecule", () => {
         await molecule_2.loadToCootFromURL(fileUrl_2, 'mol-test')
         const coordData_2 = await molecule_2.getAtoms('pdb')
 
-        expect(coordData_1.data.result.result).toBe(coordData_2.data.result.result)
+        expect(coordData_1).toBe(coordData_2)
     })
 
     test("Test copyMolecule", async () => {
@@ -129,7 +145,7 @@ describe("Testing MoorhenMolecule", () => {
         const molecule_2 = await molecule_1.copyMolecule()
         const coordData_2 = await molecule_2.getAtoms('pdb')
 
-        expect(coordData_1.data.result.result).toBe(coordData_2.data.result.result)
+        expect(coordData_1).toBe(coordData_2)
     })
 
     test("Test copyFragmentUsingCid", async () => {

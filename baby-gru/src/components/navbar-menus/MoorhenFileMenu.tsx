@@ -55,7 +55,9 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
 
         let drawPromises: Promise<void>[] = []
         for (const newMolecule of newMolecules) {
-            drawPromises.push(newMolecule.fetchIfDirtyAndDraw('CBs'))
+            drawPromises.push(
+                newMolecule.fetchIfDirtyAndDraw(newMolecule.atomCount >= 50000 ? 'CRs' : 'CBs')
+            )
         }
         await Promise.all(drawPromises)
 
@@ -153,7 +155,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         try {
             await newMolecule.loadToCootFromURL(url, molName)
             if (newMolecule.molNo === -1) throw new Error("Cannot read the fetched molecule...")
-            await newMolecule.fetchIfDirtyAndDraw('CBs')
+            await newMolecule.fetchIfDirtyAndDraw(newMolecule.atomCount >= 50000 ? 'CRs' : 'CBs')
             changeMolecules({ action: "Add", item: newMolecule })
             newMolecule.centreOn('/*/*/*/*', false)
             return newMolecule

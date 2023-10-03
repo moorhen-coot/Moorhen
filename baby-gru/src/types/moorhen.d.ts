@@ -79,6 +79,7 @@ export namespace moorhen {
     }
     
     interface Molecule {
+        getNumberOfAtoms(): Promise<number>;
         checkHasGlycans(): Promise<boolean>;
         fitLigandHere(mapMolNo: number, ligandMolNo: number, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<Molecule[]>;
         isLigand(): boolean;
@@ -121,7 +122,7 @@ export namespace moorhen {
         clearBuffersOfStyle: (style: string) => void;
         loadToCootFromURL: (inputFile: string, molName: string) => Promise<Molecule>;
         applyTransform: () => Promise<void>;
-        getAtoms(format?: string): Promise<WorkerResponse>;
+        getAtoms(format?: string): Promise<string>;
         hide: (style: string, cid?: string) => void;
         redraw: () => Promise<void>;
         setAtomsDirty: (newVal: boolean) => void;
@@ -140,6 +141,7 @@ export namespace moorhen {
         gemmiStructure: gemmi.Structure;
         sequences: Sequence[];
         ligands: LigandInfo[];
+        atomCount: number;
         ligandDicts: {[comp_id: string]: string};
         connectedToMaps: number[];
         excludedSelections: string[];
@@ -631,6 +633,7 @@ export namespace moorhen {
         changeMolecules: (arg0: MolChange<Molecule>) => void
         defaultActionButtonSettings: actionButtonSettings;
         setDefaultActionButtonSettings: (arg0: {key: string; value: string}) => void;     
+        setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtom>>;
     }
     
     type MolChange<T extends Molecule | Map> = {

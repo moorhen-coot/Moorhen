@@ -39,7 +39,6 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
         props.glRef.current.setActiveMolecule(null)
         const transformedAtoms = fragmentMolecule.current.transformedCachedAtomsAsMovedAtoms()
         await chosenMolecule.current.updateWithMovedAtoms(transformedAtoms)
-        props.changeMolecules({ action: 'Remove', item: fragmentMolecule.current })
         fragmentMolecule.current.delete()
         chosenMolecule.current.unhideAll()
         const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: chosenMolecule.current.molNo } })
@@ -48,7 +47,6 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
 
     const rejectTransform = useCallback(async () => {
         props.glRef.current.setActiveMolecule(null)
-        props.changeMolecules({ action: 'Remove', item: fragmentMolecule.current })
         fragmentMolecule.current.delete()
         chosenMolecule.current.unhideAll()
     }, [props, chosenMolecule, fragmentMolecule])
@@ -98,7 +96,6 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
                     }
             }))
             fragmentMolecule.current = newMolecule
-            props.changeMolecules({ action: "Add", item: newMolecule })
             props.glRef.current.setActiveMolecule(newMolecule)
         }, 1)
     }
@@ -164,6 +161,7 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
             props.setShowOverlay(false)
             props.setOpacity(0.5)
             props.setOverrideMenuContents(contextMenuOverride)
+            props.setHoveredAtom({molecule: null, cid: null})
         }
 
         return <MoorhenContextButtonBase 
