@@ -171,9 +171,12 @@ const getDefaultContextValues = (): moorhen.ContextValues => {
         useOffScreenBuffers: false,
         defaultMapSamplingRate: 1.8,
         depthBlurRadius: 3.0,
+        ssaoRadius: 2.5,
+        ssaoBias: 0.025,
         depthBlurDepth: 0.2,
         doShadowDepthDebug: false,
         doShadow: false,
+        doSSAO: false,
         doOutline: false,
         GLLabelsFontFamily: "Arial",
         GLLabelsFontSize: 18,
@@ -418,6 +421,7 @@ const MoorhenContext = createContext(undefined);
  * @property {boolean} [depthBlurDepth=false] - Indicates if depth blur should be used
  * @property {boolean} [doShadowDepthDebug=false] - Indicates if shadow depth blur should be used
  * @property {boolean} [doShadow=false] - Indicates if shadows should be drawn
+ * @property {boolean} [doSSAO=false] - Indicates if ambient occlusion should be done
  * @property {boolean} [doOutline=false] - Indicates if molecule should be drawn
  * @property {string} [GLLabelsFontFamily='Arial'] - The font family used in labels
  * @property {number} [GLLabelsFontSize=18] - The font size used in labels
@@ -461,6 +465,9 @@ const MoorhenContextProvider = ({ children }) => {
     const [depthBlurDepth, setDepthBlurDepth] = useState&lt;null | number>(null)
     const [doShadowDepthDebug, setDoShadowDepthDebug] = useState&lt;null | boolean>(null)
     const [doShadow, setDoShadow] = useState&lt;null | boolean>(null)
+    const [doSSAO, setDoSSAO] = useState&lt;null | boolean>(null)
+    const [ssaoRadius, setSsaoRadius] = useState&lt;null | number>(null)
+    const [ssaoBias, setSsaoBias] = useState&lt;null | number>(null)
     const [doOutline, setDoOutline] = useState&lt;null | boolean>(null)
     const [GLLabelsFontFamily, setGLLabelsFontFamily] = useState&lt;null | string>(null)
     const [GLLabelsFontSize, setGLLabelsFontSize] = useState&lt;null | number>(null)
@@ -521,6 +528,9 @@ const MoorhenContextProvider = ({ children }) => {
         38: { label: "depthBlurDepth", value: depthBlurDepth, valueSetter: setDepthBlurDepth},
         39: { label: "transparentModalsOnMouseOut", value: transparentModalsOnMouseOut, valueSetter: setTransparentModalsOnMouseOut},
         40: { label: "defaultMapSamplingRate", value: defaultMapSamplingRate, valueSetter: setDefaultMapSamplingRate},
+        41: { label: "doSSAO", value: doSSAO, valueSetter: setDoSSAO},
+        42: { label: "ssaoRadius", value: ssaoRadius, valueSetter: setSsaoRadius},
+        43: { label: "ssaoBias", value: ssaoBias, valueSetter: setSsaoBias},
     }
 
     const restoreDefaults = (defaultValues: moorhen.ContextValues)=> {
@@ -803,6 +813,24 @@ const MoorhenContextProvider = ({ children }) => {
 
     useMemo(() => {
 
+        if (ssaoBias === null) {
+            return
+        }
+
+        updateStoredContext('ssaoBias', ssaoBias);
+    }, [ssaoBias]);
+
+    useMemo(() => {
+
+        if (ssaoRadius === null) {
+            return
+        }
+
+        updateStoredContext('ssaoRadius', ssaoRadius);
+    }, [ssaoRadius]);
+
+    useMemo(() => {
+
         if (depthBlurRadius === null) {
             return
         }
@@ -845,6 +873,15 @@ const MoorhenContextProvider = ({ children }) => {
 
         updateStoredContext('doShadow', doShadow);
     }, [doShadow]);
+
+    useMemo(() => {
+
+        if (doSSAO === null) {
+            return
+        }
+
+        updateStoredContext('doSSAO', doSSAO);
+    }, [doSSAO]);
 
     useMemo(() => {
 
@@ -951,7 +988,8 @@ const MoorhenContextProvider = ({ children }) => {
         doPerspectiveProjection, setDoPerspectiveProjection, useOffScreenBuffers, setUseOffScreenBuffers, drawAxes,
         setDrawAxes, devMode, setDevMode, doShadowDepthDebug, setDoShadowDepthDebug, doShadow, setDoShadow,
         GLLabelsFontFamily, setGLLabelsFontFamily, GLLabelsFontSize, setGLLabelsFontSize, doSpinTest,
-        setDoSpinTest, doOutline, setDoOutline, depthBlurRadius, setDepthBlurRadius, depthBlurDepth, setDepthBlurDepth
+        setDoSpinTest, doOutline, setDoOutline, depthBlurRadius, setDepthBlurRadius, depthBlurDepth, setDepthBlurDepth,
+        doSSAO, setDoSSAO, ssaoBias, setSsaoBias, ssaoRadius, setSsaoRadius
     }
 
     return (
