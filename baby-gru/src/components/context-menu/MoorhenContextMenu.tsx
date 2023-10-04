@@ -180,7 +180,7 @@ export const MoorhenContextMenu = (props: {
   const collectedProps = {selectedMolecule, chosenAtom, setOverlayContents, setShowOverlay, toolTip, setToolTip, setOpacity, setOverrideMenuContents, ...props}
 
   return <>
-      <ContextMenu ref={contextMenuRef} top={overrideMenuContents ? convertRemToPx(4) : menuPosition.top} left={overrideMenuContents ? convertRemToPx(15) : menuPosition.left} opacity={opacity}>
+      <ContextMenu ref={contextMenuRef} top={overrideMenuContents ? 0 : menuPosition.top} left={overrideMenuContents ? 0 : menuPosition.left} opacity={opacity}>
         {overrideMenuContents ? 
         overrideMenuContents 
         :

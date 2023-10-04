@@ -3,10 +3,12 @@ import { MoorhenEditButtonBase } from "./MoorhenEditButtonBase"
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 import { Button, Card, Container, FormGroup, FormLabel, FormSelect, Row, Stack } from "react-bootstrap";
-import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
-import Draggable from "react-draggable";
-import { getTooltipShortcutLabel } from "../../utils/MoorhenUtils";
+import { convertRemToPx, getTooltipShortcutLabel } from '../../utils/MoorhenUtils';
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
+import { Fab, IconButton, Zoom } from '@mui/material';
+import { CancelOutlined, CheckCircleOutlined, CheckOutlined, CloseOutlined } from "@mui/icons-material";
+import Draggable from "react-draggable";
+
 
 export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
     const [showAccept, setShowAccept] = useState<boolean>(false)
@@ -20,6 +22,21 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
     const customCid = useRef<null | string>(null)
 
     const rotateTranslateModes = ['ATOM', 'RESIDUE', 'CHAIN', 'MOLECULE']
+
+    const canvasElement = document.getElementById('moorhen-canvas-background')
+    let canvasTop: number
+    let canvasLeft: number
+    let canvasRight: number
+    if (canvasElement !== null) {
+        const rect = canvasElement.getBoundingClientRect()
+        canvasLeft = rect.left
+        canvasTop = rect.top
+        canvasRight = rect.right
+    } else {
+        canvasLeft = 0
+        canvasTop = 0
+        canvasRight = 0
+    } 
 
     useEffect(() => {
         if (props.shortCuts) {
@@ -128,38 +145,55 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
     if (props.mode === 'context') {
 
         const contextMenuOverride = (
-            <Draggable nodeRef={draggableRef} handle=".inner-drag-handle">
-            <Card ref={draggableRef} className="moorhen-draggable-action-card" style={{position: 'absolute'}} onMouseOver={() => props.setOpacity(1)} onMouseOut={() => props.setOpacity(0.5)}>
-            <Card.Header className="inner-drag-handle">Accept rotate/translate ?</Card.Header>
-            <Card.Body>
-                <em>{"Hold <Shift><Alt> to translate"}</em>
-                <br></br>
-                <em>{props.shortCuts ? `Hold ${getTooltipShortcutLabel(JSON.parse(props.shortCuts as string).residue_camera_wiggle)} to move view` : null}</em>
-                <br></br>
-                <br></br>
-                <Stack direction='horizontal' gap={2} style={{ alignItems: 'center',  alignContent: 'center', justifyContent: 'center'}}>
-                    <Button onClick={async () => {
-                            await acceptTransform()
-                            props.setOverrideMenuContents(false)
-                            props.setOpacity(1)
-                            props.setShowContextMenu(false)
-                        }}><CheckOutlined /></Button>
-                    <Button onClick={async() => {
-                            await rejectTransform()
-                            props.setOverrideMenuContents(false)
-                            props.setOpacity(1)
-                            props.setShowContextMenu(false)
-                    }}><CloseOutlined /></Button>
+            <Zoom in={true}>
+            <Fab
+            disableRipple={true}
+            variant='extended'
+            size="large"
+            sx={{
+                width: convertRemToPx(14),
+                position: 'absolute',
+                top: canvasTop + convertRemToPx(0.5),
+                left: canvasLeft + (props.windowWidth / 2) - convertRemToPx(7),
+                display: 'flex',
+                color: props.isDark ? 'white' : 'grey',
+                bgcolor: props.isDark ? 'grey' : 'white',
+                '&:hover': {
+                    bgcolor: props.isDark ? 'grey' : 'white',
+                }
+            }}>
+                <Stack gap={2} direction='horizontal' style={{width: '100%', display:'flex', justifyContent: 'space-between'}}>
+                    <div>
+                        <span style={{textTransform: 'capitalize'}}>A</span>
+                        <span style={{textTransform: 'lowercase'}}>ccept changes?</span>
+                    </div>
+                    <div>
+                    <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey', }} onClick={async () => {
+                        await acceptTransform()
+                        props.setOverrideMenuContents(false)
+                        props.setOpacity(1)
+                        props.setShowContextMenu(false)
+                    }}>
+                        <CheckOutlined/>
+                    </IconButton>
+                    <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey'}} onClick={async() => {
+                        await rejectTransform()
+                        props.setOverrideMenuContents(false)
+                        props.setOpacity(1)
+                        props.setShowContextMenu(false)
+                    }}>
+                        <CloseOutlined/>
+                    </IconButton>
+                    </div>
                 </Stack>
-            </Card.Body>
-            </Card>
-        </Draggable>
+            </Fab>
+            </Zoom>
         )
 
         const nonCootCommand = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string) => {
             await startRotateTranslate(molecule, chosenAtom, selectedMode)
             props.setShowOverlay(false)
-            props.setOpacity(0.5)
+            //props.setOpacity(0.5)
             props.setOverrideMenuContents(contextMenuOverride)
             props.setHoveredAtom({molecule: null, cid: null})
         }

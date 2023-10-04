@@ -6,8 +6,9 @@ import { Button, Card, Container, Form, FormGroup, FormLabel, FormSelect, Row, S
 import { CheckOutlined, CloseOutlined, DeleteSweepOutlined } from "@mui/icons-material";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import Draggable from "react-draggable";
-import { cidToSpec } from "../../utils/MoorhenUtils";
+import { cidToSpec, convertRemToPx } from "../../utils/MoorhenUtils";
 import { libcootApi } from "../../types/libcoot";
+import { Fab, IconButton, Zoom } from "@mui/material";
 
 export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
     const [showAccept, setShowAccept] = useState<boolean>(false)
@@ -23,6 +24,21 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
     const autoClearRestraintsRef = useRef<boolean>(true)
 
     const dragModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'SPHERE']
+
+    const canvasElement = document.getElementById('moorhen-canvas-background')
+    let canvasTop: number
+    let canvasLeft: number
+    let canvasRight: number
+    if (canvasElement !== null) {
+        const rect = canvasElement.getBoundingClientRect()
+        canvasLeft = rect.left
+        canvasTop = rect.top
+        canvasRight = rect.right
+    } else {
+        canvasLeft = 0
+        canvasTop = 0
+        canvasRight = 0
+    } 
 
     const animateRefine = async (molecule: moorhen.Molecule, n_cyc: number, n_iteration: number, final_n_cyc: number = 100) => {
         for (let i = 0; i <= n_iteration; i++) {
@@ -238,51 +254,58 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
     if (props.mode === 'context') {
 
         const contextMenuOverride = (
-            <Draggable nodeRef={draggableRef} handle=".inner-drag-handle">
-                <Card ref={draggableRef} className="moorhen-draggable-action-card" style={{position: 'absolute'}} onMouseOver={() => props.setOpacity(1)} onMouseOut={() => props.setOpacity(0.5)}>
-                <Card.Header className="inner-drag-handle">Atom dragging mode</Card.Header>
-                <Card.Body>
-                    <Stack gap={2} direction="vertical" style={{ alignItems: 'center'}}>
-                        <span>Accept dragging ?</span>
-                        <Stack gap={2} direction="horizontal" style={{ alignItems: 'center',  alignContent: 'center', justifyContent: 'center'}}>
-                            <Button onClick={async () => {
-                                document.removeEventListener('atomDragged', atomDraggedCallback)
-                                document.removeEventListener('mouseup', mouseUpCallback)
-                                await finishDragging(true)
-                                props.setOverrideMenuContents(false)
-                                props.setOpacity(1)
-                                props.setShowContextMenu(false)                  
-                            }}><CheckOutlined /></Button>
-                            <Button onClick={async () => {
-                                document.removeEventListener('atomDragged', atomDraggedCallback)
-                                document.removeEventListener('mouseup', mouseUpCallback)
-                                await finishDragging(false)
-                                props.setOverrideMenuContents(false)
-                                props.setOpacity(1)
-                                props.setShowContextMenu(false)                  
-                            }}><CloseOutlined /></Button>
-                        </Stack>                    
-                    </Stack>
-                    <hr></hr>
-                    <Stack gap={2} direction="vertical" style={{ alignItems: 'center'}}>
-                        <span>Atom pull restraints</span>
-                        <Button style={{width: '80%'}} onClick={clearRestraints}><DeleteSweepOutlined /></Button>
-                        <Form.Check
-                            style={{paddingTop: '0.1rem'}} 
-                            type="switch"
-                            defaultChecked={true}
-                            onChange={(evt) => autoClearRestraintsRef.current = evt.target.checked}
-                            label="Auto clear"/>
-                    </Stack>
-                </Card.Body>
-                </Card>
-            </Draggable>
+            <Zoom in={true}>
+            <Fab
+            disableRipple={true}
+            variant='extended'
+            size="large"
+            sx={{
+                width: convertRemToPx(14),
+                position: 'absolute',
+                top: canvasTop + convertRemToPx(0.5),
+                left: canvasLeft + (props.windowWidth / 2) - convertRemToPx(7),
+                display: 'flex',
+                color: props.isDark ? 'white' : 'grey',
+                bgcolor: props.isDark ? 'grey' : 'white',
+                '&:hover': {
+                    bgcolor: props.isDark ? 'grey' : 'white',
+                }
+            }}>
+                <Stack gap={2} direction='horizontal' style={{width: '100%', display:'flex', justifyContent: 'space-between'}}>
+                    <div>
+                        <span style={{textTransform: 'capitalize'}}>A</span>
+                        <span style={{textTransform: 'lowercase'}}>ccept changes?</span>
+                    </div>
+                    <div>
+                    <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey', }} onClick={async () => {
+                        document.removeEventListener('atomDragged', atomDraggedCallback)
+                        document.removeEventListener('mouseup', mouseUpCallback)
+                        await finishDragging(true)
+                        props.setOverrideMenuContents(false)
+                        props.setOpacity(1)
+                        props.setShowContextMenu(false)                  
+                    }}>
+                        <CheckOutlined/>
+                    </IconButton>
+                    <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey'}} onClick={async() => {
+                        document.removeEventListener('atomDragged', atomDraggedCallback)
+                        document.removeEventListener('mouseup', mouseUpCallback)
+                        await finishDragging(false)
+                        props.setOverrideMenuContents(false)
+                        props.setOpacity(1)
+                        props.setShowContextMenu(false)                  
+                    }}>
+                        <CloseOutlined/>
+                    </IconButton>
+                    </div>
+                </Stack>
+            </Fab>
+            </Zoom>
         )
 
         const nonCootCommand = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string) => {
             await startDragging(molecule, chosenAtom, selectedMode)       
             props.setShowOverlay(false)
-            props.setOpacity(0.5)
             document.addEventListener('atomDragged', atomDraggedCallback)
             document.addEventListener('mouseup', mouseUpCallback)
             props.setOverrideMenuContents(contextMenuOverride)

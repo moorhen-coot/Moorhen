@@ -610,6 +610,7 @@ export namespace moorhen {
     type ContextButtonProps = {
         mode: 'context';
         monomerLibraryPath: string;
+        windowWidth: number;
         shortCuts: string | { [label: string]: Shortcut; };
         urlPrefix: string;
         commandCentre: React.RefObject<CommandCentre>
