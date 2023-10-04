@@ -6,10 +6,12 @@ in vec4 aVertexPosition;
 in vec2 aVertexTexture;
 
 out vec2 out_TexCoord0;
+out mediump mat4 pMatrix;
 
 void main(){
     gl_Position = uPMatrix * uMVMatrix * aVertexPosition;
     out_TexCoord0 =  aVertexTexture;
+    pMatrix = uPMatrix;
 }
 `;
 

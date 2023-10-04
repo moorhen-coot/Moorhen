@@ -7,9 +7,13 @@ var triangle_fragment_shader_source = `#version 300 es\n
 
     in lowp vec4 ShadowCoord;
     uniform sampler2D ShadowMap;
+    uniform sampler2D SSAOMap;
     uniform float xPixelOffset;
     uniform float yPixelOffset;
+    uniform float xSSAOScaling;
+    uniform float ySSAOScaling;
     uniform bool doShadows;
+    uniform bool doSSAO;
     uniform int shadowQuality;
 
     in mediump mat4 mvInvMatrix;
@@ -80,7 +84,10 @@ var triangle_fragment_shader_source = `#version 300 es\n
               shad /= 64.0 ;
           }
       }
-          
+
+      float occ = 1.0;
+      if(doSSAO)
+          occ = texture(SSAOMap, vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling) ).x;
 
       vec3 L;
       vec3 E;
@@ -93,7 +100,8 @@ var triangle_fragment_shader_source = `#version 300 es\n
       E = (mvInvMatrix * vec4(normalize(-v),1.0)).xyz;
       L = normalize((mvInvMatrix *light_positions).xyz);
       R = normalize(-reflect(L,norm));
-      Iamb += light_colours_ambient;
+      Iamb += occ*light_colours_ambient;
+
       Idiff += light_colours_diffuse * max(dot(norm,L), 0.0);
       float y = max(max(light_colours_specular.r,light_colours_specular.g),light_colours_specular.b);
       Ispec += light_colours_specular * pow(max(dot(R,E),0.0),specularPower);
@@ -122,6 +130,7 @@ var triangle_fragment_shader_source = `#version 300 es\n
       }
 
       fragColor = mix(color, fogColour, fogFactor );
+      //if(doSSAO) fragColor = texture(SSAOMap, vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling) );
 
     }
 `;

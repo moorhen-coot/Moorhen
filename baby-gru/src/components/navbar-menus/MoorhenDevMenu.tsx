@@ -9,6 +9,7 @@ import { MoorhenClearSelfRestraintsMenuItem } from "../menu-item/MoorhenClearSel
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenMoleculeRepresentation } from "../../utils/MoorhenMoleculeRepresentation";
 import { moorhen } from "../../types/moorhen";
+import MoorhenSlider from "../misc/MoorhenSlider"
 
 const doRestraintsMeshTest = async (commandCentre, glRef, molecules, moleculeSelectRef) => {
     const selectedMolecule = molecules.find(item => item.molNo === parseInt(moleculeSelectRef.current.value))
@@ -83,7 +84,7 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
     const context = useContext<undefined | moorhen.Context>(MoorhenContext);
 
     const menuItemProps = {setPopoverIsShown, customCid, moleculeSelectRef, ...props}
-    const { doShadow, setDoShadow, doOutline, setDoOutline, doSpinTest, setDoSpinTest } = context
+    const { doShadow, setDoShadow, doOutline, setDoOutline, doSpinTest, setDoSpinTest, doSSAO, setDoSSAO, ssaoBias, setSsaoBias, ssaoRadius, setSsaoRadius } = context
 
     return <>
                     <MenuItem onClick={() => doTest(menuItemProps)}>
@@ -116,6 +117,23 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                             onChange={() => { setDoShadow(!doShadow) }}
                             label="Shadows"/>
                     </InputGroup>
+                    <InputGroup className='moorhen-input-group-check'>
+                        <Form.Check 
+                            type="switch"
+                            checked={doSSAO}
+                            onChange={() => { setDoSSAO(!doSSAO) }}
+                            label="Occlusion"/>
+                    </InputGroup>
+                    <MoorhenSlider minVal={0.0} maxVal={10} logScale={false}
+                        sliderTitle="Occlusion radius"
+                        initialValue={ssaoRadius}
+                        externalValue={ssaoRadius}
+                        setExternalValue={setSsaoRadius} />
+                    <MoorhenSlider minVal={0.0} maxVal={.2} logScale={false}
+                        sliderTitle="Occlusion bias"
+                        initialValue={ssaoBias}
+                        externalValue={ssaoBias}
+                        setExternalValue={setSsaoBias} />
                     <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"
