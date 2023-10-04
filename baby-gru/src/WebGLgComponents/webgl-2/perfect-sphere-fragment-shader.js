@@ -33,9 +33,13 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
 
     in lowp vec4 ShadowCoord;
     uniform sampler2D ShadowMap;
+    uniform sampler2D SSAOMap;
     uniform float xPixelOffset;
     uniform float yPixelOffset;
+    uniform float xSSAOScaling;
+    uniform float ySSAOScaling;
     uniform bool doShadows;
+    uniform bool doSSAO;
     uniform int shadowQuality;
 
     uniform bool clipCap;
@@ -108,6 +112,10 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
 
       gl_FragDepth = (pos.z / pos.w + 1.0) / 2.0;
 
+      float occ = 1.0;
+      if(doSSAO)
+          occ = texture(SSAOMap, vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling) ).x;
+
       vec3 L;
       vec3 E;
       vec3 R;
@@ -123,7 +131,7 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
        L = normalize(invertLightPos);
        //R = normalize(-reflect(L,norm));
        //calculate Ambient Term:
-       Iamb += light_colours_ambient;
+       Iamb += occ*light_colours_ambient;
        //calculate Diffuse Term:
        Idiff += light_colours_diffuse * max(dot(E,L), 0.0);
        // calculate Specular Term:
@@ -148,6 +156,8 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
       }
       color.a = vColor.a;
       fragColor = mix(color, fogColour, fogFactor );
+
+      //if(doSSAO) fragColor = texture(SSAOMap, vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling) );
 
       if(clipCap){
         if(clipd<0.0){

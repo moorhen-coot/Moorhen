@@ -516,6 +516,7 @@ export namespace moorhen {
         setDoShadowDepthDebug: React.Dispatch<React.SetStateAction<boolean>>;
         setDefaultBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
         setDoShadow: React.Dispatch<React.SetStateAction<boolean>>;
+        setDoSSAO: React.Dispatch<React.SetStateAction<boolean>>;
         setDoOutline: React.Dispatch<React.SetStateAction<boolean>>;
         setDoSpinTest: React.Dispatch<React.SetStateAction<boolean>>;
         setClipCap: React.Dispatch<React.SetStateAction<boolean>>;
@@ -523,6 +524,8 @@ export namespace moorhen {
         setUseOffScreenBuffers: React.Dispatch<React.SetStateAction<boolean>>;
         setDepthBlurRadius: React.Dispatch<React.SetStateAction<number>>;
         setDepthBlurDepth: React.Dispatch<React.SetStateAction<number>>;
+        setSsaoRadius: React.Dispatch<React.SetStateAction<number>>;
+        setSsaoBias: React.Dispatch<React.SetStateAction<number>>;
         setDoPerspectiveProjection: React.Dispatch<React.SetStateAction<boolean>>;
         setDrawInteractions: React.Dispatch<React.SetStateAction<boolean>>;
         setDrawMissingLoops: React.Dispatch<React.SetStateAction<boolean>>;
@@ -578,8 +581,11 @@ export namespace moorhen {
         useOffScreenBuffers: boolean; 
         depthBlurRadius: number; 
         depthBlurDepth: number; 
+        ssaoBias: number; 
+        ssaoRadius: number; 
         doShadowDepthDebug: boolean; 
         doShadow: boolean; 
+        doSSAO: boolean; 
         doOutline: boolean; 
         GLLabelsFontFamily: string;
         GLLabelsFontSize: number;

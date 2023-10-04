@@ -189,6 +189,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setSSAOOn(context.doSSAO)
+            glRef.current.drawScene()
+        }
+    }, [context.doSSAO])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
             glRef.current.setShadowsOn(context.doShadow)
             glRef.current.drawScene()
         }
@@ -200,6 +207,20 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [context.doSpinTest])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setSSAOBias(context.ssaoBias)
+            glRef.current.drawScene()
+        }
+    }, [context.ssaoBias])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setSSAORadius(context.ssaoRadius)
+            glRef.current.drawScene()
+        }
+    }, [context.ssaoRadius])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {

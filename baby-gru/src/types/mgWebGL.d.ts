@@ -11,6 +11,9 @@ import * as mat3 from 'gl-matrix/mat3';
 export namespace webGL {
     interface MGWebGL extends React.Component  {
         isWebGL2() : boolean;
+        lerp(a:number, b:number, f:number) : number;
+        initializeSSAOBuffers() : void;
+        bindSSAOBuffers() : void;
         createColourBuffer(tri: number[]) : void;
         createIndexBuffer(tri: number[]) : void;
         createSizeBuffer(tri: number[]) : void;
@@ -77,7 +80,10 @@ export namespace webGL {
         initInstancedShadowShaders(vertexShaderShadow : string, fragmentShaderShadow : string)  : void;
         initShadowShaders(vertexShaderShadow : string, fragmentShaderShadow : string)  : void;
         initBlurXShader(vertexShaderBlurX : string, fragmentShaderBlurX : string)  : void;
+        initSSAOShader(vertexShaderBlurX : string, fragmentShaderBlurX : string)  : void;
         initBlurYShader(vertexShaderBlurY : string, fragmentShaderBlurY : string)  : void;
+        initSimpleBlurXShader(vertexShaderBlurX : string, fragmentShaderBlurX : string)  : void;
+        initSimpleBlurYShader(vertexShaderBlurX : string, fragmentShaderBlurX : string)  : void;
         initOverlayShader(vertexShaderOverlay : string, fragmentShaderOverlay : string)  : void;
         initRenderFrameBufferShaders(vertexShaderRenderFrameBuffer : string, fragmentShaderRenderFrameBuffer : string)  : void;
         initCirclesShaders(vertexShader : string, fragmentShader : string)  : void;
@@ -85,6 +91,9 @@ export namespace webGL {
         initTextBackgroundShaders(vertexShaderTextBackground : string, fragmentShaderTextBackground : string)  : void;
         initOutlineShaders(vertexShader : string, fragmentShader : string)  : void;
         initShaders(vertexShader : string, fragmentShader : string)  : void;
+        initGBufferShaders(vertexShader : string, fragmentShader : string)  : void;
+        initGBufferShadersInstanced(vertexShader : string, fragmentShader : string)  : void;
+        initGBufferShadersPerfectSphere(vertexShader : string, fragmentShader : string)  : void;
         initShadersInstanced(vertexShader : string, fragmentShader : string)  : void;
         initThickLineNormalShaders(vertexShader : string, fragmentShader : string)  : void;
         initThickLineShaders(vertexShader : string, fragmentShader : string)  : void;
@@ -100,6 +109,7 @@ export namespace webGL {
         setOrigin(o: [number, number, number], doDrawScene=true, dispatchEvent=true) : void;
         buildBuffers(): void;
         drawScene() : void;
+        textureBlur(width: number,height: number,inputTexture: WebGLTexture) : void;
         appendOtherData(jsondata: any, skipRebuild?: boolean, name?: string) : any;
         setZoom(z: number, drawScene?: boolean);
         setOriginOrientationAndZoomAnimated(o: number[],q: quat4,z: number) : void;
@@ -130,9 +140,12 @@ export namespace webGL {
         resize(width: number, height: number) : void;
         setShadowDepthDebug(doShadowDepthDebug: boolean): void;
         setShadowsOn(doShadow: boolean): void;
+        setSSAOOn(doShadow: boolean): void;
         setOutlinesOn(doOutline: boolean): void;
         setSpinTestState(doSpinTest: boolean): void;
         setBlurSize(blurSize: number): void;
+        setSSAORadius(radius: number): void;
+        setSSAOBias(bias: number): void;
         setTextFont(family: string,size: number) : void;
         setBackground(col: [number, number, number, number]) : void;
         setActiveMolecule(molecule: moorhen.Molecule) : void;
@@ -150,7 +163,9 @@ export namespace webGL {
         setSlab(slab: number[]);
         clearTextPositionBuffers(): void;
         recreateSilhouetteBuffers() : void;
+        createSSAOFramebufferBuffer() : void;
         recreateOffScreeenBuffers() : void;
+        createSimpleBlurOffScreeenBuffers() : void;
         draggableMolecule: moorhen.Molecule
         activeMolecule: moorhen.Molecule
         specularPower: number;
@@ -210,6 +225,8 @@ export namespace webGL {
         backColour: string | number[];
         blurXTexture: WebGLTexture;
         blurYTexture: WebGLTexture;
+        simpleBlurXTexture: WebGLTexture;
+        simpleBlurYTexture: WebGLTexture;
         calculatingShadowMap: boolean;
         cancelMouseTrack: boolean;
         circleTex: WebGLTexture;
@@ -218,6 +235,7 @@ export namespace webGL {
         diskBuffer: DisplayBuffer;
         diskVertices: number[];
         doShadow: boolean;
+        doSSAO: boolean;
         doShadowDepthDebug: boolean;
         doSpin: boolean;
         doStenciling: boolean;
@@ -268,9 +286,21 @@ export namespace webGL {
         nFrames: number;
         nPrevFrames: number;
         offScreenDepthTexture: WebGLTexture;
+        ssaoFramebuffer: MGWebGLFrameBuffer;
+        gFramebuffer: MGWebGLFrameBuffer;
+        gBufferRenderbufferNormal: WebGLRenderbuffer;
+        gBufferRenderbufferPosition: WebGLRenderbuffer;
+        gBufferPositionTexture: WebGLTexture;
+        gBufferDepthTexture: WebGLTexture;
+        gBufferNormalTexture: WebGLTexture;
+        ssaoTexture: WebGLTexture;
+        ssaoRadius: number;
+        ssaoBias: number;
         offScreenFramebuffer: MGWebGLFrameBuffer;
         offScreenFramebufferBlurX: MGWebGLFrameBuffer;
         offScreenFramebufferBlurY: MGWebGLFrameBuffer;
+        offScreenFramebufferSimpleBlurX: MGWebGLFrameBuffer;
+        offScreenFramebufferSimpleBlurY: MGWebGLFrameBuffer;
         offScreenFramebufferColor: MGWebGLFrameBuffer;
         offScreenReady: boolean;
         offScreenRenderbufferColor: WebGLRenderbuffer;
@@ -289,8 +319,14 @@ export namespace webGL {
         rttTextureDepth: WebGLTexture;
         screenZ: number;
         shaderProgram: ShaderTriangles;
+        shaderProgramGBuffers: ShaderGBuffersTriangles;
+        shaderProgramGBuffersInstanced: ShaderGBuffersTrianglesInstanced;
+        shaderProgramGBuffersPerfectSpheres: ShaderGBuffersPerfectSpheres;
+        shaderProgramSSAO: ShaderSSAO;
         shaderProgramBlurX: ShaderBlurX;
         shaderProgramBlurY: ShaderBlurY;
+        shaderProgramSimpleBlurX: ShaderSimpleBlurX;
+        shaderProgramSimpleBlurY: ShaderSimpleBlurY;
         shaderProgramCircles: ShaderCircles;
         shaderProgramImages: ShaderImages;
         shaderProgramInstanced: ShaderTrianglesInstanced;
@@ -328,6 +364,10 @@ export namespace webGL {
         stenciling: boolean;
         textHeightScaling: number;
         textTex: WebGLTexture;
+        ssaoNoiseTexture: WebGLTexture;
+        blurUBOBuffer: WebGLBuffer;
+        ssaoKernelBuffer: WebGLBuffer;
+        ssaoKernel: number[];
         trackMouse: boolean;
         viewChangedEvent: Event;
         props: MGWebGLPropsInterface;
@@ -342,9 +382,11 @@ export namespace webGL {
         canvasRef: any;
         depth_texture: any;
         frag_depth_ext: any;
+        drawBuffersExt: any;
         instanced_ext: any;
         ext: any;
         newTextLabels: any;
+        drawingGBuffers: boolean;
 
     }
 }
