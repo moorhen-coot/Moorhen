@@ -6,6 +6,9 @@ import { webGL } from "../../types/mgWebGL";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
+import { MoorhenSlider } from "../misc/MoorhenSlider";
+import { IconButton } from "@mui/material";
+import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
 
 export const MoorhenSelfRestraintsMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -13,12 +16,14 @@ export const MoorhenSelfRestraintsMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     popoverPlacement?: 'left' | 'right';
+    isDark: boolean;
 }) => {
 
     const modeTypeSelectRef = useRef<HTMLSelectElement | null>(null)
     const moleculeSelectRef = useRef<HTMLSelectElement | null>(null)
     const chainSelectRef = useRef<HTMLSelectElement | null>(null)
     const cidSelectRef = useRef<HTMLInputElement | null>(null)
+    const maxDistSliderRef = useRef<number>(4.5)
     const [selectedMode, setSelectedMode] = useState<string>("Molecule")
     const [selectedMolNo, setSelectedMolNo] = useState<null | number>(null)
     const [selectedChain, setSelectedChain] = useState<string>('')
@@ -41,6 +46,21 @@ export const MoorhenSelfRestraintsMenuItem = (props: {
             setSelectedChain(selectedMolecule.sequences.length > 0 ? selectedMolecule.sequences[0].chain : '')
         } 
     }
+    
+    const increaseDistButton =  <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey'}} onClick={() => {
+                                    const newVal = maxDist + 0.25
+                                    setMaxDist(newVal)
+                                    maxDistSliderRef.current = newVal
+                                }}>
+                                    <AddCircleOutline/>
+                                </IconButton>
+    const decreaseDistButton =  <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey'}} onClick={() => {
+                                    const newVal = maxDist - 0.25
+                                    setMaxDist(newVal)
+                                    maxDistSliderRef.current = newVal
+                                }}>
+                                    <RemoveCircleOutline/>
+                                </IconButton>
 
     const panelContent = <>
         <Form.Group className='moorhen-form-group' controlId="MoorhenSelfRestraintsMenuItem">
@@ -62,18 +82,33 @@ export const MoorhenSelfRestraintsMenuItem = (props: {
         {selectedMode === 'Atom Selection' &&
         <MoorhenCidInputForm
             ref={cidSelectRef}
+            margin="0.5rem"
             onChange={(evt) => setCid(evt.target.value)}
             placeholder={cidSelectRef.current ? "" : "Input custom selection e.g. //A,B"}/>}
+        <MoorhenSlider
+            ref={maxDistSliderRef}
+            sliderTitle="Max. dist."
+            decrementButton={decreaseDistButton}
+            incrementButton={increaseDistButton}
+            minVal={4}
+            maxVal={6}
+            showMinMaxVal={false}
+            logScale={false}
+            initialValue={maxDist}
+            externalValue={maxDist}
+            setExternalValue={setMaxDist}/>
     </>
 
     const onCompleted = useCallback(async () => {
-        console.log(modeTypeSelectRef.current.value, maxDist, chainSelectRef.current?.value, cidSelectRef.current?.value)
+        if (!moleculeSelectRef.current.value || maxDistSliderRef.current === null) {
+            return
+        }
         switch(modeTypeSelectRef.current.value) {
             case "Molecule":
                 await props.commandCentre.current.cootCommand({
                     command: "generate_self_restraints",
                     returnType: 'status',
-                    commandArgs: [parseInt(moleculeSelectRef.current.value), maxDist],
+                    commandArgs: [parseInt(moleculeSelectRef.current.value), maxDistSliderRef.current],
                 }, false)
                 break
 
@@ -81,20 +116,23 @@ export const MoorhenSelfRestraintsMenuItem = (props: {
                 await props.commandCentre.current.cootCommand({
                     command: "generate_chain_self_restraints",
                     returnType: 'status',
-                    commandArgs: [parseInt(moleculeSelectRef.current.value), maxDist, chainSelectRef.current.value],
+                    commandArgs: [parseInt(moleculeSelectRef.current.value), maxDistSliderRef.current, chainSelectRef.current.value],
                 }, false)
                 break
             case "Atom Selection":
+                if (!cidSelectRef.current.value) {
+                    break
+                }
                 await props.commandCentre.current.cootCommand({
                     command: "generate_local_self_restraints",
                     returnType: 'status',
-                    commandArgs: [parseInt(moleculeSelectRef.current.value), maxDist, cidSelectRef.current.value],
+                    commandArgs: [parseInt(moleculeSelectRef.current.value), maxDistSliderRef.current, cidSelectRef.current.value],
                 }, false)
                 break
             default:
                 console.warn('Unrecognised self restraints mode...', modeTypeSelectRef.current.value)
         }
-    }, [props.commandCentre, maxDist])
+    }, [props.commandCentre])
 
     return <MoorhenBaseMenuItem
         id='create-restraints-menu-item'

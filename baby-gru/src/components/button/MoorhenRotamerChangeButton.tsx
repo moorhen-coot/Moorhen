@@ -4,8 +4,10 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 import { libcootApi } from "../../types/libcoot";
 import { Button, Card, Stack } from "react-bootstrap";
-import { ArrowBackIosOutlined, ArrowForwardIosOutlined, CheckOutlined, CloseOutlined, FirstPageOutlined } from "@mui/icons-material";
+import { ArrowBackIosOutlined, ArrowForwardIosOutlined, CheckOutlined, CloseOutlined, FirstPageOutlined, NavigateBeforeOutlined, NavigateNextOutlined } from "@mui/icons-material";
 import Draggable from "react-draggable";
+import { IconButton, Zoom } from "@mui/material";
+import { convertRemToPx } from '../../utils/MoorhenUtils';
 
 export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
     const theButton = useRef<null | HTMLButtonElement>(null)
@@ -92,6 +94,21 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
         
         return rotamerInfo
     }
+
+    const canvasElement = document.getElementById('moorhen-canvas-background')
+    let canvasTop: number
+    let canvasLeft: number
+    let canvasRight: number
+    if (canvasElement !== null) {
+        const rect = canvasElement.getBoundingClientRect()
+        canvasLeft = rect.left
+        canvasTop = rect.top
+        canvasRight = rect.right
+    } else {
+        canvasLeft = 0
+        canvasTop = 0
+        canvasRight = 0
+    }
     
     if (props.mode === 'context') {
 
@@ -99,50 +116,62 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
             const rotamerName = rotamerInfo.data.result.result.name
             const rotamerRank = rotamerInfo.data.result.result.rank
             const rotamerProbability = rotamerInfo.data.result.result.richardson_probability
-
-            return <Draggable nodeRef={draggableRef} handle=".inner-drag-handle">
-                    <Card ref={draggableRef} className="moorhen-draggable-action-card" style={{position: 'absolute'}} onMouseOver={() => props.setOpacity(1)} onMouseOut={() => props.setOpacity(0.5)}>
-                      <Card.Header className="inner-drag-handle">Accept new rotamer ?</Card.Header>
-                      <Card.Body>
-                      <span>Current rotamer: {rotamerName} ({rotamerRank+1}<sup>{rotamerRank === 0 ? 'st' : rotamerRank === 1 ? 'nd' : rotamerRank === 2 ? 'rd' : 'th'}</sup>)</span>
-                      <br></br>
-                      <span>Probability: {rotamerProbability}%</span>
-                        <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
-                            <Button onClick={async () => {
-                                const rotamerInfo = await changeRotamer('change_to_first_rotamer')
-                                props.setOverrideMenuContents(getPopOverContents(rotamerInfo))
-                                }}><FirstPageOutlined/></Button>
-                            <Button onClick={async () => {
-                                const rotamerInfo = await changeRotamer('change_to_previous_rotamer')
-                                props.setOverrideMenuContents(getPopOverContents(rotamerInfo))
-                            }}><ArrowBackIosOutlined/></Button>
-                            <Button onClick={async () => {
-                                const rotamerInfo = await changeRotamer('change_to_next_rotamer')
-                                props.setOverrideMenuContents(getPopOverContents(rotamerInfo))
-                            }}><ArrowForwardIosOutlined/></Button>
-                        </Stack>
-                        <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
-                          <Button onClick={() => {
-                                acceptTransform()
-                                props.setOpacity(0.5)
-                                props.setOverrideMenuContents(false)
-                                props.setShowContextMenu(false)
-                          }}><CheckOutlined /></Button>
-                          <Button className="mx-2" onClick={() => {
-                                rejectTransform()
-                                props.setOpacity(0.5)
-                                props.setOverrideMenuContents(false)
-                                props.setShowContextMenu(false)
-                          }}><CloseOutlined /></Button>
-                        </Stack>
-                      </Card.Body>
-                    </Card>
-                  </Draggable>
+            
+            return <Zoom in={true}>
+            <div
+            className="moorhen-notification-div"
+            style={{
+                position: 'absolute',
+                width: '20rem',
+                top: canvasTop + convertRemToPx(0.5),
+                left: canvasLeft + (props.windowWidth / 2) - convertRemToPx(7),
+                color: props.isDark ? 'white' : 'grey',
+                backgroundColor: props.isDark ? 'grey' : 'white',
+            }}>
+            <Stack direction="vertical" gap={1}>
+                <div>
+                    <span>Current rotamer: {rotamerName} ({rotamerRank+1}<sup>{rotamerRank === 0 ? 'st' : rotamerRank === 1 ? 'nd' : rotamerRank === 2 ? 'rd' : 'th'}</sup>)</span>
+                </div>
+                <div>
+                    <span>Probability: {rotamerProbability}%</span>
+                </div>
+                <Stack gap={2} direction='horizontal' style={{width: '100%', display:'flex', justifyContent: 'center'}}>
+                <IconButton onClick={async () => {
+                        const rotamerInfo = await changeRotamer('change_to_first_rotamer')
+                        props.setOverrideMenuContents(getPopOverContents(rotamerInfo))
+                    }}><FirstPageOutlined/></IconButton>
+                    <IconButton onClick={async () => {
+                        const rotamerInfo = await changeRotamer('change_to_previous_rotamer')
+                        props.setOverrideMenuContents(getPopOverContents(rotamerInfo))
+                    }}><NavigateBeforeOutlined/></IconButton>
+                    <IconButton onClick={async () => {
+                        const rotamerInfo = await changeRotamer('change_to_next_rotamer')
+                        props.setOverrideMenuContents(getPopOverContents(rotamerInfo))
+                    }}><NavigateNextOutlined/></IconButton>
+                    <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey', }} onClick={async () => {
+                        acceptTransform()
+                        props.setOpacity(1)
+                        props.setOverrideMenuContents(false)
+                        props.setShowContextMenu(false)
+                    }}>
+                        <CheckOutlined/>
+                    </IconButton>
+                    <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey'}} onClick={async() => {
+                        rejectTransform()
+                        props.setOpacity(1)
+                        props.setOverrideMenuContents(false)
+                        props.setShowContextMenu(false)
+                    }}>
+                        <CloseOutlined/>
+                    </IconButton>
+                </Stack>
+            </Stack>
+            </div>
+            </Zoom>
         }
     
         const nonCootCommand = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, p: string) => {
             const rotamerInfo = await doRotamerChange(molecule, chosenAtom, p)
-            props.setOpacity(0.5)
             props.setOverrideMenuContents(getPopOverContents(rotamerInfo))
             props.setHoveredAtom({molecule: null, cid: null})
         }

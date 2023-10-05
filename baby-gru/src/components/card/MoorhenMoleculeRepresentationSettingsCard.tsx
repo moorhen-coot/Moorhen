@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Form, Stack } from "react-bootstrap";
 import { IconButton, Popover, Slider } from '@mui/material';
-import MoorhenSlider from '../misc/MoorhenSlider';
+import { MoorhenSlider } from '../misc/MoorhenSlider';
 import { AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
 import { moorhen } from "../../types/moorhen";
 import { webGL } from '../../types/mgWebGL';

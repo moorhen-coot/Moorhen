@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react"
-import MoorhenSlider from "../misc/MoorhenSlider"
+import { MoorhenSlider } from "../misc/MoorhenSlider"
 import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { webGL } from "../../types/mgWebGL";

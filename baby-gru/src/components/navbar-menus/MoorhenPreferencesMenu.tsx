@@ -8,7 +8,7 @@ import { MoorhenScoresToastPreferencesMenuItem } from "../menu-item/MoorhenScore
 import { MoorhenBackupPreferencesMenuItem } from "../menu-item/MoorhenBackupPreferencesMenuItem"
 import { MoorhenDefaultBondSmoothnessPreferencesMenuItem } from "../menu-item/MoorhenDefaultBondSmoothnessPreferencesMenuItem"
 import { MoorhenMapSamplingMenuItem } from "../menu-item/MoorhenMapSamplingMenuItem"
-import MoorhenSlider from '../misc/MoorhenSlider' 
+import { MoorhenSlider } from '../misc/MoorhenSlider' 
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MoorhenContext } from "../../utils/MoorhenContext";
 import { moorhen } from "../../types/moorhen";

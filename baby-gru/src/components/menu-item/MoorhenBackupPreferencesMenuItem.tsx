@@ -1,5 +1,5 @@
 import { Form } from "react-bootstrap";
-import MoorhenSlider from "../misc/MoorhenSlider";
+import { MoorhenSlider } from "../misc/MoorhenSlider";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 export const MoorhenBackupPreferencesMenuItem = (props: {

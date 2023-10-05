@@ -2,7 +2,7 @@ import { useContext, useState } from "react"
 import { Col, Row, Form, Card, Button } from 'react-bootstrap';
 import { MoorhenContext } from "../../utils/MoorhenContext";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase"
-import MoorhenSlider from '../misc/MoorhenSlider' 
+import { MoorhenSlider } from '../misc/MoorhenSlider' 
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 

@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { MoorhenLoadScriptMenuItem } from "../menu-item/MoorhenLoadScriptMenuItem";
 import { MoorhenSuperposeMenuItem } from "../menu-item/MoorhenSuperposeMenuItem";
-import { MenuItem } from "@mui/material";
+import { MoorhenSelfRestraintsMenuItem } from "../menu-item/MoorhenSelfRestraintsMenuItem";
+import { MoorhenClearSelfRestraintsMenuItem } from "../menu-item/MoorhenClearSelfRestraintsMenuItem";
+import { MoorhenRandomJiggleBlurMenuItem } from "../menu-item/MoorhenRandomJiggleBlurMenuItem";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
+import { MenuItem } from "@mui/material";
 import { libcootApi } from "../../types/libcoot";
 
 export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
@@ -13,6 +16,27 @@ export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterfa
 
     return <>
             <MoorhenSuperposeMenuItem key="superpose_structures" setSuperposeResults={setSuperposeResults} {...menuItemProps} />
+            <MoorhenSelfRestraintsMenuItem
+                glRef={props.glRef}
+                molecules={props.molecules}
+                isDark={props.isDark}
+                commandCentre={props.commandCentre}
+                setPopoverIsShown={setPopoverIsShown}
+            />
+            <MoorhenClearSelfRestraintsMenuItem
+                glRef={props.glRef}
+                molecules={props.molecules}
+                commandCentre={props.commandCentre}
+                setPopoverIsShown={setPopoverIsShown}
+            />
+            <MoorhenRandomJiggleBlurMenuItem
+                glRef={props.glRef}
+                molecules={props.molecules}
+                maps={props.maps}
+                isDark={props.isDark}
+                commandCentre={props.commandCentre}
+                setPopoverIsShown={setPopoverIsShown}
+            />
             {props.allowScripting && 
             <>
                 <MoorhenLoadScriptMenuItem {...menuItemProps} />
