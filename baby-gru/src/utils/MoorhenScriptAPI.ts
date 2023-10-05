@@ -33,7 +33,7 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
     doGenerateSelfRestraints = async (molNo: number, maxRadius: number) => {
         const selectedMolecule = this.molecules.find(molecule => molecule.molNo === molNo)
         if (typeof selectedMolecule !== 'undefined') {
-            await selectedMolecule.generateSelfRestraints(maxRadius)
+            await selectedMolecule.generateSelfRestraints("//", maxRadius)
         } else {
             console.log(`Unable to find molecule number ${molNo}`)
         }

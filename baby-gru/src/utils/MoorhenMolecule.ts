@@ -87,6 +87,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     environmentRepresentation: moorhen.MoleculeRepresentation;
     hasGlycans: boolean;
     hasDNA: boolean;
+    restraints: {maxRadius: number, cid: string}[];
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibraryPath = "./baby-gru/monomers") {
         this.type = 'molecule'
@@ -120,6 +121,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             width: 0.1,
             atomRadiusBondRatio: 1
         }
+        this.restraints = []
         this.hasDNA = false
         this.hasGlycans = false
         this.displayObjectsTransformation = { origin: [0, 0, 0], quat: null, centre: [0, 0, 0] }
@@ -1591,20 +1593,23 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     /**
      * Generate self restraints
+     * @param {string} [cid="//"] The CID for local restraints
      * @param {number} [maxRadius=4.2] The maximum radius for the restraints
      */
-    generateSelfRestraints(maxRadius: number = 4.2): Promise<moorhen.WorkerResponse> {
-        return this.commandCentre.current.cootCommand({
-            command: "generate_self_restraints",
+    async generateSelfRestraints(cid: string = "//", maxRadius: number = 4.2): Promise<void> {
+        await this.commandCentre.current.cootCommand({
+            command: "generate_local_self_restraints",
             returnType: 'status',
-            commandArgs: [this.molNo, maxRadius],
+            commandArgs: [this.molNo, maxRadius, cid],
         }, false)
+        this.restraints.push({ maxRadius, cid })
     }
 
     /**
      * Clear all additional restraints
      */
     clearExtraRestraints(): Promise<moorhen.WorkerResponse> {
+        this.restraints = []
         return this.commandCentre.current.cootCommand({
             command: "clear_extra_restraints",
             returnType: 'status',

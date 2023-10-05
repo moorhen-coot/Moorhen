@@ -10,6 +10,7 @@ type MoorhenMoleculeSelectPropsType = {
     label?: string;
     molecules: moorhen.Molecule[];
     onChange?: (arg0: React.ChangeEvent<HTMLSelectElement>) => void;
+    filterFunction?: (arg0: moorhen.Molecule) => boolean;
 }
 
 /**
@@ -21,6 +22,7 @@ type MoorhenMoleculeSelectPropsType = {
  * @property {boolean} [allowAny=false] Indicates whether a "Any molecule" option should be included in the selector (with value -999999)
  * @property {moorhen.Molecule[]} molecules List of molecules displayed in the selector options
  * @property {function} onChange A function that is called when the user changes the selector option
+ * @property {function} filterFunction A function that takes a moorhen.Molecule as input and returns a boolean: true if the molecule is to be included in the options.
  * @example
  * import { MoorhenMoleculeSelect } from "moorhen";
  * import { useRef } from "react";
@@ -37,6 +39,27 @@ type MoorhenMoleculeSelectPropsType = {
  * )
  */
 export const MoorhenMoleculeSelect = forwardRef<HTMLSelectElement, MoorhenMoleculeSelectPropsType>((props, selectRef) => {
+
+    const getMoleculeOptions = () => {
+        let moleculeOptions: JSX.Element[] = []
+        
+        if (props.molecules) {
+            if (props.allowAny) {
+                moleculeOptions.push(
+                    <option value={-999999} key={-999999}>Any molecule</option>
+                )
+            }
+            props.molecules.forEach(molecule => {
+                if (props.filterFunction(molecule)) {
+                    moleculeOptions.push(<option key={molecule.molNo} value={molecule.molNo}>{molecule.molNo}: {molecule.name}</option>)
+                }
+            })
+        }
+
+        return moleculeOptions.length > 0 ? moleculeOptions : null
+    }
+
+
     return <Form.Group style={{ width: props.width, margin: props.margin, height:props.height }}>
         <Form.Label>{props.label}</Form.Label>
         <FormSelect size="sm" ref={selectRef} defaultValue={-999999} onChange={(evt) => {
@@ -47,12 +70,9 @@ export const MoorhenMoleculeSelect = forwardRef<HTMLSelectElement, MoorhenMolecu
                 selectRef.current.value = evt.target.value
             }
         }}>
-            {props.allowAny && <option value={-999999} key={-999999}>Any molecule</option>}
-            {props.molecules.map(molecule => 
-                <option value={molecule.molNo} key={molecule.molNo}>{molecule.molNo}: {molecule.name}</option>
-            )}
+            {getMoleculeOptions()}
         </FormSelect>
     </Form.Group>
 })
 
-MoorhenMoleculeSelect.defaultProps = { height: '4rem', width: '20rem', allowAny: false, label: "Molecule", margin: '0.5rem' }
+MoorhenMoleculeSelect.defaultProps = { height: '4rem', width: '20rem', allowAny: false, label: "Molecule", margin: '0.5rem', filterFunction: () => true }

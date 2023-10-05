@@ -302,7 +302,8 @@ export const representationLabelMapping = {
     DishyBases: "Bases",
     VdwSpheres: "Spheres",
     allHBonds: "H-Bonds",
-    glycoBlocks: "GlycoBlocks"
+    glycoBlocks: "GlycoBlocks",
+    restraints: "Restraints"
 }
 
 export const residueCodesOneToThree = {
