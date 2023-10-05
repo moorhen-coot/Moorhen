@@ -4,12 +4,10 @@ import { MenuItem } from "@mui/material";
 import { cidToSpec } from "../../utils/MoorhenUtils";
 import { MoorhenContext } from "../../utils/MoorhenContext";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
-import { MoorhenSelfRestraintsMenuItem } from "../menu-item/MoorhenSelfRestraintsMenuItem"
-import { MoorhenClearSelfRestraintsMenuItem } from "../menu-item/MoorhenClearSelfRestraintsMenuItem"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenMoleculeRepresentation } from "../../utils/MoorhenMoleculeRepresentation";
 import { moorhen } from "../../types/moorhen";
-import MoorhenSlider from "../misc/MoorhenSlider"
+import { MoorhenSlider } from "../misc/MoorhenSlider"
 
 const doRestraintsMeshTest = async (commandCentre, glRef, molecules, moleculeSelectRef) => {
     const selectedMolecule = molecules.find(item => item.molNo === parseInt(moleculeSelectRef.current.value))
@@ -90,18 +88,6 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                     <MenuItem onClick={() => doTest(menuItemProps)}>
                         Do a timing test...
                     </MenuItem>
-                    <MoorhenSelfRestraintsMenuItem
-                        glRef={props.glRef}
-                        molecules={props.molecules}
-                        commandCentre={props.commandCentre}
-                        setPopoverIsShown={setPopoverIsShown}
-                    />
-                    <MoorhenClearSelfRestraintsMenuItem
-                        glRef={props.glRef}
-                        molecules={props.molecules}
-                        commandCentre={props.commandCentre}
-                        setPopoverIsShown={setPopoverIsShown}
-                    />  
                     <hr></hr>
                     <Form.Group>
                         <MoorhenMoleculeSelect width="" molecules={props.molecules} ref={moleculeSelectRef}/>
