@@ -8,7 +8,7 @@ import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import Draggable from "react-draggable";
 import { cidToSpec, convertRemToPx } from "../../utils/MoorhenUtils";
 import { libcootApi } from "../../types/libcoot";
-import { Fab, IconButton, Zoom } from "@mui/material";
+import { IconButton, Zoom } from "@mui/material";
 
 export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
     const [showAccept, setShowAccept] = useState<boolean>(false)

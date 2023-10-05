@@ -2,11 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { MoorhenEditButtonBase } from "./MoorhenEditButtonBase"
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
-import { Button, Card, Container, FormGroup, FormLabel, FormSelect, Row, Stack } from "react-bootstrap";
+import { Button, Card, Container, FormGroup, FormLabel, FormSelect, OverlayTrigger, Row, Stack, Tooltip } from "react-bootstrap";
 import { convertRemToPx, getTooltipShortcutLabel } from '../../utils/MoorhenUtils';
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
-import { Fab, IconButton, Snackbar, Zoom } from '@mui/material';
-import { CancelOutlined, CheckCircleOutlined, CheckOutlined, CloseOutlined } from "@mui/icons-material";
+import { IconButton, Zoom } from '@mui/material';
+import { CheckOutlined, CloseOutlined, InfoOutlined } from "@mui/icons-material";
 import Draggable from "react-draggable";
 
 
@@ -156,6 +156,19 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
                 backgroundColor: props.isDark ? 'grey' : 'white',
             }}>
                 <Stack gap={2} direction='horizontal' style={{width: '100%', display:'flex', justifyContent: 'space-between'}}>
+                    <OverlayTrigger
+                        placement="bottom"
+                        overlay={
+                            <Tooltip id="tip-tooltip" className="moorhen-tooltip">
+                            <div>
+                                <em>{"Hold <Shift><Alt> to translate"}</em>
+                                <br></br>
+                                <em>{props.shortCuts ? `Hold ${getTooltipShortcutLabel(JSON.parse(props.shortCuts as string).residue_camera_wiggle)} to move view` : null}</em>
+                            </div>
+                            </Tooltip>
+                        }>
+                    <InfoOutlined/>
+                    </OverlayTrigger>
                     <div>
                         <span>Accept changes?</span>
                     </div>

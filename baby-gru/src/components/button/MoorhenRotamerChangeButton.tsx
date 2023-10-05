@@ -4,9 +4,9 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 import { libcootApi } from "../../types/libcoot";
 import { Button, Card, Stack } from "react-bootstrap";
-import { ArrowBackIosOutlined, ArrowForwardIosOutlined, CancelOutlined, CheckCircleOutlined, CheckOutlined, CloseOutlined, FirstPageOutlined, NavigateBeforeOutlined, NavigateNextOutlined } from "@mui/icons-material";
+import { ArrowBackIosOutlined, ArrowForwardIosOutlined, CheckOutlined, CloseOutlined, FirstPageOutlined, NavigateBeforeOutlined, NavigateNextOutlined } from "@mui/icons-material";
 import Draggable from "react-draggable";
-import { Fab, IconButton, Zoom } from "@mui/material";
+import { IconButton, Zoom } from "@mui/material";
 import { convertRemToPx } from '../../utils/MoorhenUtils';
 
 export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
