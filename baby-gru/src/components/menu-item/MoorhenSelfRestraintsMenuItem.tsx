@@ -100,7 +100,6 @@ export const MoorhenSelfRestraintsMenuItem = (props: {
     </>
 
     const onCompleted = useCallback(async () => {
-        console.log(modeTypeSelectRef.current.value, maxDistSliderRef.current, chainSelectRef.current?.value, cidSelectRef.current?.value)
         if (!moleculeSelectRef.current.value || maxDistSliderRef.current === null) {
             return
         }

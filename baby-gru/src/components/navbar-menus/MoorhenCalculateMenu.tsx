@@ -3,6 +3,7 @@ import { MoorhenLoadScriptMenuItem } from "../menu-item/MoorhenLoadScriptMenuIte
 import { MoorhenSuperposeMenuItem } from "../menu-item/MoorhenSuperposeMenuItem";
 import { MoorhenSelfRestraintsMenuItem } from "../menu-item/MoorhenSelfRestraintsMenuItem";
 import { MoorhenClearSelfRestraintsMenuItem } from "../menu-item/MoorhenClearSelfRestraintsMenuItem";
+import { MoorhenRandomJiggleBlurMenuItem } from "../menu-item/MoorhenRandomJiggleBlurMenuItem";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MenuItem } from "@mui/material";
 import { libcootApi } from "../../types/libcoot";
@@ -27,7 +28,15 @@ export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterfa
                 molecules={props.molecules}
                 commandCentre={props.commandCentre}
                 setPopoverIsShown={setPopoverIsShown}
-            />  
+            />
+            <MoorhenRandomJiggleBlurMenuItem
+                glRef={props.glRef}
+                molecules={props.molecules}
+                maps={props.maps}
+                isDark={props.isDark}
+                commandCentre={props.commandCentre}
+                setPopoverIsShown={setPopoverIsShown}
+            />
             {props.allowScripting && 
             <>
                 <MoorhenLoadScriptMenuItem {...menuItemProps} />
