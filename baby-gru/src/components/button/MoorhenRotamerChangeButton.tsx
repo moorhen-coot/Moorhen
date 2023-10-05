@@ -119,7 +119,7 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
             
             return <Zoom in={true}>
             <div
-            className="moorhen-draggable-action-card"
+            className="moorhen-notification-div"
             style={{
                 position: 'absolute',
                 width: '20rem',

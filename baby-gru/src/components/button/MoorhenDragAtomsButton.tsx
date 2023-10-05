@@ -256,7 +256,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
         const contextMenuOverride = (
             <Zoom in={true}>
             <div
-            className="moorhen-draggable-action-card"
+            className="moorhen-notification-div"
             style={{
                 position: 'absolute',
                 top: canvasTop + convertRemToPx(0.5),
