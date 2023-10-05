@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useContext } from "react"
 import { Form, InputGroup } from "react-bootstrap";
-import MoorhenSlider from "../misc/MoorhenSlider"
+import { MoorhenSlider } from "../misc/MoorhenSlider"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { MoorhenContext } from "../../utils/MoorhenContext";
 import { moorhen } from "../../types/moorhen";

@@ -7,7 +7,7 @@ import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLe
 import { MoorhenMapSettingsMenuItem } from "../menu-item/MoorhenMapSettingsMenuItem";
 import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem"
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
-import MoorhenSlider from "../misc/MoorhenSlider";
+import { MoorhenSlider } from "../misc/MoorhenSlider";
 import { IconButton, MenuItem, Popover, Tooltip } from "@mui/material"
 import { RgbColorPicker } from "react-colorful"
 import { moorhen } from "../../types/moorhen"

@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react"
-import MoorhenSlider from "../misc/MoorhenSlider"
+import { MoorhenSlider } from "../misc/MoorhenSlider"
 import { Form, InputGroup } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { MoorhenContext } from "../../utils/MoorhenContext";

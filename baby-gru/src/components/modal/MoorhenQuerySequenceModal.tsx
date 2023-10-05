@@ -9,7 +9,7 @@ import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import { MoorhenContext } from "../../utils/MoorhenContext";
 import { MoorhenDraggableModalBase } from "../modal/MoorhenDraggableModalBase"
-import MoorhenSlider from "../misc/MoorhenSlider";
+import { MoorhenSlider } from "../misc/MoorhenSlider";
 import { webGL } from "../../types/mgWebGL";
 
 export const MoorhenQuerySequenceModal = (props: {

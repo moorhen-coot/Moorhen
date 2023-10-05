@@ -1,6 +1,6 @@
 import { Form } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import MoorhenSlider from "../misc/MoorhenSlider";
+import { MoorhenSlider } from "../misc/MoorhenSlider";
 
 export const MoorhenMapSettingsMenuItem = (props: {
     mapSolid: boolean;
