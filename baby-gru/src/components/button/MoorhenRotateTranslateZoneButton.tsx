@@ -5,7 +5,7 @@ import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 import { Button, Card, Container, FormGroup, FormLabel, FormSelect, Row, Stack } from "react-bootstrap";
 import { convertRemToPx, getTooltipShortcutLabel } from '../../utils/MoorhenUtils';
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
-import { Fab, IconButton, Zoom } from '@mui/material';
+import { Fab, IconButton, Snackbar, Zoom } from '@mui/material';
 import { CancelOutlined, CheckCircleOutlined, CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import Draggable from "react-draggable";
 
@@ -146,26 +146,18 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
 
         const contextMenuOverride = (
             <Zoom in={true}>
-            <Fab
-            disableRipple={true}
-            variant='extended'
-            size="large"
-            sx={{
-                width: convertRemToPx(14),
+            <div
+            className="moorhen-draggable-action-card"
+            style={{
                 position: 'absolute',
                 top: canvasTop + convertRemToPx(0.5),
                 left: canvasLeft + (props.windowWidth / 2) - convertRemToPx(7),
-                display: 'flex',
                 color: props.isDark ? 'white' : 'grey',
-                bgcolor: props.isDark ? 'grey' : 'white',
-                '&:hover': {
-                    bgcolor: props.isDark ? 'grey' : 'white',
-                }
+                backgroundColor: props.isDark ? 'grey' : 'white',
             }}>
                 <Stack gap={2} direction='horizontal' style={{width: '100%', display:'flex', justifyContent: 'space-between'}}>
                     <div>
-                        <span style={{textTransform: 'capitalize'}}>A</span>
-                        <span style={{textTransform: 'lowercase'}}>ccept changes?</span>
+                        <span>Accept changes?</span>
                     </div>
                     <div>
                     <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey', }} onClick={async () => {
@@ -186,7 +178,7 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
                     </IconButton>
                     </div>
                 </Stack>
-            </Fab>
+            </div>
             </Zoom>
         )
 

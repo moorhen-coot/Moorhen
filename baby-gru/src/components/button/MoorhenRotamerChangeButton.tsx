@@ -118,31 +118,22 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
             const rotamerProbability = rotamerInfo.data.result.result.richardson_probability
             
             return <Zoom in={true}>
-            <Fab
-            variant='extended'
-            disableRipple={true}
-            size="large"
-            sx={{
-                height: 'auto',
-                width: convertRemToPx(20),
+            <div
+            className="moorhen-draggable-action-card"
+            style={{
                 position: 'absolute',
+                width: '20rem',
                 top: canvasTop + convertRemToPx(0.5),
-                left: canvasLeft + (props.windowWidth / 2) - convertRemToPx(10),
-                display: 'flex',
+                left: canvasLeft + (props.windowWidth / 2) - convertRemToPx(7),
                 color: props.isDark ? 'white' : 'grey',
-                bgcolor: props.isDark ? 'grey' : 'white',
-                '&:hover': {
-                    bgcolor: props.isDark ? 'grey' : 'white',
-                }
+                backgroundColor: props.isDark ? 'grey' : 'white',
             }}>
             <Stack direction="vertical" gap={1}>
                 <div>
-                    <span style={{textTransform: 'capitalize'}}>C</span>
-                    <span style={{textTransform: 'lowercase'}}>urrent rotamer: {rotamerName} ({rotamerRank+1}<sup>{rotamerRank === 0 ? 'st' : rotamerRank === 1 ? 'nd' : rotamerRank === 2 ? 'rd' : 'th'}</sup>)</span>
+                    <span>Current rotamer: {rotamerName} ({rotamerRank+1}<sup>{rotamerRank === 0 ? 'st' : rotamerRank === 1 ? 'nd' : rotamerRank === 2 ? 'rd' : 'th'}</sup>)</span>
                 </div>
                 <div>
-                    <span style={{textTransform: 'capitalize'}}>P</span>
-                    <span style={{textTransform: 'lowercase'}}>robability: {rotamerProbability}%</span>
+                    <span>Probability: {rotamerProbability}%</span>
                 </div>
                 <Stack gap={2} direction='horizontal' style={{width: '100%', display:'flex', justifyContent: 'center'}}>
                 <IconButton onClick={async () => {
@@ -175,7 +166,7 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
                     </IconButton>
                 </Stack>
             </Stack>
-            </Fab>
+            </div>
             </Zoom>
         }
     

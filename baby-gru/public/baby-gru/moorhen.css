@@ -140,20 +140,13 @@ div.darkly text.end-label {fill:#FFF !important;}
 
 .moorhen-draggable-action-card {
   box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.2),0px 6px 10px 0px rgba(0,0,0,0.14),0px 1px 18px 0px rgba(0,0,0,0.12);
-  width: 15rem;
-}
-
-.moorhen-draggable-action-card > .card-header {
-  cursor: move;
-}
-
-.moorhen-draggable-action-card > .card-body {
-  align-items: center;
-  align-content: center;
-  justify-content: center;
-}
-
-.moorhen-draggable-action-card > .card-body {
+  width: 14rem;
+  min-height: 3rem;
+  height: fit-content;
+  max-height: 10rem;
+  padding: 0.5rem;
+  display: flex;
+  border-radius: 2rem;
   align-items: center;
   align-content: center;
   justify-content: center;
