@@ -61,6 +61,7 @@ export class MoorhenMap implements moorhen.Map {
     associatedReflectionFileName: string
     uniqueId: string
     mapRmsd: number
+    otherMapMolNoForColouring: number
     diffMapColourBuffers: { positiveDiffColour: number[], negativeDiffColour: number[] }
     rgba: {
         mapColour: {r: number, g: number, b: number};
@@ -93,6 +94,7 @@ export class MoorhenMap implements moorhen.Map {
         this.suggestedContourLevel = null
         this.suggestedRadius = null
         this.mapCentre = null
+        this.otherMapMolNoForColouring = null
         this.diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] }
         this.rgba = {
             mapColour: { r: 0.30000001192092896, g: 0.30000001192092896, b: 0.699999988079071},
@@ -368,6 +370,47 @@ export class MoorhenMap implements moorhen.Map {
         this.displayObjects[style] = []
     }
 
+    setupContourBuffers(objects: any[], keepCootColours: boolean = false) {
+        try {
+            const diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] }
+            this.clearBuffersOfStyle("Coot")
+            objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
+                object.col_tri.forEach((cols: number[][]) => {
+                    cols.forEach((col: number[]) => {
+                        for (let idx = 0; idx < col.length; idx += 4) {
+                            if (this.isDifference) {
+                                if (col[idx] < 0.5) {
+                                    diffMapColourBuffers.positiveDiffColour.push(idx)
+                                    col[idx] = this.rgba.positiveDiffColour.r
+                                    col[idx + 1] = this.rgba.positiveDiffColour.g
+                                    col[idx + 2] = this.rgba.positiveDiffColour.b    
+                                } else {
+                                    diffMapColourBuffers.negativeDiffColour.push(idx)
+                                    col[idx] = this.rgba.negativeDiffColour.r
+                                    col[idx + 1] = this.rgba.negativeDiffColour.g
+                                    col[idx + 2] = this.rgba.negativeDiffColour.b    
+                                }
+                            } else if (!keepCootColours) {
+                                col[idx] = this.rgba.mapColour.r
+                                col[idx + 1] = this.rgba.mapColour.g
+                                col[idx + 2] = this.rgba.mapColour.b
+                            }
+                            col[idx + 3] = this.rgba.a
+                        }
+                    })
+                })
+                let a = this.glRef.current.appendOtherData(object, true);
+                this.diffMapColourBuffers.positiveDiffColour = this.diffMapColourBuffers.positiveDiffColour.concat(diffMapColourBuffers.positiveDiffColour)
+                this.diffMapColourBuffers.negativeDiffColour = this.diffMapColourBuffers.negativeDiffColour.concat(diffMapColourBuffers.negativeDiffColour)
+                this.displayObjects['Coot'] = this.displayObjects['Coot'].concat(a)
+            })
+            this.glRef.current.buildBuffers();
+            this.glRef.current.drawScene();
+            } catch(err) {
+                console.log(err)
+            } 
+    }
+
     /**
      * Draw the map contour around a given origin
      * @param {number} x - Origin coord. X
@@ -387,53 +430,23 @@ export class MoorhenMap implements moorhen.Map {
             returnType = "lines_mesh"
         }
 
-        const response = await this.commandCentre.current.cootCommand({
-            returnType: returnType,
-            command: "get_map_contours_mesh",
-            commandArgs: [this.molNo, x, y, z, radius, contourLevel]
-        }, false)
-        try {
-            const objects = [response.data.result.result]
-            const diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] }
-            this.clearBuffersOfStyle("Coot")
-            objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
-                object.col_tri.forEach((cols: number[][]) => {
-                    cols.forEach((col: number[]) => {
-                        if (!this.isDifference) {
-                            for (let idx = 0; idx < col.length; idx += 4) {
-                                col[idx] = this.rgba.mapColour.r
-                                col[idx + 1] = this.rgba.mapColour.g
-                                col[idx + 2] = this.rgba.mapColour.b
-                                col[idx + 3] = this.rgba.a
-                            }
-                        } else {
-                            for (let idx = 0; idx < col.length; idx += 4) {
-                                if (col[idx] < 0.5) {
-                                    diffMapColourBuffers.positiveDiffColour.push(idx)
-                                    col[idx] = this.rgba.positiveDiffColour.r
-                                    col[idx + 1] = this.rgba.positiveDiffColour.g
-                                    col[idx + 2] = this.rgba.positiveDiffColour.b    
-                                } else {
-                                    diffMapColourBuffers.negativeDiffColour.push(idx)
-                                    col[idx] = this.rgba.negativeDiffColour.r
-                                    col[idx + 1] = this.rgba.negativeDiffColour.g
-                                    col[idx + 2] = this.rgba.negativeDiffColour.b    
-                                }
-                                col[idx + 3] = this.rgba.a
-                            }
-                        }
-                    })
-                })
-                let a = this.glRef.current.appendOtherData(object, true);
-                this.diffMapColourBuffers.positiveDiffColour = this.diffMapColourBuffers.positiveDiffColour.concat(diffMapColourBuffers.positiveDiffColour)
-                this.diffMapColourBuffers.negativeDiffColour = this.diffMapColourBuffers.negativeDiffColour.concat(diffMapColourBuffers.negativeDiffColour)
-                this.displayObjects['Coot'] = this.displayObjects['Coot'].concat(a)
-            })
-            this.glRef.current.buildBuffers();
-            this.glRef.current.drawScene();
-            } catch(err) {
-                console.log(err)
-            }
+        let response: moorhen.WorkerResponse<any>
+        if (this.otherMapMolNoForColouring !== null) {
+            response = await this.commandCentre.current.cootCommand({
+                returnType: returnType,
+                command: "get_map_contours_mesh_using_other_map_for_colours",
+                commandArgs: [this.molNo, this.otherMapMolNoForColouring, x, y, z, radius, contourLevel, -0.9, 0.9, false]
+            }, false)
+        } else {
+            response = await this.commandCentre.current.cootCommand({
+                returnType: returnType,
+                command: "get_map_contours_mesh",
+                commandArgs: [this.molNo, x, y, z, radius, contourLevel]
+            }, false)
+        }
+
+        const objects = [response.data.result.result]
+        this.setupContourBuffers(objects, this.otherMapMolNoForColouring !== null)
     }
 
     /**

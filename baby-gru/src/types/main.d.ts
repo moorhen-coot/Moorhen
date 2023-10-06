@@ -163,6 +163,7 @@ declare module 'moorhen' {
         cootContour: boolean;
         displayObjects: any;
         litLines: boolean;
+        otherMapMolNoForColouring: number;
         solid: boolean;
         isDifference: boolean;
         hasReflectionData: boolean;

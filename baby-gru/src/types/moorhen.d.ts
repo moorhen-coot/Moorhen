@@ -351,6 +351,7 @@ export namespace moorhen {
         selectedColumns: selectedMtzColumns;
         associatedReflectionFileName: string;
         uniqueId: string;
+        otherMapMolNoForColouring: number;
         mapRmsd: number;
         rgba: {
             mapColour: {r: number, g: number, b: number};
