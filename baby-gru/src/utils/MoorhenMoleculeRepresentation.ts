@@ -22,6 +22,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     isCustom: boolean;
     useDefaultBondOptions: boolean;
     useDefaultColourRules: boolean;
+    applyColourToNonCarbonAtoms: boolean;
     bondOptions: moorhen.cootBondOptions;
 
     constructor(style: moorhen.RepresentationStyles, cid: string, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>) {
@@ -37,6 +38,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.isCustom = false
         this.useDefaultColourRules = true
         this.useDefaultBondOptions = true
+        this.applyColourToNonCarbonAtoms = false
         this.bondOptions = {
             smoothness: 1,
             width: 0.1,
@@ -56,6 +58,14 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         ].includes(style)
         if (style === "ligands" && (typeof cid !== 'string' || cid === '/*/*/*/*')) {
             this.cid =  "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O)"
+        }
+    }
+
+    setApplyColourToNonCarbonAtoms(newVal: boolean) {
+        if (newVal) {
+            this.applyColourToNonCarbonAtoms = newVal
+        } else {
+            this.applyColourToNonCarbonAtoms = false
         }
     }
 
@@ -720,7 +730,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                     message: 'coot_command',
                     command: 'shim_set_bond_colours',
                     returnType: 'status',
-                    commandArgs: [this.parentMolecule.molNo, colourObjectList]
+                    commandArgs: [this.parentMolecule.molNo, colourObjectList, this.applyColourToNonCarbonAtoms]
                 }, false)
             } else {
                 await Promise.all(

@@ -866,8 +866,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {boolean} [isCustom=false] - Indicates if the representation is considered "custom"
      * @param {moorhen.ColourRule[]} [colourRules=undefined] - A list of colour rules that will be applied to the new representation
      * @param {moorhen.cootBondOptions} [bondOptions=undefined] - An object that describes bond width, atom/bond ratio and other bond settings.
+     * @param {boolean} [applyColourToNonCarbonAtoms=undefined] - If true then colours are applied to non-carbon atoms also.
      */
-    async addRepresentation(style: moorhen.RepresentationStyles, cid: string = '/*/*/*/*', isCustom: boolean = false, colourRules?: moorhen.ColourRule[], bondOptions?: moorhen.cootBondOptions) {
+    async addRepresentation(style: moorhen.RepresentationStyles, cid: string = '/*/*/*/*', isCustom: boolean = false, colourRules?: moorhen.ColourRule[], bondOptions?: moorhen.cootBondOptions, applyColourToNonCarbonAtoms?: boolean) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules()
         }
@@ -876,6 +877,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         representation.setParentMolecule(this)
         representation.setColourRules(colourRules)
         representation.setBondOptions(bondOptions)
+        representation.setApplyColourToNonCarbonAtoms(applyColourToNonCarbonAtoms)
         await representation.draw()
         this.representations.push(representation)
         await this.drawSymmetry(false)
