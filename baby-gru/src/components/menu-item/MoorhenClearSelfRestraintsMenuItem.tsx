@@ -17,15 +17,19 @@ export const MoorhenClearSelfRestraintsMenuItem = (props: {
 const panelContent = <>
         <MoorhenMoleculeSelect
             ref={moleculeSelectRef}
-            molecules={props.molecules}/>
+            molecules={props.molecules}
+            filterFunction={(mol) => mol.restraints.length > 0}/>
     </>
 
     const onCompleted = async () => {
-        await props.commandCentre.current.cootCommand({
-            command: "clear_extra_restraints",
-            returnType: 'status',
-            commandArgs: [parseInt(moleculeSelectRef.current.value)],
-        }, false)
+        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
+        if (selectedMolecule) {
+            await selectedMolecule.clearExtraRestraints()
+        }
+        const restraintsRepresenation = selectedMolecule.representations.find(item => item.style === 'restraints')
+        if (restraintsRepresenation) {
+            selectedMolecule.removeRepresentation(restraintsRepresenation.uniqueId)
+        }
     }
 
     return <MoorhenBaseMenuItem

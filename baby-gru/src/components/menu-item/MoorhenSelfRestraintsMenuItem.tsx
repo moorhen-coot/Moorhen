@@ -103,35 +103,37 @@ export const MoorhenSelfRestraintsMenuItem = (props: {
         if (!moleculeSelectRef.current.value || maxDistSliderRef.current === null) {
             return
         }
+
+        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
+        if(!selectedMolecule) {
+            return
+        }
+
+        let cid: string
         switch(modeTypeSelectRef.current.value) {
             case "Molecule":
-                await props.commandCentre.current.cootCommand({
-                    command: "generate_self_restraints",
-                    returnType: 'status',
-                    commandArgs: [parseInt(moleculeSelectRef.current.value), maxDistSliderRef.current],
-                }, false)
+                cid = "/*/*/*/*"
                 break
-
             case "Chain":
-                await props.commandCentre.current.cootCommand({
-                    command: "generate_chain_self_restraints",
-                    returnType: 'status',
-                    commandArgs: [parseInt(moleculeSelectRef.current.value), maxDistSliderRef.current, chainSelectRef.current.value],
-                }, false)
+                cid = `/*/${chainSelectRef.current.value}/*/*`
                 break
             case "Atom Selection":
-                if (!cidSelectRef.current.value) {
-                    break
+                if (cidSelectRef.current.value) {
+                    cid = cidSelectRef.current.value
                 }
-                await props.commandCentre.current.cootCommand({
-                    command: "generate_local_self_restraints",
-                    returnType: 'status',
-                    commandArgs: [parseInt(moleculeSelectRef.current.value), maxDistSliderRef.current, cidSelectRef.current.value],
-                }, false)
                 break
             default:
                 console.warn('Unrecognised self restraints mode...', modeTypeSelectRef.current.value)
         }
+        
+        if (cid) {
+            await selectedMolecule.generateSelfRestraints(cid, maxDistSliderRef.current)
+            const restraintsRepresenation = selectedMolecule.representations.find(item => item.style === 'restraints')
+            if (restraintsRepresenation) {
+                await restraintsRepresenation.redraw()
+            }
+        }
+        
     }, [props.commandCentre])
 
     return <MoorhenBaseMenuItem

@@ -16,7 +16,7 @@ import { MoorhenAddCustomRepresentationCard } from "./MoorhenAddCustomRepresenta
 import { MoorhenMoleculeRepresentationSettingsCard } from "./MoorhenMoleculeRepresentationSettingsCard"
 import { MoorhenModifyColourRulesCard } from './MoorhenModifyColourRulesCard';
 
-const allRepresentations = [ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks' ]
+const allRepresentations = [ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks', 'restraints' ]
 
 interface MoorhenMoleculeCardPropsInterface extends moorhen.Controls {
     dropdownId: number;
@@ -597,6 +597,7 @@ const RepresentationCheckbox = (props: {
         || (props.repKey === 'ligands' && props.molecule.ligands.length === 0) 
         || (props.repKey === 'DishyBases' && !props.molecule.hasDNA) 
         || (props.repKey === 'glycoBlocks' && !props.molecule.hasGlycans)
+        || (props.repKey === 'restraints' && props.molecule.restraints.length === 0)
         || (['rama', 'rotamer'].includes(props.repKey) && props.molecule.sequences.every(sequence => [3, 4, 5].includes(sequence.type)))
     )
     

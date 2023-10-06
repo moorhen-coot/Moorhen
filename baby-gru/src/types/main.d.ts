@@ -59,7 +59,7 @@ declare module 'moorhen' {
         addLigandOfType(resType: string, fromMolNo?: number): Promise<_moorhen.WorkerResponse>;
         updateAtoms(): Promise<void>;
         rigidBodyFit(cidsString: string, mapNo: number): Promise<_moorhen.WorkerResponse>;
-        generateSelfRestraints(maxRadius: number): Promise<_moorhen.WorkerResponse>;
+        generateSelfRestraints(cid?: string, maxRadius?: number): Promise<void>;
         clearExtraRestraints(): Promise<_moorhen.WorkerResponse>;
         refineResiduesUsingAtomCid(cid: string, mode: string, ncyc: number): Promise<_moorhen.WorkerResponse>;
         redo(): Promise<void>;
@@ -104,6 +104,7 @@ declare module 'moorhen' {
         symmetryOn: boolean;
         symmetryRadius : number;
         symmetryMatrices: number[][][];
+        restraints: {maxRadius: number, cid: string}[];
         gaussianSurfaceSettings: {
             sigma: number;
             countourLevel: number;
@@ -162,6 +163,7 @@ declare module 'moorhen' {
         cootContour: boolean;
         displayObjects: any;
         litLines: boolean;
+        otherMapMolNoForColouring: number;
         solid: boolean;
         isDifference: boolean;
         hasReflectionData: boolean;

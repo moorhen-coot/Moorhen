@@ -103,7 +103,7 @@ export namespace moorhen {
         addLigandOfType(resType: string, fromMolNo?: number): Promise<WorkerResponse>;
         updateAtoms(): Promise<void>;
         rigidBodyFit(cidsString: string, mapNo: number): Promise<WorkerResponse>;
-        generateSelfRestraints(maxRadius: number): Promise<WorkerResponse>;
+        generateSelfRestraints(cid?: string, maxRadius?: number): Promise<void>;
         clearExtraRestraints(): Promise<WorkerResponse>;
         refineResiduesUsingAtomCid(cid: string, mode: string, ncyc: number): Promise<WorkerResponse>;
         redo(): Promise<void>;
@@ -160,6 +160,7 @@ export namespace moorhen {
         displayObjectsTransformation: { origin: [number, number, number], quat: any, centre: [number, number, number] }
         uniqueId: string;
         defaultColourRules: ColourRule[];
+        restraints: {maxRadius: number, cid: string}[];
         monomerLibraryPath: string;
         hoverRepresentation: moorhen.MoleculeRepresentation;
         unitCellRepresentation: moorhen.MoleculeRepresentation;
@@ -170,7 +171,7 @@ export namespace moorhen {
 
     type RepresentationStyles = 'VdwSpheres' | 'ligands' | 'CAs' | 'CBs' | 'CDs' | 'gaussian' | 'allHBonds' | 'rama' | 
     'rotamer' | 'CRs' | 'MolecularSurface' | 'DishyBases' | 'VdWSurface' | 'Calpha' | 'unitCell' | 'hover' | 'environment' | 
-    'ligand_environment' | 'contact_dots' | 'chemical_features' | 'ligand_validation' | 'glycoBlocks'
+    'ligand_environment' | 'contact_dots' | 'chemical_features' | 'ligand_validation' | 'glycoBlocks' | 'restraints'
 
     interface MoleculeRepresentation {
         setBondOptions(bondOptions: cootBondOptions): void;
@@ -350,6 +351,7 @@ export namespace moorhen {
         selectedColumns: selectedMtzColumns;
         associatedReflectionFileName: string;
         uniqueId: string;
+        otherMapMolNoForColouring: number;
         mapRmsd: number;
         rgba: {
             mapColour: {r: number, g: number, b: number};
