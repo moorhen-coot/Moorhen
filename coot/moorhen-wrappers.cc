@@ -706,6 +706,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_cell",&molecules_container_t::get_cell)
     .function("make_masked_maps_split_by_chain",&molecules_container_t::make_masked_maps_split_by_chain)
     .function("fit_to_map_by_random_jiggle_with_blur_using_cid",&molecules_container_t::fit_to_map_by_random_jiggle_with_blur_using_cid)
+    .function("get_map_contours_mesh_using_other_map_for_colours",&molecules_container_t::get_map_contours_mesh_using_other_map_for_colours)
      ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<bool>()
