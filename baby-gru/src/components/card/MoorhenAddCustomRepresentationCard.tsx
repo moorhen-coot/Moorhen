@@ -31,8 +31,10 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     initialColour?: string;
     initialColourMode?: string;
     initialCid?: string;
+    initialApplyColourToNonCarbonAtoms?: boolean;
 }) => {
 
+    const applyColourToNonCarbonAtomsSwitchRef = useRef<HTMLInputElement | null>(null)
     const useDefaultColoursSwitchRef = useRef<HTMLInputElement | null>(null)
     const useDefaultBondSettingsSwitchRef = useRef<HTMLInputElement | null>(null)
     const ruleSelectRef = useRef<HTMLSelectElement | null>(null)
@@ -49,6 +51,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const [colour, setColour] = useState<string>(props.initialColour)
     const [useDefaultColours, setUseDefaultColours] = useState<boolean>(props.initialUseDefaultColoursValue)
     const [useDefaultBondSettings, setUseDefaultBondSettings] = useState<boolean>(props.initialUseDefaultBondSettings)
+    const [applyColourToNonCarbonAtoms, setApplyColourToNonCarbonAtoms] = useState<boolean>(props.initialApplyColourToNonCarbonAtoms)
     const [sequenceRangeSelect, setSequenceRangeSelect] = useState(null)
     const [selectedChain, setSelectedChain] = useState<string>(null)
     const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState<number>( props.initialAtomRadiusBondRatio ? props.initialAtomRadiusBondRatio : props.molecule.defaultBondOptions.atomRadiusBondRatio)
@@ -133,7 +136,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
         }
 
         if (props.mode === 'add') {
-            props.molecule.addRepresentation(styleSelectRef.current.value, cidSelection, true, colourRules, bondOptions)
+            props.molecule.addRepresentation(styleSelectRef.current.value, cidSelection, true, colourRules, bondOptions, applyColourToNonCarbonAtomsSwitchRef.current?.checked)
         } else if (props.mode === 'edit' && props.representationId) {
             const representation = props.molecule.representations.find(item => item.uniqueId === props.representationId)
             if (representation) {
@@ -142,6 +145,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 representation.setUseDefaultColourRules(!colourRules || colourRules?.length === 0)
                 representation.setColourRules(colourRules)
                 representation.setBondOptions(bondOptions)
+                representation.setApplyColourToNonCarbonAtoms(applyColourToNonCarbonAtomsSwitchRef.current?.checked)
                 representation.redraw()
             }
         }
@@ -197,6 +201,19 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                     <div style={{width: '100%'}}>
                         {sequenceRangeSelect}
                     </div>
+                }
+                {['CBs', 'VdwSpheres', 'ligands'].includes(representationStyle) && 
+                <InputGroup className='moorhen-input-group-check'>
+                    <Form.Check 
+                        ref={applyColourToNonCarbonAtomsSwitchRef}
+                        type="switch"
+                        label="Apply colour to non-carbon atoms also"
+                        checked={applyColourToNonCarbonAtoms}
+                        onChange={() => { 
+                            setApplyColourToNonCarbonAtoms((prev) => {return !prev})
+                        }}
+                    />
+                </InputGroup>
                 }
                 {['CBs', 'CAs', 'ligands'].includes(representationStyle) && 
                 <InputGroup className='moorhen-input-group-check'>
@@ -318,5 +335,5 @@ export const MoorhenAddCustomRepresentationCard = (props: {
 MoorhenAddCustomRepresentationCard.defaultProps = { 
     mode: 'add', initialColourMode: 'custom', initialRepresentationStyleValue: 'CBs', 
     initialUseDefaultColoursValue: true, initialRuleType: 'molecule', initialColour: '#47d65f',
-    initialCid: '', initialUseDefaultBondSettings: true
+    initialCid: '', initialUseDefaultBondSettings: true, initialApplyColourToNonCarbonAtoms: false
 }

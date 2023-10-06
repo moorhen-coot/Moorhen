@@ -682,6 +682,7 @@ const CustomRepresentationChip = (props: {
                     anchorEl={props.addColourRulesAnchorDivRef}
                     initialRepresentationStyleValue={props.representation.style}
                     initialRuleType='cid'
+                    initialApplyColourToNonCarbonAtoms={props.representation.applyColourToNonCarbonAtoms}
                     initialColour={(!props.representation.useDefaultColourRules && !props.representation.colourRules[0]?.isMultiColourRule) ? props.representation.colourRules[0].color : '#47d65f'}
                     initialAtomRadiusBondRatio={props.representation.bondOptions?.atomRadiusBondRatio}
                     initialBondWidth={props.representation.bondOptions?.width}

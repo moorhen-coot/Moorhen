@@ -775,7 +775,7 @@ const read_ccp4_map = (mapData: ArrayBufferLike, name: string, isDiffMap: boolea
     return molNo
 }
 
-const setUserDefinedBondColours = (imol: number, colours: { cid: string; rgb: [number, number, number] }[]) => {
+const setUserDefinedBondColours = (imol: number, colours: { cid: string; rgb: [number, number, number] }[], applyColourToNonCarbonAtoms: boolean = false) => {
     let colourMap = new cootModule.MapIntFloat3()
     let indexedResiduesVec = new cootModule.VectorStringUInt_pair()
     
@@ -786,7 +786,7 @@ const setUserDefinedBondColours = (imol: number, colours: { cid: string; rgb: [n
     })
 
     molecules_container.set_user_defined_bond_colours(imol, colourMap)
-    molecules_container.set_user_defined_atom_colour_by_selection(imol, indexedResiduesVec, false)
+    molecules_container.set_user_defined_atom_colour_by_selection(imol, indexedResiduesVec, applyColourToNonCarbonAtoms)
 
     indexedResiduesVec.delete()
     colourMap.delete()
@@ -886,7 +886,7 @@ const doCootCommand = (messageData: {
                 cootResult = doColourTest(...commandArgs as [number])
                 break
             case 'shim_set_bond_colours':
-                cootResult = setUserDefinedBondColours(...commandArgs as [number, { cid: string; rgb: [number, number, number] }[]])
+                cootResult = setUserDefinedBondColours(...commandArgs as [number, { cid: string; rgb: [number, number, number] }[], boolean])
                 break
             case 'shim_smiles_to_pdb':
                 cootResult = cootModule.SmilesToPDB(...commandArgs as [string, string, number, number])

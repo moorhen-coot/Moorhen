@@ -84,7 +84,7 @@ export namespace moorhen {
         fitLigandHere(mapMolNo: number, ligandMolNo: number, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<Molecule[]>;
         isLigand(): boolean;
         removeRepresentation(representationId: string): void;
-        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: ColourRule[], bondOptions?: cootBondOptions): Promise<MoleculeRepresentation>;
+        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: ColourRule[], bondOptions?: cootBondOptions, applyColourToNonCarbonAtoms?: boolean): Promise<MoleculeRepresentation>;
         getNeighborResiduesCids(selectionCid: string, radius: number, minDist: number, maxDist: number): Promise<string[]>;
         drawWithStyleFromMesh(style: string, meshObjects: any[], cid?: string): Promise<void>;
         updateWithMovedAtoms(movedResidues: AtomInfo[][]): Promise<void>;
@@ -174,6 +174,7 @@ export namespace moorhen {
     'ligand_environment' | 'contact_dots' | 'chemical_features' | 'ligand_validation' | 'glycoBlocks' | 'restraints'
 
     interface MoleculeRepresentation {
+        setApplyColourToNonCarbonAtoms(newVal: boolean): void;
         setBondOptions(bondOptions: cootBondOptions): void;
         setStyle(style: string): void;
         setUseDefaultColourRules(arg0: boolean): void;
@@ -191,6 +192,7 @@ export namespace moorhen {
         bondOptions: moorhen.cootBondOptions;
         useDefaultColourRules: boolean;
         useDefaultBondOptions: boolean;
+        applyColourToNonCarbonAtoms: boolean;
         uniqueId: string;
         style: string;
         cid: string;
