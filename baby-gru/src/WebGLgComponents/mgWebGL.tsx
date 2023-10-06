@@ -3594,7 +3594,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     createSSAOFramebufferBuffer(){
         if(!this.gFramebuffer){
-            this.gl.disable(this.gl.BLEND);
             this.ssaoFramebuffer = this.gl.createFramebuffer();
             this.gFramebuffer = this.gl.createFramebuffer();
 
@@ -7354,7 +7353,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 if (bufferTypes[j] === "NORMALLINES" || bufferTypes[j] === "LINES" || bufferTypes[j] === "LINE_LOOP" || bufferTypes[j] === "LINE_STRIP" || bufferTypes[j] === "DIAMONDS" || bufferTypes[j] === "TEXT" || bufferTypes[j] === "IMAGES" || bufferTypes[j] === "SQUARES" || bufferTypes[j] === "PENTAGONS" || bufferTypes[j] === "HEXAGONS" || bufferTypes[j] === "POINTS" || bufferTypes[j] === "SPHEROIDS" || bufferTypes[j] === "POINTS_SPHERES" || bufferTypes[j].substring(0, "CUSTOM_2D_SHAPE_".length) === "CUSTOM_2D_SHAPE_" || bufferTypes[j] === "PERFECT_SPHERES") {
                     continue;
                 }
-                if (this.displayBuffers[idx].transparent) {
+                if (this.displayBuffers[idx].transparent&&!this.drawingGBuffers) {
                     //console.log("Not doing normal drawing way ....");
                     continue;
                 }
@@ -7975,6 +7974,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawTransparent(theMatrix) {
+
+        if(this.drawingGBuffers) return;
 
         for (let idx = 0; idx < this.displayBuffers.length; idx++) {
 
