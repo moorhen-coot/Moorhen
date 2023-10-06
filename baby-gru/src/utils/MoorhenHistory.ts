@@ -219,5 +219,4 @@ export class MoorhenHistory implements moorhen.History {
             console.warn('Could not find the new base index to rebase moorhen history')
         }
     }
-
 }
