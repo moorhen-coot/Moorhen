@@ -4,10 +4,21 @@ import { MenuItem } from "@mui/material";
 import { cidToSpec } from "../../utils/MoorhenUtils";
 import { MoorhenContext } from "../../utils/MoorhenContext";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenMoleculeRepresentation } from "../../utils/MoorhenMoleculeRepresentation";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenSlider } from "../misc/MoorhenSlider"
+import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
+
+const doColourMapByOtherMap = async (imol_ref: number, imol_colour: number, maps: moorhen.Map[]) => {
+    const map = maps.find(map => map.molNo === imol_ref)
+    const response = await map.commandCentre.current.cootCommand({
+        command: "get_map_contours_mesh_using_other_map_for_colours",
+        returnType: 'mesh_perm',
+        commandArgs: [imol_ref, imol_colour, ...map.glRef.current.origin.map(x => -x), 90, 0.86, 0.3, 2.0, false]
+    }, false)
+    const objects = [response.data.result.result]
+    map.setupContourBuffers(objects, true)
+}
 
 const doRestraintsMeshTest = async (commandCentre, glRef, molecules, moleculeSelectRef) => {
     const selectedMolecule = molecules.find(item => item.molNo === parseInt(moleculeSelectRef.current.value))
@@ -78,10 +89,11 @@ const doTest = async (props: any) => {
 export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
     const customCid = useRef<string>('')
-    const moleculeSelectRef = useRef<HTMLSelectElement>()
+    const mapASelectRef = useRef<HTMLSelectElement>()
+    const mapBSelectRef = useRef<HTMLSelectElement>()
     const context = useContext<undefined | moorhen.Context>(MoorhenContext);
 
-    const menuItemProps = {setPopoverIsShown, customCid, moleculeSelectRef, ...props}
+    const menuItemProps = {setPopoverIsShown, customCid, mapASelectRef, ...props}
     const { doShadow, setDoShadow, doOutline, setDoOutline, doSpinTest, setDoSpinTest, doSSAO, setDoSSAO, ssaoBias, setSsaoBias, ssaoRadius, setSsaoRadius } = context
 
     return <>
@@ -90,9 +102,10 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                     </MenuItem>
                     <hr></hr>
                     <Form.Group>
-                        <MoorhenMoleculeSelect width="" molecules={props.molecules} ref={moleculeSelectRef}/>
-                        <MenuItem onClick={() => doRestraintsMeshTest(props.commandCentre, props.glRef, props.molecules, moleculeSelectRef)}>
-                            Do restraints mesh test
+                    <MoorhenMapSelect width="" maps={props.maps} ref={mapASelectRef}/>
+                    <MoorhenMapSelect width="" maps={props.maps} ref={mapBSelectRef}/>
+                        <MenuItem onClick={() => doColourMapByOtherMap(parseInt(mapASelectRef.current.value), parseInt(mapBSelectRef.current.value), props.maps)}>
+                            Colour map by another map
                         </MenuItem>
                     </Form.Group>
                     <hr></hr>                  
