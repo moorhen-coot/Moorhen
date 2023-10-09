@@ -22,7 +22,7 @@ export const MoorhenMergeMoleculesMenuItem = (props: {
     </>
 
     const onCompleted = useCallback(async () => {
-        const toMolecule = props.molecules.filter(molecule => molecule.molNo === parseInt(toRef.current.value))[0]
+        const toMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(toRef.current.value))
         const fromMolNo: number = props.fromMolNo !== null ? props.fromMolNo : parseInt(fromRef.current.value)
         const otherMolecules = props.molecules.filter(molecule => (molecule.molNo === fromMolNo) && (molecule.molNo !== toMolecule.molNo))
         if (otherMolecules.length <= 0) {
