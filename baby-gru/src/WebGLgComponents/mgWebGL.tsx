@@ -6559,7 +6559,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     }
                 } else {
                     if(this.gl.viewportWidth > this.gl.viewportHeight){
-                        mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.0);
+                        mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, -(this.gl_clipPlane0[3]+this.fogClipOffset), 1000.0);
                     } else {
                         mat4.ortho(this.pMatrix, -24, 24 , -24, 24, 0.1, 1000.0);
                     }
@@ -6569,9 +6569,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     mat4.perspective(this.pMatrix, 1.0, this.gl.viewportWidth / this.gl.viewportHeight, 0.1, 100.0);
                 } else {
                     if(this.drawingGBuffers){
-                        mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, 0.2, 70.0);
+                        //This should probably be based on min of atom span, fog, clip.
+                        const f = this.gl_clipPlane0[3]+this.fogClipOffset
+                        const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end)
+                        mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, -f, b);
                     } else {
-                        mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, 0.1, 1000.0);
+                        mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, -(this.gl_clipPlane0[3]+this.fogClipOffset), 1000.0);
                     }
                 }
             }
