@@ -14,6 +14,7 @@ export const MoorhenLoadScriptMenuItem = (props: {
      isDark: boolean;
      windowHeight: number;
      windowWidth: number; 
+     commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {
     
     const filesRef = useRef<null | HTMLInputElement>(null);

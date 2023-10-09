@@ -131,6 +131,7 @@ declare module 'moorhen' {
         setAlpha(alpha: number, redraw?: boolean): Promise<void>;
         centreOnMap(): Promise<void>;
         getSuggestedSettings(): Promise<void>;
+        setupContourBuffers(objects: any[], keepCootColours?: boolean): void;
         duplicate(): Promise<_moorhen.Map>;
         makeCootUnlive(): void;
         makeCootLive(): void;
