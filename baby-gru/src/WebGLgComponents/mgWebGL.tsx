@@ -8079,6 +8079,21 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     //console.log("this.displayBuffers[idx].allVertices.length: "+this.displayBuffers[idx].allVertices.length/3);
                     //console.log("this.displayBuffers[idx].allColours.length: "+this.displayBuffers[idx].allColours.length/3);
                     this.gl.useProgram(this.shaderProgram);
+
+                    if(this.WEBGL2&&this.shaderProgram.doSSAO){
+                        this.gl.uniform1i(this.shaderProgram.SSAOMap, 1);
+                        this.gl.activeTexture(this.gl.TEXTURE1);
+                        this.gl.bindTexture(this.gl.TEXTURE_2D, this.simpleBlurYTexture);
+                        this.gl.activeTexture(this.gl.TEXTURE0);
+                        if(this.renderToTexture){
+                            this.gl.uniform1f(this.shaderProgram.xSSAOScaling, 1.0/this.rttFramebuffer.width );
+                            this.gl.uniform1f(this.shaderProgram.ySSAOScaling, 1.0/this.rttFramebuffer.height );
+                        } else {
+                            this.gl.uniform1f(this.shaderProgram.xSSAOScaling, 1.0/this.gl.viewportWidth );
+                            this.gl.uniform1f(this.shaderProgram.ySSAOScaling, 1.0/this.gl.viewportHeight );
+                        }
+                    }
+
                     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].allTriangleVertexNormalBuffer);
                     this.gl.vertexAttribPointer(this.shaderProgram.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
 
