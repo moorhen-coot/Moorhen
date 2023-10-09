@@ -71,6 +71,22 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
           }, true)
     }
 
+    runCommand = async (command: string, ...args: any[]): Promise<void> => {
+        await this.commandCentre.current.cootCommand({
+            returnType: 'void',
+            command: command,
+            commandArgs: [...args]
+          }, true)
+          await this.redraw_molecules()
+    }
+
+    redraw_molecules = async () => {
+        await Promise.all(this.molecules.map(molecule => {
+            molecule.setAtomsDirty(true)
+            return molecule.redraw()
+          }))
+    }
+
     exe(src: string) {
         // This env defines the variables accesible within the user-defined code
         let env = {
@@ -83,11 +99,13 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
                 return obj
             }, {}),
             glRef: this.glRef,
+            run_command: this.runCommand,
             rigid_body_fit: this.doRigidBodyFit,
             generate_self_restraints: this.doGenerateSelfRestraints,
             clear_extra_restraints: this.doClearExtraRestraints,
             refine_residues_using_atom_cid: this.doRefineResiduesUsingAtomCid,
-            set_refinement_geman_mcclure_alpha: this.setGemanMcclureAlpha
+            set_refinement_geman_mcclure_alpha: this.setGemanMcclureAlpha,
+            redraw_molecules: this.redraw_molecules
         };
 
         (new Function("with(this) { " + src + "}")).call(env)
