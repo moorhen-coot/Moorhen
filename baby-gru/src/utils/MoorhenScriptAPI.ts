@@ -5,6 +5,7 @@ interface MoorhenScriptApiInterface {
     molecules: moorhen.Molecule[];
     maps: moorhen.Map[];
     glRef: React.RefObject<webGL.MGWebGL>;
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
 }
 
 export class MoorhenScriptApi implements MoorhenScriptApiInterface {
@@ -12,11 +13,13 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
     molecules: moorhen.Molecule[];
     maps: moorhen.Map[];
     glRef: React.RefObject<webGL.MGWebGL>;
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
 
-    constructor(molecules: moorhen.Molecule[], maps: moorhen.Map[], glRef: React.RefObject<webGL.MGWebGL>) {
+    constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, molecules: moorhen.Molecule[], maps: moorhen.Map[]) {
         this.molecules = molecules
         this.maps = maps
         this.glRef = glRef
+        this.commandCentre = commandCentre
     }
 
     doRigidBodyFit = async (molNo: number, cidsString: string, mapNo: number) => {
@@ -59,6 +62,31 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
         }
     }
 
+    setGemanMcclureAlpha = async (newValue: number) => {
+        await this.commandCentre.current.cootCommand({
+            returnType: "status",
+            command: 'set_refinement_geman_mcclure_alpha',
+            commandArgs: [newValue],
+            changesMolecules: []
+          }, true)
+    }
+
+    runCommand = async (command: string, ...args: any[]): Promise<void> => {
+        await this.commandCentre.current.cootCommand({
+            returnType: 'void',
+            command: command,
+            commandArgs: [...args]
+          }, true)
+          await this.redraw_molecules()
+    }
+
+    redraw_molecules = async () => {
+        await Promise.all(this.molecules.map(molecule => {
+            molecule.setAtomsDirty(true)
+            return molecule.redraw()
+          }))
+    }
+
     exe(src: string) {
         // This env defines the variables accesible within the user-defined code
         let env = {
@@ -71,10 +99,13 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
                 return obj
             }, {}),
             glRef: this.glRef,
+            run_command: this.runCommand,
             rigid_body_fit: this.doRigidBodyFit,
             generate_self_restraints: this.doGenerateSelfRestraints,
             clear_extra_restraints: this.doClearExtraRestraints,
-            refine_residues_using_atom_cid: this.doRefineResiduesUsingAtomCid
+            refine_residues_using_atom_cid: this.doRefineResiduesUsingAtomCid,
+            set_refinement_geman_mcclure_alpha: this.setGemanMcclureAlpha,
+            redraw_molecules: this.redraw_molecules
         };
 
         (new Function("with(this) { " + src + "}")).call(env)

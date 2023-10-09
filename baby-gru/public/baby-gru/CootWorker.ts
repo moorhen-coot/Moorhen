@@ -964,6 +964,9 @@ const doCootCommand = (messageData: {
             case 'status_instanced_mesh_pair':
                 returnResult = { status: cootResult.first, mesh: instancedMeshToMeshData(cootResult.second, false, false, 5) }
                 break;
+            case 'void':
+                returnResult = null
+                break
             case 'status':
             default:
                 returnResult = cootResult

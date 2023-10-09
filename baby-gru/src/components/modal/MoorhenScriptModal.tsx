@@ -15,6 +15,7 @@ export const MoorhenScriptModal = (props: {
     molecules: moorhen.Molecule[];
     maps: moorhen.Map[];
     glRef: React.RefObject<webGL.MGWebGL>;
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
     isDark: boolean;
     windowHeight: number;
     windowWidth: number;
@@ -27,7 +28,7 @@ export const MoorhenScriptModal = (props: {
 
     const handleScriptExe = useCallback(async () => {
         try {
-            const scriptApi = new MoorhenScriptApi(props.molecules, props.maps, props.glRef)
+            const scriptApi = new MoorhenScriptApi(props.commandCentre, props.glRef, props.molecules, props.maps)
             scriptApi.exe(code)
         }
         catch (err) {
