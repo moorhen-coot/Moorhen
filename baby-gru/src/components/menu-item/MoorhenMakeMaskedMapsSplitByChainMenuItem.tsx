@@ -16,19 +16,19 @@ export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
 }) => {
 
     const moleculeSelectRef = useRef<HTMLSelectElement>(null)
-    const selectRef = useRef<HTMLSelectElement>(null)
+    const mapSelectRef = useRef<HTMLSelectElement>(null)
 
     const panelContent = <>
-        <MoorhenMapSelect {...props} ref={selectRef} />
+        <MoorhenMapSelect {...props} ref={mapSelectRef} />
         <MoorhenMoleculeSelect {...props} ref={moleculeSelectRef} />
     </>
 
     const onCompleted = async () => {
-        if (!selectRef.current?.value || !moleculeSelectRef.current?.value) {
+        if (!mapSelectRef.current?.value || !moleculeSelectRef.current?.value) {
             return
         }
         
-        const mapNo = parseInt(selectRef.current.value)
+        const mapNo = parseInt(mapSelectRef.current.value)
         const moleculeNo = parseInt(moleculeSelectRef.current.value)
 
         const result = await props.commandCentre.current.cootCommand({
@@ -36,14 +36,18 @@ export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
             command: 'make_masked_maps_split_by_chain',
             commandArgs: [moleculeNo, mapNo]
         }, false) as moorhen.WorkerResponse<number[]>
+
+        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === moleculeNo)
+        const selectedMap = props.maps.find(map => map.molNo === mapNo)
         
-        if (result.data.result.result.length > 0) {
-            const oldMaps = props.maps.filter(map => map.molNo === mapNo)
+        if (result.data.result.result.length > 0 && selectedMap && selectedMolecule) {
             result.data.result.result.forEach((iNewMap, listIndex) =>{
                 const newMap = new MoorhenMap(props.commandCentre, props.glRef)
                 newMap.molNo = iNewMap
-                newMap.name = `Chain ${listIndex} of ${oldMaps[0].name}`
-                newMap.isDifference = oldMaps[0].isDifference
+                newMap.name = `Chain ${listIndex} of ${selectedMap.name}`
+                newMap.isDifference = selectedMap.isDifference
+                newMap.suggestedContourLevel = selectedMap.contourLevel
+                newMap.suggestedRadius = selectedMap.mapRadius
                 props.changeMaps({ action: 'Add', item: newMap })
             })
         }
