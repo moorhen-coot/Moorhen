@@ -6558,10 +6558,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         mat4.perspective(this.pMatrix, 1.0, 1.0, 0.1, 100.0);
                     }
                 } else {
+                    const f = this.gl_clipPlane0[3]+this.fogClipOffset;
+                    const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
                     if(this.gl.viewportWidth > this.gl.viewportHeight){
-                        mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, -(this.gl_clipPlane0[3]+this.fogClipOffset), 1000.0);
+                        mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, -f, b);
                     } else {
-                        mat4.ortho(this.pMatrix, -24, 24 , -24, 24, 0.1, 1000.0);
+                        mat4.ortho(this.pMatrix, -24, 24 , -24, 24, -f, b);
                     }
                 }
             } else {
@@ -6570,8 +6572,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 } else {
                     if(this.drawingGBuffers){
                         //This should probably be based on min of atom span, fog, clip.
-                        const f = this.gl_clipPlane0[3]+this.fogClipOffset
-                        const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end)
+                        const f = this.gl_clipPlane0[3]+this.fogClipOffset;
+                        const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
                         mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, -f, b);
                     } else {
                         mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, -(this.gl_clipPlane0[3]+this.fogClipOffset), 1000.0);
@@ -6730,7 +6732,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
             this.gl.drawBuffers([this.gl.COLOR_ATTACHMENT0]);
 
-            //console.log("Do SSAO pass");
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.ssaoFramebuffer);
             this.gl.useProgram(this.shaderProgramSSAO);
             this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, this.ssaoKernelBuffer);
@@ -7409,8 +7410,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.gl.activeTexture(this.gl.TEXTURE1);
                     this.gl.bindTexture(this.gl.TEXTURE_2D, this.simpleBlurYTexture);
                     this.gl.activeTexture(this.gl.TEXTURE0);
-                    this.gl.uniform1f(theShader.xSSAOScaling, 1.0/this.gl.viewportWidth );
-                    this.gl.uniform1f(theShader.ySSAOScaling, 1.0/this.gl.viewportHeight );
+                    if(this.renderToTexture){
+                        this.gl.uniform1f(theShader.xSSAOScaling, 1.0/this.rttFramebuffer.width );
+                        this.gl.uniform1f(theShader.ySSAOScaling, 1.0/this.rttFramebuffer.height );
+                    } else {
+                        this.gl.uniform1f(theShader.xSSAOScaling, 1.0/this.gl.viewportWidth );
+                        this.gl.uniform1f(theShader.ySSAOScaling, 1.0/this.gl.viewportHeight );
+                    }
                 }
 
                 for(let i = 0; i<16; i++)
@@ -7553,8 +7559,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.gl.activeTexture(this.gl.TEXTURE1);
                     this.gl.bindTexture(this.gl.TEXTURE_2D, this.simpleBlurYTexture);
                     this.gl.activeTexture(this.gl.TEXTURE0);
-                    this.gl.uniform1f(program.xSSAOScaling, 1.0/this.gl.viewportWidth );
-                    this.gl.uniform1f(program.ySSAOScaling, 1.0/this.gl.viewportHeight );
+                    if(this.renderToTexture){
+                        this.gl.uniform1f(program.xSSAOScaling, 1.0/this.rttFramebuffer.width );
+                        this.gl.uniform1f(program.ySSAOScaling, 1.0/this.rttFramebuffer.height );
+                    } else {
+                        this.gl.uniform1f(program.xSSAOScaling, 1.0/this.gl.viewportWidth );
+                        this.gl.uniform1f(program.ySSAOScaling, 1.0/this.gl.viewportHeight );
+                    }
                 }
 
                 if(this.stencilPass){
