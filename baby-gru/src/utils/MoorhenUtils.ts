@@ -14,7 +14,6 @@ export const getRandomMoleculeColour = () => {
     const randomComponent_C = 127
     let result = [randomComponent_A, randomComponent_B, randomComponent_C]
     result = result.sort((a, b) => 0.5 - Math.random());
-    console.log(result)
     return rgbToHex(...result as [number, number, number])
 }
 

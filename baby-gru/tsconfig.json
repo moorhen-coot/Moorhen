@@ -15,7 +15,6 @@
       },
       "include": [
         "src/*",
-        "cloud/*"
       ],
       "exclude": [
         "node_modules/*",

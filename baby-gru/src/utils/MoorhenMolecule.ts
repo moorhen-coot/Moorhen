@@ -1536,7 +1536,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }, false) as moorhen.WorkerResponse<libcootApi.PairType<string, string>[]>
         
         response.data.result.result.forEach(rule => {
-            console.log(rule.second)
             rules.push({
                 args: [rule.first, rule.second],
                 isMultiColourRule: false,
