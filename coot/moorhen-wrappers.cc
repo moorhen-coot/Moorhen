@@ -515,6 +515,14 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("z", &coot::molecule_t::moved_atom_t::z)
     .property("index", &coot::molecule_t::moved_atom_t::index)
     ;
+    class_<molecules_container_t::auto_read_mtz_info_t>("auto_read_mtz_info_t")
+    .constructor<const int &, const std::string &, const std::string &>()
+    .property("idx", &molecules_container_t::auto_read_mtz_info_t::idx)
+    .property("F", &molecules_container_t::auto_read_mtz_info_t::F)
+    .property("phi", &molecules_container_t::auto_read_mtz_info_t::phi)
+    .property("w", &molecules_container_t::auto_read_mtz_info_t::w)
+    .property("weights_used", &molecules_container_t::auto_read_mtz_info_t::weights_used)
+    ;
     class_<coot::molecule_t::interesting_place_t>("interesting_place_t")
     .constructor<const std::string &, const coot::residue_spec_t &, const clipper::Coord_orth &, const std::string &>()
     .constructor<const std::string &, const clipper::Coord_orth &, const std::string &>()
@@ -709,6 +717,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_map_contours_mesh_using_other_map_for_colours",&molecules_container_t::get_map_contours_mesh_using_other_map_for_colours)
     .function("set_refinement_geman_mcclure_alpha",&molecules_container_t::set_refinement_geman_mcclure_alpha)
     .function("get_geman_mcclure_alpha",&molecules_container_t::get_geman_mcclure_alpha)
+    .function("get_map_histogram",&molecules_container_t::get_map_histogram)
      ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<bool>()
@@ -894,7 +903,13 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .element(emscripten::index<1>())
         .element(emscripten::index<2>())
     ;
-    
+
+    value_object<coot::molecule_t::histogram_info_t>("histogram_info_t")
+        .field("base", &coot::molecule_t::histogram_info_t::base)
+        .field("bin_width", &coot::molecule_t::histogram_info_t::bin_width)
+        .field("counts", &coot::molecule_t::histogram_info_t::counts)
+    ;
+
     value_object<moorhen::h_bond>("h_bond")
         .field("hb_hydrogen",&moorhen::h_bond::hb_hydrogen)
         .field("donor",&moorhen::h_bond::donor)
@@ -927,6 +942,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("altLoc",&moorhen::h_bond_atom::altLoc)
     ;
 
+    register_vector<molecules_container_t::auto_read_mtz_info_t>("VectorAutoReadMtzInfo_t");
     register_vector<coot::CartesianPair>("VectorCootCartesianPair");
     register_vector<std::vector<coot::CartesianPair>>("VectorVectorCootCartesianPair");
     register_vector<coot::Cartesian>("VectorCootCartesian");

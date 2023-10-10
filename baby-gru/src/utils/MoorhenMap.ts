@@ -568,7 +568,10 @@ export class MoorhenMap implements moorhen.Map {
 
         if (response.data.result.status === "Completed") {
             this.hasReflectionData = true
-            this.selectedColumns = selectedColumns
+            this.selectedColumns = {
+                ...this.selectedColumns,
+                ...selectedColumns
+            }
             this.associatedReflectionFileName = response.data.result.result
         } else {
             console.warn('Unable to associate reflection data with map')

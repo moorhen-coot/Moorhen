@@ -120,7 +120,7 @@ export const MoorhenModifyColourRulesCard = (props: {
         
         setIntialRules()
 
-    }, [])
+    }, [props.showColourRulesToast])
 
     const applyRules = useCallback(async () => {
         if (props.molecule?.defaultColourRules) {
@@ -301,7 +301,7 @@ export const MoorhenModifyColourRulesCard = (props: {
                             <option value={'property'} key={'property'}>By property</option>
                         </FormSelect>
                     </Form.Group>
-                    {(ruleType === 'chain' || ruleType === 'residue-range')  && <MoorhenChainSelect width="100%" margin={'0px'} molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={props.molecule.molNo} ref={chainSelectRef} allowedTypes={[1, 2]}/>}
+                    {(ruleType === 'chain' || ruleType === 'residue-range')  && <MoorhenChainSelect width="100%" margin={'0px'} molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={props.molecule.molNo} ref={chainSelectRef}/>}
                     {ruleType === 'cid' && <MoorhenCidInputForm margin={'0px'} width="100%" onChange={handleResidueCidChange} ref={cidFormRef}/> }
                     {ruleType === 'property' && 
                     <Form.Group style={{ margin: '0px', width: '100%' }}>
@@ -322,7 +322,7 @@ export const MoorhenModifyColourRulesCard = (props: {
                         <HexColorPicker color={selectedColour} onChange={handleColorChange}/>
                     </div>
                     <div style={{padding: '0.5rem', margin: 0, justifyContent: 'center', display: 'flex', backgroundColor: '#e3e1e1', borderRadius: '8px'}}>
-                        <CirclePicker width={convertRemToPx(15)} circleSize={convertRemToPx(15)/20} color={selectedColour} onChange={handleColourCircleClick} presetColors={["#f44336", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5", "#2196f3", "#03a9f4", "#00bcd4", "#009688", "#4caf50", "#8bc34a", "#cddc39", "#ffeb3b", "#ffc107", "#ff9800", "#ff5722"]}/>
+                        <CirclePicker width={convertRemToPx(15)} circleSize={convertRemToPx(15)/20} color={selectedColour} onChange={handleColourCircleClick}/>
                     </div>
                     
                 </Stack>
