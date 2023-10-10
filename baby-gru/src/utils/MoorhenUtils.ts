@@ -8,6 +8,16 @@ import { moorhen } from "../types/moorhen";
 import { gemmi } from "../types/gemmi";
 import { webGL } from "../types/mgWebGL";
 
+export const getRandomMoleculeColour = () => {
+    const randomComponent_A = Math.floor(Math.random() * (160 - 127 + 1)) + 127
+    const randomComponent_B = 160
+    const randomComponent_C = 127
+    let result = [randomComponent_A, randomComponent_B, randomComponent_C]
+    result = result.sort((a, b) => 0.5 - Math.random());
+    console.log(result)
+    return rgbToHex(...result as [number, number, number])
+}
+
 export function guid(): string {
     let d = Date.now();
     let uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
