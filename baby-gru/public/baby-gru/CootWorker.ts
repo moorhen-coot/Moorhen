@@ -605,6 +605,31 @@ const interestingPlaceDataToJSArray = (interestingPlaceData: emscriptem.vector<l
     return returnResult
 }
 
+const autoReadMtzInfoVectToJSArray = (autoReadMtzInfoArray: emscriptem.vector<libcootApi.AutoReadMtzInfo>): libcootApi.AutoReadMtzInfoJS[] => {
+    let returnResult: {idx: number;
+        F: string;
+        phi: string;
+        w: string;
+        weights_used: boolean;
+    }[] = []
+
+    const autoReadMtzInfoArraySize = autoReadMtzInfoArray.size()
+    for(let i = 0; i < autoReadMtzInfoArraySize; i++) {
+        const autoReadMtzInfo = autoReadMtzInfoArray.get(i)
+        returnResult.push({
+            idx: autoReadMtzInfo.idx,
+            F: autoReadMtzInfo.F,
+            phi: autoReadMtzInfo.phi,
+            w: autoReadMtzInfo.w,
+            weights_used: autoReadMtzInfo.weights_used,
+        })
+        autoReadMtzInfo.delete()
+    }
+    autoReadMtzInfoArray.delete()
+    
+    return returnResult
+}
+
 const ramachandranDataToJSArray = (ramachandraData: emscriptem.vector<libcootApi.CootPhiPsiProbT>, chainID: string): libcootApi.RamaDataJS[] => {
     let returnResult: { chainId: string; insCode: string; seqNum: number; restype: string; isOutlier: boolean; phi: number; psi: number; is_pre_pro: boolean; }[] = [];
     const ramachandraDataSize = ramachandraData.size()
@@ -933,6 +958,9 @@ const doCootCommand = (messageData: {
                 break;
             case 'int_array':
                 returnResult = intArrayToJSArray(cootResult)
+                break;
+            case 'auto_read_mtz_info_array':
+                returnResult = autoReadMtzInfoVectToJSArray(cootResult)
                 break;
             case 'map_molecule_centre_info_t':
                 returnResult = mapMoleculeCentreInfoToJSObject(cootResult)

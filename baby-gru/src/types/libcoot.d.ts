@@ -49,6 +49,13 @@ export namespace libcootApi {
         res_name: string;
         label: string;
     }
+    interface AutoReadMtzInfo extends emscriptem.instance<AutoReadMtzInfo> {
+        idx: number;
+        F: string;
+        phi: string;
+        w: string;
+        weights_used: boolean;
+    }
     interface CootPhiPsi extends emscriptem.instance<CootPhiPsi> {
         ins_code: string;
         residue_number: number;
@@ -109,6 +116,13 @@ export namespace libcootApi {
         ligand_atom_is_donor: boolean;
         hydrogen_is_ligand_atom: boolean;
         bond_has_hydrogen_flag: boolean;
+    }
+    type AutoReadMtzInfoJS = {
+        idx: number;
+        F: string;
+        phi: string;
+        w: string;
+        weights_used: boolean;
     }
     type HBondJS = {
         hb_hydrogen: libcootApi.HBondAtom;

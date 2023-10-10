@@ -5,6 +5,7 @@ import { MoorhenMap } from "../../utils/MoorhenMap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL"
+import { libcootApi } from "../../types/libcoot"
 
 export const MoorhenAutoOpenMtzMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -37,35 +38,44 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
         const mtzData = new Uint8Array(reflectionData)
 
         const response = await props.commandCentre.current.cootCommand({
-            returnType: "int_array",
+            returnType: "auto_read_mtz_info_array",
             command: "shim_auto_open_mtz",
             commandArgs: [mtzData]
-        }, true) as moorhen.WorkerResponse<number[]>
+        }, true) as moorhen.WorkerResponse<libcootApi.AutoReadMtzInfoJS[]>
 
         if (response.data.result.result.length === 0) {
             props.setToastContent(props.getWarningToast('Error reading mtz file'))
         }
 
-        const isDiffMapResponses = await Promise.all(response.data.result.result.map(mapMolNo => {
+        const isDiffMapResponses = await Promise.all(response.data.result.result.map(autoReadInfo => {
             return props.commandCentre.current.cootCommand({
                 returnType: "status",
                 command: "is_a_difference_map",
-                commandArgs: [mapMolNo]
+                commandArgs: [autoReadInfo.idx]
             }, false) as Promise<moorhen.WorkerResponse<boolean>>
         }))
 
-        response.data.result.result.forEach((mapMolNo, index) => {
-            if (mapMolNo === -1) {
-                props.setToastContent(props.getWarningToast('Error reading mtz file'))
-                return
-            }
-            const newMap = new MoorhenMap(props.commandCentre, props.glRef)
-            newMap.molNo = mapMolNo
-            newMap.name = `${file.name.replace('mtz', '')}-map-${index}`
-            newMap.isDifference = isDiffMapResponses[index].data.result.result
-            props.changeMaps({ action: 'Add', item: newMap })
-            if (index === 0) props.setActiveMap(newMap)
-        })
+        await Promise.all(
+            response.data.result.result.map(async (autoReadInfo, index) => {
+                if (autoReadInfo.idx === -1) {
+                    props.setToastContent(props.getWarningToast('Error reading mtz file'))
+                    return
+                }
+                const newMap = new MoorhenMap(props.commandCentre, props.glRef)
+                newMap.molNo = autoReadInfo.idx
+                newMap.name = `${file.name.replace('mtz', '')}-map-${index}`
+                newMap.isDifference = isDiffMapResponses[index].data.result.result
+                newMap.selectedColumns = {
+                    F: autoReadInfo.F,
+                    PHI: autoReadInfo.phi,
+                    isDifference: newMap.isDifference,
+                    useWeight: autoReadInfo.weights_used,
+                }
+                await newMap.getSuggestedSettings()
+                props.changeMaps({ action: 'Add', item: newMap })
+                if (index === 0) props.setActiveMap(newMap)
+            })
+        )
 
     }, [filesRef.current, props.changeMaps, props.setActiveMap, props.commandCentre, props.glRef])
 
