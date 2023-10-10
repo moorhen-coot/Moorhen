@@ -61,6 +61,7 @@ export class MoorhenMap implements moorhen.Map {
     associatedReflectionFileName: string
     uniqueId: string
     mapRmsd: number
+    suggestedMapWeight: number
     otherMapMolNoForColouring: number
     diffMapColourBuffers: { positiveDiffColour: number[], negativeDiffColour: number[] }
     rgba: {
@@ -91,6 +92,7 @@ export class MoorhenMap implements moorhen.Map {
         this.associatedReflectionFileName = null
         this.uniqueId = guid()
         this.mapRmsd = null
+        this.suggestedMapWeight = null
         this.suggestedContourLevel = null
         this.suggestedRadius = null
         this.mapCentre = null
@@ -102,6 +104,25 @@ export class MoorhenMap implements moorhen.Map {
             negativeDiffColour: {r: 0.800000011920929, g: 0.4000000059604645, b: 0.4000000059604645},
             a: 1.0
         }
+    }
+
+    /**
+     * Helper function to set this map instance as the "active" map for refinement
+     */
+    async setActive(): Promise<void> {
+        await this.commandCentre.current.cootCommand({
+            returnType: "status",
+            command: "set_imol_refinement_map",
+            commandArgs: [this.molNo]
+        }, false)
+        if (this.suggestedMapWeight === null) {
+            await this.estimateMapWeight()
+        }
+        await this.commandCentre.current.cootCommand({
+            returnType: "status",
+            command: "set_map_weight",
+            commandArgs: [this.suggestedMapWeight]
+        }, false)
     }
 
     /**
@@ -678,6 +699,16 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     /**
+     * Estimate the map weight based on the map rmsd
+     */
+    async estimateMapWeight(): Promise<void> {
+        if (this.mapRmsd === null) {
+            await this.fetchMapRmsd()
+        }
+        this.suggestedMapWeight = 50 * 0.3 / this.mapRmsd
+    }
+    
+    /**
      * Get suggested contour level, radius and map centre for this map instance
      */
     async getSuggestedSettings(): Promise<void> {
@@ -691,7 +722,7 @@ export class MoorhenMap implements moorhen.Map {
         this.isEM = response.data.result.result
        
         await Promise.all([
-            this.fetchMapRmsd(),
+            this.fetchMapRmsd().then(_ => this.estimateMapWeight()),
             this.fetchMapCentre(),
             !this.isEM && this.fetchSuggestedLevel()
         ])

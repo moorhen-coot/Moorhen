@@ -368,11 +368,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     useEffect(() => {
         if (activeMap && commandCentre.current) {
-            commandCentre.current.cootCommand({
-                returnType: "status",
-                command: "set_imol_refinement_map",
-                commandArgs: [activeMap.molNo]
-            }, false)
+            activeMap.setActive()
         }
     }, [activeMap])
 

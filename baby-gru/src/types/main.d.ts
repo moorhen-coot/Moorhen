@@ -147,7 +147,8 @@ declare module 'moorhen' {
         fetchReflectionData(): Promise<_moorhen.WorkerResponse<Uint8Array>>;
         getMap(): Promise<_moorhen.WorkerResponse>;
         loadToCootFromMtzURL(url: RequestInfo | URL, name: string, selectedColumns: _moorhen.selectedMtzColumns): Promise<_moorhen.Map>;
-        loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap?: boolean): Promise<_moorhen.Map>
+        loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap?: boolean): Promise<_moorhen.Map>;
+        setActive(): Promise<void>;
         isEM: boolean;
         suggestedContourLevel: number;
         suggestedRadius: number;
@@ -172,6 +173,7 @@ declare module 'moorhen' {
         associatedReflectionFileName: string;
         uniqueId: string;
         mapRmsd: number;
+        suggestedMapWeight: number;
         rgba: {
             mapColour: {r: number, g: number, b: number};
             positiveDiffColour: {r: number, g: number, b: number};
