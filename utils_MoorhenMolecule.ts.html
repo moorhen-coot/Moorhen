@@ -116,7 +116,7 @@
             <pre class="prettyprint source linenums"><code>import 'pako';
 import {
     guid, readTextFile, readGemmiStructure, residueCodesThreeToOne, centreOnGemmiAtoms,
-    nucleotideCodesThreeToOne, findConsecutiveRanges
+    nucleotideCodesThreeToOne, findConsecutiveRanges, getRandomMoleculeColour
 } from './MoorhenUtils'
 import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation"
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
@@ -1299,12 +1299,37 @@ export class MoorhenMolecule implements moorhen.Molecule {
     }
 
     /**
+     * Get a list with the names of the chains in the current model
+     * @returns {string[]} - A list of chain names in the current structure
+     */
+    getChainNames(): string[] {
+        let result: string[] = []
+        const models = this.gemmiStructure.models
+        const modelsSize = models.size()
+        for (let modelIndex = 0; modelIndex &lt; modelsSize; modelIndex++) {
+            const model = models.get(modelIndex)
+            const chains = model.chains
+            const chainsSize = chains.size()
+            for (let chainIndex = 0; chainIndex &lt; chainsSize; chainIndex++) {
+                const chain = chains.get(chainIndex)
+                result.push(chain.name)
+                chain.delete()
+            }
+            model.delete()
+            chains.delete()
+        }
+        models.delete()
+        return result
+    }
+
+    /**
      * Merge a set of molecules in this molecule instance
      * @param {moorhen.Molecule} otherMolecules - A list of other molecules to merge into this instance
      * @param {boolean} [doHide=false] - Indicates whether the source molecules should be hidden when finish
      */
     async mergeMolecules(otherMolecules: moorhen.Molecule[], doHide: boolean = false): Promise&lt;void> {
         try {
+            const prevChainNames = this.getChainNames()
             await this.commandCentre.current.cootCommand({
                 command: 'merge_molecules',
                 commandArgs: [this.molNo, `${otherMolecules.map(molecule => molecule.molNo).join(':')}`],
@@ -1325,7 +1350,20 @@ export class MoorhenMolecule implements moorhen.Molecule {
             })
             await Promise.all(promises)
 
-            this.setAtomsDirty(true)
+            await this.updateAtoms()
+            const currentChains = this.getChainNames()
+            const newChains = currentChains.filter(chainName => !prevChainNames.includes(chainName))
+            newChains.forEach(chainName => {
+                const selectedColour = getRandomMoleculeColour()
+                this.defaultColourRules.push({
+                    args: [`//${chainName}`, selectedColour],
+                    isMultiColourRule: false,
+                    ruleType: 'chain',
+                    color: selectedColour,
+                    label: `//${chainName}`,
+                })
+            })
+
             await this.redraw()
 
         } catch (err) {
@@ -1613,6 +1651,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }, false) as moorhen.WorkerResponse&lt;libcootApi.PairType&lt;string, string>[]>
         
         response.data.result.result.forEach(rule => {
+            console.log(rule.second)
             rules.push({
                 args: [rule.first, rule.second],
                 isMultiColourRule: false,
