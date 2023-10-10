@@ -2,6 +2,7 @@ import { useCallback, useRef } from "react"
 import { Form, Row } from "react-bootstrap"
 import { readDataFile } from "../../utils/MoorhenUtils"
 import { MoorhenMap } from "../../utils/MoorhenMap"
+import { MoorhenMtzWrapper } from "../../utils/MoorhenMtzWrapper"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL"
@@ -34,13 +35,13 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
         }
 
         const file = filesRef.current.files[0]
-        const reflectionData = await readDataFile(file)
-        const mtzData = new Uint8Array(reflectionData)
+        const mtzWrapper = new MoorhenMtzWrapper()
+        let allColumnNames = await mtzWrapper.loadHeaderFromFile(file)
 
         const response = await props.commandCentre.current.cootCommand({
             returnType: "auto_read_mtz_info_array",
             command: "shim_auto_open_mtz",
-            commandArgs: [mtzData]
+            commandArgs: [mtzWrapper.reflectionData]
         }, true) as moorhen.WorkerResponse<libcootApi.AutoReadMtzInfoJS[]>
 
         if (response.data.result.result.length === 0) {
@@ -67,10 +68,15 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
                 newMap.isDifference = isDiffMapResponses[index].data.result.result
                 newMap.selectedColumns = {
                     F: autoReadInfo.F,
+                    Fobs: autoReadInfo.F,
+                    FreeR: Object.keys(allColumnNames).find(key => allColumnNames[key] === 'I'),
+                    SigFobs: Object.keys(allColumnNames).find(key => allColumnNames[key] === 'Q'),
                     PHI: autoReadInfo.phi,
                     isDifference: newMap.isDifference,
                     useWeight: autoReadInfo.weights_used,
+                    calcStructFact: true
                 }
+                await newMap.associateToReflectionData(newMap.selectedColumns, mtzWrapper.reflectionData)
                 await newMap.getSuggestedSettings()
                 props.changeMaps({ action: 'Add', item: newMap })
                 if (index === 0) props.setActiveMap(newMap)
