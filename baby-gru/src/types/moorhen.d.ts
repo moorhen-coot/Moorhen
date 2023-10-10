@@ -330,7 +330,8 @@ export namespace moorhen {
         fetchReflectionData(): Promise<WorkerResponse<Uint8Array>>;
         getMap(): Promise<WorkerResponse>;
         loadToCootFromMtzURL(url: RequestInfo | URL, name: string, selectedColumns: selectedMtzColumns): Promise<Map>;
-        loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap?: boolean): Promise<Map>
+        loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap?: boolean): Promise<Map>;
+        setActive(): Promise<void>;
         setupContourBuffers(objects: any[], keepCootColours?: boolean): void;
         isEM: boolean;
         suggestedContourLevel: number;
@@ -356,6 +357,7 @@ export namespace moorhen {
         uniqueId: string;
         otherMapMolNoForColouring: number;
         mapRmsd: number;
+        suggestedMapWeight: number;
         rgba: {
             mapColour: {r: number, g: number, b: number};
             positiveDiffColour: {r: number, g: number, b: number};
