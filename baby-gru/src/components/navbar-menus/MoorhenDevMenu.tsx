@@ -8,6 +8,7 @@ import { MoorhenMoleculeRepresentation } from "../../utils/MoorhenMoleculeRepres
 import { moorhen } from "../../types/moorhen";
 import { MoorhenSlider } from "../misc/MoorhenSlider"
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
+import { startRecording } from "../../utils/MoorhenScreenshot"
 
 const doColourMapByOtherMap = async (imol_ref: number, imol_colour: number, maps: moorhen.Map[]) => {
     const map = maps.find(map => map.molNo === imol_ref)
@@ -96,6 +97,10 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
     const menuItemProps = {setPopoverIsShown, customCid, mapASelectRef, ...props}
     const { doShadow, setDoShadow, doOutline, setDoOutline, doSpinTest, setDoSpinTest, doSSAO, setDoSSAO, ssaoBias, setSsaoBias, ssaoRadius, setSsaoRadius } = context
 
+    const doVideo = async () => {
+        startRecording(props.glRef)
+    }
+
     return <>
                     <MenuItem onClick={() => doTest(menuItemProps)}>
                         Do a timing test...
@@ -147,5 +152,9 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                             onChange={() => { setDoSpinTest(!doSpinTest) }}
                             label="Spin test"/>
                     </InputGroup>
+                    <MenuItem id='vide-menu-item' onClick={doVideo}>
+                        Record video
+                    </MenuItem>
+
         </>
     }
