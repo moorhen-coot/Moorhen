@@ -1730,7 +1730,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * A function to get the number of atoms in the current molecule
      * @returns {Promise<number>} The number of atoms in the molecule
      */
-    async getNumberOfAtoms() {
+    async getNumberOfAtoms(): Promise<number> {
         const result = await this.commandCentre.current.cootCommand({
             returnType: 'int',
             command: 'get_number_of_atoms',
@@ -1738,5 +1738,21 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }, false) as moorhen.WorkerResponse<number>
         this.atomCount = result.data.result.result
         return result.data.result.result
+    }
+
+    /**
+     * Move the molecule to a new position
+     * @param {number} x - Coordinate X 
+     * @param {number} y - Coordinate Y 
+     * @param {number} z - Coordinate Z 
+     */
+    async moveMoleculeHere(x: number, y: number, z: number): Promise<void> {
+        await this.commandCentre.current.cootCommand({
+            returnType: 'int',
+            command: 'move_molecule_to_new_centre',
+            commandArgs: [this.molNo, x, y, z],
+        }, false) as moorhen.WorkerResponse<number>
+        this.setAtomsDirty(true)
+        await this.redraw()
     }
 }

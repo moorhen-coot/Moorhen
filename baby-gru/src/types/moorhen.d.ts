@@ -80,6 +80,7 @@ export namespace moorhen {
     
     interface Molecule {
         getNumberOfAtoms(): Promise<number>;
+        moveMoleculeHere(x: number, y: number, z: number): Promise<void>;
         checkHasGlycans(): Promise<boolean>;
         fitLigandHere(mapMolNo: number, ligandMolNo: number, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<Molecule[]>;
         isLigand(): boolean;
@@ -312,6 +313,7 @@ export namespace moorhen {
     }
 
     interface Map {
+        estimateMapWeight(): Promise<void>;
         setAlpha(alpha: number, redraw?: boolean): Promise<void>;
         centreOnMap(): Promise<void>;
         getSuggestedSettings(): Promise<void>;

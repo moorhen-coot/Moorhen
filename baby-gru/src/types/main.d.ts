@@ -37,6 +37,7 @@ declare module 'moorhen' {
         constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibrary: string)
         getNumberOfAtoms(): Promise<number>;
         checkHasGlycans(): Promise<boolean>;
+        moveMoleculeHere(x: number, y: number, z: number): Promise<void>;
         fitLigandHere(mapMolNo: number, ligandMolNo: number, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<_moorhen.Molecule[]>;
         isLigand(): boolean;
         removeRepresentation(representationId: string): void;
@@ -149,6 +150,7 @@ declare module 'moorhen' {
         loadToCootFromMtzURL(url: RequestInfo | URL, name: string, selectedColumns: _moorhen.selectedMtzColumns): Promise<_moorhen.Map>;
         loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap?: boolean): Promise<_moorhen.Map>;
         setActive(): Promise<void>;
+        estimateMapWeight(): Promise<void>;
         isEM: boolean;
         suggestedContourLevel: number;
         suggestedRadius: number;
