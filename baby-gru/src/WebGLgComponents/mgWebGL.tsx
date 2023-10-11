@@ -7019,9 +7019,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
 
         this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
-        this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], this.background_colour[3]);
-        this.gl.clearColor(1.0,1.0,0.0,1.0);
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+        //Hmm - Why these 3 lines?
+        //this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], this.background_colour[3]);
+        //this.gl.clearColor(1.0,1.0,0.0,1.0);
+        //this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
         let paintMvMatrix = mat4.create();
         let paintPMatrix = mat4.create();
