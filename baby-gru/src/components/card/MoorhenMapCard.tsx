@@ -7,6 +7,7 @@ import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLe
 import { MoorhenMapSettingsMenuItem } from "../menu-item/MoorhenMapSettingsMenuItem";
 import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem"
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
+import { MoorhenSetMapWeight } from "../menu-item/MoorhenSetMapWeight"
 import { MoorhenSlider } from "../misc/MoorhenSlider";
 import { IconButton, MenuItem, Popover, Tooltip } from "@mui/material"
 import { RgbColorPicker } from "react-colorful"
@@ -177,6 +178,11 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         6: {
             label: "Centre on map",
             compressed: () => { return (<MenuItem key='centre-on-map'onClick={() => props.map.centreOnMap()}>Centre on map</MenuItem>) },
+            expanded: null
+        },
+        7: {
+            label: "Set map weight...",
+            compressed: () => { return (<MoorhenSetMapWeight key='set-map-weight' disabled={!cootContour} {...mapSettingsProps} />) },
             expanded: null
         },
     }

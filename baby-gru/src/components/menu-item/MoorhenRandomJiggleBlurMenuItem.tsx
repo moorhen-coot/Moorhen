@@ -134,6 +134,7 @@ export const MoorhenRandomJiggleBlurMenuItem = (props: {
             maxVal={500}
             showMinMaxVal={false}
             logScale={false}
+            allowFloats={false}
             initialValue={noTrials}
             externalValue={noTrials}
             setExternalValue={setNoTrials}/>
