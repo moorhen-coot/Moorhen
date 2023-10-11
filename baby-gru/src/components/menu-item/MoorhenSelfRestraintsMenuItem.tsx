@@ -131,6 +131,8 @@ export const MoorhenSelfRestraintsMenuItem = (props: {
             const restraintsRepresenation = selectedMolecule.representations.find(item => item.style === 'restraints')
             if (restraintsRepresenation) {
                 await restraintsRepresenation.redraw()
+            } else {
+                await selectedMolecule.addRepresentation("restraints", "/*/*/*/*")
             }
         }
         
