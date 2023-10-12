@@ -23,7 +23,7 @@ export const MoorhenRandomJiggleBlurMenuItem = (props: {
     const mapSelectRef = useRef<null | HTMLSelectElement>(null)
     const cidSelectRef = useRef<HTMLInputElement | null>(null)
     const bFactorSliderRef = useRef<number>(200)
-    const noTrialsSliderRef = useRef<number>(50)
+    const noTrialsSliderRef = useRef<number>(500)
     const scaleFactorSliderRef = useRef<number>(3)
     const [selectedMap, setSelectedMap] = useState<number | null>(null)
     const [selectedMolNo, setSelectedMolNo] = useState<null | number>(null)
@@ -70,14 +70,14 @@ export const MoorhenRandomJiggleBlurMenuItem = (props: {
                                     </IconButton>
 
     const increaseNoTrialsButton =  <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey'}} onClick={() => {
-                                        const newVal = noTrials + 10
+                                        const newVal = noTrials + 100
                                         setNoTrials(newVal)
                                         noTrialsSliderRef.current = newVal
                                     }}>
                                         <AddCircleOutline/>
                                     </IconButton>
     const decreaseNoTrialsButton =  <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey'}} onClick={() => {
-                                        const newVal = noTrials - 10
+                                        const newVal = noTrials - 100
                                         setNoTrials(newVal)
                                         noTrialsSliderRef.current = newVal
                                     }}>
@@ -130,8 +130,8 @@ export const MoorhenRandomJiggleBlurMenuItem = (props: {
             sliderTitle="No. of trials"
             decrementButton={decreaseNoTrialsButton}
             incrementButton={increaseNoTrialsButton}
-            minVal={1}
-            maxVal={500}
+            minVal={10}
+            maxVal={5000}
             showMinMaxVal={false}
             logScale={false}
             allowFloats={false}
