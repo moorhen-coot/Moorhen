@@ -605,6 +605,17 @@ const interestingPlaceDataToJSArray = (interestingPlaceData: emscriptem.vector<l
     return returnResult
 }
 
+const histogramInfoToJSData = (histogramInfo: libcootApi.HistogramInfo): libcootApi.HistogramInfoJS => {
+    const histogramCounts = histogramInfo.counts
+    const counts = intArrayToJSArray(histogramCounts)
+    const result: libcootApi.HistogramInfoJS = {
+        counts: counts,
+        bin_width: histogramInfo.bin_width,
+        base: histogramInfo.base
+    }
+    return result
+}
+
 const autoReadMtzInfoVectToJSArray = (autoReadMtzInfoArray: emscriptem.vector<libcootApi.AutoReadMtzInfo>): libcootApi.AutoReadMtzInfoJS[] => {
     let returnResult: {idx: number;
         F: string;
@@ -926,6 +937,9 @@ const doCootCommand = (messageData: {
             case 'instanced_mesh_perm':
                 returnResult = instancedMeshToMeshData(cootResult, true)
                 break;
+            case 'histogram_info_t':
+                returnResult = histogramInfoToJSData(cootResult)
+                break
             case 'symmetry':
                 returnResult = symmetryToJSData(cootResult)
                 break;

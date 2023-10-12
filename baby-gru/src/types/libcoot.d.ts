@@ -117,6 +117,16 @@ export namespace libcootApi {
         hydrogen_is_ligand_atom: boolean;
         bond_has_hydrogen_flag: boolean;
     }
+    interface HistogramInfo extends emscriptem.instance<HistogramInfo> {
+        base: number;
+        bin_width: number;
+        counts: emscriptem.vector<number>;
+    }
+    type HistogramInfoJS = {
+        base: number;
+        bin_width: number;
+        counts: number[];
+    }
     type AutoReadMtzInfoJS = {
         idx: number;
         F: string;

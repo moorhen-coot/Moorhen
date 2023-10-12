@@ -618,6 +618,17 @@ describe('Testing molecules_container_js', () => {
         expect(result_1.second).toBe(fileContents_1)
     })
 
+    test("Test histogram map", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
+        expect(mapMolNo).toBe(0)
+
+        const result = molecules_container.get_map_histogram(mapMolNo)
+        expect(result.base).toBeCloseTo(-1.01, 1)
+        expect(result.bin_width).toBeCloseTo(0.09, 1)
+        expect(result.counts.size()).toBe(51)
+    })
+
 })
 
 const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h_no_ligand.pdb', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']

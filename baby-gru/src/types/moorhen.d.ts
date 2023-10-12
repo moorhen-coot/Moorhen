@@ -313,6 +313,7 @@ export namespace moorhen {
     }
 
     interface Map {
+        getHistogram(): Promise<any>;
         setMapWeight(weight?: number): Promise<moorhen.WorkerResponse>;
         estimateMapWeight(): Promise<void>;
         setAlpha(alpha: number, redraw?: boolean): Promise<void>;
