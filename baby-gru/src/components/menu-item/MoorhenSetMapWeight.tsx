@@ -6,6 +6,7 @@ import { TextField } from "@mui/material";
 
 export const MoorhenSetMapWeight = (props: {
     map: moorhen.Map;
+    activeMap: moorhen.Map;
     disabled: boolean;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
@@ -31,6 +32,9 @@ export const MoorhenSetMapWeight = (props: {
             return
         }
         props.map.suggestedMapWeight = parseInt(mapWeightRef.current)
+        if (props.map.molNo === props.activeMap.molNo) {
+            props.map.setMapWeight()
+        }
     }, [props.map])
 
     const panelContent = <>
@@ -52,7 +56,7 @@ export const MoorhenSetMapWeight = (props: {
         <Button variant="secondary" style={{marginLeft: '0.1rem'}} onClick={estimateMapWeight}>
             Estimate
         </Button>
-        <Button variant="primary" onClick={onCompleted}>
+        <Button variant="primary" style={{marginLeft: '0.1rem'}} onClick={onCompleted}>
             Set
         </Button>
     </>

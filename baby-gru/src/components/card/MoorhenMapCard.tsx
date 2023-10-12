@@ -182,7 +182,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         },
         7: {
             label: "Set map weight...",
-            compressed: () => { return (<MoorhenSetMapWeight key='set-map-weight' disabled={!cootContour} {...mapSettingsProps} />) },
+            compressed: () => { return (<MoorhenSetMapWeight key='set-map-weight' activeMap={props.activeMap} disabled={!cootContour} {...mapSettingsProps} />) },
             expanded: null
         },
     }

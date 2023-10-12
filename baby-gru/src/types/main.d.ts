@@ -128,6 +128,7 @@ declare module 'moorhen' {
     module.exports.MoorhenMolecule = MoorhenMolecule
     
     class MoorhenMap implements _moorhen.Map {
+        setMapWeight(weight?: number): Promise<_moorhen.WorkerResponse>;
         constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>)
         setAlpha(alpha: number, redraw?: boolean): Promise<void>;
         centreOnMap(): Promise<void>;

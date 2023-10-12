@@ -313,6 +313,7 @@ export namespace moorhen {
     }
 
     interface Map {
+        setMapWeight(weight?: number): Promise<moorhen.WorkerResponse>;
         estimateMapWeight(): Promise<void>;
         setAlpha(alpha: number, redraw?: boolean): Promise<void>;
         centreOnMap(): Promise<void>;
