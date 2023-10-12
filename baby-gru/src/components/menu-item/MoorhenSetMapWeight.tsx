@@ -35,6 +35,7 @@ export const MoorhenSetMapWeight = (props: {
         if (props.map.molNo === props.activeMap.molNo) {
             props.map.setMapWeight()
         }
+        document.body.click()
     }, [props.map])
 
     const panelContent = <>
