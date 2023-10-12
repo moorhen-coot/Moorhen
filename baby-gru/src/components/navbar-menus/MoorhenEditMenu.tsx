@@ -7,6 +7,7 @@ import { MoorhenGoToMenuItem } from "../menu-item/MoorhenGoToMenuItem"
 import { MoorhenMergeMoleculesMenuItem } from "../menu-item/MoorhenMergeMoleculesMenuItem"
 import { MoorhenAddSimpleMenuItem } from "../menu-item/MoorhenAddSimpleMenuItem";
 import { MoorhenAddRemoveHydrogenAtomsMenuItem } from "../menu-item/MoorhenAddRemoveHydrogenAtomsMenuItem"
+import { MoorhenMoveMoleculeHere } from "../menu-item/MoorhenMoveMoleculeHere"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { moorhen } from "../../types/moorhen";
 
@@ -19,6 +20,7 @@ export const MoorhenEditMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             <MoorhenAddSimpleMenuItem key="add_simple" setPopoverIsShown={() => {}} {...menuItemProps} />
             <MoorhenAddRemoveHydrogenAtomsMenuItem key='add_remove_hydrogens' {...menuItemProps}/>
             <MoorhenMergeMoleculesMenuItem key="merge" {...menuItemProps} />
+            <MoorhenMoveMoleculeHere key="move" {...menuItemProps}/>
             <MoorhenDeleteUsingCidMenuItem key="delete" {...menuItemProps} />
             <MoorhenCopyFragmentUsingCidMenuItem key="copy_fragment" {...menuItemProps} />
             <MoorhenGoToMenuItem key="go_to_cid" {...menuItemProps} />

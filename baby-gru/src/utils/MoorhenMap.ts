@@ -335,14 +335,21 @@ export class MoorhenMap implements moorhen.Map {
 
     /**
      * Set the map weight
-     * @param {number} weight - The new map weight
+     * @param {number} [weight=moorhen.Map.suggestedMapWeight] - The new map weight
      * @returns {Promise<moorhen.WorkerResponse>} Void worker response
      */
-    setMapWeight(weight: number): Promise<moorhen.WorkerResponse> {
+    setMapWeight(weight?: number): Promise<moorhen.WorkerResponse> {
+        let newWeight: number
+        if (typeof weight !== 'undefined') {
+            newWeight = weight
+        }
+        else {
+            newWeight = this.suggestedMapWeight
+        }
         return this.commandCentre.current.cootCommand({
             returnType: 'status',
             command: "set_map_weight",
-            commandArgs: [this.molNo, weight]
+            commandArgs: [newWeight]
         }, false)
     }
 
@@ -622,7 +629,10 @@ export class MoorhenMap implements moorhen.Map {
     async duplicate(): Promise<moorhen.Map> {
         const reply = await this.getMap()
         const newMap = new MoorhenMap(this.commandCentre, this.glRef)
-        return newMap.loadToCootFromMapData(reply.data.result.mapData, `Copy of ${this.name}`, this.isDifference)
+        await newMap.loadToCootFromMapData(reply.data.result.mapData, `Copy of ${this.name}`, this.isDifference)
+        newMap.suggestedContourLevel = this.contourLevel
+        newMap.suggestedRadius = this.mapRadius
+        return newMap
     }
 
     /**

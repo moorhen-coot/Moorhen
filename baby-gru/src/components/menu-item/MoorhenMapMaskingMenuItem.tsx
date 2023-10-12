@@ -66,8 +66,12 @@ export const MoorhenMapMaskingMenuItem = (props: {
         
         const mapNo = parseInt(mapSelectRef.current.value)
         const molNo = parseInt(moleculeSelectRef.current.value)
-        const newMap = new MoorhenMap(commandCentre, glRef)
+        const selectedMap = props.maps.find(map => map.molNo === mapNo)
 
+        if (!selectedMap) {
+            return
+        }
+        
         let cidLabel: string
 
         switch (maskTypeSelectRef.current?.value) {
@@ -95,10 +99,12 @@ export const MoorhenMapMaskingMenuItem = (props: {
         }, false) as moorhen.WorkerResponse<number>
         
         if (result.data.result.result !== -1) {
+            const newMap = new MoorhenMap(commandCentre, glRef)
             newMap.molNo = result.data.result.result
             newMap.name = `Map ${mapNo} masked`
-            const originalMap = maps.find(map => map.molNo === mapNo)
-            newMap.isDifference = originalMap.isDifference
+            newMap.isDifference = selectedMap.isDifference
+            newMap.suggestedContourLevel = selectedMap.contourLevel
+            newMap.suggestedRadius = selectedMap.mapRadius
             changeMaps({ action: 'Add', item: newMap })
         }
             

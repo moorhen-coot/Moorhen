@@ -34,6 +34,7 @@ export const MoorhenSharpenBlurMapMenuItem = (props: {
         const mapNo = parseInt(selectRef.current.value)
         const bFactor = parseFloat(factorRef.current.value)
         const newMap = new MoorhenMap(props.commandCentre, props.glRef)
+        const selectedMap = props.maps.find(map => map.molNo === mapNo)
 
         const result = await props.commandCentre.current.cootCommand({
             returnType: 'status',
@@ -44,8 +45,9 @@ export const MoorhenSharpenBlurMapMenuItem = (props: {
         if (result.data.result.result !== -1) {
             newMap.molNo = result.data.result.result
             newMap.name = `Map ${mapNo} blurred by ${bFactor}`
-            const oldMaps = props.maps.filter(map => map.molNo === mapNo)
-            newMap.isDifference = oldMaps[0].isDifference
+            newMap.isDifference = selectedMap.isDifference
+            newMap.suggestedContourLevel = selectedMap.contourLevel
+            newMap.suggestedRadius = selectedMap.mapRadius
             props.changeMaps({ action: 'Add', item: newMap })
         }
         return result
