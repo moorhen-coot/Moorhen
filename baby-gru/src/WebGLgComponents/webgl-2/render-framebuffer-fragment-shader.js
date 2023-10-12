@@ -5,6 +5,7 @@ var render_framebuffer_fragment_shader_source = `#version 300 es\n
     uniform sampler2D inFocus;
     uniform sampler2D blurred;
     uniform sampler2D depth;
+    uniform float blurDepth;
 
     out vec4 fragColor;
 
@@ -16,9 +17,9 @@ var render_framebuffer_fragment_shader_source = `#version 300 es\n
         vec4 focusColor = texture(inFocus, out_TexCoord0);
         vec4 blurColor = texture(blurred, out_TexCoord0);
 
-        float blur = smoothstep ( minDistance , maxDistance , min(position.x*5.,1.0));
+        float blur = smoothstep ( minDistance , maxDistance , min(position.x*0.75,1.0));
 
-        if(blur>0.2)
+        if(blur>blurDepth)// ? why 0.2
             //fragColor = vec4(0.0, 0.0, 0.0, 1.0);
             fragColor = blurColor;
         else

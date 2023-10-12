@@ -110,6 +110,7 @@ export namespace webGL {
         buildBuffers(): void;
         drawScene() : void;
         textureBlur(width: number,height: number,inputTexture: WebGLTexture) : void;
+        depthBlur() : void;
         appendOtherData(jsondata: any, skipRebuild?: boolean, name?: string) : any;
         setZoom(z: number, drawScene?: boolean);
         setOriginOrientationAndZoomAnimated(o: number[],q: quat4,z: number) : void;
@@ -164,7 +165,7 @@ export namespace webGL {
         clearTextPositionBuffers(): void;
         recreateSilhouetteBuffers() : void;
         createSSAOFramebufferBuffer() : void;
-        recreateOffScreeenBuffers() : void;
+        recreateOffScreeenBuffers(width: number,  height: number) : void;
         createSimpleBlurOffScreeenBuffers() : void;
         draggableMolecule: moorhen.Molecule
         activeMolecule: moorhen.Molecule
@@ -317,6 +318,7 @@ export namespace webGL {
         rttFramebufferDepth: MGWebGLFrameBuffer;
         rttTexture: WebGLTexture;
         rttTextureDepth: WebGLTexture;
+        rttDepthTexture: WebGLTexture;
         screenZ: number;
         shaderProgram: ShaderTriangles;
         shaderProgramGBuffers: ShaderGBuffersTriangles;

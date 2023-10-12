@@ -16,6 +16,7 @@ import { WarningOutlined } from "@mui/icons-material";
 import { convertViewtoPx, doDownload, readTextFile, getMultiColourRuleArgs, loadSessionData } from "../../utils/MoorhenUtils";
 import { getBackupLabel } from "../../utils/MoorhenTimeCapsule"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
+import { screenShot } from "../../utils/MoorhenScreenshot"
 import { moorhen } from "../../types/moorhen";
 
 export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
@@ -37,6 +38,10 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     </>
 
     const menuItemProps = { setPopoverIsShown, getWarningToast, ...props }
+
+    const doScreenshot = async () => {
+        screenShot(glRef,"moorhen.png")
+    }
 
     const loadPdbFiles = async (files: FileList) => {
         let readPromises: Promise<moorhen.Molecule>[] = []
@@ -331,6 +336,10 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
 
                     {props.extraFileMenuItems && props.extraFileMenuItems.map( menu => menu)}
                     
+                    <MenuItem id='screenshot-menu-item' onClick={doScreenshot}>
+                        Screenshot
+                    </MenuItem>
+
                     <hr></hr>
 
                     <MoorhenDeleteEverythingMenuItem {...menuItemProps} />
