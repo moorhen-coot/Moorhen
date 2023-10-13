@@ -227,7 +227,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     }, [context.isMounted])
 
     useEffect(() => {
-        innerVideoRecorderRef.current = new MoorhenVideoRecorder(glRef);
+        videoRecorderRef.current = new MoorhenVideoRecorder(glRef);
     }, [context.isMounted])
 
     useEffect(() => {
