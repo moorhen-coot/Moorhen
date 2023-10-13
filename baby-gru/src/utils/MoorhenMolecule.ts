@@ -544,10 +544,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     /**
      * Load a new molecule from the contents of a file
-     * @param {Blob} source - The contents of the input file
+     * @param {File} source - The input file
      * @returns {Promise<moorhen.Molecule>} The new molecule
      */
-    async loadToCootFromFile(source: Blob): Promise<moorhen.Molecule> {
+    async loadToCootFromFile(source: File): Promise<moorhen.Molecule> {
         try {
             const coordData = await readTextFile(source);
             return await this.loadToCootFromString(coordData, source.name);

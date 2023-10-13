@@ -435,7 +435,7 @@ export const webSafeFonts = [
 
 export const allFontsSet = new Set([webSafeFonts, windowsFonts, macFonts, linuxFonts].flat().sort());
 
-export const readTextFile = (source: Blob): Promise<ArrayBuffer | string> => {
+export const readTextFile = (source: File): Promise<ArrayBuffer | string> => {
     const resolveReader = (reader: FileReader, resolveCallback) => {
         reader.removeEventListener("load", resolveCallback)
         resolveCallback(reader.result)
@@ -448,7 +448,7 @@ export const readTextFile = (source: Blob): Promise<ArrayBuffer | string> => {
     })
 }
 
-export const readDataFile = (source: Blob): Promise<ArrayBuffer> => {
+export const readDataFile = (source: File): Promise<ArrayBuffer> => {
     const resolveReader = (reader: FileReader, resolveCallback) => {
         reader.removeEventListener("load", resolveCallback)
         if (typeof reader.result === 'string') {

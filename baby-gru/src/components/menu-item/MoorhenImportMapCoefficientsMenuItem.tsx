@@ -40,7 +40,7 @@ export const MoorhenImportMapCoefficientsMenuItem = (props: {
         }
     }
 
-    const handleFile = async (file: Blob, selectedColumns: moorhen.selectedMtzColumns) => {
+    const handleFile = async (file: File, selectedColumns: moorhen.selectedMtzColumns) => {
         const newMap = new MoorhenMap(props.commandCentre, props.glRef)
         try {
             await newMap.loadToCootFromMtzFile(file, selectedColumns)
