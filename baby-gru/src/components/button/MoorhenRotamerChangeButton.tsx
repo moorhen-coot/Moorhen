@@ -8,6 +8,7 @@ import { ArrowBackIosOutlined, ArrowForwardIosOutlined, CheckOutlined, CloseOutl
 import Draggable from "react-draggable";
 import { IconButton, Zoom } from "@mui/material";
 import { convertRemToPx } from '../../utils/MoorhenUtils';
+import { MoorhenNotification } from "../misc/MoorhenNotification";
 
 export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
     const theButton = useRef<null | HTMLButtonElement>(null)
@@ -95,21 +96,6 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
         return rotamerInfo
     }
 
-    const canvasElement = document.getElementById('moorhen-canvas-background')
-    let canvasTop: number
-    let canvasLeft: number
-    let canvasRight: number
-    if (canvasElement !== null) {
-        const rect = canvasElement.getBoundingClientRect()
-        canvasLeft = rect.left
-        canvasTop = rect.top
-        canvasRight = rect.right
-    } else {
-        canvasLeft = 0
-        canvasTop = 0
-        canvasRight = 0
-    }
-    
     if (props.mode === 'context') {
 
         const getPopOverContents = (rotamerInfo: moorhen.WorkerResponse<libcootApi.RotamerInfoJS>) =>{
@@ -117,17 +103,7 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
             const rotamerRank = rotamerInfo.data.result.result.rank
             const rotamerProbability = rotamerInfo.data.result.result.richardson_probability
             
-            return <Zoom in={true}>
-            <div
-            className="moorhen-notification-div"
-            style={{
-                position: 'absolute',
-                width: '20rem',
-                top: canvasTop + convertRemToPx(0.5),
-                left: canvasLeft + (props.windowWidth / 2) - convertRemToPx(7),
-                color: props.isDark ? 'white' : 'grey',
-                backgroundColor: props.isDark ? 'grey' : 'white',
-            }}>
+            return <MoorhenNotification isDark={props.isDark} windowWidth={props.windowWidth} width={20}>
             <Stack direction="vertical" gap={1}>
                 <div>
                     <span>Current rotamer: {rotamerName} ({rotamerRank+1}<sup>{rotamerRank === 0 ? 'st' : rotamerRank === 1 ? 'nd' : rotamerRank === 2 ? 'rd' : 'th'}</sup>)</span>
@@ -166,8 +142,7 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
                     </IconButton>
                 </Stack>
             </Stack>
-            </div>
-            </Zoom>
+            </MoorhenNotification>
         }
     
         const nonCootCommand = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, p: string) => {

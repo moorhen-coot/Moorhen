@@ -2,13 +2,13 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { MoorhenEditButtonBase } from "./MoorhenEditButtonBase"
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
+import { MoorhenNotification } from "../misc/MoorhenNotification"
 import { Button, Card, Container, FormGroup, FormLabel, FormSelect, OverlayTrigger, Row, Stack, Tooltip } from "react-bootstrap";
-import { convertRemToPx, getTooltipShortcutLabel } from '../../utils/MoorhenUtils';
+import { getTooltipShortcutLabel } from '../../utils/MoorhenUtils';
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
-import { IconButton, Zoom } from '@mui/material';
+import { IconButton } from '@mui/material';
 import { CheckOutlined, CloseOutlined, InfoOutlined } from "@mui/icons-material";
 import Draggable from "react-draggable";
-
 
 export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
     const [showAccept, setShowAccept] = useState<boolean>(false)
@@ -22,21 +22,6 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
     const customCid = useRef<null | string>(null)
 
     const rotateTranslateModes = ['ATOM', 'RESIDUE', 'CHAIN', 'MOLECULE']
-
-    const canvasElement = document.getElementById('moorhen-canvas-background')
-    let canvasTop: number
-    let canvasLeft: number
-    let canvasRight: number
-    if (canvasElement !== null) {
-        const rect = canvasElement.getBoundingClientRect()
-        canvasLeft = rect.left
-        canvasTop = rect.top
-        canvasRight = rect.right
-    } else {
-        canvasLeft = 0
-        canvasTop = 0
-        canvasRight = 0
-    } 
 
     useEffect(() => {
         if (props.shortCuts) {
@@ -145,16 +130,7 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
     if (props.mode === 'context') {
 
         const contextMenuOverride = (
-            <Zoom in={true}>
-            <div
-            className="moorhen-notification-div"
-            style={{
-                position: 'absolute',
-                top: canvasTop + convertRemToPx(0.5),
-                left: canvasLeft + (props.windowWidth / 2) - convertRemToPx(7),
-                color: props.isDark ? 'white' : 'grey',
-                backgroundColor: props.isDark ? 'grey' : 'white',
-            }}>
+            <MoorhenNotification isDark={props.isDark} windowWidth={props.windowWidth}>
                 <Stack gap={2} direction='horizontal' style={{width: '100%', display:'flex', justifyContent: 'space-between'}}>
                     <OverlayTrigger
                         placement="bottom"
@@ -191,8 +167,7 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
                     </IconButton>
                     </div>
                 </Stack>
-            </div>
-            </Zoom>
+            </MoorhenNotification>
         )
 
         const nonCootCommand = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string) => {
