@@ -8,7 +8,7 @@ import { MoorhenMoleculeRepresentation } from "../../utils/MoorhenMoleculeRepres
 import { moorhen } from "../../types/moorhen";
 import { MoorhenSlider } from "../misc/MoorhenSlider"
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
-import { startRecording } from "../../utils/MoorhenScreenshot"
+import { MoorhenVideoRecorder } from "../../utils/MoorhenScreenshot"
 
 const doColourMapByOtherMap = async (imol_ref: number, imol_colour: number, maps: moorhen.Map[]) => {
     const map = maps.find(map => map.molNo === imol_ref)
@@ -97,8 +97,13 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
     const menuItemProps = {setPopoverIsShown, customCid, mapASelectRef, ...props}
     const { doShadow, setDoShadow, doOutline, setDoOutline, doSpinTest, setDoSpinTest, doSSAO, setDoSSAO, ssaoBias, setSsaoBias, ssaoRadius, setSsaoRadius } = context
 
-    const doVideo = async () => {
-        startRecording(props.glRef)
+    const videoRecorder = props.videoRecorderRef;
+    const doVideo = () => {
+        if(!videoRecorder.current.isRecording()){
+            videoRecorder.current.startRecording();
+        } else {
+            videoRecorder.current.stopRecording();
+        }
     }
 
     return <>
@@ -156,7 +161,7 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                             label="Spin test"/>
                     </InputGroup>
                     <MenuItem id='vide-menu-item' onClick={doVideo}>
-                        Record video
+                        {videoRecorder.current.isRecording() ? "Stop recording video" : "Record video"}
                     </MenuItem>
 
         </>

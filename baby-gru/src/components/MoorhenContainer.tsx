@@ -11,6 +11,7 @@ import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
+import { MoorhenVideoRecorder } from "../utils/MoorhenScreenshot"
 
 const initialMoleculesState: moorhen.Molecule[] = []
 
@@ -72,6 +73,7 @@ const initialMapsState: moorhen.Map[] = []
 export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const context = useContext<undefined | moorhen.Context>(MoorhenContext);
     const innerGlRef = useRef<null | webGL.MGWebGL>(null)
+    const innerVideoRecorderRef = useRef<null | MoorhenVideoRecorder>(null);
     const innerTimeCapsuleRef = useRef<null | moorhen.TimeCapsule>(null);
     const innnerCommandCentre = useRef<null | moorhen.CommandCentre>(null)
     const innerMoleculesRef = useRef<null | moorhen.Molecule[]>(null)
@@ -143,7 +145,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         appTitle: innerAppTitle, setAppTitle: setInnerAppTitle, cootInitialized: innerCootInitialized, 
         setCootInitialized: setInnerCootInitialized, theme: innerTheme, setTheme: setInnerTheme, 
         showToast: innerShowToast, setShowToast: setInnerShowToast, toastContent: innerToastContent, 
-        setToastContent: setInnerToastContent, availableFonts: innerAvailableFonts
+        setToastContent: setInnerToastContent, availableFonts: innerAvailableFonts, videoRecorderRef: innerVideoRecorderRef
     }
 
     let states = {} as moorhen.ContainerStates
@@ -158,7 +160,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         windowWidth, setWindowWidth, windowHeight, setWindowHeight, molecules, 
         backgroundColor, setBackgroundColor, availableFonts, setAvailableFonts, enableAtomHovering,
         appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
-        showToast, setShowToast, toastContent, setToastContent
+        showToast, setShowToast, toastContent, setToastContent, videoRecorderRef
     } = states
 
     const {
@@ -222,6 +224,10 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             setBackgroundColor(context.defaultBackgroundColor)
         }
         
+    }, [context.isMounted])
+
+    useEffect(() => {
+        innerVideoRecorderRef.current = new MoorhenVideoRecorder(glRef);
     }, [context.isMounted])
 
     useEffect(() => {
@@ -408,7 +414,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         setToastContent, hoveredAtom, setHoveredAtom, showToast, setShowToast, windowWidth, windowHeight,
         timeCapsuleRef, isDark, disableFileUploads, urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems,
         extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, extraEditMenuItems, 
-        extraDraggableModals, aceDRGInstance, availableFonts, enableAtomHovering, setEnableAtomHovering
+        extraDraggableModals, aceDRGInstance, availableFonts, enableAtomHovering, setEnableAtomHovering, videoRecorderRef
     }
 
     return <> 
