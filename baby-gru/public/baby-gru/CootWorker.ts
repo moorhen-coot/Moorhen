@@ -701,45 +701,12 @@ const simpleMeshToLineMeshData = (simpleMesh: libcootApi.SimpleMeshT, normalLigh
 
 }
 
-const read_pdb = (coordData: string, name: string) => {
-    const theGuid = guid()
-    let theSuffix;
-    if(coordData.startsWith("data_")){
-        theSuffix = "mmcif"
-    } else {
-        theSuffix = "pdb"
-    }
-    cootModule.FS_createDataFile(".", `${theGuid}.${theSuffix}`, coordData, true, true);
-    const tempFilename = `./${theGuid}.${theSuffix}`
-    const molNo = molecules_container.read_pdb(tempFilename)
-    cootModule.FS_unlink(tempFilename)
-    return molNo
-}
-
 const auto_open_mtz = (mtzData: ArrayBufferLike) => {
     const theGuid = guid()
     const asUint8Array = new Uint8Array(mtzData)
     cootModule.FS_createDataFile(".", `${theGuid}.mtz`, asUint8Array, true, true);
     const tempFilename = `./${theGuid}.mtz`
     const result = molecules_container.auto_read_mtz(tempFilename)
-    cootModule.FS_unlink(tempFilename)
-    return result
-}
-
-const read_dictionary = (coordData: string, associatedMolNo: number) => {
-    const theGuid = guid()
-    cootModule.FS_createDataFile(".", `${theGuid}.cif`, coordData, true, true);
-    const tempFilename = `./${theGuid}.cif`
-    const returnVal = molecules_container.import_cif_dictionary(tempFilename, associatedMolNo)
-    cootModule.FS_unlink(tempFilename)
-    return returnVal
-}
-
-const replace_molecule_by_model_from_file = (imol: number, coordData: string) => {
-    const theGuid = guid()
-    const tempFilename = `./${theGuid}.pdb`
-    cootModule.FS_createDataFile(".", tempFilename, coordData, true, true)
-    const result = molecules_container.replace_molecule_by_model_from_file(imol, tempFilename)
     cootModule.FS_unlink(tempFilename)
     return result
 }
@@ -828,50 +795,6 @@ const setUserDefinedBondColours = (imol: number, colours: { cid: string; rgb: [n
     colourMap.delete()
 }
 
-const doColourTest = (imol: number) => {
-    console.log('DEBUG: Start test...')
-
-    let colourMap = new cootModule.MapIntFloat3()
-    colourMap[20] = [1., 0., 0.]
-    colourMap[21] = [0., 1., 0.]
-    colourMap[22] = [0., 0., 1.]
-
-    let indexedResiduesVec = new cootModule.VectorStringUInt_pair()
-
-    const a = { first: '//A/1-10/', second: 20 }
-    indexedResiduesVec.push_back(a)
-
-    const b = { first: '//A/11-20/', second: 21 }
-    indexedResiduesVec.push_back(b)
-
-    const c = { first: '//A/21-30/', second: 22 }
-    indexedResiduesVec.push_back(c)
-
-    console.log('DEBUG: Running molecules_container.set_user_defined_bond_colours')
-    molecules_container.set_user_defined_bond_colours(imol, colourMap)
-    console.log('DEBUG: Running molecules_container.set_user_defined_atom_colour_by_selection')
-    molecules_container.set_user_defined_atom_colour_by_selection(imol, indexedResiduesVec, false)
-
-    indexedResiduesVec.delete()
-    colourMap.delete()
-}
-
-const get_atoms = (molNo: number, format: string) => {
-    const theGuid = guid()
-    const tempFilename = `./${theGuid}.pdb`
-    if (format === 'pdb') {
-        molecules_container.writePDBASCII(molNo, tempFilename)
-    } else if (format === 'mmcif') {
-        molecules_container.writeCIFASCII(molNo, tempFilename)
-    } else {
-        console.log(`Unrecognised format... ${format}`)
-    }
-
-    const pdbData = cootModule.FS.readFile(tempFilename, { encoding: 'utf8' });
-    cootModule.FS_unlink(tempFilename)
-    return pdbData
-}
-
 const doCootCommand = (messageData: { 
     myTimeStamp: number;
     chainID?: string;
@@ -888,12 +811,6 @@ const doCootCommand = (messageData: {
 
         let cootResult
         switch (command) {
-            case 'shim_get_atoms': 
-                cootResult = get_atoms(...commandArgs as [number, string])
-                break
-            case 'shim_read_pdb':
-                cootResult = read_pdb(...commandArgs as [string, string])
-                break
             case 'shim_new_positions_for_residue_atoms':
                 cootResult = new_positions_for_residue_atoms(...commandArgs as [number, libcootApi.AtomInfo[][]])
                 break
@@ -906,26 +823,14 @@ const doCootCommand = (messageData: {
             case 'shim_read_ccp4_map':
                 cootResult = read_ccp4_map(...commandArgs as [ArrayBuffer, string, boolean])
                 break
-            case 'shim_read_dictionary':
-                cootResult = read_dictionary(...commandArgs as [string, number])
-                break
             case 'shim_associate_data_mtz_file_with_map':
                 cootResult = associate_data_mtz_file_with_map(...commandArgs as [number, { data: ArrayBufferLike; fileName: string; }, string, string, string])
-                break
-            case 'shim_replace_molecule_by_model_from_file':
-                cootResult = replace_molecule_by_model_from_file(...commandArgs as [number, string])
                 break
             case 'shim_replace_map_by_mtz_from_file':
                 cootResult = replace_map_by_mtz_from_file(...commandArgs as [number, ArrayBufferLike, { F: string; PHI: string; }])
                 break
-            case 'shim_do_colour_test':
-                cootResult = doColourTest(...commandArgs as [number])
-                break
             case 'shim_set_bond_colours':
                 cootResult = setUserDefinedBondColours(...commandArgs as [number, { cid: string; rgb: [number, number, number] }[], boolean])
-                break
-            case 'shim_smiles_to_pdb':
-                cootResult = cootModule.SmilesToPDB(...commandArgs as [string, string, number, number])
                 break
             default:
                 cootResult = molecules_container[command](...commandArgs)

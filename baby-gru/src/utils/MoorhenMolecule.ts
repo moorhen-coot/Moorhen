@@ -156,8 +156,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * Replace the current molecule with the model in a file
      * @param {string} fileUrl - The uri to the file with the new model
      * @param {string} molName - The molecule name
+     * @param {string} format - The format of the file
      */
-    async replaceModelWithFile(fileUrl: string, molName: string): Promise<void> {
+    async replaceModelWithFile(fileUrl: string, molName: string, format: string = "pdb"): Promise<void> {
         let coordData: string
         let fetchResponse: Response
 
@@ -175,8 +176,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         const cootResponse = await this.commandCentre.current.cootCommand({
             returnType: "status",
-            command: 'shim_replace_molecule_by_model_from_file',
-            commandArgs: [this.molNo, coordData],
+            command: 'replace_molecule_by_model_from_string',
+            commandArgs: [this.molNo, format, coordData],
             changesMolecules: [this.molNo]
         }, true)
 
@@ -477,7 +478,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         let response = await this.commandCentre.current.cootCommand({
             returnType: "status",
-            command: 'shim_read_pdb',
+            command: 'read_pdb_string',
             commandArgs: [pdbString, newMolecule.name]
         }, true) as moorhen.WorkerResponse<number>
 
@@ -578,7 +579,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         try {
             const response = await this.commandCentre.current.cootCommand({
                 returnType: "status",
-                command: 'shim_read_pdb',
+                command: 'read_pdb_string',
                 commandArgs: [coordData, this.name],
             }, true)
             this.molNo = response.data.result.result
@@ -623,7 +624,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         await this.commandCentre.current.cootCommand({
             returnType: "status",
-            command: 'shim_read_dictionary',
+            command: 'read_dictionary_string',
             commandArgs: [dictContent, attachToMolecule],
         }, false)
         
@@ -675,7 +676,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     async getAtoms(format: string = 'pdb'): Promise<string> {
         const response = await this.commandCentre.current.cootCommand({
             returnType: "string",
-            command: 'shim_get_atoms',
+            command: 'get_molecule_atoms',
             commandArgs: [this.molNo, format],
         }, false) as moorhen.WorkerResponse<string>
         return response.data.result.result
@@ -1337,7 +1338,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     async addDict(fileContent: string): Promise<void> {
         await this.commandCentre.current.cootCommand({
             returnType: "status",
-            command: 'shim_read_dictionary',
+            command: 'read_dictionary_string',
             commandArgs: [fileContent, this.molNo]
         }, false)
 
