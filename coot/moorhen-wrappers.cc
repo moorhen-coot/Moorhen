@@ -10,10 +10,15 @@
 #include <string.h>
 #include <errno.h>
 
+#include <filesystem>
 #include <complex>
 #include <iostream>
 #include <string>
 #include <vector>
+#include <random>
+#include <ctime>
+#include <cstdlib>
+#include <fstream>
 
 #include <math.h>
 #ifndef M_PI
@@ -145,6 +150,10 @@ class molecules_container_js : public molecules_container_t {
             return DrawSugarBlocks(mol,cid_str);
         }
 
+        std::pair<std::string, std::string> smiles_to_pdb(const std::string &smile_cpp, const std::string &TLC, int nconf, int maxIters) {
+            return SmilesToPDB(smile_cpp, TLC, nconf, maxIters);
+        }
+
         bool model_has_glycans(int imol) {
             mmdb::Manager *mol = get_mol(imol);
             int nmodels = mol->GetNumberOfModels();
@@ -163,6 +172,118 @@ class molecules_container_js : public molecules_container_t {
                 }
             }
             return false;
+        }
+
+        std::string generate_rand_str(const int &len) {
+            static const char alphanum[] =
+                "0123456789"
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                "abcdefghijklmnopqrstuvwxyz";
+            std::string rand_str;
+            rand_str.reserve(len);
+            
+            std::srand(static_cast<unsigned int>(std::time(nullptr)));
+
+            for (int i = 0; i < len; ++i) {
+                rand_str += alphanum[rand() % (sizeof(alphanum) - 1)];
+            }
+            
+            return rand_str;
+        }
+
+        std::string read_text_file(const std::string &file_name){
+            std::string line;
+            std::string file_contents;
+            std::ifstream file_stream (file_name.c_str());
+            
+            if (file_stream.is_open()) {
+                while(!file_stream.eof()) {
+                    std::getline(file_stream, line);
+                    file_contents += line + "\n";
+                }
+                file_stream.close();
+            } else {
+                std::cout << "Unable to open file"; 
+            }
+            
+            return file_contents;
+        }
+
+        void write_text_file(const std::string &file_name, const std::string &file_contents) {
+            std::ofstream file(file_name);
+            if (file.is_open()) {
+                file << file_contents;
+                file.close();
+            } else {
+                std::cout << "Unable to open or create file '" << file_name << "' for writing." << std::endl;
+            }
+        }
+
+        void remove_file(const std::string &file_name, const bool &verbose = false) {
+            if (!std::filesystem::remove(file_name) && verbose) {
+                std::cout << "file " << file_name << " not found!" << std::endl;
+            } else if (verbose) {
+                std::cout << "file " << file_name << " deleted" << std::endl;
+            }
+        }
+
+        std::string get_molecule_atoms(int imol, const std::string &format) {
+            const std::string file_name = generate_rand_str(32);
+            std::string pdb_data;  
+            try {
+                if (format == "pdb") {
+                    writePDBASCII(imol, file_name);
+                } else if (format == "mmcif") {
+                    writeCIFASCII(imol, file_name);
+                } else {
+                    std::cout << "Unrecognised format " << format << std::endl;
+                    return "";
+                }
+                const std::string pdb_data = read_text_file(file_name);
+                remove_file(file_name);
+                return pdb_data;
+            }
+            catch(const std::filesystem::filesystem_error& err) {
+                std::cout << "Error: " << err.what() << std::endl;
+            }
+            return "";
+        }
+
+        int read_pdb_string(const std::string &pdb_string, const std::string &molecule_name) {
+            std::string file_name = generate_rand_str(32);
+            if (pdb_string.find("data_") == 0) {
+                file_name += ".mmcif";
+            } else {
+                file_name += ".pdb";
+            }
+            write_text_file(file_name, pdb_string);
+            const int imol = molecules_container_t::read_pdb(file_name);
+            remove_file(file_name);
+            return imol;
+        }
+
+        int read_dictionary_string (const std::string &dictionary_string, const int &associated_imol) {
+            std::string file_name = generate_rand_str(32);
+            file_name += ".cif";
+            write_text_file(file_name, dictionary_string);
+            const int imol = molecules_container_t::import_cif_dictionary(file_name, associated_imol);
+            remove_file(file_name);
+            return imol;
+        }
+
+        void replace_molecule_by_model_from_string (int imol, const std::string &format, const std::string &pdb_string) {
+            std::string file_name = generate_rand_str(32);
+            if (format == "mmcif") {
+                file_name += ".mmcif";
+            } else if (format == "pdb") {
+                file_name += ".pdb";
+            } else {
+                std::cout << "Unrecognised format " << format << std::endl;
+                return;
+            }
+            write_text_file(file_name, pdb_string);
+            molecules_container_t::replace_molecule_by_model_from_file(imol, file_name); 
+            remove_file(file_name);
         }
 
         generic_3d_lines_bonds_box_t make_exportable_environment_bond_box(int imol, const std::string &chainID, int resNo,  const std::string &altLoc){
@@ -718,7 +839,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("set_refinement_geman_mcclure_alpha",&molecules_container_t::set_refinement_geman_mcclure_alpha)
     .function("get_geman_mcclure_alpha",&molecules_container_t::get_geman_mcclure_alpha)
     .function("get_map_histogram",&molecules_container_t::get_map_histogram)
-     ;
+    ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<bool>()
     .function("writePDBASCII",&molecules_container_js::writePDBASCII)
@@ -733,6 +854,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("make_exportable_environment_bond_box",&molecules_container_js::make_exportable_environment_bond_box)
     .function("DrawGlycoBlocks",&molecules_container_js::DrawGlycoBlocks)
     .function("model_has_glycans",&molecules_container_js::model_has_glycans)
+    .function("get_molecule_atoms", &molecules_container_js::get_molecule_atoms)
+    .function("read_pdb_string", &molecules_container_js::read_pdb_string)
+    .function("smiles_to_pdb", &molecules_container_js::smiles_to_pdb)
+    .function("replace_molecule_by_model_from_string", &molecules_container_js::replace_molecule_by_model_from_string)
+    .function("read_dictionary_string", &molecules_container_js::read_dictionary_string)
     ;
     class_<generic_3d_lines_bonds_box_t>("generic_3d_lines_bonds_box_t")
     .property("line_segments", &generic_3d_lines_bonds_box_t::line_segments)
@@ -1113,7 +1239,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
 
     function("getRotamersMap",&getRotamersMap);
-    function("SmilesToPDB",&SmilesToPDB);
 
     //For testing
     //function("TakeColourMap",&TakeColourMap);

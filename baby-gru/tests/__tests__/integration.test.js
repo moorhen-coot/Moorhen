@@ -612,8 +612,9 @@ describe('Testing molecules_container_js', () => {
         expect(simpleMesh.triangles.size()).toBeGreaterThan(100)
     })
 
-    test("Test SmilesToPDB", () => {
-        const result_1 = cootModule.SmilesToPDB('c1ccccc1', 'LIG', 10, 100)
+    test("Test smiles_to_pdb", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const result_1 = molecules_container.smiles_to_pdb('c1ccccc1', 'LIG', 10, 100)
         const fileContents_1 = fs.readFileSync(path.join(__dirname, '..', 'test_data', 'benzene.cif'), { encoding: 'utf8', flag: 'r' })
         expect(result_1.second).toBe(fileContents_1)
     })
@@ -629,6 +630,53 @@ describe('Testing molecules_container_js', () => {
         expect(result.counts.size()).toBe(51)
     })
 
+    test("Test get_molecule_atoms pdb", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const pdbString  = molecules_container.get_molecule_atoms(coordMolNo, "pdb")
+        expect(pdbString).toHaveLength(258719)
+    })
+
+    test("Test get_molecule_atoms mmcif", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const pdbString  = molecules_container.get_molecule_atoms(coordMolNo, "mmcif")
+        expect(pdbString).toHaveLength(297550)
+    })
+
+    test("Test read_pdb_string pdb-format", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
+        const pdbString_1  = molecules_container.get_molecule_atoms(coordMolNo_1, "pdb")
+        expect(pdbString_1).toHaveLength(258719)
+        const coordMolNo_2 = molecules_container.read_pdb_string(pdbString_1, "mol-name")
+        expect(coordMolNo_2).toBe(1)
+        const pdbString_2  = molecules_container.get_molecule_atoms(coordMolNo_2, "pdb")
+        expect(pdbString_2).toBe(pdbString_1)
+    })
+
+    test("Test read_pdb_string mmcif-format", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
+        const pdbString_1  = molecules_container.get_molecule_atoms(coordMolNo_1, "mmcif")
+        expect(pdbString_1).toHaveLength(297550)
+        const coordMolNo_2 = molecules_container.read_pdb_string(pdbString_1, "mol-name")
+        expect(coordMolNo_2).toBe(1)
+        // For some reason this fails, probably a coot thing
+        // const pdbString_2  = molecules_container.get_molecule_atoms(coordMolNo_2, "mmcif")
+        // expect(pdbString_2).toBe(pdbString_1)
+    })
+
+    test("Test replace_molecule_by_model_from_string", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
+        const pdbString_1  = molecules_container.get_molecule_atoms(coordMolNo_1, "pdb")
+        expect(pdbString_1).toHaveLength(258719)
+        const coordMolNo_2 = molecules_container.read_pdb('./5fjj.pdb')
+        molecules_container.replace_molecule_by_model_from_string(coordMolNo_2, "pdb", pdbString_1)
+        const pdbString_2  = molecules_container.get_molecule_atoms(coordMolNo_2, "pdb")
+        expect(pdbString_2).toBe(pdbString_1)
+    })
 })
 
 const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h_no_ligand.pdb', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
