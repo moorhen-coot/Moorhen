@@ -105,6 +105,9 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                     <MenuItem onClick={() => doTest(menuItemProps)}>
                         Do a timing test...
                     </MenuItem>
+                    <MenuItem onClick={() => props.maps[0].getHistogram()}>
+                        Do a histogram test...
+                    </MenuItem>
                     <hr></hr>
                     <Form.Group>
                     <MoorhenMapSelect width="" maps={props.maps} ref={mapASelectRef}/>
