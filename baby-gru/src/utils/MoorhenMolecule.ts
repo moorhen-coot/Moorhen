@@ -477,7 +477,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         let response = await this.commandCentre.current.cootCommand({
             returnType: "status",
-            command: 'shim_read_pdb',
+            command: 'read_pdb_string',
             commandArgs: [pdbString, newMolecule.name]
         }, true) as moorhen.WorkerResponse<number>
 
@@ -578,7 +578,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         try {
             const response = await this.commandCentre.current.cootCommand({
                 returnType: "status",
-                command: 'shim_read_pdb',
+                command: 'read_pdb_string',
                 commandArgs: [coordData, this.name],
             }, true)
             this.molNo = response.data.result.result

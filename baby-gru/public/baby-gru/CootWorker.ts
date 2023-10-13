@@ -701,21 +701,6 @@ const simpleMeshToLineMeshData = (simpleMesh: libcootApi.SimpleMeshT, normalLigh
 
 }
 
-const read_pdb = (coordData: string, name: string) => {
-    const theGuid = guid()
-    let theSuffix;
-    if(coordData.startsWith("data_")){
-        theSuffix = "mmcif"
-    } else {
-        theSuffix = "pdb"
-    }
-    cootModule.FS_createDataFile(".", `${theGuid}.${theSuffix}`, coordData, true, true);
-    const tempFilename = `./${theGuid}.${theSuffix}`
-    const molNo = molecules_container.read_pdb(tempFilename)
-    cootModule.FS_unlink(tempFilename)
-    return molNo
-}
-
 const auto_open_mtz = (mtzData: ArrayBufferLike) => {
     const theGuid = guid()
     const asUint8Array = new Uint8Array(mtzData)
@@ -872,9 +857,6 @@ const doCootCommand = (messageData: {
 
         let cootResult
         switch (command) {
-            case 'shim_read_pdb':
-                cootResult = read_pdb(...commandArgs as [string, string])
-                break
             case 'shim_new_positions_for_residue_atoms':
                 cootResult = new_positions_for_residue_atoms(...commandArgs as [number, libcootApi.AtomInfo[][]])
                 break
