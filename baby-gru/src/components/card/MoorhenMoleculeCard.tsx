@@ -514,7 +514,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                     <MoorhenAddCustomRepresentationCard glRef={props.glRef} urlPrefix={props.urlPrefix} molecules={props.molecules} isDark={props.isDark} molecule={props.molecule} anchorEl={addColourRulesAnchorDivRef} show={showCreateCustomRepresentation} setShow={setShowCreateCustomRepresentation}/>
                 </Row>
             <div>
-                <Accordion disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }} style={{borderColor: "#f0f0f0", borderStyle: 'solid', borderWidth: '1px'}}>
+                <Accordion className="moorhen-accordion"  disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }}>
                         <AccordionSummary style={{backgroundColor: props.isDark ? '#adb5bd' : '#ecf0f1'}} expandIcon={busyLoadingSequences ? <Spinner animation='border'/> : <ExpandMoreOutlined />} >
                             Sequences
                         </AccordionSummary>
@@ -532,7 +532,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                             />
                         </AccordionDetails>
                 </Accordion>
-                <Accordion disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }} style={{borderColor: "#f0f0f0", borderStyle: 'solid', borderWidth: '1px'}}>
+                <Accordion className="moorhen-accordion" disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }}>
                     <AccordionSummary style={{backgroundColor: props.isDark ? '#adb5bd' : '#ecf0f1'}} expandIcon={busyLoadingLigands ? <Spinner animation='border'/> : <ExpandMoreOutlined />} >
                         Ligands
                     </AccordionSummary>

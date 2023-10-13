@@ -245,3 +245,9 @@ img.moorhen-context-button__icon {
   border-radius: 1.5rem !important;
   border-color: black !important;
 }
+
+.moorhen-accordion {
+  border-color: #f0f0f0;
+  border-style: solid;
+  border-width: 1px;
+}
