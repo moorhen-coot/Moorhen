@@ -58,7 +58,7 @@ const MoorhenImportLigandDictionary = (props: {
             await Promise.all([
                 commandCentre.current.cootCommand({
                     returnType: "status",
-                    command: 'shim_read_dictionary',
+                    command: 'read_dictionary_string',
                     commandArgs: [fileContent, selectedMoleculeIndex],
                     changesMolecules: []
                 }, false),

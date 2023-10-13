@@ -249,7 +249,7 @@ class molecules_container_js : public molecules_container_t {
             return "";
         }
 
-        int read_pdb_string(const std::string pdb_string, const std::string molecule_name) {
+        int read_pdb_string(const std::string &pdb_string, const std::string &molecule_name) {
             std::string file_name = generate_rand_str(32);
             if (pdb_string.find("data_") == 0) {
                 file_name += ".mmcif";
@@ -258,6 +258,15 @@ class molecules_container_js : public molecules_container_t {
             }
             write_text_file(file_name, pdb_string);
             const int imol = molecules_container_t::read_pdb(file_name);
+            remove_file(file_name);
+            return imol;
+        }
+
+        int read_dictionary_string (const std::string &dictionary_string, const int &associated_imol) {
+            std::string file_name = generate_rand_str(32);
+            file_name += ".cif";
+            write_text_file(file_name, dictionary_string);
+            const int imol = molecules_container_t::import_cif_dictionary(file_name, associated_imol);
             remove_file(file_name);
             return imol;
         }
@@ -849,6 +858,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("read_pdb_string", &molecules_container_js::read_pdb_string)
     .function("smiles_to_pdb", &molecules_container_js::smiles_to_pdb)
     .function("replace_molecule_by_model_from_string", &molecules_container_js::replace_molecule_by_model_from_string)
+    .function("read_dictionary_string", &molecules_container_js::read_dictionary_string)
     ;
     class_<generic_3d_lines_bonds_box_t>("generic_3d_lines_bonds_box_t")
     .property("line_segments", &generic_3d_lines_bonds_box_t::line_segments)

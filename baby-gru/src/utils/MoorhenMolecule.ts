@@ -624,7 +624,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         await this.commandCentre.current.cootCommand({
             returnType: "status",
-            command: 'shim_read_dictionary',
+            command: 'read_dictionary_string',
             commandArgs: [dictContent, attachToMolecule],
         }, false)
         
@@ -1338,7 +1338,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     async addDict(fileContent: string): Promise<void> {
         await this.commandCentre.current.cootCommand({
             returnType: "status",
-            command: 'shim_read_dictionary',
+            command: 'read_dictionary_string',
             commandArgs: [fileContent, this.molNo]
         }, false)
 

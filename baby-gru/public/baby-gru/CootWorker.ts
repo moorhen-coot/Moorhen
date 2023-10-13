@@ -711,15 +711,6 @@ const auto_open_mtz = (mtzData: ArrayBufferLike) => {
     return result
 }
 
-const read_dictionary = (coordData: string, associatedMolNo: number) => {
-    const theGuid = guid()
-    cootModule.FS_createDataFile(".", `${theGuid}.cif`, coordData, true, true);
-    const tempFilename = `./${theGuid}.cif`
-    const returnVal = molecules_container.import_cif_dictionary(tempFilename, associatedMolNo)
-    cootModule.FS_unlink(tempFilename)
-    return returnVal
-}
-
 const replace_map_by_mtz_from_file = (imol: number, mtzData: ArrayBufferLike, selectedColumns: { F: string; PHI: string; }) => {
     const theGuid = guid()
     const tempFilename = `./${theGuid}.mtz`
@@ -804,34 +795,6 @@ const setUserDefinedBondColours = (imol: number, colours: { cid: string; rgb: [n
     colourMap.delete()
 }
 
-const doColourTest = (imol: number) => {
-    console.log('DEBUG: Start test...')
-
-    let colourMap = new cootModule.MapIntFloat3()
-    colourMap[20] = [1., 0., 0.]
-    colourMap[21] = [0., 1., 0.]
-    colourMap[22] = [0., 0., 1.]
-
-    let indexedResiduesVec = new cootModule.VectorStringUInt_pair()
-
-    const a = { first: '//A/1-10/', second: 20 }
-    indexedResiduesVec.push_back(a)
-
-    const b = { first: '//A/11-20/', second: 21 }
-    indexedResiduesVec.push_back(b)
-
-    const c = { first: '//A/21-30/', second: 22 }
-    indexedResiduesVec.push_back(c)
-
-    console.log('DEBUG: Running molecules_container.set_user_defined_bond_colours')
-    molecules_container.set_user_defined_bond_colours(imol, colourMap)
-    console.log('DEBUG: Running molecules_container.set_user_defined_atom_colour_by_selection')
-    molecules_container.set_user_defined_atom_colour_by_selection(imol, indexedResiduesVec, false)
-
-    indexedResiduesVec.delete()
-    colourMap.delete()
-}
-
 const doCootCommand = (messageData: { 
     myTimeStamp: number;
     chainID?: string;
@@ -859,9 +822,6 @@ const doCootCommand = (messageData: {
                 break
             case 'shim_read_ccp4_map':
                 cootResult = read_ccp4_map(...commandArgs as [ArrayBuffer, string, boolean])
-                break
-            case 'shim_read_dictionary':
-                cootResult = read_dictionary(...commandArgs as [string, number])
                 break
             case 'shim_associate_data_mtz_file_with_map':
                 cootResult = associate_data_mtz_file_with_map(...commandArgs as [number, { data: ArrayBufferLike; fileName: string; }, string, string, string])
