@@ -7,36 +7,55 @@ interface CanvasElement extends HTMLCanvasElement {
   captureStream(frameRate?: number): MediaStream;
 }
 
-export const startRecording = (glRef: React.RefObject<webGL.MGWebGL>) => {
-    const canvas : CanvasElement = <CanvasElement> glRef.current.canvasRef.current;
-    const chunks = []; // here we will store our recorded media chunks (Blobs)
-    const stream = canvas.captureStream(30); // grab our canvas MediaStream
-    const rec = new MediaRecorder(stream); // init the recorder
-    // every time the recorder has new data, we will store it in our array
-    rec.ondataavailable = (e) => {
-        chunks.push(e.data);
-    }
-    // only when the recorder stops, we construct a complete Blob from all the chunks
-    rec.onstop = (e) =>
-        downloadVideo(new Blob(chunks, { type: "video/webm;codecs=h264" }));
-    rec.start();
-    setTimeout(() => {
-        rec.stop();
-    }, 6000); // stop recording in 6s
-}
+export class MoorhenVideoRecorder {
 
-const downloadVideo = async (blob) => {
-    var url = URL.createObjectURL(blob);
-    let link: any = document.getElementById('download_video_link');
-    if (!link) {
-        link = document.createElement('a');
-        link.id = 'download_video_link';
-        link.download = "moorhen.webm";
-        document.body.appendChild(link);
+    rec: MediaRecorder | null;
+    _isRecording: boolean;
+    chunks: any[];
+
+    constructor(glRef: React.RefObject<webGL.MGWebGL>){
+        const canvas : CanvasElement = glRef.current.canvasRef.current as CanvasElement;
+        this.chunks = []; // here we will store our recorded media chunks (Blobs)
+        const stream = canvas.captureStream(30); // grab our canvas MediaStream
+                                         // every time the recorder has new data, we will store it in our array
+        this.rec = new MediaRecorder(stream); // init the recorder
+        this._isRecording = false;
     }
-    const saveCanvas = document.createElement("canvas");
-    link.href = url;
-    link.click();
+
+    stopRecording = () => {
+        this.rec.stop();
+        this._isRecording = false;
+    }
+
+    isRecording = () => {
+        return this._isRecording;
+    }
+
+    startRecording = () => {
+        this.chunks = [];
+        this.rec.ondataavailable = (e) => {
+            this.chunks.push(e.data);
+        }
+        // only when the recorder stops, we construct a complete Blob from all the chunks
+        this.rec.onstop = (e) =>
+            this.downloadVideo(new Blob(this.chunks, { type: "video/webm;codecs=h264" }));
+        this._isRecording = true;
+        this.rec.start();
+    }
+
+    downloadVideo = async (blob) => {
+            var url = URL.createObjectURL(blob);
+        let link: any = document.getElementById('download_video_link');
+        if (!link) {
+            link = document.createElement('a');
+            link.id = 'download_video_link';
+            link.download = "moorhen.webm";
+            document.body.appendChild(link);
+        }
+        link.href = url;
+        link.click();
+    }
+
 }
 
 export const screenShot = (glRef: React.RefObject<webGL.MGWebGL>,filename: string|null) => {

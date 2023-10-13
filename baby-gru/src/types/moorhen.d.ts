@@ -3,6 +3,7 @@ import { emscriptem } from "./emscriptem";
 import { gemmi } from "./gemmi";
 import { webGL } from "./mgWebGL";
 import { MoorhenCommandCentre } from "../moorhen";
+import { MoorhenVideoRecorder } from "../utils/MoorhenScreenshot"
 
 export namespace moorhen {
 
@@ -730,12 +731,14 @@ export namespace moorhen {
         windowWidth: number;
         windowHeight: number;
         availableFonts: string[];
+        videoRecorderRef: useRef<null | MoorhenVideoRecorder>;
     }
     
     interface ContainerStates {
         glRef: React.MutableRefObject<null | webGL.MGWebGL>;
         timeCapsuleRef: React.MutableRefObject<null | TimeCapsule>;
         commandCentre: React.MutableRefObject<CommandCentre>;
+        videoRecorderRef: useRef<null | MoorhenVideoRecorder>;
         moleculesRef: React.MutableRefObject<null | Molecule[]>;
         mapsRef: React.MutableRefObject<null | Map[]>;
         activeMapRef: React.MutableRefObject<Map>;
