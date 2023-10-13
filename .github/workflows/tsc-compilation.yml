@@ -23,9 +23,9 @@ jobs:
       working-directory: /home/runner/work/Moorhen/       
       run: |    
         echo "export const version = 0.1" > /home/runner/work/Moorhen/Moorhen/baby-gru/src/version.js
-    - name: yarn install
+    - name: npm install
       working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
-      run: yarn install
+      run: npm install
     - name: tsc compile
       working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
       run: |             
