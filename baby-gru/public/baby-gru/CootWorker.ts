@@ -856,22 +856,6 @@ const doColourTest = (imol: number) => {
     colourMap.delete()
 }
 
-const get_atoms = (molNo: number, format: string) => {
-    const theGuid = guid()
-    const tempFilename = `./${theGuid}.pdb`
-    if (format === 'pdb') {
-        molecules_container.writePDBASCII(molNo, tempFilename)
-    } else if (format === 'mmcif') {
-        molecules_container.writeCIFASCII(molNo, tempFilename)
-    } else {
-        console.log(`Unrecognised format... ${format}`)
-    }
-
-    const pdbData = cootModule.FS.readFile(tempFilename, { encoding: 'utf8' });
-    cootModule.FS_unlink(tempFilename)
-    return pdbData
-}
-
 const doCootCommand = (messageData: { 
     myTimeStamp: number;
     chainID?: string;
@@ -888,9 +872,6 @@ const doCootCommand = (messageData: {
 
         let cootResult
         switch (command) {
-            case 'shim_get_atoms': 
-                cootResult = get_atoms(...commandArgs as [number, string])
-                break
             case 'shim_read_pdb':
                 cootResult = read_pdb(...commandArgs as [string, string])
                 break

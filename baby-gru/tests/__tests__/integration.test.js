@@ -629,6 +629,20 @@ describe('Testing molecules_container_js', () => {
         expect(result.counts.size()).toBe(51)
     })
 
+    test("Test get_molecule_atoms pdb", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const pdbString  = molecules_container.get_molecule_atoms(coordMolNo, "pdb")
+        expect(pdbString).toHaveLength(258719)
+    })
+
+    test("Test get_molecule_atoms mmcif", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const pdbString  = molecules_container.get_molecule_atoms(coordMolNo, "mmcif")
+        expect(pdbString).toHaveLength(297550)
+    })
+
 })
 
 const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h_no_ligand.pdb', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
