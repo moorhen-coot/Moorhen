@@ -16,7 +16,7 @@ export class MoorhenMtzWrapper implements MoorhenMtzWrapperInterface {
         this.columns = {}
     }
     
-    async loadHeaderFromFile(file: Blob): Promise<{ [colType: string]: string }> {
+    async loadHeaderFromFile(file: File): Promise<{ [colType: string]: string }> {
         const arrayBuffer = await readDataFile(file)
         const fileName = `File_${uuidv4()}`
         const byteArray = new Uint8Array(arrayBuffer)

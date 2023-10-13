@@ -249,11 +249,11 @@ export class MoorhenMap implements moorhen.Map {
 
     /**
      * Load map to moorhen from a MTZ file
-     * @param {Blob} source - The MTZ file data in the form of a blob
+     * @param {File} source - The MTZ file
      * @param {moorhen.selectedMtzColumns} selectedColumns - Object indicating the selected MTZ columns
      * @returns {Promise<moorhen.Map>} This moorhenMap instance
      */
-    loadToCootFromMtzFile = async function (source: Blob, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> {
+    loadToCootFromMtzFile = async function (source: File, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> {
         const $this = this
         let reflectionData = await readDataFile(source)
         const asUIntArray = new Uint8Array(reflectionData)
@@ -312,11 +312,11 @@ export class MoorhenMap implements moorhen.Map {
 
     /**
      * Load a map to moorhen from a map file data blob
-     * @param {Blob} source - The map file data in the form of a blob
+     * @param {File} source - The map file
      * @param {boolean} isDiffMap - Indicates whether the new map is a difference map
      * @returns {Promise<moorhen.Map>} This moorhenMap instance
      */
-    async loadToCootFromMapFile (source: Blob, isDiffMap: boolean): Promise<moorhen.Map> {
+    async loadToCootFromMapFile (source: File, isDiffMap: boolean): Promise<moorhen.Map> {
         const mapData = await readDataFile(source)
         const asUIntArray = new Uint8Array(mapData)
         return this.loadToCootFromMapData(asUIntArray, source.name, isDiffMap)

@@ -448,7 +448,7 @@ export const readTextFile = (source: Blob): Promise<ArrayBuffer | string> => {
     })
 }
 
-export const readDataFile = (source: Blob): Promise<ArrayBuffer> => {
+export const readDataFile = (source: File): Promise<ArrayBuffer> => {
     const resolveReader = (reader: FileReader, resolveCallback) => {
         reader.removeEventListener("load", resolveCallback)
         if (typeof reader.result === 'string') {
