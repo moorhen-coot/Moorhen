@@ -34,7 +34,7 @@ const formatCommandArgsString = (command: string, commandArgs: (number | string)
         case 'redo':
         case 'undo':
         case 'shim_replace_map_by_mtz_from_file':
-        case 'shim_replace_molecule_by_model_from_file':
+        case 'replace_molecule_by_model_from_string':
         case 'close_molecule':
             formattedString = `${commandArgs[0]}`
             break

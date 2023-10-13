@@ -262,6 +262,21 @@ class molecules_container_js : public molecules_container_t {
             return imol;
         }
 
+        void replace_molecule_by_model_from_string (int imol, const std::string &format, const std::string &pdb_string) {
+            std::string file_name = generate_rand_str(32);
+            if (format == "mmcif") {
+                file_name += ".mmcif";
+            } else if (format == "pdb") {
+                file_name += ".pdb";
+            } else {
+                std::cout << "Unrecognised format " << format << std::endl;
+                return;
+            }
+            write_text_file(file_name, pdb_string);
+            molecules_container_t::replace_molecule_by_model_from_file(imol, file_name); 
+            remove_file(file_name);
+        }
+
         generic_3d_lines_bonds_box_t make_exportable_environment_bond_box(int imol, const std::string &chainID, int resNo,  const std::string &altLoc){
             coot::residue_spec_t resSpec(chainID,resNo,altLoc);
             return molecules_container_t::make_exportable_environment_bond_box(imol,resSpec);
@@ -833,6 +848,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_molecule_atoms", &molecules_container_js::get_molecule_atoms)
     .function("read_pdb_string", &molecules_container_js::read_pdb_string)
     .function("smiles_to_pdb", &molecules_container_js::smiles_to_pdb)
+    .function("replace_molecule_by_model_from_string", &molecules_container_js::replace_molecule_by_model_from_string)
     ;
     class_<generic_3d_lines_bonds_box_t>("generic_3d_lines_bonds_box_t")
     .property("line_segments", &generic_3d_lines_bonds_box_t::line_segments)

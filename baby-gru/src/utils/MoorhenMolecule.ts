@@ -156,8 +156,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * Replace the current molecule with the model in a file
      * @param {string} fileUrl - The uri to the file with the new model
      * @param {string} molName - The molecule name
+     * @param {string} format - The format of the file
      */
-    async replaceModelWithFile(fileUrl: string, molName: string): Promise<void> {
+    async replaceModelWithFile(fileUrl: string, molName: string, format: string = "pdb"): Promise<void> {
         let coordData: string
         let fetchResponse: Response
 
@@ -175,8 +176,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         const cootResponse = await this.commandCentre.current.cootCommand({
             returnType: "status",
-            command: 'shim_replace_molecule_by_model_from_file',
-            commandArgs: [this.molNo, coordData],
+            command: 'replace_molecule_by_model_from_string',
+            commandArgs: [this.molNo, format, coordData],
             changesMolecules: [this.molNo]
         }, true)
 

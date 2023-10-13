@@ -720,15 +720,6 @@ const read_dictionary = (coordData: string, associatedMolNo: number) => {
     return returnVal
 }
 
-const replace_molecule_by_model_from_file = (imol: number, coordData: string) => {
-    const theGuid = guid()
-    const tempFilename = `./${theGuid}.pdb`
-    cootModule.FS_createDataFile(".", tempFilename, coordData, true, true)
-    const result = molecules_container.replace_molecule_by_model_from_file(imol, tempFilename)
-    cootModule.FS_unlink(tempFilename)
-    return result
-}
-
 const replace_map_by_mtz_from_file = (imol: number, mtzData: ArrayBufferLike, selectedColumns: { F: string; PHI: string; }) => {
     const theGuid = guid()
     const tempFilename = `./${theGuid}.mtz`
@@ -875,14 +866,8 @@ const doCootCommand = (messageData: {
             case 'shim_associate_data_mtz_file_with_map':
                 cootResult = associate_data_mtz_file_with_map(...commandArgs as [number, { data: ArrayBufferLike; fileName: string; }, string, string, string])
                 break
-            case 'shim_replace_molecule_by_model_from_file':
-                cootResult = replace_molecule_by_model_from_file(...commandArgs as [number, string])
-                break
             case 'shim_replace_map_by_mtz_from_file':
                 cootResult = replace_map_by_mtz_from_file(...commandArgs as [number, ArrayBufferLike, { F: string; PHI: string; }])
-                break
-            case 'shim_do_colour_test':
-                cootResult = doColourTest(...commandArgs as [number])
                 break
             case 'shim_set_bond_colours':
                 cootResult = setUserDefinedBondColours(...commandArgs as [number, { cid: string; rgb: [number, number, number] }[], boolean])
