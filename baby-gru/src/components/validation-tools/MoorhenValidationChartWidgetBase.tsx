@@ -144,7 +144,7 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
                         </div>
                     </div>
                 <canvas id="myChartAxis"></canvas>
-                </div>               
+                </div>
             </Fragment>
 
 })
