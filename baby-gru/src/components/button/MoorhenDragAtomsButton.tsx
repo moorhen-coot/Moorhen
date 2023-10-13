@@ -6,9 +6,10 @@ import { Button, Card, Container, Form, FormGroup, FormLabel, FormSelect, Row, S
 import { CheckOutlined, CloseOutlined, DeleteSweepOutlined } from "@mui/icons-material";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import Draggable from "react-draggable";
-import { cidToSpec, convertRemToPx } from "../../utils/MoorhenUtils";
+import { cidToSpec } from "../../utils/MoorhenUtils";
+import { IconButton } from "@mui/material";
+import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { libcootApi } from "../../types/libcoot";
-import { IconButton, Zoom } from "@mui/material";
 
 export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
     const [showAccept, setShowAccept] = useState<boolean>(false)
@@ -24,21 +25,6 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
     const autoClearRestraintsRef = useRef<boolean>(true)
 
     const dragModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'SPHERE']
-
-    const canvasElement = document.getElementById('moorhen-canvas-background')
-    let canvasTop: number
-    let canvasLeft: number
-    let canvasRight: number
-    if (canvasElement !== null) {
-        const rect = canvasElement.getBoundingClientRect()
-        canvasLeft = rect.left
-        canvasTop = rect.top
-        canvasRight = rect.right
-    } else {
-        canvasLeft = 0
-        canvasTop = 0
-        canvasRight = 0
-    } 
 
     const animateRefine = async (molecule: moorhen.Molecule, n_cyc: number, n_iteration: number, final_n_cyc: number = 100) => {
         for (let i = 0; i <= n_iteration; i++) {
@@ -254,16 +240,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
     if (props.mode === 'context') {
 
         const contextMenuOverride = (
-            <Zoom in={true}>
-            <div
-            className="moorhen-notification-div"
-            style={{
-                position: 'absolute',
-                top: canvasTop + convertRemToPx(0.5),
-                left: canvasLeft + (props.windowWidth / 2) - convertRemToPx(7),
-                color: props.isDark ? 'white' : 'grey',
-                backgroundColor: props.isDark ? 'grey' : 'white',
-            }}>
+            <MoorhenNotification isDark={props.isDark} windowWidth={props.windowWidth}>
                 <Stack gap={2} direction='horizontal' style={{width: '100%', display:'flex', justifyContent: 'space-between'}}>
                     <div>
                         <span>Accept changes?</span>
@@ -291,8 +268,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
                     </IconButton>
                     </div>
                 </Stack>
-            </div>
-            </Zoom>
+            </MoorhenNotification>
         )
 
         const nonCootCommand = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string) => {

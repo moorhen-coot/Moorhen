@@ -752,11 +752,12 @@ export class MoorhenMap implements moorhen.Map {
         this.glRef.current.setOriginAnimated(this.mapCentre)
     }
 
-    async getHistogram() {
+    async getHistogram(): Promise<libcootApi.HistogramInfoJS> {
         const response = await this.commandCentre.current.cootCommand({
             command: 'get_map_histogram',
             commandArgs: [this.molNo],
             returnType: "histogram_info_t"
         }, false) as moorhen.WorkerResponse<any>
+        return response.data.result.result
     }
 }

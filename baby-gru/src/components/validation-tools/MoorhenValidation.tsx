@@ -243,7 +243,7 @@ export const MoorhenValidation = (props: Props) => {
                 beginAtZero: true,
                 title: {
                     display: true,
-                    font:{size:axisLabelsFontSize, family:'Helvetica', weight:800},
+                    font:{size: axisLabelsFontSize, family:'Helvetica', weight:800},
                     text: availableMetrics[methodIndex].displayName,
                     color: props.isDark ? 'white' : 'black'
                 },

@@ -128,9 +128,10 @@ declare module 'moorhen' {
     module.exports.MoorhenMolecule = MoorhenMolecule
     
     class MoorhenMap implements _moorhen.Map {
-        setMapWeight(weight?: number): Promise<_moorhen.WorkerResponse>;
         constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>)
+        setMapWeight(weight?: number): Promise<_moorhen.WorkerResponse>;
         setAlpha(alpha: number, redraw?: boolean): Promise<void>;
+        getHistogram(): Promise<libcootApi.HistogramInfoJS>;
         centreOnMap(): Promise<void>;
         getSuggestedSettings(): Promise<void>;
         setupContourBuffers(objects: any[], keepCootColours?: boolean): void;

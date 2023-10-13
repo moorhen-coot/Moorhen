@@ -1,5 +1,5 @@
 import { forwardRef, useImperativeHandle, useEffect, useState, useRef, useCallback, useMemo, Fragment, useContext } from "react"
-import { Card, Form, Button, Col, DropdownButton, Stack, OverlayTrigger, ToggleButton } from "react-bootstrap"
+import { Card, Form, Button, Col, DropdownButton, Stack, OverlayTrigger, ToggleButton, Spinner } from "react-bootstrap"
 import { doDownload } from '../../utils/MoorhenUtils'
 import { MoorhenContext } from "../../utils/MoorhenContext"
 import { getNameLabel } from "./cardUtils"
@@ -8,8 +8,9 @@ import { MoorhenMapSettingsMenuItem } from "../menu-item/MoorhenMapSettingsMenuI
 import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem"
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
 import { MoorhenSetMapWeight } from "../menu-item/MoorhenSetMapWeight"
+import { MoorhenMapHistogram } from "../misc/MoorhenMapHistogram"
 import { MoorhenSlider } from "../misc/MoorhenSlider";
-import { IconButton, MenuItem, Popover, Tooltip } from "@mui/material"
+import { Accordion, AccordionDetails, AccordionSummary, IconButton, MenuItem, Popover, Tooltip } from "@mui/material"
 import { RgbColorPicker } from "react-colorful"
 import { moorhen } from "../../types/moorhen"
 
@@ -50,10 +51,12 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const [negativeMapColour, setNegativeMapColour] = useState<{ r: number; g: number; b: number; } | null>(null)
     const [positiveMapColour, setPositiveMapColour] = useState<{ r: number; g: number; b: number; } | null>(null)
     const [showColourPicker, setShowColourPicker] = useState<boolean>(false)
+    const [histogramBusy, setHistogramBusy] = useState<boolean>(false)
     const colourSwatchRef = useRef<HTMLDivElement | null>(null)
     const nextOrigin = useRef<number[]>([])
     const busyContouring = useRef<boolean>(false)
     const isDirty = useRef<boolean>(false)
+    const histogramRef = useRef(null)
 
     useImperativeHandle(cardRef, () => ({
         forceIsCollapsed: (value: boolean) => { 
@@ -461,6 +464,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             </Stack>
         </Card.Header>
         <Card.Body style={{ display: isCollapsed ? 'none' : '', padding: '0.5rem' }}>
+            <Stack direction="vertical" gap={1}>
             <Stack direction='horizontal' gap={4}>
                 <ToggleButton
                     id={`active-map-toggle-${props.map.molNo}`}
@@ -510,6 +514,15 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                     </Form.Group>
                 </Col>
             </Stack>
+            <Accordion className="moorhen-accordion" disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }}>
+                <AccordionSummary style={{backgroundColor: props.isDark ? '#adb5bd' : '#ecf0f1'}} expandIcon={histogramBusy ? <Spinner animation='border'/> : <ExpandMoreOutlined />} >
+                    Histogram
+                </AccordionSummary>
+                <AccordionDetails style={{padding: '0.2rem', backgroundColor: props.isDark ? '#ced5d6' : 'white'}}>
+                    <MoorhenMapHistogram ref={histogramRef} setBusy={setHistogramBusy} windowWidth={props.windowWidth} windowHeight={props.windowHeight} isDark={props.isDark} showHistogram={true} map={props.map}/>
+                </AccordionDetails>
+            </Accordion>
+        </Stack>
         </Card.Body>
     </Card >
 })
