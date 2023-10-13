@@ -612,8 +612,9 @@ describe('Testing molecules_container_js', () => {
         expect(simpleMesh.triangles.size()).toBeGreaterThan(100)
     })
 
-    test("Test SmilesToPDB", () => {
-        const result_1 = cootModule.SmilesToPDB('c1ccccc1', 'LIG', 10, 100)
+    test("Test smiles_to_pdb", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const result_1 = molecules_container.smiles_to_pdb('c1ccccc1', 'LIG', 10, 100)
         const fileContents_1 = fs.readFileSync(path.join(__dirname, '..', 'test_data', 'benzene.cif'), { encoding: 'utf8', flag: 'r' })
         expect(result_1.second).toBe(fileContents_1)
     })

@@ -150,6 +150,10 @@ class molecules_container_js : public molecules_container_t {
             return DrawSugarBlocks(mol,cid_str);
         }
 
+        std::pair<std::string, std::string> smiles_to_pdb(const std::string &smile_cpp, const std::string &TLC, int nconf, int maxIters) {
+            return SmilesToPDB(smile_cpp, TLC, nconf, maxIters);
+        }
+
         bool model_has_glycans(int imol) {
             mmdb::Manager *mol = get_mol(imol);
             int nmodels = mol->GetNumberOfModels();
@@ -828,6 +832,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("model_has_glycans",&molecules_container_js::model_has_glycans)
     .function("get_molecule_atoms", &molecules_container_js::get_molecule_atoms)
     .function("read_pdb_string", &molecules_container_js::read_pdb_string)
+    .function("smiles_to_pdb", &molecules_container_js::smiles_to_pdb)
     ;
     class_<generic_3d_lines_bonds_box_t>("generic_3d_lines_bonds_box_t")
     .property("line_segments", &generic_3d_lines_bonds_box_t::line_segments)
@@ -1208,7 +1213,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
 
     function("getRotamersMap",&getRotamersMap);
-    function("SmilesToPDB",&SmilesToPDB);
 
     //For testing
     //function("TakeColourMap",&TakeColourMap);

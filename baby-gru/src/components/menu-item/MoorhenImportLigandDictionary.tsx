@@ -216,7 +216,7 @@ export const MoorhenSMILESToLigandMenuItem = (props: {
         }
 
         const response = await props.commandCentre.current.cootCommand({
-            command: 'shim_smiles_to_pdb',
+            command: 'smiles_to_pdb',
             commandArgs: [smileRef.current, tlcValueRef.current, n_conformer, n_iteration],
             returnType: 'str_str_pair'
         }, true) as moorhen.WorkerResponse<libcootApi.PairType<string, string>>

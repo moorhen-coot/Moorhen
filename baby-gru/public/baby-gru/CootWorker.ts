@@ -887,9 +887,6 @@ const doCootCommand = (messageData: {
             case 'shim_set_bond_colours':
                 cootResult = setUserDefinedBondColours(...commandArgs as [number, { cid: string; rgb: [number, number, number] }[], boolean])
                 break
-            case 'shim_smiles_to_pdb':
-                cootResult = cootModule.SmilesToPDB(...commandArgs as [string, string, number, number])
-                break
             default:
                 cootResult = molecules_container[command](...commandArgs)
                 break
