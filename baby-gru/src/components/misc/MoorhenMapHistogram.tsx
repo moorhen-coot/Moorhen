@@ -81,11 +81,7 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
     }
 
     useEffect(() => {
-        const fetchHistogram = async () => {
-            if (chartRef !== null && typeof chartRef !== 'function' && chartRef.current) {
-                chartRef.current.destroy()
-            }
-    
+        const fetchHistogram = async () => {   
             props.setBusy(true)
 
             if (!props.showHistogram) {
@@ -103,7 +99,8 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
             }
     
             if (chartRef !== null && typeof chartRef !== 'function') {
-                chartRef.current = new Chart(ctx, chartData as any);
+                chartRef.current?.destroy()
+                chartRef.current = new Chart(ctx, chartData as any)
             }
 
             setTimeout(() => {
