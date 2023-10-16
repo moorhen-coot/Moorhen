@@ -102,6 +102,7 @@ export const MoorhenMapMaskingMenuItem = (props: {
             const newMap = new MoorhenMap(commandCentre, glRef)
             newMap.molNo = result.data.result.result
             newMap.name = `Map ${mapNo} masked`
+            await newMap.getSuggestedSettings()
             newMap.isDifference = selectedMap.isDifference
             newMap.suggestedContourLevel = selectedMap.contourLevel
             newMap.suggestedRadius = selectedMap.mapRadius

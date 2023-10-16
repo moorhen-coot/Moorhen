@@ -41,7 +41,7 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
                         display: true,
                         font:{size: axisLabelsFontSize, family:'Helvetica', weight:800},
                         text: 'Counts',
-                        color: props.isDark ? 'white' : 'black'
+                        color: 'black'
                     }
                   },
                   x: {
@@ -54,7 +54,7 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
                         display: true,
                         font:{size: axisLabelsFontSize, family:'Helvetica', weight:800},
                         text: 'Density value',
-                        color: props.isDark ? 'white' : 'black'
+                        color: 'black'
                     }
                   }
                 }

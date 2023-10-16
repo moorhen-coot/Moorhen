@@ -1,4 +1,4 @@
-import { readDataFile, guid } from "./MoorhenUtils"
+import { readDataFile, guid, rgbToHsv, hsvToRgb } from "./MoorhenUtils"
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { libcootApi } from "../types/libcoot";
@@ -734,6 +734,7 @@ export class MoorhenMap implements moorhen.Map {
         await Promise.all([
             this.fetchMapRmsd().then(_ => this.estimateMapWeight()),
             this.fetchMapCentre(),
+            this.setDefaultColour(),
             !this.isEM && this.fetchSuggestedLevel()
         ])
     }
@@ -759,5 +760,17 @@ export class MoorhenMap implements moorhen.Map {
             returnType: "histogram_info_t"
         }, false) as moorhen.WorkerResponse<any>
         return response.data.result.result
+    }
+
+    async setDefaultColour() {
+        let [h, s, v] = rgbToHsv(0.30000001192092896, 0.30000001192092896, 0.699999988079071)
+        h += (10 * this.molNo)
+        if (h > 360) {
+            h -= 360
+        }
+        const [r, g, b] = hsvToRgb(h, s, v)
+        this.rgba.mapColour = {
+            r, g, b
+        }
     }
 }

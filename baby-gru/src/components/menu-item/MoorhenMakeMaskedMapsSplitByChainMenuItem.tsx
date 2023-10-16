@@ -41,15 +41,18 @@ export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
         const selectedMap = props.maps.find(map => map.molNo === mapNo)
         
         if (result.data.result.result.length > 0 && selectedMap && selectedMolecule) {
-            result.data.result.result.forEach((iNewMap, listIndex) =>{
-                const newMap = new MoorhenMap(props.commandCentre, props.glRef)
-                newMap.molNo = iNewMap
-                newMap.name = `Chain ${listIndex} of ${selectedMap.name}`
-                newMap.isDifference = selectedMap.isDifference
-                newMap.suggestedContourLevel = selectedMap.contourLevel
-                newMap.suggestedRadius = selectedMap.mapRadius
-                props.changeMaps({ action: 'Add', item: newMap })
-            })
+            await Promise.all(
+                result.data.result.result.map(async (iNewMap, listIndex) =>{
+                    const newMap = new MoorhenMap(props.commandCentre, props.glRef)
+                    newMap.molNo = iNewMap
+                    newMap.name = `Chain ${listIndex} of ${selectedMap.name}`
+                    newMap.isDifference = selectedMap.isDifference
+                    await newMap.getSuggestedSettings()
+                    newMap.suggestedContourLevel = selectedMap.contourLevel
+                    newMap.suggestedRadius = selectedMap.mapRadius
+                    props.changeMaps({ action: 'Add', item: newMap })
+                })
+            )
         }
         return result
     }
