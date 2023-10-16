@@ -1,7 +1,8 @@
+import { useEffect, useState } from 'react';
 import { convertRemToPx } from '../../utils/MoorhenUtils';
 import { Zoom } from '@mui/material';
 
-export const MoorhenNotification = (props: {isDark: boolean, windowWidth: number, width?: number, children: JSX.Element}) => {
+export const MoorhenNotification = (props: {isDark: boolean, windowWidth: number, width?: number, hideDelay?: number, children: JSX.Element}) => {
     const canvasElement = document.getElementById('moorhen-canvas-background')
     let canvasTop: number
     let canvasLeft: number
@@ -17,7 +18,17 @@ export const MoorhenNotification = (props: {isDark: boolean, windowWidth: number
         canvasRight = 0
     } 
 
-    return <Zoom in={true}>
+    const [show, setShow] = useState<boolean>(true)
+
+    useEffect(() => {
+        if (props.hideDelay) {
+            setTimeout(() => {
+                setShow(false)
+            }, props.hideDelay)
+        }
+    }, [])
+
+    return <Zoom in={show} style={{ transitionDelay: show ? '500ms' : '0ms' }}>
         <div
         className="moorhen-notification-div"
         style={{
@@ -33,4 +44,4 @@ export const MoorhenNotification = (props: {isDark: boolean, windowWidth: number
         </Zoom>
 }
 
-MoorhenNotification.defaultProps = {width: 14}
+MoorhenNotification.defaultProps = { width: 14 }

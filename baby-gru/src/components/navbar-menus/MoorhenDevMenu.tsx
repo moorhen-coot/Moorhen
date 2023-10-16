@@ -4,42 +4,8 @@ import { MenuItem } from "@mui/material";
 import { cidToSpec } from "../../utils/MoorhenUtils";
 import { MoorhenContext } from "../../utils/MoorhenContext";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
-import { MoorhenMoleculeRepresentation } from "../../utils/MoorhenMoleculeRepresentation";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenSlider } from "../misc/MoorhenSlider"
-import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
-import { MoorhenVideoRecorder } from "../../utils/MoorhenScreenshot"
-
-const doColourMapByOtherMap = async (imol_ref: number, imol_colour: number, maps: moorhen.Map[]) => {
-    const map = maps.find(map => map.molNo === imol_ref)
-    const response = await map.commandCentre.current.cootCommand({
-        command: "get_map_contours_mesh_using_other_map_for_colours",
-        returnType: 'mesh_perm',
-        commandArgs: [imol_ref, imol_colour, ...map.glRef.current.origin.map(x => -x), 90, 0.86, 0.3, 2.0, false]
-    }, false)
-    const objects = [response.data.result.result]
-    map.setupContourBuffers(objects, true)
-}
-
-const doRestraintsMeshTest = async (commandCentre, glRef, molecules, moleculeSelectRef) => {
-    const selectedMolecule = molecules.find(item => item.molNo === parseInt(moleculeSelectRef.current.value))
-    console.log(`Running test for imol - ${selectedMolecule.molNo}`)
-    
-    const result = await commandCentre.current.cootCommand({
-        returnType: 'instanced_mesh',
-        command: 'get_extra_restraints_mesh',
-        commandArgs: [selectedMolecule.molNo, 0]
-    }, true)
-    console.log('Moorhen got this result:')
-    console.log(result.data.result.result)
-
-    const representation = new MoorhenMoleculeRepresentation('CBs', '//', commandCentre, glRef)
-    representation.isCustom = true
-    representation.setParentMolecule(selectedMolecule)
-    representation.setUseDefaultColourRules(true)
-    representation.useDefaultBondOptions = true
-    await representation.buildBuffers([result.data.result.result])
-}
 
 const doTest = async (props: any) => {
     let TRIAL_COUNT = 0
@@ -90,38 +56,16 @@ const doTest = async (props: any) => {
 export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
     const customCid = useRef<string>('')
-    const mapASelectRef = useRef<HTMLSelectElement>()
-    const mapBSelectRef = useRef<HTMLSelectElement>()
     const context = useContext<undefined | moorhen.Context>(MoorhenContext);
 
-    const menuItemProps = {setPopoverIsShown, customCid, mapASelectRef, ...props}
+    const menuItemProps = {setPopoverIsShown, customCid, ...props}
     const { doShadow, setDoShadow, doOutline, setDoOutline, doSpinTest, setDoSpinTest, doSSAO, setDoSSAO, ssaoBias, setSsaoBias, ssaoRadius, setSsaoRadius } = context
-
-    const videoRecorder = props.videoRecorderRef;
-    const doVideo = () => {
-        if(!videoRecorder.current.isRecording()){
-            videoRecorder.current.startRecording();
-        } else {
-            videoRecorder.current.stopRecording();
-        }
-    }
-
+   
     return <>
                     <MenuItem onClick={() => doTest(menuItemProps)}>
                         Do a timing test...
                     </MenuItem>
-                    <MenuItem onClick={() => props.maps[0].getHistogram()}>
-                        Do a histogram test...
-                    </MenuItem>
                     <hr></hr>
-                    <Form.Group>
-                    <MoorhenMapSelect width="" maps={props.maps} ref={mapASelectRef}/>
-                    <MoorhenMapSelect width="" maps={props.maps} ref={mapBSelectRef}/>
-                        <MenuItem onClick={() => doColourMapByOtherMap(parseInt(mapASelectRef.current.value), parseInt(mapBSelectRef.current.value), props.maps)}>
-                            Colour map by another map
-                        </MenuItem>
-                    </Form.Group>
-                    <hr></hr>                  
                     <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"
@@ -160,9 +104,5 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                             onChange={() => { setDoSpinTest(!doSpinTest) }}
                             label="Spin test"/>
                     </InputGroup>
-                    <MenuItem id='vide-menu-item' onClick={doVideo}>
-                        {videoRecorder.current.isRecording() ? "Stop recording video" : "Record video"}
-                    </MenuItem>
-
         </>
     }

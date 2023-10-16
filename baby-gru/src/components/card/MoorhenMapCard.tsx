@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useEffect, useState, useRef, useCallback, useMemo, Fragment, useContext } from "react"
 import { Card, Form, Button, Col, DropdownButton, Stack, OverlayTrigger, ToggleButton, Spinner } from "react-bootstrap"
-import { doDownload } from '../../utils/MoorhenUtils'
+import { doDownload, guid } from '../../utils/MoorhenUtils'
 import { MoorhenContext } from "../../utils/MoorhenContext"
 import { getNameLabel } from "./cardUtils"
 import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings, FileCopyOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined, AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
@@ -13,6 +13,7 @@ import { MoorhenSlider } from "../misc/MoorhenSlider";
 import { Accordion, AccordionDetails, AccordionSummary, IconButton, MenuItem, Popover, Tooltip } from "@mui/material"
 import { RgbColorPicker } from "react-colorful"
 import { moorhen } from "../../types/moorhen"
+import { MoorhenNotification } from "../misc/MoorhenNotification"
 
 type ActionButtonType = {
     label: string;
@@ -277,14 +278,15 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             }
             
             setMapContourLevel(newMapContourLevel)
-            props.setToastContent(
+            props.setNotificationContent(
+                <MoorhenNotification key={guid()} isDark={props.isDark} windowWidth={props.windowWidth} hideDelay={5000}>
                 <h5 style={{margin: 0}}>
                     <span>
                         {`Level: ${newMapContourLevel.toFixed(2)} ${props.map.mapRmsd ? '(' + (newMapContourLevel / props.map.mapRmsd).toFixed(2) + ' rmsd)' : ''}`}
                     </span>
                 </h5>
+                </MoorhenNotification>
             )
-    
         }
     }, [mapContourLevel, mapRadius, props.activeMap?.molNo, props.map.molNo, props.map.cootContour])
 

@@ -22,6 +22,11 @@ export const MoorhenFlipMapHandMenuItem = (props: {
 
         const mapNo = parseInt(selectRef.current.value)
         const newMap = new MoorhenMap(props.commandCentre, props.glRef)
+        const selectedMap = props.maps.find(map => map.molNo === mapNo)
+
+        if (!selectedMap) {
+            return
+        }
 
         const result  = await props.commandCentre.current.cootCommand({
             returnType: 'status',
@@ -32,9 +37,10 @@ export const MoorhenFlipMapHandMenuItem = (props: {
         if (result.data.result.result !== -1) {
             newMap.molNo = result.data.result.result
             newMap.name = `Flipped map ${mapNo}`
-            const oldMaps = props.maps.filter(map => map.molNo === mapNo)
-            newMap.isDifference = oldMaps[0].isDifference
-            newMap.contourLevel = oldMaps[0].contourLevel
+            await newMap.getSuggestedSettings()
+            newMap.isDifference = selectedMap.isDifference
+            newMap.suggestedContourLevel = selectedMap.suggestedContourLevel
+            newMap.contourLevel = selectedMap.contourLevel
             props.changeMaps({ action: 'Add', item: newMap })
         }
     }

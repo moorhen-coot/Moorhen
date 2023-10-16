@@ -4,6 +4,7 @@ import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
 import { cidToSpec, convertViewtoPx } from '../../utils/MoorhenUtils';
 import { MoorhenContext } from "../../utils/MoorhenContext";
+import { MoorhenScreenRecorder } from "../../utils/MoorhenScreenRecorder"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { libcootApi } from '../../types/libcoot';
@@ -32,6 +33,7 @@ interface MoorhenWebMGPropsInterface {
     enableAtomHovering: boolean;
     onAtomHovered: (identifier: { buffer: { id: string; }; atom: { label: string; }; }) => void;
     onKeyPress: (event: KeyboardEvent) =>  boolean | Promise<boolean>;
+    videoRecorderRef: React.MutableRefObject<null | moorhen.ScreenRecorder>;
 }
 
 type MoorhenScoresType = {
@@ -153,6 +155,12 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             drawHBonds()
         }
     }, [drawHBonds, context.drawInteractions])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function') {
+            props.videoRecorderRef.current = new MoorhenScreenRecorder(glRef)
+        }
+    }, [])
 
     useEffect(() => {
         if(context.drawInteractions){

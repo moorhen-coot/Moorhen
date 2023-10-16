@@ -1,8 +1,8 @@
-import { Form, Button, InputGroup, SplitButton, Dropdown } from "react-bootstrap";
+import { Form, Button, InputGroup, SplitButton, Dropdown, Stack } from "react-bootstrap";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenContext } from "../../utils/MoorhenContext";
-import { useState, useRef, useContext } from "react";
+import { useState, useRef, useContext, useCallback } from "react";
 import { MoorhenLoadTutorialDataMenuItem } from "../menu-item/MoorhenLoadTutorialDataMenuItem"
 import { MoorhenAssociateReflectionsToMap } from "../menu-item/MoorhenAssociateReflectionsToMap";
 import { MoorhenAutoOpenMtzMenuItem } from "../menu-item/MoorhenAutoOpenMtzMenuItem"
@@ -11,12 +11,12 @@ import { MoorhenImportFSigFMenuItem } from "../menu-item/MoorhenImportFSigFMenuI
 import { MoorhenBackupsMenuItem } from "../menu-item/MoorhenBackupsMenuItem"
 import { MoorhenImportMapCoefficientsMenuItem } from "../menu-item/MoorhenImportMapCoefficientsMenuItem"
 import { MoorhenDeleteEverythingMenuItem } from "../menu-item/MoorhenDeleteEverythingMenuItem"
-import { MenuItem } from "@mui/material";
-import { WarningOutlined } from "@mui/icons-material";
-import { convertViewtoPx, doDownload, readTextFile, getMultiColourRuleArgs, loadSessionData } from "../../utils/MoorhenUtils";
+import { IconButton, MenuItem } from "@mui/material";
+import { RadioButtonCheckedOutlined, StopCircleOutlined, WarningOutlined } from "@mui/icons-material";
+import { convertViewtoPx, doDownload, readTextFile, getMultiColourRuleArgs, loadSessionData, guid } from "../../utils/MoorhenUtils";
 import { getBackupLabel } from "../../utils/MoorhenTimeCapsule"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
-import { screenShot } from "../../utils/MoorhenScreenshot"
+import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { moorhen } from "../../types/moorhen";
 
 export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
@@ -29,19 +29,15 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
     const fetchMapDataCheckRef = useRef<HTMLInputElement | null>(null);
 
-    const getWarningToast = (message: string) => <>
-        <WarningOutlined style={{margin: 0}}/>
-            <h4 className="moorhen-warning-toast">
-                {message}
-            </h4>
-        <WarningOutlined style={{margin: 0}}/>
-    </>
+    const getWarningToast = (message: string) => <MoorhenNotification key={guid()} isDark={props.isDark} windowWidth={props.windowWidth} hideDelay={3000} width={20}>
+            <><WarningOutlined style={{margin: 0}}/>
+                <h4 className="moorhen-warning-toast">
+                    {message}
+                </h4>
+            <WarningOutlined style={{margin: 0}}/></>
+        </MoorhenNotification>
 
     const menuItemProps = { setPopoverIsShown, getWarningToast, ...props }
-
-    const doScreenshot = async () => {
-        screenShot(glRef,"moorhen.png")
-    }
 
     const loadPdbFiles = async (files: FileList) => {
         let readPromises: Promise<moorhen.Molecule>[] = []
@@ -51,7 +47,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         
         let newMolecules: moorhen.Molecule[] = await Promise.all(readPromises)
         if (!newMolecules.every(molecule => molecule.molNo !== -1)) {
-            props.setToastContent(getWarningToast(`Failed to read molecule`))
+            props.setNotificationContent(getWarningToast(`Failed to read molecule`))
             newMolecules = newMolecules.filter(molecule => molecule.molNo !== -1)
             if (newMolecules.length === 0) {
                 return
@@ -165,7 +161,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             newMolecule.centreOn('/*/*/*/*', false)
             return newMolecule
         } catch (err) {
-            props.setToastContent(getWarningToast(`Failed to read molecule`))
+            props.setNotificationContent(getWarningToast(`Failed to read molecule`))
             console.log(`Cannot fetch molecule from ${url}`)
             setIsValidPdbId(false)
         }   
@@ -179,7 +175,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             changeMaps({ action: 'Add', item: newMap })
             props.setActiveMap(newMap)
         } catch {
-            props.setToastContent(getWarningToast(`Failed to read map`))
+            props.setNotificationContent(getWarningToast(`Failed to read map`))
             console.log(`Cannot fetch map from ${url}`)
         }
     }
@@ -192,7 +188,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             changeMaps({ action: 'Add', item: newMap })
             props.setActiveMap(newMap)
         } catch {
-            props.setToastContent(getWarningToast(`Failed to read mtz`))
+            props.setNotificationContent(getWarningToast(`Failed to read mtz`))
             console.log(`Cannot fetch mtz from ${url}`)
         }
     }
@@ -204,7 +200,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             await loadSession(sessionData) 
         } catch (err) {
             console.log(err)
-            props.setToastContent(getWarningToast("Error loading session"))
+            props.setNotificationContent(getWarningToast("Error loading session"))
         }
     }
 
@@ -224,11 +220,11 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                 props.glRef
             )
             if (status === -1) {
-                props.setToastContent(getWarningToast(`Failed to read backup (deprecated format)`))
+                props.setNotificationContent(getWarningToast(`Failed to read backup (deprecated format)`))
             }
         } catch (err) {
             console.log(err)
-            props.setToastContent(getWarningToast("Error loading session"))
+            props.setNotificationContent(getWarningToast("Error loading session"))
         }
     }
 
@@ -255,6 +251,35 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         })
         return props.timeCapsuleRef.current.createBackup(keyString, sessionString)
     }
+
+    const handleRecording = useCallback( () => {
+        if (!props.videoRecorderRef.current) {
+            console.warn('Attempted to record screen before webGL is initated...')
+            return
+        } else if (props.videoRecorderRef.current.isRecording()) {
+            console.warn('Screen recoder already recording!')
+            return
+        } else {
+            document.body.click()
+            props.videoRecorderRef.current.startRecording()
+            props.setNotificationContent(
+                <MoorhenNotification key={guid()} isDark={props.isDark} windowWidth={props.windowWidth} width={13}>
+                    <Stack gap={2} direction='horizontal' style={{width: '100%', display:'flex', justifyContent: 'space-between'}}>
+                        <div style={{alignItems: 'center', display: 'flex', justifyContent: 'center'}}>
+                            <RadioButtonCheckedOutlined style={{color: 'red', borderRadius: '30px', borderWidth: 0, borderStyle: 'hidden'}} className="moorhen-recording-icon"/>
+                            <span>Recording</span>
+                        </div>
+                        <IconButton onClick={() => {
+                            props.videoRecorderRef.current.stopRecording()
+                            props.setNotificationContent(null)
+                        }}>
+                            <StopCircleOutlined/>
+                        </IconButton>
+                    </Stack>
+                </MoorhenNotification>   
+            )
+        }
+    }, [props.videoRecorderRef, props.setNotificationContent])
 
     return <>
                 <div style={{maxHeight: convertViewtoPx(65, props.windowHeight), overflowY: 'auto'}}>
@@ -334,12 +359,16 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     
                     <MoorhenBackupsMenuItem {...menuItemProps} disabled={!context.enableTimeCapsule} loadSession={loadSession} />
 
-                    {props.extraFileMenuItems && props.extraFileMenuItems.map( menu => menu)}
-                    
-                    <MenuItem id='screenshot-menu-item' onClick={doScreenshot}>
+                    <MenuItem id='screenshot-menu-item' onClick={() => props.videoRecorderRef.current?.takeScreenShot("moorhen.png")}>
                         Screenshot
                     </MenuItem>
 
+                    <MenuItem id='recording-menu-item' onClick={handleRecording}>
+                        Record a video
+                    </MenuItem>
+
+                    {props.extraFileMenuItems && props.extraFileMenuItems.map( menu => menu)}
+                    
                     <hr></hr>
 
                     <MoorhenDeleteEverythingMenuItem {...menuItemProps} />

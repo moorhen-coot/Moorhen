@@ -12,7 +12,7 @@ export const MoorhenImportMapCoefficientsMenuItem = (props: {
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setActiveMap: Dispatch<SetStateAction<moorhen.Map>>;
     setPopoverIsShown: Dispatch<SetStateAction<boolean>>;
-    setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
+    setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
     getWarningToast: (arg0: string) => JSX.Element;
 }) => {
 
@@ -35,7 +35,7 @@ export const MoorhenImportMapCoefficientsMenuItem = (props: {
             let allColumnNames = await babyGruMtzWrapper.loadHeaderFromFile(e.target.files[0])
             setColumns(allColumnNames)
         } catch (err) {
-            props.setToastContent(props.getWarningToast('Error reading mtz file'))
+            props.setNotificationContent(props.getWarningToast('Error reading mtz file'))
             document.body.click()
         }
     }
@@ -49,7 +49,7 @@ export const MoorhenImportMapCoefficientsMenuItem = (props: {
             props.setActiveMap(newMap)
             setCalcStructFact(false)
         } catch (err) {
-            props.setToastContent(props.getWarningToast('Error reading mtz file'))
+            props.setNotificationContent(props.getWarningToast('Error reading mtz file'))
             console.log(`Cannot read file`)
         }
     }

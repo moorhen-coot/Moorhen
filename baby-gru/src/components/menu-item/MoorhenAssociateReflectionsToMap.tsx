@@ -11,7 +11,7 @@ export const MoorhenAssociateReflectionsToMap = (props: {
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setActiveMap: React.Dispatch<React.SetStateAction<moorhen.Map>>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
+    setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
     getWarningToast: (arg0: string) => JSX.Element;
 }) => {
 
@@ -30,7 +30,7 @@ export const MoorhenAssociateReflectionsToMap = (props: {
             setColumns(allColumnNames)
             reflectionDataRef.current = babyGruMtzWrapper.reflectionData   
         } catch (err) {
-            props.setToastContent(props.getWarningToast('Error reading mtz file'))
+            props.setNotificationContent(props.getWarningToast('Error reading mtz file'))
             document.body.click()
         }
     }

@@ -3,7 +3,6 @@ import { emscriptem } from "./emscriptem";
 import { gemmi } from "./gemmi";
 import { webGL } from "./mgWebGL";
 import { MoorhenCommandCentre } from "../moorhen";
-import { MoorhenVideoRecorder } from "../utils/MoorhenScreenshot"
 
 export namespace moorhen {
 
@@ -311,6 +310,19 @@ export namespace moorhen {
         isDifference?: boolean;
         useWeight?: boolean;
         calcStructFact?: any; 
+    }
+
+    interface ScreenRecorder {
+        rec: MediaRecorder;
+        chunks: Blob[];
+        glRef: React.RefObject<webGL.MGWebGL>;
+        canvasRef: React.RefObject<HTMLCanvasElement>;
+        _isRecording: boolean;
+        stopRecording: () => void;
+        startRecording: () => void;
+        isRecording: () => boolean;
+        downloadVideo: (blob: Blob) => Promise<void>;
+        takeScreenShot: (fileName: string) => void;
     }
 
     interface Map {
@@ -709,6 +721,7 @@ export namespace moorhen {
         changeMaps: (arg0: MolChange<Map>) => void;
         appTitle: string;
         setAppTitle: React.Dispatch<React.SetStateAction<string>>;
+        videoRecorderRef: React.MutableRefObject<null | ScreenRecorder>;
         glRef: React.MutableRefObject<null | webGL.MGWebGL>;
         timeCapsuleRef: React.MutableRefObject<null | TimeCapsule>;
         commandCentre: React.MutableRefObject<CommandCentre>;
@@ -724,21 +737,20 @@ export namespace moorhen {
         setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtom>>;
         backgroundColor: [number, number, number, number];
         setBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
-        toastContent: null | JSX.Element;
-        setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
+        notificationContent: null | JSX.Element;
+        setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
         showToast: boolean;
         setShowToast: React.Dispatch<React.SetStateAction<boolean>>;
         windowWidth: number;
         windowHeight: number;
         availableFonts: string[];
-        videoRecorderRef: useRef<null | MoorhenVideoRecorder>;
     }
     
     interface ContainerStates {
         glRef: React.MutableRefObject<null | webGL.MGWebGL>;
         timeCapsuleRef: React.MutableRefObject<null | TimeCapsule>;
         commandCentre: React.MutableRefObject<CommandCentre>;
-        videoRecorderRef: useRef<null | MoorhenVideoRecorder>;
+        videoRecorderRef: React.MutableRefObject<null | ScreenRecorder>;
         moleculesRef: React.MutableRefObject<null | Molecule[]>;
         mapsRef: React.MutableRefObject<null | Map[]>;
         activeMapRef: React.MutableRefObject<Map>;
@@ -774,8 +786,8 @@ export namespace moorhen {
         setTheme: React.Dispatch<React.SetStateAction<string>>;
         showToast: boolean;
         setShowToast: React.Dispatch<React.SetStateAction<boolean>>;
-        toastContent: null | JSX.Element;
-        setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
+        notificationContent: null | JSX.Element;
+        setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
         availableFonts: string[];
         setAvailableFonts: React.Dispatch<React.SetStateAction<string[]>>
     }

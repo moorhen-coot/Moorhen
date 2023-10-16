@@ -1,4 +1,4 @@
-import { readDataFile, guid } from "./MoorhenUtils"
+import { readDataFile, guid, rgbToHsv, hsvToRgb } from "./MoorhenUtils"
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { libcootApi } from "../types/libcoot";
@@ -734,6 +734,7 @@ export class MoorhenMap implements moorhen.Map {
         await Promise.all([
             this.fetchMapRmsd().then(_ => this.estimateMapWeight()),
             this.fetchMapCentre(),
+            this.setDefaultColour(),
             !this.isEM && this.fetchSuggestedLevel()
         ])
     }
@@ -752,6 +753,10 @@ export class MoorhenMap implements moorhen.Map {
         this.glRef.current.setOriginAnimated(this.mapCentre)
     }
 
+    /**
+     * Get the histogram data for this map instance
+     * @returns {object} - An object with the histogram data
+     */
     async getHistogram(): Promise<libcootApi.HistogramInfoJS> {
         const response = await this.commandCentre.current.cootCommand({
             command: 'get_map_histogram',
@@ -759,5 +764,61 @@ export class MoorhenMap implements moorhen.Map {
             returnType: "histogram_info_t"
         }, false) as moorhen.WorkerResponse<any>
         return response.data.result.result
+    }
+
+    /**
+     * Fetch whether this is a difference map
+     * @returns {boolean} - True if this map instance is a difference map
+     */
+    async fetchIsDifferenceMap(): Promise<boolean> {
+        const isDifferenceMap = await this.commandCentre.current.cootCommand({
+            command: 'is_a_difference_map',
+            commandArgs: [this.molNo],
+            returnType: "boolean"
+        }, false) as moorhen.WorkerResponse<boolean>
+        this.isDifference = isDifferenceMap.data.result.result
+        return this.isDifference
+    }
+
+    /**
+     * Set the default colour for this map depending on the current number of maps loaded in the session
+     */
+    async setDefaultColour(): Promise<void> {
+        if (this.isDifference) {
+            return
+        }
+        
+        const validMapMolNos = await Promise.all([...Array(this.molNo).keys()].map(async (molNo) => {
+            if (molNo === this.molNo) {
+                return false
+            }
+            const isValidMap = await this.commandCentre.current.cootCommand({
+                command: 'is_valid_map_molecule',
+                commandArgs: [molNo],
+                returnType: "boolean"
+            }, false) as moorhen.WorkerResponse<boolean>
+            if (!isValidMap.data.result.result) {
+                return false
+            } else {
+                const isDifferenceMap = await this.commandCentre.current.cootCommand({
+                    command: 'is_a_difference_map',
+                    commandArgs: [molNo],
+                    returnType: "boolean"
+                }, false) as moorhen.WorkerResponse<boolean>
+                return !isDifferenceMap.data.result.result
+            }
+        }))
+
+        const numberOfMaps = validMapMolNos.filter(Boolean).length
+
+        let [h, s, v] = rgbToHsv(0.30000001192092896, 0.30000001192092896, 0.699999988079071)
+        h += (10 * numberOfMaps)
+        if (h > 360) {
+            h -= 360
+        }
+        const [r, g, b] = hsvToRgb(h, s, v)
+        this.rgba.mapColour = {
+            r, g, b
+        }
     }
 }

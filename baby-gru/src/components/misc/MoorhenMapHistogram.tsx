@@ -41,7 +41,7 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
                         display: true,
                         font:{size: axisLabelsFontSize, family:'Helvetica', weight:800},
                         text: 'Counts',
-                        color: props.isDark ? 'white' : 'black'
+                        color: 'black'
                     }
                   },
                   x: {
@@ -54,7 +54,7 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
                         display: true,
                         font:{size: axisLabelsFontSize, family:'Helvetica', weight:800},
                         text: 'Density value',
-                        color: props.isDark ? 'white' : 'black'
+                        color: 'black'
                     }
                   }
                 }
@@ -81,11 +81,7 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
     }
 
     useEffect(() => {
-        const fetchHistogram = async () => {
-            if (chartRef !== null && typeof chartRef !== 'function' && chartRef.current) {
-                chartRef.current.destroy()
-            }
-    
+        const fetchHistogram = async () => {   
             props.setBusy(true)
 
             if (!props.showHistogram) {
@@ -103,7 +99,8 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
             }
     
             if (chartRef !== null && typeof chartRef !== 'function') {
-                chartRef.current = new Chart(ctx, chartData as any);
+                chartRef.current?.destroy()
+                chartRef.current = new Chart(ctx, chartData as any)
             }
 
             setTimeout(() => {
