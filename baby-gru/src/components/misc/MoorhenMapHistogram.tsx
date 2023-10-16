@@ -1,5 +1,5 @@
 import { forwardRef, useEffect } from "react"
-import { Chart, registerables } from 'chart.js';
+import { Chart, registerables, ChartEvent } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation'
 import { moorhen } from "../../types/moorhen";
 import { libcootApi } from "../../types/libcoot";
@@ -14,6 +14,7 @@ type MapHistogramProps = {
     windowWidth: number;
     windowHeight: number;
     isDark: boolean;
+    setMapContourLevel: React.Dispatch<React.SetStateAction<number>>;
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
@@ -21,6 +22,17 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
 
     const parseHistogramData = (histogramData: libcootApi.HistogramInfoJS) => {
         const axisLabelsFontSize = convertViewtoPx(70, props.windowHeight) / 60
+
+        const handleClick = (evt) => {
+            if (chartRef !== null && typeof chartRef !== 'function') {
+                const points = chartRef.current.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true)
+                if (points.length === 0){
+                    return
+                }
+                const peakIndex = points[0].index
+                props.setMapContourLevel(histogramData.base + histogramData.bin_width * (peakIndex + 1))
+            }
+        }
 
         return {
             type: 'bar',
@@ -57,7 +69,8 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
                         color: 'black'
                     }
                   }
-                }
+                },
+                onClick: handleClick
             },
             data: {
                 labels: histogramData.counts.map((item, index) => {

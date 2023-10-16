@@ -521,7 +521,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                     Histogram
                 </AccordionSummary>
                 <AccordionDetails style={{padding: '0.2rem', backgroundColor: props.isDark ? '#ced5d6' : 'white'}}>
-                    <MoorhenMapHistogram ref={histogramRef} setBusy={setHistogramBusy} windowWidth={props.windowWidth} windowHeight={props.windowHeight} isDark={props.isDark} showHistogram={true} map={props.map}/>
+                    <MoorhenMapHistogram ref={histogramRef} setMapContourLevel={setMapContourLevel} setBusy={setHistogramBusy} windowWidth={props.windowWidth} windowHeight={props.windowHeight} isDark={props.isDark} showHistogram={true} map={props.map}/>
                 </AccordionDetails>
             </Accordion>
         </Stack>
