@@ -753,6 +753,10 @@ export class MoorhenMap implements moorhen.Map {
         this.glRef.current.setOriginAnimated(this.mapCentre)
     }
 
+    /**
+     * Get the histogram data for this map instance
+     * @returns {object} - An object with the histogram data
+     */
     async getHistogram(): Promise<libcootApi.HistogramInfoJS> {
         const response = await this.commandCentre.current.cootCommand({
             command: 'get_map_histogram',
@@ -762,6 +766,10 @@ export class MoorhenMap implements moorhen.Map {
         return response.data.result.result
     }
 
+    /**
+     * Fetch whether this is a difference map
+     * @returns {boolean} - True if this map instance is a difference map
+     */
     async fetchIsDifferenceMap(): Promise<boolean> {
         const isDifferenceMap = await this.commandCentre.current.cootCommand({
             command: 'is_a_difference_map',
@@ -772,6 +780,9 @@ export class MoorhenMap implements moorhen.Map {
         return this.isDifference
     }
 
+    /**
+     * Set the default colour for this map depending on the current number of maps loaded in the session
+     */
     async setDefaultColour(): Promise<void> {
         if (this.isDifference) {
             return
