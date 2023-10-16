@@ -762,9 +762,46 @@ export class MoorhenMap implements moorhen.Map {
         return response.data.result.result
     }
 
-    async setDefaultColour() {
+    async fetchIsDifferenceMap(): Promise<boolean> {
+        const isDifferenceMap = await this.commandCentre.current.cootCommand({
+            command: 'is_a_difference_map',
+            commandArgs: [this.molNo],
+            returnType: "boolean"
+        }, false) as moorhen.WorkerResponse<boolean>
+        this.isDifference = isDifferenceMap.data.result.result
+        return this.isDifference
+    }
+
+    async setDefaultColour(): Promise<void> {
+        if (this.isDifference) {
+            return
+        }
+        
+        const validMapMolNos = await Promise.all([...Array(this.molNo).keys()].map(async (molNo) => {
+            if (molNo === this.molNo) {
+                return false
+            }
+            const isValidMap = await this.commandCentre.current.cootCommand({
+                command: 'is_valid_map_molecule',
+                commandArgs: [molNo],
+                returnType: "boolean"
+            }, false) as moorhen.WorkerResponse<boolean>
+            if (!isValidMap.data.result.result) {
+                return false
+            } else {
+                const isDifferenceMap = await this.commandCentre.current.cootCommand({
+                    command: 'is_a_difference_map',
+                    commandArgs: [molNo],
+                    returnType: "boolean"
+                }, false) as moorhen.WorkerResponse<boolean>
+                return !isDifferenceMap.data.result.result
+            }
+        }))
+
+        const numberOfMaps = validMapMolNos.filter(Boolean).length
+
         let [h, s, v] = rgbToHsv(0.30000001192092896, 0.30000001192092896, 0.699999988079071)
-        h += (10 * this.molNo)
+        h += (10 * numberOfMaps)
         if (h > 360) {
             h -= 360
         }
