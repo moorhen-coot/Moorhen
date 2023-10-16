@@ -123,10 +123,59 @@ import { moorhen } from "../types/moorhen";
 import { gemmi } from "../types/gemmi";
 import { webGL } from "../types/mgWebGL";
 
-export const getRandomMoleculeColour = () => {
-    const randomComponent_A = Math.floor(Math.random() * (160 - 127 + 1)) + 127
-    const randomComponent_B = 160
-    const randomComponent_C = 127
+export const rgbToHsv = (r: number, g:number, b:number): [number, number, number] => {
+    const cMax = Math.max(r, g, b)
+    const cMin = Math.min(r, g, b)
+    const delta = cMax - cMin
+
+    let hue: number
+    if (delta === 0) {
+        hue = 0
+    } else if (r === cMax) {
+        hue = 60 * (((g - b) / delta) % 6)
+    } else if (g === cMax) {
+        hue = 60 * (((b - r) / delta) + 2)
+    } else {
+        hue = 60 * (((r - g) / delta) + 4)
+    }
+
+    let saturation: number
+    if (cMax === 0) {
+        saturation = 0
+    } else {
+        saturation = delta / cMax
+    }
+
+    return [hue, saturation, cMax]
+}
+
+export const hsvToRgb = (hue: number, saturation: number, value: number): [number, number, number] => {
+    const c = value * saturation
+    const x = c * (1 - Math.abs((hue / 60) % 2 - 1))
+    const m = value - c
+    let rgb: [number, number, number]
+
+    if (0 &lt;= hue &amp;&amp; hue &lt; 60) {
+        rgb = [c, x, 0]
+    } else if (60 &lt;= hue &amp;&amp; hue &lt; 120) {
+        rgb = [x, c, 0]
+    } else if (120 &lt;= hue &amp;&amp; hue &lt; 180) {
+        rgb = [0, c, x]
+    } else if (180 &lt;= hue &amp;&amp; hue &lt; 240) {
+        rgb = [0, x, c]
+    } else if (240 &lt;= hue &amp;&amp; hue &lt; 300) {
+        rgb = [x, 0, c]
+    } else if (300 &lt;= hue &amp;&amp; hue &lt; 360) {
+        rgb = [c, 0, x]
+    }
+
+    return rgb.map(component => component + m) as [number, number, number]
+}
+
+export const getRandomMoleculeColour = (min: number = 127, max: number = 160) => {
+    const randomComponent_A = Math.floor(Math.random() * (max - min + 1)) + min
+    const randomComponent_B = max
+    const randomComponent_C = min
     let result = [randomComponent_A, randomComponent_B, randomComponent_C]
     result = result.sort((a, b) => 0.5 - Math.random());
     return rgbToHex(...result as [number, number, number])
