@@ -2,29 +2,32 @@ import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4.js';
 import { webGL } from "../types/mgWebGL";
+import { moorhen } from '../types/moorhen.js';
 
-interface CanvasElement extends HTMLCanvasElement {
-  captureStream(frameRate?: number): MediaStream;
-}
+export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
 
-export class MoorhenVideoRecorder {
-
-    rec: MediaRecorder | null;
+    rec: MediaRecorder;
+    chunks: Blob[];
+    glRef: React.RefObject<webGL.MGWebGL>;
+    canvasRef: React.RefObject<HTMLCanvasElement>;
     _isRecording: boolean;
-    chunks: any[];
 
     constructor(glRef: React.RefObject<webGL.MGWebGL>){
-        const canvas : CanvasElement = glRef.current.canvasRef.current as CanvasElement;
-        this.chunks = []; // here we will store our recorded media chunks (Blobs)
-        const stream = canvas.captureStream(30); // grab our canvas MediaStream
-                                         // every time the recorder has new data, we will store it in our array
-        this.rec = new MediaRecorder(stream); // init the recorder
+        this.glRef = glRef
+        this.chunks = [];
+        this.canvasRef = this.glRef.current.canvasRef
+        const stream = this.canvasRef.current.captureStream(30)
+        this.rec = new MediaRecorder(stream)
         this._isRecording = false;
     }
 
     stopRecording = () => {
-        this.rec.stop();
-        this._isRecording = false;
+        if (this._isRecording) {
+            this.rec.stop();
+            this._isRecording = false;
+        } else {
+            console.warn('Attempted to stop screen recorder that was not recording...')
+        }
     }
 
     isRecording = () => {
@@ -32,6 +35,10 @@ export class MoorhenVideoRecorder {
     }
 
     startRecording = () => {
+        if (this._isRecording) {
+            console.warn('Screen recording already taking place!')
+            return
+        } 
         this.chunks = [];
         this.rec.ondataavailable = (e) => {
             this.chunks.push(e.data);
@@ -43,8 +50,8 @@ export class MoorhenVideoRecorder {
         this.rec.start();
     }
 
-    downloadVideo = async (blob) => {
-            var url = URL.createObjectURL(blob);
+    downloadVideo = async (blob: Blob) => {
+        let url = URL.createObjectURL(blob);
         let link: any = document.getElementById('download_video_link');
         if (!link) {
             link = document.createElement('a');
@@ -56,14 +63,12 @@ export class MoorhenVideoRecorder {
         link.click();
     }
 
-}
-
-export const screenShot = (glRef: React.RefObject<webGL.MGWebGL>,filename: string|null) => {
-        const oldOrigin = [glRef.current.origin[0], glRef.current.origin[1], glRef.current.origin[2]];
+    takeScreenShot = (filename: string) => {
+        const oldOrigin = [this.glRef.current.origin[0], this.glRef.current.origin[1], this.glRef.current.origin[2]];
 
         // Getting up and right for doing tiling (in future?)
         const invQuat = quat4.create();
-        quat4Inverse(glRef.current.myQuat, invQuat);
+        quat4Inverse(this.glRef.current.myQuat, invQuat);
 
         const invMat = quatToMat4(invQuat);
 
@@ -76,34 +81,35 @@ export const screenShot = (glRef: React.RefObject<webGL.MGWebGL>,filename: strin
         vec3.transformMat4(right, right, invMat);
 
 
-        let target_w;
-        let target_h;
-        let target_xoff;
-        let target_yoff;
+        let target_w: number;
+        let target_h: number;
+        let target_xoff: number;
+        let target_yoff: number;
 
         const saveCanvas = document.createElement("canvas");
 
-        if(!glRef.current.screenshotBuffersReady)
-            glRef.current.initTextureFramebuffer();
-        const w = glRef.current.rttFramebuffer.width;
-        const h = glRef.current.rttFramebuffer.height;
-        let imgData;
-        let pixels;
-        let ctx;
+        if(!this.glRef.current.screenshotBuffersReady)
+            this.glRef.current.initTextureFramebuffer();
+        const w = this.glRef.current.rttFramebuffer.width;
+        const h = this.glRef.current.rttFramebuffer.height;
+        
+        let imgData: ImageData;
+        let pixels: Uint8Array;
+        let ctx: CanvasRenderingContext2D;
 
-        if(!glRef.current.WEBGL2){
+        if(!this.glRef.current.WEBGL2){
             const mag = 1; //FIXME This doesn't work for mag>1
 
             const ncells_x = mag;
             const ncells_y = mag;
-            saveCanvas.width = glRef.current.canvas.width * ncells_x;
-            saveCanvas.height = glRef.current.canvas.height * ncells_y;
+            saveCanvas.width = this.glRef.current.canvas.width * ncells_x;
+            saveCanvas.height = this.glRef.current.canvas.height * ncells_y;
             ctx = saveCanvas.getContext("2d");
 
-            let newZoom = glRef.current.zoom / ncells_x;
-            glRef.current.setZoom(newZoom);
+            let newZoom = this.glRef.current.zoom / ncells_x;
+            this.glRef.current.setZoom(newZoom);
 
-            const ratio = 1.0 * glRef.current.gl.viewportWidth / glRef.current.gl.viewportHeight;
+            const ratio = 1.0 * this.glRef.current.gl.viewportWidth / this.glRef.current.gl.viewportHeight;
             let jj = 0;
             for (let j = Math.floor(-ncells_y / 2); j < Math.floor(ncells_y / 2); j++) {
                 let ii = 0;
@@ -111,63 +117,63 @@ export const screenShot = (glRef: React.RefObject<webGL.MGWebGL>,filename: strin
                     const x_off = ratio * (2.0 * i + 1 + ncells_x % 2);
                     const y_off = (2.0 * j + 1 + ncells_y % 2);
 
-                    glRef.current.origin = [oldOrigin[0], oldOrigin[1], oldOrigin[2]];
-                    glRef.current.origin[0] += glRef.current.zoom * right[0] * 24.0 * x_off + glRef.current.zoom * up[0] * 24.0 * y_off;
-                    glRef.current.origin[1] += glRef.current.zoom * right[1] * 24.0 * x_off + glRef.current.zoom * up[1] * 24.0 * y_off;
-                    glRef.current.origin[2] += glRef.current.zoom * right[2] * 24.0 * x_off + glRef.current.zoom * up[2] * 24.0 * y_off;
+                    this.glRef.current.origin = [oldOrigin[0], oldOrigin[1], oldOrigin[2]];
+                    this.glRef.current.origin[0] += this.glRef.current.zoom * right[0] * 24.0 * x_off + this.glRef.current.zoom * up[0] * 24.0 * y_off;
+                    this.glRef.current.origin[1] += this.glRef.current.zoom * right[1] * 24.0 * x_off + this.glRef.current.zoom * up[1] * 24.0 * y_off;
+                    this.glRef.current.origin[2] += this.glRef.current.zoom * right[2] * 24.0 * x_off + this.glRef.current.zoom * up[2] * 24.0 * y_off;
 
-                    glRef.current.save_pixel_data = true;
-                    glRef.current.drawScene();
-                    pixels = glRef.current.pixel_data;
+                    this.glRef.current.save_pixel_data = true;
+                    this.glRef.current.drawScene();
+                    pixels = this.glRef.current.pixel_data;
 
-                    imgData = ctx.createImageData(glRef.current.canvas.width, glRef.current.canvas.height);
+                    imgData = ctx.createImageData(this.glRef.current.canvas.width, this.glRef.current.canvas.height);
                     const data = imgData.data;
 
-                    for (let pixi = 0; pixi < glRef.current.canvas.height; pixi++) {
-                        for (let pixj = 0; pixj < glRef.current.canvas.width * 4; pixj++) {
-                            data[(glRef.current.canvas.height - pixi - 1) * glRef.current.canvas.width * 4 + pixj] = pixels[pixi * glRef.current.canvas.width * 4 + pixj];
+                    for (let pixi = 0; pixi < this.glRef.current.canvas.height; pixi++) {
+                        for (let pixj = 0; pixj < this.glRef.current.canvas.width * 4; pixj++) {
+                            data[(this.glRef.current.canvas.height - pixi - 1) * this.glRef.current.canvas.width * 4 + pixj] = pixels[pixi * this.glRef.current.canvas.width * 4 + pixj];
                         }
                     }
-                    ctx.putImageData(imgData, (ncells_x - ii - 1) * glRef.current.canvas.width, jj * glRef.current.canvas.height);
+                    ctx.putImageData(imgData, (ncells_x - ii - 1) * this.glRef.current.canvas.width, jj * this.glRef.current.canvas.height);
                     ii++;
                 }
                 jj++;
             }
 
-            newZoom = glRef.current.zoom * ncells_x;
-            glRef.current.setZoom(newZoom);
+            newZoom = this.glRef.current.zoom * ncells_x;
+            this.glRef.current.setZoom(newZoom);
 
-            glRef.current.origin = [oldOrigin[0], oldOrigin[1], oldOrigin[2]];
-            glRef.current.save_pixel_data = false;
-            glRef.current.drawScene();
+            this.glRef.current.origin = [oldOrigin[0], oldOrigin[1], oldOrigin[2]];
+            this.glRef.current.save_pixel_data = false;
+            this.glRef.current.drawScene();
             target_w = w;
             target_h = h;
             target_xoff = 0;
             target_yoff = 0;
         } else {
 
-            glRef.current.renderToTexture = true;
-            glRef.current.drawScene();
-            const ratio = 1.0 * glRef.current.gl.viewportWidth / glRef.current.gl.viewportHeight;
+            this.glRef.current.renderToTexture = true;
+            this.glRef.current.drawScene();
+            const ratio = 1.0 * this.glRef.current.gl.viewportWidth / this.glRef.current.gl.viewportHeight;
 
-            if(glRef.current.gl.viewportWidth>glRef.current.gl.viewportHeight){
+            if(this.glRef.current.gl.viewportWidth>this.glRef.current.gl.viewportHeight){
                 target_w = w;
                 target_h = Math.floor(h / ratio);
                 target_xoff = 0;
-                target_yoff = Math.floor(0.5*glRef.current.rttFramebuffer.height - 0.5 / ratio * glRef.current.rttFramebuffer.height);
+                target_yoff = Math.floor(0.5*this.glRef.current.rttFramebuffer.height - 0.5 / ratio * this.glRef.current.rttFramebuffer.height);
             } else {
                 target_w = Math.floor(w * ratio);
                 target_h = h;
-                target_xoff = Math.floor(0.5*glRef.current.rttFramebuffer.width - 0.5 * ratio * glRef.current.rttFramebuffer.width);
+                target_xoff = Math.floor(0.5*this.glRef.current.rttFramebuffer.width - 0.5 * ratio * this.glRef.current.rttFramebuffer.width);
                 target_yoff = 0;
             }
             saveCanvas.width = target_w;
             saveCanvas.height = target_h;
 
             ctx = saveCanvas.getContext("2d");
-            pixels = glRef.current.pixel_data;
+            pixels = this.glRef.current.pixel_data;
 
-            if(glRef.current.gl.viewportWidth>glRef.current.gl.viewportHeight){
+            if(this.glRef.current.gl.viewportWidth>this.glRef.current.gl.viewportHeight){
                 imgData = ctx.createImageData(saveCanvas.width,saveCanvas.height);
             } else {
                 imgData = ctx.createImageData(saveCanvas.width,saveCanvas.height);
@@ -180,7 +186,7 @@ export const screenShot = (glRef: React.RefObject<webGL.MGWebGL>,filename: strin
                 }
             }
             ctx.putImageData(imgData, 0,0);
-            glRef.current.renderToTexture = false;
+            this.glRef.current.renderToTexture = false;
         }
 
 
@@ -193,4 +199,5 @@ export const screenShot = (glRef: React.RefObject<webGL.MGWebGL>,filename: strin
         }
         link.href = saveCanvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
         link.click();
+    }
 }

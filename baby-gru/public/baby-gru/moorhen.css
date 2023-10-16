@@ -251,3 +251,21 @@ img.moorhen-context-button__icon {
   border-style: solid;
   border-width: 1px;
 }
+
+.moorhen-recording-icon {
+  box-shadow: 0 0px 6px;
+  color : red;
+  margin-right: 0.5rem;
+    animation: blink 3s steps(5, start) infinite;
+    -webkit-animation: blink 1s steps(5, start) infinite;
+  }
+  @keyframes blink {
+    to {
+      visibility: hidden;
+    }
+  }
+  @-webkit-keyframes blink {
+    to {
+      visibility: hidden;
+    }
+}

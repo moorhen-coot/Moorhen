@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useReducer, useRef, useState, useContext } from 'react';
-import { Container, Col, Row, Spinner, Toast, ToastContainer } from 'react-bootstrap';
+import { Container, Col, Row, Spinner } from 'react-bootstrap';
 import { MoorhenWebMG } from './webMG/MoorhenWebMG';
-import { convertViewtoPx, getTooltipShortcutLabel, createLocalStorageInstance, allFontsSet, itemReducer } from '../utils/MoorhenUtils';
+import { getTooltipShortcutLabel, createLocalStorageInstance, allFontsSet, itemReducer } from '../utils/MoorhenUtils';
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre"
 import { MoorhenContext } from "../utils/MoorhenContext";
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
@@ -9,9 +9,9 @@ import { Backdrop } from "@mui/material";
 import { babyGruKeyPress } from '../utils/MoorhenKeyboardAccelerators';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
+import { MoorhenNotification } from './misc/MoorhenNotification';
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
-import { MoorhenVideoRecorder } from "../utils/MoorhenScreenshot"
 
 const initialMoleculesState: moorhen.Molecule[] = []
 
@@ -73,7 +73,7 @@ const initialMapsState: moorhen.Map[] = []
 export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const context = useContext<undefined | moorhen.Context>(MoorhenContext);
     const innerGlRef = useRef<null | webGL.MGWebGL>(null)
-    const innerVideoRecorderRef = useRef<null | MoorhenVideoRecorder>(null);
+    const innerVideoRecorderRef = useRef<null | moorhen.ScreenRecorder>(null);
     const innerTimeCapsuleRef = useRef<null | moorhen.TimeCapsule>(null);
     const innnerCommandCentre = useRef<null | moorhen.CommandCentre>(null)
     const innerMoleculesRef = useRef<null | moorhen.Molecule[]>(null)
@@ -145,7 +145,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         appTitle: innerAppTitle, setAppTitle: setInnerAppTitle, cootInitialized: innerCootInitialized, 
         setCootInitialized: setInnerCootInitialized, theme: innerTheme, setTheme: setInnerTheme, 
         showToast: innerShowToast, setShowToast: setInnerShowToast, toastContent: innerToastContent, 
-        setToastContent: setInnerToastContent, availableFonts: innerAvailableFonts, videoRecorderRef: innerVideoRecorderRef
+        setToastContent: setInnerToastContent, availableFonts: innerAvailableFonts, 
+        videoRecorderRef: innerVideoRecorderRef
     }
 
     let states = {} as moorhen.ContainerStates
@@ -153,14 +154,14 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         states[key] = props[key] ? props[key] : innerStatesMap[key]
     })
 
-    const { glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef,
+    const { glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef, videoRecorderRef,
         lastHoveredAtom, prevActiveMoleculeRef, activeMap, maps, changeMaps,
         setActiveMap, activeMolecule, setActiveMolecule, hoveredAtom, setHoveredAtom,
         cursorStyle, setCursorStyle, busy, setBusy, changeMolecules, setEnableAtomHovering,
         windowWidth, setWindowWidth, windowHeight, setWindowHeight, molecules, 
         backgroundColor, setBackgroundColor, availableFonts, setAvailableFonts, enableAtomHovering,
         appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
-        showToast, setShowToast, toastContent, setToastContent, videoRecorderRef
+        showToast, setShowToast, toastContent, setToastContent
     } = states
 
     const {
@@ -204,11 +205,12 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     
                 const shortCut = JSON.parse(context.shortCuts as string).show_shortcuts
                 setToastContent(
-                    <h4 style={{margin: 0}}>
-                        {`Press ${getTooltipShortcutLabel(shortCut)} to show help`}
-                    </h4>
+                    <MoorhenNotification key={'initial-notification'} isDark={isDark} windowWidth={windowWidth} hideDelay={5000} width={20}>
+                        <h4 style={{margin: 0}}>
+                            {`Press ${getTooltipShortcutLabel(shortCut)} to show help`}
+                        </h4>
+                    </MoorhenNotification>
                 )
-
                 if (forwardControls) {
                     forwardControls(collectedProps)
                 }
@@ -224,10 +226,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             setBackgroundColor(context.defaultBackgroundColor)
         }
         
-    }, [context.isMounted])
-
-    useEffect(() => {
-        videoRecorderRef.current = new MoorhenVideoRecorder(glRef);
     }, [context.isMounted])
 
     useEffect(() => {
@@ -466,17 +464,12 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                         viewOnly={viewOnly}
                         extraDraggableModals={extraDraggableModals}
                         setHoveredAtom={setHoveredAtom}
+                        videoRecorderRef={videoRecorderRef}
                     />
                 </div>
             </Col>
         </Row>
-        <ToastContainer style={{ marginTop: "5rem", maxWidth: '20rem' }} position='top-center' >
-            <Toast className='shadow-none hide-scrolling' onClose={() => setShowToast(false)} autohide={true} delay={5000} show={showToast} style={{overflowY: 'scroll', maxHeight: convertViewtoPx(80, windowHeight)}}>
-                <Toast.Header className="stop-scrolling" closeButton={false} style={{justifyContent:'center'}}>
-                    {toastContent}
-                </Toast.Header>
-            </Toast>
-        </ToastContainer>
+        {toastContent}
     </Container>
     </>
 }

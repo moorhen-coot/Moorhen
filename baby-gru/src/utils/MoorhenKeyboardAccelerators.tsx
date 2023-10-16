@@ -7,7 +7,6 @@ import { getDeviceScale, vec3Create } from '../WebGLgComponents/mgWebGL';
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { libcootApi } from "../types/libcoot";
-import { screenShot } from "./MoorhenScreenshot"
 
 const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>, setHoveredAtom: (arg0: moorhen.HoveredAtom) => void) => {
     molecule.setAtomsDirty(true)
@@ -20,9 +19,8 @@ const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWe
 export const babyGruKeyPress = (event: KeyboardEvent, collectedProps: moorhen.Controls, context: moorhen.Context, shortCuts: {[key: string]: moorhen.Shortcut}): boolean | Promise<boolean> => {
     
     const { 
-        setShowToast, setToastContent, hoveredAtom, 
-        setHoveredAtom, commandCentre, activeMap, 
-        glRef, molecules, timeCapsuleRef, viewOnly
+        setShowToast, setToastContent, hoveredAtom, setHoveredAtom, commandCentre, activeMap, 
+        glRef, molecules, timeCapsuleRef, viewOnly, videoRecorderRef
     } = collectedProps;
 
     const getCentreAtom = async (): Promise<[moorhen.Molecule, string]> => {
@@ -355,7 +353,7 @@ export const babyGruKeyPress = (event: KeyboardEvent, collectedProps: moorhen.Co
     }
 
     else if (action === 'take_screenshot') {
-        screenShot(glRef,"moorhen.png")
+        videoRecorderRef.current?.takeScreenShot("moorhen.png")
     }
 
     else if (action === 'show_shortcuts') {

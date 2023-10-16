@@ -1,23 +1,22 @@
 import { useCallback, useState } from "react";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
-import { convertViewtoPx, loadSessionData } from "../../utils/MoorhenUtils";
+import { convertViewtoPx, guid, loadSessionData } from "../../utils/MoorhenUtils";
 import { Stepper, Step, StepButton, StepLabel } from "@mui/material";
 import { moorhen } from "../../types/moorhen";
 import { SaveOutlined, WarningOutlined } from "@mui/icons-material";
 import { Stack } from "react-bootstrap";
+import { MoorhenNotification } from "../misc/MoorhenNotification";
 
 export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [historyHead, setHistoryHead] = useState(0)
 
-    const getWarningToast = (message: string) => {
-        return <>
-            <WarningOutlined style={{margin: 0}}/>
+    const getWarningToast = (message: string) => <MoorhenNotification key={guid()} isDark={props.isDark} windowWidth={props.windowWidth} hideDelay={3000} width={20}>
+            <><WarningOutlined style={{margin: 0}}/>
                 <h4 className="moorhen-warning-toast">
                     {message}
                 </h4>
-            <WarningOutlined style={{margin: 0}}/>
-        </>
-    }
+            <WarningOutlined style={{margin: 0}}/></>
+        </MoorhenNotification>
 
     const loadSession = useCallback(async (sessionData: string) => {
         try {
