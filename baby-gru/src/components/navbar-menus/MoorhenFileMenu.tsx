@@ -47,7 +47,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         
         let newMolecules: moorhen.Molecule[] = await Promise.all(readPromises)
         if (!newMolecules.every(molecule => molecule.molNo !== -1)) {
-            props.setToastContent(getWarningToast(`Failed to read molecule`))
+            props.setNotificationContent(getWarningToast(`Failed to read molecule`))
             newMolecules = newMolecules.filter(molecule => molecule.molNo !== -1)
             if (newMolecules.length === 0) {
                 return
@@ -161,7 +161,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             newMolecule.centreOn('/*/*/*/*', false)
             return newMolecule
         } catch (err) {
-            props.setToastContent(getWarningToast(`Failed to read molecule`))
+            props.setNotificationContent(getWarningToast(`Failed to read molecule`))
             console.log(`Cannot fetch molecule from ${url}`)
             setIsValidPdbId(false)
         }   
@@ -175,7 +175,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             changeMaps({ action: 'Add', item: newMap })
             props.setActiveMap(newMap)
         } catch {
-            props.setToastContent(getWarningToast(`Failed to read map`))
+            props.setNotificationContent(getWarningToast(`Failed to read map`))
             console.log(`Cannot fetch map from ${url}`)
         }
     }
@@ -188,7 +188,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             changeMaps({ action: 'Add', item: newMap })
             props.setActiveMap(newMap)
         } catch {
-            props.setToastContent(getWarningToast(`Failed to read mtz`))
+            props.setNotificationContent(getWarningToast(`Failed to read mtz`))
             console.log(`Cannot fetch mtz from ${url}`)
         }
     }
@@ -200,7 +200,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             await loadSession(sessionData) 
         } catch (err) {
             console.log(err)
-            props.setToastContent(getWarningToast("Error loading session"))
+            props.setNotificationContent(getWarningToast("Error loading session"))
         }
     }
 
@@ -220,11 +220,11 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                 props.glRef
             )
             if (status === -1) {
-                props.setToastContent(getWarningToast(`Failed to read backup (deprecated format)`))
+                props.setNotificationContent(getWarningToast(`Failed to read backup (deprecated format)`))
             }
         } catch (err) {
             console.log(err)
-            props.setToastContent(getWarningToast("Error loading session"))
+            props.setNotificationContent(getWarningToast("Error loading session"))
         }
     }
 
@@ -262,7 +262,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         } else {
             document.body.click()
             props.videoRecorderRef.current.startRecording()
-            props.setToastContent(
+            props.setNotificationContent(
                 <MoorhenNotification key={guid()} isDark={props.isDark} windowWidth={props.windowWidth} width={13}>
                     <Stack gap={2} direction='horizontal' style={{width: '100%', display:'flex', justifyContent: 'space-between'}}>
                         <div style={{alignItems: 'center', display: 'flex', justifyContent: 'center'}}>
@@ -271,7 +271,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                         </div>
                         <IconButton onClick={() => {
                             props.videoRecorderRef.current.stopRecording()
-                            props.setToastContent(null)
+                            props.setNotificationContent(null)
                         }}>
                             <StopCircleOutlined/>
                         </IconButton>
@@ -279,7 +279,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                 </MoorhenNotification>   
             )
         }
-    }, [props.videoRecorderRef, props.setToastContent])
+    }, [props.videoRecorderRef, props.setNotificationContent])
 
     return <>
                 <div style={{maxHeight: convertViewtoPx(65, props.windowHeight), overflowY: 'auto'}}>

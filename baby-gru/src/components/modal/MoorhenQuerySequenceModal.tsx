@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useContext } from "react";
 import { Backdrop } from '@mui/material';
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined, FirstPageOutlined, WarningOutlined } from "@mui/icons-material";
-import { getMultiColourRuleArgs } from '../../utils/MoorhenUtils';
+import { getMultiColourRuleArgs, guid } from '../../utils/MoorhenUtils';
 import { Card, Row, Col, Form, FormSelect, Button, Spinner, Stack } from "react-bootstrap";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
@@ -11,6 +11,7 @@ import { MoorhenContext } from "../../utils/MoorhenContext";
 import { MoorhenDraggableModalBase } from "../modal/MoorhenDraggableModalBase"
 import { MoorhenSlider } from "../misc/MoorhenSlider";
 import { webGL } from "../../types/mgWebGL";
+import { MoorhenNotification } from "../misc/MoorhenNotification";
 
 export const MoorhenQuerySequenceModal = (props: {
     windowHeight: number;
@@ -23,7 +24,8 @@ export const MoorhenQuerySequenceModal = (props: {
     backgroundColor: [number, number, number, number];
     monomerLibraryPath: string;
     changeMolecules: (arg0: moorhen.MolChange<MoorhenMolecule>) => void;
-    setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
+    setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
+    isDark: boolean;
 }) => {
 
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
@@ -57,14 +59,14 @@ export const MoorhenQuerySequenceModal = (props: {
             newMolecule.centreOn('/*/*/*/*', false)
             return newMolecule
         } catch (err) {
-            props.setToastContent(
-                <>
-                    <WarningOutlined style={{margin: 0}}/>
+            props.setNotificationContent(
+                <MoorhenNotification key={guid()} isDark={props.isDark} windowWidth={props.windowWidth} hideDelay={5000}>
+                    <><WarningOutlined style={{margin: 0}}/>
                         <h4 className="moorhen-warning-toast">
                             Failed to read molecule
                         </h4>
-                    <WarningOutlined style={{margin: 0}}/>
-                </>
+                    <WarningOutlined style={{margin: 0}}/></>
+                </MoorhenNotification>
             )
             console.log(`Cannot fetch molecule from ${url}`)
         }

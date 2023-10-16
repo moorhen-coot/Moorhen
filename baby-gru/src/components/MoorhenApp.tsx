@@ -31,7 +31,7 @@ export const MoorhenApp = (props: { forwardControls: (controls: any) => any }) =
     const [cootInitialized, setCootInitialized] = useState<boolean>(false)
     const [theme, setTheme] = useState<string>("flatly")
     const [showToast, setShowToast] = useState<boolean>(false)
-    const [toastContent, setToastContent] = useState<null | JSX.Element>()
+    const [notificationContent, setNotificationContent] = useState<null | JSX.Element>()
     
     moleculesRef.current = molecules as moorhen.Molecule[]
     mapsRef.current = maps as moorhen.Map[]
@@ -44,8 +44,8 @@ export const MoorhenApp = (props: { forwardControls: (controls: any) => any }) =
         cursorStyle, setCursorStyle, busy, setBusy, maps: maps as moorhen.Map[],
         windowWidth, setWindowWidth, windowHeight, setWindowHeight, appTitle, setAppTitle,
         changeMolecules, changeMaps, backgroundColor, setBackgroundColor, cootInitialized,
-        setCootInitialized, theme, setTheme, showToast, setShowToast, toastContent,
-        setToastContent, forwardControls: props.forwardControls
+        setCootInitialized, theme, setTheme, showToast, setShowToast, notificationContent,
+        setNotificationContent, forwardControls: props.forwardControls
     }
 
     return <MoorhenContainer {...collectedProps}/>

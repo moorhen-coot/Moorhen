@@ -737,8 +737,8 @@ export namespace moorhen {
         setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtom>>;
         backgroundColor: [number, number, number, number];
         setBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
-        toastContent: null | JSX.Element;
-        setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
+        notificationContent: null | JSX.Element;
+        setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
         showToast: boolean;
         setShowToast: React.Dispatch<React.SetStateAction<boolean>>;
         windowWidth: number;
@@ -786,8 +786,8 @@ export namespace moorhen {
         setTheme: React.Dispatch<React.SetStateAction<string>>;
         showToast: boolean;
         setShowToast: React.Dispatch<React.SetStateAction<boolean>>;
-        toastContent: null | JSX.Element;
-        setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
+        notificationContent: null | JSX.Element;
+        setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
         availableFonts: string[];
         setAvailableFonts: React.Dispatch<React.SetStateAction<string[]>>
     }

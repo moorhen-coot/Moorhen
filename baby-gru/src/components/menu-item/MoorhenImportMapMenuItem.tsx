@@ -12,7 +12,7 @@ export const MoorhenImportMapMenuItem = (props: {
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setActiveMap: React.Dispatch<React.SetStateAction<moorhen.Map>>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
+    setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
     getWarningToast: (arg0: string) => JSX.Element;
 }) => {
 
@@ -43,7 +43,7 @@ export const MoorhenImportMapMenuItem = (props: {
                 props.changeMaps({ action: 'Add', item: newMap })
                 props.setActiveMap(newMap)   
             } catch (err) {
-                props.setToastContent(props.getWarningToast('Error reading map file'))
+                props.setNotificationContent(props.getWarningToast('Error reading map file'))
                 console.log(`Cannot read file`)    
             }
         }

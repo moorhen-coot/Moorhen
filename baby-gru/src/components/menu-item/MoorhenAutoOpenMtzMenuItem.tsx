@@ -13,7 +13,7 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setActiveMap: React.Dispatch<React.SetStateAction<moorhen.Map>>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
+    setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
     getWarningToast: (arg0: string) => JSX.Element;
 }) => {
 
@@ -44,7 +44,7 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
         }, true) as moorhen.WorkerResponse<libcootApi.AutoReadMtzInfoJS[]>
 
         if (response.data.result.result.length === 0) {
-            props.setToastContent(props.getWarningToast('Error reading mtz file'))
+            props.setNotificationContent(props.getWarningToast('Error reading mtz file'))
         }
 
         const isDiffMapResponses = await Promise.all(response.data.result.result.map(autoReadInfo => {
@@ -58,7 +58,7 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
         await Promise.all(
             response.data.result.result.map(async (autoReadInfo, index) => {
                 if (autoReadInfo.idx === -1) {
-                    props.setToastContent(props.getWarningToast('Error reading mtz file'))
+                    props.setNotificationContent(props.getWarningToast('Error reading mtz file'))
                     return
                 }
                 const newMap = new MoorhenMap(props.commandCentre, props.glRef)

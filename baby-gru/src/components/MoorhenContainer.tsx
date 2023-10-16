@@ -96,7 +96,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const [innerCootInitialized, setInnerCootInitialized] = useState<boolean>(false)
     const [innerTheme, setInnerTheme] = useState<string>("flatly")
     const [innerShowToast, setInnerShowToast] = useState<boolean>(false)
-    const [innerToastContent, setInnerToastContent] = useState<null | JSX.Element>(null)
+    const [innerNotificationContent, setInnerNotificationContent] = useState<null | JSX.Element>(null)
     const [innerAvailableFonts, setInnerAvailableFonts] = useState<string[]>([])
     
     innerMoleculesRef.current = innerMolecules as moorhen.Molecule[]
@@ -144,8 +144,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         changeMolecules: innerChangeMolecules, backgroundColor: innerBackgroundColor, 
         appTitle: innerAppTitle, setAppTitle: setInnerAppTitle, cootInitialized: innerCootInitialized, 
         setCootInitialized: setInnerCootInitialized, theme: innerTheme, setTheme: setInnerTheme, 
-        showToast: innerShowToast, setShowToast: setInnerShowToast, toastContent: innerToastContent, 
-        setToastContent: setInnerToastContent, availableFonts: innerAvailableFonts, 
+        showToast: innerShowToast, setShowToast: setInnerShowToast, notificationContent: innerNotificationContent, 
+        setNotificationContent: setInnerNotificationContent, availableFonts: innerAvailableFonts, 
         videoRecorderRef: innerVideoRecorderRef
     }
 
@@ -161,7 +161,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         windowWidth, setWindowWidth, windowHeight, setWindowHeight, molecules, 
         backgroundColor, setBackgroundColor, availableFonts, setAvailableFonts, enableAtomHovering,
         appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
-        showToast, setShowToast, toastContent, setToastContent
+        showToast, setShowToast, notificationContent, setNotificationContent
     } = states
 
     const {
@@ -204,7 +204,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 }, false)
     
                 const shortCut = JSON.parse(context.shortCuts as string).show_shortcuts
-                setToastContent(
+                setNotificationContent(
                     <MoorhenNotification key={'initial-notification'} isDark={isDark} windowWidth={windowWidth} hideDelay={5000} width={20}>
                         <h4 style={{margin: 0}}>
                             {`Press ${getTooltipShortcutLabel(shortCut)} to show help`}
@@ -337,8 +337,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     }, [molecules])
 
     useEffect(() => {
-        if (toastContent) setShowToast(true)
-    }, [toastContent])
+        if (notificationContent) setShowToast(true)
+    }, [notificationContent])
 
     //Make this so that the keyPress returns true or false, depending on whether mgWebGL is to continue processing event
     const onKeyPress = useCallback((event: KeyboardEvent) => {
@@ -408,8 +408,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     const collectedProps: moorhen.Controls = {
         molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
-        activeMap, setActiveMap, commandCentre, backgroundColor, setBackgroundColor, toastContent, 
-        setToastContent, hoveredAtom, setHoveredAtom, showToast, setShowToast, windowWidth, windowHeight,
+        activeMap, setActiveMap, commandCentre, backgroundColor, setBackgroundColor, notificationContent, 
+        setNotificationContent, hoveredAtom, setHoveredAtom, showToast, setShowToast, windowWidth, windowHeight,
         timeCapsuleRef, isDark, disableFileUploads, urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems,
         extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, extraEditMenuItems, 
         extraDraggableModals, aceDRGInstance, availableFonts, enableAtomHovering, setEnableAtomHovering, videoRecorderRef
@@ -469,7 +469,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 </div>
             </Col>
         </Row>
-        {toastContent}
+        {notificationContent}
     </Container>
     </>
 }

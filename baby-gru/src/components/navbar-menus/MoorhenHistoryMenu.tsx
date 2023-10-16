@@ -33,11 +33,11 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
                 props.glRef
             )
             if (status === -1) {
-                props.setToastContent(getWarningToast(`Failed to read backup (deprecated format)`))
+                props.setNotificationContent(getWarningToast(`Failed to read backup (deprecated format)`))
             }
         } catch (err) {
             console.log(err)
-            props.setToastContent(getWarningToast("Error loading session"))
+            props.setNotificationContent(getWarningToast("Error loading session"))
         }
     }, [props])
 
