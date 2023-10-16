@@ -1,7 +1,7 @@
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4.js';
-import { webGL } from "../types/mgWebGL";
+import { webGL } from "../types/mgWebGL.js";
 import { moorhen } from '../types/moorhen.js';
 
 export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {

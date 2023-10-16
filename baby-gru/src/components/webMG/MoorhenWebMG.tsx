@@ -4,7 +4,7 @@ import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
 import { cidToSpec, convertViewtoPx } from '../../utils/MoorhenUtils';
 import { MoorhenContext } from "../../utils/MoorhenContext";
-import { MoorhenScreenRecorder } from "../../utils/MoorhenScreenshot"
+import { MoorhenScreenRecorder } from "../../utils/MoorhenScreenRecorder"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { libcootApi } from '../../types/libcoot';
