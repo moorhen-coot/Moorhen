@@ -282,7 +282,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         }    
     }
 
-    async getEnvironmentBuffers(cid: string, labelled: boolean = false) {
+    async getEnvironmentBuffers(cid: string, labelled: boolean = true) {
         const resSpec = cidToSpec(cid)
         const response = await this.commandCentre.current.cootCommand({
             returnType: "generic_3d_lines_bonds_box",
