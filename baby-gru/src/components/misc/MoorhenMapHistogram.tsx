@@ -34,6 +34,9 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
             }
         }
 
+        const highestCount = Math.max(...histogramData.counts)
+        const secondHighestCount = Math.max(...histogramData.counts.filter(count => count !== highestCount))
+
         return {
             type: 'bar',
             options: {
@@ -44,6 +47,7 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
                 },
                 scales: {
                   y: {
+                    max: secondHighestCount,
                     beginAtZero: true,
                     grid: {
                         display: true,
@@ -51,9 +55,14 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
                     },
                     title: {
                         display: true,
-                        font:{size: axisLabelsFontSize, family:'Helvetica', weight:800},
+                        font: {size: axisLabelsFontSize, family:'Helvetica', weight:800},
                         text: 'Counts',
                         color: 'black'
+                    },
+                    ticks: {
+                        callback: function(val, index) {
+                          return val === secondHighestCount ? highestCount : val;
+                        }
                     }
                   },
                   x: {
