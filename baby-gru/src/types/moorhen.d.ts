@@ -745,6 +745,12 @@ export namespace moorhen {
         windowHeight: number;
         availableFonts: string[];
     }
+
+    interface State {
+        molecules: Molecule[];
+        maps: Map[];
+        canvasSettings: { height: number; width: number; isDark: boolean };
+    }
     
     interface ContainerStates {
         glRef: React.MutableRefObject<null | webGL.MGWebGL>;
