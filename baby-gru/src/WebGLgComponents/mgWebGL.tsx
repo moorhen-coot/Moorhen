@@ -9353,7 +9353,23 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const xyzOff = this.origin.map((coord, iCoord) => -coord + this.zoom * axesOffset[iCoord])
         this.gl.useProgram(this.shaderProgramThickLines);
         this.setMatrixUniforms(this.shaderProgramThickLines);
-        this.gl.uniformMatrix4fv(this.shaderProgramThickLines.pMatrixUniform, false, this.pmvMatrix);
+        let pmvMatrix = mat4.create();
+        let pMatrix = mat4.create();
+        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+        if(this.renderToTexture){
+            if(this.gl.viewportWidth > this.gl.viewportHeight){
+        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+                mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.0);
+            } else {
+                mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
+            }
+        } else {
+            mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24, 24, 0.1, 1000.0);
+        }
+        mat4.scale(pMatrix, pMatrix, [1. / this.zoom, 1. / this.zoom, 1.0]);
+        mat4.multiply(pmvMatrix, pMatrix, this.mvMatrix);
+
+        this.gl.uniformMatrix4fv(this.shaderProgramThickLines.pMatrixUniform, false, pmvMatrix);
         this.gl.uniform3fv(this.shaderProgramThickLines.screenZ, this.screenZ);
         this.gl.uniform1f(this.shaderProgramThickLines.pixelZoom, 0.04 * this.zoom);
 

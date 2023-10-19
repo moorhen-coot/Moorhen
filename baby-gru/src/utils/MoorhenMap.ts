@@ -757,10 +757,10 @@ export class MoorhenMap implements moorhen.Map {
      * Get the histogram data for this map instance
      * @returns {object} - An object with the histogram data
      */
-    async getHistogram(nBins: number = 200): Promise<libcootApi.HistogramInfoJS> {
+    async getHistogram(nBins: number = 200, zoomFactor: number = 1): Promise<libcootApi.HistogramInfoJS> {
         const response = await this.commandCentre.current.cootCommand({
             command: 'get_map_histogram',
-            commandArgs: [this.molNo, nBins],
+            commandArgs: [this.molNo, nBins, zoomFactor],
             returnType: "histogram_info_t"
         }, false) as moorhen.WorkerResponse<any>
         return response.data.result.result

@@ -1,9 +1,12 @@
-import { forwardRef, useEffect } from "react"
+import { forwardRef, useEffect, useState } from "react"
 import { Chart, registerables } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation'
 import { moorhen } from "../../types/moorhen";
 import { libcootApi } from "../../types/libcoot";
 import { convertViewtoPx } from "../../utils/MoorhenUtils";
+import { Col, Row, Stack } from "react-bootstrap";
+import { IconButton } from "@mui/material";
+import { ZoomInOutlined, ZoomOutOutlined } from "@mui/icons-material";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
@@ -19,6 +22,7 @@ type MapHistogramProps = {
 }
 
 export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, chartRef) => {
+    const [zoomFactor, setZoomFactor] = useState<number>(1)
 
     const parseHistogramData = (histogramData: libcootApi.HistogramInfoJS) => {
         const axisLabelsFontSize = convertViewtoPx(70, props.windowHeight) / 60
@@ -110,7 +114,7 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
                 return
             }
 
-            const histogram = await props.map.getHistogram()
+            const histogram = await props.map.getHistogram(200, zoomFactor)
             
             const canvas = document.getElementById(`${props.map.molNo}-histogram`) as HTMLCanvasElement;
             const ctx = canvas.getContext("2d")
@@ -131,9 +135,34 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
             
         }
         fetchHistogram()
-    }, [props.isDark, props.showHistogram, props.windowWidth])
+    }, [props.isDark, props.showHistogram, props.windowWidth, zoomFactor])
 
-    return  <div className="histogram-plot-div" style={{marginTop: '0.5rem'}}>
-                <canvas id={`${props.map.molNo}-histogram`}></canvas>
-            </div>
+    return <Row>
+        <Col style={{display: 'flex', marginTop: '0.5rem'}}>
+        <div className="histogram-plot-div" style={{width: '100%'}}>
+            <canvas id={`${props.map.molNo}-histogram`}></canvas>
+        </div>
+        </Col>
+        <Col style={{display: 'flex', paddingLeft: 0}} md="auto">
+            <Stack style={{display: 'flex', width: '1.5rem', justifyContent: 'center', alignContent: 'center', alignItems: 'center', verticalAlign: 'center'}} gap={1} direction="vertical">
+                <IconButton onClick={() => setZoomFactor((prev) => {
+                    if (prev + 2 > 20) {
+                        return 20
+                    }
+                    return prev + 2
+                })}>
+                    <ZoomInOutlined/>
+                </IconButton>
+                {zoomFactor}
+                <IconButton onClick={() => setZoomFactor((prev) => {
+                    if (prev - 2 < 1) {
+                        return 1
+                    }
+                    return prev - 2
+                    })}>
+                    <ZoomOutOutlined/>
+                </IconButton>
+            </Stack>
+        </Col>
+    </Row>
 })
