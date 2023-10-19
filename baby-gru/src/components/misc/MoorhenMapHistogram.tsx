@@ -153,7 +153,7 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
                 })}>
                     <ZoomInOutlined/>
                 </IconButton>
-                {zoomFactor}
+                x{zoomFactor}
                 <IconButton onClick={() => setZoomFactor((prev) => {
                     if (prev - 2 < 1) {
                         return 1
