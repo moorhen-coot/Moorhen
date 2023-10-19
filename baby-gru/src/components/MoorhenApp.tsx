@@ -1,8 +1,9 @@
 import { useRef, useState, useReducer } from 'react';
+import { MoorhenContextProvider } from "../utils/MoorhenContext";
+import { itemReducer } from '../utils/MoorhenUtils';
 import { MoorhenContainer } from "./MoorhenContainer"
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
-import { itemReducer } from '../utils/MoorhenUtils';
 
 const initialMoleculesState: moorhen.Molecule[] = []
 
@@ -48,7 +49,9 @@ export const MoorhenApp = (props: { forwardControls: (controls: any) => any }) =
         setNotificationContent, forwardControls: props.forwardControls
     }
 
-    return <MoorhenContainer {...collectedProps}/>
+    return <MoorhenContextProvider>
+                <MoorhenContainer {...collectedProps}/>
+            </MoorhenContextProvider>
 }
 
 MoorhenApp.defaultProps = {

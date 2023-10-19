@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useState } from "react"
-import { Chart, registerables, ChartEvent } from 'chart.js';
+import { Chart, registerables } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation'
 import { moorhen } from "../../types/moorhen";
 import { libcootApi } from "../../types/libcoot";
