@@ -131,7 +131,7 @@ declare module 'moorhen' {
         constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>)
         setMapWeight(weight?: number): Promise<_moorhen.WorkerResponse>;
         setAlpha(alpha: number, redraw?: boolean): Promise<void>;
-        getHistogram(): Promise<libcootApi.HistogramInfoJS>;
+        getHistogram(nBins?: number, zoomFactor?: number): Promise<libcootApi.HistogramInfoJS>;
         centreOnMap(): Promise<void>;
         getSuggestedSettings(): Promise<void>;
         setupContourBuffers(objects: any[], keepCootColours?: boolean): void;
