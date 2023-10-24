@@ -54,6 +54,9 @@ export namespace libcootApi {
         F: string;
         phi: string;
         w: string;
+        F_obs: string;
+        sigF_obs: string;
+        Rfree: string;
         weights_used: boolean;
     }
     interface CootPhiPsi extends emscriptem.instance<CootPhiPsi> {
@@ -132,6 +135,9 @@ export namespace libcootApi {
         F: string;
         phi: string;
         w: string;
+        F_obs: string;
+        sigF_obs: string;
+        Rfree: string;
         weights_used: boolean;
     }
     type HBondJS = {

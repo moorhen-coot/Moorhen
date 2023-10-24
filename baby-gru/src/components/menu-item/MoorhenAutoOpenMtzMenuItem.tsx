@@ -67,9 +67,9 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
                 newMap.isDifference = isDiffMapResponses[index].data.result.result
                 newMap.selectedColumns = {
                     F: autoReadInfo.F,
-                    Fobs: autoReadInfo.F,
-                    FreeR: Object.keys(allColumnNames).find(key => allColumnNames[key] === 'I'),
-                    SigFobs: Object.keys(allColumnNames).find(key => allColumnNames[key] === 'Q'),
+                    Fobs: autoReadInfo.F_obs,
+                    FreeR: autoReadInfo.Rfree,
+                    SigFobs: autoReadInfo.sigF_obs,
                     PHI: autoReadInfo.phi,
                     isDifference: newMap.isDifference,
                     useWeight: autoReadInfo.weights_used,

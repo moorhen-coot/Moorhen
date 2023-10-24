@@ -621,6 +621,9 @@ const autoReadMtzInfoVectToJSArray = (autoReadMtzInfoArray: emscriptem.vector<li
         F: string;
         phi: string;
         w: string;
+        F_obs: string;
+        sigF_obs: string;
+        Rfree: string;
         weights_used: boolean;
     }[] = []
 
@@ -632,6 +635,9 @@ const autoReadMtzInfoVectToJSArray = (autoReadMtzInfoArray: emscriptem.vector<li
             F: autoReadMtzInfo.F,
             phi: autoReadMtzInfo.phi,
             w: autoReadMtzInfo.w,
+            Rfree: autoReadMtzInfo.Rfree,
+            F_obs: autoReadMtzInfo.F_obs,
+            sigF_obs: autoReadMtzInfo.sigF_obs,
             weights_used: autoReadMtzInfo.weights_used,
         })
         autoReadMtzInfo.delete()
