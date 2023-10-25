@@ -9,6 +9,7 @@ import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
 import { IconButton } from '@mui/material';
 import { CheckOutlined, CloseOutlined, InfoOutlined } from "@mui/icons-material";
 import Draggable from "react-draggable";
+import { useSelector } from "react-redux";
 
 export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
     const [showAccept, setShowAccept] = useState<boolean>(false)
@@ -20,12 +21,13 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
     const chosenMolecule = useRef<null | moorhen.Molecule>(null)
     const fragmentCid = useRef<null | string>(null)
     const customCid = useRef<null | string>(null)
+    const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
 
     const rotateTranslateModes = ['ATOM', 'RESIDUE', 'CHAIN', 'MOLECULE']
 
     useEffect(() => {
-        if (props.shortCuts) {
-            const shortCut = JSON.parse(props.shortCuts as string).residue_camera_wiggle
+        if (shortCuts) {
+            const shortCut = JSON.parse(shortCuts as string).residue_camera_wiggle
             setTips(<>
                 <em>{"Hold <Shift><Alt> to translate"}</em>
                 <br></br>
@@ -35,7 +37,7 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
             </>
             )
         }
-    }, [props.shortCuts])
+    }, [shortCuts])
 
     const acceptTransform = useCallback(async () => {
         props.glRef.current.setActiveMolecule(null)
@@ -139,7 +141,7 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
                             <div>
                                 <em>{"Hold <Shift><Alt> to translate"}</em>
                                 <br></br>
-                                <em>{props.shortCuts ? `Hold ${getTooltipShortcutLabel(JSON.parse(props.shortCuts as string).residue_camera_wiggle)} to move view` : null}</em>
+                                <em>{shortCuts ? `Hold ${getTooltipShortcutLabel(JSON.parse(shortCuts as string).residue_camera_wiggle)} to move view` : null}</em>
                             </div>
                             </Tooltip>
                         }>

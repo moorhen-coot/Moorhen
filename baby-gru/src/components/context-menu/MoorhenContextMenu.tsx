@@ -96,9 +96,6 @@ export const MoorhenContextMenu = (props: {
   urlPrefix: string;
   changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
   activeMap: moorhen.Map;
-  enableRefineAfterMod: boolean;
-  defaultBondSmoothness: number;
-  shortCuts: {[label: string]: moorhen.Shortcut} | string;
   isDark: boolean;
   showContextMenu: false | moorhen.AtomRightClickEventInfo;
   molecules: moorhen.Molecule[];
@@ -112,7 +109,6 @@ export const MoorhenContextMenu = (props: {
   glRef: React.RefObject<webGL.MGWebGL>;
   maps: moorhen.Map[];
   commandCentre: RefObject<moorhen.CommandCentre>;
-  enableTimeCapsule: boolean;
   changeMolecules: { (arg0: moorhen.MolChange<moorhen.Molecule>): void; (arg0: moorhen.MolChange<moorhen.Molecule>): void; }; 
   monomerLibraryPath: string;
   defaultActionButtonSettings: moorhen.actionButtonSettings;

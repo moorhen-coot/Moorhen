@@ -1,9 +1,9 @@
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { webGL } from "../../types/mgWebGL";
 import { ToggleButtonGroup, ToggleButton } from "@mui/material";
-import { useState, useEffect, useContext } from "react";
-import { MoorhenContext } from "../../utils/MoorhenContext";
-import { moorhen } from "../../types/moorhen";
+import { useState, useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { setResetClippingFogging } from "../../store/sceneSettingsSlice";
 
 export const MoorhenScenePresetMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -11,14 +11,14 @@ export const MoorhenScenePresetMenuItem = (props: {
     isDark: boolean;
 }) => {
 
-    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
+    const dispatch = useDispatch()
     const [presetValue, setPresetValue] = useState<string | null>(null)
 
     useEffect(() => {
         switch(presetValue) {
             
             case "model-building":
-                context.setResetClippingFogging(true)
+                dispatch( setResetClippingFogging(true) )
                 const fieldDepthFront: number = 8;
                 const fieldDepthBack: number = 21;
                 if (props.glRef !== null && typeof props.glRef !== 'function') { 
@@ -30,7 +30,7 @@ export const MoorhenScenePresetMenuItem = (props: {
                 break
             
             case "figure-making":
-                context.setResetClippingFogging(false)
+                dispatch( setResetClippingFogging(false) )
                 props.glRef.current.gl_clipPlane0[3] = 40 - props.glRef.current.fogClipOffset
                 props.glRef.current.gl_clipPlane1[3] = props.glRef.current.fogClipOffset + 40
                 props.glRef.current.gl_fog_start = props.glRef.current.fogClipOffset - 2

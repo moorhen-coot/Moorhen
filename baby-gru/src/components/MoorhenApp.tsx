@@ -1,11 +1,9 @@
 import { useRef, useState, useReducer } from 'react';
-import { MoorhenContextProvider } from "../utils/MoorhenContext";
 import { itemReducer } from '../utils/MoorhenUtils';
 import { MoorhenContainer } from "./MoorhenContainer"
+import { MoorhenReduxProvider } from './misc/MoorhenReduxProvider'
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
-import MoorhenStore from '../store/MoorhenReduxStore';
-import { Provider } from 'react-redux';
 
 const initialMoleculesState: moorhen.Molecule[] = []
 
@@ -42,7 +40,7 @@ export const MoorhenApp = (props: { forwardControls: (controls: any) => any }) =
 
     const collectedProps = {
         glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef,
-         lastHoveredAtom, prevActiveMoleculeRef, activeMap, hoveredAtom, setHoveredAtom,
+        lastHoveredAtom, prevActiveMoleculeRef, activeMap, hoveredAtom, setHoveredAtom,
         setActiveMap, activeMolecule, setActiveMolecule, molecules: molecules as moorhen.Molecule[],
         cursorStyle, setCursorStyle, busy, setBusy, maps: maps as moorhen.Map[],
         windowWidth, setWindowWidth, windowHeight, setWindowHeight, appTitle, setAppTitle,
@@ -51,11 +49,9 @@ export const MoorhenApp = (props: { forwardControls: (controls: any) => any }) =
         setNotificationContent, forwardControls: props.forwardControls
     }
 
-    return <Provider store={MoorhenStore}> 
-        <MoorhenContextProvider>
+    return  <MoorhenReduxProvider>
                 <MoorhenContainer {...collectedProps}/>
-        </MoorhenContextProvider>
-    </Provider>
+            </MoorhenReduxProvider>
 }
 
 MoorhenApp.defaultProps = {

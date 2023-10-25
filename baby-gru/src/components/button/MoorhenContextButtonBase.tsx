@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef } from "react"
 import { Button, FormLabel, FormSelect, Stack } from "react-bootstrap"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
+import { useSelector } from "react-redux";
 
 const MoorhenPopoverOptions = (props: {
     showContextMenu: false | moorhen.AtomRightClickEventInfo;
@@ -71,7 +72,6 @@ export const MoorhenContextButtonBase = (props: {
     selectedMolecule: moorhen.Molecule;
     chosenAtom: moorhen.ResidueSpec;
     activeMap: moorhen.Map;
-    enableRefineAfterMod: boolean;
     refineAfterMod?: boolean;
     needsMapData?: boolean;
     needsAtomData?: boolean;
@@ -100,6 +100,8 @@ export const MoorhenContextButtonBase = (props: {
     };
 }) => {
     
+    const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
+
     const doEdit = async (cootCommandInput: moorhen.cootCommandKwargs) => {
         const cootResult = await props.commandCentre.current.cootCommand(cootCommandInput, true)
         
@@ -107,7 +109,7 @@ export const MoorhenContextButtonBase = (props: {
             props.onCompleted(props.selectedMolecule, props.chosenAtom)
         }
         
-        if (props.refineAfterMod && props.enableRefineAfterMod && props.activeMap) {
+        if (props.refineAfterMod && enableRefineAfterMod && props.activeMap) {
             try {
                 await props.commandCentre.current.cootCommand({
                     returnType: "status",

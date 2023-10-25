@@ -6,14 +6,8 @@ import { emscriptem } from "./emscriptem";
 
 declare module 'moorhen' {
 
-    let MoorhenContextProvider: any;
-    module.exports = MoorhenContextProvider;
-
     let MoorhenContainer: any;
     module.exports = MoorhenContainer;
-
-    let MoorhenContext: React.Context<any>;
-    module.exports = MoorhenContext;
 
     function loadSessionData(sessionDataString: string,
         monomerLibraryPath: string,

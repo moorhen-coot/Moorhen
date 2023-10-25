@@ -3,10 +3,12 @@ import { MoorhenEditButtonBase } from "./MoorhenEditButtonBase"
 import { getTooltipShortcutLabel } from "../../utils/MoorhenUtils"
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
+import { useSelector } from "react-redux";
 
 export const MoorhenAddTerminalResidueButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
 
     const [toolTip, setToolTip] = useState<string>("Add Residue")
+    const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
 
     const getCootCommandInput = (selectedMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, localParameters?: string): moorhen.cootCommandKwargs => {
         return {
@@ -19,11 +21,11 @@ export const MoorhenAddTerminalResidueButton = (props: moorhen.EditButtonProps |
     }
 
     useEffect(() => {
-        if (props.shortCuts) {
-            const shortCut = JSON.parse(props.shortCuts as string).add_terminal_residue
+        if (shortCuts) {
+            const shortCut = JSON.parse(shortCuts as string).add_terminal_residue
             setToolTip(`Add Residue ${getTooltipShortcutLabel(shortCut)}`)
         }
-    }, [props.shortCuts])
+    }, [shortCuts])
 
     if (props.mode === 'context') {
 

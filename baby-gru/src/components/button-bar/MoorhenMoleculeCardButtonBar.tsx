@@ -1,7 +1,6 @@
-import React, { useState, useMemo, Fragment, useRef, useContext } from "react";
+import { useState, useMemo, Fragment, useRef } from "react";
 import { Button, DropdownButton } from "react-bootstrap";
 import { convertViewtoPx } from '../../utils/MoorhenUtils';
-import { MoorhenContext } from "../../utils/MoorhenContext";
 import { MenuItem } from "@mui/material";
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, AddOutlined } from '@mui/icons-material';
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
@@ -9,6 +8,7 @@ import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDi
 import { clickedResidueType } from "../card/MoorhenMoleculeCard";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
+import { useSelector } from "react-redux";
 
 type MoorhenMoleculeCardButtonBarPropsType = {
     handleCentering: () => void;
@@ -34,8 +34,8 @@ type MoorhenMoleculeCardButtonBarPropsType = {
 }
 
 export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBarPropsType) => {
-    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
     const dropdownCardButtonRef = useRef<HTMLDivElement>()
+    const makeBackups = useSelector((state: moorhen.State) => state.backupSettings.makeBackups)
     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
     const [currentName, setCurrentName] = useState<string>(props.molecule.name);
 
@@ -60,18 +60,18 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
         },
         2: {
             label: "Undo last action",
-            compressed: () => { return (<MenuItem key={2} onClick={props.handleUndo} disabled={!context.makeBackups}>Undo last action</MenuItem>) },
+            compressed: () => { return (<MenuItem key={2} onClick={props.handleUndo} disabled={!makeBackups}>Undo last action</MenuItem>) },
             expanded: () => {
-                return (<Button key={2} size="sm" variant="outlined" style={{borderWidth: context.makeBackups ? '' : '0px'}} onClick={props.handleUndo} disabled={!context.makeBackups}>
+                return (<Button key={2} size="sm" variant="outlined" style={{borderWidth: makeBackups ? '' : '0px'}} onClick={props.handleUndo} disabled={!makeBackups}>
                     <UndoOutlined />
                 </Button>)
             }
         },
         3: {
             label: "Redo previous action",
-            compressed: () => { return (<MenuItem key={3} onClick={props.handleRedo} disabled={!context.makeBackups}>Redo previous action</MenuItem>) },
+            compressed: () => { return (<MenuItem key={3} onClick={props.handleRedo} disabled={!makeBackups}>Redo previous action</MenuItem>) },
             expanded: () => {
-                return (<Button key={3} size="sm" variant="outlined" style={{borderWidth: context.makeBackups ? '': '0px'}} onClick={props.handleRedo} disabled={!context.makeBackups}>
+                return (<Button key={3} size="sm" variant="outlined" style={{borderWidth: makeBackups ? '': '0px'}} onClick={props.handleRedo} disabled={!makeBackups}>
                     <RedoOutlined />
                 </Button>)
             }

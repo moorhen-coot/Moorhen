@@ -1,9 +1,8 @@
-import { useContext } from 'react';
 import { Col, Row, Card, Button } from 'react-bootstrap';
-import { MoorhenContext } from "../../utils/MoorhenContext";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 import { moorhen } from "../../types/moorhen";
 import { libcootApi } from '../../types/libcoot';
+import { useSelector } from 'react-redux';
 
 interface Props extends moorhen.Controls {
     dropdownId: number;
@@ -14,7 +13,7 @@ interface Props extends moorhen.Controls {
 }
 
 export const MoorhenFillMissingAtoms = (props: Props) => {
-    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
+    const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
 
     const fillPartialResidue = async (selectedMolecule: moorhen.Molecule, chainId: string, resNum: number, insCode: string) => {
         await props.commandCentre.current.cootCommand({
@@ -24,7 +23,7 @@ export const MoorhenFillMissingAtoms = (props: Props) => {
             changesMolecules: [selectedMolecule.molNo]
         }, true)
 
-        if (context.enableRefineAfterMod) {
+        if (enableRefineAfterMod) {
             await props.commandCentre.current.cootCommand({
                 returnType: "status",
                 command: 'refine_residues_using_atom_cid',

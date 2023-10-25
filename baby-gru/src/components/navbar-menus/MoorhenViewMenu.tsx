@@ -1,25 +1,33 @@
 import { Form, InputGroup } from "react-bootstrap";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { MoorhenClipFogMenuItem } from "../menu-item/MoorhenClipFogMenuItem";
 import { MoorhenLightingMenuItem } from "../menu-item/MoorhenLightingMenuItem"
 import { MoorhenBlurMenuItem } from "../menu-item/MoorhenBlurMenuItem"
 import { MoorhenBackgroundColorMenuItem } from "../menu-item/MoorhenBackgroundColorMenuItem"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MoorhenScenePresetMenuItem } from "../menu-item/MoorhenScenePresetMenuItem"
-import { MoorhenContext } from "../../utils/MoorhenContext";
 import { moorhen } from "../../types/moorhen";
+import { useSelector, useDispatch } from "react-redux";
+import { setDoPerspectiveProjection, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawInteractions, setDrawMissingLoops } from "../../store/sceneSettingsSlice";
 
 export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
-    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
     const [popoverIsShown, setPopoverIsShown] = useState(false)
+    const dispatch = useDispatch()
+    const drawCrosshairs = useSelector((state: moorhen.State) => state.sceneSettings.drawCrosshairs)
+    const drawFPS = useSelector((state: moorhen.State) => state.sceneSettings.drawFPS)
+    const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops)
+    const drawAxes = useSelector((state: moorhen.State) => state.sceneSettings.drawAxes)
+    const drawInteractions = useSelector((state: moorhen.State) => state.sceneSettings.drawInteractions)
+    const doPerspectiveProjection = useSelector((state: moorhen.State) => state.sceneSettings.doPerspectiveProjection)
+
     const menuItemProps = {setPopoverIsShown, ...props}
 
     return <>
                 <InputGroup className='moorhen-input-group-check'>
                     <Form.Check 
                         type="switch"
-                        checked={context.drawFPS}
-                        onChange={() => { context.setDrawFPS(!context.drawFPS) }}
+                        checked={drawFPS}
+                        onChange={() => {dispatch( setDrawFPS(!drawFPS) )}}
                         label="Show frames per second counter"/>
                 </InputGroup>
                 <InputGroup className='moorhen-input-group-check'>
@@ -37,36 +45,36 @@ export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                 <InputGroup className='moorhen-input-group-check'>
                     <Form.Check 
                         type="switch"
-                        checked={context.drawCrosshairs}
-                        onChange={() => { context.setDrawCrosshairs(!context.drawCrosshairs) }}
+                        checked={drawCrosshairs}
+                        onChange={() => {dispatch( setDrawCrosshairs(!drawCrosshairs) )}}
                         label="Show crosshairs"/>
                 </InputGroup>
                 <InputGroup className='moorhen-input-group-check'>
                     <Form.Check 
                         type="switch"
-                        checked={context.drawAxes}
-                        onChange={() => { context.setDrawAxes(!context.drawAxes) }}
+                        checked={drawAxes}
+                        onChange={() => {dispatch( setDrawAxes(!drawAxes) )}}
                         label="Show axes"/>
                 </InputGroup>
                 <InputGroup className='moorhen-input-group-check'>
                     <Form.Check 
                         type="switch"
-                        checked={context.drawMissingLoops}
-                        onChange={() => { context.setDrawMissingLoops(!context.drawMissingLoops) }}
+                        checked={drawMissingLoops}
+                        onChange={() => {dispatch( setDrawMissingLoops(!drawMissingLoops) )}}
                         label="Show missing loops"/>
                 </InputGroup>
                 <InputGroup className='moorhen-input-group-check'>
                     <Form.Check 
                         type="switch"
-                        checked={context.drawInteractions}
-                        onChange={() => { context.setDrawInteractions(!context.drawInteractions) }}
+                        checked={drawInteractions}
+                        onChange={() => {dispatch( setDrawInteractions(!drawInteractions) )}}
                         label="Show Environment Distances"/>
                 </InputGroup>
                 <InputGroup className='moorhen-input-group-check'>
                     <Form.Check 
                         type="switch"
-                        checked={context.doPerspectiveProjection}
-                        onChange={() => { context.setDoPerspectiveProjection(!context.doPerspectiveProjection) }}
+                        checked={doPerspectiveProjection}
+                        onChange={() => {dispatch( setDoPerspectiveProjection(!doPerspectiveProjection) )}}
                         label="Perspective projection"/>
                 </InputGroup>
                 <hr></hr>

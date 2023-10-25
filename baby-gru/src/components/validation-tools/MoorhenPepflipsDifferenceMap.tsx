@@ -1,10 +1,10 @@
-import { useContext, useState } from "react"
+import { useState } from "react"
 import { Col, Row, Form, Card, Button } from 'react-bootstrap';
-import { MoorhenContext } from "../../utils/MoorhenContext";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase"
 import { MoorhenSlider } from '../misc/MoorhenSlider' 
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
+import { useSelector } from "react-redux";
 
 interface Props extends moorhen.Controls {
     dropdownId: number;
@@ -15,7 +15,7 @@ interface Props extends moorhen.Controls {
 }
 
 export const MoorhenPepflipsDifferenceMap = (props: Props) => {
-    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
+    const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
     const [selectedRmsd, setSelectedRmsd] = useState<number>(4.5)
     
     const filterMapFunction = (map: moorhen.Map) => map.isDifference
@@ -28,7 +28,7 @@ export const MoorhenPepflipsDifferenceMap = (props: Props) => {
             changesMolecules: [selectedMolNo]
         }, true)
 
-        if (context.enableRefineAfterMod) {
+        if (enableRefineAfterMod) {
             await props.commandCentre.current.cootCommand({
                 returnType: "status",
                 command: 'refine_residues_using_atom_cid',

@@ -6,6 +6,15 @@ import { MoorhenCommandCentre } from "../moorhen";
 
 export namespace moorhen {
 
+    interface Preferences {
+        name: string;
+        localStorageInstance: {
+            clear: () => void;
+            setItem: (key: string, value: any) => Promise<string>;
+            getItem: (key: string) => Promise<any>;
+        };
+    }
+
     type ResidueInfo = {
         resCode: string;
         resNum: number;
@@ -457,7 +466,6 @@ export namespace moorhen {
         mapsRef: React.RefObject<Map[]>;
         glRef: React.RefObject<webGL.MGWebGL>;
         activeMapRef: React.RefObject<Map>;
-        context: Context;
         busy: boolean;
         modificationCount: number;
         modificationCountBackupThreshold: number;
@@ -641,13 +649,11 @@ export namespace moorhen {
         mode: 'context';
         monomerLibraryPath: string;
         windowWidth: number;
-        shortCuts: string | { [label: string]: Shortcut; };
         urlPrefix: string;
         commandCentre: React.RefObject<CommandCentre>
         selectedMolecule: Molecule;
         chosenAtom: ResidueSpec;
         activeMap: Map;
-        enableRefineAfterMod: boolean;
         molecules: Molecule[];
         glRef: React.RefObject<webGL.MGWebGL>;
         setOverlayContents: React.Dispatch<React.SetStateAction<JSX.Element>>;
@@ -659,7 +665,6 @@ export namespace moorhen {
         setOverrideMenuContents: React.Dispatch<React.SetStateAction<JSX.Element | boolean>>;
         showContextMenu: false | AtomRightClickEventInfo;
         backgroundColor: [number, number, number, number];
-        defaultBondSmoothness: number;
         isDark: boolean;
         changeMolecules: (arg0: MolChange<Molecule>) => void
         defaultActionButtonSettings: actionButtonSettings;
@@ -750,6 +755,68 @@ export namespace moorhen {
         molecules: Molecule[];
         maps: Map[];
         canvasSettings: { height: number; width: number; isDark: boolean };
+        mapSettings: {
+            defaultMapSamplingRate: number;
+            defaultMapLitLines: boolean;
+            mapLineWidth: number;
+            defaultMapSurface: boolean;
+        };
+        mouseSettings: {
+            contourWheelSensitivityFactor: number;
+            zoomWheelSensitivityFactor: number;
+            mouseSensitivity: number;
+        };
+        backupSettings: {
+            enableTimeCapsule: boolean;
+            makeBackups: boolean;
+            maxBackupCount: number;
+            modificationCountBackupThreshold: number;     
+        };
+        updatingMapScoresSettings: {
+            defaultUpdatingScores: string[];
+            showScoresToast: boolean;
+        };
+        shortcutSettings: {
+            shortcutOnHoveredAtom: boolean;
+            showShortcutToast: boolean;
+            shortCuts: string;        
+        };
+        labelSettings: {
+            atomLabelDepthMode: boolean;
+            GLLabelsFontFamily: string;
+            GLLabelsFontSize: number;
+        };
+        sceneSettings: {
+            defaultBackgroundColor: [number, number, number, number];
+            drawCrosshairs: boolean; 
+            drawAxes: boolean; 
+            drawFPS: boolean; 
+            drawMissingLoops: boolean; 
+            drawInteractions: boolean; 
+            doPerspectiveProjection: boolean; 
+            useOffScreenBuffers: boolean; 
+            depthBlurRadius: number; 
+            depthBlurDepth: number; 
+            ssaoBias: number; 
+            ssaoRadius: number; 
+            doShadowDepthDebug: boolean; 
+            doShadow: boolean; 
+            doSSAO: boolean; 
+            doOutline: boolean; 
+            doSpinTest: boolean;
+            defaultBondSmoothness: number,
+            resetClippingFogging: boolean; 
+            clipCap: boolean; 
+        };
+        miscAppSettings: {
+            defaultExpandDisplayCards: boolean; 
+            transparentModalsOnMouseOut: boolean; 
+            enableRefineAfterMod: boolean; 
+        };
+        generalStates: {
+            devMode: boolean; 
+            userPreferencesMounted: boolean;
+        };
     }
     
     interface ContainerStates {

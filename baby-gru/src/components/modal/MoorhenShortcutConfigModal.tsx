@@ -1,34 +1,42 @@
 import { useState, useRef, useEffect } from "react";
 import { Modal, Button, Card, Row, Col } from "react-bootstrap";
-import { getDefaultContextValues } from "../../utils/MoorhenContext";
 import { moorhen } from "../../types/moorhen"
+import { useSelector, useDispatch } from "react-redux";
+import { setShortCuts } from "../../store/shortCutsSlice";
+import { MoorhenPreferences } from "../../utils/MoorhenPreferences";
 
 export const MoorhenShortcutConfigModal = (props: {
-    shortCuts: {[label: string]: moorhen.Shortcut};
     setShowModal: React.Dispatch<React.SetStateAction<boolean>>; 
-    setShortCuts: React.Dispatch<React.SetStateAction<string>>;
     showModal: boolean; 
 }) => {
+
+    const dispatch = useDispatch()
+    const _shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
+    const shortCuts = JSON.parse(_shortCuts as string)
     const newShortCutModalRef = useRef<JSX.Element>();
     const [waitingNewShortCut, setWaitingNewShortCut] = useState<boolean | string>(false);
-    const [stagedShortCuts, setStagedShortCuts] = useState(props.shortCuts);
+    const [stagedShortCuts, setStagedShortCuts] = useState(shortCuts);
     const [shortCutMessage, setShortCutMessage] = useState<string>("... Press something ...");
 
     const cancelChanges = () => {
         props.setShowModal(false)
-        setStagedShortCuts(props.shortCuts)
+        setStagedShortCuts(shortCuts)
     }
 
     const restoreDefaults = () => {
-        const defaultValues = getDefaultContextValues()
+        const defaultValues = MoorhenPreferences.getDefaultContextValues()
         props.setShowModal(false)
         setStagedShortCuts(defaultValues.shortCuts as {[label: string]: moorhen.Shortcut})
-        props.setShortCuts(JSON.stringify(defaultValues.shortCuts))
+        dispatch(
+            setShortCuts(JSON.stringify(defaultValues.shortCuts))
+        )
     }
 
     const handleSaveChanges = () => {
         props.setShowModal(false)
-        props.setShortCuts(JSON.stringify(stagedShortCuts))
+        dispatch(
+            setShortCuts(JSON.stringify(stagedShortCuts))
+        )
     }
     
     const handleKeyUp = (evt: KeyboardEvent): void => {
@@ -118,9 +126,9 @@ export const MoorhenShortcutConfigModal = (props: {
                         </Button>
                     </Modal.Footer>                    
                 </Modal>
-                <Modal ref={newShortCutModalRef} centered backdrop="static" size='sm' keyboard={false} show={waitingNewShortCut as boolean}>
+                <Modal ref={newShortCutModalRef} centered backdrop="static" size='sm' keyboard={false} show={waitingNewShortCut as boolean} style={{zIndex: 999999999}}>
                     <Modal.Header>
-                        Define a new shortcut
+                        <b>Define a new shortcut</b>
                     </Modal.Header>
                     <Modal.Body>
                         {shortCutMessage}
