@@ -29,8 +29,10 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const fetchMapDataCheckRef = useRef<HTMLInputElement | null>(null);
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const enableTimeCapsule = useSelector((state: moorhen.State) => state.backupSettings.enableTimeCapsule)
+    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
 
-    const getWarningToast = (message: string) => <MoorhenNotification key={guid()} isDark={props.isDark} windowWidth={props.windowWidth} hideDelay={3000} width={20}>
+const getWarningToast = (message: string) => <MoorhenNotification key={guid()} hideDelay={3000} width={20}>
             <><WarningOutlined style={{margin: 0}}/>
                 <h4 className="moorhen-warning-toast">
                     {message}
@@ -69,7 +71,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
 
     const readPdbFile = async (file: File): Promise<moorhen.Molecule> => {
         const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
-        newMolecule.setBackgroundColour(props.backgroundColor)
+        newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         await newMolecule.loadToCootFromFile(file)        
         return newMolecule        
@@ -152,7 +154,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
 
     const fetchMoleculeFromURL = async (url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> => {
         const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
-        newMolecule.setBackgroundColour(props.backgroundColor)
+        newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         try {
             await newMolecule.loadToCootFromURL(url, molName)
@@ -264,7 +266,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             document.body.click()
             props.videoRecorderRef.current.startRecording()
             props.setNotificationContent(
-                <MoorhenNotification key={guid()} isDark={props.isDark} windowWidth={props.windowWidth} width={13}>
+                <MoorhenNotification key={guid()} width={13}>
                     <Stack gap={2} direction='horizontal' style={{width: '100%', display:'flex', justifyContent: 'space-between'}}>
                         <div style={{alignItems: 'center', display: 'flex', justifyContent: 'center'}}>
                             <RadioButtonCheckedOutlined style={{color: 'red', borderRadius: '30px', borderWidth: 0, borderStyle: 'hidden'}} className="moorhen-recording-icon"/>
@@ -283,7 +285,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     }, [props.videoRecorderRef, props.setNotificationContent])
 
     return <>
-                <div style={{maxHeight: convertViewtoPx(65, props.windowHeight), overflowY: 'auto'}}>
+                <div style={{maxHeight: convertViewtoPx(65, height), overflowY: 'auto'}}>
                     {!props.disableFileUploads && 
                     <Form.Group className='moorhen-form-group' controlId="upload-coordinates-form">
                         <Form.Label>Coordinates</Form.Label>

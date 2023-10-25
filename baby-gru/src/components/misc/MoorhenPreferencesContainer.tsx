@@ -186,7 +186,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('transparentModalsOnMouseOut', transparentModalsOnMouseOut);
+        localForageInstanceRef.current?.localStorageInstance.setItem('transparentModalsOnMouseOut', transparentModalsOnMouseOut);
     }, [transparentModalsOnMouseOut]);
 
 
@@ -196,7 +196,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('defaultMapSamplingRate', defaultMapSamplingRate);
+        localForageInstanceRef.current?.localStorageInstance.setItem('defaultMapSamplingRate', defaultMapSamplingRate);
     }, [defaultMapSamplingRate]);
 
     useMemo(() => {
@@ -205,7 +205,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('shortcutOnHoveredAtom', shortcutOnHoveredAtom);
+        localForageInstanceRef.current?.localStorageInstance.setItem('shortcutOnHoveredAtom', shortcutOnHoveredAtom);
     }, [shortcutOnHoveredAtom]);
 
     useMemo(() => {
@@ -214,7 +214,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('devMode', devMode);
+        localForageInstanceRef.current?.localStorageInstance.setItem('devMode', devMode);
     }, [devMode]);
     
     useMemo(() => {
@@ -223,7 +223,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('contourWheelSensitivityFactor', contourWheelSensitivityFactor);
+        localForageInstanceRef.current?.localStorageInstance.setItem('contourWheelSensitivityFactor', contourWheelSensitivityFactor);
     }, [contourWheelSensitivityFactor]);
     
     useMemo(() => {
@@ -232,7 +232,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('enableTimeCapsule', enableTimeCapsule);
+        localForageInstanceRef.current?.localStorageInstance.setItem('enableTimeCapsule', enableTimeCapsule);
     }, [enableTimeCapsule]);
     
     useMemo(() => {
@@ -241,7 +241,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('maxBackupCount', maxBackupCount);
+        localForageInstanceRef.current?.localStorageInstance.setItem('maxBackupCount', maxBackupCount);
     }, [maxBackupCount]);
     
     useMemo(() => {
@@ -250,7 +250,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('modificationCountBackupThreshold', modificationCountBackupThreshold);
+        localForageInstanceRef.current?.localStorageInstance.setItem('modificationCountBackupThreshold', modificationCountBackupThreshold);
     }, [modificationCountBackupThreshold]);
 
     useMemo(() => {
@@ -259,7 +259,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
 
-        localForageInstanceRef.current.localStorageInstance.setItem('clipCap', clipCap);
+        localForageInstanceRef.current?.localStorageInstance.setItem('clipCap', clipCap);
     }, [clipCap]);
 
     useMemo(() => {
@@ -268,7 +268,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('resetClippingFogging', resetClippingFogging);
+        localForageInstanceRef.current?.localStorageInstance.setItem('resetClippingFogging', resetClippingFogging);
     }, [resetClippingFogging]);
 
     useMemo(() => {
@@ -277,7 +277,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('zoomWheelSensitivityFactor', zoomWheelSensitivityFactor);
+        localForageInstanceRef.current?.localStorageInstance.setItem('zoomWheelSensitivityFactor', zoomWheelSensitivityFactor);
     }, [zoomWheelSensitivityFactor]);
 
     useMemo(() => {
@@ -286,7 +286,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('showShortcutToast', showShortcutToast);
+        localForageInstanceRef.current?.localStorageInstance.setItem('showShortcutToast', showShortcutToast);
     }, [showShortcutToast]);
     
     useMemo(() => {
@@ -295,7 +295,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('showScoresToast', showScoresToast);
+        localForageInstanceRef.current?.localStorageInstance.setItem('showScoresToast', showScoresToast);
     }, [showScoresToast]);
     
     useMemo(() => {
@@ -304,7 +304,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('defaultUpdatingScores', defaultUpdatingScores);
+        localForageInstanceRef.current?.localStorageInstance.setItem('defaultUpdatingScores', defaultUpdatingScores);
     }, [defaultUpdatingScores]);
     
     useMemo(() => {
@@ -313,7 +313,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('defaultBondSmoothness', defaultBondSmoothness);
+        localForageInstanceRef.current?.localStorageInstance.setItem('defaultBondSmoothness', defaultBondSmoothness);
     }, [defaultBondSmoothness]);
 
     useMemo(() => {
@@ -322,7 +322,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('defaultMapSurface', defaultMapSurface);
+        localForageInstanceRef.current?.localStorageInstance.setItem('defaultMapSurface', defaultMapSurface);
     }, [defaultMapSurface]);
 
     useMemo(() => {
@@ -331,7 +331,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('makeBackups', makeBackups);
+        localForageInstanceRef.current?.localStorageInstance.setItem('makeBackups', makeBackups);
     }, [makeBackups]);
 
     useMemo(() => {
@@ -340,7 +340,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('enableRefineAfterMod', enableRefineAfterMod);
+        localForageInstanceRef.current?.localStorageInstance.setItem('enableRefineAfterMod', enableRefineAfterMod);
     }, [enableRefineAfterMod]);
 
     useMemo(() => {
@@ -349,7 +349,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('mapLineWidth', mapLineWidth);
+        localForageInstanceRef.current?.localStorageInstance.setItem('mapLineWidth', mapLineWidth);
     }, [mapLineWidth]);
 
     useMemo(() => {
@@ -358,7 +358,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
 
-        localForageInstanceRef.current.localStorageInstance.setItem('drawAxes', drawAxes);
+        localForageInstanceRef.current?.localStorageInstance.setItem('drawAxes', drawAxes);
     }, [drawAxes]);
 
     useMemo(() => {
@@ -367,7 +367,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('drawCrosshairs', drawCrosshairs);
+        localForageInstanceRef.current?.localStorageInstance.setItem('drawCrosshairs', drawCrosshairs);
     }, [drawCrosshairs]);
 
     useMemo(() => {
@@ -376,7 +376,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('drawFPS', drawFPS);
+        localForageInstanceRef.current?.localStorageInstance.setItem('drawFPS', drawFPS);
     }, [drawFPS]);
 
     useMemo(() => {
@@ -385,7 +385,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('drawMissingLoops', drawMissingLoops);
+        localForageInstanceRef.current?.localStorageInstance.setItem('drawMissingLoops', drawMissingLoops);
     }, [drawMissingLoops]);
 
     useMemo(() => {
@@ -394,7 +394,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
 
-        localForageInstanceRef.current.localStorageInstance.setItem('doPerspectiveProjection', doPerspectiveProjection);
+        localForageInstanceRef.current?.localStorageInstance.setItem('doPerspectiveProjection', doPerspectiveProjection);
     }, [doPerspectiveProjection]);
 
     useMemo(() => {
@@ -403,7 +403,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
 
-        localForageInstanceRef.current.localStorageInstance.setItem('depthBlurDepth', depthBlurDepth);
+        localForageInstanceRef.current?.localStorageInstance.setItem('depthBlurDepth', depthBlurDepth);
     }, [depthBlurDepth]);
 
     useMemo(() => {
@@ -412,7 +412,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
 
-        localForageInstanceRef.current.localStorageInstance.setItem('ssaoBias', ssaoBias);
+        localForageInstanceRef.current?.localStorageInstance.setItem('ssaoBias', ssaoBias);
     }, [ssaoBias]);
 
     useMemo(() => {
@@ -421,7 +421,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
 
-        localForageInstanceRef.current.localStorageInstance.setItem('ssaoRadius', ssaoRadius);
+        localForageInstanceRef.current?.localStorageInstance.setItem('ssaoRadius', ssaoRadius);
     }, [ssaoRadius]);
 
     useMemo(() => {
@@ -430,7 +430,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
 
-        localForageInstanceRef.current.localStorageInstance.setItem('depthBlurRadius', depthBlurRadius);
+        localForageInstanceRef.current?.localStorageInstance.setItem('depthBlurRadius', depthBlurRadius);
     }, [depthBlurRadius]);
 
     useMemo(() => {
@@ -439,7 +439,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
 
-        localForageInstanceRef.current.localStorageInstance.setItem('useOffScreenBuffers', useOffScreenBuffers);
+        localForageInstanceRef.current?.localStorageInstance.setItem('useOffScreenBuffers', useOffScreenBuffers);
     }, [useOffScreenBuffers]);
 
     useMemo(() => {
@@ -448,7 +448,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
 
-        localForageInstanceRef.current.localStorageInstance.setItem('doShadowDepthDebug', doShadowDepthDebug);
+        localForageInstanceRef.current?.localStorageInstance.setItem('doShadowDepthDebug', doShadowDepthDebug);
     }, [doShadowDepthDebug]);
 
     useMemo(() => {
@@ -457,7 +457,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
 
-        localForageInstanceRef.current.localStorageInstance.setItem('doOutline', doOutline);
+        localForageInstanceRef.current?.localStorageInstance.setItem('doOutline', doOutline);
     }, [doOutline]);
 
     useMemo(() => {
@@ -466,7 +466,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
 
-        localForageInstanceRef.current.localStorageInstance.setItem('doShadow', doShadow);
+        localForageInstanceRef.current?.localStorageInstance.setItem('doShadow', doShadow);
     }, [doShadow]);
 
     useMemo(() => {
@@ -475,7 +475,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
 
-        localForageInstanceRef.current.localStorageInstance.setItem('doSSAO', doSSAO);
+        localForageInstanceRef.current?.localStorageInstance.setItem('doSSAO', doSSAO);
     }, [doSSAO]);
 
     useMemo(() => {
@@ -484,7 +484,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
 
-        localForageInstanceRef.current.localStorageInstance.setItem('GLLabelsFontFamily', GLLabelsFontFamily);
+        localForageInstanceRef.current?.localStorageInstance.setItem('GLLabelsFontFamily', GLLabelsFontFamily);
     }, [GLLabelsFontFamily]);
 
     useMemo(() => {
@@ -493,7 +493,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
 
-        localForageInstanceRef.current.localStorageInstance.setItem('GLLabelsFontSize', GLLabelsFontSize);
+        localForageInstanceRef.current?.localStorageInstance.setItem('GLLabelsFontSize', GLLabelsFontSize);
     }, [GLLabelsFontSize]);
 
     useMemo(() => {
@@ -502,7 +502,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
 
-        localForageInstanceRef.current.localStorageInstance.setItem('doSpinTest', doSpinTest);
+        localForageInstanceRef.current?.localStorageInstance.setItem('doSpinTest', doSpinTest);
     }, [doSpinTest]);
 
     useMemo(() => {
@@ -511,7 +511,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('drawInteractions', drawInteractions);
+        localForageInstanceRef.current?.localStorageInstance.setItem('drawInteractions', drawInteractions);
     }, [drawInteractions]);
 
     useMemo(() => {
@@ -520,7 +520,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('mouseSensitivity', mouseSensitivity);
+        localForageInstanceRef.current?.localStorageInstance.setItem('mouseSensitivity', mouseSensitivity);
     }, [mouseSensitivity]);
 
     useMemo(() => {
@@ -529,7 +529,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('atomLabelDepthMode', atomLabelDepthMode);
+        localForageInstanceRef.current?.localStorageInstance.setItem('atomLabelDepthMode', atomLabelDepthMode);
     }, [atomLabelDepthMode]);
  
     useMemo(() => {
@@ -538,7 +538,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('defaultBackgroundColor', defaultBackgroundColor);
+        localForageInstanceRef.current?.localStorageInstance.setItem('defaultBackgroundColor', defaultBackgroundColor);
     }, [defaultBackgroundColor]);
     
     useMemo(() => {
@@ -547,7 +547,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('defaultExpandDisplayCards', defaultExpandDisplayCards);
+        localForageInstanceRef.current?.localStorageInstance.setItem('defaultExpandDisplayCards', defaultExpandDisplayCards);
     }, [defaultExpandDisplayCards]);
 
     useMemo(() => {
@@ -556,7 +556,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('shortCuts', shortCuts);
+        localForageInstanceRef.current?.localStorageInstance.setItem('shortCuts', shortCuts);
     }, [shortCuts]);
 
     useMemo(() => {
@@ -565,7 +565,7 @@ export const MoorhenPreferencesContainer = (props) => {
             return
         }
        
-        localForageInstanceRef.current.localStorageInstance.setItem('defaultMapLitLines', defaultMapLitLines);
+        localForageInstanceRef.current?.localStorageInstance.setItem('defaultMapLitLines', defaultMapLitLines);
     }, [defaultMapLitLines]);
 
     return  <></>

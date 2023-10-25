@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
 
-export const defaultMouseSettings = createSlice({
+export const defaultMouseSettingsSlice = createSlice({
   name: 'mouseSettings',
   initialState: {
     zoomWheelSensitivityFactor: null,
@@ -19,6 +19,6 @@ export const defaultMouseSettings = createSlice({
     }
 }})
 
-export const { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity } = defaultMouseSettings.actions
+export const { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity } = defaultMouseSettingsSlice.actions
 
-export default defaultMouseSettings.reducer
+export default defaultMouseSettingsSlice.reducer

@@ -1,4 +1,3 @@
-import { Dispatch, SetStateAction } from "react"
 import { Form, InputGroup } from "react-bootstrap";
 import { MoorhenSlider } from "../misc/MoorhenSlider"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
@@ -7,7 +6,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { setDepthBlurDepth, setDepthBlurRadius, setUseOffScreenBuffers } from "../../store/sceneSettingsSlice";
 
 export const MoorhenBlurMenuItem = (props: {
-    setPopoverIsShown: Dispatch<SetStateAction<boolean>> ;
+    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> ;
 }) => {
 
     const dispatch = useDispatch()

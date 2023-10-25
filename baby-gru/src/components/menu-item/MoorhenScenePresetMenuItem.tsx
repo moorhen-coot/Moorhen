@@ -2,16 +2,17 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { webGL } from "../../types/mgWebGL";
 import { ToggleButtonGroup, ToggleButton } from "@mui/material";
 import { useState, useEffect } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setResetClippingFogging } from "../../store/sceneSettingsSlice";
+import { moorhen } from "../../types/moorhen";
 
 export const MoorhenScenePresetMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    isDark: boolean;
 }) => {
 
     const dispatch = useDispatch()
+    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
     const [presetValue, setPresetValue] = useState<string | null>(null)
 
     useEffect(() => {
@@ -49,7 +50,7 @@ export const MoorhenScenePresetMenuItem = (props: {
         let borderColor: string
         let color: string
         if (presetValue === value) {
-            if (props.isDark) {
+            if (isDark) {
                 borderColor = 'white'
                 color = 'white'
             } else {
@@ -69,7 +70,7 @@ export const MoorhenScenePresetMenuItem = (props: {
 
     const panelContent = <>
         <p>Select a preset...</p>
-        <ToggleButtonGroup color={props.isDark ? 'primary' : "standard"} orientation="vertical" value={presetValue} onChange={(evt, newValue: string) => {setPresetValue(newValue)}} exclusive>
+        <ToggleButtonGroup color={isDark ? 'primary' : "standard"} orientation="vertical" value={presetValue} onChange={(evt, newValue: string) => {setPresetValue(newValue)}} exclusive>
             {getToggleButton('Model building', 'model-building')}
             {getToggleButton('Figure making', 'figure-making')}
         </ToggleButtonGroup>

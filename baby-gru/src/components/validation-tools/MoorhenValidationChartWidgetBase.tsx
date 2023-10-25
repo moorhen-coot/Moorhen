@@ -7,6 +7,7 @@ import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
 import { gemmi } from "../../types/gemmi";
 import annotationPlugin from 'chartjs-plugin-annotation'
 import { moorhen } from "../../types/moorhen";
+import { useSelector } from "react-redux";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
@@ -20,7 +21,6 @@ type ValidationChartProps = {
     dropdownId: number;
     accordionDropdownId: number;
     showSideBar: boolean;
-    backgroundColor: [number, number, number, number];
     sideBarWidth: number;
     extraControlForm?: JSX.Element;
     extraControlFormValue?: any;
@@ -36,7 +36,7 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
     const [selectedMap, setSelectedMap] = useState<number | null>(null)
     const [selectedChain, setSelectedChain] = useState<string | null>(null)
     const [cachedGemmiStructure, setCachedGemmiStructure] = useState<null | gemmi.Structure>(null)
-
+    const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
 
     const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedModel(parseInt(evt.target.value))
@@ -114,7 +114,7 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
         }
         
 
-    }, [plotData, props.backgroundColor, props.sideBarWidth, props.showSideBar, props.accordionDropdownId])
+    }, [plotData, backgroundColor, props.sideBarWidth, props.showSideBar, props.accordionDropdownId])
 
     return <Fragment>
                 <Form style={{ padding:'0', margin: '0' }}>

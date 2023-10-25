@@ -5,12 +5,12 @@ import { MoorhenSlider } from '../misc/MoorhenSlider';
 import { AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
 import { moorhen } from "../../types/moorhen";
 import { webGL } from '../../types/mgWebGL';
+import { useSelector } from "react-redux";
 
 export const MoorhenMoleculeRepresentationSettingsCard = (props: {
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
     show: boolean; anchorEl: React.RefObject<HTMLDivElement>;
     molecule: moorhen.Molecule;
-    isDark: boolean;
     molecules: moorhen.Molecule[];
     urlPrefix: string;
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -40,6 +40,7 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
 
     const [symmetryOn, setSymmetryOn] = useState<boolean>(false)
     const [showUnitCell, setShowUnitCell] = useState<boolean>(false)
+    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
 
     const {
         bondWidth, setBondWidth, atomRadiusBondRatio,
@@ -56,7 +57,7 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
     } = props.symmetrySettingsProps
 
     const getSliderButton = (state: number, stateSetter: React.Dispatch<React.SetStateAction<number>>, step: number) => {
-        return <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey'}} onClick={() => stateSetter((prev) => { return prev + step})} >
+        return <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey'}} onClick={() => stateSetter((prev) => { return prev + step})} >
                     {step > 0 ? <AddCircleOutline/> : <RemoveCircleOutline/>}
                 </IconButton>
     }
@@ -82,7 +83,7 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
                 anchorEl={props.anchorEl.current}
                 anchorOrigin={{ vertical: 'center', horizontal: 'center' }}
                 transformOrigin={{ vertical: 'center', horizontal: 'center', }}
-                sx={{'& .MuiPaper-root': {backgroundColor: props.isDark ? 'grey' : 'white', marginTop: '0.1rem', borderRadius: '1rem', borderStyle: 'solid', borderColor: 'grey', borderWidth: '1px'}}}
+                sx={{'& .MuiPaper-root': {backgroundColor: isDark ? 'grey' : 'white', marginTop: '0.1rem', borderRadius: '1rem', borderStyle: 'solid', borderColor: 'grey', borderWidth: '1px'}}}
                 
             >
             <Stack gap={2} direction='vertical' style={{width: '25rem', margin: '0.5rem'}}>

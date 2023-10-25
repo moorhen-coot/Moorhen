@@ -67,7 +67,6 @@ MoorhenPopoverOptions.defaultProps = {extraInput: () => null, nonCootCommand: fa
   
 
 export const MoorhenContextButtonBase = (props: {
-    isDark: boolean;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     selectedMolecule: moorhen.Molecule;
     chosenAtom: moorhen.ResidueSpec;
@@ -100,6 +99,7 @@ export const MoorhenContextButtonBase = (props: {
     };
 }) => {
     
+    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
 
     const doEdit = async (cootCommandInput: moorhen.cootCommandKwargs) => {
@@ -154,7 +154,7 @@ export const MoorhenContextButtonBase = (props: {
             className="moorhen-context-button"
             onClick={handleClick}
             onMouseEnter={() => props.setToolTip(props.toolTipLabel)}
-            style={{ backgroundColor: props.isDark ? 'grey' : 'white' }}
+            style={{ backgroundColor: isDark ? 'grey' : 'white' }}
             disabled={props.needsMapData && !props.activeMap || (props.needsAtomData && props.molecules.length === 0)}
         >
             {props.icon}

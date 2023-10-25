@@ -4,14 +4,16 @@ import parse from 'html-react-parser'
 import { MenuItem } from "@mui/material";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
+import { useSelector } from "react-redux";
 
 export const MoorhenLigandList = (props: { 
     setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    isDark: boolean; molecule: moorhen.Molecule;
+    molecule: moorhen.Molecule;
     glRef: React.RefObject<webGL.MGWebGL>; 
 }) => {
 
+    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
     const [showState, setShowState] = useState<{ [key: string]: boolean }>({})
     const [ligandList, setLigandList] = useState<{
         svg: string;
@@ -25,7 +27,7 @@ export const MoorhenLigandList = (props: {
         const result = await props.commandCentre.current.cootCommand({
             returnType: "string",
             command: 'get_svg_for_residue_type',
-            commandArgs: [imol, compId, false, props.isDark],
+            commandArgs: [imol, compId, false, isDark],
         }, false) as moorhen.WorkerResponse<string>
         
         const parser = new DOMParser()

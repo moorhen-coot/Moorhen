@@ -6,8 +6,21 @@ export const labelSettingsSlice = createSlice({
     atomLabelDepthMode: null,
     GLLabelsFontFamily: null,
     GLLabelsFontSize: null,
+    availableFonts: []
   },
   reducers: {
+    addAvailableFont: (state, action: {payload: string, type: string}) => {
+      return {...state, availableFonts: [...state.availableFonts, action.payload]}
+    },
+    removeAvailableFont: (state, action: {payload: string, type: string}) => {
+      return {...state, availableFonts: state.availableFonts.filter(item => item !== action.payload)}
+    },
+    emptyAvailableFonts: (state) => {
+      return {...state, availableFonts: [ ]}
+    },
+    addAvailableFontList: (state, action: {payload: string[], type: string}) => {
+      return {...state, availableFonts: [...state.availableFonts, ...action.payload]}
+    },
     setAtomLabelDepthMode: (state, action: {payload: boolean, type: string}) => {
       return {...state, atomLabelDepthMode: action.payload}
     },
@@ -20,6 +33,6 @@ export const labelSettingsSlice = createSlice({
   }
 })
 
-export const { setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } = labelSettingsSlice.actions
+export const { addAvailableFontList, setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } = labelSettingsSlice.actions
 
 export default labelSettingsSlice.reducer

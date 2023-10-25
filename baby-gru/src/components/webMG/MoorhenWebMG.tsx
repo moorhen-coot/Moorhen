@@ -18,16 +18,9 @@ interface MoorhenWebMGPropsInterface {
     changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
     maps: moorhen.Map[];
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
-    width: () => number;
-    height: () => number;
     activeMap: moorhen.Map;
-    backgroundColor: [number, number, number, number];
-    setBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
-    isDark: boolean;
     hoveredAtom: moorhen.HoveredAtom;
     viewOnly: boolean;
-    windowHeight: number;
-    windowWidth: number;
     urlPrefix: string;
     extraDraggableModals: JSX.Element[];
     enableAtomHovering: boolean;
@@ -93,6 +86,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const zoomWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.zoomWheelSensitivityFactor)
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
     const mapLineWidth = useSelector((state: moorhen.State) => state.mapSettings.mapLineWidth)
+    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
+    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
 
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
@@ -198,7 +194,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         } else {
             clearHBonds()
         }
-    }, [drawInteractions, props.molecules, props.backgroundColor])
+    }, [drawInteractions, props.molecules, backgroundColor])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
@@ -446,10 +442,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             if (resetClippingFogging) {
                 setClipFogByZoom()
             }
-            glRef.current.resize(props.width(), props.height())
+            glRef.current.resize(width, height)
             glRef.current.drawScene()    
         }
-    }, [glRef, props.width, props.height])
+    }, [glRef, width, height])
 
     const handleRightClick = useCallback((e: moorhen.AtomRightClickEvent) => {
         setShowContextMenu({ ...e.detail })
@@ -462,8 +458,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.setDiffuseLight(1., 1., 1.)
             glRef.current.setLightPositionNoUpdate(10., 10., 60.)
             setClipFogByZoom()
-            glRef.current.resize(props.width(), props.height())
-            glRef.current.drawScene()    
+            glRef.current.resize(width, height)
+            glRef.current.drawScene()
         }
     }, [])
 
@@ -552,9 +548,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
-            glRef.current.setBackground(props.backgroundColor)
+            glRef.current.setBackground(backgroundColor)
         }
-    }, [props.backgroundColor, glRef])
+    }, [backgroundColor, glRef])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
@@ -603,7 +599,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }
     */
     return  <>
-                <ToastContainer style={{ zIndex: '0', marginTop: "5rem", marginRight: '0.5rem', textAlign:'left', alignItems: 'left', maxWidth: convertViewtoPx(40, props.windowWidth)}} position='top-end' >
+                <ToastContainer style={{ zIndex: '0', marginTop: "5rem", marginRight: '0.5rem', textAlign:'left', alignItems: 'left', maxWidth: convertViewtoPx(40, width)}} position='top-end' >
                     {scoresToastContents !== null && showScoresToast &&
                         <Toast onClose={() => {}} autohide={false} show={true} style={{width: '100%', borderRadius: '1.5rem'}}>
                             {scoresToastContents}
@@ -633,9 +629,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     viewOnly={props.viewOnly}
                     urlPrefix={props.urlPrefix}
                     commandCentre={props.commandCentre}
-                    backgroundColor={props.backgroundColor}
-                    setBackgroundColor={props.setBackgroundColor}
-                    isDark={props.isDark}
                     timeCapsuleRef={props.timeCapsuleRef}
                     molecules={props.molecules}
                     changeMolecules={props.changeMolecules}
@@ -644,8 +637,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     showContextMenu={showContextMenu}
                     setShowContextMenu={setShowContextMenu}
                     activeMap={props.activeMap}
-                    windowWidth={props.windowWidth}
-                    windowHeight={props.windowHeight}
                     defaultActionButtonSettings={defaultActionButtonSettings}
                     setDefaultActionButtonSettings={setDefaultActionButtonSettings}
                     setHoveredAtom={props.setHoveredAtom}

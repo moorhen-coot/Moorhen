@@ -1068,6 +1068,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("altLoc",&moorhen::h_bond_atom::altLoc)
     ;
 
+    register_vector<coot::atom_spec_t>("VectorAtomSpec_t");
     register_vector<molecules_container_t::auto_read_mtz_info_t>("VectorAutoReadMtzInfo_t");
     register_vector<coot::CartesianPair>("VectorCootCartesianPair");
     register_vector<std::vector<coot::CartesianPair>>("VectorVectorCootCartesianPair");

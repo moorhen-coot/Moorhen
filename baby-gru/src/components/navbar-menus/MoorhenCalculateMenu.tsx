@@ -19,7 +19,6 @@ export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterfa
             <MoorhenSelfRestraintsMenuItem
                 glRef={props.glRef}
                 molecules={props.molecules}
-                isDark={props.isDark}
                 commandCentre={props.commandCentre}
                 setPopoverIsShown={setPopoverIsShown}
             />
@@ -33,7 +32,6 @@ export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterfa
                 glRef={props.glRef}
                 molecules={props.molecules}
                 maps={props.maps}
-                isDark={props.isDark}
                 commandCentre={props.commandCentre}
                 setPopoverIsShown={setPopoverIsShown}
             />

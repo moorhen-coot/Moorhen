@@ -3,33 +3,39 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { RgbColorPicker } from "react-colorful";
 import { CirclePicker } from "react-color"
 import { convertRemToPx } from "../../utils/MoorhenUtils";
+import { useDispatch, useSelector } from "react-redux";
+import { moorhen } from "../../types/moorhen";
+import { setBackgroundColor } from "../../store/canvasStatesSlice";
 
 export const MoorhenBackgroundColorMenuItem = (props: {
-    backgroundColor: [number, number, number, number];
-    setBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     popoverPlacement?: 'left' | 'right' ;
 }) => {
     
-    const [backgroundColor, setBackgroundColor] = useState<{ r: number; g: number; b: number; }>({
-        r: 255 * props.backgroundColor[0],
-        g: 255 * props.backgroundColor[1],
-        b: 255 * props.backgroundColor[2],
+    const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
+    const dispatch = useDispatch()
+
+    const [innerBackgroundColor, setInnerBackgroundColor] = useState<{ r: number; g: number; b: number; }>({
+        r: 255 * backgroundColor[0],
+        g: 255 * backgroundColor[1],
+        b: 255 * backgroundColor[2],
     })
 
     useEffect(() => {
         try {
-            if (JSON.stringify(props.backgroundColor) !== JSON.stringify([backgroundColor.r / 255., backgroundColor.g / 255., backgroundColor.b / 255., props.backgroundColor[3]])) {
-                props.setBackgroundColor([ backgroundColor.r / 255., backgroundColor.g / 255., backgroundColor.b / 255., props.backgroundColor[3] ])
+            if (JSON.stringify(backgroundColor) !== JSON.stringify([innerBackgroundColor.r / 255., innerBackgroundColor.g / 255., innerBackgroundColor.b / 255., backgroundColor[3]])) {
+                dispatch(
+                    setBackgroundColor([ innerBackgroundColor.r / 255., innerBackgroundColor.g / 255., innerBackgroundColor.b / 255., backgroundColor[3] ])
+                )
             }
         } catch (err) {
             console.log(err)
         }    
-    }, [backgroundColor])
+    }, [innerBackgroundColor])
 
     const handleCircleClick = (color: { rgb: { r: number; g: number; b: number; a: number; } }) => {
         try {
-            setBackgroundColor(color.rgb)
+            setInnerBackgroundColor(color.rgb)
         }
         catch (err) {
             console.log('err', err)
@@ -38,7 +44,7 @@ export const MoorhenBackgroundColorMenuItem = (props: {
 
     const handleColorChange = (color: { r: number; g: number; b: number; }) => {
         try {
-            setBackgroundColor(color)
+            setInnerBackgroundColor(color)
         }
         catch (err) {
             console.log('err', err)
@@ -46,9 +52,9 @@ export const MoorhenBackgroundColorMenuItem = (props: {
     }
 
     const panelContent = <>
-        <RgbColorPicker color={backgroundColor} onChange={handleColorChange} />
+        <RgbColorPicker color={innerBackgroundColor} onChange={handleColorChange} />
         <div style={{padding: '0.5rem', margin: '0.15rem', justifyContent: 'center', display: 'flex', backgroundColor: '#e3e1e1', borderRadius: '8px'}}>
-            <CirclePicker width={convertRemToPx(10)} onChange={handleCircleClick} color={backgroundColor} circleSize={convertRemToPx(10)/9} colors={['#000000', '#5c5c5c', '#8a8a8a', '#cccccc', '#ffffff']}/>
+            <CirclePicker width={convertRemToPx(10)} onChange={handleCircleClick} color={innerBackgroundColor} circleSize={convertRemToPx(10)/9} colors={['#000000', '#5c5c5c', '#8a8a8a', '#cccccc', '#ffffff']}/>
         </div>
     </>
 

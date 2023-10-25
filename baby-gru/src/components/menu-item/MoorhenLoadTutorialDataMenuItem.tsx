@@ -10,7 +10,6 @@ import { useSelector } from "react-redux";
 export const MoorhenLoadTutorialDataMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     monomerLibraryPath: string;
-    backgroundColor: [number, number, number, number];
     urlPrefix: string;
     glRef: React.RefObject<webGL.MGWebGL>;
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
@@ -20,6 +19,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
 }) => {
 
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
+    const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
     const tutorialNumberSelectorRef = useRef<HTMLSelectElement | null>(null);
     const allTutorialNumbers = ['1', '2', '3']
     const tutorialMtzColumnNames = {
@@ -45,7 +45,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
         }
         const tutorialNumber = tutorialNumberSelectorRef.current.value
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath)
-        newMolecule.setBackgroundColour(props.backgroundColor)
+        newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         const newMap = new MoorhenMap(props.commandCentre, props.glRef)
         const newDiffMap = new MoorhenMap(props.commandCentre, props.glRef)

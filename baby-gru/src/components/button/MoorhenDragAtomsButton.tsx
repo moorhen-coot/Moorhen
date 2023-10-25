@@ -10,6 +10,7 @@ import { cidToSpec } from "../../utils/MoorhenUtils";
 import { IconButton } from "@mui/material";
 import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { libcootApi } from "../../types/libcoot";
+import { useSelector } from "react-redux";
 
 export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
     const [showAccept, setShowAccept] = useState<boolean>(false)
@@ -23,6 +24,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
     const draggingDirty = useRef<boolean>(false)
     const refinementDirty = useRef<boolean>(false)
     const autoClearRestraintsRef = useRef<boolean>(true)
+    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
 
     const dragModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'SPHERE']
 
@@ -240,13 +242,13 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
     if (props.mode === 'context') {
 
         const contextMenuOverride = (
-            <MoorhenNotification isDark={props.isDark} windowWidth={props.windowWidth}>
+            <MoorhenNotification>
                 <Stack gap={2} direction='horizontal' style={{width: '100%', display:'flex', justifyContent: 'space-between'}}>
                     <div>
                         <span>Accept changes?</span>
                     </div>
                     <div>
-                    <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey', }} onClick={async () => {
+                    <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey', }} onClick={async () => {
                         document.removeEventListener('atomDragged', atomDraggedCallback)
                         document.removeEventListener('mouseup', mouseUpCallback)
                         await finishDragging(true)
@@ -256,7 +258,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
                     }}>
                         <CheckOutlined/>
                     </IconButton>
-                    <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey'}} onClick={async() => {
+                    <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey'}} onClick={async() => {
                         document.removeEventListener('atomDragged', atomDraggedCallback)
                         document.removeEventListener('mouseup', mouseUpCallback)
                         await finishDragging(false)

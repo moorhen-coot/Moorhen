@@ -6,6 +6,7 @@ import { MoorhenChainSelect } from '../select/MoorhenChainSelect'
 import { MoorhenMapSelect } from '../select/MoorhenMapSelect'
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
 import { residueCodesOneToThree, getResidueInfo, convertViewtoPx } from '../../utils/MoorhenUtils'
+import { useSelector } from "react-redux"
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
@@ -24,7 +25,10 @@ export const MoorhenMMRRCCPlot = (props) => {
     const [selectedModel, setSelectedModel] = useState(null)
     const [selectedMap, setSelectedMap] = useState(null)
     const [selectedChain, setSelectedChain] = useState(null)
-    
+    const isDark = useSelector((state) => state.canvasStates.isDark)
+    const height = useSelector((state) => state.canvasStates.height)
+    const backgroundColor = useSelector((state) => state.canvasStates.backgroundColor)
+
     const getSequenceData = () => {
         let selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
         if (selectedMolecule) {
@@ -153,7 +157,7 @@ export const MoorhenMMRRCCPlot = (props) => {
                
         const barWidth = props.sideBarWidth / 40
         const tooltipFontSize = 12
-        const axisLabelsFontSize = convertViewtoPx(70, props.windowHeight) / 60
+        const axisLabelsFontSize = convertViewtoPx(70, height) / 60
         
         const containerBody = document.getElementById('myContainerBody')
         containerBody.style.width = (labels.length*barWidth)+ "px";
@@ -164,7 +168,7 @@ export const MoorhenMMRRCCPlot = (props) => {
                 stacked: true,
                 beginAtZero: true,
                 display:true,
-                ticks: {color: props.isDark ? 'white' : 'black',
+                ticks: {color: isDark ? 'white' : 'black',
                         font:{size:barWidth, family:'Helvetica'},
                         maxRotation: 0, 
                         minRotation: 0,
@@ -184,7 +188,7 @@ export const MoorhenMMRRCCPlot = (props) => {
                     display: true,
                     font: {size:axisLabelsFontSize, family:'Helvetica', weight:800},
                     text: 'Correlation',
-                    color: props.isDark ? 'white' : 'black'
+                    color: isDark ? 'white' : 'black'
                 },
                 grid: {
                     display: true,
@@ -273,7 +277,7 @@ export const MoorhenMMRRCCPlot = (props) => {
         });
 
 
-    }, [plotData, props.backgroundColor, props.sideBarWidth, props.showSideBar, props.accordionDropdownId])
+    }, [plotData, backgroundColor, props.sideBarWidth, props.showSideBar, props.accordionDropdownId])
     
     return  <Fragment>
                 <Form style={{ padding:'0', margin: '0' }}>

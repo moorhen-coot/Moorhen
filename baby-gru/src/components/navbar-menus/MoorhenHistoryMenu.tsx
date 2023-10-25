@@ -6,11 +6,13 @@ import { moorhen } from "../../types/moorhen";
 import { SaveOutlined, WarningOutlined } from "@mui/icons-material";
 import { Stack } from "react-bootstrap";
 import { MoorhenNotification } from "../misc/MoorhenNotification";
+import { useSelector } from "react-redux";
 
 export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [historyHead, setHistoryHead] = useState(0)
+    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
 
-    const getWarningToast = (message: string) => <MoorhenNotification key={guid()} isDark={props.isDark} windowWidth={props.windowWidth} hideDelay={3000} width={20}>
+    const getWarningToast = (message: string) => <MoorhenNotification key={guid()} hideDelay={3000} width={20}>
             <><WarningOutlined style={{margin: 0}}/>
                 <h4 className="moorhen-warning-toast">
                     {message}
@@ -87,7 +89,7 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
         </Step>
     }, [props.commandCentre, historyHead, props.molecules, props.timeCapsuleRef, loadSession])
 
-    return <div style={{maxHeight: convertViewtoPx(65, props.windowHeight), maxWidth: '20rem', overflowY: 'auto', overflowX: 'hidden'}}>
+    return <div style={{maxHeight: convertViewtoPx(65, height), maxWidth: '20rem', overflowY: 'auto', overflowX: 'hidden'}}>
         <Stepper nonLinear activeStep={historyHead} orientation="vertical">
             {props.commandCentre.current.history.entries.map((entry, index) => getHistoryStep(entry, index)) }
         </Stepper>

@@ -39,6 +39,7 @@ export interface MoorhenNavBarExtendedControlsInterface extends MoorhenNavBarPro
 }
 
 export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface>((props, ref) => {
+    
     const [speedDialOpen, setSpeedDialOpen] = useState<boolean>(false)
     const [currentDropdownId, setCurrentDropdownId] = useState<string>('-1')
     const [showSaveIcon, setShowSaveIcon] = useState<boolean>(false)
@@ -49,6 +50,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
     const [showQuerySequence, setShowQuerySequence] = useState<boolean>(false)
     const [showScripting, setShowScripting] = useState<boolean>(false)
     const [popoverTargetRef, setPopoverTargetRef] = useState()
+    
     const speedDialRef = useRef()
     const fileSpeedDialActionRef = useRef()
     const editSpeedDialActionRef = useRef()
@@ -63,7 +65,12 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
     const cryoDialActionRef = useRef()
     const helpDialActionRef = useRef()
     const devDialActionRef = useRef()
+    
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
+    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
+    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+
 
     useEffect(() => {
         if (props.timeCapsuleRef.current) {
@@ -157,10 +164,10 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
                 position: 'absolute',
                 top: canvasTop + convertRemToPx(0.5),
                 left: canvasLeft + convertRemToPx(0.5),
-                color: props.isDark ? 'white' : 'black' ,
-                bgcolor: props.isDark ? 'grey' : 'white',
+                color: isDark ? 'white' : 'black' ,
+                bgcolor: isDark ? 'grey' : 'white',
                 '&:hover': {
-                    bgcolor: props.isDark ? 'grey' : 'white',
+                    bgcolor: isDark ? 'grey' : 'white',
                 },
             }}
         >
@@ -170,7 +177,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
         <ClickAwayListener onClickAway={() => { setCurrentDropdownId('-1') }}>
         <Popper open={speedDialOpen} anchorEl={speedDialRef.current} placement='bottom-start'>
             <Grow in={speedDialOpen} style={{ transformOrigin: '0 0 0' }}>
-            <MenuList style={{height: props.windowHeight - convertRemToPx(5), width: '100%', overflowY: 'auto', direction: 'rtl'}}>
+            <MenuList style={{height: height - convertRemToPx(5), width: '100%', overflowY: 'auto', direction: 'rtl'}}>
                 {Object.keys(actions).map((key) => {
                 const action = actions[key]
                 return <MenuItem
@@ -179,7 +186,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
                     className='moorhen-navbar-menu-item'
                     onClick={() => handleDialActionClick(action.name)}
                     style={{
-                        backgroundColor: props.isDark ? (currentDropdownId === action.name ? '#a8a8a8' : 'grey') : (currentDropdownId === action.name ? '#d4d4d4' : 'white') ,
+                        backgroundColor: isDark ? (currentDropdownId === action.name ? '#a8a8a8' : 'grey') : (currentDropdownId === action.name ? '#d4d4d4' : 'white') ,
                     }}>
                         <Stack gap={2} direction='horizontal' style={{display: 'flex', verticalAlign: 'middle'}}>
                             {action.name}
@@ -192,7 +199,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
             </MenuList>
             </Grow>
             <Overlay placement='right' show={currentDropdownId !== '-1'} target={currentDropdownId !== '-1' ? popoverTargetRef : null}>
-                <Popover className='moorhen-nav-popover' style={{maxWidth: convertViewtoPx(35, props.windowWidth)}}>
+                <Popover className='moorhen-nav-popover' style={{maxWidth: convertViewtoPx(35, width)}}>
                     <Popover.Body>
                         { currentDropdownId === 'File' && <MoorhenFileMenu dropdownId="File" {...collectedProps} /> }
                         { currentDropdownId === 'Edit' && <MoorhenEditMenu dropdownId="Edit" {...collectedProps} /> }
@@ -213,15 +220,11 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
     <MoorhenModelsModal
             show={showModels}
             setShow={setShowModels}
-            windowHeight={props.windowHeight}
-            windowWidth={props.windowWidth}
             {...props}
     />
     <MoorhenMapsModal
             show={showMaps}
             setShow={setShowMaps}
-            windowHeight={props.windowHeight}
-            windowWidth={props.windowWidth}
             {...props}
     />
     {showCreateAcedrgLinkModal && 
@@ -229,8 +232,6 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
             width={45}
             show={showCreateAcedrgLinkModal}
             setShow={setShowCreateAcedrgLinkModal}
-            windowHeight={props.windowHeight}
-            windowWidth={props.windowWidth}
             {...props}
         />
     }
@@ -238,8 +239,6 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
         <MoorhenValidationToolsModal 
             show={showValidation}
             setShow={setShowValidation}
-            windowHeight={props.windowHeight}
-            windowWidth={props.windowWidth}
             {...props}
         />
     }
@@ -247,8 +246,6 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
         <MoorhenQuerySequenceModal
             show={showQuerySequence}
             setShow={setShowQuerySequence}
-            windowHeight={props.windowHeight}
-            windowWidth={props.windowWidth}
             {...props} />
     }
     {showScripting &&
@@ -262,15 +259,15 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
             top: canvasTop + convertRemToPx(0.5),
             right: canvasLeft + convertRemToPx(0.5),
             display: props.hoveredAtom.cid || props.busy || showSaveIcon ? 'flex' : 'none',
-            color: props.isDark ? 'grey' : 'white' ,
-            bgcolor: props.isDark ? 'grey' : 'white',
+            color: isDark ? 'grey' : 'white' ,
+            bgcolor: isDark ? 'grey' : 'white',
             '&:hover': {
-                bgcolor: props.isDark ? 'grey' : 'white',
+                bgcolor: isDark ? 'grey' : 'white',
             }
         }}
     >
         {props.hoveredAtom.cid && <Form.Control className='moorhen-hovered-atom-form' type="text" readOnly={true} value={`${props.hoveredAtom.molecule.name}:${props.hoveredAtom.cid}`} />}
-        {props.busy && <Spinner className='moorhen-spinner' animation="border" variant={props.isDark ? 'light' : 'dark'} />}
+        {props.busy && <Spinner className='moorhen-spinner' animation="border" variant={isDark ? 'light' : 'dark'} />}
         {showSaveIcon && <SaveOutlined style={{ padding: 0, margin: 0, color: 'black' }}/>}
     </Fab>
     </>
