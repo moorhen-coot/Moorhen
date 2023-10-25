@@ -17,7 +17,6 @@ export const getBackupLabel = (key: moorhen.backupKey): string => {
  * @param {React.RefObject<moorhen.Map[]>} mapsRef - A react reference to the list of loaded maps
  * @param {React.RefObject<moorhen.Map>} activeMapRef - A react reference to the currently active map
  * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the molecular graphics renderer
- * @param {moorhen.Context} context - The context provider of the app
  * @property {string} version - Version number of the current time capsule
  * @property {boolean} disableBackups - Disable time capsule
  * @property {number} maxBackupCount - Maximum number of automatic backups to store in local storage
@@ -29,7 +28,6 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
     mapsRef: React.RefObject<moorhen.Map[]>;
     glRef: React.RefObject<webGL.MGWebGL>;
     activeMapRef: React.RefObject<moorhen.Map>;
-    context: moorhen.Context;
     busy: boolean;
     modificationCount: number;
     modificationCountBackupThreshold: number;
@@ -38,12 +36,11 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
     disableBackups: boolean;
     storageInstance: moorhen.LocalStorageInstance;
     
-    constructor(moleculesRef: React.RefObject<moorhen.Molecule[]>, mapsRef: React.RefObject<moorhen.Map[]>, activeMapRef: React.RefObject<moorhen.Map>, glRef: React.RefObject<webGL.MGWebGL>, context: moorhen.Context) {
+    constructor(moleculesRef: React.RefObject<moorhen.Molecule[]>, mapsRef: React.RefObject<moorhen.Map[]>, activeMapRef: React.RefObject<moorhen.Map>, glRef: React.RefObject<webGL.MGWebGL>) {
         this.moleculesRef = moleculesRef
         this.mapsRef = mapsRef
         this.glRef = glRef
         this.activeMapRef = activeMapRef
-        this.context = context
         this.busy = false
         this.modificationCount = 0
         this.modificationCountBackupThreshold = 5

@@ -1,62 +1,52 @@
 import { Form, InputGroup } from "react-bootstrap";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
-
+import { useSelector, useDispatch } from "react-redux";
+import { addMapUpdatingScore, removeMapUpdatingScore, setShowScoresToast } from "../../store/updatingMapScoresSettingsSlice";
+import { moorhen } from "../../types/moorhen";
+import { useCallback } from "react";
 
 export const MoorhenScoresToastPreferencesMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    defaultUpdatingScores: string[];
-    setDefaultUpdatingScores: React.Dispatch<{
-        action: 'Add' | 'Remove' | 'Overwrite';
-        item?: string;
-        items?: string[];
-    }>;
-    showScoresToast: boolean;
-    setShowScoresToast: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
+
+    const dispatch = useDispatch()
+    const showScoresToast = useSelector((state: moorhen.State) => state.updatingMapScoresSettings.showScoresToast)
+    const defaultUpdatingScores = useSelector((state: moorhen.State) => state.updatingMapScoresSettings.defaultUpdatingScores)
+
+    const handleScoreChange = useCallback((score: string) => {
+        dispatch(
+            defaultUpdatingScores.includes(score) ? removeMapUpdatingScore(score) : addMapUpdatingScore(score)
+        )
+    }, [defaultUpdatingScores])
 
     const panelContent =
         <>
             <InputGroup style={{ padding: '0rem', width: '15rem' }}>
                 <Form.Check
                     type="switch"
-                    checked={props.showScoresToast}
-                    onChange={() => { props.setShowScoresToast(!props.showScoresToast) }}
+                    checked={showScoresToast}
+                    onChange={() => {dispatch( setShowScoresToast(!showScoresToast) )}}
                     label="Show scores window" />
             </InputGroup>
             <InputGroup style={{ padding: '0rem', width: '15rem' }}>
                 <Form.Check
                     type="switch"
-                    checked={props.defaultUpdatingScores.includes('Rfactor')}
-                    onChange={() => {
-                        props.setDefaultUpdatingScores({
-                            action: props.defaultUpdatingScores.includes('Rfactor') ? 'Remove' : 'Add',
-                            item: 'Rfactor'
-                        })
-                    }}
+                    checked={defaultUpdatingScores.includes('Rfactor')}
+                    onChange={() => handleScoreChange('Rfactor')}
                     label="Show Rfactor" />
             </InputGroup>
             <InputGroup style={{ padding: '0rem', width: '15rem' }}>
                 <Form.Check
                     type="switch"
-                    checked={props.defaultUpdatingScores.includes('Rfree')}
-                    onChange={() => {
-                        props.setDefaultUpdatingScores({
-                            action: props.defaultUpdatingScores.includes('Rfree') ? 'Remove' : 'Add',
-                            item: 'Rfree'
-                        })
-                    }}
+                    checked={defaultUpdatingScores.includes('Rfree')}
+                    onChange={() => handleScoreChange('Rfree')}
                     label="Show Rfree" />
             </InputGroup>
             <InputGroup style={{ padding: '0rem', width: '15rem' }}>
                 <Form.Check
                     type="switch"
-                    checked={props.defaultUpdatingScores.includes('Moorhen Points')}
-                    onChange={() => {
-                        props.setDefaultUpdatingScores({
-                            action: props.defaultUpdatingScores.includes('Moorhen Points') ? 'Remove' : 'Add',
-                            item: 'Moorhen Points'
-                        })
-                    }}
+                    checked={defaultUpdatingScores.includes('Moorhen Points')}
+                    onChange={() => handleScoreChange('Moorhen Points')}
                     label="Show Moorhen points" />
             </InputGroup>
         </>

@@ -5,19 +5,21 @@ import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 import { MoorhenEditButtonBase } from "./MoorhenEditButtonBase";
 import { Container, FormGroup, FormLabel, FormSelect, Row } from "react-bootstrap";
 import { libcootApi } from "../../types/libcoot";
+import { useSelector } from "react-redux";
 
 export const MoorhenDeleteButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
     const [panelParameters, setPanelParameters] = useState<string>('RESIDUE')
     const [toolTipLabel, setToolTipLabel] = useState<string>("Delete Item")
+    const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
 
     const deleteModes = ['ATOM', 'RESIDUE', 'RESIDUE HYDROGENS', 'RESIDUE SIDE-CHAIN', 'CHAIN', 'CHAIN HYDROGENS', 'MOLECULE HYDROGENS']
 
     useEffect(() => {
-        if (props.shortCuts) {
-            const shortCut = JSON.parse(props.shortCuts as string).delete_residue
+        if (shortCuts) {
+            const shortCut = JSON.parse(shortCuts as string).delete_residue
             setToolTipLabel(`Delete Item ${getTooltipShortcutLabel(shortCut)}`)
         }
-    }, [props.shortCuts])
+    }, [shortCuts])
 
 
     const deleteFormatArgs = (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, pp: string) => {

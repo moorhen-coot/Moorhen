@@ -1,9 +1,8 @@
-import { useEffect, useCallback, useReducer, useRef, useState, useContext } from 'react';
+import { useEffect, useCallback, useReducer, useRef, useState } from 'react';
 import { Container, Col, Row, Spinner } from 'react-bootstrap';
 import { MoorhenWebMG } from './webMG/MoorhenWebMG';
 import { getTooltipShortcutLabel, createLocalStorageInstance, allFontsSet, itemReducer } from '../utils/MoorhenUtils';
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre"
-import { MoorhenContext } from "../utils/MoorhenContext";
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
 import { Backdrop } from "@mui/material";
 import { babyGruKeyPress } from '../utils/MoorhenKeyboardAccelerators';
@@ -12,6 +11,9 @@ import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
 import { MoorhenNotification } from './misc/MoorhenNotification';
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
+import { MoorhenPreferencesContainer } from './misc/MoorhenPreferencesContainer'
+import { useSelector, useDispatch } from 'react-redux';
+import { setDefaultBackgroundColor } from '../store/sceneSettingsSlice';
 
 const initialMoleculesState: moorhen.Molecule[] = []
 
@@ -71,7 +73,6 @@ const initialMapsState: moorhen.Map[] = []
  * }
  */
 export const MoorhenContainer = (props: moorhen.ContainerProps) => {
-    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
     const innerGlRef = useRef<null | webGL.MGWebGL>(null)
     const innerVideoRecorderRef = useRef<null | moorhen.ScreenRecorder>(null);
     const innerTimeCapsuleRef = useRef<null | moorhen.TimeCapsule>(null);
@@ -99,6 +100,18 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const [innerNotificationContent, setInnerNotificationContent] = useState<null | JSX.Element>(null)
     const [innerAvailableFonts, setInnerAvailableFonts] = useState<string[]>([])
     
+    const dispatch = useDispatch()
+    const userPreferencesMounted = useSelector((state: moorhen.State) => state.generalStates.userPreferencesMounted)
+    const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops)
+    const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
+    const shortcutOnHoveredAtom = useSelector((state: moorhen.State) => state.shortcutSettings.shortcutOnHoveredAtom)
+    const showShortcutToast = useSelector((state: moorhen.State) => state.shortcutSettings.showShortcutToast)
+    const defaultMapSamplingRate = useSelector((state: moorhen.State) => state.mapSettings.defaultMapSamplingRate)
+    const defaultBackgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.defaultBackgroundColor)
+    const makeBackups = useSelector((state: moorhen.State) => state.backupSettings.makeBackups)
+    const maxBackupCount = useSelector((state: moorhen.State) => state.backupSettings.maxBackupCount)
+    const modificationCountBackupThreshold = useSelector((state: moorhen.State) => state.backupSettings.modificationCountBackupThreshold)
+
     innerMoleculesRef.current = innerMolecules as moorhen.Molecule[]
     innerMapsRef.current = innerMaps as moorhen.Map[]
     innerActiveMapRef.current = innerActiveMap
@@ -183,27 +196,27 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     useEffect(() => {
         const initTimeCapsule = async () => {
-            if (context.isMounted) {
-                timeCapsuleRef.current = new MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef, context)
+            if (userPreferencesMounted) {
+                timeCapsuleRef.current = new MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef)
                 timeCapsuleRef.current.storageInstance = backupStorageInstance
-                timeCapsuleRef.current.maxBackupCount = context.maxBackupCount
-                timeCapsuleRef.current.modificationCountBackupThreshold = context.modificationCountBackupThreshold
+                timeCapsuleRef.current.maxBackupCount = maxBackupCount
+                timeCapsuleRef.current.modificationCountBackupThreshold = modificationCountBackupThreshold
                 await timeCapsuleRef.current.init()
             }
         }
         initTimeCapsule()
-    }, [context.isMounted])
+    }, [userPreferencesMounted])
     
     useEffect(() => {
         const onCootInitialized = async () => {
-            if (cootInitialized && context.isMounted) {
+            if (cootInitialized && userPreferencesMounted) {
                 await commandCentre.current.cootCommand({
                     command: 'set_map_sampling_rate',
-                    commandArgs: [context.defaultMapSamplingRate],
+                    commandArgs: [defaultMapSamplingRate],
                     returnType: 'status'
                 }, false)
     
-                const shortCut = JSON.parse(context.shortCuts as string).show_shortcuts
+                const shortCut = JSON.parse(shortCuts as string).show_shortcuts
                 setNotificationContent(
                     <MoorhenNotification key={'initial-notification'} isDark={isDark} windowWidth={windowWidth} hideDelay={5000} width={20}>
                         <h4 style={{margin: 0}}>
@@ -219,17 +232,17 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         
         onCootInitialized()
 
-    }, [cootInitialized, context.isMounted, forwardControls])
+    }, [cootInitialized, userPreferencesMounted, forwardControls])
 
     useEffect(() => {
-        if (context.isMounted && context.defaultBackgroundColor !== backgroundColor) {
-            setBackgroundColor(context.defaultBackgroundColor)
+        if (userPreferencesMounted && defaultBackgroundColor !== backgroundColor) {
+            setBackgroundColor(defaultBackgroundColor)
         }
         
-    }, [context.isMounted])
+    }, [userPreferencesMounted])
 
     useEffect(() => {
-        if (!context.isMounted) {
+        if (!userPreferencesMounted) {
             return
         }
         
@@ -245,8 +258,10 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             setTheme("flatly")
         }
         
-        if (context.defaultBackgroundColor !== backgroundColor) {
-            context.setDefaultBackgroundColor(backgroundColor)
+        if (defaultBackgroundColor !== backgroundColor) {
+            dispatch(
+                setDefaultBackgroundColor(backgroundColor)
+            )
         }
 
         style.rel = "stylesheet";
@@ -263,31 +278,31 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         async function setMakeBackupsAPI() {
             await commandCentre.current.cootCommand({
                 command: 'set_make_backups',
-                commandArgs: [context.makeBackups],
+                commandArgs: [makeBackups],
                 returnType: "status"
             }, false)
         }
 
-        if (commandCentre.current && context.makeBackups !== null && cootInitialized) {
+        if (commandCentre.current && makeBackups !== null && cootInitialized) {
             setMakeBackupsAPI()
         }
 
-    }, [context.makeBackups, cootInitialized])
+    }, [makeBackups, cootInitialized])
 
     useEffect(() => {
         async function setDrawMissingLoopAPI() {
             await commandCentre.current.cootCommand({
                 command: 'set_draw_missing_residue_loops',
-                commandArgs: [context.drawMissingLoops],
+                commandArgs: [drawMissingLoops],
                 returnType: "status"
             }, false)
         }
 
-        if (commandCentre.current && context.drawMissingLoops !== null && cootInitialized) {
+        if (commandCentre.current && drawMissingLoops !== null && cootInitialized) {
             setDrawMissingLoopAPI()
         }
 
-    }, [context.drawMissingLoops, cootInitialized])
+    }, [drawMissingLoops, cootInitialized])
 
     useEffect(() => {
         setWindowDimensions()
@@ -342,8 +357,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     //Make this so that the keyPress returns true or false, depending on whether mgWebGL is to continue processing event
     const onKeyPress = useCallback((event: KeyboardEvent) => {
-        return babyGruKeyPress(event, collectedProps, context, JSON.parse(context.shortCuts as string))
-    }, [molecules, activeMolecule, activeMap, hoveredAtom, viewOnly, context])
+        return babyGruKeyPress(event, collectedProps, JSON.parse(shortCuts as string), showShortcutToast, shortcutOnHoveredAtom)
+    }, [molecules, activeMolecule, activeMap, hoveredAtom, viewOnly, shortCuts, showShortcutToast, shortcutOnHoveredAtom])
 
     useEffect(() => {
         if (hoveredAtom && hoveredAtom.molecule && hoveredAtom.cid) {
@@ -425,7 +440,9 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         <MoorhenNavBar {...collectedProps} busy={busy}/>
         
     </div>
-    
+
+    <MoorhenPreferencesContainer/>
+
     <Container fluid className={`baby-gru ${theme}`}>
         <Row>
             <Col style={{ paddingLeft: '0', paddingRight: '0' }}>

@@ -1,8 +1,7 @@
 import { Form, Button, InputGroup, SplitButton, Dropdown, Stack } from "react-bootstrap";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenMap } from "../../utils/MoorhenMap";
-import { MoorhenContext } from "../../utils/MoorhenContext";
-import { useState, useRef, useContext, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
 import { MoorhenLoadTutorialDataMenuItem } from "../menu-item/MoorhenLoadTutorialDataMenuItem"
 import { MoorhenAssociateReflectionsToMap } from "../menu-item/MoorhenAssociateReflectionsToMap";
 import { MoorhenAutoOpenMtzMenuItem } from "../menu-item/MoorhenAutoOpenMtzMenuItem"
@@ -18,16 +17,18 @@ import { getBackupLabel } from "../../utils/MoorhenTimeCapsule"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { moorhen } from "../../types/moorhen";
+import { useSelector } from "react-redux";
 
 export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
 
     const { changeMolecules, changeMaps, commandCentre, glRef, monomerLibraryPath } = props;
-    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
     const [remoteSource, setRemoteSource] = useState<string>("PDBe")
     const [isValidPdbId, setIsValidPdbId] = useState<boolean>(true)
     const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
     const fetchMapDataCheckRef = useRef<HTMLInputElement | null>(null);
+    const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
+    const enableTimeCapsule = useSelector((state: moorhen.State) => state.backupSettings.enableTimeCapsule)
 
     const getWarningToast = (message: string) => <MoorhenNotification key={guid()} isDark={props.isDark} windowWidth={props.windowWidth} hideDelay={3000} width={20}>
             <><WarningOutlined style={{margin: 0}}/>
@@ -69,7 +70,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const readPdbFile = async (file: File): Promise<moorhen.Molecule> => {
         const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
         newMolecule.setBackgroundColour(props.backgroundColor)
-        newMolecule.defaultBondOptions.smoothness = context.defaultBondSmoothness
+        newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         await newMolecule.loadToCootFromFile(file)        
         return newMolecule        
     }
@@ -152,7 +153,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const fetchMoleculeFromURL = async (url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> => {
         const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
         newMolecule.setBackgroundColour(props.backgroundColor)
-        newMolecule.defaultBondOptions.smoothness = context.defaultBondSmoothness
+        newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         try {
             await newMolecule.loadToCootFromURL(url, molName)
             if (newMolecule.molNo === -1) throw new Error("Cannot read the fetched molecule...")
@@ -353,11 +354,11 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                         Download session
                     </MenuItem>
 
-                    <MenuItem id='save-session-menu-item' onClick={createBackup} disabled={!context.enableTimeCapsule}>
+                    <MenuItem id='save-session-menu-item' onClick={createBackup} disabled={!enableTimeCapsule}>
                         Save backup
                     </MenuItem>
                     
-                    <MoorhenBackupsMenuItem {...menuItemProps} disabled={!context.enableTimeCapsule} loadSession={loadSession} />
+                    <MoorhenBackupsMenuItem {...menuItemProps} disabled={!enableTimeCapsule} loadSession={loadSession} />
 
                     <MenuItem id='screenshot-menu-item' onClick={() => props.videoRecorderRef.current?.takeScreenShot("moorhen.png")}>
                         Screenshot

@@ -1,11 +1,11 @@
-import { useContext, useRef } from "react";
+import { useRef } from "react";
 import { Form } from "react-bootstrap";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
-import { MoorhenContext } from "../../utils/MoorhenContext";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
+import { useSelector } from "react-redux";
 
 export const MoorhenLoadTutorialDataMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -19,7 +19,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 
-    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
+    const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const tutorialNumberSelectorRef = useRef<HTMLSelectElement | null>(null);
     const allTutorialNumbers = ['1', '2', '3']
     const tutorialMtzColumnNames = {
@@ -46,7 +46,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
         const tutorialNumber = tutorialNumberSelectorRef.current.value
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath)
         newMolecule.setBackgroundColour(props.backgroundColor)
-        newMolecule.defaultBondOptions.smoothness = context.defaultBondSmoothness
+        newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         const newMap = new MoorhenMap(props.commandCentre, props.glRef)
         const newDiffMap = new MoorhenMap(props.commandCentre, props.glRef)
         await newMolecule.loadToCootFromURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `mol-${tutorialNumber}`)

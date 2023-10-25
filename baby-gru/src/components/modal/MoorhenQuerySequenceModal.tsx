@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useContext } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Backdrop } from '@mui/material';
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined, FirstPageOutlined, WarningOutlined } from "@mui/icons-material";
 import { getMultiColourRuleArgs, guid } from '../../utils/MoorhenUtils';
@@ -7,11 +7,11 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
-import { MoorhenContext } from "../../utils/MoorhenContext";
 import { MoorhenDraggableModalBase } from "../modal/MoorhenDraggableModalBase"
 import { MoorhenSlider } from "../misc/MoorhenSlider";
 import { webGL } from "../../types/mgWebGL";
 import { MoorhenNotification } from "../misc/MoorhenNotification";
+import { useSelector } from "react-redux";
 
 export const MoorhenQuerySequenceModal = (props: {
     windowHeight: number;
@@ -43,9 +43,7 @@ export const MoorhenQuerySequenceModal = (props: {
     const moleculeSelectRef = useRef<HTMLSelectElement>();
     const chainSelectRef = useRef<HTMLSelectElement>();
     const sourceSelectRef =  useRef<HTMLSelectElement>();
-    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
-
-    const { defaultBondSmoothness } = context
+    const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
 
     const fetchMoleculeFromURL = async (url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> => {
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath)

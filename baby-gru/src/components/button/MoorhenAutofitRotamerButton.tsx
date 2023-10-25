@@ -3,10 +3,12 @@ import { getTooltipShortcutLabel } from "../../utils/MoorhenUtils"
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 import { MoorhenEditButtonBase } from "./MoorhenEditButtonBase";
+import { useSelector } from "react-redux";
 
 export const MoorhenAutofitRotamerButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
 
     const [toolTipLabel, setToolTipLabel] = useState<string>("Auto-fit Rotamer")
+    const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
 
     const getCootCommandInput = (selectedMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, localParameters?: string): moorhen.cootCommandKwargs => {
         return {
@@ -24,11 +26,11 @@ export const MoorhenAutofitRotamerButton = (props: moorhen.EditButtonProps | moo
     }
 
     useEffect(() => {
-        if (props.shortCuts) {
-            const shortCut = JSON.parse(props.shortCuts as string).auto_fit_rotamer
+        if (shortCuts) {
+            const shortCut = JSON.parse(shortCuts as string).auto_fit_rotamer
             setToolTipLabel(`Auto-fit Rotamer ${getTooltipShortcutLabel(shortCut)}`)
         }
-    }, [props.shortCuts])
+    }, [shortCuts])
 
 
     if (props.mode === 'context') {

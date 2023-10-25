@@ -1,11 +1,11 @@
-import { useContext, useRef } from "react";
+import { useRef } from "react";
 import { Form } from "react-bootstrap";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
-import { MoorhenContext } from "../../utils/MoorhenContext";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
+import { useSelector } from "react-redux";
 
 export const MoorhenGetMonomerMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>
@@ -17,7 +17,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 
-    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
+    const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const tlcRef = useRef<HTMLInputElement>()
     const selectRef = useRef<HTMLSelectElement | null>(null)
 
@@ -60,7 +60,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
             newMolecule.molNo = result.data.result.result
             newMolecule.name = newTlc
             newMolecule.setBackgroundColour(props.glRef.current.background_colour)
-            newMolecule.defaultBondOptions.smoothness = context.defaultBondSmoothness
+            newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
             const fromMolecule = props.molecules.find(molecule => molecule.molNo === fromMolNo)
             if (typeof fromMolecule !== 'undefined') {
                 const ligandDict = fromMolecule.getDict(newTlc)

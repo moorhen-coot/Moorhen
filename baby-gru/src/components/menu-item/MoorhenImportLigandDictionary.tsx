@@ -1,6 +1,5 @@
-import React, { useCallback, useContext, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
-import { MoorhenContext } from "../../utils/MoorhenContext"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { Dropdown, Form, InputGroup, SplitButton } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
@@ -9,6 +8,7 @@ import { readTextFile } from "../../utils/MoorhenUtils"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { libcootApi } from "../../types/libcoot"
+import { useSelector } from "react-redux"
 
 const MoorhenImportLigandDictionary = (props: { 
     id: string;
@@ -34,7 +34,7 @@ const MoorhenImportLigandDictionary = (props: {
     moleculeSelectValueRef: React.MutableRefObject<string>;
 }) => {
 
-    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
+    const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
 
     const {
         createInstance, setCreateInstance, addToMolecule, fetchLigandDict, panelContent,
@@ -84,7 +84,7 @@ const MoorhenImportLigandDictionary = (props: {
                 newMolecule.molNo = result.data.result.result
                 newMolecule.name = instanceName
                 newMolecule.setBackgroundColour(backgroundColor)
-                newMolecule.defaultBondOptions.smoothness = context.defaultBondSmoothness
+                newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
                 await Promise.all([
                     newMolecule.fetchDefaultColourRules(),
                     newMolecule.addDict(fileContent)
@@ -108,7 +108,7 @@ const MoorhenImportLigandDictionary = (props: {
 
         setPopoverIsShown(false)
 
-    }, [moleculeSelectValueRef, createRef, setPopoverIsShown, molecules, commandCentre, glRef, tlcValueRef, monomerLibraryPath, backgroundColor, context.defaultBondSmoothness, changeMolecules, addToMoleculeValueRef])
+    }, [moleculeSelectValueRef, createRef, setPopoverIsShown, molecules, commandCentre, glRef, tlcValueRef, monomerLibraryPath, backgroundColor, defaultBondSmoothness, changeMolecules, addToMoleculeValueRef])
 
     const popoverContent = <>
             {panelContent}
