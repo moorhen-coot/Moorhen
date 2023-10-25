@@ -160,7 +160,6 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
                     </MenuItem>
                     <MoorhenShortcutConfigModal showModal={showModal} setShowModal={setShowModal}/>
                     <MoorhenGLFontMenuItem
-                        availableFonts={props.availableFonts}
                         setPopoverIsShown={setPopoverIsShown}
                     />
             </div>

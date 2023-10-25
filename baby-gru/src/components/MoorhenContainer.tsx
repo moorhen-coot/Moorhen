@@ -96,7 +96,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const [innerTheme, setInnerTheme] = useState<string>("flatly")
     const [innerShowToast, setInnerShowToast] = useState<boolean>(false)
     const [innerNotificationContent, setInnerNotificationContent] = useState<null | JSX.Element>(null)
-    const [innerAvailableFonts, setInnerAvailableFonts] = useState<string[]>([])
     
     const dispatch = useDispatch()
     const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
@@ -129,27 +128,10 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         
     }, [])
 
-    useEffect(() => {
-        const fetchAvailableFonts = async () => {
-            await document.fonts.ready;
-            const fontAvailable: string[] = []
-            allFontsSet.forEach((font: string) => {
-                if (document.fonts.check(`12px "${font}"`)) {
-                    fontAvailable.push(font);
-                }    
-            })
-            setInnerAvailableFonts(Array.from(fontAvailable))  
-        }
-
-        fetchAvailableFonts()
-
-    }, [])
-
     const innerStatesMap: moorhen.ContainerStates = {
         glRef: innerGlRef, timeCapsuleRef: innerTimeCapsuleRef, commandCentre: innnerCommandCentre,
         moleculesRef: innerMoleculesRef, mapsRef: innerMapsRef, activeMapRef: innerActiveMapRef,
         lastHoveredAtom: innerLastHoveredAtom, setEnableAtomHovering: setInnerEnableAtomHovering,
-        prevActiveMoleculeRef: innerPrevActiveMoleculeRef, setAvailableFonts: setInnerAvailableFonts,
         activeMap: innerActiveMap, setActiveMap: setInnerActiveMap, activeMolecule: innerActiveMolecule,
         setActiveMolecule: setInnerActiveMolecule, hoveredAtom: innerHoveredAtom, setHoveredAtom: setInnerHoveredAtom,
         cursorStyle: innerCursorStyle, maps: innerMaps as moorhen.Map[], molecules: innerMolecules as moorhen.Molecule[],
@@ -158,8 +140,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         appTitle: innerAppTitle, setAppTitle: setInnerAppTitle, cootInitialized: innerCootInitialized, 
         setCootInitialized: setInnerCootInitialized, theme: innerTheme, setTheme: setInnerTheme, 
         showToast: innerShowToast, setShowToast: setInnerShowToast, notificationContent: innerNotificationContent, 
-        setNotificationContent: setInnerNotificationContent, availableFonts: innerAvailableFonts, 
-        videoRecorderRef: innerVideoRecorderRef
+        setNotificationContent: setInnerNotificationContent, videoRecorderRef: innerVideoRecorderRef,
+        prevActiveMoleculeRef: innerPrevActiveMoleculeRef, 
     }
 
     let states = {} as moorhen.ContainerStates
@@ -171,9 +153,9 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         lastHoveredAtom, prevActiveMoleculeRef, activeMap, maps, changeMaps,
         setActiveMap, activeMolecule, setActiveMolecule, hoveredAtom, setHoveredAtom,
         cursorStyle, setCursorStyle, busy, setBusy, changeMolecules, setEnableAtomHovering,
-        molecules, availableFonts, setAvailableFonts, enableAtomHovering,
         appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
-        showToast, setShowToast, notificationContent, setNotificationContent
+        showToast, setShowToast, notificationContent, setNotificationContent,
+        molecules, enableAtomHovering
     } = states
 
     const {
@@ -433,7 +415,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         setHoveredAtom, showToast, setShowToast, timeCapsuleRef, disableFileUploads, 
         urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems, extraEditMenuItems,
         extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, setEnableAtomHovering, videoRecorderRef,
-        extraDraggableModals, aceDRGInstance, availableFonts, enableAtomHovering, 
+        extraDraggableModals, aceDRGInstance, enableAtomHovering, 
     }
 
     return <> 

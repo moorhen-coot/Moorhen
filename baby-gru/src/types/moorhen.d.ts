@@ -740,7 +740,6 @@ export namespace moorhen {
         setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
         showToast: boolean;
         setShowToast: React.Dispatch<React.SetStateAction<boolean>>;
-        availableFonts: string[];
     }
 
     interface State {
@@ -866,8 +865,6 @@ export namespace moorhen {
         setShowToast: React.Dispatch<React.SetStateAction<boolean>>;
         notificationContent: null | JSX.Element;
         setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
-        availableFonts: string[];
-        setAvailableFonts: React.Dispatch<React.SetStateAction<string[]>>
     }
     
     interface ContainerProps extends Partial<ContainerStates>, Partial<ContainerOptionalProps> { }
