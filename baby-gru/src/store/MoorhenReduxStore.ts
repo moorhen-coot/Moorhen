@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit'
 import moleculesReducer from './moleculesSlice'
 import mapsReducer from './mapsSlice'
-import canvasReducer from './canvasSettingsSlice'
+import canvasReducer from './canvasStatesSlice'
 import mapSettingsReducer from './mapSettingsSlice'
 import mouseSettingsReducer from './mouseSettings'
 import backupSettingsReducer from './backupSettingsSlice'
@@ -11,12 +11,13 @@ import labelSettingsReducer from './labelSettingsSlice'
 import sceneSettingsReducer from './sceneSettingsSlice'
 import miscAppSettingsReducer from './miscAppSettingsSlice'
 import generalStatesReducer from './generalStatesSlice'
+import hoveringStatesReducer from './hoveringStatesSlice'
 
 export default configureStore({
     reducer: {
         molecules: moleculesReducer,
         maps: mapsReducer,
-        canvasSettings: canvasReducer,
+        canvasStates: canvasReducer,
         mapSettings: mapSettingsReducer,
         mouseSettings: mouseSettingsReducer,
         backupSettings: backupSettingsReducer,
@@ -25,7 +26,8 @@ export default configureStore({
         labelSettings: labelSettingsReducer,
         sceneSettings: sceneSettingsReducer,
         miscAppSettings: miscAppSettingsReducer,
-        generalStates: generalStatesReducer
+        generalStates: generalStatesReducer,
+        hoveringStates: hoveringStatesReducer
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

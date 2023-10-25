@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
 
-export const sceneSettings = createSlice({
+export const sceneSettingsSlice = createSlice({
   name: 'sceneSettings',
   initialState: {
     defaultBackgroundColor: null,
@@ -23,8 +23,12 @@ export const sceneSettings = createSlice({
     doOutline: null,
     depthBlurRadius: null,
     depthBlurDepth: null,
+    backgroundColour: [1, 1, 1, 1],
   },
   reducers: {
+    setBackgroundColour:  (state, action: {payload: [number, number, number, number], type: string}) => {
+        return {...state, backgroundColour: action.payload}
+    },
     setDefaultBackgroundColor: (state, action: {payload: [number, number, number, number], type: string}) => {
         return {...state, defaultBackgroundColor: action.payload}
     },
@@ -89,9 +93,10 @@ export const sceneSettings = createSlice({
 }})
 
 export const {
-    setDefaultBackgroundColor, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness, setDrawAxes,
-    setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap, setDoPerspectiveProjection, 
-    setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpinTest, setDoOutline, setDepthBlurRadius, setDepthBlurDepth
-} = sceneSettings.actions
+    setDefaultBackgroundColor, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
+    setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap,  
+    setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpinTest, setDoOutline, setDepthBlurRadius,
+    setDepthBlurDepth,setBackgroundColour, setDrawAxes, setDoPerspectiveProjection
+} = sceneSettingsSlice.actions
 
-export default sceneSettings.reducer
+export default sceneSettingsSlice.reducer

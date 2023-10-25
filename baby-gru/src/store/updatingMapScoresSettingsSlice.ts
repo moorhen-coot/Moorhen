@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
 
-export const updatingMapScoresSettings = createSlice({
+export const updatingMapScoresSettingsSlice = createSlice({
   name: 'updatingMapScoresSettings',
   initialState: {
     defaultUpdatingScores: null,
@@ -21,6 +21,6 @@ export const updatingMapScoresSettings = createSlice({
     }
 }})
 
-export const { setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores } = updatingMapScoresSettings.actions
+export const { setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores } = updatingMapScoresSettingsSlice.actions
 
-export default updatingMapScoresSettings.reducer
+export default updatingMapScoresSettingsSlice.reducer

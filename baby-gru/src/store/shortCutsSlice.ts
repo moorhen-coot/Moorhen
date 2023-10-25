@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
 
-export const shortcutSettings = createSlice({
+export const shortcutSettingsSlice = createSlice({
   name: 'shortcutSettings',
   initialState: {
     shortcutOnHoveredAtom: null,
@@ -19,6 +19,6 @@ export const shortcutSettings = createSlice({
     }    
 }})
 
-export const { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts } = shortcutSettings.actions
+export const { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts } = shortcutSettingsSlice.actions
 
-export default shortcutSettings.reducer
+export default shortcutSettingsSlice.reducer

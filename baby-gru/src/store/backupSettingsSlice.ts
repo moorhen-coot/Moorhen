@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
 
-export const backupSettings = createSlice({
+export const backupSettingsSlice = createSlice({
   name: 'backupSettings',
   initialState: {
     enableTimeCapsule: null,
@@ -23,6 +23,6 @@ export const backupSettings = createSlice({
     }
 }})
 
-export const { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold } = backupSettings.actions
+export const { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold } = backupSettingsSlice.actions
 
-export default backupSettings.reducer
+export default backupSettingsSlice.reducer

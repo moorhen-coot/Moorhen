@@ -754,7 +754,11 @@ export namespace moorhen {
     interface State {
         molecules: Molecule[];
         maps: Map[];
-        canvasSettings: { height: number; width: number; isDark: boolean };
+        canvasStates: {
+            height: number;
+            width: number;
+            isDark: boolean
+        };
         mapSettings: {
             defaultMapSamplingRate: number;
             defaultMapLitLines: boolean;
@@ -785,8 +789,10 @@ export namespace moorhen {
             atomLabelDepthMode: boolean;
             GLLabelsFontFamily: string;
             GLLabelsFontSize: number;
+            availableFonts: string[];
         };
         sceneSettings: {
+            backgroundColor: [number, number, number, number];
             defaultBackgroundColor: [number, number, number, number];
             drawCrosshairs: boolean; 
             drawAxes: boolean; 
@@ -816,6 +822,19 @@ export namespace moorhen {
         generalStates: {
             devMode: boolean; 
             userPreferencesMounted: boolean;
+            busy: boolean;
+            appTitle: string;
+            cootInitialized: boolean;
+            notificationContent: JSX.Element;
+            showToast: boolean;
+            activeMap: Map;
+            activeMolecule: Molecule;
+            theme: string;
+        };
+        hoveringStates: {
+            enableAtomHovering: boolean;
+            hoveredAtom: HoveredAtom;
+            cursorStyle: string;
         };
     }
     

@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit'
 
 export const canvasSettingsSlice = createSlice({
-  name: 'canvasSettings',
+  name: 'canvasStates',
   initialState: {
     height: 0,
     width: 0,
