@@ -648,7 +648,6 @@ export namespace moorhen {
     type ContextButtonProps = {
         mode: 'context';
         monomerLibraryPath: string;
-        windowWidth: number;
         urlPrefix: string;
         commandCentre: React.RefObject<CommandCentre>
         selectedMolecule: Molecule;
@@ -664,8 +663,6 @@ export namespace moorhen {
         setOpacity: React.Dispatch<React.SetStateAction<number>>;
         setOverrideMenuContents: React.Dispatch<React.SetStateAction<JSX.Element | boolean>>;
         showContextMenu: false | AtomRightClickEventInfo;
-        backgroundColor: [number, number, number, number];
-        isDark: boolean;
         changeMolecules: (arg0: MolChange<Molecule>) => void
         defaultActionButtonSettings: actionButtonSettings;
         setDefaultActionButtonSettings: (arg0: {key: string; value: string}) => void;     
@@ -719,7 +716,6 @@ export namespace moorhen {
     }
     
     interface Controls extends ContainerOptionalProps {
-        isDark: boolean;
         molecules: Molecule[];
         changeMolecules: (arg0: MolChange<Molecule>) => void;
         maps: Map[];
@@ -740,14 +736,10 @@ export namespace moorhen {
         setActiveMolecule: React.Dispatch<React.SetStateAction<Molecule>>;
         hoveredAtom: null | HoveredAtom;
         setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtom>>;
-        backgroundColor: [number, number, number, number];
-        setBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
         notificationContent: null | JSX.Element;
         setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
         showToast: boolean;
         setShowToast: React.Dispatch<React.SetStateAction<boolean>>;
-        windowWidth: number;
-        windowHeight: number;
         availableFonts: string[];
     }
 
@@ -755,6 +747,7 @@ export namespace moorhen {
         molecules: Molecule[];
         maps: Map[];
         canvasStates: {
+            backgroundColor: [number, number, number, number];
             height: number;
             width: number;
             isDark: boolean
@@ -792,7 +785,6 @@ export namespace moorhen {
             availableFonts: string[];
         };
         sceneSettings: {
-            backgroundColor: [number, number, number, number];
             defaultBackgroundColor: [number, number, number, number];
             drawCrosshairs: boolean; 
             drawAxes: boolean; 
@@ -860,16 +852,10 @@ export namespace moorhen {
         setCursorStyle: React.Dispatch<React.SetStateAction<string>>;
         busy: boolean;
         setBusy: React.Dispatch<React.SetStateAction<boolean>>;
-        windowWidth: number;
-        setWindowWidth: React.Dispatch<React.SetStateAction<number>>;
-        windowHeight: number;
-        setWindowHeight: React.Dispatch<React.SetStateAction<number>>;
         molecules: Molecule[];
         changeMolecules: (arg0: MolChange<Molecule>) => void;
         maps: Map[];
         changeMaps: (arg0: MolChange<Map>) => void;
-        backgroundColor: [number, number, number, number];
-        setBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
         appTitle: string;
         setAppTitle: React.Dispatch<React.SetStateAction<string>>;
         cootInitialized: boolean;

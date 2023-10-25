@@ -8,17 +8,18 @@ import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
+import { useSelector } from "react-redux";
 
 export const MoorhenRandomJiggleBlurMenuItem = (props: {
     molecules: moorhen.Molecule[];
     maps: moorhen.Map[];
-    isDark: boolean;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     popoverPlacement?: 'left' | 'right'
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
     
+    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const mapSelectRef = useRef<null | HTMLSelectElement>(null)
     const cidSelectRef = useRef<HTMLInputElement | null>(null)
@@ -54,14 +55,14 @@ export const MoorhenRandomJiggleBlurMenuItem = (props: {
         } 
     }
 
-    const increaseBfactorButton =  <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey'}} onClick={() => {
+    const increaseBfactorButton =  <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey'}} onClick={() => {
                                         const newVal = bFactor + 25
                                         setBFactor(newVal)
                                         bFactorSliderRef.current = newVal
                                     }}>
                                         <AddCircleOutline/>
                                     </IconButton>
-    const decreaseBfactorButton =  <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey'}} onClick={() => {
+    const decreaseBfactorButton =  <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey'}} onClick={() => {
                                         const newVal = bFactor - 25
                                         setBFactor(newVal)
                                         bFactorSliderRef.current = newVal
@@ -69,14 +70,14 @@ export const MoorhenRandomJiggleBlurMenuItem = (props: {
                                         <RemoveCircleOutline/>
                                     </IconButton>
 
-    const increaseNoTrialsButton =  <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey'}} onClick={() => {
+    const increaseNoTrialsButton =  <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey'}} onClick={() => {
                                         const newVal = noTrials + 100
                                         setNoTrials(newVal)
                                         noTrialsSliderRef.current = newVal
                                     }}>
                                         <AddCircleOutline/>
                                     </IconButton>
-    const decreaseNoTrialsButton =  <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey'}} onClick={() => {
+    const decreaseNoTrialsButton =  <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey'}} onClick={() => {
                                         const newVal = noTrials - 100
                                         setNoTrials(newVal)
                                         noTrialsSliderRef.current = newVal
@@ -84,14 +85,14 @@ export const MoorhenRandomJiggleBlurMenuItem = (props: {
                                         <RemoveCircleOutline/>
                                     </IconButton>
 
-    const increaseScaleFactorButton =  <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey'}} onClick={() => {
+    const increaseScaleFactorButton =  <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey'}} onClick={() => {
                                             const newVal = scaleFactor + 1
                                             setScaleFactor(newVal)
                                             scaleFactorSliderRef.current = newVal
                                         }}>
                                             <AddCircleOutline/>
                                         </IconButton>
-    const decreaseScaleFactorButton =  <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey'}} onClick={() => {
+    const decreaseScaleFactorButton =  <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey'}} onClick={() => {
                                             const newVal = scaleFactor - 1
                                             setScaleFactor(newVal)
                                             scaleFactorSliderRef.current = newVal

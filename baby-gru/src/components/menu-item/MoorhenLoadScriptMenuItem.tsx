@@ -11,9 +11,6 @@ export const MoorhenLoadScriptMenuItem = (props: {
      molecules: moorhen.Molecule[];
      maps: moorhen.Map[];
      glRef: React.RefObject<webGL.MGWebGL>;
-     isDark: boolean;
-     windowHeight: number;
-     windowWidth: number; 
      commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {
     

@@ -23,6 +23,7 @@ import { MoorhenRigidBodyFitButton } from "../button/MoorhenRigidBodyFitButton";
 import { moorhen } from "../../types/moorhen";
 import { JSX } from "react/jsx-runtime";
 import { webGL } from "../../types/mgWebGL";
+import { useSelector } from "react-redux";
 
 const ContextMenu = styled.div`
   position: absolute;
@@ -96,16 +97,11 @@ export const MoorhenContextMenu = (props: {
   urlPrefix: string;
   changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
   activeMap: moorhen.Map;
-  isDark: boolean;
   showContextMenu: false | moorhen.AtomRightClickEventInfo;
   molecules: moorhen.Molecule[];
-  windowWidth: number;
-  windowHeight: number;
   timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
   setShowContextMenu: React.Dispatch<React.SetStateAction<false | moorhen.AtomRightClickEventInfo>>;
   viewOnly: boolean;
-  backgroundColor: [number, number, number, number];
-  setBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
   glRef: React.RefObject<webGL.MGWebGL>;
   maps: moorhen.Map[];
   commandCentre: RefObject<moorhen.CommandCentre>;
@@ -124,6 +120,9 @@ export const MoorhenContextMenu = (props: {
   const [opacity, setOpacity] = useState<number>(1.0)
   const [toolTip, setToolTip] = useState<string>('')
   
+  const width = useSelector((state: moorhen.State) => state.canvasStates.width)
+  const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+
   const handleContextMenu = useCallback((evt) => {
     evt.stopPropagation()
     evt.preventDefault()
@@ -159,15 +158,15 @@ export const MoorhenContextMenu = (props: {
   const menuWidth = selectedMolecule && chosenAtom ? convertRemToPx(19) : convertRemToPx(7)
   const menuHeight = selectedMolecule && chosenAtom ? convertRemToPx(19) : convertRemToPx(7)
   
-  if (props.windowWidth - left < menuWidth) {
+  if (width - left < menuWidth) {
     left -= menuWidth
   }
-  if (props.windowHeight - top < menuHeight) {
+  if (height - top < menuHeight) {
     top -= menuHeight
   }
     
   let placement: "left" | "right" = "right"
-  if (props.windowWidth * 0.5 < left){
+  if (width * 0.5 < left){
     placement = 'left'
   }
   
@@ -184,7 +183,7 @@ export const MoorhenContextMenu = (props: {
                   <List>
                     {
                     props.viewOnly ? 
-                      <MoorhenBackgroundColorMenuItem setPopoverIsShown={() => { }} backgroundColor={props.backgroundColor} setBackgroundColor={props.setBackgroundColor}/>
+                      <MoorhenBackgroundColorMenuItem setPopoverIsShown={() => { }}/>
                     :              
                     selectedMolecule && chosenAtom &&
                      <div style={{ display:'flex', justifyContent: 'center' }}>

@@ -10,21 +10,20 @@ import Editor from 'react-simple-code-editor';
 import 'prismjs/themes/prism.css';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
+import { useSelector } from "react-redux";
 
 export const MoorhenScriptModal = (props: {
     molecules: moorhen.Molecule[];
     maps: moorhen.Map[];
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    isDark: boolean;
-    windowHeight: number;
-    windowWidth: number;
     show: boolean;
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
     code?: string;
 }) => {
 
     const [code, setCode] = useState<string>("")
+    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
 
     const handleScriptExe = useCallback(async () => {
         try {
@@ -45,7 +44,7 @@ export const MoorhenScriptModal = (props: {
     return <MoorhenDraggableModalBase
                 headerTitle="Interactive scripting"
                 body={
-                    <div style={{backgroundColor: props.isDark ? 'white' : '#e6e6e6', borderColor:'black'}}>
+                    <div style={{backgroundColor: isDark ? 'white' : '#e6e6e6', borderColor:'black'}}>
                         <Editor
                             value={code}
                             onValueChange={code => setCode(code)}

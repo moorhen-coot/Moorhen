@@ -23,7 +23,6 @@ type MoorhenMoleculeCardButtonBarPropsType = {
     changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
     glRef: React.RefObject<webGL.MGWebGL>;
     sideBarWidth: number;
-    windowHeight: number;
     isVisible: boolean;
     isCollapsed: boolean;
     setIsCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
@@ -35,9 +34,10 @@ type MoorhenMoleculeCardButtonBarPropsType = {
 
 export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBarPropsType) => {
     const dropdownCardButtonRef = useRef<HTMLDivElement>()
-    const makeBackups = useSelector((state: moorhen.State) => state.backupSettings.makeBackups)
     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
     const [currentName, setCurrentName] = useState<string>(props.molecule.name);
+    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const makeBackups = useSelector((state: moorhen.State) => state.backupSettings.makeBackups)
 
     useMemo(() => {
         if (currentName === "") {
@@ -145,7 +145,7 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
             show={props.currentDropdownMolNo === props.molecule.molNo}
             onToggle={() => { props.molecule.molNo !== props.currentDropdownMolNo ? props.setCurrentDropdownMolNo(props.molecule.molNo) : props.setCurrentDropdownMolNo(-1) }}
             >
-                <div style={{maxHeight: convertViewtoPx(50, props.windowHeight) * 0.5, overflowY: 'auto'}}>
+                <div style={{maxHeight: convertViewtoPx(50, height) * 0.5, overflowY: 'auto'}}>
                     {compressedButtons}
                 </div>
             </DropdownButton>

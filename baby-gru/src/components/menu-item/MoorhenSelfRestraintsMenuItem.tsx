@@ -9,6 +9,7 @@ import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
 import { MoorhenSlider } from "../misc/MoorhenSlider";
 import { IconButton } from "@mui/material";
 import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
+import { useSelector } from "react-redux";
 
 export const MoorhenSelfRestraintsMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -16,9 +17,9 @@ export const MoorhenSelfRestraintsMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     popoverPlacement?: 'left' | 'right';
-    isDark: boolean;
 }) => {
 
+    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
     const modeTypeSelectRef = useRef<HTMLSelectElement | null>(null)
     const moleculeSelectRef = useRef<HTMLSelectElement | null>(null)
     const chainSelectRef = useRef<HTMLSelectElement | null>(null)
@@ -47,14 +48,14 @@ export const MoorhenSelfRestraintsMenuItem = (props: {
         } 
     }
     
-    const increaseDistButton =  <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey'}} onClick={() => {
+    const increaseDistButton =  <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey'}} onClick={() => {
                                     const newVal = maxDist + 0.25
                                     setMaxDist(newVal)
                                     maxDistSliderRef.current = newVal
                                 }}>
                                     <AddCircleOutline/>
                                 </IconButton>
-    const decreaseDistButton =  <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey'}} onClick={() => {
+    const decreaseDistButton =  <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey'}} onClick={() => {
                                     const newVal = maxDist - 0.25
                                     setMaxDist(newVal)
                                     maxDistSliderRef.current = newVal

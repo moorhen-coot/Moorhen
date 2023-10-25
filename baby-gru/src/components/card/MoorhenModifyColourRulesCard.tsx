@@ -10,6 +10,7 @@ import { MoorhenSequenceRangeSelect } from "../sequence-viewer/MoorhenSequenceRa
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { Popover } from "@mui/material";
+import { useSelector } from "react-redux";
 
 type colourRuleChange = {
     action: "Add" | "Remove" | "Overwrite" | "MoveUp" | "MoveDown" | "Empty";
@@ -60,11 +61,8 @@ export const MoorhenModifyColourRulesCard = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
     molecules: moorhen.Molecule[];
     molecule: moorhen.Molecule;
-    windowWidth: number;
-    isDark: boolean;
     showColourRulesToast: boolean;
     setShowColourRulesToast: React.Dispatch<React.SetStateAction<boolean>>;
-    windowHeight: number;
     anchorEl: React.RefObject<HTMLDivElement>;
 }) => {
     
@@ -79,6 +77,8 @@ export const MoorhenModifyColourRulesCard = (props: {
     const [cid, setCid] = useState<string>(null)
     const [sequenceRangeSelect, setSequenceRangeSelect] = useState(null)
     const [ruleList, setRuleList] = useReducer(itemReducer, initialRuleState, () => { return props.molecule.defaultColourRules })
+    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
 
     const handleChainChange = (evt) => {
         setSelectedChain(evt.target.value)
@@ -213,7 +213,7 @@ export const MoorhenModifyColourRulesCard = (props: {
         return <Card key={index} className='hide-scrolling' style={{margin: '0.1rem', maxWidth: '100%', overflowX:'scroll'}}>
                 <Card.Body>
                     <Row className='align-items-center'>
-                        <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left', color: props.isDark ? 'white' : 'black' }}>
+                        <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left', color: isDark ? 'white' : 'black' }}>
                             <b>
                             {`#${index+1}. `}
                             </b>
@@ -242,7 +242,7 @@ export const MoorhenModifyColourRulesCard = (props: {
                                         Move up
                                     </Tooltip>
                                 }>
-                                <Button size='sm' style={{margin: '0.1rem'}} variant={props.isDark ? "dark" : "light"} onClick={() => {setRuleList({action:'MoveUp', item:rule})}}>
+                                <Button size='sm' style={{margin: '0.1rem'}} variant={isDark ? "dark" : "light"} onClick={() => {setRuleList({action:'MoveUp', item:rule})}}>
                                     <ArrowUpwardOutlined/>
                                 </Button>
                             </OverlayTrigger>
@@ -254,7 +254,7 @@ export const MoorhenModifyColourRulesCard = (props: {
                                         Move down
                                     </Tooltip>
                                 }>
-                                <Button size='sm' style={{margin: '0.1rem'}} variant={props.isDark ? "dark" : "light"} onClick={() => {setRuleList({action:'MoveDown', item:rule})}}>
+                                <Button size='sm' style={{margin: '0.1rem'}} variant={isDark ? "dark" : "light"} onClick={() => {setRuleList({action:'MoveDown', item:rule})}}>
                                     <ArrowDownwardOutlined/>
                                 </Button>
                             </OverlayTrigger>
@@ -266,7 +266,7 @@ export const MoorhenModifyColourRulesCard = (props: {
                                         Delete
                                     </Tooltip>
                                 }>
-                                <Button size='sm' style={{margin: '0.1rem'}} variant={props.isDark ? "dark" : "light"} onClick={() => {setRuleList({action:'Remove', item:rule})}}>
+                                <Button size='sm' style={{margin: '0.1rem'}} variant={isDark ? "dark" : "light"} onClick={() => {setRuleList({action:'Remove', item:rule})}}>
                                     <DeleteOutlined/>
                                 </Button>
                             </OverlayTrigger>
@@ -286,7 +286,7 @@ export const MoorhenModifyColourRulesCard = (props: {
                 anchorEl={props.anchorEl.current}
                 anchorOrigin={{ vertical: 'center', horizontal: 'center' }}
                 transformOrigin={{ vertical: 'center', horizontal: 'center', }}
-                sx={{'& .MuiPaper-root': {backgroundColor: props.isDark ? 'grey' : 'white', borderRadius: '1rem', marginTop: '0.1rem', borderStyle: 'solid', borderColor: 'grey', borderWidth: '1px'}}}
+                sx={{'& .MuiPaper-root': {backgroundColor: isDark ? 'grey' : 'white', borderRadius: '1rem', marginTop: '0.1rem', borderStyle: 'solid', borderColor: 'grey', borderWidth: '1px'}}}
             >
             <Stack direction="vertical" gap={2} style={{alignItems: 'center', padding: '0.5rem'}}>
                 <Stack gap={2} direction='horizontal' style={{margin: 0, padding: 0}}>
@@ -334,7 +334,7 @@ export const MoorhenModifyColourRulesCard = (props: {
                     </div>
             }
             <hr style={{width: '100%'}}></hr>
-            <div className="hide-scrolling" style={{width: '100%', padding:'0.2rem', maxHeight: convertViewtoPx(20, props.windowHeight), overflowY: 'auto', textAlign:'center'}}>
+            <div className="hide-scrolling" style={{width: '100%', padding:'0.2rem', maxHeight: convertViewtoPx(20, height), overflowY: 'auto', textAlign:'center'}}>
                 {ruleList.length === 0 ? 
                     "No rules created yet"
                 :

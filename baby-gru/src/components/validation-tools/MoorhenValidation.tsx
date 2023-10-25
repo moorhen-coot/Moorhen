@@ -5,6 +5,7 @@ import { MoorhenValidationChartWidgetBase } from "./MoorhenValidationChartWidget
 import annotationPlugin from 'chartjs-plugin-annotation'
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
+import { useSelector } from "react-redux";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
@@ -35,6 +36,8 @@ const metricInfoScaling = {
 
 export const MoorhenValidation = (props: Props) => {
     const chartRef = useRef(null);
+    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
 
     const plugin = {
         id: 'custom_bar_borders',
@@ -180,7 +183,7 @@ export const MoorhenValidation = (props: Props) => {
        
         const barWidth = props.sideBarWidth / 40
         const tooltipFontSize = 12
-        const axisLabelsFontSize = convertViewtoPx(70, props.windowHeight) / 60
+        const axisLabelsFontSize = convertViewtoPx(70, height) / 60
         
         const containerBody = document.getElementById('myContainerBody')
         containerBody.style.width = (labels.length*barWidth)+ "px";
@@ -190,7 +193,7 @@ export const MoorhenValidation = (props: Props) => {
                 stacked: true,
                 beginAtZero: true,
                 display:true,
-                ticks: {color: props.isDark ? 'white' : 'black',
+                ticks: {color: isDark ? 'white' : 'black',
                         font:{size:barWidth, family:'Helvetica'},
                         maxRotation: 0, 
                         minRotation: 0,
@@ -245,7 +248,7 @@ export const MoorhenValidation = (props: Props) => {
                     display: true,
                     font:{size: axisLabelsFontSize, family:'Helvetica', weight:800},
                     text: availableMetrics[methodIndex].displayName,
-                    color: props.isDark ? 'white' : 'black'
+                    color: isDark ? 'white' : 'black'
                 },
                 grid: {
                     display:false,
@@ -306,7 +309,6 @@ export const MoorhenValidation = (props: Props) => {
                 getChart={getChart} 
                 molecules={props.molecules}
                 maps={props.maps}
-                backgroundColor={props.backgroundColor}
                 sideBarWidth={props.sideBarWidth}
                 dropdownId={props.dropdownId}
                 accordionDropdownId={props.accordionDropdownId}

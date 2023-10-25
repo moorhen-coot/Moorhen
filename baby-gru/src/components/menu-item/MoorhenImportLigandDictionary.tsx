@@ -19,7 +19,6 @@ const MoorhenImportLigandDictionary = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     monomerLibraryPath: string;
-    backgroundColor: [number, number, number, number];
     panelContent: JSX.Element;
     changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
     fetchLigandDict: () => Promise<string>;
@@ -35,12 +34,13 @@ const MoorhenImportLigandDictionary = (props: {
 }) => {
 
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
+    const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
 
     const {
         createInstance, setCreateInstance, addToMolecule, fetchLigandDict, panelContent,
         setAddToMolecule, tlcValueRef, createRef, moleculeSelectRef, addToRef,moleculeSelectValueRef,
         addToMoleculeValueRef, setPopoverIsShown, molecules, glRef, commandCentre, menuItemText,
-        changeMolecules, backgroundColor, monomerLibraryPath, id
+        changeMolecules, monomerLibraryPath, id
     } = props
 
     const handleFileContent = useCallback(async (fileContent: string) => {
@@ -168,7 +168,6 @@ export const MoorhenSMILESToLigandMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     monomerLibraryPath: string;
-    backgroundColor: [number, number, number, number];
 }) => {
 
     const [smile, setSmile] = useState<string>('')
@@ -286,7 +285,6 @@ export const MoorhenImportDictionaryMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     monomerLibraryPath: string;
-    backgroundColor: [number, number, number, number];
  }) => {
     const filesRef = useRef<null | HTMLInputElement>(null)
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)

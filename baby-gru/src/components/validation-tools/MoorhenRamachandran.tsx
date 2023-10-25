@@ -6,6 +6,7 @@ import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
 import { gemmi } from "../../types/gemmi";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
+import { useSelector } from "react-redux";
 
 interface Props extends moorhen.Controls {
     dropdownId: number;
@@ -44,6 +45,8 @@ export const MoorhenRamachandran = (props: Props) => {
     const [cachedGemmiStructure, setCachedGemmiStructure] = useState<gemmi.Structure | null>(null)
     const [molName, setMolName] = useState<null | string>(null)
     const [chainId, setChainId] = useState<null | string>(null)
+    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
+    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
 
     const getMolName = useCallback((selectedMolNo: number) => {
         if (selectedMolNo === null || props.molecules.length === 0) {
@@ -313,7 +316,7 @@ export const MoorhenRamachandran = (props: Props) => {
         setChainId(chainSelectRef.current.value)
         draw(-1)
 
-    }, [ramaPlotData, draw, chainSelectRef, selectedModel, getMolName])
+    }, [ramaPlotData, draw, chainSelectRef, selectedModel, getMolName, ramaPlotDimensions])
 
     useEffect(() => {
 
@@ -405,7 +408,7 @@ export const MoorhenRamachandran = (props: Props) => {
             }
         }, 50);
 
-    }, [props.windowHeight, props.windowWidth])
+    }, [width, height])
 
     useEffect(() => {
         async function fetchRamaData() {

@@ -28,7 +28,7 @@ export const MoorhenLigandValidation = (props: Props) => {
             const selectedMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
             if(selectedMolecule) {
                 setCardList(
-                    <MoorhenLigandList commandCentre={props.commandCentre} molecule={selectedMolecule} glRef={props.glRef} isDark={props.isDark}/>    
+                    <MoorhenLigandList commandCentre={props.commandCentre} molecule={selectedMolecule} glRef={props.glRef}/>    
                 )
             } else {
                 setCardList(null)    

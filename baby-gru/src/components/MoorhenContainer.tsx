@@ -14,6 +14,7 @@ import { webGL } from '../types/mgWebGL';
 import { MoorhenPreferencesContainer } from './misc/MoorhenPreferencesContainer'
 import { useSelector, useDispatch } from 'react-redux';
 import { setDefaultBackgroundColor } from '../store/sceneSettingsSlice';
+import { setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/canvasStatesSlice';
 
 const initialMoleculesState: moorhen.Molecule[] = []
 
@@ -88,11 +89,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const [innerHoveredAtom, setInnerHoveredAtom] = useState<null | moorhen.HoveredAtom>({ molecule: null, cid: null })
     const [innerCursorStyle, setInnerCursorStyle] = useState<string>("default")
     const [innerBusy, setInnerBusy] = useState<boolean>(false)
-    const [innerWindowWidth, setInnerWindowWidth] = useState<number>(window.innerWidth)
-    const [innerWindowHeight, setInnerWindowHeight] = useState<number>(window.innerHeight)
     const [innerMolecules, innerChangeMolecules] = useReducer(itemReducer, initialMoleculesState)
     const [innerMaps, innerChangeMaps] = useReducer(itemReducer, initialMapsState)
-    const [innerBackgroundColor, setInnerBackgroundColor] = useState<[number, number, number, number]>([1, 1, 1, 1])
     const [innerAppTitle, setInnerAppTitle] = useState<string>('Moorhen')
     const [innerCootInitialized, setInnerCootInitialized] = useState<boolean>(false)
     const [innerTheme, setInnerTheme] = useState<string>("flatly")
@@ -101,6 +99,10 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const [innerAvailableFonts, setInnerAvailableFonts] = useState<string[]>([])
     
     const dispatch = useDispatch()
+    const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
+    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
+    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
     const userPreferencesMounted = useSelector((state: moorhen.State) => state.generalStates.userPreferencesMounted)
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops)
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
@@ -151,10 +153,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         activeMap: innerActiveMap, setActiveMap: setInnerActiveMap, activeMolecule: innerActiveMolecule,
         setActiveMolecule: setInnerActiveMolecule, hoveredAtom: innerHoveredAtom, setHoveredAtom: setInnerHoveredAtom,
         cursorStyle: innerCursorStyle, maps: innerMaps as moorhen.Map[], molecules: innerMolecules as moorhen.Molecule[],
-        setCursorStyle: setInnerCursorStyle, busy: innerBusy, setBusy: setInnerBusy, windowHeight: innerWindowHeight, 
-        windowWidth: innerWindowWidth, setWindowWidth: setInnerWindowWidth, setBackgroundColor: setInnerBackgroundColor,
-        changeMaps: innerChangeMaps, setWindowHeight: setInnerWindowHeight, enableAtomHovering: innerEnableAtomHovering,
-        changeMolecules: innerChangeMolecules, backgroundColor: innerBackgroundColor, 
+        setCursorStyle: setInnerCursorStyle, busy: innerBusy, setBusy: setInnerBusy, 
+        changeMaps: innerChangeMaps, enableAtomHovering: innerEnableAtomHovering, changeMolecules: innerChangeMolecules, 
         appTitle: innerAppTitle, setAppTitle: setInnerAppTitle, cootInitialized: innerCootInitialized, 
         setCootInitialized: setInnerCootInitialized, theme: innerTheme, setTheme: setInnerTheme, 
         showToast: innerShowToast, setShowToast: setInnerShowToast, notificationContent: innerNotificationContent, 
@@ -171,8 +171,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         lastHoveredAtom, prevActiveMoleculeRef, activeMap, maps, changeMaps,
         setActiveMap, activeMolecule, setActiveMolecule, hoveredAtom, setHoveredAtom,
         cursorStyle, setCursorStyle, busy, setBusy, changeMolecules, setEnableAtomHovering,
-        windowWidth, setWindowWidth, windowHeight, setWindowHeight, molecules, 
-        backgroundColor, setBackgroundColor, availableFonts, setAvailableFonts, enableAtomHovering,
+        molecules, availableFonts, setAvailableFonts, enableAtomHovering,
         appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
         showToast, setShowToast, notificationContent, setNotificationContent
     } = states
@@ -183,16 +182,25 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         extraEditMenuItems, aceDRGInstance, extraCalculateMenuItems, setMoorhenDimensions
     } = props
     
-    const setWindowDimensions = () => {
+    const setWindowDimensions = useCallback(() => {
+        let [ newWidth, newHeight ]: [number, number] = [window.innerWidth, window.innerHeight]
         if (setMoorhenDimensions) {
-            const [ width, height ] = setMoorhenDimensions()
-            setWindowWidth(width)
-            setWindowHeight(height)
-        } else {
-            setWindowWidth(window.innerWidth)
-            setWindowHeight(window.innerHeight)
+            [ newWidth, newHeight ] = setMoorhenDimensions()
+        } 
+        if (width !== newWidth) {
+            dispatch(setWidth(newWidth))
         }
-    }
+        if (height !== newHeight) {
+            dispatch(setHeight(newHeight))
+        }
+    }, [width, height])
+
+    useEffect(() => {
+        window.addEventListener('resize', setWindowDimensions)
+        return () => {
+            window.removeEventListener('resize', setWindowDimensions)
+        }
+    }, [setWindowDimensions])
 
     useEffect(() => {
         const initTimeCapsule = async () => {
@@ -218,7 +226,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     
                 const shortCut = JSON.parse(shortCuts as string).show_shortcuts
                 setNotificationContent(
-                    <MoorhenNotification key={'initial-notification'} isDark={isDark} windowWidth={windowWidth} hideDelay={5000} width={20}>
+                    <MoorhenNotification key={'initial-notification'} hideDelay={5000} width={20}>
                         <h4 style={{margin: 0}}>
                             {`Press ${getTooltipShortcutLabel(shortCut)} to show help`}
                         </h4>
@@ -236,7 +244,9 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     useEffect(() => {
         if (userPreferencesMounted && defaultBackgroundColor !== backgroundColor) {
-            setBackgroundColor(defaultBackgroundColor)
+            dispatch(
+                setBackgroundColor(defaultBackgroundColor)
+            )
         }
         
     }, [userPreferencesMounted])
@@ -249,6 +259,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         let head = document.head;
         let style: any = document.createElement("link");
         const isDark = isDarkBackground(...backgroundColor)
+
+        dispatch(setIsDark(isDark))
 
         if (isDark) {
             style.href = `${urlPrefix}/baby-gru/darkly.css`
@@ -314,9 +326,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 setCootInitialized(true)
             },
         })
-        window.addEventListener('resize', setWindowDimensions)
         return () => {
-            window.removeEventListener('resize', setWindowDimensions)
             commandCentre.current.unhook()
         }
     }, [])
@@ -357,8 +367,14 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     //Make this so that the keyPress returns true or false, depending on whether mgWebGL is to continue processing event
     const onKeyPress = useCallback((event: KeyboardEvent) => {
-        return babyGruKeyPress(event, collectedProps, JSON.parse(shortCuts as string), showShortcutToast, shortcutOnHoveredAtom)
-    }, [molecules, activeMolecule, activeMap, hoveredAtom, viewOnly, shortCuts, showShortcutToast, shortcutOnHoveredAtom])
+        return babyGruKeyPress(
+            event,
+            {...collectedProps, isDark, windowWidth: width},
+            JSON.parse(shortCuts as string),
+            showShortcutToast,
+            shortcutOnHoveredAtom
+        )
+    }, [molecules, activeMolecule, activeMap, hoveredAtom, viewOnly, shortCuts, showShortcutToast, shortcutOnHoveredAtom, width, isDark])
 
     useEffect(() => {
         if (hoveredAtom && hoveredAtom.molecule && hoveredAtom.cid) {
@@ -383,7 +399,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     useEffect(() => {
         glResize()
-    }, [windowHeight, windowWidth])
+    }, [width, height])
 
     useEffect(() => {
         if (activeMap && commandCentre.current) {
@@ -407,27 +423,17 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     }, [activeMolecule])
 
     const glResize = () => {
-        glRef.current.resize(windowWidth, windowHeight)
+        glRef.current.resize(width, height)
         glRef.current.drawScene()
     }
 
-    const webGLWidth = () => {
-        return windowWidth
-    }
-
-    const webGLHeight = () => {
-        return windowHeight
-    }
-
-    const isDark = isDarkBackground(...backgroundColor)
-
     const collectedProps: moorhen.Controls = {
         molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
-        activeMap, setActiveMap, commandCentre, backgroundColor, setBackgroundColor, notificationContent, 
-        setNotificationContent, hoveredAtom, setHoveredAtom, showToast, setShowToast, windowWidth, windowHeight,
-        timeCapsuleRef, isDark, disableFileUploads, urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems,
-        extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, extraEditMenuItems, 
-        extraDraggableModals, aceDRGInstance, availableFonts, enableAtomHovering, setEnableAtomHovering, videoRecorderRef
+        activeMap, setActiveMap, commandCentre, notificationContent, setNotificationContent, hoveredAtom, 
+        setHoveredAtom, showToast, setShowToast, timeCapsuleRef, disableFileUploads, 
+        urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems, extraEditMenuItems,
+        extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, setEnableAtomHovering, videoRecorderRef,
+        extraDraggableModals, aceDRGInstance, availableFonts, enableAtomHovering, 
     }
 
     return <> 
@@ -454,7 +460,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                             ${255 * backgroundColor[1]},
                             ${255 * backgroundColor[2]}, 
                             ${backgroundColor[3]})`,
-                        cursor: cursorStyle, margin: 0, padding: 0, height: Math.floor(windowHeight),
+                        cursor: cursorStyle, margin: 0, padding: 0, height: Math.floor(height),
                     }}>
                     <MoorhenWebMG
                         ref={glRef}
@@ -466,16 +472,9 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                         changeMolecules={changeMolecules}
                         maps={maps}
                         changeMaps={changeMaps}
-                        width={webGLWidth}
-                        height={webGLHeight}
-                        backgroundColor={backgroundColor}
-                        setBackgroundColor={setBackgroundColor}
-                        isDark={isDark}
                         onAtomHovered={onAtomHovered}
                         onKeyPress={onKeyPress}
                         hoveredAtom={hoveredAtom}
-                        windowHeight={windowHeight}
-                        windowWidth={windowWidth}
                         urlPrefix={urlPrefix}
                         activeMap={activeMap}
                         viewOnly={viewOnly}

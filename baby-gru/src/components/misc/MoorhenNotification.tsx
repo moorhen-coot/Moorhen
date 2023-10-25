@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { convertRemToPx } from '../../utils/MoorhenUtils';
 import { Zoom } from '@mui/material';
+import { useSelector } from 'react-redux';
+import { moorhen } from '../../types/moorhen';
 
-export const MoorhenNotification = (props: {isDark: boolean, windowWidth: number, width?: number, hideDelay?: number, children: JSX.Element}) => {
+export const MoorhenNotification = (props: {width?: number, hideDelay?: number, children: JSX.Element}) => {
     const canvasElement = document.getElementById('moorhen-canvas-background')
     let canvasTop: number
     let canvasLeft: number
@@ -19,6 +21,8 @@ export const MoorhenNotification = (props: {isDark: boolean, windowWidth: number
     } 
 
     const [show, setShow] = useState<boolean>(true)
+    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
 
     useEffect(() => {
         if (props.hideDelay) {
@@ -35,9 +39,9 @@ export const MoorhenNotification = (props: {isDark: boolean, windowWidth: number
             position: 'absolute',
             width: `${props.width}rem`,
             top: canvasTop + convertRemToPx(0.5),
-            left: canvasLeft + (props.windowWidth / 2) - convertRemToPx(props.width / 2),
-            color: props.isDark ? 'white' : 'grey',
-            backgroundColor: props.isDark ? 'grey' : 'white',
+            left: canvasLeft + (width / 2) - convertRemToPx(props.width / 2),
+            color: isDark ? 'white' : 'grey',
+            backgroundColor: isDark ? 'grey' : 'white',
         }}>
             {props.children}
         </div>

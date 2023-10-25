@@ -7,7 +7,6 @@ import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
 
 export const MoorhenDraggableModalBase = (props: {
-    windowWidth: number;
     width?: number;
     top?: string;
     left?: string;
@@ -16,7 +15,6 @@ export const MoorhenDraggableModalBase = (props: {
     headerTitle: string;
     show: boolean;
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
-    windowHeight: number;
     body: JSX.Element | JSX.Element[];
     footer: JSX.Element;
     additionalChildren?: JSX.Element;
@@ -24,16 +22,19 @@ export const MoorhenDraggableModalBase = (props: {
     handleClassName?: string;
 }) => {
     
-    const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.miscAppSettings.transparentModalsOnMouseOut)
     const [opacity, setOpacity] = useState<number>(1.0)
     const [collapse, setCollapse] = useState<boolean>(false)
     const draggableNodeRef = useRef<HTMLDivElement>();
+
+    const windowWidth = useSelector((state: moorhen.State) => state.canvasStates.width)
+    const windowHeight = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.miscAppSettings.transparentModalsOnMouseOut)
 
     return <Draggable nodeRef={draggableNodeRef} handle={`.${props.handleClassName}`} >
             <Card
                 className="moorhen-draggable-card"
                 ref={draggableNodeRef}
-                style={{ display: props.show ? 'block' : 'none', position: 'absolute', top: props.top, left: props.left, opacity: opacity, width: props.windowWidth ? convertViewtoPx(props.width, props.windowWidth) : `${props.width}wh`}}
+                style={{ display: props.show ? 'block' : 'none', position: 'absolute', top: props.top, left: props.left, opacity: opacity, width: windowWidth ? convertViewtoPx(props.width, windowWidth) : `${props.width}wh`}}
                 onMouseOver={() => setOpacity(1.0)}
                 onMouseOut={() => {
                     if(transparentModalsOnMouseOut) setOpacity(0.5)
@@ -51,7 +52,7 @@ export const MoorhenDraggableModalBase = (props: {
                         </Button>
                     </Stack>
                 </Card.Header>
-                <Card.Body style={{maxHeight: props.windowHeight ? convertViewtoPx(props.height, props.windowHeight) : `${props.height}vh`, overflowY: props.overflowY, display: collapse ? 'none' : 'block', justifyContent: 'center'}}>
+                <Card.Body style={{maxHeight: windowHeight ? convertViewtoPx(props.height, windowHeight) : `${props.height}vh`, overflowY: props.overflowY, display: collapse ? 'none' : 'block', justifyContent: 'center'}}>
                     {props.body}
                 </Card.Body>
                 {props.footer && 

@@ -16,7 +16,6 @@ export const MoorhenFitLigandRightHereMenuItem = (props: {
     molecules: moorhen.Molecule[];
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
-    backgroundColor: [number, number, number, number];
     monomerLibraryPath: string;
 }) => {
 

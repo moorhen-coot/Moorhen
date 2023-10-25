@@ -11,10 +11,9 @@ import { MoorhenMMRRCCPlot } from "../validation-tools/MoorhenMMRRCCPlot"
 import { MoorhenLigandValidation } from "../validation-tools/MoorhenLigandValidation"
 import { MoorhenUnmodelledBlobs } from "../validation-tools/MoorhenUnmodelledBlobs"
 import { convertViewtoPx} from '../../utils/MoorhenUtils';
+import { useSelector } from "react-redux";
 
 interface MoorhenValidationModalProps extends moorhen.Controls {
-    windowWidth: number;
-    windowHeight: number;
     show: boolean;
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -22,9 +21,11 @@ interface MoorhenValidationModalProps extends moorhen.Controls {
 export const MoorhenValidationToolsModal = (props: MoorhenValidationModalProps) => {    
     const [selectedTool, setSelectedTool] = useState<null | number>(null)
     const toolsAccordionSelectRef = useRef<undefined | HTMLSelectElement>()
+    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
+    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
 
     const collectedProps = {
-        sideBarWidth: convertViewtoPx(35, props.windowWidth), dropdownId: 1, busy: false,
+        sideBarWidth: convertViewtoPx(35, width), dropdownId: 1, busy: false,
         accordionDropdownId: 1, setAccordionDropdownId: (arg0) => {}, showSideBar: true, ...props
     }
 
@@ -49,18 +50,16 @@ export const MoorhenValidationToolsModal = (props: MoorhenValidationModalProps) 
     }
 
     return <MoorhenDraggableModalBase
-                left={`${props.windowWidth / 2}px`}
+                left={`${width / 2}px`}
                 show={props.show}
                 setShow={props.setShow}
                 height={70}
                 width={37}
-                windowHeight={props.windowHeight}
-                windowWidth={props.windowWidth}
                 overflowY='hidden'
                 headerTitle='Validation tools'
                 footer={null}
                 body={
-                    <div style={{width: convertViewtoPx(35, props.windowWidth), height: convertViewtoPx(70, props.windowHeight)}} >
+                    <div style={{width: convertViewtoPx(35, width), height: convertViewtoPx(70, height)}} >
                         <Row style={{padding: '0.5rem', width:'100%', display:'inline-flex'}}>
                             <Form.Select id='validation-tool-select' ref={toolsAccordionSelectRef} onChange={handleChange} defaultValue={'placeHolder'}>
                                 <option key="placeHolder" value="placeHolder" disabled hidden>Tool...</option>

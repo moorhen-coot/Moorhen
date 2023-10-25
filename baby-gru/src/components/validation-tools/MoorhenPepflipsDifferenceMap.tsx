@@ -100,7 +100,6 @@ export const MoorhenPepflipsDifferenceMap = (props: Props) => {
     return <MoorhenValidationListWidgetBase 
                 molecules={props.molecules}
                 maps={props.maps}
-                backgroundColor={props.backgroundColor}
                 sideBarWidth={props.sideBarWidth}
                 dropdownId={props.dropdownId}
                 accordionDropdownId={props.accordionDropdownId}

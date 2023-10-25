@@ -38,6 +38,7 @@ interface MoorhenMapCardPropsInterface extends moorhen.Controls {
 }
 
 export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((props, cardRef) => {
+    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
     const contourWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.contourWheelSensitivityFactor)
     const defaultMapLitLines = useSelector((state: moorhen.State) => state.mapSettings.defaultMapLitLines)
     const defaultMapSurface = useSelector((state: moorhen.State) => state.mapSettings.defaultMapSurface)
@@ -282,7 +283,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             
             setMapContourLevel(newMapContourLevel)
             props.setNotificationContent(
-                <MoorhenNotification key={guid()} isDark={props.isDark} windowWidth={props.windowWidth} hideDelay={5000}>
+                <MoorhenNotification key={guid()} hideDelay={5000}>
                 <h5 style={{margin: 0}}>
                     <span>
                         {`Level: ${newMapContourLevel.toFixed(2)} ${props.map.mapRmsd ? '(' + (newMapContourLevel / props.map.mapRmsd).toFixed(2) + ' rmsd)' : ''}`}
@@ -347,16 +348,16 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
 
     }, [mapRadius, mapContourLevel, mapLitLines, mapSolid])
 
-    const increaseLevelButton = <IconButton onClick={() => setMapContourLevel(mapContourLevel + contourWheelSensitivityFactor)} style={{padding: 0, color: props.isDark ? 'white' : 'black'}}>
+    const increaseLevelButton = <IconButton onClick={() => setMapContourLevel(mapContourLevel + contourWheelSensitivityFactor)} style={{padding: 0, color: isDark ? 'white' : 'black'}}>
                                     <AddCircleOutline/>
                                 </IconButton>
-    const decreaseLevelButton = <IconButton onClick={() => setMapContourLevel(mapContourLevel - contourWheelSensitivityFactor)} style={{padding: 0, color: props.isDark ? 'white' : 'black'}}>
+    const decreaseLevelButton = <IconButton onClick={() => setMapContourLevel(mapContourLevel - contourWheelSensitivityFactor)} style={{padding: 0, color: isDark ? 'white' : 'black'}}>
                                     <RemoveCircleOutline/>
                                 </IconButton>
-    const increaseRadiusButton = <IconButton onClick={() => setMapRadius(mapRadius + 2)} style={{padding: 0, color: props.isDark ? 'white' : 'black'}}>
+    const increaseRadiusButton = <IconButton onClick={() => setMapRadius(mapRadius + 2)} style={{padding: 0, color: isDark ? 'white' : 'black'}}>
                                     <AddCircleOutline/>
                                 </IconButton>
-    const decreaseRadiusButton = <IconButton onClick={() => setMapRadius(mapRadius - 2)} style={{padding: 0, color: props.isDark ? 'white' : 'black'}}>
+    const decreaseRadiusButton = <IconButton onClick={() => setMapRadius(mapRadius - 2)} style={{padding: 0, color: isDark ? 'white' : 'black'}}>
                                     <RemoveCircleOutline/>
                                 </IconButton>
 
@@ -387,7 +388,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                         anchorEl={colourSwatchRef.current}
                         sx={{
                             '& .MuiPaper-root': {
-                                overflowY: 'hidden', borderRadius: '8px', padding: '0.5rem', background: props.isDark ? 'grey' : 'white'
+                                overflowY: 'hidden', borderRadius: '8px', padding: '0.5rem', background: isDark ? 'grey' : 'white'
                             }
                         }}
                     >
@@ -459,7 +460,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     return <Card ref={cardRef} className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.map.molNo}>
         <Card.Header style={{ padding: '0.1rem' }}>
             <Stack gap={2} direction='horizontal'>
-                <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left', color: props.isDark ? 'white' : 'black' }}>
+                <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left', color: isDark ? 'white' : 'black' }}>
                     {getNameLabel(props.map)}
                     {getMapColourSelector()}
                 </Col>
@@ -474,7 +475,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                 <ToggleButton
                     id={`active-map-toggle-${props.map.molNo}`}
                     type="checkbox"
-                    variant={props.isDark ? "outline-light" : "outline-primary"}
+                    variant={isDark ? "outline-light" : "outline-primary"}
                     checked={props.map === props.activeMap}
                     style={{ marginLeft: '0.1rem', marginRight: '0.5rem', justifyContent: 'space-betweeen', display: 'flex' }}
                     onClick={() => props.setActiveMap(props.map)}
@@ -520,11 +521,11 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                 </Col>
             </Stack>
             <Accordion className="moorhen-accordion" disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }}>
-                <AccordionSummary style={{backgroundColor: props.isDark ? '#adb5bd' : '#ecf0f1'}} expandIcon={histogramBusy ? <Spinner animation='border'/> : <ExpandMoreOutlined />} >
+                <AccordionSummary style={{backgroundColor: isDark ? '#adb5bd' : '#ecf0f1'}} expandIcon={histogramBusy ? <Spinner animation='border'/> : <ExpandMoreOutlined />} >
                     Histogram
                 </AccordionSummary>
-                <AccordionDetails style={{padding: '0.2rem', backgroundColor: props.isDark ? '#ced5d6' : 'white'}}>
-                    <MoorhenMapHistogram ref={histogramRef} setMapContourLevel={setMapContourLevel} setBusy={setHistogramBusy} windowWidth={props.windowWidth} windowHeight={props.windowHeight} isDark={props.isDark} showHistogram={true} map={props.map}/>
+                <AccordionDetails style={{padding: '0.2rem', backgroundColor: isDark ? '#ced5d6' : 'white'}}>
+                    <MoorhenMapHistogram ref={histogramRef} setMapContourLevel={setMapContourLevel} setBusy={setHistogramBusy} showHistogram={true} map={props.map}/>
                 </AccordionDetails>
             </Accordion>
         </Stack>

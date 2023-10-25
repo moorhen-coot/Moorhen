@@ -5,10 +5,9 @@ import { convertRemToPx } from "../../utils/MoorhenUtils";
 import { moorhen } from "../../types/moorhen";
 import { UnfoldLessOutlined } from '@mui/icons-material';
 import { Button } from 'react-bootstrap';
+import { useSelector } from "react-redux";
 
 interface MoorhenMapsModalProps extends moorhen.Controls {
-    windowWidth: number;
-    windowHeight: number;
     show: boolean;
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -16,6 +15,7 @@ interface MoorhenMapsModalProps extends moorhen.Controls {
 export const MoorhenMapsModal = (props: MoorhenMapsModalProps) => {    
     const cardListRef = useRef([])
     const [currentDropdownMolNo, setCurrentDropdownMolNo] = useState<number>(-1)
+    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
 
     useEffect(() => {
         cardListRef.current = cardListRef.current.slice(0, props.maps.length);
@@ -49,11 +49,9 @@ export const MoorhenMapsModal = (props: MoorhenMapsModalProps) => {
     displayData.sort((a, b) => (a.props.index > b.props.index) ? 1 : ((b.props.index > a.props.index) ? -1 : 0))
 
     return <MoorhenDraggableModalBase
-                left={`${props.windowWidth / 2}px`}
+                left={`${width / 2}px`}
                 show={props.show}
                 setShow={props.setShow}
-                windowHeight={props.windowHeight}
-                windowWidth={props.windowWidth}
                 height={70}
                 width={37}
                 headerTitle={'Maps'}

@@ -40,6 +40,7 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
     const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.miscAppSettings.defaultExpandDisplayCards)
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
     const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.miscAppSettings.transparentModalsOnMouseOut)
+    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
 
      const [showModal, setShowModal] = useState<boolean | null>(null);
      const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
@@ -52,7 +53,7 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
         }
     }, [maxBackupCount, modificationCountBackupThreshold, enableTimeCapsule])
 
-    return <div style={{maxHeight: convertViewtoPx(65, props.windowHeight), overflowY: 'auto'}}>
+    return <div style={{maxHeight: convertViewtoPx(65, height), overflowY: 'auto'}}>
                     <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"

@@ -6,9 +6,9 @@ import { libcootApi } from "../../types/libcoot";
 import { Button, Card, Stack } from "react-bootstrap";
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined, CheckOutlined, CloseOutlined, FirstPageOutlined, NavigateBeforeOutlined, NavigateNextOutlined } from "@mui/icons-material";
 import Draggable from "react-draggable";
-import { IconButton, Zoom } from "@mui/material";
-import { convertRemToPx } from '../../utils/MoorhenUtils';
+import { IconButton } from "@mui/material";
 import { MoorhenNotification } from "../misc/MoorhenNotification";
+import { useSelector } from "react-redux";
 
 export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
     const theButton = useRef<null | HTMLButtonElement>(null)
@@ -20,6 +20,7 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
     const [rotamerName, setRotamerName] = useState<string>('')
     const [rotamerRank, setRotamerRank] = useState<number| null>(null)
     const [rotamerProbability, setRotamerProbability] = useState<number | null>(null)
+    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
     
     const changeRotamer = useCallback(async (command: string) => {
         const rotamerInfo = await props.commandCentre.current.cootCommand({
@@ -103,7 +104,7 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
             const rotamerRank = rotamerInfo.data.result.result.rank
             const rotamerProbability = rotamerInfo.data.result.result.richardson_probability
             
-            return <MoorhenNotification isDark={props.isDark} windowWidth={props.windowWidth} width={20}>
+            return <MoorhenNotification width={20}>
             <Stack direction="vertical" gap={1}>
                 <div>
                     <span>Current rotamer: {rotamerName} ({rotamerRank+1}<sup>{rotamerRank === 0 ? 'st' : rotamerRank === 1 ? 'nd' : rotamerRank === 2 ? 'rd' : 'th'}</sup>)</span>
@@ -124,7 +125,7 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
                         const rotamerInfo = await changeRotamer('change_to_next_rotamer')
                         props.setOverrideMenuContents(getPopOverContents(rotamerInfo))
                     }}><NavigateNextOutlined/></IconButton>
-                    <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey', }} onClick={async () => {
+                    <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey', }} onClick={async () => {
                         acceptTransform()
                         props.setOpacity(1)
                         props.setOverrideMenuContents(false)
@@ -132,7 +133,7 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
                     }}>
                         <CheckOutlined/>
                     </IconButton>
-                    <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey'}} onClick={async() => {
+                    <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey'}} onClick={async() => {
                         rejectTransform()
                         props.setOpacity(1)
                         props.setOverrideMenuContents(false)

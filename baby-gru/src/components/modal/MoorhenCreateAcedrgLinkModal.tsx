@@ -225,8 +225,6 @@ export const MoorhenCreateAcedrgLinkModal = (props: {
     molecules: moorhen.Molecule[];
     aceDRGInstance: moorhen.AceDRGInstance;
     monomerLibraryPath: string;   
-    windowWidth: number;
-    windowHeight: number;
     width: number;
     show: boolean;
     setShow: React.Dispatch<React.SetStateAction<boolean>>;

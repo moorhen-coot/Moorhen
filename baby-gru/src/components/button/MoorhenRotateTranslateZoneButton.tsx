@@ -22,6 +22,7 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
     const fragmentCid = useRef<null | string>(null)
     const customCid = useRef<null | string>(null)
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
+    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
 
     const rotateTranslateModes = ['ATOM', 'RESIDUE', 'CHAIN', 'MOLECULE']
 
@@ -132,7 +133,7 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
     if (props.mode === 'context') {
 
         const contextMenuOverride = (
-            <MoorhenNotification isDark={props.isDark} windowWidth={props.windowWidth}>
+            <MoorhenNotification>
                 <Stack gap={2} direction='horizontal' style={{width: '100%', display:'flex', justifyContent: 'space-between'}}>
                     <OverlayTrigger
                         placement="bottom"
@@ -151,7 +152,7 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
                         <span>Accept changes?</span>
                     </div>
                     <div>
-                    <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey', }} onClick={async () => {
+                    <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey', }} onClick={async () => {
                         await acceptTransform()
                         props.setOverrideMenuContents(false)
                         props.setOpacity(1)
@@ -159,7 +160,7 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
                     }}>
                         <CheckOutlined/>
                     </IconButton>
-                    <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey'}} onClick={async() => {
+                    <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey'}} onClick={async() => {
                         await rejectTransform()
                         props.setOverrideMenuContents(false)
                         props.setOpacity(1)

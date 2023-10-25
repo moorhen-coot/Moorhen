@@ -14,18 +14,14 @@ import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { useSelector } from "react-redux";
 
 export const MoorhenQuerySequenceModal = (props: {
-    windowHeight: number;
-    windowWidth: number;
     show: boolean;
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
     molecules: moorhen.Molecule[];
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
-    backgroundColor: [number, number, number, number];
     monomerLibraryPath: string;
     changeMolecules: (arg0: moorhen.MolChange<MoorhenMolecule>) => void;
     setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
-    isDark: boolean;
 }) => {
 
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
@@ -44,10 +40,11 @@ export const MoorhenQuerySequenceModal = (props: {
     const chainSelectRef = useRef<HTMLSelectElement>();
     const sourceSelectRef =  useRef<HTMLSelectElement>();
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
+    const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
 
     const fetchMoleculeFromURL = async (url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> => {
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath)
-        newMolecule.setBackgroundColour(props.backgroundColor)
+        newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         try {
             await newMolecule.loadToCootFromURL(url, molName)
@@ -58,7 +55,7 @@ export const MoorhenQuerySequenceModal = (props: {
             return newMolecule
         } catch (err) {
             props.setNotificationContent(
-                <MoorhenNotification key={guid()} isDark={props.isDark} windowWidth={props.windowWidth} hideDelay={5000}>
+                <MoorhenNotification key={guid()} hideDelay={5000}>
                     <><WarningOutlined style={{margin: 0}}/>
                         <h4 className="moorhen-warning-toast">
                             Failed to read molecule

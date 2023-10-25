@@ -4,6 +4,7 @@ import { MoorhenMapSelect } from '../select/MoorhenMapSelect'
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
 import { moorhen } from "../../types/moorhen";
 import { gemmi } from "../../types/gemmi";
+import { useSelector } from "react-redux";
 
 export const MoorhenValidationListWidgetBase = (props: {
     molecules: moorhen.Molecule[];
@@ -14,7 +15,6 @@ export const MoorhenValidationListWidgetBase = (props: {
     accordionDropdownId: number;
     showSideBar: boolean;
     getCards: (arg0: number, arg1: number, arg2: any) => JSX.Element[];
-    backgroundColor: [number, number, number, number];
     sideBarWidth: number;
     extraControlForm?: JSX.Element;
     extraControlFormValue?: any;
@@ -28,7 +28,8 @@ export const MoorhenValidationListWidgetBase = (props: {
     const [cachedGemmiStructure, setCachedGemmiStructure] = useState<null | gemmi.Structure>(null)
     const [cardData, setCardData] = useState<any[]>([])
     const [cardList, setCardList] = useState<JSX.Element[]>([])
-    
+    const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
+
     const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedModel(parseInt(evt.target.value))
     }
@@ -91,7 +92,7 @@ export const MoorhenValidationListWidgetBase = (props: {
             const newCardList = props.getCards(selectedModel, selectedMap, cardData)
             setCardList(newCardList)
         }
-    }, [cardData, props.backgroundColor, props.sideBarWidth, props.showSideBar, props.accordionDropdownId])
+    }, [cardData, backgroundColor, props.sideBarWidth, props.showSideBar, props.accordionDropdownId])
 
     return <Fragment>
                 <Form style={{ padding:'0', margin: '0' }}>

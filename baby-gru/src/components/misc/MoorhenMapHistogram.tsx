@@ -7,6 +7,7 @@ import { convertViewtoPx } from "../../utils/MoorhenUtils";
 import { Col, Row, Stack } from "react-bootstrap";
 import { IconButton } from "@mui/material";
 import { ZoomInOutlined, ZoomOutOutlined } from "@mui/icons-material";
+import { useSelector } from "react-redux";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
@@ -14,18 +15,18 @@ Chart.register(annotationPlugin);
 type MapHistogramProps = {
     map: moorhen.Map;
     showHistogram: boolean;
-    windowWidth: number;
-    windowHeight: number;
-    isDark: boolean;
     setMapContourLevel: React.Dispatch<React.SetStateAction<number>>;
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, chartRef) => {
     const [zoomFactor, setZoomFactor] = useState<number>(1)
+    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
+    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
 
     const parseHistogramData = (histogramData: libcootApi.HistogramInfoJS) => {
-        const axisLabelsFontSize = convertViewtoPx(70, props.windowHeight) / 60
+        const axisLabelsFontSize = convertViewtoPx(70, height) / 60
 
         const handleClick = (evt) => {
             if (chartRef !== null && typeof chartRef !== 'function') {
@@ -96,10 +97,10 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
                     label: 'Counts',
                     data: histogramData.counts,
                     backgroundColor: [
-                        props.isDark ? 'rgba(100, 100, 100, 0.7)' : 'rgba(204, 204, 204, 0.7)'
+                        isDark ? 'rgba(100, 100, 100, 0.7)' : 'rgba(204, 204, 204, 0.7)'
                       ],
                       borderColor: [
-                        props.isDark ? 'rgba(100, 100, 100, 0.7)' : 'rgba(204, 204, 204, 0.7)'
+                        isDark ? 'rgba(100, 100, 100, 0.7)' : 'rgba(204, 204, 204, 0.7)'
                       ],
                 }],
             },
@@ -135,7 +136,7 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
             
         }
         fetchHistogram()
-    }, [props.isDark, props.showHistogram, props.windowWidth, zoomFactor])
+    }, [isDark, props.showHistogram, width, height, zoomFactor])
 
     return <Row>
         <Col style={{display: 'flex', marginTop: '0.5rem'}}>

@@ -19,7 +19,21 @@ const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWe
 
 export const babyGruKeyPress = (
     event: KeyboardEvent, 
-    collectedProps: moorhen.Controls, 
+    collectedProps: {
+        isDark: boolean;
+        setShowToast: (arg: boolean) => void;
+        setNotificationContent: (arg: JSX.Element) => void;
+        hoveredAtom: moorhen.HoveredAtom;
+        setHoveredAtom: (arg: moorhen.HoveredAtom) => void;
+        commandCentre: React.RefObject<moorhen.CommandCentre>;
+        activeMap: moorhen.Map;
+        molecules: moorhen.Molecule[];
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
+        glRef: React.RefObject<webGL.MGWebGL>;
+        viewOnly: boolean;
+        windowWidth: number;
+        videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;
+    }, 
     shortCuts: {[key: string]: moorhen.Shortcut}, 
     showShortcutToast: boolean, 
     shortcutOnHoveredAtom: boolean
@@ -93,7 +107,7 @@ export const babyGruKeyPress = (
 
     if (showShortcutToast && !viewOnly) {
         setNotificationContent(
-            <MoorhenNotification key={guid()} isDark={isDark} windowWidth={windowWidth} hideDelay={5000}>
+            <MoorhenNotification key={guid()} hideDelay={5000}>
                 <h5 style={{margin: 0}}>{`${modifiers.join("-")} ${event.key} pressed`}</h5>
             </MoorhenNotification>
         )
@@ -118,7 +132,7 @@ export const babyGruKeyPress = (
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, "SPHERE", 4000]
         }
         showShortcutToast && setNotificationContent(
-            <MoorhenNotification key={guid()} isDark={isDark} windowWidth={windowWidth} hideDelay={5000}>
+            <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -155,7 +169,7 @@ export const babyGruKeyPress = (
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
         }
         showShortcutToast && setNotificationContent(
-            <MoorhenNotification key={guid()} isDark={isDark} windowWidth={windowWidth} hideDelay={5000}>
+            <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -172,7 +186,7 @@ export const babyGruKeyPress = (
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, "TRIPLE", 4000]
         }
         showShortcutToast && setNotificationContent(
-            <MoorhenNotification key={guid()} isDark={isDark} windowWidth={windowWidth} hideDelay={5000}>
+            <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -196,7 +210,7 @@ export const babyGruKeyPress = (
             ]
         }
         showShortcutToast && setNotificationContent(
-            <MoorhenNotification key={guid()} isDark={isDark} windowWidth={windowWidth} hideDelay={5000}>
+            <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -232,7 +246,7 @@ export const babyGruKeyPress = (
             ]
         }
         showShortcutToast && setNotificationContent(
-            <MoorhenNotification key={guid()} isDark={isDark} windowWidth={windowWidth} hideDelay={5000}>
+            <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -249,7 +263,7 @@ export const babyGruKeyPress = (
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }
         showShortcutToast && setNotificationContent(
-            <MoorhenNotification key={guid()} isDark={isDark} windowWidth={windowWidth} hideDelay={5000}>
+            <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -263,7 +277,7 @@ export const babyGruKeyPress = (
 
     else if (action === 'go_to_blob' && activeMap && !viewOnly) {
         showShortcutToast && setNotificationContent(
-            <MoorhenNotification key={guid()} isDark={isDark} windowWidth={windowWidth} hideDelay={5000}>
+            <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -299,7 +313,7 @@ export const babyGruKeyPress = (
         glRef.current.clearMeasureCylinderBuffers()
         glRef.current.drawScene()
         showShortcutToast && setNotificationContent(
-            <MoorhenNotification key={guid()} isDark={isDark} windowWidth={windowWidth} hideDelay={5000}>
+            <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -403,7 +417,7 @@ export const babyGruKeyPress = (
             glRef.current.drawScene()
         }
         showShortcutToast && setNotificationContent(
-            <MoorhenNotification key={guid()} isDark={isDark} windowWidth={windowWidth} hideDelay={5000}>
+            <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -453,7 +467,7 @@ export const babyGruKeyPress = (
         glRef.current.gl_clipPlane0[3] = glRef.current.gl_clipPlane0[3] - 0.5
         glRef.current.drawScene()
         showShortcutToast && setNotificationContent(
-            <MoorhenNotification key={guid()} isDark={isDark} windowWidth={windowWidth} hideDelay={5000}>
+            <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -469,7 +483,7 @@ export const babyGruKeyPress = (
         glRef.current.gl_clipPlane0[3] = glRef.current.gl_clipPlane0[3] + 0.5
         glRef.current.drawScene()
         showShortcutToast && setNotificationContent(
-            <MoorhenNotification key={guid()} isDark={isDark} windowWidth={windowWidth} hideDelay={5000}>
+            <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -485,7 +499,7 @@ export const babyGruKeyPress = (
         glRef.current.gl_clipPlane1[3] = glRef.current.gl_clipPlane1[3] - 0.5
         glRef.current.drawScene()
         showShortcutToast && setNotificationContent(
-            <MoorhenNotification key={guid()} isDark={isDark} windowWidth={windowWidth} hideDelay={5000}>
+            <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -501,7 +515,7 @@ export const babyGruKeyPress = (
         glRef.current.gl_clipPlane1[3] = glRef.current.gl_clipPlane1[3] + 0.5
         glRef.current.drawScene()
         showShortcutToast && setNotificationContent(
-            <MoorhenNotification key={guid()} isDark={isDark} windowWidth={windowWidth} hideDelay={5000}>
+            <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>

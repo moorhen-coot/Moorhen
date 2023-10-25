@@ -5,21 +5,25 @@ export const canvasSettingsSlice = createSlice({
   initialState: {
     height: 0,
     width: 0,
-    isDark: false
+    isDark: false,
+    backgroundColor: [1, 1, 1, 1],
   },
   reducers: {
-    setHeight: (state: { height: number; width: number; isDark: boolean }, action: {payload: number, type: string}) => {
+    setBackgroundColor: (state, action: {payload: [number, number, number, number], type: string}) => {
+      return {...state, backgroundColor: action.payload}
+    },
+    setHeight: (state, action: {payload: number, type: string}) => {
       return {...state, height: action.payload}
     },
-    setWidth: (state: { height: number; width: number; isDark: boolean }, action: {payload: number, type: string}) => {
+    setWidth: (state, action: {payload: number, type: string}) => {
       return {...state, width: action.payload}
     },
-    setIsDark: (state: { height: number; width: number; isDark: boolean }, action: {payload: boolean, type: string}) => {
+    setIsDark: (state, action: {payload: boolean, type: string}) => {
       return {...state, isDark: action.payload}
     }
   }
 })
 
-export const { setHeight, setWidth, setIsDark } = canvasSettingsSlice.actions
+export const { setHeight, setWidth, setIsDark, setBackgroundColor } = canvasSettingsSlice.actions
 
 export default canvasSettingsSlice.reducer
