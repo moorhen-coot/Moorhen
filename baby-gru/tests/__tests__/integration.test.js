@@ -624,7 +624,7 @@ describe('Testing molecules_container_js', () => {
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
         expect(mapMolNo).toBe(0)
 
-        const result = molecules_container.get_map_histogram(mapMolNo)
+        const result = molecules_container.get_map_histogram(mapMolNo, 200, 1)
         expect(result.base).toBeCloseTo(-1.01, 1)
         expect(result.bin_width).toBeCloseTo(0.09, 1)
         expect(result.counts.size()).toBe(51)
