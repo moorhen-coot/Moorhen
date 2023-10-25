@@ -13,7 +13,7 @@ export const labelSettingsSlice = createSlice({
       return {...state, availableFonts: [...state.availableFonts, action.payload]}
     },
     removeAvailableFont: (state, action: {payload: string, type: string}) => {
-      return {...state, availableFonts: state.availableFonts.filter(item => item !== action.payload)]}
+      return {...state, availableFonts: state.availableFonts.filter(item => item !== action.payload)}
     },
     emptyAvailableFonts: (state) => {
       return {...state, availableFonts: [ ]}
