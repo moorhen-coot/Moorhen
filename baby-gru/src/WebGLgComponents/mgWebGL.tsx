@@ -52,6 +52,7 @@ import { triangle_gbuffer_vertex_shader_source as triangle_gbuffer_vertex_shader
 import { triangle_instanced_gbuffer_vertex_shader_source as triangle_instanced_gbuffer_vertex_shader_source_webgl2 } from './webgl-2/triangle-instanced-gbuffer-vertex-shader.js';
 import { twod_gbuffer_vertex_shader_source as twod_gbuffer_vertex_shader_source_webgl2 } from './webgl-2/twodshapes-gbuffer-vertex-shader.js';
 import { perfect_sphere_gbuffer_fragment_shader_source as perfect_sphere_gbuffer_fragment_shader_source_webgl2 } from './webgl-2/perfect-sphere-gbuffer-fragment-shader.js';
+import { thick_lines_normal_gbuffer_vertex_shader_source as thick_lines_normal_gbuffer_vertex_shader_source_webgl2 } from './webgl-2/thick-lines-normal-gbuffer-vertex-shader.js';
 
 //WebGL1 shaders
 import { blur_vertex_shader_source as blur_vertex_shader_source_webgl1 } from './webgl-1/blur-vertex-shader.js';
@@ -90,6 +91,7 @@ import { triangle_gbuffer_vertex_shader_source as triangle_gbuffer_vertex_shader
 import { triangle_instanced_gbuffer_vertex_shader_source as triangle_instanced_gbuffer_vertex_shader_source_webgl1 } from './webgl-1/triangle-instanced-gbuffer-vertex-shader.js';
 import { twod_gbuffer_vertex_shader_source as twod_gbuffer_vertex_shader_source_webgl1 } from './webgl-1/twodshapes-gbuffer-vertex-shader.js';
 import { perfect_sphere_gbuffer_fragment_shader_source as perfect_sphere_gbuffer_fragment_shader_source_webgl1 } from './webgl-1/perfect-sphere-gbuffer-fragment-shader.js';
+import { thick_lines_normal_gbuffer_vertex_shader_source as thick_lines_normal_gbuffer_vertex_shader_source_webgl1 } from './webgl-1/thick-lines-normal-gbuffer-vertex-shader.js';
 
 import { DistanceBetweenPointAndLine, DihedralAngle } from './mgMaths.js';
 import { determineFontHeight } from './fontHeight.js';
@@ -1745,6 +1747,8 @@ interface ShaderThickLines extends MGWebGLShader {
 
 interface ShaderThickLinesNormal extends ShaderThickLines {
     vertexRealNormalAttribute: GLint;
+    xSSAOScaling: WebGLUniformLocation; //Perhaps in parent? Perhaps more of parent here?
+    ySSAOScaling: WebGLUniformLocation; // ditto
 }
 
 interface ShaderTwodShapes extends MGWebGLShader {
@@ -1824,6 +1828,9 @@ interface ShaderTriangles extends MGWebGLShader {
 }
 
 interface ShaderGBuffersTriangles extends MGWebGLShader {
+}
+
+interface ShaderGBuffersThickLinesNormal extends ShaderThickLinesNormal {
 }
 
 interface ShaderBlurX extends MGWebGLShader {
@@ -2081,6 +2088,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         shaderProgramGBuffers: ShaderGBuffersTriangles;
         shaderProgramGBuffersInstanced: ShaderGBuffersTrianglesInstanced;
         shaderProgramGBuffersPerfectSpheres: ShaderGBuffersPerfectSpheres;
+        shaderProgramGBuffersThickLinesNormal: ShaderGBuffersThickLinesNormal;
         shaderProgramSSAO: ShaderSSAO;
         shaderProgramBlurX: ShaderBlurX;
         shaderProgramBlurY: ShaderBlurY;
@@ -2696,6 +2704,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let gBufferInstancedVertexShader;
         let gBufferFragmentShader;
         let gBufferTwodVertexShader;
+        let gBufferThickLineNormalVertexShader;
         let gBufferPerfectSphereFragmentShader;
         let blurVertexShader;
         let ssaoFragmentShader;
@@ -2767,6 +2776,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let triangle_instanced_gbuffer_vertex_shader_source = triangle_instanced_gbuffer_vertex_shader_source_webgl1;
         let perfect_sphere_gbuffer_fragment_shader_source = perfect_sphere_gbuffer_fragment_shader_source_webgl1;
         let twod_gbuffer_vertex_shader_source = twod_gbuffer_vertex_shader_source_webgl1;
+        let thick_lines_normal_gbuffer_vertex_shader_source = thick_lines_normal_gbuffer_vertex_shader_source_webgl1;
 
         if(this.WEBGL2){
             ssao_fragment_shader_source = ssao_fragment_shader_source_webgl2;
@@ -2805,6 +2815,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             triangle_instanced_gbuffer_vertex_shader_source = triangle_instanced_gbuffer_vertex_shader_source_webgl2;
             perfect_sphere_gbuffer_fragment_shader_source = perfect_sphere_gbuffer_fragment_shader_source_webgl2;
             twod_gbuffer_vertex_shader_source = twod_gbuffer_vertex_shader_source_webgl2;
+            thick_lines_normal_gbuffer_vertex_shader_source = thick_lines_normal_gbuffer_vertex_shader_source_webgl2;
         }
 
         vertexShader = getShader(self.gl, triangle_vertex_shader_source, "vertex");
@@ -2813,6 +2824,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         gBufferFragmentShader = getShader(self.gl, triangle_gbuffer_fragment_shader_source, "fragment");
         gBufferInstancedVertexShader = getShader(self.gl, triangle_instanced_gbuffer_vertex_shader_source, "vertex");
         gBufferTwodVertexShader = getShader(self.gl, twod_gbuffer_vertex_shader_source, "vertex");
+        gBufferThickLineNormalVertexShader = getShader(self.gl, thick_lines_normal_gbuffer_vertex_shader_source, "vertex");
         gBufferPerfectSphereFragmentShader = getShader(self.gl, perfect_sphere_gbuffer_fragment_shader_source, "fragment");
         gBufferVertexShader = getShader(self.gl, triangle_gbuffer_vertex_shader_source, "vertex");
         self.initGBufferShaders(gBufferVertexShader, gBufferFragmentShader);
@@ -2879,6 +2891,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         self.initShadersInstanced(vertexShaderInstanced, fragmentShader);
         self.initGBufferShadersInstanced(gBufferInstancedVertexShader, gBufferFragmentShader);
         self.initGBufferShadersPerfectSphere(gBufferTwodVertexShader, gBufferPerfectSphereFragmentShader);
+        self.initGBufferThickLineNormalShaders(gBufferThickLineNormalVertexShader, gBufferFragmentShader);
 
         this.ssaoRadius = 2.5;
         this.ssaoBias = 0.025;
@@ -2887,7 +2900,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         self.buildBuffers();
 
         this.measureTextCanvasTexture = new TextCanvasTexture(this,1024,2048);
-        this.labelsTextCanvasTexture = new TextCanvasTexture(this,64,2048);
+        this.labelsTextCanvasTexture = new TextCanvasTexture(this,128,2048);
 
         self.gl.clearColor(self.background_colour[0], self.background_colour[1], self.background_colour[2], self.background_colour[3]);
         self.gl.enable(self.gl.DEPTH_TEST);
@@ -4884,15 +4897,64 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramInstanced.specularPower = this.gl.getUniformLocation(this.shaderProgramInstanced, "specularPower");
     }
 
+    initGBufferThickLineNormalShaders(vertexShader, fragmentShader) {
+        //initGBufferThickLineNormalShaders
+        this.shaderProgramGBuffersThickLinesNormal = this.gl.createProgram();
+        this.gl.attachShader(this.shaderProgramGBuffersThickLinesNormal, vertexShader);
+        this.gl.attachShader(this.shaderProgramGBuffersThickLinesNormal, fragmentShader);
+        //this.gl.bindAttribLocation(this.shaderProgramGBuffersThickLinesNormal, 0, "aVertexPosition");
+        //this.gl.bindAttribLocation(this.shaderProgramGBuffersThickLinesNormal, 1, "aVertexColour");
+        //this.gl.bindAttribLocation(this.shaderProgramGBuffersThickLinesNormal, 2, "aVertexNormal");
+        //this.gl.bindAttribLocation(this.shaderProgramGBuffersThickLinesNormal, 8, "aVertexRealNormal");//4,5,6,7 Give wrong normals. Why?
+        this.gl.linkProgram(this.shaderProgramGBuffersThickLinesNormal);
+
+        if (!this.gl.getProgramParameter(this.shaderProgramGBuffersThickLinesNormal, this.gl.LINK_STATUS)) {
+            alert("Could not initialise shaders (initGBufferThickLineNormalShaders)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramGBuffersThickLinesNormal));
+        }
+
+        this.gl.useProgram(this.shaderProgramGBuffersThickLinesNormal);
+
+        this.shaderProgramGBuffersThickLinesNormal.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramGBuffersThickLinesNormal, "aVertexPosition");
+        this.gl.enableVertexAttribArray(this.shaderProgramGBuffersThickLinesNormal.vertexPositionAttribute);
+
+        this.shaderProgramGBuffersThickLinesNormal.vertexColourAttribute = this.gl.getAttribLocation(this.shaderProgramGBuffersThickLinesNormal, "aVertexColour");
+        this.gl.enableVertexAttribArray(this.shaderProgramGBuffersThickLinesNormal.vertexColourAttribute);
+
+        this.shaderProgramGBuffersThickLinesNormal.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgramGBuffersThickLinesNormal, "aVertexNormal");
+        this.gl.enableVertexAttribArray(this.shaderProgramGBuffersThickLinesNormal.vertexNormalAttribute);
+
+        this.shaderProgramGBuffersThickLinesNormal.vertexRealNormalAttribute = this.gl.getAttribLocation(this.shaderProgramGBuffersThickLinesNormal, "aVertexRealNormal");
+        this.gl.enableVertexAttribArray(this.shaderProgramGBuffersThickLinesNormal.vertexRealNormalAttribute);
+
+        this.shaderProgramGBuffersThickLinesNormal.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramGBuffersThickLinesNormal, "uPMatrix");
+        this.shaderProgramGBuffersThickLinesNormal.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramGBuffersThickLinesNormal, "uMVMatrix");
+        this.shaderProgramGBuffersThickLinesNormal.mvInvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramGBuffersThickLinesNormal, "uMVINVMatrix");
+        this.shaderProgramGBuffersThickLinesNormal.screenZ = this.gl.getUniformLocation(this.shaderProgramGBuffersThickLinesNormal, "screenZ");
+
+        this.shaderProgramGBuffersThickLinesNormal.clipPlane0 = this.gl.getUniformLocation(this.shaderProgramGBuffersThickLinesNormal, "clipPlane0");
+        this.shaderProgramGBuffersThickLinesNormal.clipPlane1 = this.gl.getUniformLocation(this.shaderProgramGBuffersThickLinesNormal, "clipPlane1");
+        this.shaderProgramGBuffersThickLinesNormal.clipPlane2 = this.gl.getUniformLocation(this.shaderProgramGBuffersThickLinesNormal, "clipPlane2");
+        this.shaderProgramGBuffersThickLinesNormal.clipPlane3 = this.gl.getUniformLocation(this.shaderProgramGBuffersThickLinesNormal, "clipPlane3");
+        this.shaderProgramGBuffersThickLinesNormal.clipPlane4 = this.gl.getUniformLocation(this.shaderProgramGBuffersThickLinesNormal, "clipPlane4");
+        this.shaderProgramGBuffersThickLinesNormal.clipPlane5 = this.gl.getUniformLocation(this.shaderProgramGBuffersThickLinesNormal, "clipPlane5");
+        this.shaderProgramGBuffersThickLinesNormal.clipPlane6 = this.gl.getUniformLocation(this.shaderProgramGBuffersThickLinesNormal, "clipPlane6");
+        this.shaderProgramGBuffersThickLinesNormal.clipPlane7 = this.gl.getUniformLocation(this.shaderProgramGBuffersThickLinesNormal, "clipPlane7");
+        this.shaderProgramGBuffersThickLinesNormal.nClipPlanes = this.gl.getUniformLocation(this.shaderProgramGBuffersThickLinesNormal, "nClipPlanes");
+
+        this.shaderProgramGBuffersThickLinesNormal.pixelZoom = this.gl.getUniformLocation(this.shaderProgramGBuffersThickLinesNormal, "pixelZoom");
+
+    }
+
     initThickLineNormalShaders(vertexShader, fragmentShader) {
 
         this.shaderProgramThickLinesNormal = this.gl.createProgram();
         this.gl.attachShader(this.shaderProgramThickLinesNormal, vertexShader);
         this.gl.attachShader(this.shaderProgramThickLinesNormal, fragmentShader);
-        this.gl.bindAttribLocation(this.shaderProgramThickLinesNormal, 0, "aVertexPosition");
-        this.gl.bindAttribLocation(this.shaderProgramThickLinesNormal, 1, "aVertexColour");
-        this.gl.bindAttribLocation(this.shaderProgramThickLinesNormal, 2, "aVertexNormal");
-        this.gl.bindAttribLocation(this.shaderProgramThickLinesNormal, 7, "aVertexRealNormal");
+        //this.gl.bindAttribLocation(this.shaderProgramThickLinesNormal, 0, "aVertexPosition");
+        //this.gl.bindAttribLocation(this.shaderProgramThickLinesNormal, 1, "aVertexColour");
+        //this.gl.bindAttribLocation(this.shaderProgramThickLinesNormal, 2, "aVertexNormal");
+        //this.gl.bindAttribLocation(this.shaderProgramThickLinesNormal, 8, "aVertexRealNormal");//4,5,6,7 Give wrong normals. Why?
         this.gl.linkProgram(this.shaderProgramThickLinesNormal);
 
         if (!this.gl.getProgramParameter(this.shaderProgramThickLinesNormal, this.gl.LINK_STATUS)) {
@@ -4929,6 +4991,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramThickLinesNormal.yPixelOffset = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "yPixelOffset");
         this.shaderProgramThickLinesNormal.doShadows = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "doShadows");
         this.shaderProgramThickLinesNormal.doSSAO = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "doSSAO");
+        this.shaderProgramThickLinesNormal.xSSAOScaling = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "xSSAOScaling");
+        this.shaderProgramThickLinesNormal.ySSAOScaling = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "ySSAOScaling");
         this.shaderProgramThickLinesNormal.shadowQuality = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "shadowQuality");
         this.shaderProgramThickLinesNormal.clipPlane0 = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "clipPlane0");
         this.shaderProgramThickLinesNormal.clipPlane1 = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "clipPlane1");
@@ -5926,19 +5990,24 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "NORMALLINES") {
                     console.log("Treating normal lines specially");
-                    var size = this.mapLineWidth;//1.0;
+                    const size = this.mapLineWidth;//1.0;
                     const useIndices = this.displayBuffers[idx].supplementary["useIndices"];
                     let thickLines;
                     if (useIndices) {
                         thickLines = this.linesToThickLinesWithIndicesAndNormals(this.displayBuffers[idx].triangleVertices[j], this.displayBuffers[idx].triangleNormals[j], this.displayBuffers[idx].triangleColours[j], this.displayBuffers[idx].triangleIndexs[j], size);
                     } else {
+                        console.log("************************************************************");
+                        console.log("************************************************************");
+                        console.log("RETURNING BECAUSE NO INDICES");
+                        console.log("************************************************************");
+                        console.log("************************************************************");
                         return;
                     }
-                    var Normals_new = thickLines["normals"];
-                    var RealNormals_new = thickLines["realNormals"];
-                    var Vertices_new = thickLines["vertices"];
-                    var Colours_new = thickLines["colours"];
-                    var Indexs_new = thickLines["indices"];
+                    const Normals_new = thickLines["normals"];
+                    const RealNormals_new = thickLines["realNormals"];
+                    const Vertices_new = thickLines["vertices"];
+                    const Colours_new = thickLines["colours"];
+                    const Indexs_new = thickLines["indices"];
                     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexIndexBuffer[j]);
                     if (this.ext) {
                         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(Indexs_new), this.gl.STATIC_DRAW);
@@ -7771,7 +7840,81 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.disableVertexAttribArray(program.vertexTextureAttribute);
             }
 
+            let shaderProgramThickLinesNormal = this.shaderProgramThickLinesNormal;
             if(this.drawingGBuffers){
+                shaderProgramThickLinesNormal = this.shaderProgramGBuffersThickLinesNormal;
+            } else {
+                shaderProgramThickLinesNormal = this.shaderProgramThickLinesNormal;
+            }
+
+            this.gl.useProgram(shaderProgramThickLinesNormal);
+
+            for(let i = 0; i<16; i++)
+                this.gl.disableVertexAttribArray(i);
+
+            this.gl.uniform1i(shaderProgramThickLinesNormal.shinyBack, true);
+            this.setLightUniforms(shaderProgramThickLinesNormal);
+            this.gl.uniform3fv(shaderProgramThickLinesNormal.screenZ, this.screenZ);
+            this.gl.enableVertexAttribArray(shaderProgramThickLinesNormal.vertexPositionAttribute);
+            this.gl.enableVertexAttribArray(shaderProgramThickLinesNormal.vertexColourAttribute);
+            this.gl.enableVertexAttribArray(shaderProgramThickLinesNormal.vertexNormalAttribute);
+            this.gl.enableVertexAttribArray(shaderProgramThickLinesNormal.vertexRealNormalAttribute);
+            this.setMatrixUniforms(shaderProgramThickLinesNormal);
+            this.gl.uniformMatrix4fv(shaderProgramThickLinesNormal.pMatrixUniform, false, this.pmvMatrix);
+
+            // I do not think this is useful yet as I do not think that lines contribute to occlusion buffer.
+            if(this.WEBGL2&&shaderProgramThickLinesNormal.doSSAO&&!this.drawingGBuffers){
+                this.gl.uniform1i(shaderProgramThickLinesNormal.SSAOMap, 1);
+                this.gl.activeTexture(this.gl.TEXTURE1);
+                this.gl.bindTexture(this.gl.TEXTURE_2D, this.simpleBlurYTexture);
+                this.gl.activeTexture(this.gl.TEXTURE0);
+                if(this.renderToTexture){
+                    this.gl.uniform1f(shaderProgramThickLinesNormal.xSSAOScaling, 1.0/this.rttFramebuffer.width );
+                    this.gl.uniform1f(shaderProgramThickLinesNormal.ySSAOScaling, 1.0/this.rttFramebuffer.height );
+                } else {
+                    this.gl.uniform1f(shaderProgramThickLinesNormal.xSSAOScaling, 1.0/this.gl.viewportWidth );
+                    this.gl.uniform1f(shaderProgramThickLinesNormal.ySSAOScaling, 1.0/this.gl.viewportHeight );
+                }
+                if(shaderProgramThickLinesNormal.doSSAO!=null){
+                    if(shaderProgramThickLinesNormal.doSSAO!=null) this.gl.uniform1i(shaderProgramThickLinesNormal.doSSAO, this.doSSAO);
+                }
+            }
+
+            for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
+                if (bufferTypes[j] !== "NORMALLINES") {
+                    continue;
+                }
+                // FIXME ? We assume all are the same size. Anything else is a little tricky for now.
+                if (typeof (this.displayBuffers[idx].primitiveSizes) !== "undefined" && typeof (this.displayBuffers[idx].primitiveSizes[j]) !== "undefined" && typeof (this.displayBuffers[idx].primitiveSizes[j][0]) !== "undefined") {
+                    this.gl.uniform1f(shaderProgramThickLinesNormal.pixelZoom, this.displayBuffers[idx].primitiveSizes[j][0] * 0.04 * this.zoom);
+                } else {
+                    this.gl.uniform1f(shaderProgramThickLinesNormal.pixelZoom, 1.0 * 0.04 * this.zoom);
+                }
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexNormalBuffer[j]);
+                this.gl.vertexAttribPointer(shaderProgramThickLinesNormal.vertexNormalAttribute, triangleVertexNormalBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexRealNormalBuffer[j]);
+                this.gl.vertexAttribPointer(shaderProgramThickLinesNormal.vertexRealNormalAttribute, triangleVertexRealNormalBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexPositionBuffer[j]);
+                this.gl.vertexAttribPointer(shaderProgramThickLinesNormal.vertexPositionAttribute, triangleVertexPositionBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleColourBuffer[j]);
+                this.gl.vertexAttribPointer(shaderProgramThickLinesNormal.vertexColourAttribute, triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, triangleVertexIndexBuffer[j]);
+
+                if (this.displayBuffers[idx].transformMatrix) {
+                    this.drawTransformMatrixPMV(this.displayBuffers[idx].transformMatrix, this.displayBuffers[idx], shaderProgramThickLinesNormal, this.gl.TRIANGLES, j);
+                } else {
+                    if (this.ext) {
+                        this.gl.drawElements(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_INT, 0);
+                    } else {
+                        this.gl.drawElements(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_SHORT, 0);
+                    }
+                }
+            }
+
+            this.gl.disableVertexAttribArray(shaderProgramThickLinesNormal.vertexRealNormalAttribute);
+
+            if(this.drawingGBuffers){
+                //FIXME - Don't skip on thick lines.
                 //console.log("Skip most stuff!");
                 continue;
             }
@@ -7784,7 +7927,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 continue; //Nothing else implemented
             //Cylinders here
 
-            //vertex attribute settings are likely wrong from here on...
+            //vertex attribute settings are likely wrong from here on... (REALLY - I HOPE NOT! SJM 26/10/2023)
 
             let sphereProgram = this.shaderProgramPointSpheres;
 
@@ -7975,48 +8118,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     }
                 }
             }
-
-            this.gl.useProgram(this.shaderProgramThickLinesNormal);
-            this.gl.uniform1i(this.shaderProgramThickLinesNormal.shinyBack, true);
-            this.setLightUniforms(this.shaderProgramThickLinesNormal);
-            this.gl.uniform3fv(this.shaderProgramThickLinesNormal.screenZ, this.screenZ);
-            this.gl.enableVertexAttribArray(this.shaderProgramThickLinesNormal.vertexNormalAttribute);
-            this.gl.enableVertexAttribArray(this.shaderProgramThickLinesNormal.vertexRealNormalAttribute);
-            this.setMatrixUniforms(this.shaderProgramThickLinesNormal);
-            this.gl.uniformMatrix4fv(this.shaderProgramThickLinesNormal.pMatrixUniform, false, this.pmvMatrix);
-
-            for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
-                if (bufferTypes[j] !== "NORMALLINES") {
-                    continue;
-                }
-                // FIXME ? We assume all are the same size. Anything else is a little tricky for now.
-                if (typeof (this.displayBuffers[idx].primitiveSizes) !== "undefined" && typeof (this.displayBuffers[idx].primitiveSizes[j]) !== "undefined" && typeof (this.displayBuffers[idx].primitiveSizes[j][0]) !== "undefined") {
-                    this.gl.uniform1f(this.shaderProgramThickLinesNormal.pixelZoom, this.displayBuffers[idx].primitiveSizes[j][0] * 0.04 * this.zoom);
-                } else {
-                    this.gl.uniform1f(this.shaderProgramThickLinesNormal.pixelZoom, 1.0 * 0.04 * this.zoom);
-                }
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexNormalBuffer[j]);
-                this.gl.vertexAttribPointer(this.shaderProgramThickLinesNormal.vertexNormalAttribute, triangleVertexNormalBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexRealNormalBuffer[j]);
-                this.gl.vertexAttribPointer(this.shaderProgramThickLinesNormal.vertexRealNormalAttribute, triangleVertexRealNormalBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexPositionBuffer[j]);
-                this.gl.vertexAttribPointer(this.shaderProgramThickLinesNormal.vertexPositionAttribute, triangleVertexPositionBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleColourBuffer[j]);
-                this.gl.vertexAttribPointer(this.shaderProgramThickLinesNormal.vertexColourAttribute, triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
-                this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, triangleVertexIndexBuffer[j]);
-
-                if (this.displayBuffers[idx].transformMatrix) {
-                    this.drawTransformMatrixPMV(this.displayBuffers[idx].transformMatrix, this.displayBuffers[idx], this.shaderProgramThickLinesNormal, this.gl.TRIANGLES, j);
-                } else {
-                    if (this.ext) {
-                        this.gl.drawElements(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_INT, 0);
-                    } else {
-                        this.gl.drawElements(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_SHORT, 0);
-                    }
-                }
-            }
-
-            this.gl.disableVertexAttribArray(this.shaderProgramThickLinesNormal.vertexRealNormalAttribute);
 
             this.gl.useProgram(this.shaderProgramThickLines);
             this.gl.uniform3fv(this.shaderProgramThickLines.screenZ, this.screenZ);

@@ -15,8 +15,11 @@ fi
 BUILD_DIR=${PWD}/CCP4_WASM_BUILD
 INSTALL_DIR=${PWD}/install
 
-NUMPROCS=8
-
+if [ x`uname -s` = x"Darwin" ]; then
+    NUMPROCS=`sysctl -n hw.ncpu`
+else
+    NUMPROCS=`nproc --all`
+fi
 echo "Sources are in ${SOURCE_DIR}"
 echo "Building in ${BUILD_DIR}"
 echo "Installing in ${INSTALL_DIR}"
@@ -58,7 +61,7 @@ emar q ${INSTALL_DIR}/lib/libboost_wserialization.a ${INSTALL_DIR}/lib/libboost_
 #RDKit
 mkdir -p ${BUILD_DIR}/rdkit_build
 cd ${BUILD_DIR}/rdkit_build
-emcmake cmake -Dboost_iostreams_DIR=${INSTALL_DIR}/lib/cmake/boost_iostreams-1.80.0/ -Dboost_system_DIR=${INSTALL_DIR}/lib/cmake/boost_system-1.80.0/  -Dboost_headers_DIR=${INSTALL_DIR}/lib/cmake/boost_headers-1.80.0/ -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-1.80.0 -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="-s USE_PTHREADS=1 -pthread -Wno-enum-constexpr-conversion -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF
+emcmake cmake -Dboost_iostreams_DIR=${INSTALL_DIR}/lib/cmake/boost_iostreams-1.83.0/ -Dboost_system_DIR=${INSTALL_DIR}/lib/cmake/boost_system-1.83.0/  -Dboost_headers_DIR=${INSTALL_DIR}/lib/cmake/boost_headers-1.83.0/ -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-1.83.0 -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="-s USE_PTHREADS=1 -pthread -Wno-enum-constexpr-conversion -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF
 emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}

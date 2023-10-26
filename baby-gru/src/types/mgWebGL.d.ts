@@ -94,6 +94,7 @@ export namespace webGL {
         initGBufferShaders(vertexShader : string, fragmentShader : string)  : void;
         initGBufferShadersInstanced(vertexShader : string, fragmentShader : string)  : void;
         initGBufferShadersPerfectSphere(vertexShader : string, fragmentShader : string)  : void;
+        initGBufferThickLineNormalShaders(vertexShader : string, fragmentShader : string)  : void;
         initShadersInstanced(vertexShader : string, fragmentShader : string)  : void;
         initThickLineNormalShaders(vertexShader : string, fragmentShader : string)  : void;
         initThickLineShaders(vertexShader : string, fragmentShader : string)  : void;
@@ -324,6 +325,7 @@ export namespace webGL {
         shaderProgramGBuffers: ShaderGBuffersTriangles;
         shaderProgramGBuffersInstanced: ShaderGBuffersTrianglesInstanced;
         shaderProgramGBuffersPerfectSpheres: ShaderGBuffersPerfectSpheres;
+        shaderProgramGBuffersThickLinesNormal: ShaderGBuffersThickLinesNormal;
         shaderProgramSSAO: ShaderSSAO;
         shaderProgramBlurX: ShaderBlurX;
         shaderProgramBlurY: ShaderBlurY;
