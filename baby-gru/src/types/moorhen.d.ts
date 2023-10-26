@@ -859,8 +859,6 @@ export namespace moorhen {
         setAppTitle: React.Dispatch<React.SetStateAction<string>>;
         cootInitialized: boolean;
         setCootInitialized: React.Dispatch<React.SetStateAction<boolean>>;
-        theme: string,
-        setTheme: React.Dispatch<React.SetStateAction<string>>;
         showToast: boolean;
         setShowToast: React.Dispatch<React.SetStateAction<boolean>>;
         notificationContent: null | JSX.Element;

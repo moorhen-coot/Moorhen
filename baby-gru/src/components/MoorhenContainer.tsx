@@ -15,6 +15,7 @@ import { MoorhenPreferencesContainer } from './misc/MoorhenPreferencesContainer'
 import { useSelector, useDispatch } from 'react-redux';
 import { setDefaultBackgroundColor } from '../store/sceneSettingsSlice';
 import { setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/canvasStatesSlice';
+import { setTheme } from '../store/generalStatesSlice';
 
 const initialMoleculesState: moorhen.Molecule[] = []
 
@@ -93,11 +94,11 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const [innerMaps, innerChangeMaps] = useReducer(itemReducer, initialMapsState)
     const [innerAppTitle, setInnerAppTitle] = useState<string>('Moorhen')
     const [innerCootInitialized, setInnerCootInitialized] = useState<boolean>(false)
-    const [innerTheme, setInnerTheme] = useState<string>("flatly")
     const [innerShowToast, setInnerShowToast] = useState<boolean>(false)
     const [innerNotificationContent, setInnerNotificationContent] = useState<null | JSX.Element>(null)
     
     const dispatch = useDispatch()
+    const theme = useSelector((state: moorhen.State) => state.generalStates.theme)
     const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
     const height = useSelector((state: moorhen.State) => state.canvasStates.height)
     const width = useSelector((state: moorhen.State) => state.canvasStates.width)
@@ -138,7 +139,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         setCursorStyle: setInnerCursorStyle, busy: innerBusy, setBusy: setInnerBusy, 
         changeMaps: innerChangeMaps, enableAtomHovering: innerEnableAtomHovering, changeMolecules: innerChangeMolecules, 
         appTitle: innerAppTitle, setAppTitle: setInnerAppTitle, cootInitialized: innerCootInitialized, 
-        setCootInitialized: setInnerCootInitialized, theme: innerTheme, setTheme: setInnerTheme, 
+        setCootInitialized: setInnerCootInitialized,
         showToast: innerShowToast, setShowToast: setInnerShowToast, notificationContent: innerNotificationContent, 
         setNotificationContent: setInnerNotificationContent, videoRecorderRef: innerVideoRecorderRef,
         prevActiveMoleculeRef: innerPrevActiveMoleculeRef, 
@@ -153,7 +154,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         lastHoveredAtom, prevActiveMoleculeRef, activeMap, maps, changeMaps,
         setActiveMap, activeMolecule, setActiveMolecule, hoveredAtom, setHoveredAtom,
         cursorStyle, setCursorStyle, busy, setBusy, changeMolecules, setEnableAtomHovering,
-        appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
+        appTitle, setAppTitle, cootInitialized, setCootInitialized,
         showToast, setShowToast, notificationContent, setNotificationContent,
         molecules, enableAtomHovering
     } = states
@@ -263,7 +264,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         }
         if (isDark !== _isDark) {
             dispatch( setIsDark(_isDark) )
-            setTheme(_isDark ? "darkly" : "flatly")
+            dispatch( setTheme(_isDark ? "darkly" : "flatly") )
         }
 
     }, [backgroundColor])
@@ -420,7 +421,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     return <> 
     <div>
-        <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={!cootInitialized}>
+        <Backdrop sx={{ color: '#fff', zIndex: (_theme) => _theme.zIndex.drawer + 1 }} open={!cootInitialized}>
             <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
             <span>Starting moorhen...</span>
         </Backdrop>
