@@ -11,7 +11,6 @@ export const generalStatesSlice = createSlice({
     notificationContent: null,
     showToast: false,
     activeMap: null,
-    activeMolecule: null,
     theme: 'flatly',
     viewOnly: false,
   },
@@ -27,9 +26,6 @@ export const generalStatesSlice = createSlice({
     },
     setViewOnly: (state, action: {payload: boolean, type: string}) => {
       return {...state, viewOnly: action.payload}
-    },
-    setActiveMolecule: (state, action: {payload: moorhen.Molecule, type: string}) => {
-      return {...state, activeMolecule: action.payload}
     },
     setActiveMap: (state, action: {payload: moorhen.Map, type: string}) => {
       return {...state, activeMap: action.payload}
@@ -49,7 +45,7 @@ export const generalStatesSlice = createSlice({
 }})
 
 export const {
-  setNotificationContent, setShowToast, setActiveMap, setActiveMolecule, setCootInitialized,
+  setNotificationContent, setShowToast, setActiveMap, setCootInitialized,
   setAppTittle, setUserPreferencesMounted, setDevMode, setTheme, setViewOnly
 } = generalStatesSlice.actions
 

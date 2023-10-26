@@ -730,8 +730,6 @@ export namespace moorhen {
         setEnableAtomHovering: React.Dispatch<React.SetStateAction<boolean>>;
         activeMap: Map;
         setActiveMap: React.Dispatch<React.SetStateAction<Map>>;
-        activeMolecule: Molecule;
-        setActiveMolecule: React.Dispatch<React.SetStateAction<Molecule>>;
         hoveredAtom: null | HoveredAtom;
         setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtom>>;
         notificationContent: null | JSX.Element;
@@ -816,7 +814,6 @@ export namespace moorhen {
             notificationContent: JSX.Element;
             showToast: boolean;
             activeMap: Map;
-            activeMolecule: Molecule;
             theme: string;
         };
         hoveringStates: {
@@ -835,13 +832,10 @@ export namespace moorhen {
         mapsRef: React.MutableRefObject<null | Map[]>;
         activeMapRef: React.MutableRefObject<Map>;
         lastHoveredAtom: React.MutableRefObject<null | HoveredAtom>;
-        prevActiveMoleculeRef: React.MutableRefObject<null | Molecule>;
         enableAtomHovering: boolean;
         setEnableAtomHovering: React.Dispatch<React.SetStateAction<boolean>>;
         activeMap: Map;
         setActiveMap: React.Dispatch<React.SetStateAction<Map>>;
-        activeMolecule: Molecule;
-        setActiveMolecule: React.Dispatch<React.SetStateAction<Molecule>>;
         hoveredAtom: null | HoveredAtom;
         setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtom>>;
         cursorStyle: string;

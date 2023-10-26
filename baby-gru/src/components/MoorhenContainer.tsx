@@ -83,10 +83,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const innerMapsRef = useRef<null | moorhen.Map[]>(null)
     const innerActiveMapRef = useRef<null | moorhen.Map>(null)
     const innerLastHoveredAtom = useRef<null | moorhen.HoveredAtom>(null)
-    const innerPrevActiveMoleculeRef = useRef<null |  moorhen.Molecule>(null)
     const [innerEnableAtomHovering, setInnerEnableAtomHovering] = useState<boolean>(true)
     const [innerActiveMap, setInnerActiveMap] = useState<null | moorhen.Map>(null)
-    const [innerActiveMolecule, setInnerActiveMolecule] = useState<null|  moorhen.Molecule>(null)
     const [innerHoveredAtom, setInnerHoveredAtom] = useState<null | moorhen.HoveredAtom>({ molecule: null, cid: null })
     const [innerCursorStyle, setInnerCursorStyle] = useState<string>("default")
     const [innerMolecules, innerChangeMolecules] = useReducer(itemReducer, initialMoleculesState)
@@ -131,14 +129,13 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         glRef: innerGlRef, timeCapsuleRef: innerTimeCapsuleRef, commandCentre: innnerCommandCentre,
         moleculesRef: innerMoleculesRef, mapsRef: innerMapsRef, activeMapRef: innerActiveMapRef,
         lastHoveredAtom: innerLastHoveredAtom, setEnableAtomHovering: setInnerEnableAtomHovering,
-        activeMap: innerActiveMap, setActiveMap: setInnerActiveMap, activeMolecule: innerActiveMolecule,
-        setActiveMolecule: setInnerActiveMolecule, hoveredAtom: innerHoveredAtom, setHoveredAtom: setInnerHoveredAtom,
+        activeMap: innerActiveMap, setActiveMap: setInnerActiveMap,
+        hoveredAtom: innerHoveredAtom, setHoveredAtom: setInnerHoveredAtom,
         cursorStyle: innerCursorStyle, maps: innerMaps as moorhen.Map[], molecules: innerMolecules as moorhen.Molecule[],
         setCursorStyle: setInnerCursorStyle,
         changeMaps: innerChangeMaps, enableAtomHovering: innerEnableAtomHovering, changeMolecules: innerChangeMolecules, 
         showToast: innerShowToast, setShowToast: setInnerShowToast, notificationContent: innerNotificationContent, 
         setNotificationContent: setInnerNotificationContent, videoRecorderRef: innerVideoRecorderRef,
-        prevActiveMoleculeRef: innerPrevActiveMoleculeRef, 
     }
 
     let states = {} as moorhen.ContainerStates
@@ -147,8 +144,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     })
 
     const { glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef, videoRecorderRef,
-        lastHoveredAtom, prevActiveMoleculeRef, activeMap, maps, changeMaps,
-        setActiveMap, activeMolecule, setActiveMolecule, hoveredAtom, setHoveredAtom,
+        lastHoveredAtom, activeMap, maps, changeMaps,
+        setActiveMap, hoveredAtom, setHoveredAtom,
         cursorStyle, setCursorStyle, changeMolecules, setEnableAtomHovering,
         showToast, setShowToast, notificationContent, setNotificationContent,
         molecules, enableAtomHovering
@@ -349,7 +346,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             showShortcutToast,
             shortcutOnHoveredAtom
         )
-    }, [molecules, activeMolecule, activeMap, hoveredAtom, viewOnly, shortCuts, showShortcutToast, shortcutOnHoveredAtom, width, isDark])
+    }, [molecules, activeMap, hoveredAtom, viewOnly, shortCuts, showShortcutToast, shortcutOnHoveredAtom, width, isDark])
 
     useEffect(() => {
         if (hoveredAtom && hoveredAtom.molecule && hoveredAtom.cid) {
@@ -382,28 +379,13 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         }
     }, [activeMap])
 
-    useEffect(() => {
-        function resetActiveGL() {
-            prevActiveMoleculeRef.current = activeMolecule;
-            if (activeMolecule)
-                glRef.current.setActiveMolecule(activeMolecule)
-            else
-                glRef.current.setActiveMolecule(null)
-        }
-        if (prevActiveMoleculeRef.current) {
-            prevActiveMoleculeRef.current.applyTransform().then(() => resetActiveGL())
-        } else {
-            resetActiveGL()
-        }
-    }, [activeMolecule])
-
     const glResize = () => {
         glRef.current.resize(width, height)
         glRef.current.drawScene()
     }
 
     const collectedProps: moorhen.Controls = {
-        molecules, changeMolecules, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
+        molecules, changeMolecules, maps, changeMaps, glRef,
         activeMap, setActiveMap, commandCentre, notificationContent, setNotificationContent, hoveredAtom, 
         setHoveredAtom, showToast, setShowToast, timeCapsuleRef, disableFileUploads, 
         urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems, extraEditMenuItems,
