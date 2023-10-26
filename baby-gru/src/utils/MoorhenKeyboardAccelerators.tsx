@@ -21,7 +21,6 @@ export const babyGruKeyPress = (
     event: KeyboardEvent, 
     collectedProps: {
         isDark: boolean;
-        setShowToast: (arg: boolean) => void;
         setNotificationContent: (arg: JSX.Element) => void;
         hoveredAtom: moorhen.HoveredAtom;
         setHoveredAtom: (arg: moorhen.HoveredAtom) => void;
@@ -40,7 +39,7 @@ export const babyGruKeyPress = (
 ): boolean | Promise<boolean> => {
     
     const { 
-        setShowToast, setNotificationContent, hoveredAtom, setHoveredAtom, commandCentre, activeMap, 
+        setNotificationContent, hoveredAtom, setHoveredAtom, commandCentre, activeMap, 
         glRef, molecules, timeCapsuleRef, viewOnly, videoRecorderRef, isDark, windowWidth
     } = collectedProps;
 
@@ -111,7 +110,6 @@ export const babyGruKeyPress = (
                 <h5 style={{margin: 0}}>{`${modifiers.join("-")} ${event.key} pressed`}</h5>
             </MoorhenNotification>
         )
-        setShowToast(true)    
     }
     
     let action: null | string = null;

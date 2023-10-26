@@ -9,7 +9,6 @@ export const generalStatesSlice = createSlice({
     appTitle: 'Moorhen',
     cootInitialized: false,
     notificationContent: null,
-    showToast: false,
     activeMap: null,
     theme: 'flatly',
     viewOnly: false,
@@ -20,9 +19,6 @@ export const generalStatesSlice = createSlice({
     },
     setNotificationContent: (state, action: {payload: JSX.Element, type: string}) => {
       return {...state, notificationContent: action.payload}
-    },
-    setShowToast: (state, action: {payload: boolean, type: string}) => {
-      return {...state, showToast: action.payload}
     },
     setViewOnly: (state, action: {payload: boolean, type: string}) => {
       return {...state, viewOnly: action.payload}
@@ -45,7 +41,7 @@ export const generalStatesSlice = createSlice({
 }})
 
 export const {
-  setNotificationContent, setShowToast, setActiveMap, setCootInitialized,
+  setNotificationContent, setActiveMap, setCootInitialized,
   setAppTittle, setUserPreferencesMounted, setDevMode, setTheme, setViewOnly
 } = generalStatesSlice.actions
 

@@ -87,7 +87,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const [innerActiveMap, setInnerActiveMap] = useState<null | moorhen.Map>(null)
     const [innerMolecules, innerChangeMolecules] = useReducer(itemReducer, initialMoleculesState)
     const [innerMaps, innerChangeMaps] = useReducer(itemReducer, initialMapsState)
-    const [innerShowToast, setInnerShowToast] = useState<boolean>(false)
     const [innerNotificationContent, setInnerNotificationContent] = useState<null | JSX.Element>(null)
     
     const dispatch = useDispatch()
@@ -132,7 +131,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         activeMap: innerActiveMap, setActiveMap: setInnerActiveMap,
         maps: innerMaps as moorhen.Map[], molecules: innerMolecules as moorhen.Molecule[],
         changeMaps: innerChangeMaps, changeMolecules: innerChangeMolecules, 
-        showToast: innerShowToast, setShowToast: setInnerShowToast, notificationContent: innerNotificationContent, 
+        notificationContent: innerNotificationContent, 
         setNotificationContent: setInnerNotificationContent, videoRecorderRef: innerVideoRecorderRef,
     }
 
@@ -145,7 +144,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         lastHoveredAtom, activeMap, maps, changeMaps,
         setActiveMap,
         changeMolecules,
-        showToast, setShowToast, notificationContent, setNotificationContent,
+        notificationContent, setNotificationContent,
         molecules
     } = states
 
@@ -331,10 +330,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         }
     }, [molecules])
 
-    useEffect(() => {
-        if (notificationContent) setShowToast(true)
-    }, [notificationContent])
-
     //Make this so that the keyPress returns true or false, depending on whether mgWebGL is to continue processing event
     const onKeyPress = useCallback((event: KeyboardEvent) => {
         return babyGruKeyPress(
@@ -385,7 +380,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const collectedProps: moorhen.Controls = {
         molecules, changeMolecules, maps, changeMaps, glRef,
         activeMap, setActiveMap, commandCentre, notificationContent, setNotificationContent,  
-        showToast, setShowToast, timeCapsuleRef, disableFileUploads, 
+        timeCapsuleRef, disableFileUploads, 
         urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems, extraEditMenuItems,
         extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, videoRecorderRef,
         extraDraggableModals, aceDRGInstance, 

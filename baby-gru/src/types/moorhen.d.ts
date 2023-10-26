@@ -729,8 +729,6 @@ export namespace moorhen {
         setActiveMap: React.Dispatch<React.SetStateAction<Map>>;
         notificationContent: null | JSX.Element;
         setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
-        showToast: boolean;
-        setShowToast: React.Dispatch<React.SetStateAction<boolean>>;
     }
 
     interface State {
@@ -807,7 +805,6 @@ export namespace moorhen {
             appTitle: string;
             cootInitialized: boolean;
             notificationContent: JSX.Element;
-            showToast: boolean;
             activeMap: Map;
             theme: string;
         };
@@ -833,8 +830,6 @@ export namespace moorhen {
         changeMolecules: (arg0: MolChange<Molecule>) => void;
         maps: Map[];
         changeMaps: (arg0: MolChange<Map>) => void;
-        showToast: boolean;
-        setShowToast: React.Dispatch<React.SetStateAction<boolean>>;
         notificationContent: null | JSX.Element;
         setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
     }
