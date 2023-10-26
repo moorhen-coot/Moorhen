@@ -23,7 +23,6 @@ interface MoorhenWebMGPropsInterface {
     viewOnly: boolean;
     urlPrefix: string;
     extraDraggableModals: JSX.Element[];
-    enableAtomHovering: boolean;
     onAtomHovered: (identifier: { buffer: { id: string; }; atom: { label: string; }; }) => void;
     onKeyPress: (event: KeyboardEvent) =>  boolean | Promise<boolean>;
     videoRecorderRef: React.MutableRefObject<null | moorhen.ScreenRecorder>;
@@ -59,6 +58,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const hBondsDirty = useRef<boolean>(false)
     const busyDrawingHBonds = useRef<boolean>(false)
 
+    const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering)
     const drawCrosshairs = useSelector((state: moorhen.State) => state.sceneSettings.drawCrosshairs)
     const drawFPS = useSelector((state: moorhen.State) => state.sceneSettings.drawFPS)
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops)
@@ -609,7 +609,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
                 <MGWebGL
                     ref={glRef}
-                    onAtomHovered={props.enableAtomHovering ? props.onAtomHovered : null}
+                    onAtomHovered={enableAtomHovering ? props.onAtomHovered : null}
                     onKeyPress={props.onKeyPress}
                     messageChanged={(d) => { }}
                     mouseSensitivityFactor={mouseSensitivity}

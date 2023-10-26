@@ -726,8 +726,6 @@ export namespace moorhen {
         commandCentre: React.MutableRefObject<CommandCentre>;
         moleculesRef: React.MutableRefObject<null | Molecule[]>;
         mapsRef: React.MutableRefObject<null | Map[]>;
-        enableAtomHovering: boolean;
-        setEnableAtomHovering: React.Dispatch<React.SetStateAction<boolean>>;
         activeMap: Map;
         setActiveMap: React.Dispatch<React.SetStateAction<Map>>;
         hoveredAtom: null | HoveredAtom;
@@ -832,8 +830,6 @@ export namespace moorhen {
         mapsRef: React.MutableRefObject<null | Map[]>;
         activeMapRef: React.MutableRefObject<Map>;
         lastHoveredAtom: React.MutableRefObject<null | HoveredAtom>;
-        enableAtomHovering: boolean;
-        setEnableAtomHovering: React.Dispatch<React.SetStateAction<boolean>>;
         activeMap: Map;
         setActiveMap: React.Dispatch<React.SetStateAction<Map>>;
         hoveredAtom: null | HoveredAtom;

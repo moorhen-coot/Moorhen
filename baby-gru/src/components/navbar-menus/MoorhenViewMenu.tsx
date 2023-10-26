@@ -9,9 +9,11 @@ import { MoorhenScenePresetMenuItem } from "../menu-item/MoorhenScenePresetMenuI
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch } from "react-redux";
 import { setDoPerspectiveProjection, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawInteractions, setDrawMissingLoops } from "../../store/sceneSettingsSlice";
+import { setEnableAtomHovering } from "../../store/hoveringStatesSlice";
 
 export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
+    const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering)
     const drawCrosshairs = useSelector((state: moorhen.State) => state.sceneSettings.drawCrosshairs)
     const drawFPS = useSelector((state: moorhen.State) => state.sceneSettings.drawFPS)
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops)
@@ -33,13 +35,13 @@ export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                 <InputGroup className='moorhen-input-group-check'>
                     <Form.Check 
                         type="switch"
-                        checked={props.enableAtomHovering}
+                        checked={enableAtomHovering}
                         onChange={() => { 
-                            props.setEnableAtomHovering(!props.enableAtomHovering)
-                            if (props.enableAtomHovering) {
+                            if (enableAtomHovering) {
                                 props.setHoveredAtom({molecule: null, cid: null})
                             }
-                         }}
+                            dispatch( setEnableAtomHovering(!enableAtomHovering) )
+                        }}
                         label="Enable atom hovering"/>
                 </InputGroup>
                 <InputGroup className='moorhen-input-group-check'>

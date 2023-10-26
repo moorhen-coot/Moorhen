@@ -16,6 +16,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { setDefaultBackgroundColor } from '../store/sceneSettingsSlice';
 import { setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/canvasStatesSlice';
 import { setCootInitialized, setTheme } from '../store/generalStatesSlice';
+import { setEnableAtomHovering } from '../store/hoveringStatesSlice';
 
 const initialMoleculesState: moorhen.Molecule[] = []
 
@@ -83,7 +84,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const innerMapsRef = useRef<null | moorhen.Map[]>(null)
     const innerActiveMapRef = useRef<null | moorhen.Map>(null)
     const innerLastHoveredAtom = useRef<null | moorhen.HoveredAtom>(null)
-    const [innerEnableAtomHovering, setInnerEnableAtomHovering] = useState<boolean>(true)
     const [innerActiveMap, setInnerActiveMap] = useState<null | moorhen.Map>(null)
     const [innerHoveredAtom, setInnerHoveredAtom] = useState<null | moorhen.HoveredAtom>({ molecule: null, cid: null })
     const [innerCursorStyle, setInnerCursorStyle] = useState<string>("default")
@@ -128,12 +128,12 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const innerStatesMap: moorhen.ContainerStates = {
         glRef: innerGlRef, timeCapsuleRef: innerTimeCapsuleRef, commandCentre: innnerCommandCentre,
         moleculesRef: innerMoleculesRef, mapsRef: innerMapsRef, activeMapRef: innerActiveMapRef,
-        lastHoveredAtom: innerLastHoveredAtom, setEnableAtomHovering: setInnerEnableAtomHovering,
+        lastHoveredAtom: innerLastHoveredAtom,
         activeMap: innerActiveMap, setActiveMap: setInnerActiveMap,
         hoveredAtom: innerHoveredAtom, setHoveredAtom: setInnerHoveredAtom,
         cursorStyle: innerCursorStyle, maps: innerMaps as moorhen.Map[], molecules: innerMolecules as moorhen.Molecule[],
         setCursorStyle: setInnerCursorStyle,
-        changeMaps: innerChangeMaps, enableAtomHovering: innerEnableAtomHovering, changeMolecules: innerChangeMolecules, 
+        changeMaps: innerChangeMaps, changeMolecules: innerChangeMolecules, 
         showToast: innerShowToast, setShowToast: setInnerShowToast, notificationContent: innerNotificationContent, 
         setNotificationContent: setInnerNotificationContent, videoRecorderRef: innerVideoRecorderRef,
     }
@@ -146,9 +146,9 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const { glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef, videoRecorderRef,
         lastHoveredAtom, activeMap, maps, changeMaps,
         setActiveMap, hoveredAtom, setHoveredAtom,
-        cursorStyle, setCursorStyle, changeMolecules, setEnableAtomHovering,
+        cursorStyle, setCursorStyle, changeMolecules,
         showToast, setShowToast, notificationContent, setNotificationContent,
-        molecules, enableAtomHovering
+        molecules
     } = states
 
     const {
@@ -310,7 +310,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             )
             const totalAtomCount = moleculeAtomCounts.reduce((partialAtomCount, atomCount) => partialAtomCount + atomCount, 0)
             if (totalAtomCount >= 80000) {
-                setEnableAtomHovering(false)
+                dispatch( setEnableAtomHovering(false) )
             }
         }
         checkMoleculeSizes()
@@ -389,8 +389,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         activeMap, setActiveMap, commandCentre, notificationContent, setNotificationContent, hoveredAtom, 
         setHoveredAtom, showToast, setShowToast, timeCapsuleRef, disableFileUploads, 
         urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems, extraEditMenuItems,
-        extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, setEnableAtomHovering, videoRecorderRef,
-        extraDraggableModals, aceDRGInstance, enableAtomHovering, 
+        extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, videoRecorderRef,
+        extraDraggableModals, aceDRGInstance, 
     }
 
     return <> 
@@ -421,7 +421,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                     }}>
                     <MoorhenWebMG
                         ref={glRef}
-                        enableAtomHovering={enableAtomHovering}
                         monomerLibraryPath={monomerLibraryPath}
                         timeCapsuleRef={timeCapsuleRef}
                         commandCentre={commandCentre}
