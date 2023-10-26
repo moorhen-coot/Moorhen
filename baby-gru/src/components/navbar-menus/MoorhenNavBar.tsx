@@ -36,10 +36,10 @@ export interface MoorhenNavBarExtendedControlsInterface extends moorhen.Controls
 
 export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.Controls>((props, ref) => {
     
+    const [timeCapsuleBusy, setTimeCapsuleBusy] = useState<boolean>(false)
     const [busy, setBusy] = useState<boolean>(false)
     const [speedDialOpen, setSpeedDialOpen] = useState<boolean>(false)
     const [currentDropdownId, setCurrentDropdownId] = useState<string>('-1')
-    const [showSaveIcon, setShowSaveIcon] = useState<boolean>(false)
     const [showCreateAcedrgLinkModal, setShowCreateAcedrgLinkModal] = useState<boolean>(false)
     const [showValidation, setShowValidation] = useState<boolean>(false)
     const [showModels, setShowModels] = useState<boolean>(false)
@@ -78,9 +78,15 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.Controls>((props, r
 
     useEffect(() => {
         if (props.timeCapsuleRef.current) {
-            setShowSaveIcon(props.timeCapsuleRef.current.busy)
+            props.timeCapsuleRef.current.onIsBusyChange = (newValue: boolean) => {
+                if (newValue) {
+                    setTimeCapsuleBusy(true)
+                } else {
+                    setTimeout(() => setTimeCapsuleBusy(false), 1000)
+                }
+            }
         }
-    }, [props.timeCapsuleRef.current?.busy])
+    }, [props.timeCapsuleRef.current])
 
     const collectedProps = {
         currentDropdownId, setCurrentDropdownId, setShowQuerySequence, setShowScripting, setShowCreateAcedrgLinkModal, ...props
@@ -262,7 +268,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.Controls>((props, r
             position: 'absolute',
             top: canvasTop + convertRemToPx(0.5),
             right: canvasLeft + convertRemToPx(0.5),
-            display: hoveredAtom.cid || busy || showSaveIcon ? 'flex' : 'none',
+            display: hoveredAtom.cid || busy || timeCapsuleBusy ? 'flex' : 'none',
             color: isDark ? 'grey' : 'white' ,
             bgcolor: isDark ? 'grey' : 'white',
             '&:hover': {
@@ -272,7 +278,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.Controls>((props, r
     >
         {hoveredAtom.cid && <Form.Control className='moorhen-hovered-atom-form' type="text" readOnly={true} value={`${hoveredAtom.molecule.name}:${hoveredAtom.cid}`} />}
         {busy && <Spinner className='moorhen-spinner' animation="border" variant={isDark ? 'light' : 'dark'} />}
-        {showSaveIcon && <SaveOutlined style={{ padding: 0, margin: 0, color: 'black' }}/>}
+        {timeCapsuleBusy && <SaveOutlined style={{ padding: 0, margin: 0, color: 'black' }}/>}
     </Fab>
     </>
 })

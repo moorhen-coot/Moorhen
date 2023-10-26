@@ -120,7 +120,7 @@ export async function loadSessionData(
     dispatch: Dispatch<AnyAction>
 ): Promise<number> {
 
-    timeCapsuleRef.current.busy = true
+    timeCapsuleRef.current.setBusy(true)
     const sessionData: moorhen.backupSession = JSON.parse(sessionDataString)
 
     if (!sessionData) {
@@ -293,7 +293,7 @@ export async function loadSessionData(
         })
     }, 2500);
 
-    timeCapsuleRef.current.busy = false
+    timeCapsuleRef.current.setBusy(false)
     return 0
 }
 

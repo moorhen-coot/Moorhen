@@ -35,6 +35,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
     version: string;
     disableBackups: boolean;
     storageInstance: moorhen.LocalStorageInstance;
+    onIsBusyChange: (arg0: boolean) => void;
     
     constructor(moleculesRef: React.RefObject<moorhen.Molecule[]>, mapsRef: React.RefObject<moorhen.Map[]>, activeMapRef: React.RefObject<moorhen.Map>, glRef: React.RefObject<webGL.MGWebGL>) {
         this.moleculesRef = moleculesRef
@@ -47,7 +48,8 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         this.maxBackupCount = 10
         this.version = 'v14'
         this.disableBackups = false
-        this.storageInstance = null    
+        this.storageInstance = null
+        this.onIsBusyChange = null
     }
 
     /**
@@ -60,6 +62,13 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         } else {
             console.log('Time capsule storage instance has not been defined! Backups will be disabled...')
             this.disableBackups = true
+        }
+    }
+
+    setBusy(newValue: boolean) {
+        this.busy = newValue
+        if (this.onIsBusyChange) {
+            this.onIsBusyChange(this.busy)
         }
     }
 
@@ -116,7 +125,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
      * @returns {Promise<moorhen.backupSession>} A backup for the current session
      */
     async fetchSession (includeAdditionalMapData: boolean = true): Promise<moorhen.backupSession> {
-        this.busy = true
+        this.setBusy(true)
         const keyStrings = await this.storageInstance.keys()
         const mtzFileNames = keyStrings.map((keyString: string) => JSON.parse(keyString)).filter((key: moorhen.backupKey) => key.type === 'mtzData').map((key: moorhen.backupKey) => key.name)
         const mapNames = keyStrings.map((keyString: string) => JSON.parse(keyString)).filter((key: moorhen.backupKey) => key.type === 'mapData').map((key: moorhen.backupKey) => key.name)
@@ -249,7 +258,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
     async addModification(): Promise<string> {
         this.modificationCount += 1
         if (this.modificationCount >= this.modificationCountBackupThreshold && !this.disableBackups) {
-            this.busy = true
+            this.setBusy(true)
             this.modificationCount = 0
             
             await this.updateDataFiles()
@@ -315,7 +324,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             try {
                 await this.storageInstance.setItem(key, value)
                 await this.cleanupIfFull()
-                this.busy = false
+                this.setBusy(false)
                 return key
             } catch (err) {
                 console.log(err)

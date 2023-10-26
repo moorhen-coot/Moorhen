@@ -456,6 +456,8 @@ export namespace moorhen {
     }
     
     interface TimeCapsule {
+        setBusy: (arg0: boolean) => void;
+        onIsBusyChange: (arg0: boolean) => void;
         getSortedKeys(): Promise<backupKey[]>;
         cleanupUnusedDataFiles(): Promise<void>;
         removeBackup(key: string): Promise<void>;
