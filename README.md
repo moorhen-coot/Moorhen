@@ -28,9 +28,9 @@ The following libraries/programs are compiled to Web Assembly:
 * Coot 1.0 ('gtk3' git branch)
 * fftw 2.1.5
 * gsl 2.7.1
-* Boost 1.80.0
+* Boost 1.83.0
 * glm 0.9.9.8
-* RDKit 2022_09_2
+* RDKit 2023_09_1
 
 ## **Binaries**
 
