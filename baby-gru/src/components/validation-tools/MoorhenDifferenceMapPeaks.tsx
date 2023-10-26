@@ -233,7 +233,6 @@ export const MoorhenDifferenceMapPeaks = (props: Props) => {
                 getChart={getChart} 
                 filterMapFunction={filterMapFunction}
                 enableChainSelect={false}
-                molecules={props.molecules}
                 maps={props.maps}
                 sideBarWidth={props.sideBarWidth}
                 dropdownId={props.dropdownId}

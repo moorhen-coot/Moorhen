@@ -61,7 +61,7 @@ export const MoorhenMapsModal = (props: MoorhenMapsModalProps) => {
                     </Button>
                 ]}
                 body={
-                    props.molecules.length === 0 && props.maps.length === 0 ? <span>No maps loaded</span> : displayData
+                    props.maps.length === 0 ? <span>No maps loaded</span> : displayData
                 }
                 footer={null}
             />

@@ -3,26 +3,27 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
+import { useSelector } from 'react-redux';
 
 export const MoorhenClearSelfRestraintsMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
-    molecules: moorhen.Molecule[];
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     popoverPlacement?: 'left' | 'right';
 }) => {
 
     const moleculeSelectRef = useRef<HTMLSelectElement | null>(null)
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
 
-const panelContent = <>
+    const panelContent = <>
         <MoorhenMoleculeSelect
             ref={moleculeSelectRef}
-            molecules={props.molecules}
+            molecules={molecules}
             filterFunction={(mol) => mol.restraints.length > 0}/>
     </>
 
     const onCompleted = async () => {
-        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
         if (selectedMolecule) {
             await selectedMolecule.clearExtraRestraints()
         }

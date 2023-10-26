@@ -652,7 +652,6 @@ export namespace moorhen {
         commandCentre: React.RefObject<CommandCentre>
         selectedMolecule: Molecule;
         chosenAtom: ResidueSpec;
-        molecules: Molecule[];
         glRef: React.RefObject<webGL.MGWebGL>;
         setOverlayContents: React.Dispatch<React.SetStateAction<JSX.Element>>;
         setShowOverlay: React.Dispatch<React.SetStateAction<boolean>>;
@@ -662,7 +661,6 @@ export namespace moorhen {
         setOpacity: React.Dispatch<React.SetStateAction<number>>;
         setOverrideMenuContents: React.Dispatch<React.SetStateAction<JSX.Element | boolean>>;
         showContextMenu: false | AtomRightClickEventInfo;
-        changeMolecules: (arg0: MolChange<Molecule>) => void
         defaultActionButtonSettings: actionButtonSettings;
         setDefaultActionButtonSettings: (arg0: {key: string; value: string}) => void;     
     }
@@ -714,8 +712,6 @@ export namespace moorhen {
     }
     
     interface Controls extends ContainerOptionalProps {
-        molecules: Molecule[];
-        changeMolecules: (arg0: MolChange<Molecule>) => void;
         maps: Map[];
         changeMaps: (arg0: MolChange<Map>) => void;
         videoRecorderRef: React.MutableRefObject<null | ScreenRecorder>;
@@ -821,8 +817,6 @@ export namespace moorhen {
         mapsRef: React.MutableRefObject<null | Map[]>;
         activeMapRef: React.MutableRefObject<Map>;
         lastHoveredAtom: React.MutableRefObject<null | HoveredAtom>;
-        molecules: Molecule[];
-        changeMolecules: (arg0: MolChange<Molecule>) => void;
         maps: Map[];
         changeMaps: (arg0: MolChange<Map>) => void;
         notificationContent: null | JSX.Element;

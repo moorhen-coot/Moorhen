@@ -4,11 +4,11 @@ import { Button, Card, Dropdown, Form, InputGroup, Row, Spinner, SplitButton, St
 import { Backdrop, TextField } from "@mui/material";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
+import { useSelector } from 'react-redux';
 
 type AceDRGtomPickerProps = {
     monomerLibraryPath: string;
     id: number;
-    molecules: moorhen.Molecule[];
     awaitAtomClick: number;
     setAwaitAtomClick: React.Dispatch<React.SetStateAction<number>>;
 }
@@ -32,6 +32,8 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
     const changeBondOrderValueRef = useRef<boolean>(null)
     const changeSelectedBondOrderValueRef = useRef<HTMLSelectElement | null>(null)
     const newBondOrderValueRef = useRef<HTMLSelectElement | null>(null)
+
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
 
     useImperativeHandle(ref, () => ({
         getFormData: (): moorhen.createCovLinkAtomInput => {return {
@@ -106,7 +108,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
     }
 
     const setAtomPickerEventListener = async (evt) => {
-        const chosenMolecule = props.molecules.find(molecule => molecule.buffersInclude(evt.detail.buffer))
+        const chosenMolecule = molecules.find(molecule => molecule.buffersInclude(evt.detail.buffer))
         const chosenAtom = cidToSpec(evt.detail.atom.label)
         const chosenResidueCid = `/${chosenAtom.mol_no}/${chosenAtom.chain_id}/${chosenAtom.res_no}-${chosenAtom.res_no}/*`
         const [atoms, monomerBonds] = await Promise.all([chosenMolecule.gemmiAtomsForCid(chosenResidueCid), getBonds(chosenMolecule, chosenAtom)])
@@ -222,7 +224,6 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
 })
 
 export const MoorhenCreateAcedrgLinkModal = (props: {
-    molecules: moorhen.Molecule[];
     aceDRGInstance: moorhen.AceDRGInstance;
     monomerLibraryPath: string;   
     width: number;

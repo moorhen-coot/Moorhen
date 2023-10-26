@@ -12,6 +12,7 @@ import { setActiveMap } from "../../store/generalStatesSlice";
 export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [historyHead, setHistoryHead] = useState(0)
     const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
     const dispatch = useDispatch()
 
     const getWarningToast = (message: string) => <MoorhenNotification key={guid()} hideDelay={3000} width={20}>
@@ -27,14 +28,14 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
             const status = await loadSessionData(
                 sessionData as string,
                 props.monomerLibraryPath,
-                props.molecules, 
-                props.changeMolecules,
+                molecules, 
                 props.maps,
                 props.changeMaps,
                 (newMap: moorhen.Map) => dispatch( setActiveMap(newMap) ),
                 props.commandCentre,
                 props.timeCapsuleRef,
-                props.glRef
+                props.glRef,
+                dispatch
             )
             if (status === -1) {
                 props.setNotificationContent(getWarningToast(`Failed to read backup (deprecated format)`))
@@ -49,7 +50,7 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
         const moleculeNames = []
         if (historyEntry.changesMolecules?.length > 0) {
             historyEntry.changesMolecules.forEach(imol => {
-                const molecule = props.molecules.find(mol => mol.molNo === imol)
+                const molecule = molecules.find(mol => mol.molNo === imol)
                 if (molecule) {
                     moleculeNames.push(molecule.name)
                 }
@@ -89,7 +90,7 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
                 </StepLabel>
             </StepButton>
         </Step>
-    }, [props.commandCentre, historyHead, props.molecules, props.timeCapsuleRef, loadSession])
+    }, [props.commandCentre, historyHead, molecules, props.timeCapsuleRef, loadSession])
 
     return <div style={{maxHeight: convertViewtoPx(65, height), maxWidth: '20rem', overflowY: 'auto', overflowX: 'hidden'}}>
         <Stepper nonLinear activeStep={historyHead} orientation="vertical">

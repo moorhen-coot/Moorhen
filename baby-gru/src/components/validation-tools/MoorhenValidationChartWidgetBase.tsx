@@ -13,7 +13,6 @@ Chart.register(...registerables);
 Chart.register(annotationPlugin);
 
 type ValidationChartProps = {
-    molecules: moorhen.Molecule[];
     maps: moorhen.Map[];
     filterMapFunction?: (arg0: moorhen.Map) => boolean;
     fetchData: (arg0: number, arg1: number, arg2: string) => Promise<any>;
@@ -37,6 +36,7 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
     const [selectedChain, setSelectedChain] = useState<string | null>(null)
     const [cachedGemmiStructure, setCachedGemmiStructure] = useState<null | gemmi.Structure>(null)
     const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
 
     const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedModel(parseInt(evt.target.value))
@@ -52,15 +52,15 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
     }
 
     useEffect(() => {
-        if (props.molecules.length === 0) {
+        if (molecules.length === 0) {
             setSelectedModel(null)
         } else if (selectedModel === null) {
-            setSelectedModel(props.molecules[0].molNo)
-        } else if (!props.molecules.map(molecule => molecule.molNo).includes(selectedModel)) {
-            setSelectedModel(props.molecules[0].molNo)
+            setSelectedModel(molecules[0].molNo)
+        } else if (!molecules.map(molecule => molecule.molNo).includes(selectedModel)) {
+            setSelectedModel(molecules[0].molNo)
         }
 
-    }, [props.molecules.length])
+    }, [molecules.length])
 
     useEffect(() => {
         const filteredMaps = props.maps.filter(map => props.filterMapFunction(map))
@@ -77,9 +77,9 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
     
     useEffect(() => {
         if (selectedModel !== null) {
-            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo === selectedModel);
-            if (selectedMoleculeIndex !== -1 && props.molecules[selectedMoleculeIndex]){
-                setCachedGemmiStructure(props.molecules[selectedMoleculeIndex].gemmiStructure)
+            let selectedMoleculeIndex = molecules.findIndex(molecule => molecule.molNo === selectedModel);
+            if (selectedMoleculeIndex !== -1 && molecules[selectedMoleculeIndex]){
+                setCachedGemmiStructure(molecules[selectedMoleculeIndex].gemmiStructure)
             }
         }
     })
@@ -121,11 +121,11 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
                     <Form.Group>
                         <Row style={{ padding:'0', margin: '0' }}>
                             <Col>
-                                <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
+                                <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef}/>
                             </Col>
                             {props.enableChainSelect &&
                             <Col>
-                                <MoorhenChainSelect width="" onChange={handleChainChange} molecules={props.molecules} selectedCoordMolNo={selectedModel} allowedTypes={[1, 2]} ref={chainSelectRef}/>
+                                <MoorhenChainSelect width="" onChange={handleChainChange} molecules={molecules} selectedCoordMolNo={selectedModel} allowedTypes={[1, 2]} ref={chainSelectRef}/>
                             </Col>
                             }
                             <Col>

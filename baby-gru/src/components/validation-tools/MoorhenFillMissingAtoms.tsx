@@ -14,6 +14,7 @@ interface Props extends moorhen.Controls {
 
 export const MoorhenFillMissingAtoms = (props: Props) => {
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
 
     const fillPartialResidue = async (selectedMolecule: moorhen.Molecule, chainId: string, resNum: number, insCode: string) => {
         await props.commandCentre.current.cootCommand({
@@ -57,7 +58,7 @@ export const MoorhenFillMissingAtoms = (props: Props) => {
     }
 
     const getCards = (selectedModel: number, selectedMap: number, residueList: libcootApi.ResidueSpecJS[]) => {
-        const selectedMolecule =  props.molecules.find(molecule => molecule.molNo === selectedModel)
+        const selectedMolecule =  molecules.find(molecule => molecule.molNo === selectedModel)
         
         return residueList.map(residue => {
             const label = `/${residue.modelNumber}/${residue.chainId}/${residue.resNum}${residue.insCode ? '.' + residue.insCode : ''}/`
@@ -84,7 +85,6 @@ export const MoorhenFillMissingAtoms = (props: Props) => {
     }
 
     return <MoorhenValidationListWidgetBase 
-                molecules={props.molecules}
                 maps={props.maps}
                 sideBarWidth={props.sideBarWidth}
                 dropdownId={props.dropdownId}

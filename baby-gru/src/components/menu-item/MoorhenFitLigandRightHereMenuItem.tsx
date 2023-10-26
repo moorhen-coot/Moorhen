@@ -6,32 +6,35 @@ import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from 'react-redux';
+import { addMolecule } from "../../store/moleculesSlice";
 
 export const MoorhenFitLigandRightHereMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     popoverPlacement?: 'left' | 'right';
     glRef: React.RefObject<webGL.MGWebGL>;  
     maps: moorhen.Map[];
-    molecules: moorhen.Molecule[];
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
     monomerLibraryPath: string;
 }) => {
 
+    const dispatch = useDispatch()
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
+
     const intoMoleculeRef = useRef<HTMLSelectElement | null>(null)
     const ligandMoleculeRef = useRef<HTMLSelectElement | null>(null)
     const mapSelectRef = useRef<HTMLSelectElement | null>(null)
     const useConformersRef = useRef<boolean>(false)
     const conformerCountRef = useRef<string>('0')
+
     const [useConformers, setUseConformers] = useState<boolean>(false)
     const [conformerCount, setConformerCount] = useState<string>('10')
 
     const panelContent = <>
         <MoorhenMapSelect {...props} label="Map" ref={mapSelectRef} />
-        <MoorhenMoleculeSelect {...props} label="Protein molecule" allowAny={false} ref={intoMoleculeRef} />
-        <MoorhenMoleculeSelect {...props} label="Ligand molecule" allowAny={false} ref={ligandMoleculeRef} />
+        <MoorhenMoleculeSelect molecules={molecules} label="Protein molecule" allowAny={false} ref={intoMoleculeRef} />
+        <MoorhenMoleculeSelect molecules={molecules} label="Ligand molecule" allowAny={false} ref={ligandMoleculeRef} />
         {devMode && 
          <Form.Check
             style={{margin: '0.5rem'}} 
@@ -67,7 +70,7 @@ export const MoorhenFitLigandRightHereMenuItem = (props: {
             return
         }
 
-        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(intoMoleculeRef.current.value))
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(intoMoleculeRef.current.value))
         if(selectedMolecule) {
             const newMolecules = await selectedMolecule.fitLigandHere(
                 parseInt(mapSelectRef.current.value),
@@ -76,7 +79,7 @@ export const MoorhenFitLigandRightHereMenuItem = (props: {
                 useConformersRef.current,
                 parseInt(conformerCountRef.current)
             )
-            newMolecules.forEach(molecule => props.changeMolecules({ action: "Add", item: molecule }))
+            newMolecules.forEach(molecule => dispatch( addMolecule(molecule) ))
         }
     }
 

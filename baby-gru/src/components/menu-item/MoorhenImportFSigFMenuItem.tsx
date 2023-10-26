@@ -4,10 +4,10 @@ import { MoorhenMapSelect } from "../select/MoorhenMapSelect"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
+import { useSelector } from 'react-redux';
 
 export const MoorhenImportFSigFMenuItem = (props:{
     maps: moorhen.Map[];
-    molecules: moorhen.Molecule[];
     selectedMolNo?: number;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
@@ -17,6 +17,7 @@ export const MoorhenImportFSigFMenuItem = (props:{
     const twoFoFcSelectRef = useRef<null | HTMLSelectElement>(null)
     const foFcSelectRef = useRef<null | HTMLSelectElement>(null)
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
 
     const connectMap = async () => {
         const [molecule, reflectionMap, twoFoFcMap, foFcMap] = [
@@ -103,7 +104,7 @@ export const MoorhenImportFSigFMenuItem = (props:{
             </Col>
             {props.selectedMolNo === null &&
                 <Col key="Col3">
-                    <MoorhenMoleculeSelect {...props} ref={moleculeSelectRef} label="Molecule" allowAny={false} width='100%' />
+                    <MoorhenMoleculeSelect molecules={molecules} ref={moleculeSelectRef} label="Molecule" allowAny={false} width='100%' />
                 </Col>
             }
         </Row>

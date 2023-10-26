@@ -19,8 +19,6 @@ type MoorhenMoleculeCardButtonBarPropsType = {
     handleResidueRangeRefinement: () => void;
     handleVisibility: () => void;
     molecule: moorhen.Molecule;
-    molecules: moorhen.Molecule[];
-    changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
     glRef: React.RefObject<webGL.MGWebGL>;
     sideBarWidth: number;
     isVisible: boolean;
@@ -129,7 +127,6 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
             key="deleteDisplayObjectMenuItem"
             setPopoverIsShown={setPopoverIsShown} 
             glRef={props.glRef} 
-            changeItemList={props.changeMolecules} 
             item={props.molecule} />
     )
 

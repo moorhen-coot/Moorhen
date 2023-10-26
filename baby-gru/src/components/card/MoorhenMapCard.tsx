@@ -224,7 +224,6 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                 key='delete-map'
                 setPopoverIsShown={setPopoverIsShown}
                 glRef={props.glRef}
-                changeItemList={props.changeMaps}
                 item={props.map}/>
         ))
 

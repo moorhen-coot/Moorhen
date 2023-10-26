@@ -38,6 +38,7 @@ export const MoorhenRamachandran = (props: Props) => {
     const ramaPlotProOutlierImageRef = useRef<null | HTMLImageElement>(null);
     const ramaPlotOtherNormalImageRef = useRef<null | HTMLImageElement>(null);
     const ramaPlotOtherOutlierImageRef = useRef<null | HTMLImageElement>(null);
+
     const [clickedResidue, setClickedResidue] = useState<null | {modelIndex: number; coordMolNo: number; molName: string; chain: string; seqNum: number; insCode: string;}>(null)
     const [ramaPlotDimensions, setRamaPlotDimensions] = useState<number>(230)
     const [ramaPlotData, setRamaPlotData] = useState<null | libcootApi.RamaDataJS[]>(null)
@@ -46,20 +47,22 @@ export const MoorhenRamachandran = (props: Props) => {
     const [cachedGemmiStructure, setCachedGemmiStructure] = useState<gemmi.Structure | null>(null)
     const [molName, setMolName] = useState<null | string>(null)
     const [chainId, setChainId] = useState<null | string>(null)
+    
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const width = useSelector((state: moorhen.State) => state.canvasStates.width)
     const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
     const dispatch = useDispatch()
 
     const getMolName = useCallback((selectedMolNo: number) => {
-        if (selectedMolNo === null || props.molecules.length === 0) {
+        if (selectedMolNo === null || molecules.length === 0) {
             return;
         }
-        const coordMolNums = props.molecules.map(molecule => molecule.molNo);
-        const molNames = props.molecules.map(molecule => molecule.name);
+        const coordMolNums = molecules.map(molecule => molecule.molNo);
+        const molNames = molecules.map(molecule => molecule.name);
         let moleculeIndex = coordMolNums.findIndex(num => num === selectedMolNo)
         return molNames[moleculeIndex];
-    }, [props.molecules])
+    }, [molecules])
 
     const getOffsetRect = (elem: HTMLCanvasElement) => {
         const box = elem.getBoundingClientRect();
@@ -293,12 +296,12 @@ export const MoorhenRamachandran = (props: Props) => {
 
     const handleHoveredAtom = useCallback((cid: string) => {
         if (selectedModel !== null) {
-            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo === selectedModel);
-            if (selectedMoleculeIndex !== -1 && props.molecules[selectedMoleculeIndex]) {
-                dispatch( setHoveredAtom({ molecule:props.molecules[selectedMoleculeIndex], cid: cid }) )
+            let selectedMoleculeIndex = molecules.findIndex(molecule => molecule.molNo === selectedModel);
+            if (selectedMoleculeIndex !== -1 && molecules[selectedMoleculeIndex]) {
+                dispatch( setHoveredAtom({ molecule:molecules[selectedMoleculeIndex], cid: cid }) )
             }
         }
-    }, [selectedModel, props.molecules])
+    }, [selectedModel, molecules])
 
     const handleMouseMove = useCallback((event) => {
     
@@ -430,27 +433,27 @@ export const MoorhenRamachandran = (props: Props) => {
 
 
     useEffect(() => {
-        if (props.molecules.length === 0) {
+        if (molecules.length === 0) {
             setSelectedModel(null)
         } else if (selectedModel === null) {
-            setSelectedModel(props.molecules[0].molNo)
-        } else if (!props.molecules.map(molecule => molecule.molNo).includes(selectedModel)) {
-            setSelectedModel(props.molecules[0].molNo)
+            setSelectedModel(molecules[0].molNo)
+        } else if (!molecules.map(molecule => molecule.molNo).includes(selectedModel)) {
+            setSelectedModel(molecules[0].molNo)
         }
 
-    }, [props.molecules.length])
+    }, [molecules.length])
 
     useEffect(() => {
         if (selectedModel !== null) {
-            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo === selectedModel);
-            if (selectedMoleculeIndex !== -1 && props.molecules[selectedMoleculeIndex]){
-                setCachedGemmiStructure(props.molecules[selectedMoleculeIndex].gemmiStructure)
+            let selectedMoleculeIndex = molecules.findIndex(molecule => molecule.molNo === selectedModel);
+            if (selectedMoleculeIndex !== -1 && molecules[selectedMoleculeIndex]){
+                setCachedGemmiStructure(molecules[selectedMoleculeIndex].gemmiStructure)
             }
         }
     })
 
     useEffect(() => {
-        if (ramaPlotData === null || selectedModel === null || chainSelectRef.current.value === null || props.molecules.length === 0) {
+        if (ramaPlotData === null || selectedModel === null || chainSelectRef.current.value === null || molecules.length === 0) {
             return;
         }
 
@@ -473,13 +476,13 @@ export const MoorhenRamachandran = (props: Props) => {
             return
         }
 
-        let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.name === clickedResidue.molName);
+        let selectedMoleculeIndex = molecules.findIndex(molecule => molecule.name === clickedResidue.molName);
         if (selectedMoleculeIndex === -1) {
             console.log(`Cannot find molecule ${clickedResidue.molName}`)
             return
         }
 
-        props.molecules[selectedMoleculeIndex].centreOn(`/*/${clickedResidue.chain}/${clickedResidue.seqNum}-${clickedResidue.seqNum}/*`)
+        molecules[selectedMoleculeIndex].centreOn(`/*/${clickedResidue.chain}/${clickedResidue.seqNum}-${clickedResidue.seqNum}/*`)
 
     }, [clickedResidue])
 
@@ -520,10 +523,10 @@ export const MoorhenRamachandran = (props: Props) => {
             <Form.Group>
                 <Row style={{ padding: '0', margin: '0' }}>
                     <Col>
-                        <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
+                        <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef}/>
                     </Col>
                     <Col>
-                        <MoorhenChainSelect width="" molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={selectedModel} ref={chainSelectRef} allowedTypes={[1, 2]}/>
+                        <MoorhenChainSelect width="" molecules={molecules} onChange={handleChainChange} selectedCoordMolNo={selectedModel} ref={chainSelectRef} allowedTypes={[1, 2]}/>
                     </Col>
                 </Row>
             </Form.Group>

@@ -13,7 +13,6 @@ import 'prismjs/components/prism-javascript';
 import { useSelector } from "react-redux";
 
 export const MoorhenScriptModal = (props: {
-    molecules: moorhen.Molecule[];
     maps: moorhen.Map[];
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -24,16 +23,17 @@ export const MoorhenScriptModal = (props: {
 
     const [code, setCode] = useState<string>("")
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
 
     const handleScriptExe = useCallback(async () => {
         try {
-            const scriptApi = new MoorhenScriptApi(props.commandCentre, props.glRef, props.molecules, props.maps)
+            const scriptApi = new MoorhenScriptApi(props.commandCentre, props.glRef, molecules, props.maps)
             scriptApi.exe(code)
         }
         catch (err) {
             console.error(err)
         }
-    }, [code, props.glRef, props.maps, props.molecules])
+    }, [code, props.glRef, props.maps, molecules])
     
     useEffect(() => {
         if (props.code) {

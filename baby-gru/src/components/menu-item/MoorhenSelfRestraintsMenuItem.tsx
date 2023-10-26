@@ -13,35 +13,38 @@ import { useSelector } from "react-redux";
 
 export const MoorhenSelfRestraintsMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
-    molecules: moorhen.Molecule[];
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     popoverPlacement?: 'left' | 'right';
 }) => {
-
+    
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    
     const modeTypeSelectRef = useRef<HTMLSelectElement | null>(null)
     const moleculeSelectRef = useRef<HTMLSelectElement | null>(null)
     const chainSelectRef = useRef<HTMLSelectElement | null>(null)
     const cidSelectRef = useRef<HTMLInputElement | null>(null)
     const maxDistSliderRef = useRef<number>(4.5)
+    
     const [selectedMode, setSelectedMode] = useState<string>("Molecule")
     const [selectedMolNo, setSelectedMolNo] = useState<null | number>(null)
     const [selectedChain, setSelectedChain] = useState<string>('')
     const [maxDist, setMaxDist] = useState<number>(4.5)
     const [cid, setCid] = useState<string>('')
+    
     const modes = ["Molecule", "Chain", "Atom Selection"]
 
     useEffect(() => {
-        if (props.molecules.length === 0) {
+        if (molecules.length === 0) {
             setSelectedMolNo(null)
-        } else if (selectedMolNo === null || !props.molecules.map(molecule => molecule.molNo).includes(selectedMolNo)) {
-            setSelectedMolNo(props.molecules[0].molNo)
+        } else if (selectedMolNo === null || !molecules.map(molecule => molecule.molNo).includes(selectedMolNo)) {
+            setSelectedMolNo(molecules[0].molNo)
         }
-    }, [props.molecules.length])
+    }, [molecules.length])
 
     const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
-        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(evt.target.value))
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(evt.target.value))
         if (selectedMolecule) {
             setSelectedMolNo(parseInt(evt.target.value))
             setSelectedChain(selectedMolecule.sequences.length > 0 ? selectedMolecule.sequences[0].chain : '')
@@ -72,12 +75,12 @@ export const MoorhenSelfRestraintsMenuItem = (props: {
         </Form.Group>
         <MoorhenMoleculeSelect
             ref={moleculeSelectRef}
-            molecules={props.molecules}
+            molecules={molecules}
             onChange={handleModelChange}/>
         {selectedMode === 'Chain' && 
         <MoorhenChainSelect
             ref={chainSelectRef}
-            molecules={props.molecules}
+            molecules={molecules}
             selectedCoordMolNo={selectedMolNo}
             onChange={(evt) => setSelectedChain(evt.target.value)}/>}
         {selectedMode === 'Atom Selection' &&
@@ -105,7 +108,7 @@ export const MoorhenSelfRestraintsMenuItem = (props: {
             return
         }
 
-        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
         if(!selectedMolecule) {
             return
         }

@@ -4,9 +4,9 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
+import { useSelector } from 'react-redux';
 
 export const MoorhenAddRemoveHydrogenAtomsMenuItem = (props: {
-    molecules: moorhen.Molecule[];
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     popoverPlacement?: 'left' | 'right'
@@ -14,6 +14,7 @@ export const MoorhenAddRemoveHydrogenAtomsMenuItem = (props: {
 }) => {
     
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
 
     const handleClick = useCallback(async (cootCommand: string) => {
         if (moleculeSelectRef.current !== null && moleculeSelectRef.current.value) {
@@ -25,16 +26,16 @@ export const MoorhenAddRemoveHydrogenAtomsMenuItem = (props: {
                 commandArgs: [selectedMolNo],
                 changesMolecules: [selectedMolNo]
             }, true)
-            const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedMolNo)
+            const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedMolNo)
             selectedMolecule.setAtomsDirty(true)
             selectedMolecule.redraw()
             document.body.click()
         }
         document.body.click()
-    }, [moleculeSelectRef, props.molecules, props.commandCentre])
+    }, [moleculeSelectRef, molecules, props.commandCentre])
 
     const panelContent = <Form.Group>
-        <MoorhenMoleculeSelect {...props} label="Molecule" allowAny={false} ref={moleculeSelectRef} />
+        <MoorhenMoleculeSelect {...props} molecules={molecules} label="Molecule" allowAny={false} ref={moleculeSelectRef} />
         <Button className="mx-2" variant='primary' onClick={() => handleClick('add_hydrogen_atoms')}>
             Add
         </Button>

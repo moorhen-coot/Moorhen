@@ -7,6 +7,7 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useSelector, useDispatch } from 'react-redux';
 import { setActiveMap } from "../../store/generalStatesSlice";
+import { addMolecule } from "../../store/moleculesSlice";
 
 export const MoorhenLoadTutorialDataMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -14,7 +15,6 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
     urlPrefix: string;
     glRef: React.RefObject<webGL.MGWebGL>;
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
-    changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 
@@ -52,7 +52,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
         const newDiffMap = new MoorhenMap(props.commandCentre, props.glRef)
         await newMolecule.loadToCootFromURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `mol-${tutorialNumber}`)
         await newMolecule.fetchIfDirtyAndDraw('CBs')
-        props.changeMolecules({ action: "Add", item: newMolecule })
+        dispatch( addMolecule(newMolecule) )
         await newMolecule.centreOn('/*/*/*/*', false)
         await newMap.loadToCootFromMtzURL(
             `${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`,

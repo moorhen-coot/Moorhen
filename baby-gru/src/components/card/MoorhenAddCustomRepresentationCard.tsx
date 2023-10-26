@@ -17,7 +17,6 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
     show: boolean; anchorEl: React.RefObject<HTMLDivElement>;
     molecule: moorhen.Molecule;
-    molecules: moorhen.Molecule[];
     urlPrefix: string;
     glRef: React.RefObject<webGL.MGWebGL>;
     mode?: "add" | "edit";
@@ -58,6 +57,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const [bondWidth, setBondWidth] = useState<number>(props.initialBondWidth ? props.initialBondWidth : props.molecule.defaultBondOptions.width)
     const [bondSmoothness, setBondSmoothness] = useState<number>(props.molecule.defaultBondOptions.smoothness === 1 ? 1 : props.molecule.defaultBondOptions.smoothness === 2 ? 50 : 100)
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
 
     const handleChainChange = (evt) => {
         setSelectedChain(evt.target.value)
@@ -195,7 +195,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                         </FormSelect>
                 </Form.Group>
                 <div style={{justifyContent: 'center', display: 'flex'}}>
-                    {(ruleType === 'chain' || ruleType === 'residue-range')  && <MoorhenChainSelect molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={props.molecule.molNo} ref={chainSelectRef} allowedTypes={[1, 2]}/>}
+                    {(ruleType === 'chain' || ruleType === 'residue-range')  && <MoorhenChainSelect molecules={molecules} onChange={handleChainChange} selectedCoordMolNo={props.molecule.molNo} ref={chainSelectRef} allowedTypes={[1, 2]}/>}
                     {ruleType === 'cid' && <Form.Control ref={cidFormRef} defaultValue={props.initialCid} size="sm" type='text' placeholder={'Atom selection'} style={{margin: '0.5rem'}}/> }
                 </div>
                 {ruleType === 'residue-range' && 

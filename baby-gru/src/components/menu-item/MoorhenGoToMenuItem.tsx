@@ -5,9 +5,9 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
+import { useSelector } from 'react-redux';
 
 export const MoorhenGoToMenuItem = (props: {
-    molecules: moorhen.Molecule[];
     glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
@@ -15,9 +15,10 @@ export const MoorhenGoToMenuItem = (props: {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const cidRef = useRef<null | HTMLInputElement>(null)
     const [cid, setCid] = useState<string>("")
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
 
     const panelContent = <>
-        <MoorhenMoleculeSelect ref={moleculeSelectRef} molecules={props.molecules} width='20rem'/>
+        <MoorhenMoleculeSelect ref={moleculeSelectRef} molecules={molecules} width='20rem'/>
         <Form.Group className='moorhen-form-group' controlId="cid">
             <Form.Label>Atom selection</Form.Label>
             <Form.Control ref={cidRef} type="text" value={cid} onChange={(e) => {
@@ -41,7 +42,7 @@ export const MoorhenGoToMenuItem = (props: {
             return
         }
 
-        const molecule = props.molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
+        const molecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
         
         if (!residueSpec.chain_id || !residueSpec.res_no || !molecule) {
             return

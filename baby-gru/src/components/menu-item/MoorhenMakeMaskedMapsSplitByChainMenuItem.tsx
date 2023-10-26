@@ -5,10 +5,10 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { webGL } from "../../types/mgWebGL";
+import { useSelector } from 'react-redux';
 
 export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
     maps: moorhen.Map[];
-    molecules: moorhen.Molecule[];
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -17,10 +17,11 @@ export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
 
     const moleculeSelectRef = useRef<HTMLSelectElement>(null)
     const mapSelectRef = useRef<HTMLSelectElement>(null)
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
 
     const panelContent = <>
         <MoorhenMapSelect {...props} ref={mapSelectRef} />
-        <MoorhenMoleculeSelect {...props} ref={moleculeSelectRef} />
+        <MoorhenMoleculeSelect {...props} molecules={molecules} ref={moleculeSelectRef} />
     </>
 
     const onCompleted = async () => {
@@ -37,7 +38,7 @@ export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
             commandArgs: [moleculeNo, mapNo]
         }, false) as moorhen.WorkerResponse<number[]>
 
-        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === moleculeNo)
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === moleculeNo)
         const selectedMap = props.maps.find(map => map.molNo === mapNo)
         
         if (result.data.result.result.length > 0 && selectedMap && selectedMolecule) {

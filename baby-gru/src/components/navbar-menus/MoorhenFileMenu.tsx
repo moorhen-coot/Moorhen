@@ -19,6 +19,7 @@ import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch } from 'react-redux';
 import { setActiveMap } from "../../store/generalStatesSlice";
+import { addMolecule, addMoleculeList, emptyMolecules } from "../../store/moleculesSlice";
 
 export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
@@ -33,9 +34,9 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const enableTimeCapsule = useSelector((state: moorhen.State) => state.backupSettings.enableTimeCapsule)
     const height = useSelector((state: moorhen.State) => state.canvasStates.height)
     const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
-    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
 
-    const { changeMolecules, changeMaps, commandCentre, glRef, monomerLibraryPath } = props;
+    const { changeMaps, commandCentre, glRef, monomerLibraryPath } = props;
 
     const getWarningToast = (message: string) => <MoorhenNotification key={guid()} hideDelay={3000} width={20}>
             <><WarningOutlined style={{margin: 0}}/>
@@ -70,7 +71,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         }
         await Promise.all(drawPromises)
 
-        changeMolecules({ action: "AddList", items: newMolecules })
+        dispatch( addMoleculeList(newMolecules) )
         newMolecules.at(-1).centreOn('/*/*/*/*', false)
     }
 
@@ -165,7 +166,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             await newMolecule.loadToCootFromURL(url, molName)
             if (newMolecule.molNo === -1) throw new Error("Cannot read the fetched molecule...")
             await newMolecule.fetchIfDirtyAndDraw(newMolecule.atomCount >= 50000 ? 'CRs' : 'CBs')
-            changeMolecules({ action: "Add", item: newMolecule })
+            dispatch( addMolecule(newMolecule) )
             newMolecule.centreOn('/*/*/*/*', false)
             return newMolecule
         } catch (err) {
@@ -218,14 +219,14 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             const status = await loadSessionData(
                 sessionData as string,
                 props.monomerLibraryPath,
-                props.molecules, 
-                props.changeMolecules,
+                molecules, 
                 props.maps,
                 props.changeMaps,
                 (newMap: moorhen.Map) => dispatch( setActiveMap(newMap) ),
                 props.commandCentre,
                 props.timeCapsuleRef,
-                props.glRef
+                props.glRef,
+                dispatch
             )
             if (status === -1) {
                 props.setNotificationContent(getWarningToast(`Failed to read backup (deprecated format)`))

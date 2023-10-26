@@ -6,26 +6,29 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { libcootApi } from "../../types/libcoot";
+import { useSelector } from 'react-redux';
 
 export const MoorhenSuperposeMenuItem = (props: {
-    molecules: moorhen.Molecule[];
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>; 
     setSuperposeResults: React.Dispatch<React.SetStateAction<false | libcootApi.SuperposeResultsJS>>; 
 }) => {
     
-    const refChainSelectRef = useRef<null | HTMLSelectElement>(null);
-    const refMoleculeSelectRef = useRef<null | HTMLSelectElement>(null);
-    const movChainSelectRef = useRef<null | HTMLSelectElement>(null);
-    const movMoleculeSelectRef = useRef<null | HTMLSelectElement>(null);
+    const refChainSelectRef = useRef<null | HTMLSelectElement>(null)
+    const refMoleculeSelectRef = useRef<null | HTMLSelectElement>(null)
+    const movChainSelectRef = useRef<null | HTMLSelectElement>(null)
+    const movMoleculeSelectRef = useRef<null | HTMLSelectElement>(null)
+
     const [selectedRefModel, setSelectedRefModel] = useState<null | number>(null)
     const [selectedRefChain, setSelectedRefChain] = useState<null | string>(null)
     const [selectedMovModel, setSelectedMovModel] = useState<null | number>(null)
     const [selectedMovChain, setSelectedMovChain] = useState<null | string>(null)
 
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
+
     const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>, isReferenceModel: boolean) => {
-        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(evt.target.value))
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(evt.target.value))
         if (isReferenceModel) {
             setSelectedRefModel(parseInt(evt.target.value))
             setSelectedRefChain(selectedMolecule.sequences[0].chain)
@@ -44,36 +47,36 @@ export const MoorhenSuperposeMenuItem = (props: {
     }
 
     useEffect(() => {
-        if (props.molecules.length === 0) {
+        if (molecules.length === 0) {
             setSelectedRefModel(null)
             setSelectedMovModel(null)
             return
         }
 
-        if (selectedRefModel === null || !props.molecules.map(molecule => molecule.molNo).includes(selectedRefModel)) {
-            setSelectedRefModel(props.molecules[0].molNo)
+        if (selectedRefModel === null || !molecules.map(molecule => molecule.molNo).includes(selectedRefModel)) {
+            setSelectedRefModel(molecules[0].molNo)
         }
 
-        if (selectedMovModel === null || !props.molecules.map(molecule => molecule.molNo).includes(selectedMovModel)) {
-            setSelectedMovModel(props.molecules[0].molNo)
+        if (selectedMovModel === null || !molecules.map(molecule => molecule.molNo).includes(selectedMovModel)) {
+            setSelectedMovModel(molecules[0].molNo)
         }
 
-    }, [props.molecules.length])
+    }, [molecules.length])
 
     const panelContent = <>
         <Form.Group key="reference-model-select" style={{ width: '20rem', margin: '0.5rem' }} controlId="refModelSelect" className="mb-3">
             <Form.Label>
                 Reference structure
             </Form.Label>
-            <MoorhenMoleculeSelect width="" molecules={props.molecules} ref={refMoleculeSelectRef} onChange={(evt) => handleModelChange(evt, true)} />
-            <MoorhenChainSelect width="" molecules={props.molecules} onChange={(evt) => handleChainChange(evt, true)} selectedCoordMolNo={selectedRefModel} allowedTypes={[1, 2]} ref={refChainSelectRef} />
+            <MoorhenMoleculeSelect width="" molecules={molecules} ref={refMoleculeSelectRef} onChange={(evt) => handleModelChange(evt, true)} />
+            <MoorhenChainSelect width="" molecules={molecules} onChange={(evt) => handleChainChange(evt, true)} selectedCoordMolNo={selectedRefModel} allowedTypes={[1, 2]} ref={refChainSelectRef} />
         </Form.Group>
         <Form.Group key="moving-model-select" style={{ width: '20rem', margin: '0.5rem' }} controlId="movModelSelect" className="mb-3">
             <Form.Label>
                 Moving structure
             </Form.Label>
-            <MoorhenMoleculeSelect width="" molecules={props.molecules} ref={movMoleculeSelectRef} onChange={(evt) => handleModelChange(evt, false)} />
-            <MoorhenChainSelect width="" molecules={props.molecules} onChange={(evt) => handleChainChange(evt, false)} selectedCoordMolNo={selectedMovModel} allowedTypes={[1, 2]} ref={movChainSelectRef} />
+            <MoorhenMoleculeSelect width="" molecules={molecules} ref={movMoleculeSelectRef} onChange={(evt) => handleModelChange(evt, false)} />
+            <MoorhenChainSelect width="" molecules={molecules} onChange={(evt) => handleChainChange(evt, false)} selectedCoordMolNo={selectedMovModel} allowedTypes={[1, 2]} ref={movChainSelectRef} />
         </Form.Group>
     </>
 
@@ -82,8 +85,8 @@ export const MoorhenSuperposeMenuItem = (props: {
             return
         }
 
-        const refMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(refMoleculeSelectRef.current.value))
-        const movMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(movMoleculeSelectRef.current.value))
+        const refMolecule = molecules.find(molecule => molecule.molNo === parseInt(refMoleculeSelectRef.current.value))
+        const movMolecule = molecules.find(molecule => molecule.molNo === parseInt(movMoleculeSelectRef.current.value))
 
         if (!refMolecule || !movMolecule) {
             return
@@ -109,7 +112,7 @@ export const MoorhenSuperposeMenuItem = (props: {
         movMolecule.centreOn('/*/*/*/*', true)
         props.setSuperposeResults(result.data.result.result)
 
-    }, [props.molecules, props.commandCentre])
+    }, [molecules, props.commandCentre])
 
     return <MoorhenBaseMenuItem
         id='superpose-models-menu-item'

@@ -7,6 +7,8 @@ import { MoorhenMap } from "./MoorhenMap";
 import { moorhen } from "../types/moorhen";
 import { gemmi } from "../types/gemmi";
 import { webGL } from "../types/mgWebGL";
+import { AnyAction, Dispatch } from "@reduxjs/toolkit";
+import { addMolecule, emptyMolecules } from "../store/moleculesSlice";
 
 export const rgbToHsv = (r: number, g:number, b:number): [number, number, number] => {
     const cMax = Math.max(r, g, b)
@@ -109,13 +111,13 @@ export async function loadSessionData(
     sessionDataString: string,
     monomerLibraryPath: string,
     molecules: moorhen.Molecule[],
-    changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void,
     maps: moorhen.Map[],
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void,
     setActiveMap: (arg0: moorhen.Map) => void,
     commandCentre: React.RefObject<moorhen.CommandCentre>,
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-    glRef: React.RefObject<webGL.MGWebGL>
+    glRef: React.RefObject<webGL.MGWebGL>,
+    dispatch: Dispatch<AnyAction>
 ): Promise<number> {
 
     timeCapsuleRef.current.busy = true
@@ -132,7 +134,7 @@ export async function loadSessionData(
     molecules.forEach(molecule => {
         molecule.delete()
     })
-    changeMolecules({ action: "Empty" })
+    dispatch( emptyMolecules() )
 
     maps.forEach(map => {
         map.delete()
@@ -215,7 +217,7 @@ export async function loadSessionData(
 
     // Change props.molecules
     newMolecules.forEach(molecule => {
-        changeMolecules({ action: "Add", item: molecule })
+        dispatch( addMolecule(molecule) )
     })
 
     // Change props.maps

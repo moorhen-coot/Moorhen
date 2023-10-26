@@ -9,9 +9,9 @@ import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { webGL } from "../../types/mgWebGL";
+import { useSelector } from 'react-redux';
 
 export const MoorhenMapMaskingMenuItem = (props: {
-    molecules: moorhen.Molecule[];
     maps: moorhen.Map[];
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
@@ -19,8 +19,11 @@ export const MoorhenMapMaskingMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
+
     const [invertFlag, setInvertFlag] = useState<boolean>(false)
     const [maskType, setMaskType] = useState<string>('molecule')
+
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const maskTypeSelectRef = useRef<null | HTMLSelectElement>(null)
     const invertFlagRef = useRef<null | HTMLInputElement>(null)
@@ -45,10 +48,10 @@ export const MoorhenMapMaskingMenuItem = (props: {
             </FormSelect>
         </Form.Group>
         <MoorhenMapSelect {...props} ref={mapSelectRef} />
-        <MoorhenMoleculeSelect {...props} allowAny={false} ref={moleculeSelectRef} />
+        <MoorhenMoleculeSelect {...props} molecules={molecules} allowAny={false} ref={moleculeSelectRef} />
         {maskTypeSelectRef.current?.value === 'cid' && <MoorhenCidInputForm {...props} width='20rem' margin='0.5rem' ref={cidInputRef} />}
-        {maskTypeSelectRef.current?.value === 'chain' && <MoorhenChainSelect {...props} molecules={props.molecules} selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)} ref={chainSelectRef} />}
-        {maskTypeSelectRef.current?.value === 'ligand' && <MoorhenLigandSelect {...props} molecules={props.molecules} selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)} ref={ligandSelectRef} />}
+        {maskTypeSelectRef.current?.value === 'chain' && <MoorhenChainSelect {...props} molecules={molecules} selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)} ref={chainSelectRef} />}
+        {maskTypeSelectRef.current?.value === 'ligand' && <MoorhenLigandSelect {...props} molecules={molecules} selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)} ref={ligandSelectRef} />}
         <Form.Group className='moorhen-form-group'>
             <Form.Check
                 ref={invertFlagRef}

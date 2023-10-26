@@ -73,7 +73,6 @@ export const MoorhenContextButtonBase = (props: {
     refineAfterMod?: boolean;
     needsMapData?: boolean;
     needsAtomData?: boolean;
-    molecules: moorhen.Molecule[];
     nonCootCommand?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec, arg2?: string) => Promise<void>;
     glRef: React.RefObject<webGL.MGWebGL>;
     cootCommandInput?: moorhen.cootCommandKwargs;
@@ -98,6 +97,7 @@ export const MoorhenContextButtonBase = (props: {
     };
 }) => {
     
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
@@ -155,7 +155,7 @@ export const MoorhenContextButtonBase = (props: {
             onClick={handleClick}
             onMouseEnter={() => props.setToolTip(props.toolTipLabel)}
             style={{ backgroundColor: isDark ? 'grey' : 'white' }}
-            disabled={props.needsMapData && !activeMap || (props.needsAtomData && props.molecules.length === 0)}
+            disabled={props.needsMapData && !activeMap || (props.needsAtomData && molecules.length === 0)}
         >
             {props.icon}
         </IconButton>

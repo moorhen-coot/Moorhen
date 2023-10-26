@@ -5,16 +5,16 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { MoorhenScriptModal } from "../modal/MoorhenScriptModal";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
+import { useSelector } from 'react-redux';
 
 export const MoorhenLoadScriptMenuItem = (props: {
      setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-     molecules: moorhen.Molecule[];
      maps: moorhen.Map[];
      glRef: React.RefObject<webGL.MGWebGL>;
      commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {
     
-    const filesRef = useRef<null | HTMLInputElement>(null);
+    const filesRef = useRef<null | HTMLInputElement>(null)
     const [showCodeEditor, setShowCodeEditor] = useState<boolean>(false)
     const [code, setCode] = useState<string>('No code loaded')
 
