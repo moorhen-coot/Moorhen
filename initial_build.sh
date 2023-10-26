@@ -15,8 +15,11 @@ fi
 BUILD_DIR=${PWD}/CCP4_WASM_BUILD
 INSTALL_DIR=${PWD}/install
 
-NUMPROCS=`nproc --all`
-
+if [ x`uname -s` = x"Darwin" ]; then
+    NUMPROCS=`sysctl -n hw.ncpu`
+else
+    NUMPROCS=`nproc --all`
+fi
 echo "Sources are in ${SOURCE_DIR}"
 echo "Building in ${BUILD_DIR}"
 echo "Installing in ${INSTALL_DIR}"
