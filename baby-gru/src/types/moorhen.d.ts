@@ -666,7 +666,6 @@ export namespace moorhen {
         changeMolecules: (arg0: MolChange<Molecule>) => void
         defaultActionButtonSettings: actionButtonSettings;
         setDefaultActionButtonSettings: (arg0: {key: string; value: string}) => void;     
-        setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtom>>;
     }
     
     type MolChange<T extends Molecule | Map> = {
@@ -728,8 +727,6 @@ export namespace moorhen {
         mapsRef: React.MutableRefObject<null | Map[]>;
         activeMap: Map;
         setActiveMap: React.Dispatch<React.SetStateAction<Map>>;
-        hoveredAtom: null | HoveredAtom;
-        setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtom>>;
         notificationContent: null | JSX.Element;
         setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
         showToast: boolean;
@@ -832,8 +829,6 @@ export namespace moorhen {
         lastHoveredAtom: React.MutableRefObject<null | HoveredAtom>;
         activeMap: Map;
         setActiveMap: React.Dispatch<React.SetStateAction<Map>>;
-        hoveredAtom: null | HoveredAtom;
-        setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtom>>;
         cursorStyle: string;
         setCursorStyle: React.Dispatch<React.SetStateAction<string>>;
         molecules: Molecule[];

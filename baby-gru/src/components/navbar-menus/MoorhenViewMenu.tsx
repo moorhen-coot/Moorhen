@@ -9,7 +9,7 @@ import { MoorhenScenePresetMenuItem } from "../menu-item/MoorhenScenePresetMenuI
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch } from "react-redux";
 import { setDoPerspectiveProjection, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawInteractions, setDrawMissingLoops } from "../../store/sceneSettingsSlice";
-import { setEnableAtomHovering } from "../../store/hoveringStatesSlice";
+import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
 
 export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
@@ -38,7 +38,7 @@ export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                         checked={enableAtomHovering}
                         onChange={() => { 
                             if (enableAtomHovering) {
-                                props.setHoveredAtom({molecule: null, cid: null})
+                                dispatch( setHoveredAtom({molecule: null, cid: null}) )
                             }
                             dispatch( setEnableAtomHovering(!enableAtomHovering) )
                         }}

@@ -16,7 +16,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { setDefaultBackgroundColor } from '../store/sceneSettingsSlice';
 import { setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/canvasStatesSlice';
 import { setCootInitialized, setTheme } from '../store/generalStatesSlice';
-import { setEnableAtomHovering } from '../store/hoveringStatesSlice';
+import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSlice';
 
 const initialMoleculesState: moorhen.Molecule[] = []
 
@@ -85,7 +85,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const innerActiveMapRef = useRef<null | moorhen.Map>(null)
     const innerLastHoveredAtom = useRef<null | moorhen.HoveredAtom>(null)
     const [innerActiveMap, setInnerActiveMap] = useState<null | moorhen.Map>(null)
-    const [innerHoveredAtom, setInnerHoveredAtom] = useState<null | moorhen.HoveredAtom>({ molecule: null, cid: null })
     const [innerCursorStyle, setInnerCursorStyle] = useState<string>("default")
     const [innerMolecules, innerChangeMolecules] = useReducer(itemReducer, initialMoleculesState)
     const [innerMaps, innerChangeMaps] = useReducer(itemReducer, initialMapsState)
@@ -93,6 +92,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const [innerNotificationContent, setInnerNotificationContent] = useState<null | JSX.Element>(null)
     
     const dispatch = useDispatch()
+    const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const cootInitialized = useSelector((state: moorhen.State) => state.generalStates.cootInitialized)
     const theme = useSelector((state: moorhen.State) => state.generalStates.theme)
     const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
@@ -130,7 +130,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         moleculesRef: innerMoleculesRef, mapsRef: innerMapsRef, activeMapRef: innerActiveMapRef,
         lastHoveredAtom: innerLastHoveredAtom,
         activeMap: innerActiveMap, setActiveMap: setInnerActiveMap,
-        hoveredAtom: innerHoveredAtom, setHoveredAtom: setInnerHoveredAtom,
         cursorStyle: innerCursorStyle, maps: innerMaps as moorhen.Map[], molecules: innerMolecules as moorhen.Molecule[],
         setCursorStyle: setInnerCursorStyle,
         changeMaps: innerChangeMaps, changeMolecules: innerChangeMolecules, 
@@ -145,7 +144,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     const { glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef, videoRecorderRef,
         lastHoveredAtom, activeMap, maps, changeMaps,
-        setActiveMap, hoveredAtom, setHoveredAtom,
+        setActiveMap,
         cursorStyle, setCursorStyle, changeMolecules,
         showToast, setShowToast, notificationContent, setNotificationContent,
         molecules
@@ -319,14 +318,14 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const onAtomHovered = useCallback((identifier: { buffer: { id: string; }; atom: { label: string; }; }) => {
         if (identifier == null) {
             if (lastHoveredAtom.current !== null && lastHoveredAtom.current.molecule !== null) {
-                setHoveredAtom({ molecule: null, cid: null })
+                dispatch( setHoveredAtom({ molecule: null, cid: null }) )
             }
         }
         else {
             molecules.forEach(molecule => {
                 if (molecule.buffersInclude(identifier.buffer)) {
                     if (molecule !== hoveredAtom.molecule || identifier.atom.label !== hoveredAtom.cid) {
-                        setHoveredAtom({ molecule: molecule, cid: identifier.atom.label })
+                        dispatch( setHoveredAtom({ molecule: molecule, cid: identifier.atom.label }) )
                     }
                 }
             })
@@ -341,7 +340,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const onKeyPress = useCallback((event: KeyboardEvent) => {
         return babyGruKeyPress(
             event,
-            {...collectedProps, isDark, windowWidth: width},
+            {...collectedProps, isDark, windowWidth: width, hoveredAtom, setHoveredAtom: (newVal) => dispatch(setHoveredAtom(newVal))},
             JSON.parse(shortCuts as string),
             showShortcutToast,
             shortcutOnHoveredAtom
@@ -386,8 +385,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     const collectedProps: moorhen.Controls = {
         molecules, changeMolecules, maps, changeMaps, glRef,
-        activeMap, setActiveMap, commandCentre, notificationContent, setNotificationContent, hoveredAtom, 
-        setHoveredAtom, showToast, setShowToast, timeCapsuleRef, disableFileUploads, 
+        activeMap, setActiveMap, commandCentre, notificationContent, setNotificationContent,  
+        showToast, setShowToast, timeCapsuleRef, disableFileUploads, 
         urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems, extraEditMenuItems,
         extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, videoRecorderRef,
         extraDraggableModals, aceDRGInstance, 
@@ -430,12 +429,10 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                         changeMaps={changeMaps}
                         onAtomHovered={onAtomHovered}
                         onKeyPress={onKeyPress}
-                        hoveredAtom={hoveredAtom}
                         urlPrefix={urlPrefix}
                         activeMap={activeMap}
                         viewOnly={viewOnly}
                         extraDraggableModals={extraDraggableModals}
-                        setHoveredAtom={setHoveredAtom}
                         videoRecorderRef={videoRecorderRef}
                     />
                 </div>

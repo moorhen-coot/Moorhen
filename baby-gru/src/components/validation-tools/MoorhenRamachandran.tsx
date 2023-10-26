@@ -6,7 +6,8 @@ import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
 import { gemmi } from "../../types/gemmi";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from 'react-redux';
+import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 
 interface Props extends moorhen.Controls {
     dropdownId: number;
@@ -45,8 +46,10 @@ export const MoorhenRamachandran = (props: Props) => {
     const [cachedGemmiStructure, setCachedGemmiStructure] = useState<gemmi.Structure | null>(null)
     const [molName, setMolName] = useState<null | string>(null)
     const [chainId, setChainId] = useState<null | string>(null)
+    const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const width = useSelector((state: moorhen.State) => state.canvasStates.width)
     const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const dispatch = useDispatch()
 
     const getMolName = useCallback((selectedMolNo: number) => {
         if (selectedMolNo === null || props.molecules.length === 0) {
@@ -291,11 +294,11 @@ export const MoorhenRamachandran = (props: Props) => {
     const handleHoveredAtom = useCallback((cid: string) => {
         if (selectedModel !== null) {
             let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo === selectedModel);
-            if (selectedMoleculeIndex !== -1 && props.molecules[selectedMoleculeIndex]){
-                props.setHoveredAtom({ molecule:props.molecules[selectedMoleculeIndex] , cid: cid })
+            if (selectedMoleculeIndex !== -1 && props.molecules[selectedMoleculeIndex]) {
+                dispatch( setHoveredAtom({ molecule:props.molecules[selectedMoleculeIndex], cid: cid }) )
             }
         }
-    }, [props.setHoveredAtom, selectedModel, props.molecules])
+    }, [selectedModel, props.molecules])
 
     const handleMouseMove = useCallback((event) => {
     
@@ -490,11 +493,11 @@ export const MoorhenRamachandran = (props: Props) => {
     }
 
     useEffect(() => {
-        if (props.hoveredAtom===null || props.hoveredAtom.molecule === null || props.hoveredAtom.cid === null || ramaPlotData === null || selectedModel === null || chainSelectRef.current.value === null || selectedModel !==  props.hoveredAtom.molecule.molNo || canvasRef.current === null) {
+        if (hoveredAtom===null || hoveredAtom.molecule === null || hoveredAtom.cid === null || ramaPlotData === null || selectedModel === null || chainSelectRef.current.value === null || selectedModel !==  hoveredAtom.molecule.molNo || canvasRef.current === null) {
             return
         }
 
-        const [_, insCode, chainId, resInfo, atomName]   = props.hoveredAtom.cid.split('/')
+        const [_, insCode, chainId, resInfo, atomName]   = hoveredAtom.cid.split('/')
 
         if (chainSelectRef.current.value !== chainId || !resInfo) {
             return
@@ -510,7 +513,7 @@ export const MoorhenRamachandran = (props: Props) => {
         doAnimation(hitRef.current, newHit)
         hitRef.current = newHit
 
-    }, [props.hoveredAtom])
+    }, [hoveredAtom])
 
     return <Fragment>
         <Form style={{ padding:'0', margin: '0' }}>

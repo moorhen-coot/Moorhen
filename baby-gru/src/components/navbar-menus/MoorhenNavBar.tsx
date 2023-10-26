@@ -63,6 +63,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.Controls>((props, r
     const helpDialActionRef = useRef()
     const devDialActionRef = useRef()
     
+    const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const cootInitialized = useSelector((state: moorhen.State) => state.generalStates.cootInitialized)
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
@@ -261,7 +262,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.Controls>((props, r
             position: 'absolute',
             top: canvasTop + convertRemToPx(0.5),
             right: canvasLeft + convertRemToPx(0.5),
-            display: props.hoveredAtom.cid || busy || showSaveIcon ? 'flex' : 'none',
+            display: hoveredAtom.cid || busy || showSaveIcon ? 'flex' : 'none',
             color: isDark ? 'grey' : 'white' ,
             bgcolor: isDark ? 'grey' : 'white',
             '&:hover': {
@@ -269,7 +270,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.Controls>((props, r
             }
         }}
     >
-        {props.hoveredAtom.cid && <Form.Control className='moorhen-hovered-atom-form' type="text" readOnly={true} value={`${props.hoveredAtom.molecule.name}:${props.hoveredAtom.cid}`} />}
+        {hoveredAtom.cid && <Form.Control className='moorhen-hovered-atom-form' type="text" readOnly={true} value={`${hoveredAtom.molecule.name}:${hoveredAtom.cid}`} />}
         {busy && <Spinner className='moorhen-spinner' animation="border" variant={isDark ? 'light' : 'dark'} />}
         {showSaveIcon && <SaveOutlined style={{ padding: 0, margin: 0, color: 'black' }}/>}
     </Fab>

@@ -6,7 +6,8 @@ import { MoorhenChainSelect } from '../select/MoorhenChainSelect'
 import { MoorhenMapSelect } from '../select/MoorhenMapSelect'
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
 import { residueCodesOneToThree, getResidueInfo, convertViewtoPx } from '../../utils/MoorhenUtils'
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
+import { setHoveredAtom } from "../../store/hoveringStatesSlice"
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
@@ -28,6 +29,7 @@ export const MoorhenMMRRCCPlot = (props) => {
     const isDark = useSelector((state) => state.canvasStates.isDark)
     const height = useSelector((state) => state.canvasStates.height)
     const backgroundColor = useSelector((state) => state.canvasStates.backgroundColor)
+    const dispatch = useDispatch()
 
     const getSequenceData = () => {
         let selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
@@ -83,10 +85,12 @@ export const MoorhenMMRRCCPlot = (props) => {
         if(selectedMolecule) {
             const clickedResidue = getResidueInfo(props.molecules, selectedMolecule.molNo, chainSelectRef.current.value, residueIndex)
             if (clickedResidue) {
-                props.setHoveredAtom({
-                    molecule: selectedMolecule,
-                    cid:  `//${clickedResidue.chain}/${clickedResidue.seqNum}(${residueCodesOneToThree[clickedResidue.resCode]})/`
-                })
+                dispatch(
+                    setHoveredAtom({
+                        molecule: selectedMolecule,
+                        cid:  `//${clickedResidue.chain}/${clickedResidue.seqNum}(${residueCodesOneToThree[clickedResidue.resCode]})/`
+                    })    
+                )
                 return `${clickedResidue.seqNum} (${residueCodesOneToThree[clickedResidue.resCode]})`
             }
         }

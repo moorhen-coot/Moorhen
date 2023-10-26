@@ -8,7 +8,8 @@ import { ArrowBackIosOutlined, ArrowForwardIosOutlined, CheckOutlined, CloseOutl
 import Draggable from "react-draggable";
 import { IconButton } from "@mui/material";
 import { MoorhenNotification } from "../misc/MoorhenNotification";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch, batch } from 'react-redux';
+import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
 
 export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
     const theButton = useRef<null | HTMLButtonElement>(null)
@@ -21,7 +22,8 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
     const [rotamerRank, setRotamerRank] = useState<number| null>(null)
     const [rotamerProbability, setRotamerProbability] = useState<number | null>(null)
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
-    
+    const dispatch = useDispatch()
+
     const changeRotamer = useCallback(async (command: string) => {
         const rotamerInfo = await props.commandCentre.current.cootCommand({
             returnType: 'rotamer_info_t',
@@ -51,13 +53,15 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
         
         const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: chosenMolecule.current.molNo } })
         document.dispatchEvent(scoresUpdateEvent)
-    
+        dispatch( setEnableAtomHovering(true) )
+
     }, [props.changeMolecules, props.commandCentre, props.glRef])
 
     const rejectTransform = useCallback(async () => {
         props.changeMolecules({ action: 'Remove', item: fragmentMolecule.current })
         fragmentMolecule.current.delete()
         chosenMolecule.current.unhideAll()
+        dispatch( setEnableAtomHovering(true) )
     }, [props.changeMolecules])
 
     const doRotamerChange = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, p: string = '') => {
@@ -149,7 +153,10 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
         const nonCootCommand = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, p: string) => {
             const rotamerInfo = await doRotamerChange(molecule, chosenAtom, p)
             props.setOverrideMenuContents(getPopOverContents(rotamerInfo))
-            props.setHoveredAtom({molecule: null, cid: null})
+            batch( () => {
+                dispatch( setHoveredAtom({molecule: null, cid: null}) )
+                dispatch( setEnableAtomHovering(false) )    
+            })
         }
 
         return <MoorhenContextButtonBase 

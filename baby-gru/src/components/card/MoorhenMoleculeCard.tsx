@@ -528,8 +528,6 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                                 setClickedResidue={setClickedResidue}
                                 selectedResidues={selectedResidues}
                                 setSelectedResidues={setSelectedResidues}
-                                hoveredAtom={props.hoveredAtom}
-                                setHoveredAtom={props.setHoveredAtom}                                
                             />
                         </AccordionDetails>
                 </Accordion>

@@ -10,7 +10,8 @@ import { cidToSpec } from "../../utils/MoorhenUtils";
 import { IconButton } from "@mui/material";
 import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { libcootApi } from "../../types/libcoot";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch, batch } from 'react-redux';
+import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
 
 export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
     const [showAccept, setShowAccept] = useState<boolean>(false)
@@ -25,6 +26,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
     const refinementDirty = useRef<boolean>(false)
     const autoClearRestraintsRef = useRef<boolean>(true)
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const dispatch = useDispatch()
 
     const dragModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'SPHERE']
 
@@ -155,6 +157,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
         }
         moltenFragmentRef.current.delete()
         chosenMolecule.current.unhideAll()
+        dispatch( setEnableAtomHovering(true) )
     }
 
     const atomDraggedCallback = useCallback(async (evt: moorhen.AtomDraggedEvent) => {
@@ -279,7 +282,10 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
             document.addEventListener('atomDragged', atomDraggedCallback)
             document.addEventListener('mouseup', mouseUpCallback)
             props.setOverrideMenuContents(contextMenuOverride)
-            props.setHoveredAtom({molecule: null, cid: null})
+            batch( () => {
+                dispatch( setHoveredAtom({molecule: null, cid: null}) )
+                dispatch( setEnableAtomHovering(false) )    
+            })
         }
 
         return <MoorhenContextButtonBase 
