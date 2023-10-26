@@ -829,8 +829,6 @@ export namespace moorhen {
         lastHoveredAtom: React.MutableRefObject<null | HoveredAtom>;
         activeMap: Map;
         setActiveMap: React.Dispatch<React.SetStateAction<Map>>;
-        cursorStyle: string;
-        setCursorStyle: React.Dispatch<React.SetStateAction<string>>;
         molecules: Molecule[];
         changeMolecules: (arg0: MolChange<Molecule>) => void;
         maps: Map[];

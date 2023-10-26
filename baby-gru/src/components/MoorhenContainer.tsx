@@ -85,13 +85,13 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const innerActiveMapRef = useRef<null | moorhen.Map>(null)
     const innerLastHoveredAtom = useRef<null | moorhen.HoveredAtom>(null)
     const [innerActiveMap, setInnerActiveMap] = useState<null | moorhen.Map>(null)
-    const [innerCursorStyle, setInnerCursorStyle] = useState<string>("default")
     const [innerMolecules, innerChangeMolecules] = useReducer(itemReducer, initialMoleculesState)
     const [innerMaps, innerChangeMaps] = useReducer(itemReducer, initialMapsState)
     const [innerShowToast, setInnerShowToast] = useState<boolean>(false)
     const [innerNotificationContent, setInnerNotificationContent] = useState<null | JSX.Element>(null)
     
     const dispatch = useDispatch()
+    const cursorStyle = useSelector((state: moorhen.State) => state.hoveringStates.cursorStyle)
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const cootInitialized = useSelector((state: moorhen.State) => state.generalStates.cootInitialized)
     const theme = useSelector((state: moorhen.State) => state.generalStates.theme)
@@ -130,8 +130,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         moleculesRef: innerMoleculesRef, mapsRef: innerMapsRef, activeMapRef: innerActiveMapRef,
         lastHoveredAtom: innerLastHoveredAtom,
         activeMap: innerActiveMap, setActiveMap: setInnerActiveMap,
-        cursorStyle: innerCursorStyle, maps: innerMaps as moorhen.Map[], molecules: innerMolecules as moorhen.Molecule[],
-        setCursorStyle: setInnerCursorStyle,
+        maps: innerMaps as moorhen.Map[], molecules: innerMolecules as moorhen.Molecule[],
         changeMaps: innerChangeMaps, changeMolecules: innerChangeMolecules, 
         showToast: innerShowToast, setShowToast: setInnerShowToast, notificationContent: innerNotificationContent, 
         setNotificationContent: setInnerNotificationContent, videoRecorderRef: innerVideoRecorderRef,
@@ -145,7 +144,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const { glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef, videoRecorderRef,
         lastHoveredAtom, activeMap, maps, changeMaps,
         setActiveMap,
-        cursorStyle, setCursorStyle, changeMolecules,
+        changeMolecules,
         showToast, setShowToast, notificationContent, setNotificationContent,
         molecules
     } = states
