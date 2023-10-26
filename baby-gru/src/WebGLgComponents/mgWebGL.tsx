@@ -2887,7 +2887,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         self.buildBuffers();
 
         this.measureTextCanvasTexture = new TextCanvasTexture(this,1024,2048);
-        this.labelsTextCanvasTexture = new TextCanvasTexture(this,64,2048);
+        this.labelsTextCanvasTexture = new TextCanvasTexture(this,128,2048);
 
         self.gl.clearColor(self.background_colour[0], self.background_colour[1], self.background_colour[2], self.background_colour[3]);
         self.gl.enable(self.gl.DEPTH_TEST);
@@ -4892,7 +4892,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.bindAttribLocation(this.shaderProgramThickLinesNormal, 0, "aVertexPosition");
         this.gl.bindAttribLocation(this.shaderProgramThickLinesNormal, 1, "aVertexColour");
         this.gl.bindAttribLocation(this.shaderProgramThickLinesNormal, 2, "aVertexNormal");
-        this.gl.bindAttribLocation(this.shaderProgramThickLinesNormal, 7, "aVertexRealNormal");
+        this.gl.bindAttribLocation(this.shaderProgramThickLinesNormal, 8, "aVertexRealNormal");//4,5,6,7 Give wrong normals. Why?
         this.gl.linkProgram(this.shaderProgramThickLinesNormal);
 
         if (!this.gl.getProgramParameter(this.shaderProgramThickLinesNormal, this.gl.LINK_STATUS)) {
