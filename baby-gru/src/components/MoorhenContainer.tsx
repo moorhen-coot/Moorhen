@@ -15,7 +15,7 @@ import { MoorhenPreferencesContainer } from './misc/MoorhenPreferencesContainer'
 import { useSelector, useDispatch } from 'react-redux';
 import { setDefaultBackgroundColor } from '../store/sceneSettingsSlice';
 import { setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/canvasStatesSlice';
-import { setTheme } from '../store/generalStatesSlice';
+import { setCootInitialized, setTheme } from '../store/generalStatesSlice';
 
 const initialMoleculesState: moorhen.Molecule[] = []
 
@@ -89,15 +89,14 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const [innerActiveMolecule, setInnerActiveMolecule] = useState<null|  moorhen.Molecule>(null)
     const [innerHoveredAtom, setInnerHoveredAtom] = useState<null | moorhen.HoveredAtom>({ molecule: null, cid: null })
     const [innerCursorStyle, setInnerCursorStyle] = useState<string>("default")
-    const [innerBusy, setInnerBusy] = useState<boolean>(false)
     const [innerMolecules, innerChangeMolecules] = useReducer(itemReducer, initialMoleculesState)
     const [innerMaps, innerChangeMaps] = useReducer(itemReducer, initialMapsState)
     const [innerAppTitle, setInnerAppTitle] = useState<string>('Moorhen')
-    const [innerCootInitialized, setInnerCootInitialized] = useState<boolean>(false)
     const [innerShowToast, setInnerShowToast] = useState<boolean>(false)
     const [innerNotificationContent, setInnerNotificationContent] = useState<null | JSX.Element>(null)
     
     const dispatch = useDispatch()
+    const cootInitialized = useSelector((state: moorhen.State) => state.generalStates.cootInitialized)
     const theme = useSelector((state: moorhen.State) => state.generalStates.theme)
     const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
     const height = useSelector((state: moorhen.State) => state.canvasStates.height)
@@ -136,10 +135,9 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         activeMap: innerActiveMap, setActiveMap: setInnerActiveMap, activeMolecule: innerActiveMolecule,
         setActiveMolecule: setInnerActiveMolecule, hoveredAtom: innerHoveredAtom, setHoveredAtom: setInnerHoveredAtom,
         cursorStyle: innerCursorStyle, maps: innerMaps as moorhen.Map[], molecules: innerMolecules as moorhen.Molecule[],
-        setCursorStyle: setInnerCursorStyle, busy: innerBusy, setBusy: setInnerBusy, 
+        setCursorStyle: setInnerCursorStyle,
         changeMaps: innerChangeMaps, enableAtomHovering: innerEnableAtomHovering, changeMolecules: innerChangeMolecules, 
-        appTitle: innerAppTitle, setAppTitle: setInnerAppTitle, cootInitialized: innerCootInitialized, 
-        setCootInitialized: setInnerCootInitialized,
+        appTitle: innerAppTitle, setAppTitle: setInnerAppTitle,
         showToast: innerShowToast, setShowToast: setInnerShowToast, notificationContent: innerNotificationContent, 
         setNotificationContent: setInnerNotificationContent, videoRecorderRef: innerVideoRecorderRef,
         prevActiveMoleculeRef: innerPrevActiveMoleculeRef, 
@@ -153,9 +151,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const { glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef, videoRecorderRef,
         lastHoveredAtom, prevActiveMoleculeRef, activeMap, maps, changeMaps,
         setActiveMap, activeMolecule, setActiveMolecule, hoveredAtom, setHoveredAtom,
-        cursorStyle, setCursorStyle, busy, setBusy, changeMolecules, setEnableAtomHovering,
-        appTitle, setAppTitle, cootInitialized, setCootInitialized,
-        showToast, setShowToast, notificationContent, setNotificationContent,
+        cursorStyle, setCursorStyle, changeMolecules, setEnableAtomHovering,
+        appTitle, setAppTitle, showToast, setShowToast, notificationContent, setNotificationContent,
         molecules, enableAtomHovering
     } = states
 
@@ -302,11 +299,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     useEffect(() => {
         setWindowDimensions()
         commandCentre.current = new MoorhenCommandCentre(urlPrefix, glRef, timeCapsuleRef, {
-            onActiveMessagesChanged: (newActiveMessages) => {
-                setBusy(newActiveMessages.length !== 0)
-            },
             onCootInitialized: () => {
-                setCootInitialized(true)
+                dispatch( setCootInitialized(true) )
             },
         })
         return () => {
@@ -426,7 +420,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             <span>Starting moorhen...</span>
         </Backdrop>
         
-        <MoorhenNavBar {...collectedProps} busy={busy}/>
+        <MoorhenNavBar {...collectedProps}/>
         
     </div>
 

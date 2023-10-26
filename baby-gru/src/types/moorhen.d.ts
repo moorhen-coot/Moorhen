@@ -813,7 +813,6 @@ export namespace moorhen {
         generalStates: {
             devMode: boolean; 
             userPreferencesMounted: boolean;
-            busy: boolean;
             appTitle: string;
             cootInitialized: boolean;
             notificationContent: JSX.Element;
@@ -849,16 +848,12 @@ export namespace moorhen {
         setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtom>>;
         cursorStyle: string;
         setCursorStyle: React.Dispatch<React.SetStateAction<string>>;
-        busy: boolean;
-        setBusy: React.Dispatch<React.SetStateAction<boolean>>;
         molecules: Molecule[];
         changeMolecules: (arg0: MolChange<Molecule>) => void;
         maps: Map[];
         changeMaps: (arg0: MolChange<Map>) => void;
         appTitle: string;
         setAppTitle: React.Dispatch<React.SetStateAction<string>>;
-        cootInitialized: boolean;
-        setCootInitialized: React.Dispatch<React.SetStateAction<boolean>>;
         showToast: boolean;
         setShowToast: React.Dispatch<React.SetStateAction<boolean>>;
         notificationContent: null | JSX.Element;

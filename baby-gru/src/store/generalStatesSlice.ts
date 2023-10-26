@@ -6,7 +6,6 @@ export const generalStatesSlice = createSlice({
   initialState: {
     devMode: null,
     userPreferencesMounted: false,
-    busy: false,
     appTitle: 'Moorhen',
     cootInitialized: false,
     notificationContent: null,
@@ -41,9 +40,6 @@ export const generalStatesSlice = createSlice({
     setAppTittle: (state, action: {payload: string, type: string}) => {
       return {...state, appTitle: action.payload}
     },
-    setBusy: (state, action: {payload: boolean, type: string}) => {
-      return {...state, busy: action.payload}
-    },
     setUserPreferencesMounted: (state, action: {payload: boolean, type: string}) => {
       return {...state, userPreferencesMounted: action.payload}
     },
@@ -54,7 +50,7 @@ export const generalStatesSlice = createSlice({
 
 export const {
   setNotificationContent, setShowToast, setActiveMap, setActiveMolecule, setCootInitialized,
-  setAppTittle, setBusy, setUserPreferencesMounted, setDevMode, setTheme, setViewOnly
+  setAppTittle, setUserPreferencesMounted, setDevMode, setTheme, setViewOnly
 } = generalStatesSlice.actions
 
 export default generalStatesSlice.reducer

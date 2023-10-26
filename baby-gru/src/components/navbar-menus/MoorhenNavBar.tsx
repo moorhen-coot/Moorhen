@@ -25,11 +25,7 @@ import { MoorhenScriptModal } from '../modal/MoorhenScriptModal';
 import { moorhen } from '../../types/moorhen';
 import { useSelector } from 'react-redux';
 
-interface MoorhenNavBarPropsInterface extends moorhen.Controls {
-    busy: boolean;
-}
-
-export interface MoorhenNavBarExtendedControlsInterface extends MoorhenNavBarPropsInterface {
+export interface MoorhenNavBarExtendedControlsInterface extends moorhen.Controls {
     dropdownId: string;
     currentDropdownId: string;
     setCurrentDropdownId: React.Dispatch<React.SetStateAction<string>>;
@@ -38,8 +34,9 @@ export interface MoorhenNavBarExtendedControlsInterface extends MoorhenNavBarPro
     setShowCreateAcedrgLinkModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface>((props, ref) => {
+export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.Controls>((props, ref) => {
     
+    const [busy, setBusy] = useState<boolean>(false)
     const [speedDialOpen, setSpeedDialOpen] = useState<boolean>(false)
     const [currentDropdownId, setCurrentDropdownId] = useState<string>('-1')
     const [showSaveIcon, setShowSaveIcon] = useState<boolean>(false)
@@ -66,11 +63,17 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
     const helpDialActionRef = useRef()
     const devDialActionRef = useRef()
     
+    const cootInitialized = useSelector((state: moorhen.State) => state.generalStates.cootInitialized)
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
     const width = useSelector((state: moorhen.State) => state.canvasStates.width)
     const height = useSelector((state: moorhen.State) => state.canvasStates.height)
 
+    useEffect(() => {
+        if (props.commandCentre.current) {
+            props.commandCentre.current.onActiveMessagesChanged = (newActiveMessages) => setBusy(newActiveMessages.length !== 0)
+        }         
+    }, [cootInitialized])
 
     useEffect(() => {
         if (props.timeCapsuleRef.current) {
@@ -258,7 +261,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
             position: 'absolute',
             top: canvasTop + convertRemToPx(0.5),
             right: canvasLeft + convertRemToPx(0.5),
-            display: props.hoveredAtom.cid || props.busy || showSaveIcon ? 'flex' : 'none',
+            display: props.hoveredAtom.cid || busy || showSaveIcon ? 'flex' : 'none',
             color: isDark ? 'grey' : 'white' ,
             bgcolor: isDark ? 'grey' : 'white',
             '&:hover': {
@@ -267,7 +270,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
         }}
     >
         {props.hoveredAtom.cid && <Form.Control className='moorhen-hovered-atom-form' type="text" readOnly={true} value={`${props.hoveredAtom.molecule.name}:${props.hoveredAtom.cid}`} />}
-        {props.busy && <Spinner className='moorhen-spinner' animation="border" variant={isDark ? 'light' : 'dark'} />}
+        {busy && <Spinner className='moorhen-spinner' animation="border" variant={isDark ? 'light' : 'dark'} />}
         {showSaveIcon && <SaveOutlined style={{ padding: 0, margin: 0, color: 'black' }}/>}
     </Fab>
     </>
