@@ -720,8 +720,6 @@ export namespace moorhen {
         changeMolecules: (arg0: MolChange<Molecule>) => void;
         maps: Map[];
         changeMaps: (arg0: MolChange<Map>) => void;
-        appTitle: string;
-        setAppTitle: React.Dispatch<React.SetStateAction<string>>;
         videoRecorderRef: React.MutableRefObject<null | ScreenRecorder>;
         glRef: React.MutableRefObject<null | webGL.MGWebGL>;
         timeCapsuleRef: React.MutableRefObject<null | TimeCapsule>;
@@ -852,8 +850,6 @@ export namespace moorhen {
         changeMolecules: (arg0: MolChange<Molecule>) => void;
         maps: Map[];
         changeMaps: (arg0: MolChange<Map>) => void;
-        appTitle: string;
-        setAppTitle: React.Dispatch<React.SetStateAction<string>>;
         showToast: boolean;
         setShowToast: React.Dispatch<React.SetStateAction<boolean>>;
         notificationContent: null | JSX.Element;

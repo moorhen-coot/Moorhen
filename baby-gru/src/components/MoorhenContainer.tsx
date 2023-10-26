@@ -91,7 +91,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const [innerCursorStyle, setInnerCursorStyle] = useState<string>("default")
     const [innerMolecules, innerChangeMolecules] = useReducer(itemReducer, initialMoleculesState)
     const [innerMaps, innerChangeMaps] = useReducer(itemReducer, initialMapsState)
-    const [innerAppTitle, setInnerAppTitle] = useState<string>('Moorhen')
     const [innerShowToast, setInnerShowToast] = useState<boolean>(false)
     const [innerNotificationContent, setInnerNotificationContent] = useState<null | JSX.Element>(null)
     
@@ -137,7 +136,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         cursorStyle: innerCursorStyle, maps: innerMaps as moorhen.Map[], molecules: innerMolecules as moorhen.Molecule[],
         setCursorStyle: setInnerCursorStyle,
         changeMaps: innerChangeMaps, enableAtomHovering: innerEnableAtomHovering, changeMolecules: innerChangeMolecules, 
-        appTitle: innerAppTitle, setAppTitle: setInnerAppTitle,
         showToast: innerShowToast, setShowToast: setInnerShowToast, notificationContent: innerNotificationContent, 
         setNotificationContent: setInnerNotificationContent, videoRecorderRef: innerVideoRecorderRef,
         prevActiveMoleculeRef: innerPrevActiveMoleculeRef, 
@@ -152,7 +150,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         lastHoveredAtom, prevActiveMoleculeRef, activeMap, maps, changeMaps,
         setActiveMap, activeMolecule, setActiveMolecule, hoveredAtom, setHoveredAtom,
         cursorStyle, setCursorStyle, changeMolecules, setEnableAtomHovering,
-        appTitle, setAppTitle, showToast, setShowToast, notificationContent, setNotificationContent,
+        showToast, setShowToast, notificationContent, setNotificationContent,
         molecules, enableAtomHovering
     } = states
 
@@ -405,7 +403,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     }
 
     const collectedProps: moorhen.Controls = {
-        molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
+        molecules, changeMolecules, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
         activeMap, setActiveMap, commandCentre, notificationContent, setNotificationContent, hoveredAtom, 
         setHoveredAtom, showToast, setShowToast, timeCapsuleRef, disableFileUploads, 
         urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems, extraEditMenuItems,
