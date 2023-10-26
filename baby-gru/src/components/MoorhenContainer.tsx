@@ -18,8 +18,6 @@ import { setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/can
 import { setCootInitialized, setTheme } from '../store/generalStatesSlice';
 import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSlice';
 
-const initialMoleculesState: moorhen.Molecule[] = []
-
 const initialMapsState: moorhen.Map[] = []
 
 /**
