@@ -6,6 +6,8 @@ import ProtvistaTrack from "protvista-track";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { clickedResidueType } from '../card/MoorhenMoleculeCard';
+import { useSelector, useDispatch } from 'react-redux';
+import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 
 !window.customElements.get('protvista-navigation') && window.customElements.define("protvista-navigation", ProtvistaNavigation);
 !window.customElements.get('protvista-sequence') && window.customElements.define("protvista-sequence", ProtvistaSequence);
@@ -49,9 +51,6 @@ type MoorhenSequenceViewerPropsType = {
     setClickedResidue: React.Dispatch<React.SetStateAction<clickedResidueType>>;
     selectedResidues: [number, number];
     setSelectedResidues: React.Dispatch<React.SetStateAction<[number, number]>>;
-    hoveredAtom: moorhen.HoveredAtom;
-    setHoveredAtom: React.Dispatch<React.SetStateAction<moorhen.HoveredAtom>>;
-
 }
 
 export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => {
@@ -68,12 +67,14 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
         seqLenght: initialSeqLenght,
         displaySequence: initialDisplaySequence
     });
+    const dispatch = useDispatch()
+    const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
 
     const hoveredResidueColor = '#FFEB3B66'
     const transparentColor = '#FFEB3B00'
 
     const {
-        molecule, sequence, setHoveredAtom, hoveredAtom, clickedResidue,
+        molecule, sequence, clickedResidue,
         setClickedResidue, selectedResidues, setSelectedResidues
     } = props;
 
@@ -201,13 +202,13 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                 let hoveredResidue = sequence.sequence.find(residue => residue.resNum === evt.detail.feature.start)
                 if (hoveredResidue) {
                     let cid = hoveredResidue.cid
-                    setHoveredAtom({ molecule: molecule, cid: cid })
+                    dispatch( setHoveredAtom({ molecule: molecule, cid: cid }) )
                 }
             }
         } else if (evt.detail.eventtype === "mouseout") {
             setMessage("")
         }
-    }, [clickedResidue, sequence, selectedResidues, molecule, setHoveredAtom, setSelectedResidues, setClickedResidue])
+    }, [clickedResidue, sequence, selectedResidues, molecule, setSelectedResidues, setClickedResidue])
 
 
     /**

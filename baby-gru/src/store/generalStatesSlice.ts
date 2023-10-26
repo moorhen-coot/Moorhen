@@ -6,13 +6,10 @@ export const generalStatesSlice = createSlice({
   initialState: {
     devMode: null,
     userPreferencesMounted: false,
-    busy: false,
     appTitle: 'Moorhen',
     cootInitialized: false,
     notificationContent: null,
-    showToast: false,
     activeMap: null,
-    activeMolecule: null,
     theme: 'flatly',
     viewOnly: false,
   },
@@ -23,14 +20,8 @@ export const generalStatesSlice = createSlice({
     setNotificationContent: (state, action: {payload: JSX.Element, type: string}) => {
       return {...state, notificationContent: action.payload}
     },
-    setShowToast: (state, action: {payload: boolean, type: string}) => {
-      return {...state, showToast: action.payload}
-    },
     setViewOnly: (state, action: {payload: boolean, type: string}) => {
       return {...state, viewOnly: action.payload}
-    },
-    setActiveMolecule: (state, action: {payload: moorhen.Molecule, type: string}) => {
-      return {...state, activeMolecule: action.payload}
     },
     setActiveMap: (state, action: {payload: moorhen.Map, type: string}) => {
       return {...state, activeMap: action.payload}
@@ -41,9 +32,6 @@ export const generalStatesSlice = createSlice({
     setAppTittle: (state, action: {payload: string, type: string}) => {
       return {...state, appTitle: action.payload}
     },
-    setBusy: (state, action: {payload: boolean, type: string}) => {
-      return {...state, busy: action.payload}
-    },
     setUserPreferencesMounted: (state, action: {payload: boolean, type: string}) => {
       return {...state, userPreferencesMounted: action.payload}
     },
@@ -53,8 +41,8 @@ export const generalStatesSlice = createSlice({
 }})
 
 export const {
-  setNotificationContent, setShowToast, setActiveMap, setActiveMolecule, setCootInitialized,
-  setAppTittle, setBusy, setUserPreferencesMounted, setDevMode, setTheme, setViewOnly
+  setNotificationContent, setActiveMap, setCootInitialized,
+  setAppTittle, setUserPreferencesMounted, setDevMode, setTheme, setViewOnly
 } = generalStatesSlice.actions
 
 export default generalStatesSlice.reducer

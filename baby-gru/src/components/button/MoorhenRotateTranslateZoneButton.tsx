@@ -9,7 +9,8 @@ import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
 import { IconButton } from '@mui/material';
 import { CheckOutlined, CloseOutlined, InfoOutlined } from "@mui/icons-material";
 import Draggable from "react-draggable";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch, batch } from 'react-redux';
+import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
 
 export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
     const [showAccept, setShowAccept] = useState<boolean>(false)
@@ -23,6 +24,7 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
     const customCid = useRef<null | string>(null)
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const dispatch = useDispatch()
 
     const rotateTranslateModes = ['ATOM', 'RESIDUE', 'CHAIN', 'MOLECULE']
 
@@ -48,12 +50,14 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
         chosenMolecule.current.unhideAll()
         const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: chosenMolecule.current.molNo } })
         document.dispatchEvent(scoresUpdateEvent)
+        dispatch( setEnableAtomHovering(true) )
     }, [props, chosenMolecule, fragmentMolecule])
 
     const rejectTransform = useCallback(async () => {
         props.glRef.current.setActiveMolecule(null)
         fragmentMolecule.current.delete()
         chosenMolecule.current.unhideAll()
+        dispatch( setEnableAtomHovering(true) )
     }, [props, chosenMolecule, fragmentMolecule])
 
     const startRotateTranslate = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string) => {
@@ -178,7 +182,10 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
             props.setShowOverlay(false)
             //props.setOpacity(0.5)
             props.setOverrideMenuContents(contextMenuOverride)
-            props.setHoveredAtom({molecule: null, cid: null})
+            batch( () => {
+                dispatch( setHoveredAtom({molecule: null, cid: null}) )
+                dispatch( setEnableAtomHovering(false) )    
+            })
         }
 
         return <MoorhenContextButtonBase 

@@ -5,7 +5,8 @@ import { MoorhenValidationChartWidgetBase } from "./MoorhenValidationChartWidget
 import annotationPlugin from 'chartjs-plugin-annotation'
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from 'react-redux';
+import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
@@ -38,6 +39,7 @@ export const MoorhenValidation = (props: Props) => {
     const chartRef = useRef(null);
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
     const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const dispatch = useDispatch()
 
     const plugin = {
         id: 'custom_bar_borders',
@@ -156,10 +158,12 @@ export const MoorhenValidation = (props: Props) => {
             if(selectedMolecule) {
                 const clickedResidue = getResidueInfo(props.molecules, selectedMolecule.molNo, selectedChain, residueIndex)
                 if (clickedResidue) {
-                    props.setHoveredAtom({
-                        molecule: selectedMolecule,
-                        cid:  `//${clickedResidue.chain}/${clickedResidue.seqNum}(${residueCodesOneToThree[clickedResidue.resCode]})/`
-                    })
+                    dispatch(
+                        setHoveredAtom({
+                            molecule: selectedMolecule,
+                            cid:  `//${clickedResidue.chain}/${clickedResidue.seqNum}(${residueCodesOneToThree[clickedResidue.resCode]})/`
+                        })
+                    )
                     return `${clickedResidue.seqNum} (${residueCodesOneToThree[clickedResidue.resCode]})`
                 }
             }

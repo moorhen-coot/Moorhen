@@ -4,18 +4,20 @@ import { MoorhenMap } from "../../utils/MoorhenMap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
+import { setActiveMap } from "../../store/generalStatesSlice";
+import { useDispatch } from 'react-redux';
 
 export const MoorhenImportMapMenuItem = (props: { 
     maps: moorhen.Map[];
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
-    setActiveMap: React.Dispatch<React.SetStateAction<moorhen.Map>>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
     getWarningToast: (arg0: string) => JSX.Element;
 }) => {
 
+    const dispatch = useDispatch()
     const filesRef = useRef<null | HTMLInputElement>(null)
     const isDiffRef = useRef<undefined | HTMLInputElement>()
 
@@ -41,13 +43,13 @@ export const MoorhenImportMapMenuItem = (props: {
                 await newMap.loadToCootFromMapFile(file, isDiffRef.current.checked)
                 if (newMap.molNo === -1) throw new Error('Cannot read the mtz file!')
                 props.changeMaps({ action: 'Add', item: newMap })
-                props.setActiveMap(newMap)   
+                dispatch( setActiveMap(newMap) )
             } catch (err) {
                 props.setNotificationContent(props.getWarningToast('Error reading map file'))
                 console.log(`Cannot read file`)    
             }
         }
-    }, [props.maps, filesRef.current, isDiffRef.current, props.glRef, props.setActiveMap, props.changeMaps, props.commandCentre])
+    }, [props.maps, filesRef.current, isDiffRef.current, props.glRef, props.changeMaps, props.commandCentre])
 
     return <MoorhenBaseMenuItem
         id='import-map-menu-item'

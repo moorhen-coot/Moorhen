@@ -96,7 +96,6 @@ MoorhenPopoverOptions.defaultProps = {extraInput: () => null, nonCootCommand: fa
 export const MoorhenContextMenu = (props: {
   urlPrefix: string;
   changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
-  activeMap: moorhen.Map;
   showContextMenu: false | moorhen.AtomRightClickEventInfo;
   molecules: moorhen.Molecule[];
   timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
@@ -109,7 +108,6 @@ export const MoorhenContextMenu = (props: {
   monomerLibraryPath: string;
   defaultActionButtonSettings: moorhen.actionButtonSettings;
   setDefaultActionButtonSettings: (arg0: {key: string; value: string}) => void;
-  setHoveredAtom: React.Dispatch<React.SetStateAction<moorhen.HoveredAtom>>;
 }) => {
 
   const contextMenuRef = useRef(null)
@@ -177,50 +175,51 @@ export const MoorhenContextMenu = (props: {
   return <>
       <ContextMenu ref={contextMenuRef} top={overrideMenuContents ? 0 : menuPosition.top} left={overrideMenuContents ? 0 : menuPosition.left} opacity={opacity}>
         {overrideMenuContents ? 
-        overrideMenuContents 
+          overrideMenuContents 
         :
-              <ClickAwayListener onClickAway={() => !showOverlay && props.setShowContextMenu(false)}>
-                  <List>
-                    {
-                    props.viewOnly ? 
-                      <MoorhenBackgroundColorMenuItem setPopoverIsShown={() => { }}/>
-                    :              
-                    selectedMolecule && chosenAtom &&
-                     <div style={{ display:'flex', justifyContent: 'center' }}>
-                     <Tooltip className="moorhen-tooltip" title={toolTip}>
-                     <FormGroup ref={quickActionsFormGroupRef} style={{ justifyContent: 'center', margin: "0px", padding: "0px", width: '18rem' }} row>
-                      <MoorhenAutofitRotamerButton mode='context' {...collectedProps} />
-                      <MoorhenFlipPeptideButton mode='context' {...collectedProps}/>
-                      <MoorhenSideChain180Button mode='context' {...collectedProps}/> 
-                      <MoorhenRefineResiduesButton mode='context' {...collectedProps}/> 
-                      <MoorhenDeleteButton mode='context' {...collectedProps} />
-                      <MoorhenMutateButton mode='context' {...collectedProps} />
-                      <MoorhenAddTerminalResidueButton mode='context' {...collectedProps} />
-                      <MoorhenRotamerChangeButton mode='context' {...collectedProps}/>
-                      <MoorhenRigidBodyFitButton  mode='context' {...collectedProps}/>
-                      <MoorhenEigenFlipLigandButton mode='context' {...collectedProps}/>
-                      <MoorhenJedFlipFalseButton mode='context' {...collectedProps}/>
-                      <MoorhenJedFlipTrueButton mode='context' {...collectedProps}/>
-                      <MoorhenRotateTranslateZoneButton mode='context' {...collectedProps} />
-                      <MoorhenDragAtomsButton mode='context' {...collectedProps} />
-                      <MoorhenAddAltConfButton mode ='context' {...collectedProps} />
-                      <MoorhenConvertCisTransButton mode='context' {...collectedProps} />
-                     </FormGroup>
-                     </Tooltip>
-                     </div>
-                    }
-                  </List>
-        </ClickAwayListener>
+          <ClickAwayListener onClickAway={() => !showOverlay && props.setShowContextMenu(false)}>
+            <List>
+              {props.viewOnly ? 
+                <MoorhenBackgroundColorMenuItem setPopoverIsShown={() => { }}/>
+              :              
+              selectedMolecule && chosenAtom &&
+              <div style={{ display:'flex', justifyContent: 'center' }}>
+              <Tooltip className="moorhen-tooltip" title={toolTip}>
+              <FormGroup ref={quickActionsFormGroupRef} style={{ justifyContent: 'center', margin: "0px", padding: "0px", width: '18rem' }} row>
+              <MoorhenAutofitRotamerButton mode='context' {...collectedProps} />
+              <MoorhenFlipPeptideButton mode='context' {...collectedProps}/>
+              <MoorhenSideChain180Button mode='context' {...collectedProps}/> 
+              <MoorhenRefineResiduesButton mode='context' {...collectedProps}/> 
+              <MoorhenDeleteButton mode='context' {...collectedProps} />
+              <MoorhenMutateButton mode='context' {...collectedProps} />
+              <MoorhenAddTerminalResidueButton mode='context' {...collectedProps} />
+              <MoorhenRotamerChangeButton mode='context' {...collectedProps}/>
+              <MoorhenRigidBodyFitButton  mode='context' {...collectedProps}/>
+              <MoorhenEigenFlipLigandButton mode='context' {...collectedProps}/>
+              <MoorhenJedFlipFalseButton mode='context' {...collectedProps}/>
+              <MoorhenJedFlipTrueButton mode='context' {...collectedProps}/>
+              <MoorhenRotateTranslateZoneButton mode='context' {...collectedProps} />
+              <MoorhenDragAtomsButton mode='context' {...collectedProps} />
+              <MoorhenAddAltConfButton mode ='context' {...collectedProps} />
+              <MoorhenConvertCisTransButton mode='context' {...collectedProps} />
+              </FormGroup>
+              </Tooltip>
+              </div>
+              }
+            </List>
+          </ClickAwayListener>
         }
-          </ContextMenu>
-          <Overlay placement={menuPosition.placement} show={showOverlay} target={quickActionsFormGroupRef.current}>
-              <Popover className="context-button-popover" style={{borderRadius: '1rem', boxShadow: '0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12)'}}>
-              <Popover.Body>
-                {overlayContents}
-              </Popover.Body>
-            </Popover>
-          </Overlay>
-          </>
+      </ContextMenu>
+      {!overrideMenuContents &&
+        <Overlay placement={menuPosition.placement} show={showOverlay} target={quickActionsFormGroupRef.current}>
+            <Popover className="context-button-popover" style={{borderRadius: '1rem', boxShadow: '0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12)'}}>
+            <Popover.Body>
+              {overlayContents}
+            </Popover.Body>
+          </Popover>
+        </Overlay>
+      }
+    </>
         
 
 }

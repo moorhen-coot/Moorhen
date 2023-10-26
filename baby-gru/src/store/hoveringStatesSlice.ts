@@ -21,7 +21,7 @@ export const hoveringStatesSlice = createSlice({
 }})
 
 export const {
-  setCursorStyle, setEnableAtomHovering
+  setCursorStyle, setEnableAtomHovering, setHoveredAtom
 } = hoveringStatesSlice.actions
 
 export default hoveringStatesSlice.reducer

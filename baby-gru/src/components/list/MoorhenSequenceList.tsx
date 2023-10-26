@@ -9,8 +9,6 @@ export const MoorhenSequenceList = (props: {
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
     molecule: moorhen.Molecule; 
     glRef: React.RefObject<webGL.MGWebGL>;
-    hoveredAtom: moorhen.HoveredAtom;
-    setHoveredAtom: React.Dispatch<React.SetStateAction<moorhen.HoveredAtom>>;
     selectedResidues: [number, number];
     setSelectedResidues: React.Dispatch<React.SetStateAction<[number, number]>>;
     clickedResidue: {
@@ -68,8 +66,6 @@ export const MoorhenSequenceList = (props: {
                                 setClickedResidue={props.setClickedResidue}
                                 selectedResidues={props.selectedResidues}
                                 setSelectedResidues={props.setSelectedResidues}
-                                hoveredAtom={props.hoveredAtom}
-                                setHoveredAtom={props.setHoveredAtom}
                             />)
                         }
                     )}

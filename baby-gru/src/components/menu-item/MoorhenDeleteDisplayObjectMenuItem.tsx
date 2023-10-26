@@ -2,15 +2,18 @@ import { Form } from "react-bootstrap";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
+import { useSelector, useDispatch } from 'react-redux';
+import { setActiveMap } from "../../store/generalStatesSlice";
 
 export const MoorhenDeleteDisplayObjectMenuItem = (props: {
     changeItemList: (arg0: moorhen.MolChange<(moorhen.Molecule | moorhen.Map)>) => void;
     item: moorhen.Map | moorhen.Molecule;
     glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    activeMap?: moorhen.Map;
-    setActiveMap?: React.Dispatch<React.SetStateAction<moorhen.Map>>; 
 }) => {
+
+    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
+    const dispatch = useDispatch()
 
     const panelContent = <>
         <Form.Group style={{ width: '10rem', margin: '0.5rem' }} controlId="MoorhenGetDeleteMenuItem" className="mb-3">
@@ -22,8 +25,8 @@ export const MoorhenDeleteDisplayObjectMenuItem = (props: {
         props.changeItemList({ action: 'Remove', item: props.item })
         props.item.delete();
         props.setPopoverIsShown(false)
-        if (props.item.type === "map" && props.activeMap?.molNo === props.item.molNo) {
-            props.setActiveMap(null)
+        if (props.item.type === "map" && activeMap?.molNo === props.item.molNo) {
+            dispatch( setActiveMap(null) )
         }
     }
 

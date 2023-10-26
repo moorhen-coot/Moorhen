@@ -4,12 +4,13 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 import { Container, Form, FormGroup, FormLabel, FormSelect, Row } from "react-bootstrap";
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
+import { useSelector } from 'react-redux';
 
 export const MoorhenRigidBodyFitButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
     const [panelParameters, setPanelParameters] = useState<string>('TRIPLE')
     const [randomJiggleMode, setRandomJiggleMode] = useState<boolean>(false)
     const customCid = useRef<null | string>(null)
-
+    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
     const rigidBodyModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'CHAIN', 'ALL']
 
@@ -92,7 +93,7 @@ export const MoorhenRigidBodyFitButton = (props: moorhen.EditButtonProps | moorh
     }
     
     const getCootCommandInput = useCallback((selectedMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string, randomJiggleModeSelectRef?: React.RefObject<HTMLInputElement>) => {
-        const commandArgs = rigidBodyFitFormatArgs(selectedMolecule, chosenAtom, selectedMode, props.activeMap.molNo)
+        const commandArgs = rigidBodyFitFormatArgs(selectedMolecule, chosenAtom, selectedMode, activeMap.molNo)
 
         let command: string;
         if (typeof randomJiggleModeSelectRef !== 'undefined') {
@@ -114,7 +115,7 @@ export const MoorhenRigidBodyFitButton = (props: moorhen.EditButtonProps | moorh
             commandArgs: command === 'rigid_body_fit' ? commandArgs : [...commandArgs.slice(0, 2), 0, -1],
             changesMolecules: [selectedMolecule.molNo]
           }
-    }, [props.activeMap, randomJiggleMode])
+    }, [activeMap, randomJiggleMode])
 
     const MoorhenRigidBodyFitPanel = (props: {
         panelParameters: string;

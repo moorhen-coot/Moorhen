@@ -10,7 +10,6 @@ import { libcootApi } from '../../types/libcoot';
 import { useSelector } from 'react-redux';
 
 interface MoorhenWebMGPropsInterface {
-    setHoveredAtom: React.Dispatch<React.SetStateAction<moorhen.HoveredAtom>>;
     monomerLibraryPath: string;
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -18,12 +17,9 @@ interface MoorhenWebMGPropsInterface {
     changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
     maps: moorhen.Map[];
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
-    activeMap: moorhen.Map;
-    hoveredAtom: moorhen.HoveredAtom;
     viewOnly: boolean;
     urlPrefix: string;
     extraDraggableModals: JSX.Element[];
-    enableAtomHovering: boolean;
     onAtomHovered: (identifier: { buffer: { id: string; }; atom: { label: string; }; }) => void;
     onKeyPress: (event: KeyboardEvent) =>  boolean | Promise<boolean>;
     videoRecorderRef: React.MutableRefObject<null | moorhen.ScreenRecorder>;
@@ -59,6 +55,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const hBondsDirty = useRef<boolean>(false)
     const busyDrawingHBonds = useRef<boolean>(false)
 
+    const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
+    const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering)
     const drawCrosshairs = useSelector((state: moorhen.State) => state.sceneSettings.drawCrosshairs)
     const drawFPS = useSelector((state: moorhen.State) => state.sceneSettings.drawFPS)
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops)
@@ -121,17 +119,17 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [props.commandCentre, glRef])
 
     const handleMiddleClickGoToAtom = useCallback(evt => {
-        if (props.hoveredAtom?.molecule && props.hoveredAtom?.cid){
+        if (hoveredAtom?.molecule && hoveredAtom?.cid){
 
-            const residueSpec: moorhen.ResidueSpec = cidToSpec(props.hoveredAtom.cid)
+            const residueSpec: moorhen.ResidueSpec = cidToSpec(hoveredAtom.cid)
 
             if (!residueSpec.chain_id || !residueSpec.res_no) {
                 return
             }
 
-            props.hoveredAtom.molecule.centreOn(`/*/${residueSpec.chain_id}/${residueSpec.res_no}-${residueSpec.res_no}/*`)
+            hoveredAtom.molecule.centreOn(`/*/${residueSpec.chain_id}/${residueSpec.res_no}-${residueSpec.res_no}/*`)
         }
-    }, [props.hoveredAtom])
+    }, [hoveredAtom])
 
 
     const drawHBonds = useCallback(async () => {
@@ -609,7 +607,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
                 <MGWebGL
                     ref={glRef}
-                    onAtomHovered={props.enableAtomHovering ? props.onAtomHovered : null}
+                    onAtomHovered={enableAtomHovering ? props.onAtomHovered : null}
                     onKeyPress={props.onKeyPress}
                     messageChanged={(d) => { }}
                     mouseSensitivityFactor={mouseSensitivity}
@@ -636,10 +634,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     changeMaps={props.changeMaps}
                     showContextMenu={showContextMenu}
                     setShowContextMenu={setShowContextMenu}
-                    activeMap={props.activeMap}
                     defaultActionButtonSettings={defaultActionButtonSettings}
                     setDefaultActionButtonSettings={setDefaultActionButtonSettings}
-                    setHoveredAtom={props.setHoveredAtom}
                 />}
                 
                 {props.extraDraggableModals && props.extraDraggableModals.map(modal => modal)}

@@ -652,7 +652,6 @@ export namespace moorhen {
         commandCentre: React.RefObject<CommandCentre>
         selectedMolecule: Molecule;
         chosenAtom: ResidueSpec;
-        activeMap: Map;
         molecules: Molecule[];
         glRef: React.RefObject<webGL.MGWebGL>;
         setOverlayContents: React.Dispatch<React.SetStateAction<JSX.Element>>;
@@ -666,7 +665,6 @@ export namespace moorhen {
         changeMolecules: (arg0: MolChange<Molecule>) => void
         defaultActionButtonSettings: actionButtonSettings;
         setDefaultActionButtonSettings: (arg0: {key: string; value: string}) => void;     
-        setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtom>>;
     }
     
     type MolChange<T extends Molecule | Map> = {
@@ -720,26 +718,14 @@ export namespace moorhen {
         changeMolecules: (arg0: MolChange<Molecule>) => void;
         maps: Map[];
         changeMaps: (arg0: MolChange<Map>) => void;
-        appTitle: string;
-        setAppTitle: React.Dispatch<React.SetStateAction<string>>;
         videoRecorderRef: React.MutableRefObject<null | ScreenRecorder>;
         glRef: React.MutableRefObject<null | webGL.MGWebGL>;
         timeCapsuleRef: React.MutableRefObject<null | TimeCapsule>;
         commandCentre: React.MutableRefObject<CommandCentre>;
         moleculesRef: React.MutableRefObject<null | Molecule[]>;
         mapsRef: React.MutableRefObject<null | Map[]>;
-        enableAtomHovering: boolean;
-        setEnableAtomHovering: React.Dispatch<React.SetStateAction<boolean>>;
-        activeMap: Map;
-        setActiveMap: React.Dispatch<React.SetStateAction<Map>>;
-        activeMolecule: Molecule;
-        setActiveMolecule: React.Dispatch<React.SetStateAction<Molecule>>;
-        hoveredAtom: null | HoveredAtom;
-        setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtom>>;
         notificationContent: null | JSX.Element;
         setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
-        showToast: boolean;
-        setShowToast: React.Dispatch<React.SetStateAction<boolean>>;
     }
 
     interface State {
@@ -813,13 +799,10 @@ export namespace moorhen {
         generalStates: {
             devMode: boolean; 
             userPreferencesMounted: boolean;
-            busy: boolean;
             appTitle: string;
             cootInitialized: boolean;
             notificationContent: JSX.Element;
-            showToast: boolean;
             activeMap: Map;
-            activeMolecule: Molecule;
             theme: string;
         };
         hoveringStates: {
@@ -838,31 +821,10 @@ export namespace moorhen {
         mapsRef: React.MutableRefObject<null | Map[]>;
         activeMapRef: React.MutableRefObject<Map>;
         lastHoveredAtom: React.MutableRefObject<null | HoveredAtom>;
-        prevActiveMoleculeRef: React.MutableRefObject<null | Molecule>;
-        enableAtomHovering: boolean;
-        setEnableAtomHovering: React.Dispatch<React.SetStateAction<boolean>>;
-        activeMap: Map;
-        setActiveMap: React.Dispatch<React.SetStateAction<Map>>;
-        activeMolecule: Molecule;
-        setActiveMolecule: React.Dispatch<React.SetStateAction<Molecule>>;
-        hoveredAtom: null | HoveredAtom;
-        setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtom>>;
-        cursorStyle: string;
-        setCursorStyle: React.Dispatch<React.SetStateAction<string>>;
-        busy: boolean;
-        setBusy: React.Dispatch<React.SetStateAction<boolean>>;
         molecules: Molecule[];
         changeMolecules: (arg0: MolChange<Molecule>) => void;
         maps: Map[];
         changeMaps: (arg0: MolChange<Map>) => void;
-        appTitle: string;
-        setAppTitle: React.Dispatch<React.SetStateAction<string>>;
-        cootInitialized: boolean;
-        setCootInitialized: React.Dispatch<React.SetStateAction<boolean>>;
-        theme: string,
-        setTheme: React.Dispatch<React.SetStateAction<string>>;
-        showToast: boolean;
-        setShowToast: React.Dispatch<React.SetStateAction<boolean>>;
         notificationContent: null | JSX.Element;
         setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
     }
