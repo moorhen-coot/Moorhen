@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useReducer, useRef, useState } from 'react';
+import { useEffect, useCallback, useReducer, useRef, useState, useMemo } from 'react';
 import { Container, Col, Row, Spinner } from 'react-bootstrap';
 import { MoorhenWebMG } from './webMG/MoorhenWebMG';
 import { getTooltipShortcutLabel, createLocalStorageInstance, allFontsSet, itemReducer } from '../utils/MoorhenUtils';
@@ -233,38 +233,38 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         
     }, [userPreferencesMounted])
 
-    useEffect(() => {
-        if (!userPreferencesMounted) {
-            return
-        }
-        
+    useMemo(() => {
         let head = document.head;
         let style: any = document.createElement("link");
-        const isDark = isDarkBackground(...backgroundColor)
-
-        dispatch(setIsDark(isDark))
 
         if (isDark) {
             style.href = `${urlPrefix}/baby-gru/darkly.css`
-            setTheme("darkly")
         } else {
             style.href = `${urlPrefix}/baby-gru/flatly.css`
-            setTheme("flatly")
         }
         
-        if (defaultBackgroundColor !== backgroundColor) {
-            dispatch(
-                setDefaultBackgroundColor(backgroundColor)
-            )
-        }
-
         style.rel = "stylesheet";
         style.async = true
         style.type = 'text/css'
 
         head.appendChild(style);
         return () => { head.removeChild(style); }
+    }, [isDark])
 
+    useEffect(() => {
+        if (!userPreferencesMounted) {
+            return
+        }
+        
+        const _isDark = isDarkBackground(...backgroundColor)
+        
+        if (defaultBackgroundColor !== backgroundColor) {
+            dispatch( setDefaultBackgroundColor(backgroundColor) )
+        }
+        if (isDark !== _isDark) {
+            dispatch( setIsDark(_isDark) )
+            setTheme(_isDark ? "darkly" : "flatly")
+        }
 
     }, [backgroundColor])
 
