@@ -3,16 +3,17 @@ import { Button, Form } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { TextField } from "@mui/material";
+import { useSelector } from 'react-redux';
 
 export const MoorhenSetMapWeight = (props: {
     map: moorhen.Map;
-    activeMap: moorhen.Map;
     disabled: boolean;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 
     const mapWeightRef = useRef<null | string>(null)
     const [mapWeight, setMapWeight] = useState<string>(null)
+    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
     useEffect(() => {
         props.map.estimateMapWeight().then(_ => {
@@ -32,7 +33,7 @@ export const MoorhenSetMapWeight = (props: {
             return
         }
         props.map.suggestedMapWeight = parseInt(mapWeightRef.current)
-        if (props.map.molNo === props.activeMap.molNo) {
+        if (props.map.molNo === activeMap.molNo) {
             props.map.setMapWeight()
         }
         document.body.click()

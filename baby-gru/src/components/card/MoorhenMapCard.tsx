@@ -13,7 +13,8 @@ import { Accordion, AccordionDetails, AccordionSummary, IconButton, MenuItem, Po
 import { RgbColorPicker } from "react-colorful"
 import { moorhen } from "../../types/moorhen"
 import { MoorhenNotification } from "../misc/MoorhenNotification"
-import { useSelector } from "react-redux"
+import { useSelector, useDispatch } from 'react-redux';
+import { setActiveMap } from "../../store/generalStatesSlice";
 
 type ActionButtonType = {
     label: string;
@@ -38,11 +39,14 @@ interface MoorhenMapCardPropsInterface extends moorhen.Controls {
 }
 
 export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((props, cardRef) => {
+    const dispatch = useDispatch()
+    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
     const contourWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.contourWheelSensitivityFactor)
     const defaultMapLitLines = useSelector((state: moorhen.State) => state.mapSettings.defaultMapLitLines)
     const defaultMapSurface = useSelector((state: moorhen.State) => state.mapSettings.defaultMapSurface)
     const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.miscAppSettings.defaultExpandDisplayCards)
+    
     const [cootContour, setCootContour] = useState<boolean>(true)
     const [mapRadius, setMapRadius] = useState<number>(props.initialRadius)
     const [mapContourLevel, setMapContourLevel] = useState<number>(props.initialContour)
@@ -57,6 +61,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const [positiveMapColour, setPositiveMapColour] = useState<{ r: number; g: number; b: number; } | null>(null)
     const [showColourPicker, setShowColourPicker] = useState<boolean>(false)
     const [histogramBusy, setHistogramBusy] = useState<boolean>(false)
+    
     const colourSwatchRef = useRef<HTMLDivElement | null>(null)
     const nextOrigin = useRef<number[]>([])
     const busyContouring = useRef<boolean>(false)
@@ -190,7 +195,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         },
         7: {
             label: "Set map weight...",
-            compressed: () => { return (<MoorhenSetMapWeight key='set-map-weight' activeMap={props.activeMap} disabled={!cootContour} {...mapSettingsProps} />) },
+            compressed: () => { return (<MoorhenSetMapWeight key='set-map-weight' disabled={!cootContour} {...mapSettingsProps} />) },
             expanded: null
         },
     }
@@ -220,9 +225,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                 setPopoverIsShown={setPopoverIsShown}
                 glRef={props.glRef}
                 changeItemList={props.changeMaps}
-                item={props.map}
-                setActiveMap={props.setActiveMap}
-                activeMap={props.activeMap} />
+                item={props.map}/>
         ))
 
         return <Fragment>
@@ -274,7 +277,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
 
     const handleWheelContourLevelCallback = useCallback((evt: moorhen.WheelContourLevelEvent) => {
         let newMapContourLevel: number
-        if (props.map.cootContour && props.map.molNo === props.activeMap.molNo) {
+        if (props.map.cootContour && props.map.molNo === activeMap.molNo) {
             if (evt.detail.factor > 1) {
                 newMapContourLevel = mapContourLevel + contourWheelSensitivityFactor
             } else {
@@ -292,13 +295,13 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                 </MoorhenNotification>
             )
         }
-    }, [mapContourLevel, mapRadius, props.activeMap?.molNo, props.map.molNo, props.map.cootContour])
+    }, [mapContourLevel, mapRadius, activeMap?.molNo, props.map.molNo, props.map.cootContour])
 
     const handleRadiusChangeCallback = useCallback((evt: moorhen.MapRadiusChangeEvent) => {
-        if (props.map.cootContour && props.map.molNo === props.activeMap.molNo) {
+        if (props.map.cootContour && props.map.molNo === activeMap.molNo) {
             setMapRadius(mapRadius + evt.detail.factor)
         }
-    }, [mapRadius, props.activeMap?.molNo, props.map.molNo, props.map.cootContour])
+    }, [mapRadius, activeMap?.molNo, props.map.molNo, props.map.cootContour])
 
     const handleNewMapContour = useCallback((evt: moorhen.NewMapContourEvent) => {
         if (props.map.molNo === evt.detail.molNo) {
@@ -328,7 +331,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             document.removeEventListener("newMapContour", handleNewMapContour);
             document.removeEventListener("mapRadiusChanged", handleRadiusChangeCallback);
         };
-    }, [handleOriginUpdate, props.activeMap?.molNo]);
+    }, [handleOriginUpdate, activeMap?.molNo]);
 
     useEffect(() => {
         props.map.setAlpha(mapOpacity)
@@ -476,11 +479,11 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                     id={`active-map-toggle-${props.map.molNo}`}
                     type="checkbox"
                     variant={isDark ? "outline-light" : "outline-primary"}
-                    checked={props.map === props.activeMap}
+                    checked={props.map === activeMap}
                     style={{ marginLeft: '0.1rem', marginRight: '0.5rem', justifyContent: 'space-betweeen', display: 'flex' }}
-                    onClick={() => props.setActiveMap(props.map)}
+                    onClick={() => dispatch( setActiveMap(props.map) )}
                     value={""}                >
-                    {props.map === props.activeMap ? <RadioButtonCheckedOutlined/> : <RadioButtonUncheckedOutlined/>}
+                    {props.map === activeMap ? <RadioButtonCheckedOutlined/> : <RadioButtonUncheckedOutlined/>}
                     <span style={{marginLeft: '0.5rem'}}>Active</span>
                 </ToggleButton>
                 <Col>

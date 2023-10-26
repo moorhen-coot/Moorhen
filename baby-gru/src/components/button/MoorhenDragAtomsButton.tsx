@@ -26,6 +26,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
     const refinementDirty = useRef<boolean>(false)
     const autoClearRestraintsRef = useRef<boolean>(true)
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
     const dispatch = useDispatch()
 
     const dragModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'SPHERE']
@@ -115,7 +116,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
         await props.commandCentre.current.cootCommand({
             returnType: 'status',
             command: 'init_refinement_of_molecule_as_fragment_based_on_reference',
-            commandArgs: [moltenFragmentRef.current.molNo, chosenMolecule.current.molNo, props.activeMap.molNo]
+            commandArgs: [moltenFragmentRef.current.molNo, chosenMolecule.current.molNo, activeMap.molNo]
         }, false)
 
         /* Redraw with animation after delay so that the context menu does not refresh empty*/

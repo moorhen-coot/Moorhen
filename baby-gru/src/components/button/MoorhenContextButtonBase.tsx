@@ -70,7 +70,6 @@ export const MoorhenContextButtonBase = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     selectedMolecule: moorhen.Molecule;
     chosenAtom: moorhen.ResidueSpec;
-    activeMap: moorhen.Map;
     refineAfterMod?: boolean;
     needsMapData?: boolean;
     needsAtomData?: boolean;
@@ -101,6 +100,7 @@ export const MoorhenContextButtonBase = (props: {
     
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
+    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
     const doEdit = async (cootCommandInput: moorhen.cootCommandKwargs) => {
         const cootResult = await props.commandCentre.current.cootCommand(cootCommandInput, true)
@@ -109,7 +109,7 @@ export const MoorhenContextButtonBase = (props: {
             props.onCompleted(props.selectedMolecule, props.chosenAtom)
         }
         
-        if (props.refineAfterMod && enableRefineAfterMod && props.activeMap) {
+        if (props.refineAfterMod && enableRefineAfterMod && activeMap) {
             try {
                 await props.commandCentre.current.cootCommand({
                     returnType: "status",
@@ -155,7 +155,7 @@ export const MoorhenContextButtonBase = (props: {
             onClick={handleClick}
             onMouseEnter={() => props.setToolTip(props.toolTipLabel)}
             style={{ backgroundColor: isDark ? 'grey' : 'white' }}
-            disabled={props.needsMapData && !props.activeMap || (props.needsAtomData && props.molecules.length === 0)}
+            disabled={props.needsMapData && !activeMap || (props.needsAtomData && props.molecules.length === 0)}
         >
             {props.icon}
         </IconButton>

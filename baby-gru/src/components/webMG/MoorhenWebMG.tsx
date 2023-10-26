@@ -17,7 +17,6 @@ interface MoorhenWebMGPropsInterface {
     changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
     maps: moorhen.Map[];
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
-    activeMap: moorhen.Map;
     viewOnly: boolean;
     urlPrefix: string;
     extraDraggableModals: JSX.Element[];
@@ -635,7 +634,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     changeMaps={props.changeMaps}
                     showContextMenu={showContextMenu}
                     setShowContextMenu={setShowContextMenu}
-                    activeMap={props.activeMap}
                     defaultActionButtonSettings={defaultActionButtonSettings}
                     setDefaultActionButtonSettings={setDefaultActionButtonSettings}
                 />}

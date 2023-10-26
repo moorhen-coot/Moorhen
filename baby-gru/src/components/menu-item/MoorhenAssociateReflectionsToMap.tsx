@@ -9,7 +9,6 @@ export const MoorhenAssociateReflectionsToMap = (props: {
     maps: moorhen.Map[];
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
-    setActiveMap: React.Dispatch<React.SetStateAction<moorhen.Map>>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
     getWarningToast: (arg0: string) => JSX.Element;

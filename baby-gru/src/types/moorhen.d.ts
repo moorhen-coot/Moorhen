@@ -652,7 +652,6 @@ export namespace moorhen {
         commandCentre: React.RefObject<CommandCentre>
         selectedMolecule: Molecule;
         chosenAtom: ResidueSpec;
-        activeMap: Map;
         molecules: Molecule[];
         glRef: React.RefObject<webGL.MGWebGL>;
         setOverlayContents: React.Dispatch<React.SetStateAction<JSX.Element>>;
@@ -725,8 +724,6 @@ export namespace moorhen {
         commandCentre: React.MutableRefObject<CommandCentre>;
         moleculesRef: React.MutableRefObject<null | Molecule[]>;
         mapsRef: React.MutableRefObject<null | Map[]>;
-        activeMap: Map;
-        setActiveMap: React.Dispatch<React.SetStateAction<Map>>;
         notificationContent: null | JSX.Element;
         setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
     }
@@ -824,8 +821,6 @@ export namespace moorhen {
         mapsRef: React.MutableRefObject<null | Map[]>;
         activeMapRef: React.MutableRefObject<Map>;
         lastHoveredAtom: React.MutableRefObject<null | HoveredAtom>;
-        activeMap: Map;
-        setActiveMap: React.Dispatch<React.SetStateAction<Map>>;
         molecules: Molecule[];
         changeMolecules: (arg0: MolChange<Molecule>) => void;
         maps: Map[];

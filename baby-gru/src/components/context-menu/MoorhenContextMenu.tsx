@@ -96,7 +96,6 @@ MoorhenPopoverOptions.defaultProps = {extraInput: () => null, nonCootCommand: fa
 export const MoorhenContextMenu = (props: {
   urlPrefix: string;
   changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
-  activeMap: moorhen.Map;
   showContextMenu: false | moorhen.AtomRightClickEventInfo;
   molecules: moorhen.Molecule[];
   timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;

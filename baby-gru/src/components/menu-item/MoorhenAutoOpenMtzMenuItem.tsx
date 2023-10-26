@@ -6,18 +6,20 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL"
 import { libcootApi } from "../../types/libcoot"
+import { useDispatch } from 'react-redux';
+import { setActiveMap } from "../../store/generalStatesSlice"
 
 export const MoorhenAutoOpenMtzMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
-    setActiveMap: React.Dispatch<React.SetStateAction<moorhen.Map>>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
     getWarningToast: (arg0: string) => JSX.Element;
 }) => {
 
     const filesRef = useRef<null | HTMLInputElement>(null)
+    const dispatch = useDispatch()
 
     const panelContent = <>
         <Row>
@@ -78,11 +80,11 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
                 await newMap.associateToReflectionData(newMap.selectedColumns, mtzWrapper.reflectionData)
                 await newMap.getSuggestedSettings()
                 props.changeMaps({ action: 'Add', item: newMap })
-                if (index === 0) props.setActiveMap(newMap)
+                if (index === 0) dispatch( setActiveMap(newMap) )
             })
         )
 
-    }, [filesRef.current, props.changeMaps, props.setActiveMap, props.commandCentre, props.glRef])
+    }, [filesRef.current, props.changeMaps, props.commandCentre, props.glRef])
 
     return <MoorhenBaseMenuItem
         id='auto-open-mtz-menu-item'

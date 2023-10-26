@@ -17,22 +17,27 @@ import { getBackupLabel } from "../../utils/MoorhenTimeCapsule"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { moorhen } from "../../types/moorhen";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from 'react-redux';
+import { setActiveMap } from "../../store/generalStatesSlice";
 
 export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
+    const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
+    const fetchMapDataCheckRef = useRef<HTMLInputElement | null>(null);
 
-    const { changeMolecules, changeMaps, commandCentre, glRef, monomerLibraryPath } = props;
     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
     const [remoteSource, setRemoteSource] = useState<string>("PDBe")
     const [isValidPdbId, setIsValidPdbId] = useState<boolean>(true)
-    const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
-    const fetchMapDataCheckRef = useRef<HTMLInputElement | null>(null);
+    
+    const dispatch = useDispatch()
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const enableTimeCapsule = useSelector((state: moorhen.State) => state.backupSettings.enableTimeCapsule)
     const height = useSelector((state: moorhen.State) => state.canvasStates.height)
     const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
+    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
-const getWarningToast = (message: string) => <MoorhenNotification key={guid()} hideDelay={3000} width={20}>
+    const { changeMolecules, changeMaps, commandCentre, glRef, monomerLibraryPath } = props;
+
+    const getWarningToast = (message: string) => <MoorhenNotification key={guid()} hideDelay={3000} width={20}>
             <><WarningOutlined style={{margin: 0}}/>
                 <h4 className="moorhen-warning-toast">
                     {message}
@@ -176,8 +181,8 @@ const getWarningToast = (message: string) => <MoorhenNotification key={guid()} h
             await newMap.loadToCootFromMapURL(url, mapName, isDiffMap)
             if (newMap.molNo === -1) throw new Error("Cannot read the fetched map...")
             changeMaps({ action: 'Add', item: newMap })
-            props.setActiveMap(newMap)
-        } catch {
+            dispatch( setActiveMap(newMap) )
+       } catch {
             props.setNotificationContent(getWarningToast(`Failed to read map`))
             console.log(`Cannot fetch map from ${url}`)
         }
@@ -189,7 +194,7 @@ const getWarningToast = (message: string) => <MoorhenNotification key={guid()} h
             await newMap.loadToCootFromMtzURL(url, mapName, selectedColumns)
             if (newMap.molNo === -1) throw new Error("Cannot read the fetched mtz...")
             changeMaps({ action: 'Add', item: newMap })
-            props.setActiveMap(newMap)
+            dispatch( setActiveMap(newMap) )
         } catch {
             props.setNotificationContent(getWarningToast(`Failed to read mtz`))
             console.log(`Cannot fetch mtz from ${url}`)
@@ -217,7 +222,7 @@ const getWarningToast = (message: string) => <MoorhenNotification key={guid()} h
                 props.changeMolecules,
                 props.maps,
                 props.changeMaps,
-                props.setActiveMap,
+                (newMap: moorhen.Map) => dispatch( setActiveMap(newMap) ),
                 props.commandCentre,
                 props.timeCapsuleRef,
                 props.glRef

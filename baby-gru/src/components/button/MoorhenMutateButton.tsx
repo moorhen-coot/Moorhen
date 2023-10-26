@@ -4,9 +4,11 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 import { MoorhenEditButtonBase } from "./MoorhenEditButtonBase";
 import { Container, FormGroup, FormLabel, FormSelect, Row } from "react-bootstrap";
+import { useSelector } from 'react-redux';
 
 export const MoorhenMutateButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
     const [panelParameters, setPanelParameters] = useState<string>('ALA')
+    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
     const mutateModes = [
         'ALA', 'CYS', 'ASP', 'GLU', 'PHE', 'GLY', 'HIS', 'ILE', 'LYS', 'LEU',
@@ -20,7 +22,7 @@ export const MoorhenMutateButton = (props: moorhen.EditButtonProps | moorhen.Con
             chosenAtom.res_no,
             chosenAtom.ins_code,
             chosenAtom.alt_conf,
-            props.activeMap.molNo
+            activeMap.molNo
         ]
         await props.commandCentre.current.cootCommand({
             returnType: "status",
@@ -28,7 +30,7 @@ export const MoorhenMutateButton = (props: moorhen.EditButtonProps | moorhen.Con
             commandArgs: formattedArgs,
             changesMolecules: [molecule.molNo]
         }, true)
-    }, [props.activeMap, props.commandCentre])
+    }, [activeMap, props.commandCentre])
 
     const getCootCommandInput = (selectedMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string) => {
         return {

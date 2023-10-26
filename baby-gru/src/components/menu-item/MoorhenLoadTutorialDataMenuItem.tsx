@@ -5,7 +5,8 @@ import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from 'react-redux';
+import { setActiveMap } from "../../store/generalStatesSlice";
 
 export const MoorhenLoadTutorialDataMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -14,10 +15,10 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
-    setActiveMap: React.Dispatch<React.SetStateAction<moorhen.Map>>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 
+    const dispatch = useDispatch()
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
     const tutorialNumberSelectorRef = useRef<HTMLSelectElement | null>(null);
@@ -64,7 +65,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
             { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false, calcStructFact: true, ...tutorialMtzColumnNames[tutorialNumber] }
         )
         props.changeMaps({ action: 'AddList', items: [newMap, newDiffMap] })
-        props.setActiveMap(newMap)
+        dispatch( setActiveMap(newMap) )
     }
 
     return <MoorhenBaseMenuItem
