@@ -8,11 +8,11 @@ import { webGL } from "../../types/mgWebGL"
 import { libcootApi } from "../../types/libcoot"
 import { useDispatch } from 'react-redux';
 import { setActiveMap } from "../../store/generalStatesSlice"
+import { addMap } from "../../store/mapsSlice"
 
 export const MoorhenAutoOpenMtzMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
-    changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
     getWarningToast: (arg0: string) => JSX.Element;
@@ -79,12 +79,12 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
                 }
                 await newMap.associateToReflectionData(newMap.selectedColumns, mtzWrapper.reflectionData)
                 await newMap.getSuggestedSettings()
-                props.changeMaps({ action: 'Add', item: newMap })
+                dispatch( addMap(newMap) )
                 if (index === 0) dispatch( setActiveMap(newMap) )
             })
         )
 
-    }, [filesRef.current, props.changeMaps, props.commandCentre, props.glRef])
+    }, [filesRef.current, props.commandCentre, props.glRef])
 
     return <MoorhenBaseMenuItem
         id='auto-open-mtz-menu-item'

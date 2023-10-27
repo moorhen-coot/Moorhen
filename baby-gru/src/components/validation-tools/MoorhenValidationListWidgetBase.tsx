@@ -7,7 +7,6 @@ import { gemmi } from "../../types/gemmi";
 import { useSelector } from "react-redux";
 
 export const MoorhenValidationListWidgetBase = (props: {
-    maps: moorhen.Map[];
     filterMapFunction?: (arg0: moorhen.Map) => boolean;
     fetchData: (arg0: number, arg1: number) => Promise<any>;
     dropdownId: number;
@@ -22,13 +21,16 @@ export const MoorhenValidationListWidgetBase = (props: {
 
     const mapSelectRef = useRef<undefined | HTMLSelectElement>();
     const moleculeSelectRef = useRef<undefined | HTMLSelectElement>();
+
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
     const [selectedMap, setSelectedMap] = useState<null | number>(null)
     const [cachedGemmiStructure, setCachedGemmiStructure] = useState<null | gemmi.Structure>(null)
     const [cardData, setCardData] = useState<any[]>([])
     const [cardList, setCardList] = useState<JSX.Element[]>([])
+
     const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const maps = useSelector((state: moorhen.State) => state.maps)
 
     const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedModel(parseInt(evt.target.value))
@@ -50,9 +52,9 @@ export const MoorhenValidationListWidgetBase = (props: {
     }, [molecules.length])
 
     useEffect(() => {
-        const filteredMaps = props.maps.filter(map => props.filterMapFunction(map))
+        const filteredMaps = maps.filter(map => props.filterMapFunction(map))
 
-        if (props.maps.length === 0 || filteredMaps.length === 0) {
+        if (maps.length === 0 || filteredMaps.length === 0) {
             setSelectedMap(null)
         } else if (selectedMap === null) {
             setSelectedMap(filteredMaps[0].molNo)
@@ -60,7 +62,7 @@ export const MoorhenValidationListWidgetBase = (props: {
             setSelectedMap(filteredMaps[0].molNo)
         }
 
-    }, [props.maps.length])
+    }, [maps.length])
    
     useEffect(() => {
         if (selectedModel !== null) {
@@ -103,7 +105,7 @@ export const MoorhenValidationListWidgetBase = (props: {
                             </Col>
                             {props.enableMapSelect && 
                             <Col>
-                                <MoorhenMapSelect filterFunction={props.filterMapFunction} width="" onChange={handleMapChange} maps={props.maps} ref={mapSelectRef}/>
+                                <MoorhenMapSelect filterFunction={props.filterMapFunction} width="" onChange={handleMapChange} maps={maps} ref={mapSelectRef}/>
                             </Col>
                             }
                             {props.extraControlForm}

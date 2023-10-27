@@ -13,7 +13,6 @@ export const MoorhenFitLigandRightHereMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     popoverPlacement?: 'left' | 'right';
     glRef: React.RefObject<webGL.MGWebGL>;  
-    maps: moorhen.Map[];
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     monomerLibraryPath: string;
 }) => {
@@ -21,6 +20,7 @@ export const MoorhenFitLigandRightHereMenuItem = (props: {
     const dispatch = useDispatch()
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const maps = useSelector((state: moorhen.State) => state.maps)
 
     const intoMoleculeRef = useRef<HTMLSelectElement | null>(null)
     const ligandMoleculeRef = useRef<HTMLSelectElement | null>(null)
@@ -32,7 +32,7 @@ export const MoorhenFitLigandRightHereMenuItem = (props: {
     const [conformerCount, setConformerCount] = useState<string>('10')
 
     const panelContent = <>
-        <MoorhenMapSelect {...props} label="Map" ref={mapSelectRef} />
+        <MoorhenMapSelect maps={maps} label="Map" ref={mapSelectRef} />
         <MoorhenMoleculeSelect molecules={molecules} label="Protein molecule" allowAny={false} ref={intoMoleculeRef} />
         <MoorhenMoleculeSelect molecules={molecules} label="Ligand molecule" allowAny={false} ref={ligandMoleculeRef} />
         {devMode && 

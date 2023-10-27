@@ -95,13 +95,11 @@ MoorhenPopoverOptions.defaultProps = {extraInput: () => null, nonCootCommand: fa
 
 export const MoorhenContextMenu = (props: {
   urlPrefix: string;
-  changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
   showContextMenu: false | moorhen.AtomRightClickEventInfo;
   timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
   setShowContextMenu: React.Dispatch<React.SetStateAction<false | moorhen.AtomRightClickEventInfo>>;
   viewOnly: boolean;
   glRef: React.RefObject<webGL.MGWebGL>;
-  maps: moorhen.Map[];
   commandCentre: RefObject<moorhen.CommandCentre>;
   monomerLibraryPath: string;
   defaultActionButtonSettings: moorhen.actionButtonSettings;

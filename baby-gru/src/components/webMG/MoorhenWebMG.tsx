@@ -13,8 +13,6 @@ interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    maps: moorhen.Map[];
-    changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     viewOnly: boolean;
     urlPrefix: string;
     extraDraggableModals: JSX.Element[];
@@ -44,14 +42,15 @@ const actionButtonSettingsReducer = (defaultSettings: moorhen.actionButtonSettin
 }
 
 export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface>((props, glRef) => {
+    const hBondsDirty = useRef<boolean>(false)
+    const busyDrawingHBonds = useRef<boolean>(false)
     const scores = useRef<MoorhenScoresType | null>(null)
+
     const [innerMapLineWidth, setInnerMapLineWidth] = useState<number>(0.75)
     const [connectedMolNo, setConnectedMolNo] = useState<null | moorhen.ConnectMapsInfo>(null)
     const [scoresToastContents, setScoreToastContents] = useState<null | JSX.Element>(null)
     const [showContextMenu, setShowContextMenu] = useState<false | moorhen.AtomRightClickEventInfo>(false)
     const [defaultActionButtonSettings, setDefaultActionButtonSettings] = useReducer(actionButtonSettingsReducer, intialDefaultActionButtonSettings)
-    const hBondsDirty = useRef<boolean>(false)
-    const busyDrawingHBonds = useRef<boolean>(false)
 
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering)
@@ -86,6 +85,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const height = useSelector((state: moorhen.State) => state.canvasStates.height)
     const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const maps = useSelector((state: moorhen.State) => state.maps)
 
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
@@ -275,7 +275,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         if (e.detail?.modifiedMolecule !== null && connectedMolNo && connectedMolNo.molecule === e.detail.modifiedMolecule && glRef !== null && typeof glRef !== 'function') {
             
             await Promise.all(
-                props.maps.filter(map => connectedMolNo.uniqueMaps.includes(map.molNo)).map(map => {
+                maps.filter(map => connectedMolNo.uniqueMaps.includes(map.molNo)).map(map => {
                     return map.doCootContour(
                         ...glRef.current.origin.map(coord => -coord) as [number, number, number],
                         map.mapRadius,
@@ -348,7 +348,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             }
         } 
 
-    }, [props.commandCentre, connectedMolNo, scores, defaultUpdatingScores, glRef, props.maps])
+    }, [props.commandCentre, connectedMolNo, scores, defaultUpdatingScores, glRef, maps])
 
     const handleDisconnectMaps = () => {
         scores.current = null
@@ -571,13 +571,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [molecules])
 
     useEffect(() => {
-        const mapsMolNo: number[] = props.maps.map(map => map.molNo)
+        const mapsMolNo: number[] = maps.map(map => map.molNo)
         if (connectedMolNo && mapsMolNo.length === 0){
             handleDisconnectMaps()
         } else if (connectedMolNo && !connectedMolNo.uniqueMaps.every(mapMolNo => mapsMolNo.includes(mapMolNo))){
             handleDisconnectMaps()
         }
-    }, [props.maps, props.maps.length])
+    }, [maps, maps.length])
 
     /*
     if(window.pyodide){
@@ -627,8 +627,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     urlPrefix={props.urlPrefix}
                     commandCentre={props.commandCentre}
                     timeCapsuleRef={props.timeCapsuleRef}
-                    maps={props.maps}
-                    changeMaps={props.changeMaps}
                     showContextMenu={showContextMenu}
                     setShowContextMenu={setShowContextMenu}
                     defaultActionButtonSettings={defaultActionButtonSettings}

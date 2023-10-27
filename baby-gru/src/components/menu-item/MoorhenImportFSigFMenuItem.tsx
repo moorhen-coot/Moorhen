@@ -7,7 +7,6 @@ import { moorhen } from "../../types/moorhen";
 import { useSelector } from 'react-redux';
 
 export const MoorhenImportFSigFMenuItem = (props:{
-    maps: moorhen.Map[];
     selectedMolNo?: number;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
@@ -18,6 +17,7 @@ export const MoorhenImportFSigFMenuItem = (props:{
     const foFcSelectRef = useRef<null | HTMLSelectElement>(null)
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const maps = useSelector((state: moorhen.State) => state.maps)
 
     const connectMap = async () => {
         const [molecule, reflectionMap, twoFoFcMap, foFcMap] = [
@@ -34,7 +34,7 @@ export const MoorhenImportFSigFMenuItem = (props:{
 
             //Calculate rmsd before connecting
             const prevRmsd = await Promise.all(uniqueMaps.map(imol => {
-                const currentMap = props.maps.find(map => map.molNo === imol)
+                const currentMap = maps.find(map => map.molNo === imol)
                 return currentMap.fetchMapRmsd()
             }))
 
@@ -63,7 +63,7 @@ export const MoorhenImportFSigFMenuItem = (props:{
             //Adjust contour to match previous rmsd
             await Promise.all(
                 uniqueMaps.map(async (imol, index) => {
-                    const currentMap = props.maps.find(map => map.molNo === imol)
+                    const currentMap = maps.find(map => map.molNo === imol)
                     const postRmsd = await currentMap.fetchMapRmsd()
                     let newContourLevel = currentMap.contourLevel * postRmsd / prevRmsd[index]
                     if (currentMap.isDifference) {
@@ -92,15 +92,15 @@ export const MoorhenImportFSigFMenuItem = (props:{
     const panelContent = <>
         <Row>
             <Col style={{ width: '30rem' }}>
-                <MoorhenMapSelect {...props} ref={mapSelectRef} filterFunction={(map) => map.hasReflectionData} width='100%' label='Reflection data' />
+                <MoorhenMapSelect maps={maps} ref={mapSelectRef} filterFunction={(map) => map.hasReflectionData} width='100%' label='Reflection data' />
             </Col>
         </Row>
         <Row style={{ marginBottom: "1rem" }}>
             <Col key="Col1">
-                <MoorhenMapSelect {...props} ref={twoFoFcSelectRef} label="2foFc" width='100%' />
+                <MoorhenMapSelect maps={maps} ref={twoFoFcSelectRef} label="2foFc" width='100%' />
             </Col>
             <Col key="Col2">
-                <MoorhenMapSelect {...props} ref={foFcSelectRef} label="FoFc" filterFunction={(map) => map.isDifference} width='100%' />
+                <MoorhenMapSelect maps={maps} ref={foFcSelectRef} label="FoFc" filterFunction={(map) => map.isDifference} width='100%' />
             </Col>
             {props.selectedMolNo === null &&
                 <Col key="Col3">

@@ -15,6 +15,7 @@ import { moorhen } from "../../types/moorhen"
 import { MoorhenNotification } from "../misc/MoorhenNotification"
 import { useSelector, useDispatch } from 'react-redux';
 import { setActiveMap } from "../../store/generalStatesSlice";
+import { addMap } from "../../store/mapsSlice";
 
 type ActionButtonType = {
     label: string;
@@ -147,7 +148,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
 
     const handleDuplicate = async () => {
         const newMap = await props.map.duplicate()
-        return props.changeMaps({ action: "Add", item: newMap })
+        dispatch( addMap(newMap) )
     }
 
     const actionButtons: { [key: number] : ActionButtonType } = {

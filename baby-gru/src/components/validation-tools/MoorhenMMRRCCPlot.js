@@ -32,6 +32,7 @@ export const MoorhenMMRRCCPlot = (props) => {
     const height = useSelector((state) => state.canvasStates.height)
     const backgroundColor = useSelector((state) => state.canvasStates.backgroundColor)
     const molecules = useSelector((state) => state.molecules)
+    const maps = useSelector((state) => state.maps)
     const dispatch = useDispatch()
 
     const getSequenceData = () => {
@@ -129,15 +130,15 @@ export const MoorhenMMRRCCPlot = (props) => {
     }, [molecules.length])
 
     useEffect(() => {
-        if (props.maps.length === 0) {
+        if (maps.length === 0) {
             setSelectedMap(null)
         } else if (selectedMap === null) {
-            setSelectedMap(props.maps[0].molNo)
-        } else if (!props.maps.map(map => map.molNo).includes(selectedMap)) {
-            setSelectedMap(props.maps[0].molNo)
+            setSelectedMap(maps[0].molNo)
+        } else if (!maps.map(map => map.molNo).includes(selectedMap)) {
+            setSelectedMap(maps[0].molNo)
         }
 
-    }, [props.maps.length])
+    }, [maps.length])
 
     useEffect(() => {
         if (chartRef.current) {
@@ -297,7 +298,7 @@ export const MoorhenMMRRCCPlot = (props) => {
                                 <MoorhenChainSelect width="" onChange={handleChainChange} molecules={molecules} selectedCoordMolNo={selectedModel} allowedTypes={[1, 2]} ref={chainSelectRef}/>
                             </Col>
                             <Col>
-                                <MoorhenMapSelect width="" onChange={handleMapChange} maps={props.maps} ref={mapSelectRef}/>
+                                <MoorhenMapSelect width="" onChange={handleMapChange} maps={maps} ref={mapSelectRef}/>
                             </Col>
                             <Col style={{ display:'flex', alignItems: 'center', alignContent: 'center', verticalAlign: 'center'}}>
                                 <Button variant="secondary" size='lg' onClick={fetchData} style={{width: '80%', marginTop:'10%'}}>

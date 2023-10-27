@@ -48,7 +48,6 @@ export const MoorhenUnmodelledBlobs = (props: Props) => {
     }
 
     return <MoorhenValidationListWidgetBase 
-                maps={props.maps}
                 sideBarWidth={props.sideBarWidth}
                 dropdownId={props.dropdownId}
                 accordionDropdownId={props.accordionDropdownId}

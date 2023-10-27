@@ -9,6 +9,9 @@ import { gemmi } from "../types/gemmi";
 import { webGL } from "../types/mgWebGL";
 import { AnyAction, Dispatch } from "@reduxjs/toolkit";
 import { addMolecule, emptyMolecules } from "../store/moleculesSlice";
+import { addMap, emptyMaps } from "../store/mapsSlice";
+import { batch } from "react-redux";
+import { setActiveMap } from "../store/generalStatesSlice";
 
 export const rgbToHsv = (r: number, g:number, b:number): [number, number, number] => {
     const cMax = Math.max(r, g, b)
@@ -112,8 +115,6 @@ export async function loadSessionData(
     monomerLibraryPath: string,
     molecules: moorhen.Molecule[],
     maps: moorhen.Map[],
-    changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void,
-    setActiveMap: (arg0: moorhen.Map) => void,
     commandCentre: React.RefObject<moorhen.CommandCentre>,
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
     glRef: React.RefObject<webGL.MGWebGL>,
@@ -134,12 +135,15 @@ export async function loadSessionData(
     molecules.forEach(molecule => {
         molecule.delete()
     })
-    dispatch( emptyMolecules() )
 
     maps.forEach(map => {
         map.delete()
     })
-    changeMaps({ action: "Empty" })
+    
+    batch(() => {
+        dispatch( emptyMolecules() )
+        dispatch( emptyMaps() )    
+    })
 
     // Load molecules stored in session from pdb string
     const newMoleculePromises = sessionData.moleculeData.map(storedMoleculeData => {
@@ -222,12 +226,12 @@ export async function loadSessionData(
 
     // Change props.maps
     newMaps.forEach(map => {
-        changeMaps({ action: "Add", item: map })
+        dispatch( addMap(map) )
     })
 
     // Set active map
     if (sessionData.activeMapIndex !== -1){
-        setActiveMap(newMaps[sessionData.activeMapIndex])
+        dispatch( setActiveMap(newMaps[sessionData.activeMapIndex]) )
     }
 
     // Set camera details

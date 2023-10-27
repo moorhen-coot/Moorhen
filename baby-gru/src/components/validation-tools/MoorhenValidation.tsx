@@ -312,7 +312,6 @@ export const MoorhenValidation = (props: Props) => {
                 ref={chartRef}
                 fetchData={fetchData}
                 getChart={getChart} 
-                maps={props.maps}
                 sideBarWidth={props.sideBarWidth}
                 dropdownId={props.dropdownId}
                 accordionDropdownId={props.accordionDropdownId}

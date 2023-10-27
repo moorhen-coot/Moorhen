@@ -2,18 +2,18 @@ import { Form } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector, useDispatch, batch } from 'react-redux';
 import { emptyMolecules } from "../../store/moleculesSlice";
+import { emptyMaps } from "../../store/mapsSlice";
 
 export const MoorhenDeleteEverythingMenuItem = (props: {
-    maps: moorhen.Map[];
     glRef: React.RefObject<webGL.MGWebGL>;
-    changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> 
 }) => {
 
     const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const maps = useSelector((state: moorhen.State) => state.maps)
 
     const panelContent = <>
         <Form.Group style={{ width: '18rem', margin: '0.5rem' }} controlId="MoorhenGetDeleteEverythingMenuItem" className="mb-3">
@@ -22,14 +22,16 @@ export const MoorhenDeleteEverythingMenuItem = (props: {
     </>
 
     const onCompleted = () => {
-        props.maps.forEach(map => {
+        maps.forEach(map => {
             map.delete()
         })
         molecules.forEach(molecule => {
             molecule.delete()
         })
-        props.changeMaps({ action: 'Empty' })
-        dispatch( emptyMolecules() )
+        batch(() => {
+            dispatch( emptyMolecules() )
+            dispatch( emptyMaps() )
+        })
     }
 
     return <MoorhenBaseMenuItem

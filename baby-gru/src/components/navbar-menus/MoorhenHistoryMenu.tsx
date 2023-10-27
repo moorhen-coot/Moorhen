@@ -7,13 +7,15 @@ import { SaveOutlined, WarningOutlined } from "@mui/icons-material";
 import { Stack } from "react-bootstrap";
 import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { useSelector, useDispatch } from 'react-redux';
-import { setActiveMap } from "../../store/generalStatesSlice";
 
 export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
+
     const [historyHead, setHistoryHead] = useState(0)
+
+    const dispatch = useDispatch()
     const height = useSelector((state: moorhen.State) => state.canvasStates.height)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
-    const dispatch = useDispatch()
+    const maps = useSelector((state: moorhen.State) => state.maps)
 
     const getWarningToast = (message: string) => <MoorhenNotification key={guid()} hideDelay={3000} width={20}>
             <><WarningOutlined style={{margin: 0}}/>
@@ -29,9 +31,7 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
                 sessionData as string,
                 props.monomerLibraryPath,
                 molecules, 
-                props.maps,
-                props.changeMaps,
-                (newMap: moorhen.Map) => dispatch( setActiveMap(newMap) ),
+                maps,
                 props.commandCentre,
                 props.timeCapsuleRef,
                 props.glRef,

@@ -11,13 +11,13 @@ import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { useSelector } from "react-redux";
 
 export const MoorhenRandomJiggleBlurMenuItem = (props: {
-    maps: moorhen.Map[];
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     popoverPlacement?: 'left' | 'right'
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
     
+    const maps = useSelector((state: moorhen.State) => state.maps)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
     
@@ -51,7 +51,7 @@ export const MoorhenRandomJiggleBlurMenuItem = (props: {
     }
 
     const handleMapChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
-        const selectedMap = props.maps.find(map => map.molNo === parseInt(evt.target.value))
+        const selectedMap = maps.find(map => map.molNo === parseInt(evt.target.value))
         if (selectedMap) {
             setSelectedMap(parseInt(evt.target.value))
         } 
@@ -109,7 +109,7 @@ export const MoorhenRandomJiggleBlurMenuItem = (props: {
             onChange={handleModelChange}/>
         <MoorhenMapSelect
             ref={mapSelectRef}
-            maps={props.maps}
+            maps={maps}
             onChange={handleMapChange}/>
         <MoorhenCidInputForm
             ref={cidSelectRef}

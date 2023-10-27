@@ -5,19 +5,20 @@ import { Col, Form, FormSelect, Row } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL"
-import { useDispatch } from 'react-redux';
+import { batch, useDispatch } from 'react-redux';
 import { setActiveMap } from "../../store/generalStatesSlice"
+import { addMap } from "../../store/mapsSlice"
 
 export const MoorhenImportMapCoefficientsMenuItem = (props: {
     commandCentre: RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
-    changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setPopoverIsShown: Dispatch<SetStateAction<boolean>>;
     setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
     getWarningToast: (arg0: string) => JSX.Element;
 }) => {
 
     const dispatch = useDispatch()
+    
     const filesRef = useRef<null | HTMLInputElement>(null)
     const fSelectRef = useRef<null | HTMLSelectElement>(null)
     const phiSelectRef = useRef<null | HTMLSelectElement>(null)
@@ -28,6 +29,7 @@ export const MoorhenImportMapCoefficientsMenuItem = (props: {
     const isDiffRef = useRef<null | HTMLInputElement>(null)
     const useWeightRef = useRef<null | HTMLInputElement>(null)
     const calcStructFactRef = useRef<null | HTMLInputElement>(null)
+
     const [calcStructFact, setCalcStructFact] = useState<boolean>(false)
     const [columns, setColumns] = useState<{ [colType: string]: string }>({})
 
@@ -47,8 +49,10 @@ export const MoorhenImportMapCoefficientsMenuItem = (props: {
         try {
             await newMap.loadToCootFromMtzFile(file, selectedColumns)
             if (newMap.molNo === -1) throw new Error('Cannot read the mtz file!')
-            props.changeMaps({ action: 'Add', item: newMap })
-            dispatch( setActiveMap(newMap) )
+            batch(() => {
+                dispatch( addMap(newMap) )
+                dispatch( setActiveMap(newMap) )
+            })
             setCalcStructFact(false)
         } catch (err) {
             props.setNotificationContent(props.getWarningToast('Error reading mtz file'))

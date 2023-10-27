@@ -5,23 +5,25 @@ import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector, useDispatch, batch } from 'react-redux';
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMolecule } from "../../store/moleculesSlice";
+import { addMapList } from "../../store/mapsSlice";
 
 export const MoorhenLoadTutorialDataMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     monomerLibraryPath: string;
     urlPrefix: string;
     glRef: React.RefObject<webGL.MGWebGL>;
-    changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 
     const dispatch = useDispatch()
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
+
     const tutorialNumberSelectorRef = useRef<HTMLSelectElement | null>(null);
+
     const allTutorialNumbers = ['1', '2', '3']
     const tutorialMtzColumnNames = {
         1: { Fobs: 'FP', SigFobs: 'SIGFP', FreeR: 'FREE' },
@@ -52,7 +54,6 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
         const newDiffMap = new MoorhenMap(props.commandCentre, props.glRef)
         await newMolecule.loadToCootFromURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `mol-${tutorialNumber}`)
         await newMolecule.fetchIfDirtyAndDraw('CBs')
-        dispatch( addMolecule(newMolecule) )
         await newMolecule.centreOn('/*/*/*/*', false)
         await newMap.loadToCootFromMtzURL(
             `${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`,
@@ -64,8 +65,11 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
             `diff-map-${tutorialNumber}`,
             { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false, calcStructFact: true, ...tutorialMtzColumnNames[tutorialNumber] }
         )
-        props.changeMaps({ action: 'AddList', items: [newMap, newDiffMap] })
-        dispatch( setActiveMap(newMap) )
+        batch(() => {
+            dispatch( addMolecule(newMolecule) )
+            dispatch( addMapList([newMap, newDiffMap]) )
+            dispatch( setActiveMap(newMap) )   
+        })
     }
 
     return <MoorhenBaseMenuItem

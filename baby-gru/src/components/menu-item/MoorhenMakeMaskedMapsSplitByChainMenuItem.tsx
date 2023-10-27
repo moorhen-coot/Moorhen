@@ -5,11 +5,10 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { webGL } from "../../types/mgWebGL";
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { addMap } from "../../store/mapsSlice";
 
 export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
-    maps: moorhen.Map[];
-    changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -17,11 +16,14 @@ export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
 
     const moleculeSelectRef = useRef<HTMLSelectElement>(null)
     const mapSelectRef = useRef<HTMLSelectElement>(null)
+
+    const dispatch = useDispatch()
+    const maps = useSelector((state: moorhen.State) => state.maps)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
 
     const panelContent = <>
-        <MoorhenMapSelect {...props} ref={mapSelectRef} />
-        <MoorhenMoleculeSelect {...props} molecules={molecules} ref={moleculeSelectRef} />
+        <MoorhenMapSelect maps={maps} ref={mapSelectRef} />
+        <MoorhenMoleculeSelect molecules={molecules} ref={moleculeSelectRef} />
     </>
 
     const onCompleted = async () => {
@@ -39,7 +41,7 @@ export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
         }, false) as moorhen.WorkerResponse<number[]>
 
         const selectedMolecule = molecules.find(molecule => molecule.molNo === moleculeNo)
-        const selectedMap = props.maps.find(map => map.molNo === mapNo)
+        const selectedMap = maps.find(map => map.molNo === mapNo)
         
         if (result.data.result.result.length > 0 && selectedMap && selectedMolecule) {
             await Promise.all(
@@ -51,7 +53,7 @@ export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
                     await newMap.getSuggestedSettings()
                     newMap.suggestedContourLevel = selectedMap.contourLevel
                     newMap.suggestedRadius = selectedMap.mapRadius
-                    props.changeMaps({ action: 'Add', item: newMap })
+                    dispatch( addMap(newMap) )
                 })
             )
         }

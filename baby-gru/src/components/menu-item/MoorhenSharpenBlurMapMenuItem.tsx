@@ -5,15 +5,17 @@ import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { webGL } from "../../types/mgWebGL";
+import { useDispatch, useSelector } from "react-redux";
+import { addMap } from "../../store/mapsSlice";
 
 export const MoorhenSharpenBlurMapMenuItem = (props: {
-    maps: moorhen.Map[];
-    changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
+    const dispatch = useDispatch()
+    const maps = useSelector((state: moorhen.State) => state.maps)
     const factorRef = useRef<HTMLInputElement>()
     const selectRef = useRef<HTMLSelectElement>(null)
 
@@ -22,7 +24,7 @@ export const MoorhenSharpenBlurMapMenuItem = (props: {
             <Form.Label>B-factor to apply</Form.Label>
             <Form.Control ref={factorRef} type="number" defaultValue={50.} />
         </Form.Group>
-        <MoorhenMapSelect {...props} ref={selectRef} />
+        <MoorhenMapSelect maps={maps} ref={selectRef} />
     </>
 
 
@@ -34,7 +36,7 @@ export const MoorhenSharpenBlurMapMenuItem = (props: {
         const mapNo = parseInt(selectRef.current.value)
         const bFactor = parseFloat(factorRef.current.value)
         const newMap = new MoorhenMap(props.commandCentre, props.glRef)
-        const selectedMap = props.maps.find(map => map.molNo === mapNo)
+        const selectedMap = maps.find(map => map.molNo === mapNo)
 
         if (!selectedMap) {
             return
@@ -53,7 +55,7 @@ export const MoorhenSharpenBlurMapMenuItem = (props: {
             newMap.isDifference = selectedMap.isDifference
             newMap.suggestedContourLevel = selectedMap.contourLevel
             newMap.suggestedRadius = selectedMap.mapRadius
-            props.changeMaps({ action: 'Add', item: newMap })
+            dispatch( addMap(newMap) )
         }
         return result
     }

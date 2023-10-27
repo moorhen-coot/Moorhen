@@ -28,7 +28,6 @@ export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterfa
             />
             <MoorhenRandomJiggleBlurMenuItem
                 glRef={props.glRef}
-                maps={props.maps}
                 commandCentre={props.commandCentre}
                 setPopoverIsShown={setPopoverIsShown}
             />

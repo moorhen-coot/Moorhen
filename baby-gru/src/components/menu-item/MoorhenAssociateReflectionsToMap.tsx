@@ -4,15 +4,16 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect"
 import { MoorhenMtzWrapper } from "../../utils/MoorhenMtzWrapper"
+import { useSelector } from "react-redux";
 
 export const MoorhenAssociateReflectionsToMap = (props: {
-    maps: moorhen.Map[];
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
     getWarningToast: (arg0: string) => JSX.Element;
 }) => {
+
+    const maps = useSelector((state: moorhen.State) => state.maps)
 
     const mapSelectRef = useRef<null | HTMLSelectElement>(null)
     const filesRef = useRef<null | HTMLInputElement>(null)
@@ -20,6 +21,7 @@ export const MoorhenAssociateReflectionsToMap = (props: {
     const sigFobsSelectRef = useRef<null | HTMLSelectElement>(null)
     const freeRSelectRef = useRef<null | HTMLSelectElement>(null)
     const reflectionDataRef = useRef<Uint8Array>(null)
+
     const [columns, setColumns] = useState<{ [colType: string]: string; }>({})
 
     const handleFileRead = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,7 +45,7 @@ export const MoorhenAssociateReflectionsToMap = (props: {
             Fobs: fobsSelectRef.current.value, SigFobs: sigFobsSelectRef.current.value,
             FreeR: freeRSelectRef.current.value, calcStructFact: true
         }
-        const selectedMap = props.maps.find(map => map.molNo === parseInt(mapSelectRef.current.value))
+        const selectedMap = maps.find(map => map.molNo === parseInt(mapSelectRef.current.value))
         
         if (!selectedMap) {
             return
@@ -54,7 +56,7 @@ export const MoorhenAssociateReflectionsToMap = (props: {
 
     const panelContent = <>
         <Stack direction='vertical' gap={2}>
-            <MoorhenMapSelect {...props} ref={mapSelectRef} filterFunction={(map) => !map.hasReflectionData} width='100%' label='Select a map' />
+            <MoorhenMapSelect maps={maps} ref={mapSelectRef} filterFunction={(map) => !map.hasReflectionData} width='100%' label='Select a map' />
             <Form.Group style={{ width: '100%', margin: '0.5rem', padding: '0rem' }} controlId="uploadMTZ" className="mb-3">
                 <Form.Label>Upload MTZ file with reflection data</Form.Label>
                 <Form.Control ref={filesRef} type="file" multiple={false} accept=".mtz" onChange={(e: React.ChangeEvent<HTMLInputElement>) => {handleFileRead(e)}} />

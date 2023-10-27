@@ -714,8 +714,6 @@ export namespace moorhen {
     }
     
     interface Controls extends ContainerOptionalProps {
-        maps: Map[];
-        changeMaps: (arg0: MolChange<Map>) => void;
         videoRecorderRef: React.MutableRefObject<null | ScreenRecorder>;
         glRef: React.MutableRefObject<null | webGL.MGWebGL>;
         timeCapsuleRef: React.MutableRefObject<null | TimeCapsule>;
@@ -819,8 +817,6 @@ export namespace moorhen {
         mapsRef: React.MutableRefObject<null | Map[]>;
         activeMapRef: React.MutableRefObject<Map>;
         lastHoveredAtom: React.MutableRefObject<null | HoveredAtom>;
-        maps: Map[];
-        changeMaps: (arg0: MolChange<Map>) => void;
         notificationContent: null | JSX.Element;
         setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
     }

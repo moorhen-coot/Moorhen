@@ -59,7 +59,7 @@ export const MoorhenModelsModal = (props: MoorhenModelsModalProps) => {
                     </Button>
                 ]}
                 body={
-                    molecules.length === 0 && props.maps.length === 0 ? <span>No models loaded</span> : displayData
+                    molecules.length === 0 ? <span>No models loaded</span> : displayData
                 }
                 footer={null}
             />

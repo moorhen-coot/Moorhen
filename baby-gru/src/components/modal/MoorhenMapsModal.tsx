@@ -13,13 +13,17 @@ interface MoorhenMapsModalProps extends moorhen.Controls {
 }
 
 export const MoorhenMapsModal = (props: MoorhenMapsModalProps) => {    
+    
     const cardListRef = useRef([])
+
     const [currentDropdownMolNo, setCurrentDropdownMolNo] = useState<number>(-1)
+
     const width = useSelector((state: moorhen.State) => state.canvasStates.width)
+    const maps = useSelector((state: moorhen.State) => state.maps)
 
     useEffect(() => {
-        cardListRef.current = cardListRef.current.slice(0, props.maps.length);
-    }, [props.maps]); 
+        cardListRef.current = cardListRef.current.slice(0, maps.length);
+    }, [maps]); 
  
     const handleCollapseAll = useCallback(() => {
         cardListRef.current.forEach(card => {
@@ -27,7 +31,7 @@ export const MoorhenMapsModal = (props: MoorhenMapsModalProps) => {
         })
     }, [cardListRef.current, cardListRef])
 
-    let displayData = props.maps.map((map, index) => {
+    let displayData = maps.map((map, index) => {
         return <MoorhenMapCard
             ref={el => cardListRef.current[index] = el}
             showSideBar={true}
@@ -61,7 +65,7 @@ export const MoorhenMapsModal = (props: MoorhenMapsModalProps) => {
                     </Button>
                 ]}
                 body={
-                    props.maps.length === 0 ? <span>No maps loaded</span> : displayData
+                    maps.length === 0 ? <span>No maps loaded</span> : displayData
                 }
                 footer={null}
             />

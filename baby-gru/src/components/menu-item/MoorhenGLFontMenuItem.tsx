@@ -41,7 +41,7 @@ export const MoorhenGLFontMenuItem = (props: {
             </Form.Select>
             <Form.Label>Graphics labels size</Form.Label>
             <Form.Select value={GLLabelsFontSize} onChange={(e) => {dispatch( setGLLabelsFontSize(parseInt(e.target.value)) )}}>
-            { fontSizes.map((item) => {
+            {fontSizes.map((item) => {
                 return <option key={item} value={item}>{item}</option>
             })
             }
