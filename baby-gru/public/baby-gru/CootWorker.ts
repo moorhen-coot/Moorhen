@@ -776,8 +776,14 @@ const associate_data_mtz_file_with_map = (iMol: number, mtzData: { data: ArrayBu
 const read_ccp4_map = (mapData: ArrayBufferLike, name: string, isDiffMap: boolean) => {
     const theGuid = guid()
     const asUint8Array = new Uint8Array(mapData)
-    cootModule.FS_createDataFile(".", `${theGuid}.map`, asUint8Array, true, true);
-    const tempFilename = `./${theGuid}.map`
+    let fileExtension = ''
+    if (name.endsWith('.map.gz')) {
+        fileExtension = 'map.gz'
+    } else if (name.endsWith('.mrc.gz')) {
+        fileExtension = 'mrc.gz'
+    }
+    cootModule.FS_createDataFile(".", `${theGuid}${fileExtension}`, asUint8Array, true, true);
+    const tempFilename = `./${theGuid}${fileExtension}`
     const read_map_args: [string, boolean] = [tempFilename, isDiffMap]
     const molNo = molecules_container.read_ccp4_map(...read_map_args)
     cootModule.FS_unlink(tempFilename)

@@ -23,7 +23,7 @@ export const MoorhenImportMapMenuItem = (props: {
         <Row>
             <Form.Group style={{ width: '30rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadCCP4Map" className="mb-3">
                 <Form.Label>CCP4/MRC Map...</Form.Label>
-                <Form.Control ref={filesRef} type="file" multiple={false} accept=".map, .mrc" />
+                <Form.Control ref={filesRef} type="file" multiple={false} accept=".map, .mrc, .map.gz, .mrc.gz" />
             </Form.Group>
         </Row>
         <Row style={{ marginBottom: "1rem" }}>

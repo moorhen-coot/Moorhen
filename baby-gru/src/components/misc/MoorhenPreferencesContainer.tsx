@@ -151,7 +151,7 @@ export const MoorhenPreferencesContainer = (props) => {
                 localForageInstanceRef.current = preferences
 
                 const storedVersion = await preferences.localStorageInstance.getItem('version')
-                const defaultValues = MoorhenPreferences.getDefaultContextValues()
+                const defaultValues = MoorhenPreferences.defaultContextValues
                 if (storedVersion !== defaultValues.version) {
                     restoreDefaults(preferences, defaultValues)
                     dispatch(setUserPreferencesMounted(true))

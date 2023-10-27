@@ -8,6 +8,7 @@ export namespace moorhen {
 
     interface Preferences {
         name: string;
+        static defaultContextValues: ContextValues;
         localStorageInstance: {
             clear: () => void;
             setItem: (key: string, value: any) => Promise<string>;
