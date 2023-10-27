@@ -1,7 +1,7 @@
-import { useEffect, useCallback, useReducer, useRef, useState, useMemo } from 'react';
+import { useEffect, useCallback, useRef, useMemo } from 'react';
 import { Container, Col, Row, Spinner } from 'react-bootstrap';
 import { MoorhenWebMG } from './webMG/MoorhenWebMG';
-import { getTooltipShortcutLabel, createLocalStorageInstance, allFontsSet, itemReducer } from '../utils/MoorhenUtils';
+import { getTooltipShortcutLabel, createLocalStorageInstance } from '../utils/MoorhenUtils';
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre"
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
 import { Backdrop } from "@mui/material";
@@ -34,8 +34,7 @@ import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSl
  * @property {moorhen.LocalStorageInstance} backupStorageInstance - An interface used by the moorhen container to store session backups
  * @property {moorhen.AceDRGInstance} aceDRGInstance - An interface used by the moorhen container to execute aceDRG jobs
  * @example
- * import { useState, useReducer, useRef } from "react";
- * import { MoorhenContainer, itemReducer } from "moorhen";
+ * import { MoorhenContainer } from "moorhen";
  *
  * const ExampleApp = () => {
  * 

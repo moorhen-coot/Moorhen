@@ -18,9 +18,11 @@ export const getBackupLabel = (key: moorhen.backupKey): string => {
  * @param {React.RefObject<moorhen.Map>} activeMapRef - A react reference to the currently active map
  * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the molecular graphics renderer
  * @property {string} version - Version number of the current time capsule
+ * @property {boolean} busy - Indicates if time capsule is busy loading from local storage
  * @property {boolean} disableBackups - Disable time capsule
  * @property {number} maxBackupCount - Maximum number of automatic backups to store in local storage
  * @property {number} modificationCountBackupThreshold - Number of modifications to trigger an automatic backup
+ * @property {function} onIsBusyChange - Callback function called whenever there's a change in the `this.busy` state
  */
 export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
 
@@ -65,6 +67,10 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         }
     }
 
+    /**
+     * Sets instance attr. this.busy and calls this.onIsBusyChange()
+     * @param {boolea} newValue - The new value for the busy attr.
+     */
     setBusy(newValue: boolean) {
         this.busy = newValue
         if (this.onIsBusyChange) {
