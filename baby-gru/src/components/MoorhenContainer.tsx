@@ -18,8 +18,6 @@ import { setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/can
 import { setCootInitialized, setNotificationContent, setTheme } from '../store/generalStatesSlice';
 import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSlice';
 
-const initialMapsState: moorhen.Map[] = []
-
 /**
  * A container for the Moorhen app
  * @property {string} [urlPrefix='.'] - The root url used to load sources from public folder
@@ -74,6 +72,7 @@ const initialMapsState: moorhen.Map[] = []
  * }
  */
 export const MoorhenContainer = (props: moorhen.ContainerProps) => {
+    
     const innerGlRef = useRef<null | webGL.MGWebGL>(null)
     const innerVideoRecorderRef = useRef<null | moorhen.ScreenRecorder>(null);
     const innerTimeCapsuleRef = useRef<null | moorhen.TimeCapsule>(null);
@@ -81,7 +80,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const innerMoleculesRef = useRef<null | moorhen.Molecule[]>(null)
     const innerMapsRef = useRef<null | moorhen.Map[]>(null)
     const innerActiveMapRef = useRef<null | moorhen.Map>(null)
-    const innerLastHoveredAtom = useRef<null | moorhen.HoveredAtom>(null)
+    const innerlastHoveredAtomRef = useRef<null | moorhen.HoveredAtom>(null)
     
     const dispatch = useDispatch()
     const maps = useSelector((state: moorhen.State) => state.maps)
@@ -107,21 +106,20 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const modificationCountBackupThreshold = useSelector((state: moorhen.State) => state.backupSettings.modificationCountBackupThreshold)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
    
-    const innerStatesMap: moorhen.ContainerStates = {
+    const innerStatesMap: moorhen.ContainerRefs = {
         glRef: innerGlRef, timeCapsuleRef: innerTimeCapsuleRef, commandCentre: innnerCommandCentre,
         moleculesRef: innerMoleculesRef, mapsRef: innerMapsRef, activeMapRef: innerActiveMapRef,
-        lastHoveredAtom: innerLastHoveredAtom,
-        videoRecorderRef: innerVideoRecorderRef,
+        lastHoveredAtomRef: innerlastHoveredAtomRef, videoRecorderRef: innerVideoRecorderRef,
     }
 
-    let states = {} as moorhen.ContainerStates
+    let refs = {} as moorhen.ContainerRefs
     Object.keys(innerStatesMap).forEach(key => {
-        states[key] = props[key] ? props[key] : innerStatesMap[key]
+        refs[key] = props[key] ? props[key] : innerStatesMap[key]
     })
 
     const { 
-        glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef, videoRecorderRef, lastHoveredAtom, 
-    } = states
+        glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef, videoRecorderRef, lastHoveredAtomRef, 
+    } = refs
 
     activeMapRef.current = activeMap
     moleculesRef.current = molecules
@@ -129,9 +127,15 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     const {
         disableFileUploads, urlPrefix, extraNavBarMenus, viewOnly, extraDraggableModals, 
-        monomerLibraryPath, forwardControls, extraFileMenuItems, allowScripting, backupStorageInstance,
+        monomerLibraryPath, extraFileMenuItems, allowScripting, backupStorageInstance,
         extraEditMenuItems, aceDRGInstance, extraCalculateMenuItems, setMoorhenDimensions
     } = props
+
+    const collectedProps: moorhen.Controls = {
+        glRef, commandCentre, timeCapsuleRef, disableFileUploads, extraDraggableModals, aceDRGInstance, 
+        urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems, extraEditMenuItems,
+        extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, videoRecorderRef,
+    }
     
     useEffect(() => {
         let head = document.head
@@ -193,15 +197,12 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                         </h4>
                     </MoorhenNotification>
                 ))
-                if (forwardControls) {
-                    forwardControls(collectedProps)
-                }
             }
         }
         
         onCootInitialized()
 
-    }, [cootInitialized, userPreferencesMounted, forwardControls])
+    }, [cootInitialized, userPreferencesMounted])
 
     useEffect(() => {
         if (userPreferencesMounted && defaultBackgroundColor !== backgroundColor) {
@@ -304,7 +305,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     const onAtomHovered = useCallback((identifier: { buffer: { id: string; }; atom: { label: string; }; }) => {
         if (identifier == null) {
-            if (lastHoveredAtom.current !== null && lastHoveredAtom.current.molecule !== null) {
+            if (lastHoveredAtomRef.current !== null && lastHoveredAtomRef.current.molecule !== null) {
                 dispatch( setHoveredAtom({ molecule: null, cid: null }) )
             }
         }
@@ -341,23 +342,23 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     useEffect(() => {
         if (hoveredAtom && hoveredAtom.molecule && hoveredAtom.cid) {
-            if (lastHoveredAtom.current == null ||
-                hoveredAtom.molecule !== lastHoveredAtom.current.molecule ||
-                hoveredAtom.cid !== lastHoveredAtom.current.cid
+            if (lastHoveredAtomRef.current == null ||
+                hoveredAtom.molecule !== lastHoveredAtomRef.current.molecule ||
+                hoveredAtom.cid !== lastHoveredAtomRef.current.cid
             ) {
                 hoveredAtom.molecule.drawHover(hoveredAtom.cid)
                 //if we have changed molecule, might have to clean up hover display item of previous molecule
             }
         }
 
-        if (lastHoveredAtom.current !== null &&
-            lastHoveredAtom.current.molecule !== null &&
-            lastHoveredAtom.current.molecule !== hoveredAtom.molecule
+        if (lastHoveredAtomRef.current !== null &&
+            lastHoveredAtomRef.current.molecule !== null &&
+            lastHoveredAtomRef.current.molecule !== hoveredAtom.molecule
         ) {
-            lastHoveredAtom.current.molecule.clearBuffersOfStyle("hover")
+            lastHoveredAtomRef.current.molecule.clearBuffersOfStyle("hover")
         }
 
-        lastHoveredAtom.current = hoveredAtom
+        lastHoveredAtomRef.current = hoveredAtom
     }, [hoveredAtom])
 
     useEffect(() => {
@@ -373,12 +374,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const glResize = () => {
         glRef.current.resize(width, height)
         glRef.current.drawScene()
-    }
-
-    const collectedProps: moorhen.Controls = {
-        glRef, commandCentre, timeCapsuleRef, disableFileUploads, extraDraggableModals, aceDRGInstance, 
-        urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems, extraEditMenuItems,
-        extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, videoRecorderRef,
     }
 
     return <> 
@@ -430,7 +425,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 MoorhenContainer.defaultProps = {
     urlPrefix: '.',
     monomerLibraryPath: './baby-gru/monomers',
-    forwardControls: () => {},
     setMoorhenDimensions: null,
     disableFileUploads: false,
     extraNavBarMenus: [],

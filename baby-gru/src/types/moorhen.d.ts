@@ -704,7 +704,6 @@ export namespace moorhen {
         extraDraggableModals: JSX.Element[];
         monomerLibraryPath: string;
         setMoorhenDimensions?: null | ( () => [number, number] );
-        forwardControls?: (arg0: Controls) => any;
         extraFileMenuItems: JSX.Element[];
         allowScripting: boolean;
         backupStorageInstance?: any;
@@ -806,7 +805,7 @@ export namespace moorhen {
         };
     }
     
-    interface ContainerStates {
+    interface ContainerRefs {
         glRef: React.MutableRefObject<null | webGL.MGWebGL>;
         timeCapsuleRef: React.MutableRefObject<null | TimeCapsule>;
         commandCentre: React.MutableRefObject<CommandCentre>;
@@ -814,10 +813,10 @@ export namespace moorhen {
         moleculesRef: React.MutableRefObject<null | Molecule[]>;
         mapsRef: React.MutableRefObject<null | Map[]>;
         activeMapRef: React.MutableRefObject<Map>;
-        lastHoveredAtom: React.MutableRefObject<null | HoveredAtom>;
+        lastHoveredAtomRef: React.MutableRefObject<null | HoveredAtom>;
     }
     
-    interface ContainerProps extends Partial<ContainerStates>, Partial<ContainerOptionalProps> { }
+    interface ContainerProps extends Partial<ContainerRefs>, Partial<ContainerOptionalProps> { }
 
     type actionButtonSettings = {
         mutate: 'ALA' | 'CYS' | 'ASP' | 'GLU' | 'PHE' | 'GLY' | 'HIS' | 'ILE' | 'LYS' | 'LEU' | 'MET' | 'ASN' | 'PRO' | 'GLN' | 'ARG' | 'SER' | 'THR' | 'VAL' | 'TRP' | 'TYR';
