@@ -11,21 +11,23 @@ import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { useSelector } from "react-redux";
 
 export const MoorhenRandomJiggleBlurMenuItem = (props: {
-    molecules: moorhen.Molecule[];
-    maps: moorhen.Map[];
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     popoverPlacement?: 'left' | 'right'
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
     
+    const maps = useSelector((state: moorhen.State) => state.maps)
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const mapSelectRef = useRef<null | HTMLSelectElement>(null)
     const cidSelectRef = useRef<HTMLInputElement | null>(null)
     const bFactorSliderRef = useRef<number>(200)
     const noTrialsSliderRef = useRef<number>(500)
     const scaleFactorSliderRef = useRef<number>(3)
+    
     const [selectedMap, setSelectedMap] = useState<number | null>(null)
     const [selectedMolNo, setSelectedMolNo] = useState<null | number>(null)
     const [bFactor, setBFactor] = useState<number>(200)
@@ -34,22 +36,22 @@ export const MoorhenRandomJiggleBlurMenuItem = (props: {
     const [cid, setCid] = useState<string>('')
 
     useEffect(() => {
-        if (props.molecules.length === 0) {
+        if (molecules.length === 0) {
             setSelectedMolNo(null)
-        } else if (selectedMolNo === null || !props.molecules.map(molecule => molecule.molNo).includes(selectedMolNo)) {
-            setSelectedMolNo(props.molecules[0].molNo)
+        } else if (selectedMolNo === null || !molecules.map(molecule => molecule.molNo).includes(selectedMolNo)) {
+            setSelectedMolNo(molecules[0].molNo)
         }
-    }, [props.molecules.length])
+    }, [molecules.length])
 
     const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
-        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(evt.target.value))
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(evt.target.value))
         if (selectedMolecule) {
             setSelectedMolNo(parseInt(evt.target.value))
         } 
     }
 
     const handleMapChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
-        const selectedMap = props.maps.find(map => map.molNo === parseInt(evt.target.value))
+        const selectedMap = maps.find(map => map.molNo === parseInt(evt.target.value))
         if (selectedMap) {
             setSelectedMap(parseInt(evt.target.value))
         } 
@@ -103,11 +105,11 @@ export const MoorhenRandomJiggleBlurMenuItem = (props: {
     const panelContent = <>
         <MoorhenMoleculeSelect
             ref={moleculeSelectRef}
-            molecules={props.molecules}
+            molecules={molecules}
             onChange={handleModelChange}/>
         <MoorhenMapSelect
             ref={mapSelectRef}
-            maps={props.maps}
+            maps={maps}
             onChange={handleMapChange}/>
         <MoorhenCidInputForm
             ref={cidSelectRef}
@@ -159,7 +161,7 @@ export const MoorhenRandomJiggleBlurMenuItem = (props: {
             return
         }
         
-        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
         if(!selectedMolecule) {
             return
         }

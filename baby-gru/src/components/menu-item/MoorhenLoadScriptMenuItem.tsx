@@ -8,13 +8,11 @@ import { webGL } from "../../types/mgWebGL";
 
 export const MoorhenLoadScriptMenuItem = (props: {
      setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-     molecules: moorhen.Molecule[];
-     maps: moorhen.Map[];
      glRef: React.RefObject<webGL.MGWebGL>;
      commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {
     
-    const filesRef = useRef<null | HTMLInputElement>(null);
+    const filesRef = useRef<null | HTMLInputElement>(null)
     const [showCodeEditor, setShowCodeEditor] = useState<boolean>(false)
     const [code, setCode] = useState<string>('No code loaded')
 

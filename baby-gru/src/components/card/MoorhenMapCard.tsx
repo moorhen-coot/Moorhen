@@ -14,7 +14,8 @@ import { RgbColorPicker } from "react-colorful"
 import { moorhen } from "../../types/moorhen"
 import { MoorhenNotification } from "../misc/MoorhenNotification"
 import { useSelector, useDispatch } from 'react-redux';
-import { setActiveMap } from "../../store/generalStatesSlice";
+import { setActiveMap, setNotificationContent } from "../../store/generalStatesSlice";
+import { addMap } from "../../store/mapsSlice";
 
 type ActionButtonType = {
     label: string;
@@ -147,7 +148,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
 
     const handleDuplicate = async () => {
         const newMap = await props.map.duplicate()
-        return props.changeMaps({ action: "Add", item: newMap })
+        dispatch( addMap(newMap) )
     }
 
     const actionButtons: { [key: number] : ActionButtonType } = {
@@ -224,7 +225,6 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                 key='delete-map'
                 setPopoverIsShown={setPopoverIsShown}
                 glRef={props.glRef}
-                changeItemList={props.changeMaps}
                 item={props.map}/>
         ))
 
@@ -283,9 +283,8 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             } else {
                 newMapContourLevel = mapContourLevel - contourWheelSensitivityFactor
             }
-            
             setMapContourLevel(newMapContourLevel)
-            props.setNotificationContent(
+            dispatch(setNotificationContent(
                 <MoorhenNotification key={guid()} hideDelay={5000}>
                 <h5 style={{margin: 0}}>
                     <span>
@@ -293,7 +292,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                     </span>
                 </h5>
                 </MoorhenNotification>
-            )
+            ))
         }
     }, [mapContourLevel, mapRadius, activeMap?.molNo, props.map.molNo, props.map.cootContour])
 

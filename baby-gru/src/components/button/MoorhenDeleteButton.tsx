@@ -5,12 +5,14 @@ import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 import { MoorhenEditButtonBase } from "./MoorhenEditButtonBase";
 import { Container, FormGroup, FormLabel, FormSelect, Row } from "react-bootstrap";
 import { libcootApi } from "../../types/libcoot";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from 'react-redux';
+import { removeMolecule } from "../../store/moleculesSlice";
 
 export const MoorhenDeleteButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
     const [panelParameters, setPanelParameters] = useState<string>('RESIDUE')
     const [toolTipLabel, setToolTipLabel] = useState<string>("Delete Item")
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
+    const dispatch = useDispatch()
 
     const deleteModes = ['ATOM', 'RESIDUE', 'RESIDUE HYDROGENS', 'RESIDUE SIDE-CHAIN', 'CHAIN', 'CHAIN HYDROGENS', 'MOLECULE HYDROGENS']
 
@@ -56,7 +58,7 @@ export const MoorhenDeleteButton = (props: moorhen.EditButtonProps | moorhen.Con
         if (cootResult.data.result.result.second < 1) {
             console.log('Empty molecule detected, deleting it now...')
             molecule.delete()
-            props.changeMolecules({ action: 'Remove', item: molecule })
+            dispatch( removeMolecule(molecule) )
         }
     }
 

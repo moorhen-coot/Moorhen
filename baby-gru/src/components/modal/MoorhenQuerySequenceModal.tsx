@@ -11,17 +11,16 @@ import { MoorhenDraggableModalBase } from "../modal/MoorhenDraggableModalBase"
 import { MoorhenSlider } from "../misc/MoorhenSlider";
 import { webGL } from "../../types/mgWebGL";
 import { MoorhenNotification } from "../misc/MoorhenNotification";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from 'react-redux';
+import { addMolecule } from "../../store/moleculesSlice";
+import { setNotificationContent } from "../../store/generalStatesSlice";
 
 export const MoorhenQuerySequenceModal = (props: {
     show: boolean;
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
-    molecules: moorhen.Molecule[];
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     monomerLibraryPath: string;
-    changeMolecules: (arg0: moorhen.MolChange<MoorhenMolecule>) => void;
-    setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
 }) => {
 
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
@@ -33,12 +32,16 @@ export const MoorhenQuerySequenceModal = (props: {
     const [seqIdCutoff, setSeqIdCutoff] = useState<number>(90)
     const [eValCutoff, setEValCutoff] = useState<number>(0.1)
     const [busy, setBusy] = useState<boolean>(false);
+
     const timerRef = useRef<any>(null);
     const cachedSeqIdCutoff = useRef<number | null>(null);
     const cachedEValCutoff = useRef<number | null>(null);
     const moleculeSelectRef = useRef<HTMLSelectElement>();
     const chainSelectRef = useRef<HTMLSelectElement>();
     const sourceSelectRef =  useRef<HTMLSelectElement>();
+
+    const dispatch = useDispatch()
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
 
@@ -50,11 +53,11 @@ export const MoorhenQuerySequenceModal = (props: {
             await newMolecule.loadToCootFromURL(url, molName)
             if (newMolecule.molNo === -1) throw new Error("Cannot read the fetched molecule...")
             await newMolecule.fetchIfDirtyAndDraw(newMolecule.atomCount >= 50000 ? 'CRs' : 'CBs')
-            props.changeMolecules({ action: "Add", item: newMolecule })
+            dispatch( addMolecule(newMolecule) )
             newMolecule.centreOn('/*/*/*/*', false)
             return newMolecule
         } catch (err) {
-            props.setNotificationContent(
+            dispatch(setNotificationContent(
                 <MoorhenNotification key={guid()} hideDelay={5000}>
                     <><WarningOutlined style={{margin: 0}}/>
                         <h4 className="moorhen-warning-toast">
@@ -62,7 +65,7 @@ export const MoorhenQuerySequenceModal = (props: {
                         </h4>
                     <WarningOutlined style={{margin: 0}}/></>
                 </MoorhenNotification>
-            )
+            ))
             console.log(`Cannot fetch molecule from ${url}`)
         }
     }
@@ -222,14 +225,14 @@ export const MoorhenQuerySequenceModal = (props: {
     }
 
     useEffect(() => {
-        if (props.molecules.length === 0) {
+        if (molecules.length === 0) {
             setSelectedModel(null)
         } else if (selectedModel === null) {
-            setSelectedModel(props.molecules[0].molNo)
-        } else if (!props.molecules.map(molecule => molecule.molNo).includes(selectedModel)) {
-            setSelectedModel(props.molecules[0].molNo)
+            setSelectedModel(molecules[0].molNo)
+        } else if (!molecules.map(molecule => molecule.molNo).includes(selectedModel)) {
+            setSelectedModel(molecules[0].molNo)
         }
-    }, [props.molecules.length])
+    }, [molecules.length])
 
     const queryOnlineServices = useCallback(async (seqId: number, eVal: number) => {
         if (seqId !== seqIdCutoff || eVal !== eValCutoff) {
@@ -241,7 +244,7 @@ export const MoorhenQuerySequenceModal = (props: {
         }
         
         setBusy(true)
-        const molecule = props.molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
+        const molecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
         const sequence = molecule.sequences.find(sequence => sequence.chain === chainSelectRef.current.value)
         let results: { result_set: { [id: number]: { identifier: string; score: number; } }, total_count: number }
         
@@ -262,7 +265,7 @@ export const MoorhenQuerySequenceModal = (props: {
         
         setBusy(false)
 
-    }, [seqIdCutoff, eValCutoff, props.molecules, currentResultsPage, selectedSource])
+    }, [seqIdCutoff, eValCutoff, molecules, currentResultsPage, selectedSource])
 
     useEffect(() => {
         cachedSeqIdCutoff.current = seqIdCutoff
@@ -291,10 +294,10 @@ export const MoorhenQuerySequenceModal = (props: {
             <>
             <Row style={{ padding: '0', margin: '0' }}>
                 <Col>
-                    <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
+                    <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef}/>
                 </Col>
                 <Col>
-                    <MoorhenChainSelect width="" molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={selectedModel} ref={chainSelectRef} allowedTypes={[1, 2]}/>
+                    <MoorhenChainSelect width="" molecules={molecules} onChange={handleChainChange} selectedCoordMolNo={selectedModel} ref={chainSelectRef} allowedTypes={[1, 2]}/>
                 </Col>
                 <Col>
                     <Form.Group style={{ margin: '0.5rem' }}>

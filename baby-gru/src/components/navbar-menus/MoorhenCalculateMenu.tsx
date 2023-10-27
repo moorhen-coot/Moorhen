@@ -18,20 +18,16 @@ export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterfa
             <MoorhenSuperposeMenuItem key="superpose_structures" setSuperposeResults={setSuperposeResults} {...menuItemProps} />
             <MoorhenSelfRestraintsMenuItem
                 glRef={props.glRef}
-                molecules={props.molecules}
                 commandCentre={props.commandCentre}
                 setPopoverIsShown={setPopoverIsShown}
             />
             <MoorhenClearSelfRestraintsMenuItem
                 glRef={props.glRef}
-                molecules={props.molecules}
                 commandCentre={props.commandCentre}
                 setPopoverIsShown={setPopoverIsShown}
             />
             <MoorhenRandomJiggleBlurMenuItem
                 glRef={props.glRef}
-                molecules={props.molecules}
-                maps={props.maps}
                 commandCentre={props.commandCentre}
                 setPopoverIsShown={setPopoverIsShown}
             />

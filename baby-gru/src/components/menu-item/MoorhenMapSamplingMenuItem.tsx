@@ -26,13 +26,14 @@ const samplingRateMarks = [1, 13, 25, 40, 60, 80, 100]
 export const MoorhenMapSamplingMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>; 
     popoverPlacement?: "left" | "right";
-    maps: moorhen.Map[];
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
     const dispatch = useDispatch()
+    const maps = useSelector((state: moorhen.State) => state.maps)
     const defaultMapSamplingRate = useSelector((state: moorhen.State) => state.mapSettings.defaultMapSamplingRate)
+
     const [mapSampling, setMapSampling] = useState<number>(convertPercentageToSamplingRate(defaultMapSamplingRate, true))
 
     useEffect(() => {
@@ -50,9 +51,9 @@ export const MoorhenMapSamplingMenuItem = (props: {
                     setDefaultMapSamplingRate(newSamplingRate)
                 )
            
-                if (props.maps.length > 0) {
+                if (maps.length > 0) {
                     await Promise.all(
-                        props.maps.filter(map => !map.isEM && map.hasReflectionData).map(async(map: moorhen.Map) => {
+                        maps.filter(map => !map.isEM && map.hasReflectionData).map(async(map: moorhen.Map) => {
                             const reflectionData = await map.fetchReflectionData()
                             await props.commandCentre.current.cootCommand({
                                 returnType: "status",

@@ -13,10 +13,6 @@ interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    molecules: moorhen.Molecule[];
-    changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
-    maps: moorhen.Map[];
-    changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     viewOnly: boolean;
     urlPrefix: string;
     extraDraggableModals: JSX.Element[];
@@ -46,14 +42,15 @@ const actionButtonSettingsReducer = (defaultSettings: moorhen.actionButtonSettin
 }
 
 export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface>((props, glRef) => {
+    const hBondsDirty = useRef<boolean>(false)
+    const busyDrawingHBonds = useRef<boolean>(false)
     const scores = useRef<MoorhenScoresType | null>(null)
+
     const [innerMapLineWidth, setInnerMapLineWidth] = useState<number>(0.75)
     const [connectedMolNo, setConnectedMolNo] = useState<null | moorhen.ConnectMapsInfo>(null)
     const [scoresToastContents, setScoreToastContents] = useState<null | JSX.Element>(null)
     const [showContextMenu, setShowContextMenu] = useState<false | moorhen.AtomRightClickEventInfo>(false)
     const [defaultActionButtonSettings, setDefaultActionButtonSettings] = useReducer(actionButtonSettingsReducer, intialDefaultActionButtonSettings)
-    const hBondsDirty = useRef<boolean>(false)
-    const busyDrawingHBonds = useRef<boolean>(false)
 
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering)
@@ -87,6 +84,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const width = useSelector((state: moorhen.State) => state.canvasStates.width)
     const height = useSelector((state: moorhen.State) => state.canvasStates.height)
     const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const maps = useSelector((state: moorhen.State) => state.maps)
 
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
@@ -137,7 +136,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             busyDrawingHBonds.current = true
             hBondsDirty.current = false
 
-            const visibleMolecules: moorhen.Molecule[] = props.molecules.filter(molecule => molecule.isVisible && molecule.hasVisibleBuffers())
+            const visibleMolecules: moorhen.Molecule[] = molecules.filter(molecule => molecule.isVisible && molecule.hasVisibleBuffers())
             if (visibleMolecules.length === 0) {
                 busyDrawingHBonds.current = false
                 return
@@ -151,7 +150,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             const moleculeMolNo: number = response.data.result.result.first
             const residueCid: string = response.data.result.result.second
     
-            const mol: moorhen.Molecule = props.molecules.find(molecule => molecule.molNo === moleculeMolNo)
+            const mol: moorhen.Molecule = molecules.find(molecule => molecule.molNo === moleculeMolNo)
             if(typeof mol !== 'undefined') {
                 await mol.drawEnvironment(residueCid, true)
             }
@@ -160,15 +159,15 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             drawHBonds()
         }
 
-    }, [props.commandCentre, props.molecules, glRef])
+    }, [props.commandCentre, molecules, glRef])
 
     const clearHBonds = useCallback(async () => {
         if(!drawInteractions) {
-            props.molecules.forEach(mol => {
+            molecules.forEach(mol => {
                 mol.clearBuffersOfStyle('environment')
             })
         }
-    }, [drawInteractions, props.molecules])
+    }, [drawInteractions, molecules])
 
     const handleOriginUpdate = useCallback(async (e) => {
         hBondsDirty.current = true
@@ -192,7 +191,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         } else {
             clearHBonds()
         }
-    }, [drawInteractions, props.molecules, backgroundColor])
+    }, [drawInteractions, molecules, backgroundColor])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
@@ -276,7 +275,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         if (e.detail?.modifiedMolecule !== null && connectedMolNo && connectedMolNo.molecule === e.detail.modifiedMolecule && glRef !== null && typeof glRef !== 'function') {
             
             await Promise.all(
-                props.maps.filter(map => connectedMolNo.uniqueMaps.includes(map.molNo)).map(map => {
+                maps.filter(map => connectedMolNo.uniqueMaps.includes(map.molNo)).map(map => {
                     return map.doCootContour(
                         ...glRef.current.origin.map(coord => -coord) as [number, number, number],
                         map.mapRadius,
@@ -349,11 +348,11 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             }
         } 
 
-    }, [props.commandCentre, connectedMolNo, scores, defaultUpdatingScores, glRef, props.maps])
+    }, [props.commandCentre, connectedMolNo, scores, defaultUpdatingScores, glRef, maps])
 
     const handleDisconnectMaps = () => {
         scores.current = null
-        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === connectedMolNo.molecule)
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === connectedMolNo.molecule)
         if (selectedMolecule) {
             selectedMolecule.connectedToMaps = null
         }
@@ -396,15 +395,15 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }
 
         if (connectedMolNo && evt.detail.molecule !== connectedMolNo.molecule) {
-            const previousConnectedMolecule = props.molecules.find(molecule => molecule.molNo === connectedMolNo.molecule)
+            const previousConnectedMolecule = molecules.find(molecule => molecule.molNo === connectedMolNo.molecule)
             previousConnectedMolecule.connectedToMaps = null    
         }
 
         setConnectedMolNo(evt.detail)
-        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === evt.detail.molecule)
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === evt.detail.molecule)
         selectedMolecule.connectedToMaps = evt.detail.maps
         
-    }, [props.commandCentre, defaultUpdatingScores, props.molecules, connectedMolNo])
+    }, [props.commandCentre, defaultUpdatingScores, molecules, connectedMolNo])
 
     useEffect(() => {
         if (scores.current !== null && defaultUpdatingScores !== null && showScoresToast && connectedMolNo) {
@@ -564,21 +563,21 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [mapLineWidth])
 
     useEffect(() => {
-        if (connectedMolNo && props.molecules.length === 0){
+        if (connectedMolNo && molecules.length === 0){
             handleDisconnectMaps()
-        } else if (connectedMolNo && !props.molecules.map(molecule => molecule.molNo).includes(connectedMolNo.molecule)){
+        } else if (connectedMolNo && !molecules.map(molecule => molecule.molNo).includes(connectedMolNo.molecule)){
             handleDisconnectMaps()
         }
-    }, [props.molecules])
+    }, [molecules])
 
     useEffect(() => {
-        const mapsMolNo: number[] = props.maps.map(map => map.molNo)
+        const mapsMolNo: number[] = maps.map(map => map.molNo)
         if (connectedMolNo && mapsMolNo.length === 0){
             handleDisconnectMaps()
         } else if (connectedMolNo && !connectedMolNo.uniqueMaps.every(mapMolNo => mapsMolNo.includes(mapMolNo))){
             handleDisconnectMaps()
         }
-    }, [props.maps, props.maps.length])
+    }, [maps, maps.length])
 
     /*
     if(window.pyodide){
@@ -628,10 +627,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     urlPrefix={props.urlPrefix}
                     commandCentre={props.commandCentre}
                     timeCapsuleRef={props.timeCapsuleRef}
-                    molecules={props.molecules}
-                    changeMolecules={props.changeMolecules}
-                    maps={props.maps}
-                    changeMaps={props.changeMaps}
                     showContextMenu={showContextMenu}
                     setShowContextMenu={setShowContextMenu}
                     defaultActionButtonSettings={defaultActionButtonSettings}

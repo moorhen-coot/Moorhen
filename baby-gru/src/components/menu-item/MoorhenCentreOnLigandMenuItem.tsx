@@ -4,24 +4,26 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { ChevronRightOutlined, ExpandMoreOutlined } from "@mui/icons-material";
 import TreeView from '@mui/lab/TreeView';
 import TreeItem from '@mui/lab/TreeItem';
+import { useSelector } from 'react-redux';
 
 export const MoorhenCentreOnLigandMenuItem = (props: { 
-    molecules: moorhen.Molecule[];
     glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
  }) => {
+
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
 
     return <MoorhenBaseMenuItem
             key='centre-on-ligand-menu-item'
             id='centre-on-ligand-menu-item'
             popoverContent={
-                props.molecules.some(molecule => molecule.ligands.length > 0) ?
+                molecules.some(molecule => molecule.ligands.length > 0) ?
                 <TreeView
                 aria-label="file system navigator"
                 defaultCollapseIcon={<ExpandMoreOutlined />}
                 defaultExpandIcon={<ChevronRightOutlined />}
                 >
-                    {props.molecules.filter(molecule => molecule.ligands.length > 0).map(molecule => {
+                    {molecules.filter(molecule => molecule.ligands.length > 0).map(molecule => {
                         return <TreeItem key={molecule.molNo} nodeId={molecule.molNo.toString()} label={molecule.name}>
                             {molecule.ligands.map(ligand => {
                                 return <TreeItem

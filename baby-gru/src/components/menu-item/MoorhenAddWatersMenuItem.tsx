@@ -6,7 +6,6 @@ import { webGL } from "../../types/mgWebGL";
 import { useSelector } from 'react-redux';
 
 export const MoorhenAddWatersMenuItem = (props: {
-    molecules: moorhen.Molecule[];
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -15,6 +14,7 @@ export const MoorhenAddWatersMenuItem = (props: {
     const moleculeRef = useRef<null | HTMLSelectElement>(null)
     const [disabled, setDisabled] = useState<boolean>(true)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
 
     useEffect(() => {
         if (!activeMap) {
@@ -25,7 +25,7 @@ export const MoorhenAddWatersMenuItem = (props: {
     }, [activeMap])
 
     const panelContent = <>
-        <MoorhenMoleculeSelect {...props} ref={moleculeRef} allowAny={false} />
+        <MoorhenMoleculeSelect molecules={molecules} ref={moleculeRef} allowAny={false} />
     </>
 
     const onCompleted = useCallback(async () => {
@@ -39,13 +39,13 @@ export const MoorhenAddWatersMenuItem = (props: {
             returnType: "status",
             changesMolecules: [molNo]
         }, true)
-        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === molNo)
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === molNo)
         selectedMolecule.setAtomsDirty(true)
         await selectedMolecule.redraw()
         const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: molNo } })
         document.dispatchEvent(scoresUpdateEvent)
 
-    }, [props.molecules, activeMap, props.glRef, props.commandCentre])
+    }, [molecules, activeMap, props.glRef, props.commandCentre])
 
     return <MoorhenBaseMenuItem
         id='add-waters-menu-item'

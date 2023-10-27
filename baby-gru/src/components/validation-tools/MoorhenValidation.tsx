@@ -38,6 +38,7 @@ const metricInfoScaling = {
 export const MoorhenValidation = (props: Props) => {
     const chartRef = useRef(null);
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
     const height = useSelector((state: moorhen.State) => state.canvasStates.height)
     const dispatch = useDispatch()
 
@@ -74,7 +75,7 @@ export const MoorhenValidation = (props: Props) => {
     }
 
     const getSequenceData = (selectedMolNo: number, selectedChain: string) => {
-        let selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedMolNo)
+        let selectedMolecule = molecules.find(molecule => molecule.molNo === selectedMolNo)
         if (selectedMolecule) {
             let sequenceData = selectedMolecule.sequences.find(sequence => sequence.chain === selectedChain)
             if (sequenceData) {
@@ -139,9 +140,9 @@ export const MoorhenValidation = (props: Props) => {
             }
             
             const residueIndex = points[0].index
-            const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
+            const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel)
             if(selectedMolecule) {
-                const clickedResidue = getResidueInfo(props.molecules, selectedMolecule.molNo, selectedChain, residueIndex)
+                const clickedResidue = getResidueInfo(molecules, selectedMolecule.molNo, selectedChain, residueIndex)
                 if (clickedResidue) {
                     selectedMolecule.centreOn(`/*/${clickedResidue.chain}/${clickedResidue.seqNum}-${clickedResidue.seqNum}/*`)
                 }
@@ -154,9 +155,9 @@ export const MoorhenValidation = (props: Props) => {
             }
             
             const residueIndex = args[0].dataIndex
-            const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
+            const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel)
             if(selectedMolecule) {
-                const clickedResidue = getResidueInfo(props.molecules, selectedMolecule.molNo, selectedChain, residueIndex)
+                const clickedResidue = getResidueInfo(molecules, selectedMolecule.molNo, selectedChain, residueIndex)
                 if (clickedResidue) {
                     dispatch(
                         setHoveredAtom({
@@ -311,8 +312,6 @@ export const MoorhenValidation = (props: Props) => {
                 ref={chartRef}
                 fetchData={fetchData}
                 getChart={getChart} 
-                molecules={props.molecules}
-                maps={props.maps}
                 sideBarWidth={props.sideBarWidth}
                 dropdownId={props.dropdownId}
                 accordionDropdownId={props.accordionDropdownId}

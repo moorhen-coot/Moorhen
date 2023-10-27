@@ -10,6 +10,7 @@ import { IconButton } from "@mui/material";
 import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { useSelector, useDispatch, batch } from 'react-redux';
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { removeMolecule } from "../../store/moleculesSlice";
 
 export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
     const theButton = useRef<null | HTMLButtonElement>(null)
@@ -55,14 +56,14 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
         document.dispatchEvent(scoresUpdateEvent)
         dispatch( setEnableAtomHovering(true) )
 
-    }, [props.changeMolecules, props.commandCentre, props.glRef])
+    }, [props.commandCentre, props.glRef])
 
-    const rejectTransform = useCallback(async () => {
-        props.changeMolecules({ action: 'Remove', item: fragmentMolecule.current })
+    const rejectTransform = async () => {
+        dispatch( removeMolecule(fragmentMolecule.current) )
         fragmentMolecule.current.delete()
         chosenMolecule.current.unhideAll()
         dispatch( setEnableAtomHovering(true) )
-    }, [props.changeMolecules])
+    }
 
     const doRotamerChange = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, p: string = '') => {
         chosenMolecule.current = molecule

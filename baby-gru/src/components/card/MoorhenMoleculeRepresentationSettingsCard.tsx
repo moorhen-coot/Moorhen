@@ -11,7 +11,6 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
     show: boolean; anchorEl: React.RefObject<HTMLDivElement>;
     molecule: moorhen.Molecule;
-    molecules: moorhen.Molecule[];
     urlPrefix: string;
     glRef: React.RefObject<webGL.MGWebGL>;
     symmetrySettingsProps: {

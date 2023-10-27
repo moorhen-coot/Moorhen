@@ -17,8 +17,10 @@ import { getBackupLabel } from "../../utils/MoorhenTimeCapsule"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { moorhen } from "../../types/moorhen";
-import { useSelector, useDispatch } from 'react-redux';
-import { setActiveMap } from "../../store/generalStatesSlice";
+import { useSelector, useDispatch, batch } from 'react-redux';
+import { setActiveMap, setNotificationContent } from "../../store/generalStatesSlice";
+import { addMolecule, addMoleculeList } from "../../store/moleculesSlice";
+import { addMap } from "../../store/mapsSlice";
 
 export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
@@ -29,13 +31,14 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const [isValidPdbId, setIsValidPdbId] = useState<boolean>(true)
     
     const dispatch = useDispatch()
+    const maps = useSelector((state: moorhen.State) => state.maps)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const enableTimeCapsule = useSelector((state: moorhen.State) => state.backupSettings.enableTimeCapsule)
     const height = useSelector((state: moorhen.State) => state.canvasStates.height)
     const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
-    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
 
-    const { changeMolecules, changeMaps, commandCentre, glRef, monomerLibraryPath } = props;
+    const { commandCentre, glRef, monomerLibraryPath } = props;
 
     const getWarningToast = (message: string) => <MoorhenNotification key={guid()} hideDelay={3000} width={20}>
             <><WarningOutlined style={{margin: 0}}/>
@@ -55,7 +58,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         
         let newMolecules: moorhen.Molecule[] = await Promise.all(readPromises)
         if (!newMolecules.every(molecule => molecule.molNo !== -1)) {
-            props.setNotificationContent(getWarningToast(`Failed to read molecule`))
+            dispatch(setNotificationContent(getWarningToast(`Failed to read molecule`)))
             newMolecules = newMolecules.filter(molecule => molecule.molNo !== -1)
             if (newMolecules.length === 0) {
                 return
@@ -70,7 +73,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         }
         await Promise.all(drawPromises)
 
-        changeMolecules({ action: "AddList", items: newMolecules })
+        dispatch( addMoleculeList(newMolecules) )
         newMolecules.at(-1).centreOn('/*/*/*/*', false)
     }
 
@@ -165,11 +168,11 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             await newMolecule.loadToCootFromURL(url, molName)
             if (newMolecule.molNo === -1) throw new Error("Cannot read the fetched molecule...")
             await newMolecule.fetchIfDirtyAndDraw(newMolecule.atomCount >= 50000 ? 'CRs' : 'CBs')
-            changeMolecules({ action: "Add", item: newMolecule })
+            dispatch( addMolecule(newMolecule) )
             newMolecule.centreOn('/*/*/*/*', false)
             return newMolecule
         } catch (err) {
-            props.setNotificationContent(getWarningToast(`Failed to read molecule`))
+            dispatch(setNotificationContent(getWarningToast(`Failed to read molecule`)))
             console.log(`Cannot fetch molecule from ${url}`)
             setIsValidPdbId(false)
         }   
@@ -180,10 +183,12 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         try {
             await newMap.loadToCootFromMapURL(url, mapName, isDiffMap)
             if (newMap.molNo === -1) throw new Error("Cannot read the fetched map...")
-            changeMaps({ action: 'Add', item: newMap })
-            dispatch( setActiveMap(newMap) )
+            batch(() => {
+                dispatch( addMap(newMap) )
+                dispatch( setActiveMap(newMap) )
+            })
        } catch {
-            props.setNotificationContent(getWarningToast(`Failed to read map`))
+            dispatch(setNotificationContent(getWarningToast(`Failed to read map`)))
             console.log(`Cannot fetch map from ${url}`)
         }
     }
@@ -193,10 +198,12 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         try {
             await newMap.loadToCootFromMtzURL(url, mapName, selectedColumns)
             if (newMap.molNo === -1) throw new Error("Cannot read the fetched mtz...")
-            changeMaps({ action: 'Add', item: newMap })
-            dispatch( setActiveMap(newMap) )
+            batch(() => {
+                dispatch( addMap(newMap) )
+                dispatch( setActiveMap(newMap) )
+            })
         } catch {
-            props.setNotificationContent(getWarningToast(`Failed to read mtz`))
+            dispatch(setNotificationContent(getWarningToast(`Failed to read mtz`)))
             console.log(`Cannot fetch mtz from ${url}`)
         }
     }
@@ -208,7 +215,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             await loadSession(sessionData) 
         } catch (err) {
             console.log(err)
-            props.setNotificationContent(getWarningToast("Error loading session"))
+            dispatch(setNotificationContent(getWarningToast("Error loading session")))
         }
     }
 
@@ -218,21 +225,19 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             const status = await loadSessionData(
                 sessionData as string,
                 props.monomerLibraryPath,
-                props.molecules, 
-                props.changeMolecules,
-                props.maps,
-                props.changeMaps,
-                (newMap: moorhen.Map) => dispatch( setActiveMap(newMap) ),
+                molecules, 
+                maps,
                 props.commandCentre,
                 props.timeCapsuleRef,
-                props.glRef
+                props.glRef,
+                dispatch
             )
             if (status === -1) {
-                props.setNotificationContent(getWarningToast(`Failed to read backup (deprecated format)`))
+                dispatch(setNotificationContent(getWarningToast(`Failed to read backup (deprecated format)`)))
             }
         } catch (err) {
             console.log(err)
-            props.setNotificationContent(getWarningToast("Error loading session"))
+            dispatch(setNotificationContent(getWarningToast("Error loading session")))
         }
     }
 
@@ -270,24 +275,26 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         } else {
             document.body.click()
             props.videoRecorderRef.current.startRecording()
-            props.setNotificationContent(
-                <MoorhenNotification key={guid()} width={13}>
-                    <Stack gap={2} direction='horizontal' style={{width: '100%', display:'flex', justifyContent: 'space-between'}}>
-                        <div style={{alignItems: 'center', display: 'flex', justifyContent: 'center'}}>
-                            <RadioButtonCheckedOutlined style={{color: 'red', borderRadius: '30px', borderWidth: 0, borderStyle: 'hidden'}} className="moorhen-recording-icon"/>
-                            <span>Recording</span>
-                        </div>
-                        <IconButton onClick={() => {
-                            props.videoRecorderRef.current.stopRecording()
-                            props.setNotificationContent(null)
-                        }}>
-                            <StopCircleOutlined/>
-                        </IconButton>
-                    </Stack>
-                </MoorhenNotification>   
+            dispatch(
+                setNotificationContent(
+                    <MoorhenNotification key={guid()} width={13}>
+                        <Stack gap={2} direction='horizontal' style={{width: '100%', display:'flex', justifyContent: 'space-between'}}>
+                            <div style={{alignItems: 'center', display: 'flex', justifyContent: 'center'}}>
+                                <RadioButtonCheckedOutlined style={{color: 'red', borderRadius: '30px', borderWidth: 0, borderStyle: 'hidden'}} className="moorhen-recording-icon"/>
+                                <span>Recording</span>
+                            </div>
+                            <IconButton onClick={() => {
+                                props.videoRecorderRef.current.stopRecording()
+                                dispatch( setNotificationContent(null) )
+                            }}>
+                                <StopCircleOutlined/>
+                            </IconButton>
+                        </Stack>
+                    </MoorhenNotification>   
+                )
             )
         }
-    }, [props.videoRecorderRef, props.setNotificationContent])
+    }, [props.videoRecorderRef])
 
     return <>
                 <div style={{maxHeight: convertViewtoPx(65, height), overflowY: 'auto'}}>

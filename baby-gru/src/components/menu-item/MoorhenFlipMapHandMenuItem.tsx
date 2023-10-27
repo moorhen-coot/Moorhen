@@ -4,15 +4,17 @@ import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { webGL } from "../../types/mgWebGL";
+import { useDispatch, useSelector } from "react-redux";
+import { addMap } from "../../store/mapsSlice";
 
 export const MoorhenFlipMapHandMenuItem = (props: {
-    maps: moorhen.Map[];
-    changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
+    const dispatch = useDispatch()
+    const maps = useSelector((state: moorhen.State) => state.maps)
     const selectRef = useRef<HTMLSelectElement>(null)
 
     const onCompleted = async () => {
@@ -22,7 +24,7 @@ export const MoorhenFlipMapHandMenuItem = (props: {
 
         const mapNo = parseInt(selectRef.current.value)
         const newMap = new MoorhenMap(props.commandCentre, props.glRef)
-        const selectedMap = props.maps.find(map => map.molNo === mapNo)
+        const selectedMap = maps.find(map => map.molNo === mapNo)
 
         if (!selectedMap) {
             return
@@ -41,13 +43,13 @@ export const MoorhenFlipMapHandMenuItem = (props: {
             newMap.isDifference = selectedMap.isDifference
             newMap.suggestedContourLevel = selectedMap.suggestedContourLevel
             newMap.contourLevel = selectedMap.contourLevel
-            props.changeMaps({ action: 'Add', item: newMap })
+            dispatch( addMap(newMap) )
         }
     }
 
     return <MoorhenBaseMenuItem
         id='flip-hand-map-menu-item'
-        popoverContent={<MoorhenMapSelect {...props} ref={selectRef} />}
+        popoverContent={<MoorhenMapSelect maps={maps} ref={selectRef} />}
         menuItemText="Flip map..."
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}

@@ -59,7 +59,6 @@ export const MoorhenModifyColourRulesCard = (props: {
     urlPrefix: string;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
-    molecules: moorhen.Molecule[];
     molecule: moorhen.Molecule;
     showColourRulesToast: boolean;
     setShowColourRulesToast: React.Dispatch<React.SetStateAction<boolean>>;
@@ -70,6 +69,7 @@ export const MoorhenModifyColourRulesCard = (props: {
     const ruleSelectRef = useRef<HTMLSelectElement>()
     const residueRangeSelectRef = useRef<any>()
     const cidFormRef = useRef<HTMLInputElement>()
+    
     const [ruleType, setRuleType] = useState<string>('molecule')
     const [colourProperty, setColourProperty] = useState<string>('b-factor')
     const [selectedColour, setSelectedColour] = useState<string>('#808080')
@@ -77,8 +77,10 @@ export const MoorhenModifyColourRulesCard = (props: {
     const [cid, setCid] = useState<string>(null)
     const [sequenceRangeSelect, setSequenceRangeSelect] = useState(null)
     const [ruleList, setRuleList] = useReducer(itemReducer, initialRuleState, () => { return props.molecule.defaultColourRules })
+    
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
     const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
 
     const handleChainChange = (evt) => {
         setSelectedChain(evt.target.value)
@@ -301,7 +303,7 @@ export const MoorhenModifyColourRulesCard = (props: {
                             <option value={'property'} key={'property'}>By property</option>
                         </FormSelect>
                     </Form.Group>
-                    {(ruleType === 'chain' || ruleType === 'residue-range')  && <MoorhenChainSelect width="100%" margin={'0px'} molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={props.molecule.molNo} ref={chainSelectRef}/>}
+                    {(ruleType === 'chain' || ruleType === 'residue-range')  && <MoorhenChainSelect width="100%" margin={'0px'} molecules={molecules} onChange={handleChainChange} selectedCoordMolNo={props.molecule.molNo} ref={chainSelectRef}/>}
                     {ruleType === 'cid' && <MoorhenCidInputForm margin={'0px'} width="100%" onChange={handleResidueCidChange} ref={cidFormRef}/> }
                     {ruleType === 'property' && 
                     <Form.Group style={{ margin: '0px', width: '100%' }}>

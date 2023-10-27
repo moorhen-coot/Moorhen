@@ -12,9 +12,10 @@ import { AddOutlined, DeleteOutlined, FormatColorFillOutlined, SettingsOutlined,
 import { MoorhenAddCustomRepresentationCard } from "./MoorhenAddCustomRepresentationCard"
 import { MoorhenMoleculeRepresentationSettingsCard } from "./MoorhenMoleculeRepresentationSettingsCard"
 import { MoorhenModifyColourRulesCard } from './MoorhenModifyColourRulesCard';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
+import { addMolecule } from '../../store/moleculesSlice';
 
 const allRepresentations = [ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks', 'restraints' ]
 
@@ -63,15 +64,18 @@ export type clickedResidueType = {
 }
 
 export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInterface>((props, cardRef) => {
+    const dispatch = useDispatch()
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
     const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
     const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.miscAppSettings.defaultExpandDisplayCards)
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops)
     const userPreferencesMounted = useSelector((state: moorhen.State) => state.generalStates.userPreferencesMounted)
+    
     const addColourRulesAnchorDivRef = useRef<HTMLDivElement | null>(null)
     const busyRedrawing = useRef<boolean>(false)
     const isDirty = useRef<boolean>(false)
     const innerDrawMissingLoopsRef = useRef<boolean>(null)
+    
     const [busyLoadingSequences, setBusyLoadingSequences] = useState<boolean>(false)
     const [busyLoadingLigands, setBusyLoadingLigands] = useState<boolean>(false)
     const [showColourRulesModal, setShowColourRulesModal] = useState<boolean>(false)
@@ -379,7 +383,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
         async function createNewFragmentMolecule() {
             const cid =  `//${clickedResidue.chain}/${selectedResidues[0]}-${selectedResidues[1]}/*`
             const newMolecule = await props.molecule.copyFragmentUsingCid(cid, true)
-            props.changeMolecules({ action: "Add", item: newMolecule })
+            dispatch( addMolecule(newMolecule) )
         }
 
         // TODO: Test that residue start and residue end are valid (i.e. not missing from the structure)
@@ -443,8 +447,6 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                 <Col style={{ display: 'flex', justifyContent: 'right' }}>
                     <MoorhenMoleculeCardButtonBar
                         molecule={props.molecule}
-                        molecules={props.molecules}
-                        changeMolecules={props.changeMolecules}
                         glRef={props.glRef}
                         sideBarWidth={props.sideBarWidth}
                         isVisible={isVisible}
@@ -486,7 +488,6 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                                                     glRef={props.glRef}
                                                     addColourRulesAnchorDivRef={addColourRulesAnchorDivRef}
                                                     molecule={props.molecule}
-                                                    molecules={props.molecules}
                                                     representation={representation}
                                                     isVisible={isVisible}
                                                     changeCustomRepresentationList={changeCustomRepresentationList}/>
@@ -510,9 +511,9 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                         </Button>
                         </Stack>
                     </Col>
-                    <MoorhenMoleculeRepresentationSettingsCard symmetrySettingsProps={symmetrySettingsProps} gaussianSettingsProps={gaussianSettingsProps} bondSettingsProps={bondSettingsProps} glRef={props.glRef} urlPrefix={props.urlPrefix} molecules={props.molecules} molecule={props.molecule} anchorEl={addColourRulesAnchorDivRef} show={showCreateRepresentationSettingsModal} setShow={setShowCreateRepresentationSettingsModal}/>
-                    <MoorhenModifyColourRulesCard molecules={props.molecules} anchorEl={addColourRulesAnchorDivRef} urlPrefix={props.urlPrefix} glRef={props.glRef} commandCentre={props.commandCentre} molecule={props.molecule} showColourRulesToast={showColourRulesModal} setShowColourRulesToast={setShowColourRulesModal}/>
-                    <MoorhenAddCustomRepresentationCard glRef={props.glRef} urlPrefix={props.urlPrefix} molecules={props.molecules} molecule={props.molecule} anchorEl={addColourRulesAnchorDivRef} show={showCreateCustomRepresentation} setShow={setShowCreateCustomRepresentation}/>
+                    <MoorhenMoleculeRepresentationSettingsCard symmetrySettingsProps={symmetrySettingsProps} gaussianSettingsProps={gaussianSettingsProps} bondSettingsProps={bondSettingsProps} glRef={props.glRef} urlPrefix={props.urlPrefix} molecule={props.molecule} anchorEl={addColourRulesAnchorDivRef} show={showCreateRepresentationSettingsModal} setShow={setShowCreateRepresentationSettingsModal}/>
+                    <MoorhenModifyColourRulesCard anchorEl={addColourRulesAnchorDivRef} urlPrefix={props.urlPrefix} glRef={props.glRef} commandCentre={props.commandCentre} molecule={props.molecule} showColourRulesToast={showColourRulesModal} setShowColourRulesToast={setShowColourRulesModal}/>
+                    <MoorhenAddCustomRepresentationCard glRef={props.glRef} urlPrefix={props.urlPrefix} molecule={props.molecule} anchorEl={addColourRulesAnchorDivRef} show={showCreateCustomRepresentation} setShow={setShowCreateCustomRepresentation}/>
                 </Row>
             <div>
                 <Accordion className="moorhen-accordion"  disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }}>
@@ -633,7 +634,6 @@ const CustomRepresentationChip = (props: {
     addColourRulesAnchorDivRef: React.RefObject<HTMLDivElement>;
     glRef: React.RefObject<webGL.MGWebGL>;
     isVisible: boolean;
-    molecules: moorhen.Molecule[];
     molecule: moorhen.Molecule;
     representation: moorhen.MoleculeRepresentation; 
     changeCustomRepresentationList: (arg0: {action: "Add" | "Remove"; item: moorhen.MoleculeRepresentation}) => void;
@@ -675,7 +675,6 @@ const CustomRepresentationChip = (props: {
                     representationId={props.representation.uniqueId}
                     glRef={props.glRef}
                     urlPrefix={props.urlPrefix}
-                    molecules={props.molecules}
                     molecule={props.molecule}
                     anchorEl={props.addColourRulesAnchorDivRef}
                     initialRepresentationStyleValue={props.representation.style}

@@ -9,18 +9,22 @@ import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { webGL } from "../../types/mgWebGL";
+import { useDispatch, useSelector } from 'react-redux';
+import { addMap } from "../../store/mapsSlice";
 
 export const MoorhenMapMaskingMenuItem = (props: {
-    molecules: moorhen.Molecule[];
-    maps: moorhen.Map[];
-    changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
+    const dispatch = useDispatch()
+    const maps = useSelector((state: moorhen.State) => state.maps)
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
+
     const [invertFlag, setInvertFlag] = useState<boolean>(false)
     const [maskType, setMaskType] = useState<string>('molecule')
+
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const maskTypeSelectRef = useRef<null | HTMLSelectElement>(null)
     const invertFlagRef = useRef<null | HTMLInputElement>(null)
@@ -29,7 +33,7 @@ export const MoorhenMapMaskingMenuItem = (props: {
     const ligandSelectRef = useRef<null | HTMLSelectElement>(null)
     const cidInputRef = useRef<null | HTMLInputElement>(null)
 
-    const { commandCentre, maps, changeMaps, glRef } = props
+    const { commandCentre, glRef } = props
 
     const panelContent = <>
         <Form.Group style={{ margin: '0.5rem', width: '20rem' }}>
@@ -44,11 +48,11 @@ export const MoorhenMapMaskingMenuItem = (props: {
                 <option value={'cid'} key={'cid'}>By atom selection</option>
             </FormSelect>
         </Form.Group>
-        <MoorhenMapSelect {...props} ref={mapSelectRef} />
-        <MoorhenMoleculeSelect {...props} allowAny={false} ref={moleculeSelectRef} />
+        <MoorhenMapSelect maps={maps} ref={mapSelectRef} />
+        <MoorhenMoleculeSelect {...props} molecules={molecules} allowAny={false} ref={moleculeSelectRef} />
         {maskTypeSelectRef.current?.value === 'cid' && <MoorhenCidInputForm {...props} width='20rem' margin='0.5rem' ref={cidInputRef} />}
-        {maskTypeSelectRef.current?.value === 'chain' && <MoorhenChainSelect {...props} molecules={props.molecules} selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)} ref={chainSelectRef} />}
-        {maskTypeSelectRef.current?.value === 'ligand' && <MoorhenLigandSelect {...props} molecules={props.molecules} selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)} ref={ligandSelectRef} />}
+        {maskTypeSelectRef.current?.value === 'chain' && <MoorhenChainSelect {...props} molecules={molecules} selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)} ref={chainSelectRef} />}
+        {maskTypeSelectRef.current?.value === 'ligand' && <MoorhenLigandSelect {...props} molecules={molecules} selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)} ref={ligandSelectRef} />}
         <Form.Group className='moorhen-form-group'>
             <Form.Check
                 ref={invertFlagRef}
@@ -66,7 +70,7 @@ export const MoorhenMapMaskingMenuItem = (props: {
         
         const mapNo = parseInt(mapSelectRef.current.value)
         const molNo = parseInt(moleculeSelectRef.current.value)
-        const selectedMap = props.maps.find(map => map.molNo === mapNo)
+        const selectedMap = maps.find(map => map.molNo === mapNo)
 
         if (!selectedMap) {
             return
@@ -106,10 +110,10 @@ export const MoorhenMapMaskingMenuItem = (props: {
             newMap.isDifference = selectedMap.isDifference
             newMap.suggestedContourLevel = selectedMap.contourLevel
             newMap.suggestedRadius = selectedMap.mapRadius
-            changeMaps({ action: 'Add', item: newMap })
+            dispatch( addMap(newMap) )
         }
-            
-    }, [commandCentre, maps, changeMaps, glRef])
+
+    }, [commandCentre, maps, glRef])
 
     return <MoorhenBaseMenuItem
         id='mask-map-menu-item'

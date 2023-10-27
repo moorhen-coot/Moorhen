@@ -4,16 +4,14 @@ import { MoorhenMap } from "../../utils/MoorhenMap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { setActiveMap } from "../../store/generalStatesSlice";
-import { useDispatch } from 'react-redux';
+import { setActiveMap, setNotificationContent } from "../../store/generalStatesSlice";
+import { batch, useDispatch } from 'react-redux';
+import { addMap } from "../../store/mapsSlice";
 
 export const MoorhenImportMapMenuItem = (props: { 
-    maps: moorhen.Map[];
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
-    changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
     getWarningToast: (arg0: string) => JSX.Element;
 }) => {
 
@@ -42,14 +40,16 @@ export const MoorhenImportMapMenuItem = (props: {
             try {
                 await newMap.loadToCootFromMapFile(file, isDiffRef.current.checked)
                 if (newMap.molNo === -1) throw new Error('Cannot read the mtz file!')
-                props.changeMaps({ action: 'Add', item: newMap })
-                dispatch( setActiveMap(newMap) )
+                batch(() => {
+                    dispatch( addMap(newMap) )
+                    dispatch( setActiveMap(newMap) )
+                })
             } catch (err) {
-                props.setNotificationContent(props.getWarningToast('Error reading map file'))
+                dispatch(setNotificationContent(props.getWarningToast('Error reading map file')))
                 console.log(`Cannot read file`)    
             }
         }
-    }, [props.maps, filesRef.current, isDiffRef.current, props.glRef, props.changeMaps, props.commandCentre])
+    }, [filesRef.current, isDiffRef.current, props.glRef, props.commandCentre])
 
     return <MoorhenBaseMenuItem
         id='import-map-menu-item'

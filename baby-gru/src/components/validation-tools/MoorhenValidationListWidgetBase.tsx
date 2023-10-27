@@ -7,8 +7,6 @@ import { gemmi } from "../../types/gemmi";
 import { useSelector } from "react-redux";
 
 export const MoorhenValidationListWidgetBase = (props: {
-    molecules: moorhen.Molecule[];
-    maps: moorhen.Map[];
     filterMapFunction?: (arg0: moorhen.Map) => boolean;
     fetchData: (arg0: number, arg1: number) => Promise<any>;
     dropdownId: number;
@@ -23,12 +21,16 @@ export const MoorhenValidationListWidgetBase = (props: {
 
     const mapSelectRef = useRef<undefined | HTMLSelectElement>();
     const moleculeSelectRef = useRef<undefined | HTMLSelectElement>();
+
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
     const [selectedMap, setSelectedMap] = useState<null | number>(null)
     const [cachedGemmiStructure, setCachedGemmiStructure] = useState<null | gemmi.Structure>(null)
     const [cardData, setCardData] = useState<any[]>([])
     const [cardList, setCardList] = useState<JSX.Element[]>([])
+
     const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const maps = useSelector((state: moorhen.State) => state.maps)
 
     const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedModel(parseInt(evt.target.value))
@@ -39,20 +41,20 @@ export const MoorhenValidationListWidgetBase = (props: {
     }
     
     useEffect(() => {
-        if (props.molecules.length === 0) {
+        if (molecules.length === 0) {
             setSelectedModel(null)
         } else if (selectedModel === null) {
-            setSelectedModel(props.molecules[0].molNo)
-        } else if (!props.molecules.map(molecule => molecule.molNo).includes(selectedModel)) {
-            setSelectedModel(props.molecules[0].molNo)
+            setSelectedModel(molecules[0].molNo)
+        } else if (!molecules.map(molecule => molecule.molNo).includes(selectedModel)) {
+            setSelectedModel(molecules[0].molNo)
         }
 
-    }, [props.molecules.length])
+    }, [molecules.length])
 
     useEffect(() => {
-        const filteredMaps = props.maps.filter(map => props.filterMapFunction(map))
+        const filteredMaps = maps.filter(map => props.filterMapFunction(map))
 
-        if (props.maps.length === 0 || filteredMaps.length === 0) {
+        if (maps.length === 0 || filteredMaps.length === 0) {
             setSelectedMap(null)
         } else if (selectedMap === null) {
             setSelectedMap(filteredMaps[0].molNo)
@@ -60,13 +62,13 @@ export const MoorhenValidationListWidgetBase = (props: {
             setSelectedMap(filteredMaps[0].molNo)
         }
 
-    }, [props.maps.length])
+    }, [maps.length])
    
     useEffect(() => {
         if (selectedModel !== null) {
-            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo === selectedModel);
-            if (selectedMoleculeIndex !== -1 && props.molecules[selectedMoleculeIndex]){
-                setCachedGemmiStructure(props.molecules[selectedMoleculeIndex].gemmiStructure)
+            let selectedMoleculeIndex = molecules.findIndex(molecule => molecule.molNo === selectedModel);
+            if (selectedMoleculeIndex !== -1 && molecules[selectedMoleculeIndex]){
+                setCachedGemmiStructure(molecules[selectedMoleculeIndex].gemmiStructure)
             }
         }
     })
@@ -99,11 +101,11 @@ export const MoorhenValidationListWidgetBase = (props: {
                     <Form.Group>
                         <Row style={{ padding:'0', margin: '0' }}>
                             <Col>
-                                <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
+                                <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef}/>
                             </Col>
                             {props.enableMapSelect && 
                             <Col>
-                                <MoorhenMapSelect filterFunction={props.filterMapFunction} width="" onChange={handleMapChange} maps={props.maps} ref={mapSelectRef}/>
+                                <MoorhenMapSelect filterFunction={props.filterMapFunction} width="" onChange={handleMapChange} maps={maps} ref={mapSelectRef}/>
                             </Col>
                             }
                             {props.extraControlForm}

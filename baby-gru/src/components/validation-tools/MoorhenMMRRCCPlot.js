@@ -22,17 +22,21 @@ export const MoorhenMMRRCCPlot = (props) => {
     const mapSelectRef = useRef();
     const moleculeSelectRef = useRef();
     const chartRef = useRef(null);
+
     const [plotData, setPlotData] = useState(null)
     const [selectedModel, setSelectedModel] = useState(null)
     const [selectedMap, setSelectedMap] = useState(null)
     const [selectedChain, setSelectedChain] = useState(null)
+
     const isDark = useSelector((state) => state.canvasStates.isDark)
     const height = useSelector((state) => state.canvasStates.height)
     const backgroundColor = useSelector((state) => state.canvasStates.backgroundColor)
+    const molecules = useSelector((state) => state.molecules)
+    const maps = useSelector((state) => state.maps)
     const dispatch = useDispatch()
 
     const getSequenceData = () => {
-        let selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
+        let selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel)
         if (selectedMolecule) {
             let sequenceData = selectedMolecule.sequences.find(sequence => sequence.chain === chainSelectRef.current.value)
             if (sequenceData) {
@@ -66,9 +70,9 @@ export const MoorhenMMRRCCPlot = (props) => {
         }
         
         const residueIndex = points[0].index
-        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel)
         if(selectedMolecule) {
-            const clickedResidue = getResidueInfo(props.molecules, selectedMolecule.molNo, chainSelectRef.current.value, residueIndex)
+            const clickedResidue = getResidueInfo(molecules, selectedMolecule.molNo, chainSelectRef.current.value, residueIndex)
             if (clickedResidue) {
                 selectedMolecule.centreOn(`/*/${clickedResidue.chain}/${clickedResidue.seqNum}-${clickedResidue.seqNum}/*`)
             }
@@ -81,9 +85,9 @@ export const MoorhenMMRRCCPlot = (props) => {
         }
         
         const residueIndex = args[0].dataIndex
-        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel)
         if(selectedMolecule) {
-            const clickedResidue = getResidueInfo(props.molecules, selectedMolecule.molNo, chainSelectRef.current.value, residueIndex)
+            const clickedResidue = getResidueInfo(molecules, selectedMolecule.molNo, chainSelectRef.current.value, residueIndex)
             if (clickedResidue) {
                 dispatch(
                     setHoveredAtom({
@@ -115,26 +119,26 @@ export const MoorhenMMRRCCPlot = (props) => {
     }
 
     useEffect(() => {
-        if (props.molecules.length === 0) {
+        if (molecules.length === 0) {
             setSelectedModel(null)
         } else if (selectedModel === null) {
-            setSelectedModel(props.molecules[0].molNo)
-        } else if (!props.molecules.map(molecule => molecule.molNo).includes(selectedModel)) {
-            setSelectedModel(props.molecules[0].molNo)
+            setSelectedModel(molecules[0].molNo)
+        } else if (!molecules.map(molecule => molecule.molNo).includes(selectedModel)) {
+            setSelectedModel(molecules[0].molNo)
         }
 
-    }, [props.molecules.length])
+    }, [molecules.length])
 
     useEffect(() => {
-        if (props.maps.length === 0) {
+        if (maps.length === 0) {
             setSelectedMap(null)
         } else if (selectedMap === null) {
-            setSelectedMap(props.maps[0].molNo)
-        } else if (!props.maps.map(map => map.molNo).includes(selectedMap)) {
-            setSelectedMap(props.maps[0].molNo)
+            setSelectedMap(maps[0].molNo)
+        } else if (!maps.map(map => map.molNo).includes(selectedMap)) {
+            setSelectedMap(maps[0].molNo)
         }
 
-    }, [props.maps.length])
+    }, [maps.length])
 
     useEffect(() => {
         if (chartRef.current) {
@@ -288,13 +292,13 @@ export const MoorhenMMRRCCPlot = (props) => {
                     <Form.Group>
                         <Row style={{ padding:'0', margin: '0' }}>
                             <Col>
-                                <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
+                                <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef}/>
                             </Col>
                             <Col>
-                                <MoorhenChainSelect width="" onChange={handleChainChange} molecules={props.molecules} selectedCoordMolNo={selectedModel} allowedTypes={[1, 2]} ref={chainSelectRef}/>
+                                <MoorhenChainSelect width="" onChange={handleChainChange} molecules={molecules} selectedCoordMolNo={selectedModel} allowedTypes={[1, 2]} ref={chainSelectRef}/>
                             </Col>
                             <Col>
-                                <MoorhenMapSelect width="" onChange={handleMapChange} maps={props.maps} ref={mapSelectRef}/>
+                                <MoorhenMapSelect width="" onChange={handleMapChange} maps={maps} ref={mapSelectRef}/>
                             </Col>
                             <Col style={{ display:'flex', alignItems: 'center', alignContent: 'center', verticalAlign: 'center'}}>
                                 <Button variant="secondary" size='lg' onClick={fetchData} style={{width: '80%', marginTop:'10%'}}>

@@ -456,6 +456,8 @@ export namespace moorhen {
     }
     
     interface TimeCapsule {
+        setBusy: (arg0: boolean) => void;
+        onIsBusyChange: (arg0: boolean) => void;
         getSortedKeys(): Promise<backupKey[]>;
         cleanupUnusedDataFiles(): Promise<void>;
         removeBackup(key: string): Promise<void>;
@@ -652,7 +654,6 @@ export namespace moorhen {
         commandCentre: React.RefObject<CommandCentre>
         selectedMolecule: Molecule;
         chosenAtom: ResidueSpec;
-        molecules: Molecule[];
         glRef: React.RefObject<webGL.MGWebGL>;
         setOverlayContents: React.Dispatch<React.SetStateAction<JSX.Element>>;
         setShowOverlay: React.Dispatch<React.SetStateAction<boolean>>;
@@ -662,7 +663,6 @@ export namespace moorhen {
         setOpacity: React.Dispatch<React.SetStateAction<number>>;
         setOverrideMenuContents: React.Dispatch<React.SetStateAction<JSX.Element | boolean>>;
         showContextMenu: false | AtomRightClickEventInfo;
-        changeMolecules: (arg0: MolChange<Molecule>) => void
         defaultActionButtonSettings: actionButtonSettings;
         setDefaultActionButtonSettings: (arg0: {key: string; value: string}) => void;     
     }
@@ -714,18 +714,12 @@ export namespace moorhen {
     }
     
     interface Controls extends ContainerOptionalProps {
-        molecules: Molecule[];
-        changeMolecules: (arg0: MolChange<Molecule>) => void;
-        maps: Map[];
-        changeMaps: (arg0: MolChange<Map>) => void;
         videoRecorderRef: React.MutableRefObject<null | ScreenRecorder>;
         glRef: React.MutableRefObject<null | webGL.MGWebGL>;
         timeCapsuleRef: React.MutableRefObject<null | TimeCapsule>;
         commandCentre: React.MutableRefObject<CommandCentre>;
         moleculesRef: React.MutableRefObject<null | Molecule[]>;
         mapsRef: React.MutableRefObject<null | Map[]>;
-        notificationContent: null | JSX.Element;
-        setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
     }
 
     interface State {
@@ -821,12 +815,6 @@ export namespace moorhen {
         mapsRef: React.MutableRefObject<null | Map[]>;
         activeMapRef: React.MutableRefObject<Map>;
         lastHoveredAtom: React.MutableRefObject<null | HoveredAtom>;
-        molecules: Molecule[];
-        changeMolecules: (arg0: MolChange<Molecule>) => void;
-        maps: Map[];
-        changeMaps: (arg0: MolChange<Map>) => void;
-        notificationContent: null | JSX.Element;
-        setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
     }
     
     interface ContainerProps extends Partial<ContainerStates>, Partial<ContainerOptionalProps> { }

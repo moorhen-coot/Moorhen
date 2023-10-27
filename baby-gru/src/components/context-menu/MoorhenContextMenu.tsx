@@ -95,16 +95,12 @@ MoorhenPopoverOptions.defaultProps = {extraInput: () => null, nonCootCommand: fa
 
 export const MoorhenContextMenu = (props: {
   urlPrefix: string;
-  changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
   showContextMenu: false | moorhen.AtomRightClickEventInfo;
-  molecules: moorhen.Molecule[];
   timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
   setShowContextMenu: React.Dispatch<React.SetStateAction<false | moorhen.AtomRightClickEventInfo>>;
   viewOnly: boolean;
   glRef: React.RefObject<webGL.MGWebGL>;
-  maps: moorhen.Map[];
   commandCentre: RefObject<moorhen.CommandCentre>;
-  changeMolecules: { (arg0: moorhen.MolChange<moorhen.Molecule>): void; (arg0: moorhen.MolChange<moorhen.Molecule>): void; }; 
   monomerLibraryPath: string;
   defaultActionButtonSettings: moorhen.actionButtonSettings;
   setDefaultActionButtonSettings: (arg0: {key: string; value: string}) => void;
@@ -118,6 +114,7 @@ export const MoorhenContextMenu = (props: {
   const [opacity, setOpacity] = useState<number>(1.0)
   const [toolTip, setToolTip] = useState<string>('')
   
+  const molecules = useSelector((state: moorhen.State) => state.molecules)
   const width = useSelector((state: moorhen.State) => state.canvasStates.width)
   const height = useSelector((state: moorhen.State) => state.canvasStates.height)
 
@@ -140,7 +137,7 @@ export const MoorhenContextMenu = (props: {
   let selectedMolecule: moorhen.Molecule
   let chosenAtom: moorhen.ResidueSpec
   if (props.showContextMenu && props.showContextMenu.buffer){
-    selectedMolecule = props.molecules.find(molecule => molecule.buffersInclude(props.showContextMenu ? props.showContextMenu.buffer : null))
+    selectedMolecule = molecules.find(molecule => molecule.buffersInclude(props.showContextMenu ? props.showContextMenu.buffer : null))
   }
   if (props.showContextMenu && props.showContextMenu.atom) {
     chosenAtom = cidToSpec(props.showContextMenu.atom.label)
