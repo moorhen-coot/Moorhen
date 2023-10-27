@@ -1,7 +1,7 @@
-import { useEffect, useCallback, useReducer, useRef, useState, useMemo } from 'react';
+import { useEffect, useCallback, useRef, useMemo } from 'react';
 import { Container, Col, Row, Spinner } from 'react-bootstrap';
 import { MoorhenWebMG } from './webMG/MoorhenWebMG';
-import { getTooltipShortcutLabel, createLocalStorageInstance, allFontsSet, itemReducer } from '../utils/MoorhenUtils';
+import { getTooltipShortcutLabel, createLocalStorageInstance } from '../utils/MoorhenUtils';
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre"
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
 import { Backdrop } from "@mui/material";
@@ -18,13 +18,10 @@ import { setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/can
 import { setCootInitialized, setNotificationContent, setTheme } from '../store/generalStatesSlice';
 import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSlice';
 
-const initialMapsState: moorhen.Map[] = []
-
 /**
- * A container for the Moorhen app
+ * A container for the Moorhen app. Needs to be rendered within a MoorhenReduxprovider.
  * @property {string} [urlPrefix='.'] - The root url used to load sources from public folder
  * @property {string} [monomerLibraryPath='./baby-gru/monomers'] - A string with the path to the monomer library, relative to the root of the app
- * @property {function} forwardControls - Callback executed when coot is initialised and will return an object of type moorhen.Controls
  * @property {function} setMoorhenDimensions - Callback executed on window resize. Return type is an array of two numbers [width, height]
  * @property {boolean} [disableFileUploads=false] - Indicates if file uploads should b disabled
  * @property {JSX.Element[]} extraNavBarMenus - A list with additional menu items rendered under the navigation menu
@@ -37,43 +34,30 @@ const initialMapsState: moorhen.Map[] = []
  * @property {moorhen.LocalStorageInstance} backupStorageInstance - An interface used by the moorhen container to store session backups
  * @property {moorhen.AceDRGInstance} aceDRGInstance - An interface used by the moorhen container to execute aceDRG jobs
  * @example
- * import { useState, useReducer, useRef } from "react";
- * import { MoorhenContainer, itemReducer } from "moorhen";
+ * import { MoorhenContainer } from "moorhen";
  *
- * const initialMoleculesState = []
- * const initialMapsState = []
- * 
  * const ExampleApp = () => {
  * 
- *  const [activeMap, setActiveMap] = useState(null);
- *  const [molecules, changeMolecules] = useReducer(itemReducer, initialMoleculesState);
- *  const [maps, changeMaps] = useReducer(itemReducer, initialMapsState);
- * 
  *  const doClick = (evt) => { console.log('Click!') }
+ * 
  *  const exportMenuItem =  <MenuItem key={'example-key'} id='example-menu-item' onClick={doClick}>
  *                              Example extra menu
  *                          </MenuItem>
- * 
- *  const moleculesRef = useRef(null);
- *  const mapsRef = useRef(null);
- *  const activeMapRef = useRef(null);
- * 
- *  moleculesRef.current = molecules;
- *  mapsRef.current = maps;
- *  activeMapRef.current = activeMap;
- * 
- *  const forwardCollectedControls = (controls) => { console.log(controls) }
- * 
- *  return <MoorhenContainer
- *    moleculesRef={moleculesRef}
- *    mapsRef={mapsRef}
- *    allowScripting={false}
- *    extraFileMenuItems={[exportMenuItem]}
- *    forwardControls={forwardCollectedControls}
- *  />
+ *  
+ * const setDimensions = () => {
+ *   return [window.innerWidth, window.innerHeight]
  * }
+ *  
+ * return <MoorhenReduxProvider> 
+ *              <MoorhenContainer
+ *                  allowScripting={false}
+ *                  setMoorhenDimensions={setDimensions}
+ *                  extraFileMenuItems={[exportMenuItem]}/>
+ *          </MoorhenReduxProvider>
+ * 
  */
 export const MoorhenContainer = (props: moorhen.ContainerProps) => {
+    
     const innerGlRef = useRef<null | webGL.MGWebGL>(null)
     const innerVideoRecorderRef = useRef<null | moorhen.ScreenRecorder>(null);
     const innerTimeCapsuleRef = useRef<null | moorhen.TimeCapsule>(null);
@@ -81,7 +65,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const innerMoleculesRef = useRef<null | moorhen.Molecule[]>(null)
     const innerMapsRef = useRef<null | moorhen.Map[]>(null)
     const innerActiveMapRef = useRef<null | moorhen.Map>(null)
-    const innerLastHoveredAtom = useRef<null | moorhen.HoveredAtom>(null)
+    const innerlastHoveredAtomRef = useRef<null | moorhen.HoveredAtom>(null)
     
     const dispatch = useDispatch()
     const maps = useSelector((state: moorhen.State) => state.maps)
@@ -107,21 +91,20 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const modificationCountBackupThreshold = useSelector((state: moorhen.State) => state.backupSettings.modificationCountBackupThreshold)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
    
-    const innerStatesMap: moorhen.ContainerStates = {
+    const innerStatesMap: moorhen.ContainerRefs = {
         glRef: innerGlRef, timeCapsuleRef: innerTimeCapsuleRef, commandCentre: innnerCommandCentre,
         moleculesRef: innerMoleculesRef, mapsRef: innerMapsRef, activeMapRef: innerActiveMapRef,
-        lastHoveredAtom: innerLastHoveredAtom,
-        videoRecorderRef: innerVideoRecorderRef,
+        lastHoveredAtomRef: innerlastHoveredAtomRef, videoRecorderRef: innerVideoRecorderRef,
     }
 
-    let states = {} as moorhen.ContainerStates
+    let refs = {} as moorhen.ContainerRefs
     Object.keys(innerStatesMap).forEach(key => {
-        states[key] = props[key] ? props[key] : innerStatesMap[key]
+        refs[key] = props[key] ? props[key] : innerStatesMap[key]
     })
 
     const { 
-        glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef, videoRecorderRef, lastHoveredAtom, 
-    } = states
+        glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef, videoRecorderRef, lastHoveredAtomRef, 
+    } = refs
 
     activeMapRef.current = activeMap
     moleculesRef.current = molecules
@@ -129,9 +112,16 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     const {
         disableFileUploads, urlPrefix, extraNavBarMenus, viewOnly, extraDraggableModals, 
-        monomerLibraryPath, forwardControls, extraFileMenuItems, allowScripting, backupStorageInstance,
+        monomerLibraryPath, extraFileMenuItems, allowScripting, backupStorageInstance,
         extraEditMenuItems, aceDRGInstance, extraCalculateMenuItems, setMoorhenDimensions
     } = props
+
+    const collectedProps: moorhen.CollectedProps = {
+        glRef, commandCentre, timeCapsuleRef, disableFileUploads, extraDraggableModals, aceDRGInstance, 
+        urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems, extraEditMenuItems,
+        extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, activeMapRef,
+        videoRecorderRef, lastHoveredAtomRef,
+    }
     
     useEffect(() => {
         let head = document.head
@@ -193,15 +183,12 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                         </h4>
                     </MoorhenNotification>
                 ))
-                if (forwardControls) {
-                    forwardControls(collectedProps)
-                }
             }
         }
         
         onCootInitialized()
 
-    }, [cootInitialized, userPreferencesMounted, forwardControls])
+    }, [cootInitialized, userPreferencesMounted])
 
     useEffect(() => {
         if (userPreferencesMounted && defaultBackgroundColor !== backgroundColor) {
@@ -304,7 +291,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     const onAtomHovered = useCallback((identifier: { buffer: { id: string; }; atom: { label: string; }; }) => {
         if (identifier == null) {
-            if (lastHoveredAtom.current !== null && lastHoveredAtom.current.molecule !== null) {
+            if (lastHoveredAtomRef.current !== null && lastHoveredAtomRef.current.molecule !== null) {
                 dispatch( setHoveredAtom({ molecule: null, cid: null }) )
             }
         }
@@ -341,23 +328,23 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     useEffect(() => {
         if (hoveredAtom && hoveredAtom.molecule && hoveredAtom.cid) {
-            if (lastHoveredAtom.current == null ||
-                hoveredAtom.molecule !== lastHoveredAtom.current.molecule ||
-                hoveredAtom.cid !== lastHoveredAtom.current.cid
+            if (lastHoveredAtomRef.current == null ||
+                hoveredAtom.molecule !== lastHoveredAtomRef.current.molecule ||
+                hoveredAtom.cid !== lastHoveredAtomRef.current.cid
             ) {
                 hoveredAtom.molecule.drawHover(hoveredAtom.cid)
                 //if we have changed molecule, might have to clean up hover display item of previous molecule
             }
         }
 
-        if (lastHoveredAtom.current !== null &&
-            lastHoveredAtom.current.molecule !== null &&
-            lastHoveredAtom.current.molecule !== hoveredAtom.molecule
+        if (lastHoveredAtomRef.current !== null &&
+            lastHoveredAtomRef.current.molecule !== null &&
+            lastHoveredAtomRef.current.molecule !== hoveredAtom.molecule
         ) {
-            lastHoveredAtom.current.molecule.clearBuffersOfStyle("hover")
+            lastHoveredAtomRef.current.molecule.clearBuffersOfStyle("hover")
         }
 
-        lastHoveredAtom.current = hoveredAtom
+        lastHoveredAtomRef.current = hoveredAtom
     }, [hoveredAtom])
 
     useEffect(() => {
@@ -373,12 +360,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const glResize = () => {
         glRef.current.resize(width, height)
         glRef.current.drawScene()
-    }
-
-    const collectedProps: moorhen.Controls = {
-        glRef, commandCentre, timeCapsuleRef, disableFileUploads, extraDraggableModals, aceDRGInstance, 
-        urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems, extraEditMenuItems,
-        extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, videoRecorderRef,
     }
 
     return <> 
@@ -430,7 +411,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 MoorhenContainer.defaultProps = {
     urlPrefix: '.',
     monomerLibraryPath: './baby-gru/monomers',
-    forwardControls: () => {},
     setMoorhenDimensions: null,
     disableFileUploads: false,
     extraNavBarMenus: [],

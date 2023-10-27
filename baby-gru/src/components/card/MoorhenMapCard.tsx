@@ -23,7 +23,7 @@ type ActionButtonType = {
     expanded: null | ( () => JSX.Element );
 }
 
-interface MoorhenMapCardPropsInterface extends moorhen.Controls {
+interface MoorhenMapCardPropsInterface extends moorhen.CollectedProps {
     dropdownId: number;
     accordionDropdownId: number;
     setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;

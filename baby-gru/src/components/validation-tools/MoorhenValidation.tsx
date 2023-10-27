@@ -11,7 +11,7 @@ import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
 
-interface Props extends moorhen.Controls {
+interface Props extends moorhen.CollectedProps {
     dropdownId: number;
     accordionDropdownId: number;
     setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;

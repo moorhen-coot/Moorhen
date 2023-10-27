@@ -19,7 +19,7 @@ import { addMolecule } from '../../store/moleculesSlice';
 
 const allRepresentations = [ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks', 'restraints' ]
 
-interface MoorhenMoleculeCardPropsInterface extends moorhen.Controls {
+interface MoorhenMoleculeCardPropsInterface extends moorhen.CollectedProps {
     dropdownId: number;
     accordionDropdownId: number;
     setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;

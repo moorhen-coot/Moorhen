@@ -172,9 +172,9 @@ export namespace moorhen {
         defaultColourRules: ColourRule[];
         restraints: {maxRadius: number, cid: string}[];
         monomerLibraryPath: string;
-        hoverRepresentation: moorhen.MoleculeRepresentation;
-        unitCellRepresentation: moorhen.MoleculeRepresentation;
-        environmentRepresentation: moorhen.MoleculeRepresentation;
+        hoverRepresentation: MoleculeRepresentation;
+        unitCellRepresentation: MoleculeRepresentation;
+        environmentRepresentation: MoleculeRepresentation;
         hasDNA: boolean;
         hasGlycans: boolean;
     }
@@ -199,7 +199,7 @@ export namespace moorhen {
         show(): void;
         hide(): void;
         setAtomBuffers(arg0: AtomInfo[]): void;
-        bondOptions: moorhen.cootBondOptions;
+        bondOptions: cootBondOptions;
         useDefaultColourRules: boolean;
         useDefaultBondOptions: boolean;
         applyColourToNonCarbonAtoms: boolean;
@@ -336,7 +336,7 @@ export namespace moorhen {
 
     interface Map {
         getHistogram(nBins?: number, zoomFactor?: number): Promise<libcootApi.HistogramInfoJS>;
-        setMapWeight(weight?: number): Promise<moorhen.WorkerResponse>;
+        setMapWeight(weight?: number): Promise<WorkerResponse>;
         estimateMapWeight(): Promise<void>;
         setAlpha(alpha: number, redraw?: boolean): Promise<void>;
         centreOnMap(): Promise<void>;
@@ -695,7 +695,18 @@ export namespace moorhen {
         windowHeight: number;
         changeMolecules: (arg0: MolChange<Molecule>) => void
     }
-    
+
+    interface ContainerRefs {
+        glRef: React.MutableRefObject<null | webGL.MGWebGL>;
+        timeCapsuleRef: React.MutableRefObject<null | TimeCapsule>;
+        commandCentre: React.MutableRefObject<CommandCentre>;
+        videoRecorderRef: React.MutableRefObject<null | ScreenRecorder>;
+        moleculesRef: React.MutableRefObject<null | Molecule[]>;
+        mapsRef: React.MutableRefObject<null | Map[]>;
+        activeMapRef: React.MutableRefObject<Map>;
+        lastHoveredAtomRef: React.MutableRefObject<null | HoveredAtom>;
+    }
+      
     interface ContainerOptionalProps {
         disableFileUploads: boolean;
         urlPrefix: string;
@@ -704,7 +715,6 @@ export namespace moorhen {
         extraDraggableModals: JSX.Element[];
         monomerLibraryPath: string;
         setMoorhenDimensions?: null | ( () => [number, number] );
-        forwardControls?: (arg0: Controls) => any;
         extraFileMenuItems: JSX.Element[];
         allowScripting: boolean;
         backupStorageInstance?: any;
@@ -713,14 +723,9 @@ export namespace moorhen {
         aceDRGInstance: AceDRGInstance | null; 
     }
     
-    interface Controls extends ContainerOptionalProps {
-        videoRecorderRef: React.MutableRefObject<null | ScreenRecorder>;
-        glRef: React.MutableRefObject<null | webGL.MGWebGL>;
-        timeCapsuleRef: React.MutableRefObject<null | TimeCapsule>;
-        commandCentre: React.MutableRefObject<CommandCentre>;
-        moleculesRef: React.MutableRefObject<null | Molecule[]>;
-        mapsRef: React.MutableRefObject<null | Map[]>;
-    }
+    interface ContainerProps extends Partial<ContainerRefs>, Partial<ContainerOptionalProps> { }
+    
+    interface CollectedProps extends ContainerRefs, ContainerOptionalProps { }
 
     interface State {
         molecules: Molecule[];
@@ -806,19 +811,6 @@ export namespace moorhen {
         };
     }
     
-    interface ContainerStates {
-        glRef: React.MutableRefObject<null | webGL.MGWebGL>;
-        timeCapsuleRef: React.MutableRefObject<null | TimeCapsule>;
-        commandCentre: React.MutableRefObject<CommandCentre>;
-        videoRecorderRef: React.MutableRefObject<null | ScreenRecorder>;
-        moleculesRef: React.MutableRefObject<null | Molecule[]>;
-        mapsRef: React.MutableRefObject<null | Map[]>;
-        activeMapRef: React.MutableRefObject<Map>;
-        lastHoveredAtom: React.MutableRefObject<null | HoveredAtom>;
-    }
-    
-    interface ContainerProps extends Partial<ContainerStates>, Partial<ContainerOptionalProps> { }
-
     type actionButtonSettings = {
         mutate: 'ALA' | 'CYS' | 'ASP' | 'GLU' | 'PHE' | 'GLY' | 'HIS' | 'ILE' | 'LYS' | 'LEU' | 'MET' | 'ASN' | 'PRO' | 'GLN' | 'ARG' | 'SER' | 'THR' | 'VAL' | 'TRP' | 'TYR';
         refine: 'SINGLE' | 'TRIPLE' | 'QUINTUPLE' | 'HEPTUPLE' | 'SPHERE' | 'BIG_SPHERE' | 'CHAIN' | 'ALL';

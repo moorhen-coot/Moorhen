@@ -20,7 +20,7 @@ import { MoorhenAutofitRotamerButton } from "../button/MoorhenAutofitRotamerButt
 import { MoorhenConvertCisTransButton } from "../button/MoorhenConvertCisTransButton"
 import { moorhen } from "../../types/moorhen";
 
-interface MoorhenToolkitModalProps extends moorhen.Controls {
+interface MoorhenToolkitModalProps extends moorhen.CollectedProps {
     windowWidth: number;
     windowHeight: number;
     show: boolean;

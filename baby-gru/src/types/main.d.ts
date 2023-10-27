@@ -9,29 +9,21 @@ declare module 'moorhen' {
     let MoorhenContainer: any;
     module.exports = MoorhenContainer;
 
-    function loadSessionData(sessionDataString: string,
-        monomerLibraryPath: string,
-        molecules: _moorhen.Molecule[],
-        changeMolecules: (arg0: _moorhen.MolChange<_moorhen.Molecule>) => void,
-        maps: _moorhen.Map[],
-        changeMaps: (arg0: _moorhen.MolChange<_moorhen.Map>) => void,
-        setActiveMap: (arg0: _moorhen.Map) => void,
-        commandCentre: React.RefObject<_moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule>,
-        glRef: React.RefObject<webGL.MGWebGL>): Promise<number>;
-    module.exports = loadSessionData;
-
-    function itemReducer<T extends _moorhen.Molecule | _moorhen.Map> (oldList: T[], change: _moorhen.MolChange<T>): T[];
-    module.exports = itemReducer;
-
-    function getDefaultContextValues(): _moorhen.ContextValues;
-    module.exports = getDefaultContextValues;
+    class MoorhenPreferences implements _moorhen.Preferences {
+        name: string;
+        localStorageInstance: {
+            clear: () => void;
+            setItem: (key: string, value: any) => Promise<string>;
+            getItem: (key: string) => Promise<any>;
+        };   
+    }
+    module.exports.MoorhenPreferences = MoorhenPreferences
 
     class MoorhenMolecule implements _moorhen.Molecule {
         constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibrary: string)
         getNumberOfAtoms(): Promise<number>;
-        checkHasGlycans(): Promise<boolean>;
         moveMoleculeHere(x: number, y: number, z: number): Promise<void>;
+        checkHasGlycans(): Promise<boolean>;
         fitLigandHere(mapMolNo: number, ligandMolNo: number, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<_moorhen.Molecule[]>;
         isLigand(): boolean;
         removeRepresentation(representationId: string): void;
@@ -99,7 +91,6 @@ declare module 'moorhen' {
         symmetryOn: boolean;
         symmetryRadius : number;
         symmetryMatrices: number[][][];
-        restraints: {maxRadius: number, cid: string}[];
         gaussianSurfaceSettings: {
             sigma: number;
             countourLevel: number;
@@ -112,6 +103,7 @@ declare module 'moorhen' {
         displayObjectsTransformation: { origin: [number, number, number], quat: any, centre: [number, number, number] }
         uniqueId: string;
         defaultColourRules: _moorhen.ColourRule[];
+        restraints: {maxRadius: number, cid: string}[];
         monomerLibraryPath: string;
         hoverRepresentation: _moorhen.MoleculeRepresentation;
         unitCellRepresentation: _moorhen.MoleculeRepresentation;
@@ -123,12 +115,12 @@ declare module 'moorhen' {
     
     class MoorhenMap implements _moorhen.Map {
         constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>)
-        setMapWeight(weight?: number): Promise<_moorhen.WorkerResponse>;
-        setAlpha(alpha: number, redraw?: boolean): Promise<void>;
         getHistogram(nBins?: number, zoomFactor?: number): Promise<libcootApi.HistogramInfoJS>;
+        setMapWeight(weight?: number): Promise<_moorhen.WorkerResponse>;
+        estimateMapWeight(): Promise<void>;
+        setAlpha(alpha: number, redraw?: boolean): Promise<void>;
         centreOnMap(): Promise<void>;
         getSuggestedSettings(): Promise<void>;
-        setupContourBuffers(objects: any[], keepCootColours?: boolean): void;
         duplicate(): Promise<_moorhen.Map>;
         makeCootUnlive(): void;
         makeCootLive(): void;
@@ -146,7 +138,7 @@ declare module 'moorhen' {
         loadToCootFromMtzURL(url: RequestInfo | URL, name: string, selectedColumns: _moorhen.selectedMtzColumns): Promise<_moorhen.Map>;
         loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap?: boolean): Promise<_moorhen.Map>;
         setActive(): Promise<void>;
-        estimateMapWeight(): Promise<void>;
+        setupContourBuffers(objects: any[], keepCootColours?: boolean): void;
         isEM: boolean;
         suggestedContourLevel: number;
         suggestedRadius: number;
@@ -163,13 +155,13 @@ declare module 'moorhen' {
         cootContour: boolean;
         displayObjects: any;
         litLines: boolean;
-        otherMapMolNoForColouring: number;
         solid: boolean;
         isDifference: boolean;
         hasReflectionData: boolean;
         selectedColumns: _moorhen.selectedMtzColumns;
         associatedReflectionFileName: string;
         uniqueId: string;
+        otherMapMolNoForColouring: number;
         mapRmsd: number;
         suggestedMapWeight: number;
         rgba: {
@@ -180,4 +172,209 @@ declare module 'moorhen' {
         }
     }
     module.exports.MoorhenMap = MoorhenMap
+
+    function loadSessionData(
+        sessionDataString: string,
+        monomerLibraryPath: string,
+        molecules: _moorhen.Molecule[],
+        maps: _moorhen.Map[],
+        commandCentre: React.RefObject<_moorhen.CommandCentre>,
+        timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule>,
+        glRef: React.RefObject<webGL.MGWebGL>,
+        dispatch: (reduxStoreAction: any) => void,
+    ): Promise<number>;
+    module.exports = loadSessionData;
+
+
+    function setDefaultBackgroundColor(arg0: [number, number, number, number]): void;
+    module.exports = setDefaultBackgroundColor;
+    
+    function setDrawCrosshairs(arg0: boolean): void;
+    module.exports = setDrawCrosshairs;
+    
+    function setDrawFPS(arg0: boolean): void;
+    module.exports = setDrawFPS;
+    
+    function setDrawMissingLoops(arg0: boolean): void;
+    module.exports = setDrawMissingLoops;
+    
+    function setDefaultBondSmoothness(arg0: number): void;
+    module.exports = setDefaultBondSmoothness;
+    
+    function setDrawInteractions(arg0: boolean): void;
+    module.exports = setDrawInteractions;
+    
+    function setDoSSAO(arg0: boolean): void;
+    module.exports = setDoSSAO;
+    
+    function setSsaoRadius(arg0: number): void;
+    module.exports = setSsaoRadius;
+    
+    function setSsaoBias(arg0: number): void;
+    module.exports = setSsaoBias;
+    
+    function setResetClippingFogging(arg0: boolean): void;
+    module.exports = setResetClippingFogging;
+    
+    function setClipCap(arg0: boolean): void;
+    module.exports = setClipCap;
+    
+    function setUseOffScreenBuffers(arg0: boolean): void;
+    module.exports = setUseOffScreenBuffers;
+    
+    function setDoShadowDepthDebug(arg0: boolean): void;
+    module.exports = setDoShadowDepthDebug;
+    
+    function setDoShadow(arg0: boolean): void;
+    module.exports = setDoShadow;
+    
+    function setDoSpinTest(arg0: boolean): void;
+    module.exports = setDoSpinTest;
+    
+    function setDoOutline(arg0: boolean): void;
+    module.exports = setDoOutline;
+    
+    function setDepthBlurRadius(arg0: number): void;
+    module.exports = setDepthBlurRadius;
+    
+    function setDepthBlurDepth(arg0: number): void;
+    module.exports = setDepthBlurDepth;
+    
+    function setDrawAxes(arg0: boolean): void;
+    module.exports = setDrawAxes;
+    
+    function setDoPerspectiveProjection(arg0: boolean): void;
+    module.exports = setDoPerspectiveProjection;
+
+    function setEnableTimeCapsule(arg0: boolean): void;
+    module.exports = setEnableTimeCapsule;
+
+    function setMakeBackups(arg0: boolean): void;
+    module.exports = setMakeBackups;
+
+    function setMaxBackupCount(arg0: number): void;
+    module.exports = setMaxBackupCount;
+
+    function setModificationCountBackupThreshold(arg0: number): void;
+    module.exports = setModificationCountBackupThreshold;
+
+    function setHeight(arg0: number): void;
+    module.exports = setHeight;
+
+    function setWidth(arg0: number): void;
+    module.exports = setWidth;
+
+    function setIsDark(arg0: boolean): void;
+    module.exports = setIsDark;
+
+    function setBackgroundColor(arg0: [number, number, number, number]): void;
+    module.exports = setBackgroundColor;
+
+    function setNotificationContent(arg0: JSX.Element): void;
+    module.exports = setNotificationContent;
+
+    function setActiveMap(arg0: _moorhen.Map): void;
+    module.exports = setActiveMap;
+
+    function setCootInitialized(arg0: boolean): void;
+    module.exports = setCootInitialized;
+
+    function setAppTitle(arg0: string): void;
+    module.exports = setAppTitle;
+
+    function setUserPreferencesMounted(arg0: boolean): void;
+    module.exports = setUserPreferencesMounted;
+
+    function setDevMode(arg0: boolean): void;
+    module.exports = setDevMode;
+
+    function setTheme(arg0: string): void;
+    module.exports = setTheme;
+
+    function setViewOnly(arg0: boolean): void;
+    module.exports = setViewOnly;
+
+    function setCursorStyle(arg0: string): void;
+    module.exports = setCursorStyle;
+
+    function setEnableAtomHovering(arg0: boolean): void;
+    module.exports = setEnableAtomHovering;
+
+    function setHoveredAtom(arg0: {molecule: null | _moorhen.Molecule; cid: null | string}): void;
+    module.exports = setHoveredAtom;
+
+    function addAvailableFontList(arg0: string): void;
+    module.exports = addAvailableFontList;
+
+    function setAtomLabelDepthMode(arg0: boolean): void;
+    module.exports = setAtomLabelDepthMode;
+
+    function setGLLabelsFontFamily(arg0: string): void;
+    module.exports = setGLLabelsFontFamily;
+
+    function setGLLabelsFontSize(arg0: number): void;
+    module.exports = setGLLabelsFontSize;
+
+    function setDefaultMapSamplingRate(arg0: number): void;
+    module.exports = setDefaultMapSamplingRate;
+
+    function setDefaultMapLitLines(arg0: boolean): void;
+    module.exports = setDefaultMapLitLines;
+
+    function setMapLineWidth(arg0: number): void;
+    module.exports = setMapLineWidth;
+
+    function setDefaultMapSurface(arg0: boolean): void;
+    module.exports = setDefaultMapSurface;
+
+    function setDefaultExpandDisplayCards(arg0: boolean): void;
+    module.exports = setDefaultExpandDisplayCards;
+
+    function setTransparentModalsOnMouseOut(arg0: boolean): void;
+    module.exports = setTransparentModalsOnMouseOut;
+
+    function setEnableRefineAfterMod(arg0: boolean): void;
+    module.exports = setEnableRefineAfterMod;
+
+    function addMolecule(arg0: _moorhen.Molecule): void;
+    module.exports = addMolecule;
+
+    function removeMolecule(arg0: _moorhen.Molecule): void;
+    module.exports = removeMolecule;
+
+    function emptyMolecules(): void;
+    module.exports = emptyMolecules;
+
+    function addMoleculeList(arg0: _moorhen.Molecule[]): void;
+    module.exports = addMoleculeList;
+
+    function setContourWheelSensitivityFactor(arg0: number): void;
+    module.exports = setContourWheelSensitivityFactor;
+
+    function setZoomWheelSensitivityFactor(arg0: number): void;
+    module.exports = setZoomWheelSensitivityFactor;
+
+    function setMouseSensitivity(arg0: number): void;
+    module.exports = setMouseSensitivity;
+
+    function setShowShortcutToast(arg0: boolean): void;
+    module.exports = setShowShortcutToast;
+
+    function setShortcutOnHoveredAtom(arg0: boolean): void;
+    module.exports = setShortcutOnHoveredAtom;
+
+    function setShortCuts(arg0: string): void;
+    module.exports = setShortCuts;
+
+    function setShowScoresToast(arg0: boolean): void;
+    module.exports = setShowScoresToast;
+
+    function addMapUpdatingScore(arg0: _moorhen.Map): void;
+    module.exports = addMapUpdatingScore;
+
+    function removeMapUpdatingScore(arg0: _moorhen.Map): void;
+    module.exports = removeMapUpdatingScore;
+
+    function overwriteMapUpdatingScores(arg0: _moorhen.Map[]): void;
+    module.exports = overwriteMapUpdatingScores;
 }

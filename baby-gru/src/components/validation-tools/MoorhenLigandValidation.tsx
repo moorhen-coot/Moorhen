@@ -6,7 +6,7 @@ import { moorhen } from "../../types/moorhen";
 import { gemmi } from "../../types/gemmi";
 import { useSelector } from 'react-redux';
 
-interface Props extends moorhen.Controls {
+interface Props extends moorhen.CollectedProps {
     dropdownId: number;
     accordionDropdownId: number;
     setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;

@@ -25,7 +25,7 @@ import { MoorhenScriptModal } from '../modal/MoorhenScriptModal';
 import { moorhen } from '../../types/moorhen';
 import { useSelector } from 'react-redux';
 
-export interface MoorhenNavBarExtendedControlsInterface extends moorhen.Controls {
+export interface MoorhenNavBarExtendedControlsInterface extends moorhen.CollectedProps {
     dropdownId: string;
     currentDropdownId: string;
     setCurrentDropdownId: React.Dispatch<React.SetStateAction<string>>;
@@ -34,7 +34,7 @@ export interface MoorhenNavBarExtendedControlsInterface extends moorhen.Controls
     setShowCreateAcedrgLinkModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.Controls>((props, ref) => {
+export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((props, ref) => {
     
     const [timeCapsuleBusy, setTimeCapsuleBusy] = useState<boolean>(false)
     const [busy, setBusy] = useState<boolean>(false)
