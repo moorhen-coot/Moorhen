@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { MoorhenContainer } from "./MoorhenContainer"
+import { MoorhenContainer } from "./MoorhenContainer";
 import { MoorhenReduxProvider } from './misc/MoorhenReduxProvider'
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';

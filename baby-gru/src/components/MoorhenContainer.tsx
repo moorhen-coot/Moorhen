@@ -19,7 +19,7 @@ import { setCootInitialized, setNotificationContent, setTheme } from '../store/g
 import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSlice';
 
 /**
- * A container for the Moorhen app
+ * A container for the Moorhen app. Needs to be rendered within a MoorhenReduxprovider.
  * @property {string} [urlPrefix='.'] - The root url used to load sources from public folder
  * @property {string} [monomerLibraryPath='./baby-gru/monomers'] - A string with the path to the monomer library, relative to the root of the app
  * @property {function} setMoorhenDimensions - Callback executed on window resize. Return type is an array of two numbers [width, height]
@@ -37,38 +37,25 @@ import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSl
  * import { useState, useReducer, useRef } from "react";
  * import { MoorhenContainer, itemReducer } from "moorhen";
  *
- * const initialMoleculesState = []
- * const initialMapsState = []
- * 
  * const ExampleApp = () => {
  * 
- *  const [activeMap, setActiveMap] = useState(null);
- *  const [molecules, changeMolecules] = useReducer(itemReducer, initialMoleculesState);
- *  const [maps, changeMaps] = useReducer(itemReducer, initialMapsState);
- * 
  *  const doClick = (evt) => { console.log('Click!') }
+ * 
  *  const exportMenuItem =  <MenuItem key={'example-key'} id='example-menu-item' onClick={doClick}>
  *                              Example extra menu
  *                          </MenuItem>
- * 
- *  const moleculesRef = useRef(null);
- *  const mapsRef = useRef(null);
- *  const activeMapRef = useRef(null);
- * 
- *  moleculesRef.current = molecules;
- *  mapsRef.current = maps;
- *  activeMapRef.current = activeMap;
- * 
- *  const forwardCollectedControls = (controls) => { console.log(controls) }
- * 
- *  return <MoorhenContainer
- *    moleculesRef={moleculesRef}
- *    mapsRef={mapsRef}
- *    allowScripting={false}
- *    extraFileMenuItems={[exportMenuItem]}
- *    forwardControls={forwardCollectedControls}
- *  />
+ *  
+ * const setDimensions = () => {
+ *   return [window.innerWidth, window.innerHeight]
  * }
+ *  
+ * return <MoorhenReduxProvider> 
+ *              <MoorhenContainer
+ *                  allowScripting={false}
+ *                  setMoorhenDimensions={setDimensions}
+ *                  extraFileMenuItems={[exportMenuItem]}/>
+ *          </MoorhenReduxProvider>
+ * 
  */
 export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     
