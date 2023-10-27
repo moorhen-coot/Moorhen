@@ -1,0 +1,421 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title> utils/MoorhenPreferences.ts</title>
+
+  <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="./build/entry.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,400,700|Inconsolata,700" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+  <link type="text/css" rel="stylesheet" href="https://jmblog.github.io/color-themes-for-google-code-prettify/themes/tomorrow-night.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/app.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/iframe.css">
+  <link type="text/css" rel="stylesheet" href="docs.styles.css">
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+  
+</head>
+
+
+
+<body class="layout small-header">
+    <div id="stickyNavbarOverlay"></div>
+    
+
+<div class="top-nav">
+    <div class="inner">
+        <a id="hamburger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+        <div class="logo">
+             
+                <a class="image" href="index.html">
+                    <img src="./MoorhenLogo.png" alt="logo">
+                </a>
+            
+             
+                <a href="index.html">
+                    <h1 class="navbar-item">Moorhen Developer Documentation</h1>
+                </a>
+            
+        </div>
+        <div class="menu">
+            
+            <div class="navigation">
+                <a
+                    href="index.html"
+                    class="link"
+                >
+                    Documentation
+                </a>
+                
+                 
+                    
+                        <a
+                            class="link user-link "
+                            href="https://github.com/moorhen-coot/Moorhen"
+                        >
+                            Github
+                        </a>
+                    
+                        <a
+                            class="link user-link "
+                            href="https://moorhen-coot.github.io/wiki/"
+                        >
+                            Moorhen Wiki
+                        </a>
+                    
+                
+                
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="main">
+        <div
+            class="sidebar "
+            id="sidebarNav"
+        >
+            
+                <div class="search-wrapper">
+                    <input id="search" type="text" placeholder="Search docs..." class="input">
+                </div>
+            
+            <nav>
+                
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenCommandCentre.html">MoorhenCommandCentre</a></li><li><a href="MoorhenMap.html">MoorhenMap</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenPreferences.html">MoorhenPreferences</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li></ul><h3>Global</h3><ul><li><a href="global.html#MoorhenContainer">MoorhenContainer</a></li><li><a href="global.html#MoorhenDraggableModalBase">MoorhenDraggableModalBase</a></li><li><a href="global.html#MoorhenMapSelect">MoorhenMapSelect</a></li><li><a href="global.html#MoorhenMoleculeSelect">MoorhenMoleculeSelect</a></li><li><a href="global.html#MoorhenReduxProvider">MoorhenReduxProvider</a></li><li><a href="global.html#loadSessionData">loadSessionData</a></li></ul></div>
+                
+            </nav>
+        </div>
+        <div class="core" id="main-content-wrapper">
+            <div class="content">
+                <header class="page-title">
+                    <p>Source</p>
+                    <h1>utils/MoorhenPreferences.ts</h1>
+                </header>
+                
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import localforage from 'localforage';
+import { moorhen } from '../types/moorhen';
+
+/**
+ * Interface for the Moorhen preferences kept in the browser local storage
+ * @property {string} name - The name of the local storage instance
+ * @property {LocalForage} localStorageInstance - The local storage instance
+ * @constructor
+ * @param {string} name - The name of the local storage instance
+ */
+export class MoorhenPreferences implements moorhen.Preferences {
+
+    localStorageInstance: LocalForage;
+    name: string;
+
+    constructor(name: string) {
+        this.name = name
+        this.createLocalForageInstance()
+    }
+
+    createLocalForageInstance(empty: boolean = false): LocalForage {
+        this.localStorageInstance = localforage.createInstance({
+            driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
+            name: this.name,
+            storeName: this.name
+        })
+        if (empty) {
+            this.localStorageInstance.clear()
+        }
+        return this.localStorageInstance
+    }   
+
+    static getDefaultContextValues(): moorhen.ContextValues {
+        return {
+            version: 'v30',
+            transparentModalsOnMouseOut: true,
+            defaultBackgroundColor: [1, 1, 1, 1], 
+            atomLabelDepthMode: true, 
+            enableTimeCapsule: true, 
+            defaultExpandDisplayCards: true,
+            defaultMapLitLines: false,
+            enableRefineAfterMod: false,
+            drawCrosshairs: true,
+            drawAxes: false,
+            drawFPS: false,
+            drawMissingLoops: true,
+            drawInteractions: false,
+            doPerspectiveProjection: false,
+            useOffScreenBuffers: false,
+            defaultMapSamplingRate: 1.8,
+            depthBlurRadius: 3.0,
+            ssaoRadius: 2.5,
+            ssaoBias: 0.025,
+            depthBlurDepth: 0.2,
+            doShadowDepthDebug: false,
+            doShadow: false,
+            doSSAO: false,
+            doOutline: false,
+            GLLabelsFontFamily: "Arial",
+            GLLabelsFontSize: 18,
+            doSpinTest: false,
+            mouseSensitivity: 0.3,
+            zoomWheelSensitivityFactor: 1.0,
+            contourWheelSensitivityFactor: 0.05,
+            mapLineWidth: 0.75,
+            makeBackups: true,
+            showShortcutToast: false,
+            defaultMapSurface: false,
+            defaultBondSmoothness: 1,
+            showScoresToast: true,
+            shortcutOnHoveredAtom: false,
+            resetClippingFogging: true,
+            clipCap: true,
+            defaultUpdatingScores: ['Rfree', 'Rfactor', 'Moorhen Points'],
+            maxBackupCount: 10,
+            modificationCountBackupThreshold: 5,
+            devMode: false,
+            shortCuts: {
+                "decrease_front_clip": {
+                    modifiers: [],
+                    keyPress: "1",
+                    label: "Decrease front clip",
+                    viewOnly: true
+                },
+                "increase_front_clip": {
+                    modifiers: [],
+                    keyPress: "2",
+                    label: "Increase front clip",
+                    viewOnly: true
+                },
+                "decrease_back_clip": {
+                    modifiers: [],
+                    keyPress: "3",
+                    label: "Decrease back clip",
+                    viewOnly: true
+                },
+                "increase_back_clip": {
+                    modifiers: [],
+                    keyPress: "4",
+                    label: "Increase back clip",
+                    viewOnly: true
+                },
+                "sphere_refine": {
+                    modifiers: ["shiftKey"],
+                    keyPress: "r",
+                    label: "Refine sphere",
+                    viewOnly: false
+                },
+                "flip_peptide": {
+                    modifiers: ["shiftKey"],
+                    keyPress: "q",
+                    label: "Flip peptide",
+                    viewOnly: false
+                },
+                "triple_refine": {
+                    modifiers: ["shiftKey"],
+                    keyPress: "h",
+                    label: "Refine triplet",
+                    viewOnly: false
+                },
+                "auto_fit_rotamer": {
+                    modifiers: ["shiftKey"],
+                    keyPress: "j",
+                    label: "Autofit rotamer",
+                    viewOnly: false
+                },
+                "add_terminal_residue": {
+                    modifiers: ["shiftKey"],
+                    keyPress: "y",
+                    label: "Add terminal residue",
+                    viewOnly: false
+                },
+                "delete_residue": {
+                    modifiers: ["shiftKey"],
+                    keyPress: "d",
+                    label: "Delete residue",
+                    viewOnly: false
+                },
+                "eigen_flip": {
+                    modifiers: ["shiftKey"],
+                    keyPress: "e",
+                    label: "Eigen flip ligand",
+                    viewOnly: false
+                },
+                "undo": {
+                    modifiers: ["ctrlKey"],
+                    keyPress: "z",
+                    label: "Undo last action",
+                    viewOnly: false
+                },
+                "redo": {
+                    modifiers: ["ctrlKey", "shiftKey"],
+                    keyPress: "z",
+                    label: "Redo previous action",
+                    viewOnly: false
+                },
+                "show_shortcuts": {
+                    modifiers: [],
+                    keyPress: "h",
+                    label: "Show shortcuts",
+                    viewOnly: true
+                },
+                "restore_scene": {
+                    modifiers: [],
+                    keyPress: "r",
+                    label: "Restore scene",
+                    viewOnly: true
+                },
+                "clear_labels": {
+                    modifiers: [],
+                    keyPress: "c",
+                    label: "Clear labels",
+                    viewOnly: true
+                },
+                "move_up": {
+                    modifiers: [],
+                    keyPress: "arrowup",
+                    label: "Move model up",
+                    viewOnly: true
+                },
+                "move_down": {
+                    modifiers: [],
+                    keyPress: "arrowdown",
+                    label: "Move model down",
+                    viewOnly: true
+                },
+                "move_left": {
+                    modifiers: [],
+                    keyPress: "arrowleft",
+                    label: "Move model left",
+                    viewOnly: true
+                },
+                "move_right": {
+                    modifiers: [],
+                    keyPress: "arrowright",
+                    label: "Move model right",
+                    viewOnly: true
+                },
+                "go_to_blob": {
+                    modifiers: [],
+                    keyPress: "g",
+                    label: "Go to blob",
+                    viewOnly: true
+                },
+                "take_screenshot": {
+                    modifiers: [],
+                    keyPress: "s",
+                    label: "Take a screenshot",
+                    viewOnly: true
+                },
+                "residue_camera_wiggle": {
+                    modifiers: [],
+                    keyPress: "z",
+                    label: "Wiggle camera while rotating a residue",
+                    viewOnly: true
+                },
+                "measure_distances": {
+                    modifiers: [],
+                    keyPress: "m",
+                    label: "Measure distances between atoms on click",
+                    viewOnly: true
+                },
+                "measure_angles": {
+                    modifiers: ["shiftKey"],
+                    keyPress: "m",
+                    label: "Measure angles between atoms on click",
+                    viewOnly: true
+                },
+                "label_atom": {
+                    modifiers: [],
+                    keyPress: "l",
+                    label: "Label an atom on click",
+                    viewOnly: true
+                },
+                "center_atom": {
+                    modifiers: ["altKey"],
+                    keyPress: "alt",
+                    label: "Center on clicked atom",
+                    viewOnly: true
+                },
+                "set_map_contour": {
+                    modifiers: ["ctrlKey"],
+                    keyPress: "control",
+                    label: "Set map contour on scroll",
+                    viewOnly: true
+                },
+                "jump_next_residue": {
+                    modifiers: [],
+                    keyPress: " ",
+                    label: "Jump to the next residue",
+                    viewOnly: true
+                },
+                "jump_previous_residue": {
+                    modifiers: ["shiftKey"],
+                    keyPress: " ",
+                    label: "Jump to the previous residue",
+                    viewOnly: true,
+                },
+                "increase_map_radius": {
+                    modifiers: [],
+                    keyPress: "]",
+                    label: "Increase map radius",
+                    viewOnly: true
+                },
+                "decrease_map_radius": {
+                    modifiers: [],
+                    keyPress: "[",
+                    label: "Decrease map radius",
+                    viewOnly: true
+                },
+            }
+        }
+    }
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+            </div>
+            
+            <footer class="footer">
+                <div class="content has-text-centered">
+                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.2</a></p>
+                    <p class="sidebar-created-by">
+                        <a href="https://github.com/SoftwareBrothers/better-docs" target="_blank">BetterDocs theme</a> provided with <i class="fas fa-heart"></i> by
+                        <a href="http://softwarebrothers.co" target="_blank">SoftwareBrothers - JavaScript Development Agency</a>
+                    </p>
+                </div>
+            </footer>
+            
+        </div>
+        <div id="side-nav" class="side-nav">
+        </div>
+    </div>
+<script src="scripts/app.min.js"></script>
+<script>PR.prettyPrint();</script>
+<script src="scripts/linenumber.js"> </script>
+
+<script src="scripts/search.js"> </script>
+
+
+</body>
+</html>

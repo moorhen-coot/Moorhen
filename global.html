@@ -94,7 +94,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenCommandCentre.html">MoorhenCommandCentre</a></li><li><a href="MoorhenMap.html">MoorhenMap</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li></ul><h3>Global</h3><ul><li><a href="global.html#MoorhenContainer">MoorhenContainer</a></li><li><a href="global.html#MoorhenContextProvider">MoorhenContextProvider</a></li><li><a href="global.html#MoorhenMapSelect">MoorhenMapSelect</a></li><li><a href="global.html#MoorhenMoleculeSelect">MoorhenMoleculeSelect</a></li><li><a href="global.html#getDefaultContextValues">getDefaultContextValues</a></li><li><a href="global.html#itemReducer">itemReducer</a></li><li><a href="global.html#loadSessionData">loadSessionData</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenCommandCentre.html">MoorhenCommandCentre</a></li><li><a href="MoorhenMap.html">MoorhenMap</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenPreferences.html">MoorhenPreferences</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li></ul><h3>Global</h3><ul><li><a href="global.html#MoorhenContainer">MoorhenContainer</a></li><li><a href="global.html#MoorhenDraggableModalBase">MoorhenDraggableModalBase</a></li><li><a href="global.html#MoorhenMapSelect">MoorhenMapSelect</a></li><li><a href="global.html#MoorhenMoleculeSelect">MoorhenMoleculeSelect</a></li><li><a href="global.html#MoorhenReduxProvider">MoorhenReduxProvider</a></li><li><a href="global.html#loadSessionData">loadSessionData</a></li></ul></div>
                 
             </nav>
         </div>
@@ -201,7 +201,7 @@
 
 
 <div class="description">
-    A container for the Moorhen app
+    A container for the Moorhen app. Needs to be rendered within a MoorhenReduxprovider.
 </div>
 
 
@@ -306,39 +306,6 @@
     
 
     <td class="description last">A string with the path to the monomer library, relative to the root of the app</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>forwardControls</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">function</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-        </td>
-    
-
-    <td class="description last">Callback executed when coot is initialised and will return an object of type moorhen.Controls</td>
 </tr>
 
         
@@ -758,7 +725,7 @@
         <p class="tag-source">
             <a href="components_MoorhenContainer.tsx.html" class="button">View Source</a>
             <span>
-                <a href="components_MoorhenContainer.tsx.html">components/MoorhenContainer.tsx</a>, <a href="components_MoorhenContainer.tsx.html#line73">line 73</a>
+                <a href="components_MoorhenContainer.tsx.html">components/MoorhenContainer.tsx</a>, <a href="components_MoorhenContainer.tsx.html#line57">line 57</a>
             </span>
         </p>
     
@@ -771,40 +738,635 @@
     <h5>Example</h5>
     
     
-        <pre class="prettyprint"><code>import { useState, useReducer, useRef } from "react";
-import { MoorhenContainer, itemReducer } from "moorhen";
-
-const initialMoleculesState = []
-const initialMapsState = []
+        <pre class="prettyprint"><code>import { MoorhenContainer } from "moorhen";
 
 const ExampleApp = () => {
 
- const [activeMap, setActiveMap] = useState(null);
- const [molecules, changeMolecules] = useReducer(itemReducer, initialMoleculesState);
- const [maps, changeMaps] = useReducer(itemReducer, initialMapsState);
-
  const doClick = (evt) => { console.log('Click!') }
+
  const exportMenuItem =  &lt;MenuItem key={'example-key'} id='example-menu-item' onClick={doClick}>
                              Example extra menu
                          &lt;/MenuItem>
 
- const moleculesRef = useRef(null);
- const mapsRef = useRef(null);
- const activeMapRef = useRef(null);
+const setDimensions = () => {
+  return [window.innerWidth, window.innerHeight]
+}
 
- moleculesRef.current = molecules;
- mapsRef.current = maps;
- activeMapRef.current = activeMap;
+return &lt;MoorhenReduxProvider>
+             &lt;MoorhenContainer
+                 allowScripting={false}
+                 setMoorhenDimensions={setDimensions}
+                 extraFileMenuItems={[exportMenuItem]}/>
+         &lt;/MoorhenReduxProvider></code></pre>
+    
 
- const forwardCollectedControls = (controls) => { console.log(controls) }
 
- return &lt;MoorhenContainer
-   moleculesRef={moleculesRef}
-   mapsRef={mapsRef}
-   allowScripting={false}
-   extraFileMenuItems={[exportMenuItem]}
-   forwardControls={forwardCollectedControls}
- />
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="MoorhenDraggableModalBase">
+    <a class="href-link" href="#MoorhenDraggableModalBase">#</a>
+    
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        MoorhenDraggableModalBase
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    The base component used to create draggable modals.
+</div>
+
+
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+<div class="table-container">
+    <table class="props table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+            <th>Attributes</th>
+            
+
+            
+            <th>Default</th>
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>width</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">number</code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+            &lt;optional><br>
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+            35
+        
+        </td>
+    
+
+    <td class="description last">The width of the modal measured in wh</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>height</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">number</code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+            &lt;optional><br>
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+            45
+        
+        </td>
+    
+
+    <td class="description last">The height of the modal measured in vh</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>top</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">string</code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+            &lt;optional><br>
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+            "5rem"
+        
+        </td>
+    
+
+    <td class="description last">The intial top location of the modal</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>left</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">string</code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+            &lt;optional><br>
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+            "5rem"
+        
+        </td>
+    
+
+    <td class="description last">The intial top location of the modal</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>additionalHeaderButtons</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">Array.&lt;JSX.Element></code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+            &lt;optional><br>
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+            null
+        
+        </td>
+    
+
+    <td class="description last">Additional buttons rendered on the modal header</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>additionalChildren</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">Array.&lt;JSX.Element></code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+            &lt;optional><br>
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+            null
+        
+        </td>
+    
+
+    <td class="description last">Additional JSX elements rendered inside the modal</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>headerTitle</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">string</code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+        </td>
+    
+
+    <td class="description last">The title displayed on the modal header</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>overflowY</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">string</code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+            &lt;optional><br>
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+            "scroll"
+        
+        </td>
+    
+
+    <td class="description last">Indicates how to handle content overflow on vertical axis</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>handleClassName</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">string</code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+            &lt;optional><br>
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+            "handle"
+        
+        </td>
+    
+
+    <td class="description last">The css class name for the draggable handle</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>show</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">boolean</code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+        </td>
+    
+
+    <td class="description last">Indicates if the modal is to be displayed</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>setShow</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">function</code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+        </td>
+    
+
+    <td class="description last">Setter function for props.show</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>footer</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">JSX.Element</code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+            &lt;optional><br>
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+            null
+        
+        </td>
+    
+
+    <td class="description last">Element rendered as the modal footer</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>body</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">JSX.Element</code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+        </td>
+    
+
+    <td class="description last">Element rendered as the modal body</td>
+</tr>
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="components_modal_MoorhenDraggableModalBase.tsx.html" class="button">View Source</a>
+            <span>
+                <a href="components_modal_MoorhenDraggableModalBase.tsx.html">components/modal/MoorhenDraggableModalBase.tsx</a>, <a href="components_modal_MoorhenDraggableModalBase.tsx.html#line59">line 59</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+    <h5>Example</h5>
+    
+    
+        <pre class="prettyprint"><code>import { MoorhenDraggableModalBase } from "moorhen";
+
+const example = () => {
+  return &lt;MoorhenDraggableModalBase
+               headerTitle="Create covalent link"
+               additionalChildren={
+                   &lt;Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={awaitAtomClick !== -1}>
+                       &lt;Stack gap={2} direction='vertical'style={{justifyContent: 'center', alignItems: 'center'}}>
+                           &lt;Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
+                           &lt;span>Click on an atom...&lt;/span>
+                           &lt;Button variant='danger' onClick={() => setAwaitAtomClick(-1)}>Cancel&lt;/Button>
+                       &lt;/Stack>
+                   &lt;/Backdrop>
+               }
+               body={
+                   &lt;Stack direction='horizontal' gap={2} style={{display: 'flex', justifyContent: 'space-between'}}>
+                       &lt;AceDRGtomPicker id={1} ref={atomPickerOneRef} awaitAtomClick={awaitAtomClick} setAwaitAtomClick={setAwaitAtomClick} {...props}/>
+                       &lt;AceDRGtomPicker id={2} ref={atomPickerTwoRef} awaitAtomClick={awaitAtomClick} setAwaitAtomClick={setAwaitAtomClick} {...props}/>
+                   &lt;/Stack>
+               }
+               footer={
+                   &lt;div style={{display: 'flex', justifyContent: 'space-between', width: '100%'}}>
+                   &lt;div style={{display: 'flex', alignItems: 'center', justifyContent: 'left', width: '50%'}}>
+                       &lt;Form.Control type="text" readOnly={true} value={errorMessage}/>
+                   &lt;/div>
+                   &lt;div style={{display: 'flex', alignItems: 'center', justifyContent: 'right'}}>
+                       &lt;Button variant='primary' onClick={handleSubmitToAcedrg}>Run AceDRG&lt;/Button>
+                       &lt;Button variant='danger' onClick={handleCancel} style={{marginLeft: '0.1rem'}}>Cancel&lt;/Button>
+                   &lt;/div>
+                   &lt;/div>
+               }
+           />
 }</code></pre>
     
 
@@ -1555,6 +2117,93 @@ return (
 
 </div>
             
+                <div class="member">
+
+<h4 class="name" id="MoorhenReduxProvider">
+    <a class="href-link" href="#MoorhenReduxProvider">#</a>
+    
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        MoorhenReduxProvider
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    Redux provider for the Moorhen app. MoorhenContainer needs to be rendered inside this component.
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="components_misc_MoorhenReduxProvider.tsx.html" class="button">View Source</a>
+            <span>
+                <a href="components_misc_MoorhenReduxProvider.tsx.html">components/misc/MoorhenReduxProvider.tsx</a>, <a href="components_misc_MoorhenReduxProvider.tsx.html#line18">line 18</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+    <h5>Example</h5>
+    
+    
+        <pre class="prettyprint"><code>import { MoorhenReduxProvider, MoorhenContainer } from "moorhen";
+
+const exampleApp = () => {
+
+   return &lt;MoorhenReduxProvider>
+             &lt;MoorhenContainer/>
+          &lt;\MoorhenReduxProvider>
+}</code></pre>
+    
+
+
+</div>
+            
             </div>
         </div>
     
@@ -1568,2024 +2217,12 @@ return (
 
 
     
-    <h4 class="name" id="MoorhenContextProvider">
-        <a class="href-link" href="#MoorhenContextProvider">#</a>
-        
-        <span class="code-name">
-            
-                MoorhenContextProvider<span class="signature">(children)</span><span class="type-signature"></span>
-            
-        </span>
-    </h4>
-    
-
-    
-    
-    <div class="description">
-        A context provider storing state variables used throughout Moorhen. It will store these states
-in the local storage so that they persist across different sessions.
-    </div>
-    
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-<div class="table-container">
-    <table class="params table">
-        <thead>
-        <tr>
-            
-            <th>Name</th>
-            
-
-            <th>Type</th>
-
-            
-
-            
-
-            <th class="last">Description</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>children</code></td>
-  
-
-  <td class="type">
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last">The Moorhen App</td>
-</tr>
-
-
-        
-        </tbody>
-    </table>
-</div>
-
-
-
-
-
-    <h5 class="subsection-title">Properties:</h5>
-
-    
-<div class="table-container">
-    <table class="props table">
-        <thead>
-        <tr>
-            
-            <th>Name</th>
-            
-
-            <th>Type</th>
-
-            
-            <th>Attributes</th>
-            
-
-            
-            <th>Default</th>
-            
-
-            <th class="last">Description</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>isMounted</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-        </td>
-    
-
-    <td class="description last">Indicates if the states have been already loaded from local storage.</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>defaultBackgroundColor</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">Array.&lt;number></code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            [1, 1, 1, 1]
-        
-        </td>
-    
-
-    <td class="description last">The default background colour used when starting the app.</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>enableTimeCapsule</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            true
-        
-        </td>
-    
-
-    <td class="description last">Indicates if session backups are enabled by default</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>atomLabelDepthMode</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            true
-        
-        </td>
-    
-
-    <td class="description last">Indicates if the atom label depth mode is active</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>defaultExpandDisplayCards</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            false
-        
-        </td>
-    
-
-    <td class="description last">Indicates whether molecule and map cards should be expanded on load</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>shortCuts</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">string</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-        </td>
-    
-
-    <td class="description last">A string with a JSON structure containing the user defined keyboard shortcuts</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>defaultMapLitLines</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            false
-        
-        </td>
-    
-
-    <td class="description last">Indicates if maps should be rendered using lit lines by default</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>enableRefineAfterMod</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            false
-        
-        </td>
-    
-
-    <td class="description last">Indicates if triple refinement should be automatically done after every modification</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>mouseSensitivity</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">number</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            0.3
-        
-        </td>
-    
-
-    <td class="description last">The current mouse sensitivity used to pan/rotate the view</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>zoomWheelSensitivityFactor</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">number</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            1.0
-        
-        </td>
-    
-
-    <td class="description last">The current sensitivity used when using the mouse wheel to zoom the view</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>contourWheelSensitivityFactor</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">number</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            0.05
-        
-        </td>
-    
-
-    <td class="description last">The current sensitivity used when using the mouse wheel to change map contour level</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>drawCrosshairs</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            true
-        
-        </td>
-    
-
-    <td class="description last">Indicates if the crosshairs should be drawn</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>drawAxes</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            true
-        
-        </td>
-    
-
-    <td class="description last">Indicates if the x/y/z axes should be drawn</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>drawFPS</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            true
-        
-        </td>
-    
-
-    <td class="description last">Indicates if the current FPS should be calculated and shown</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>drawMissingLoops</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            true
-        
-        </td>
-    
-
-    <td class="description last">Indicates if missing residues should be drawn using dashed lines</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>drawInteractions</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            true
-        
-        </td>
-    
-
-    <td class="description last">Indicates if residue interactions should be drawn</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>doPerspectiveProjection</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            false
-        
-        </td>
-    
-
-    <td class="description last">Indicates if perspective projection should be used</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>useOffScreenBuffers</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            false
-        
-        </td>
-    
-
-    <td class="description last">Indicates if off screen buffers should be used</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>depthBlurDepth</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            false
-        
-        </td>
-    
-
-    <td class="description last">Indicates if depth blur should be used</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>doShadowDepthDebug</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            false
-        
-        </td>
-    
-
-    <td class="description last">Indicates if shadow depth blur should be used</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>doShadow</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            false
-        
-        </td>
-    
-
-    <td class="description last">Indicates if shadows should be drawn</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>doSSAO</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            false
-        
-        </td>
-    
-
-    <td class="description last">Indicates if ambient occlusion should be done</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>doOutline</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            false
-        
-        </td>
-    
-
-    <td class="description last">Indicates if molecule should be drawn</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>GLLabelsFontFamily</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">string</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            'Arial'
-        
-        </td>
-    
-
-    <td class="description last">The font family used in labels</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>GLLabelsFontSize</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">number</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            18
-        
-        </td>
-    
-
-    <td class="description last">The font size used in labels</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>doSpinTest</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            false
-        
-        </td>
-    
-
-    <td class="description last">Indicates if a spin test is to be carried out</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>mapLineWidth</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">number</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            0.75
-        
-        </td>
-    
-
-    <td class="description last">The default map line width</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>makeBackups</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            true
-        
-        </td>
-    
-
-    <td class="description last">Indicates if automatic session backups are active</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>showShortcutToast</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            false
-        
-        </td>
-    
-
-    <td class="description last">Indicates if a toastshould be shown on key press when a shortcut is activated</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>defaultMapSurface</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            false
-        
-        </td>
-    
-
-    <td class="description last">Indicates if maps should be shown as surfaces by default</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>defaultBondSmoothness</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">number</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            1
-        
-        </td>
-    
-
-    <td class="description last">The default smoothness level used when rendering molecules</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>showScoresToast</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            false
-        
-        </td>
-    
-
-    <td class="description last">Indicates if a toast with scores should be shown after connecting molecules and maps for map updates</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>shortcutOnHoveredAtom</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            false
-        
-        </td>
-    
-
-    <td class="description last">Indicates if shortcuts should be performed on the atom being hovered instead of the one in the centre of view</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>resetClippingFogging</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            false
-        
-        </td>
-    
-
-    <td class="description last">Indicates if clipping and fogging is to be reset when the zoom level changes</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>clipCap</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            false
-        
-        </td>
-    
-
-    <td class="description last">Activates clip clap spheres</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>transparentModalsOnMouseOut</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            true
-        
-        </td>
-    
-
-    <td class="description last">Make modals transparent on mouse out</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>maxBackupCount</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">number</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            10
-        
-        </td>
-    
-
-    <td class="description last">The maximum number of session backups stored in the local storage</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>modificationCountBackupThreshold</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">number</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            5
-        
-        </td>
-    
-
-    <td class="description last">The number of modifications that will trigger an automatic session backup</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>defaultUpdatingScores</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">Array.&lt;string></code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            ['Rfree', 'Rfactor', 'Moorhen Points']
-        
-        </td>
-    
-
-    <td class="description last">A list of the scores shown after connecting molecules and maps for map updates</td>
-</tr>
-
-        
-            
-<tr class="deep-level-0">
-    
-        <td class="name"><code>devMode</code></td>
-    
-
-    <td class="type">
-    
-        
-<code class="param-type">boolean</code>
-
-
-    
-    </td>
-
-    
-        <td class="attributes">
-        
-            &lt;optional><br>
-        
-
-        
-        </td>
-    
-
-    
-        <td class="default">
-        
-            false
-        
-        </td>
-    
-
-    <td class="description last">Indicates if developer mode is active</td>
-</tr>
-
-        
-        </tbody>
-    </table>
-</div>
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="utils_MoorhenContext.tsx.html" class="button">View Source</a>
-            <span>
-                <a href="utils_MoorhenContext.tsx.html">utils/MoorhenContext.tsx</a>, <a href="utils_MoorhenContext.tsx.html#line325">line 325</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-</div>
-            
-                <div class="member">
-
-
-    
-    <h4 class="name" id="getDefaultContextValues">
-        <a class="href-link" href="#getDefaultContextValues">#</a>
-        
-        <span class="code-name">
-            
-                getDefaultContextValues<span class="signature">()</span><span class="type-signature"> &rarr; {moorhen.ContextValues}</span>
-            
-        </span>
-    </h4>
-    
-
-    
-    
-    <div class="description">
-        A function use to get the default user-defined preferences and other context
-values.
-    </div>
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="utils_MoorhenContext.tsx.html" class="button">View Source</a>
-            <span>
-                <a href="utils_MoorhenContext.tsx.html">utils/MoorhenContext.tsx</a>, <a href="utils_MoorhenContext.tsx.html#line38">line 38</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <div class='columns method-parameter'>
-        <div class="column is-2"><label>Returns:</label></div>
-        <div class="column is-10">
-            
-                    
-
-<div class="columns">
-    
-    <div class='param-desc column is-7'>An object containing the default context values
-for the current version.</div>
-    
-    
-    <div class='column is-5 has-text-left'>
-        <label>Type: </label>
-        
-<code class="param-type">moorhen.ContextValues</code>
-
-
-    </div>
-    
-</div>
-
-                
-        </div>
-    </div>
-
-
-
-
-    <h5>Example</h5>
-    
-    
-        <pre class="prettyprint"><code>import { getDefaultContextValues } from "moorhen";
-
-const storedVersion = await localforage.getItem('version');
-const defaultValues = getDefaultContextValues();
-
-if (storedVersion !== defaultValues.version) {
- localforage.setItem('version', defaultValues.version);
-}</code></pre>
-    
-
-
-</div>
-            
-                <div class="member">
-
-
-    
-    <h4 class="name" id="itemReducer">
-        <a class="href-link" href="#itemReducer">#</a>
-        
-        <span class="code-name">
-            
-                itemReducer<span class="signature">(oldList, change)</span><span class="type-signature"> &rarr; {Array.&lt;T>}</span>
-            
-        </span>
-    </h4>
-    
-
-    
-    
-    <div class="description">
-        A reducer that can be used to manage the state of the listed molecules and maps. Here `T` indicates either
-`moorhen.Map` or `moorhen.Molecule`
-    </div>
-    
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-<div class="table-container">
-    <table class="params table">
-        <thead>
-        <tr>
-            
-            <th>Name</th>
-            
-
-            <th>Type</th>
-
-            
-
-            
-
-            <th class="last">Description</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>oldList</code></td>
-  
-
-  <td class="type">
-  
-      
-<code class="param-type">Array.&lt;T></code>
-
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last">The old state list</td>
-</tr>
-
-
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>change</code></td>
-  
-
-  <td class="type">
-  
-      
-<code class="param-type">moorhen.MolChange.&lt;T></code>
-
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last">An object indicating the change, of shape `{ action: 'Add' | 'Remove' | 'AddList' | 'Empty'; item?: T; items?: T[]; }`</td>
-</tr>
-
-
-        
-        </tbody>
-    </table>
-</div>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="utils_MoorhenUtils.ts.html" class="button">View Source</a>
-            <span>
-                <a href="utils_MoorhenUtils.ts.html">utils/MoorhenUtils.ts</a>, <a href="utils_MoorhenUtils.ts.html#line281">line 281</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <div class='columns method-parameter'>
-        <div class="column is-2"><label>Returns:</label></div>
-        <div class="column is-10">
-            
-                    
-
-<div class="columns">
-    
-    <div class='param-desc column is-7'>The resulting new state with the updated list of molecules or maps</div>
-    
-    
-    <div class='column is-5 has-text-left'>
-        <label>Type: </label>
-        
-<code class="param-type">Array.&lt;T></code>
-
-
-    </div>
-    
-</div>
-
-                
-        </div>
-    </div>
-
-
-
-
-    <h5>Example</h5>
-    
-    
-        <pre class="prettyprint"><code>import { useReducer } from 'react'
-import { itemReducer } from "moorhen"
-
-// Define initial states
-const initialMoleculesState = []
-const initialMapsState = []
-
-// Use reducer
-const [molecules, changeMolecules] = useReducer(itemReducer, initialMoleculesState)
-const [maps, changeMaps] = useReducer(itemReducer, initialMapsState)
-
-// Add new molecule
-newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibrary)
-changeMolecules({ action: "Add", item: newMolecule })
-
-// Remove new molecule
-changeMolecules({ action: "Remove", item: newMolecule })
-
-// Remove all molecules
-changeMolecules({ action: "Empty"})</code></pre>
-    
-
-
-</div>
-            
-                <div class="member">
-
-
-    
     <h4 class="name" id="loadSessionData">
         <a class="href-link" href="#loadSessionData">#</a>
         
         <span class="code-name">
             
-                loadSessionData<span class="signature">(sessionDataString, monomerLibraryPath, molecules, changeMolecules, maps, changeMaps, setActiveMap, commandCentre, timeCapsuleRef, glRef)</span><span class="type-signature"> &rarr; {number}</span>
+                loadSessionData<span class="signature">(sessionDataString, monomerLibraryPath, molecules, maps, commandCentre, timeCapsuleRef, glRef, dispatch)</span><span class="type-signature"> &rarr; {number}</span>
             
         </span>
     </h4>
@@ -3707,31 +2344,6 @@ changeMolecules({ action: "Empty"})</code></pre>
             
 <tr class="deep-level-0">
   
-      <td class="name"><code>changeMolecules</code></td>
-  
-
-  <td class="type">
-  
-      
-<code class="param-type">function</code>
-
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last">The state reducer for the molecules loaded in the session</td>
-</tr>
-
-
-        
-
-            
-<tr class="deep-level-0">
-  
       <td class="name"><code>maps</code></td>
   
 
@@ -3749,56 +2361,6 @@ changeMolecules({ action: "Empty"})</code></pre>
   
 
   <td class="description last">State containing current maps loaded in the session</td>
-</tr>
-
-
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>changeMaps</code></td>
-  
-
-  <td class="type">
-  
-      
-<code class="param-type">function</code>
-
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last">The state reducer for the maps loaded in the session</td>
-</tr>
-
-
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>setActiveMap</code></td>
-  
-
-  <td class="type">
-  
-      
-<code class="param-type">function</code>
-
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last">A function to set the state of the active map</td>
 </tr>
 
 
@@ -3878,6 +2440,31 @@ changeMolecules({ action: "Empty"})</code></pre>
 
 
         
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>dispatch</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Dispatch.&lt;AnyAction></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">Dispatch method for the MoorhenReduxStore</td>
+</tr>
+
+
+        
         </tbody>
     </table>
 </div>
@@ -3921,7 +2508,7 @@ changeMolecules({ action: "Empty"})</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenUtils.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenUtils.ts.html">utils/MoorhenUtils.ts</a>, <a href="utils_MoorhenUtils.ts.html#line109">line 109</a>
+                <a href="utils_MoorhenUtils.ts.html">utils/MoorhenUtils.ts</a>, <a href="utils_MoorhenUtils.ts.html#line107">line 107</a>
             </span>
         </p>
     
