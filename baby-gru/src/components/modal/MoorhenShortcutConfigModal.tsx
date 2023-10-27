@@ -24,7 +24,7 @@ export const MoorhenShortcutConfigModal = (props: {
     }
 
     const restoreDefaults = () => {
-        const defaultValues = MoorhenPreferences.getDefaultContextValues()
+        const defaultValues = MoorhenPreferences.defaultContextValues
         props.setShowModal(false)
         setStagedShortCuts(defaultValues.shortCuts as {[label: string]: moorhen.Shortcut})
         dispatch(

@@ -9,8 +9,12 @@ declare module 'moorhen' {
     let MoorhenContainer: any;
     module.exports = MoorhenContainer;
 
+    let MoorhenReduxProvider: any;
+    module.exports = MoorhenReduxProvider;
+
     class MoorhenPreferences implements _moorhen.Preferences {
         name: string;
+        static defaultContextValues: _moorhen.ContextValues;
         localStorageInstance: {
             clear: () => void;
             setItem: (key: string, value: any) => Promise<string>;
