@@ -6,6 +6,7 @@ import { MoorhenMolecule } from './utils/MoorhenMolecule';
 import { MoorhenMap } from './utils/MoorhenMap';
 import { MoorhenCommandCentre } from './utils/MoorhenCommandCentre';
 import { MoorhenTimeCapsule } from './utils/MoorhenTimeCapsule';
+import { MoorhenPreferences } from "./utils/MoorhenPreferences";
 import { MoorhenMoleculeSelect } from "./components/select/MoorhenMoleculeSelect";
 import { MoorhenMapSelect } from "./components/select/MoorhenMapSelect";
 import { loadSessionData } from "./utils/MoorhenUtils";
@@ -44,5 +45,6 @@ export {
     setDefaultMapSurface, setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut, setEnableRefineAfterMod,
     addMolecule, removeMolecule, emptyMolecules, addMoleculeList, setContourWheelSensitivityFactor, 
     setZoomWheelSensitivityFactor, setMouseSensitivity, setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts,
-    setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores
+    setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores, 
+    MoorhenPreferences
 };

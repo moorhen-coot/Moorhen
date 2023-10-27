@@ -172,9 +172,9 @@ export namespace moorhen {
         defaultColourRules: ColourRule[];
         restraints: {maxRadius: number, cid: string}[];
         monomerLibraryPath: string;
-        hoverRepresentation: moorhen.MoleculeRepresentation;
-        unitCellRepresentation: moorhen.MoleculeRepresentation;
-        environmentRepresentation: moorhen.MoleculeRepresentation;
+        hoverRepresentation: MoleculeRepresentation;
+        unitCellRepresentation: MoleculeRepresentation;
+        environmentRepresentation: MoleculeRepresentation;
         hasDNA: boolean;
         hasGlycans: boolean;
     }
@@ -199,7 +199,7 @@ export namespace moorhen {
         show(): void;
         hide(): void;
         setAtomBuffers(arg0: AtomInfo[]): void;
-        bondOptions: moorhen.cootBondOptions;
+        bondOptions: cootBondOptions;
         useDefaultColourRules: boolean;
         useDefaultBondOptions: boolean;
         applyColourToNonCarbonAtoms: boolean;
@@ -336,7 +336,7 @@ export namespace moorhen {
 
     interface Map {
         getHistogram(nBins?: number, zoomFactor?: number): Promise<libcootApi.HistogramInfoJS>;
-        setMapWeight(weight?: number): Promise<moorhen.WorkerResponse>;
+        setMapWeight(weight?: number): Promise<WorkerResponse>;
         estimateMapWeight(): Promise<void>;
         setAlpha(alpha: number, redraw?: boolean): Promise<void>;
         centreOnMap(): Promise<void>;

@@ -1,6 +1,13 @@
 import localforage from 'localforage';
 import { moorhen } from '../types/moorhen';
 
+/**
+ * Interface for the Moorhen preferences kept in the browser local storage
+ * @property {string} name - The name of the local storage instance
+ * @property {LocalForage} localStorageInstance - The local storage instance
+ * @constructor
+ * @param {string} name - The name of the local storage instance
+ */
 export class MoorhenPreferences implements moorhen.Preferences {
 
     localStorageInstance: LocalForage;
