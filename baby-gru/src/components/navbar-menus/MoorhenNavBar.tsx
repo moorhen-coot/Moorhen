@@ -28,6 +28,7 @@ import { useSelector } from 'react-redux';
 export interface MoorhenNavBarExtendedControlsInterface extends moorhen.CollectedProps {
     dropdownId: string;
     currentDropdownId: string;
+    setBusy: React.Dispatch<React.SetStateAction<boolean>>;
     setCurrentDropdownId: React.Dispatch<React.SetStateAction<string>>;
     setShowQuerySequence: React.Dispatch<React.SetStateAction<boolean>>;
     setShowScripting: React.Dispatch<React.SetStateAction<boolean>>;
@@ -89,7 +90,8 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
     }, [props.timeCapsuleRef.current])
 
     const collectedProps = {
-        currentDropdownId, setCurrentDropdownId, setShowQuerySequence, setShowScripting, setShowCreateAcedrgLinkModal, ...props
+        currentDropdownId, setCurrentDropdownId, setShowQuerySequence, setShowScripting, 
+        setShowCreateAcedrgLinkModal, setBusy, ...props
     }
 
     const actions = {

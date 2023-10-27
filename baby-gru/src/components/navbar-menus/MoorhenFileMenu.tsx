@@ -86,16 +86,28 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     }
 
     const fetchFiles = (): void => {
+        props.setBusy(true)
         if (remoteSource === "PDBe") {
             fetchFilesFromEBI()
         } else if (remoteSource === "PDB-REDO") {
             fetchFilesFromPDBRedo()
         } else if (remoteSource === 'AFDB') {
             fetchFilesFromAFDB()
-        } else if (remoteSource === 'COD') {
-            fetchFilesFromCOD()
+        } else if (remoteSource === 'EMDB') {
+            fetchMapFromEMDB()
         } else {
             console.log(`Unrecognised remote source! ${remoteSource}`)
+        }
+    }
+
+    const fetchMapFromEMDB = () => {
+        const emdbCode = pdbCodeFetchInputRef.current.value.toLowerCase()
+        if (emdbCode) {
+            const mapUrl = `https://ftp.ebi.ac.uk/pub/databases/emdb/structures/EMD-${emdbCode}/map/emd_${emdbCode}.map.gz`
+            fetchMapFromURL(mapUrl, `${emdbCode}.map.gz`, false)
+            .then(newMap => newMap.centreOnMap())
+        } else {
+            console.log('Error: no EMDB entry provided')
         }
     }
 
@@ -178,7 +190,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         }   
     }
 
-    const fetchMapFromURL = async (url: RequestInfo | URL, mapName: string, isDiffMap: boolean = false): Promise<void> => {
+    const fetchMapFromURL = async (url: RequestInfo | URL, mapName: string, isDiffMap: boolean = false): Promise<moorhen.Map> => {
         const newMap = new MoorhenMap(commandCentre, glRef)
         try {
             await newMap.loadToCootFromMapURL(url, mapName, isDiffMap)
@@ -187,13 +199,15 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                 dispatch( addMap(newMap) )
                 dispatch( setActiveMap(newMap) )
             })
-       } catch {
+        } catch (err) {
+            console.warn(err)
             dispatch(setNotificationContent(getWarningToast(`Failed to read map`)))
             console.log(`Cannot fetch map from ${url}`)
         }
+        return newMap
     }
 
-    const fetchMtzFromURL = async (url: RequestInfo | URL, mapName: string, selectedColumns: moorhen.selectedMtzColumns): Promise<void> => {
+    const fetchMtzFromURL = async (url: RequestInfo | URL, mapName: string, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> => {
         const newMap = new MoorhenMap(commandCentre, glRef)
         try {
             await newMap.loadToCootFromMtzURL(url, mapName, selectedColumns)
@@ -206,6 +220,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             dispatch(setNotificationContent(getWarningToast(`Failed to read mtz`)))
             console.log(`Cannot fetch mtz from ${url}`)
         }
+        return newMap
     }
 
     const handleSessionUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -318,9 +333,9 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                                 <Dropdown.Item key="AFDB" href="#" onClick={() => {
                                     setRemoteSource("AFDB")
                                 }}>AlphaFold DB</Dropdown.Item>
-                                <Dropdown.Item key="COD" href="#" onClick={() => {
-                                    setRemoteSource("COD")
-                                }}>COD</Dropdown.Item>
+                                <Dropdown.Item key="EMDB" href="#" onClick={() => {
+                                    setRemoteSource("EMDB")
+                                }}>EMDB</Dropdown.Item>
                             </SplitButton>
                             <Form.Control type="text" style={{borderColor: isValidPdbId ? '' : 'red'}}  ref={pdbCodeFetchInputRef} onKeyDown={(e) => {
                                 setIsValidPdbId(true)
