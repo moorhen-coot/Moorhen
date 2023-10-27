@@ -626,8 +626,8 @@ describe('Testing molecules_container_js', () => {
 
         const result = molecules_container.get_map_histogram(mapMolNo, 200, 1)
         expect(result.base).toBeCloseTo(-1.01, 1)
-        expect(result.bin_width).toBeCloseTo(0.09, 1)
-        expect(result.counts.size()).toBe(51)
+        expect(result.bin_width).toBeCloseTo(0.02, 1)
+        expect(result.counts.size()).toBe(200)
     })
 
     test("Test get_molecule_atoms pdb", () => {
