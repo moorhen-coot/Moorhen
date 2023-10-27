@@ -695,7 +695,18 @@ export namespace moorhen {
         windowHeight: number;
         changeMolecules: (arg0: MolChange<Molecule>) => void
     }
-    
+
+    interface ContainerRefs {
+        glRef: React.MutableRefObject<null | webGL.MGWebGL>;
+        timeCapsuleRef: React.MutableRefObject<null | TimeCapsule>;
+        commandCentre: React.MutableRefObject<CommandCentre>;
+        videoRecorderRef: React.MutableRefObject<null | ScreenRecorder>;
+        moleculesRef: React.MutableRefObject<null | Molecule[]>;
+        mapsRef: React.MutableRefObject<null | Map[]>;
+        activeMapRef: React.MutableRefObject<Map>;
+        lastHoveredAtomRef: React.MutableRefObject<null | HoveredAtom>;
+    }
+      
     interface ContainerOptionalProps {
         disableFileUploads: boolean;
         urlPrefix: string;
@@ -712,14 +723,9 @@ export namespace moorhen {
         aceDRGInstance: AceDRGInstance | null; 
     }
     
-    interface Controls extends ContainerOptionalProps {
-        videoRecorderRef: React.MutableRefObject<null | ScreenRecorder>;
-        glRef: React.MutableRefObject<null | webGL.MGWebGL>;
-        timeCapsuleRef: React.MutableRefObject<null | TimeCapsule>;
-        commandCentre: React.MutableRefObject<CommandCentre>;
-        moleculesRef: React.MutableRefObject<null | Molecule[]>;
-        mapsRef: React.MutableRefObject<null | Map[]>;
-    }
+    interface ContainerProps extends Partial<ContainerRefs>, Partial<ContainerOptionalProps> { }
+    
+    interface CollectedProps extends ContainerRefs, ContainerOptionalProps { }
 
     interface State {
         molecules: Molecule[];
@@ -805,19 +811,6 @@ export namespace moorhen {
         };
     }
     
-    interface ContainerRefs {
-        glRef: React.MutableRefObject<null | webGL.MGWebGL>;
-        timeCapsuleRef: React.MutableRefObject<null | TimeCapsule>;
-        commandCentre: React.MutableRefObject<CommandCentre>;
-        videoRecorderRef: React.MutableRefObject<null | ScreenRecorder>;
-        moleculesRef: React.MutableRefObject<null | Molecule[]>;
-        mapsRef: React.MutableRefObject<null | Map[]>;
-        activeMapRef: React.MutableRefObject<Map>;
-        lastHoveredAtomRef: React.MutableRefObject<null | HoveredAtom>;
-    }
-    
-    interface ContainerProps extends Partial<ContainerRefs>, Partial<ContainerOptionalProps> { }
-
     type actionButtonSettings = {
         mutate: 'ALA' | 'CYS' | 'ASP' | 'GLU' | 'PHE' | 'GLY' | 'HIS' | 'ILE' | 'LYS' | 'LEU' | 'MET' | 'ASN' | 'PRO' | 'GLN' | 'ARG' | 'SER' | 'THR' | 'VAL' | 'TRP' | 'TYR';
         refine: 'SINGLE' | 'TRIPLE' | 'QUINTUPLE' | 'HEPTUPLE' | 'SPHERE' | 'BIG_SPHERE' | 'CHAIN' | 'ALL';

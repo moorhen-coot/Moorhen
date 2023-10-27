@@ -13,7 +13,7 @@ import { MoorhenUnmodelledBlobs } from "../validation-tools/MoorhenUnmodelledBlo
 import { convertViewtoPx} from '../../utils/MoorhenUtils';
 import { useSelector } from "react-redux";
 
-interface MoorhenValidationModalProps extends moorhen.Controls {
+interface MoorhenValidationModalProps extends moorhen.CollectedProps {
     show: boolean;
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
 }

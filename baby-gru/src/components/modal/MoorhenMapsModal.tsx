@@ -7,7 +7,7 @@ import { UnfoldLessOutlined } from '@mui/icons-material';
 import { Button } from 'react-bootstrap';
 import { useSelector } from "react-redux";
 
-interface MoorhenMapsModalProps extends moorhen.Controls {
+interface MoorhenMapsModalProps extends moorhen.CollectedProps {
     show: boolean;
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
 }

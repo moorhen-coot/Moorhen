@@ -22,7 +22,6 @@ import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSl
  * A container for the Moorhen app
  * @property {string} [urlPrefix='.'] - The root url used to load sources from public folder
  * @property {string} [monomerLibraryPath='./baby-gru/monomers'] - A string with the path to the monomer library, relative to the root of the app
- * @property {function} forwardControls - Callback executed when coot is initialised and will return an object of type moorhen.Controls
  * @property {function} setMoorhenDimensions - Callback executed on window resize. Return type is an array of two numbers [width, height]
  * @property {boolean} [disableFileUploads=false] - Indicates if file uploads should b disabled
  * @property {JSX.Element[]} extraNavBarMenus - A list with additional menu items rendered under the navigation menu
@@ -131,10 +130,11 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         extraEditMenuItems, aceDRGInstance, extraCalculateMenuItems, setMoorhenDimensions
     } = props
 
-    const collectedProps: moorhen.Controls = {
+    const collectedProps: moorhen.CollectedProps = {
         glRef, commandCentre, timeCapsuleRef, disableFileUploads, extraDraggableModals, aceDRGInstance, 
         urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems, extraEditMenuItems,
-        extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, videoRecorderRef,
+        extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, activeMapRef,
+        videoRecorderRef, lastHoveredAtomRef,
     }
     
     useEffect(() => {
