@@ -101,13 +101,11 @@ export function sequenceIsValid(sequence: moorhen.ResidueInfo[]): boolean {
  * @param {string} sessionDataString - A JSON string representation of the object containing session data
  * @param {string} monomerLibraryPath - Path to the monomer library
  * @param {moorhen.Molecule[]} molecules - State containing current molecules loaded in the session
- * @param {function} changeMolecules - The state reducer for the molecules loaded in the session
  * @param {moorhen.Map[]} maps - State containing current maps loaded in the session
- * @param {function} changeMaps - The state reducer for the maps loaded in the session
- * @param {function} setActiveMap - A function to set the state of the active map
  * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - React reference to the command centre
  * @param {React.RefObject<moorhen.TimeCapsule>} timeCapsuleRef - React reference to the time capsule
  * @param {React.RefObject<webGL.MGWebGL>} glRef - React reference to the webGL renderer
+ * @param {Dispatch<AnyAction>} dispatch - Dispatch method for the MoorhenReduxStore
  * @returns {number} Returns -1 if there was an error loading the session otherwise 0
  */
 export async function loadSessionData(
@@ -299,50 +297,6 @@ export async function loadSessionData(
 
     timeCapsuleRef.current.setBusy(false)
     return 0
-}
-
-/**
- * A reducer that can be used to manage the state of the listed molecules and maps. Here `T` indicates either
- * `moorhen.Map` or `moorhen.Molecule`
- * @param {T[]} oldList - The old state list
- * @param {moorhen.MolChange<T>} change - An object indicating the change, of shape `{ action: 'Add' | 'Remove' | 'AddList' | 'Empty'; item?: T; items?: T[]; }`
- * @returns {T[]} The resulting new state with the updated list of molecules or maps
- * @example
- * import { useReducer } from 'react'
- * import { itemReducer } from "moorhen"
- * 
- * // Define initial states
- * const initialMoleculesState = []
- * const initialMapsState = []
- * 
- * // Use reducer
- * const [molecules, changeMolecules] = useReducer(itemReducer, initialMoleculesState)
- * const [maps, changeMaps] = useReducer(itemReducer, initialMapsState)
- * 
- * // Add new molecule
- * newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibrary)
- * changeMolecules({ action: "Add", item: newMolecule })
- * 
- * // Remove new molecule
- * changeMolecules({ action: "Remove", item: newMolecule })
- * 
- * // Remove all molecules
- * changeMolecules({ action: "Empty"})
- */
-export function itemReducer<T extends moorhen.Molecule | moorhen.Map> (oldList: T[], change: moorhen.MolChange<T>): T[] {
-    if (change.action === 'Add') {
-        return [...oldList, change.item]
-    }
-    else if (change.action === 'Remove') {
-        return oldList.filter(item =>  item.molNo !== change.item.molNo)
-    }
-    else if (change.action === 'AddList') {
-        return oldList.concat(change.items)
-    }
-    else if (change.action === 'Empty') {
-        return []
-    }
-    return oldList
 }
 
 export function convertRemToPx(rem: number): number {
