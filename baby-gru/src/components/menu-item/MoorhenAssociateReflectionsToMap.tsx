@@ -4,15 +4,16 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect"
 import { MoorhenMtzWrapper } from "../../utils/MoorhenMtzWrapper"
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { setNotificationContent } from "../../store/generalStatesSlice";
 
 export const MoorhenAssociateReflectionsToMap = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
     getWarningToast: (arg0: string) => JSX.Element;
 }) => {
 
+    const dispatch = useDispatch()
     const maps = useSelector((state: moorhen.State) => state.maps)
 
     const mapSelectRef = useRef<null | HTMLSelectElement>(null)
@@ -31,7 +32,7 @@ export const MoorhenAssociateReflectionsToMap = (props: {
             setColumns(allColumnNames)
             reflectionDataRef.current = babyGruMtzWrapper.reflectionData   
         } catch (err) {
-            props.setNotificationContent(props.getWarningToast('Error reading mtz file'))
+            dispatch(setNotificationContent(props.getWarningToast('Error reading mtz file')))
             document.body.click()
         }
     }

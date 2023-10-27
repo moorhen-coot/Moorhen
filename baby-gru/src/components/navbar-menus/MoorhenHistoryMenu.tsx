@@ -7,6 +7,7 @@ import { SaveOutlined, WarningOutlined } from "@mui/icons-material";
 import { Stack } from "react-bootstrap";
 import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { useSelector, useDispatch } from 'react-redux';
+import { setNotificationContent } from "../../store/generalStatesSlice";
 
 export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
 
@@ -38,11 +39,11 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
                 dispatch
             )
             if (status === -1) {
-                props.setNotificationContent(getWarningToast(`Failed to read backup (deprecated format)`))
+                dispatch(setNotificationContent(getWarningToast(`Failed to read backup (deprecated format)`)))
             }
         } catch (err) {
             console.log(err)
-            props.setNotificationContent(getWarningToast("Error loading session"))
+            dispatch(setNotificationContent(getWarningToast("Error loading session")))
         }
     }, [props])
 

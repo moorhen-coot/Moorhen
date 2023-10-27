@@ -14,7 +14,7 @@ import { RgbColorPicker } from "react-colorful"
 import { moorhen } from "../../types/moorhen"
 import { MoorhenNotification } from "../misc/MoorhenNotification"
 import { useSelector, useDispatch } from 'react-redux';
-import { setActiveMap } from "../../store/generalStatesSlice";
+import { setActiveMap, setNotificationContent } from "../../store/generalStatesSlice";
 import { addMap } from "../../store/mapsSlice";
 
 type ActionButtonType = {
@@ -283,9 +283,8 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             } else {
                 newMapContourLevel = mapContourLevel - contourWheelSensitivityFactor
             }
-            
             setMapContourLevel(newMapContourLevel)
-            props.setNotificationContent(
+            dispatch(setNotificationContent(
                 <MoorhenNotification key={guid()} hideDelay={5000}>
                 <h5 style={{margin: 0}}>
                     <span>
@@ -293,7 +292,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                     </span>
                 </h5>
                 </MoorhenNotification>
-            )
+            ))
         }
     }, [mapContourLevel, mapRadius, activeMap?.molNo, props.map.molNo, props.map.cootContour])
 

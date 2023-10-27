@@ -18,7 +18,7 @@ import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch, batch } from 'react-redux';
-import { setActiveMap } from "../../store/generalStatesSlice";
+import { setActiveMap, setNotificationContent } from "../../store/generalStatesSlice";
 import { addMolecule, addMoleculeList } from "../../store/moleculesSlice";
 import { addMap } from "../../store/mapsSlice";
 
@@ -58,7 +58,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         
         let newMolecules: moorhen.Molecule[] = await Promise.all(readPromises)
         if (!newMolecules.every(molecule => molecule.molNo !== -1)) {
-            props.setNotificationContent(getWarningToast(`Failed to read molecule`))
+            dispatch(setNotificationContent(getWarningToast(`Failed to read molecule`)))
             newMolecules = newMolecules.filter(molecule => molecule.molNo !== -1)
             if (newMolecules.length === 0) {
                 return
@@ -172,7 +172,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             newMolecule.centreOn('/*/*/*/*', false)
             return newMolecule
         } catch (err) {
-            props.setNotificationContent(getWarningToast(`Failed to read molecule`))
+            dispatch(setNotificationContent(getWarningToast(`Failed to read molecule`)))
             console.log(`Cannot fetch molecule from ${url}`)
             setIsValidPdbId(false)
         }   
@@ -188,7 +188,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                 dispatch( setActiveMap(newMap) )
             })
        } catch {
-            props.setNotificationContent(getWarningToast(`Failed to read map`))
+            dispatch(setNotificationContent(getWarningToast(`Failed to read map`)))
             console.log(`Cannot fetch map from ${url}`)
         }
     }
@@ -203,7 +203,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                 dispatch( setActiveMap(newMap) )
             })
         } catch {
-            props.setNotificationContent(getWarningToast(`Failed to read mtz`))
+            dispatch(setNotificationContent(getWarningToast(`Failed to read mtz`)))
             console.log(`Cannot fetch mtz from ${url}`)
         }
     }
@@ -215,7 +215,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             await loadSession(sessionData) 
         } catch (err) {
             console.log(err)
-            props.setNotificationContent(getWarningToast("Error loading session"))
+            dispatch(setNotificationContent(getWarningToast("Error loading session")))
         }
     }
 
@@ -233,11 +233,11 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                 dispatch
             )
             if (status === -1) {
-                props.setNotificationContent(getWarningToast(`Failed to read backup (deprecated format)`))
+                dispatch(setNotificationContent(getWarningToast(`Failed to read backup (deprecated format)`)))
             }
         } catch (err) {
             console.log(err)
-            props.setNotificationContent(getWarningToast("Error loading session"))
+            dispatch(setNotificationContent(getWarningToast("Error loading session")))
         }
     }
 
@@ -275,24 +275,26 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         } else {
             document.body.click()
             props.videoRecorderRef.current.startRecording()
-            props.setNotificationContent(
-                <MoorhenNotification key={guid()} width={13}>
-                    <Stack gap={2} direction='horizontal' style={{width: '100%', display:'flex', justifyContent: 'space-between'}}>
-                        <div style={{alignItems: 'center', display: 'flex', justifyContent: 'center'}}>
-                            <RadioButtonCheckedOutlined style={{color: 'red', borderRadius: '30px', borderWidth: 0, borderStyle: 'hidden'}} className="moorhen-recording-icon"/>
-                            <span>Recording</span>
-                        </div>
-                        <IconButton onClick={() => {
-                            props.videoRecorderRef.current.stopRecording()
-                            props.setNotificationContent(null)
-                        }}>
-                            <StopCircleOutlined/>
-                        </IconButton>
-                    </Stack>
-                </MoorhenNotification>   
+            dispatch(
+                setNotificationContent(
+                    <MoorhenNotification key={guid()} width={13}>
+                        <Stack gap={2} direction='horizontal' style={{width: '100%', display:'flex', justifyContent: 'space-between'}}>
+                            <div style={{alignItems: 'center', display: 'flex', justifyContent: 'center'}}>
+                                <RadioButtonCheckedOutlined style={{color: 'red', borderRadius: '30px', borderWidth: 0, borderStyle: 'hidden'}} className="moorhen-recording-icon"/>
+                                <span>Recording</span>
+                            </div>
+                            <IconButton onClick={() => {
+                                props.videoRecorderRef.current.stopRecording()
+                                dispatch( setNotificationContent(null) )
+                            }}>
+                                <StopCircleOutlined/>
+                            </IconButton>
+                        </Stack>
+                    </MoorhenNotification>   
+                )
             )
         }
-    }, [props.videoRecorderRef, props.setNotificationContent])
+    }, [props.videoRecorderRef])
 
     return <>
                 <div style={{maxHeight: convertViewtoPx(65, height), overflowY: 'auto'}}>

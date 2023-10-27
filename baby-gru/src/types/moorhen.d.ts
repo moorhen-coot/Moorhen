@@ -720,8 +720,6 @@ export namespace moorhen {
         commandCentre: React.MutableRefObject<CommandCentre>;
         moleculesRef: React.MutableRefObject<null | Molecule[]>;
         mapsRef: React.MutableRefObject<null | Map[]>;
-        notificationContent: null | JSX.Element;
-        setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
     }
 
     interface State {
@@ -817,8 +815,6 @@ export namespace moorhen {
         mapsRef: React.MutableRefObject<null | Map[]>;
         activeMapRef: React.MutableRefObject<Map>;
         lastHoveredAtom: React.MutableRefObject<null | HoveredAtom>;
-        notificationContent: null | JSX.Element;
-        setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
     }
     
     interface ContainerProps extends Partial<ContainerStates>, Partial<ContainerOptionalProps> { }

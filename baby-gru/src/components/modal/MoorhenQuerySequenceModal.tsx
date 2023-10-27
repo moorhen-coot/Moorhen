@@ -13,6 +13,7 @@ import { webGL } from "../../types/mgWebGL";
 import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice";
+import { setNotificationContent } from "../../store/generalStatesSlice";
 
 export const MoorhenQuerySequenceModal = (props: {
     show: boolean;
@@ -20,7 +21,6 @@ export const MoorhenQuerySequenceModal = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     monomerLibraryPath: string;
-    setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
 }) => {
 
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
@@ -57,7 +57,7 @@ export const MoorhenQuerySequenceModal = (props: {
             newMolecule.centreOn('/*/*/*/*', false)
             return newMolecule
         } catch (err) {
-            props.setNotificationContent(
+            dispatch(setNotificationContent(
                 <MoorhenNotification key={guid()} hideDelay={5000}>
                     <><WarningOutlined style={{margin: 0}}/>
                         <h4 className="moorhen-warning-toast">
@@ -65,7 +65,7 @@ export const MoorhenQuerySequenceModal = (props: {
                         </h4>
                     <WarningOutlined style={{margin: 0}}/></>
                 </MoorhenNotification>
-            )
+            ))
             console.log(`Cannot fetch molecule from ${url}`)
         }
     }

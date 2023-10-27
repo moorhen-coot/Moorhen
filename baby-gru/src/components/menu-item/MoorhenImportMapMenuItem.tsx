@@ -4,7 +4,7 @@ import { MoorhenMap } from "../../utils/MoorhenMap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { setActiveMap } from "../../store/generalStatesSlice";
+import { setActiveMap, setNotificationContent } from "../../store/generalStatesSlice";
 import { batch, useDispatch } from 'react-redux';
 import { addMap } from "../../store/mapsSlice";
 
@@ -12,7 +12,6 @@ export const MoorhenImportMapMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
     getWarningToast: (arg0: string) => JSX.Element;
 }) => {
 
@@ -46,7 +45,7 @@ export const MoorhenImportMapMenuItem = (props: {
                     dispatch( setActiveMap(newMap) )
                 })
             } catch (err) {
-                props.setNotificationContent(props.getWarningToast('Error reading map file'))
+                dispatch(setNotificationContent(props.getWarningToast('Error reading map file')))
                 console.log(`Cannot read file`)    
             }
         }

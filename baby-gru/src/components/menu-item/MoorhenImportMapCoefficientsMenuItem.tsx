@@ -6,14 +6,13 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL"
 import { batch, useDispatch } from 'react-redux';
-import { setActiveMap } from "../../store/generalStatesSlice"
+import { setActiveMap, setNotificationContent } from "../../store/generalStatesSlice"
 import { addMap } from "../../store/mapsSlice"
 
 export const MoorhenImportMapCoefficientsMenuItem = (props: {
     commandCentre: RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: Dispatch<SetStateAction<boolean>>;
-    setNotificationContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
     getWarningToast: (arg0: string) => JSX.Element;
 }) => {
 
@@ -39,7 +38,7 @@ export const MoorhenImportMapCoefficientsMenuItem = (props: {
             let allColumnNames = await babyGruMtzWrapper.loadHeaderFromFile(e.target.files[0])
             setColumns(allColumnNames)
         } catch (err) {
-            props.setNotificationContent(props.getWarningToast('Error reading mtz file'))
+            dispatch(setNotificationContent(props.getWarningToast('Error reading mtz file')))
             document.body.click()
         }
     }
@@ -55,7 +54,7 @@ export const MoorhenImportMapCoefficientsMenuItem = (props: {
             })
             setCalcStructFact(false)
         } catch (err) {
-            props.setNotificationContent(props.getWarningToast('Error reading mtz file'))
+            dispatch(setNotificationContent(props.getWarningToast('Error reading mtz file')))
             console.log(`Cannot read file`)
         }
     }
