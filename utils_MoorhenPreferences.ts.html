@@ -127,9 +127,9 @@ export class MoorhenPreferences implements moorhen.Preferences {
 
     localStorageInstance: LocalForage;
     name: string;
-    defaultContextValues: moorhen.ContextValues;
+    defaultPreferencesValues: moorhen.PreferencesValues;
 
-    constructor(name: string) {
+    constructor(name: string = 'babyGru-localStorage') {
         this.name = name
         this.createLocalForageInstance()
     }
@@ -146,8 +146,8 @@ export class MoorhenPreferences implements moorhen.Preferences {
         return this.localStorageInstance
     }
 
-    static defaultContextValues: moorhen.ContextValues = {
-        version: 'v30',
+    static defaultPreferencesValues: moorhen.PreferencesValues = {
+        version: 'v31',
         transparentModalsOnMouseOut: true,
         defaultBackgroundColor: [1, 1, 1, 1],
         atomLabelDepthMode: true,
