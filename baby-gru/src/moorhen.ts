@@ -22,6 +22,7 @@ import {
     setNotificationContent, setActiveMap, setCootInitialized, setAppTittle, 
     setUserPreferencesMounted, setDevMode, setTheme, setViewOnly
  } from './store/generalStatesSlice';
+import { addMap, addMapList, removeMap, emptyMaps } from "./store/mapsSlice";
 import { setCursorStyle, setEnableAtomHovering, setHoveredAtom } from './store/hoveringStatesSlice';
 import { addAvailableFontList, setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } from './store/labelSettingsSlice';
 import { setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, setDefaultMapSurface } from './store/mapSettingsSlice';
@@ -46,5 +47,5 @@ export {
     addMolecule, removeMolecule, emptyMolecules, addMoleculeList, setContourWheelSensitivityFactor, 
     setZoomWheelSensitivityFactor, setMouseSensitivity, setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts,
     setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores, 
-    MoorhenPreferences
+    addMap, addMapList, removeMap, emptyMaps, MoorhenPreferences
 };
