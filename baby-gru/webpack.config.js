@@ -76,19 +76,15 @@ module.exports = (env, argv) => {
               toType: 'dir',  
             }
           }),
-          env.destination === 'npmRegistry' ? {
+          {
             from: path.resolve(__dirname, 'package.json'),
             to: paths.dist,
             toType: 'dir',
-          } : env.destination === 'ccp4Cloud' &&  {
-            from: path.resolve(paths.cloud, 'webcoot.html'),
-            to: paths.dist,
-            toType: 'dir',
-          }
+          } 
         ],
       }),
     ],
-    entry: env.destination === 'npmRegistry' ? path.join(paths.src, 'moorhen.ts') : path.join(paths.cloud, 'webcoot.js'),
+    entry: path.join(paths.src, 'moorhen.ts'),
     target: 'web',
     optimization: {
       minimize: argv.mode === 'development' ? false : true
@@ -122,6 +118,10 @@ module.exports = (env, argv) => {
           loader: 'babel-loader',
         },
         {
+          test: /\.jsx$/,
+          loader: 'babel-loader',
+        },
+        {
           test: /\.(?:ico|gif|png|jpg|jpeg|svg|xpm)$/,
           loader: 'file-loader',
           type: 'asset/resource',
@@ -137,11 +137,11 @@ module.exports = (env, argv) => {
       fallback: {
         fs: false
       },
-      extensions: ['.ts', '.tsx', '.js'],
+      extensions: ['.ts', '.tsx', '.js', '.jsx'],
     },
-    externals: env.destination === 'npmRegistry' ? {
+    externals: {
       'react': 'react',
       'react-dom': 'react-dom',
-    } : { }
+    }
   }
 }
