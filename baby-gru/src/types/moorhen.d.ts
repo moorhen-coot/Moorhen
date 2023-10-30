@@ -8,7 +8,7 @@ export namespace moorhen {
 
     interface Preferences {
         name: string;
-        static defaultContextValues: ContextValues;
+        static defaultPreferencesValues: PreferencesValues;
         localStorageInstance: {
             clear: () => void;
             setItem: (key: string, value: any) => Promise<string>;
@@ -596,7 +596,7 @@ export namespace moorhen {
         setTransparentModalsOnMouseOut: React.Dispatch<React.SetStateAction<boolean>>;
     }
     
-    interface ContextValues {
+    interface PreferencesValues {
         version?: string;
         isMounted?: boolean;
         defaultMapSamplingRate: number;
@@ -646,7 +646,7 @@ export namespace moorhen {
         };
     }
     
-    interface Context extends ContextSetters, ContextValues { }
+    interface Context extends ContextSetters, PreferencesValues { }
     
     type ContextButtonProps = {
         mode: 'context';
@@ -709,6 +709,7 @@ export namespace moorhen {
     }
       
     interface ContainerOptionalProps {
+        onUserPreferencesChange: (key: string, value: any) => void;
         disableFileUploads: boolean;
         urlPrefix: string;
         extraNavBarMenus: {name: string; ref: React.RefObject<any> ; icon: JSX.Element; JSXElement: JSX.Element}[];

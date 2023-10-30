@@ -23,6 +23,7 @@ import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSl
  * @property {string} [urlPrefix='.'] - The root url used to load sources from public folder
  * @property {string} [monomerLibraryPath='./baby-gru/monomers'] - A string with the path to the monomer library, relative to the root of the app
  * @property {function} setMoorhenDimensions - Callback executed on window resize. Return type is an array of two numbers [width, height]
+ * @property {function} onUserPreferencesChange - Callback executed whenever a user-defined preference changes (key: string, value: any) => void.
  * @property {boolean} [disableFileUploads=false] - Indicates if file uploads should b disabled
  * @property {JSX.Element[]} extraNavBarMenus - A list with additional menu items rendered under the navigation menu
  * @property {JSX.Element[]} extraFileMenuItems - A list with additional menu items rendered under the "File" menu
@@ -113,14 +114,15 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const {
         disableFileUploads, urlPrefix, extraNavBarMenus, viewOnly, extraDraggableModals, 
         monomerLibraryPath, extraFileMenuItems, allowScripting, backupStorageInstance,
-        extraEditMenuItems, aceDRGInstance, extraCalculateMenuItems, setMoorhenDimensions
+        extraEditMenuItems, aceDRGInstance, extraCalculateMenuItems, setMoorhenDimensions,
+        onUserPreferencesChange
     } = props
 
     const collectedProps: moorhen.CollectedProps = {
         glRef, commandCentre, timeCapsuleRef, disableFileUploads, extraDraggableModals, aceDRGInstance, 
         urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems, extraEditMenuItems,
         extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, activeMapRef,
-        videoRecorderRef, lastHoveredAtomRef,
+        videoRecorderRef, lastHoveredAtomRef, onUserPreferencesChange
     }
     
     useEffect(() => {
@@ -373,7 +375,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         
     </div>
 
-    <MoorhenPreferencesContainer/>
+    <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange}/>
 
     <Container fluid className={`baby-gru ${theme}`}>
         <Row>
@@ -409,6 +411,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 }
 
 MoorhenContainer.defaultProps = {
+    onUserPreferencesChange: () => {},
     urlPrefix: '.',
     monomerLibraryPath: './baby-gru/monomers',
     setMoorhenDimensions: null,

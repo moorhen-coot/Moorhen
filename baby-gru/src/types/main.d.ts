@@ -14,7 +14,7 @@ declare module 'moorhen' {
 
     class MoorhenPreferences implements _moorhen.Preferences {
         name: string;
-        static defaultContextValues: _moorhen.ContextValues;
+        static defaultPreferencesValues: _moorhen.PreferencesValues;
         localStorageInstance: {
             clear: () => void;
             setItem: (key: string, value: any) => Promise<string>;
@@ -190,195 +190,207 @@ declare module 'moorhen' {
     module.exports = loadSessionData;
 
 
-    function setDefaultBackgroundColor(arg0: [number, number, number, number]): void;
+    function setDefaultBackgroundColor(arg0: [number, number, number, number]): any;
     module.exports = setDefaultBackgroundColor;
     
-    function setDrawCrosshairs(arg0: boolean): void;
+    function setDrawCrosshairs(arg0: boolean): any;
     module.exports = setDrawCrosshairs;
     
-    function setDrawFPS(arg0: boolean): void;
+    function setDrawFPS(arg0: boolean): any;
     module.exports = setDrawFPS;
     
-    function setDrawMissingLoops(arg0: boolean): void;
+    function setDrawMissingLoops(arg0: boolean): any;
     module.exports = setDrawMissingLoops;
     
-    function setDefaultBondSmoothness(arg0: number): void;
+    function setDefaultBondSmoothness(arg0: number): any;
     module.exports = setDefaultBondSmoothness;
     
-    function setDrawInteractions(arg0: boolean): void;
+    function setDrawInteractions(arg0: boolean): any;
     module.exports = setDrawInteractions;
     
-    function setDoSSAO(arg0: boolean): void;
+    function setDoSSAO(arg0: boolean): any;
     module.exports = setDoSSAO;
     
-    function setSsaoRadius(arg0: number): void;
+    function setSsaoRadius(arg0: number): any;
     module.exports = setSsaoRadius;
     
-    function setSsaoBias(arg0: number): void;
+    function setSsaoBias(arg0: number): any;
     module.exports = setSsaoBias;
     
-    function setResetClippingFogging(arg0: boolean): void;
+    function setResetClippingFogging(arg0: boolean): any;
     module.exports = setResetClippingFogging;
     
-    function setClipCap(arg0: boolean): void;
+    function setClipCap(arg0: boolean): any;
     module.exports = setClipCap;
     
-    function setUseOffScreenBuffers(arg0: boolean): void;
+    function setUseOffScreenBuffers(arg0: boolean): any;
     module.exports = setUseOffScreenBuffers;
     
-    function setDoShadowDepthDebug(arg0: boolean): void;
+    function setDoShadowDepthDebug(arg0: boolean): any;
     module.exports = setDoShadowDepthDebug;
     
-    function setDoShadow(arg0: boolean): void;
+    function setDoShadow(arg0: boolean): any;
     module.exports = setDoShadow;
     
-    function setDoSpinTest(arg0: boolean): void;
+    function setDoSpinTest(arg0: boolean): any;
     module.exports = setDoSpinTest;
     
-    function setDoOutline(arg0: boolean): void;
+    function setDoOutline(arg0: boolean): any;
     module.exports = setDoOutline;
     
-    function setDepthBlurRadius(arg0: number): void;
+    function setDepthBlurRadius(arg0: number): any;
     module.exports = setDepthBlurRadius;
     
-    function setDepthBlurDepth(arg0: number): void;
+    function setDepthBlurDepth(arg0: number): any;
     module.exports = setDepthBlurDepth;
     
-    function setDrawAxes(arg0: boolean): void;
+    function setDrawAxes(arg0: boolean): any;
     module.exports = setDrawAxes;
     
-    function setDoPerspectiveProjection(arg0: boolean): void;
+    function setDoPerspectiveProjection(arg0: boolean): any;
     module.exports = setDoPerspectiveProjection;
 
-    function setEnableTimeCapsule(arg0: boolean): void;
+    function setEnableTimeCapsule(arg0: boolean): any;
     module.exports = setEnableTimeCapsule;
 
-    function setMakeBackups(arg0: boolean): void;
+    function setMakeBackups(arg0: boolean): any;
     module.exports = setMakeBackups;
 
-    function setMaxBackupCount(arg0: number): void;
+    function setMaxBackupCount(arg0: number): any;
     module.exports = setMaxBackupCount;
 
-    function setModificationCountBackupThreshold(arg0: number): void;
+    function setModificationCountBackupThreshold(arg0: number): any;
     module.exports = setModificationCountBackupThreshold;
 
-    function setHeight(arg0: number): void;
+    function setHeight(arg0: number): any;
     module.exports = setHeight;
 
-    function setWidth(arg0: number): void;
+    function setWidth(arg0: number): any;
     module.exports = setWidth;
 
-    function setIsDark(arg0: boolean): void;
+    function setIsDark(arg0: boolean): any;
     module.exports = setIsDark;
 
-    function setBackgroundColor(arg0: [number, number, number, number]): void;
+    function setBackgroundColor(arg0: [number, number, number, number]): any;
     module.exports = setBackgroundColor;
 
-    function setNotificationContent(arg0: JSX.Element): void;
+    function setNotificationContent(arg0: JSX.Element): any;
     module.exports = setNotificationContent;
 
-    function setActiveMap(arg0: _moorhen.Map): void;
+    function setActiveMap(arg0: _moorhen.Map): any;
     module.exports = setActiveMap;
 
-    function setCootInitialized(arg0: boolean): void;
+    function setCootInitialized(arg0: boolean): any;
     module.exports = setCootInitialized;
 
-    function setAppTitle(arg0: string): void;
+    function setAppTitle(arg0: string): any;
     module.exports = setAppTitle;
 
-    function setUserPreferencesMounted(arg0: boolean): void;
+    function setUserPreferencesMounted(arg0: boolean): any;
     module.exports = setUserPreferencesMounted;
 
-    function setDevMode(arg0: boolean): void;
+    function setDevMode(arg0: boolean): any;
     module.exports = setDevMode;
 
-    function setTheme(arg0: string): void;
+    function setTheme(arg0: string): any;
     module.exports = setTheme;
 
-    function setViewOnly(arg0: boolean): void;
+    function setViewOnly(arg0: boolean): any;
     module.exports = setViewOnly;
 
-    function setCursorStyle(arg0: string): void;
+    function setCursorStyle(arg0: string): any;
     module.exports = setCursorStyle;
 
-    function setEnableAtomHovering(arg0: boolean): void;
+    function setEnableAtomHovering(arg0: boolean): any;
     module.exports = setEnableAtomHovering;
 
-    function setHoveredAtom(arg0: {molecule: null | _moorhen.Molecule; cid: null | string}): void;
+    function setHoveredAtom(arg0: {molecule: null | _moorhen.Molecule; cid: null | string}): any;
     module.exports = setHoveredAtom;
 
-    function addAvailableFontList(arg0: string): void;
+    function addAvailableFontList(arg0: string): any;
     module.exports = addAvailableFontList;
 
-    function setAtomLabelDepthMode(arg0: boolean): void;
+    function setAtomLabelDepthMode(arg0: boolean): any;
     module.exports = setAtomLabelDepthMode;
 
-    function setGLLabelsFontFamily(arg0: string): void;
+    function setGLLabelsFontFamily(arg0: string): any;
     module.exports = setGLLabelsFontFamily;
 
-    function setGLLabelsFontSize(arg0: number): void;
+    function setGLLabelsFontSize(arg0: number): any;
     module.exports = setGLLabelsFontSize;
 
-    function setDefaultMapSamplingRate(arg0: number): void;
+    function setDefaultMapSamplingRate(arg0: number): any;
     module.exports = setDefaultMapSamplingRate;
 
-    function setDefaultMapLitLines(arg0: boolean): void;
+    function setDefaultMapLitLines(arg0: boolean): any;
     module.exports = setDefaultMapLitLines;
 
-    function setMapLineWidth(arg0: number): void;
+    function setMapLineWidth(arg0: number): any;
     module.exports = setMapLineWidth;
 
-    function setDefaultMapSurface(arg0: boolean): void;
+    function setDefaultMapSurface(arg0: boolean): any;
     module.exports = setDefaultMapSurface;
 
-    function setDefaultExpandDisplayCards(arg0: boolean): void;
+    function setDefaultExpandDisplayCards(arg0: boolean): any;
     module.exports = setDefaultExpandDisplayCards;
 
-    function setTransparentModalsOnMouseOut(arg0: boolean): void;
+    function setTransparentModalsOnMouseOut(arg0: boolean): any;
     module.exports = setTransparentModalsOnMouseOut;
 
-    function setEnableRefineAfterMod(arg0: boolean): void;
+    function setEnableRefineAfterMod(arg0: boolean): any;
     module.exports = setEnableRefineAfterMod;
 
-    function addMolecule(arg0: _moorhen.Molecule): void;
+    function addMolecule(arg0: _moorhen.Molecule): any;
     module.exports = addMolecule;
 
-    function removeMolecule(arg0: _moorhen.Molecule): void;
+    function removeMolecule(arg0: _moorhen.Molecule): any;
     module.exports = removeMolecule;
 
-    function emptyMolecules(): void;
+    function emptyMolecules(): any;
     module.exports = emptyMolecules;
 
-    function addMoleculeList(arg0: _moorhen.Molecule[]): void;
+    function addMoleculeList(arg0: _moorhen.Molecule[]): any;
     module.exports = addMoleculeList;
 
-    function setContourWheelSensitivityFactor(arg0: number): void;
+    function setContourWheelSensitivityFactor(arg0: number): any;
     module.exports = setContourWheelSensitivityFactor;
 
-    function setZoomWheelSensitivityFactor(arg0: number): void;
+    function setZoomWheelSensitivityFactor(arg0: number): any;
     module.exports = setZoomWheelSensitivityFactor;
 
-    function setMouseSensitivity(arg0: number): void;
+    function setMouseSensitivity(arg0: number): any;
     module.exports = setMouseSensitivity;
 
-    function setShowShortcutToast(arg0: boolean): void;
+    function setShowShortcutToast(arg0: boolean): any;
     module.exports = setShowShortcutToast;
 
-    function setShortcutOnHoveredAtom(arg0: boolean): void;
+    function setShortcutOnHoveredAtom(arg0: boolean): any;
     module.exports = setShortcutOnHoveredAtom;
 
-    function setShortCuts(arg0: string): void;
+    function setShortCuts(arg0: string): any;
     module.exports = setShortCuts;
 
-    function setShowScoresToast(arg0: boolean): void;
+    function setShowScoresToast(arg0: boolean): any;
     module.exports = setShowScoresToast;
 
-    function addMapUpdatingScore(arg0: _moorhen.Map): void;
+    function addMapUpdatingScore(arg0: _moorhen.Map): any;
     module.exports = addMapUpdatingScore;
 
-    function removeMapUpdatingScore(arg0: _moorhen.Map): void;
+    function removeMapUpdatingScore(arg0: _moorhen.Map): any;
     module.exports = removeMapUpdatingScore;
 
-    function overwriteMapUpdatingScores(arg0: _moorhen.Map[]): void;
+    function overwriteMapUpdatingScores(arg0: _moorhen.Map[]): any;
     module.exports = overwriteMapUpdatingScores;
+
+    function addMap(arg0: _moorhen.Map): any;
+    module.exports = addMap;
+
+    function removeMap(arg0: _moorhen.Map): any;
+    module.exports = removeMap;
+
+    function emptyMaps(): any;
+    module.exports = emptyMaps;
+
+    function addMapList(arg0: _moorhen.Map[]): any;
+    module.exports = addMapList;
 }
