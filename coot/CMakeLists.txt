@@ -421,6 +421,8 @@ ${coot_src}/compat/getopt.cc
 ${coot_src}/compat/getopt1.cc
 ${coot_src}/src/gl-matrix.cc
 glycoblocks.cc
+${CMAKE_CURRENT_SOURCE_DIR}/../metaballs/metaballs.cc
+${CMAKE_CURRENT_SOURCE_DIR}/../metaballs/metaballs-mmdb.cc
 )
 
 add_library(coot STATIC

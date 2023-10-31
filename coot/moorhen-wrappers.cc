@@ -136,6 +136,7 @@ struct moorhen_hbond {
 
 };
 
+coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::string &cid_str, int gridSize);
 coot::instanced_mesh_t DrawSugarBlocks(mmdb::Manager *molHnd, const std::string &cid_str);
 bool isSugar(const std::string &resName);
 
@@ -148,6 +149,11 @@ class molecules_container_js : public molecules_container_t {
         coot::instanced_mesh_t DrawGlycoBlocks(int imol, const std::string &cid_str) {
             mmdb::Manager *mol = get_mol(imol);
             return DrawSugarBlocks(mol,cid_str);
+        }
+
+        coot::simple_mesh_t DrawMoorhenMetaBalls(int imol, const std::string &cid_str, int gridSize) {
+            mmdb::Manager *mol = get_mol(imol);
+            return GenerateMoorhenMetaBalls(mol,cid_str,gridSize);
         }
 
         std::pair<std::string, std::string> smiles_to_pdb(const std::string &smile_cpp, const std::string &TLC, int nconf, int maxIters) {
@@ -855,6 +861,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_neighbours_cid",&molecules_container_js::get_neighbours_cid)
     .function("make_exportable_environment_bond_box",&molecules_container_js::make_exportable_environment_bond_box)
     .function("DrawGlycoBlocks",&molecules_container_js::DrawGlycoBlocks)
+    .function("DrawMoorhenMetaBalls",&molecules_container_js::DrawMoorhenMetaBalls)
     .function("model_has_glycans",&molecules_container_js::model_has_glycans)
     .function("get_molecule_atoms", &molecules_container_js::get_molecule_atoms)
     .function("read_pdb_string", &molecules_container_js::read_pdb_string)

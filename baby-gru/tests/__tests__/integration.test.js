@@ -34,6 +34,17 @@ describe("Testing gemmi", () => {
         cleanUpVariables = []
     })
 
+    test("Test metaballs", () => {
+        console.log("Testing metaballs")
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMol = molecules_container.read_pdb('./5a3h.pdb')
+        const mesh = molecules_container.DrawMoorhenMetaBalls(coordMol, "B/1-2")
+        console.log("No. of vertices:")
+        console.log(mesh.vertices.size())
+        console.log("No. of triangles:")
+        console.log(mesh.triangles.size())
+    })
+
     test("Test read structure file", () => {
         const st = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
         const models = st.models
