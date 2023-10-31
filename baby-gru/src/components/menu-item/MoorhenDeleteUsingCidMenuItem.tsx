@@ -29,6 +29,10 @@ export const MoorhenDeleteUsingCidMenuItem = (props: {
     </>
 
     const onCompleted = async () => {
+        if (!fromRef.current || !fromRef.current.value) {
+            return
+        }
+
         const fromMolecule = molecules.find(molecule => molecule.molNo === parseInt(fromRef.current.value))
         const cidToDelete = cidRef.current.value
 
@@ -36,21 +40,7 @@ export const MoorhenDeleteUsingCidMenuItem = (props: {
             return
         }
 
-        const commandArgs = [
-            parseInt(fromRef.current.value),
-            `${cidToDelete}`,
-            "LITERAL"
-        ]
-
-        await props.commandCentre.current.cootCommand({
-            returnType: "status",
-            command: "delete_using_cid",
-            commandArgs: commandArgs,
-            changesMolecules: [parseInt(fromRef.current.value)]
-        }, true)
-            
-        fromMolecule.setAtomsDirty(true)
-        fromMolecule.redraw()
+        await fromMolecule.deleteCid(cidToDelete)
         
         props.setPopoverIsShown(false)
     }

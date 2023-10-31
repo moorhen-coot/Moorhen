@@ -72,8 +72,18 @@ div.darkly text.end-label {fill:#FFF !important;}
   height: 3rem;
 }
 
-.tool-container-row{
+.big-validation-tool-container-row {
+  width: 100%;
+  margin: 0;
+  padding: 0;
   height: calc(100% - 10rem);
+}
+
+.small-validation-tool-container-row {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  height: calc(100% - 19rem);
 }
 
 .carousel-control-next {

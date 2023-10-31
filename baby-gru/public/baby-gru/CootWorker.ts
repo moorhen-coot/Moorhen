@@ -459,6 +459,28 @@ const mmrrccStatsToJSArray = (mmrrccStats: libcootApi.PairType<emscriptem.map<li
     return returnResult
 }
 
+const atomSpecToJSArray = (atomSpecs: emscriptem.vector<libcootApi.AtomSpecT>): libcootApi.AtomSpecJS[] => {
+    let returnResult: libcootApi.AtomSpecJS[] = []
+    const atomsSize = atomSpecs.size()
+    for (let ic = 0; ic < atomsSize; ic++) {
+        const atom = atomSpecs.get(ic)
+        returnResult.push({
+            chain_id: atom.chain_id,
+            res_no: atom.res_no,
+            ins_code: atom.ins_code,
+            atom_name: atom.atom_name,
+            alt_conf: atom.alt_conf,
+            int_user_data: atom.int_user_data,
+            float_user_data: atom.float_user_data,
+            string_user_data: atom.string_user_data,
+            model_number: atom.model_number
+        })
+        atom.delete()
+    }
+    atomSpecs.delete()
+    return returnResult
+}
+
 const residueSpecToJSArray = (residueSpecs: emscriptem.vector<libcootApi.ResidueSpecT>): libcootApi.ResidueSpecJS[] => {
     let returnResult: { resNum: number; insCode: string; modelNumber: number; chainId: string; }[] = []
     const residuesSize = residueSpecs.size()
@@ -901,6 +923,9 @@ const doCootCommand = (messageData: {
                 break;
             case 'residue_specs':
                 returnResult = residueSpecToJSArray(cootResult)
+                break;
+            case 'atom_specs':
+                returnResult = atomSpecToJSArray(cootResult)
                 break;
             case 'ramachandran_data':
                 returnResult = ramachandranDataToJSArray(cootResult, messageData.chainID as string)

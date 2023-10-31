@@ -26,8 +26,6 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
         const selectedMolecule = this.molecules.find(molecule => molecule.molNo === molNo)
         if (typeof selectedMolecule !== 'undefined') {
             await selectedMolecule.rigidBodyFit(cidsString, mapNo)
-            selectedMolecule.setAtomsDirty(true)
-            await selectedMolecule.redraw()
         } else {
             console.log(`Unable to find molecule number ${molNo}`)
         }
@@ -46,8 +44,6 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
         const selectedMolecule = this.molecules.find(molecule => molecule.molNo === molNo)
         if (typeof selectedMolecule !== 'undefined') {
             await selectedMolecule.refineResiduesUsingAtomCid(cid, mode, ncyc)
-            selectedMolecule.setAtomsDirty(true)
-            await selectedMolecule.redraw()
         } else {
             console.log(`Unable to find molecule number ${molNo}`)
         }

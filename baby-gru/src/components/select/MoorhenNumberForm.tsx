@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useState } from "react";
 import { Form } from "react-bootstrap";
 
 type MoorhenNumberFormPropsType = {
+    onChange?: (newVal: string) => void;
     allowNegativeValues?: boolean;
     defaultValue: number;
     label?: string;
@@ -42,9 +43,10 @@ export const MoorhenNumberForm = forwardRef<string, MoorhenNumberFormPropsType>(
                         }
                         setCurrentValue(evt.target.value)
                         setIsValidInput(_isValid)
+                        props.onChange(evt.target.value)
                     }
                 }} />
             </Form.Group>
 })
 
-MoorhenNumberForm.defaultProps = { allowNegativeValues: false, label: 'Input' }
+MoorhenNumberForm.defaultProps = { allowNegativeValues: false, label: 'Input', onChange: () => {} }
