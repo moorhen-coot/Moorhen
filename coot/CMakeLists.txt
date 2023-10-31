@@ -318,6 +318,7 @@ ${coot_src}/coot-utils/prideout-octasphere.cc
 ${coot_src}/coot-utils/oct.cc
 ${coot_src}/coot-utils/shapes.cc
 ${coot_src}/coot-utils/simple-mesh.cc
+${coot_src}/coot-utils/find-water-baddies.cc
 ${coot_src}/coords/phenix-geo-bonds.cc
 ${coot_src}/coords/Bond_lines_ext.cc
 ${coot_src}/coords/mmdb-crystal.cc
