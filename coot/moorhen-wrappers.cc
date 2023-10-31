@@ -839,6 +839,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("set_refinement_geman_mcclure_alpha",&molecules_container_t::set_refinement_geman_mcclure_alpha)
     .function("get_geman_mcclure_alpha",&molecules_container_t::get_geman_mcclure_alpha)
     .function("get_map_histogram",&molecules_container_t::get_map_histogram)
+    .function("sharpen_blur_map_with_resample",&molecules_container_t::sharpen_blur_map_with_resample)
+    .function("find_water_baddies",&molecules_container_t::find_water_baddies)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<bool>()
