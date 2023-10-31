@@ -8,6 +8,7 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice";
+import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 
 export const MoorhenFitLigandRightHereMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
@@ -26,10 +27,9 @@ export const MoorhenFitLigandRightHereMenuItem = (props: {
     const ligandMoleculeRef = useRef<HTMLSelectElement | null>(null)
     const mapSelectRef = useRef<HTMLSelectElement | null>(null)
     const useConformersRef = useRef<boolean>(false)
-    const conformerCountRef = useRef<string>('0')
+    const conformerCountRef = useRef<string>(null)
 
     const [useConformers, setUseConformers] = useState<boolean>(false)
-    const [conformerCount, setConformerCount] = useState<string>('10')
 
     const panelContent = <>
         <MoorhenMapSelect maps={maps} label="Map" ref={mapSelectRef} />
@@ -45,28 +45,13 @@ export const MoorhenFitLigandRightHereMenuItem = (props: {
                 setUseConformers(!useConformers)
             }}
             label="Use conformers"/>}
-        {useConformers &&
-        <Form.Group>
-            <TextField
-                style={{margin: '0.5rem'}} 
-                id='conformer-count'
-                label='No. of conformers'
-                type='number'
-                variant="standard"
-                error={isNaN(parseInt(conformerCount)) || parseInt(conformerCount) < 0 || parseInt(conformerCount) === Infinity}
-                value={conformerCount}
-                onChange={(evt) => {
-                    conformerCountRef.current = evt.target.value
-                    setConformerCount(evt.target.value)
-                }}
-            />
-        </Form.Group>}
+        {useConformers && <MoorhenNumberForm ref={conformerCountRef} label="No. of conformers" defaultValue={10}/> }
     </>
 
 
     const onCompleted = async () => {
-        if (useConformersRef.current && (isNaN(parseInt(conformerCountRef.current)) || parseInt(conformerCountRef.current) < 0 || parseInt(conformerCountRef.current) === Infinity)) {
-            console.log('Unable to parse conformer count into a valid int...')
+        if (useConformersRef.current && !conformerCountRef.current) {
+            console.warn('Unable to parse conformer count into a valid int...')
             return
         }
 
