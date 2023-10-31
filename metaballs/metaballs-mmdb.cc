@@ -75,10 +75,12 @@ coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::s
         if(HetAtoms[i]->Het){
             if(strncmp(HetAtoms[i]->residue->name,"HOH",3)!=0){
                 std::array<float,4> point{float(HetAtoms[i]->x),float(HetAtoms[i]->y),float(HetAtoms[i]->z),r};
+                std::cout << "Adding atom " << HetAtoms[i]->residue->name << " / " << HetAtoms[i]->name << std::endl;
                 points.push_back(point);
             }
         }
     }
+    std::cout << "There are " << points.size() << " points" << std::endl;
 
     MC::mcMesh mesh = MoorhenMetaBalls::GenerateMeshFromPoints(points, isoLevel, n);
 
