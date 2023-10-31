@@ -64,8 +64,6 @@ export const MoorhenWaterValidation = (props: Props) => {
         let badWaters = []
 
         if (bFactorLimRef.current && sigmaLevelRef.current  && minDistRef.current  && maxDistRef) {
-            console.log(selectedModel, selectedMap, bFactorLim, sigmaLevel, minDist, maxDist, ignorePartOccRef.current.checked, ignoreZeroOccRef.current.checked)
-
             const inputData: moorhen.cootCommandKwargs = {
                 message:'coot_command',
                 command: "find_water_baddies", 
