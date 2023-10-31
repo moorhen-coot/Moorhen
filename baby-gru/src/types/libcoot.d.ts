@@ -252,7 +252,29 @@ export namespace libcootApi {
         insCode: string;
         modelNumber: number;
         chainId: string;
-    } 
+    }
+    interface AtomSpecT extends emscriptem.instance<ResidueSpecT> {
+        chain_id: string;
+        res_no: number;
+        ins_code: string;
+        atom_name: string;
+        alt_conf: string;
+        int_user_data: number;
+        float_user_data: number;
+        string_user_data: string;
+        model_number: number;
+    }
+    interface AtomSpecJS {
+        chain_id: string;
+        res_no: number;
+        ins_code: string;
+        atom_name: string;
+        alt_conf: string;
+        int_user_data: number;
+        float_user_data: number;
+        string_user_data: string;
+        model_number: number;
+    }
     interface ResidueValidationInformationT extends emscriptem.instance<ResidueValidationInformationT> {
         label: string;
         residue_spec: ResidueSpecT;

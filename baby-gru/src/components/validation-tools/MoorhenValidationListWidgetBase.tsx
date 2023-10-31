@@ -112,7 +112,7 @@ export const MoorhenValidationListWidgetBase = (props: {
                         </Row>
                     </Form.Group>
                 </Form>
-                <div style={{overflowY:'scroll', height:'100%', paddingTop:'0.5rem', paddingLeft:'0.25rem', paddingRight:'0.25rem'}} >
+                <div style={{overflowY: 'auto', height:'100%', paddingTop:'0.5rem', paddingLeft:'0.25rem', paddingRight:'0.25rem'}} >
                     {cardList}
                 </div>
             </Fragment>

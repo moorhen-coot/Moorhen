@@ -8,6 +8,7 @@ import { MoorhenDifferenceMapPeaks } from "../validation-tools/MoorhenDifference
 import { MoorhenPepflipsDifferenceMap } from "../validation-tools/MoorhenPepflipsDifferenceMap"
 import { MoorhenFillMissingAtoms } from "../validation-tools/MoorhenFillMissingAtoms"
 import { MoorhenMMRRCCPlot } from "../validation-tools/MoorhenMMRRCCPlot"
+import { MoorhenWaterValidation } from "../validation-tools/MoorhenWaterValidation"
 import { MoorhenLigandValidation } from "../validation-tools/MoorhenLigandValidation"
 import { MoorhenUnmodelledBlobs } from "../validation-tools/MoorhenUnmodelledBlobs"
 import { convertViewtoPx} from '../../utils/MoorhenUtils';
@@ -37,7 +38,8 @@ export const MoorhenValidationToolsModal = (props: MoorhenValidationModalProps) 
             {label: "Peptide flips using difference map", toolWidget: <MoorhenPepflipsDifferenceMap {...collectedProps}/>},
             {label: "Fill partial residues", toolWidget: <MoorhenFillMissingAtoms {...collectedProps}/>},
             {label: "Unmodelled blobs", toolWidget: <MoorhenUnmodelledBlobs {...collectedProps}/>},
-            {label: "MMRRCC plot", toolWidget: <MoorhenMMRRCCPlot {...collectedProps}/>}
+            {label: "MMRRCC plot", toolWidget: <MoorhenMMRRCCPlot {...collectedProps}/>},
+            {label: "Water validation", toolWidget: <MoorhenWaterValidation {...collectedProps}/>}
     ]
 
     const handleChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
@@ -66,7 +68,7 @@ export const MoorhenValidationToolsModal = (props: MoorhenValidationModalProps) 
                                     {toolOptions.map(option => <option key={option.label} value={option.label}>{option.label}</option>)}
                             </Form.Select>
                         </Row>
-                        <Row className="tool-container-row" style={{width:'100%', margin:'0rem', padding:'0rem'}}>
+                        <Row className={selectedTool !== null && toolOptions[selectedTool].label === "Water validation" ? "small-validation-tool-container-row" : "big-validation-tool-container-row"}>
                             {selectedTool !== null ? toolOptions[selectedTool].toolWidget : null}
                         </Row>
                     </div>

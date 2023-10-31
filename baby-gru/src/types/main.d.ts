@@ -25,6 +25,7 @@ declare module 'moorhen' {
 
     class MoorhenMolecule implements _moorhen.Molecule {
         constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibrary: string)
+        deleteCid(cid: string, redraw?: boolean): Promise<void>;
         getNumberOfAtoms(): Promise<number>;
         moveMoleculeHere(x: number, y: number, z: number): Promise<void>;
         checkHasGlycans(): Promise<boolean>;
@@ -49,10 +50,10 @@ declare module 'moorhen' {
         getDict(newTlc: string): string;
         addLigandOfType(resType: string, fromMolNo?: number): Promise<_moorhen.WorkerResponse>;
         updateAtoms(): Promise<void>;
-        rigidBodyFit(cidsString: string, mapNo: number): Promise<_moorhen.WorkerResponse>;
+        rigidBodyFit(cidsString: string, mapNo: number, redraw?: boolean): Promise<void>;
         generateSelfRestraints(cid?: string, maxRadius?: number): Promise<void>;
         clearExtraRestraints(): Promise<_moorhen.WorkerResponse>;
-        refineResiduesUsingAtomCid(cid: string, mode: string, ncyc: number): Promise<_moorhen.WorkerResponse>;
+        refineResiduesUsingAtomCid(cid: string, mode: string, ncyc?: number, redraw?: boolean): Promise<void>;
         redo(): Promise<void>;
         undo(): Promise<void>;
         show(style: string, cid?: string): void;

@@ -89,6 +89,8 @@ export namespace moorhen {
     }
     
     interface Molecule {
+        refineResiduesUsingAtomCid(cid: string, mode: string, ncyc?: number, redraw?: boolean): Promise<void>;
+        deleteCid(cid: string, redraw?: boolean): Promise<void>;
         getNumberOfAtoms(): Promise<number>;
         moveMoleculeHere(x: number, y: number, z: number): Promise<void>;
         checkHasGlycans(): Promise<boolean>;
@@ -113,10 +115,9 @@ export namespace moorhen {
         getDict(newTlc: string): string;
         addLigandOfType(resType: string, fromMolNo?: number): Promise<WorkerResponse>;
         updateAtoms(): Promise<void>;
-        rigidBodyFit(cidsString: string, mapNo: number): Promise<WorkerResponse>;
+        rigidBodyFit(cidsString: string, mapNo: number, redraw?: boolean): Promise<void>;
         generateSelfRestraints(cid?: string, maxRadius?: number): Promise<void>;
         clearExtraRestraints(): Promise<WorkerResponse>;
-        refineResiduesUsingAtomCid(cid: string, mode: string, ncyc: number): Promise<WorkerResponse>;
         redo(): Promise<void>;
         undo(): Promise<void>;
         show(style: string, cid?: string): void;
