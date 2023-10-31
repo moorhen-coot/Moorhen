@@ -1738,13 +1738,18 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} cidsString - Residue CID selection 
      * @param {number} mapNo - Map number that should be used
      */
-    rigidBodyFit(cidsString: string, mapNo: number): Promise&lt;moorhen.WorkerResponse> {
-        return this.commandCentre.current.cootCommand({
+    async rigidBodyFit(cidsString: string, mapNo: number, redraw: boolean = true): Promise&lt;void> {
+        await this.commandCentre.current.cootCommand({
             command: "rigid_body_fit",
             returnType: 'status',
             commandArgs: [this.molNo, cidsString, mapNo],
             changesMolecules: [this.molNo]
         }, true)
+                
+        this.setAtomsDirty(true)
+        if (redraw) {
+            await this.redraw()
+        }
     }
 
     /**
@@ -1778,14 +1783,39 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} cid - The CID selection with the atoms that should be refined
      * @param {string} mode - Refinement mode (SINGLE, TRIPLE ...etc.)
      * @param {number} ncyc - Number of refinement cycles
+     * @param {boolean} [redraw=true] - Indicates if the molecule should be redrawn
      */
-    refineResiduesUsingAtomCid(cid: string, mode: string, ncyc: number): Promise&lt;moorhen.WorkerResponse> {
-        return this.commandCentre.current.cootCommand({
+    async refineResiduesUsingAtomCid(cid: string, mode: string, ncyc: number = 4000, redraw: boolean = true): Promise&lt;void> {
+        await this.commandCentre.current.cootCommand({
             command: "refine_residues_using_atom_cid",
             returnType: 'status',
             commandArgs: [this.molNo, cid, mode, ncyc],
             changesMolecules: [this.molNo]
         }, true)
+        
+        this.setAtomsDirty(true)
+        if (redraw) {
+            await this.redraw()
+        }
+    }
+
+    /**
+     * Delete residues in a given CID
+     * @param {string} cid - The CID to delete
+     * @param {boolean} [redraw=true] - Indicates if the molecule should be redrawn
+     */
+    async deleteCid(cid: string, redraw: boolean = true): Promise&lt;void> {
+        await this.commandCentre.current.cootCommand({
+            returnType: "status",
+            command: "delete_using_cid",
+            commandArgs: [this.molNo, cid, "LITERAL"],
+            changesMolecules: [this.molNo]
+        }, true)
+        
+        this.setAtomsDirty(true)
+        if (redraw) {
+            await this.redraw()
+        }
     }
 
     /**
