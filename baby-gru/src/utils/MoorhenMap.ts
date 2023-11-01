@@ -62,7 +62,7 @@ export class MoorhenMap implements moorhen.Map {
     uniqueId: string
     mapRmsd: number
     suggestedMapWeight: number
-    otherMapMolNoForColouring: number
+    otherMapForColouring: {molNo: number, min: number, max: number};
     diffMapColourBuffers: { positiveDiffColour: number[], negativeDiffColour: number[] }
     rgba: {
         mapColour: {r: number, g: number, b: number};
@@ -96,7 +96,7 @@ export class MoorhenMap implements moorhen.Map {
         this.suggestedContourLevel = null
         this.suggestedRadius = null
         this.mapCentre = null
-        this.otherMapMolNoForColouring = null
+        this.otherMapForColouring = null
         this.diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] }
         this.rgba = {
             mapColour: { r: 0.30000001192092896, g: 0.30000001192092896, b: 0.699999988079071},
@@ -459,11 +459,11 @@ export class MoorhenMap implements moorhen.Map {
         }
 
         let response: moorhen.WorkerResponse<any>
-        if (this.otherMapMolNoForColouring !== null) {
+        if (this.otherMapForColouring !== null) {
             response = await this.commandCentre.current.cootCommand({
                 returnType: returnType,
                 command: "get_map_contours_mesh_using_other_map_for_colours",
-                commandArgs: [this.molNo, this.otherMapMolNoForColouring, x, y, z, radius, contourLevel, -0.9, 0.9, false]
+                commandArgs: [this.molNo, this.otherMapForColouring.molNo, x, y, z, radius, contourLevel, this.otherMapForColouring.min, this.otherMapForColouring.max, false]
             }, false)
         } else {
             response = await this.commandCentre.current.cootCommand({
@@ -474,7 +474,21 @@ export class MoorhenMap implements moorhen.Map {
         }
 
         const objects = [response.data.result.result]
-        this.setupContourBuffers(objects, this.otherMapMolNoForColouring !== null)
+        this.setupContourBuffers(objects, this.otherMapForColouring !== null)
+    }
+
+    /**
+     * Set colouring for this map instance based on another map
+     * @param {number} molNo - The imol for the other map
+     * @param {number} min - The min value
+     * @param {number} max - The max value
+     */
+    setOtherMapForColouring(molNo: number, min: number = -0.9, max: number = 0.9) {
+        if (molNo === null) {
+            this.otherMapForColouring = null
+        } else {
+            this.otherMapForColouring = { molNo, min, max }
+        }
     }
 
     /**
@@ -525,8 +539,8 @@ export class MoorhenMap implements moorhen.Map {
             return
         }
 
-        if (this.otherMapMolNoForColouring) {
-            this.otherMapMolNoForColouring = null
+        if (this.otherMapForColouring !== null) {
+            this.otherMapForColouring = null
         }
         
         this.rgba.mapColour = { r, g, b }
