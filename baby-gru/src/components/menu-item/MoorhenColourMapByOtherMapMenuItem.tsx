@@ -31,7 +31,7 @@ export const MoorhenColourMapByOtherMapMenuItem = (props: {
 
     const panelContent = <>
         <MoorhenMapSelect maps={maps} ref={mapSelectRef_1} label="Colour this map..." />
-        <MoorhenMapSelect maps={maps} ref={mapSelectRef_2} label="With this map..."/>
+        <MoorhenMapSelect maps={maps} ref={mapSelectRef_2} label="By this map..."/>
         <span style={{margin: '0.5rem'}}>Min/Max values</span>
         <Slider
           getAriaLabel={() => 'Min-Max values'}
