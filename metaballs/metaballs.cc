@@ -34,12 +34,12 @@ MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points
         if(z>max_z) max_z = z;
     }
 
-    min_x -= r;
-    min_y -= r;
-    min_z -= r;
-    max_x += r;
-    max_y += r;
-    max_z += r;
+    min_x -= (r+isoLevel);
+    min_y -= (r+isoLevel);
+    min_z -= (r+isoLevel);
+    max_x += (r+isoLevel);
+    max_y += (r+isoLevel);
+    max_z += (r+isoLevel);
 
     std::cout << "orig x range:" << min_x << " " << max_x << std::endl;
     std::cout << "orig y range:" << min_y << " " << max_y << std::endl;

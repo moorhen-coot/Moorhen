@@ -45,6 +45,33 @@
 #include "MC.h"
 #include "metaballs.h"
 
+void mergeLastTwoGroupsIfNecessary(std::vector<std::vector<std::array<float,4>>> &all_points){
+
+    std::vector<std::array<float,4>> last   = all_points[all_points.size()-1];
+    std::vector<std::array<float,4>> &penult = all_points[all_points.size()-2];
+
+    bool connected = false;
+
+    for(unsigned ii=0;ii<last.size();ii++){
+        std::array<float,4> &pl = last[ii];
+        for(unsigned jj=0;jj<penult.size();jj++){
+            std::array<float,4> &pp = penult[jj];
+            float distsq = (pl[0]-pp[0])*(pl[0]-pp[0]) + (pl[1]-pp[1])*(pl[1]-pp[1]) + (pl[2]-pp[2])*(pl[2]-pp[2]);
+            if(distsq<6.7) {
+                connected = true;
+                break;
+            }
+        }
+    }
+
+    if(connected){
+        //std::cout << "Merging ..." << std::endl;
+        penult.insert(penult.end(),last.begin(),last.end());
+        all_points.pop_back();
+    }
+
+}
+
 coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::string &cid_str, int gridSize) {
 
     coot::simple_mesh_t coot_mesh;
@@ -67,37 +94,73 @@ coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::s
 
     if(nHetAtoms==0) return coot_mesh;
 
+    std::vector<std::vector<std::array<float,4>>> all_points;
     std::vector<std::array<float,4>> points;
 
-    //FIXME - alt locs...
-    //FIXME - double
+    //TODO - double?
+    //TODO - Be cleverer about box size/orientation.
+
+    //TODO - Be more clever with no-contiguous sets of atoms, i.e. two separate ligands.
+    //      - This requires making multiple grids and then combining into one big mesh.
+    //      - But how do we cluster them in the first place?
+    mmdb::Residue *currentResidue = 0;
     for(int i=0;i<nHetAtoms;i++){
         if(HetAtoms[i]->Het){
             if(strncmp(HetAtoms[i]->residue->name,"HOH",3)!=0){
                 std::array<float,4> point{float(HetAtoms[i]->x),float(HetAtoms[i]->y),float(HetAtoms[i]->z),r};
-                std::cout << "Adding atom " << HetAtoms[i]->residue->name << " / " << HetAtoms[i]->name << std::endl;
+                if(HetAtoms[i]->residue!=currentResidue){
+                    //std::cout << "New residue!" << std::endl;
+                    currentResidue = HetAtoms[i]->residue;
+                    if(points.size()>0){
+                        //std::cout << "There are " << points.size() << " points" << std::endl;
+                        all_points.push_back(points);
+                        points.clear();
+                    }
+                    if(all_points.size()>1){
+                        //Compare previous 2
+                        mergeLastTwoGroupsIfNecessary(all_points);
+                    }
+                }
+                //std::cout << "Adding atom " << HetAtoms[i]->residue->name << " / " << HetAtoms[i]->name << std::endl;
                 points.push_back(point);
             }
         }
     }
-    std::cout << "There are " << points.size() << " points" << std::endl;
 
-    MC::mcMesh mesh = MoorhenMetaBalls::GenerateMeshFromPoints(points, isoLevel, n);
+    //std::cout << "There are " << points.size() << " points" << std::endl;
+    if(points.size()>0){
+        all_points.push_back(points);
+    }
 
-    //FIXME - colours.
-    glm::vec4 col = glm::vec4(0.6f, 0.6f, 0.2f, 1.0f);
+    if(all_points.size()==0){
+        return coot_mesh;
+    }
 
-    if(mesh.vertices.size()>0&&mesh.normals.size()==mesh.vertices.size()&&mesh.indices.size()>0){
-        coot_mesh.status = 1;
-        coot_mesh.name = "Metaballs";
-        for(unsigned ii=0;ii<mesh.indices.size();ii+=3){
-            coot_mesh.triangles.push_back(g_triangle(mesh.indices[ii],mesh.indices[ii+1],mesh.indices[ii+2]));
-        }
-        std::vector<coot::api::vnc_vertex> vertices;
-        for(unsigned iv=0;iv<mesh.vertices.size();iv++){
-            glm::vec3 v(mesh.vertices[iv].x,mesh.vertices[iv].y,mesh.vertices[iv].z);
-            glm::vec3 n(mesh.normals[iv].x,mesh.normals[iv].y,mesh.normals[iv].z);
-            coot_mesh.vertices.push_back(coot::api::vnc_vertex(v, n, col));
+    if(all_points.size()>1){
+        //Compare last 2
+        mergeLastTwoGroupsIfNecessary(all_points);
+    }
+
+    int totVert = 0;
+    for(unsigned imesh=0;imesh<all_points.size();imesh++){
+        MC::mcMesh mesh = MoorhenMetaBalls::GenerateMeshFromPoints(all_points[imesh], isoLevel, n);
+
+        //FIXME - colours.
+        glm::vec4 col = glm::vec4(0.6f, 0.6f, 0.2f, 1.0f);
+
+        if(mesh.vertices.size()>0&&mesh.normals.size()==mesh.vertices.size()&&mesh.indices.size()>0){
+            coot_mesh.status = 1;
+            coot_mesh.name = "Metaballs";
+            for(unsigned ii=0;ii<mesh.indices.size();ii+=3){
+                coot_mesh.triangles.push_back(g_triangle(mesh.indices[ii]+totVert,mesh.indices[ii+1]+totVert,mesh.indices[ii+2]+totVert));
+            }
+            std::vector<coot::api::vnc_vertex> vertices;
+            for(unsigned iv=0;iv<mesh.vertices.size();iv++){
+                glm::vec3 v(mesh.vertices[iv].x,mesh.vertices[iv].y,mesh.vertices[iv].z);
+                glm::vec3 n(mesh.normals[iv].x,mesh.normals[iv].y,mesh.normals[iv].z);
+                coot_mesh.vertices.push_back(coot::api::vnc_vertex(v, n, col));
+            }
+            totVert += mesh.vertices.size();
         }
     }
 
