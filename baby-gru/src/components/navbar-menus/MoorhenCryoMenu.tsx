@@ -4,6 +4,7 @@ import { MoorhenSharpenBlurMapMenuItem } from "../menu-item/MoorhenSharpenBlurMa
 import { MoorhenMakeMaskedMapsSplitByChainMenuItem } from "../menu-item/MoorhenMakeMaskedMapsSplitByChainMenuItem";
 import { MoorhenFlipMapHandMenuItem } from "../menu-item/MoorhenFlipMapHandMenuItem"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
+import { MoorhenColourMapByOtherMapMenuItem } from "../menu-item/MoorhenColourMapByOtherMapMenuItem"
 
 export const MoorhenCryoMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
@@ -14,5 +15,6 @@ export const MoorhenCryoMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             <MoorhenMapMaskingMenuItem  {...menuItemProps} />
             <MoorhenFlipMapHandMenuItem  {...menuItemProps} />
             <MoorhenMakeMaskedMapsSplitByChainMenuItem  {...menuItemProps} />
+            <MoorhenColourMapByOtherMapMenuItem {...menuItemProps}/>
     </>
 }
