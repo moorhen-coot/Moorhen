@@ -72,16 +72,12 @@ void mergeLastTwoGroupsIfNecessary(std::vector<std::vector<std::array<float,4>>>
 
 }
 
-coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::string &cid_str, int gridSize) {
+coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::string &cid_str, int n, float r, float isoLevel) {
 
     coot::simple_mesh_t coot_mesh;
 
     coot_mesh.status = 0;
 
-    int n = gridSize;
-    float r = 0.45f;
-    float isoLevel = 1.0;
-    
     if(!molHnd) return coot_mesh;
 
     const char * cid = cid_str.c_str();

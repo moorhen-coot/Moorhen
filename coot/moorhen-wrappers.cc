@@ -136,7 +136,7 @@ struct moorhen_hbond {
 
 };
 
-coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::string &cid_str, int gridSize);
+coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::string &cid_str, int gridSize, float radius, float isoLevel);
 coot::instanced_mesh_t DrawSugarBlocks(mmdb::Manager *molHnd, const std::string &cid_str);
 bool isSugar(const std::string &resName);
 
@@ -151,9 +151,9 @@ class molecules_container_js : public molecules_container_t {
             return DrawSugarBlocks(mol,cid_str);
         }
 
-        coot::simple_mesh_t DrawMoorhenMetaBalls(int imol, const std::string &cid_str, int gridSize) {
+        coot::simple_mesh_t DrawMoorhenMetaBalls(int imol, const std::string &cid_str, int gridSize, float radius, float isoLevel) {
             mmdb::Manager *mol = get_mol(imol);
-            return GenerateMoorhenMetaBalls(mol,cid_str,gridSize);
+            return GenerateMoorhenMetaBalls(mol,cid_str,gridSize,radius,isoLevel);
         }
 
         std::pair<std::string, std::string> smiles_to_pdb(const std::string &smile_cpp, const std::string &TLC, int nconf, int maxIters) {
