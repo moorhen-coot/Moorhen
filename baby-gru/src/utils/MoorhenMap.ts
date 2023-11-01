@@ -524,6 +524,10 @@ export class MoorhenMap implements moorhen.Map {
             console.error('Cannot use moorhen.Map.setColour to change difference map colour. Use moorhen.Map.setDiffMapColour instead...')
             return
         }
+
+        if (this.otherMapMolNoForColouring) {
+            this.otherMapMolNoForColouring = null
+        }
         
         this.rgba.mapColour = { r, g, b }
         
