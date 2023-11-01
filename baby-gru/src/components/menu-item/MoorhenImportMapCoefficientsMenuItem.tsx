@@ -1,11 +1,11 @@
-import React, { Dispatch, RefObject, SetStateAction, useRef, useState } from "react"
+import { Dispatch, RefObject, SetStateAction, useCallback, useRef, useState } from "react"
 import { MoorhenMtzWrapper } from "../../utils/MoorhenMtzWrapper"
 import { MoorhenMap } from "../../utils/MoorhenMap"
 import { Col, Form, FormSelect, Row } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL"
-import { batch, useDispatch } from 'react-redux';
+import { batch, useDispatch, useSelector } from 'react-redux';
 import { setActiveMap, setNotificationContent } from "../../store/generalStatesSlice"
 import { addMap } from "../../store/mapsSlice"
 
@@ -17,7 +17,9 @@ export const MoorhenImportMapCoefficientsMenuItem = (props: {
 }) => {
 
     const dispatch = useDispatch()
-    
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const maps = useSelector((state: moorhen.State) => state.maps)
+
     const filesRef = useRef<null | HTMLInputElement>(null)
     const fSelectRef = useRef<null | HTMLSelectElement>(null)
     const phiSelectRef = useRef<null | HTMLSelectElement>(null)
@@ -43,33 +45,35 @@ export const MoorhenImportMapCoefficientsMenuItem = (props: {
         }
     }
 
-    const handleFile = async (file: File, selectedColumns: moorhen.selectedMtzColumns) => {
-        const newMap = new MoorhenMap(props.commandCentre, props.glRef)
-        try {
-            await newMap.loadToCootFromMtzFile(file, selectedColumns)
-            if (newMap.molNo === -1) throw new Error('Cannot read the mtz file!')
-            batch(() => {
-                dispatch( addMap(newMap) )
-                dispatch( setActiveMap(newMap) )
-            })
-            setCalcStructFact(false)
-        } catch (err) {
-            dispatch(setNotificationContent(props.getWarningToast('Error reading mtz file')))
-            console.log(`Cannot read file`)
-        }
-    }
-
-    const onCompleted = async () => {
+    const onCompleted = useCallback(async () => {
         if (filesRef.current.files.length > 0) {
-            let selectedColumns = {
+            const file = filesRef.current.files[0]
+            const selectedColumns = {
                 F: fSelectRef.current.value, PHI: phiSelectRef.current.value, W: wSelectRef.current.value,
                 isDifference: isDiffRef.current.checked, useWeight: useWeightRef.current.checked,
                 Fobs: fobsSelectRef.current.value, SigFobs: sigFobsSelectRef.current.value,
                 FreeR: freeRSelectRef.current.value, calcStructFact: calcStructFactRef.current.checked
             }
-            return await handleFile(filesRef.current.files[0], selectedColumns)   
+            const newMap = new MoorhenMap(props.commandCentre, props.glRef)
+            try {
+                await newMap.loadToCootFromMtzFile(file, selectedColumns)
+                if (newMap.molNo === -1) {
+                    throw new Error('Cannot read the mtz file!')
+                }
+                if (molecules.length === 0 && maps.length === 0) {
+                    await newMap.centreOnMap()
+                }
+                batch(() => {
+                    dispatch( addMap(newMap) )
+                    dispatch( setActiveMap(newMap) )
+                })
+                setCalcStructFact(false)
+            } catch (err) {
+                dispatch(setNotificationContent(props.getWarningToast('Error reading mtz file')))
+                console.log(`Cannot read file`)
+            }      
         }
-    }
+    }, [filesRef.current, isDiffRef.current, props.glRef, props.commandCentre, molecules, maps])
 
     const panelContent = <>
         <Row>

@@ -144,6 +144,7 @@ declare module 'moorhen' {
         loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap?: boolean): Promise<_moorhen.Map>;
         setActive(): Promise<void>;
         setupContourBuffers(objects: any[], keepCootColours?: boolean): void;
+        setOtherMapForColouring(molNo: number, min?: number, max?: number): void;
         isEM: boolean;
         suggestedContourLevel: number;
         suggestedRadius: number;
@@ -166,7 +167,7 @@ declare module 'moorhen' {
         selectedColumns: _moorhen.selectedMtzColumns;
         associatedReflectionFileName: string;
         uniqueId: string;
-        otherMapMolNoForColouring: number;
+        otherMapForColouring: {molNo: number, min: number, max: number};
         mapRmsd: number;
         suggestedMapWeight: number;
         rgba: {
