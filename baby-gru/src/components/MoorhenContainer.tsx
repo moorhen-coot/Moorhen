@@ -20,6 +20,11 @@ import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSl
 
 /**
  * A container for the Moorhen app. Needs to be rendered within a MoorhenReduxprovider.
+ * @property {React.RefObject<webGL.mgWebGL>} [glRef] - React reference holding the webGL rendering component
+ * @property {React.RefObject<moorhen.TimeCapsule>} [timeCapsuleRef] - React reference holding an instance of MoorhenTimeCapsule which is in charge of backups
+ * @property {React.RefObject<moorhen.commandCentre>} [commandCentre] - React reference holding an instance of MoorhenCommandCentre which is in charge of communication with libcoot instance
+ * @property {React.RefObject<moorhen.Molecule[]>} [moleculesRef] - React reference holding a list of loaded MoorhenMolecule instances
+ * @property {React.RefObject<moorhen.Map[]>} [mapsRef] - React reference holding a list of loaded MoorhenMap instances
  * @property {string} [urlPrefix='.'] - The root url used to load sources from public folder
  * @property {string} [monomerLibraryPath='./baby-gru/monomers'] - A string with the path to the monomer library, relative to the root of the app
  * @property {function} setMoorhenDimensions - Callback executed on window resize. Return type is an array of two numbers [width, height]
