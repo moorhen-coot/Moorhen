@@ -14,6 +14,7 @@ var triangle_fragment_shader_source = `#version 300 es\n
     uniform float ySSAOScaling;
     uniform bool doShadows;
     uniform bool doSSAO;
+    uniform bool occludeDiffuse;
     uniform int shadowQuality;
 
     in mediump mat4 mvInvMatrix;
@@ -102,7 +103,10 @@ var triangle_fragment_shader_source = `#version 300 es\n
       R = normalize(-reflect(L,norm));
       Iamb += occ*light_colours_ambient;
 
-      Idiff += light_colours_diffuse * max(dot(norm,L), 0.0);
+      if(occludeDiffuse)
+          Idiff += occ*light_colours_diffuse * max(dot(norm,L), 0.0);
+      else
+          Idiff += light_colours_diffuse * max(dot(norm,L), 0.0);
       float y = max(max(light_colours_specular.r,light_colours_specular.g),light_colours_specular.b);
       Ispec += light_colours_specular * pow(max(dot(R,E),0.0),specularPower);
       Ispec.a *= y;

@@ -142,7 +142,8 @@ export namespace webGL {
         resize(width: number, height: number) : void;
         setShadowDepthDebug(doShadowDepthDebug: boolean): void;
         setShadowsOn(doShadow: boolean): void;
-        setSSAOOn(doShadow: boolean): void;
+        setSSAOOn(doSSAO: boolean): void;
+        setOccludeDiffuse(doOccludeDiffuse: boolean): void;
         setOutlinesOn(doOutline: boolean): void;
         setSpinTestState(doSpinTest: boolean): void;
         setBlurSize(blurSize: number): void;
@@ -238,6 +239,7 @@ export namespace webGL {
         diskVertices: number[];
         doShadow: boolean;
         doSSAO: boolean;
+        occludeDiffuse: boolean;
         doShadowDepthDebug: boolean;
         doSpin: boolean;
         doStenciling: boolean;

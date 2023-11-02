@@ -1749,6 +1749,7 @@ interface ShaderThickLinesNormal extends ShaderThickLines {
     vertexRealNormalAttribute: GLint;
     xSSAOScaling: WebGLUniformLocation; //Perhaps in parent? Perhaps more of parent here?
     ySSAOScaling: WebGLUniformLocation; // ditto
+    occludeDiffuse: WebGLUniformLocation;
 }
 
 interface ShaderTwodShapes extends MGWebGLShader {
@@ -1804,6 +1805,7 @@ interface ShaderPerfectSpheres extends MGWebGLShader {
     shadowQuality: WebGLUniformLocation;
     doShadows: WebGLUniformLocation;
     doSSAO: WebGLUniformLocation;
+    occludeDiffuse: WebGLUniformLocation;
     clipCap: WebGLUniformLocation;
     specularPower: WebGLUniformLocation;
     scaleMatrix: WebGLUniformLocation;
@@ -1824,6 +1826,7 @@ interface ShaderTriangles extends MGWebGLShader {
     yPixelOffset: WebGLUniformLocation;
     xSSAOScaling: WebGLUniformLocation;
     ySSAOScaling: WebGLUniformLocation;
+    occludeDiffuse: WebGLUniformLocation;
     textureMatrixUniform: WebGLUniformLocation;
 }
 
@@ -2001,6 +2004,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         diskVertices: number[];
         doShadow: boolean;
         doSSAO: boolean;
+        occludeDiffuse: boolean;
         doShadowDepthDebug: boolean;
         doSpin: boolean;
         doStenciling: boolean;
@@ -2353,6 +2357,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.doSSAO = doSSAO;
     }
 
+    setOccludeDiffuse(doOccludeDiffuse) {
+        this.occludeDiffuse = doOccludeDiffuse;
+    }
+
     setShadowDepthDebug(doShadowDebug) {
         /*
         this.doShadowDepthDebug = doShadowDebug;
@@ -2548,6 +2556,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.doShadow = false;
         this.doSSAO = false;
+        this.occludeDiffuse = false;
 
         this.doSpin = false;
 
@@ -4791,6 +4800,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgram.ySSAOScaling = this.gl.getUniformLocation(this.shaderProgram, "ySSAOScaling");
         this.shaderProgram.doShadows = this.gl.getUniformLocation(this.shaderProgram, "doShadows");
         this.shaderProgram.doSSAO = this.gl.getUniformLocation(this.shaderProgram, "doSSAO");
+        this.shaderProgram.occludeDiffuse = this.gl.getUniformLocation(this.shaderProgram, "occludeDiffuse");
         this.shaderProgram.shadowQuality = this.gl.getUniformLocation(this.shaderProgram, "shadowQuality");
 
         this.shaderProgram.clipPlane0 = this.gl.getUniformLocation(this.shaderProgram, "clipPlane0");
@@ -4871,6 +4881,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramInstanced.ySSAOScaling = this.gl.getUniformLocation(this.shaderProgramInstanced, "ySSAOScaling");
         this.shaderProgramInstanced.doShadows = this.gl.getUniformLocation(this.shaderProgramInstanced, "doShadows");
         this.shaderProgramInstanced.doSSAO = this.gl.getUniformLocation(this.shaderProgramInstanced, "doSSAO");
+        this.shaderProgramInstanced.occludeDiffuse = this.gl.getUniformLocation(this.shaderProgramInstanced, "occludeDiffuse");
         this.shaderProgramInstanced.shadowQuality = this.gl.getUniformLocation(this.shaderProgramInstanced, "shadowQuality");
 
         this.shaderProgramInstanced.clipPlane0 = this.gl.getUniformLocation(this.shaderProgramInstanced, "clipPlane0");
@@ -4993,6 +5004,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramThickLinesNormal.doSSAO = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "doSSAO");
         this.shaderProgramThickLinesNormal.xSSAOScaling = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "xSSAOScaling");
         this.shaderProgramThickLinesNormal.ySSAOScaling = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "ySSAOScaling");
+        this.shaderProgramThickLinesNormal.occludeDiffuse = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "occludeDiffuse");
         this.shaderProgramThickLinesNormal.shadowQuality = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "shadowQuality");
         this.shaderProgramThickLinesNormal.clipPlane0 = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "clipPlane0");
         this.shaderProgramThickLinesNormal.clipPlane1 = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "clipPlane1");
@@ -5276,6 +5288,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramPerfectSpheres.ySSAOScaling = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "ySSAOScaling");
         this.shaderProgramPerfectSpheres.doShadows = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "doShadows");
         this.shaderProgramPerfectSpheres.doSSAO = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "doSSAO");
+        this.shaderProgramPerfectSpheres.occludeDiffuse = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "occludeDiffuse");
         this.shaderProgramPerfectSpheres.shadowQuality = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "shadowQuality");
 
         this.shaderProgramPerfectSpheres.scaleMatrix = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "scaleMatrix");
@@ -7544,6 +7557,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.gl.uniform1i(theShader.shadowQuality, 1);
                 }
                 if(theShader.doSSAO!=null) this.gl.uniform1i(theShader.doSSAO, this.doSSAO);
+                if(theShader.occludeDiffuse!=null) this.gl.uniform1i(theShader.occludeDiffuse, this.occludeDiffuse);
                 if(this.WEBGL2&&theShader.doSSAO&&!this.drawingGBuffers){
                     this.gl.uniform1i(theShader.SSAOMap, 1);
                     this.gl.activeTexture(this.gl.TEXTURE1);
@@ -7693,6 +7707,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.gl.uniform1i(program.shadowQuality, 1);
                 }
                 if(program.doSSAO!=null) this.gl.uniform1i(program.doSSAO, this.doSSAO);
+                if(program.occludeDiffuse!=null) this.gl.uniform1i(program.occludeDiffuse, this.occludeDiffuse);
                 if(this.WEBGL2&&program.doSSAO&&!this.drawingGBuffers){
                     this.gl.uniform1i(program.SSAOMap, 1);
                     this.gl.activeTexture(this.gl.TEXTURE1);
@@ -7877,6 +7892,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 }
                 if(shaderProgramThickLinesNormal.doSSAO!=null){
                     if(shaderProgramThickLinesNormal.doSSAO!=null) this.gl.uniform1i(shaderProgramThickLinesNormal.doSSAO, this.doSSAO);
+                    if(shaderProgramThickLinesNormal.occludeDiffuse!=null) this.gl.uniform1i(shaderProgramThickLinesNormal.occludeDiffuse, this.occludeDiffuse);
                 }
             }
 
