@@ -5,6 +5,7 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { webGL } from "../../types/mgWebGL";
 import { useSelector } from 'react-redux';
 import { Slider } from "@mui/material";
+import { Button } from "react-bootstrap";
 
 export const MoorhenColourMapByOtherMapMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
@@ -29,31 +30,26 @@ export const MoorhenColourMapByOtherMapMenuItem = (props: {
         minMaxValueRef.current = newValue
     }
 
-    const panelContent = <>
-        <MoorhenMapSelect maps={maps} ref={mapSelectRef_1} label="Colour this map..." />
-        <MoorhenMapSelect maps={maps} ref={mapSelectRef_2} label="By this map..."/>
-        <span style={{margin: '0.5rem'}}>Min/Max values</span>
-        <Slider
-          getAriaLabel={() => 'Min-Max values'}
-          value={minMaxValue}
-          onChange={handleMinMaxChange}
-          getAriaValueText={(value) => `${convertValue(value)}`}
-          valueLabelFormat={(value) => `${convertValue(value)}`}
-          valueLabelDisplay="on"
-          sx={{
-            marginTop: '1.5rem',
-            '& .MuiSlider-valueLabel': {
-                fontSize: 14,
-                fontWeight: 'bold',
-                top: -1,
-                color: 'grey',
-                backgroundColor: 'unset',
-              },
-          }}
-        />
-    </>
+    const handleCancel = (_evt) => {
+        document.body.click()
+    }
 
-    const onCompleted = useCallback(async () => {
+    const handleDefaultColour = (_evt) => {
+        if (!mapSelectRef_1.current.value) {
+            return
+        }
+
+        const referenceMap = maps.find(map => map.molNo === parseInt(mapSelectRef_1.current.value))
+        
+        if (!referenceMap) {
+            return
+        }
+
+        referenceMap.setOtherMapForColouring(null)
+        referenceMap.doCootContour(...props.glRef.current.origin.map(coord => -coord) as [number, number, number], referenceMap.mapRadius, referenceMap.contourLevel)
+    }
+
+    const handleApply = useCallback(async (_evt) => {
         if (!mapSelectRef_1.current.value || !mapSelectRef_2.current.value || !minMaxValueRef.current) {
             return
         }
@@ -71,11 +67,44 @@ export const MoorhenColourMapByOtherMapMenuItem = (props: {
 
     }, [maps, props.glRef])
 
+    const panelContent = <>
+        <MoorhenMapSelect maps={maps} ref={mapSelectRef_1} label="Colour this map..." />
+        <MoorhenMapSelect maps={maps} ref={mapSelectRef_2} label="By this map..."/>
+        <span style={{margin: '0.5rem'}}>Min/Max values</span>
+        <Slider
+            getAriaLabel={() => 'Min-Max values'}
+            value={minMaxValue}
+            onChange={handleMinMaxChange}
+            getAriaValueText={(value) => `${convertValue(value)}`}
+            valueLabelFormat={(value) => `${convertValue(value)}`}
+            valueLabelDisplay="on"
+            sx={{
+                marginTop: '1.5rem',
+                '& .MuiSlider-valueLabel': {
+                    fontSize: 14,
+                    fontWeight: 'bold',
+                    top: -1,
+                    color: 'grey',
+                    backgroundColor: 'unset',
+                },
+            }}
+        />
+        <Button variant="primary" onClick={handleApply}>
+            Apply
+        </Button>
+        <Button variant="secondary" onClick={handleDefaultColour} style={{marginLeft: '0.5rem'}}>
+            Reset to default colour
+        </Button>
+        <Button variant="danger" onClick={handleCancel} style={{marginLeft: '0.5rem'}}>
+            Close
+        </Button>
+    </>
+
     return <MoorhenBaseMenuItem
         id='colour-map-by-other-map-menu-item'
         popoverContent={panelContent}
         menuItemText="Colour map by other map..."
-        onCompleted={onCompleted}
+        showOkButton={false}
         setPopoverIsShown={props.setPopoverIsShown}
     />
 }
