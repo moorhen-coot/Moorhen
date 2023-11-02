@@ -4,12 +4,16 @@
 #include <cstdlib>
 #include <iostream>
 #include <algorithm>
+#include <chrono>
 
 #define MC_IMPLEM_ENABLE
 #include "MC.h"
 
 namespace MoorhenMetaBalls {
+
 MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points, float isoLevel, unsigned int n){
+
+    auto t_start = std::chrono::high_resolution_clock::now();
 
     MC::mcMesh mesh;
 
@@ -63,34 +67,47 @@ MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points
     std::cout << "n" << " " << "cell_x" << " " << "cell_y" << " " << "cell_z" << std::endl;
     std::cout << n << " " << cell_x << " " << cell_y << " " << cell_z << std::endl;
 
+    auto t_min_max = std::chrono::high_resolution_clock::now();
+
     // First compute a scalar field
     MC::MC_FLOAT* field = new MC::MC_FLOAT[n * n * n];
 
-    int maxIdx = 0;
-    for(unsigned iz=0;iz<n;iz++){
-        float z = min_z + iz * cell_z;
-        for(unsigned iy=0;iy<n;iy++){
-            float y = min_y + iy * cell_y;
-            for(unsigned ix=0;ix<n;ix++){
-                float x = min_x + ix * cell_x;
-                float f = 0.0f;
-                for(unsigned ip=0;ip<points.size();ip++){
-                    float x0 = points[ip][0];
-                    float y0 = points[ip][1];
-                    float z0 = points[ip][2];
-                    float r0 = points[ip][3];
-                    f += (r0 * r0) / ( (x - x0)*(x - x0) + (y - y0)*(y - y0) + (z - z0)*(z - z0));
+    unsigned np = points.size();
 
+    float mIsoLevel = -isoLevel;
+    std::fill(field, field+n * n * n, mIsoLevel);
+    auto t_field_fill = std::chrono::high_resolution_clock::now();
+
+    for(unsigned ip=0;ip<np;ip++){
+        int newIdx = 0;
+        float x0 = points[ip][0];
+        float y0 = points[ip][1];
+        float z0 = points[ip][2];
+        float r0 = points[ip][3];
+        float rr = r0 * r0;
+        for(unsigned iz=0;iz<n;iz++){
+            float z = min_z + iz * cell_z;
+            float zz = (z - z0)*(z - z0);
+            for(unsigned iy=0;iy<n;iy++){
+                float y = min_y + iy * cell_y;
+                float yy = (y - y0)*(y - y0);
+                for(unsigned ix=0;ix<n;ix++){
+                    float x = min_x + ix * cell_x;
+                    float xx = (x - x0)*(x - x0);
+                    field[newIdx++] += rr / (xx + yy + zz);
                 }
-                field[maxIdx++] = f-isoLevel;
             }
         }
     }
 
-    std::cout << maxIdx << std::endl;
+    auto t_field = std::chrono::high_resolution_clock::now();
 
     // Compute isosurface using marching cube
     MC::marching_cube(field, n, n, n, mesh);
+
+    delete [] field;
+
+    auto t_march = std::chrono::high_resolution_clock::now();
 
     for(unsigned iv=0;iv<mesh.vertices.size();iv++){
         mesh.vertices[iv].x *= cell_x;
@@ -104,6 +121,14 @@ MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points
     std::cout << mesh.vertices.size() << std::endl;
     std::cout << mesh.normals.size() << std::endl;
     std::cout << mesh.indices.size() << std::endl;
+
+    auto t_mesh = std::chrono::high_resolution_clock::now();
+
+    std::cout << "Time to get min max " << std::chrono::duration_cast<std::chrono::microseconds>(t_min_max-t_start).count() << std::endl;
+    std::cout << "Time to initialize field " << std::chrono::duration_cast<std::chrono::microseconds>(t_field_fill-t_min_max).count() << std::endl;
+    std::cout << "Time to make field " << std::chrono::duration_cast<std::chrono::microseconds>(t_field-t_field_fill).count() << std::endl;
+    std::cout << "Time to get surface " << std::chrono::duration_cast<std::chrono::microseconds>(t_march-t_field).count() << std::endl;
+    std::cout << "Time to make mesh " << std::chrono::duration_cast<std::chrono::microseconds>(t_mesh-t_march).count() << std::endl;
 
     return mesh;
 }
