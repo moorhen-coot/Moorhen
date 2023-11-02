@@ -49,20 +49,16 @@ MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points
     std::cout << "orig y range:" << min_y << " " << max_y << std::endl;
     std::cout << "orig z range:" << min_z << " " << max_z << std::endl;
 
-    min_x = std::min(min_x,min_y);
-    max_x = std::max(max_x,max_y);
-    min_x = std::min(min_x,min_z);
-    max_x = std::max(max_x,max_z);
-    min_y = min_z = min_x;
-    max_y = max_z = max_x;
+    float min_d = std::min(min_x,min_y);
+    float max_d = std::max(max_x,max_y);
+    min_d = std::min(min_d,min_z);
+    max_d = std::max(max_d,max_z);
 
-    std::cout << min_x << " " << max_x << std::endl;
-    std::cout << min_y << " " << max_y << std::endl;
-    std::cout << min_z << " " << max_z << std::endl;
+    std::cout << min_d << " " << max_d << std::endl;
 
-    float cell_x = (max_x - min_x) / n;
-    float cell_y = (max_y - min_y) / n;
-    float cell_z = (max_z - min_z) / n;
+    float cell_x = (max_d - min_d) / n;
+    float cell_y = (max_d - min_d) / n;
+    float cell_z = (max_d - min_d) / n;
 
     std::cout << "n" << " " << "cell_x" << " " << "cell_y" << " " << "cell_z" << std::endl;
     std::cout << n << " " << cell_x << " " << cell_y << " " << cell_z << std::endl;
@@ -70,31 +66,36 @@ MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points
     auto t_min_max = std::chrono::high_resolution_clock::now();
 
     // First compute a scalar field
-    MC::MC_FLOAT* field = new MC::MC_FLOAT[n * n * n];
+    std::vector<MC::MC_FLOAT> field(n * n * n);
 
     unsigned np = points.size();
 
     float mIsoLevel = -isoLevel;
-    std::fill(field, field+n * n * n, mIsoLevel);
+    std::fill(field.begin(), field.end(), mIsoLevel);
     auto t_field_fill = std::chrono::high_resolution_clock::now();
 
     for(unsigned ip=0;ip<np;ip++){
-        int newIdx = 0;
         float x0 = points[ip][0];
         float y0 = points[ip][1];
         float z0 = points[ip][2];
         float r0 = points[ip][3];
         float rr = r0 * r0;
         for(unsigned iz=0;iz<n;iz++){
-            float z = min_z + iz * cell_z;
+            float z = min_d + iz * cell_z;
+            if(z>max_z||z<min_z) continue;
+            int idx_z = iz*n*n;
             float zz = (z - z0)*(z - z0);
             for(unsigned iy=0;iy<n;iy++){
-                float y = min_y + iy * cell_y;
+                float y = min_d + iy * cell_y;
+                if(y>max_y||y<min_y) continue;
+                int idx_y = iy*n;
                 float yy = (y - y0)*(y - y0);
                 for(unsigned ix=0;ix<n;ix++){
-                    float x = min_x + ix * cell_x;
+                    float x = min_d + ix * cell_x;
+                    if(x>max_x||x<min_x) continue;
                     float xx = (x - x0)*(x - x0);
-                    field[newIdx++] += rr / (xx + yy + zz);
+                    int newIdx = idx_z + idx_y + ix;
+                    field[newIdx] += rr / (xx + yy + zz);
                 }
             }
         }
@@ -103,19 +104,17 @@ MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points
     auto t_field = std::chrono::high_resolution_clock::now();
 
     // Compute isosurface using marching cube
-    MC::marching_cube(field, n, n, n, mesh);
-
-    delete [] field;
+    MC::marching_cube(field.data(), n, n, n, mesh);
 
     auto t_march = std::chrono::high_resolution_clock::now();
 
     for(unsigned iv=0;iv<mesh.vertices.size();iv++){
         mesh.vertices[iv].x *= cell_x;
-        mesh.vertices[iv].x += min_x;
+        mesh.vertices[iv].x += min_d;
         mesh.vertices[iv].y *= cell_y;
-        mesh.vertices[iv].y += min_y;
+        mesh.vertices[iv].y += min_d;
         mesh.vertices[iv].z *= cell_z;
-        mesh.vertices[iv].z += min_z;
+        mesh.vertices[iv].z += min_d;
         //std::cout << mesh.vertices[iv].x << " " << mesh.vertices[iv].y << " " << mesh.vertices[iv].z << std::endl;
     }
     std::cout << mesh.vertices.size() << std::endl;
