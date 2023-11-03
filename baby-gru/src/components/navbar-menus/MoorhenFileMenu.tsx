@@ -143,17 +143,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         const uniprotID: string = pdbCodeFetchInputRef.current.value.toUpperCase()
         const coordUrl = `https://alphafold.ebi.ac.uk/files/AF-${uniprotID}-F1-model_v4.pdb`
         if (uniprotID) {
-            fetchMoleculeFromURL(coordUrl, `${uniprotID}`)
-                .then(newMolecule => {
-                    const newRule = {
-                        args: [getMultiColourRuleArgs(newMolecule, 'af2-plddt')],
-                        isMultiColourRule: true,
-                        ruleType: 'af2-plddt',
-                        label: `//*`
-                    }
-                    newMolecule.defaultColourRules = [newRule]
-                })
-                .catch(err => console.log(err))
+            fetchMoleculeFromURL(coordUrl, `${uniprotID}`, true)
         }
     }
 
@@ -172,22 +162,33 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         }
     }
 
-    const fetchMoleculeFromURL = async (url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> => {
+    const fetchMoleculeFromURL = async (url: RequestInfo | URL, molName: string, isAF2?: boolean): Promise<moorhen.Molecule> => {
         const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
         newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         try {
             await newMolecule.loadToCootFromURL(url, molName)
-            if (newMolecule.molNo === -1) throw new Error("Cannot read the fetched molecule...")
+            if (newMolecule.molNo === -1) {
+                throw new Error("Cannot read the fetched molecule...")
+            } else if (isAF2) {
+                const newRule = {
+                    args: [getMultiColourRuleArgs(newMolecule, 'af2-plddt')],
+                    isMultiColourRule: true,
+                    ruleType: 'af2-plddt',
+                    label: `//*`
+                }
+                newMolecule.defaultColourRules = [newRule]
+            }
             await newMolecule.fetchIfDirtyAndDraw(newMolecule.atomCount >= 50000 ? 'CRs' : 'CBs')
+            await newMolecule.centreOn('/*/*/*/*', true)
             dispatch( addMolecule(newMolecule) )
-            newMolecule.centreOn('/*/*/*/*', false)
             return newMolecule
         } catch (err) {
             dispatch(setNotificationContent(getWarningToast(`Failed to read molecule`)))
             console.log(`Cannot fetch molecule from ${url}`)
             setIsValidPdbId(false)
-        }   
+            props.setBusy(false)
+        }
     }
 
     const fetchMapFromURL = async (url: RequestInfo | URL, mapName: string, isDiffMap: boolean = false): Promise<moorhen.Map> => {
@@ -203,6 +204,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             console.warn(err)
             dispatch(setNotificationContent(getWarningToast(`Failed to read map`)))
             console.log(`Cannot fetch map from ${url}`)
+            props.setBusy(false)
         }
         return newMap
     }
@@ -219,6 +221,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         } catch {
             dispatch(setNotificationContent(getWarningToast(`Failed to read mtz`)))
             console.log(`Cannot fetch mtz from ${url}`)
+            props.setBusy(false)
         }
         return newMap
     }
