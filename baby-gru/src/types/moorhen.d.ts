@@ -103,8 +103,8 @@ export namespace moorhen {
         updateWithMovedAtoms(movedResidues: AtomInfo[][]): Promise<void>;
         transformedCachedAtomsAsMovedAtoms(selectionCid?: string): AtomInfo[][];
         copyFragmentUsingCid(cid: string, doRecentre?: boolean, style?: string): Promise<Molecule>;
-        hideCid(cid: string): Promise<void>;
-        unhideAll(): Promise<void>;
+        hideCid(cid: string, redraw?: boolean): Promise<void>;
+        unhideAll(redraw?: boolean): Promise<void>;
         drawUnitCell(): void;
         gemmiAtomsForCid: (cid: string, omitExcludedCids?: boolean) => Promise<AtomInfo[]>;
         mergeMolecules(otherMolecules: Molecule[], doHide?: boolean): Promise<void>;

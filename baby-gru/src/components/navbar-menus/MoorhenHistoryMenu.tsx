@@ -94,11 +94,13 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
     }, [props.commandCentre, historyHead, molecules, props.timeCapsuleRef, loadSession])
 
     return <div style={{maxHeight: convertViewtoPx(65, height), maxWidth: '20rem', overflowY: 'auto', overflowX: 'hidden'}}>
+        {props.commandCentre.current.history.entries.length === 0 ? 
+        <span>No command history</span>
+        :
         <Stepper nonLinear activeStep={historyHead} orientation="vertical">
-            {props.commandCentre.current.history.entries.length === 0 ? 
-            <span>No command history</span>
-            : props.commandCentre.current.history.entries.map((entry, index) => getHistoryStep(entry, index)) }
+            { props.commandCentre.current.history.entries.map((entry, index) => getHistoryStep(entry, index)) }
         </Stepper>
+        }
     </div>
 }
 

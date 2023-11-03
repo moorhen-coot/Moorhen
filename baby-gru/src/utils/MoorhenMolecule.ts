@@ -1552,8 +1552,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
     /**
      * Hide representations for a given CID selection
      * @param {string} cid - The CID selection
+     * @param {boolean} [redraw=true] - Indicates if the molecule should be redrawn
      */
-    async hideCid(cid: string): Promise<void> {
+    async hideCid(cid: string, redraw: boolean = true): Promise<void> {
         await this.commandCentre.current.cootCommand({
             message: 'coot_command',
             command: "add_to_non_drawn_bonds",
@@ -1600,13 +1601,16 @@ export class MoorhenMolecule implements moorhen.Molecule {
         selection.delete()
 
         // Redraw to apply changes
-        await this.redraw()
+        if (redraw) {
+            await this.redraw()
+        }
     }
 
     /**
      * Unhide all the molecule representations
+     * @param {boolean} [redraw=true] - Indicates if the molecule should be redrawn
      */
-    async unhideAll() {
+    async unhideAll(redraw: boolean = true) {
         await this.commandCentre.current.cootCommand({
             message: 'coot_command',
             command: "clear_non_drawn_bonds",
@@ -1615,7 +1619,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }, false)
         this.excludedSelections = []
         this.excludedCids = []
-        await this.redraw()
+        if (redraw) {
+            await this.redraw()
+        }
     }
 
     /**

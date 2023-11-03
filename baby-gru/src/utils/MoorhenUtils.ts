@@ -669,8 +669,8 @@ export const getTooltipShortcutLabel = (shortCut: moorhen.Shortcut): string => {
 }
 
 // FIXME: Again looping thourhg atoms every where...
-const getMoleculeBfactors = (gemmiStructure: gemmi.Structure): { cid: string, bFactor: number }[] => {
-    let bFactors: { cid: string, bFactor: number }[] = []
+export const getMoleculeBfactors = (gemmiStructure: gemmi.Structure): { cid: string, bFactor: number, chainId: string, resNum: number, modelName: string }[] => {
+    let bFactors: { cid: string, bFactor: number, chainId: string, resNum: number, modelName: string }[] = []
     try {
         const models = gemmiStructure.models
         for (let modelIndex = 0; modelIndex < models.size(); modelIndex++) {
@@ -698,7 +698,10 @@ const getMoleculeBfactors = (gemmiStructure: gemmi.Structure): { cid: string, bF
                     }
                     bFactors.push({
                         cid: `/${modelName}/${chainName}/${resNum}/*`,
-                        bFactor: residueTemp / atomsSize
+                        bFactor: residueTemp / atomsSize,
+                        chainId: chainName,
+                        modelName: modelName,
+                        resNum: parseInt(resNum)
                     })
                     residue.delete()
                     residueSeqId.delete()
