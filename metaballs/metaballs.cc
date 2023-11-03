@@ -11,13 +11,13 @@
 
 namespace MoorhenMetaBalls {
 
-MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points, float isoLevel, unsigned int n){
+MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points, float isoLevel, float gridSize){
 
     auto t_start = std::chrono::high_resolution_clock::now();
 
     MC::mcMesh mesh;
 
-    float r = 0.45f;
+    float padding = 0.5f;
 
     float min_x =  1e8;
     float max_x = -1e8;
@@ -38,35 +38,34 @@ MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points
         if(z>max_z) max_z = z;
     }
 
-    min_x -= (r+isoLevel);
-    min_y -= (r+isoLevel);
-    min_z -= (r+isoLevel);
-    max_x += (r+isoLevel);
-    max_y += (r+isoLevel);
-    max_z += (r+isoLevel);
+    min_x -= (padding+isoLevel);
+    min_y -= (padding+isoLevel);
+    min_z -= (padding+isoLevel);
+    max_x += (padding+isoLevel);
+    max_y += (padding+isoLevel);
+    max_z += (padding+isoLevel);
 
     std::cout << "orig x range:" << min_x << " " << max_x << std::endl;
     std::cout << "orig y range:" << min_y << " " << max_y << std::endl;
     std::cout << "orig z range:" << min_z << " " << max_z << std::endl;
 
-    float min_d = std::min(min_x,min_y);
-    float max_d = std::max(max_x,max_y);
-    min_d = std::min(min_d,min_z);
-    max_d = std::max(max_d,max_z);
+    int ncell_x = (max_x - min_x) / gridSize;
+    int ncell_y = (max_y - min_y) / gridSize;
+    int ncell_z = (max_z - min_z) / gridSize;
 
-    std::cout << min_d << " " << max_d << std::endl;
+    float cell_x = gridSize;
+    float cell_y = gridSize;
+    float cell_z = gridSize;
 
-    float cell_x = (max_d - min_d) / n;
-    float cell_y = (max_d - min_d) / n;
-    float cell_z = (max_d - min_d) / n;
-
-    std::cout << "n" << " " << "cell_x" << " " << "cell_y" << " " << "cell_z" << std::endl;
-    std::cout << n << " " << cell_x << " " << cell_y << " " << cell_z << std::endl;
+    std::cout << "cell_x" << " " << "cell_y" << " " << "cell_z" << std::endl;
+    std::cout << cell_x << " " << cell_y << " " << cell_z << std::endl;
+    std::cout << "ncell_x" << " " << "ncell_y" << " " << "ncell_z" << std::endl;
+    std::cout << ncell_x << " " << ncell_y << " " << ncell_z << std::endl;
 
     auto t_min_max = std::chrono::high_resolution_clock::now();
 
     // First compute a scalar field
-    std::vector<MC::MC_FLOAT> field(n * n * n);
+    std::vector<MC::MC_FLOAT> field(ncell_x * ncell_y * ncell_z);
 
     unsigned np = points.size();
 
@@ -80,18 +79,18 @@ MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points
         float z0 = points[ip][2];
         float r0 = points[ip][3];
         float rr = r0 * r0;
-        for(unsigned iz=0;iz<n;iz++){
-            float z = min_d + iz * cell_z;
+        for(unsigned iz=0;iz<ncell_z;iz++){
+            float z = min_z + iz * cell_z;
             if(z>max_z||z<min_z) continue;
-            int idx_z = iz*n*n;
+            int idx_z = iz*ncell_x*ncell_y;
             float zz = (z - z0)*(z - z0);
-            for(unsigned iy=0;iy<n;iy++){
-                float y = min_d + iy * cell_y;
+            for(unsigned iy=0;iy<ncell_y;iy++){
+                float y = min_y + iy * cell_y;
                 if(y>max_y||y<min_y) continue;
-                int idx_y = iy*n;
+                int idx_y = iy*ncell_x;
                 float yy = (y - y0)*(y - y0);
-                for(unsigned ix=0;ix<n;ix++){
-                    float x = min_d + ix * cell_x;
+                for(unsigned ix=0;ix<ncell_x;ix++){
+                    float x = min_x + ix * cell_x;
                     if(x>max_x||x<min_x) continue;
                     float xx = (x - x0)*(x - x0);
                     int newIdx = idx_z + idx_y + ix;
@@ -104,22 +103,22 @@ MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points
     auto t_field = std::chrono::high_resolution_clock::now();
 
     // Compute isosurface using marching cube
-    MC::marching_cube(field.data(), n, n, n, mesh);
+    MC::marching_cube(field.data(), ncell_x, ncell_y, ncell_z, mesh);
 
     auto t_march = std::chrono::high_resolution_clock::now();
 
     for(unsigned iv=0;iv<mesh.vertices.size();iv++){
         mesh.vertices[iv].x *= cell_x;
-        mesh.vertices[iv].x += min_d;
+        mesh.vertices[iv].x += min_x;
         mesh.vertices[iv].y *= cell_y;
-        mesh.vertices[iv].y += min_d;
+        mesh.vertices[iv].y += min_y;
         mesh.vertices[iv].z *= cell_z;
-        mesh.vertices[iv].z += min_d;
+        mesh.vertices[iv].z += min_z;
         //std::cout << mesh.vertices[iv].x << " " << mesh.vertices[iv].y << " " << mesh.vertices[iv].z << std::endl;
     }
-    std::cout << mesh.vertices.size() << std::endl;
-    std::cout << mesh.normals.size() << std::endl;
-    std::cout << mesh.indices.size() << std::endl;
+    std::cout << "vertices: " << mesh.vertices.size() << std::endl;
+    std::cout << "normals: " << mesh.normals.size() << std::endl;
+    std::cout << "indices: " << mesh.indices.size() << std::endl;
 
     auto t_mesh = std::chrono::high_resolution_clock::now();
 
@@ -149,6 +148,7 @@ MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points
                 v_y +=  mesh.vertices[hits[ih]].y;
                 v_z +=  mesh.vertices[hits[ih]].z;
             }
+            //std::cout << "nhits: " << hits.size() << std::endl;
             mesh.normals[ii].x = n_x / (hits.size()+1);
             mesh.normals[ii].y = n_y / (hits.size()+1);
             mesh.normals[ii].z = n_z / (hits.size()+1);

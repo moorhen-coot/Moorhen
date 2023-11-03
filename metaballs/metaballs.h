@@ -3,5 +3,5 @@
 #include "MC.h"
 
 namespace MoorhenMetaBalls {
-    MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points, float isoLevel, unsigned int n);
+    MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points, float isoLevel, float gridSize);
 }

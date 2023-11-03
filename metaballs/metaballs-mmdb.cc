@@ -72,7 +72,7 @@ void mergeLastTwoGroupsIfNecessary(std::vector<std::vector<std::array<float,4>>>
 
 }
 
-coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::string &cid_str, int n, float r, float isoLevel) {
+coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::string &cid_str, float gridSize, float r, float isoLevel) {
 
     coot::simple_mesh_t coot_mesh;
 
@@ -139,7 +139,7 @@ coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::s
 
     int totVert = 0;
     for(unsigned imesh=0;imesh<all_points.size();imesh++){
-        MC::mcMesh mesh = MoorhenMetaBalls::GenerateMeshFromPoints(all_points[imesh], isoLevel, n);
+        MC::mcMesh mesh = MoorhenMetaBalls::GenerateMeshFromPoints(all_points[imesh], isoLevel, gridSize);
 
         //FIXME - colours.
         glm::vec4 col = glm::vec4(0.6f, 0.6f, 0.2f, 1.0f);
