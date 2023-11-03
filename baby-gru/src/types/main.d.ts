@@ -38,8 +38,8 @@ declare module 'moorhen' {
         updateWithMovedAtoms(movedResidues: _moorhen.AtomInfo[][]): Promise<void>;
         transformedCachedAtomsAsMovedAtoms(selectionCid?: string): _moorhen.AtomInfo[][];
         copyFragmentUsingCid(cid: string, doRecentre?: boolean, style?: string): Promise<_moorhen.Molecule>;
-        hideCid(cid: string): Promise<void>;
-        unhideAll(): Promise<void>;
+        hideCid(cid: string, redraw?: boolean): Promise<void>;
+        unhideAll(redraw?: boolean): Promise<void>;
         drawUnitCell(): void;
         gemmiAtomsForCid: (cid: string, omitExcludedCids?: boolean) => Promise<_moorhen.AtomInfo[]>;
         mergeMolecules(otherMolecules: _moorhen.Molecule[], doHide?: boolean): Promise<void>;
