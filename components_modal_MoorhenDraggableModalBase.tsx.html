@@ -186,6 +186,7 @@ export const MoorhenDraggableModalBase = (props: {
     additionalChildren?: JSX.Element;
     overflowY?: 'visible' | 'hidden' | 'clip' | 'scroll' | 'auto';
     handleClassName?: string;
+    showCloseButton?: boolean;
 }) => {
     
     const [opacity, setOpacity] = useState&lt;number>(1.0)
@@ -213,9 +214,11 @@ export const MoorhenDraggableModalBase = (props: {
                         &lt;Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => setCollapse(!collapse)}>
                             {collapse ? &lt;AddOutlined/> : &lt;RemoveOutlined/>}
                         &lt;/Button>
+                        {props.showCloseButton &amp;&amp;
                         &lt;Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => props.setShow(false)}>
                             &lt;CloseOutlined/>
-                        &lt;/Button>
+                        &lt;/Button>                    
+                        }
                     &lt;/Stack>
                 &lt;/Card.Header>
                 &lt;Card.Body style={{maxHeight: windowHeight ? convertViewtoPx(props.height, windowHeight) : `${props.height}vh`, overflowY: props.overflowY, display: collapse ? 'none' : 'block', justifyContent: 'center'}}>
@@ -231,7 +234,10 @@ export const MoorhenDraggableModalBase = (props: {
         &lt;/Draggable>
 }
 
-MoorhenDraggableModalBase.defaultProps = { handleClassName: 'handle', additionalHeaderButtons:null, additionalChildren: null, width: 35, height: 45, top: '5rem', left: '5rem', overflowY: 'scroll'}
+MoorhenDraggableModalBase.defaultProps = { 
+    showCloseButton: true, handleClassName: 'handle', additionalHeaderButtons:null, additionalChildren: null, 
+    width: 35, height: 45, top: '5rem', left: '5rem', overflowY: 'scroll'
+}
 </code></pre>
         </article>
     </section>
