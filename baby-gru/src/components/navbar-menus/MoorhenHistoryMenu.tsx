@@ -95,7 +95,9 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
 
     return <div style={{maxHeight: convertViewtoPx(65, height), maxWidth: '20rem', overflowY: 'auto', overflowX: 'hidden'}}>
         <Stepper nonLinear activeStep={historyHead} orientation="vertical">
-            {props.commandCentre.current.history.entries.map((entry, index) => getHistoryStep(entry, index)) }
+            {props.commandCentre.current.history.entries.length === 0 ? 
+            <span>No command history</span>
+            : props.commandCentre.current.history.entries.map((entry, index) => getHistoryStep(entry, index)) }
         </Stepper>
     </div>
 }

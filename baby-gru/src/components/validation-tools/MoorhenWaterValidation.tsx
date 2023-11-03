@@ -85,8 +85,8 @@ export const MoorhenWaterValidation = (props: Props) => {
             return <Card key={`${index}/${selectedModel}/${water.model_number}/${water.chain_id}/${water.res_no}`} style={{marginTop: '0.5rem'}}>
                     <Card.Body style={{padding:'0.5rem'}}>
                         <Row style={{display:'flex', justifyContent:'between'}}>
-                            <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
-                                {water.string_user_data}
+                            <Col style={{alignItems:'center', justifyContent:'left', display:'flex', whiteSpace: 'pre'}}>
+                                {`/${water.model_number}/${water.chain_id}/${water.res_no}(HOH)    ${water.string_user_data}`}
                             </Col>
                             <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
                                 <Button style={{marginRight:'0.5rem'}} onClick={() => {
