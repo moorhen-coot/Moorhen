@@ -121,9 +121,9 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
         if (isDirty.current) {
             busyRedrawing.current = true
             isDirty.current = false
-            await Promise.all(
-                representationIds.map(id => props.molecule.redrawRepresentation(id))
-            )
+            for (let id of representationIds) {
+                await props.molecule.redrawRepresentation(id)
+            }
             busyRedrawing.current = false
             redrawMolIfDirty(representationIds)
         }

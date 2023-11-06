@@ -52,9 +52,6 @@ export const MoorhenQuerySequenceModal = (props: {
         try {
             await newMolecule.loadToCootFromURL(url, molName)
             if (newMolecule.molNo === -1) throw new Error("Cannot read the fetched molecule...")
-            await newMolecule.fetchIfDirtyAndDraw(newMolecule.atomCount >= 50000 ? 'CRs' : 'CBs')
-            dispatch( addMolecule(newMolecule) )
-            newMolecule.centreOn('/*/*/*/*', false)
             return newMolecule
         } catch (err) {
             dispatch(setNotificationContent(
@@ -127,6 +124,9 @@ export const MoorhenQuerySequenceModal = (props: {
 
     const fetchAndSuperpose = async (polimerEntity: string, coordUrl: string, chainId: string, source: string) => {
         const newMolecule = await fetchMoleculeFromURL(coordUrl, polimerEntity)
+        if (!newMolecule) {
+            return
+        }
         if (source === 'AFDB') {
             const newRule = {
                 args: [getMultiColourRuleArgs(newMolecule, 'af2-plddt')],
@@ -149,8 +149,9 @@ export const MoorhenQuerySequenceModal = (props: {
             changesMolecules: [newMolecule.molNo]
         }, true)                            
         newMolecule.setAtomsDirty(true)
-        await newMolecule.redraw()
-        newMolecule.centreOn('/*/*/*/*', true)
+        await newMolecule.fetchIfDirtyAndDraw(newMolecule.atomCount >= 50000 ? 'CRs' : 'CBs')
+        await newMolecule.centreOn('/*/*/*/*', true)
+        dispatch( addMolecule(newMolecule) )
     }
 
     const getPDBHitCard = async (polimerEntity: string, source: string = 'PDB') => {
