@@ -15,8 +15,8 @@ export const MoorhenApp = (props) => {
     const prevActiveMoleculeRef = useRef<null | moorhen.Molecule>(null)
 
     const collectedProps = {
-        glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef,
-        lastHoveredAtom, prevActiveMoleculeRef,
+        glRef, timeCapsuleRef, commandCentre, moleculesRef, 
+        mapsRef, activeMapRef, lastHoveredAtom, prevActiveMoleculeRef,
     }
 
     return  <MoorhenReduxProvider>
