@@ -150,7 +150,6 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     }, [props.molecule, props.glRef])
 
     useEffect(() => {
-        console.log('HI ', drawMissingLoops)
         if (!userPreferencesMounted || drawMissingLoops === null) {
             return
         } else if (innerDrawMissingLoopsRef.current === null) {
