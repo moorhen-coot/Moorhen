@@ -9,6 +9,28 @@ declare module 'moorhen' {
     let MoorhenContainer: any;
     module.exports = MoorhenContainer;
 
+    let MoorhenDraggableModalBase: any;
+    module.exports = MoorhenDraggableModalBase;
+
+
+    let MoorhenMoleculeSelect: any;
+    module.exports = MoorhenMoleculeSelect;
+
+    let MoorhenQuerySequenceModal: any;
+    module.exports = MoorhenQuerySequenceModal;
+
+    let MoorhenMapSelect: any;
+    module.exports = MoorhenMapSelect;
+
+
+    let MoorhenSlider: any;
+    module.exports = MoorhenSlider;
+
+
+    let MoorhenFetchOnlineSourcesForm: any;
+    module.exports = MoorhenFetchOnlineSourcesForm;
+
+
     let MoorhenReduxProvider: any;
     module.exports = MoorhenReduxProvider;
 
@@ -25,6 +47,7 @@ declare module 'moorhen' {
 
     class MoorhenMolecule implements _moorhen.Molecule {
         constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibrary: string)
+        SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string): Promise<_moorhen.WorkerResponse>;
         deleteCid(cid: string, redraw?: boolean): Promise<void>;
         getNumberOfAtoms(): Promise<number>;
         moveMoleculeHere(x: number, y: number, z: number): Promise<void>;
@@ -179,6 +202,9 @@ declare module 'moorhen' {
     }
     module.exports.MoorhenMap = MoorhenMap
 
+    function getMoleculeBfactors(gemmiStructure: gemmi.Structure): { cid: string, bFactor: number, chainId: string, resNum: number, modelName: string }[];
+    module.exports = getMoleculeBfactors;
+
     function loadSessionData(
         sessionDataString: string,
         monomerLibraryPath: string,
@@ -190,7 +216,6 @@ declare module 'moorhen' {
         dispatch: (reduxStoreAction: any) => void,
     ): Promise<number>;
     module.exports = loadSessionData;
-
 
     function setDefaultBackgroundColor(arg0: [number, number, number, number]): any;
     module.exports = setDefaultBackgroundColor;
