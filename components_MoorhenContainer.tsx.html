@@ -235,14 +235,14 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         disableFileUploads, urlPrefix, extraNavBarMenus, viewOnly, extraDraggableModals, 
         monomerLibraryPath, extraFileMenuItems, allowScripting, backupStorageInstance,
         extraEditMenuItems, aceDRGInstance, extraCalculateMenuItems, setMoorhenDimensions,
-        onUserPreferencesChange
+        onUserPreferencesChange, extraNavBarModals
     } = props
 
     const collectedProps: moorhen.CollectedProps = {
         glRef, commandCentre, timeCapsuleRef, disableFileUploads, extraDraggableModals, aceDRGInstance, 
         urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems, extraEditMenuItems,
         extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, activeMapRef,
-        videoRecorderRef, lastHoveredAtomRef, onUserPreferencesChange
+        videoRecorderRef, lastHoveredAtomRef, onUserPreferencesChange, extraNavBarModals
     }
     
     useEffect(() => {
@@ -536,6 +536,7 @@ MoorhenContainer.defaultProps = {
     monomerLibraryPath: './baby-gru/monomers',
     setMoorhenDimensions: null,
     disableFileUploads: false,
+    extraNavBarModals: [],
     extraNavBarMenus: [],
     extraFileMenuItems: [],
     extraEditMenuItems: [],
