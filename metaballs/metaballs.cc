@@ -3,6 +3,7 @@
 #include <vector>
 #include <cstdlib>
 #include <iostream>
+#include <iomanip>
 #include <algorithm>
 #include <chrono>
 
@@ -81,17 +82,14 @@ MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points
         float rr = r0 * r0;
         for(unsigned iz=0;iz<ncell_z;iz++){
             float z = min_z + iz * cell_z;
-            if(z>max_z||z<min_z) continue;
             int idx_z = iz*ncell_x*ncell_y;
             float zz = (z - z0)*(z - z0);
             for(unsigned iy=0;iy<ncell_y;iy++){
                 float y = min_y + iy * cell_y;
-                if(y>max_y||y<min_y) continue;
                 int idx_y = iy*ncell_x;
                 float yy = (y - y0)*(y - y0);
                 for(unsigned ix=0;ix<ncell_x;ix++){
                     float x = min_x + ix * cell_x;
-                    if(x>max_x||x<min_x) continue;
                     float xx = (x - x0)*(x - x0);
                     int newIdx = idx_z + idx_y + ix;
                     field[newIdx] += rr / (xx + yy + zz);
@@ -170,12 +168,29 @@ MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points
 
     auto t_smooth = std::chrono::high_resolution_clock::now();
 
-    std::cout << "Time to get min max " << std::chrono::duration_cast<std::chrono::microseconds>(t_min_max-t_start).count() << std::endl;
-    std::cout << "Time to initialize field " << std::chrono::duration_cast<std::chrono::microseconds>(t_field_fill-t_min_max).count() << std::endl;
-    std::cout << "Time to make field " << std::chrono::duration_cast<std::chrono::microseconds>(t_field-t_field_fill).count() << std::endl;
-    std::cout << "Time to get surface " << std::chrono::duration_cast<std::chrono::microseconds>(t_march-t_field).count() << std::endl;
-    std::cout << "Time to rebase mesh " << std::chrono::duration_cast<std::chrono::microseconds>(t_mesh-t_march).count() << std::endl;
-    std::cout << "Time to smooth mesh " << std::chrono::duration_cast<std::chrono::microseconds>(t_smooth-t_mesh).count() << std::endl;
+    auto t_total = std::chrono::duration_cast<std::chrono::microseconds>(t_smooth - t_start).count();
+    auto t1 = std::chrono::duration_cast<std::chrono::microseconds>(t_min_max-t_start).count();
+    auto t2 = std::chrono::duration_cast<std::chrono::microseconds>(t_field_fill-t_min_max).count();
+    auto t3 = std::chrono::duration_cast<std::chrono::microseconds>(t_field-t_field_fill).count();
+    auto t4 = std::chrono::duration_cast<std::chrono::microseconds>(t_march-t_field).count();
+    auto t5 = std::chrono::duration_cast<std::chrono::microseconds>(t_mesh-t_march).count();
+    auto t6 = std::chrono::duration_cast<std::chrono::microseconds>(t_smooth-t_mesh).count();
+    auto p1 = 100.* t1 / t_total; 
+    auto p2 = 100.* t2 / t_total;
+    auto p3 = 100.* t3 / t_total;
+    auto p4 = 100.* t4 / t_total;
+    auto p5 = 100.* t5 / t_total;
+    auto p6 = 100.* t6 / t_total;
+
+    std::cout << std::fixed;
+    std::cout << std::setprecision(2);
+
+    std::cout << "Time to get min max "      << t1 << " (" << p1 << "%)" << std::endl;
+    std::cout << "Time to initialize field " << t2 << " (" << p2 << "%)" << std::endl;
+    std::cout << "Time to make field "       << t3 << " (" << p3 << "%)" << std::endl;
+    std::cout << "Time to get surface "      << t4 << " (" << p4 << "%)" << std::endl;
+    std::cout << "Time to rebase mesh "      << t5 << " (" << p5 << "%)" << std::endl;
+    std::cout << "Time to smooth mesh "      << t6 << " (" << p6 << "%)" << std::endl;
 
     return mesh;
 }
