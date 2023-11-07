@@ -120,7 +120,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
     }
 
     if (devMode) {
-        actions['Dev'] = { icon: <ScienceOutlined/>, name: 'Dev', ref: devDialActionRef}
+        actions['Dev'] = { icon: <ScienceOutlined/>, name: 'Dev', ref: devDialActionRef }
     }
 
     useEffect(() => {
