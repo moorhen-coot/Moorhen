@@ -18,7 +18,8 @@ import { MoorhenMapsModal } from '../modal/MoorhenMapsModal';
 import { MoorhenValidationToolsModal } from '../modal/MoorhenValidationToolsModal';
 import { 
     AcUnitOutlined, CalculateOutlined, DescriptionOutlined, EditOutlined, VisibilityOutlined,
-    FactCheckOutlined, HelpOutlineOutlined, MenuOutlined, SaveOutlined, ScienceOutlined, SettingsSuggestOutlined, CloseOutlined, HistoryOutlined,
+    FactCheckOutlined, HelpOutlineOutlined, MenuOutlined, SaveOutlined, ScienceOutlined, 
+    SettingsSuggestOutlined, CloseOutlined, HistoryOutlined,
  } from '@mui/icons-material';
 import { MoorhenQuerySequenceModal } from '../modal/MoorhenQuerySequenceModal';
 import { MoorhenScriptModal } from '../modal/MoorhenScriptModal';
@@ -27,9 +28,7 @@ import { useSelector } from 'react-redux';
 
 export interface MoorhenNavBarExtendedControlsInterface extends moorhen.CollectedProps {
     dropdownId: string;
-    currentDropdownId: string;
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
-    setCurrentDropdownId: React.Dispatch<React.SetStateAction<string>>;
     setShowQuerySequence: React.Dispatch<React.SetStateAction<boolean>>;
     setShowScripting: React.Dispatch<React.SetStateAction<boolean>>;
     setShowCreateAcedrgLinkModal: React.Dispatch<React.SetStateAction<boolean>>;
@@ -40,7 +39,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
     const [timeCapsuleBusy, setTimeCapsuleBusy] = useState<boolean>(false)
     const [busy, setBusy] = useState<boolean>(false)
     const [speedDialOpen, setSpeedDialOpen] = useState<boolean>(false)
-    const [currentDropdownId, setCurrentDropdownId] = useState<string>('-1')
+    const [navBarActiveMenu, setNavBarActiveMenu] = useState<string>('-1')
     const [showCreateAcedrgLinkModal, setShowCreateAcedrgLinkModal] = useState<boolean>(false)
     const [showValidation, setShowValidation] = useState<boolean>(false)
     const [showModels, setShowModels] = useState<boolean>(false)
@@ -90,8 +89,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
     }, [props.timeCapsuleRef.current])
 
     const collectedProps = {
-        currentDropdownId, setCurrentDropdownId, setShowQuerySequence, setShowScripting, 
-        setShowCreateAcedrgLinkModal, setBusy, ...props
+        setShowQuerySequence, setShowScripting, setShowCreateAcedrgLinkModal, setBusy, ...props
     }
 
     const actions = {
@@ -109,46 +107,57 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
         'Help': { icon: <HelpOutlineOutlined/>, name: 'Help', ref: helpDialActionRef},
     }
 
-    if (devMode) {
-        actions['Dev'] = { icon: <ScienceOutlined/>, name: 'Dev', ref: devDialActionRef}
-    }
-
     if (props.extraNavBarMenus) {
         props.extraNavBarMenus.forEach(menu => {
             actions[menu.name] = menu
         })
     }
 
+    if (props.extraNavBarModals) {
+        props.extraNavBarModals.forEach(modal => {
+            actions[modal.name] = modal
+        })
+    }
+
+    if (devMode) {
+        actions['Dev'] = { icon: <ScienceOutlined/>, name: 'Dev', ref: devDialActionRef }
+    }
+
     useEffect(() => {
-        switch(currentDropdownId) {
+        switch(navBarActiveMenu) {
             case "-1":
                 break
             case "Models":
                 setShowModels(true)
-                setCurrentDropdownId('-1')
+                setNavBarActiveMenu('-1')
                 break
             case "Maps":
                 setShowMaps(true)
-                setCurrentDropdownId('-1')
+                setNavBarActiveMenu('-1')
                 break
             case "Validation":
                 setShowValidation(true)
-                setCurrentDropdownId('-1')
+                setNavBarActiveMenu('-1')
                 break
             default:
-                setPopoverTargetRef(actions[currentDropdownId].ref.current)
+                const selectedExtraNavBarModal = props.extraNavBarModals.find(modal => modal.name === navBarActiveMenu)
+                if (selectedExtraNavBarModal) {
+                    selectedExtraNavBarModal.setShow(true)
+                    setNavBarActiveMenu('-1')
+                } else {
+                    setPopoverTargetRef(actions[navBarActiveMenu]?.ref.current)
+                }
                 break
         }
-    }, [currentDropdownId])
+    }, [navBarActiveMenu])
 
     const handleDialActionClick = useCallback((actionName) => {
-        if (actionName === currentDropdownId) {
-            setCurrentDropdownId('-1')
+        if (actionName === navBarActiveMenu) {
+            setNavBarActiveMenu('-1')
         } else {
-            setCurrentDropdownId(actionName)
+            setNavBarActiveMenu(actionName)
         }
-        
-    }, [currentDropdownId])
+    }, [navBarActiveMenu])
 
     const canvasElement = document.getElementById('moorhen-canvas-background')
     let canvasTop: number
@@ -168,7 +177,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
             variant={'extended'}
             size={"large"}
             onClick={() => {
-                setCurrentDropdownId('-1')
+                setNavBarActiveMenu('-1')
                 setSpeedDialOpen(!speedDialOpen)        
             }}
             sx={{
@@ -186,7 +195,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
             { (speedDialOpen) ? <CloseOutlined style={{color: 'black'}}/> : <MenuOutlined style={{color: 'black'}}/> }
             <img className='moorhen-navbar-menu-item-icon' src={`${props.urlPrefix}/baby-gru/pixmaps/MoorhenLogo.png`} alt='Moorhen' /> 
         </Fab>
-        <ClickAwayListener onClickAway={() => { setCurrentDropdownId('-1') }}>
+        <ClickAwayListener onClickAway={() => { setNavBarActiveMenu('-1') }}>
         <Popper open={speedDialOpen} anchorEl={speedDialRef.current} placement='bottom-start'>
             <Grow in={speedDialOpen} style={{ transformOrigin: '0 0 0' }}>
             <MenuList style={{height: height - convertRemToPx(5), width: '100%', overflowY: 'auto', direction: 'rtl'}}>
@@ -198,7 +207,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
                     className='moorhen-navbar-menu-item'
                     onClick={() => handleDialActionClick(action.name)}
                     style={{
-                        backgroundColor: isDark ? (currentDropdownId === action.name ? '#a8a8a8' : 'grey') : (currentDropdownId === action.name ? '#d4d4d4' : 'white') ,
+                        backgroundColor: isDark ? (navBarActiveMenu === action.name ? '#a8a8a8' : 'grey') : (navBarActiveMenu === action.name ? '#d4d4d4' : 'white') ,
                     }}>
                         <Stack gap={2} direction='horizontal' style={{display: 'flex', verticalAlign: 'middle'}}>
                             {action.name}
@@ -210,35 +219,38 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
                 })}
             </MenuList>
             </Grow>
-            <Overlay placement='right' show={currentDropdownId !== '-1'} target={currentDropdownId !== '-1' ? popoverTargetRef : null}>
+            <Overlay placement='right' show={navBarActiveMenu !== '-1'} target={navBarActiveMenu !== '-1' ? popoverTargetRef : null}>
                 <Popover className='moorhen-nav-popover' style={{maxWidth: convertViewtoPx(35, width)}}>
                     <Popover.Body>
-                        { currentDropdownId === 'File' && <MoorhenFileMenu dropdownId="File" {...collectedProps} /> }
-                        { currentDropdownId === 'Edit' && <MoorhenEditMenu dropdownId="Edit" {...collectedProps} /> }
-                        { currentDropdownId === 'Calculate' && <MoorhenCalculateMenu dropdownId="Calculate" {...collectedProps} /> }
-                        { currentDropdownId === 'Ligand' && <MoorhenLigandMenu dropdownId="Ligand" {...collectedProps} /> }
-                        { currentDropdownId === 'View' && <MoorhenViewMenu dropdownId="View" {...collectedProps} /> }
-                        { currentDropdownId === 'Preferences' && <MoorhenPreferencesMenu dropdownId="Preferences" {...collectedProps} /> }
-                        { currentDropdownId === 'History' && <MoorhenHistoryMenu dropdownId="History" {...collectedProps} /> }
-                        { currentDropdownId === 'Cryo' && <MoorhenCryoMenu dropdownId="Cryo" {...collectedProps} /> }
-                        { currentDropdownId === 'Help' &&  <MoorhenHelpMenu dropdownId="Help" {...collectedProps} /> }
-                        { currentDropdownId === 'Dev' &&  <MoorhenDevMenu dropdownId="Dev" {...collectedProps} /> }
-                        { props.extraNavBarMenus && props.extraNavBarMenus.find(menu => currentDropdownId === menu.name)?.JSXElement }
+                        { navBarActiveMenu === 'File' && <MoorhenFileMenu dropdownId="File" {...collectedProps} /> }
+                        { navBarActiveMenu === 'Edit' && <MoorhenEditMenu dropdownId="Edit" {...collectedProps} /> }
+                        { navBarActiveMenu === 'Calculate' && <MoorhenCalculateMenu dropdownId="Calculate" {...collectedProps} /> }
+                        { navBarActiveMenu === 'Ligand' && <MoorhenLigandMenu dropdownId="Ligand" {...collectedProps} /> }
+                        { navBarActiveMenu === 'View' && <MoorhenViewMenu dropdownId="View" {...collectedProps} /> }
+                        { navBarActiveMenu === 'Preferences' && <MoorhenPreferencesMenu dropdownId="Preferences" {...collectedProps} /> }
+                        { navBarActiveMenu === 'History' && <MoorhenHistoryMenu dropdownId="History" {...collectedProps} /> }
+                        { navBarActiveMenu === 'Cryo' && <MoorhenCryoMenu dropdownId="Cryo" {...collectedProps} /> }
+                        { navBarActiveMenu === 'Help' &&  <MoorhenHelpMenu dropdownId="Help" {...collectedProps} /> }
+                        { navBarActiveMenu === 'Dev' &&  <MoorhenDevMenu dropdownId="Dev" {...collectedProps} /> }
+                        { props.extraNavBarMenus && props.extraNavBarMenus.find(menu => navBarActiveMenu === menu.name)?.JSXElement }
                     </Popover.Body>
                 </Popover>
             </Overlay>
         </Popper>
         </ClickAwayListener>
+    
     <MoorhenModelsModal
-            show={showModels}
-            setShow={setShowModels}
-            {...props}
+        show={showModels}
+        setShow={setShowModels}
+        {...props}
     />
+    
     <MoorhenMapsModal
-            show={showMaps}
-            setShow={setShowMaps}
-            {...props}
+        show={showMaps}
+        setShow={setShowMaps}
+        {...props}
     />
+        
     {showCreateAcedrgLinkModal && 
         <MoorhenCreateAcedrgLinkModal
             width={45}
@@ -247,6 +259,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
             {...props}
         />
     }
+    
     {showValidation && 
         <MoorhenValidationToolsModal 
             show={showValidation}
@@ -254,15 +267,20 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
             {...props}
         />
     }
+    
     {showQuerySequence &&
         <MoorhenQuerySequenceModal
             show={showQuerySequence}
             setShow={setShowQuerySequence}
             {...props} />
     }
+    
     {showScripting &&
         <MoorhenScriptModal show={showScripting} setShow={setShowScripting} {...props} />
     }
+    
+    { props.extraNavBarModals && props.extraNavBarModals.filter(modal => modal.show).map(modal => modal.JSXElement) }
+
     <Fab
         variant='extended'
         size="large"

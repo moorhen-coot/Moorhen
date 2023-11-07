@@ -2,6 +2,7 @@ import { ErrorBoundary } from "./ErrorBoundary";
 import { MoorhenApp } from './components/MoorhenApp';
 import { MoorhenContainer } from './components/MoorhenContainer';
 import { MoorhenDraggableModalBase } from "./components/modal/MoorhenDraggableModalBase";
+import { MoorhenQuerySequenceModal } from "./components/modal/MoorhenQuerySequenceModal";
 import { MoorhenMolecule } from './utils/MoorhenMolecule';
 import { MoorhenMap } from './utils/MoorhenMap';
 import { MoorhenCommandCentre } from './utils/MoorhenCommandCentre';
@@ -9,7 +10,9 @@ import { MoorhenTimeCapsule } from './utils/MoorhenTimeCapsule';
 import { MoorhenPreferences } from "./utils/MoorhenPreferences";
 import { MoorhenMoleculeSelect } from "./components/select/MoorhenMoleculeSelect";
 import { MoorhenMapSelect } from "./components/select/MoorhenMapSelect";
-import { loadSessionData } from "./utils/MoorhenUtils";
+import { MoorhenSlider } from "./components/misc/MoorhenSlider";
+import { MoorhenFetchOnlineSourcesForm } from "./components/form/MoorhenFetchOnlineSourcesForm";
+import { loadSessionData, getMoleculeBfactors } from "./utils/MoorhenUtils";
 import { MoorhenReduxProvider } from "./components/misc/MoorhenReduxProvider";
 import { setDefaultBackgroundColor, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
     setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap,  
@@ -44,8 +47,8 @@ export {
     setCursorStyle, setEnableAtomHovering, setHoveredAtom, addAvailableFontList, setAtomLabelDepthMode, 
     setGLLabelsFontFamily, setGLLabelsFontSize, setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, 
     setDefaultMapSurface, setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut, setEnableRefineAfterMod,
-    addMolecule, removeMolecule, emptyMolecules, addMoleculeList, setContourWheelSensitivityFactor, 
+    addMolecule, removeMolecule, emptyMolecules, addMoleculeList, setContourWheelSensitivityFactor, MoorhenFetchOnlineSourcesForm,
     setZoomWheelSensitivityFactor, setMouseSensitivity, setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts,
-    setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores, 
-    addMap, addMapList, removeMap, emptyMaps, MoorhenPreferences
+    setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores, MoorhenSlider,
+    addMap, addMapList, removeMap, emptyMaps, getMoleculeBfactors, MoorhenQuerySequenceModal, MoorhenPreferences
 };

@@ -89,6 +89,7 @@ export namespace moorhen {
     }
     
     interface Molecule {
+        SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string): Promise<WorkerResponse>;
         refineResiduesUsingAtomCid(cid: string, mode: string, ncyc?: number, redraw?: boolean): Promise<void>;
         deleteCid(cid: string, redraw?: boolean): Promise<void>;
         getNumberOfAtoms(): Promise<number>;
@@ -715,6 +716,7 @@ export namespace moorhen {
         disableFileUploads: boolean;
         urlPrefix: string;
         extraNavBarMenus: {name: string; ref: React.RefObject<any> ; icon: JSX.Element; JSXElement: JSX.Element}[];
+        extraNavBarModals: {name: string; ref: React.RefObject<any> ; icon: JSX.Element; JSXElement: JSX.Element; show: boolean; setShow: React.Dispatch<React.SetStateAction<boolean>>;}[];
         viewOnly: boolean;
         extraDraggableModals: JSX.Element[];
         monomerLibraryPath: string;

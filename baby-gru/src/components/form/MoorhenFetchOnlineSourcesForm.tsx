@@ -1,0 +1,218 @@
+import { Form, Button, InputGroup, SplitButton, Dropdown } from "react-bootstrap";
+import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
+import { MoorhenMap } from "../../utils/MoorhenMap";
+import { useState, useRef } from "react";
+import { WarningOutlined } from "@mui/icons-material";
+import { getMultiColourRuleArgs, guid } from "../../utils/MoorhenUtils";
+import { MoorhenNotification } from "../misc/MoorhenNotification";
+import { moorhen } from "../../types/moorhen";
+import { useSelector, useDispatch, batch } from 'react-redux';
+import { setActiveMap, setNotificationContent } from "../../store/generalStatesSlice";
+import { addMolecule } from "../../store/moleculesSlice";
+import { addMap } from "../../store/mapsSlice";
+import { webGL } from "../../types/mgWebGL";
+
+export const MoorhenFetchOnlineSourcesForm = (props: {
+    monomerLibraryPath: string;
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
+    glRef: React.RefObject<webGL.MGWebGL>;
+    setBusy: React.Dispatch<React.SetStateAction<boolean>>;
+    sources?: string[];
+    downloadMaps?: boolean;
+    onMoleculeLoad: (newMolecule: moorhen.Molecule) => any;
+}) => {
+
+    const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
+    const fetchMapDataCheckRef = useRef<HTMLInputElement | null>(null);
+
+    const [remoteSource, setRemoteSource] = useState<string>("PDBe")
+    const [isValidPdbId, setIsValidPdbId] = useState<boolean>(true)
+
+    const dispatch = useDispatch()
+    const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
+    const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
+
+    const { commandCentre, glRef, monomerLibraryPath } = props;
+
+    const getWarningToast = (message: string) => <MoorhenNotification key={guid()} hideDelay={3000} width={20}>
+        <><WarningOutlined style={{ margin: 0 }} />
+            <h4 className="moorhen-warning-toast">
+                {message}
+            </h4>
+            <WarningOutlined style={{ margin: 0 }} /></>
+    </MoorhenNotification>
+
+    const fetchFiles = (): void => {
+        if (pdbCodeFetchInputRef.current.value === "") {
+            return
+        }
+        props.setBusy(true)
+        if (remoteSource === "PDBe") {
+            fetchFilesFromEBI()
+        } else if (remoteSource === "PDB-REDO") {
+            fetchFilesFromPDBRedo()
+        } else if (remoteSource === 'AFDB') {
+            fetchFilesFromAFDB()
+        } else if (remoteSource === 'EMDB') {
+            fetchMapFromEMDB()
+        } else {
+            console.log(`Unrecognised remote source! ${remoteSource}`)
+        }
+    }
+
+    const fetchMapFromEMDB = () => {
+        const emdbCode = pdbCodeFetchInputRef.current.value.toLowerCase()
+        if (emdbCode) {
+            const mapUrl = `https://ftp.ebi.ac.uk/pub/databases/emdb/structures/EMD-${emdbCode}/map/emd_${emdbCode}.map.gz`
+            fetchMapFromURL(mapUrl, `${emdbCode}.map.gz`, false)
+                .then(newMap => newMap.centreOnMap())
+        } else {
+            console.log('Error: no EMDB entry provided')
+        }
+    }
+
+    const fetchFilesFromCOD = () => {
+        const entryCod: string = pdbCodeFetchInputRef.current.value.toLowerCase()
+        const codUrl = `http://www.crystallography.net/cod/${entryCod}.cif`
+        if (entryCod) {
+            Promise.all([
+                fetchMoleculeFromURL(codUrl, `cod-${entryCod}`),
+            ])
+        } else {
+            console.log('Error: no COD entry')
+        }
+    }
+
+    const fetchFilesFromEBI = () => {
+        const pdbCode = pdbCodeFetchInputRef.current.value.toLowerCase()
+        const coordUrl = `https://www.ebi.ac.uk/pdbe/entry-files/download/${pdbCode}.cif`
+        const mapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode}.ccp4`
+        const diffMapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode}_diff.ccp4`
+        if (pdbCode && fetchMapDataCheckRef.current?.checked) {
+            Promise.all([
+                fetchMoleculeFromURL(coordUrl, pdbCode),
+                fetchMapFromURL(mapUrl, `${pdbCode}-map`),
+                fetchMapFromURL(diffMapUrl, `${pdbCode}-map`, true)
+            ])
+        } else if (pdbCode) {
+            fetchMoleculeFromURL(coordUrl, pdbCode)
+        }
+    }
+
+    const fetchFilesFromAFDB = () => {
+        const uniprotID: string = pdbCodeFetchInputRef.current.value.toUpperCase()
+        const coordUrl = `https://alphafold.ebi.ac.uk/files/AF-${uniprotID}-F1-model_v4.pdb`
+        if (uniprotID) {
+            fetchMoleculeFromURL(coordUrl, `${uniprotID}`, true)
+        }
+    }
+
+    const fetchFilesFromPDBRedo = () => {
+        const pdbCode = pdbCodeFetchInputRef.current.value
+        const coordUrl = `https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.pdb`
+        const mtzUrl = `https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.mtz/`
+        if (pdbCode && fetchMapDataCheckRef.current?.checked) {
+            Promise.all([
+                fetchMoleculeFromURL(coordUrl, `${pdbCode}-redo`),
+                fetchMtzFromURL(mtzUrl, `${pdbCode}-map-redo`, { F: "FWT", PHI: "PHWT", Fobs: 'FP', SigFobs: 'SIGFP', FreeR: 'FREE', isDifference: false, useWeight: false, calcStructFact: true }),
+                fetchMtzFromURL(mtzUrl, `${pdbCode}-map-redo`, { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false })
+            ])
+        } else if (pdbCode) {
+            fetchMoleculeFromURL(coordUrl, `${pdbCode}-redo`)
+        }
+    }
+
+    const fetchMoleculeFromURL = async (url: RequestInfo | URL, molName: string, isAF2?: boolean): Promise<moorhen.Molecule> => {
+        const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
+        newMolecule.setBackgroundColour(backgroundColor)
+        newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
+        try {
+            await newMolecule.loadToCootFromURL(url, molName)
+            if (newMolecule.molNo === -1) {
+                throw new Error("Cannot read the fetched molecule...")
+            } else if (isAF2) {
+                const newRule = {
+                    args: [getMultiColourRuleArgs(newMolecule, 'af2-plddt')],
+                    isMultiColourRule: true,
+                    ruleType: 'af2-plddt',
+                    label: `//*`
+                }
+                newMolecule.defaultColourRules = [newRule]
+            }
+            await newMolecule.fetchIfDirtyAndDraw(newMolecule.atomCount >= 50000 ? 'CRs' : 'CBs')
+            await newMolecule.centreOn('/*/*/*/*', true)
+            dispatch(addMolecule(newMolecule))
+            props.onMoleculeLoad(newMolecule)
+            return newMolecule
+        } catch (err) {
+            dispatch(setNotificationContent(getWarningToast(`Failed to read molecule`)))
+            console.log(`Cannot fetch molecule from ${url}`)
+            setIsValidPdbId(false)
+            props.setBusy(false)
+        }
+    }
+
+    const fetchMapFromURL = async (url: RequestInfo | URL, mapName: string, isDiffMap: boolean = false): Promise<moorhen.Map> => {
+        const newMap = new MoorhenMap(commandCentre, glRef)
+        try {
+            await newMap.loadToCootFromMapURL(url, mapName, isDiffMap)
+            if (newMap.molNo === -1) throw new Error("Cannot read the fetched map...")
+            batch(() => {
+                dispatch(addMap(newMap))
+                dispatch(setActiveMap(newMap))
+            })
+        } catch (err) {
+            console.warn(err)
+            dispatch(setNotificationContent(getWarningToast(`Failed to read map`)))
+            console.log(`Cannot fetch map from ${url}`)
+            props.setBusy(false)
+        }
+        return newMap
+    }
+
+    const fetchMtzFromURL = async (url: RequestInfo | URL, mapName: string, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> => {
+        const newMap = new MoorhenMap(commandCentre, glRef)
+        try {
+            await newMap.loadToCootFromMtzURL(url, mapName, selectedColumns)
+            if (newMap.molNo === -1) throw new Error("Cannot read the fetched mtz...")
+            batch(() => {
+                dispatch(addMap(newMap))
+                dispatch(setActiveMap(newMap))
+            })
+        } catch {
+            dispatch(setNotificationContent(getWarningToast(`Failed to read mtz`)))
+            console.log(`Cannot fetch mtz from ${url}`)
+            props.setBusy(false)
+        }
+        return newMap
+    }
+
+    return <Form.Group className='moorhen-form-group' controlId="fetch-pdbe-form">
+        <Form.Label>Fetch coords from online services</Form.Label>
+        <InputGroup>
+            <SplitButton title={remoteSource} id="fetch-coords-online-source-select">
+                {props.sources.map(source => {
+                    /* @ts-ignore */
+                    return  <Dropdown.Item key={source} href="#" onClick={() => {
+                                setRemoteSource(source)
+                            }}>{source}</Dropdown.Item>
+                })}
+            </SplitButton>
+            <Form.Control type="text" style={{ borderColor: isValidPdbId ? '' : 'red' }} ref={pdbCodeFetchInputRef} onKeyDown={(e) => {
+                setIsValidPdbId(true)
+                if (e.code === 'Enter') {
+                    fetchFiles()
+                }
+            }} />
+            <Button variant="light" onClick={fetchFiles}>
+                Fetch
+            </Button>
+        </InputGroup>
+        <Form.Label style={{ display: isValidPdbId ? 'none' : 'block', alignContent: 'center', textAlign: 'center' }}>Problem fetching</Form.Label>
+        {props.downloadMaps && <Form.Check style={{ marginTop: '0.5rem' }} ref={fetchMapDataCheckRef} label={'fetch data for map'} name={`fetchMapData`} type="checkbox" />}        
+    </Form.Group>
+}
+
+MoorhenFetchOnlineSourcesForm.defaultProps = {
+    sources: ['PDBe', 'PDB-REDO', 'AFDB', 'EMDB'], downloadMaps: true, onMoleculeLoad: () => {}
+}
