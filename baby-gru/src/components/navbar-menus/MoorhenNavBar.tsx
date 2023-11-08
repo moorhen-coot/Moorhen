@@ -92,7 +92,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
         setShowQuerySequence, setShowScripting, setShowCreateAcedrgLinkModal, setBusy, ...props
     }
 
-    const actions = {
+    const navBarMenus = {
         'File': { icon: <DescriptionOutlined />, name: 'File', ref: fileSpeedDialActionRef},
         'Edit': { icon: <EditOutlined />, name: 'Edit', ref: editSpeedDialActionRef},
         'Calculate': { icon: <CalculateOutlined/>, name: 'Calculate', ref: calcualteSpeedDialActionRef},
@@ -109,18 +109,25 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
 
     if (props.extraNavBarMenus) {
         props.extraNavBarMenus.forEach(menu => {
-            actions[menu.name] = menu
+            navBarMenus[menu.name] = menu
         })
     }
 
     if (props.extraNavBarModals) {
         props.extraNavBarModals.forEach(modal => {
-            actions[modal.name] = modal
+            navBarMenus[modal.name] = modal
         })
     }
 
     if (devMode) {
-        actions['Dev'] = { icon: <ScienceOutlined/>, name: 'Dev', ref: devDialActionRef }
+        navBarMenus['Dev'] = { icon: <ScienceOutlined/>, name: 'Dev', ref: devDialActionRef }
+    }
+
+    let navBarMenuNames: string[] = []
+    if (props.includeNavBarMenuNames.length === 0) {
+        navBarMenuNames = Object.keys(navBarMenus)
+    } else {
+        navBarMenuNames = props.includeNavBarMenuNames
     }
 
     useEffect(() => {
@@ -145,7 +152,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
                     selectedExtraNavBarModal.setShow(true)
                     setNavBarActiveMenu('-1')
                 } else {
-                    setPopoverTargetRef(actions[navBarActiveMenu]?.ref.current)
+                    setPopoverTargetRef(navBarMenus[navBarActiveMenu]?.ref.current)
                 }
                 break
         }
@@ -199,20 +206,20 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
         <Popper open={speedDialOpen} anchorEl={speedDialRef.current} placement='bottom-start'>
             <Grow in={speedDialOpen} style={{ transformOrigin: '0 0 0' }}>
             <MenuList style={{height: height - convertRemToPx(5), width: '100%', overflowY: 'auto', direction: 'rtl'}}>
-                {Object.keys(actions).map((key) => {
-                const action = actions[key]
+                {navBarMenuNames.filter(menuName => menuName in navBarMenus).map(menuName => {
+                const menu = navBarMenus[menuName]
                 return <MenuItem
-                    ref={action.ref}
-                    key={action.name}
+                    ref={menu.ref}
+                    key={menu.name}
                     className='moorhen-navbar-menu-item'
-                    onClick={() => handleDialActionClick(action.name)}
+                    onClick={() => handleDialActionClick(menu.name)}
                     style={{
-                        backgroundColor: isDark ? (navBarActiveMenu === action.name ? '#a8a8a8' : 'grey') : (navBarActiveMenu === action.name ? '#d4d4d4' : 'white') ,
+                        backgroundColor: isDark ? (navBarActiveMenu === menu.name ? '#a8a8a8' : 'grey') : (navBarActiveMenu === menu.name ? '#d4d4d4' : 'white') ,
                     }}>
                         <Stack gap={2} direction='horizontal' style={{display: 'flex', verticalAlign: 'middle'}}>
-                            {action.name}
+                            {menu.name}
                             <IconButton>
-                                {action.icon}
+                                {menu.icon}
                             </IconButton>
                         </Stack>
                 </MenuItem>

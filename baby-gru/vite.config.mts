@@ -41,4 +41,17 @@ export default defineConfig({
             ]
         }
     },
+    build: {
+        lib: {
+            entry: './src/moorhen.ts',
+            name: 'Moorhen',
+            fileName: 'moorhen',
+        },
+        minify: true,
+        sourcemap: 'inline',
+        rollupOptions: {
+            external: [ 'react', 'react-dom' ],
+        },
+    },
+    base: './',
 });
