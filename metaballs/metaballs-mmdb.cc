@@ -257,7 +257,7 @@ coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::s
             trim(element);
             float atomMult = multLookup[element];
             if(strncmp(HetAtoms[i]->residue->name,"HOH",3)!=0){
-                std::cout << element << " " << atomMult << std::endl;
+                //std::cout << element << " " << atomMult << std::endl;
                 std::array<float,4> point{float(HetAtoms[i]->x),float(HetAtoms[i]->y),float(HetAtoms[i]->z),r*atomMult/1.7f};
                 if(HetAtoms[i]->residue!=currentResidue){
                     //std::cout << "New residue!" << std::endl;
