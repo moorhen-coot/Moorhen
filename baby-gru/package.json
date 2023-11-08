@@ -70,7 +70,6 @@
     "start": "vite",
     "prebuild": "npm run create-version && npm run transpile-ts-worker",
     "build": "vite build",
-    "postbuild": "cp package.json ./dist/ && mv ./dist/moorhen.umd.js ./dist/moorhen.js",
     "build-release": "npm run prebuild && webpack --mode production --devtool inline-source-map",
     "dev": "concurrently -k \"BROWSER=none npm start\" \"npm:electron\"",
     "electron": "wait-on tcp:3000 && electron-forge start",
