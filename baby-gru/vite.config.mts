@@ -41,4 +41,15 @@ export default defineConfig({
             ]
         }
     },
+    build: {
+        lib: {
+            entry: './src/moorhen.ts',
+            name: 'moorhen',
+            fileName: 'moorhen',
+            formats: ['umd']
+        },
+        minify: true,
+        sourcemap: 'inline',
+    },
+    base: './',
 });
