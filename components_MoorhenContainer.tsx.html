@@ -145,7 +145,9 @@ import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSl
  * @property {function} setMoorhenDimensions - Callback executed on window resize. Return type is an array of two numbers [width, height]
  * @property {function} onUserPreferencesChange - Callback executed whenever a user-defined preference changes (key: string, value: any) => void.
  * @property {boolean} [disableFileUploads=false] - Indicates if file uploads should b disabled
- * @property {JSX.Element[]} extraNavBarMenus - A list with additional menu items rendered under the navigation menu
+ * @property {string[]} [includeNavBarMenuNames] - An array of menu names to include in the Moorhen navbar. If empty array then all menus will be included. It can also be used to set their order.
+ * @property {object[]} extraNavBarModals - A list with additional draggable modals with buttons rendered under the navigation menu
+ * @property {object[]} extraNavBarMenus - A list with additional menu items rendered under the navigation menu
  * @property {JSX.Element[]} extraFileMenuItems - A list with additional menu items rendered under the "File" menu
  * @property {JSX.Element[]} extraEditMenuItems - A list with additional menu items rendered under the "Edit" menu
  * @property {JSX.Element[]} extraCalculateMenuItems - A list with additional menu items rendered under the "Calculate" menu
@@ -235,14 +237,15 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         disableFileUploads, urlPrefix, extraNavBarMenus, viewOnly, extraDraggableModals, 
         monomerLibraryPath, extraFileMenuItems, allowScripting, backupStorageInstance,
         extraEditMenuItems, aceDRGInstance, extraCalculateMenuItems, setMoorhenDimensions,
-        onUserPreferencesChange, extraNavBarModals
+        onUserPreferencesChange, extraNavBarModals, includeNavBarMenuNames
     } = props
 
     const collectedProps: moorhen.CollectedProps = {
         glRef, commandCentre, timeCapsuleRef, disableFileUploads, extraDraggableModals, aceDRGInstance, 
         urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems, extraEditMenuItems,
         extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, activeMapRef,
-        videoRecorderRef, lastHoveredAtomRef, onUserPreferencesChange, extraNavBarModals
+        videoRecorderRef, lastHoveredAtomRef, onUserPreferencesChange, extraNavBarModals, 
+        includeNavBarMenuNames
     }
     
     useEffect(() => {
@@ -536,6 +539,7 @@ MoorhenContainer.defaultProps = {
     monomerLibraryPath: './baby-gru/monomers',
     setMoorhenDimensions: null,
     disableFileUploads: false,
+    includeNavBarMenuNames: [],
     extraNavBarModals: [],
     extraNavBarMenus: [],
     extraFileMenuItems: [],
