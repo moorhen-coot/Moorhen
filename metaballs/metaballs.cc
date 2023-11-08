@@ -18,7 +18,7 @@ MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points
 
     MC::mcMesh mesh;
 
-    float padding = 0.5f;
+    float padding = 4.0f;
 
     float min_x =  1e8;
     float max_x = -1e8;
@@ -39,12 +39,12 @@ MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points
         if(z>max_z) max_z = z;
     }
 
-    min_x -= (padding+isoLevel);
-    min_y -= (padding+isoLevel);
-    min_z -= (padding+isoLevel);
-    max_x += (padding+isoLevel);
-    max_y += (padding+isoLevel);
-    max_z += (padding+isoLevel);
+    min_x -= (padding/isoLevel+gridSize);
+    min_y -= (padding/isoLevel+gridSize);
+    min_z -= (padding/isoLevel+gridSize);
+    max_x += (padding/isoLevel+gridSize);
+    max_y += (padding/isoLevel+gridSize);
+    max_z += (padding/isoLevel+gridSize);
 
     std::cout << "orig x range:" << min_x << " " << max_x << std::endl;
     std::cout << "orig y range:" << min_y << " " << max_y << std::endl;
