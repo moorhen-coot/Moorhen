@@ -727,6 +727,7 @@ export namespace moorhen {
         extraEditMenuItems: JSX.Element[];
         extraCalculateMenuItems: JSX.Element[];
         aceDRGInstance: AceDRGInstance | null; 
+        includeNavBarMenuNames: string[]
     }
     
     interface ContainerProps extends Partial<ContainerRefs>, Partial<ContainerOptionalProps> { }

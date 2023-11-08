@@ -1,6 +1,6 @@
 {
   "name": "moorhen",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "private": false,
   "main": "moorhen.js",
   "types": "./types/main.d.ts",
@@ -143,6 +143,7 @@
     "jest": "^27.5.1",
     "jsdoc": "^4.0.2",
     "localforage": "^1.10.0",
+    "mini-css-extract-plugin": "^2.7.6",
     "nested-worker": "git+https://github.com/johanholmerin/nested-worker.git#semver:^1.0.0",
     "nightingale-linegraph-track": "^3.8.10",
     "node-fetch": "^2.7.0",
