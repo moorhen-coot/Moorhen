@@ -4,6 +4,7 @@ import { MoorhenSuperposeMenuItem } from "../menu-item/MoorhenSuperposeMenuItem"
 import { MoorhenSelfRestraintsMenuItem } from "../menu-item/MoorhenSelfRestraintsMenuItem";
 import { MoorhenClearSelfRestraintsMenuItem } from "../menu-item/MoorhenClearSelfRestraintsMenuItem";
 import { MoorhenRandomJiggleBlurMenuItem } from "../menu-item/MoorhenRandomJiggleBlurMenuItem";
+import { MoorhenAddWatersMenuItem } from "../menu-item/MoorhenAddWatersMenuItem"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MenuItem } from "@mui/material";
 import { libcootApi } from "../../types/libcoot";
@@ -15,6 +16,7 @@ export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterfa
     const menuItemProps = { setPopoverIsShown, ...props }
 
     return <>
+            <MoorhenAddWatersMenuItem {...menuItemProps} />
             <MoorhenSuperposeMenuItem key="superpose_structures" setSuperposeResults={setSuperposeResults} {...menuItemProps} />
             <MoorhenSelfRestraintsMenuItem
                 glRef={props.glRef}
