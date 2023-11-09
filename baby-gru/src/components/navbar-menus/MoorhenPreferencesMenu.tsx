@@ -7,14 +7,14 @@ import { MoorhenGLFontMenuItem } from '../menu-item/MoorhenGLFontMenuItem'
 import { MoorhenScoresToastPreferencesMenuItem } from "../menu-item/MoorhenScoresToastPreferencesMenuItem"
 import { MoorhenBackupPreferencesMenuItem } from "../menu-item/MoorhenBackupPreferencesMenuItem"
 import { MoorhenDefaultBondSmoothnessPreferencesMenuItem } from "../menu-item/MoorhenDefaultBondSmoothnessPreferencesMenuItem"
-import { MoorhenMapSamplingMenuItem } from "../menu-item/MoorhenMapSamplingMenuItem"
+import { MapContourSettingsMenuItem } from "../menu-item/MapContourSettingsMenuItem"
 import { MoorhenSlider } from '../misc/MoorhenSlider' 
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { useSelector, useDispatch } from "react-redux";
 import { setDefaultExpandDisplayCards, setEnableRefineAfterMod, setTransparentModalsOnMouseOut } from "../../store/miscAppSettingsSlice";
 import { setAtomLabelDepthMode } from "../../store/labelSettingsSlice";
-import { setDefaultMapLitLines, setDefaultMapSurface, setMapLineWidth } from "../../store/mapSettingsSlice";
-import { setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
+import { setDefaultMapLitLines, setDefaultMapSurface } from "../../store/mapSettingsSlice";
+import { setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
 import { setMakeBackups } from "../../store/backupSettingsSlice";
 import { setDevMode } from "../../store/generalStatesSlice";
 import { setContourWheelSensitivityFactor, setMouseSensitivity, setZoomWheelSensitivityFactor } from "../../store/mouseSettings";
@@ -25,7 +25,6 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
     const dispatch = useDispatch()
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
     const defaultMapLitLines = useSelector((state: moorhen.State) => state.mapSettings.defaultMapLitLines)
-    const mapLineWidth = useSelector((state: moorhen.State) => state.mapSettings.mapLineWidth)
     const defaultMapSurface = useSelector((state: moorhen.State) => state.mapSettings.defaultMapSurface)
     const enableTimeCapsule = useSelector((state: moorhen.State) => state.backupSettings.enableTimeCapsule)
     const makeBackups = useSelector((state: moorhen.State) => state.backupSettings.makeBackups)
@@ -136,9 +135,6 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
                     <Form.Group controlId="mapWheelSensitivitySlider" style={{paddingTop:'0.5rem', paddingBottom:'0rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
                         <MoorhenSlider minVal={0.01} maxVal={0.1} logScale={false} sliderTitle="Mouse wheel map contour sensitivity" initialValue={contourWheelSensitivityFactor} externalValue={contourWheelSensitivityFactor} setExternalValue={(val: number) => dispatch(setContourWheelSensitivityFactor(val))}/>
                     </Form.Group>
-                    <Form.Group controlId="mapLineWidthSlider" style={{paddingTop:'0.5rem', paddingBottom:'0rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
-                        <MoorhenSlider minVal={0.1} maxVal={1.5} logScale={true} sliderTitle="Map lines thickness" initialValue={mapLineWidth} externalValue={mapLineWidth} setExternalValue={(val: number) => dispatch(setMapLineWidth(val))}/>
-                    </Form.Group>
                     <hr></hr>
                     <MoorhenBackupPreferencesMenuItem 
                         setPopoverIsShown={setPopoverIsShown}
@@ -149,7 +145,7 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
                     <MoorhenDefaultBondSmoothnessPreferencesMenuItem
                         setPopoverIsShown={setPopoverIsShown}
                     />
-                    <MoorhenMapSamplingMenuItem
+                    <MapContourSettingsMenuItem
                         glRef={props.glRef}
                         commandCentre={props.commandCentre}
                         setPopoverIsShown={setPopoverIsShown}

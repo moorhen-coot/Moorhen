@@ -1,10 +1,13 @@
-import { Slider } from "@mui/material";
+import { IconButton, Slider } from "@mui/material";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { useEffect, useState } from "react";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from "react-redux";
-import { setDefaultMapSamplingRate } from "../../store/mapSettingsSlice";
+import { setDefaultMapSamplingRate, setMapLineWidth } from "../../store/mapSettingsSlice";
+import { Form } from "react-bootstrap";
+import { MoorhenSlider } from "../misc/MoorhenSlider";
+import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
 
 const convertPercentageToSamplingRate = (oldValue: number, reverse: boolean = false) => {
     let [oldMax, oldMin, newMax, newMin]: number[] = []
@@ -23,7 +26,7 @@ const convertPercentageToSamplingRate = (oldValue: number, reverse: boolean = fa
 
 const samplingRateMarks = [1, 13, 25, 40, 60, 80, 100]
 
-export const MoorhenMapSamplingMenuItem = (props: {
+export const MapContourSettingsMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>; 
     popoverPlacement?: "left" | "right";
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -33,6 +36,8 @@ export const MoorhenMapSamplingMenuItem = (props: {
     const dispatch = useDispatch()
     const maps = useSelector((state: moorhen.State) => state.maps)
     const defaultMapSamplingRate = useSelector((state: moorhen.State) => state.mapSettings.defaultMapSamplingRate)
+    const mapLineWidth = useSelector((state: moorhen.State) => state.mapSettings.mapLineWidth)
+    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
 
     const [mapSampling, setMapSampling] = useState<number>(convertPercentageToSamplingRate(defaultMapSamplingRate, true))
 
@@ -70,8 +75,18 @@ export const MoorhenMapSamplingMenuItem = (props: {
         setMapSamplingRate()
 
      }, [mapSampling])
-    
-    const panelContent =
+
+    const panelContent = <>
+        <Form.Group controlId="mapLineWidthSlider" style={{ paddingLeft: '0.5rem', paddingRight: '0.5rem' }}>
+            <MoorhenSlider
+            minVal={0.1}
+            maxVal={1.5}
+            logScale={true}
+            sliderTitle="Map lines thickness"
+            initialValue={mapLineWidth}
+            externalValue={mapLineWidth}
+            setExternalValue={(val: number) => dispatch(setMapLineWidth(val))}/>
+        </Form.Group>
         <div style={{width: '17rem', padding: '1rem'}}>
             <span>Map sampling rate</span>
             <Slider
@@ -91,17 +106,18 @@ export const MoorhenMapSamplingMenuItem = (props: {
                 marks={samplingRateMarks.map(mark => {return {value: mark, label:  convertPercentageToSamplingRate(mark).toFixed(1).toString()}})}
             />
         </div>
+    </>
 
     return <MoorhenBaseMenuItem
         popoverPlacement={props.popoverPlacement}
         popoverContent={panelContent}
         showOkButton={false}
-        menuItemText={"Set map sampling rate..."}
+        menuItemText={"Map contour settings..."}
         setPopoverIsShown={props.setPopoverIsShown}
         onCompleted={() => {}}
     />
 }
 
-MoorhenMapSamplingMenuItem.defaultProps = {
+MapContourSettingsMenuItem.defaultProps = {
     popoverPlacement: 'right'
 }
