@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from "react"
 import { Col, Row, Form, Button } from 'react-bootstrap'
-import { Chart, registerables } from 'chart.js'
+import { Chart, TooltipItem, registerables } from 'chart.js'
 import annotationPlugin from 'chartjs-plugin-annotation'
 import { MoorhenChainSelect } from '../select/MoorhenChainSelect'
 import { MoorhenMapSelect } from '../select/MoorhenMapSelect'
@@ -8,31 +8,39 @@ import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
 import { residueCodesOneToThree, getResidueInfo, convertViewtoPx } from '../../utils/MoorhenUtils'
 import { useDispatch, useSelector } from "react-redux"
 import { setHoveredAtom } from "../../store/hoveringStatesSlice"
+import { moorhen } from "../../types/moorhen"
+import { libcootApi } from "../../types/libcoot"
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
 
-export const MoorhenMMRRCCPlot = (props) => {
-    const chartCardRef = useRef();
-    const chartBoxRef = useRef();
-    const containerRef = useRef();
-    const containerBodyRef = useRef();
-    const canvasRef = useRef();
-    const chainSelectRef = useRef();
-    const mapSelectRef = useRef();
-    const moleculeSelectRef = useRef();
-    const chartRef = useRef(null);
+export const MoorhenMMRRCCPlot = (props: {
+    sideBarWidth: number;
+    showSideBar: boolean;
+    dropdownId: number;
+    accordionDropdownId: number;
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
+}) => {
+    const chartCardRef = useRef<HTMLDivElement>();
+    const chartBoxRef = useRef<HTMLDivElement>();
+    const containerRef = useRef<HTMLDivElement>();
+    const containerBodyRef = useRef<HTMLDivElement>();
+    const canvasRef = useRef<HTMLCanvasElement>();
+    const chainSelectRef = useRef<null | HTMLSelectElement>(null);
+    const mapSelectRef = useRef<null | HTMLSelectElement>(null);
+    const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
+    const chartRef = useRef<null | Chart>(null);
 
-    const [plotData, setPlotData] = useState(null)
-    const [selectedModel, setSelectedModel] = useState(null)
-    const [selectedMap, setSelectedMap] = useState(null)
-    const [selectedChain, setSelectedChain] = useState(null)
+    const [plotData, setPlotData] = useState<null | libcootApi.MMRCCStatsJS>(null)
+    const [selectedModel, setSelectedModel] = useState<null | number>(null)
+    const [selectedMap, setSelectedMap] = useState<null | number>(null)
+    const [selectedChain, setSelectedChain] = useState<null | string>(null)
 
-    const isDark = useSelector((state) => state.canvasStates.isDark)
-    const height = useSelector((state) => state.canvasStates.height)
-    const backgroundColor = useSelector((state) => state.canvasStates.backgroundColor)
-    const molecules = useSelector((state) => state.molecules)
-    const maps = useSelector((state) => state.maps)
+    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const maps = useSelector((state: moorhen.State) => state.maps)
     const dispatch = useDispatch()
 
     const getSequenceData = () => {
@@ -79,7 +87,7 @@ export const MoorhenMMRRCCPlot = (props) => {
         }
     }
 
-    const setTooltipTitle = (args) => {
+    const setTooltipTitle = (args: TooltipItem<"line">[]) => {
         if (!chartRef.current){
             return;
         }
@@ -108,7 +116,7 @@ export const MoorhenMMRRCCPlot = (props) => {
             command: 'mmrrcc', 
             returnType: 'mmrrcc_stats', 
             commandArgs: [parseInt(moleculeSelectRef.current.value), chainSelectRef.current.value, parseInt(mapSelectRef.current.value)], 
-        }, false)
+        }, false) as moorhen.WorkerResponse<libcootApi.MMRCCStatsJS>
 
         setPlotData(response.data.result.result)
 
@@ -154,7 +162,7 @@ export const MoorhenMMRRCCPlot = (props) => {
             return
         }
         
-        let labels = []
+        let labels: ([string, number] | string)[] = []
         sequenceData.forEach((residue, index) => {
             if (index % 10 !== 0) {
                 labels.push(residue.resCode)
@@ -169,7 +177,8 @@ export const MoorhenMMRRCCPlot = (props) => {
         
         const containerBody = document.getElementById('myContainerBody')
         containerBody.style.width = (labels.length*barWidth)+ "px";
-        let ctx = document.getElementById("myChart").getContext("2d")
+        const canvas = document.getElementById("myChart") as HTMLCanvasElement
+        let ctx = canvas.getContext("2d")
 
         let scales = {
             x: {
@@ -194,7 +203,7 @@ export const MoorhenMMRRCCPlot = (props) => {
                 beginAtZero: true,
                 title: {
                     display: true,
-                    font: {size:axisLabelsFontSize, family:'Helvetica', weight:800},
+                    font: {size:axisLabelsFontSize, family:'Helvetica'},
                     text: 'Correlation',
                     color: isDark ? 'white' : 'black'
                 },
@@ -204,7 +213,7 @@ export const MoorhenMMRRCCPlot = (props) => {
             }
         }
 
-        let datasets = []
+        let datasets: {label: string; data: (number | null)[], clip: (number | false), fill: boolean, borderColor: string, tension: number}[] = []
         
         for(const metric of Object.keys(plotData)){
             if (!plotData[metric]) {
@@ -214,7 +223,7 @@ export const MoorhenMMRRCCPlot = (props) => {
             datasets.push({
                 label: metric,
                 data: sequenceData.map(currentResidue => {
-                    let residue = plotData[metric].find(res => parseInt(res.resNum) === parseInt(currentResidue.resNum))
+                    let residue = plotData[metric].find(res => parseInt(res.resNum) === currentResidue.resNum)
                     if (residue) {
                         return residue.correlation
                     } else {
@@ -251,22 +260,21 @@ export const MoorhenMMRRCCPlot = (props) => {
                         title: setTooltipTitle,
                         },
                         titleFont: {
-                            size:tooltipFontSize,
-                            family:'Helvetica'
+                            size: tooltipFontSize,
+                            family: 'Helvetica'
                         },
                         bodyFont: {
-                            size:tooltipFontSize,
-                            family:'Helvetica'
+                            size: tooltipFontSize,
+                            family: 'Helvetica'
                         },
                         footerFont: {
-                            family:'Helvetica'
+                            family: 'Helvetica'
                         }
                     },
                     annotation: {
                         annotations: {
                             thresholdLine: {
                                 type: 'line',
-                                mode: 'horizontal',
                                 scaleID: 'y-axis-0',
                                 yMin: 0.4,
                                 yMax: 0.4,
@@ -279,7 +287,6 @@ export const MoorhenMMRRCCPlot = (props) => {
                 onClick: handleClick,
                 responsive: true,
                 maintainAspectRatio: false,
-                barThickness: 'flex',
                 scales: scales
             }
         });
@@ -310,8 +317,8 @@ export const MoorhenMMRRCCPlot = (props) => {
                 </Form>
                 <div ref={chartCardRef} className="validation-plot-div" >
                     <div ref={chartBoxRef} style={{height: '100%'}} className="chartBox" id="myChartBox">
-                        <div ref={containerRef} className="validation-plot-container" style={{height: '100%', overflowX:'scroll'}}>
-                            <div ref={containerBodyRef} style={{height: '100%'}} className="containerBody" id="myContainerBody">
+                        <div ref={containerRef} className="validation-plot-container" style={{height: '100%', overflowX: 'auto'}}>
+                            <div ref={containerBodyRef} style={{height: '100%', minHeight: convertViewtoPx(45, height)}} className="containerBody" id="myContainerBody">
                                 <canvas ref={canvasRef} id="myChart"></canvas>
                             </div>
                         </div>

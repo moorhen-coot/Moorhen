@@ -154,6 +154,18 @@ export namespace libcootApi {
         hydrogen_is_ligand_atom: boolean;
         bond_has_hydrogen_flag: boolean;     
     }
+    interface MMRCCStatsJS {
+        "All atoms": DensityCorrelationStatsInfoJS[];
+        "Side-chains": DensityCorrelationStatsInfoJS[];
+    }
+    interface DensityCorrelationStatsInfoJS {
+        resNum: number;
+        insCode: string;
+        modelNumber: number;
+        chainId: string;
+        n: number;
+        correlation: number;
+    }
     interface DensityCorrelationStatsInfoT extends emscriptem.instance<DensityCorrelationStatsInfoT> {
         n: number;
         sum_xy: number;
