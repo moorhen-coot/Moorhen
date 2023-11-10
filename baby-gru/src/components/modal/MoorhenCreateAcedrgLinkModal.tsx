@@ -132,14 +132,15 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
         }
     }, [props.awaitAtomClick])
 
-    return <Card style={{width: '100%', height: '100%', margin: 0, padding: '0.5rem', borderColor: 'grey', borderWidth: 3}}>
-            <Stack direction='vertical' gap={2}>
+    return <Card style={{width: '100%', height: '100%', margin: 0, padding: '0.5rem', borderColor: 'grey', borderWidth: 3, overflowX: 'hidden', overflowY: 'auto'}}>
+            <Stack direction='vertical' gap={2} style={{justifyContent: 'space-between'}}>
             <InputGroup>
                 <Button variant="primary" onClick={() => props.setAwaitAtomClick(props.id)}>
                     Set Atom {props.id}
                 </Button>
                 <Form.Control type="text" readOnly={true} value={selectedAtom ? selectedAtom : 'No atom selected'} />
             </InputGroup>
+            <div>
             <Form.Label style={{marginTop:'0.2rem', marginBottom: 0, display:'flex', justifyContent: 'left'}}>
                 Delete atom...
             </Form.Label>
@@ -159,6 +160,8 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
                     {monomerAtoms.map(atom => <option key={atom.label} value={atom.label}>{atom.has_altloc ? `${atom.name}:${atom.alt_loc}` : atom.name}</option>) }
                 </Form.Select>
             </InputGroup>
+            </div>
+            <div>
             <Form.Label style={{marginTop:'0.2rem', marginBottom: 0, display:'flex', justifyContent: 'left'}}>
                 Change order of bond...
             </Form.Label>
@@ -185,6 +188,8 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
                     <option key={'TRIPLE'} value={'TRIPLE'}>TRIPLE</option>
                 </Form.Select>
             </Row>
+            </div>
+            <div>
             <Form.Label style={{marginTop:'0.2rem', marginBottom: 0, display:'flex', justifyContent: 'left'}}>
                 Change formal charge of an atom...
             </Form.Label>
@@ -218,6 +223,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
                     }}
                 />
             </Row>
+            </div>
     </Stack>
     </Card> 
 
