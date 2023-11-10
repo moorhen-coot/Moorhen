@@ -139,9 +139,9 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
                         </Row>
                     </Form.Group>
                 </Form>
-                <div style={{display: 'flex'}} className="validation-plot-div" >
+                <div className="validation-plot-div" >
                     <div style={{height: '100%'}} className="chartBox" id="myChartBox">
-                        <div className="validation-plot-container" style={{height: '100%', overflowX:'scroll'}}>
+                        <div id="myValidationPlotContainer" className="validation-plot-container" style={{height: '100%', overflowX: 'auto'}}>
                             <div style={{height: '100%', minHeight: convertViewtoPx(45, height)}} className="containerBody" id="myContainerBody">
                                 <canvas id="myChart"></canvas>
                             </div>

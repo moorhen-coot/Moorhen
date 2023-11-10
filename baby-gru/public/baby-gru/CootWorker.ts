@@ -423,7 +423,7 @@ const symmetryToJSData = (symmetryDataPair: libcootApi.PairType<libcootApi.Symme
     return result
 }
 
-const mmrrccStatsToJSArray = (mmrrccStats: libcootApi.PairType<emscriptem.map<libcootApi.DensityCorrelationStatsInfoT, libcootApi.ResidueSpecT>, emscriptem.map<libcootApi.DensityCorrelationStatsInfoT, libcootApi.ResidueSpecT>>) => {
+const mmrrccStatsToJSArray = (mmrrccStats: libcootApi.PairType<emscriptem.map<libcootApi.DensityCorrelationStatsInfoT, libcootApi.ResidueSpecT>, emscriptem.map<libcootApi.DensityCorrelationStatsInfoT, libcootApi.ResidueSpecT>>): libcootApi.MMRCCStatsJS => {
     const parseStats = (stats: emscriptem.map<libcootApi.DensityCorrelationStatsInfoT, libcootApi.ResidueSpecT>) => {
         let result: {resNum: number; insCode: string; modelNumber: number; chainId: string; n: number; correlation: number; }[] = []
         const residueSpecs = stats.keys()
