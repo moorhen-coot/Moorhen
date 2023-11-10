@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Backdrop } from '@mui/material';
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined, FirstPageOutlined, WarningOutlined } from "@mui/icons-material";
-import { getMultiColourRuleArgs, guid } from '../../utils/MoorhenUtils';
+import { convertRemToPx, convertViewtoPx, getMultiColourRuleArgs, guid } from '../../utils/MoorhenUtils';
 import { Card, Row, Col, Form, FormSelect, Button, Spinner, Stack } from "react-bootstrap";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
@@ -42,6 +42,8 @@ export const MoorhenQuerySequenceModal = (props: {
 
     const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
 
@@ -284,6 +286,13 @@ export const MoorhenQuerySequenceModal = (props: {
     }, [numberOfHits])
 
     return <MoorhenDraggableModalBase
+        left={`${width / 4}px`}
+        defaultHeight={convertViewtoPx(10, height)}
+        defaultWidth={convertViewtoPx(10, width)}
+        minHeight={convertViewtoPx(15, height)}
+        minWidth={convertRemToPx(37)}
+        maxHeight={convertViewtoPx(50, height)}
+        maxWidth={convertViewtoPx(50, width)}
         additionalChildren={
             <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={busy}>
                 <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
@@ -325,7 +334,7 @@ export const MoorhenQuerySequenceModal = (props: {
             <hr></hr>
             <Row>
                 {queryResults?.length > 0 ? <span>Found {numberOfHits} hits</span> : null}
-                {queryResults?.length > 0 ? queryResults : <span>No results found...</span>}
+                {queryResults?.length > 0 ? <div style={{height: '100px', width: '100%'}}>{queryResults}</div> : <span>No results found...</span>}
             </Row>
             </>
         }

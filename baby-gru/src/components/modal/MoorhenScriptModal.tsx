@@ -11,6 +11,7 @@ import 'prismjs/themes/prism.css';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
 import { useSelector } from "react-redux";
+import { convertRemToPx, convertViewtoPx } from "../../utils/MoorhenUtils";
 
 export const MoorhenScriptModal = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -21,6 +22,9 @@ export const MoorhenScriptModal = (props: {
 }) => {
 
     const [code, setCode] = useState<string>("")
+    
+    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
+    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const maps = useSelector((state: moorhen.State) => state.maps)
@@ -42,19 +46,29 @@ export const MoorhenScriptModal = (props: {
     }, [])
 
     return <MoorhenDraggableModalBase
+                left={`${width / 5}px`}
+                top={`${height / 6}px`}
                 headerTitle="Interactive scripting"
+                defaultHeight={convertViewtoPx(10, height)}
+                defaultWidth={convertViewtoPx(10, width)}
+                minHeight={convertViewtoPx(10, height)}
+                minWidth={convertRemToPx(37)}
+                maxHeight={convertViewtoPx(60, height)}
+                maxWidth={convertRemToPx(55)}
                 body={
-                    <div style={{backgroundColor: isDark ? 'white' : '#e6e6e6', borderColor:'black'}}>
+                    <div style={{display: 'flex', maxHeight: convertViewtoPx(60, height), minHeight: convertViewtoPx(10, height) , overflowY: 'auto', backgroundColor: isDark ? 'white' : '#e6e6e6', borderColor:'black'}}>
+                        <div style={{height: '100%', width: '100%'}}>
                         <Editor
-                            value={code}
-                            onValueChange={code => setCode(code)}
-                            highlight={code => highlight(code, languages.js)}
-                            padding={10}
-                            style={{
-                                fontFamily: '"Fira code", "Fira Mono", monospace',
-                                fontSize: 16
-                            }}
-                        /> 
+                                value={code}
+                                onValueChange={code => setCode(code)}
+                                highlight={code => highlight(code, languages.js)}
+                                padding={10}
+                                style={{
+                                    fontFamily: '"Fira code", "Fira Mono", monospace',
+                                    fontSize: 16
+                                }}
+                            /> 
+                        </div>
                     </div>
                 }
                 footer={

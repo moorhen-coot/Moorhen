@@ -15,6 +15,7 @@ interface Props extends moorhen.CollectedProps {
     setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
     sideBarWidth: number;
     showSideBar: boolean;
+    resizeTrigger: boolean;
 }
 
 export const MoorhenRamachandran = (props: Props) => {
@@ -414,7 +415,7 @@ export const MoorhenRamachandran = (props: Props) => {
             }
         }, 50);
 
-    }, [width, height])
+    }, [width, height, props.resizeTrigger])
 
     useEffect(() => {
         async function fetchRamaData() {

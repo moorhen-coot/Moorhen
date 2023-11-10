@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
-import { cidToSpec } from "../../utils/MoorhenUtils";
+import { cidToSpec, convertRemToPx, convertViewtoPx } from "../../utils/MoorhenUtils";
 import { Button, Card, Dropdown, Form, InputGroup, Row, Spinner, SplitButton, Stack } from "react-bootstrap";
 import { Backdrop, TextField } from "@mui/material";
 import { moorhen } from "../../types/moorhen";
@@ -132,7 +132,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
         }
     }, [props.awaitAtomClick])
 
-    return <Card style={{margin: 0, padding: '0.5rem', borderColor: 'grey', borderWidth: 3}}>
+    return <Card style={{width: '100%', height: '100%', margin: 0, padding: '0.5rem', borderColor: 'grey', borderWidth: 3}}>
             <Stack direction='vertical' gap={2}>
             <InputGroup>
                 <Button variant="primary" onClick={() => props.setAwaitAtomClick(props.id)}>
@@ -233,6 +233,10 @@ export const MoorhenCreateAcedrgLinkModal = (props: {
     
     const [awaitAtomClick, setAwaitAtomClick] = useState<number>(-1)
     const [errorMessage, setErrorMessage] = useState<string>('')
+    
+    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
+    
     const atomPickerOneRef = useRef(null)
     const atomPickerTwoRef = useRef(null)
 
@@ -260,6 +264,16 @@ export const MoorhenCreateAcedrgLinkModal = (props: {
 
     return <MoorhenDraggableModalBase 
                 headerTitle="Create covalent link"
+                left={`${width / 2}px`}
+                top={`${height / 3}px`}
+                show={props.show}
+                setShow={props.setShow}
+                defaultHeight={convertViewtoPx(10, height)}
+                defaultWidth={convertViewtoPx(10, width)}
+                minHeight={convertViewtoPx(10, height)}
+                minWidth={convertRemToPx(37)}
+                maxHeight={convertViewtoPx(90, height)}
+                maxWidth={convertRemToPx(55)}
                 additionalChildren={
                     <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={awaitAtomClick !== -1}>
                         <Stack gap={2} direction='vertical'style={{justifyContent: 'center', alignItems: 'center'}}>
@@ -270,7 +284,7 @@ export const MoorhenCreateAcedrgLinkModal = (props: {
                     </Backdrop>
                 }
                 body={
-                    <Stack direction='horizontal' gap={2} style={{display: 'flex', justifyContent: 'space-between'}}>
+                    <Stack direction='horizontal' gap={2} style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between', height: '100%'}}>
                         <AceDRGtomPicker id={1} ref={atomPickerOneRef} awaitAtomClick={awaitAtomClick} setAwaitAtomClick={setAwaitAtomClick} {...props}/>
                         <AceDRGtomPicker id={2} ref={atomPickerTwoRef} awaitAtomClick={awaitAtomClick} setAwaitAtomClick={setAwaitAtomClick} {...props}/>
                     </Stack>

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useReducer, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { Card, Row, Col, Stack, Button, Spinner } from "react-bootstrap";
 import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
-import { doDownload, representationLabelMapping } from '../../utils/MoorhenUtils';
+import { convertRemToPx, doDownload, representationLabelMapping } from '../../utils/MoorhenUtils';
 import { isDarkBackground } from '../../WebGLgComponents/mgWebGL'
 import { MoorhenSequenceList } from "../list/MoorhenSequenceList";
 import { MoorhenMoleculeCardButtonBar } from "../button-bar/MoorhenMoleculeCardButtonBar"
@@ -464,7 +464,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
         <Card.Body style={{ display: isCollapsed ? 'none' : '', padding: '0.25rem', justifyContent:'center' }}>
             <Stack gap={2} direction='vertical'>
                 <Row style={{display: 'flex'}}>
-                    <Col style={{ width:'100%', height: '100%' }}>
+                    <Col style={{ display: 'flex' }}>
                         <div ref={addColourRulesAnchorDivRef} style={{ margin: '1px', paddingTop: '0.25rem', paddingBottom: '0.25rem',  border: '1px solid', borderRadius:'0.33rem', borderColor: "#CCC" }}>
                             <FormGroup style={{ margin: "0px", padding: "0px", display: 'flex', justifyContent: 'center'}} row>
                                 {allRepresentations.map(key => 
@@ -591,7 +591,7 @@ const RepresentationCheckbox = (props: {
     const [repState, setRepState] = useState<boolean>(false)
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
 
-    const chipStyle = getChipStyle(props.molecule.defaultColourRules, repState, isDark)
+    const chipStyle = getChipStyle(props.molecule.defaultColourRules, repState, isDark, `${convertRemToPx(6.5)}px`)
     const disabled: boolean = (
         !props.isVisible 
         || (props.repKey === 'ligands' && props.molecule.ligands.length === 0) 
