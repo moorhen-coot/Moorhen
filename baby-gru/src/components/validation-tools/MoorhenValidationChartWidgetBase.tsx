@@ -8,6 +8,7 @@ import { gemmi } from "../../types/gemmi";
 import annotationPlugin from 'chartjs-plugin-annotation'
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
+import { convertViewtoPx } from "../../utils/MoorhenUtils";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
@@ -36,6 +37,7 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
     const [selectedChain, setSelectedChain] = useState<string | null>(null)
     const [cachedGemmiStructure, setCachedGemmiStructure] = useState<null | gemmi.Structure>(null)
 
+    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
     const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const maps = useSelector((state: moorhen.State) => state.maps)
@@ -137,15 +139,14 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
                         </Row>
                     </Form.Group>
                 </Form>
-                <div className="validation-plot-div" >
+                <div style={{display: 'flex'}} className="validation-plot-div" >
                     <div style={{height: '100%'}} className="chartBox" id="myChartBox">
                         <div className="validation-plot-container" style={{height: '100%', overflowX:'scroll'}}>
-                            <div style={{height: '100%'}} className="containerBody" id="myContainerBody">
+                            <div style={{height: '100%', minHeight: convertViewtoPx(45, height)}} className="containerBody" id="myContainerBody">
                                 <canvas id="myChart"></canvas>
                             </div>
                         </div>
                     </div>
-                <canvas id="myChartAxis"></canvas>
                 </div>
             </Fragment>
 

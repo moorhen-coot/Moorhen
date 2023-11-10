@@ -61,7 +61,7 @@
       ]
     }
   },
-  "dependencies": { },
+"dependencies": { },
   "scripts": {
     "create-version": "npx genversion -e -p ./package.json -d -s ./src/version.js",
     "transpile-ts-worker": "npx tsc --module es2015 --lib webworker --skipLibCheck public/baby-gru/CootWorker.ts && sed -i.bak '/export {}/d' public/baby-gru/CootWorker.js && rm public/baby-gru/CootWorker.js.bak",
@@ -159,6 +159,7 @@
     "protvista-sequence": "^3.5.1",
     "protvista-track": "^3.4.0",
     "rc-tree": "4.2.2",
+    "re-resizable": "^6.9.11",
     "react": "^18.1.0",
     "react-bootstrap": "^2.3.1",
     "react-bootstrap-typeahead": "^6.0.0-alpha.11",

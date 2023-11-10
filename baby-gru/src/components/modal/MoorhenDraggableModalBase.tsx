@@ -1,10 +1,10 @@
 import { useRef, useState } from "react";
 import { Button, Card, Stack } from "react-bootstrap";
 import Draggable from "react-draggable";
-import { convertViewtoPx } from "../../utils/MoorhenUtils";
-import { AddOutlined, CloseOutlined, RemoveOutlined } from "@mui/icons-material";
+import { AddOutlined, CloseOutlined, RemoveOutlined, SquareFootOutlined } from "@mui/icons-material";
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
+import { Resizable } from "re-resizable";
 
 /**
  * The base component used to create draggable modals.
@@ -58,10 +58,14 @@ import { useSelector } from "react-redux";
  * 
  */
 export const MoorhenDraggableModalBase = (props: {
-    width?: number;
+    defaultWidth?: number;
+    defaultHeight?: number;
+    maxWidth?: number;
+    maxHeight?: number;
+    minWidth?: number;
+    minHeight?: number;
     top?: string;
     left?: string;
-    height?: number;
     additionalHeaderButtons?: JSX.Element[];
     headerTitle: string;
     show: boolean;
@@ -70,8 +74,12 @@ export const MoorhenDraggableModalBase = (props: {
     footer: JSX.Element;
     additionalChildren?: JSX.Element;
     overflowY?: 'visible' | 'hidden' | 'clip' | 'scroll' | 'auto';
+    overflowX?: 'visible' | 'hidden' | 'clip' | 'scroll' | 'auto';
     handleClassName?: string;
     showCloseButton?: boolean;
+    lockAspectRatio?: boolean;
+    enableResize?: false | {[key: string]: boolean};
+    onResizeStop?: (evt: MouseEvent | TouchEvent, direction: 'top' | 'right' | 'bottom' | 'left' | 'topRight' | 'bottomRight' | 'bottomLeft' | 'topLeft', ref: HTMLDivElement, delta: {width: number, height: number}) => void;
 }) => {
     
     const [opacity, setOpacity] = useState<number>(1.0)
@@ -86,13 +94,13 @@ export const MoorhenDraggableModalBase = (props: {
             <Card
                 className="moorhen-draggable-card"
                 ref={draggableNodeRef}
-                style={{ display: props.show ? 'block' : 'none', position: 'absolute', top: props.top, left: props.left, opacity: opacity, width: windowWidth ? convertViewtoPx(props.width, windowWidth) : `${props.width}wh`}}
+                style={{ display: props.show ? 'block' : 'none', position: 'absolute', top: props.top, left: props.left, opacity: opacity}}
                 onMouseOver={() => setOpacity(1.0)}
                 onMouseOut={() => {
                     if(transparentModalsOnMouseOut) setOpacity(0.5)
                 }}
             >
-                <Card.Header className={props.handleClassName} style={{ justifyContent: 'space-between', display: 'flex', cursor: 'move', alignItems:'center'}}>
+                <Card.Header className={props.handleClassName} style={{ minWidth: props.minWidth, justifyContent: 'space-between', display: 'flex', cursor: 'move', alignItems:'center'}}>
                     {props.headerTitle}
                     <Stack gap={2} direction="horizontal">
                         {props.additionalHeaderButtons?.map(button => button)}
@@ -106,8 +114,31 @@ export const MoorhenDraggableModalBase = (props: {
                         }
                     </Stack>
                 </Card.Header>
-                <Card.Body style={{maxHeight: windowHeight ? convertViewtoPx(props.height, windowHeight) : `${props.height}vh`, overflowY: props.overflowY, display: collapse ? 'none' : 'block', justifyContent: 'center'}}>
-                    {props.body}
+                <Card.Body style={{display: collapse ? 'none' : 'flex', justifyContent: 'center', flexDirection: 'column'}}>
+                    <Resizable
+                    maxWidth={props.maxWidth}
+                    maxHeight={props.maxHeight}
+                    minWidth={props.minWidth}
+                    minHeight={props.minHeight}
+                    bounds={'window'}
+                    resizeRatio={1.3}
+                    lockAspectRatio={props.lockAspectRatio}
+                    enable={props.enableResize}
+                    handleComponent={{bottomRight: props.enableResize ? <SquareFootOutlined style={{transform: 'rotate(270deg)'}}/> : <></>}}
+                    onResizeStop={props.onResizeStop}
+                    >
+                    <div style={{
+                            overflowY: props.overflowY,
+                            overflowX: props.overflowX,
+                            height: '100%',
+                            width: '100%',
+                            display: 'block',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                            }}>
+                        {props.body}
+                    </div>
+                    </Resizable>
                 </Card.Body>
                 {props.footer && 
                 <Card.Footer style={{display: collapse ? 'none' : 'flex', alignItems: 'center', justifyContent: 'right'}}>
@@ -121,5 +152,7 @@ export const MoorhenDraggableModalBase = (props: {
 
 MoorhenDraggableModalBase.defaultProps = { 
     showCloseButton: true, handleClassName: 'handle', additionalHeaderButtons:null, additionalChildren: null, 
-    width: 35, height: 45, top: '5rem', left: '5rem', overflowY: 'scroll'
+    enableResize: { top: false, right: true, bottom: true, left: false, topRight: false, bottomRight: true, bottomLeft: true, topLeft: false },
+    top: '5rem', left: '5rem', overflowY: 'auto', overflowX: 'hidden', lockAspectRatio: false, maxHeight: 100, maxWidth: 100, 
+    minHeight: 100, minWidth: 100, deafultWidth: 100, defaultHeight: 100, onResizeStop: () => {}
 }

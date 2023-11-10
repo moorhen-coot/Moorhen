@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { MoorhenMapCard } from "../card/MoorhenMapCard";
-import { convertRemToPx } from "../../utils/MoorhenUtils";
+import { convertRemToPx, convertViewtoPx } from "../../utils/MoorhenUtils";
 import { moorhen } from "../../types/moorhen";
 import { UnfoldLessOutlined } from '@mui/icons-material';
 import { Button } from 'react-bootstrap';
@@ -19,6 +19,7 @@ export const MoorhenMapsModal = (props: MoorhenMapsModalProps) => {
     const [currentDropdownMolNo, setCurrentDropdownMolNo] = useState<number>(-1)
 
     const width = useSelector((state: moorhen.State) => state.canvasStates.width)
+    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
     const maps = useSelector((state: moorhen.State) => state.maps)
 
     useEffect(() => {
@@ -39,7 +40,7 @@ export const MoorhenMapsModal = (props: MoorhenMapsModalProps) => {
             dropdownId={1}
             accordionDropdownId={1}
             setAccordionDropdownId={(arg0) => {}}
-            sideBarWidth={convertRemToPx(26)}
+            sideBarWidth={convertRemToPx(37)}
             key={map.molNo}
             index={map.molNo}
             map={map}
@@ -54,10 +55,15 @@ export const MoorhenMapsModal = (props: MoorhenMapsModalProps) => {
 
     return <MoorhenDraggableModalBase
                 left={`${width / 2}px`}
+                top={`${height / 3}px`}
                 show={props.show}
                 setShow={props.setShow}
-                height={70}
-                width={37}
+                defaultHeight={convertViewtoPx(10, height)}
+                defaultWidth={convertViewtoPx(10, width)}
+                minHeight={convertViewtoPx(10, height)}
+                minWidth={convertRemToPx(37)}
+                maxHeight={convertViewtoPx(90, height)}
+                maxWidth={convertRemToPx(55)}
                 headerTitle={'Maps'}
                 additionalHeaderButtons={[
                     <Button variant="white" key='collapse-all-maps' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={handleCollapseAll}>

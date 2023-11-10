@@ -11,7 +11,7 @@ import { MoorhenMMRRCCPlot } from "../validation-tools/MoorhenMMRRCCPlot"
 import { MoorhenWaterValidation } from "../validation-tools/MoorhenWaterValidation"
 import { MoorhenLigandValidation } from "../validation-tools/MoorhenLigandValidation"
 import { MoorhenUnmodelledBlobs } from "../validation-tools/MoorhenUnmodelledBlobs"
-import { convertViewtoPx} from '../../utils/MoorhenUtils';
+import { convertRemToPx, convertViewtoPx} from '../../utils/MoorhenUtils';
 import { useSelector } from "react-redux";
 
 interface MoorhenValidationModalProps extends moorhen.CollectedProps {
@@ -21,6 +21,7 @@ interface MoorhenValidationModalProps extends moorhen.CollectedProps {
 
 export const MoorhenValidationToolsModal = (props: MoorhenValidationModalProps) => {    
     const [selectedTool, setSelectedTool] = useState<null | number>(null)
+    const [draggableResizeTrigger, setDraggableResizeTrigger] = useState<boolean>(true)
     const toolsAccordionSelectRef = useRef<undefined | HTMLSelectElement>()
     const width = useSelector((state: moorhen.State) => state.canvasStates.width)
     const height = useSelector((state: moorhen.State) => state.canvasStates.height)
@@ -32,7 +33,7 @@ export const MoorhenValidationToolsModal = (props: MoorhenValidationModalProps) 
 
     const toolOptions = [
             {label: "Difference Map Peaks", toolWidget: <MoorhenDifferenceMapPeaks {...collectedProps}/>},
-            {label: "Ramachandran Plot", toolWidget: <MoorhenRamachandran {...collectedProps}/>},
+            {label: "Ramachandran Plot", toolWidget: <MoorhenRamachandran resizeTrigger={draggableResizeTrigger} {...collectedProps}/>},
             {label: "Validation Plot", toolWidget: <MoorhenValidation {...collectedProps}/>},
             {label: "Ligand Validation", toolWidget: <MoorhenLigandValidation {...collectedProps}/>},
             {label: "Peptide flips using difference map", toolWidget: <MoorhenPepflipsDifferenceMap {...collectedProps}/>},
@@ -51,17 +52,30 @@ export const MoorhenValidationToolsModal = (props: MoorhenValidationModalProps) 
         }
     }
 
+    const chartWidgets = [
+        'Difference Map Peaks',
+        'Validation Plot',
+        'MMRRCC plot'
+    ]
+
     return <MoorhenDraggableModalBase
-                left={`${width / 2}px`}
+                left={`${width / 6}px`}
+                top={`${height / 3}px`}
                 show={props.show}
                 setShow={props.setShow}
-                height={70}
-                width={37}
-                overflowY='hidden'
+                defaultHeight={convertViewtoPx(70, height)}
+                defaultWidth={convertViewtoPx(37, width)}
+                minHeight={convertViewtoPx(30, height)}
+                minWidth={convertRemToPx(37)}
+                maxHeight={convertViewtoPx(90, height)}
+                maxWidth={convertViewtoPx(80, width)}
+                overflowY={chartWidgets.includes(toolOptions[selectedTool]?.label) ? 'hidden' : 'auto'}
+                overflowX='auto'
                 headerTitle='Validation tools'
                 footer={null}
+                onResizeStop={() => { setDraggableResizeTrigger((prev) => !prev) }}
                 body={
-                    <div style={{width: convertViewtoPx(35, width), height: convertViewtoPx(70, height)}} >
+                    <div style={{height: '100%'}} >
                         <Row style={{padding: '0.5rem', width:'100%', display:'inline-flex'}}>
                             <Form.Select id='validation-tool-select' ref={toolsAccordionSelectRef} onChange={handleChange} defaultValue={'placeHolder'}>
                                 <option key="placeHolder" value="placeHolder" disabled hidden>Tool...</option>

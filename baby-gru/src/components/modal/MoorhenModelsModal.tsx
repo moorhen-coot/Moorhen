@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { MoorhenMoleculeCard } from "../card/MoorhenMoleculeCard";
-import { convertRemToPx } from "../../utils/MoorhenUtils";
+import { convertRemToPx, convertViewtoPx } from "../../utils/MoorhenUtils";
 import { moorhen } from "../../types/moorhen";
 import { Button } from "react-bootstrap";
 import { UnfoldLessOutlined } from "@mui/icons-material";
@@ -14,7 +14,10 @@ interface MoorhenModelsModalProps extends moorhen.CollectedProps {
 
 export const MoorhenModelsModal = (props: MoorhenModelsModalProps) => {
     const cardListRef = useRef([])
+    
     const [currentDropdownMolNo, setCurrentDropdownMolNo] = useState<number>(-1)
+    
+    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
     const width = useSelector((state: moorhen.State) => state.canvasStates.width)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
 
@@ -36,7 +39,7 @@ export const MoorhenModelsModal = (props: MoorhenModelsModalProps) => {
             dropdownId={1}
             accordionDropdownId={1}
             setAccordionDropdownId={(arg0) => {}}
-            sideBarWidth={convertRemToPx(26)}
+            sideBarWidth={convertRemToPx(37)}
             key={molecule.molNo}
             index={molecule.molNo}
             molecule={molecule}
@@ -50,8 +53,12 @@ export const MoorhenModelsModal = (props: MoorhenModelsModalProps) => {
                 left={`${width / 2}px`}
                 show={props.show}
                 setShow={props.setShow}
-                height={70}
-                width={37}
+                defaultHeight={convertViewtoPx(10, height)}
+                defaultWidth={convertViewtoPx(10, width)}
+                minHeight={convertViewtoPx(10, height)}
+                minWidth={convertRemToPx(37)}
+                maxHeight={convertViewtoPx(90, height)}
+                maxWidth={convertRemToPx(55)}
                 headerTitle={'Models'}
                 additionalHeaderButtons={[
                     <Button variant="white" key='collapse-all-maps' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={handleCollapseAll}>
