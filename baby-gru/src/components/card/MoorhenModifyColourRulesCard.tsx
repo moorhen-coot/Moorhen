@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState, useReducer } from "react";
-import { Row, Button, Stack, Form, FormSelect, Card, Col, OverlayTrigger, Tooltip } from "react-bootstrap";
-import { ArrowUpwardOutlined, ArrowDownwardOutlined, DeleteOutlined } from '@mui/icons-material';
+import { Button, Stack, Form, FormSelect } from "react-bootstrap";
 import { CirclePicker } from "react-color";
 import { HexColorPicker } from "react-colorful";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
+import { MoorhenColourRuleCard } from "./MoorhenColourRuleCard"
 import { convertRemToPx, convertViewtoPx, getMultiColourRuleArgs } from "../../utils/MoorhenUtils";
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
 import { MoorhenSequenceRangeSelect } from "../sequence-viewer/MoorhenSequenceRangeSelect";
@@ -16,6 +16,7 @@ type colourRuleChange = {
     action: "Add" | "Remove" | "Overwrite" | "MoveUp" | "MoveDown" | "Empty";
     item?: moorhen.ColourRule;
     items?: moorhen.ColourRule[];
+    color?: string;
 }
 
 const itemReducer = (oldList: moorhen.ColourRule[], change: colourRuleChange) => {
@@ -49,6 +50,15 @@ const itemReducer = (oldList: moorhen.ColourRule[], change: colourRuleChange) =>
         let newList = oldList.slice()
         newList[itemIndex] = oldList[itemIndex + 1]
         newList[itemIndex + 1] = change.item
+        return newList
+    }
+    else if (change.action === 'UpdateColor') {
+        const itemIndex = oldList.findIndex(item => item === change.item)
+        const newItem = {...oldList[itemIndex]}
+        newItem.color = change.color
+        if (!newItem.isMultiColourRule) newItem.args[1] = change.color
+        let newList = [...oldList]
+        newList[itemIndex] = newItem
         return newList
     }
 }
@@ -130,16 +140,14 @@ export const MoorhenModifyColourRulesCard = (props: {
                 return
             }
             props.molecule.defaultColourRules = ruleList
-            await Promise.all(
-                props.molecule.representations.filter(representation => representation.useDefaultColourRules).map(representation => {
-                    if (representation.visible) {
-                        return representation.redraw()
-                    } else {
-                        representation.deleteBuffers()
-                        return Promise.resolve()
-                    }
-                })
-            )
+            const representations = props.molecule.representations.filter(representation => representation.useDefaultColourRules)
+            for (let representation of representations) {
+                if (representation.visible) {
+                    await representation.redraw()
+                } else {
+                    representation.deleteBuffers()
+                }
+            }
         }
     }, [ruleList, props.molecule])
 
@@ -211,73 +219,6 @@ export const MoorhenModifyColourRulesCard = (props: {
         )
     }, [selectedChain, ruleType])
 
-    const getRuleCard = (rule, index) => {
-        return <Card key={index} className='hide-scrolling' style={{margin: '0.1rem', maxWidth: '100%', overflowX:'scroll'}}>
-                <Card.Body>
-                    <Row className='align-items-center'>
-                        <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left', color: isDark ? 'white' : 'black' }}>
-                            <b>
-                            {`#${index+1}. `}
-                            </b>
-                            <span>
-                                {`. ${rule.label}`}
-                            </span>
-                        </Col>
-                        <Col style={{ display: 'flex', justifyContent: 'right', alignItems:'center' }}>
-                            {!rule.isMultiColourRule ?
-                                <div style={{borderColor: 'black', borderWidth:'5px', backgroundColor: rule.color, height:'20px', width:'20px', margin: '0.1rem'}}/>
-                            : rule.ruleType === "b-factor" ?
-                                <img className="colour-rule-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/temperature.svg`} alt='b-factor' style={{height:'28px', width:'`12px', margin: '0.1rem'}}/>
-                            :
-                            <>
-                                <div style={{borderColor: 'rgb(255, 125, 69)', borderWidth:'5px', backgroundColor:  'rgb(255, 125, 69)', height:'20px', width:'5px', margin: '0rem', padding: '0rem'}}/>
-                                <div style={{borderColor: 'rgb(255, 219, 19)', borderWidth:'5px', backgroundColor: 'rgb(255, 219, 19)', height:'20px', width:'5px', margin: '0rem', padding: '0rem'}}/>
-                                <div style={{borderColor: 'rgb(101, 203, 243)', borderWidth:'5px', backgroundColor: 'rgb(101, 203, 243)', height:'20px', width:'5px', margin: '0rem', padding: '0rem'}}/>
-                                <div style={{borderColor: 'rgb(0, 83, 214)', borderWidth:'5px', backgroundColor: 'rgb(0, 83, 214)', height:'20px', width:'5px', margin: '0rem', padding: '0rem'}}/>
-                            </>
-                            }
-                            <OverlayTrigger
-                                placement="top"
-                                delay={{ show: 400, hide: 400 }}
-                                overlay={
-                                    <Tooltip id="button-tooltip">
-                                        Move up
-                                    </Tooltip>
-                                }>
-                                <Button size='sm' style={{margin: '0.1rem'}} variant={isDark ? "dark" : "light"} onClick={() => {setRuleList({action:'MoveUp', item:rule})}}>
-                                    <ArrowUpwardOutlined/>
-                                </Button>
-                            </OverlayTrigger>
-                            <OverlayTrigger
-                                placement="top"
-                                delay={{ show: 400, hide: 400 }}
-                                overlay={
-                                    <Tooltip id="button-tooltip">
-                                        Move down
-                                    </Tooltip>
-                                }>
-                                <Button size='sm' style={{margin: '0.1rem'}} variant={isDark ? "dark" : "light"} onClick={() => {setRuleList({action:'MoveDown', item:rule})}}>
-                                    <ArrowDownwardOutlined/>
-                                </Button>
-                            </OverlayTrigger>
-                            <OverlayTrigger
-                                placement="top"
-                                delay={{ show: 400, hide: 400 }}
-                                overlay={
-                                    <Tooltip id="button-tooltip">
-                                        Delete
-                                    </Tooltip>
-                                }>
-                                <Button size='sm' style={{margin: '0.1rem'}} variant={isDark ? "dark" : "light"} onClick={() => {setRuleList({action:'Remove', item:rule})}}>
-                                    <DeleteOutlined/>
-                                </Button>
-                            </OverlayTrigger>
-                        </Col>
-                    </Row>
-                </Card.Body>
-            </Card>
-    }
-
     if (!props.anchorEl) {
         return null
     }
@@ -340,7 +281,7 @@ export const MoorhenModifyColourRulesCard = (props: {
                 {ruleList.length === 0 ? 
                     "No rules created yet"
                 :
-                    ruleList.map((rule, index) => getRuleCard(rule, index))}
+                    ruleList.map((rule, index) => <MoorhenColourRuleCard key={index} molecule={props.molecule} urlPrefix={props.urlPrefix} rule={rule} index={index} setRuleList={setRuleList} />)}
             </div>
         </Stack>
     </Popover>

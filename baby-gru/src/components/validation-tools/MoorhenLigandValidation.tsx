@@ -16,9 +16,11 @@ interface Props extends moorhen.CollectedProps {
 
 export const MoorhenLigandValidation = (props: Props) => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
+    
     const [selectedMolNo, setSelectedMolNo] = useState<null | number>(null)
     const [cachedGemmiStructure, setCachedGemmiStructure] = useState<null | gemmi.Structure>(null)
     const [cardList, setCardList] = useState<null | JSX.Element>(null)
+    
     const molecules = useSelector((state: moorhen.State) => state.molecules)
 
     const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
@@ -70,7 +72,7 @@ export const MoorhenLigandValidation = (props: Props) => {
                         </Row>
                     </Form.Group>
                 </Form>
-                <div style={{overflowY:'auto', overflowX: 'hidden', height:'100%', paddingTop:'0.5rem', paddingLeft:'0.25rem', paddingRight:'0.25rem'}} >
+                <div style={{overflowY:'auto', overflowX: 'hidden', height:'100%', paddingTop:'0.5rem', paddingLeft:'1rem', paddingRight:'1rem'}} >
                     {cardList}
                 </div>
             </Fragment>
