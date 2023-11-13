@@ -270,8 +270,8 @@ export const MoorhenCreateAcedrgLinkModal = (props: {
 
     return <MoorhenDraggableModalBase 
                 headerTitle="Create covalent link"
-                left={`${width / 2}px`}
-                top={`${height / 3}px`}
+                left={width / 2}
+                top={height / 3}
                 show={props.show}
                 setShow={props.setShow}
                 defaultHeight={convertViewtoPx(10, height)}

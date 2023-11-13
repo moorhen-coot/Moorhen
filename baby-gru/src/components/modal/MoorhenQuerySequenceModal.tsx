@@ -286,7 +286,8 @@ export const MoorhenQuerySequenceModal = (props: {
     }, [numberOfHits])
 
     return <MoorhenDraggableModalBase
-        left={`${width / 4}px`}
+        left={width / 4}
+        top={height / 4}
         defaultHeight={convertViewtoPx(10, height)}
         defaultWidth={convertViewtoPx(10, width)}
         minHeight={convertViewtoPx(15, height)}
