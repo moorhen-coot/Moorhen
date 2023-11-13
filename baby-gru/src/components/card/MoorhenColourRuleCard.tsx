@@ -7,7 +7,6 @@ import { moorhen } from "../../types/moorhen";
 import { Popover, hexToRgb } from "@mui/material";
 import { useSelector } from "react-redux";
 
-
 export const MoorhenColourRuleCard = (props: {
     molecule: moorhen.Molecule;
     index: number;
