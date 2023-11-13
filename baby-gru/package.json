@@ -7,6 +7,7 @@
   "homepage": "./",
   "author": "Paul Emsley, Filomeno Sanchez Rodriguez, Martin Noble, Stuart McNicholas",
   "description": "Moorhen molecular graphics",
+  "license": "BSD-3-Clause",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/moorhen-coot/Moorhen.git"

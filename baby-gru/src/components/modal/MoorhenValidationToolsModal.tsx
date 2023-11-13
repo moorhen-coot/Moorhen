@@ -59,8 +59,8 @@ export const MoorhenValidationToolsModal = (props: MoorhenValidationModalProps) 
     ]
 
     return <MoorhenDraggableModalBase
-                left={`${width / 6}px`}
-                top={`${height / 3}px`}
+                left={width / 6}
+                top={height / 3}
                 show={props.show}
                 setShow={props.setShow}
                 defaultHeight={convertViewtoPx(70, height)}

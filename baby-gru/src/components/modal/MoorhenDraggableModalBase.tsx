@@ -10,8 +10,8 @@ import { Resizable } from "re-resizable";
  * The base component used to create draggable modals.
  * @property {number} [width=35] - The width of the modal measured in wh
  * @property {number} [height=45] - The height of the modal measured in vh
- * @property {string} [top="5rem"] - The intial top location of the modal
- * @property {string} [left="5rem"] - The intial top location of the modal
+ * @property {number} [top=500] - The intial top location of the modal
+ * @property {number} [left=500] - The intial top location of the modal
  * @property {JSX.Element[]} [additionalHeaderButtons=null] - Additional buttons rendered on the modal header
  * @property {JSX.Element[]} [additionalChildren=null] - Additional JSX elements rendered inside the modal
  * @property {string} headerTitle - The title displayed on the modal header
@@ -64,8 +64,8 @@ export const MoorhenDraggableModalBase = (props: {
     maxHeight?: number;
     minWidth?: number;
     minHeight?: number;
-    top?: string;
-    left?: string;
+    top?: number;
+    left?: number;
     additionalHeaderButtons?: JSX.Element[];
     headerTitle: string;
     show: boolean;
@@ -90,7 +90,15 @@ export const MoorhenDraggableModalBase = (props: {
     const windowHeight = useSelector((state: moorhen.State) => state.canvasStates.height)
     const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.miscAppSettings.transparentModalsOnMouseOut)
 
-    return <Draggable nodeRef={draggableNodeRef} handle={`.${props.handleClassName}`} >
+    return <Draggable
+                nodeRef={draggableNodeRef}
+                handle={`.${props.handleClassName}`}
+                bounds={{
+                    left: -props.left,
+                    right: windowWidth - props.left - 100,
+                    top: -props.top,
+                    bottom: windowHeight - props.top - 100
+                }} >
             <Card
                 className="moorhen-draggable-card"
                 ref={draggableNodeRef}
@@ -153,6 +161,6 @@ export const MoorhenDraggableModalBase = (props: {
 MoorhenDraggableModalBase.defaultProps = { 
     showCloseButton: true, handleClassName: 'handle', additionalHeaderButtons:null, additionalChildren: null, 
     enableResize: { top: false, right: true, bottom: true, left: false, topRight: false, bottomRight: true, bottomLeft: true, topLeft: false },
-    top: '5rem', left: '5rem', overflowY: 'auto', overflowX: 'hidden', lockAspectRatio: false, maxHeight: 100, maxWidth: 100, 
+    top: 500, left: 500, overflowY: 'auto', overflowX: 'hidden', lockAspectRatio: false, maxHeight: 100, maxWidth: 100, 
     minHeight: 100, minWidth: 100, deafultWidth: 100, defaultHeight: 100, onResizeStop: () => {}
 }

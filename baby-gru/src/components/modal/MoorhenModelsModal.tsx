@@ -50,7 +50,8 @@ export const MoorhenModelsModal = (props: MoorhenModelsModalProps) => {
     displayData.sort((a, b) => (a.props.index > b.props.index) ? 1 : ((b.props.index > a.props.index) ? -1 : 0))
 
     return <MoorhenDraggableModalBase
-                left={`${width / 2}px`}
+                left={width / 2}
+                top={height / 4}
                 show={props.show}
                 setShow={props.setShow}
                 defaultHeight={convertViewtoPx(10, height)}
