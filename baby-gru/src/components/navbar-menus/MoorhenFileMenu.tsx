@@ -169,7 +169,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     }, [props.videoRecorderRef])
 
     return <>
-                <div style={{maxHeight: convertViewtoPx(65, height), overflowY: 'auto'}}>
+                <div style={{maxHeight: convertViewtoPx(65, height), overflow: 'auto'}}>
                     
                     {!props.disableFileUploads && 
                     <Form.Group className='moorhen-form-group' controlId="upload-coordinates-form">

@@ -10,6 +10,7 @@ import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch } from "react-redux";
 import { setDoPerspectiveProjection, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawInteractions, setDrawMissingLoops } from "../../store/sceneSettingsSlice";
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { convertViewtoPx } from "../../utils/MoorhenUtils";
 
 export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
@@ -20,11 +21,13 @@ export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const drawAxes = useSelector((state: moorhen.State) => state.sceneSettings.drawAxes)
     const drawInteractions = useSelector((state: moorhen.State) => state.sceneSettings.drawInteractions)
     const doPerspectiveProjection = useSelector((state: moorhen.State) => state.sceneSettings.doPerspectiveProjection)
+    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
     const dispatch = useDispatch()
 
     const menuItemProps = {setPopoverIsShown, ...props}
 
     return <>
+        <div style={{maxHeight: convertViewtoPx(65, height), overflow: 'auto'}}>
                 <InputGroup className='moorhen-input-group-check'>
                     <Form.Check 
                         type="switch"
@@ -85,5 +88,6 @@ export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                 <MoorhenClipFogMenuItem {...menuItemProps} />
                 <MoorhenLightingMenuItem {...menuItemProps} />
                 {props.glRef.current.isWebGL2 () && <MoorhenBlurMenuItem {...menuItemProps} />}
+        </div>
     </>
 }

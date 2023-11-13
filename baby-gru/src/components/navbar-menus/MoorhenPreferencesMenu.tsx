@@ -52,7 +52,7 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
         }
     }, [maxBackupCount, modificationCountBackupThreshold, enableTimeCapsule])
 
-    return <div style={{maxHeight: convertViewtoPx(65, height), overflowY: 'auto'}}>
+    return <div style={{maxHeight: convertViewtoPx(65, height), overflow: 'auto'}}>
                     <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"
