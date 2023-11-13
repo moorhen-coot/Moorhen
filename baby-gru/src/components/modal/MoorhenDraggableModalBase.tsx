@@ -1,10 +1,11 @@
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, Card, Stack } from "react-bootstrap";
-import Draggable from "react-draggable";
+import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
 import { AddOutlined, CloseOutlined, RemoveOutlined, SquareFootOutlined } from "@mui/icons-material";
 import { moorhen } from "../../types/moorhen";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Resizable } from "re-resizable";
+import { setEnableAtomHovering } from "../../moorhen";
 
 /**
  * The base component used to create draggable modals.
@@ -81,28 +82,75 @@ export const MoorhenDraggableModalBase = (props: {
     enableResize?: false | {[key: string]: boolean};
     onResizeStop?: (evt: MouseEvent | TouchEvent, direction: 'top' | 'right' | 'bottom' | 'left' | 'topRight' | 'bottomRight' | 'bottomLeft' | 'topLeft', ref: HTMLDivElement, delta: {width: number, height: number}) => void;
 }) => {
-    
-    const [opacity, setOpacity] = useState<number>(1.0)
-    const [collapse, setCollapse] = useState<boolean>(false)
-    const draggableNodeRef = useRef<HTMLDivElement>();
 
+    const dispatch = useDispatch()
     const windowWidth = useSelector((state: moorhen.State) => state.canvasStates.width)
     const windowHeight = useSelector((state: moorhen.State) => state.canvasStates.height)
     const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.miscAppSettings.transparentModalsOnMouseOut)
+    const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering)
+    
+    const [opacity, setOpacity] = useState<number>(1.0)
+    const [collapse, setCollapse] = useState<boolean>(false)
+    const [position, setPosition] = useState<{x: number, y: number}>({x: props.left, y: props.top})
+
+    const draggableNodeRef = useRef<HTMLDivElement>();
+    const cachedEnableAtomHovering = useRef<boolean>(false);
+
+
+    useEffect(() => {
+        setPosition({
+            x: props.left, y: props.top
+        })
+    }, [windowWidth, windowHeight])
+
+    const handleDrag = (evt: DraggableEvent, data: DraggableData) => {
+        setPosition((prev) => {
+            return { x: prev.x + data.deltaX, y: prev.y + data.deltaY }
+        })
+    }
+
+    const handleDragStart = useCallback(() => {
+        if (enableAtomHovering) {
+            dispatch( setEnableAtomHovering(false) )
+            cachedEnableAtomHovering.current = true
+        } else {
+            cachedEnableAtomHovering.current = false
+        }
+    }, [enableAtomHovering])
+
+    const handleDragStop = useCallback(() => {
+        setPosition((prev) => {
+            let x = prev.x
+            let y = prev.y
+            if (x < 0) {
+                x = 0
+            } else if (x > windowWidth - 100) {
+                x = windowWidth - 100
+            }
+            if (y < 0) {
+                y = 0
+            } else if (y > windowHeight - 100) {
+                y = windowHeight - 100
+            }
+            return { x, y }
+        })
+        if (cachedEnableAtomHovering.current) {
+            dispatch( setEnableAtomHovering(true) )
+        }
+    }, [windowWidth, windowHeight])
 
     return <Draggable
                 nodeRef={draggableNodeRef}
                 handle={`.${props.handleClassName}`}
-                bounds={{
-                    left: -props.left,
-                    right: windowWidth - props.left - 100,
-                    top: -props.top,
-                    bottom: windowHeight - props.top - 100
-                }} >
+                position={position}
+                onDrag={handleDrag}
+                onStop={handleDragStop}
+                onStart={handleDragStart}
+                >
             <Card
                 className="moorhen-draggable-card"
                 ref={draggableNodeRef}
-                style={{ display: props.show ? 'block' : 'none', position: 'absolute', top: props.top, left: props.left, opacity: opacity}}
+                style={{ display: props.show ? 'block' : 'none', position: 'absolute', opacity: opacity}}
                 onMouseOver={() => setOpacity(1.0)}
                 onMouseOut={() => {
                     if(transparentModalsOnMouseOut) setOpacity(0.5)
