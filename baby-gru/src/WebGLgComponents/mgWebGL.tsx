@@ -8859,10 +8859,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 }
                 this.props.messageChanged({ message: label + ", xyz:(" + atx + " " + aty + " " + atz + ")" + tempFactorLabel });
 
-                let atomClicked = new CustomEvent("atomClicked", {
+                let atomClicked: moorhen.AtomClickedEvent = new CustomEvent("atomClicked", {
                     "detail": {
                         atom: self.displayBuffers[minidx].atoms[minj],
-                        buffer: self.displayBuffers[minidx]
+                        buffer: self.displayBuffers[minidx],
+                        isResidueSelection: self.keysDown['residue_selection']
                     }
                 });
                 document.dispatchEvent(atomClicked);
@@ -8885,7 +8886,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     } else {
                         self.measuredAtoms[self.measuredAtoms.length - 1].push(theAtom);
                     }
-                }
+                } 
             }
             if(updateLabels) self.updateLabels()
         }

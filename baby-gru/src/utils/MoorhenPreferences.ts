@@ -32,7 +32,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
     }
 
     static defaultPreferencesValues: moorhen.PreferencesValues = {
-        version: 'v31',
+        version: 'v32',
         transparentModalsOnMouseOut: false,
         defaultBackgroundColor: [1, 1, 1, 1],
         atomLabelDepthMode: true,
@@ -231,6 +231,12 @@ export class MoorhenPreferences implements moorhen.Preferences {
                 keyPress: "l",
                 label: "Label an atom on click",
                 viewOnly: true
+            },
+            "residue_selection": {
+                modifiers: ["shiftKey"],
+                keyPress: "shift",
+                label: "Create a residue selection",
+                viewOnly: false
             },
             "center_atom": {
                 modifiers: ["altKey"],
