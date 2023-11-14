@@ -1,13 +1,9 @@
-import { useCallback, useState } from "react"
-import { residueCodesThreeToOne } from "../../utils/MoorhenUtils"
+import { useCallback } from "react"
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
-import { MoorhenEditButtonBase } from "./MoorhenEditButtonBase";
-import { Container, FormGroup, FormLabel, FormSelect, Row } from "react-bootstrap";
 import { useSelector } from 'react-redux';
 
-export const MoorhenMutateButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
-    const [panelParameters, setPanelParameters] = useState<string>('ALA')
+export const MoorhenMutateButton = (props: moorhen.ContextButtonProps) => {
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
     const mutateModes = [
@@ -39,68 +35,24 @@ export const MoorhenMutateButton = (props: moorhen.EditButtonProps | moorhen.Con
             command: 'mutate',
             commandArgs: [selectedMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, selectedMode],
             changesMolecules: [selectedMolecule.molNo]
-          }
-    }
-
-    if (props.mode === 'context') {
-
-        return <MoorhenContextButtonBase 
-                    icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/mutate.svg`} alt='Mutate'/>}
-                    refineAfterMod={false}
-                    needsMapData={true}
-                    onCompleted={autoFitRotamer}
-                    toolTipLabel="Mutate residue"
-                    popoverSettings={{
-                        label: 'Mutate to...',
-                        options: mutateModes,
-                        getCootCommandInput: getCootCommandInput,
-                        defaultValue: props.defaultActionButtonSettings['mutate'],
-                        setDefaultValue: (newValue: string) => {
-                            props.setDefaultActionButtonSettings({key: 'mutate', value: newValue})
-                        }
-                    }}
-                    {...props}
-                />
-
-    } else {
-            
-        const MoorhenMutatePanel = (props: { panelParameters: string; setPanelParameters: React.Dispatch<React.SetStateAction<string>> }) => {
-            return <Container>
-                <Row style={{textAlign: 'center', justifyContent: 'center'}}>Please identify residue to mutate</Row>
-                <Row>
-                    <FormGroup>
-                        <FormLabel>To residue of type</FormLabel>
-                        <FormSelect defaultValue={props.panelParameters}
-                            onChange={(e) => {
-                                props.setPanelParameters(e.target.value)
-                            }}>
-                            {mutateModes.map(optionName => {
-                                return <option key={optionName} value={optionName}>{`${optionName} (${residueCodesThreeToOne[optionName]})`}</option>
-                            })}
-                        </FormSelect>
-                    </FormGroup>
-                </Row>
-            </Container>
         }
-        
-        return <MoorhenEditButtonBase
-                    id='mutate-residue-edit-button'
-                    toolTipLabel="Simple Mutate"
-                    setToolTip={props.setToolTip}
-                    buttonIndex={props.buttonIndex}
-                    selectedButtonIndex={props.selectedButtonIndex}
-                    setSelectedButtonIndex={props.setSelectedButtonIndex}
-                    needsMapData={true}
-                    onCompleted={autoFitRotamer}
-                    panelParameters={panelParameters}
-                    getCootCommandInput={getCootCommandInput}
-                    prompt={
-                        <MoorhenMutatePanel
-                            setPanelParameters={setPanelParameters}
-                            panelParameters={panelParameters} />
-                    }
-                    icon={<img style={{ width: '100%', height: '100%' }} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/mutate.svg`} alt='Mutate' />}
-                    {...props}
-                />
     }
+
+    return <MoorhenContextButtonBase
+        icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/mutate.svg`} alt='Mutate' />}
+        refineAfterMod={false}
+        needsMapData={true}
+        onCompleted={autoFitRotamer}
+        toolTipLabel="Mutate residue"
+        popoverSettings={{
+            label: 'Mutate to...',
+            options: mutateModes,
+            getCootCommandInput: getCootCommandInput,
+            defaultValue: props.defaultActionButtonSettings['mutate'],
+            setDefaultValue: (newValue: string) => {
+                props.setDefaultActionButtonSettings({ key: 'mutate', value: newValue })
+            }
+        }}
+        {...props}
+    />
 }

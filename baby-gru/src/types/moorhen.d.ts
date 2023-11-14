@@ -677,29 +677,6 @@ export namespace moorhen {
         items?: T[];
     }    
 
-    type EditButtonProps = {
-        mode?: 'edit';
-        monomerLibraryPath: string;
-        backgroundColor: [number, number, number, number];
-        defaultBondSmoothness: number;
-        urlPrefix: string;
-        shortCuts: string | { [label: string]: Shortcut; };
-        selectedButtonIndex: string;
-        setSelectedButtonIndex: React.Dispatch<React.SetStateAction<string>>;
-        setToolTip: React.Dispatch<React.SetStateAction<string>>;
-        setOverlayContents: React.Dispatch<React.SetStateAction<JSX.Element>>;
-        buttonIndex: string;
-        enableRefineAfterMod: boolean;
-        refineAfterMod?: boolean;
-        glRef: React.RefObject<webGL.MGWebGL>;
-        commandCentre: React.RefObject<CommandCentre>;
-        activeMap: Map;
-        molecules: Molecule[];
-        timeCapsuleRef: React.RefObject<TimeCapsule>;
-        windowHeight: number;
-        changeMolecules: (arg0: MolChange<Molecule>) => void
-    }
-
     interface ContainerRefs {
         glRef: React.MutableRefObject<null | webGL.MGWebGL>;
         timeCapsuleRef: React.MutableRefObject<null | TimeCapsule>;

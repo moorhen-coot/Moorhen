@@ -1,13 +1,10 @@
 import { useCallback, useRef, useState } from "react"
-import { MoorhenEditButtonBase } from "./MoorhenEditButtonBase"
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
-import { Container, Form, FormGroup, FormLabel, FormSelect, Row } from "react-bootstrap";
-import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
+import { Form } from "react-bootstrap";
 import { useSelector } from 'react-redux';
 
-export const MoorhenRigidBodyFitButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
-    const [panelParameters, setPanelParameters] = useState<string>('TRIPLE')
+export const MoorhenRigidBodyFitButton = (props: moorhen.ContextButtonProps) => {
     const [randomJiggleMode, setRandomJiggleMode] = useState<boolean>(false)
     const customCid = useRef<null | string>(null)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
@@ -20,11 +17,11 @@ export const MoorhenRigidBodyFitButton = (props: moorhen.EditButtonProps | moorh
         let commandArgs: [number, string, number]
         let start: number
         let stop: number
-    
+
         if (typeof selectedSequence !== 'undefined') {
             selectedResidueIndex = selectedSequence.sequence.findIndex(residue => residue.resNum === chosenAtom.res_no)
         }
-        
+
         if (selectedResidueIndex === -1) {
             selectedMode = 'SINGLE'
         }
@@ -84,14 +81,14 @@ export const MoorhenRigidBodyFitButton = (props: moorhen.EditButtonProps | moorh
                     customCid.current,
                     activeMapMolNo
                 ]
-                break;    
+                break;
             default:
                 console.log('Unrecognised rigid body fit mode...')
                 break
         }
         return commandArgs
     }
-    
+
     const getCootCommandInput = useCallback((selectedMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string, randomJiggleModeSelectRef?: React.RefObject<HTMLInputElement>) => {
         const commandArgs = rigidBodyFitFormatArgs(selectedMolecule, chosenAtom, selectedMode, activeMap.molNo)
 
@@ -114,99 +111,31 @@ export const MoorhenRigidBodyFitButton = (props: moorhen.EditButtonProps | moorh
             command: command,
             commandArgs: command === 'rigid_body_fit' ? commandArgs : [...commandArgs.slice(0, 2), 0, -1],
             changesMolecules: [selectedMolecule.molNo]
-          }
+        }
     }, [activeMap, randomJiggleMode])
 
-    const MoorhenRigidBodyFitPanel = (props: {
-        panelParameters: string;
-        setPanelParameters: React.Dispatch<React.SetStateAction<string>> 
-        randomJiggleMode: boolean;
-        setRandomJiggleMode: React.Dispatch<React.SetStateAction<boolean>>;
-    }) => {
-        
-        const [innerRandomJiggleMode, setInnerRandomJiggleMode] = useState<boolean>(props.randomJiggleMode)
-        
-        return <Container>
-            <Row style={{textAlign: 'center', justifyContent: 'center'}}>Please click an atom for rigid body fitting</Row>
-            <Row>
-                <FormGroup>
-                    <FormLabel>Residue selection</FormLabel>
-                    <FormSelect defaultValue={props.panelParameters}
-                        onChange={(e) => {
-                            props.setPanelParameters(e.target.value)
-                        }}>
-                        {rigidBodyModes.map(optionName => {
-                            return <option key={optionName} value={optionName}>{optionName}</option>
-                        })}
-                        <option key={'CUSTOM'} value={'CUSTOM'}>CUSTOM</option>
-                    </FormSelect>
-                    <Form.Check
-                        style={{ paddingTop: '0.1rem' }}
-                        type="switch"
-                        checked={innerRandomJiggleMode}
-                        onChange={() => { 
-                            setInnerRandomJiggleMode(!innerRandomJiggleMode)
-                            props.setRandomJiggleMode(!props.randomJiggleMode)
-                         }}
-                        label="Use random jiggle fit" />
-                </FormGroup>
-            </Row>
-            <Row>
-                {props.panelParameters === 'CUSTOM' &&
-                    <MoorhenCidInputForm defaultValue={customCid.current} onChange={(e) => { customCid.current = e.target.value }} placeholder={customCid.current ? "" : "Input custom cid e.g. //A,B"} />
-                }
-            </Row>
-        </Container>
-    }
-
-    if (props.mode === 'context') {
-
-        return <MoorhenContextButtonBase 
-                    icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rigid-body.svg`} alt='Rigid body fit'/>}
-                    refineAfterMod={false}
-                    needsMapData={true}
-                    toolTipLabel="Rigid body fit"
-                    popoverSettings={{
-                        label: 'Rigid body fit',
-                        options: rigidBodyModes,
-                        getCootCommandInput: getCootCommandInput,
-                        defaultValue: props.defaultActionButtonSettings['rigidBodyFit'],
-                        setDefaultValue: (newValue: string) => {
-                            props.setDefaultActionButtonSettings({key: 'rigidBodyFit', value: newValue})
-                        },
-                        extraInput: (ref) => {
-                            return <Form.Check
-                                        ref={ref}
-                                        style={{paddingTop: '0.1rem'}} 
-                                        type="switch"
-                                        label="Use random jiggle fit"/>
-                          },
-                    }}
-                    {...props}
-                />     
-        
-    } else {
-
-        return <><MoorhenEditButtonBase
-            id='rigid-body-fit-button'
-            toolTipLabel="Rigid body fit"
-            setToolTip={props.setToolTip}
-            buttonIndex={props.buttonIndex}
-            selectedButtonIndex={props.selectedButtonIndex}
-            setSelectedButtonIndex={props.setSelectedButtonIndex}
-            needsMapData={true}
-            refineAfterMod={false}
-            prompt={<MoorhenRigidBodyFitPanel
-                        randomJiggleMode={randomJiggleMode}
-                        setRandomJiggleMode={setRandomJiggleMode}
-                        setPanelParameters={setPanelParameters}
-                        panelParameters={panelParameters} />}
-            icon={<img style={{ width: '100%', height: '100%' }} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rigid-body.svg`} alt='Rigid body fit' />}
-            panelParameters={panelParameters}
-            getCootCommandInput={getCootCommandInput}
-            {...props}
-            />
-        </>
-    }
+    return <MoorhenContextButtonBase
+        icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rigid-body.svg`} alt='Rigid body fit' />}
+        refineAfterMod={false}
+        needsMapData={true}
+        toolTipLabel="Rigid body fit"
+        popoverSettings={{
+            label: 'Rigid body fit',
+            options: rigidBodyModes,
+            getCootCommandInput: getCootCommandInput,
+            defaultValue: props.defaultActionButtonSettings['rigidBodyFit'],
+            setDefaultValue: (newValue: string) => {
+                props.setDefaultActionButtonSettings({ key: 'rigidBodyFit', value: newValue })
+            },
+            extraInput: (ref) => {
+                return <Form.Check
+                    ref={ref}
+                    style={{ paddingTop: '0.1rem' }}
+                    type="switch"
+                    label="Use random jiggle fit" />
+            },
+        }}
+        {...props}
+    />
 }
 
