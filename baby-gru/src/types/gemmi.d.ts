@@ -3,7 +3,8 @@ import { emscriptem } from "./emscriptem"
 export namespace gemmi {
     interface NeighborSearch extends emscriptem.instance<NeighborSearch> {
         populate: (arg0: boolean) => void;
-        find_atoms: (arg0: Position, arg1: number, arg2: number) => emscriptem.vector<Mark>
+        find_atoms: (arg0: Position, arg1: string, arg2: number) => emscriptem.vector<Mark>;
+        find_neighbors: (arg0: Atom, arg1: number, ag2: number) =>  emscriptem.vector<Mark>;
     }
     interface Mark extends emscriptem.instance<Mark> {
         x: number;
