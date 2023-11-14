@@ -13,7 +13,7 @@ var thick_lines_normal_gbuffer_vertex_shader_source = `
 
     varying lowp vec3 vNormal;
     varying lowp vec4 eyePos;
-    varying lowp vec3 v;
+    varying lowp vec4 v;
 
     varying mediump mat4 mvInvMatrix;
 
