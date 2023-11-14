@@ -221,6 +221,13 @@ export namespace moorhen {
         isCustom: boolean;
         styleHasColourRules: boolean;
     }
+
+    type ResidueSelection = {
+        molecule: null | moorhen.Molecule;
+        first: null | string;
+        second: null | string;
+        cid: null | string;
+    }
     
     type HoveredAtom = {
         molecule: Molecule | null,
