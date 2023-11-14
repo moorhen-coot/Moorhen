@@ -405,62 +405,21 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {number} maxDist - Maximum distance for the search
      * @returns {Promise&lt;string[]>} List of CIDs with the residues found within the radius of search
      */
-    async getNeighborResiduesCids(selectionCid: string, radius: number, minDist: number, maxDist: number): Promise&lt;string[]> {
+    async getNeighborResiduesCids(selectionCid: string, maxDist: number): Promise&lt;string[]> {
         let multiCidRanges: string[] = []
-        let neighborResidues: { [chainId: string]: number[] } = {}
+        
+        const response = await this.commandCentre.current.cootCommand({
+            returnType: "status",
+            command: 'get_neighbours_cid',
+            commandArgs: [this.molNo, selectionCid, maxDist]
+        }, true) as moorhen.WorkerResponse&lt;string>
 
-        const model = this.gemmiStructure.first_model()
-        const unitCell = this.gemmiStructure.cell
-
-        const neighborSearch = new window.CCP4Module.NeighborSearch(model, unitCell, radius)
-        neighborSearch.populate(false)
-
-        const selectedGemmiAtoms = await this.gemmiAtomsForCid(selectionCid)
-        if (selectedGemmiAtoms.length === 0) {
-            return multiCidRanges
-        }
-
-        const selectedAtom = selectedGemmiAtoms[0]
-        const selectedAtomPosition = new window.CCP4Module.Position(selectedAtom.x, selectedAtom.y, selectedAtom.z)
-
-        const marks = neighborSearch.find_atoms(selectedAtomPosition, minDist, maxDist)
-        const chains = model.chains
-        const marksSize = marks.size()
-
-        for (let markIndex = 0; markIndex &lt; marksSize; markIndex++) {
-            const mark = marks.get(markIndex)
-            const imageIdx = mark.image_idx
-            if (imageIdx !== 0) {
-                continue
-            }
-            const chain = chains.get(mark.chain_idx)
-            const residues = chain.residues
-            const residue = residues.get(mark.residue_idx)
-            const residueSeqId = residue.seqid
-            const resNum = residueSeqId.str()
-            if (Object.hasOwn(neighborResidues, chain.name)) {
-                neighborResidues[chain.name].push(parseInt(resNum))
-            } else {
-                neighborResidues[chain.name] = [parseInt(resNum)]
-            }
-            residue.delete()
-            residueSeqId.delete()
-            residues.delete()
-            chain.delete()
-            // mark.delete() For some reason this throws abort error. Maybe because the type is gemmi::Mark* ??
-        }
-
-        Object.keys(neighborResidues).forEach(chainId => {
-            const residueRanges = findConsecutiveRanges(Array.from(new Set(neighborResidues[chainId])))
+        response.data.result.result.split('|').forEach(chainResidueCid => {
+            let [chainId, resNums] = chainResidueCid.split('/')
+            const residueRanges = findConsecutiveRanges(resNums.split(',').map(n => parseInt(n)))
             residueRanges.forEach(range => multiCidRanges.push(`//${chainId}/${range[0]}-${range[1]}/*`))
         })
-
-        model.delete()
-        chains.delete()
-        unitCell.delete()
-        neighborSearch.delete()
-        selectedAtomPosition.delete()
-        marks.delete()
+        
         return multiCidRanges
     }
 
