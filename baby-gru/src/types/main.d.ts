@@ -56,7 +56,7 @@ declare module 'moorhen' {
         isLigand(): boolean;
         removeRepresentation(representationId: string): void;
         addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: _moorhen.ColourRule[], bondOptions?: _moorhen.cootBondOptions, applyColourToNonCarbonAtoms?: boolean): Promise<_moorhen.MoleculeRepresentation>;
-        getNeighborResiduesCids(selectionCid: string, radius: number, minDist: number, maxDist: number): Promise<string[]>;
+        getNeighborResiduesCids(selectionCid: string, maxDist: number): Promise<string[]>;
         drawWithStyleFromMesh(style: string, meshObjects: any[], cid?: string): Promise<void>;
         updateWithMovedAtoms(movedResidues: _moorhen.AtomInfo[][]): Promise<void>;
         transformedCachedAtomsAsMovedAtoms(selectionCid?: string): _moorhen.AtomInfo[][];

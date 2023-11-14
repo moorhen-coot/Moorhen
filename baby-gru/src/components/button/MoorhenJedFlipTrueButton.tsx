@@ -1,8 +1,7 @@
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
-import { MoorhenEditButtonBase } from "./MoorhenEditButtonBase";
 
-export const MoorhenJedFlipTrueButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
+export const MoorhenJedFlipTrueButton = (props: moorhen.ContextButtonProps) => {
 
     const getCootCommandInput = (selectedMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, localParameters?: string): moorhen.cootCommandKwargs => {
         return {
@@ -14,30 +13,10 @@ export const MoorhenJedFlipTrueButton = (props: moorhen.EditButtonProps | moorhe
         }
     }
 
-    if (props.mode === 'context') {
-
-        return <MoorhenContextButtonBase 
-                    icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/jed-flip-reverse.svg`} alt='jed-flip-reverse'/>}
-                    toolTipLabel="JED Flip: wag the dog"
-                    cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}
-                    {...props}
-                />     
-
-    } else {
-
-        return <MoorhenEditButtonBase
-                    toolTipLabel="JED Flip: wag the dog"
-                    setToolTip={props.setToolTip}
-                    buttonIndex={props.buttonIndex}
-                    selectedButtonIndex={props.selectedButtonIndex}
-                    setSelectedButtonIndex={props.setSelectedButtonIndex}
-                    needsMapData={false}
-                    getCootCommandInput={getCootCommandInput}
-                    prompt="Click atom in residue to flip around that rotatable bond - wag the dog"
-                    icon={<img style={{ width: '100%', height: '100%' }} alt="jed-flip-reverse" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/jed-flip-reverse.svg`} />}
-                    {...props}
-                />
-    
-    }
-
+    return <MoorhenContextButtonBase
+        icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/jed-flip-reverse.svg`} alt='jed-flip-reverse' />}
+        toolTipLabel="JED Flip: wag the dog"
+        cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}
+        {...props}
+    />
 }
