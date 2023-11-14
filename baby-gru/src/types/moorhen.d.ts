@@ -96,7 +96,7 @@ export namespace moorhen {
         moveMoleculeHere(x: number, y: number, z: number): Promise<void>;
         checkHasGlycans(): Promise<boolean>;
         fitLigandHere(mapMolNo: number, ligandMolNo: number, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<Molecule[]>;
-        isLigand(): boolean;
+        checkIsLigand(): boolean;
         removeRepresentation(representationId: string): void;
         addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: ColourRule[], bondOptions?: cootBondOptions, applyColourToNonCarbonAtoms?: boolean): Promise<MoleculeRepresentation>;
         getNeighborResiduesCids(selectionCid: string, maxDist: number): Promise<string[]>;
@@ -144,6 +144,7 @@ export namespace moorhen {
         buffersInclude: (bufferIn: { id: string; }) => boolean;
         redrawRepresentation: (id: string) => Promise<void>;
         type: string;
+        isLigand: boolean;
         excludedCids: string[];
         commandCentre: React.RefObject<CommandCentre>;
         glRef: React.RefObject<webGL.MGWebGL>;

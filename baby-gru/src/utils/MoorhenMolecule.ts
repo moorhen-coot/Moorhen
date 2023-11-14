@@ -88,6 +88,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     hasGlycans: boolean;
     hasDNA: boolean;
     restraints: {maxRadius: number, cid: string}[];
+    isLigand: boolean;
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibraryPath = "./baby-gru/monomers") {
         this.type = 'molecule'
@@ -124,6 +125,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.restraints = []
         this.hasDNA = false
         this.hasGlycans = false
+        this.isLigand = false
         this.displayObjectsTransformation = { origin: [0, 0, 0], quat: null, centre: [0, 0, 0] }
         this.uniqueId = guid()
         this.monomerLibraryPath = monomerLibraryPath
@@ -379,7 +381,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * Check if the molecule instance consists of a ligand
      * @returns {boolean} True if the molecule is a ligand
      */
-    isLigand(): boolean {
+    checkIsLigand(): boolean {
         let isLigand = true
         const structure = this.gemmiStructure.clone()
        
@@ -401,7 +403,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
         models.delete()    
         structure.delete()
-    
+        this.isLigand = isLigand
         return isLigand
     }
 
@@ -442,6 +444,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }, true) as moorhen.WorkerResponse<number>
 
         newMolecule.molNo = response.data.result.result
+        newMolecule.isLigand = this.isLigand
         newMolecule.hasGlycans = this.hasGlycans
         newMolecule.hasDNA = this.hasDNA
 
@@ -542,6 +545,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 commandArgs: [coordData, this.name],
             }, true)
             this.molNo = response.data.result.result
+            this.checkIsLigand()
             await Promise.all([
                 this.getNumberOfAtoms(),
                 this.loadMissingMonomers(),
@@ -662,6 +666,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
             this.gemmiStructure.delete()
         }
+        this.checkIsLigand()
         const [_hasGlycans, pdbString] = await Promise.all([
             this.checkHasGlycans(),
             this.getAtoms()
