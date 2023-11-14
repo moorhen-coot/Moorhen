@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useRef, useMemo } from 'react';
 import { Container, Col, Row, Spinner } from 'react-bootstrap';
 import { MoorhenWebMG } from './webMG/MoorhenWebMG';
-import { getTooltipShortcutLabel, createLocalStorageInstance } from '../utils/MoorhenUtils';
+import { getTooltipShortcutLabel, createLocalStorageInstance, cidToSpec } from '../utils/MoorhenUtils';
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre"
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
 import { Backdrop } from "@mui/material";
@@ -15,7 +15,7 @@ import { MoorhenPreferencesContainer } from './misc/MoorhenPreferencesContainer'
 import { useSelector, useDispatch } from 'react-redux';
 import { setDefaultBackgroundColor } from '../store/sceneSettingsSlice';
 import { setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/canvasStatesSlice';
-import { setCootInitialized, setNotificationContent, setTheme } from '../store/generalStatesSlice';
+import { clearResidueSelection, setCootInitialized, setNotificationContent, setResidueSelection, setStopResidueSelection, setTheme } from '../store/generalStatesSlice';
 import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSlice';
 
 /**
@@ -98,7 +98,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const maxBackupCount = useSelector((state: moorhen.State) => state.backupSettings.maxBackupCount)
     const modificationCountBackupThreshold = useSelector((state: moorhen.State) => state.backupSettings.modificationCountBackupThreshold)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
-   
+    const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
+
     const innerStatesMap: moorhen.ContainerRefs = {
         glRef: innerGlRef, timeCapsuleRef: innerTimeCapsuleRef, commandCentre: innnerCommandCentre,
         moleculesRef: innerMoleculesRef, mapsRef: innerMapsRef, activeMapRef: innerActiveMapRef,
@@ -327,8 +328,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 windowWidth: width,
                 activeMap,
                 hoveredAtom,
-                setHoveredAtom: (newVal) => dispatch(setHoveredAtom(newVal)),
-                setNotificationContent: (newVal) => dispatch(setNotificationContent(newVal))
+                dispatch
             },
             JSON.parse(shortCuts as string),
             showShortcutToast,
@@ -368,6 +368,52 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         }
     }, [activeMap])
 
+    const handleAtomClicked = useCallback(async (evt: moorhen.AtomClickedEvent) => {
+        const clearSelection = () => {
+            dispatch( clearResidueSelection() )
+            molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
+        }
+
+        if (!evt.detail.isResidueSelection || evt.detail.buffer.id == null) {
+            clearSelection()
+            return
+        } 
+
+        const selectedMolecule = molecules.find(molecule => molecule.buffersInclude(evt.detail.buffer))
+        if (!selectedMolecule) {
+            clearSelection()
+            return
+        }
+        
+        if (residueSelection.first === null || residueSelection.molecule === null || residueSelection.molecule.molNo !== selectedMolecule.molNo) {
+            const resSpec: moorhen.ResidueSpec = cidToSpec(evt.detail.atom.label)
+            await selectedMolecule.drawResidueSelection(`/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*`)
+            dispatch(
+                setResidueSelection({ molecule: selectedMolecule, first: evt.detail.atom.label, second: null, cid: null})
+            )
+            return
+        }
+
+        const startResSpec: moorhen.ResidueSpec = cidToSpec(residueSelection.first)
+        const stopResSpec: moorhen.ResidueSpec = cidToSpec(evt.detail.atom.label)
+        if (startResSpec.chain_id !== stopResSpec.chain_id) {
+            clearSelection()
+        } else {
+            const sortedResNums = [startResSpec.res_no, stopResSpec.res_no].sort(function(a, b){return a - b})
+            const cid = `/*/${startResSpec.chain_id}/${sortedResNums[0]}-${sortedResNums[1]}/*`
+            await selectedMolecule.drawResidueSelection(cid)
+            dispatch(
+                setResidueSelection({ molecule: selectedMolecule, first: residueSelection.first, second: evt.detail.atom.label, cid: cid})
+            )    
+        }
+    }, [molecules, residueSelection])
+
+    useEffect(() => {
+        document.addEventListener('atomClicked', handleAtomClicked)
+        return () => {
+            document.removeEventListener('atomClicked', handleAtomClicked)
+        }
+    }, [handleAtomClicked])
 
     return <> 
     <div>

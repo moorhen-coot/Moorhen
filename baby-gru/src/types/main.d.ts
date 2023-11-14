@@ -90,6 +90,7 @@ declare module 'moorhen' {
         drawEnvironment: (cid: string, labelled?: boolean) => Promise<void>;
         centreOn: (selectionCid?: string, animate?: boolean) => Promise<void>;
         drawHover: (cid: string) => Promise<void>;
+        drawResidueSelection: (cid: string) => Promise<void>;
         clearBuffersOfStyle: (style: string) => void;
         loadToCootFromURL: (inputFile: string, molName: string) => Promise<_moorhen.Molecule>;
         applyTransform: () => Promise<void>;
@@ -137,6 +138,7 @@ declare module 'moorhen' {
         hoverRepresentation: _moorhen.MoleculeRepresentation;
         unitCellRepresentation: _moorhen.MoleculeRepresentation;
         environmentRepresentation: _moorhen.MoleculeRepresentation;
+        selectionRepresentation: _moorhen.MoleculeRepresentation;
         hasDNA: boolean;
         hasGlycans: boolean;
     }

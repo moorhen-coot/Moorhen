@@ -132,6 +132,7 @@ export namespace moorhen {
         drawEnvironment: (cid: string, labelled?: boolean) => Promise<void>;
         centreOn: (selectionCid?: string, animate?: boolean) => Promise<void>;
         drawHover: (cid: string) => Promise<void>;
+        drawResidueSelection: (cid: string) => Promise<void>;
         clearBuffersOfStyle: (style: string) => void;
         loadToCootFromURL: (inputFile: string, molName: string) => Promise<Molecule>;
         applyTransform: () => Promise<void>;
@@ -179,13 +180,14 @@ export namespace moorhen {
         hoverRepresentation: MoleculeRepresentation;
         unitCellRepresentation: MoleculeRepresentation;
         environmentRepresentation: MoleculeRepresentation;
+        selectionRepresentation: MoleculeRepresentation;
         hasDNA: boolean;
         hasGlycans: boolean;
     }
 
     type RepresentationStyles = 'VdwSpheres' | 'ligands' | 'CAs' | 'CBs' | 'CDs' | 'gaussian' | 'allHBonds' | 'rama' | 
     'rotamer' | 'CRs' | 'MolecularSurface' | 'DishyBases' | 'VdWSurface' | 'Calpha' | 'unitCell' | 'hover' | 'environment' | 
-    'ligand_environment' | 'contact_dots' | 'chemical_features' | 'ligand_validation' | 'glycoBlocks' | 'restraints'
+    'ligand_environment' | 'contact_dots' | 'chemical_features' | 'ligand_validation' | 'glycoBlocks' | 'restraints' | 'residueSelection'
 
     interface MoleculeRepresentation {
         setApplyColourToNonCarbonAtoms(newVal: boolean): void;
@@ -529,6 +531,7 @@ export namespace moorhen {
     type AtomClickedEvent = CustomEvent<{
         buffer: { id: string };
         atom: { label: string };
+        isResidueSelection: boolean;
     }>
 
     type ConnectMapsEvent = CustomEvent<ConnectMapsInfo>
@@ -678,12 +681,6 @@ export namespace moorhen {
         defaultActionButtonSettings: actionButtonSettings;
         setDefaultActionButtonSettings: (arg0: {key: string; value: string}) => void;     
     }
-    
-    type MolChange<T extends Molecule | Map> = {
-        action: 'Add' | 'Remove' | 'AddList' | 'Empty';
-        item?: T;
-        items?: T[];
-    }    
 
     interface ContainerRefs {
         glRef: React.MutableRefObject<null | webGL.MGWebGL>;
@@ -795,6 +792,7 @@ export namespace moorhen {
             notificationContent: JSX.Element;
             activeMap: Map;
             theme: string;
+            residueSelection: ResidueSelection;
         };
         hoveringStates: {
             enableAtomHovering: boolean;

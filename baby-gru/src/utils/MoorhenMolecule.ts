@@ -85,6 +85,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     hoverRepresentation: moorhen.MoleculeRepresentation;
     unitCellRepresentation: moorhen.MoleculeRepresentation;
     environmentRepresentation: moorhen.MoleculeRepresentation;
+    selectionRepresentation: moorhen.MoleculeRepresentation;
     hasGlycans: boolean;
     hasDNA: boolean;
     restraints: {maxRadius: number, cid: string}[];
@@ -136,6 +137,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.environmentRepresentation.setParentMolecule(this)
         this.hoverRepresentation = new MoorhenMoleculeRepresentation('hover', null, this.commandCentre, this.glRef)
         this.hoverRepresentation.setParentMolecule(this)
+        this.selectionRepresentation = new MoorhenMoleculeRepresentation('residueSelection', null, this.commandCentre, this.glRef)
+        this.selectionRepresentation.setParentMolecule(this)
     }
 
     /**
@@ -414,6 +417,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.hoverRepresentation?.deleteBuffers()
         this.unitCellRepresentation?.deleteBuffers()
         this.environmentRepresentation?.deleteBuffers()
+        this.selectionRepresentation?.deleteBuffers()
         this.representations.forEach(representation => representation.deleteBuffers())
         this.glRef.current.drawScene()
         const response = await this.commandCentre.current.cootCommand({
@@ -914,6 +918,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
             this.unitCellRepresentation?.deleteBuffers()
         } else if (style === 'environment') {
             this.environmentRepresentation?.deleteBuffers()
+        } else if (style === 'residueSelection') {
+            this.selectionRepresentation?.deleteBuffers()
         } else {
             this.representations.forEach(representation => representation.style === style ? representation.deleteBuffers() : null)
             this.representations = this.representations.filter(representation => representation.style !== style)
@@ -972,6 +978,17 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if (typeof selectionString === 'string') {
             this.hoverRepresentation.cid = selectionString
             this.hoverRepresentation.redraw()
+        }
+    }
+
+    /**
+     * Highlight residues in a selected CID range
+     * @param {string} selectionString - The CID selection for the residues that will be highlighted
+     */
+    async drawResidueSelection(selectionString: string): Promise<void> {
+        if (typeof selectionString === 'string') {
+            this.selectionRepresentation.cid = selectionString
+            this.selectionRepresentation.redraw()
         }
     }
 
