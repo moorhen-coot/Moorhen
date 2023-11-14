@@ -109,7 +109,7 @@ export const MoorhenDraggableModalBase = (props: {
         })
     }
 
-    const handleDragStart = useCallback(() => {
+    const handleStart = useCallback(() => {
         if (enableAtomHovering) {
             dispatch( setEnableAtomHovering(false) )
             cachedEnableAtomHovering.current = true
@@ -139,13 +139,20 @@ export const MoorhenDraggableModalBase = (props: {
         }
     }, [windowWidth, windowHeight])
 
+    const handleResizeStop = (evt: MouseEvent | TouchEvent, direction: 'top' | 'right' | 'bottom' | 'left' | 'topRight' | 'bottomRight' | 'bottomLeft' | 'topLeft', ref: HTMLDivElement, delta: {width: number, height: number}) => {
+        if (cachedEnableAtomHovering.current) {
+            dispatch( setEnableAtomHovering(true) )
+        }
+        props.onResizeStop(evt, direction, ref, delta)
+    }
+        
     return <Draggable
                 nodeRef={draggableNodeRef}
                 handle={`.${props.handleClassName}`}
                 position={position}
                 onDrag={handleDrag}
                 onStop={handleDragStop}
-                onStart={handleDragStart}
+                onStart={handleStart}
                 >
             <Card
                 className="moorhen-draggable-card"
@@ -181,7 +188,8 @@ export const MoorhenDraggableModalBase = (props: {
                     lockAspectRatio={props.lockAspectRatio}
                     enable={props.enableResize}
                     handleComponent={{bottomRight: props.enableResize ? <SquareFootOutlined style={{transform: 'rotate(270deg)'}}/> : <></>}}
-                    onResizeStop={props.onResizeStop}
+                    onResizeStop={handleResizeStop}
+                    onResizeStart={handleStart}
                     >
                     <div style={{
                             overflowY: props.overflowY,

@@ -325,7 +325,7 @@ describe("Testing MoorhenMolecule", () => {
         expect(result).toEqual(['//A/32-34/*'])
     })
 
-    test("Test isLigand", async () => {
+    test("Test checkIsLigand", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
@@ -336,13 +336,15 @@ describe("Testing MoorhenMolecule", () => {
         }
         const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
-        
+        expect(molecule.isLigand).toBeFalsy()
+
         const result_cid = molecules_container.delete_using_cid(molecule.molNo, "//A", "LITERAL")
         expect(result_cid.first).toBe(1)
 
         molecule.setAtomsDirty(true)
         await molecule.updateAtoms()
-        const isLigand = molecule.isLigand()
+        expect(molecule.isLigand).toBeTruthy()
+        const isLigand = molecule.checkIsLigand()
         expect(isLigand).toBeTruthy()
     })
 

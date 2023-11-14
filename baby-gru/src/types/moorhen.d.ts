@@ -96,7 +96,7 @@ export namespace moorhen {
         moveMoleculeHere(x: number, y: number, z: number): Promise<void>;
         checkHasGlycans(): Promise<boolean>;
         fitLigandHere(mapMolNo: number, ligandMolNo: number, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<Molecule[]>;
-        isLigand(): boolean;
+        checkIsLigand(): boolean;
         removeRepresentation(representationId: string): void;
         addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: ColourRule[], bondOptions?: cootBondOptions, applyColourToNonCarbonAtoms?: boolean): Promise<MoleculeRepresentation>;
         getNeighborResiduesCids(selectionCid: string, maxDist: number): Promise<string[]>;
@@ -132,6 +132,7 @@ export namespace moorhen {
         drawEnvironment: (cid: string, labelled?: boolean) => Promise<void>;
         centreOn: (selectionCid?: string, animate?: boolean) => Promise<void>;
         drawHover: (cid: string) => Promise<void>;
+        drawResidueSelection: (cid: string) => Promise<void>;
         clearBuffersOfStyle: (style: string) => void;
         loadToCootFromURL: (inputFile: string, molName: string) => Promise<Molecule>;
         applyTransform: () => Promise<void>;
@@ -144,6 +145,7 @@ export namespace moorhen {
         buffersInclude: (bufferIn: { id: string; }) => boolean;
         redrawRepresentation: (id: string) => Promise<void>;
         type: string;
+        isLigand: boolean;
         excludedCids: string[];
         commandCentre: React.RefObject<CommandCentre>;
         glRef: React.RefObject<webGL.MGWebGL>;
@@ -178,13 +180,14 @@ export namespace moorhen {
         hoverRepresentation: MoleculeRepresentation;
         unitCellRepresentation: MoleculeRepresentation;
         environmentRepresentation: MoleculeRepresentation;
+        selectionRepresentation: MoleculeRepresentation;
         hasDNA: boolean;
         hasGlycans: boolean;
     }
 
     type RepresentationStyles = 'VdwSpheres' | 'ligands' | 'CAs' | 'CBs' | 'CDs' | 'gaussian' | 'allHBonds' | 'rama' | 
     'rotamer' | 'CRs' | 'MolecularSurface' | 'DishyBases' | 'VdWSurface' | 'Calpha' | 'unitCell' | 'hover' | 'environment' | 
-    'ligand_environment' | 'contact_dots' | 'chemical_features' | 'ligand_validation' | 'glycoBlocks' | 'restraints'
+    'ligand_environment' | 'contact_dots' | 'chemical_features' | 'ligand_validation' | 'glycoBlocks' | 'restraints' | 'residueSelection'
 
     interface MoleculeRepresentation {
         setApplyColourToNonCarbonAtoms(newVal: boolean): void;
@@ -219,6 +222,13 @@ export namespace moorhen {
         styleHasSymmetry: boolean;
         isCustom: boolean;
         styleHasColourRules: boolean;
+    }
+
+    type ResidueSelection = {
+        molecule: null | moorhen.Molecule;
+        first: null | string;
+        second: null | string;
+        cid: null | string;
     }
     
     type HoveredAtom = {
@@ -521,6 +531,7 @@ export namespace moorhen {
     type AtomClickedEvent = CustomEvent<{
         buffer: { id: string };
         atom: { label: string };
+        isResidueSelection: boolean;
     }>
 
     type ConnectMapsEvent = CustomEvent<ConnectMapsInfo>
@@ -670,12 +681,6 @@ export namespace moorhen {
         defaultActionButtonSettings: actionButtonSettings;
         setDefaultActionButtonSettings: (arg0: {key: string; value: string}) => void;     
     }
-    
-    type MolChange<T extends Molecule | Map> = {
-        action: 'Add' | 'Remove' | 'AddList' | 'Empty';
-        item?: T;
-        items?: T[];
-    }    
 
     interface ContainerRefs {
         glRef: React.MutableRefObject<null | webGL.MGWebGL>;
@@ -787,6 +792,7 @@ export namespace moorhen {
             notificationContent: JSX.Element;
             activeMap: Map;
             theme: string;
+            residueSelection: ResidueSelection;
         };
         hoveringStates: {
             enableAtomHovering: boolean;

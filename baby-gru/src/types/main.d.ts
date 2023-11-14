@@ -53,7 +53,7 @@ declare module 'moorhen' {
         moveMoleculeHere(x: number, y: number, z: number): Promise<void>;
         checkHasGlycans(): Promise<boolean>;
         fitLigandHere(mapMolNo: number, ligandMolNo: number, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<_moorhen.Molecule[]>;
-        isLigand(): boolean;
+        checkIsLigand(): boolean;
         removeRepresentation(representationId: string): void;
         addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: _moorhen.ColourRule[], bondOptions?: _moorhen.cootBondOptions, applyColourToNonCarbonAtoms?: boolean): Promise<_moorhen.MoleculeRepresentation>;
         getNeighborResiduesCids(selectionCid: string, maxDist: number): Promise<string[]>;
@@ -90,6 +90,7 @@ declare module 'moorhen' {
         drawEnvironment: (cid: string, labelled?: boolean) => Promise<void>;
         centreOn: (selectionCid?: string, animate?: boolean) => Promise<void>;
         drawHover: (cid: string) => Promise<void>;
+        drawResidueSelection: (cid: string) => Promise<void>;
         clearBuffersOfStyle: (style: string) => void;
         loadToCootFromURL: (inputFile: string, molName: string) => Promise<_moorhen.Molecule>;
         applyTransform: () => Promise<void>;
@@ -101,6 +102,7 @@ declare module 'moorhen' {
         centreAndAlignViewOn(selectionCid: string, animate?: boolean): Promise<void>;
         buffersInclude: (bufferIn: { id: string; }) => boolean;
         redrawRepresentation: (id: string) => Promise<void>;
+        isLigand: boolean;
         type: string;
         excludedCids: string[];
         commandCentre: React.RefObject<_moorhen.CommandCentre>;
@@ -136,6 +138,7 @@ declare module 'moorhen' {
         hoverRepresentation: _moorhen.MoleculeRepresentation;
         unitCellRepresentation: _moorhen.MoleculeRepresentation;
         environmentRepresentation: _moorhen.MoleculeRepresentation;
+        selectionRepresentation: _moorhen.MoleculeRepresentation;
         hasDNA: boolean;
         hasGlycans: boolean;
     }

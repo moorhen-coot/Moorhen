@@ -45,16 +45,16 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             atomRadiusBondRatio: 1
         }
         this.styleHasAtomBuffers = ![
-            'contact_dots', 'ligand_validation', 'chemical_features', 'unitCell', 'MolecularSurface', 'VdWSurface', 
+            'contact_dots', 'ligand_validation', 'chemical_features', 'unitCell', 'MolecularSurface', 'VdWSurface', 'residueSelection',
             'gaussian', 'allHBonds', 'rotamer', 'rama', 'environment', 'ligand_environment', 'hover', 'CDs', 'restraints'
         ].includes(style)
         this.styleHasSymmetry = ![
-            'hover', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 
+            'hover', 'residueSelection', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 
             'chemical_features', 'VdWSurface', 'restraints'
         ].includes(style)
         this.styleHasColourRules = ![
             'allHBonds', 'rama', 'rotamer', 'unitCell', 'hover', 'environment', 'ligand_environment',
-            'contact_dots', 'chemical_features', 'ligand_validation', 'restraints'
+            'contact_dots', 'chemical_features', 'ligand_validation', 'restraints', 'residueSelection'
         ].includes(style)
         if (style === "ligands" && (typeof cid !== 'string' || cid === '/*/*/*/*')) {
             this.cid =  "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O)"
@@ -82,14 +82,15 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.style = style
         this.styleHasAtomBuffers = ![
             'contact_dots', 'ligand_validation', 'chemical_features', 'unitCell', 'MolecularSurface', 'VdWSurface', 
-            'gaussian', 'allHBonds', 'rotamer', 'rama', 'environment', 'ligand_environment', 'hover', 'CDs'
+            'gaussian', 'allHBonds', 'rotamer', 'rama', 'environment', 'ligand_environment', 'hover', 'CDs', 'residueSelection'
         ].includes(style)
         this.styleHasSymmetry = ![
-            'hover', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'
+            'hover', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots',
+            'chemical_features', 'VdWSurface', 'residueSelection'
         ].includes(style)
         this.styleHasColourRules = ![
             'allHBonds', 'rama', 'rotamer', 'unitCell', 'hover', 'environment', 'ligand_environment',
-            'contact_dots', 'chemical_features', 'ligand_validation'
+            'contact_dots', 'chemical_features', 'ligand_validation', 'residueSelection'
         ].includes(style)
         if (style === "ligands" && (typeof this.cid !== 'string' || this.cid === '/*/*/*/*')) {
             this.cid =  "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O)"
@@ -244,6 +245,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 break
             case 'hover':
                 objects = this.getResidueHighlightBuffers(this.cid, [1.0, 0.5, 0.0, 0.35])
+                break
+            case 'residueSelection':
+                objects = this.getResidueHighlightBuffers(this.cid, [1.0, 0.0, 0.0, 0.35], true)
                 break
             case 'environment':
             case 'ligand_environment':
@@ -476,31 +480,40 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         }
     }
 
-    async getResidueHighlightBuffers(selectionString: string, colour: number[]) {
-        if (typeof selectionString === 'string') {
-            const resSpec: moorhen.ResidueSpec = cidToSpec(selectionString)
-            let modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
-            if (this.parentMolecule.sequences.length === 0) {
-                modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/${resSpec.atom_name}${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
-            }
-            const selectedGemmiAtoms = await this.parentMolecule.gemmiAtomsForCid(modifiedSelection)
-            const atomColours = {}
-            selectedGemmiAtoms.forEach(atom => { atomColours[`${atom.serial}`] = colour })
-            let sphere_size = 0.3
-            let click_tol = 0.65
-            if (this.parentMolecule.representations.some(item => item.style === 'VdwSpheres' && item.visible)) {
-                sphere_size = 1.8
-                click_tol = 3.7
-            }
-            let objects = [
-                gemmiAtomsToCirclesSpheresInfo(selectedGemmiAtoms, sphere_size, "PERFECT_SPHERES", atomColours)
-            ]
-            objects.forEach(object => {
-                object["clickTol"] = click_tol
-                object["doStencil"] = true
-            })
-            return objects
+    async getResidueHighlightBuffers(selectionString: string, colour: number[], isResidueRange: boolean = false) {
+        if (typeof selectionString !== 'string') {
+            return
         }
+        
+        let modifiedSelection: string
+        if (isResidueRange) {
+            modifiedSelection = selectionString
+        } else {
+            const resSpec: moorhen.ResidueSpec = cidToSpec(selectionString)
+            if (this.parentMolecule.isLigand) {
+                modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/${resSpec.atom_name}${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
+            } else {
+                modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
+            }
+        }
+        
+        const selectedGemmiAtoms = await this.parentMolecule.gemmiAtomsForCid(modifiedSelection)
+        const atomColours = {}
+        selectedGemmiAtoms.forEach(atom => { atomColours[`${atom.serial}`] = colour })
+        let sphere_size = 0.3
+        let click_tol = 0.65
+        if (this.parentMolecule.representations.some(item => item.style === 'VdwSpheres' && item.visible)) {
+            sphere_size = 1.8
+            click_tol = 3.7
+        }
+        let objects = [
+            gemmiAtomsToCirclesSpheresInfo(selectedGemmiAtoms, sphere_size, "PERFECT_SPHERES", atomColours)
+        ]
+        objects.forEach(object => {
+            object["clickTol"] = click_tol
+            object["doStencil"] = true
+        })
+        return objects
     }
 
     async getCootContactDotsCidBuffers(style: string, cid: string) {

@@ -5,11 +5,11 @@ export const hoveringStatesSlice = createSlice({
   name: 'hoveringStates',
   initialState: {
     enableAtomHovering: true,
-    hoveredAtom: { molecule: null, cid: null } as { molecule: null | moorhen.Molecule, cid: null | string },
+    hoveredAtom: { molecule: null, cid: null } as moorhen.HoveredAtom,
     cursorStyle: 'default'
   },
   reducers: {
-    setHoveredAtom: (state, action: {payload: { molecule: null | moorhen.Molecule, cid: null | string }, type: string}) => {
+    setHoveredAtom: (state, action: {payload: moorhen.HoveredAtom, type: string}) => {
         return {...state, hoveredAtom: action.payload}
     },
     setEnableAtomHovering: (state, action: {payload: boolean, type: string}) => {

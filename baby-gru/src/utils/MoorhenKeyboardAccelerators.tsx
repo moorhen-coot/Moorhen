@@ -8,11 +8,15 @@ import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { libcootApi } from "../types/libcoot";
 import { MoorhenNotification } from "../components/misc/MoorhenNotification";
+import { Dispatch } from "react";
+import { AnyAction } from "@reduxjs/toolkit";
+import { setNotificationContent, clearResidueSelection } from "../store/generalStatesSlice";
+import { setHoveredAtom } from "../store/hoveringStatesSlice";
 
-const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>, setHoveredAtom: (arg0: moorhen.HoveredAtom) => void) => {
+const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, dispatch: Dispatch<AnyAction>) => {
     molecule.setAtomsDirty(true)
     molecule.redraw()
-    setHoveredAtom({ molecule: null, cid: null })
+    dispatch( setHoveredAtom({ molecule: null, cid: null }) )
     const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: glRef.current.origin,  modifiedMolecule: molecule.molNo} })
     document.dispatchEvent(scoresUpdateEvent)
 }
@@ -21,9 +25,8 @@ export const babyGruKeyPress = (
     event: KeyboardEvent, 
     collectedProps: {
         isDark: boolean;
-        setNotificationContent: (arg: JSX.Element) => void;
+        dispatch: Dispatch<AnyAction>
         hoveredAtom: moorhen.HoveredAtom;
-        setHoveredAtom: (arg: moorhen.HoveredAtom) => void;
         commandCentre: React.RefObject<moorhen.CommandCentre>;
         activeMap: moorhen.Map;
         molecules: moorhen.Molecule[];
@@ -39,8 +42,8 @@ export const babyGruKeyPress = (
 ): boolean | Promise<boolean> => {
     
     const { 
-        setNotificationContent, hoveredAtom, setHoveredAtom, commandCentre, activeMap, 
-        glRef, molecules, timeCapsuleRef, viewOnly, videoRecorderRef, isDark, windowWidth
+        hoveredAtom, commandCentre, activeMap, glRef, molecules, dispatch,
+        timeCapsuleRef, viewOnly, videoRecorderRef, isDark, windowWidth
     } = collectedProps;
 
     const getCentreAtom = async (): Promise<[moorhen.Molecule, string]> => {
@@ -84,7 +87,7 @@ export const babyGruKeyPress = (
                 changesMolecules: [chosenMolecule.molNo]
             }, true)
             .then(_ => {
-                apresEdit(chosenMolecule, glRef, timeCapsuleRef, setHoveredAtom)
+                apresEdit(chosenMolecule, glRef, dispatch)
             })
             .then(_ => false)
             .catch(err => {
@@ -105,11 +108,11 @@ export const babyGruKeyPress = (
     if (event.key === " ") modifiers.push("<Space>")
 
     if (showShortcutToast && !viewOnly) {
-        setNotificationContent(
+        dispatch( setNotificationContent(
             <MoorhenNotification key={guid()} hideDelay={5000}>
                 <h5 style={{margin: 0}}>{`${modifiers.join("-")} ${event.key} pressed`}</h5>
             </MoorhenNotification>
-        )
+        ))
     }
     
     let action: null | string = null;
@@ -129,7 +132,7 @@ export const babyGruKeyPress = (
         const formatArgs = (chosenMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, "SPHERE", 4000]
         }
-        showShortcutToast && setNotificationContent(
+        showShortcutToast && dispatch( setNotificationContent(
             <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
@@ -138,7 +141,7 @@ export const babyGruKeyPress = (
                 </List>
             </h5>
             </MoorhenNotification>
-        )
+        ))
         return doShortCut('refine_residues_using_atom_cid', formatArgs)
     }
 
@@ -166,7 +169,7 @@ export const babyGruKeyPress = (
         const formatArgs = (chosenMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
         }
-        showShortcutToast && setNotificationContent(
+        showShortcutToast && dispatch( setNotificationContent(
             <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
@@ -175,7 +178,7 @@ export const babyGruKeyPress = (
                 </List>
             </h5>
             </MoorhenNotification>
-        )
+        ))
         return doShortCut('flipPeptide_cid', formatArgs)
     }
 
@@ -183,7 +186,7 @@ export const babyGruKeyPress = (
         const formatArgs = (chosenMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, "TRIPLE", 4000]
         }
-        showShortcutToast && setNotificationContent(
+        showShortcutToast && dispatch( setNotificationContent(
             <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
@@ -192,7 +195,7 @@ export const babyGruKeyPress = (
                 </List>
             </h5>
             </MoorhenNotification>
-        )
+        ))
         return doShortCut('refine_residues_using_atom_cid', formatArgs)
     }
 
@@ -207,7 +210,7 @@ export const babyGruKeyPress = (
                 activeMap.molNo
             ]
         }
-        showShortcutToast && setNotificationContent(
+        showShortcutToast && dispatch( setNotificationContent(
             <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
@@ -216,7 +219,7 @@ export const babyGruKeyPress = (
                 </List>
             </h5>
             </MoorhenNotification>
-        )
+        ))
         return doShortCut('auto_fit_rotamer', formatArgs)
     }
 
@@ -224,14 +227,14 @@ export const babyGruKeyPress = (
         const formatArgs = (chosenMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
             return [chosenMolecule.molNo,  `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }
-        showShortcutToast && setNotificationContent(
+        showShortcutToast && dispatch( setNotificationContent(
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
                     <ListItem style={{justifyContent: 'center'}}>Add residue</ListItem>
                 </List>
             </h5>
-        )
+        ))
         return doShortCut('add_terminal_residue_directly_using_cid', formatArgs)
     }
 
@@ -243,7 +246,7 @@ export const babyGruKeyPress = (
                 'LITERAL'
             ]
         }
-        showShortcutToast && setNotificationContent(
+        showShortcutToast && dispatch( setNotificationContent(
             <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
@@ -252,7 +255,7 @@ export const babyGruKeyPress = (
                 </List>
             </h5>
             </MoorhenNotification>
-        )
+        ))
         return doShortCut('delete_using_cid', formatArgs)
     }
 
@@ -260,7 +263,7 @@ export const babyGruKeyPress = (
         const formatArgs = (chosenMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }
-        showShortcutToast && setNotificationContent(
+        showShortcutToast && dispatch( setNotificationContent(
             <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
@@ -269,12 +272,12 @@ export const babyGruKeyPress = (
                 </List>
             </h5>
             </MoorhenNotification>
-        )
+        ))
         return doShortCut('eigen_flip_ligand', formatArgs)
     }
 
     else if (action === 'go_to_blob' && activeMap && !viewOnly) {
-        showShortcutToast && setNotificationContent(
+        showShortcutToast && dispatch( setNotificationContent(
             <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
@@ -283,7 +286,7 @@ export const babyGruKeyPress = (
                 </List>
             </h5>
             </MoorhenNotification>
-        )
+        ))
         const frontAndBack: [number[], number[], number, number] = glRef.current.getFrontAndBackPos(event);
         const goToBlobEvent = {
             back: [frontAndBack[0][0], frontAndBack[0][1], frontAndBack[0][2]],
@@ -310,7 +313,9 @@ export const babyGruKeyPress = (
         glRef.current.measuredAtoms = []
         glRef.current.clearMeasureCylinderBuffers()
         glRef.current.drawScene()
-        showShortcutToast && setNotificationContent(
+        dispatch( clearResidueSelection() )
+        molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
+        showShortcutToast && dispatch( setNotificationContent(
             <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
@@ -319,7 +324,7 @@ export const babyGruKeyPress = (
                 </List>
             </h5>
             </MoorhenNotification>
-        )
+        ))
     }
 
     else if (action === 'move_up') {
@@ -414,7 +419,7 @@ export const babyGruKeyPress = (
             glRef.current.showShortCutHelp = null
             glRef.current.drawScene()
         }
-        showShortcutToast && setNotificationContent(
+        showShortcutToast && dispatch( setNotificationContent(
             <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
@@ -423,7 +428,7 @@ export const babyGruKeyPress = (
                 </List>
             </h5>
             </MoorhenNotification>
-        )
+        ))
         return false
     }
 
@@ -464,7 +469,7 @@ export const babyGruKeyPress = (
     else if (action === 'decrease_front_clip') {
         glRef.current.gl_clipPlane0[3] = glRef.current.gl_clipPlane0[3] - 0.5
         glRef.current.drawScene()
-        showShortcutToast && setNotificationContent(
+        showShortcutToast && dispatch( setNotificationContent(
             <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
@@ -473,14 +478,14 @@ export const babyGruKeyPress = (
                 </List>
             </h5>
             </MoorhenNotification>
-        )
+        ))
         return false
     }
 
     else if (action === 'increase_front_clip') {
         glRef.current.gl_clipPlane0[3] = glRef.current.gl_clipPlane0[3] + 0.5
         glRef.current.drawScene()
-        showShortcutToast && setNotificationContent(
+        showShortcutToast && dispatch( setNotificationContent(
             <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
@@ -489,14 +494,14 @@ export const babyGruKeyPress = (
                 </List>
             </h5>
             </MoorhenNotification>
-        )
+        ))
         return false
     }
 
     else if (action === 'decrease_back_clip') {
         glRef.current.gl_clipPlane1[3] = glRef.current.gl_clipPlane1[3] - 0.5
         glRef.current.drawScene()
-        showShortcutToast && setNotificationContent(
+        showShortcutToast && dispatch( setNotificationContent(
             <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
@@ -505,14 +510,14 @@ export const babyGruKeyPress = (
                 </List>
             </h5>
             </MoorhenNotification>
-        )
+        ))
         return false
     }
 
     else if (action === 'increase_back_clip') {
         glRef.current.gl_clipPlane1[3] = glRef.current.gl_clipPlane1[3] + 0.5
         glRef.current.drawScene()
-        showShortcutToast && setNotificationContent(
+        showShortcutToast && dispatch( setNotificationContent(
             <MoorhenNotification key={guid()} hideDelay={5000}>
             <h5 style={{margin: 0}}>
                 <List>
@@ -521,7 +526,7 @@ export const babyGruKeyPress = (
                 </List>
             </h5>
             </MoorhenNotification>
-        )
+        ))
         return false
     }
 
