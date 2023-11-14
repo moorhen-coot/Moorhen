@@ -307,6 +307,24 @@ describe("Testing MoorhenMolecule", () => {
         expect(molecule.ligands).toHaveLength(0)
     })
 
+    test("Test getNeighborResiduesCids", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl, 'mol-test')
+        
+        const result = await molecule.getNeighborResiduesCids('//A/33/CA', 3)
+        console.log(result)
+        expect(result).toEqual(['//A/32-34/*'])
+    })
+
     test("Test isLigand", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
