@@ -358,7 +358,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     }, [hoveredAtom])
 
     useEffect(() => {
-        glResize()
+        glRef.current.resize(width, height)
+        glRef.current.drawScene()
     }, [width, height])
 
     useEffect(() => {
@@ -367,10 +368,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         }
     }, [activeMap])
 
-    const glResize = () => {
-        glRef.current.resize(width, height)
-        glRef.current.drawScene()
-    }
 
     return <> 
     <div>
