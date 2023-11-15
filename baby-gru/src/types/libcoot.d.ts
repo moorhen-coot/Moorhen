@@ -2,6 +2,8 @@
 import { emscriptem } from "./emscriptem";
 import { gemmi } from "./gemmi"
 
+// Warning: do not import moorhen namespace otherwise worker code breaks during transpilation
+
 declare global {
     function print(arg0: string): void;
     function createRSRModule(arg0: any): Promise<any>;
@@ -10,6 +12,7 @@ declare global {
 
 export namespace libcootApi {
     type CCP4ModuleType = {
+        get_atom_info_for_selection(gemmiStructure: gemmi.Structure, arg1: string, arg2: string): emscriptem.vector<AtomInfo>;
         structure_is_ligand(gemmiStructure: gemmi.Structure): boolean;
         count_residues_in_selection(gemmiStructure: gemmi.Structure, selection: gemmi.Selection): number;
         remove_non_selected_residues(gemmiStructure: gemmi.Structure, selection: gemmi.Selection): gemmi.Structure;
@@ -31,8 +34,8 @@ export namespace libcootApi {
         Fractional: { new(x: number, y: number, z: number): gemmi.Fractional };
         cifDocument: { new(): gemmi.cifDocument }
     }
+    // We need to define AtomInfo here because we cannot import moorhen namespace otherwise worker code breaks during transpilation
     type AtomInfo = {
-        pos: [number, number, number];
         x: number;
         y: number;
         z: number;
@@ -40,7 +43,7 @@ export namespace libcootApi {
         element: emscriptem.instance<string>;
         symbol: string;
         tempFactor: number;
-        serial: string;
+        serial: number;
         name: string;
         has_altloc: boolean;
         alt_loc: string;

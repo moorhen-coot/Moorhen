@@ -58,7 +58,7 @@ export namespace moorhen {
         element: emscriptem.instance<string>;
         symbol: string;
         tempFactor: number;
-        serial: string;
+        serial: number;
         name: string;
         has_altloc: boolean;
         alt_loc: string;

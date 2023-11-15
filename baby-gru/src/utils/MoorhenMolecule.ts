@@ -1381,90 +1381,15 @@ export class MoorhenMolecule implements moorhen.Molecule {
             await this.updateAtoms()
         }
         
-        let excludedSelections: gemmi.Selection[] = []
-        if (omitExcludedCids) {
-            excludedSelections = this.excludedSelections.map(excludedCid => {
-                return new window.CCP4Module.Selection(excludedCid)
-            })
-        }
-
         let result: moorhen.AtomInfo[] = []
-        const selection = new window.CCP4Module.Selection(cid)
-        const model = this.gemmiStructure.first_model()
-
-        if (selection.matches_model(model)) {
-            const modelName = model.name
-            const chains = model.chains
-            const chainsSize = chains.size()
-            for (let i = 0; i < chainsSize; i++) {
-                const chain = chains.get(i)
-                if (selection.matches_chain(chain)) {
-                    const chainName = chain.name
-                    const residues = chain.residues
-                    const residuesSize = residues.size()
-                    for (let j = 0; j < residuesSize; j++) {
-                        const residue = residues.get(j)
-                        if (selection.matches_residue(residue) && excludedSelections.every(item => !item.matches_residue(residue))) {
-                            const residueName = residue.name
-                            const residueSeqId = residue.seqid
-                            const resNum = residueSeqId.str()
-                            const atoms = residue.atoms
-                            const atomsSize = atoms.size()
-                            for (let k = 0; k < atomsSize; k++) {
-                                const atom = atoms.get(k)
-                                if (selection.matches_atom(atom)) {
-                                    const atomCharge = atom.charge
-                                    const atomPos = atom.pos
-                                    const atomPosX = atomPos.x
-                                    const atomPosY = atomPos.y
-                                    const atomPosZ = atomPos.z
-                                    const atomElement = atom.element
-                                    const atomTempFactor = atom.b_iso
-                                    const atomSerial = atom.serial
-                                    const atomName = atom.name
-                                    const atomAltLoc = atom.altloc
-                                    const atomHasAltLoc = atom.has_altloc()
-                                    const atomInfo: moorhen.AtomInfo = {
-                                        res_name: residueName,
-                                        res_no: resNum,
-                                        mol_name: modelName,
-                                        chain_id: chainName,
-                                        pos: [atomPosX, atomPosY, atomPosZ],
-                                        x: atomPosX,
-                                        y: atomPosY,
-                                        z: atomPosZ,
-                                        charge: atomCharge,
-                                        element: atomElement,
-                                        symbol: window.CCP4Module.getElementNameAsString(atomElement),
-                                        tempFactor: atomTempFactor,
-                                        serial: atomSerial,
-                                        name: atomName,
-                                        has_altloc: atomHasAltLoc,
-                                        alt_loc: atomHasAltLoc ? '' : String.fromCharCode(atomAltLoc),
-                                        label: `/${modelName}/${chainName}/${resNum}(${residueName})/${atomName}${atomHasAltLoc ? ':' + String.fromCharCode(atomAltLoc) : ''}`
-                                    }
-                                    result.push(atomInfo)
-                                    atomPos.delete()
-                                    atomElement.delete()
-                                }
-                                atom.delete()
-                            }
-                            atoms.delete()
-                            residueSeqId.delete()
-                        }
-                        residue.delete()
-                    }
-                    residues.delete()
-                }
-                chain.delete()
-            }
-            chains.delete()
+        const atomInfoVec = window.CCP4Module.get_atom_info_for_selection(this.gemmiStructure, cid, omitExcludedCids ? this.excludedSelections.join("||") : "")
+        const atomInfoVecSize = atomInfoVec.size()
+        for (let i = 0; i < atomInfoVecSize; i++) {
+            const atomInfo = atomInfoVec.get(i)
+            result.push({...atomInfo, pos: [atomInfo.x, atomInfo.y, atomInfo.z]})
         }
-
-        selection.delete()
-        model.delete()
-        excludedSelections.forEach(item => item.delete())
-
+        atomInfoVec.delete()
+        
         return result
     }
 

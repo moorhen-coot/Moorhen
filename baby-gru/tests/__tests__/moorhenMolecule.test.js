@@ -279,6 +279,27 @@ describe("Testing MoorhenMolecule", () => {
         await molecule.hideCid("/*/A/29-30/*")
         const gemmiAtoms = await molecule.gemmiAtomsForCid('//A/30-31/CA', true)
         expect(f).toHaveBeenCalled()
+        expect(gemmiAtoms).toEqual([
+            {
+              res_name: 'GLY',
+              res_no: '31',
+              mol_name: '1',
+              chain_id: 'A',
+              pos: [ 70.995, 43.686, 22.449 ],
+              x: 70.995,
+              y: 43.686,
+              z: 22.449,
+              charge: 0,
+              element: 'C',
+              symbol: 'C',
+              tempFactor: 9.109999656677246,
+              serial: 213,
+              name: 'CA',
+              has_altloc: false,
+              alt_loc: "",
+              label: '/1/A/31(GLY)/CA'
+            }
+        ])
         expect(gemmiAtoms.map(atomInfo => atomInfo.label)).toEqual([ "/1/A/31(GLY)/CA" ])
     })
 

@@ -903,7 +903,7 @@ export const getDashedCylinder = (nsteps: number, cylinder_accu: number): [numbe
 }
 
 export const gemmiAtomPairsToCylindersInfo = (
-    atoms: [{ pos: [number, number, number], serial: string }, { pos: [number, number, number], serial: string }][],
+    atoms: [{ pos: [number, number, number], serial: (number | string) }, { pos: [number, number, number], serial: (number | string) }][],
     size: number,
     colourScheme: { [x: string]: number[]; },
     labelled: boolean = false,
