@@ -10,6 +10,7 @@ declare global {
 
 export namespace libcootApi {
     type CCP4ModuleType = {
+        structure_is_ligand(gemmiStructure: gemmi.Structure): boolean;
         count_residues_in_selection(gemmiStructure: gemmi.Structure, selection: gemmi.Selection): number;
         remove_non_selected_residues(gemmiStructure: gemmi.Structure, selection: gemmi.Selection): gemmi.Structure;
         check_polymer_type(polymerConst: emscriptem.instance<number>): {value: number};

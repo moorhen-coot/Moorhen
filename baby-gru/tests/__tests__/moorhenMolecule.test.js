@@ -321,7 +321,6 @@ describe("Testing MoorhenMolecule", () => {
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
         
         const result = await molecule.getNeighborResiduesCids('//A/33/CA', 3)
-        console.log(result)
         expect(result).toEqual(['//A/32-34/*'])
     })
 

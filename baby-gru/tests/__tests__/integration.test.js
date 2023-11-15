@@ -170,6 +170,18 @@ describe("Testing gemmi", () => {
         cleanUpVariables.push(st_1, st_2, model_1, chains_1, model_2, chains_2, chain_2, residues_2, residue_2_seqId, residue_2)
     })
 
+    test("Test structure_is_ligand", () => {
+        const st_1 = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
+        cootModule.gemmi_setup_entities(st_1)
+        
+        const is_ligand_1 = cootModule.structure_is_ligand(st_1)
+        expect(is_ligand_1).toBeFalsy()
+
+        const selection = new cootModule.Selection('//B')
+        const st_2 = cootModule.remove_non_selected_residues(st_1, selection)
+        const is_ligand_2 = cootModule.structure_is_ligand(st_2)
+        expect(is_ligand_2).toBeTruthy()
+    })
 })
 
 describe('Testing molecules_container_js', () => {
