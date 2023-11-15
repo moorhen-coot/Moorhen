@@ -321,63 +321,29 @@ export class MoorhenMolecule implements moorhen.Molecule {
             return
         }
 
-        let sequences: moorhen.Sequence[] = []
-        const structure = this.gemmiStructure.clone()
-        try {
-            const models = structure.models
-            const modelsSize = models.size()
-            for (let modelIndex = 0; modelIndex < modelsSize; modelIndex++) {
-                const model = models.get(modelIndex)
-                const chains = model.chains
-                const chainsSize = chains.size()
-                for (let chainIndex = 0; chainIndex < chainsSize; chainIndex++) {
-                    let currentSequence: moorhen.ResidueInfo[] = []
-                    const chain = chains.get(chainIndex)
-                    window.CCP4Module.remove_ligands_and_waters_chain(chain)
-                    const residues = chain.residues
-                    const chainName = chain.name
-                    const polymerConst = chain.get_polymer_const()
-                    const polymerType = window.CCP4Module.check_polymer_type(polymerConst)
-                    const polymerTypeValue: number = polymerType.value
-                    let threeToOne = [3, 4, 5].includes(polymerTypeValue) ? nucleotideCodesThreeToOne : residueCodesThreeToOne
-                    const residuesSize = residues.size()
-                    for (let residueIndex = 0; residueIndex < residuesSize; residueIndex++) {
-                        const residue = residues.get(residueIndex)
-                        const resName = residue.name
-                        const residueSeqId = residue.seqid
-                        const resNum = residueSeqId.str()
-                        currentSequence.push({
-                            resNum: Number(resNum),
-                            resCode: Object.keys(threeToOne).includes(resName) ? threeToOne[resName] : 'X',
-                            cid: `//${chainName}/${resNum}(${resName})/`
-                        })
-                        residue.delete()
-                        residueSeqId.delete()
-                    }
-                    if (currentSequence.length > 0) {
-                        sequences.push({
-                            name: `${this.name}_${chainName}`,
-                            chain: chainName,
-                            type: polymerTypeValue,
-                            sequence: currentSequence,
-                        })
-                    }
-                    chain.delete()
-                    residues.delete()
-                    polymerConst.delete()
-                }
-                model.delete()
-                chains.delete()
+        let result: moorhen.Sequence[] = []
+        const sequenceInfoVec = window.CCP4Module.get_sequence_info(this.gemmiStructure, this.name)
+        const sequenceInfoVecSize = sequenceInfoVec.size()
+        for (let i = 0; i < sequenceInfoVecSize; i++) {
+            const sequenceInfo = sequenceInfoVec.get(i)
+            const sequenceInfoSeq = sequenceInfo.sequence
+            let currentSequence: moorhen.ResidueInfo[] = []
+            const sequenceInfoSize = sequenceInfoSeq.size()
+            for (let i = 0; i < sequenceInfoSize; i++) {
+                currentSequence.push(sequenceInfoSeq.get(i))
             }
-            models.delete()
-        } finally {
-            if (structure && !structure.isDeleted()) {
-                structure.delete()
-            }
+            sequenceInfoSeq.delete()    
+            result.push({
+                name: sequenceInfo.name,
+                chain: sequenceInfo.chain,
+                type: sequenceInfo.type,
+                sequence: currentSequence
+            })
         }
+        sequenceInfoVec.delete()
 
-        this.sequences = sequences
-        this.hasDNA = sequences.some(sequence => [3, 4, 5].includes(sequence.type))
+        this.sequences = result
+        this.hasDNA = this.sequences.some(sequence => [3, 4, 5].includes(sequence.type))
     }
 
     /**
@@ -1381,90 +1347,15 @@ export class MoorhenMolecule implements moorhen.Molecule {
             await this.updateAtoms()
         }
         
-        let excludedSelections: gemmi.Selection[] = []
-        if (omitExcludedCids) {
-            excludedSelections = this.excludedSelections.map(excludedCid => {
-                return new window.CCP4Module.Selection(excludedCid)
-            })
-        }
-
         let result: moorhen.AtomInfo[] = []
-        const selection = new window.CCP4Module.Selection(cid)
-        const model = this.gemmiStructure.first_model()
-
-        if (selection.matches_model(model)) {
-            const modelName = model.name
-            const chains = model.chains
-            const chainsSize = chains.size()
-            for (let i = 0; i < chainsSize; i++) {
-                const chain = chains.get(i)
-                if (selection.matches_chain(chain)) {
-                    const chainName = chain.name
-                    const residues = chain.residues
-                    const residuesSize = residues.size()
-                    for (let j = 0; j < residuesSize; j++) {
-                        const residue = residues.get(j)
-                        if (selection.matches_residue(residue) && excludedSelections.every(item => !item.matches_residue(residue))) {
-                            const residueName = residue.name
-                            const residueSeqId = residue.seqid
-                            const resNum = residueSeqId.str()
-                            const atoms = residue.atoms
-                            const atomsSize = atoms.size()
-                            for (let k = 0; k < atomsSize; k++) {
-                                const atom = atoms.get(k)
-                                if (selection.matches_atom(atom)) {
-                                    const atomCharge = atom.charge
-                                    const atomPos = atom.pos
-                                    const atomPosX = atomPos.x
-                                    const atomPosY = atomPos.y
-                                    const atomPosZ = atomPos.z
-                                    const atomElement = atom.element
-                                    const atomTempFactor = atom.b_iso
-                                    const atomSerial = atom.serial
-                                    const atomName = atom.name
-                                    const atomAltLoc = atom.altloc
-                                    const atomHasAltLoc = atom.has_altloc()
-                                    const atomInfo: moorhen.AtomInfo = {
-                                        res_name: residueName,
-                                        res_no: resNum,
-                                        mol_name: modelName,
-                                        chain_id: chainName,
-                                        pos: [atomPosX, atomPosY, atomPosZ],
-                                        x: atomPosX,
-                                        y: atomPosY,
-                                        z: atomPosZ,
-                                        charge: atomCharge,
-                                        element: atomElement,
-                                        symbol: window.CCP4Module.getElementNameAsString(atomElement),
-                                        tempFactor: atomTempFactor,
-                                        serial: atomSerial,
-                                        name: atomName,
-                                        has_altloc: atomHasAltLoc,
-                                        alt_loc: atomHasAltLoc ? '' : String.fromCharCode(atomAltLoc),
-                                        label: `/${modelName}/${chainName}/${resNum}(${residueName})/${atomName}${atomHasAltLoc ? ':' + String.fromCharCode(atomAltLoc) : ''}`
-                                    }
-                                    result.push(atomInfo)
-                                    atomPos.delete()
-                                    atomElement.delete()
-                                }
-                                atom.delete()
-                            }
-                            atoms.delete()
-                            residueSeqId.delete()
-                        }
-                        residue.delete()
-                    }
-                    residues.delete()
-                }
-                chain.delete()
-            }
-            chains.delete()
+        const atomInfoVec = window.CCP4Module.get_atom_info_for_selection(this.gemmiStructure, cid, omitExcludedCids ? this.excludedSelections.join("||") : "")
+        const atomInfoVecSize = atomInfoVec.size()
+        for (let i = 0; i < atomInfoVecSize; i++) {
+            const atomInfo = atomInfoVec.get(i)
+            result.push({...atomInfo, pos: [atomInfo.x, atomInfo.y, atomInfo.z]})
         }
-
-        selection.delete()
-        model.delete()
-        excludedSelections.forEach(item => item.delete())
-
+        atomInfoVec.delete()
+        
         return result
     }
 

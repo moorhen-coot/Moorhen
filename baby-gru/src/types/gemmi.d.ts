@@ -73,7 +73,7 @@ export namespace gemmi {
         altloc: number;
         charge: number;
         b_iso: number;
-        serial: string;
+        serial: number;
         has_altloc: () => boolean;
     }
     interface ResidueSeqId extends emscriptem.instance<ResidueSeqId> {

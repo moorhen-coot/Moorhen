@@ -229,61 +229,155 @@ void cif_parse_string(gemmi::cif::Document& doc, const std::string& data) {
   gemmi::cif::parse_input(doc, in);
 }
 
-struct SequenceEntry {
+struct SequenceResInfo {
     int resNum;
     std::string resCode;
     std::string cid;
 };
 
-struct SequenceChain {
+struct SequenceEntry {
     int type;
     std::string name;
     std::string chain;
-    std::vector<SequenceEntry> sequence;
+    std::vector<SequenceResInfo> sequence;
 };
 
-std::vector<SequenceChain> parseSequences(const gemmi::Structure &structure, const std::string &data_name){
+std::vector<SequenceEntry> get_sequence_info(const gemmi::Structure &Structure, const std::string &mol_name){
 
-    std::vector<SequenceChain> sequences;
+    std::vector<SequenceEntry> sequences;
+    auto structure_copy = Structure;
 
-    const auto models = structure.models;
+    const auto models = structure_copy.models;
     for (auto modelIndex = 0; modelIndex < models.size(); modelIndex++) {
         const auto model = models[modelIndex];
         const auto chains = model.chains;
         for (auto chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
-            std::vector<SequenceEntry> currentSequence;
+            std::vector<SequenceResInfo> currentSequence;
             auto chain = chains[chainIndex];
             gemmi::remove_ligands_and_waters(chain);
             const auto residues = chain.residues;
-            const auto chainName = chain.name;
             const auto polymerType = gemmi::check_polymer_type(chain.get_polymer());
             for (auto residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
+                SequenceResInfo seq_entry;
                 const auto residue = residues[residueIndex];
-                const auto resName = residue.name;
-                const auto resNum = std::stoi(residue.seqid.str());
-                SequenceEntry seq_entry;
-                seq_entry.resNum = resNum;
-                seq_entry.cid = "//"+chainName+"/"+residue.seqid.str()+"("+resName+")/";
+                seq_entry.resNum = std::stoi(residue.seqid.str());
+                seq_entry.cid = "//"+chain.name+"/"+residue.seqid.str()+"("+residue.name+")/";
                 if(polymerType==gemmi::PolymerType::Dna||polymerType==gemmi::PolymerType::Rna||polymerType==gemmi::PolymerType::DnaRnaHybrid){ // More than just nucleic and peptide ...
-                    seq_entry.resCode = nucleotideCodesThreeToOne[resName];
+                    seq_entry.resCode = nucleotideCodesThreeToOne[residue.name];
                 } else {
-                    seq_entry.resCode = residueCodesThreeToOne[resName];
+                    seq_entry.resCode = residueCodesThreeToOne[residue.name];
                 }
                 currentSequence.push_back(seq_entry);
             }
             if (currentSequence.size() > 0) {
-                SequenceChain seq_chain;
-                seq_chain.name = data_name + "_" + chainName;
-                seq_chain.chain = chainName;
-                seq_chain.sequence = currentSequence;
-                seq_chain.type = int(polymerType);
-                sequences.push_back(seq_chain);
+                SequenceEntry seq_entry;
+                seq_entry.name = mol_name + "_" + chain.name;
+                seq_entry.chain = chain.name;
+                seq_entry.sequence = currentSequence;
+                seq_entry.type = int(polymerType);
+                sequences.push_back(seq_entry);
             }
         }
     }
-
     return sequences;
+}
 
+struct AtomInfo {
+    double x;
+    double y;
+    double z;
+    float charge;
+    std::string element;
+    std::string symbol;
+    float tempFactor;
+    int serial;
+    std::string name;
+    bool has_altloc;
+    std::string alt_loc;
+    std::string mol_name;
+    std::string chain_id;
+    std::string res_no;
+    std::string res_name;
+    std::string label;
+};
+
+// excluded_cids is a string of CID selections separated with ||
+std::vector<AtomInfo> get_atom_info_for_selection(const gemmi::Structure &Structure, const std::string &cid, const std::string &excluded_cids) {
+
+    std::vector<gemmi::Selection> excluded_selections_vec;    
+    if (!excluded_cids.empty()) {
+        std::istringstream stream(excluded_cids);
+        std::string token;
+        while (std::getline(stream, token, '|')) {
+            gemmi::Selection sele(token);
+            excluded_selections_vec.push_back(sele);
+        }
+    }
+
+    const gemmi::Selection Selection(cid);
+    std::vector<AtomInfo> atom_info_vec;
+    auto structure_copy = Structure;
+    auto models = structure_copy.models;
+    for (int modelIndex = 0; modelIndex < models.size(); modelIndex++) {
+        const auto model = models[modelIndex];
+        if (!Selection.matches(model)) {
+            continue;
+        }
+        const auto chains = model.chains;
+        for (int chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
+            auto chain = chains[chainIndex];
+            if (!Selection.matches(chain)) {
+                continue;
+            }
+            const auto residues = chain.residues;
+            for (int residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
+                const auto residue = residues[residueIndex];
+                bool omit = false;
+                for (int selectionIndex = 0; selectionIndex < excluded_selections_vec.size(); selectionIndex++) {
+                    auto exclude_selection = excluded_selections_vec[selectionIndex];
+                    if (exclude_selection.matches(residue)) {
+                        omit = true;
+                        break;
+                    }
+                }
+                if (!Selection.matches(residue) || omit) {
+                    continue;
+                }
+                const auto atoms = residue.atoms;
+                for (int atomIndex = 0; atomIndex < atoms.size(); atomIndex++) {
+                    const auto atom = atoms[atomIndex];
+                    if (!Selection.matches(atom)) {
+                        continue;
+                    }
+                    AtomInfo atom_info;
+                    atom_info.x = atom.pos.x;
+                    atom_info.y = atom.pos.y;
+                    atom_info.z = atom.pos.z;
+                    atom_info.charge = atom.charge;
+                    atom_info.element = get_element_name_as_string(atom.element);
+                    atom_info.symbol = get_element_name_as_string(atom.element);
+                    atom_info.tempFactor = atom.b_iso;
+                    atom_info.serial = atom.serial;
+                    atom_info.name = atom.name;
+                    atom_info.has_altloc = atom.has_altloc();
+                    atom_info.mol_name = model.name;
+                    atom_info.chain_id = chain.name;
+                    atom_info.res_no = residue.seqid.str();
+                    atom_info.res_name = residue.name;
+                    atom_info.label = "/" + model.name + "/" + chain.name + "/" + residue.seqid.str() +"(" + residue.name + ")/" + atom.name;
+                    if (atom.has_altloc()) {
+                        std::string altloc_str(1, atom.altloc);
+                        atom_info.label += ":" + altloc_str;
+                        atom_info.alt_loc = altloc_str;
+                    } else {
+                        atom_info.alt_loc = "";
+                    }
+                    atom_info_vec.push_back(atom_info);
+                }
+            }
+        }
+    }
+    return atom_info_vec;
 }
 
 void GemmiSelectionRemoveSelectedResidue(gemmi::Selection &s, gemmi::Residue &r){
@@ -314,7 +408,8 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("imag",select_overload<long double(void)const>(&std::complex<long double>::imag))
     ;
 
-//Gemmi from here
+    //Gemmi from here
+    register_vector<gemmi::Selection>("VectorGemmiSelection");
     register_vector<gemmi::GridOp>("VectorGemmiGridOp");
     register_vector<gemmi::NeighborSearch::Mark*>("VectorGemmiNeighborSearchMark");
     register_vector<gemmi::Mtz::Dataset>("VectorGemmiMtzDataset");
@@ -2189,6 +2284,45 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .property("el",&gemmi::AtomNameElement::el)
     ;
 
+    value_object<SequenceEntry>("SequenceEntry")
+    .field("type", &SequenceEntry::type)
+    .field("name", &SequenceEntry::name)
+    .field("chain", &SequenceEntry::chain)
+    .field("sequence", &SequenceEntry::sequence)
+    ;
+
+    register_vector<SequenceEntry>("VectorSequenceEntry");
+
+    value_object<SequenceResInfo>("SequenceResInfo")
+    .field("resNum", &SequenceResInfo::resNum)
+    .field("resCode", &SequenceResInfo::resCode)
+    .field("cid", &SequenceResInfo::cid)
+    ;
+
+    register_vector<SequenceResInfo>("VectorSequenceResInfo");
+
+    value_object<AtomInfo>("AtomInfo")
+    .field("x", &AtomInfo::x)
+    .field("y", &AtomInfo::y)
+    .field("z", &AtomInfo::z)
+    .field("charge", &AtomInfo::charge)
+    .field("element", &AtomInfo::element)
+    .field("symbol", &AtomInfo::symbol)
+    .field("tempFactor", &AtomInfo::tempFactor)
+    .field("serial", &AtomInfo::serial)
+    .field("name", &AtomInfo::name)
+    .field("has_altloc", &AtomInfo::has_altloc)
+    .field("alt_loc", &AtomInfo::alt_loc)
+    .field("mol_name", &AtomInfo::mol_name)
+    .field("chain_id", &AtomInfo::chain_id)
+    .field("res_no", &AtomInfo::res_no)
+    .field("res_name", &AtomInfo::res_name)
+    .field("label", &AtomInfo::label)
+    ;
+
+    register_vector<AtomInfo>("VectorAtomInfo");
+
+
     //TODO Wrap some of these gemmi classes
     /*
 
@@ -2339,4 +2473,6 @@ GlobWalk
     function("getSpaceGroupQualifierAsString",&get_spacegroup_qualifier);
     function("getElementNameAsString",&get_element_name_as_string);
     function("cif_parse_string",&cif_parse_string);
+    function("get_atom_info_for_selection", &get_atom_info_for_selection);
+    function("get_sequence_info", &get_sequence_info);
 }
