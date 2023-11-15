@@ -229,61 +229,57 @@ void cif_parse_string(gemmi::cif::Document& doc, const std::string& data) {
   gemmi::cif::parse_input(doc, in);
 }
 
-struct SequenceEntry {
+struct SequenceResInfo {
     int resNum;
     std::string resCode;
     std::string cid;
 };
 
-struct SequenceChain {
+struct SequenceEntry {
     int type;
     std::string name;
     std::string chain;
-    std::vector<SequenceEntry> sequence;
+    std::vector<SequenceResInfo> sequence;
 };
 
-std::vector<SequenceChain> parseSequences(const gemmi::Structure &structure, const std::string &data_name){
+std::vector<SequenceEntry> get_sequence_info(const gemmi::Structure &Structure, const std::string &mol_name){
 
-    std::vector<SequenceChain> sequences;
+    std::vector<SequenceEntry> sequences;
+    auto structure_copy = Structure;
 
-    const auto models = structure.models;
+    const auto models = structure_copy.models;
     for (auto modelIndex = 0; modelIndex < models.size(); modelIndex++) {
         const auto model = models[modelIndex];
         const auto chains = model.chains;
         for (auto chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
-            std::vector<SequenceEntry> currentSequence;
+            std::vector<SequenceResInfo> currentSequence;
             auto chain = chains[chainIndex];
             gemmi::remove_ligands_and_waters(chain);
             const auto residues = chain.residues;
-            const auto chainName = chain.name;
             const auto polymerType = gemmi::check_polymer_type(chain.get_polymer());
             for (auto residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
+                SequenceResInfo seq_entry;
                 const auto residue = residues[residueIndex];
-                const auto resName = residue.name;
-                const auto resNum = std::stoi(residue.seqid.str());
-                SequenceEntry seq_entry;
-                seq_entry.resNum = resNum;
-                seq_entry.cid = "//"+chainName+"/"+residue.seqid.str()+"("+resName+")/";
+                seq_entry.resNum = std::stoi(residue.seqid.str());
+                seq_entry.cid = "//"+chain.name+"/"+residue.seqid.str()+"("+residue.name+")/";
                 if(polymerType==gemmi::PolymerType::Dna||polymerType==gemmi::PolymerType::Rna||polymerType==gemmi::PolymerType::DnaRnaHybrid){ // More than just nucleic and peptide ...
-                    seq_entry.resCode = nucleotideCodesThreeToOne[resName];
+                    seq_entry.resCode = nucleotideCodesThreeToOne[residue.name];
                 } else {
-                    seq_entry.resCode = residueCodesThreeToOne[resName];
+                    seq_entry.resCode = residueCodesThreeToOne[residue.name];
                 }
                 currentSequence.push_back(seq_entry);
             }
             if (currentSequence.size() > 0) {
-                SequenceChain seq_chain;
-                seq_chain.name = data_name + "_" + chainName;
-                seq_chain.chain = chainName;
-                seq_chain.sequence = currentSequence;
-                seq_chain.type = int(polymerType);
-                sequences.push_back(seq_chain);
+                SequenceEntry seq_entry;
+                seq_entry.name = mol_name + "_" + chain.name;
+                seq_entry.chain = chain.name;
+                seq_entry.sequence = currentSequence;
+                seq_entry.type = int(polymerType);
+                sequences.push_back(seq_entry);
             }
         }
     }
-
     return sequences;
-
 }
 
 struct AtomInfo {
@@ -2288,6 +2284,23 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .property("el",&gemmi::AtomNameElement::el)
     ;
 
+    value_object<SequenceEntry>("SequenceEntry")
+    .field("type", &SequenceEntry::type)
+    .field("name", &SequenceEntry::name)
+    .field("chain", &SequenceEntry::chain)
+    .field("sequence", &SequenceEntry::sequence)
+    ;
+
+    register_vector<SequenceEntry>("VectorSequenceEntry");
+
+    value_object<SequenceResInfo>("SequenceResInfo")
+    .field("resNum", &SequenceResInfo::resNum)
+    .field("resCode", &SequenceResInfo::resCode)
+    .field("cid", &SequenceResInfo::cid)
+    ;
+
+    register_vector<SequenceResInfo>("VectorSequenceResInfo");
+
     value_object<AtomInfo>("AtomInfo")
     .field("x", &AtomInfo::x)
     .field("y", &AtomInfo::y)
@@ -2461,4 +2474,5 @@ GlobWalk
     function("getElementNameAsString",&get_element_name_as_string);
     function("cif_parse_string",&cif_parse_string);
     function("get_atom_info_for_selection", &get_atom_info_for_selection);
+    function("get_sequence_info", &get_sequence_info);
 }

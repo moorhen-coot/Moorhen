@@ -303,6 +303,37 @@ describe("Testing MoorhenMolecule", () => {
         expect(gemmiAtoms.map(atomInfo => atomInfo.label)).toEqual([ "/1/A/31(GLY)/CA" ])
     })
 
+    test("Test parseSequences", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl, 'mol-test')
+        expect(molecule.sequences).toHaveLength(1)
+        
+        const firstSequence = molecule.sequences[0]
+        expect(firstSequence.name).toBe("mol-test_A")
+        expect(firstSequence.chain).toBe("A")
+        expect(firstSequence.type).toBe(1)
+        expect(firstSequence.sequence).toHaveLength(300)
+        
+        const firstResidue = firstSequence.sequence[0]
+        expect(firstResidue.resNum).toBe(4)
+        expect(firstResidue.resCode).toBe("S")
+        expect(firstResidue.cid).toBe("//A/4(SER)/")
+        
+        const lastResidue = firstSequence.sequence[299]
+        expect(lastResidue.resNum).toBe(303)
+        expect(lastResidue.resCode).toBe("S")
+        expect(lastResidue.cid).toBe("//A/303(SER)/")
+    })
+
     test("Test updateAtoms", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')

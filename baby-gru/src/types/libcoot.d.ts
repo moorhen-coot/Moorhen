@@ -12,6 +12,7 @@ declare global {
 
 export namespace libcootApi {
     type CCP4ModuleType = {
+        get_sequence_info(gemmiStructure: gemmi.Structure, molName: string): emscriptem.vector<SequenceEntry>;
         get_atom_info_for_selection(gemmiStructure: gemmi.Structure, arg1: string, arg2: string): emscriptem.vector<AtomInfo>;
         structure_is_ligand(gemmiStructure: gemmi.Structure): boolean;
         count_residues_in_selection(gemmiStructure: gemmi.Structure, selection: gemmi.Selection): number;
@@ -33,6 +34,18 @@ export namespace libcootApi {
         Position: { new(x: number, y: number, z: number): gemmi.Position };
         Fractional: { new(x: number, y: number, z: number): gemmi.Fractional };
         cifDocument: { new(): gemmi.cifDocument }
+    }
+    type SequenceResInfo = {
+        resNum: number;
+        resCode: string;
+        cid: string;
+    }
+    type SequenceEntry = {
+        type: number;
+        name: string;
+        chain: string;
+        sequence: emscriptem.vector<SequenceResInfo>;
+    
     }
     // We need to define AtomInfo here because we cannot import moorhen namespace otherwise worker code breaks during transpilation
     type AtomInfo = {
