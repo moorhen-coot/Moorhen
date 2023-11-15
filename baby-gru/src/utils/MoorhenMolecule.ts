@@ -386,27 +386,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      */
     checkIsLigand(): boolean {
         let isLigand = true
-        const structure = this.gemmiStructure.clone()
-       
-        window.CCP4Module.remove_ligands_and_waters_structure(structure)
-        window.CCP4Module.remove_hydrogens_structure(structure)
-        structure.remove_empty_chains()
-    
-        const models = structure.models
-        const modelsSize = models.size()
-        for (let modelIndex = 0; (modelIndex < modelsSize) && isLigand; modelIndex++) {
-            const model = models.get(modelIndex)
-            const chains = model.chains
-            const chainsSize = chains.size()
-            model.delete()
-            chains.delete()
-            if (chainsSize > 0) {
-                isLigand = false
-            }
-        }
-        models.delete()    
-        structure.delete()
-        this.isLigand = isLigand
+        this.isLigand = window.CCP4Module.structure_is_ligand(this.gemmiStructure)
         return isLigand
     }
 
@@ -539,10 +519,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
 
         this.name = name.replace(pdbRegex, "").replace(entRegex, "").replace(cifRegex, "").replace(mmcifRegex, "");
-        this.updateGemmiStructure(coordData as string)
-        this.atomsDirty = false
 
         try {
+            this.updateGemmiStructure(coordData as string)
+            this.atomsDirty = false
             const response = await this.commandCentre.current.cootCommand({
                 returnType: "status",
                 command: 'read_pdb_string',
@@ -670,13 +650,13 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
             this.gemmiStructure.delete()
         }
-        this.checkIsLigand()
         const [_hasGlycans, pdbString] = await Promise.all([
             this.checkHasGlycans(),
             this.getAtoms()
         ])
         try {
             this.updateGemmiStructure(pdbString)
+            this.checkIsLigand()
         }
         catch (err) {
             console.log(err)

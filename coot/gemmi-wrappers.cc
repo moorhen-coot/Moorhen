@@ -42,6 +42,25 @@ using namespace emscripten;
 using GemmiSMat33double = gemmi::SMat33<double>;
 using GemmiSMat33float = gemmi::SMat33<float>;
 
+bool structure_is_ligand(const gemmi::Structure &Structure) {
+    bool isLigand = true;
+    auto structure_copy = Structure;
+    gemmi::remove_ligands_and_waters(structure_copy);
+    gemmi::remove_hydrogens(structure_copy);
+    structure_copy.remove_empty_chains();
+
+    auto models = structure_copy.models;
+    for (auto modelIndex = 0; (modelIndex < models.size()) && isLigand; modelIndex++) {
+        const auto model = models[modelIndex];
+        const auto chains = model.chains;
+        if (chains.size() > 0) {
+            isLigand = false;
+        }
+    }
+    
+    return isLigand;
+}
+
 std::string get_pdb_string_from_gemmi_struct(const gemmi::Structure &Structure){
     std::ostringstream oss;
     gemmi::write_pdb(Structure, oss);
@@ -2267,6 +2286,7 @@ GlobWalk
     function("remove_non_selected_residues",&remove_non_selected_residues);
     function("count_residues_in_selection",&count_residues_in_selection);
     function("get_pdb_string_from_gemmi_struct",&get_pdb_string_from_gemmi_struct);
+    function("structure_is_ligand",&structure_is_ligand);
     function("read_structure_from_string",&read_structure_from_string);
     function("read_structure_file",&gemmi::read_structure_file);
     function("read_mtz_file",&gemmi::read_mtz_file);
