@@ -342,6 +342,35 @@ describe('Testing molecules_container_js', () => {
         expect(mi0.chain_id).toBe("C")
     })
 
+    test("Test water validation", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
+        expect(coordMolNo).toBe(0)
+        expect(mapMolNo).toBe(1)
+
+        const bad_water_info = molecules_container.find_water_baddies(
+            coordMolNo, mapMolNo, 60.0, 0.8, 2.3, 3.5, false, false
+        )
+
+        const bad_water_info_size = bad_water_info.size()
+        expect(bad_water_info_size).toBe(4)
+
+        let result = []
+        for (let i = 0; i < bad_water_info_size; i++) {
+            const bad_water = bad_water_info.get(i)
+            result.push([i, bad_water.chain_id, bad_water.res_no])
+        }
+        expect(result).toEqual([
+            [0, 'A', 1151],
+            [1, 'A', 1199],
+            [2, 'A', 1220],
+            [3, 'A', 1227]
+        ])
+  
+        cleanUpVariables.push(bad_water_info)
+    })
+
     test('Test ramachandran_validation', () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
