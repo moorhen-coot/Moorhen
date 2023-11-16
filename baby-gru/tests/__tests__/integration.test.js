@@ -266,7 +266,7 @@ describe('Testing molecules_container_js', () => {
         expect(ligandMolNo).toBe(0)
 
         const useConformers = false
-        const conformerCount = 100
+        const conformerCount = 10
         const coordMolNo = molecules_container.read_pdb('./5a3h_no_ligand.pdb')
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
         const result = molecules_container.fit_ligand_right_here(
