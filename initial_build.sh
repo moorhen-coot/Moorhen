@@ -37,8 +37,8 @@ cd ${BUILD_DIR}
 #Boost (has to be built in source tree as far as I am aware)
 cd ${SOURCE_DIR}/boost
 ./bootstrap.sh --with-libraries=serialization,regex,chrono,date_time,filesystem,iostreams,program_options,thread,math,random,system
-./b2 toolset=emscripten link=static variant=release threading=single runtime-link=static thread system filesystem regex serialization chrono date_time program_options random -j ${NUMPROCS}
-./b2 toolset=emscripten link=static variant=release threading=single runtime-link=static install --prefix=${INSTALL_DIR}
+./b2 toolset=emscripten link=static variant=release cxxflags="-pthread" linkflags="-pthread" threading=multi runtime-link=static thread system filesystem regex serialization chrono date_time program_options random -j ${NUMPROCS}
+./b2 toolset=emscripten link=static variant=release cxxflags="-pthread" linkflags="-pthread" threading=multi runtime-link=static install --prefix=${INSTALL_DIR}
 cd ${BUILD_DIR}
 
 emar q ${INSTALL_DIR}/lib/libboost_chrono.a ${INSTALL_DIR}/lib/libboost_chrono.bc
@@ -57,6 +57,7 @@ emar q ${INSTALL_DIR}/lib/libboost_regex.a ${INSTALL_DIR}/lib/libboost_regex.bc
 emar q ${INSTALL_DIR}/lib/libboost_serialization.a ${INSTALL_DIR}/lib/libboost_serialization.bc
 emar q ${INSTALL_DIR}/lib/libboost_system.a ${INSTALL_DIR}/lib/libboost_system.bc
 emar q ${INSTALL_DIR}/lib/libboost_wserialization.a ${INSTALL_DIR}/lib/libboost_wserialization.bc
+emar q ${INSTALL_DIR}/lib/libboost_thread.a ${INSTALL_DIR}/lib/libboost_thread.bc
 
 #RDKit
 mkdir -p ${BUILD_DIR}/rdkit_build
