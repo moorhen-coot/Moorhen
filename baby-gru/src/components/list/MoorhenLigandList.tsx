@@ -5,6 +5,7 @@ import { MenuItem } from "@mui/material";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useSelector } from "react-redux";
+import { convertViewtoPx } from "../../utils/MoorhenUtils";
 
 export const MoorhenLigandList = (props: { 
     setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -13,7 +14,9 @@ export const MoorhenLigandList = (props: {
     glRef: React.RefObject<webGL.MGWebGL>; 
 }) => {
 
+    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+
     const [showState, setShowState] = useState<{ [key: string]: boolean }>({})
     const [ligandList, setLigandList] = useState<{
         svg: string;
@@ -130,7 +133,7 @@ export const MoorhenLigandList = (props: {
             null
             : ligandList.length > 0 ? 
                 <>
-                    <Row style={{ height: '100%' }}>
+                    <Row style={{ maxHeight: convertViewtoPx(30, height), overflowY: 'auto' }}>
                         <Col style={{paddingLeft: '0.5rem', paddingRight: '0.5rem'}}>
                             {ligandList.map((ligand, index) => {
                                 const ligandCid = `/*/${ligand.chainName}/${ligand.resNum}(${ligand.resName})`

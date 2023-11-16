@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Row, Col } from "react-bootstrap";
 import { MoorhenSequenceViewer } from "../sequence-viewer/MoorhenSequenceViewer";
-import { sequenceIsValid } from '../../utils/MoorhenUtils';
+import { convertViewtoPx, sequenceIsValid } from '../../utils/MoorhenUtils';
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
+import { useSelector } from "react-redux";
 
 export const MoorhenSequenceList = (props: { 
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
@@ -25,6 +26,8 @@ export const MoorhenSequenceList = (props: {
     }>>;
 }) => {
     
+    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+
     const [sequenceList, setSequenceList] = useState<null | { chain: string; sequence: (moorhen.Sequence | null) }[]>(null)
 
     useEffect(() => {
@@ -46,7 +49,7 @@ export const MoorhenSequenceList = (props: {
 
     return sequenceList !== null && sequenceList.length > 0 ?
         <>
-            <Row style={{ height: '100%' }}>
+            <Row style={{ maxHeight: convertViewtoPx(30, height), overflowY: 'auto' }}>
                 <Col>
                     {props.molecule.sequences.map(
                         sequence => {
