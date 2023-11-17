@@ -247,7 +247,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 objects = this.getResidueHighlightBuffers(this.cid, [1.0, 0.5, 0.0, 0.35])
                 break
             case 'residueSelection':
-                objects = this.getResidueHighlightBuffers(this.cid, [1.0, 0.0, 0.0, 0.35], true)
+                objects = this.getResidueHighlightBuffers(this.cid, [0.25, 1.0, 0.25, 0.35], true)
                 break
             case 'environment':
             case 'ligand_environment':

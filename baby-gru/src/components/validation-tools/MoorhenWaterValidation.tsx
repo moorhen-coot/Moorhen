@@ -72,7 +72,13 @@ export const MoorhenWaterValidation = (props: Props) => {
             }
             
             let response = await props.commandCentre.current.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.AtomSpecJS[]>
-            badWaters = response.data.result.result
+            if (response.data.result.result) {
+                badWaters = response.data.result.result
+            } else if (response.data.result.status === 'Exception') {
+                console.warn(response.data.consoleMessage)
+            } else {
+                console.warn('Moorhen was unable to get water validation...')
+            }
         }
 
         busyFetching.current = false

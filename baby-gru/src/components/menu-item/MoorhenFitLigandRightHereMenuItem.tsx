@@ -34,7 +34,7 @@ export const MoorhenFitLigandRightHereMenuItem = (props: {
     const panelContent = <>
         <MoorhenMapSelect maps={maps} label="Map" ref={mapSelectRef} />
         <MoorhenMoleculeSelect molecules={molecules} label="Protein molecule" allowAny={false} ref={intoMoleculeRef} />
-        <MoorhenMoleculeSelect molecules={molecules} label="Ligand molecule" allowAny={false} ref={ligandMoleculeRef} />
+        <MoorhenMoleculeSelect molecules={molecules} label="Ligand molecule" allowAny={false} ref={ligandMoleculeRef} filterFunction={(molecule: moorhen.Molecule) => molecule.isLigand} />
         {devMode && 
          <Form.Check
             style={{margin: '0.5rem'}} 
