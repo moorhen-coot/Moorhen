@@ -134,7 +134,7 @@ export namespace moorhen {
         drawHover: (cid: string) => Promise<void>;
         drawResidueSelection: (cid: string) => Promise<void>;
         clearBuffersOfStyle: (style: string) => void;
-        loadToCootFromURL: (inputFile: string, molName: string) => Promise<Molecule>;
+        loadToCootFromURL: (inputFile: string, molName: string, options?: RequestInit) => Promise<Molecule>;
         applyTransform: () => Promise<void>;
         getAtoms(format?: string): Promise<string>;
         hide: (style: string, cid?: string) => void;
@@ -368,8 +368,8 @@ export namespace moorhen {
         doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number): Promise<void>;
         fetchReflectionData(): Promise<WorkerResponse<Uint8Array>>;
         getMap(): Promise<WorkerResponse>;
-        loadToCootFromMtzURL(url: RequestInfo | URL, name: string, selectedColumns: selectedMtzColumns): Promise<Map>;
-        loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap?: boolean): Promise<Map>;
+        loadToCootFromMtzURL(url: RequestInfo | URL, name: string, selectedColumns: selectedMtzColumns, options?: RequestInit): Promise<Map>;
+        loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap?: boolean, options?: RequestInit): Promise<Map>;
         setActive(): Promise<void>;
         setupContourBuffers(objects: any[], keepCootColours?: boolean): void;
         setOtherMapForColouring(molNo: number, min?: number, max?: number): void;

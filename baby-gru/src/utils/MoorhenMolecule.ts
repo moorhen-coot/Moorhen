@@ -437,10 +437,11 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * Load a new molecule from a file URL
      * @param {string} url - The url to the path with the data for the new molecule
      * @param {string} molName - The new molecule name
+     * @param {object} [options] - Options passed to fetch API
      * @returns {Promise<moorhen.Molecule>} The new molecule
      */
-    async loadToCootFromURL(url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> {
-        const response = await fetch(url)
+    async loadToCootFromURL(url: RequestInfo | URL, molName: string, options?: RequestInit): Promise<moorhen.Molecule> {
+        const response = await fetch(url, options)
         try {
             if (response.ok) {
                 const coordData = await response.text()
