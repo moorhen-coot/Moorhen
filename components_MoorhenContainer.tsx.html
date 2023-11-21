@@ -114,12 +114,12 @@
     <section>
         <article>
             <pre class="prettyprint source linenums"><code>import { useEffect, useCallback, useRef, useMemo } from 'react';
-import { Container, Col, Row, Spinner, Stack } from 'react-bootstrap';
+import { Container, Col, Row, Spinner } from 'react-bootstrap';
 import { MoorhenWebMG } from './webMG/MoorhenWebMG';
-import { getTooltipShortcutLabel, createLocalStorageInstance, cidToSpec, guid } from '../utils/MoorhenUtils';
+import { getTooltipShortcutLabel, createLocalStorageInstance } from '../utils/MoorhenUtils';
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre"
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
-import { Backdrop, IconButton } from "@mui/material";
+import { Backdrop } from "@mui/material";
 import { babyGruKeyPress } from '../utils/MoorhenKeyboardAccelerators';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
@@ -131,9 +131,8 @@ import { MoorhenResidueSelectionActions } from './misc/MoorhenResidueSelectionAc
 import { useSelector, useDispatch } from 'react-redux';
 import { setDefaultBackgroundColor } from '../store/sceneSettingsSlice';
 import { setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/canvasStatesSlice';
-import { clearResidueSelection, setCootInitialized, setNotificationContent, setResidueSelection, setStopResidueSelection, setTheme } from '../store/generalStatesSlice';
+import { setCootInitialized, setNotificationContent, setTheme } from '../store/generalStatesSlice';
 import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSlice';
-import { ClearOutlined } from '@mui/icons-material';
 
 /**
  * A container for the Moorhen app. Needs to be rendered within a MoorhenReduxprovider.
