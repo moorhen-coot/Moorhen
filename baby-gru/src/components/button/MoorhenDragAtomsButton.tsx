@@ -26,8 +26,6 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
-    const dragModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'SPHERE']
-
     const animateRefine = async (molecule: moorhen.Molecule, n_cyc: number, n_iteration: number, final_n_cyc: number = 100) => {
         for (let i = 0; i <= n_iteration; i++) {
             const result = await props.commandCentre.current.cootCommand({
@@ -272,7 +270,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
         </MoorhenNotification>
     )
 
-    const nonCootCommand = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string) => {
+    const nonCootCommand = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string = 'SPHERE') => {
         await startDragging(molecule, chosenAtom, selectedMode)
         props.setShowOverlay(false)
         document.addEventListener('atomDragged', atomDraggedCallback)
@@ -289,15 +287,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
         toolTipLabel="Drag atoms"
         refineAfterMod={false}
         needsMapData={true}
-        popoverSettings={{
-            label: 'Drag mode...',
-            options: dragModes,
-            nonCootCommand: nonCootCommand,
-            defaultValue: props.defaultActionButtonSettings['drag'],
-            setDefaultValue: (newValue: string) => {
-                props.setDefaultActionButtonSettings({ key: 'drag', value: newValue })
-            }
-        }}
+        nonCootCommand={nonCootCommand}
         {...props}
     />
 }
