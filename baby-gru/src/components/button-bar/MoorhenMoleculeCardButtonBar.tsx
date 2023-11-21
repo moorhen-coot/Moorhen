@@ -16,7 +16,6 @@ type MoorhenMoleculeCardButtonBarPropsType = {
     handleDownload: () => Promise<void>;
     handleRedo: () => Promise<void>;
     handleUndo: () => Promise<void>;
-    handleResidueRangeRefinement: () => void;
     handleVisibility: () => void;
     molecule: moorhen.Molecule;
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -93,13 +92,8 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
             }
         },
         6: {
-            label: 'Refine selected residues',
-            compressed: () => { return (<MenuItem key={6} disabled={(!props.clickedResidue || !props.selectedResidues)} onClick={props.handleResidueRangeRefinement}>Refine selected residues</MenuItem>) },
-            expanded: null
-        },
-        7: {
             label: 'Rename molecule',
-            compressed: () => { return (<MoorhenRenameDisplayObjectMenuItem key={7} setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />) },
+            compressed: () => { return (<MoorhenRenameDisplayObjectMenuItem key={6} setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />) },
             expanded: null
         },
     }

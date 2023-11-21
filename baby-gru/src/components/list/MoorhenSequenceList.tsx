@@ -65,6 +65,7 @@ export const MoorhenSequenceList = (props: {
                                 sequence={sequence}
                                 molecule={props.molecule}
                                 glRef={props.glRef}
+                                useMainStateResidueSelections={true}
                                 clickedResidue={props.clickedResidue}
                                 setClickedResidue={props.setClickedResidue}
                                 selectedResidues={props.selectedResidues}

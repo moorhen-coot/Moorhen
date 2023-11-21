@@ -8,6 +8,7 @@ import { webGL } from "../../types/mgWebGL";
 import { clickedResidueType } from '../card/MoorhenMoleculeCard';
 import { useSelector, useDispatch } from 'react-redux';
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { cidToSpec } from "../../utils/MoorhenUtils";
 
 !window.customElements.get('protvista-navigation') && window.customElements.define("protvista-navigation", ProtvistaNavigation);
 !window.customElements.get('protvista-sequence') && window.customElements.define("protvista-sequence", ProtvistaSequence);
@@ -51,6 +52,7 @@ type MoorhenSequenceViewerPropsType = {
     setClickedResidue: React.Dispatch<React.SetStateAction<clickedResidueType>>;
     selectedResidues: [number, number];
     setSelectedResidues: React.Dispatch<React.SetStateAction<[number, number]>>;
+    useMainStateResidueSelections?: boolean
 }
 
 export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => {
@@ -58,7 +60,10 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
     const sequenceRef = useRef<any>(null);
     const navigationRef = useRef<any>(null);
     const selectedResiduesTrackRef = useRef<any>(null)
+    const shiftKey = useRef<boolean>(false);
+    
     const [initialRulerStart, initialSeqLenght, initialDisplaySequence, intialStart, initialEnd] = parseSequenceData(props.sequence.sequence)
+    
     const [message, setMessage] = useState<string>("");
     const [displaySettings, setDisplaySettings] = useState<DisplaySettingsType>({
         rulerStart: initialRulerStart,
@@ -67,8 +72,10 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
         seqLenght: initialSeqLenght,
         displaySequence: initialDisplaySequence
     });
+    
     const dispatch = useDispatch()
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
+    const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
 
     const hoveredResidueColor = '#FFEB3B66'
     const transparentColor = '#FFEB3B00'
@@ -172,42 +179,81 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
 
     }, [hoveredAtom])
 
-    
+    useEffect(() => {
+        if (!props.useMainStateResidueSelections) {
+            return
+        }
+
+        if (residueSelection.molecule && residueSelection.molecule.molNo !== props.molecule.molNo) {
+            clearSelection()
+            return
+        } else if (residueSelection.first) {
+            const startResSpec = cidToSpec(residueSelection.first)
+            if (startResSpec.chain_id !== props.sequence.chain) {
+                clearSelection()
+                return
+            }
+        }
+
+        if (residueSelection.molecule && residueSelection.cid) {
+            const startResSpec = cidToSpec(residueSelection.first)
+            const stopResSpec = cidToSpec(residueSelection.second)
+            const sortedResNums = [startResSpec.res_no, stopResSpec.res_no].sort(function(a, b){return a - b}) as [number, number]
+            setSelection(...sortedResNums)
+        } else if (residueSelection.molecule && residueSelection.first) {
+            const startResSpec = cidToSpec(residueSelection.first)
+            setSelection(startResSpec.res_no, null)
+        } else {
+            clearSelection()
+        }
+    }, [residueSelection])
+  
     /**
      * Callback to handle changes in the protvista component
      */
     const handleChange = useCallback((evt) => {
-        if (evt.detail.eventtype === "click") {
-            let residue = sequence.sequence.find(residue => residue.resNum === evt.detail.feature.start)
-            if (!residue) {
-                return
-            } else if (evt.detail.feature !== null && !(evt.detail.highlight.includes(','))) {
-                setClickedResidue({modelIndex:0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.start})
-                setSelectedResidues(null)
-            } else if (evt.detail.highlight.includes(',')) {
-                let residues;
-                if (clickedResidue === null) {
-                    setClickedResidue({modelIndex: 0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.start})
+        setTimeout(() => {
+            if (evt.detail.eventtype === "click") {
+                let residue = sequence.sequence.find(residue => residue.resNum === evt.detail.feature.start)
+                if (!residue) {
                     return
-                } else if (selectedResidues === null || selectedResidues.length < 2){
-                    residues = [clickedResidue.seqNum, evt.detail.feature.start]
-                } else {
-                    residues = [evt.detail.feature.start, ...selectedResidues]
+                } else if (shiftKey.current && props.useMainStateResidueSelections) {
+                    let atomClicked: moorhen.AtomClickedEvent = new CustomEvent("atomClicked", {
+                        "detail": {
+                            atom: {label: residue.cid},
+                            buffer: {id: props.molecule.representations[0]?.buffers[0]?.id},
+                            isResidueSelection: true
+                        }
+                    })
+                    document.dispatchEvent(atomClicked)   
+                } else if (evt.detail.feature !== null && !(evt.detail.highlight.includes(','))) {
+                    setClickedResidue({modelIndex:0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.start})
+                    setSelectedResidues(null)
+                } else if (evt.detail.highlight.includes(',')) {
+                    let residues;
+                    if (clickedResidue === null) {
+                        setClickedResidue({modelIndex: 0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.start})
+                        return
+                    } else if (selectedResidues === null || selectedResidues.length < 2){
+                        residues = [clickedResidue.seqNum, evt.detail.feature.start]
+                    } else {
+                        residues = [evt.detail.feature.start, ...selectedResidues]
+                    }
+                    setSelectedResidues([Math.min(...residues), Math.max(...residues)])
+                    setClickedResidue({modelIndex: 0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.start})
                 }
-                setSelectedResidues([Math.min(...residues), Math.max(...residues)])
-                setClickedResidue({modelIndex: 0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.start})
-            }
-        } else if (evt.detail.eventtype === "mouseover") {
-            if (evt.detail.feature !== null) {
-                let hoveredResidue = sequence.sequence.find(residue => residue.resNum === evt.detail.feature.start)
-                if (hoveredResidue) {
-                    let cid = hoveredResidue.cid
-                    dispatch( setHoveredAtom({ molecule: molecule, cid: cid }) )
+            } else if (evt.detail.eventtype === "mouseover") {
+                if (evt.detail.feature !== null) {
+                    let hoveredResidue = sequence.sequence.find(residue => residue.resNum === evt.detail.feature.start)
+                    if (hoveredResidue) {
+                        let cid = hoveredResidue.cid
+                        dispatch( setHoveredAtom({ molecule: molecule, cid: cid }) )
+                    }
                 }
-            }
-        } else if (evt.detail.eventtype === "mouseout") {
-            setMessage("")
-        }
+            } else if (evt.detail.eventtype === "mouseout") {
+                setMessage("")
+            }   
+        }, 1)
     }, [clickedResidue, sequence, selectedResidues, molecule, setSelectedResidues, setClickedResidue])
 
 
@@ -224,12 +270,18 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
             evt.preventDefault()
             evt.stopPropagation()
         }
+
+        const handleClick = (evt: MouseEvent) => {
+            shiftKey.current = evt.shiftKey
+        }
         
+        sequenceRef.current.addEventListener("click", handleClick)
         sequenceRef.current.addEventListener("change", handleChange)
         sequenceRef.current.addEventListener('dblclick', disableDoubleClick, true)
 
         return () => {
             if (sequenceRef && sequenceRef.current) {
+                sequenceRef.current.removeEventListener("click", handleClick)
                 sequenceRef.current.removeEventListener('change', handleChange);
                 sequenceRef.current.removeEventListener('dblclick', disableDoubleClick, true);
             }
@@ -277,8 +329,10 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
     /**
      * Hook used to clear the current selection if user selects residue from different chain
      */
-    useEffect(() => {       
-        if (clickedResidue && clickedResidue.chain !== sequence.chain) {
+    useEffect(() => {
+        if (props.useMainStateResidueSelections) {
+            return
+        } else if (clickedResidue && clickedResidue.chain !== sequence.chain) {
             clearSelection()
         } else if (clickedResidue && !selectedResidues) {
             setSelection(clickedResidue.seqNum, null)
@@ -328,6 +382,7 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                 </protvista-manager>
             </div>    
         </div>
-    )
-    
+    )   
 }
+
+MoorhenSequenceViewer.defaultProps = { useMainStateResidueSelections: false }

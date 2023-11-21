@@ -416,27 +416,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
         props.setCurrentDropdownMolNo(-1)
     }
 
-    const handleResidueRangeRefinement = () => {
-        async function refineResidueRange() {
-            await props.commandCentre.current.cootCommand({
-                returnType: "status",
-                command: 'refine_residue_range',
-                commandArgs: [props.molecule.molNo, clickedResidue.chain, ...selectedResidues],
-                changesMolecules: [props.molecule.molNo]
-            }, true)
-
-            props.molecule.setAtomsDirty(true)
-            props.molecule.redraw()
-        }
-
-        if (clickedResidue && selectedResidues) {
-            refineResidueRange()
-        }
-
-        props.setCurrentDropdownMolNo(-1)
-    }
-
-    const handleProps = { handleCentering, handleCopyFragment, handleDownload, handleRedo, handleUndo, handleResidueRangeRefinement, handleVisibility }
+    const handleProps = { handleCentering, handleCopyFragment, handleDownload, handleRedo, handleUndo, handleVisibility }
 
     return <><Card ref={cardRef} className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.molecule.molNo}>
         <Card.Header style={{ padding: '0.1rem' }}>
