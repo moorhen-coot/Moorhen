@@ -194,12 +194,13 @@ export class MoorhenMap implements moorhen.Map {
      * @param {string} url - The url to the MTZ file
      * @param {string} name - The name that will be assigned to the map
      * @param {moorhen.selectedMtzColumns} selectedColumns - Object indicating the selected MTZ columns
+     * @param {object} [options] - Options passed to fetch API
      * @returns {Pormise<moorhen.Map>} This moorhenMap instance
      */
-    async loadToCootFromMtzURL(url: RequestInfo | URL, name: string, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> {
+    async loadToCootFromMtzURL(url: RequestInfo | URL, name: string, selectedColumns: moorhen.selectedMtzColumns, options?: RequestInit): Promise<moorhen.Map> {
 
         try {
-            const response = await fetch(url)
+            const response = await fetch(url, options)
             if (!response.ok) {
                 return Promise.reject(`Error fetching data from url ${url}`)
             }
@@ -269,12 +270,13 @@ export class MoorhenMap implements moorhen.Map {
      * @param {string} url - The url to the MTZ file
      * @param {string} name - The name that will be assigned to the map
      * @param {boolean} [isDiffMap=false] - Indicates whether the new map is a difference map
+     * @param {object} [options] - Options passed to fetch API
      * @returns {Promise<moorhen.Map>} This moorhenMap instance
      */
-    async loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap: boolean= false): Promise<moorhen.Map>  {
+    async loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap: boolean= false, options?: RequestInit): Promise<moorhen.Map>  {
 
         try {
-            const response = await fetch(url);
+            const response = await fetch(url, options);
             const mapData = await response.blob();
             const arrayBuffer = await mapData.arrayBuffer();
             return await this.loadToCootFromMapData(new Uint8Array(arrayBuffer), name, isDiffMap);
