@@ -89,9 +89,10 @@ export namespace moorhen {
     }
     
     interface Molecule {
+        refineResidueRange(chainId: string, start: number, stop: number, ncyc?: number, redraw?: boolean): Promise<void>;
         SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string): Promise<WorkerResponse>;
         refineResiduesUsingAtomCid(cid: string, mode: string, ncyc?: number, redraw?: boolean): Promise<void>;
-        deleteCid(cid: string, redraw?: boolean): Promise<void>;
+        deleteCid(cid: string, redraw?: boolean): Promise<{first: number, second: number}>;
         getNumberOfAtoms(): Promise<number>;
         moveMoleculeHere(x: number, y: number, z: number): Promise<void>;
         checkHasGlycans(): Promise<boolean>;

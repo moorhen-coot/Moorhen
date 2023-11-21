@@ -1526,7 +1526,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * Refine a set of residues
      * @param {string} cid - The CID selection with the atoms that should be refined
      * @param {string} mode - Refinement mode (SINGLE, TRIPLE ...etc.)
-     * @param {number} ncyc - Number of refinement cycles
+     * @param {number} [ncyc=4000] - Number of refinement cycles
      * @param {boolean} [redraw=true] - Indicates if the molecule should be redrawn
      */
     async refineResiduesUsingAtomCid(cid: string, mode: string, ncyc: number = 4000, redraw: boolean = true): Promise<void> {
@@ -1544,22 +1544,47 @@ export class MoorhenMolecule implements moorhen.Molecule {
     }
 
     /**
+     * Refine a residue range
+     * @param {string} chainId - The chain ID for the residue range
+     * @param {string} start - First residue number in the range
+     * @param {string} stop - Last residue number in the range
+     * @param {number} [ncyc=4000] - Number of refinement cycles
+     * @param {boolean} [redraw=true] - Indicates if the molecule should be redrawn
+     */
+    async refineResidueRange(chainId: string, start: number, stop: number, ncyc: number = 4000, redraw: boolean = true): Promise<void> {
+        await this.commandCentre.current.cootCommand({
+            returnType: "status",
+            command: 'refine_residue_range',
+            commandArgs: [this.molNo, chainId, start, stop, ncyc],
+            changesMolecules: [this.molNo]
+        }, true)
+
+        this.setAtomsDirty(true)
+        if (redraw) {
+            await this.redraw()
+        }
+    }
+
+    /**
      * Delete residues in a given CID
      * @param {string} cid - The CID to delete
      * @param {boolean} [redraw=true] - Indicates if the molecule should be redrawn
+     * @returns {object} - A pair where first is the return status and second is the atom count of the molecule after deletion
      */
-    async deleteCid(cid: string, redraw: boolean = true): Promise<void> {
-        await this.commandCentre.current.cootCommand({
+    async deleteCid(cid: string, redraw: boolean = true): Promise<libcootApi.PairType<number, number>> {
+        const result = await this.commandCentre.current.cootCommand({
             returnType: "status",
             command: "delete_using_cid",
             commandArgs: [this.molNo, cid, "LITERAL"],
             changesMolecules: [this.molNo]
-        }, true)
+        }, true) as moorhen.WorkerResponse<libcootApi.PairType<number, number>>
         
         this.setAtomsDirty(true)
         if (redraw) {
             await this.redraw()
         }
+        
+        return result.data.result.result
     }
 
     /**

@@ -12,6 +12,7 @@ import { MoorhenNotification } from './misc/MoorhenNotification';
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
 import { MoorhenPreferencesContainer } from './misc/MoorhenPreferencesContainer'
+import { MoorhenResidueSelectionActions } from './misc/MoorhenResidueSelectionActions'
 import { useSelector, useDispatch } from 'react-redux';
 import { setDefaultBackgroundColor } from '../store/sceneSettingsSlice';
 import { setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/canvasStatesSlice';
@@ -369,85 +370,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         }
     }, [activeMap])
 
-    const handleAtomClicked = useCallback(async (evt: moorhen.AtomClickedEvent) => {
-        const clearSelection = () => {
-            dispatch( clearResidueSelection() )
-            dispatch( setNotificationContent(null) )
-            molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
-        }
-
-        if (!evt.detail.isResidueSelection || evt.detail.buffer.id == null) {
-            return
-        } 
-
-        const selectedMolecule = molecules.find(molecule => molecule.buffersInclude(evt.detail.buffer))
-        if (!selectedMolecule) {
-            clearSelection()
-            return
-        }
-        
-        if (residueSelection.first === null || residueSelection.molecule === null || residueSelection.molecule.molNo !== selectedMolecule.molNo) {
-            const resSpec: moorhen.ResidueSpec = cidToSpec(evt.detail.atom.label)
-            await selectedMolecule.drawResidueSelection(`/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*`)
-            dispatch(
-                setResidueSelection({ molecule: selectedMolecule, first: evt.detail.atom.label, second: null, cid: null})
-            )
-            dispatch(
-                setNotificationContent(
-                    <MoorhenNotification key={guid()} width={13}>
-                        <Stack gap={2} direction='horizontal' style={{width: '100%', display:'flex', justifyContent: 'space-between'}}>
-                            <div style={{alignItems: 'center', display: 'flex', justifyContent: 'center'}}>
-                                {`/${resSpec.mol_no}/${resSpec.chain_id}/${resSpec.res_no}`}
-                            </div>
-                            <IconButton onClick={() => {
-                                clearSelection()
-                            }}>
-                                <ClearOutlined/>
-                            </IconButton>
-                        </Stack>
-                    </MoorhenNotification>   
-                )
-            )
-            return
-        }
-
-        const startResSpec: moorhen.ResidueSpec = cidToSpec(residueSelection.first)
-        const stopResSpec: moorhen.ResidueSpec = cidToSpec(evt.detail.atom.label)
-        if (startResSpec.chain_id !== stopResSpec.chain_id) {
-            clearSelection()
-        } else {
-            const sortedResNums = [startResSpec.res_no, stopResSpec.res_no].sort(function(a, b){return a - b})
-            const cid = `/*/${startResSpec.chain_id}/${sortedResNums[0]}-${sortedResNums[1]}/*`
-            await selectedMolecule.drawResidueSelection(cid)
-            dispatch(
-                setResidueSelection({ molecule: selectedMolecule, first: residueSelection.first, second: evt.detail.atom.label, cid: cid})
-            )
-            dispatch(
-                setNotificationContent(
-                    <MoorhenNotification key={guid()} width={13}>
-                        <Stack gap={2} direction='horizontal' style={{width: '100%', display:'flex', justifyContent: 'space-between'}}>
-                            <div style={{alignItems: 'center', display: 'flex', justifyContent: 'center'}}>
-                                { `/${startResSpec.mol_no}/${startResSpec.chain_id}/${sortedResNums[0]}-${sortedResNums[1]}`}
-                            </div>
-                            <IconButton onClick={() => {
-                                clearSelection()
-                            }}>
-                                <ClearOutlined/>
-                            </IconButton>
-                        </Stack>
-                    </MoorhenNotification>   
-                )
-            )
-        }
-    }, [molecules, residueSelection])
-
-    useEffect(() => {
-        document.addEventListener('atomClicked', handleAtomClicked)
-        return () => {
-            document.removeEventListener('atomClicked', handleAtomClicked)
-        }
-    }, [handleAtomClicked])
-
     return <> 
     <div>
         <Backdrop sx={{ color: '#fff', zIndex: (_theme) => _theme.zIndex.drawer + 1 }} open={!cootInitialized}>
@@ -460,6 +382,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     </div>
 
     <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange}/>
+
+    <MoorhenResidueSelectionActions/>
 
     <Container fluid className={`baby-gru ${theme}`}>
         <Row>
