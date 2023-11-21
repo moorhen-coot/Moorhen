@@ -1,4 +1,4 @@
-import { IconButton } from "@mui/material"
+import { IconButton, Tooltip } from "@mui/material"
 import { cidToSpec, guid } from "../../utils/MoorhenUtils"
 import { MoorhenNotification } from "./MoorhenNotification"
 import { CloseOutlined, CopyAllOutlined, CrisisAlertOutlined, DeleteOutlined } from "@mui/icons-material"
@@ -9,12 +9,13 @@ import { clearResidueSelection, setNotificationContent, setResidueSelection } fr
 import { useCallback, useEffect, useRef, useState } from "react"
 import { addMolecule, removeMolecule } from "../../moorhen"
 
-
 export const MoorhenResidueSelectionActions = (props) => {
 
     const notificationKeyRef = useRef<string>(guid())
+    const notificationComponentRef = useRef()
 
     const [selectionLabel, setSelectionLabel] = useState<null | string>(null)
+    const [tooltipContents, setTooltipContents] = useState<null | string>(null)
 
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
@@ -125,26 +126,28 @@ export const MoorhenResidueSelectionActions = (props) => {
     }, [residueSelection, clearSelection])
 
     return  selectionLabel ?
-        <MoorhenNotification key={notificationKeyRef.current} width={13}>
-            <Stack direction="vertical" gap={1}>
+        <MoorhenNotification key={notificationKeyRef.current} width={14}>
+            <Tooltip className="moorhen-tooltip" title={tooltipContents}>
+            <Stack ref={notificationComponentRef} direction="vertical" gap={1}>
                 <div>
                     <span>{selectionLabel}</span>
                 </div>
                 <Stack gap={2} direction='horizontal' style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-                    <IconButton onClick={handleDelete}>
+                    <IconButton onClick={handleDelete} onMouseEnter={() => setTooltipContents('Delete')}>
                         <DeleteOutlined/>
                     </IconButton>
-                    <IconButton onClick={handleRefinement}>
+                    <IconButton onClick={handleRefinement} onMouseEnter={() => setTooltipContents('Refine')}>
                         <CrisisAlertOutlined/>
                     </IconButton>
-                    <IconButton onClick={handleSelectionCopy}>
+                    <IconButton onClick={handleSelectionCopy} onMouseEnter={() => setTooltipContents('Copy fragment')}>
                         <CopyAllOutlined/>
                     </IconButton>
-                    <IconButton onClick={clearSelection}>
+                    <IconButton onClick={clearSelection} onMouseEnter={() => setTooltipContents('Clear selection')}>
                         <CloseOutlined/>
                     </IconButton>
                 </Stack>
             </Stack>
+            </Tooltip>
         </MoorhenNotification>
-        : null
+    : null
 }
