@@ -115,7 +115,6 @@ export const MoorhenContextMenu = (props: {
   const [opacity, setOpacity] = useState<number>(1.0)
   const [toolTip, setToolTip] = useState<string>('')
   
-  const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
   const molecules = useSelector((state: moorhen.State) => state.molecules)
   const width = useSelector((state: moorhen.State) => state.canvasStates.width)
   const height = useSelector((state: moorhen.State) => state.canvasStates.height)
@@ -180,21 +179,6 @@ export const MoorhenContextMenu = (props: {
             <List>
               {props.viewOnly ? 
                 <MoorhenBackgroundColorMenuItem setPopoverIsShown={() => { }}/>
-              :
-              residueSelection.cid !== null && residueSelection.molecule !== null ? 
-              <>
-              <div style={{ display:'flex', justifyContent: 'center' }}>
-              <Tooltip className="moorhen-tooltip" title={toolTip}>
-              <FormGroup ref={quickActionsFormGroupRef} style={{ justifyContent: 'center', margin: "0px", padding: "0px", width: '18rem' }} row>
-              <MoorhenRefineResiduesButton mode='context' {...collectedProps}/> 
-              <MoorhenDeleteButton mode='context' {...collectedProps} />
-              <MoorhenRigidBodyFitButton  mode='context' {...collectedProps}/>
-              <MoorhenRotateTranslateZoneButton mode='context' {...collectedProps} />
-              <MoorhenDragAtomsButton mode='context' {...collectedProps} />
-              </FormGroup>
-              </Tooltip>
-              </div>
-              </>
               :
               selectedMolecule && chosenAtom &&
               <div style={{ display:'flex', justifyContent: 'center' }}>

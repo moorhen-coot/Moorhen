@@ -9,14 +9,12 @@ export const MoorhenRigidBodyFitButton = (props: moorhen.ContextButtonProps) => 
     const customCid = useRef<null | string>(null)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
-    const rigidBodyModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'CHAIN', 'ALL']
+    const rigidBodyModes = ['RESIDUE', 'CHAIN', 'MOLECULE']
 
     const rigidBodyFitFormatArgs = (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string, activeMapMolNo: number) => {
         const selectedSequence = molecule.sequences.find(sequence => sequence.chain === chosenAtom.chain_id)
         let selectedResidueIndex: number = -1
         let commandArgs: [number, string, number]
-        let start: number
-        let stop: number
 
         if (typeof selectedSequence !== 'undefined') {
             selectedResidueIndex = selectedSequence.sequence.findIndex(residue => residue.resNum === chosenAtom.res_no)
@@ -27,37 +25,10 @@ export const MoorhenRigidBodyFitButton = (props: moorhen.ContextButtonProps) => 
         }
 
         switch (selectedMode) {
-            case 'SINGLE':
+            case 'RESIDUE':
                 commandArgs = [
                     molecule.molNo,
                     `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
-                    activeMapMolNo
-                ]
-                break
-            case 'TRIPLE':
-                start = selectedResidueIndex !== 0 ? selectedSequence.sequence[selectedResidueIndex - 1].resNum : chosenAtom.res_no
-                stop = selectedResidueIndex < selectedSequence.sequence.length - 1 ? selectedSequence.sequence[selectedResidueIndex + 1].resNum : chosenAtom.res_no
-                commandArgs = [
-                    molecule.molNo,
-                    `//${chosenAtom.chain_id}/${start}-${stop}`,
-                    activeMapMolNo
-                ]
-                break
-            case 'QUINTUPLE':
-                start = selectedResidueIndex !== 0 ? selectedSequence.sequence[selectedResidueIndex - 2].resNum : chosenAtom.res_no
-                stop = selectedResidueIndex < selectedSequence.sequence.length - 2 ? selectedSequence.sequence[selectedResidueIndex + 2].resNum : selectedSequence.sequence[selectedResidueIndex - 1].resNum
-                commandArgs = [
-                    molecule.molNo,
-                    `//${chosenAtom.chain_id}/${start}-${stop}`,
-                    activeMapMolNo
-                ]
-                break
-            case 'HEPTUPLE':
-                start = selectedResidueIndex !== 0 ? selectedSequence.sequence[selectedResidueIndex - 3].resNum : chosenAtom.res_no
-                stop = selectedResidueIndex < selectedSequence.sequence.length - 3 ? selectedSequence.sequence[selectedResidueIndex + 3].resNum : selectedSequence.sequence[selectedResidueIndex - 1].resNum
-                commandArgs = [
-                    molecule.molNo,
-                    `//${chosenAtom.chain_id}/${start}-${stop}`,
                     activeMapMolNo
                 ]
                 break
@@ -68,7 +39,7 @@ export const MoorhenRigidBodyFitButton = (props: moorhen.ContextButtonProps) => 
                     activeMapMolNo
                 ]
                 break
-            case 'ALL':
+            case 'MOLECULE':
                 commandArgs = [
                     molecule.molNo,
                     `//*/*`,

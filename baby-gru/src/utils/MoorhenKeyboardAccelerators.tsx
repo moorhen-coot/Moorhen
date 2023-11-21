@@ -10,7 +10,7 @@ import { libcootApi } from "../types/libcoot";
 import { MoorhenNotification } from "../components/misc/MoorhenNotification";
 import { Dispatch } from "react";
 import { AnyAction } from "@reduxjs/toolkit";
-import { setNotificationContent, clearResidueSelection } from "../store/generalStatesSlice";
+import { setNotificationContent } from "../store/generalStatesSlice";
 import { setHoveredAtom } from "../store/hoveringStatesSlice";
 
 const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, dispatch: Dispatch<AnyAction>) => {
@@ -313,7 +313,6 @@ export const babyGruKeyPress = (
         glRef.current.measuredAtoms = []
         glRef.current.clearMeasureCylinderBuffers()
         glRef.current.drawScene()
-        dispatch( clearResidueSelection() )
         molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
         showShortcutToast && dispatch( setNotificationContent(
             <MoorhenNotification key={guid()} hideDelay={5000}>

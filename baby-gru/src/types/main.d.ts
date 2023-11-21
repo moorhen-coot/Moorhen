@@ -47,6 +47,7 @@ declare module 'moorhen' {
 
     class MoorhenMolecule implements _moorhen.Molecule {
         constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibrary: string)
+        animateRefine(n_cyc: number, n_iteration: number, final_n_cyc?: number): Promise<void>;
         refineResidueRange(chainId: string, start: number, stop: number, ncyc?: number, redraw?: boolean): Promise<void>;
         SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string): Promise<_moorhen.WorkerResponse>;
         deleteCid(cid: string, redraw?: boolean): Promise<{first: number, second: number}>;

@@ -8,16 +8,14 @@ export const MoorhenRefineResiduesButton = (props: moorhen.ContextButtonProps) =
     const [toolTipLabel, setToolTipLabel] = useState<string>("Refine Residues")
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
 
-    const refinementModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'SPHERE', 'BIG_SPHERE', 'CHAIN', 'ALL']
-
     useEffect(() => {
         if (shortCuts) {
-            const shortCut = JSON.parse(shortCuts as string).triple_refine
+            const shortCut = JSON.parse(shortCuts as string).sphere_refine
             setToolTipLabel(`Refine Residues ${getTooltipShortcutLabel(shortCut)}`)
         }
     }, [shortCuts])
 
-    const getCootCommandInput = (selectedMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string) => {
+    const getCootCommandInput = (selectedMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string = 'SPHERE') => {
         return {
             message: 'coot_command',
             returnType: "status",
@@ -32,15 +30,7 @@ export const MoorhenRefineResiduesButton = (props: moorhen.ContextButtonProps) =
         needsMapData={true}
         refineAfterMod={false}
         toolTipLabel={toolTipLabel}
-        popoverSettings={{
-            label: 'Refinement mode',
-            options: refinementModes,
-            getCootCommandInput: getCootCommandInput,
-            defaultValue: props.defaultActionButtonSettings['refine'],
-            setDefaultValue: (newValue: string) => {
-                props.setDefaultActionButtonSettings({ key: 'refine', value: newValue })
-            }
-        }}
+        cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}
         {...props}
     />
 }

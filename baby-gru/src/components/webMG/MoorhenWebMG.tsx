@@ -33,7 +33,7 @@ const intialDefaultActionButtonSettings: moorhen.actionButtonSettings = {
     delete: 'RESIDUE',
     rotateTranslate: 'RESIDUE',
     drag: 'TRIPLE',
-    rigidBodyFit: 'TRIPLE',
+    rigidBodyFit: 'CHAIN',
 }
 
 const actionButtonSettingsReducer = (defaultSettings: moorhen.actionButtonSettings, change: {key: string; value: string}) => {

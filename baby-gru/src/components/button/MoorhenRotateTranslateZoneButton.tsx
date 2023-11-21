@@ -19,7 +19,7 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.ContextButtonPro
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
     const dispatch = useDispatch()
 
-    const rotateTranslateModes = ['ATOM', 'RESIDUE', 'CHAIN', 'MOLECULE']
+    const rotateTranslateModes = ['RESIDUE', 'CHAIN', 'MOLECULE']
 
     useEffect(() => {
         if (shortCuts) {

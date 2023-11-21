@@ -1566,6 +1566,32 @@ export class MoorhenMolecule implements moorhen.Molecule {
     }
 
     /**
+     * Refine a molecule with animation effect
+     * @param {number} n_cyc - The totale number of refinement cycles for each iteration
+     * @param {number} n_iteration - The number of iterations
+     * @param {number} [final_n_cyc=100] - Number of refinement cycles in the last iteration
+     */
+    async animateRefine(n_cyc: number, n_iteration: number, final_n_cyc: number = 100) {
+        for (let i = 0; i <= n_iteration; i++) {
+            const result = await this.commandCentre.current.cootCommand({
+                returnType: 'status_instanced_mesh_pair',
+                command: 'refine',
+                commandArgs: [this.molNo, i !== n_iteration ? n_cyc : final_n_cyc]
+            }, false) as moorhen.WorkerResponse<{ status: number; mesh: libcootApi.InstancedMeshJS[]; }>
+    
+            if (result.data.result.result.status !== -2) {
+                return
+            }
+    
+            if (i !== n_iteration) {
+                await this.drawWithStyleFromMesh('CBs', [result.data.result.result.mesh])
+            }
+        }
+        this.setAtomsDirty(true)
+        await this.fetchIfDirtyAndDraw('CBs')
+    }
+    
+    /**
      * Delete residues in a given CID
      * @param {string} cid - The CID to delete
      * @param {boolean} [redraw=true] - Indicates if the molecule should be redrawn

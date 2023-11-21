@@ -26,28 +26,6 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
     const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
-    const dragModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'SPHERE']
-
-    const animateRefine = async (molecule: moorhen.Molecule, n_cyc: number, n_iteration: number, final_n_cyc: number = 100) => {
-        for (let i = 0; i <= n_iteration; i++) {
-            const result = await props.commandCentre.current.cootCommand({
-                returnType: 'status_instanced_mesh_pair',
-                command: 'refine',
-                commandArgs: [molecule.molNo, i !== n_iteration ? n_cyc : final_n_cyc]
-            }, false) as moorhen.WorkerResponse<{ status: number; mesh: libcootApi.InstancedMeshJS[]; }>
-
-            if (result.data.result.result.status !== -2) {
-                return
-            }
-
-            if (i !== n_iteration) {
-                await molecule.drawWithStyleFromMesh('CBs', [result.data.result.result.mesh])
-            }
-        }
-        molecule.setAtomsDirty(true)
-        await molecule.fetchIfDirtyAndDraw('CBs')
-    }
-
     const startDragging = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, dragMode: string) => {
         const selectedSequence = molecule.sequences.find(sequence => sequence.chain === chosenAtom.chain_id)
         let selectedResidueIndex: number = -1;
@@ -123,7 +101,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
             }))
             moltenFragmentRef.current.setAtomsDirty(true)
             await moltenFragmentRef.current.fetchIfDirtyAndDraw('CBs')
-            await animateRefine(moltenFragmentRef.current, 10, 5, 10)
+            await moltenFragmentRef.current.animateRefine(10, 5, 10)
             props.glRef.current.setDraggableMolecule(newMolecule)
         }, 1)
     }
@@ -208,9 +186,9 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
                     command: 'clear_target_position_restraints',
                     commandArgs: [moltenFragmentRef.current.molNo]
                 }, false)
-                await animateRefine(moltenFragmentRef.current, 10, 5)
+                await moltenFragmentRef.current.animateRefine(10, 5)
             } else {
-                await animateRefine(moltenFragmentRef.current, -1, 1)
+                await moltenFragmentRef.current.animateRefine(-1, 1)
             }
             busy.current = false
         } else {
@@ -226,7 +204,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
             command: 'clear_target_position_restraints',
             commandArgs: [moltenFragmentRef.current.molNo]
         }, false)
-        await animateRefine(moltenFragmentRef.current, 10, 5)
+        await moltenFragmentRef.current.animateRefine(10, 5)
         busy.current = false
     }
 
@@ -272,7 +250,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
         </MoorhenNotification>
     )
 
-    const nonCootCommand = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string) => {
+    const nonCootCommand = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string = 'SPHERE') => {
         await startDragging(molecule, chosenAtom, selectedMode)
         props.setShowOverlay(false)
         document.addEventListener('atomDragged', atomDraggedCallback)
@@ -289,15 +267,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
         toolTipLabel="Drag atoms"
         refineAfterMod={false}
         needsMapData={true}
-        popoverSettings={{
-            label: 'Drag mode...',
-            options: dragModes,
-            nonCootCommand: nonCootCommand,
-            defaultValue: props.defaultActionButtonSettings['drag'],
-            setDefaultValue: (newValue: string) => {
-                props.setDefaultActionButtonSettings({ key: 'drag', value: newValue })
-            }
-        }}
+        nonCootCommand={nonCootCommand}
         {...props}
     />
 }
