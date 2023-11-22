@@ -252,7 +252,7 @@ describe('Testing molecules_container_js', () => {
         expect(atomCount).toBe(14)
     })
 
-    test('Test ligand methods', () => {
+    test('Test fit_ligand_right_here 1', () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         
         const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', -999999)
@@ -267,6 +267,29 @@ describe('Testing molecules_container_js', () => {
 
         const useConformers = false
         const conformerCount = 10
+        const coordMolNo = molecules_container.read_pdb('./5a3h_no_ligand.pdb')
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
+        const result = molecules_container.fit_ligand_right_here(
+            coordMolNo, mapMolNo, ligandMolNo, ...coords, 1., useConformers, conformerCount
+        )
+        expect(result.size()).toBeGreaterThan(0)
+    })
+
+    test('Test fit_ligand_right_here 2', () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        
+        const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', -999999)
+        expect(result_import_dict).toBe(1)
+
+        const coords = [0, 0, 0]
+        const tlc = 'LZA'
+        const ligandMolNo = molecules_container.get_monomer_and_position_at(
+            tlc, -999999, ...coords
+        )
+        expect(ligandMolNo).toBe(0)
+
+        const useConformers = true
+        const conformerCount = 50
         const coordMolNo = molecules_container.read_pdb('./5a3h_no_ligand.pdb')
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
         const result = molecules_container.fit_ligand_right_here(
