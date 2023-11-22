@@ -2,8 +2,7 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { ChevronRightOutlined, ExpandMoreOutlined } from "@mui/icons-material";
-import TreeView from '@mui/lab/TreeView';
-import TreeItem from '@mui/lab/TreeItem';
+import { TreeView, TreeItem } from '@mui/x-tree-view';
 import { useSelector } from 'react-redux';
 
 export const MoorhenCentreOnLigandMenuItem = (props: { 

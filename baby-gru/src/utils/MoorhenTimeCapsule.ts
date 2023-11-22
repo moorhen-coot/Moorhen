@@ -48,7 +48,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         this.modificationCount = 0
         this.modificationCountBackupThreshold = 5
         this.maxBackupCount = 10
-        this.version = 'v14'
+        this.version = 'v15'
         this.disableBackups = false
         this.storageInstance = null
         this.onIsBusyChange = null
@@ -216,7 +216,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                 uniqueId: map.uniqueId,
                 mapData: mapDataPromises[index],
                 reflectionData: reflectionDataPromises[index],
-                cootContour: map.cootContour,
+                isVisible: map.isVisible,
                 contourLevel: map.contourLevel,
                 radius: map.mapRadius,
                 colour: map.mapColour,

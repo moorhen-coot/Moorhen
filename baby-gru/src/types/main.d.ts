@@ -9,6 +9,9 @@ declare module 'moorhen' {
     let MoorhenContainer: any;
     module.exports = MoorhenContainer;
 
+    let ErrorBoundary: any;
+    module.exports = ErrorBoundary;
+
     let MoorhenDraggableModalBase: any;
     module.exports = MoorhenDraggableModalBase;
 
@@ -186,7 +189,7 @@ declare module 'moorhen' {
         mapRadius: number;
         mapColour: [number, number, number, number];
         webMGContour: boolean;
-        cootContour: boolean;
+        isVisible: boolean;
         displayObjects: any;
         litLines: boolean;
         solid: boolean;

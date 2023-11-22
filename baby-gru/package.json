@@ -112,6 +112,7 @@
     "@mui/icons-material": "^5.10.9",
     "@mui/lab": "^5.0.0-alpha.140",
     "@mui/material": "^5.10.10",
+    "@mui/x-tree-view": "^6.17.0",
     "@reduxjs/toolkit": "^1.9.7",
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react": "^13.2.0",

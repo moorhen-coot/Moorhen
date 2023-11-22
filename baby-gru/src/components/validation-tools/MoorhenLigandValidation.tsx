@@ -32,7 +32,7 @@ export const MoorhenLigandValidation = (props: Props) => {
             const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
             if(selectedMolecule) {
                 setCardList(
-                    <MoorhenLigandList commandCentre={props.commandCentre} molecule={selectedMolecule} glRef={props.glRef}/>    
+                    <MoorhenLigandList commandCentre={props.commandCentre} molecule={selectedMolecule} glRef={props.glRef} height={'100%'}/>    
                 )
             } else {
                 setCardList(null)    
@@ -72,7 +72,7 @@ export const MoorhenLigandValidation = (props: Props) => {
                         </Row>
                     </Form.Group>
                 </Form>
-                <div style={{overflowY:'auto', overflowX: 'hidden', height:'100%', paddingTop:'0.5rem', paddingLeft:'1rem', paddingRight:'1rem'}} >
+                <div style={{overflowY: 'auto', overflowX: 'hidden', height: '100%', paddingTop: '0.5rem', paddingLeft: '1rem', paddingRight: '1rem'}} >
                     {cardList}
                 </div>
             </Fragment>

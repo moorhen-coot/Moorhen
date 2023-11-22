@@ -388,7 +388,7 @@ export namespace moorhen {
         mapRadius: number;
         mapColour: [number, number, number, number];
         webMGContour: boolean;
-        cootContour: boolean;
+        isVisible: boolean;
         displayObjects: any;
         litLines: boolean;
         solid: boolean;
@@ -435,7 +435,7 @@ export namespace moorhen {
         uniqueId: string;
         mapData: Uint8Array;
         reflectionData: Uint8Array;
-        cootContour: boolean;
+        isVisible: boolean;
         contourLevel: number;
         radius: number;
         colour: [number, number, number, number];
@@ -541,7 +541,7 @@ export namespace moorhen {
     type NewMapContourEvent = CustomEvent<{
         molNo: number;
         mapRadius: number;
-        cootContour: boolean;
+        isVisible: boolean;
         contourLevel: number;
         mapColour: [number, number, number, number],
         litLines: boolean;
