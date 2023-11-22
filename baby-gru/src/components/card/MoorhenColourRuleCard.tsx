@@ -25,8 +25,11 @@ export const MoorhenColourRuleCard = (props: {
 
     const { index, molecule, rule, urlPrefix, setRuleList } = props
     
-    const [r, g, b]: number[] = hexToRgb(rule.color).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
-
+    let [r, g, b]: number[] = []
+    if (!rule.isMultiColourRule) {
+        [r, g, b] = hexToRgb(rule.color).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+    }
+    
     const redrawIfDirty = () => {
         if (isDirty.current) {
             busyRedrawing.current = true
