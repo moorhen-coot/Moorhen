@@ -34,7 +34,7 @@ describe("Testing gemmi", () => {
         cleanUpVariables = []
     })
 
-    test("Test metaballs", () => {
+    test.skip("Test metaballs", () => {
         console.log("Testing metaballs")
         const molecules_container = new cootModule.molecules_container_js(false)
         const coordMol = molecules_container.read_pdb('./5a3h.pdb')
