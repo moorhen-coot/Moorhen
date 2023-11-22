@@ -1,5 +1,6 @@
 # Moorhen
 [![NPM Version](https://badge.fury.io/js/moorhen.svg?style=flat)](https://npmjs.org/package/moorhen)
+[![Inline docs](https://github.com/moorhen-coot/MoorhenOrgBuild/actions/workflows/build-and-deploy.yml/badge.svg)](https://moorhen.org)
 [![Inline docs](https://github.com/moorhen-coot/moorhen/actions/workflows/js-documentation.yml/badge.svg)](https://moorhen-coot.github.io/Moorhen/)
 [![Inline docs](https://github.com/moorhen-coot/wiki/actions/workflows/jekyll.yml/badge.svg)](https://moorhen-coot.github.io/wiki/)
 
