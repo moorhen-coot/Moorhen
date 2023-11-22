@@ -164,7 +164,7 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
 
         const [_, insCode, chainId, resInfo, atomName]   = hoveredAtom.cid.split('/')
 
-        if (chainId !== sequence.chain || !resInfo) {
+        if (chainId !== sequence.chain || !resInfo || hoveredAtom.molecule.molNo !== molecule.molNo) {
             return
         }
         
