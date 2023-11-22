@@ -19,7 +19,6 @@ export const MoorhenFitLigandRightHereMenuItem = (props: {
 }) => {
 
     const dispatch = useDispatch()
-    const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const maps = useSelector((state: moorhen.State) => state.maps)
 
@@ -35,8 +34,7 @@ export const MoorhenFitLigandRightHereMenuItem = (props: {
         <MoorhenMapSelect maps={maps} label="Map" ref={mapSelectRef} />
         <MoorhenMoleculeSelect molecules={molecules} label="Protein molecule" allowAny={false} ref={intoMoleculeRef} />
         <MoorhenMoleculeSelect molecules={molecules} label="Ligand molecule" allowAny={false} ref={ligandMoleculeRef} filterFunction={(molecule: moorhen.Molecule) => molecule.isLigand} />
-        {devMode && 
-         <Form.Check
+        <Form.Check
             style={{margin: '0.5rem'}} 
             type="switch"
             checked={useConformers}
@@ -44,7 +42,7 @@ export const MoorhenFitLigandRightHereMenuItem = (props: {
                 useConformersRef.current = !useConformers
                 setUseConformers(!useConformers)
             }}
-            label="Use conformers"/>}
+            label="Use conformers"/>
         {useConformers && <MoorhenNumberForm ref={conformerCountRef} label="No. of conformers" defaultValue={10}/> }
     </>
 
