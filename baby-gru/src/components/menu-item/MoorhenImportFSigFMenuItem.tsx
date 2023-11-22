@@ -73,7 +73,7 @@ export const MoorhenImportFSigFMenuItem = (props:{
                         "detail": {
                             molNo: currentMap.molNo,
                             mapRadius: currentMap.mapRadius,
-                            cootContour: currentMap.cootContour,
+                            isVisible: currentMap.isVisible,
                             contourLevel: newContourLevel,
                             mapColour: currentMap.mapColour,
                             litLines: currentMap.litLines,

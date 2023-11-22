@@ -268,7 +268,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         props.map.contourLevel = mapContourLevel
         props.map.mapRadius = mapRadius
         isDirty.current = true
-        if (props.map.cootContour) {
+        if (props.map.isVisible) {
             if (!busyContouring.current) {
                 doContourIfDirty()
             }
@@ -277,7 +277,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
 
     const handleWheelContourLevelCallback = useCallback((evt: moorhen.WheelContourLevelEvent) => {
         let newMapContourLevel: number
-        if (props.map.cootContour && props.map.molNo === activeMap.molNo) {
+        if (props.map.isVisible && props.map.molNo === activeMap.molNo) {
             if (evt.detail.factor > 1) {
                 newMapContourLevel = mapContourLevel + contourWheelSensitivityFactor
             } else {
@@ -294,17 +294,17 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                 </MoorhenNotification>
             ))
         }
-    }, [mapContourLevel, mapRadius, activeMap?.molNo, props.map.molNo, props.map.cootContour])
+    }, [mapContourLevel, mapRadius, activeMap?.molNo, props.map.molNo, props.map.isVisible])
 
     const handleRadiusChangeCallback = useCallback((evt: moorhen.MapRadiusChangeEvent) => {
-        if (props.map.cootContour && props.map.molNo === activeMap.molNo) {
+        if (props.map.isVisible && props.map.molNo === activeMap.molNo) {
             setMapRadius(mapRadius + evt.detail.factor)
         }
-    }, [mapRadius, activeMap?.molNo, props.map.molNo, props.map.cootContour])
+    }, [mapRadius, activeMap?.molNo, props.map.molNo, props.map.isVisible])
 
     const handleNewMapContour = useCallback((evt: moorhen.NewMapContourEvent) => {
         if (props.map.molNo === evt.detail.molNo) {
-            setCootContour(evt.detail.cootContour)
+            setCootContour(evt.detail.isVisible)
             setMapContourLevel(evt.detail.contourLevel)
             setMapLitLines(evt.detail.litLines)
             setMapRadius(evt.detail.mapRadius)
@@ -337,14 +337,14 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     }, [mapOpacity])
 
     useEffect(() => {
-        setCootContour(props.map.cootContour)
+        setCootContour(props.map.isVisible)
         nextOrigin.current = props.glRef.current.origin.map(coord => -coord)
         props.map.litLines = mapLitLines
         props.map.solid = mapSolid
         props.map.contourLevel = mapContourLevel
         props.map.mapRadius = mapRadius
         isDirty.current = true
-        if (props.map.cootContour && !busyContouring.current) {
+        if (props.map.isVisible && !busyContouring.current) {
             doContourIfDirty()
         }
 

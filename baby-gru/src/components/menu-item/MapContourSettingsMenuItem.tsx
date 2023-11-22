@@ -65,7 +65,11 @@ export const MapContourSettingsMenuItem = (props: {
                                 command: 'shim_replace_map_by_mtz_from_file',
                                 commandArgs: [map.molNo, reflectionData.data.result.mtzData, map.selectedColumns]
                             }, true) as moorhen.WorkerResponse<number>
-                            return map.doCootContour(...props.glRef.current.origin.map(coord => -coord) as [number, number, number], map.mapRadius, map.contourLevel)
+                            if (map.isVisible) {
+                                return map.doCootContour(...props.glRef.current.origin.map(coord => -coord) as [number, number, number], map.mapRadius, map.contourLevel)
+                            } else {
+                                return Promise.resolve()
+                            }
                         })
                     )
                 }

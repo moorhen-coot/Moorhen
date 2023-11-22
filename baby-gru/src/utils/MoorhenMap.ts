@@ -51,7 +51,7 @@ export class MoorhenMap implements moorhen.Map {
     mapRadius: number
     mapColour: [number, number, number, number]
     webMGContour: boolean
-    cootContour: boolean
+    isVisible: boolean
     displayObjects: any
     litLines: boolean
     solid: boolean
@@ -82,7 +82,7 @@ export class MoorhenMap implements moorhen.Map {
         this.mapRadius = 13
         this.mapColour = [0.3, 0.3, 1.0, 1.0]
         this.webMGContour = false
-        this.cootContour = true
+        this.isVisible = true
         this.displayObjects = { Coot: [] }
         this.litLines = false
         this.solid = false
@@ -371,7 +371,7 @@ export class MoorhenMap implements moorhen.Map {
      * Contour the map and make it live
      */
     makeCootLive(): void {
-        this.cootContour = true
+        this.isVisible = true
         this.doCootContour(...this.glRef.current.origin.map(coord => -coord) as [number, number, number], this.mapRadius, this.contourLevel)
         this.glRef.current.drawScene()
     }
@@ -380,9 +380,8 @@ export class MoorhenMap implements moorhen.Map {
      * Hide the map
      */
     makeCootUnlive(): void {
-        const $this = this
-        $this.cootContour = false
-        $this.clearBuffersOfStyle('Coot')
+        this.isVisible = false
+        this.clearBuffersOfStyle('Coot')
         this.glRef.current.buildBuffers();
         this.glRef.current.drawScene();
     }

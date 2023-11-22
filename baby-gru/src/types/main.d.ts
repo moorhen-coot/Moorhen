@@ -186,7 +186,7 @@ declare module 'moorhen' {
         mapRadius: number;
         mapColour: [number, number, number, number];
         webMGContour: boolean;
-        cootContour: boolean;
+        isVisible: boolean;
         displayObjects: any;
         litLines: boolean;
         solid: boolean;
