@@ -16,7 +16,8 @@ jobs:
            mv Moorhen ccp4_wasm
        - name: Install dependencies 
          working-directory: /home/runner/work/Moorhen/       
-         run: |    
+         run: |
+           sudo apt-get update -y
            sudo apt-get install -y bzr nodejs npm                  
            cd /home/runner/work/Moorhen/
            git clone https://github.com/emscripten-core/emsdk.git
