@@ -216,7 +216,7 @@ export const MoorhenLigandList = (props: {
                                                                 }}/>
                                                                 <Form.Check
                                                                     key={keyval}
-                                                                    label={"Validation"}
+                                                                    label={"Geom. Validation"}
                                                                     type="checkbox"
                                                                     checked={showState[keyval]}
                                                                     style={{'margin': '0.5rem'}}
