@@ -18,7 +18,7 @@ jobs:
         with:
           node-version: 16
       - name: Update mirrors
-        working-directory: /home/runner/work/MoorhenOrgBuild/MoorhenOrgBuild/
+        working-directory: /home/runner/work/Moorhen/
         run: sudo apt-get update -y
       - name: Install dependencies 
         working-directory: /home/runner/work/Moorhen/
