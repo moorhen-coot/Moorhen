@@ -496,7 +496,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 commandArgs: [coordData, this.name],
             }, true)
             this.molNo = response.data.result.result
-            this.checkIsLigand()
             await Promise.all([
                 this.getNumberOfAtoms(),
                 this.loadMissingMonomers(),
@@ -623,7 +622,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
         ])
         try {
             this.updateGemmiStructure(pdbString)
-            this.checkIsLigand()
         }
         catch (err) {
             console.log(err)
@@ -1336,6 +1334,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
 
         this.ligands = ligandList
+        this.checkIsLigand()
     }
 
     /**
@@ -1344,7 +1343,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {Promise<moorhen.AtomInfo[]>} JS objects containing atom information
      */
     async gemmiAtomsForCid(cid: string, omitExcludedCids: boolean = false): Promise<moorhen.AtomInfo[]> {
-        if (this.atomsDirty) {
+        if (this.atomsDirty || this.gemmiStructure.isDeleted()) {
             await this.updateAtoms()
         }
         
