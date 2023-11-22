@@ -62,7 +62,7 @@
       ]
     }
   },
-"dependencies": { },
+  "dependencies": { },
   "scripts": {
     "create-version": "npx genversion -e -p ./package.json -d -s ./src/version.js",
     "transpile-ts-worker": "npx tsc --module es2015 --lib webworker --skipLibCheck public/baby-gru/CootWorker.ts && sed -i.bak '/export {}/d' public/baby-gru/CootWorker.js && rm public/baby-gru/CootWorker.js.bak",
