@@ -62,7 +62,7 @@
       ]
     }
   },
-  "dependencies": { },
+"dependencies": { },
   "scripts": {
     "create-version": "npx genversion -e -p ./package.json -d -s ./src/version.js",
     "transpile-ts-worker": "npx tsc --module es2015 --lib webworker --skipLibCheck public/baby-gru/CootWorker.ts && sed -i.bak '/export {}/d' public/baby-gru/CootWorker.js && rm public/baby-gru/CootWorker.js.bak",
@@ -112,6 +112,7 @@
     "@mui/icons-material": "^5.10.9",
     "@mui/lab": "^5.0.0-alpha.140",
     "@mui/material": "^5.10.10",
+    "@mui/x-tree-view": "^6.17.0",
     "@reduxjs/toolkit": "^1.9.7",
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react": "^13.2.0",
