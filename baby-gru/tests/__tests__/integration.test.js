@@ -34,11 +34,14 @@ describe("Testing gemmi", () => {
         cleanUpVariables = []
     })
 
-    test.skip("Test metaballs", () => {
+    test("Test metaballs", () => {
         console.log("Testing metaballs")
         const molecules_container = new cootModule.molecules_container_js(false)
         const coordMol = molecules_container.read_pdb('./5a3h.pdb')
-        const mesh = molecules_container.DrawMoorhenMetaBalls(coordMol, "B/1-2")
+        const gridSize = 0.15
+        const radius = 0.65
+        const isoLevel = 1.8
+        const mesh = molecules_container.DrawMoorhenMetaBalls(coordMol, "B/1-2", gridSize, radius, isoLevel)
         console.log("No. of vertices:")
         console.log(mesh.vertices.size())
         console.log("No. of triangles:")
