@@ -265,6 +265,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             case 'restraints':
                 objects = await this.getRestraintsMeshBuffers()
                 break
+            case 'MetaBalls':
+                objects = await this.getMetaBallBuffers()
+                break
             default:
                 console.log(`Unrecognised style ${this.style}...`)
                 break
@@ -626,6 +629,16 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         } catch (err) {
             console.log(err)
         }
+    }
+
+    async getMetaBallBuffers() {
+        const response = await this.commandCentre.current.cootCommand({
+                returnType: "mesh_perm",
+                command: "DrawMoorhenMetaBalls",
+                commandArgs: [this.parentMolecule.molNo, this.cid, 0.2, 0.65, 1.8]
+        }, false) as moorhen.WorkerResponse<libcootApi.SimpleMeshJS>;
+        const objects = [response.data.result.result];
+        return objects
     }
 
     async getRamachandranBallBuffers() {
