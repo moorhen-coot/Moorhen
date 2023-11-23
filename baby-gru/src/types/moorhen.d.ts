@@ -28,6 +28,7 @@ export namespace moorhen {
         resNum: string;
         modelName: string;
         cid: string;
+        svg?: string;
     }
     
     type Sequence = {

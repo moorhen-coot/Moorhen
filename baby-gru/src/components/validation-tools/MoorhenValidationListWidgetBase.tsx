@@ -31,6 +31,7 @@ export const MoorhenValidationListWidgetBase = (props: {
     const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const maps = useSelector((state: moorhen.State) => state.maps)
+    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
 
     const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedModel(parseInt(evt.target.value))

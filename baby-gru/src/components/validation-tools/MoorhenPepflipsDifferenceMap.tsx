@@ -71,7 +71,6 @@ export const MoorhenPepflipsDifferenceMap = (props: Props) => {
     }
     
     const getCards = (selectedModel: number, selectedMap: number, newPepflips: libcootApi.InterestingPlaceDataJS[]): JSX.Element[] => {
-
         return newPepflips.map((flip, index) => {
             return <Card key={index} style={{marginTop: '0.5rem'}}>
                     <Card.Body style={{padding:'0.5rem'}}>
@@ -95,7 +94,6 @@ export const MoorhenPepflipsDifferenceMap = (props: Props) => {
                     </Card.Body>
                 </Card>
         })
-
     }
 
     return <MoorhenValidationListWidgetBase 

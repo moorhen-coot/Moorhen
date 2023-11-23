@@ -5,6 +5,7 @@ import { MenuItem } from "@mui/material";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useSelector } from "react-redux";
+import { getLigandSVG } from "../../utils/MoorhenUtils";
 
 export const MoorhenLigandList = (props: { 
     setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -25,77 +26,6 @@ export const MoorhenLigandList = (props: {
         modelName: string;
     }[]>(null)
 
-    const getLigandSVG = async (imol: number, compId: string): Promise<string> => {
-        const result = await props.commandCentre.current.cootCommand({
-            returnType: "string",
-            command: 'get_svg_for_residue_type',
-            commandArgs: [imol, compId, false, isDark],
-        }, false) as moorhen.WorkerResponse<string>
-        
-        const parser = new DOMParser()
-        let theText = result.data.result.result
-        let doc = parser.parseFromString(theText, "image/svg+xml")
-        let xmin = 999
-        let ymin = 999
-        let xmax = -999
-        let ymax = -999
-        
-        let lines = doc.getElementsByTagName("line")
-        for (let l of lines) {
-            const x1 = parseFloat(l.getAttribute("x1"))
-            const y1 = parseFloat(l.getAttribute("y1"))
-            const x2 = parseFloat(l.getAttribute("x2"))
-            const y2 = parseFloat(l.getAttribute("y2"))
-            if(x1>xmax) xmax = x1
-            if(x1<xmin) xmin = x1
-            if(y1>ymax) ymax = y1
-            if(y1<ymin) ymin = y1
-            if(x2>xmax) xmax = x2
-            if(x2<xmin) xmin = x2
-            if(y2>ymax) ymax = y2
-            if(y2<ymin) ymin = y2
-        }
-        
-        let texts = doc.getElementsByTagName("text");
-        for (let t of texts) {
-            const x = parseFloat(t.getAttribute("x"))
-            const y = parseFloat(t.getAttribute("y"))
-            if(x>xmax) xmax = x
-            if(x<xmin) xmin = x
-            if(y>ymax) ymax = y
-            if(y<ymin) ymin = y
-        }
-        
-        let polygons = doc.getElementsByTagName("polygon");
-        for (let poly of polygons) {
-            const points = poly.getAttribute("points").trim().split(" ")
-            for (const point of points) {
-                const xy = point.split(",")
-                const x = parseFloat(xy[0])
-                const y = parseFloat(xy[1])
-                if(x>xmax) xmax = x
-                if(x<xmin) xmin = x
-                if(y>ymax) ymax = y
-                if(y<ymin) ymin = y
-            }
-        }
-
-        xmin -= 20
-        ymin -= 20
-        xmax += 30
-        ymax -= ymin - 10
-        let svgs = doc.getElementsByTagName("svg")
-        const viewBoxStr = xmin+" "+ymin+" "+xmax+" "+ymax
-        for (let item of svgs) {
-            item.setAttribute("viewBox" , viewBoxStr)
-            item.setAttribute("width" , "100%")
-            item.setAttribute("height" , "100%")
-            theText = item.outerHTML
-        }
-        
-        return theText 
-    }
-
     useEffect(() => {
         async function updateLigandList() {
             props.setBusy(true)
@@ -115,7 +45,7 @@ export const MoorhenLigandList = (props: {
             }[] = []
 
             for (const ligand of props.molecule.ligands) {
-                const ligandSVG = await getLigandSVG(props.molecule.molNo, ligand.resName)
+                const ligandSVG = await getLigandSVG(props.commandCentre, props.molecule.molNo, ligand.resName, isDark)
                 ligandList.push({svg: ligandSVG, ...ligand})
             }
 
