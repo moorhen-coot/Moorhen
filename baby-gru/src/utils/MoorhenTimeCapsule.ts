@@ -1,5 +1,6 @@
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
+import { guid } from "./MoorhenUtils";
 
 export const getBackupLabel = (key: moorhen.backupKey): string => {
     const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' } as const
@@ -48,7 +49,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         this.modificationCount = 0
         this.modificationCountBackupThreshold = 5
         this.maxBackupCount = 10
-        this.version = 'v15'
+        this.version = 'v16'
         this.disableBackups = false
         this.storageInstance = null
         this.onIsBusyChange = null
@@ -274,6 +275,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             const key: moorhen.backupKey = {
                 dateTime: `${Date.now()}`, 
                 type: 'automatic', 
+                serNo: guid(),
                 molNames: this.moleculesRef.current.map(mol => mol.name),
                 mapNames: this.mapsRef.current.map(map => map.uniqueId),
                 mtzNames: this.mapsRef.current.filter(map => map.hasReflectionData).map(map => map.associatedReflectionFileName)

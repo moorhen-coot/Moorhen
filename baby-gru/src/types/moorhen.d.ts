@@ -415,6 +415,7 @@ export namespace moorhen {
         label?: string;
         dateTime: string;
         type: string;
+        serNo: string | number;
         molNames: string[];
         mapNames?: string[];
         mtzNames?: string[];

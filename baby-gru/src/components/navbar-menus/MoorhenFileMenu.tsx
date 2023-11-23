@@ -126,6 +126,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         const key: moorhen.backupKey = {
             dateTime: `${Date.now()}`,
             type: 'manual',
+            serNo: guid(),
             molNames: session.moleculeData.map(mol => mol.name),
             mapNames: session.mapData.map(map => map.uniqueId),
             mtzNames: session.mapData.filter(map => map.hasReflectionData).map(map => map.associatedReflectionFileName)
