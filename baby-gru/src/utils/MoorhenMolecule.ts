@@ -520,7 +520,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         if (!fileContent.includes('data_')) {
             try {
-                response = await fetch(`https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/${newTlc.toUpperCase()}.cif`);
+                const url = `https://raw.githubusercontent.com/MonomerLibrary/monomers/master/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`
+                response = await fetch(url);
                 if (response.ok) {
                     dictContent = await response.text();
                 } else {
