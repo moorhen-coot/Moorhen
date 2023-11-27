@@ -300,7 +300,91 @@ describe("Testing MoorhenMolecule", () => {
               label: '/1/A/31(GLY)/CA'
             }
         ])
-        expect(gemmiAtoms.map(atomInfo => atomInfo.label)).toEqual([ "/1/A/31(GLY)/CA" ])
+    })
+
+    test("Test gemmiAtomsForCid 3", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const f = jest.spyOn(molecule, 'updateAtoms')
+        await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
+        molecule.setAtomsDirty(true)
+        const gemmiAtoms = await molecule.gemmiAtomsForCid('//A/30-31/CA||//A/60-61/CA')
+        expect(f).toHaveBeenCalled()
+        expect(gemmiAtoms).toHaveLength(4)
+        expect(gemmiAtoms.map(atomInfo => atomInfo.label)).toEqual([ "/1/A/30(LYS)/CA", "/1/A/31(GLY)/CA", "/1/A/60(VAL)/CA", "/1/A/61(PHE)/CA" ])
+    })
+
+    test("Test gemmiAtomsForCid 4", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const f = jest.spyOn(molecule, 'updateAtoms')
+        await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
+        molecule.setAtomsDirty(true)
+        await molecule.hideCid("/*/A/29-30/*")
+        await molecule.hideCid("/*/A/59-60/*")
+        const gemmiAtoms = await molecule.gemmiAtomsForCid('//A/30-31/CA||//A/60-61/CA', true)
+        expect(f).toHaveBeenCalled()
+        expect(gemmiAtoms).toHaveLength(2)
+        expect(gemmiAtoms).toEqual([
+            {
+              res_name: 'GLY',
+              res_no: '31',
+              mol_name: '1',
+              chain_id: 'A',
+              pos: [ 70.995, 43.686, 22.449 ],
+              x: 70.995,
+              y: 43.686,
+              z: 22.449,
+              charge: 0,
+              element: 'C',
+              symbol: 'C',
+              tempFactor: 9.109999656677246,
+              serial: 213,
+              name: 'CA',
+              has_altloc: false,
+              alt_loc: "",
+              label: '/1/A/31(GLY)/CA'
+            },
+            {
+                alt_loc: "",
+                chain_id: "A",
+                charge: 0,
+                element: "C",
+                has_altloc: false,
+                label: "/1/A/61(PHE)/CA",
+                mol_name: "1",
+                name: "CA",
+                pos: [
+                    66.013,
+                    44.486,
+                    20.155,
+                ],
+                res_name: "PHE",
+                res_no: "61",
+                serial: 475,
+                symbol: "C",
+                tempFactor: 8.699999809265137,
+                x: 66.013,
+                y: 44.486,
+                z: 20.155,
+            }
+        ])
     })
 
     test("Test parseSequences", async () => {
@@ -359,7 +443,7 @@ describe("Testing MoorhenMolecule", () => {
         expect(molecule.ligands).toHaveLength(0)
     })
 
-    test("Test getNeighborResiduesCids", async () => {
+    test("Test getNeighborResiduesCids 1", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
@@ -374,6 +458,63 @@ describe("Testing MoorhenMolecule", () => {
         
         const result = await molecule.getNeighborResiduesCids('//A/33/CA', 3)
         expect(result).toEqual(['//A/32-34/*'])
+    })
+
+    test("Test getNeighborResiduesCids 2", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl, 'mol-test')
+        
+        const result = await molecule.getNeighborResiduesCids('//A/188/CA', 7)
+        expect(result).toEqual([
+            "//A/147-147/*",
+            "//A/152-152/*",
+            "//A/183-190/*",
+            "//A/197-197/*",
+            "//A/939-939/*",
+            "//A/965-965/*",
+            "//A/971-971/*",
+            "//A/995-995/*",
+            "//A/1011-1011/*",
+            "//A/1037-1037/*",
+            "//A/1042-1042/*",
+            "//A/1132-1133/*",
+            "//A/1149-1149/*",
+            "//A/1163-1163/*",
+            "//A/1198-1198/*",
+            "//A/1208-1208/*"
+        ])
+    })
+    
+    test("Test getNeighborResiduesCids 3", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl, 'mol-test')
+        
+        const result = await molecule.getNeighborResiduesCids('//A/30-33/CA', 5)
+        expect(result).toEqual([
+            "//A/29-34/*",
+            "//A/58-62/*",
+            "//A/259-261/*",
+            "//A/300-300/*",
+            "//A/1044-1044/*"
+        ])
     })
 
     test("Test checkIsLigand", async () => {

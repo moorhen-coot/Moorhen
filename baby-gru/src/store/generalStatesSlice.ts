@@ -12,7 +12,7 @@ export const generalStatesSlice = createSlice({
     activeMap: null,
     theme: 'flatly',
     viewOnly: false,
-    residueSelection: { molecule: null, first: null, second: null, cid: null } as moorhen.ResidueSelection,
+    residueSelection: { molecule: null, first: null, second: null, cid: null, isMultiCid: false } as moorhen.ResidueSelection,
     isChangingRotamers: false,
     isDraggingAtoms: false,
     isRotatingAtoms: false
@@ -52,7 +52,7 @@ export const generalStatesSlice = createSlice({
         return {...state, devMode: action.payload}
     },
     clearResidueSelection: (state) => {
-      return {...state, residueSelection: { molecule: null, first: null, second: null, cid: null }}
+      return {...state, residueSelection: { molecule: null, first: null, second: null, cid: null, isMultiCid: false }}
     },
     setResidueSelection: (state, action: {payload: moorhen.ResidueSelection, type: string}) => {
       return {...state, residueSelection: action.payload}

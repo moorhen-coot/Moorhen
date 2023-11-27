@@ -32,7 +32,7 @@ export const MoorhenMergeMoleculesMenuItem = (props: {
         }
         await toMolecule.mergeMolecules(otherMolecules, true)
         props.setPopoverIsShown(false)
-        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: toMolecule.molNo } })
+        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { modifiedMolecule: toMolecule.molNo } })
         document.dispatchEvent(scoresUpdateEvent)
     }, [toRef.current, fromRef.current, molecules, props.fromMolNo, props.glRef])
 

@@ -301,52 +301,99 @@ struct AtomInfo {
     std::string label;
 };
 
-// excluded_cids is a string of CID selections separated with ||
-std::vector<AtomInfo> get_atom_info_for_selection(const gemmi::Structure &Structure, const std::string &cid, const std::string &excluded_cids) {
-
-    std::vector<gemmi::Selection> excluded_selections_vec;    
-    if (!excluded_cids.empty()) {
-        std::istringstream stream(excluded_cids);
-        std::string token;
-        while (std::getline(stream, token, '|')) {
-            gemmi::Selection sele(token);
-            excluded_selections_vec.push_back(sele);
+bool selection_vector_matches_model(const std::vector<gemmi::Selection> &selections_vec, const gemmi::Model &model) {
+    bool is_match = false;
+    for (int selectionIndex = 0; selectionIndex < selections_vec.size(); selectionIndex++) {
+        gemmi::Selection selection = selections_vec[selectionIndex];
+        if (selection.matches(model)) {
+            is_match = true;
+            break;
         }
     }
+    return is_match;
+}
 
-    const gemmi::Selection Selection(cid);
+bool selection_vector_matches_chain(const std::vector<gemmi::Selection> &selections_vec, const gemmi::Chain &chain) {
+    bool is_match = false;
+    for (int selectionIndex = 0; selectionIndex < selections_vec.size(); selectionIndex++) {
+        gemmi::Selection selection = selections_vec[selectionIndex];
+        if (selection.matches(chain)) {
+            is_match = true;
+            break;
+        }
+    }
+    return is_match;
+}
+
+bool selection_vector_matches_residue(const std::vector<gemmi::Selection> &selections_vec, const gemmi::Residue &residue) {
+    bool is_match = false;
+    for (int selectionIndex = 0; selectionIndex < selections_vec.size(); selectionIndex++) {
+        gemmi::Selection selection = selections_vec[selectionIndex];
+        if (selection.matches(residue)) {
+            is_match = true;
+            break;
+        }
+    }
+    return is_match;
+}
+
+bool selection_vector_matches_atom(const std::vector<gemmi::Selection> &selections_vec, const gemmi::Atom &atom) {
+    bool is_match = false;
+    for (int selectionIndex = 0; selectionIndex < selections_vec.size(); selectionIndex++) {
+        gemmi::Selection selection = selections_vec[selectionIndex];
+        if (selection.matches(atom)) {
+            is_match = true;
+            break;
+        }
+    }
+    return is_match;
+}
+
+std::vector<gemmi::Selection> parse_multi_cid_selections(const std::string &cids) {
+    std::vector<gemmi::Selection> selections_vec;
+    if (!cids.empty()) {
+        std::istringstream stream(cids);
+        std::string token;
+        while (std::getline(stream, token, '|')) {
+            if (!token.empty()) {
+                gemmi::Selection sele(token);
+                selections_vec.push_back(sele);
+            }
+        }
+    }
+    return selections_vec;
+}
+
+// cids and excluded_cids are strings of CID selections separated with ||
+std::vector<AtomInfo> get_atom_info_for_selection(const gemmi::Structure &Structure, const std::string &cids, const std::string &excluded_cids) {
+
+    std::vector<gemmi::Selection> selections_vec = parse_multi_cid_selections(cids);
+    std::vector<gemmi::Selection> excluded_selections_vec = parse_multi_cid_selections(excluded_cids);
+
     std::vector<AtomInfo> atom_info_vec;
     auto structure_copy = Structure;
     auto models = structure_copy.models;
     for (int modelIndex = 0; modelIndex < models.size(); modelIndex++) {
         const auto model = models[modelIndex];
-        if (!Selection.matches(model)) {
+        if (!selection_vector_matches_model(selections_vec, model)) {
             continue;
         }
         const auto chains = model.chains;
         for (int chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
             auto chain = chains[chainIndex];
-            if (!Selection.matches(chain)) {
+            if (!selection_vector_matches_chain(selections_vec, chain)) {
                 continue;
             }
             const auto residues = chain.residues;
             for (int residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
                 const auto residue = residues[residueIndex];
-                bool omit = false;
-                for (int selectionIndex = 0; selectionIndex < excluded_selections_vec.size(); selectionIndex++) {
-                    auto exclude_selection = excluded_selections_vec[selectionIndex];
-                    if (exclude_selection.matches(residue)) {
-                        omit = true;
-                        break;
-                    }
-                }
-                if (!Selection.matches(residue) || omit) {
+                if (!selection_vector_matches_residue(selections_vec, residue) || selection_vector_matches_residue(excluded_selections_vec, residue)) {
                     continue;
                 }
                 const auto atoms = residue.atoms;
                 for (int atomIndex = 0; atomIndex < atoms.size(); atomIndex++) {
                     const auto atom = atoms[atomIndex];
-                    if (!Selection.matches(atom)) {
+                    if (!selection_vector_matches_atom(selections_vec, atom)) {
                         continue;
                     }
                     AtomInfo atom_info;

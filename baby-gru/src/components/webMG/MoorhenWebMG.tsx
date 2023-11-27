@@ -275,7 +275,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }
     }, [useOffScreenBuffers])
 
-    const handleScoreUpdates = useCallback(async (e) => {
+    const handleScoreUpdates = useCallback(async (e: moorhen.ScoresUpdateEvent) => {
         if (e.detail?.modifiedMolecule !== null && connectedMolNo && connectedMolNo.molecule === e.detail.modifiedMolecule && glRef !== null && typeof glRef !== 'function') {
             
             await Promise.all(

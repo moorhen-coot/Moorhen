@@ -398,7 +398,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
         await props.molecule.undo()
         props.setCurrentDropdownMolNo(-1)
         const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", {
-            detail: { origin: props.glRef.current.origin, modifiedMolecule: props.molecule.molNo } 
+            detail: { modifiedMolecule: props.molecule.molNo } 
         })
         document.dispatchEvent(scoresUpdateEvent)
     }
@@ -407,7 +407,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
         await props.molecule.redo()
         props.setCurrentDropdownMolNo(-1)
         const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", {
-            detail: { origin: props.glRef.current.origin, modifiedMolecule: props.molecule.molNo } 
+            detail: { modifiedMolecule: props.molecule.molNo } 
         })
         document.dispatchEvent(scoresUpdateEvent)
     }

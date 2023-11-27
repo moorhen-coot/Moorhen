@@ -46,7 +46,7 @@ export const MoorhenRotamerChangeButton = (props: moorhen.ContextButtonProps) =>
         fragmentMolecule.current.delete()
         chosenMolecule.current.unhideAll()
 
-        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: chosenMolecule.current.molNo } })
+        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { modifiedMolecule: chosenMolecule.current.molNo } })
         document.dispatchEvent(scoresUpdateEvent)
         dispatch(setIsChangingRotamers(false))
 

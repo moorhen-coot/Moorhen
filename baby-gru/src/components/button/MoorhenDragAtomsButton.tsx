@@ -128,7 +128,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
             }, true)
             chosenMolecule.current.atomsDirty = true
             await chosenMolecule.current.redraw()
-            const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: chosenMolecule.current.molNo } })
+            const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { modifiedMolecule: chosenMolecule.current.molNo } })
             document.dispatchEvent(scoresUpdateEvent)
         }
         moltenFragmentRef.current.delete()

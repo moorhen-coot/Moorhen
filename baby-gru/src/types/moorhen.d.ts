@@ -232,7 +232,8 @@ export namespace moorhen {
         molecule: null | moorhen.Molecule;
         first: null | string;
         second: null | string;
-        cid: null | string;
+        cid: null | string | string[];
+        isMultiCid: boolean;
     }
     
     type HoveredAtom = {
@@ -523,7 +524,6 @@ export namespace moorhen {
     type MapRadiusChangeEvent = CustomEvent<{ factor: number; }>
 
     type ScoresUpdateEvent = CustomEvent<{
-        origin: [number, number, number];
         modifiedMolecule: number;
     }>
     

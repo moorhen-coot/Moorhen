@@ -297,10 +297,36 @@ class molecules_container_js : public molecules_container_t {
             return molecules_container_t::make_exportable_environment_bond_box(imol,resSpec);
         }
 
+        std::vector<std::pair<int, int>> get_consecutive_ranges(const std::vector<int> &numbers) {
+            std::vector<int> numbers_vec = numbers;
+            std::sort(numbers_vec.begin(), numbers_vec.end());
+            
+            std::vector<std::pair<int, int>> ranges;
+            if (!numbers_vec.empty()) {
+                int start = numbers_vec[0];
+                int end = numbers_vec[0];
+                for (int i = 1; i < numbers_vec.size(); i++) {
+                    int i_number = numbers_vec[i];
+                    if (i_number == end + 1) {
+                        end = i_number;
+                    } else {
+                        std::pair<int, int> i_pair(start, end);
+                        ranges.push_back(i_pair);
+                        start = i_number;
+                        end = i_number;
+                    }
+                }
+                std::pair<int, int> i_pair(start, end);
+                ranges.push_back(i_pair);
+            }
+            
+            return ranges;
+        }
+
+        // Returns a "||" separated string of cids.
         std::string get_neighbours_cid(int imol, const std::string &central_Cid_str, double max_dist){
-            //Returns a "|" separated string of cids.
             std::string neighb_cid = "";
-            std::map<std::string, std::string> chainsResidues;
+            std::map<std::string, std::vector<int>> chainsResidues;
             mmdb::Manager *mol = get_mol(imol);
             const char * central_Cid = central_Cid_str.c_str();
             int central_SelHnd = mol->NewSelection();
@@ -315,28 +341,22 @@ class molecules_container_js : public molecules_container_t {
             mol->GetSelIndex(neighb_SelHnd, neighb_residues, n_neighb_residues);
             for(int i=0; i<n_neighb_residues; i++){
                 std::string chainId = std::string(neighb_residues[i]->GetChainID());
-                if(chainsResidues.count(chainId)==0){
-                    chainsResidues[chainId] = std::string();
-                } else {
-                    chainsResidues[chainId] += std::string(",");
+                if(!chainsResidues.count(chainId)){
+                    std::vector<int> int_vec;
+                    chainsResidues[chainId] = int_vec;
                 }
-                std::string resNum = std::to_string(neighb_residues[i]->GetSeqNum());
-                if(strlen(neighb_residues[i]->GetInsCode())>0){
-                    resNum += std::string(".") + std::string(neighb_residues[i]->GetInsCode());
-                }
-                chainsResidues[chainId] += resNum;
-
-                //std::cout << resNum << std::endl;
-
+                chainsResidues[chainId].push_back(neighb_residues[i]->GetSeqNum());
             }
             for (auto const& [key, val] : chainsResidues){
-                neighb_cid += key + std::string("/") + val + std::string("|");
+                auto residue_ranges = get_consecutive_ranges(val);
+                for (int i=0; i < residue_ranges.size(); i++) {
+                    auto i_residue_range = residue_ranges[i];
+                    neighb_cid += std::string("//") + key + std::string("/") + std::to_string(i_residue_range.first) + "-" + std::to_string(i_residue_range.second) + std::string("/*||");
+                }
             }
-            neighb_cid = neighb_cid.substr(0,neighb_cid.length()-1);
-            std::cout << neighb_cid << std::endl;
+            neighb_cid = neighb_cid.substr(0,neighb_cid.length()-2);
             return neighb_cid;
         }
-
 
         std::pair<coot::symmetry_info_t,std::vector<std::array<float, 16>>> get_symmetry_with_matrices(int imol, float symmetry_search_radius, float x, float y, float z) { 
             coot::symmetry_info_t si = get_symmetry(imol, symmetry_search_radius, x, y, z);
@@ -1086,6 +1106,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_map<unsigned int, std::array<float, 3>>("MapIntFloat3");
     register_map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>("Map_residue_spec_t_density_correlation_stats_info_t");
     register_vector<std::array<float, 16>>("VectorArrayFloat16");
+    register_vector<std::pair<int, int>>("VectorInt_pair");
     register_vector<std::pair<std::string, unsigned int> >("VectorStringUInt_pair");
     register_vector<std::pair<symm_trans_t, Cell_Translation>>("Vectorsym_trans_t_Cell_Translation_pair");
     register_vector<std::pair<std::string, std::string>>("Vectorstring_string_pair");
