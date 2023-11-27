@@ -325,18 +325,13 @@ class molecules_container_js : public molecules_container_t {
                     resNum += std::string(".") + std::string(neighb_residues[i]->GetInsCode());
                 }
                 chainsResidues[chainId] += resNum;
-
-                //std::cout << resNum << std::endl;
-
             }
             for (auto const& [key, val] : chainsResidues){
                 neighb_cid += key + std::string("/") + val + std::string("|");
             }
             neighb_cid = neighb_cid.substr(0,neighb_cid.length()-1);
-            std::cout << neighb_cid << std::endl;
             return neighb_cid;
         }
-
 
         std::pair<coot::symmetry_info_t,std::vector<std::array<float, 16>>> get_symmetry_with_matrices(int imol, float symmetry_search_radius, float x, float y, float z) { 
             coot::symmetry_info_t si = get_symmetry(imol, symmetry_search_radius, x, y, z);
