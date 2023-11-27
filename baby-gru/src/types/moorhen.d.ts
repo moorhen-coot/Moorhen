@@ -796,6 +796,9 @@ export namespace moorhen {
             activeMap: Map;
             theme: string;
             residueSelection: ResidueSelection;
+            isChangingRotamers: boolean;
+            isDraggingAtoms: boolean;
+            isRotatingAtoms: boolean;
         };
         hoveringStates: {
             enableAtomHovering: boolean;

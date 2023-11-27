@@ -98,7 +98,9 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const maxBackupCount = useSelector((state: moorhen.State) => state.backupSettings.maxBackupCount)
     const modificationCountBackupThreshold = useSelector((state: moorhen.State) => state.backupSettings.modificationCountBackupThreshold)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
-    const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
+    const isChangingRotamers = useSelector((state: moorhen.State) => state.generalStates.isChangingRotamers)
+    const isRotatingAtoms = useSelector((state: moorhen.State) => state.generalStates.isRotatingAtoms)
+    const isDraggingAtoms = useSelector((state: moorhen.State) => state.generalStates.isDraggingAtoms)
 
     const innerStatesMap: moorhen.ContainerRefs = {
         glRef: innerGlRef, timeCapsuleRef: innerTimeCapsuleRef, commandCentre: innnerCommandCentre,
@@ -319,6 +321,9 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     //Make this so that the keyPress returns true or false, depending on whether mgWebGL is to continue processing event
     const onKeyPress = useCallback((event: KeyboardEvent) => {
+        if (isChangingRotamers || isRotatingAtoms || isDraggingAtoms) {
+            return false
+        }
         return babyGruKeyPress(
             event,
             {
@@ -334,7 +339,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             showShortcutToast,
             shortcutOnHoveredAtom
         )
-    }, [molecules, activeMap, hoveredAtom, viewOnly, shortCuts, showShortcutToast, shortcutOnHoveredAtom, width, isDark])
+    }, [molecules, activeMap, hoveredAtom, viewOnly, shortCuts, showShortcutToast, shortcutOnHoveredAtom, width, isDark, isChangingRotamers, isRotatingAtoms, isDraggingAtoms])
 
     useEffect(() => {
         if (hoveredAtom && hoveredAtom.molecule && hoveredAtom.cid) {

@@ -13,8 +13,20 @@ export const generalStatesSlice = createSlice({
     theme: 'flatly',
     viewOnly: false,
     residueSelection: { molecule: null, first: null, second: null, cid: null } as moorhen.ResidueSelection,
+    isChangingRotamers: false,
+    isDraggingAtoms: false,
+    isRotatingAtoms: false
   },
   reducers: {
+    setIsChangingRotamers: (state, action: {payload: boolean, type: string}) => {
+      return {...state, isChangingRotamers: action.payload}
+    },
+    setIsDraggingAtoms: (state, action: {payload: boolean, type: string}) => {
+      return {...state, isDraggingAtoms: action.payload}
+    },
+    setIsRotatingAtoms: (state, action: {payload: boolean, type: string}) => {
+      return {...state, isRotatingAtoms: action.payload}
+    },
     setTheme: (state, action: {payload: string, type: string}) => {
       return {...state, theme: action.payload}
     },
@@ -64,10 +76,11 @@ export const generalStatesSlice = createSlice({
 }})
 
 export const {
-  setNotificationContent, setActiveMap, setViewOnly, setTheme,
+  setNotificationContent, setActiveMap, setViewOnly, setTheme, setIsDraggingAtoms,
   setAppTittle, setUserPreferencesMounted, setDevMode, setCootInitialized, 
   setStopResidueSelection, setStartResidueSelection, clearResidueSelection,
-  setMoleculeResidueSelection, setResidueSelection, setCidResidueSelection
+  setMoleculeResidueSelection, setResidueSelection, setCidResidueSelection,
+  setIsRotatingAtoms, setIsChangingRotamers
 } = generalStatesSlice.actions
 
 export default generalStatesSlice.reducer

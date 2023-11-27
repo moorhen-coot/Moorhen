@@ -52,6 +52,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const [showContextMenu, setShowContextMenu] = useState<false | moorhen.AtomRightClickEventInfo>(false)
     const [defaultActionButtonSettings, setDefaultActionButtonSettings] = useReducer(actionButtonSettingsReducer, intialDefaultActionButtonSettings)
 
+    const isChangingRotamers = useSelector((state: moorhen.State) => state.generalStates.isChangingRotamers)
+    const isDraggingAtoms = useSelector((state: moorhen.State) => state.generalStates.isDraggingAtoms)
+    const isRotatingAtoms = useSelector((state: moorhen.State) => state.generalStates.isRotatingAtoms)
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering)
     const drawCrosshairs = useSelector((state: moorhen.State) => state.sceneSettings.drawCrosshairs)
@@ -579,22 +582,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }
     }, [maps, maps.length])
 
-    /*
-    if(window.pyodide){
-        window.xxx = 42
-        window.yyy = [2,21,84]
-        window.zzz = {"foo":"bar","sna":"foo"}
-        window.zzz.fu = "kung"
-        window.pyodide.runPython(`
-        from js import window
-        zzz = window.zzz
-        zzz_py = zzz.to_py()
-        print("hello !!!!!!!!!!!!!!!!!!!!!!",window.xxx,window.yyy,len(window.yyy))
-        for k,v in zzz_py.items():
-            print(k,v)
-        `)
-    }
-    */
+
     return  <>
                 <ToastContainer style={{ zIndex: '0', marginTop: "5rem", marginRight: '0.5rem', textAlign:'left', alignItems: 'left', maxWidth: convertViewtoPx(40, width)}} position='top-end' >
                     {scoresToastContents !== null && showScoresToast &&
@@ -606,7 +594,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
                 <MGWebGL
                     ref={glRef}
-                    onAtomHovered={enableAtomHovering ? props.onAtomHovered : null}
+                    onAtomHovered={(enableAtomHovering && !isRotatingAtoms && !isDraggingAtoms && !isChangingRotamers) ? props.onAtomHovered : null}
                     onKeyPress={props.onKeyPress}
                     messageChanged={(d) => { }}
                     mouseSensitivityFactor={mouseSensitivity}

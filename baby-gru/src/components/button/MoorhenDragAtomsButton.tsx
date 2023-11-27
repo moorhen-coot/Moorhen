@@ -8,7 +8,8 @@ import { cidToSpec } from "../../utils/MoorhenUtils";
 import { IconButton } from "@mui/material";
 import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { useSelector, useDispatch, batch } from 'react-redux';
-import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { setIsDraggingAtoms } from "../../store/generalStatesSlice";
 
 export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {       
     const moltenFragmentRef = useRef<null | moorhen.Molecule>(null)
@@ -132,7 +133,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
         }
         moltenFragmentRef.current.delete()
         chosenMolecule.current.unhideAll()
-        dispatch(setEnableAtomHovering(true))
+        dispatch(setIsDraggingAtoms(false))
     }
 
     const atomDraggedCallback = useCallback(async (evt: moorhen.AtomDraggedEvent) => {
@@ -257,7 +258,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
         props.setOverrideMenuContents(contextMenuOverride)
         batch(() => {
             dispatch(setHoveredAtom({ molecule: null, cid: null }))
-            dispatch(setEnableAtomHovering(false))
+            dispatch(setIsDraggingAtoms(true))
         })
     }
 

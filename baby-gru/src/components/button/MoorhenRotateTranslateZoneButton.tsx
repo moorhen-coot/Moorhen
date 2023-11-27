@@ -7,17 +7,21 @@ import { getTooltipShortcutLabel } from '../../utils/MoorhenUtils';
 import { IconButton } from '@mui/material';
 import { CheckOutlined, CloseOutlined, InfoOutlined } from "@mui/icons-material";
 import { useSelector, useDispatch, batch } from 'react-redux';
-import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { setIsRotatingAtoms } from "../../store/generalStatesSlice";
 
 export const MoorhenRotateTranslateZoneButton = (props: moorhen.ContextButtonProps) => {
-    const [tips, setTips] = useState<null | JSX.Element>(null)
+
     const fragmentMolecule = useRef<null | moorhen.Molecule>(null)
     const chosenMolecule = useRef<null | moorhen.Molecule>(null)
     const fragmentCid = useRef<null | string>(null)
     const customCid = useRef<null | string>(null)
+
+    const [tips, setTips] = useState<null | JSX.Element>(null)
+
+    const dispatch = useDispatch()
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
-    const dispatch = useDispatch()
 
     const rotateTranslateModes = ['RESIDUE', 'CHAIN', 'MOLECULE']
 
@@ -43,14 +47,14 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.ContextButtonPro
         chosenMolecule.current.unhideAll()
         const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: chosenMolecule.current.molNo } })
         document.dispatchEvent(scoresUpdateEvent)
-        dispatch(setEnableAtomHovering(true))
+        dispatch(setIsRotatingAtoms(false))
     }, [props, chosenMolecule, fragmentMolecule])
 
     const rejectTransform = useCallback(async () => {
         props.glRef.current.setActiveMolecule(null)
         fragmentMolecule.current.delete()
         chosenMolecule.current.unhideAll()
-        dispatch(setEnableAtomHovering(true))
+        dispatch(setIsRotatingAtoms(false))
     }, [props, chosenMolecule, fragmentMolecule])
 
     const startRotateTranslate = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string) => {
@@ -146,11 +150,10 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.ContextButtonPro
     const nonCootCommand = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string) => {
         await startRotateTranslate(molecule, chosenAtom, selectedMode)
         props.setShowOverlay(false)
-        //props.setOpacity(0.5)
         props.setOverrideMenuContents(contextMenuOverride)
         batch(() => {
             dispatch(setHoveredAtom({ molecule: null, cid: null }))
-            dispatch(setEnableAtomHovering(false))
+            dispatch(setIsRotatingAtoms(true))
         })
     }
 
