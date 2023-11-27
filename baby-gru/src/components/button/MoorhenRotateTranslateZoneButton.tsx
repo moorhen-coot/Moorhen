@@ -45,7 +45,7 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.ContextButtonPro
         await chosenMolecule.current.updateWithMovedAtoms(transformedAtoms)
         fragmentMolecule.current.delete()
         chosenMolecule.current.unhideAll()
-        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: chosenMolecule.current.molNo } })
+        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { modifiedMolecule: chosenMolecule.current.molNo } })
         document.dispatchEvent(scoresUpdateEvent)
         dispatch(setIsRotatingAtoms(false))
     }, [props, chosenMolecule, fragmentMolecule])

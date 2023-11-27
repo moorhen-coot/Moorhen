@@ -123,7 +123,9 @@ export const MoorhenContextButtonBase = (props: {
             }
         }
         
-        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: props.selectedMolecule.molNo } })
+        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { 
+            modifiedMolecule: props.selectedMolecule.molNo
+        }})
         document.dispatchEvent(scoresUpdateEvent)
         props.selectedMolecule.setAtomsDirty(true)
         props.selectedMolecule.clearBuffersOfStyle('hover')

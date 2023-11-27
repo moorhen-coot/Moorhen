@@ -34,7 +34,7 @@ export const MoorhenFillMissingAtoms = (props: Props) => {
         }
         selectedMolecule.setAtomsDirty(true)
         selectedMolecule.redraw()
-        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: selectedMolecule.molNo} })
+        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {modifiedMolecule: selectedMolecule.molNo} })
         document.dispatchEvent(scoresUpdateEvent);    
     }
 

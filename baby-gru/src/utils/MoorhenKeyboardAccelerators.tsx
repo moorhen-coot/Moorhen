@@ -17,7 +17,7 @@ const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWe
     molecule.setAtomsDirty(true)
     molecule.redraw()
     dispatch( setHoveredAtom({ molecule: null, cid: null }) )
-    const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: glRef.current.origin,  modifiedMolecule: molecule.molNo} })
+    const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {modifiedMolecule: molecule.molNo} })
     document.dispatchEvent(scoresUpdateEvent)
 }
 
@@ -158,7 +158,7 @@ export const babyGruKeyPress = (
         }
         promise.then(_ => {
             const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", {
-                detail: { origin: glRef.current.origin, modifiedMolecule: selectedMolecule.molNo } 
+                detail: { modifiedMolecule: selectedMolecule.molNo } 
             })
             document.dispatchEvent(scoresUpdateEvent)        
         })

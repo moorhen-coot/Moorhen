@@ -43,7 +43,7 @@ const doTest = async (props: any) => {
 
         molecule.setAtomsDirty(true)
         await molecule.redraw()
-        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: molecule.molNo } })
+        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { modifiedMolecule: molecule.molNo } })
         document.dispatchEvent(scoresUpdateEvent)
         
         if (TRIAL_COUNT <= 99) {

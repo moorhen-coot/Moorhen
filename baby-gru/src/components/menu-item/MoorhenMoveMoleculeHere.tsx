@@ -26,7 +26,7 @@ export const MoorhenMoveMoleculeHere = (props: {
         if (selectedMolecule) {
             await selectedMolecule.moveMoleculeHere(...props.glRef.current.origin.map(coord => -coord) as [number, number, number])
             const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {
-                origin: props.glRef.current.origin, modifiedMolecule: selectedMolecule.molNo 
+                modifiedMolecule: selectedMolecule.molNo 
             } })
             document.dispatchEvent(scoresUpdateEvent)
         }

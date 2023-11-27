@@ -97,7 +97,7 @@ const MoorhenImportLigandDictionary = (props: {
                     if (typeof toMolecule !== 'undefined') {
                         const otherMolecules = [newMolecule]
                         await toMolecule.mergeMolecules(otherMolecules, true)
-                        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: glRef.current.origin, modifiedMolecule: toMolecule.molNo } })
+                        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { modifiedMolecule: toMolecule.molNo } })
                         document.dispatchEvent(scoresUpdateEvent)
                         await toMolecule.redraw()
                     } else {

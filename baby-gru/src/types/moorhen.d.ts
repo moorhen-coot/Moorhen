@@ -524,7 +524,6 @@ export namespace moorhen {
     type MapRadiusChangeEvent = CustomEvent<{ factor: number; }>
 
     type ScoresUpdateEvent = CustomEvent<{
-        origin: [number, number, number];
         modifiedMolecule: number;
     }>
     
