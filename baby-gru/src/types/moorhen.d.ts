@@ -232,7 +232,8 @@ export namespace moorhen {
         molecule: null | moorhen.Molecule;
         first: null | string;
         second: null | string;
-        cid: null | string;
+        cid: null | string | string[];
+        isMultiCid: boolean;
     }
     
     type HoveredAtom = {
