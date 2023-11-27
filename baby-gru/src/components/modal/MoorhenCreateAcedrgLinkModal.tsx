@@ -240,8 +240,8 @@ export const MoorhenCreateAcedrgLinkModal = (props: {
     const [awaitAtomClick, setAwaitAtomClick] = useState<number>(-1)
     const [errorMessage, setErrorMessage] = useState<string>('')
     
-    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
-    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     
     const atomPickerOneRef = useRef(null)
     const atomPickerTwoRef = useRef(null)

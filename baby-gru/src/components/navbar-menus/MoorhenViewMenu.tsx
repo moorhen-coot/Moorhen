@@ -21,7 +21,7 @@ export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const drawAxes = useSelector((state: moorhen.State) => state.sceneSettings.drawAxes)
     const drawInteractions = useSelector((state: moorhen.State) => state.sceneSettings.drawInteractions)
     const doPerspectiveProjection = useSelector((state: moorhen.State) => state.sceneSettings.doPerspectiveProjection)
-    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const dispatch = useDispatch()
 
     const menuItemProps = {setPopoverIsShown, ...props}

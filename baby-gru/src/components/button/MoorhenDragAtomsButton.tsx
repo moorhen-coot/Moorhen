@@ -7,9 +7,9 @@ import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import { cidToSpec } from "../../utils/MoorhenUtils";
 import { IconButton } from "@mui/material";
 import { MoorhenNotification } from "../misc/MoorhenNotification";
-import { libcootApi } from "../../types/libcoot";
 import { useSelector, useDispatch, batch } from 'react-redux';
-import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { setIsDraggingAtoms } from "../../store/generalStatesSlice";
 
 export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {       
     const moltenFragmentRef = useRef<null | moorhen.Molecule>(null)
@@ -23,7 +23,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
     const [showAccept, setShowAccept] = useState<boolean>(false)
 
     const dispatch = useDispatch()
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
     const startDragging = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, dragMode: string) => {
@@ -133,7 +133,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
         }
         moltenFragmentRef.current.delete()
         chosenMolecule.current.unhideAll()
-        dispatch(setEnableAtomHovering(true))
+        dispatch(setIsDraggingAtoms(false))
     }
 
     const atomDraggedCallback = useCallback(async (evt: moorhen.AtomDraggedEvent) => {
@@ -258,7 +258,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
         props.setOverrideMenuContents(contextMenuOverride)
         batch(() => {
             dispatch(setHoveredAtom({ molecule: null, cid: null }))
-            dispatch(setEnableAtomHovering(false))
+            dispatch(setIsDraggingAtoms(true))
         })
     }
 

@@ -14,7 +14,7 @@ interface Props extends moorhen.CollectedProps {
 
 export const MoorhenLigandValidation = (props: Props) => {
     const molecules = useSelector((state: moorhen.State) => state.molecules)
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
     const fetchCardData = async (selectedModel: number, selectedMap: number): Promise<moorhen.LigandInfo[]> => {
         let ligandInfo: moorhen.LigandInfo[] = []

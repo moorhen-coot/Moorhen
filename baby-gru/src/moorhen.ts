@@ -17,10 +17,9 @@ import { MoorhenReduxProvider } from "./components/misc/MoorhenReduxProvider";
 import { setDefaultBackgroundColor, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
     setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap,  
     setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpinTest, setDoOutline, setDepthBlurRadius,
-    setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection 
+    setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setBackgroundColor
 } from './store/sceneSettingsSlice';
 import { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold } from './store/backupSettingsSlice';
-import { setHeight, setWidth, setIsDark, setBackgroundColor } from './store/canvasStatesSlice';
 import { 
     setNotificationContent, setActiveMap, setCootInitialized, setAppTittle, 
     setUserPreferencesMounted, setDevMode, setTheme, setViewOnly

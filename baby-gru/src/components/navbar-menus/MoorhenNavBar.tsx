@@ -66,9 +66,9 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const cootInitialized = useSelector((state: moorhen.State) => state.generalStates.cootInitialized)
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
-    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
-    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
     useEffect(() => {
         if (props.commandCentre.current) {

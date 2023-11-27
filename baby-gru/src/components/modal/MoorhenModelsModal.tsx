@@ -17,8 +17,8 @@ export const MoorhenModelsModal = (props: MoorhenModelsModalProps) => {
     
     const [currentDropdownMolNo, setCurrentDropdownMolNo] = useState<number>(-1)
     
-    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
-    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
 
     useEffect(() => {

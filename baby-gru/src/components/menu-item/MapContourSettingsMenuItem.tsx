@@ -37,7 +37,7 @@ export const MapContourSettingsMenuItem = (props: {
     const maps = useSelector((state: moorhen.State) => state.maps)
     const defaultMapSamplingRate = useSelector((state: moorhen.State) => state.mapSettings.defaultMapSamplingRate)
     const mapLineWidth = useSelector((state: moorhen.State) => state.mapSettings.mapLineWidth)
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
     const [mapSampling, setMapSampling] = useState<number>(convertPercentageToSamplingRate(defaultMapSamplingRate, true))
 

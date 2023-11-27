@@ -42,10 +42,10 @@ export const MoorhenQuerySequenceModal = (props: {
 
     const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules)
-    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
-    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
-    const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
+    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
 
     const fetchMoleculeFromURL = async (url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> => {
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath)

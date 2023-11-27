@@ -17,10 +17,12 @@ export const MoorhenResidueSelectionActions = (props) => {
     const [selectionLabel, setSelectionLabel] = useState<null | string>(null)
     const [tooltipContents, setTooltipContents] = useState<null | string>(null)
 
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
-    const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
     const dispatch = useDispatch()
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const isChangingRotamers = useSelector((state: moorhen.State) => state.generalStates.isChangingRotamers)
+    const isRotatingAtoms = useSelector((state: moorhen.State) => state.generalStates.isRotatingAtoms)
+    const isDraggingAtoms = useSelector((state: moorhen.State) => state.generalStates.isDraggingAtoms)
+    const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
 
     const clearSelection = useCallback(() => {
         dispatch( clearResidueSelection() )
@@ -30,7 +32,7 @@ export const MoorhenResidueSelectionActions = (props) => {
     }, [molecules])
 
     const handleAtomClicked = useCallback(async (evt: moorhen.AtomClickedEvent) => {
-        if (!evt.detail.isResidueSelection || evt.detail.buffer.id == null) {
+        if (!evt.detail.isResidueSelection || evt.detail.buffer.id == null || isDraggingAtoms || isRotatingAtoms || isChangingRotamers) {
             return
         } 
 
@@ -63,7 +65,7 @@ export const MoorhenResidueSelectionActions = (props) => {
             )
             setSelectionLabel(`/${startResSpec.mol_no}/${startResSpec.chain_id}/${sortedResNums[0]}-${sortedResNums[1]}`)
         }
-    }, [clearSelection, residueSelection])
+    }, [clearSelection, residueSelection, isRotatingAtoms, isChangingRotamers, isDraggingAtoms])
 
     useEffect(() => {
         document.addEventListener('atomClicked', handleAtomClicked)

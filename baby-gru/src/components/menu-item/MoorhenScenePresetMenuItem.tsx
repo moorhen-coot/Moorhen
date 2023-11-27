@@ -12,7 +12,7 @@ export const MoorhenScenePresetMenuItem = (props: {
 }) => {
 
     const dispatch = useDispatch()
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const [presetValue, setPresetValue] = useState<string | null>(null)
 
     useEffect(() => {

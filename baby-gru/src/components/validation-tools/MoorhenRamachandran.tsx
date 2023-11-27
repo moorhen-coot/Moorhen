@@ -50,8 +50,8 @@ export const MoorhenRamachandran = (props: Props) => {
     const [chainId, setChainId] = useState<null | string>(null)
     
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
-    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
-    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const dispatch = useDispatch()
 

@@ -26,7 +26,7 @@ export const MoorhenSequenceList = (props: {
     }>>;
 }) => {
     
-    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
     const [sequenceList, setSequenceList] = useState<null | { chain: string; sequence: (moorhen.Sequence | null) }[]>(null)
 

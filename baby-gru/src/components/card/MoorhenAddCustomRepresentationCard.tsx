@@ -56,7 +56,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState<number>( props.initialAtomRadiusBondRatio ? props.initialAtomRadiusBondRatio : props.molecule.defaultBondOptions.atomRadiusBondRatio)
     const [bondWidth, setBondWidth] = useState<number>(props.initialBondWidth ? props.initialBondWidth : props.molecule.defaultBondOptions.width)
     const [bondSmoothness, setBondSmoothness] = useState<number>(props.molecule.defaultBondOptions.smoothness === 1 ? 1 : props.molecule.defaultBondOptions.smoothness === 2 ? 50 : 100)
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
 
     const handleChainChange = (evt) => {

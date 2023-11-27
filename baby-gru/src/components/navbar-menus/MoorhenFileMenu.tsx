@@ -29,8 +29,8 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const maps = useSelector((state: moorhen.State) => state.maps)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const enableTimeCapsule = useSelector((state: moorhen.State) => state.backupSettings.enableTimeCapsule)
-    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
-    const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
 
     const { commandCentre, glRef, monomerLibraryPath, setBusy } = props;

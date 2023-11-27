@@ -37,8 +37,8 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
     const [selectedChain, setSelectedChain] = useState<string | null>(null)
     const [cachedGemmiStructure, setCachedGemmiStructure] = useState<null | gemmi.Structure>(null)
 
-    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
-    const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const maps = useSelector((state: moorhen.State) => state.maps)
 

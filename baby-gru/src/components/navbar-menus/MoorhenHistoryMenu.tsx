@@ -14,7 +14,7 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
     const [historyHead, setHistoryHead] = useState(0)
 
     const dispatch = useDispatch()
-    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const maps = useSelector((state: moorhen.State) => state.maps)
 

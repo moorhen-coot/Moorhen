@@ -88,8 +88,8 @@ export const MoorhenModifyColourRulesCard = (props: {
     const [sequenceRangeSelect, setSequenceRangeSelect] = useState(null)
     const [ruleList, setRuleList] = useReducer(itemReducer, initialRuleState, () => { return props.molecule.defaultColourRules })
     
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
-    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
 
     const handleChainChange = (evt) => {

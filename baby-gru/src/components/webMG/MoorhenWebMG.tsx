@@ -52,6 +52,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const [showContextMenu, setShowContextMenu] = useState<false | moorhen.AtomRightClickEventInfo>(false)
     const [defaultActionButtonSettings, setDefaultActionButtonSettings] = useReducer(actionButtonSettingsReducer, intialDefaultActionButtonSettings)
 
+    const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
+    const isChangingRotamers = useSelector((state: moorhen.State) => state.generalStates.isChangingRotamers)
+    const isDraggingAtoms = useSelector((state: moorhen.State) => state.generalStates.isDraggingAtoms)
+    const isRotatingAtoms = useSelector((state: moorhen.State) => state.generalStates.isRotatingAtoms)
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering)
     const drawCrosshairs = useSelector((state: moorhen.State) => state.sceneSettings.drawCrosshairs)
@@ -81,9 +85,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const zoomWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.zoomWheelSensitivityFactor)
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
     const mapLineWidth = useSelector((state: moorhen.State) => state.mapSettings.mapLineWidth)
-    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
-    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
-    const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const maps = useSelector((state: moorhen.State) => state.maps)
 
@@ -445,8 +449,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [glRef, width, height])
 
     const handleRightClick = useCallback((e: moorhen.AtomRightClickEvent) => {
-        setShowContextMenu({ ...e.detail })
-    }, [])
+        if (!isRotatingAtoms && !isChangingRotamers && !isDraggingAtoms && !residueSelection.molecule) {
+            setShowContextMenu({ ...e.detail })            
+        }
+    }, [isRotatingAtoms, isChangingRotamers, isDraggingAtoms, residueSelection])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function') {
@@ -579,22 +585,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }
     }, [maps, maps.length])
 
-    /*
-    if(window.pyodide){
-        window.xxx = 42
-        window.yyy = [2,21,84]
-        window.zzz = {"foo":"bar","sna":"foo"}
-        window.zzz.fu = "kung"
-        window.pyodide.runPython(`
-        from js import window
-        zzz = window.zzz
-        zzz_py = zzz.to_py()
-        print("hello !!!!!!!!!!!!!!!!!!!!!!",window.xxx,window.yyy,len(window.yyy))
-        for k,v in zzz_py.items():
-            print(k,v)
-        `)
-    }
-    */
+
     return  <>
                 <ToastContainer style={{ zIndex: '0', marginTop: "5rem", marginRight: '0.5rem', textAlign:'left', alignItems: 'left', maxWidth: convertViewtoPx(40, width)}} position='top-end' >
                     {scoresToastContents !== null && showScoresToast &&
@@ -606,7 +597,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
                 <MGWebGL
                     ref={glRef}
-                    onAtomHovered={enableAtomHovering ? props.onAtomHovered : null}
+                    onAtomHovered={(enableAtomHovering && !isRotatingAtoms && !isDraggingAtoms && !isChangingRotamers) ? props.onAtomHovered : null}
                     onKeyPress={props.onKeyPress}
                     messageChanged={(d) => { }}
                     mouseSensitivityFactor={mouseSensitivity}
