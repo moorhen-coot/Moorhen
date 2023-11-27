@@ -30,7 +30,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
 
     const dispatch = useDispatch()
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
-    const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
+    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
 
     const { commandCentre, glRef, monomerLibraryPath } = props;
 

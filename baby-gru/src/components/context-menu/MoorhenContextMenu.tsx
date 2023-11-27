@@ -116,8 +116,8 @@ export const MoorhenContextMenu = (props: {
   const [toolTip, setToolTip] = useState<string>('')
   
   const molecules = useSelector((state: moorhen.State) => state.molecules)
-  const width = useSelector((state: moorhen.State) => state.canvasStates.width)
-  const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+  const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
+  const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
   const handleContextMenu = useCallback((evt) => {
     evt.stopPropagation()

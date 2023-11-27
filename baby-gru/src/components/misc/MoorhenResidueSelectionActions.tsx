@@ -18,7 +18,7 @@ export const MoorhenResidueSelectionActions = (props) => {
     const [tooltipContents, setTooltipContents] = useState<null | string>(null)
 
     const molecules = useSelector((state: moorhen.State) => state.molecules)
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
     const dispatch = useDispatch()
 

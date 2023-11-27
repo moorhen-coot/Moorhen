@@ -42,7 +42,7 @@ interface MoorhenMapCardPropsInterface extends moorhen.CollectedProps {
 export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((props, cardRef) => {
     const dispatch = useDispatch()
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const contourWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.contourWheelSensitivityFactor)
     const defaultMapLitLines = useSelector((state: moorhen.State) => state.mapSettings.defaultMapLitLines)
     const defaultMapSurface = useSelector((state: moorhen.State) => state.mapSettings.defaultMapSurface)

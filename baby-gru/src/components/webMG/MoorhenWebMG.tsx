@@ -81,9 +81,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const zoomWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.zoomWheelSensitivityFactor)
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
     const mapLineWidth = useSelector((state: moorhen.State) => state.mapSettings.mapLineWidth)
-    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
-    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
-    const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const maps = useSelector((state: moorhen.State) => state.maps)
 

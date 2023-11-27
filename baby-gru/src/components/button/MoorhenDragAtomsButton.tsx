@@ -7,7 +7,6 @@ import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import { cidToSpec } from "../../utils/MoorhenUtils";
 import { IconButton } from "@mui/material";
 import { MoorhenNotification } from "../misc/MoorhenNotification";
-import { libcootApi } from "../../types/libcoot";
 import { useSelector, useDispatch, batch } from 'react-redux';
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
 
@@ -23,7 +22,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
     const [showAccept, setShowAccept] = useState<boolean>(false)
 
     const dispatch = useDispatch()
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
     const startDragging = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, dragMode: string) => {

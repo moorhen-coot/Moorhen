@@ -23,9 +23,9 @@ export const MoorhenScriptModal = (props: {
 
     const [code, setCode] = useState<string>("")
     
-    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
-    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const maps = useSelector((state: moorhen.State) => state.maps)
 

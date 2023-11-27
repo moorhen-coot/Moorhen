@@ -28,10 +28,10 @@ export const MoorhenValidationListWidgetBase = (props: {
     const [cardData, setCardData] = useState<any[]>([])
     const [cardList, setCardList] = useState<JSX.Element[]>([])
 
-    const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
+    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const maps = useSelector((state: moorhen.State) => state.maps)
-    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
     const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedModel(parseInt(evt.target.value))

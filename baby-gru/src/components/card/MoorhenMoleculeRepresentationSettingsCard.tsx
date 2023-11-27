@@ -39,7 +39,7 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
 
     const [symmetryOn, setSymmetryOn] = useState<boolean>(false)
     const [showUnitCell, setShowUnitCell] = useState<boolean>(false)
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
     const {
         bondWidth, setBondWidth, atomRadiusBondRatio,

@@ -23,8 +23,8 @@ export const MoorhenValidationToolsModal = (props: MoorhenValidationModalProps) 
     const [selectedTool, setSelectedTool] = useState<null | number>(null)
     const [draggableResizeTrigger, setDraggableResizeTrigger] = useState<boolean>(true)
     const toolsAccordionSelectRef = useRef<undefined | HTMLSelectElement>()
-    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
-    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
     const collectedProps = {
         sideBarWidth: convertViewtoPx(35, width), dropdownId: 1, busy: false,

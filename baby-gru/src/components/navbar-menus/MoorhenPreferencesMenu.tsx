@@ -39,7 +39,7 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
     const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.miscAppSettings.defaultExpandDisplayCards)
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
     const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.miscAppSettings.transparentModalsOnMouseOut)
-    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
      const [showModal, setShowModal] = useState<boolean | null>(null);
      const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)

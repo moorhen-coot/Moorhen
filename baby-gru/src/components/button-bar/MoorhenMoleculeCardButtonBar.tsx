@@ -33,7 +33,7 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
     const dropdownCardButtonRef = useRef<HTMLDivElement>()
     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
     const [currentName, setCurrentName] = useState<string>(props.molecule.name);
-    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const makeBackups = useSelector((state: moorhen.State) => state.backupSettings.makeBackups)
 
     useMemo(() => {

@@ -21,9 +21,9 @@ type MapHistogramProps = {
 
 export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, chartRef) => {
     const [zoomFactor, setZoomFactor] = useState<number>(1)
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
-    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
-    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
     const parseHistogramData = (histogramData: libcootApi.HistogramInfoJS) => {
         const axisLabelsFontSize = convertViewtoPx(70, height) / 60

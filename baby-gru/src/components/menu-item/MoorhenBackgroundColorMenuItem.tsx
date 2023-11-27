@@ -5,14 +5,14 @@ import { CirclePicker } from "react-color"
 import { convertRemToPx } from "../../utils/MoorhenUtils";
 import { useDispatch, useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
-import { setBackgroundColor } from "../../store/canvasStatesSlice";
+import { setBackgroundColor } from "../../store/sceneSettingsSlice";
 
 export const MoorhenBackgroundColorMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     popoverPlacement?: 'left' | 'right' ;
 }) => {
     
-    const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
+    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const dispatch = useDispatch()
 
     const [innerBackgroundColor, setInnerBackgroundColor] = useState<{ r: number; g: number; b: number; }>({

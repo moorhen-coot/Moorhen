@@ -65,12 +65,12 @@ export type clickedResidueType = {
 
 export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInterface>((props, cardRef) => {
     const dispatch = useDispatch()
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
-    const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
+    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.miscAppSettings.defaultExpandDisplayCards)
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops)
     const userPreferencesMounted = useSelector((state: moorhen.State) => state.generalStates.userPreferencesMounted)
-    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
     const addColourRulesAnchorDivRef = useRef<HTMLDivElement | null>(null)
     const busyRedrawing = useRef<boolean>(false)
@@ -570,7 +570,7 @@ const RepresentationCheckbox = (props: {
 }) => {
 
     const [repState, setRepState] = useState<boolean>(false)
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
     const chipStyle = getChipStyle(props.molecule.defaultColourRules, repState, isDark, `${convertRemToPx(6.5)}px`)
     const disabled: boolean = (
@@ -624,7 +624,7 @@ const CustomRepresentationChip = (props: {
 
     const [representationIsVisible, setRepresentationIsVisible] = useState<boolean>(true)
     const [showEditRepresentation, setShowEditRepresentation] = useState<boolean>(false)
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
     const chipStyle = getChipStyle(representation.colourRules, representationIsVisible, isDark)
     

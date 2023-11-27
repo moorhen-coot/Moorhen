@@ -24,8 +24,8 @@ export const MoorhenDifferenceMapPeaks = (props: Props) => {
     const chartRef = useRef(null);
     const [selectedRmsd, setSelectedRmsd] = useState<number>(4.5)
     const [mapRmsd, setMapRmsd] = useState<number>(4.5)
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
-    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
     const plugin = {
         id: 'custom_bar_borders',

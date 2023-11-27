@@ -23,6 +23,10 @@ export const sceneSettingsSlice = createSlice({
     doOutline: null,
     depthBlurRadius: null,
     depthBlurDepth: null,
+    height: 0,
+    width: 0,
+    isDark: false,
+    backgroundColor: [1, 1, 1, 1],
   },
   reducers: {
     setDefaultBackgroundColor: (state, action: {payload: [number, number, number, number], type: string}) => {
@@ -85,14 +89,25 @@ export const sceneSettingsSlice = createSlice({
     setDepthBlurDepth: (state, action: {payload: number, type: string}) => {
         return {...state, depthBlurDepth: action.payload}
     },
-
+    setBackgroundColor: (state, action: {payload: [number, number, number, number], type: string}) => {
+        return {...state, backgroundColor: action.payload}
+    },
+    setHeight: (state, action: {payload: number, type: string}) => {
+        return {...state, height: action.payload}
+    },
+    setWidth: (state, action: {payload: number, type: string}) => {
+        return {...state, width: action.payload}
+    },
+    setIsDark: (state, action: {payload: boolean, type: string}) => {
+        return {...state, isDark: action.payload}
+    }  
 }})
 
 export const {
     setDefaultBackgroundColor, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
     setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap,  
     setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpinTest, setDoOutline, setDepthBlurRadius,
-    setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection
+    setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setBackgroundColor
 } = sceneSettingsSlice.actions
 
 export default sceneSettingsSlice.reducer

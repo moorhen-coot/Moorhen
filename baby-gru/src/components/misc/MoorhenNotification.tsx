@@ -21,8 +21,8 @@ export const MoorhenNotification = (props: {width?: number, hideDelay?: number, 
     } 
 
     const [show, setShow] = useState<boolean>(true)
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
-    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
 
     useEffect(() => {
         if (props.hideDelay) {

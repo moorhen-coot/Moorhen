@@ -21,7 +21,7 @@ export const MoorhenColourRuleCard = (props: {
 
     const [showColourPicker, setShowColourPicker] = useState<boolean>(false)
 
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
     const { index, molecule, rule, urlPrefix, setRuleList } = props
     

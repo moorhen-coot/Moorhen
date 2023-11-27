@@ -14,7 +14,7 @@ export const MoorhenRotamerChangeButton = (props: moorhen.ContextButtonProps) =>
     const fragmentMolecule = useRef<null | moorhen.Molecule>(null)
     const chosenMolecule = useRef<null | moorhen.Molecule>(null)
     const selectedFragmentRef = useRef<{ cid: string; alt_conf: string; }>({ cid: '', alt_conf: '' })
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const dispatch = useDispatch()
 
     const changeRotamer = useCallback(async (command: string) => {

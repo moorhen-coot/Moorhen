@@ -18,8 +18,8 @@ export const MoorhenMapsModal = (props: MoorhenMapsModalProps) => {
 
     const [currentDropdownMolNo, setCurrentDropdownMolNo] = useState<number>(-1)
 
-    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
-    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const maps = useSelector((state: moorhen.State) => state.maps)
 
     useEffect(() => {

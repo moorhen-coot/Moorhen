@@ -19,7 +19,7 @@ export const MoorhenSelfRestraintsMenuItem = (props: {
 }) => {
     
     const molecules = useSelector((state: moorhen.State) => state.molecules)
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     
     const modeTypeSelectRef = useRef<HTMLSelectElement | null>(null)
     const moleculeSelectRef = useRef<HTMLSelectElement | null>(null)

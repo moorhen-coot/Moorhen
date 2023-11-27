@@ -724,12 +724,6 @@ export namespace moorhen {
     interface State {
         molecules: Molecule[];
         maps: Map[];
-        canvasStates: {
-            backgroundColor: [number, number, number, number];
-            height: number;
-            width: number;
-            isDark: boolean
-        };
         mapSettings: {
             defaultMapSamplingRate: number;
             defaultMapLitLines: boolean;
@@ -782,7 +776,11 @@ export namespace moorhen {
             doSpinTest: boolean;
             defaultBondSmoothness: number,
             resetClippingFogging: boolean; 
-            clipCap: boolean; 
+            clipCap: boolean;
+            backgroundColor: [number, number, number, number];
+            height: number;
+            width: number;
+            isDark: boolean;
         };
         miscAppSettings: {
             defaultExpandDisplayCards: boolean; 

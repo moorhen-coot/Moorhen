@@ -98,7 +98,7 @@ export const MoorhenContextButtonBase = (props: {
 }) => {
     
     const molecules = useSelector((state: moorhen.State) => state.molecules)
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 

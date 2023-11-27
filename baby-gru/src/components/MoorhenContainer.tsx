@@ -14,8 +14,7 @@ import { webGL } from '../types/mgWebGL';
 import { MoorhenPreferencesContainer } from './misc/MoorhenPreferencesContainer'
 import { MoorhenResidueSelectionActions } from './misc/MoorhenResidueSelectionActions'
 import { useSelector, useDispatch } from 'react-redux';
-import { setDefaultBackgroundColor } from '../store/sceneSettingsSlice';
-import { setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/canvasStatesSlice';
+import { setDefaultBackgroundColor, setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/sceneSettingsSlice';
 import { setCootInitialized, setNotificationContent, setTheme } from '../store/generalStatesSlice';
 import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSlice';
 
@@ -83,10 +82,10 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const cootInitialized = useSelector((state: moorhen.State) => state.generalStates.cootInitialized)
     const theme = useSelector((state: moorhen.State) => state.generalStates.theme)
-    const backgroundColor = useSelector((state: moorhen.State) => state.canvasStates.backgroundColor)
-    const height = useSelector((state: moorhen.State) => state.canvasStates.height)
-    const width = useSelector((state: moorhen.State) => state.canvasStates.width)
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const notificationContent = useSelector((state: moorhen.State) => state.generalStates.notificationContent)
     const userPreferencesMounted = useSelector((state: moorhen.State) => state.generalStates.userPreferencesMounted)
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops)

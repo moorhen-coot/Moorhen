@@ -14,7 +14,7 @@ export const MoorhenLigandList = (props: {
     height?: number | string;
 }) => {
 
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
     const [ligandList, setLigandList] = useState<moorhen.LigandInfo[]>(null)
 

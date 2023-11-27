@@ -20,7 +20,7 @@ export const MoorhenLigandCard = (props: {
     }
 
     const [showState, setShowState] = useState<{ [key: string]: boolean }>({})
-    const isDark = useSelector((state: moorhen.State) => state.canvasStates.isDark)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
     const { ligand, molecule } = props
 
