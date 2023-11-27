@@ -350,7 +350,7 @@ bool selection_vector_matches_atom(const std::vector<gemmi::Selection> &selectio
 }
 
 std::vector<gemmi::Selection> parse_multi_cid_selections(const std::string &cids) {
-    std::vector<gemmi::Selection> selections_vec;    
+    std::vector<gemmi::Selection> selections_vec;
     if (!cids.empty()) {
         std::istringstream stream(cids);
         std::string token;
@@ -367,8 +367,8 @@ std::vector<gemmi::Selection> parse_multi_cid_selections(const std::string &cids
 // cids and excluded_cids are strings of CID selections separated with ||
 std::vector<AtomInfo> get_atom_info_for_selection(const gemmi::Structure &Structure, const std::string &cids, const std::string &excluded_cids) {
 
-    std::vector<gemmi::Selection> selections_vec = parse_multi_cid_selections(cids);    
-    std::vector<gemmi::Selection> excluded_selections_vec = parse_multi_cid_selections(excluded_cids);    
+    std::vector<gemmi::Selection> selections_vec = parse_multi_cid_selections(cids);
+    std::vector<gemmi::Selection> excluded_selections_vec = parse_multi_cid_selections(excluded_cids);
 
     std::vector<AtomInfo> atom_info_vec;
     auto structure_copy = Structure;

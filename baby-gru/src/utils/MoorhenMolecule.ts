@@ -296,20 +296,13 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {Promise<string[]>} List of CIDs with the residues found within the radius of search
      */
     async getNeighborResiduesCids(selectionCid: string, maxDist: number): Promise<string[]> {
-        let multiCidRanges: string[] = []
-        
         const response = await this.commandCentre.current.cootCommand({
             returnType: "status",
             command: 'get_neighbours_cid',
             commandArgs: [this.molNo, selectionCid, maxDist]
         }, true) as moorhen.WorkerResponse<string>
 
-        response.data.result.result.split('|').forEach(chainResidueCid => {
-            let [chainId, resNums] = chainResidueCid.split('/')
-            const residueRanges = findConsecutiveRanges(resNums.split(',').map(n => parseInt(n)))
-            residueRanges.forEach(range => multiCidRanges.push(`//${chainId}/${range[0]}-${range[1]}/*`))
-        })
-        
+        const multiCidRanges: string[] = response.data.result.result.split('||')
         return multiCidRanges
     }
 

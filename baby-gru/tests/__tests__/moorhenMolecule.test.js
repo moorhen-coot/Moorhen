@@ -443,7 +443,7 @@ describe("Testing MoorhenMolecule", () => {
         expect(molecule.ligands).toHaveLength(0)
     })
 
-    test("Test getNeighborResiduesCids", async () => {
+    test("Test getNeighborResiduesCids 1", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
@@ -458,6 +458,63 @@ describe("Testing MoorhenMolecule", () => {
         
         const result = await molecule.getNeighborResiduesCids('//A/33/CA', 3)
         expect(result).toEqual(['//A/32-34/*'])
+    })
+
+    test("Test getNeighborResiduesCids 2", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl, 'mol-test')
+        
+        const result = await molecule.getNeighborResiduesCids('//A/188/CA', 7)
+        expect(result).toEqual([
+            "//A/147-147/*",
+            "//A/152-152/*",
+            "//A/183-190/*",
+            "//A/197-197/*",
+            "//A/939-939/*",
+            "//A/965-965/*",
+            "//A/971-971/*",
+            "//A/995-995/*",
+            "//A/1011-1011/*",
+            "//A/1037-1037/*",
+            "//A/1042-1042/*",
+            "//A/1132-1133/*",
+            "//A/1149-1149/*",
+            "//A/1163-1163/*",
+            "//A/1198-1198/*",
+            "//A/1208-1208/*"
+        ])
+    })
+    
+    test("Test getNeighborResiduesCids 3", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl, 'mol-test')
+        
+        const result = await molecule.getNeighborResiduesCids('//A/30-33/CA', 5)
+        expect(result).toEqual([
+            "//A/29-34/*",
+            "//A/58-62/*",
+            "//A/259-261/*",
+            "//A/300-300/*",
+            "//A/1044-1044/*"
+        ])
     })
 
     test("Test checkIsLigand", async () => {
