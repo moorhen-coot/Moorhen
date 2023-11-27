@@ -194,9 +194,11 @@ export const MoorhenResidueSelectionActions = (props) => {
                     <IconButton onClick={handleSelectionCopy} onMouseEnter={() => setTooltipContents('Copy fragment')}>
                         <CopyAllOutlined/>
                     </IconButton>
+                    {/**
                     <IconButton onClick={handleExpandSelection} onMouseEnter={() => setTooltipContents('Expand to neighbouring residues')}>
                         <AllOutOutlined/>
                     </IconButton>
+                     */}
                     <IconButton onClick={clearSelection} onMouseEnter={() => setTooltipContents('Clear selection')}>
                         <CloseOutlined/>
                     </IconButton>
