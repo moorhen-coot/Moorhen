@@ -1,7 +1,7 @@
 import { IconButton, Tooltip } from "@mui/material"
 import { cidToSpec, guid } from "../../utils/MoorhenUtils"
 import { MoorhenNotification } from "./MoorhenNotification"
-import { CloseOutlined, CopyAllOutlined, CrisisAlertOutlined, DeleteOutlined } from "@mui/icons-material"
+import { AllOutOutlined, CloseOutlined, CopyAllOutlined, CrisisAlertOutlined, DeleteOutlined } from "@mui/icons-material"
 import { useDispatch, useSelector } from "react-redux"
 import { moorhen } from "../../types/moorhen"
 import { Stack } from "react-bootstrap"
@@ -46,7 +46,13 @@ export const MoorhenResidueSelectionActions = (props) => {
             const resSpec = cidToSpec(evt.detail.atom.label)
             await selectedMolecule.drawResidueSelection(`/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*`)
             dispatch(
-                setResidueSelection({ molecule: selectedMolecule, first: evt.detail.atom.label, second: null, cid: null})
+                setResidueSelection({
+                    molecule: selectedMolecule,
+                    first: evt.detail.atom.label,
+                    second: null,
+                    cid: null,
+                    isMultiCid: false
+                })
             )
             setSelectionLabel(`/${resSpec.mol_no}/${resSpec.chain_id}/${resSpec.res_no}`)
             return
@@ -61,7 +67,13 @@ export const MoorhenResidueSelectionActions = (props) => {
             const cid = `/*/${startResSpec.chain_id}/${sortedResNums[0]}-${sortedResNums[1]}/*`
             await selectedMolecule.drawResidueSelection(cid)
             dispatch(
-                setResidueSelection({ molecule: selectedMolecule, first: residueSelection.first, second: evt.detail.atom.label, cid: cid})
+                setResidueSelection({
+                    molecule: selectedMolecule,
+                    first: residueSelection.first,
+                    second: evt.detail.atom.label,
+                    cid: cid,
+                    isMultiCid: false
+                })
             )
             setSelectionLabel(`/${startResSpec.mol_no}/${startResSpec.chain_id}/${sortedResNums[0]}-${sortedResNums[1]}`)
         }
@@ -77,8 +89,10 @@ export const MoorhenResidueSelectionActions = (props) => {
     const handleSelectionCopy = useCallback(async () => {
         let cid: string
         
-        if (residueSelection.molecule && residueSelection.cid) {
-            cid = residueSelection.cid
+        if (residueSelection.isMultiCid) {
+            // pass
+        } else if (residueSelection.molecule && residueSelection.cid) {
+            cid = residueSelection.cid as string
         } else if (residueSelection.molecule && residueSelection.first) {
             const startResSpec = cidToSpec(residueSelection.first)
             cid =`/${startResSpec.mol_no}/${startResSpec.chain_id}/${startResSpec.res_no}-${startResSpec.res_no}`
@@ -93,7 +107,9 @@ export const MoorhenResidueSelectionActions = (props) => {
     }, [residueSelection, clearSelection])
 
     const handleRefinement = useCallback(async () => {
-        if (residueSelection.molecule && residueSelection.cid) {
+        if (residueSelection.isMultiCid) {
+            // pass
+        } else if (residueSelection.molecule && residueSelection.cid) {
             const startResSpec = cidToSpec(residueSelection.first)
             const stopResSpec = cidToSpec(residueSelection.second)
             const sortedResNums = [startResSpec.res_no, stopResSpec.res_no].sort(function(a, b){return a - b})
@@ -108,8 +124,10 @@ export const MoorhenResidueSelectionActions = (props) => {
     const handleDelete = useCallback(async () => {
         let cid: string
         
-        if (residueSelection.molecule && residueSelection.cid) {
-            cid = residueSelection.cid
+        if (residueSelection.isMultiCid) {
+            // pass
+        } else if (residueSelection.molecule && residueSelection.cid) {
+            cid = residueSelection.cid as string
         } else if (residueSelection.molecule && residueSelection.first) {
             const startResSpec = cidToSpec(residueSelection.first)
             cid = `/${startResSpec.mol_no}/${startResSpec.chain_id}/${startResSpec.res_no}-${startResSpec.res_no}`
@@ -127,22 +145,57 @@ export const MoorhenResidueSelectionActions = (props) => {
         clearSelection()
     }, [residueSelection, clearSelection])
 
+    const handleExpandSelection = useCallback(async () => {
+        let cid: string
+        
+        if (residueSelection.isMultiCid) {
+            // pass
+        } else if (residueSelection.molecule && residueSelection.cid) {
+            cid = residueSelection.cid as string
+            const startResSpec = cidToSpec(residueSelection.first)
+            const stopResSpec = cidToSpec(residueSelection.second)
+            const sortedResNums = [startResSpec.res_no, stopResSpec.res_no].sort(function(a, b){return a - b})
+            setSelectionLabel(`/${startResSpec.mol_no}/${startResSpec.chain_id}/${sortedResNums[0]}-${sortedResNums[1]} +7Å`)
+        } else if (residueSelection.molecule && residueSelection.first) {
+            const startResSpec = cidToSpec(residueSelection.first)
+            cid = `/${startResSpec.mol_no}/${startResSpec.chain_id}/${startResSpec.res_no}-${startResSpec.res_no}`
+            setSelectionLabel(`/${startResSpec.mol_no}/${startResSpec.chain_id}/${startResSpec.res_no} +7Å`)
+        }
+
+        if (cid) {
+            const result = await residueSelection.molecule.getNeighborResiduesCids(cid, 7)
+            await residueSelection.molecule.drawResidueSelection(result.join('||'))
+            dispatch(
+                setResidueSelection({
+                    molecule: residueSelection.molecule,
+                    first: residueSelection.first,
+                    second: residueSelection.second,
+                    cid: result,
+                    isMultiCid: true
+                })
+            )
+        }
+}, [residueSelection, clearSelection])
+
     return  selectionLabel ?
-        <MoorhenNotification key={notificationKeyRef.current} width={14}>
+        <MoorhenNotification key={notificationKeyRef.current} width={16}>
             <Tooltip className="moorhen-tooltip" title={tooltipContents}>
             <Stack ref={notificationComponentRef} direction="vertical" gap={1}>
                 <div>
                     <span>{selectionLabel}</span>
                 </div>
                 <Stack gap={2} direction='horizontal' style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-                    <IconButton onClick={handleDelete} onMouseEnter={() => setTooltipContents('Delete')}>
-                        <DeleteOutlined/>
-                    </IconButton>
                     <IconButton onClick={handleRefinement} onMouseEnter={() => setTooltipContents('Refine')}>
                         <CrisisAlertOutlined/>
                     </IconButton>
+                    <IconButton onClick={handleDelete} onMouseEnter={() => setTooltipContents('Delete')}>
+                        <DeleteOutlined/>
+                    </IconButton>
                     <IconButton onClick={handleSelectionCopy} onMouseEnter={() => setTooltipContents('Copy fragment')}>
                         <CopyAllOutlined/>
+                    </IconButton>
+                    <IconButton onClick={handleExpandSelection} onMouseEnter={() => setTooltipContents('Expand to neighbouring residues')}>
+                        <AllOutOutlined/>
                     </IconButton>
                     <IconButton onClick={clearSelection} onMouseEnter={() => setTooltipContents('Clear selection')}>
                         <CloseOutlined/>
