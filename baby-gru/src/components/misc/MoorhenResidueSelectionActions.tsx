@@ -96,8 +96,8 @@ export const MoorhenResidueSelectionActions = (props) => {
     const handleSelectionCopy = useCallback(async () => {
         let cid: string
         
-        if (residueSelection.isMultiCid) {
-            // pass
+        if (residueSelection.isMultiCid && Array.isArray(residueSelection.cid)) {
+            cid = residueSelection.cid.join('||')
         } else if (residueSelection.molecule && residueSelection.cid) {
             cid = residueSelection.cid as string
         } else if (residueSelection.molecule && residueSelection.first) {
@@ -114,8 +114,8 @@ export const MoorhenResidueSelectionActions = (props) => {
     }, [residueSelection, clearSelection])
 
     const handleRefinement = useCallback(async () => {
-        if (residueSelection.isMultiCid) {
-            // pass
+        if (residueSelection.isMultiCid && Array.isArray(residueSelection.cid)) {
+            await residueSelection.molecule.refineResiduesUsingAtomCid(residueSelection.cid.join('||'), 'LITERAL')
         } else if (residueSelection.molecule && residueSelection.cid) {
             const startResSpec = cidToSpec(residueSelection.first)
             const stopResSpec = cidToSpec(residueSelection.second)
@@ -133,8 +133,8 @@ export const MoorhenResidueSelectionActions = (props) => {
     const handleDelete = useCallback(async () => {
         let cid: string
         
-        if (residueSelection.isMultiCid) {
-            // pass
+        if (residueSelection.isMultiCid && Array.isArray(residueSelection.cid)) {
+            cid = residueSelection.cid.join('||')
         } else if (residueSelection.molecule && residueSelection.cid) {
             cid = residueSelection.cid as string
         } else if (residueSelection.molecule && residueSelection.first) {
@@ -204,11 +204,9 @@ export const MoorhenResidueSelectionActions = (props) => {
                     <IconButton onClick={handleSelectionCopy} onMouseEnter={() => setTooltipContents('Copy fragment')}>
                         <CopyAllOutlined/>
                     </IconButton>
-                    {/**
                     <IconButton onClick={handleExpandSelection} onMouseEnter={() => setTooltipContents('Expand to neighbouring residues')}>
                         <AllOutOutlined/>
                     </IconButton>
-                     */}
                     <IconButton onClick={clearSelection} onMouseEnter={() => setTooltipContents('Clear selection')}>
                         <CloseOutlined/>
                     </IconButton>
