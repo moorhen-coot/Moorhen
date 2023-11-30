@@ -25,6 +25,7 @@ import { MoorhenQuerySequenceModal } from '../modal/MoorhenQuerySequenceModal';
 import { MoorhenScriptModal } from '../modal/MoorhenScriptModal';
 import { moorhen } from '../../types/moorhen';
 import { useSelector } from 'react-redux';
+import { MoorhenControlsModal } from '../modal/MoorhenControlsModal';
 
 export interface MoorhenNavBarExtendedControlsInterface extends moorhen.CollectedProps {
     dropdownId: string;
@@ -32,6 +33,7 @@ export interface MoorhenNavBarExtendedControlsInterface extends moorhen.Collecte
     setShowQuerySequence: React.Dispatch<React.SetStateAction<boolean>>;
     setShowScripting: React.Dispatch<React.SetStateAction<boolean>>;
     setShowCreateAcedrgLinkModal: React.Dispatch<React.SetStateAction<boolean>>;
+    setShowControlsModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((props, ref) => {
@@ -44,6 +46,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
     const [showValidation, setShowValidation] = useState<boolean>(false)
     const [showModels, setShowModels] = useState<boolean>(false)
     const [showMaps, setShowMaps] = useState<boolean>(false)
+    const [showControlsModal, setShowControlsModal] = useState<boolean>(false)
     const [showQuerySequence, setShowQuerySequence] = useState<boolean>(false)
     const [showScripting, setShowScripting] = useState<boolean>(false)
     const [popoverTargetRef, setPopoverTargetRef] = useState()
@@ -89,7 +92,8 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
     }, [props.timeCapsuleRef.current])
 
     const collectedProps = {
-        setShowQuerySequence, setShowScripting, setShowCreateAcedrgLinkModal, setBusy, ...props
+        setShowControlsModal, setShowQuerySequence, setShowScripting, 
+        setShowCreateAcedrgLinkModal, setBusy, ...props
     }
 
     const navBarMenus = {
@@ -284,6 +288,13 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
     
     {showScripting &&
         <MoorhenScriptModal show={showScripting} setShow={setShowScripting} {...props} />
+    }
+
+    {showControlsModal &&
+        <MoorhenControlsModal
+            show={showControlsModal}
+            setShow={setShowControlsModal}
+            {...props}/>
     }
     
     { props.extraNavBarModals && props.extraNavBarModals.filter(modal => modal.show).map(modal => modal.JSXElement) }

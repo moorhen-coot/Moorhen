@@ -1,10 +1,14 @@
-import { Card, Col, Modal, Row } from "react-bootstrap";
-import { MoorhenNavBarExtendedControlsInterface } from "../navbar-menus/MoorhenNavBar";
+import { Card, Col, Row } from "react-bootstrap";
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
+import { useEffect, useState } from "react";
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
+import { convertRemToPx, convertViewtoPx } from "../../utils/MoorhenUtils";
+import parse from 'html-react-parser'
 
 const shortCutMouseActions = {
     residue_camera_wiggle: ['mouse-move', 'circle-left-mouse-click', 'one-finger-move'],
+    residue_selection: ['circle-left-mouse-click', 'one-finger-tap'],
     measure_distances: ['circle-left-mouse-click', 'one-finger-tap'],
     measure_angles: ['circle-left-mouse-click', 'one-finger-tap'],
     label_atom: ['circle-left-mouse-click', 'one-finger-tap'],
@@ -14,14 +18,28 @@ const shortCutMouseActions = {
     rotate_view: ['circle-left-mouse-click', 'mouse-move', 'one-finger-move']
 }
 
-interface MoorhenControlsModalPropsInterface extends MoorhenNavBarExtendedControlsInterface {
-    showControlsModal: boolean;
-    setShowControlsModal: React.Dispatch<React.SetStateAction<boolean>>;
+export const MoorhenControlsModal = (props: {
+    show: boolean;
+    setShow: React.Dispatch<React.SetStateAction<boolean>>;
+    urlPrefix: string;
+}) => {
 
-}
-
-export const MoorhenControlsModal = (props: MoorhenControlsModalPropsInterface) => {
     const _shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
+
+    const [svgString, setSvgString] = useState<string | null>(null)
+
+    useEffect(() => {
+        const fetchSVG = async () => {
+            const response = await fetch(`${props.urlPrefix}/baby-gru/pixmaps/keyboard-blank.svg`)
+            if (response.ok) {
+                const text = await response.text()
+                setSvgString(text)
+            }
+        }
+        fetchSVG()
+    }, [])
 
     const shortCuts: moorhen.Shortcut[] = _shortCuts ? JSON.parse(_shortCuts as string) : null
     if (shortCuts) {
@@ -33,8 +51,7 @@ export const MoorhenControlsModal = (props: MoorhenControlsModalPropsInterface) 
         const cardElement = document.getElementById(`show-controls-card-${key}`)
         cardElement.style.borderWidth = isMouseEnter ? '0.2rem' : '0.1rem'
         cardElement.style.borderColor = isMouseEnter ? 'black' : 'grey'
-        const query: any = document.querySelector(".moorhen-keyboard")
-        const svg = query.getSVGDocument()
+        const svg: any = document.querySelector("#moorhen-keyboard-blank-svg")
         if (!svg) {
             return
         }
@@ -56,14 +73,22 @@ export const MoorhenControlsModal = (props: MoorhenControlsModalPropsInterface) 
             })
         }
     }
-    
-    return <Modal show={props.showControlsModal} backdrop="static" size='lg' onHide={() => props.setShowControlsModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Moorhen Controls</Modal.Title>
-                </Modal.Header>
-                <Modal.Body style={{height:'65vh', overflowY: 'scroll'}}>
-                <Row>
-                    <Col className="col-4" style={{overflowY: 'scroll', height: '60vh'}}>
+
+    return <MoorhenDraggableModalBase
+                left={width / 5}
+                top={height / 5}
+                defaultHeight={convertViewtoPx(60, height)}
+                defaultWidth={convertViewtoPx(60, width)}
+                minHeight={convertViewtoPx(60, height)}
+                minWidth={convertViewtoPx(60, width)}
+                maxHeight={convertViewtoPx(60, height)}
+                maxWidth={convertViewtoPx(60, width)}
+                headerTitle='Moorhen Controls'
+                enableResize={false}
+                footer={null}
+                body={
+                    <Row style={{display: 'flex'}}>
+                    <Col className="col-4" style={{overflowY: 'scroll', height: convertViewtoPx(60, height)}}>
                     {shortCuts && Object.keys(shortCuts).map(key => {
                             let modifiers = []
                             if (shortCuts[key].modifiers.includes('shiftKey')) modifiers.push("Shift")
@@ -82,10 +107,11 @@ export const MoorhenControlsModal = (props: MoorhenControlsModalPropsInterface) 
                                     </Card>
                             })}
                     </Col>
-                    <Col className="col-8">
-                        <object style={{width:'100%', height: '100%'}} className="moorhen-keyboard" data={`${props.urlPrefix}/baby-gru/pixmaps/keyboard-blank.svg`} type="image/svg+xml" aria-label="keyboard"/>
+                    <Col className="col-8" style={{ display: 'flex' }}>
+                        {svgString ? parse(svgString) : null}
                     </Col>
                     </Row>
-                </Modal.Body>
-            </Modal>
+                }
+                {...props}
+            />
 }
