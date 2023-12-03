@@ -268,10 +268,8 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         props.map.contourLevel = mapContourLevel
         props.map.mapRadius = mapRadius
         isDirty.current = true
-        if (props.map.isVisible) {
-            if (!busyContouring.current) {
+        if (props.map.isVisible && !busyContouring.current) {
                 doContourIfDirty()
-            }
         }
     }, [mapContourLevel, mapRadius])
 
