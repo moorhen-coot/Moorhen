@@ -1,8 +1,5 @@
 import 'pako';
-import {
-    guid, readTextFile, readGemmiStructure, residueCodesThreeToOne, centreOnGemmiAtoms,
-    nucleotideCodesThreeToOne, findConsecutiveRanges, getRandomMoleculeColour
-} from './MoorhenUtils'
+import { guid, readTextFile, readGemmiStructure, centreOnGemmiAtoms, getRandomMoleculeColour } from './MoorhenUtils'
 import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation"
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
