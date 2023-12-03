@@ -3,7 +3,7 @@ import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
-import { convertRemToPx, convertViewtoPx } from "../../utils/MoorhenUtils";
+import { convertViewtoPx } from "../../utils/MoorhenUtils";
 import parse from 'html-react-parser'
 
 const shortCutMouseActions = {
