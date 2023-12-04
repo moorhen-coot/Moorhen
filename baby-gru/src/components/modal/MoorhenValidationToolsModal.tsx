@@ -29,6 +29,7 @@ export const MoorhenValidationToolsModal = (props: MoorhenValidationModalProps) 
     
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
 
     const collectedProps = {
         sideBarWidth: convertViewtoPx(35, width), dropdownId: 1, busy: false, 
@@ -44,9 +45,14 @@ export const MoorhenValidationToolsModal = (props: MoorhenValidationModalProps) 
             {label: "Fill partial residues", toolWidget: <MoorhenFillMissingAtoms {...collectedProps}/>},
             {label: "Unmodelled blobs", toolWidget: <MoorhenUnmodelledBlobs {...collectedProps}/>},
             {label: "MMRRCC plot", toolWidget: <MoorhenMMRRCCPlot {...collectedProps}/>},
-            {label: "Water validation", toolWidget: <MoorhenWaterValidation {...collectedProps}/>},
-            // {label: "Iris validation", toolWidget: <MoorhenIrisValidation resizeNodeRef={resizeNodeRef} resizeTrigger={draggableResizeTrigger} {...collectedProps}/>}
+            {label: "Water validation", toolWidget: <MoorhenWaterValidation {...collectedProps}/>}
     ]
+
+    if (devMode) {
+        toolOptions.push(
+            {label: "Iris validation", toolWidget: <MoorhenIrisValidation resizeNodeRef={resizeNodeRef} resizeTrigger={draggableResizeTrigger} {...collectedProps}/>}
+        )
+    }
 
     const handleChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         if (evt.target.value) {
