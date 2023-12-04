@@ -19,21 +19,24 @@ interface MoorhenValidationModalProps extends moorhen.CollectedProps {
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export const MoorhenValidationToolsModal = (props: MoorhenValidationModalProps) => {    
+export const MoorhenValidationToolsModal = (props: MoorhenValidationModalProps) => {        
+    const resizeNodeRef = useRef<HTMLDivElement>();
+    const toolsAccordionSelectRef = useRef<undefined | HTMLSelectElement>()
+    
     const [selectedTool, setSelectedTool] = useState<null | number>(null)
     const [draggableResizeTrigger, setDraggableResizeTrigger] = useState<boolean>(true)
-    const toolsAccordionSelectRef = useRef<undefined | HTMLSelectElement>()
+    
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
     const collectedProps = {
-        sideBarWidth: convertViewtoPx(35, width), dropdownId: 1, busy: false,
+        sideBarWidth: convertViewtoPx(35, width), dropdownId: 1, busy: false, 
         accordionDropdownId: 1, setAccordionDropdownId: (arg0) => {}, showSideBar: true, ...props
     }
 
     const toolOptions = [
             {label: "Difference Map Peaks", toolWidget: <MoorhenDifferenceMapPeaks {...collectedProps}/>},
-            {label: "Ramachandran Plot", toolWidget: <MoorhenRamachandran resizeTrigger={draggableResizeTrigger} {...collectedProps}/>},
+            {label: "Ramachandran Plot", toolWidget: <MoorhenRamachandran resizeNodeRef={resizeNodeRef} resizeTrigger={draggableResizeTrigger} {...collectedProps}/>},
             {label: "Validation Plot", toolWidget: <MoorhenValidation {...collectedProps}/>},
             {label: "Ligand Validation", toolWidget: <MoorhenLigandValidation {...collectedProps}/>},
             {label: "Peptide flips using difference map", toolWidget: <MoorhenPepflipsDifferenceMap {...collectedProps}/>},
@@ -73,6 +76,7 @@ export const MoorhenValidationToolsModal = (props: MoorhenValidationModalProps) 
                 overflowX='auto'
                 headerTitle='Validation tools'
                 footer={null}
+                resizeNodeRef={resizeNodeRef}
                 onResizeStop={() => { setDraggableResizeTrigger((prev) => !prev) }}
                 body={
                     <div style={{height: '100%'}} >
