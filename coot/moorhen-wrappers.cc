@@ -764,6 +764,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("delete_colour_rules",&molecules_container_t::delete_colour_rules)
     .function("add_colour_rules_multi",&molecules_container_t::add_colour_rules_multi)
     .function("fit_ligand_right_here",&molecules_container_t::fit_ligand_right_here)
+    .function("fit_ligand",&molecules_container_t::fit_ligand)
     .function("fit_to_map_by_random_jiggle",&molecules_container_t::fit_to_map_by_random_jiggle)
     .function("fit_to_map_by_random_jiggle_using_cid",&molecules_container_t::fit_to_map_by_random_jiggle_using_cid)
     .function("get_svg_for_residue_type",&molecules_container_t::get_svg_for_residue_type)
