@@ -11,6 +11,7 @@ import { MoorhenMMRRCCPlot } from "../validation-tools/MoorhenMMRRCCPlot"
 import { MoorhenWaterValidation } from "../validation-tools/MoorhenWaterValidation"
 import { MoorhenLigandValidation } from "../validation-tools/MoorhenLigandValidation"
 import { MoorhenUnmodelledBlobs } from "../validation-tools/MoorhenUnmodelledBlobs"
+import { MoorhenIrisValidation } from "../validation-tools/MoorhenIrisValidation"
 import { convertRemToPx, convertViewtoPx} from '../../utils/MoorhenUtils';
 import { useSelector } from "react-redux";
 
@@ -43,7 +44,8 @@ export const MoorhenValidationToolsModal = (props: MoorhenValidationModalProps) 
             {label: "Fill partial residues", toolWidget: <MoorhenFillMissingAtoms {...collectedProps}/>},
             {label: "Unmodelled blobs", toolWidget: <MoorhenUnmodelledBlobs {...collectedProps}/>},
             {label: "MMRRCC plot", toolWidget: <MoorhenMMRRCCPlot {...collectedProps}/>},
-            {label: "Water validation", toolWidget: <MoorhenWaterValidation {...collectedProps}/>}
+            {label: "Water validation", toolWidget: <MoorhenWaterValidation {...collectedProps}/>},
+            // {label: "Iris validation", toolWidget: <MoorhenIrisValidation resizeNodeRef={resizeNodeRef} resizeTrigger={draggableResizeTrigger} {...collectedProps}/>}
     ]
 
     const handleChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
