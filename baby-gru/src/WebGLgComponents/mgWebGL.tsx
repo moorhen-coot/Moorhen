@@ -3460,16 +3460,16 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     setOriginAnimated(o: number[], doDrawScene=true) : void {
-        this.nAnimationFrames = 15;
-        const old_x = this.origin[0]
-        const old_y = this.origin[1]
-        const old_z = this.origin[2]
-        const new_x = o[0]
-        const new_y = o[1]
-        const new_z = o[2]
+        const [old_x, old_y, old_z] = this.origin
+        const [new_x, new_y, new_z] = o
         const DX = new_x - old_x
         const DY = new_y - old_y
         const DZ = new_z - old_z
+        const distance = Math.sqrt(DX**2 + DY**2 + DZ**2)
+        // Optimal speed is 1A per frame, with upper limit of 10 frames
+        const nFrames = Math.floor(distance / 1.5)
+        this.nAnimationFrames = nFrames > 10 ? 10 : nFrames
+        console.log(this.nAnimationFrames)
         const dx = DX/this.nAnimationFrames
         const dy = DY/this.nAnimationFrames
         const dz = DZ/this.nAnimationFrames
