@@ -142,6 +142,7 @@
     "gl-matrix": "^3.4.3",
     "html-react-parser": "^1.4.14",
     "html-webpack-plugin": "^5.5.0",
+    "iris-validation": "^0.1.8",
     "jest": "^27.5.1",
     "jsdoc": "^4.0.2",
     "localforage": "^1.10.0",
