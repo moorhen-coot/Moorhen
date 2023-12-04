@@ -3,10 +3,11 @@ import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
-import { convertRemToPx, convertViewtoPx } from "../../utils/MoorhenUtils";
+import { convertViewtoPx } from "../../utils/MoorhenUtils";
 import parse from 'html-react-parser'
 
 const shortCutMouseActions = {
+    open_context_menu: ['circle-right-mouse-click', 'two-finger-tap'],
     residue_camera_wiggle: ['mouse-move', 'circle-left-mouse-click', 'one-finger-move'],
     residue_selection: ['circle-left-mouse-click', 'one-finger-tap'],
     measure_distances: ['circle-left-mouse-click', 'one-finger-tap'],
@@ -45,6 +46,7 @@ export const MoorhenControlsModal = (props: {
     if (shortCuts) {
         shortCuts['pan_view'] = {modifiers: ['shiftKey', 'altKey'], keyPress: '', label: 'Pan view'}
         shortCuts['rotate_view'] = {modifiers: ['shiftKey'], keyPress: '', label: 'Rotate view'} 
+        shortCuts['open_context_menu'] = {modifiers: [], keyPress: '', label: 'Open context menu'} 
     }
 
     const handleMouseHover = (key: string, modifiers: string[], isMouseEnter: boolean = true) => {

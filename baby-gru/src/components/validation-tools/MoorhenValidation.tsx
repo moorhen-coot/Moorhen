@@ -36,11 +36,12 @@ const metricInfoScaling = {
 }
 
 export const MoorhenValidation = (props: Props) => {
-    const chartRef = useRef(null);
+    const dispatch = useDispatch()
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    const dispatch = useDispatch()
+
+    const chartRef = useRef(null);
 
     const plugin = {
         id: 'custom_bar_borders',

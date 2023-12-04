@@ -2,7 +2,7 @@ import { useState, useMemo, Fragment, useRef } from "react";
 import { Button, DropdownButton } from "react-bootstrap";
 import { convertViewtoPx } from '../../utils/MoorhenUtils';
 import { MenuItem } from "@mui/material";
-import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, AddOutlined } from '@mui/icons-material';
+import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings } from '@mui/icons-material';
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
 import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem"
 import { clickedResidueType } from "../card/MoorhenMoleculeCard";
@@ -129,7 +129,7 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
         <DropdownButton
             ref={dropdownCardButtonRef}
             key="dropDownButton"
-            title={<AddOutlined />}
+            title={<Settings />}
             size="sm"
             variant="outlined"
             autoClose={popoverIsShown ? false : 'outside'}
