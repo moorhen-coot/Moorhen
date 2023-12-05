@@ -9,7 +9,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { moorhen } from '../../types/moorhen';
 import { setShowControlsModal, setShowCreateAcedrgLinkModal, setShowMapsModal, setShowModelsModal, setShowQuerySequenceModal, setShowScriptingModal, setShowValidationModal } from '../../store/activeModalsSlice';
 
-export const MoorhenModalsContainer = (props) => {
+export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
     const dispatch = useDispatch()
     const showModelsModal = useSelector((state: moorhen.State) => state.activeModals.showModelsModal)
     const showMapsModal = useSelector((state: moorhen.State) => state.activeModals.showMapsModal)

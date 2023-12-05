@@ -385,7 +385,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         
     </div>
 
-    <MoorhenModalsContainer/>
+    <MoorhenModalsContainer {...collectedProps}/>
 
     <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange}/>
 
