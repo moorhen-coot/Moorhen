@@ -575,7 +575,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     /**
      * Get a string with the PDB file contents of the molecule in its current state
      * @param {string} [format='pdb'] - Indicate the file format
-     * @returns {Promise<moorhen.WorkerResponse>}  A worker response with the file contents
+     * @returns {string}  A string representation file contents
      */
     async getAtoms(format: string = 'pdb'): Promise<string> {
         const response = await this.commandCentre.current.cootCommand({
