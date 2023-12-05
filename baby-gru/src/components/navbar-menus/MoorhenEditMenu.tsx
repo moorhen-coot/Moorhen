@@ -9,13 +9,17 @@ import { MoorhenAddRemoveHydrogenAtomsMenuItem } from "../menu-item/MoorhenAddRe
 import { MoorhenMoveMoleculeHere } from "../menu-item/MoorhenMoveMoleculeHere"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { moorhen } from "../../types/moorhen";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { setShowCreateAcedrgLinkModal } from "../../store/activeModalsSlice";
 
 export const MoorhenEditMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
-    const [popoverIsShown, setPopoverIsShown] = useState(false)
-    const menuItemProps = { setPopoverIsShown, ...props }
+    const dispatch = useDispatch()
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
 
+    const [popoverIsShown, setPopoverIsShown] = useState(false)
+
+    const menuItemProps = { setPopoverIsShown, ...props }
+    
     return <>
             <MoorhenAddSimpleMenuItem key="add_simple" setPopoverIsShown={() => {}} {...menuItemProps} />
             <MoorhenAddRemoveHydrogenAtomsMenuItem key='add_remove_hydrogens' {...menuItemProps}/>
@@ -26,7 +30,7 @@ export const MoorhenEditMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             <MoorhenGoToMenuItem key="go_to_cid" {...menuItemProps} />
             {devMode &&
                 <MenuItem onClick={() => {
-                    props.setShowCreateAcedrgLinkModal(true)
+                    dispatch(setShowCreateAcedrgLinkModal(true))
                     document.body.click()
                 }}>
                     Create covalent link between two atoms...

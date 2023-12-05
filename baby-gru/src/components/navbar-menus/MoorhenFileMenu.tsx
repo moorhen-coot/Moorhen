@@ -20,6 +20,7 @@ import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch } from 'react-redux';
 import { setNotificationContent } from "../../store/generalStatesSlice";
 import { addMoleculeList } from "../../store/moleculesSlice";
+import { setShowQuerySequenceModal } from "../../store/activeModalsSlice";
 
 export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     
@@ -189,7 +190,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     <hr></hr>
 
                     <MenuItem id='query-online-services-sequence' onClick={() => {
-                        props.setShowQuerySequence(true)
+                        dispatch(setShowQuerySequenceModal(true))
                         document.body.click()
                     }}>
                         Query online services with a sequence...

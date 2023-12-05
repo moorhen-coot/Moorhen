@@ -805,6 +805,15 @@ export namespace moorhen {
             hoveredAtom: HoveredAtom;
             cursorStyle: string;
         };
+        activeModals: {
+            showModelsModal: false,
+            showMapsModal: false,
+            showCreateAcedrgLinkModal: false,
+            showValidationModal: false,
+            showQuerySequenceModal: false,
+            showScriptingModal: false,
+            showControlsModal: false,
+        };
     }
     
     type actionButtonSettings = {

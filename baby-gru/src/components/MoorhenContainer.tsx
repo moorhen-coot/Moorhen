@@ -9,6 +9,7 @@ import { babyGruKeyPress } from '../utils/MoorhenKeyboardAccelerators';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
 import { MoorhenNotification } from './misc/MoorhenNotification';
+import { MoorhenModalsContainer } from './misc/MoorhenModalsContainer'
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
 import { MoorhenPreferencesContainer } from './misc/MoorhenPreferencesContainer'
@@ -383,6 +384,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         <MoorhenNavBar {...collectedProps}/>
         
     </div>
+
+    <MoorhenModalsContainer/>
 
     <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange}/>
 
