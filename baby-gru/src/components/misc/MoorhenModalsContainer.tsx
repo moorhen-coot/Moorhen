@@ -5,9 +5,10 @@ import { MoorhenValidationToolsModal } from '../modal/MoorhenValidationToolsModa
 import { MoorhenQuerySequenceModal } from '../modal/MoorhenQuerySequenceModal';
 import { MoorhenScriptModal } from '../modal/MoorhenScriptModal';
 import { MoorhenControlsModal } from '../modal/MoorhenControlsModal';
+import { MoorheFitLigandModal } from '../modal/MoorhenFitLigandModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { moorhen } from '../../types/moorhen';
-import { setShowControlsModal, setShowCreateAcedrgLinkModal, setShowMapsModal, setShowModelsModal, setShowQuerySequenceModal, setShowScriptingModal, setShowValidationModal } from '../../store/activeModalsSlice';
+import { setShowControlsModal, setShowCreateAcedrgLinkModal, setShowFitLigandModal, setShowMapsModal, setShowModelsModal, setShowQuerySequenceModal, setShowScriptingModal, setShowValidationModal } from '../../store/activeModalsSlice';
 
 export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
     const dispatch = useDispatch()
@@ -18,6 +19,7 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
     const showQuerySequenceModal = useSelector((state: moorhen.State) => state.activeModals.showQuerySequenceModal)
     const showScriptingModal = useSelector((state: moorhen.State) => state.activeModals.showScriptingModal)
     const showControlsModal = useSelector((state: moorhen.State) => state.activeModals.showControlsModal)
+    const showFitLigandModal = useSelector((state: moorhen.State) => state.activeModals.showFitLigandModal)
 
     return <>
         <MoorhenModelsModal
@@ -66,6 +68,13 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
                 show={showControlsModal}
                 setShow={(newVal: boolean) => dispatch(setShowControlsModal(newVal))}
                 {...props} />
+        }
+
+        {showFitLigandModal &&
+            <MoorheFitLigandModal
+            show={showFitLigandModal}
+            setShow={(newVal: boolean) => dispatch(setShowFitLigandModal(newVal))}
+            {...props} />
         }
     </>
 }
