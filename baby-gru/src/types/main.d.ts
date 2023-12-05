@@ -165,7 +165,7 @@ declare module 'moorhen' {
         fetchMapRmsd(): Promise<number>;
         fetchSuggestedLevel(): Promise<number>;
         fetchMapCentre(): Promise<[number, number, number]>;
-        replaceMapWithMtzFile(fileUrl: RequestInfo | URL, name: string, selectedColumns: _moorhen.selectedMtzColumns, mapColour?: { [type: string]: {r: number, g: number, b: number} }): Promise<void>;
+        replaceMapWithMtzFile(fileUrl: RequestInfo | URL, selectedColumns: _moorhen.selectedMtzColumns): Promise<void>;
         associateToReflectionData (selectedColumns: _moorhen.selectedMtzColumns, reflectionData: Uint8Array | ArrayBuffer): Promise<void>;
         delete(): Promise<void> 
         doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number): Promise<void>;
