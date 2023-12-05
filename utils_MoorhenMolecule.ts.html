@@ -690,7 +690,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     /**
      * Get a string with the PDB file contents of the molecule in its current state
      * @param {string} [format='pdb'] - Indicate the file format
-     * @returns {Promise&lt;moorhen.WorkerResponse>}  A worker response with the file contents
+     * @returns {string}  A string representation file contents
      */
     async getAtoms(format: string = 'pdb'): Promise&lt;string> {
         const response = await this.commandCentre.current.cootCommand({
@@ -1737,29 +1737,37 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * A function to fit a given ligand
      * @param {number} mapMolNo - The map iMol that will be used for ligand fitting
      * @param {number} ligandMolNo - The ligand iMol that will be fitted
+     * @param {boolean} [fitRightHere=true] - Indicates if the ligand should be fitted at the current origin
      * @param {boolean} [redraw=false] - Indicates if the fitted ligands should be drawn
      * @param {boolean} [useConformers=false] - Indicates if there is need to test multiple conformers
      * @param {number} [conformerCount=0] - Conformer count
      * @returns {Promise&lt;moorhen.Molecule[]>} - A list of fitted ligands
      */
-    async fitLigandHere(mapMolNo: number, ligandMolNo: number, redraw: boolean = false, useConformers: boolean = false, conformerCount: number = 0): Promise&lt;moorhen.Molecule[]> {
+    async fitLigand(mapMolNo: number, ligandMolNo: number, fitRightHere: boolean = true, redraw: boolean = false, useConformers: boolean = false, conformerCount: number = 0): Promise&lt;moorhen.Molecule[]> {
+        const command = fitRightHere ? 'fit_ligand_right_here' : 'fit_ligand'
+        
+        const commandArgs = fitRightHere ? [
+            this.molNo, mapMolNo, ligandMolNo,
+            ...this.glRef.current.origin.map(coord => -coord),
+            1., useConformers, conformerCount
+        ] : [
+            this.molNo, mapMolNo, ligandMolNo,
+            1., useConformers, conformerCount
+        ]
+
         const result = await this.commandCentre.current.cootCommand({
             returnType: 'int_array',
-            command: 'fit_ligand_right_here',
-            commandArgs: [
-                this.molNo, mapMolNo, ligandMolNo,
-                ...this.glRef.current.origin.map(coord => -coord),
-                1., useConformers, conformerCount
-            ],
+            command: command,
+            commandArgs: commandArgs,
             changesMolecules: [this.molNo]
         }, true) as moorhen.WorkerResponse&lt;number[]>
         
         if (result.data.result.status === "Completed") {
             const newMolecules: moorhen.Molecule[] = await Promise.all(
-                result.data.result.result.map(async (iMol) => {
+                result.data.result.result.map(async (molNo, idx) => {
                     const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.monomerLibraryPath)
-                    newMolecule.molNo = iMol
-                    newMolecule.name = `fit_lig_${iMol}`
+                    newMolecule.molNo = molNo
+                    newMolecule.name = `Fit. lig. #${idx}`
                     newMolecule.isDarkBackground = this.isDarkBackground
                     newMolecule.defaultBondOptions = this.defaultBondOptions
                     if (redraw) {
