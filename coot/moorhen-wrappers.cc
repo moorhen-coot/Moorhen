@@ -234,12 +234,14 @@ class molecules_container_js : public molecules_container_t {
         }
 
         std::string get_molecule_atoms(int imol, const std::string &format) {
-            const std::string file_name = generate_rand_str(32);
+            std::string file_name = generate_rand_str(32);
             std::string pdb_data;  
             try {
                 if (format == "pdb") {
+                    file_name += ".pdb";
                     writePDBASCII(imol, file_name);
                 } else if (format == "mmcif") {
+                    file_name += ".mmcif";
                     writeCIFASCII(imol, file_name);
                 } else {
                     std::cout << "Unrecognised format " << format << std::endl;
