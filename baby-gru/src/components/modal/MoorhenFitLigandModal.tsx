@@ -166,6 +166,11 @@ export const MoorheFitLigandModal = (props: { show: boolean; setShow: React.Disp
         </Stack>
     </>
 
+    const spinnerContent =  <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={busy}>
+                                <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
+                                <span>Finding ligand...</span>
+                            </Backdrop>
+
     return <MoorhenDraggableModalBase
                 left={width / 6}
                 top={height / 6}
@@ -177,12 +182,7 @@ export const MoorheFitLigandModal = (props: { show: boolean; setShow: React.Disp
                 minWidth={convertRemToPx(37)}
                 maxHeight={convertViewtoPx(50, height)}
                 maxWidth={convertViewtoPx(50, width)}
-                additionalChildren={
-                    <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={busy}>
-                        <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
-                        <span>Finding ligand...</span>
-                    </Backdrop>
-                }
+                additionalChildren={spinnerContent}
                 headerTitle='Find ligand'
                 footer={footerContent}
                 body={bodyContent}
