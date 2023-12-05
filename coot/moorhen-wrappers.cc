@@ -191,7 +191,7 @@ class molecules_container_js : public molecules_container_t {
     
             for (int i = 0; i < len; ++i) {
                 int randomIndex = distrib(gen);
-                rand_str += alphanum[randomIndex];
+                rand_str += charset[randomIndex];
             }
             
             return rand_str;
