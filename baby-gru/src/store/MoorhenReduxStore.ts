@@ -11,6 +11,7 @@ import sceneSettingsReducer from './sceneSettingsSlice'
 import miscAppSettingsReducer from './miscAppSettingsSlice'
 import generalStatesReducer from './generalStatesSlice'
 import hoveringStatesReducer from './hoveringStatesSlice'
+import activeModalsReducer from './activeModalsSlice'
 
 export default configureStore({
     reducer: {
@@ -25,7 +26,8 @@ export default configureStore({
         sceneSettings: sceneSettingsReducer,
         miscAppSettings: miscAppSettingsReducer,
         generalStates: generalStatesReducer,
-        hoveringStates: hoveringStatesReducer
+        hoveringStates: hoveringStatesReducer,
+        activeModals: activeModalsReducer
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

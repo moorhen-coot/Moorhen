@@ -98,7 +98,7 @@ export namespace moorhen {
         getNumberOfAtoms(): Promise<number>;
         moveMoleculeHere(x: number, y: number, z: number): Promise<void>;
         checkHasGlycans(): Promise<boolean>;
-        fitLigandHere(mapMolNo: number, ligandMolNo: number, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<Molecule[]>;
+        fitLigand(mapMolNo: number, ligandMolNo: number, fitRightHere?: boolean, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<Molecule[]>;
         checkIsLigand(): boolean;
         removeRepresentation(representationId: string): void;
         addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: ColourRule[], bondOptions?: cootBondOptions, applyColourToNonCarbonAtoms?: boolean): Promise<MoleculeRepresentation>;
@@ -367,7 +367,7 @@ export namespace moorhen {
         fetchMapRmsd(): Promise<number>;
         fetchSuggestedLevel(): Promise<number>;
         fetchMapCentre(): Promise<[number, number, number]>;
-        replaceMapWithMtzFile(fileUrl: RequestInfo | URL, name: string, selectedColumns: selectedMtzColumns, mapColour?: { [type: string]: {r: number, g: number, b: number} }): Promise<void>;
+        replaceMapWithMtzFile(fileUrl: RequestInfo | URL, selectedColumns: selectedMtzColumns): Promise<void>;
         associateToReflectionData (selectedColumns: selectedMtzColumns, reflectionData: Uint8Array | ArrayBuffer): Promise<void>;
         delete(): Promise<void> 
         doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number): Promise<void>;
@@ -804,6 +804,16 @@ export namespace moorhen {
             enableAtomHovering: boolean;
             hoveredAtom: HoveredAtom;
             cursorStyle: string;
+        };
+        activeModals: {
+            showModelsModal: boolean;
+            showMapsModal: boolean;
+            showCreateAcedrgLinkModal: boolean;
+            showValidationModal: boolean;
+            showQuerySequenceModal: boolean;
+            showScriptingModal: boolean;
+            showControlsModal: boolean;
+            showFitLigandModal: boolean;
         };
     }
     

@@ -12,28 +12,18 @@ import { MoorhenCryoMenu } from './MoorhenCryoMenu';
 import { MoorhenCalculateMenu } from './MoorhenCalculateMenu';
 import { ClickAwayListener, Fab, MenuItem, IconButton, MenuList, Popper, Grow } from "@mui/material";
 import { convertRemToPx, convertViewtoPx } from '../../utils/MoorhenUtils';
-import { MoorhenModelsModal } from '../modal/MoorhenModelsModal';
-import { MoorhenCreateAcedrgLinkModal } from '../modal/MoorhenCreateAcedrgLinkModal';
-import { MoorhenMapsModal } from '../modal/MoorhenMapsModal';
-import { MoorhenValidationToolsModal } from '../modal/MoorhenValidationToolsModal';
 import { 
     AcUnitOutlined, CalculateOutlined, DescriptionOutlined, EditOutlined, VisibilityOutlined,
     FactCheckOutlined, HelpOutlineOutlined, MenuOutlined, SaveOutlined, ScienceOutlined, 
     SettingsSuggestOutlined, CloseOutlined, HistoryOutlined,
  } from '@mui/icons-material';
-import { MoorhenQuerySequenceModal } from '../modal/MoorhenQuerySequenceModal';
-import { MoorhenScriptModal } from '../modal/MoorhenScriptModal';
 import { moorhen } from '../../types/moorhen';
-import { useSelector } from 'react-redux';
-import { MoorhenControlsModal } from '../modal/MoorhenControlsModal';
+import { useDispatch, useSelector } from 'react-redux';
+import { setShowMapsModal, setShowModelsModal, setShowValidationModal } from '../../store/activeModalsSlice';
 
 export interface MoorhenNavBarExtendedControlsInterface extends moorhen.CollectedProps {
     dropdownId: string;
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
-    setShowQuerySequence: React.Dispatch<React.SetStateAction<boolean>>;
-    setShowScripting: React.Dispatch<React.SetStateAction<boolean>>;
-    setShowCreateAcedrgLinkModal: React.Dispatch<React.SetStateAction<boolean>>;
-    setShowControlsModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((props, ref) => {
@@ -42,13 +32,6 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
     const [busy, setBusy] = useState<boolean>(false)
     const [speedDialOpen, setSpeedDialOpen] = useState<boolean>(false)
     const [navBarActiveMenu, setNavBarActiveMenu] = useState<string>('-1')
-    const [showCreateAcedrgLinkModal, setShowCreateAcedrgLinkModal] = useState<boolean>(false)
-    const [showValidation, setShowValidation] = useState<boolean>(false)
-    const [showModels, setShowModels] = useState<boolean>(false)
-    const [showMaps, setShowMaps] = useState<boolean>(false)
-    const [showControlsModal, setShowControlsModal] = useState<boolean>(false)
-    const [showQuerySequence, setShowQuerySequence] = useState<boolean>(false)
-    const [showScripting, setShowScripting] = useState<boolean>(false)
     const [popoverTargetRef, setPopoverTargetRef] = useState()
     
     const speedDialRef = useRef()
@@ -66,6 +49,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
     const helpDialActionRef = useRef()
     const devDialActionRef = useRef()
     
+    const dispatch = useDispatch()
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const cootInitialized = useSelector((state: moorhen.State) => state.generalStates.cootInitialized)
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
@@ -91,10 +75,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
         }
     }, [props.timeCapsuleRef.current])
 
-    const collectedProps = {
-        setShowControlsModal, setShowQuerySequence, setShowScripting, 
-        setShowCreateAcedrgLinkModal, setBusy, ...props
-    }
+    const collectedProps = { setBusy, ...props }
 
     const navBarMenus = {
         'File': { icon: <DescriptionOutlined />, name: 'File', ref: fileSpeedDialActionRef},
@@ -139,15 +120,15 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
             case "-1":
                 break
             case "Models":
-                setShowModels(true)
+                dispatch(setShowModelsModal(true))
                 setNavBarActiveMenu('-1')
                 break
             case "Maps":
-                setShowMaps(true)
+                dispatch(setShowMapsModal(true))
                 setNavBarActiveMenu('-1')
                 break
             case "Validation":
-                setShowValidation(true)
+                dispatch(setShowValidationModal(true))
                 setNavBarActiveMenu('-1')
                 break
             default:
@@ -249,74 +230,27 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
             </Overlay>
         </Popper>
         </ClickAwayListener>
-    
-    <MoorhenModelsModal
-        show={showModels}
-        setShow={setShowModels}
-        {...props}
-    />
-    
-    <MoorhenMapsModal
-        show={showMaps}
-        setShow={setShowMaps}
-        {...props}
-    />
-        
-    {showCreateAcedrgLinkModal && 
-        <MoorhenCreateAcedrgLinkModal
-            width={45}
-            show={showCreateAcedrgLinkModal}
-            setShow={setShowCreateAcedrgLinkModal}
-            {...props}
-        />
-    }
-    
-    {showValidation && 
-        <MoorhenValidationToolsModal 
-            show={showValidation}
-            setShow={setShowValidation}
-            {...props}
-        />
-    }
-    
-    {showQuerySequence &&
-        <MoorhenQuerySequenceModal
-            show={showQuerySequence}
-            setShow={setShowQuerySequence}
-            {...props} />
-    }
-    
-    {showScripting &&
-        <MoorhenScriptModal show={showScripting} setShow={setShowScripting} {...props} />
-    }
+   
+        { props.extraNavBarModals && props.extraNavBarModals.filter(modal => modal.show).map(modal => modal.JSXElement) }
 
-    {showControlsModal &&
-        <MoorhenControlsModal
-            show={showControlsModal}
-            setShow={setShowControlsModal}
-            {...props}/>
-    }
-    
-    { props.extraNavBarModals && props.extraNavBarModals.filter(modal => modal.show).map(modal => modal.JSXElement) }
-
-    <Fab
-        variant='extended'
-        size="large"
-        sx={{
-            position: 'absolute',
-            top: canvasTop + convertRemToPx(0.5),
-            right: canvasLeft + convertRemToPx(0.5),
-            display: hoveredAtom.cid || busy || timeCapsuleBusy ? 'flex' : 'none',
-            color: isDark ? 'grey' : 'white' ,
-            bgcolor: isDark ? 'grey' : 'white',
-            '&:hover': {
+        <Fab
+            variant='extended'
+            size="large"
+            sx={{
+                position: 'absolute',
+                top: canvasTop + convertRemToPx(0.5),
+                right: canvasLeft + convertRemToPx(0.5),
+                display: hoveredAtom.cid || busy || timeCapsuleBusy ? 'flex' : 'none',
+                color: isDark ? 'grey' : 'white' ,
                 bgcolor: isDark ? 'grey' : 'white',
-            }
-        }}
-    >
-        {hoveredAtom.cid && <Form.Control className='moorhen-hovered-atom-form' type="text" readOnly={true} value={`${hoveredAtom.molecule.name}:${hoveredAtom.cid}`} />}
-        {busy && <Spinner className='moorhen-spinner' animation="border" variant={isDark ? 'light' : 'dark'} />}
-        {timeCapsuleBusy && <SaveOutlined style={{ padding: 0, margin: 0, color: 'black' }}/>}
-    </Fab>
+                '&:hover': {
+                    bgcolor: isDark ? 'grey' : 'white',
+                }
+            }}
+        >
+            {hoveredAtom.cid && <Form.Control className='moorhen-hovered-atom-form' type="text" readOnly={true} value={`${hoveredAtom.molecule.name}:${hoveredAtom.cid}`} />}
+            {busy && <Spinner className='moorhen-spinner' animation="border" variant={isDark ? 'light' : 'dark'} />}
+            {timeCapsuleBusy && <SaveOutlined style={{ padding: 0, margin: 0, color: 'black' }}/>}
+        </Fab>
     </>
 })

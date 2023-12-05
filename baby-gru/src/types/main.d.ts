@@ -57,7 +57,7 @@ declare module 'moorhen' {
         getNumberOfAtoms(): Promise<number>;
         moveMoleculeHere(x: number, y: number, z: number): Promise<void>;
         checkHasGlycans(): Promise<boolean>;
-        fitLigandHere(mapMolNo: number, ligandMolNo: number, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<_moorhen.Molecule[]>;
+        fitLigand(mapMolNo: number, ligandMolNo: number, fitRightHere?: boolean, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<_moorhen.Molecule[]>;
         checkIsLigand(): boolean;
         removeRepresentation(representationId: string): void;
         addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: _moorhen.ColourRule[], bondOptions?: _moorhen.cootBondOptions, applyColourToNonCarbonAtoms?: boolean): Promise<_moorhen.MoleculeRepresentation>;
@@ -165,7 +165,7 @@ declare module 'moorhen' {
         fetchMapRmsd(): Promise<number>;
         fetchSuggestedLevel(): Promise<number>;
         fetchMapCentre(): Promise<[number, number, number]>;
-        replaceMapWithMtzFile(fileUrl: RequestInfo | URL, name: string, selectedColumns: _moorhen.selectedMtzColumns, mapColour?: { [type: string]: {r: number, g: number, b: number} }): Promise<void>;
+        replaceMapWithMtzFile(fileUrl: RequestInfo | URL, selectedColumns: _moorhen.selectedMtzColumns): Promise<void>;
         associateToReflectionData (selectedColumns: _moorhen.selectedMtzColumns, reflectionData: Uint8Array | ArrayBuffer): Promise<void>;
         delete(): Promise<void> 
         doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number): Promise<void>;

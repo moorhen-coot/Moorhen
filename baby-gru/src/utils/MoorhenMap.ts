@@ -152,12 +152,10 @@ export class MoorhenMap implements moorhen.Map {
     /**
      * Replace the current map with the contents of a MTZ file
      * @param {string} fileUrl - The uri to the MTZ file
-     * @param {string} name - The name of the map
      * @param {moorhen.selectedMtzColumns} selectedColumns - Object indicating the selected MTZ columns
-     * @param {object} mapColour - The map colour
      * @returns {Promise<void>}
      */
-    async replaceMapWithMtzFile(fileUrl: RequestInfo | URL, name: string, selectedColumns: moorhen.selectedMtzColumns, mapColour?: { [type: string]: {r: number, g: number, b: number} }): Promise<void> {
+    async replaceMapWithMtzFile(fileUrl: RequestInfo | URL, selectedColumns: moorhen.selectedMtzColumns): Promise<void> {
         let mtzData: Uint8Array
         let fetchResponse: Response
 

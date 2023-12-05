@@ -8,8 +8,12 @@ import { MoorhenAddWatersMenuItem } from "../menu-item/MoorhenAddWatersMenuItem"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MenuItem } from "@mui/material";
 import { libcootApi } from "../../types/libcoot";
+import { useDispatch } from "react-redux";
+import { setShowScriptingModal } from "../../store/activeModalsSlice";
 
 export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
+    const dispatch = useDispatch()
+    
     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
     const [superposeResults, setSuperposeResults] = useState<false | libcootApi.SuperposeResultsJS>(false)
     
@@ -37,7 +41,7 @@ export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterfa
             <>
                 <MoorhenLoadScriptMenuItem {...menuItemProps} />
                 <MenuItem id="interactive-scripting-menu-item" onClick={() => { 
-                    props.setShowScripting(true)
+                    dispatch(setShowScriptingModal(true))
                     document.body.click()
                  }}>Interactive scripting...</MenuItem>
             </>

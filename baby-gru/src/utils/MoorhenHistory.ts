@@ -44,6 +44,7 @@ const formatCommandArgsString = (command: string, commandArgs: (number | string)
             break
         case 'replace_fragment':
         case 'fit_ligand_right_here':
+        case 'fit_ligand':
             formattedString = `${commandArgs[0]},  ${commandArgs[1]},  ${commandArgs[2]}`
             break
         case 'mutate':

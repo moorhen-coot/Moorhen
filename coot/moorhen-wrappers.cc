@@ -181,17 +181,17 @@ class molecules_container_js : public molecules_container_t {
         }
 
         std::string generate_rand_str(const int &len) {
-            static const char alphanum[] =
-                "0123456789"
-                "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                "abcdefghijklmnopqrstuvwxyz";
+            const std::string charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             std::string rand_str;
             rand_str.reserve(len);
             
-            std::srand(static_cast<unsigned int>(std::time(nullptr)));
-
+            std::random_device rand_dev;
+            std::mt19937 gen(rand_dev());
+            std::uniform_int_distribution<> distrib(0, charset.length() - 1);
+    
             for (int i = 0; i < len; ++i) {
-                rand_str += alphanum[rand() % (sizeof(alphanum) - 1)];
+                int randomIndex = distrib(gen);
+                rand_str += charset[randomIndex];
             }
             
             return rand_str;
@@ -234,12 +234,14 @@ class molecules_container_js : public molecules_container_t {
         }
 
         std::string get_molecule_atoms(int imol, const std::string &format) {
-            const std::string file_name = generate_rand_str(32);
+            std::string file_name = generate_rand_str(32);
             std::string pdb_data;  
             try {
                 if (format == "pdb") {
+                    file_name += ".pdb";
                     writePDBASCII(imol, file_name);
                 } else if (format == "mmcif") {
+                    file_name += ".mmcif";
                     writeCIFASCII(imol, file_name);
                 } else {
                     std::cout << "Unrecognised format " << format << std::endl;
