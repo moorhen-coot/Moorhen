@@ -62,10 +62,7 @@
       ]
     }
   },
-  "dependencies": {
-    "iris-validation": "^0.1.10",
-    "iris-validation-backend": "^0.0.8"
-  },
+  "dependencies": {},
   "scripts": {
     "create-version": "npx genversion -e -p ./package.json -d -s ./src/version.js",
     "transpile-ts-worker": "npx tsc --module es2015 --lib webworker --skipLibCheck public/baby-gru/CootWorker.ts && sed -i.bak '/export {}/d' public/baby-gru/CootWorker.js && rm public/baby-gru/CootWorker.js.bak",
@@ -145,6 +142,8 @@
     "gl-matrix": "^3.4.3",
     "html-react-parser": "^1.4.14",
     "html-webpack-plugin": "^5.5.0",
+    "iris-validation": "^0.1.10",
+    "iris-validation-backend": "^0.0.8",
     "jest": "^27.5.1",
     "jsdoc": "^4.0.2",
     "localforage": "^1.10.0",
