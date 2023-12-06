@@ -1781,6 +1781,36 @@ export class MoorhenMolecule implements moorhen.Molecule {
     }
 
     /**
+     * Get information about the residue B-factors
+     * @returns {object[]} An array of objects indicating the residue CID and B-factor
+     */
+    getResidueBFactors() {
+        let result: { cid: string, bFactor: number }[] = []
+        const resBfactorInfoVec = window.CCP4Module.get_structure_bfactors(this.gemmiStructure)
+        const resBfactorInfoVecSize = resBfactorInfoVec.size()
+        for (let i = 0; i &lt; resBfactorInfoVecSize; i++) {
+            const resInfo = resBfactorInfoVec.get(i)
+            result.push({...resInfo})
+        }
+        resBfactorInfoVec.delete()
+        
+        return result
+    }
+
+    /**
+     * Get chain IDs that are related by NCS or molecular symmetry 
+     * @returns {string[][]} An array of arrays where chain IDs are grouped together
+     */
+    async getNcsRelatedChains(): Promise&lt;string[][]> {
+        const result = await this.commandCentre.current.cootCommand({
+            returnType: 'string_array_array',
+            command: 'get_ncs_related_chains',
+            commandArgs: [this.molNo]
+        }, false) as moorhen.WorkerResponse&lt;string[][]>
+        return result.data.result.result
+    }
+
+    /**
      * A function to get the number of atoms in the current molecule
      * @returns {Promise&lt;number>} The number of atoms in the molecule
      */

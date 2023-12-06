@@ -855,60 +855,6 @@ export const getTooltipShortcutLabel = (shortCut: moorhen.Shortcut): string => {
     return modifiers.length > 0 ? `&lt;${modifiers.join(" ")} ${shortCut.keyPress.toUpperCase()}>` : `&lt;${shortCut.keyPress.toUpperCase()}>`
 }
 
-// FIXME: Again looping thourhg atoms every where...
-export const getMoleculeBfactors = (gemmiStructure: gemmi.Structure): { cid: string, bFactor: number, chainId: string, resNum: number, modelName: string }[] => {
-    let bFactors: { cid: string, bFactor: number, chainId: string, resNum: number, modelName: string }[] = []
-    try {
-        const models = gemmiStructure.models
-        for (let modelIndex = 0; modelIndex &lt; models.size(); modelIndex++) {
-            const model = models.get(modelIndex)
-            const modelName = model.name
-            const chains = model.chains
-            const chainsSize = chains.size()
-            for (let chainIndex = 0; chainIndex &lt; chainsSize; chainIndex++) {
-                const chain = chains.get(chainIndex)
-                const chainName = chain.name
-                const residues = chain.residues
-                const residuesSize = residues.size()
-                for (let residueIndex = 0; residueIndex &lt; residuesSize; residueIndex++) {
-                    let residueTemp = 0
-                    const residue = residues.get(residueIndex)
-                    const residueSeqId = residue.seqid
-                    const resNum = residueSeqId.str()
-                    const atoms = residue.atoms
-                    const atomsSize = atoms.size()
-                    for (let atomIndex = 0; atomIndex &lt; atomsSize; atomIndex++) {
-                        const atom = atoms.get(atomIndex)
-                        const atomTemp = atom.b_iso
-                        residueTemp += atomTemp
-                        atom.delete()
-                    }
-                    bFactors.push({
-                        cid: `/${modelName}/${chainName}/${resNum}/*`,
-                        bFactor: residueTemp / atomsSize,
-                        chainId: chainName,
-                        modelName: modelName,
-                        resNum: parseInt(resNum)
-                    })
-                    residue.delete()
-                    residueSeqId.delete()
-                    atoms.delete()
-                }
-                chain.delete()
-                residues.delete()
-            }
-            model.delete()
-            chains.delete()
-        }
-        models.delete()
-    } finally {
-        if (gemmiStructure &amp;&amp; !gemmiStructure.isDeleted()) {
-            gemmiStructure.delete()
-        }
-    }
-    return bFactors
-}
-
 export function componentToHex(c: number): string {
     const hex = c.toString(16)
     return hex.length === 1 ? "0" + hex : hex
@@ -980,11 +926,11 @@ export const getMultiColourRuleArgs = (molecule: moorhen.Molecule, ruleType: str
     let multiRulesArgs: string
     switch (ruleType) {
         case 'b-factor':
-            const bFactors = getMoleculeBfactors(molecule.gemmiStructure.clone())
+            const bFactors = molecule.getResidueBFactors()
             multiRulesArgs = getBfactorColourRules(bFactors)
             break;
         case 'af2-plddt':
-            const plddt = getMoleculeBfactors(molecule.gemmiStructure.clone())
+            const plddt = molecule.getResidueBFactors()
             multiRulesArgs = getPlddtColourRules(plddt)
             break;
         default:
