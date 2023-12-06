@@ -54,4 +54,7 @@ export default defineConfig({
         },
     },
     base: './',
+    optimizeDeps: {
+        exclude: ['iris-validation-backend']
+      }
 });
