@@ -82,6 +82,8 @@ declare module 'moorhen' {
         generateSelfRestraints(cid?: string, maxRadius?: number): Promise<void>;
         clearExtraRestraints(): Promise<_moorhen.WorkerResponse>;
         refineResiduesUsingAtomCid(cid: string, mode: string, ncyc?: number, redraw?: boolean): Promise<void>;
+        getNcsRelatedChains(): Promise<string[][]>;
+        getResidueBFactors(): { cid: string, bFactor: number }[];
         redo(): Promise<void>;
         undo(): Promise<void>;
         show(style: string, cid?: string): void;
@@ -209,9 +211,6 @@ declare module 'moorhen' {
         }
     }
     module.exports.MoorhenMap = MoorhenMap
-
-    function getMoleculeBfactors(gemmiStructure: gemmi.Structure): { cid: string, bFactor: number, chainId: string, resNum: number, modelName: string }[];
-    module.exports = getMoleculeBfactors;
 
     function loadSessionData(
         sessionDataString: string,

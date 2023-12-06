@@ -90,6 +90,8 @@ export namespace moorhen {
     }
     
     interface Molecule {
+        getResidueBFactors(): { cid: string, bFactor: number }[];
+        getNcsRelatedChains(): Promise<string[][]>;
         animateRefine(n_cyc: number, n_iteration: number, final_n_cyc?: number): Promise<void>;
         refineResidueRange(chainId: string, start: number, stop: number, ncyc?: number, redraw?: boolean): Promise<void>;
         SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string): Promise<WorkerResponse>;

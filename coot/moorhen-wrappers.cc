@@ -706,6 +706,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("get_ncs_related_chains", &molecules_container_t::get_ncs_related_chains)
     .function("is_EM_map",&molecules_container_t::is_EM_map)
     .function("set_map_sampling_rate",&molecules_container_t::set_map_sampling_rate)
     .function("get_mesh_for_ligand_validation_vs_dictionary",&molecules_container_t::get_mesh_for_ligand_validation_vs_dictionary)

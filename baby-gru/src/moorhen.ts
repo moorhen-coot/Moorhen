@@ -12,7 +12,7 @@ import { MoorhenMoleculeSelect } from "./components/select/MoorhenMoleculeSelect
 import { MoorhenMapSelect } from "./components/select/MoorhenMapSelect";
 import { MoorhenSlider } from "./components/misc/MoorhenSlider";
 import { MoorhenFetchOnlineSourcesForm } from "./components/form/MoorhenFetchOnlineSourcesForm";
-import { loadSessionData, getMoleculeBfactors } from "./utils/MoorhenUtils";
+import { loadSessionData } from "./utils/MoorhenUtils";
 import { MoorhenReduxProvider } from "./components/misc/MoorhenReduxProvider";
 import { setDefaultBackgroundColor, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
     setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap,  
@@ -49,5 +49,5 @@ export {
     addMolecule, removeMolecule, emptyMolecules, addMoleculeList, setContourWheelSensitivityFactor, MoorhenFetchOnlineSourcesForm,
     setZoomWheelSensitivityFactor, setMouseSensitivity, setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts,
     setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores, MoorhenSlider,
-    addMap, addMapList, removeMap, emptyMaps, getMoleculeBfactors, MoorhenQuerySequenceModal, MoorhenPreferences
+    addMap, addMapList, removeMap, emptyMaps, MoorhenQuerySequenceModal, MoorhenPreferences
 };

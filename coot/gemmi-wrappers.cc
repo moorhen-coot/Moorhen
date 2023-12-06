@@ -282,6 +282,11 @@ std::vector<SequenceEntry> get_sequence_info(const gemmi::Structure &Structure, 
     return sequences;
 }
 
+struct ResidueBFactorInfo {
+    std::string cid;
+    float bFactor;
+};
+
 struct AtomInfo {
     double x;
     double y;
@@ -362,6 +367,33 @@ std::vector<gemmi::Selection> parse_multi_cid_selections(const std::string &cids
         }
     }
     return selections_vec;
+}
+
+std::vector<ResidueBFactorInfo> get_structure_bfactors(const gemmi::Structure &Structure) {
+    std::vector<ResidueBFactorInfo> res_bfactor_info_vec;
+    const auto models = Structure.models;
+    for (int modelIndex = 0; modelIndex < models.size(); modelIndex++) {
+        const auto model = models[modelIndex];
+        const auto chains = model.chains;
+        for (int chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
+            const auto chain = chains[chainIndex];
+            const auto residues = chain.residues;
+            for (int residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
+                const auto residue = residues[residueIndex];
+                ResidueBFactorInfo res_bfactor_info;
+                res_bfactor_info.cid = "/" + model.name + "/" + chain.name + "/" + residue.seqid.str() +"(" + residue.name + ")/*";
+                res_bfactor_info.bFactor = 0;
+                const auto atoms = residue.atoms;
+                for (int atomIndex = 0; atomIndex < atoms.size(); atomIndex++) {
+                    const auto atom = atoms[atomIndex];
+                    res_bfactor_info.bFactor += atom.b_iso;
+                }
+                res_bfactor_info.bFactor /= atoms.size();
+                res_bfactor_info_vec.push_back(res_bfactor_info);
+            }
+        }
+    }
+    return res_bfactor_info_vec;
 }
 
 // cids and excluded_cids are strings of CID selections separated with ||
@@ -2348,6 +2380,13 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
 
     register_vector<SequenceResInfo>("VectorSequenceResInfo");
 
+    value_object<ResidueBFactorInfo>("ResidueBFactorInfo")
+    .field("cid", &ResidueBFactorInfo::cid)
+    .field("bFactor", &ResidueBFactorInfo::bFactor)
+    ;
+
+    register_vector<ResidueBFactorInfo>("VectorResidueBFactorInfo");
+
     value_object<AtomInfo>("AtomInfo")
     .field("x", &AtomInfo::x)
     .field("y", &AtomInfo::y)
@@ -2522,4 +2561,5 @@ GlobWalk
     function("cif_parse_string",&cif_parse_string);
     function("get_atom_info_for_selection", &get_atom_info_for_selection);
     function("get_sequence_info", &get_sequence_info);
+    function("get_structure_bfactors", &get_structure_bfactors);
 }
