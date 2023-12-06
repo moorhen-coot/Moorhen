@@ -430,8 +430,11 @@ class molecules_container_js : public molecules_container_t {
             return get_mol(imol)->WritePDBASCII(fname_cp);
         }
         int writeCIFASCII(int imol, const std::string &file_name) { 
-            const char *fname_cp = file_name.c_str();
-            return get_mol(imol)->WriteCIFASCII(fname_cp);
+            const auto mol = get_mol(imol);
+            mmdb::Manager *mol_copy  = new mmdb::Manager;
+            mol_copy->Copy(mol, mmdb::MMDBFCM_All);
+            int ierr = mol_copy->WriteCIFASCII(file_name.c_str());
+            return ierr;
         }
         int writeCCP4Map(int imol, const std::string &file_name) {
             auto xMap = (*this)[imol].xmap;
