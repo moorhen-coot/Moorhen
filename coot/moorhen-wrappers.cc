@@ -430,8 +430,11 @@ class molecules_container_js : public molecules_container_t {
             return get_mol(imol)->WritePDBASCII(fname_cp);
         }
         int writeCIFASCII(int imol, const std::string &file_name) { 
-            const char *fname_cp = file_name.c_str();
-            return get_mol(imol)->WriteCIFASCII(fname_cp);
+            const auto mol = get_mol(imol);
+            mmdb::Manager *mol_copy  = new mmdb::Manager;
+            mol_copy->Copy(mol, mmdb::MMDBFCM_All);
+            int ierr = mol_copy->WriteCIFASCII(file_name.c_str());
+            return ierr;
         }
         int writeCCP4Map(int imol, const std::string &file_name) {
             auto xMap = (*this)[imol].xmap;
@@ -706,6 +709,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("get_ncs_related_chains", &molecules_container_t::get_ncs_related_chains)
     .function("is_EM_map",&molecules_container_t::is_EM_map)
     .function("set_map_sampling_rate",&molecules_container_t::set_map_sampling_rate)
     .function("get_mesh_for_ligand_validation_vs_dictionary",&molecules_container_t::get_mesh_for_ligand_validation_vs_dictionary)

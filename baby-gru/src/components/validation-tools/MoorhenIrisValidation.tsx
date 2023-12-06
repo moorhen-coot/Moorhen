@@ -4,7 +4,7 @@ import { Chart, TooltipItem } from 'chart.js'
 import { MoorhenChainSelect } from '../select/MoorhenChainSelect'
 import { MoorhenMapSelect } from '../select/MoorhenMapSelect'
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
-import { residueCodesOneToThree, getResidueInfo, convertViewtoPx, convertRemToPx, getMoleculeBfactors } from '../../utils/MoorhenUtils'
+import { residueCodesOneToThree, getResidueInfo, convertViewtoPx, convertRemToPx } from '../../utils/MoorhenUtils'
 import { useDispatch, useSelector } from "react-redux"
 import { setHoveredAtom } from "../../store/hoveringStatesSlice"
 import { Iris, IrisData, IrisAesthetics, IrisProps, generate_random_data } from "iris-validation"

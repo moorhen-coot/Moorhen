@@ -517,6 +517,27 @@ describe("Testing MoorhenMolecule", () => {
         ])
     })
 
+    test("Test getResidueBFactors", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl, 'mol-test')
+
+        const bFactors = molecule.getResidueBFactors()
+
+        expect(bFactors).toHaveLength(650)
+        expect(bFactors[0].cid).toBe('/1/A/4(SER)/*')
+        expect(bFactors[0].bFactor).toBeCloseTo(27.18, 1)
+        expect(bFactors[bFactors.length - 1].cid).toBe('/1/A/1248(HOH)/*')
+        expect(bFactors[bFactors.length - 1].bFactor).toBeCloseTo(55.18, 1)
+    })
+
     test("Test checkIsLigand", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
