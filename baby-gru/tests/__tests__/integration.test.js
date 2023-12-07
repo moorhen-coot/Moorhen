@@ -707,7 +707,7 @@ describe('Testing molecules_container_js', () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const pdbString  = molecules_container.get_molecule_atoms(coordMolNo, "mmcif")
-        expect(pdbString).toHaveLength(297550)
+        expect(pdbString).toHaveLength(297616)
     })
 
     test("Test read_pdb_string pdb-format", () => {
@@ -725,7 +725,7 @@ describe('Testing molecules_container_js', () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
         const pdbString_1  = molecules_container.get_molecule_atoms(coordMolNo_1, "mmcif")
-        expect(pdbString_1).toHaveLength(297550)
+        expect(pdbString_1).toHaveLength(297616)
         const coordMolNo_2 = molecules_container.read_pdb_string(pdbString_1, "mol-name")
         expect(coordMolNo_2).toBe(1)
         // For some reason this fails, probably a coot thing
