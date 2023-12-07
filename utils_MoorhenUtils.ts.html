@@ -719,89 +719,6 @@ export const centreOnGemmiAtoms = (atoms: moorhen.AtomInfo[]): [number, number, 
     return [-xtot / atomCount, -ytot / atomCount, -ztot / atomCount]
 }
 
-// FIXME: We have multiple functions looping through all residues multiple times when paring a molecule. Let's do it only once...
-export const getBufferAtoms = (gemmiStructure: gemmi.Structure, exclude_ligands_and_waters: boolean = false): moorhen.AtomInfo[] => {
-    if (exclude_ligands_and_waters) {
-        window.CCP4Module.remove_ligands_and_waters_structure(gemmiStructure)
-    }
-
-    let atomList: moorhen.AtomInfo[] = []
-
-    try {
-        const models = gemmiStructure.models
-        for (let modelIndex = 0; modelIndex &lt; models.size(); modelIndex++) {
-            const model = models.get(modelIndex)
-            const modelName = model.name
-            const chains = model.chains
-            const chainsSize = chains.size()
-            for (let chainIndex = 0; chainIndex &lt; chainsSize; chainIndex++) {
-                const chain = chains.get(chainIndex)
-                const chainName = chain.name
-                const residues = chain.residues
-                const residuesSize = residues.size()
-                for (let residueIndex = 0; residueIndex &lt; residuesSize; residueIndex++) {
-                    const residue = residues.get(residueIndex)
-                    const residueName = residue.name
-                    const residueSeqId = residue.seqid
-                    const resNum = residueSeqId.str()
-                    const atoms = residue.atoms
-                    const atomsSize = atoms.size()
-                    for (let atomIndex = 0; atomIndex &lt; atomsSize; atomIndex++) {
-                        const atom = atoms.get(atomIndex)
-                        const atomPos = atom.pos
-                        const atomPosX = atomPos.x
-                        const atomPosY = atomPos.y
-                        const atomPosZ = atomPos.z
-                        const atomElement = atom.element
-                        const atomElementString = window.CCP4Module.getElementNameAsString(atomElement)
-                        const atomCharge = atom.charge
-                        const atomTemp = atom.b_iso
-                        const atomName = atom.name
-                        const atomAltLoc = atom.altloc
-                        const atomHasAltLoc = atom.has_altloc()
-                        atomList.push({
-                            mol_name: modelName,
-                            chain_id: chainName,
-                            res_name: residueName,
-                            res_no: resNum,
-                            name: atomName,
-                            pos: [atomPosX, atomPosY, atomPosZ],
-                            x: atomPosX,
-                            y: atomPosY,
-                            z: atomPosZ,
-                            element: atomElement,
-                            serial: atom.serial,
-                            has_altloc: atomHasAltLoc,
-                            alt_loc: atomHasAltLoc ? String.fromCharCode(atomAltLoc) : '',
-                            tempFactor: atomTemp,
-                            charge: atomCharge,
-                            symbol: atomElementString,
-                            label: `/${modelName}/${chainName}/${resNum}(${residueName})/${atomName}${atomHasAltLoc ? ':' + String.fromCharCode(atomAltLoc) : ''}`
-                        })
-                        atom.delete()
-                        atomPos.delete()
-                        atomElement.delete()
-                    }
-                    residue.delete()
-                    residueSeqId.delete()
-                    atoms.delete()
-                }
-                chain.delete()
-                residues.delete()
-            }
-            model.delete()
-            chains.delete()
-        }
-        models.delete()
-    } finally {
-        if (gemmiStructure &amp;&amp; !gemmiStructure.isDeleted()) {
-            gemmiStructure.delete()
-        }
-    }
-
-    return atomList
-}
-
 export const cidToSpec = (cid: string): moorhen.ResidueSpec => {
     //molNo, chain_id, res_no, ins_code, alt_conf
     const ResNameRegExp = /\(([^)]+)\)/;
@@ -921,7 +838,18 @@ const getPlddtColourRules = (plddtList: { cid: string; bFactor: number; }[]): st
     return plddtList.map(item => `${item.cid}^${getColour(item.bFactor)}`).join('|')
 }
 
-export const getMultiColourRuleArgs = (molecule: moorhen.Molecule, ruleType: string): string => {
+const getNcsColourRules = (ncsRelatedChains: string[][]): string => {
+    let result: string[]  = []
+    ncsRelatedChains.forEach(chains => {
+        const randColour = getRandomMoleculeColour()
+        chains.forEach(chain => {
+            result.push(`//${chain}^${randColour}`)
+        })
+    })
+    return result.join('|')
+}
+
+export const getMultiColourRuleArgs = async (molecule: moorhen.Molecule, ruleType: string): Promise&lt;string> => {
 
     let multiRulesArgs: string
     switch (ruleType) {
@@ -932,6 +860,10 @@ export const getMultiColourRuleArgs = (molecule: moorhen.Molecule, ruleType: str
         case 'af2-plddt':
             const plddt = molecule.getResidueBFactors()
             multiRulesArgs = getPlddtColourRules(plddt)
+            break;
+        case 'mol-symm':
+            const ncsRelatedChains = await molecule.getNcsRelatedChains()
+            multiRulesArgs = getNcsColourRules(ncsRelatedChains)
             break;
         default:
             console.log('Unrecognised colour rule...')
