@@ -80,6 +80,7 @@ export const MoorhenValidationToolsModal = (props: MoorhenValidationModalProps) 
                 minWidth={convertRemToPx(37)}
                 maxHeight={convertViewtoPx(90, height)}
                 maxWidth={convertViewtoPx(80, width)}
+                enforceMaxBodyDimensions={!chartWidgets.includes(toolOptions[selectedTool]?.label)}
                 overflowY={chartWidgets.includes(toolOptions[selectedTool]?.label) ? 'hidden' : 'auto'}
                 overflowX='auto'
                 headerTitle='Validation tools'
@@ -91,7 +92,7 @@ export const MoorhenValidationToolsModal = (props: MoorhenValidationModalProps) 
                         <Row style={{padding: '0.5rem', width:'100%', display:'inline-flex'}}>
                             <Form.Select id='validation-tool-select' ref={toolsAccordionSelectRef} onChange={handleChange} defaultValue={'placeHolder'}>
                                 <option key="placeHolder" value="placeHolder" disabled hidden>Tool...</option>
-                                    {toolOptions.map(option => <option key={option.label} value={option.label}>{option.label}</option>)}
+                                {toolOptions.map(option => <option key={option.label} value={option.label}>{option.label}</option>)}
                             </Form.Select>
                         </Row>
                         <Row className={selectedTool !== null && toolOptions[selectedTool].label === "Water validation" ? "small-validation-tool-container-row" : "big-validation-tool-container-row"}>

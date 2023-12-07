@@ -2,7 +2,6 @@ import React from "react"
 import { emscriptem } from "./emscriptem";
 import { gemmi } from "./gemmi";
 import { webGL } from "./mgWebGL";
-import { MoorhenCommandCentre } from "../moorhen";
 
 export namespace moorhen {
 
@@ -272,7 +271,8 @@ export namespace moorhen {
         unhook: () => void;
         onCootInitialized: null | ( () => void );
         onConsoleChanged: null | ( (msg: string) => void );
-        onNewCommand : null | ( (kwargs: any) => void );
+        onCommandStart : null | ( (kwargs: any) => void );
+        onCommandExit : null | ( (kwargs: any) => void );
         onActiveMessagesChanged: null | ( (activeMessages: WorkerMessage[]) => void );
         cootCommandList(commandList: cootCommandKwargs[]): Promise<WorkerResponse>;
         cootCommand: (kwargs: cootCommandKwargs, doJournal?: boolean) => Promise<WorkerResponse>;
@@ -801,6 +801,7 @@ export namespace moorhen {
             isChangingRotamers: boolean;
             isDraggingAtoms: boolean;
             isRotatingAtoms: boolean;
+            newCootCommandAlert: boolean;
         };
         hoveringStates: {
             enableAtomHovering: boolean;

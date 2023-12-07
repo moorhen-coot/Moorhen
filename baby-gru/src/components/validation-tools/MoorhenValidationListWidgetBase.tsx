@@ -24,10 +24,10 @@ export const MoorhenValidationListWidgetBase = (props: {
 
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
     const [selectedMap, setSelectedMap] = useState<null | number>(null)
-    const [cachedGemmiStructure, setCachedGemmiStructure] = useState<null | gemmi.Structure>(null)
     const [cardData, setCardData] = useState<any[]>([])
     const [cardList, setCardList] = useState<JSX.Element[]>([])
 
+    const newCootCommandAlert = useSelector((state: moorhen.State) => state.generalStates.newCootCommandAlert)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const maps = useSelector((state: moorhen.State) => state.maps)
@@ -64,15 +64,6 @@ export const MoorhenValidationListWidgetBase = (props: {
         }
 
     }, [maps.length])
-   
-    useEffect(() => {
-        if (selectedModel !== null) {
-            let selectedMoleculeIndex = molecules.findIndex(molecule => molecule.molNo === selectedModel);
-            if (selectedMoleculeIndex !== -1 && molecules[selectedMoleculeIndex]){
-                setCachedGemmiStructure(molecules[selectedMoleculeIndex].gemmiStructure)
-            }
-        }
-    })
 
     useEffect(() => {
         async function fetchData() {
@@ -86,7 +77,7 @@ export const MoorhenValidationListWidgetBase = (props: {
     
         fetchData()   
 
-    }, [selectedMap, selectedModel, cachedGemmiStructure, props.extraControlFormValue])
+    }, [selectedMap, selectedModel, newCootCommandAlert, props.extraControlFormValue])
 
     useEffect(() => {
         if (selectedModel === null || (props.enableMapSelect && selectedMap === null) || cardData === null || props.dropdownId !== props.accordionDropdownId || !props.showSideBar) {

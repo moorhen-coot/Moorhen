@@ -3,7 +3,6 @@ import { Col, Row, Form } from 'react-bootstrap';
 import { convertRemToPx } from '../../utils/MoorhenUtils';
 import { MoorhenChainSelect } from '../select/MoorhenChainSelect'
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
-import { gemmi } from "../../types/gemmi";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch } from 'react-redux';
@@ -46,10 +45,10 @@ export const MoorhenRamachandran = (props: Props) => {
     const [ramaPlotData, setRamaPlotData] = useState<null | libcootApi.RamaDataJS[]>(null)
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
     const [selectedChain, setSelectedChain] = useState<string | null>(null)
-    const [cachedGemmiStructure, setCachedGemmiStructure] = useState<gemmi.Structure | null>(null)
     const [molName, setMolName] = useState<null | string>(null)
     const [chainId, setChainId] = useState<null | string>(null)
     
+    const newCootCommandAlert = useSelector((state: moorhen.State) => state.generalStates.newCootCommandAlert)
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
@@ -446,15 +445,6 @@ export const MoorhenRamachandran = (props: Props) => {
     }, [molecules.length])
 
     useEffect(() => {
-        if (selectedModel !== null) {
-            let selectedMoleculeIndex = molecules.findIndex(molecule => molecule.molNo === selectedModel);
-            if (selectedMoleculeIndex !== -1 && molecules[selectedMoleculeIndex]){
-                setCachedGemmiStructure(molecules[selectedMoleculeIndex].gemmiStructure)
-            }
-        }
-    })
-
-    useEffect(() => {
         if (ramaPlotData === null || selectedModel === null || chainSelectRef.current.value === null || molecules.length === 0) {
             return;
         }
@@ -471,7 +461,7 @@ export const MoorhenRamachandran = (props: Props) => {
         
         fetchRamaData()
 
-    }, [cachedGemmiStructure])
+    }, [newCootCommandAlert])
 
     useEffect(() => {
         if (!clickedResidue) {

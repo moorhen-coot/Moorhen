@@ -35,8 +35,8 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
     const [selectedModel, setSelectedModel] = useState<number | null>(null)
     const [selectedMap, setSelectedMap] = useState<number | null>(null)
     const [selectedChain, setSelectedChain] = useState<string | null>(null)
-    const [cachedGemmiStructure, setCachedGemmiStructure] = useState<null | gemmi.Structure>(null)
 
+    const newCootCommandAlert = useSelector((state: moorhen.State) => state.generalStates.newCootCommandAlert)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
@@ -80,22 +80,13 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
     }, [maps.length])
     
     useEffect(() => {
-        if (selectedModel !== null) {
-            let selectedMoleculeIndex = molecules.findIndex(molecule => molecule.molNo === selectedModel);
-            if (selectedMoleculeIndex !== -1 && molecules[selectedMoleculeIndex]){
-                setCachedGemmiStructure(molecules[selectedMoleculeIndex].gemmiStructure)
-            }
-        }
-    })
-    
-    useEffect(() => {
         const fetchData = async () => {
             const newPlotData = await props.fetchData(selectedModel, selectedMap, props.enableChainSelect ? chainSelectRef.current.value : null)
             setPlotData(newPlotData)
         }
         fetchData()
 
-    }, [selectedChain, selectedMap, selectedModel, cachedGemmiStructure, props.extraControlFormValue])
+    }, [selectedChain, selectedMap, selectedModel, newCootCommandAlert, props.extraControlFormValue])
 
     useEffect(() => {
         if (chartRef !== null && typeof chartRef !== 'function' && chartRef.current) {

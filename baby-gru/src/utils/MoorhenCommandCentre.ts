@@ -10,7 +10,8 @@ import { webGL } from '../types/mgWebGL';
  * @constructor
  * @param {string} urlPrefix - The root url used to find the baby-gru/CootWorker.js worker file
  * @param {function} onConsoleChanged - Callback executed whenever the worker prints a message to the console
- * @param {function} onNewCommand - Callback executed whenever a new command is issued to the web worker
+ * @param {function} onCommandStart - Callback executed whenever a new command is issued to the web worker
+ * @param {function} onCommandExit - Callback executed whenever a new command is completed by the web worker
  * @param {function} onActiveMessagesChanged  - Callback executed whenever a new message is received from the worker
  * @param {function} onCootInitialized - Callback executed once after coot is initialised in the web worker
  * @property {function} cootCommand - Runs a coot command
@@ -42,7 +43,8 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
     history: moorhen.History;
     onCootInitialized: null | ( () => void );
     onConsoleChanged: null | ( (msg: string) => void );
-    onNewCommand : null | ( (kwargs: any) => void );
+    onCommandStart : null | ( (kwargs: any) => void );
+    onCommandExit : null | ( (kwargs: any) => void );
     onActiveMessagesChanged: null | ( (activeMessages: moorhen.WorkerMessage[]) => void );
 
     constructor(urlPrefix: string, glRef: React.RefObject<webGL.MGWebGL>, timeCapsule: React.RefObject<moorhen.TimeCapsule>, props: {[x: string]: any}) {
@@ -52,7 +54,8 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
         this.history.setCommandCentre(this)
         
         this.onConsoleChanged = null
-        this.onNewCommand = null
+        this.onCommandStart = null
+        this.onCommandExit = null
         this.onActiveMessagesChanged = null
 
         Object.keys(props).forEach(key => this[key] = props[key])
@@ -91,12 +94,15 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
     async cootCommand(kwargs: moorhen.cootCommandKwargs, doJournal: boolean = true): Promise<moorhen.WorkerResponse> {
         const message = "coot_command"
         console.log('In cootCommand', kwargs.command)
-        if (this.onNewCommand) {
-            this.onNewCommand(kwargs)
+        if (this.onCommandStart) {
+            this.onCommandStart({...kwargs, doJournal})
         }
         const result = await this.postMessage({ message, ...kwargs })
         if (doJournal) {
             await this.history.addEntry(kwargs)
+        }
+        if (this.onCommandExit) {
+            this.onCommandExit({...kwargs, doJournal})
         }
         return result
     }
@@ -104,13 +110,17 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
     async cootCommandList(commandList: moorhen.cootCommandKwargs[], doJournal: boolean = true): Promise<moorhen.WorkerResponse> {
         const message = "coot_command_list"
         console.log('In cootCommandList', commandList)
-        if (this.onNewCommand) {
-            commandList.forEach(commandKwargs => this.onNewCommand(commandKwargs))
+        if (this.onCommandStart) {
+            commandList.forEach(commandKwargs => this.onCommandStart(commandKwargs))
         }
         if (doJournal) {
-            await commandList.forEach(commandKwargs => this.history.addEntry(commandKwargs))
+            await Promise.all(commandList.map(commandKwargs => this.history.addEntry(commandKwargs)))
         }
-        return this.postMessage({ message, commandList })
+        const result = await this.postMessage({ message, commandList })
+        if (this.onCommandExit) {
+            commandList.forEach(commandKwargs => this.onCommandExit(commandKwargs))
+        }
+        return result
     }
 
     postMessage(kwargs: moorhen.cootCommandKwargs): Promise<moorhen.WorkerResponse> {
