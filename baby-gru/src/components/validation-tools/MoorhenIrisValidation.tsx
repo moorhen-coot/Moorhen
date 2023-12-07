@@ -1,16 +1,14 @@
-import { Fragment, useEffect, useRef, useState } from "react"
-import { Col, Row, Form, Button } from 'react-bootstrap'
-import { Chart, TooltipItem } from 'chart.js'
-import { MoorhenChainSelect } from '../select/MoorhenChainSelect'
-import { MoorhenMapSelect } from '../select/MoorhenMapSelect'
+import { Fragment, useCallback, useEffect, useRef, useState } from "react"
+import { Col, Row, Form } from 'react-bootstrap'
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
-import { residueCodesOneToThree, getResidueInfo, convertViewtoPx, convertRemToPx } from '../../utils/MoorhenUtils'
+import { convertRemToPx } from '../../utils/MoorhenUtils'
 import { useDispatch, useSelector } from "react-redux"
-import { setHoveredAtom } from "../../store/hoveringStatesSlice"
-import { Iris, IrisData, IrisAesthetics, IrisProps, generate_random_data } from "iris-validation"
+import { Iris, IrisData, IrisAesthetics, IrisProps } from "iris-validation"
 import { moorhen } from "../../types/moorhen"
-import { libcootApi } from "../../types/libcoot"
 import iris_module from "iris-validation-backend"
+import { MoorhenMapSelect } from "../select/MoorhenMapSelect"
+import { gemmi } from "../../types/gemmi";
+import { setHoveredAtom } from "../../moorhen"
 
 export const MoorhenIrisValidation = (props: {
     sideBarWidth: number;
@@ -22,20 +20,18 @@ export const MoorhenIrisValidation = (props: {
     resizeNodeRef: React.RefObject<HTMLDivElement>;
 }) => {
 
-    const [plotDimensions, setPlotDimensions] = useState<number>(230)
-
     const dispatch = useDispatch()
-    const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const maps = useSelector((state: moorhen.State) => state.maps)
 
-    const [result, setResult] = useState();
-
-    const random_data = generate_random_data(5) // get 5 metric rings
+    const [plotDimensions, setPlotDimensions] = useState<number>(230)
+    const [irisData, setIrisData] = useState<null | IrisData>(null)
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
     const [selectedMap, setSelectedMap] = useState<null | number>(null)
+    const [cachedGemmiStructure, setCachedGemmiStructure] = useState<null | gemmi.Structure>(null)
+
     const mapSelectRef = useRef<undefined | HTMLSelectElement>();
     const moleculeSelectRef = useRef<undefined | HTMLSelectElement>();
 
@@ -47,56 +43,97 @@ export const MoorhenIrisValidation = (props: {
         setSelectedMap(parseInt(evt.target.value))
     }
 
-    const aes: IrisAesthetics = {
-        dimensions: [plotDimensions, plotDimensions],
-        radius_change: 50,
-        header: 40,
-        text_size: 100
-    }
-
-    const results: IrisData = {
-        data: result,
-        chain_list: null,
-        file_list: [`${molecules[0].name}.pdb`],
-    }
-
-    const iris_props: IrisProps = {
-        results: results,
-        from_wasm: true,
-        aesthetics: aes,
-        click_callback: (residue) => {
-            const split_res = residue.split("/")
-            const res = `${split_res[0]}/${split_res[2]}(${split_res[1]})`
-            molecules[0].centreOn(res)
-        },
-        hover_callback: (residue) => {
-            // const split_res = residue.split("/")
-            // const res = `${split_res[0]}/${split_res[2]}(${split_res[1]})`
-            // console.log(res)
-            // molecules[0].drawHover(res)
-
+    const handleHover = useCallback((residueLabel: string) => {
+        if (selectedModel !== null) {
+            const molecule = molecules.find(item => item.molNo === selectedModel)        
+            if (molecule) {
+                const [chain, resName, resNum] = residueLabel.split('/')
+                const cid = `//${chain}/${resNum}(${resName})`
+                dispatch(setHoveredAtom({molecule, cid}))
+            }
         }
-    }
+    }, [selectedModel, molecules])
+
+
+    const handleClick = useCallback((residueLabel: string) => {
+        if (selectedModel !== null) {
+            const molecule = molecules.find(item => item.molNo === selectedModel)        
+            if (molecule) {
+                const [chain, resName, resNum] = residueLabel.split('/')
+                const cid = `//${chain}/${resNum}(${resName})`
+                molecule.centreOn(cid)
+            }
+        }
+    }, [selectedModel, molecules])
 
     useEffect(() => {
-        iris_module().then(async (Module) => {
-            const map_response = await maps[0].getMap()
-            const moleculeData = await molecules[0].getAtoms()
-            let map_data = new Uint8Array(map_response.data.result.mapData)
+        const fetchData = async () => {
+            if (selectedModel === null || selectedMap === null) {
+                return
+            }
+    
+            const molecule = molecules.find(item => item.molNo === selectedModel)
+            const map = maps.find(item => item.molNo === selectedMap)
+            
+            if (!molecule || !map) {
+                return
+            }
+    
+            const irisModule = await iris_module()
+    
+            const [mapResponse, moleculeData] = await Promise.all([
+                map.getMap(),
+                molecule.getAtoms()
+            ])
+            const map_data = new Uint8Array(mapResponse.data.result.mapData)
+    
+            const moleculeFileName = `${molecule.name}.pdb`
+            const mapFileName = `${map.name}.map`
+            irisModule['FS_createDataFile']('/', mapFileName, map_data, true, true, true)
+            irisModule['FS_createDataFile']('/', moleculeFileName, moleculeData, true, true, true)
+    
+            const backend_call = irisModule.calculate_single_pdb(moleculeFileName, mapFileName, false)
+            setIrisData({
+                data: backend_call.results,
+                chain_list: null,
+                file_list: [moleculeFileName],
+            })
+        }
+        fetchData()
+    }, [selectedMap, selectedModel, molecules, maps, cachedGemmiStructure])
 
-            const molecule_name = `${molecules[0].name}.pdb`
-            const map_name = `${maps[0].name}.map`
-            Module['FS_createDataFile']('/', map_name, map_data, true, true, true)
-            Module['FS_createDataFile']('/', molecule_name, moleculeData, true, true, true)
+    useEffect(() => {
+        if (molecules.length === 0) {
+            setSelectedModel(null)
+        } else if (selectedModel === null) {
+            setSelectedModel(molecules[0].molNo)
+        } else if (!molecules.map(molecule => molecule.molNo).includes(selectedModel)) {
+            setSelectedModel(molecules[0].molNo)
+        }
+    }, [molecules.length])
 
-            let backend_call = Module.calculate_single_pdb(molecule_name, map_name, false);
-            setResult(backend_call.results);
-        })
-    }, [])
+    useEffect(() => {
+        if (maps.length === 0) {
+            setSelectedMap(null)
+        } else if (selectedMap === null) {
+            setSelectedMap(maps[0].molNo)
+        } else if (!maps.map(map => map.molNo).includes(selectedMap)) {
+            setSelectedMap(maps[0].molNo)
+        }
+    }, [maps.length])
+   
+    useEffect(() => {
+        if (selectedModel !== null) {
+            let selectedMoleculeIndex = molecules.findIndex(molecule => molecule.molNo === selectedModel);
+            if (selectedMoleculeIndex !== -1 && molecules[selectedMoleculeIndex]){
+                setCachedGemmiStructure(molecules[selectedMoleculeIndex].gemmiStructure)
+            }
+        }
+    })
 
     useEffect(() => {
         setTimeout(() => {
-            let plotHeigth = (props.resizeNodeRef.current.clientHeight) - convertRemToPx(10)
+            let plotHeigth = (props.resizeNodeRef.current.clientHeight) - convertRemToPx(15)
             let plotWidth = (props.resizeNodeRef.current.clientWidth) - convertRemToPx(3)
             if (plotHeigth > 0 && plotWidth > 0) {
                 plotHeigth > plotWidth ? setPlotDimensions(plotWidth) : setPlotDimensions(plotHeigth)
@@ -105,20 +142,34 @@ export const MoorhenIrisValidation = (props: {
 
     }, [width, height, props.resizeTrigger])
 
+    const aes: IrisAesthetics = {
+        dimensions: [plotDimensions, plotDimensions],
+        radius_change: 50,
+        header: 40,
+        text_size: 100
+    }
 
+    const iris_props: IrisProps = {
+        results: irisData,
+        from_wasm: true,
+        aesthetics: aes,
+        click_callback: handleClick,
+        hover_callback: handleHover
+    }
 
     return <Fragment>
-        <Form style={{ padding: '0', margin: '0' }}>
+        <Form style={{ padding:'0', margin: '0' }}>
             <Form.Group>
-                <Row style={{ padding: '0', margin: '0' }}>
+                <Row style={{ padding:'0', margin: '0' }}>
                     <Col>
-                        <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef} />
+                        <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef}/>
                     </Col>
-
+                    <Col>
+                        <MoorhenMapSelect width="" onChange={handleMapChange} maps={maps} ref={mapSelectRef}/>
+                    </Col>
                 </Row>
             </Form.Group>
         </Form>
-        {result ? <Iris {...iris_props} /> : <>Molecule not loaded</>}
+        {irisData ? <Iris {...iris_props} /> : <>No data</>}
     </Fragment>
-
 }
