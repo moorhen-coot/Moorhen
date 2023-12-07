@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Row, Button, Card, Col, OverlayTrigger, Tooltip } from "react-bootstrap";
-import { ArrowUpwardOutlined, ArrowDownwardOutlined, DeleteOutlined } from '@mui/icons-material';
+import { ArrowUpwardOutlined, ArrowDownwardOutlined, DeleteOutlined, GrainOutlined } from '@mui/icons-material';
 import { RgbColorPicker } from "react-colorful";
 import { rgbToHex } from "../../utils/MoorhenUtils";
 import { moorhen } from "../../types/moorhen";
@@ -96,6 +96,8 @@ export const MoorhenColourRuleCard = (props: {
                         <RgbColorPicker color={{r, g, b}} onChange={handleColorChange} />
                     </Popover>
                 </>
+                : rule.ruleType === "mol-symm" ?
+                    <GrainOutlined style={{height:'23px', width:'`23px', marginLeft: '0.5rem', marginRight: '0.5rem', borderStyle: 'solid', borderColor: '#ced4da', borderWidth: '3px', borderRadius: '8px'}}/>            
                 : rule.ruleType === "b-factor" ?
                     <img className="colour-rule-icon" src={`${urlPrefix}/baby-gru/pixmaps/temperature.svg`} alt='b-factor' style={{height:'28px', width:'`12px', margin: '0.1rem'}}/>
                 :
