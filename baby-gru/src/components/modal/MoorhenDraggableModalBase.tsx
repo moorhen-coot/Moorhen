@@ -59,6 +59,7 @@ import { setEnableAtomHovering } from "../../moorhen";
  * 
  */
 export const MoorhenDraggableModalBase = (props: {
+    enforceMaxBodyDimensions: boolean;
     resizeNodeRef: null | React.RefObject<HTMLDivElement>;
     defaultWidth?: number;
     defaultHeight?: number;
@@ -203,9 +204,13 @@ export const MoorhenDraggableModalBase = (props: {
                             alignItems: 'center',
                             justifyContent: 'center'
                             }}>
-                        <div style={{maxHeight: props.maxHeight, maxWidth: props.maxWidth}}>
+                        {props.enforceMaxBodyDimensions ? 
+                        <div style={props.enforceMaxBodyDimensions ? {maxHeight: props.maxHeight, maxWidth: props.maxWidth} : {}}>
                             {props.body}
                         </div>
+                        : 
+                        props.body
+                        }
                     </div>
                     </Resizable>
                 </Card.Body>
@@ -223,5 +228,5 @@ MoorhenDraggableModalBase.defaultProps = {
     showCloseButton: true, handleClassName: 'handle', additionalHeaderButtons:null, additionalChildren: null, 
     enableResize: { top: false, right: true, bottom: true, left: false, topRight: false, bottomRight: true, bottomLeft: true, topLeft: false },
     top: 500, left: 500, overflowY: 'auto', overflowX: 'hidden', lockAspectRatio: false, maxHeight: 100, maxWidth: 100, 
-    minHeight: 100, minWidth: 100, deafultWidth: 100, defaultHeight: 100, onResizeStop: () => {}, resizeNodeRef: null
+    minHeight: 100, minWidth: 100, deafultWidth: 100, defaultHeight: 100, onResizeStop: () => {}, resizeNodeRef: null, enforceMaxBodyDimensions: true,
 }

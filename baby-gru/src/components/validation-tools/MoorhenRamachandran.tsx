@@ -3,7 +3,6 @@ import { Col, Row, Form } from 'react-bootstrap';
 import { convertRemToPx } from '../../utils/MoorhenUtils';
 import { MoorhenChainSelect } from '../select/MoorhenChainSelect'
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
-import { gemmi } from "../../types/gemmi";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch } from 'react-redux';
