@@ -113,7 +113,7 @@
 
 <header>
     
-        <h2><span class="attribs"><span class="type-signature"></span></span>MoorhenCommandCentre<span class="signature">(urlPrefix, onConsoleChanged, onNewCommand, onActiveMessagesChanged, onCootInitialized)</span><span class="type-signature"></span></h2>
+        <h2><span class="attribs"><span class="type-signature"></span></span>MoorhenCommandCentre<span class="signature">(urlPrefix, onConsoleChanged, onCommandStart, onCommandExit, onActiveMessagesChanged, onCootInitialized)</span><span class="type-signature"></span></h2>
         
             <div class="class-description">A command centre used to communicate between Moorhen and a web worker running an instance of the
 headless libcoot API</div>
@@ -140,7 +140,7 @@ headless libcoot API</div>
         
         <span class="code-name">
             
-                new MoorhenCommandCentre<span class="signature">(urlPrefix, onConsoleChanged, onNewCommand, onActiveMessagesChanged, onCootInitialized)</span><span class="type-signature"></span>
+                new MoorhenCommandCentre<span class="signature">(urlPrefix, onConsoleChanged, onCommandStart, onCommandExit, onActiveMessagesChanged, onCootInitialized)</span><span class="type-signature"></span>
             
         </span>
     </h4>
@@ -233,7 +233,7 @@ headless libcoot API</div>
             
 <tr class="deep-level-0">
   
-      <td class="name"><code>onNewCommand</code></td>
+      <td class="name"><code>onCommandStart</code></td>
   
 
   <td class="type">
@@ -250,6 +250,31 @@ headless libcoot API</div>
   
 
   <td class="description last">Callback executed whenever a new command is issued to the web worker</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>onCommandExit</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">function</code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">Callback executed whenever a new command is completed by the web worker</td>
 </tr>
 
 
@@ -445,7 +470,7 @@ headless libcoot API</div>
         <p class="tag-source">
             <a href="utils_MoorhenCommandCentre.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenCommandCentre.ts.html">utils/MoorhenCommandCentre.ts</a>, <a href="utils_MoorhenCommandCentre.ts.html#line36">line 36</a>
+                <a href="utils_MoorhenCommandCentre.ts.html">utils/MoorhenCommandCentre.ts</a>, <a href="utils_MoorhenCommandCentre.ts.html#line37">line 37</a>
             </span>
         </p>
     
