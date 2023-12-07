@@ -337,6 +337,24 @@ const colourRulesToJSArray = (colourRulesArray: emscriptem.vector<libcootApi.Pai
     return returnResult;
 }
 
+const stringArrayArrayToJSArray = (stringArrayArray: emscriptem.vector<emscriptem.vector<string>>) => {
+    let returnResult: string[][] = []
+    const stringArrayArraySize = stringArrayArray.size()
+    for (let i = 0; i < stringArrayArraySize; i++) {
+        const stringArray = stringArrayArray.get(i)
+        const stringArraySize = stringArray.size()
+        let currentResultArray: string[] = []
+        for (let j = 0; j < stringArraySize; j++) {
+            const s = stringArray.get(j)
+            currentResultArray.push(s)
+        }
+        returnResult.push(currentResultArray)
+        stringArray.delete()
+    }
+    stringArrayArray.delete()
+    return returnResult
+}
+
 const floatArrayToJSArray = (floatArray: emscriptem.vector<number>) => {
     let returnResult: number[] = []
     const floatArraySize = floatArray.size()
@@ -345,7 +363,7 @@ const floatArrayToJSArray = (floatArray: emscriptem.vector<number>) => {
         returnResult.push(f);
     }
     floatArray.delete()
-    return returnResult;
+    return returnResult
 }
 
 const mapMoleculeCentreInfoToJSObject = (mapMoleculeCentreInfo: libcootApi.MapMoleculeCentreInfo): libcootApi.MapMoleculeCentreInfoJS => {
@@ -873,6 +891,9 @@ const doCootCommand = (messageData: {
 
         let returnResult;
         switch (returnType) {
+            case 'string_array_array':
+                returnResult = stringArrayArrayToJSArray(cootResult)
+                break;
             case 'instanced_mesh_perm':
                 returnResult = instancedMeshToMeshData(cootResult, true)
                 break;

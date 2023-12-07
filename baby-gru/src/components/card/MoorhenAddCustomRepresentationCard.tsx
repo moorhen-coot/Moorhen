@@ -78,7 +78,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
         )
     }, [selectedChain, ruleType])
 
-    const handleCreateRepresentation = useCallback(() => {
+    const handleCreateRepresentation = useCallback(async () => {
         let cidSelection: string
         switch(ruleSelectRef.current.value) {
             case "molecule":
@@ -111,10 +111,12 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                         label: cidSelection
                     }]
                     break
+                case 'mol-symm':
                 case "b-factor":
                 case "af2-plddt":
+                    const ruleArgs = await getMultiColourRuleArgs(props.molecule, colourModeSelectRef.current.value)
                     colourRules = [{
-                        args: [getMultiColourRuleArgs(props.molecule, colourModeSelectRef.current.value)],
+                        args: [ruleArgs],
                         isMultiColourRule: true,
                         color: colour,
                         ruleType: `${colourModeSelectRef.current.value}`,

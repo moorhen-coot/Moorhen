@@ -130,8 +130,9 @@ export const MoorhenQuerySequenceModal = (props: {
             return
         }
         if (source === 'AFDB') {
+            let ruleArgs = await getMultiColourRuleArgs(newMolecule, 'af2-plddt')
             const newRule = {
-                args: [getMultiColourRuleArgs(newMolecule, 'af2-plddt')],
+                args: [ruleArgs],
                 isMultiColourRule: true,
                 ruleType: 'af2-plddt',
                 label: `//*`

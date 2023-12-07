@@ -131,8 +131,9 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
             if (newMolecule.molNo === -1) {
                 throw new Error("Cannot read the fetched molecule...")
             } else if (isAF2) {
+                const ruleArgs = await getMultiColourRuleArgs(newMolecule, 'af2-plddt')
                 const newRule = {
-                    args: [getMultiColourRuleArgs(newMolecule, 'af2-plddt')],
+                    args: [ruleArgs],
                     isMultiColourRule: true,
                     ruleType: 'af2-plddt',
                     label: `//*`
