@@ -723,7 +723,18 @@ const getPlddtColourRules = (plddtList: { cid: string; bFactor: number; }[]): st
     return plddtList.map(item => `${item.cid}^${getColour(item.bFactor)}`).join('|')
 }
 
-export const getMultiColourRuleArgs = (molecule: moorhen.Molecule, ruleType: string): string => {
+const getNcsColourRules = (ncsRelatedChains: string[][]): string => {
+    let result: string[]  = []
+    ncsRelatedChains.forEach(chains => {
+        const randColour = getRandomMoleculeColour()
+        chains.forEach(chain => {
+            result.push(`//${chain}^${randColour}`)
+        })
+    })
+    return result.join('|')
+}
+
+export const getMultiColourRuleArgs = async (molecule: moorhen.Molecule, ruleType: string): Promise<string> => {
 
     let multiRulesArgs: string
     switch (ruleType) {
@@ -734,6 +745,10 @@ export const getMultiColourRuleArgs = (molecule: moorhen.Molecule, ruleType: str
         case 'af2-plddt':
             const plddt = molecule.getResidueBFactors()
             multiRulesArgs = getPlddtColourRules(plddt)
+            break;
+        case 'mol-symm':
+            const ncsRelatedChains = await molecule.getNcsRelatedChains()
+            multiRulesArgs = getNcsColourRules(ncsRelatedChains)
             break;
         default:
             console.log('Unrecognised colour rule...')
