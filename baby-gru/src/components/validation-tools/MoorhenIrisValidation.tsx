@@ -21,6 +21,7 @@ export const MoorhenIrisValidation = (props: {
 }) => {
 
     const dispatch = useDispatch()
+    const newCootCommandAlert = useSelector((state: moorhen.State) => state.generalStates.newCootCommandAlert)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
@@ -30,7 +31,6 @@ export const MoorhenIrisValidation = (props: {
     const [irisData, setIrisData] = useState<null | IrisData>(null)
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
     const [selectedMap, setSelectedMap] = useState<null | number>(null)
-    const [cachedGemmiStructure, setCachedGemmiStructure] = useState<null | gemmi.Structure>(null)
 
     const mapSelectRef = useRef<undefined | HTMLSelectElement>();
     const moleculeSelectRef = useRef<undefined | HTMLSelectElement>();
@@ -100,7 +100,7 @@ export const MoorhenIrisValidation = (props: {
             })
         }
         fetchData()
-    }, [selectedMap, selectedModel, molecules, maps, cachedGemmiStructure])
+    }, [selectedMap, selectedModel, molecules, maps, newCootCommandAlert])
 
     useEffect(() => {
         if (molecules.length === 0) {
@@ -122,15 +122,6 @@ export const MoorhenIrisValidation = (props: {
         }
     }, [maps.length])
    
-    useEffect(() => {
-        if (selectedModel !== null) {
-            let selectedMoleculeIndex = molecules.findIndex(molecule => molecule.molNo === selectedModel);
-            if (selectedMoleculeIndex !== -1 && molecules[selectedMoleculeIndex]){
-                setCachedGemmiStructure(molecules[selectedMoleculeIndex].gemmiStructure)
-            }
-        }
-    })
-
     useEffect(() => {
         setTimeout(() => {
             let plotHeigth = (props.resizeNodeRef.current.clientHeight) - convertRemToPx(15)
