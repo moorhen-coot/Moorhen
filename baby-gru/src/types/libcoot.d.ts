@@ -12,6 +12,13 @@ declare global {
 
 export namespace libcootApi {
     type CCP4ModuleType = {
+        get_ligand_info_for_structure(gemmiStructure: gemmi.Structure): emscriptem.vector<{
+            resName: string;
+            chainName: string;
+            resNum: string;
+            modelName: string;
+            cid: string;
+        }>;
         guess_coord_data_format(coordDataString: string): number;
         get_structure_bfactors(gemmiStructure: gemmi.Structure): emscriptem.vector<{ cid: string; bFactor: number }>;
         get_sequence_info(gemmiStructure: gemmi.Structure, molName: string): emscriptem.vector<SequenceEntry>;

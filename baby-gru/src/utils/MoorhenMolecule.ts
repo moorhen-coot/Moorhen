@@ -1337,34 +1337,13 @@ export class MoorhenMolecule implements moorhen.Molecule {
      */
     async updateLigands(): Promise<void> {
         let ligandList: moorhen.LigandInfo[] = []
-        const model = this.gemmiStructure.first_model()
-        const modelName = model.name
-
-        try {
-            const chains = model.chains
-            const chainsSize = chains.size()
-            for (let i = 0; i < chainsSize; i++) {
-                const chain = chains.get(i)
-                const chainName = chain.name
-                const ligands = chain.get_ligands_const()
-                const ligandsSize = ligands.size()
-                for (let j = 0; j < ligandsSize; j++) {
-                    let ligand = ligands.at(j)
-                    const resName = ligand.name
-                    const ligandSeqId = ligand.seqid
-                    const resNum = ligandSeqId.str()
-                    const cid = `/${model.name}/${chain.name}/${ligandSeqId.num?.value}(${ligand.name})`
-                    ligandList.push({ resName, chainName, resNum, modelName, cid })
-                    ligand.delete()
-                    ligandSeqId.delete()
-                }
-                chain.delete()
-                ligands.delete()
-            }
-            chains.delete()
-        } finally {
-            model.delete()
+        const ligandInfoVec = window.CCP4Module.get_ligand_info_for_structure(this.gemmiStructure)
+        const ligandInfoVecSize = ligandInfoVec.size()
+        for (let i = 0; i < ligandInfoVecSize; i++) {
+            const ligandInfo = ligandInfoVec.get(i)
+            ligandList.push({...ligandInfo})
         }
+        ligandInfoVec.delete()
 
         this.ligands = ligandList
         this.checkIsLigand()

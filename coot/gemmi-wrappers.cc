@@ -297,6 +297,14 @@ struct ResidueBFactorInfo {
     float bFactor;
 };
 
+struct LigandInfo {
+    std::string resName;
+    std::string chainName;
+    std::string resNum;
+    std::string modelName;
+    std::string cid;
+};
+
 struct AtomInfo {
     double x;
     double y;
@@ -404,6 +412,31 @@ std::vector<ResidueBFactorInfo> get_structure_bfactors(const gemmi::Structure &S
         }
     }
     return res_bfactor_info_vec;
+}
+
+std::vector<LigandInfo> get_ligand_info_for_structure(const gemmi::Structure &Structure) {
+    std::vector<LigandInfo> ligand_info_vec;
+    auto structure_copy = Structure;
+    auto models = structure_copy.models;
+    for (int modelIndex = 0; modelIndex < models.size(); modelIndex++) {
+        const auto model = models[modelIndex];
+        const auto chains = model.chains;
+        for (int chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
+            auto chain = chains[chainIndex];
+            const auto ligands = chain.get_ligands();
+            for (int ligandIndex = 0; ligandIndex < ligands.size(); ligandIndex++) {
+                auto ligand = ligands[ligandIndex];
+                LigandInfo ligand_info;
+                ligand_info.resName = ligand.name;
+                ligand_info.resNum = ligand.seqid.str();
+                ligand_info.cid = "/" + model.name + "/" + chain.name + "/" + ligand.seqid.str() + "(" + ligand.name + ")";
+                ligand_info.chainName = chain.name;
+                ligand_info.modelName = model.name;
+                ligand_info_vec.push_back(ligand_info);
+            }
+        }
+    }
+    return ligand_info_vec;
 }
 
 // cids and excluded_cids are strings of CID selections separated with ||
@@ -2397,6 +2430,16 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
 
     register_vector<ResidueBFactorInfo>("VectorResidueBFactorInfo");
 
+    value_object<LigandInfo>("LigandInfo")
+    .field("resName", &LigandInfo::resName)
+    .field("chainName", &LigandInfo::chainName)
+    .field("resNum", &LigandInfo::resNum)
+    .field("modelName", &LigandInfo::modelName)
+    .field("cid", &LigandInfo::cid)
+    ;
+
+    register_vector<LigandInfo>("VectorLigandInfo");
+
     value_object<AtomInfo>("AtomInfo")
     .field("x", &AtomInfo::x)
     .field("y", &AtomInfo::y)
@@ -2571,6 +2614,7 @@ GlobWalk
     function("getElementNameAsString",&get_element_name_as_string);
     function("cif_parse_string",&cif_parse_string);
     function("get_atom_info_for_selection", &get_atom_info_for_selection);
+    function("get_ligand_info_for_structure", &get_ligand_info_for_structure);
     function("get_sequence_info", &get_sequence_info);
     function("get_structure_bfactors", &get_structure_bfactors);
     function("guess_coord_data_format", &guess_coord_data_format);
