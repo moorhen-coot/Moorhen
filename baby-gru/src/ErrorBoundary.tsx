@@ -2,6 +2,7 @@ import React, { ErrorInfo } from 'react';
 import { Modal, Button } from "react-bootstrap"
 import { doDownload, createLocalStorageInstance } from "./utils/MoorhenUtils"
 import { MoorhenTimeCapsule } from "./utils/MoorhenTimeCapsule"
+import { MoorhenMolecule } from './utils/MoorhenMolecule';
 import { moorhen } from './types/moorhen';
 
 type ErrorBoundaryPropsType = {
@@ -46,7 +47,8 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryPropsType, Error
         const backup = await timeCapsule.retrieveLastBackup() as string
         const sessionData: moorhen.backupSession = JSON.parse(backup)
         const promises = sessionData.moleculeData.map(molData => {
-            return this.doAsyncDownload([molData.pdbData], `${molData.name}.pdb`)
+            const format = MoorhenMolecule.guessCoordFormat(molData.coordString)
+            return this.doAsyncDownload([molData.coordString], `${molData.name}.${format}`)
         })
         await Promise.all(promises)
     }

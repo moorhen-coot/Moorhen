@@ -90,7 +90,7 @@ declare module 'moorhen' {
         setSymmetryRadius(radius: number): Promise<void>;
         drawSymmetry: (fetchSymMatrix?: boolean) => Promise<void>;
         getUnitCellParams():  { a: number; b: number; c: number; alpha: number; beta: number; gamma: number; };
-        replaceModelWithFile(fileUrl: string, molName: string): Promise<void>
+        replaceModelWithFile(fileUrl: string): Promise<void>
         delete(): Promise<_moorhen.WorkerResponse> 
         fetchDefaultColourRules(): Promise<void>;
         fetchIfDirtyAndDraw(arg0: string): Promise<void>;
@@ -109,6 +109,7 @@ declare module 'moorhen' {
         centreAndAlignViewOn(selectionCid: string, animate?: boolean): Promise<void>;
         buffersInclude: (bufferIn: { id: string; }) => boolean;
         redrawRepresentation: (id: string) => Promise<void>;
+        downloadAtoms(format?: 'mmcif' | 'pdb'): Promise<void>;
         isLigand: boolean;
         type: string;
         excludedCids: string[];
@@ -148,6 +149,7 @@ declare module 'moorhen' {
         selectionRepresentation: _moorhen.MoleculeRepresentation;
         hasDNA: boolean;
         hasGlycans: boolean;
+        coordsFormat: _moorhen.coorFormats;
     }
     module.exports.MoorhenMolecule = MoorhenMolecule
     

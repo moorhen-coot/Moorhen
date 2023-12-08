@@ -23,6 +23,7 @@
 #include <gemmi/gz.hpp>
 #include <gemmi/model.hpp>
 #include <gemmi/monlib.hpp>
+#include <gemmi/polyheur.hpp>
 #include <gemmi/select.hpp>
 #include <gemmi/small.hpp>
 #include <gemmi/asudata.hpp>
@@ -229,6 +230,14 @@ void cif_parse_string(gemmi::cif::Document& doc, const std::string& data) {
   gemmi::cif::parse_input(doc, in);
 }
 
+int guess_coord_data_format(const std::string &file_contents) {
+    char *c_data = (char *)file_contents.c_str();
+    size_t size = file_contents.length();
+    const char* end = c_data + size;
+    gemmi::CoorFormat coor_format = gemmi::coor_format_from_content(c_data, end);
+    return int(coor_format);
+}
+
 struct SequenceResInfo {
     int resNum;
     std::string resCode;
@@ -247,6 +256,8 @@ std::vector<SequenceEntry> get_sequence_info(const gemmi::Structure &Structure, 
     std::vector<SequenceEntry> sequences;
     auto structure_copy = Structure;
 
+    gemmi::remove_ligands_and_waters(structure_copy);
+    structure_copy.remove_empty_chains();
     const auto models = structure_copy.models;
     for (auto modelIndex = 0; modelIndex < models.size(); modelIndex++) {
         const auto model = models[modelIndex];
@@ -254,7 +265,6 @@ std::vector<SequenceEntry> get_sequence_info(const gemmi::Structure &Structure, 
         for (auto chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
             std::vector<SequenceResInfo> currentSequence;
             auto chain = chains[chainIndex];
-            gemmi::remove_ligands_and_waters(chain);
             const auto residues = chain.residues;
             const auto polymerType = gemmi::check_polymer_type(chain.get_polymer());
             for (auto residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
@@ -285,6 +295,14 @@ std::vector<SequenceEntry> get_sequence_info(const gemmi::Structure &Structure, 
 struct ResidueBFactorInfo {
     std::string cid;
     float bFactor;
+};
+
+struct LigandInfo {
+    std::string resName;
+    std::string chainName;
+    std::string resNum;
+    std::string modelName;
+    std::string cid;
 };
 
 struct AtomInfo {
@@ -394,6 +412,31 @@ std::vector<ResidueBFactorInfo> get_structure_bfactors(const gemmi::Structure &S
         }
     }
     return res_bfactor_info_vec;
+}
+
+std::vector<LigandInfo> get_ligand_info_for_structure(const gemmi::Structure &Structure) {
+    std::vector<LigandInfo> ligand_info_vec;
+    auto structure_copy = Structure;
+    auto models = structure_copy.models;
+    for (int modelIndex = 0; modelIndex < models.size(); modelIndex++) {
+        const auto model = models[modelIndex];
+        const auto chains = model.chains;
+        for (int chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
+            auto chain = chains[chainIndex];
+            const auto ligands = chain.get_ligands();
+            for (int ligandIndex = 0; ligandIndex < ligands.size(); ligandIndex++) {
+                auto ligand = ligands[ligandIndex];
+                LigandInfo ligand_info;
+                ligand_info.resName = ligand.name;
+                ligand_info.resNum = ligand.seqid.str();
+                ligand_info.cid = "/" + model.name + "/" + chain.name + "/" + ligand.seqid.str() + "(" + ligand.name + ")";
+                ligand_info.chainName = chain.name;
+                ligand_info.modelName = model.name;
+                ligand_info_vec.push_back(ligand_info);
+            }
+        }
+    }
+    return ligand_info_vec;
 }
 
 // cids and excluded_cids are strings of CID selections separated with ||
@@ -2387,6 +2430,16 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
 
     register_vector<ResidueBFactorInfo>("VectorResidueBFactorInfo");
 
+    value_object<LigandInfo>("LigandInfo")
+    .field("resName", &LigandInfo::resName)
+    .field("chainName", &LigandInfo::chainName)
+    .field("resNum", &LigandInfo::resNum)
+    .field("modelName", &LigandInfo::modelName)
+    .field("cid", &LigandInfo::cid)
+    ;
+
+    register_vector<LigandInfo>("VectorLigandInfo");
+
     value_object<AtomInfo>("AtomInfo")
     .field("x", &AtomInfo::x)
     .field("y", &AtomInfo::y)
@@ -2520,6 +2573,7 @@ GlobWalk
     function("split_chains_by_segments", &gemmi::split_chains_by_segments);
     function("check_polymer_type", &gemmi::check_polymer_type);
     function("make_one_letter_sequence", &gemmi::make_one_letter_sequence);
+    function("gemmi_add_entity_types",select_overload<void(gemmi::Structure&, bool)>(&gemmi::add_entity_types));
     function("remove_alternative_conformations_structure",select_overload<void(gemmi::Structure&)>(&gemmi::remove_alternative_conformations));
     function("remove_alternative_conformations_model",    select_overload<void(gemmi::Model&)>(&gemmi::remove_alternative_conformations));
     function("remove_alternative_conformations_chain",    select_overload<void(gemmi::Chain&)>(&gemmi::remove_alternative_conformations));
@@ -2560,6 +2614,8 @@ GlobWalk
     function("getElementNameAsString",&get_element_name_as_string);
     function("cif_parse_string",&cif_parse_string);
     function("get_atom_info_for_selection", &get_atom_info_for_selection);
+    function("get_ligand_info_for_structure", &get_ligand_info_for_structure);
     function("get_sequence_info", &get_sequence_info);
     function("get_structure_bfactors", &get_structure_bfactors);
+    function("guess_coord_data_format", &guess_coord_data_format);
 }

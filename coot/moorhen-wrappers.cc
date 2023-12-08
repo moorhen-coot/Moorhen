@@ -279,15 +279,12 @@ class molecules_container_js : public molecules_container_t {
             return imol;
         }
 
-        void replace_molecule_by_model_from_string (int imol, const std::string &format, const std::string &pdb_string) {
+        void replace_molecule_by_model_from_string (int imol, const std::string &pdb_string) {
             std::string file_name = generate_rand_str(32);
-            if (format == "mmcif") {
+            if (pdb_string.find("data_") == 0) {
                 file_name += ".mmcif";
-            } else if (format == "pdb") {
-                file_name += ".pdb";
             } else {
-                std::cout << "Unrecognised format " << format << std::endl;
-                return;
+                file_name += ".pdb";
             }
             write_text_file(file_name, pdb_string);
             molecules_container_t::replace_molecule_by_model_from_file(imol, file_name); 

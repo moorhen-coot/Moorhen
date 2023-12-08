@@ -87,8 +87,11 @@ export namespace moorhen {
         ruleType: string;
         label: string;
     }
+
+    type coorFormats = 'pdb' | 'mmcif';
     
     interface Molecule {
+        downloadAtoms(format?: 'mmcif' | 'pdb'): Promise<void>;
         getResidueBFactors(): { cid: string, bFactor: number }[];
         getNcsRelatedChains(): Promise<string[][]>;
         animateRefine(n_cyc: number, n_iteration: number, final_n_cyc?: number): Promise<void>;
@@ -129,7 +132,7 @@ export namespace moorhen {
         setSymmetryRadius(radius: number): Promise<void>;
         drawSymmetry: (fetchSymMatrix?: boolean) => Promise<void>;
         getUnitCellParams():  { a: number; b: number; c: number; alpha: number; beta: number; gamma: number; };
-        replaceModelWithFile(fileUrl: string, molName: string): Promise<void>
+        replaceModelWithFile(fileUrl: string): Promise<void>
         delete(): Promise<WorkerResponse> 
         fetchDefaultColourRules(): Promise<void>;
         fetchIfDirtyAndDraw(arg0: string): Promise<void>;
@@ -187,6 +190,7 @@ export namespace moorhen {
         selectionRepresentation: MoleculeRepresentation;
         hasDNA: boolean;
         hasGlycans: boolean;
+        coordsFormat: coorFormats
     }
 
     type RepresentationStyles = 'VdwSpheres' | 'ligands' | 'CAs' | 'CBs' | 'CDs' | 'gaussian' | 'allHBonds' | 'rama' | 
@@ -427,7 +431,7 @@ export namespace moorhen {
     type moleculeSessionData = {
         name: string;
         molNo: number;
-        pdbData: string;
+        coordString: string;
         representations: { cid: string, style: string, isCustom: boolean, colourRules: ColourRule[], bondOptions: cootBondOptions }[];
         defaultBondOptions: cootBondOptions;
         defaultColourRules: ColourRule[];

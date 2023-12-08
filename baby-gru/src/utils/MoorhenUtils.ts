@@ -214,10 +214,10 @@ export async function loadSessionData(
         dispatch( emptyMaps() )    
     })
 
-    // Load molecules stored in session from pdb string
+    // Load molecules stored in session from coords string
     const newMoleculePromises = sessionData.moleculeData.map(storedMoleculeData => {
         const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
-        return newMolecule.loadToCootFromString(storedMoleculeData.pdbData, storedMoleculeData.name)
+        return newMolecule.loadToCootFromString(storedMoleculeData.coordString, storedMoleculeData.name)
     })
     
     // Load maps stored in session
@@ -580,8 +580,8 @@ export const doDownloadText = (text: string, filename: string) => {
     document.body.removeChild(element);
 }
 
-export const readGemmiStructure = (pdbData: ArrayBuffer | string, molName: string): gemmi.Structure => {
-    const structure: gemmi.Structure = window.CCP4Module.read_structure_from_string(pdbData, molName)
+export const readGemmiStructure = (coordData: ArrayBuffer | string, molName: string): gemmi.Structure => {
+    const structure: gemmi.Structure = window.CCP4Module.read_structure_from_string(coordData, molName)
     return structure
 }
 

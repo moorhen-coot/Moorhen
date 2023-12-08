@@ -12,6 +12,14 @@ declare global {
 
 export namespace libcootApi {
     type CCP4ModuleType = {
+        get_ligand_info_for_structure(gemmiStructure: gemmi.Structure): emscriptem.vector<{
+            resName: string;
+            chainName: string;
+            resNum: string;
+            modelName: string;
+            cid: string;
+        }>;
+        guess_coord_data_format(coordDataString: string): number;
         get_structure_bfactors(gemmiStructure: gemmi.Structure): emscriptem.vector<{ cid: string; bFactor: number }>;
         get_sequence_info(gemmiStructure: gemmi.Structure, molName: string): emscriptem.vector<SequenceEntry>;
         get_atom_info_for_selection(gemmiStructure: gemmi.Structure, arg1: string, arg2: string): emscriptem.vector<AtomInfo>;
@@ -21,9 +29,10 @@ export namespace libcootApi {
         check_polymer_type(polymerConst: emscriptem.instance<number>): {value: number};
         remove_ligands_and_waters_chain(chain: gemmi.Chain): void;
         gemmi_setup_entities(gemmiStructure: gemmi.Structure): void;
+        gemmi_add_entity_types(gemmiStructure: gemmi.Structure, overWrite: boolean): void;
         remove_ligands_and_waters_structure(gemmiStructure: gemmi.Structure): void;
         remove_hydrogens_structure(gemmiStructure: gemmi.Structure): void;
-        read_structure_from_string(pdbData: string | ArrayBuffer, molName: string): gemmi.Structure;
+        read_structure_from_string(coordData: string | ArrayBuffer, molName: string): gemmi.Structure;
         get_mtz_columns(fileName: string): emscriptem.vector<string>;
         FS_createDataFile(arg0: string, fileName: string, byteArray: Uint8Array, arg3: boolean, arg4: boolean): void;
         getElementNameAsString: (arg0: emscriptem.instance<string>) => string;

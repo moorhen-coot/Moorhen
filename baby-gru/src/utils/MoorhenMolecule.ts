@@ -1,5 +1,5 @@
 import 'pako';
-import { guid, readTextFile, readGemmiStructure, centreOnGemmiAtoms, getRandomMoleculeColour } from './MoorhenUtils'
+import { guid, readTextFile, readGemmiStructure, centreOnGemmiAtoms, getRandomMoleculeColour, doDownload } from './MoorhenUtils'
 import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation"
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
@@ -87,6 +87,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     hasDNA: boolean;
     restraints: {maxRadius: number, cid: string}[];
     isLigand: boolean;
+    coordsFormat: moorhen.coorFormats
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibraryPath = "./baby-gru/monomers") {
         this.type = 'molecule'
@@ -96,6 +97,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.isVisible = true
         this.name = "unnamed"
         this.molNo = null
+        this.coordsFormat = null
         this.gemmiStructure = null
         this.sequences = []
         this.ligands = null
@@ -157,10 +159,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
     /**
      * Replace the current molecule with the model in a file
      * @param {string} fileUrl - The uri to the file with the new model
-     * @param {string} molName - The molecule name
-     * @param {string} format - The format of the file
      */
-    async replaceModelWithFile(fileUrl: string, molName: string, format: string = "pdb"): Promise<void> {
+    async replaceModelWithFile(fileUrl: string): Promise<void> {
         let coordData: string
         let fetchResponse: Response
 
@@ -179,7 +179,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         const cootResponse = await this.commandCentre.current.cootCommand({
             returnType: "status",
             command: 'replace_molecule_by_model_from_string',
-            commandArgs: [this.molNo, format, coordData],
+            commandArgs: [this.molNo, coordData],
             changesMolecules: [this.molNo]
         }, true)
 
@@ -247,12 +247,14 @@ export class MoorhenMolecule implements moorhen.Molecule {
     /**
      * Update the cached gemmi structure for this molecule
      */
-    async updateGemmiStructure(pdbString: string): Promise<void> {
+    async updateGemmiStructure(coordString: string): Promise<void> {
         if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
             this.gemmiStructure.delete()
         }
-        this.gemmiStructure = readGemmiStructure(pdbString, this.name)
+        this.gemmiStructure = readGemmiStructure(coordString, this.name)
         window.CCP4Module.gemmi_setup_entities(this.gemmiStructure)
+        // Only override if this is mmcif
+        window.CCP4Module.gemmi_add_entity_types(this.gemmiStructure, this.coordsFormat === 'mmcif')
         this.parseSequences()
         this.updateLigands()
     }
@@ -372,15 +374,16 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {moorhen.Molecule} New molecule instance
      */
     async copyMolecule(): Promise<moorhen.Molecule> {
-        let pdbString = await this.getAtoms()
+        let coordString = await this.getAtoms()
         let newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.monomerLibraryPath)
         newMolecule.name = `${this.name}-placeholder`
         newMolecule.defaultBondOptions = this.defaultBondOptions
+        newMolecule.coordsFormat = this.coordsFormat
 
         let response = await this.commandCentre.current.cootCommand({
             returnType: "status",
             command: 'read_pdb_string',
-            commandArgs: [pdbString, newMolecule.name]
+            commandArgs: [coordString, newMolecule.name]
         }, true) as moorhen.WorkerResponse<number>
 
         newMolecule.molNo = response.data.result.result
@@ -413,6 +416,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         newMolecule.molNo = response.data.result.result
         newMolecule.isDarkBackground = this.isDarkBackground
         newMolecule.defaultBondOptions = this.defaultBondOptions
+        newMolecule.coordsFormat = this.coordsFormat
         await Promise.all(Object.keys(this.ligandDicts).map(key => newMolecule.addDict(this.ligandDicts[key])))
         await newMolecule.fetchDefaultColourRules()
         if (doRecentre) {
@@ -460,6 +464,35 @@ export class MoorhenMolecule implements moorhen.Molecule {
     }
 
     /**
+     * Guess the coordinate format from the file contents
+     * @param {string} coordDataString - The file contents
+     * @returns {string} - The file format
+     */
+    static guessCoordFormat(coordDataString: string): moorhen.coorFormats {
+        let result: moorhen.coorFormats = 'pdb'
+        try {
+            const format = window.CCP4Module.guess_coord_data_format(coordDataString)
+            if (format === 0) {
+                // result = 'unknown'
+            } else if (format === 1) {
+                // result = 'detect'
+            } else if (format === 2) {
+                result = 'pdb'
+            } else if (format === 3) {
+                result = 'mmcif'
+            } else if (format === 4) {
+                // result = 'mmjson'
+            } else if (format === 5) {
+                // result = 'chemComp'
+            }    
+        } catch (err) {
+            console.warn(err)
+            console.log('Unable to guess format of coords using gemmi... Defaulting to PDB format')
+        }
+        return result
+    }
+
+    /**
      * Load a new molecule from a string
      * @param {string} coordData - The molecule data
      * @param {string} name - The new molecule name
@@ -475,6 +508,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             this.gemmiStructure.delete()
         }
 
+        this.coordsFormat = MoorhenMolecule.guessCoordFormat(coordData as string)
         this.name = name.replace(pdbRegex, "").replace(entRegex, "").replace(cifRegex, "").replace(mmcifRegex, "");
 
         try {
@@ -574,16 +608,25 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     /**
      * Get a string with the PDB file contents of the molecule in its current state
-     * @param {string} [format='pdb'] - Indicate the file format
+     * @param {string} [format='pdb'] - File format will match the one of the original file unless specified here
      * @returns {string}  A string representation file contents
      */
-    async getAtoms(format: string = 'pdb'): Promise<string> {
+    async getAtoms(format?: 'mmcif' | 'pdb'): Promise<string> {
         const response = await this.commandCentre.current.cootCommand({
             returnType: "string",
             command: 'get_molecule_atoms',
-            commandArgs: [this.molNo, format],
+            commandArgs: [this.molNo, format ? format : this.coordsFormat ? this.coordsFormat : 'pdb'],
         }, false) as moorhen.WorkerResponse<string>
         return response.data.result.result
+    }
+
+    /**
+     * Download the PDB file contents of the molecule in its current state
+     * @param {string} [format='pdb'] - File format will match the one of the original file unless specified here
+     */
+    async downloadAtoms(format?: 'mmcif' | 'pdb') {
+        const coordsString = await this.getAtoms(format)
+        doDownload([coordsString], `${this.name}.${format ? format : this.coordsFormat ? this.coordsFormat : 'pdb'}`)
     }
 
     /**
@@ -607,16 +650,16 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
             this.gemmiStructure.delete()
         }
-        const [_hasGlycans, pdbString] = await Promise.all([
+        const [_hasGlycans, coordString] = await Promise.all([
             this.checkHasGlycans(),
             this.getAtoms()
         ])
         try {
-            this.updateGemmiStructure(pdbString)
+            this.updateGemmiStructure(coordString)
         }
         catch (err) {
             console.log(err)
-            console.warn('Issue parsing coordinates into Gemmi structure', pdbString)
+            console.warn('Issue parsing coordinates into Gemmi structure', coordString)
         }
         this.atomsDirty = false
 }
@@ -1295,34 +1338,13 @@ export class MoorhenMolecule implements moorhen.Molecule {
      */
     async updateLigands(): Promise<void> {
         let ligandList: moorhen.LigandInfo[] = []
-        const model = this.gemmiStructure.first_model()
-        const modelName = model.name
-
-        try {
-            const chains = model.chains
-            const chainsSize = chains.size()
-            for (let i = 0; i < chainsSize; i++) {
-                const chain = chains.get(i)
-                const chainName = chain.name
-                const ligands = chain.get_ligands_const()
-                const ligandsSize = ligands.size()
-                for (let j = 0; j < ligandsSize; j++) {
-                    let ligand = ligands.at(j)
-                    const resName = ligand.name
-                    const ligandSeqId = ligand.seqid
-                    const resNum = ligandSeqId.str()
-                    const cid = `/${model.name}/${chain.name}/${ligandSeqId.num?.value}(${ligand.name})`
-                    ligandList.push({ resName, chainName, resNum, modelName, cid })
-                    ligand.delete()
-                    ligandSeqId.delete()
-                }
-                chain.delete()
-                ligands.delete()
-            }
-            chains.delete()
-        } finally {
-            model.delete()
+        const ligandInfoVec = window.CCP4Module.get_ligand_info_for_structure(this.gemmiStructure)
+        const ligandInfoVecSize = ligandInfoVec.size()
+        for (let i = 0; i < ligandInfoVecSize; i++) {
+            const ligandInfo = ligandInfoVec.get(i)
+            ligandList.push({...ligandInfo})
         }
+        ligandInfoVec.delete()
 
         this.ligands = ligandList
         this.checkIsLigand()
