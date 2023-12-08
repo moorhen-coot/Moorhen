@@ -86,6 +86,7 @@ const MoorhenImportLigandDictionary = (props: {
                 newMolecule.name = instanceName
                 newMolecule.setBackgroundColour(backgroundColor)
                 newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
+                newMolecule.coordsFormat = 'mmcif'
                 await Promise.all([
                     newMolecule.fetchDefaultColourRules(),
                     newMolecule.addDict(fileContent)
