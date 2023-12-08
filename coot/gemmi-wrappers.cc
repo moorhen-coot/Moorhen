@@ -230,6 +230,14 @@ void cif_parse_string(gemmi::cif::Document& doc, const std::string& data) {
   gemmi::cif::parse_input(doc, in);
 }
 
+int guess_coord_data_format(const std::string &file_contents) {
+    char *c_data = (char *)file_contents.c_str();
+    size_t size = file_contents.length();
+    const char* end = c_data + size;
+    gemmi::CoorFormat coor_format = gemmi::coor_format_from_content(c_data, end);
+    return int(coor_format);
+}
+
 struct SequenceResInfo {
     int resNum;
     std::string resCode;
@@ -2565,4 +2573,5 @@ GlobWalk
     function("get_atom_info_for_selection", &get_atom_info_for_selection);
     function("get_sequence_info", &get_sequence_info);
     function("get_structure_bfactors", &get_structure_bfactors);
+    function("guess_coord_data_format", &guess_coord_data_format);
 }

@@ -739,13 +739,13 @@ describe('Testing molecules_container_js', () => {
         const pdbString_1  = molecules_container.get_molecule_atoms(coordMolNo_1, "pdb")
         expect(pdbString_1).toHaveLength(258719)
         const coordMolNo_2 = molecules_container.read_pdb('./5fjj.pdb')
-        molecules_container.replace_molecule_by_model_from_string(coordMolNo_2, "pdb", pdbString_1)
+        molecules_container.replace_molecule_by_model_from_string(coordMolNo_2, pdbString_1)
         const pdbString_2  = molecules_container.get_molecule_atoms(coordMolNo_2, "pdb")
         expect(pdbString_2).toBe(pdbString_1)
     })
 })
 
-const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h_no_ligand.pdb', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
+const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
 
 const setupFunctions = {
     removeTestDataFromFauxFS: () => {
