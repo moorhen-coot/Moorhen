@@ -247,6 +247,8 @@ std::vector<SequenceEntry> get_sequence_info(const gemmi::Structure &Structure, 
     std::vector<SequenceEntry> sequences;
     auto structure_copy = Structure;
 
+    gemmi::remove_ligands_and_waters(structure_copy);
+    structure_copy.remove_empty_chains();
     const auto models = structure_copy.models;
     for (auto modelIndex = 0; modelIndex < models.size(); modelIndex++) {
         const auto model = models[modelIndex];
@@ -254,7 +256,6 @@ std::vector<SequenceEntry> get_sequence_info(const gemmi::Structure &Structure, 
         for (auto chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
             std::vector<SequenceResInfo> currentSequence;
             auto chain = chains[chainIndex];
-            gemmi::remove_ligands_and_waters(chain);
             const auto residues = chain.residues;
             const auto polymerType = gemmi::check_polymer_type(chain.get_polymer());
             for (auto residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
