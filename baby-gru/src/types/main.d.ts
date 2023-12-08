@@ -149,7 +149,7 @@ declare module 'moorhen' {
         selectionRepresentation: _moorhen.MoleculeRepresentation;
         hasDNA: boolean;
         hasGlycans: boolean;
-        originalFileFormat: _moorhen.coorFormats;
+        coordsFormat: _moorhen.coorFormats;
     }
     module.exports.MoorhenMolecule = MoorhenMolecule
     

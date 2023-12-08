@@ -87,7 +87,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     hasDNA: boolean;
     restraints: {maxRadius: number, cid: string}[];
     isLigand: boolean;
-    originalFileFormat: moorhen.coorFormats
+    coordsFormat: moorhen.coorFormats
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibraryPath = "./baby-gru/monomers") {
         this.type = 'molecule'
@@ -97,7 +97,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.isVisible = true
         this.name = "unnamed"
         this.molNo = null
-        this.originalFileFormat = null
+        this.coordsFormat = null
         this.gemmiStructure = null
         this.sequences = []
         this.ligands = null
@@ -377,7 +377,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         let newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.monomerLibraryPath)
         newMolecule.name = `${this.name}-placeholder`
         newMolecule.defaultBondOptions = this.defaultBondOptions
-        newMolecule.originalFileFormat = this.originalFileFormat
+        newMolecule.coordsFormat = this.coordsFormat
 
         let response = await this.commandCentre.current.cootCommand({
             returnType: "status",
@@ -415,7 +415,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         newMolecule.molNo = response.data.result.result
         newMolecule.isDarkBackground = this.isDarkBackground
         newMolecule.defaultBondOptions = this.defaultBondOptions
-        newMolecule.originalFileFormat = this.originalFileFormat
+        newMolecule.coordsFormat = this.coordsFormat
         await Promise.all(Object.keys(this.ligandDicts).map(key => newMolecule.addDict(this.ligandDicts[key])))
         await newMolecule.fetchDefaultColourRules()
         if (doRecentre) {
@@ -507,7 +507,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             this.gemmiStructure.delete()
         }
 
-        this.originalFileFormat = MoorhenMolecule.guessCoordFormat(coordData as string)
+        this.coordsFormat = MoorhenMolecule.guessCoordFormat(coordData as string)
         this.name = name.replace(pdbRegex, "").replace(entRegex, "").replace(cifRegex, "").replace(mmcifRegex, "");
 
         try {
@@ -614,7 +614,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         const response = await this.commandCentre.current.cootCommand({
             returnType: "string",
             command: 'get_molecule_atoms',
-            commandArgs: [this.molNo, format ? format : this.originalFileFormat ? this.originalFileFormat : 'pdb'],
+            commandArgs: [this.molNo, format ? format : this.coordsFormat ? this.coordsFormat : 'pdb'],
         }, false) as moorhen.WorkerResponse<string>
         return response.data.result.result
     }
@@ -625,7 +625,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      */
     async downloadAtoms(format?: 'mmcif' | 'pdb') {
         const coordsString = await this.getAtoms(format)
-        doDownload([coordsString], `${this.name}.${format ? format : this.originalFileFormat ? this.originalFileFormat : 'pdb'}`)
+        doDownload([coordsString], `${this.name}.${format ? format : this.coordsFormat ? this.coordsFormat : 'pdb'}`)
     }
 
     /**

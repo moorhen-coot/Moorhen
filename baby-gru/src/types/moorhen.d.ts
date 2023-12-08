@@ -190,7 +190,7 @@ export namespace moorhen {
         selectionRepresentation: MoleculeRepresentation;
         hasDNA: boolean;
         hasGlycans: boolean;
-        originalFileFormat: coorFormats
+        coordsFormat: coorFormats
     }
 
     type RepresentationStyles = 'VdwSpheres' | 'ligands' | 'CAs' | 'CBs' | 'CDs' | 'gaussian' | 'allHBonds' | 'rama' | 

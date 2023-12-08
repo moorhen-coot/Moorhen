@@ -67,9 +67,9 @@ describe("Testing MoorhenMolecule", () => {
             current: new MockMoorhenCommandCentre(molecules_container, cootModule)
         }
         const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
-        expect(molecule.originalFileFormat).toBe(null)
+        expect(molecule.coordsFormat).toBe(null)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
-        expect(molecule.originalFileFormat).toBe('pdb')
+        expect(molecule.coordsFormat).toBe('pdb')
     })
 
     test("Test guessCoordFormat mmcif", async () => {
@@ -82,9 +82,9 @@ describe("Testing MoorhenMolecule", () => {
             current: new MockMoorhenCommandCentre(molecules_container, cootModule)
         }
         const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
-        expect(molecule.originalFileFormat).toBe(null)
+        expect(molecule.coordsFormat).toBe(null)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
-        expect(molecule.originalFileFormat).toBe('mmcif')
+        expect(molecule.coordsFormat).toBe('mmcif')
     })
 
     test("Test guessCoordFormat ligandCif", async () => {
@@ -97,9 +97,9 @@ describe("Testing MoorhenMolecule", () => {
             current: new MockMoorhenCommandCentre(molecules_container, cootModule)
         }
         const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
-        expect(molecule.originalFileFormat).toBe(null)
+        expect(molecule.coordsFormat).toBe(null)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
-        expect(molecule.originalFileFormat).toBe('mmcif')
+        expect(molecule.coordsFormat).toBe('mmcif')
     })
 
     test("Test delete", async () => {
@@ -211,7 +211,7 @@ describe("Testing MoorhenMolecule", () => {
         const coordData_2 = await molecule_2.getAtoms()
 
         expect(coordData_1).toBe(coordData_2)
-        expect(molecule_2.originalFileFormat).toBe(molecule_1.originalFileFormat)
+        expect(molecule_2.coordsFormat).toBe(molecule_1.coordsFormat)
     })
 
     test("Test copyFragmentUsingCid", async () => {
@@ -230,7 +230,7 @@ describe("Testing MoorhenMolecule", () => {
         const atomCount = molecules_container.get_number_of_atoms(molecule_2.molNo)
         expect(molecule_2.molNo).not.toBe(-1)
         expect(atomCount).toBe(14)
-        expect(molecule_2.originalFileFormat).toBe(molecule_1.originalFileFormat)
+        expect(molecule_2.coordsFormat).toBe(molecule_1.coordsFormat)
     })
 
     test("Test mergeMolecules", async () => {
