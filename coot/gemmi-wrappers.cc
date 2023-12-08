@@ -23,6 +23,7 @@
 #include <gemmi/gz.hpp>
 #include <gemmi/model.hpp>
 #include <gemmi/monlib.hpp>
+#include <gemmi/polyheur.hpp>
 #include <gemmi/select.hpp>
 #include <gemmi/small.hpp>
 #include <gemmi/asudata.hpp>
@@ -2521,6 +2522,7 @@ GlobWalk
     function("split_chains_by_segments", &gemmi::split_chains_by_segments);
     function("check_polymer_type", &gemmi::check_polymer_type);
     function("make_one_letter_sequence", &gemmi::make_one_letter_sequence);
+    function("gemmi_add_entity_types",select_overload<void(gemmi::Structure&, bool)>(&gemmi::add_entity_types));
     function("remove_alternative_conformations_structure",select_overload<void(gemmi::Structure&)>(&gemmi::remove_alternative_conformations));
     function("remove_alternative_conformations_model",    select_overload<void(gemmi::Model&)>(&gemmi::remove_alternative_conformations));
     function("remove_alternative_conformations_chain",    select_overload<void(gemmi::Chain&)>(&gemmi::remove_alternative_conformations));
