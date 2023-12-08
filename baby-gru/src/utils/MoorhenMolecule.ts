@@ -253,7 +253,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
         this.gemmiStructure = readGemmiStructure(coordString, this.name)
         window.CCP4Module.gemmi_setup_entities(this.gemmiStructure)
-        window.CCP4Module.gemmi_add_entity_types(this.gemmiStructure, true)
+        // Only override if this is mmcif
+        window.CCP4Module.gemmi_add_entity_types(this.gemmiStructure, this.coordsFormat === 'mmcif')
         this.parseSequences()
         this.updateLigands()
     }
