@@ -3466,9 +3466,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const DY = new_y - old_y
         const DZ = new_z - old_z
         const distance = Math.sqrt(DX**2 + DY**2 + DZ**2)
-        // Optimal speed is 1A per frame, with upper limit of 10 frames
+        // Optimal speed is 1A per frame, with upper limit of 15 frames and lower limit of 5
         const nFrames = Math.floor(distance / 1.5)
-        this.nAnimationFrames = nFrames > 10 ? 10 : nFrames < 1 ? 1 : nFrames
+        this.nAnimationFrames = nFrames > 15 ? 15 : nFrames < 5 ? 5 : nFrames
         const dx = DX/this.nAnimationFrames
         const dy = DY/this.nAnimationFrames
         const dz = DZ/this.nAnimationFrames
