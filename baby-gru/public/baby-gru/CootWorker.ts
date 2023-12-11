@@ -301,9 +301,6 @@ const SuperposeResultsToJSArray = (superposeResults: libcootApi.SuperposeResults
                 label: movResidueData.label,
             }
         }
-        
-        movResidueSpec.delete()
-        refResidueSpec.delete()
 
         alignedPairsData.push(currentPairData)
     }
@@ -448,7 +445,6 @@ const mmrrccStatsToJSArray = (mmrrccStats: libcootApi.PairType<emscriptem.map<li
                 n: densityCorrStat.n,
                 correlation: densityCorrStat.correlation()
             })
-            residueSpec.delete()
             densityCorrStat.delete()
         }
         residueSpecs.delete()
@@ -484,7 +480,6 @@ const atomSpecToJSArray = (atomSpecs: emscriptem.vector<libcootApi.AtomSpecT>): 
             string_user_data: atom.string_user_data,
             model_number: atom.model_number
         })
-        atom.delete()
     }
     atomSpecs.delete()
     return returnResult
@@ -501,7 +496,6 @@ const residueSpecToJSArray = (residueSpecs: emscriptem.vector<libcootApi.Residue
             modelNumber: residue.model_number,
             chainId: residue.chain_id
         })
-        residue.delete()
     }
     residueSpecs.delete()
     return returnResult
@@ -528,7 +522,6 @@ const validationDataToJSArray = (validationData: libcootApi.ValidationInformatio
                     restype: "UNK",
                     value: residue.function_value
                 })
-                residueSpec.delete()
             }
             resInfo.delete()
         }
@@ -626,7 +619,6 @@ const interestingPlaceDataToJSArray = (interestingPlaceData: emscriptem.vector<l
             coordY: residue.y,
             coordZ: residue.z
         })
-        residueSpec.delete()
     }
     interestingPlaceData.delete()
     return returnResult

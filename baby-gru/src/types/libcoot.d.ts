@@ -280,7 +280,7 @@ export namespace libcootApi {
         suggested_contour_level: number;
         suggested_radius: number;
     }
-    interface ResidueSpecT extends emscriptem.instance<ResidueSpecT> {
+    interface ResidueSpecT {
         model_number: number;
         chain_id: string;
         res_no: number;
@@ -292,7 +292,7 @@ export namespace libcootApi {
         modelNumber: number;
         chainId: string;
     }
-    interface AtomSpecT extends emscriptem.instance<ResidueSpecT> {
+    interface AtomSpecT {
         chain_id: string;
         res_no: number;
         ins_code: string;
