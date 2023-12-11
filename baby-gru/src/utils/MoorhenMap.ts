@@ -118,11 +118,7 @@ export class MoorhenMap implements moorhen.Map {
         if (this.suggestedMapWeight === null) {
             await this.estimateMapWeight()
         }
-        await this.commandCentre.current.cootCommand({
-            returnType: "status",
-            command: "set_map_weight",
-            commandArgs: [this.suggestedMapWeight]
-        }, false)
+        await this.setMapWeight()
     }
 
     /**
@@ -355,14 +351,15 @@ export class MoorhenMap implements moorhen.Map {
 
     /**
      * Get the current map weight
-     * @returns {Promise<moorhen.WorkerResponse<number>>} The current map weight
+     * @returns {Promise<number>} The current map weight
      */
-    getMapWeight() {
-        return this.commandCentre.current.cootCommand({
+    async getMapWeight(): Promise<number> {
+        const result = await this.commandCentre.current.cootCommand({
             returnType: 'status',
             command: "get_map_weight",
-            commandArgs: [this.molNo]
-        }, false) as Promise<moorhen.WorkerResponse<number>>
+            commandArgs: []
+        }, false) as moorhen.WorkerResponse<number>
+        return result.data.result.result
     }
 
     /**
