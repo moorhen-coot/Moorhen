@@ -95,7 +95,7 @@ describe("Testing MoorhenMap", () => {
             current: new MockMoorhenCommandCentre(molecules_container, cootModule)
         }
         const map_1 = new MoorhenMap(commandCentre, glRef)
-        await map_1.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false, calcStructFact: false })
+        await map_1.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         expect(map_1.molNo).toBe(0)
         molecules_container.writeCCP4Map(map_1.molNo, 'test-file-name.map')
         const mapData = cootModule.FS.readFile('test-file-name.map', { encoding: 'binary' });
