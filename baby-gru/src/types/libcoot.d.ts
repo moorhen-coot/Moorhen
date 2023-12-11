@@ -314,12 +314,12 @@ export namespace libcootApi {
         string_user_data: string;
         model_number: number;
     }
-    interface ResidueValidationInformationT extends emscriptem.instance<ResidueValidationInformationT> {
+    interface ResidueValidationInformationT {
         label: string;
         residue_spec: ResidueSpecT;
         function_value: number;
     }
-    interface ChainValidationInformationT extends emscriptem.instance<ChainValidationInformationT> {
+    interface ChainValidationInformationT {
         chain_id: string;
         rviv: emscriptem.vector<ResidueValidationInformationT>;
     }

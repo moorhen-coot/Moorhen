@@ -302,9 +302,7 @@ const SuperposeResultsToJSArray = (superposeResults: libcootApi.SuperposeResults
             }
         }
         
-        movResidueData.delete()
         movResidueSpec.delete()
-        refResidueData.delete()
         refResidueSpec.delete()
 
         alignedPairsData.push(currentPairData)
@@ -531,12 +529,10 @@ const validationDataToJSArray = (validationData: libcootApi.ValidationInformatio
                     restype: "UNK",
                     value: residue.function_value
                 })
-                residue.delete()
                 residueSpec.delete()
             }
             resInfo.delete()
         }
-        chain.delete()
     }
     cviv.delete()
     validationData.delete()
