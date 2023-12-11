@@ -262,7 +262,6 @@ const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean 
         else
             totNorm.push(...vertNormal);
         totCol.push(...vertColor);
-        vert.delete()
     }
     vertices.delete()
 
@@ -574,7 +573,6 @@ const linesBoxToJSArray = (BoxData: libcootApi.Generic3dLinesBondsBoxT): libcoot
         envdata.push(thisEnvdata)
     }
     segments.delete()
-    BoxData.delete()
 
     return envdata
 }

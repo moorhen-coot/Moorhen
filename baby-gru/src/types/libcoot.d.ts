@@ -213,7 +213,7 @@ export namespace libcootApi {
         amplitude: () => number;
         size: number;
     }
-    interface Generic3dLinesBondsBoxT extends emscriptem.instance<Generic3dLinesBondsBoxT> {
+    interface Generic3dLinesBondsBoxT {
         line_segments: emscriptem.vector<emscriptem.vector<CootCartesianPair>>;
     }
     type Generic3dLinesBondsBoxJS = {
@@ -355,10 +355,10 @@ export namespace libcootApi {
         colour: [number, number, number, number];
         orientation: [[number, number, number, number], [number, number, number, number], [number, number, number, number], [number, number, number, number]];
     }
-    interface gTriangle extends emscriptem.instance<gTriangle> {
+    interface gTriangle {
         point_id: [number, number, number];
     }
-    interface VncVertex extends emscriptem.instance<VncVertex> {
+    interface VncVertex {
         pos: [number, number, number];
         normal: [number, number, number];
         color: [number, number, number, number];

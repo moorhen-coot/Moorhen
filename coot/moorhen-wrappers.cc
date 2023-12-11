@@ -893,8 +893,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("replace_molecule_by_model_from_string", &molecules_container_js::replace_molecule_by_model_from_string)
     .function("read_dictionary_string", &molecules_container_js::read_dictionary_string)
     ;
-    class_<generic_3d_lines_bonds_box_t>("generic_3d_lines_bonds_box_t")
-    .property("line_segments", &generic_3d_lines_bonds_box_t::line_segments)
+    value_object<generic_3d_lines_bonds_box_t>("generic_3d_lines_bonds_box_t")
+    .field("line_segments", &generic_3d_lines_bonds_box_t::line_segments)
     ;
     class_<coot::CartesianPair>("CartesianPair")
     .function("getStart", &coot::CartesianPair::getStart)
