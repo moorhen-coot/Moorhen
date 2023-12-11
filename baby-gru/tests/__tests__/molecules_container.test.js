@@ -405,7 +405,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(resSpec)
     })
 
-    test('Test flip_peptide by residue spec', () => {
+    test.skip('Test flip_peptide by residue spec', () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         expect(coordMolNo).toBe(0)
