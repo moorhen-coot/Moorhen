@@ -82,7 +82,6 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
             thisNorm.push(vertNormal[0])
             thisNorm.push(vertNormal[1])
             thisNorm.push(vertNormal[2])
-            vert.delete()
         }
         vertices.delete()
 
@@ -266,8 +265,6 @@ const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean 
         vert.delete()
     }
     vertices.delete()
-
-    simpleMesh.delete()
 
     return {
         prim_types: [["TRIANGLES"]],
@@ -734,11 +731,8 @@ const simpleMeshToLineMeshData = (simpleMesh: libcootApi.SimpleMeshT, normalLigh
         totPos.push(...vert.pos);
         totNorm.push(...vert.normal);
         totCol.push(...vert.color);
-        vert.delete()
     }
     vertices.delete()
-
-    simpleMesh.delete()
 
     if (normalLighting)
         return { prim_types: [["NORMALLINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], additional_norm_tri: [[totNorm]], norm_tri: [[totNorm]], col_tri: [[totCol]] };

@@ -978,16 +978,14 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("ins_code",&coot::residue_spec_t::ins_code)
     .property("int_user_data",&coot::residue_spec_t::int_user_data)
     ;
-    class_<coot::api::vnc_vertex>("vnc_vertex")
-    .constructor<const glm::vec3 &, const glm::vec3 &, const glm::vec4 &>()
-    .property("pos",&coot::api::vnc_vertex::pos)
-    .property("normal",&coot::api::vnc_vertex::normal)
-    .property("color",&coot::api::vnc_vertex::color)
+    value_object<coot::api::vnc_vertex>("vnc_vertex")
+    .field("pos",&coot::api::vnc_vertex::pos)
+    .field("normal",&coot::api::vnc_vertex::normal)
+    .field("color",&coot::api::vnc_vertex::color)
     ;
-    class_<coot::api::vn_vertex>("vn_vertex")
-    .constructor<const glm::vec3 &, const glm::vec3 &>()
-    .property("pos",&coot::api::vn_vertex::pos)
-    .property("normal",&coot::api::vn_vertex::normal)
+    value_object<coot::api::vn_vertex>("vn_vertex")
+    .field("pos",&coot::api::vn_vertex::pos)
+    .field("normal",&coot::api::vn_vertex::normal)
     ;
     value_object<coot::molecule_t::rotamer_change_info_t>("rotamer_change_info_t")
     .field("rank", &coot::molecule_t::rotamer_change_info_t::rank)
@@ -1012,11 +1010,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("y",&symm_trans_t::y)
     .function("z",&symm_trans_t::z)
     ;
-    class_<coot::simple_mesh_t>("simple_mesh_t")
-    .property("vertices",&coot::simple_mesh_t::vertices)
-    .property("triangles",&coot::simple_mesh_t::triangles)
-    .property("status",&coot::simple_mesh_t::status)
-    .property("name",&coot::simple_mesh_t::name)
+    value_object<coot::simple_mesh_t>("simple_mesh_t")
+    .field("vertices",&coot::simple_mesh_t::vertices)
+    .field("triangles",&coot::simple_mesh_t::triangles)
+    .field("status",&coot::simple_mesh_t::status)
+    .field("name",&coot::simple_mesh_t::name)
     ;
 
     class_<coot::util::density_correlation_stats_info_t>("density_correlation_stats_info_t")
@@ -1032,11 +1030,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
 
     value_object<superpose_results_t>("superpose_results_t")
-       .field("superpose_info",     &superpose_results_t::superpose_info) // a json file (string)
-       .field("alignment",          &superpose_results_t::alignment)
-       .field("alignment_info_vec", &superpose_results_t::alignment_info_vec)
-       .field("aligned_pairs",      &superpose_results_t::aligned_pairs)
-       ;
+    .field("superpose_info",     &superpose_results_t::superpose_info) // a json file (string)
+    .field("alignment",          &superpose_results_t::alignment)
+    .field("alignment_info_vec", &superpose_results_t::alignment_info_vec)
+    .field("aligned_pairs",      &superpose_results_t::aligned_pairs)
+    ;
 
     value_array<std::array<float, 16>>("array_native_float_16")
         .element(emscripten::index<0>())
