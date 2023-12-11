@@ -240,7 +240,7 @@ export namespace libcootApi {
         norm_tri: [[number[]]];
         col_tri: [[number[]]];
     }
-    interface SymmetryData extends emscriptem.instance<SymmetryData> {
+    interface SymmetryData {
         cell: CellTranslation;
         symm_trans: emscriptem.vector<PairType<SymmetryTransT, CellTranslation>>;
     }

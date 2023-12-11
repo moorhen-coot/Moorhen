@@ -698,9 +698,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("beta", &coot::Cell::beta)
     .property("gamma", &coot::Cell::gamma)
     ;
-    class_<coot::symmetry_info_t>("symmetry_info_t")
-    .property("cell",&coot::symmetry_info_t::cell)
-    .property("symm_trans",&coot::symmetry_info_t::symm_trans)
+    value_object<coot::symmetry_info_t>("symmetry_info_t")
+    .field("cell",&coot::symmetry_info_t::cell)
+    .field("symm_trans",&coot::symmetry_info_t::symm_trans)
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()

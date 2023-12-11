@@ -429,7 +429,6 @@ const symmetryToJSData = (symmetryDataPair: libcootApi.PairType<libcootApi.Symme
     cell.delete()
     symm_trans.delete()
     symmetryMatrices.delete()
-    symmetryData.delete()
     return result
 }
 
