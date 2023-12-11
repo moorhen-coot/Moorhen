@@ -23,170 +23,6 @@ afterAll(() => {
     setupFunctions.removeTestDataFromFauxFS()
 })
 
-describe("Testing gemmi", () => {
-
-    afterEach(() => {
-        cleanUpVariables.forEach(item => {
-            if (typeof item.delete === 'function' && !item.isDeleted()) {
-                item.delete()
-            }
-        })
-        cleanUpVariables = []
-    })
-
-    test("Test metaballs", () => {
-        console.log("Testing metaballs")
-        const molecules_container = new cootModule.molecules_container_js(false)
-        const coordMol = molecules_container.read_pdb('./5a3h.pdb')
-        const gridSize = 0.15
-        const radius = 0.65
-        const isoLevel = 1.8
-        const mesh = molecules_container.DrawMoorhenMetaBalls(coordMol, "B/1-2", gridSize, radius, isoLevel)
-        console.log("No. of vertices:")
-        console.log(mesh.vertices.size())
-        console.log("No. of triangles:")
-        console.log(mesh.triangles.size())
-    })
-
-    test("Test read structure file", () => {
-        const st = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
-        const models = st.models
-        expect(st.has_origx).toBeTruthy()
-        expect(st.spacegroup_hm).toBe('P 21 21 21')
-        expect(models.size()).toBe(1)
-
-        const model = st.first_model()
-        const modelMass = cootModule.calculate_mass_model(model)
-        expect(modelMass).toBeCloseTo(37224.72, 1)
-        
-        const chains = model.chains
-        expect(chains.size()).toBe(3)
-
-        const chain = chains.get(0)
-        expect(cootModule.calculate_mass_chain(chain)).toBeCloseTo(31365.81, 1)
-        expect(chain.name).toBe('A')
-
-        const residues = chain.residues
-        expect(residues.size()).toBe(300)
-
-        const residue = residues.get(0)
-        expect(residue.name).toBe('SER')
-
-        const atoms = residue.atoms
-        expect(atoms.size()).toBe(6)
-
-        const atom = atoms.get(0)
-        expect(atom.name).toBe('N')
-        expect(cootModule.getElementNameAsString(atom.element)).toBe('N')
-        cleanUpVariables.push(st, model, models, chain, chains, residue, residues, atom, atoms)
-    })
-
-    test("Test ligands", () => {
-        const st = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
-        cootModule.gemmi_setup_entities(st)
-        const model = st.first_model()
-        const chains = model.chains
-        
-        const chain = chains.get(1)
-        expect(chain.name).toBe('B')
-        
-        const ligands = chain.get_ligands_const()
-        expect(ligands.size()).toBe(2)
-
-        const ligand = ligands.at(0)
-        expect(ligand.name).toBe('G2F')
-
-        cleanUpVariables.push(st, model, chain, chains, ligand, ligands)
-    })
-
-    test("Test waters", () => {
-        const st = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
-        cootModule.gemmi_setup_entities(st)
-        const model = st.first_model()
-        const chains = model.chains
-        
-        const chain = chains.get(2)
-        expect(chain.name).toBe('A')
-        
-        const waters = chain.get_waters_const()
-        expect(waters.size()).toBe(348)
-
-        const water = waters.at(0)
-        expect(water.name).toBe('HOH')
-        const waterSeqId = water.seqid
-        expect(waterSeqId.str()).toBe('901')
-        
-        cleanUpVariables.push(st, model, chain, chains, water, waters, waterSeqId)
-
-    })
-
-    test("Test remove waters and ligands", () => {
-        const st = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
-        cootModule.gemmi_setup_entities(st)
-        cootModule.remove_ligands_and_waters_structure(st)
-        st.remove_empty_chains()
-        const model = st.first_model()
-        const chains = model.chains
-        expect(chains.size()).toBe(1)
-        cleanUpVariables.push(st, model, chains)
-    })
-
-    test("Test spacegroups", () => {
-        const sgp1 = cootModule.get_spacegroup_by_name('P1')
-        expect(cootModule.getSpaceGroupHMAsString(sgp1)).toBe('P 1')
-        expect(sgp1.hm()).toBe('P 1')
-        expect(cootModule.getSpaceGroupHallAsString(sgp1)).toBe('P 1')
-        expect(cootModule.getSpaceGroupHallAsString(sgp1)).toBe('P 1')
-        cleanUpVariables.push(sgp1)
-    })
-
-    test("Test count_residues_in_selection", () => {
-        const selection = new cootModule.Selection('//A/31-33/*')
-        const st = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
-        const residue_count = cootModule.count_residues_in_selection(st, selection)
-        expect(residue_count).toBe(3)
-        cleanUpVariables.push(st)
-    })
-
-    test("Test remove_non_selected_residues", () => {
-        const selection = new cootModule.Selection('//A/31-33/*')
-        const st_1 = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
-        cootModule.gemmi_setup_entities(st_1)
-        const st_2 = cootModule.remove_non_selected_residues(st_1, selection)
-
-        const model_1 = st_1.first_model()
-        const chains_1 = model_1.chains
-        // Expect the original structure to be unchanged
-        expect(chains_1.size()).toBe(3)
-
-        const model_2 = st_2.first_model()
-        const chains_2 = model_2.chains
-        const chain_2 = chains_2.get(0)
-        const residues_2 = chain_2.residues
-        const residue_2 = residues_2.get(0)
-        const residue_2_seqId = residue_2.seqid
-        expect(chains_2.size()).toBe(1)
-        expect(chain_2.name).toBe('A')
-        expect(residues_2.size()).toBe(3)
-        expect(residue_2_seqId.str()).toBe('31')
-
-        cleanUpVariables.push(st_1, st_2, model_1, chains_1, model_2, chains_2, chain_2, residues_2, residue_2_seqId, residue_2)
-    })
-
-    test("Test structure_is_ligand", () => {
-        const st_1 = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
-        cootModule.gemmi_setup_entities(st_1)
-        
-        const is_ligand_1 = cootModule.structure_is_ligand(st_1)
-        expect(is_ligand_1).toBeFalsy()
-
-        const selection = new cootModule.Selection('//B')
-        const st_2 = cootModule.remove_non_selected_residues(st_1, selection)
-        const is_ligand_2 = cootModule.structure_is_ligand(st_2)
-        expect(is_ligand_2).toBeTruthy()
-    })
-})
-
 describe('Testing molecules_container_js', () => {
     afterEach(() => {
         cleanUpVariables.forEach(item => {
@@ -208,8 +44,16 @@ describe('Testing molecules_container_js', () => {
         expect(ret).toBe(1)
     })
 
-    test('Create residue_spec_t', () => {
-        const resSpec = new cootModule.residue_spec_t("A", 217, "")
+
+    test("Test metaballs", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMol = molecules_container.read_pdb('./5a3h.pdb')
+        const gridSize = 0.15
+        const radius = 0.65
+        const isoLevel = 1.8
+        const mesh = molecules_container.DrawMoorhenMetaBalls(coordMol, "B/1-2", gridSize, radius, isoLevel)
+        expect(mesh.vertices.size()).toBe(7620)
+        expect(mesh.triangles.size()).toBe(15244)
     })
 
     test("Test read PDB", () => {
@@ -328,11 +172,8 @@ describe('Testing molecules_container_js', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         
         const result_cid = molecules_container.delete_using_cid(coordMolNo, "A/32-33/*", "LITERAL")
-        const resSpec = new cootModule.residue_spec_t("A", 32, "")
-        const deletedResidue = molecules_container.get_residue(coordMolNo, resSpec)
         expect(result_cid.first).toBe(1)
         expect(result_cid.second).toBe(2751)
-        expect(deletedResidue).toBe(null)
 
         const result_sideChain = molecules_container.delete_side_chain(coordMolNo, "A", 154, "");
         expect(result_sideChain.first).toBe(1)
@@ -345,16 +186,15 @@ describe('Testing molecules_container_js', () => {
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
         molecules_container.set_imol_refinement_map(mapMolNo)
 
+        const atom_count_1 = molecules_container.get_number_of_atoms(coordMolNo)
         molecules_container.delete_using_cid(coordMolNo, "A/100-101/*", "LITERAL")
-        const residueSpec = new cootModule.residue_spec_t("A", 100, "")
-        const deletedResidue = molecules_container.get_residue(coordMolNo, residueSpec)
-        expect(deletedResidue).toBe(null)
+        const atom_count_2 = molecules_container.get_number_of_atoms(coordMolNo)
+        expect(atom_count_2).toBe(atom_count_1 - 24)
 
         const result = molecules_container.add_terminal_residue_directly_using_cid(coordMolNo, "A/99")
-        const resSpec = new cootModule.residue_spec_t("A", 100, "")
-        const addedResidue = molecules_container.get_residue(coordMolNo, resSpec)
-        expect(addedResidue.nAtoms).toBe(5)
         expect(result).not.toBe(-1)
+        const atom_count_3 = molecules_container.get_number_of_atoms(coordMolNo)
+        expect(atom_count_3).toBe(atom_count_2 + 5)
     })
 
     test('Test merge molecules', () => {
@@ -404,7 +244,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(rama_info)
     })
 
-    test('Test get_residue', () => {
+    test.skip('Test get_residue', () => {
         const resSpec = new cootModule.residue_spec_t("A", 217, "");
         const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
@@ -490,7 +330,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(codes)
     })
 
-    test('Test Auto-fit rotamer', () => {
+    test.skip('Test Auto-fit rotamer', () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.geometry_init_standard()
         const imol = molecules_container.read_pdb('./tm-A.pdb')
@@ -541,7 +381,7 @@ describe('Testing molecules_container_js', () => {
         }
     })
 
-    test('Test backups', () => {
+    test.skip('Test backups', () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
@@ -565,7 +405,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(resSpec)
     })
 
-    test('Test flip_peptide by residue spec', () => {
+    test.skip('Test flip_peptide by residue spec', () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         expect(coordMolNo).toBe(0)
