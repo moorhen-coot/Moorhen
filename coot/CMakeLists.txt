@@ -8,7 +8,7 @@ set(CMAKE_EXECUTABLE_SUFFIX ".js")
 set(coot_src ${CMAKE_CURRENT_SOURCE_DIR}/../checkout/coot-1.0)
 
 # XDATADIR should be "${install_top_dir}/share/data"
-add_definitions(-DUSE_GEMMI -DCLIPPER_HAS_TOP8000 -DMAKE_ENHANCED_LIGAND_TOOLS -DANALYSE_REFINEMENT_TIMING -DVERSION="1.0" -DPACKAGE_VERSION="1.0" -DHAVE_CXX_THREAD -DHAVE_BOOST -DHAVE_GSL -DPKGDATADIR="${coot_src}/pixmaps" -DDATADIR="${coot_src}/data" -DXDATADIR="${coot_src}/share/data")
+add_definitions(-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -DUSE_GEMMI -DCLIPPER_HAS_TOP8000 -DMAKE_ENHANCED_LIGAND_TOOLS -DANALYSE_REFINEMENT_TIMING -DVERSION="1.0" -DPACKAGE_VERSION="1.0" -DHAVE_CXX_THREAD -DHAVE_BOOST -DHAVE_GSL -DPKGDATADIR="${coot_src}/pixmaps" -DDATADIR="${coot_src}/data" -DXDATADIR="${coot_src}/share/data")
 
 set(coot_rotamer_data
 ${coot_src}/rama-data/rota500-pro.data
@@ -432,9 +432,9 @@ ${coot_src}/ideal/write-png.cc
 
 target_include_directories(coot PRIVATE ${coot_src} ${coot_src}/coords ${coot_src}/utils ${coot_src}/src ../include ../checkout/ssm ../checkout/mmdb2 ../checkout/clipper ../checkout/fftw-2.1.5/fftw ../checkout/fftw-2.1.5/rfftw ../checkout/libccp4/ccp4 ../boost  ../checkout/gemmi/include )
 
-set_target_properties(coot PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-deprecated-builtins -pthread -DHAVE_CXX11=1 -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1" LINK_FLAGS "-fexceptions -pthread -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1 -sDEMANGLE_SUPPORT=1 -sASSERTIONS=2")
+set_target_properties(coot PROPERTIES COMPILE_FLAGS "-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -Wno-deprecated-declarations -Wno-deprecated-builtins -pthread -DHAVE_CXX11=1 -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1" LINK_FLAGS "-fexceptions -pthread -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1 -sDEMANGLE_SUPPORT=1 -sASSERTIONS=2")
 
-set_source_files_properties(${coot_exception_srcs} PROPERTIES COMPILE_FLAGS "-fexceptions -pthread -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1" )
+set_source_files_properties(${coot_exception_srcs} PROPERTIES COMPILE_FLAGS "-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -fexceptions -pthread -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1" )
 
 FILE(WRITE ${CMAKE_BINARY_DIR}/coot/coot_env.js
 Module.preRun = [function() {ENV.COOT_DATA_DIR="${coot_src}"}, function() {ENV.COOT_REFMAC_LIB_DIR="${CMAKE_BINARY_DIR}/ccp4_lib"}, function() {ENV.CCP4_LIB="${CMAKE_BINARY_DIR}/ccp4_lib"}]
