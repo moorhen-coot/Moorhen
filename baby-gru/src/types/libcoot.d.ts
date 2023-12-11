@@ -98,7 +98,7 @@ export namespace libcootApi {
         is_allowed_flag: boolean;
         residue_name: () => string;
     }
-    interface InterestingPlaceT extends emscriptem.instance<InterestingPlaceT> {
+    interface InterestingPlaceT {
         feature_type: string;
         residue_spec: ResidueSpecT;
         x: number;

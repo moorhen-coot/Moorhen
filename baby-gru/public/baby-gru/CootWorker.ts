@@ -627,7 +627,6 @@ const interestingPlaceDataToJSArray = (interestingPlaceData: emscriptem.vector<l
             coordY: residue.y,
             coordZ: residue.z
         })
-        residue.delete()
         residueSpec.delete()
     }
     interestingPlaceData.delete()
