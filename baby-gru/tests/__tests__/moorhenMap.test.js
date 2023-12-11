@@ -1,5 +1,4 @@
 import { MoorhenMap } from "../../tsDist/src/utils/MoorhenMap"
-import { readDataFile } from "../../tsDist/src/utils/MoorhenUtils";
 import { MockMoorhenCommandCentre } from "../helpers/mockMoorhenCommandCentre"
 import { MockWebGL } from "../helpers/mockWebGL"
 import fetch from 'node-fetch';
@@ -84,6 +83,29 @@ describe("Testing MoorhenMap", () => {
         expect(map.isDifference).toBeTruthy()
         const isValid = molecules_container.is_valid_map_molecule(map.molNo)
         expect(isValid).toBeTruthy()
+    })
+
+    test("Test loadToCootFromMapData", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+        const map_1 = new MoorhenMap(commandCentre, glRef)
+        await map_1.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false, calcStructFact: false })
+        expect(map_1.molNo).toBe(0)
+        molecules_container.writeCCP4Map(map_1.molNo, 'test-file-name.map')
+        const mapData = cootModule.FS.readFile('test-file-name.map', { encoding: 'binary' });
+
+        const map_2 = new MoorhenMap(commandCentre, glRef)
+        await map_2.loadToCootFromMapData(mapData, 'map-test')
+        expect(map_2.molNo).toBe(1)
+        const isValid = molecules_container.is_valid_map_molecule(map_2.molNo)
+        expect(isValid).toBeTruthy()
+        expect(map_2.isEM).toBeFalsy()
     })
 
     test("Test delete", async () => {
