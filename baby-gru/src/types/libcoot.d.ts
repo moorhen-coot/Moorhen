@@ -227,7 +227,7 @@ export namespace libcootApi {
         status: string;
         richardson_probability: number;
     }
-    interface SimpleMeshT extends emscriptem.instance<SimpleMeshT> {
+    interface SimpleMeshT {
         vertices: emscriptem.vector<VncVertex>;
         triangles: emscriptem.vector<gTriangle>;
     }
