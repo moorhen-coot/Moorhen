@@ -163,6 +163,7 @@ describe("Testing MoorhenMap", () => {
         expect(f_5).toHaveBeenCalledTimes(1)
         expect(f_6).toHaveBeenCalledTimes(1)
                 
+        expect(map.isEM).toBeFalsy()
         expect(map.mapRmsd).toBeCloseTo(0.35, 1)
         expect(map.mapCentre[0]).toBeCloseTo(1.09, 1)
         expect(map.mapCentre[1]).toBeCloseTo(-0.17, 1)
