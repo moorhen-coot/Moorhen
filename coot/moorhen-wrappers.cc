@@ -574,6 +574,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("type", &coot::validation_information_t::type)
     .property("cviv", &coot::validation_information_t::cviv)
     .function("get_index_for_chain",&coot::validation_information_t::get_index_for_chain)
+    .function("empty",&coot::validation_information_t::empty)
     ;
     class_<mmdb::Atom>("Atom")
     .constructor<>()
@@ -664,13 +665,12 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("z", &coot::molecule_t::moved_atom_t::z)
     .property("index", &coot::molecule_t::moved_atom_t::index)
     ;
-    class_<molecules_container_t::auto_read_mtz_info_t>("auto_read_mtz_info_t")
-    .constructor<const int &, const std::string &, const std::string &>()
-    .property("idx", &molecules_container_t::auto_read_mtz_info_t::idx)
-    .property("F", &molecules_container_t::auto_read_mtz_info_t::F)
-    .property("phi", &molecules_container_t::auto_read_mtz_info_t::phi)
-    .property("w", &molecules_container_t::auto_read_mtz_info_t::w)
-    .property("weights_used", &molecules_container_t::auto_read_mtz_info_t::weights_used)
+    value_object<molecules_container_t::auto_read_mtz_info_t>("auto_read_mtz_info_t")
+    .field("idx", &molecules_container_t::auto_read_mtz_info_t::idx)
+    .field("F", &molecules_container_t::auto_read_mtz_info_t::F)
+    .field("phi", &molecules_container_t::auto_read_mtz_info_t::phi)
+    .field("w", &molecules_container_t::auto_read_mtz_info_t::w)
+    .field("weights_used", &molecules_container_t::auto_read_mtz_info_t::weights_used)
     ;
     class_<coot::molecule_t::interesting_place_t>("interesting_place_t")
     .constructor<const std::string &, const coot::residue_spec_t &, const clipper::Coord_orth &, const std::string &>()

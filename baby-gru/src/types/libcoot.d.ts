@@ -76,7 +76,7 @@ export namespace libcootApi {
         res_name: string;
         label: string;
     }
-    interface AutoReadMtzInfo extends emscriptem.instance<AutoReadMtzInfo> {
+    interface AutoReadMtzInfo {
         idx: number;
         F: string;
         phi: string;

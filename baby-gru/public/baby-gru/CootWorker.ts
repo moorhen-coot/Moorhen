@@ -669,7 +669,6 @@ const autoReadMtzInfoVectToJSArray = (autoReadMtzInfoArray: emscriptem.vector<li
             sigF_obs: autoReadMtzInfo.sigF_obs,
             weights_used: autoReadMtzInfo.weights_used,
         })
-        autoReadMtzInfo.delete()
     }
     autoReadMtzInfoArray.delete()
     
