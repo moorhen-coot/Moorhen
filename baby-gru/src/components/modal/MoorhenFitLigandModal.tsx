@@ -124,7 +124,7 @@ export const MoorheFitLigandModal = (props: { show: boolean; setShow: React.Disp
                 type="switch"
                 checked={fitAnywhere}
                 onChange={() => { 
-                    fitAnywhereRef.current = !useConformers
+                    fitAnywhereRef.current = !fitAnywhere
                     setFitAnywhere(!fitAnywhere)
                 }}
                 label="Search everywhere"/>
