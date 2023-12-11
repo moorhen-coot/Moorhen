@@ -363,14 +363,14 @@ export namespace libcootApi {
         normal: [number, number, number];
         color: [number, number, number, number];
     }
-    interface InstancedGeomT extends emscriptem.instance<InstancedGeomT> {
+    interface InstancedGeomT {
         vertices: emscriptem.vector<VncVertex>;
         triangles: emscriptem.vector<gTriangle>;
         name: string;
         instancing_data_A: emscriptem.vector<InstancedDataType>;
         instancing_data_B: emscriptem.vector<InstancedDataType>;
     }
-    interface InstancedMeshT extends emscriptem.instance<InstancedMeshT> {
+    interface InstancedMeshT {
         geom: emscriptem.vector<InstancedGeomT>;
         markup: SimpleMeshT;
     }

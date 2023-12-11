@@ -169,7 +169,6 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
             }
         }
         Bs.delete()
-        inst.delete()
 
         totNorm.push(thisNorm)
         totPos.push(thisPos)
@@ -188,7 +187,6 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
 
     geom.delete()
     const simpleMeshData = simpleMeshToMeshData(markup) // simpleMeshToMeshData should do the "delete"
-    instanceMesh.delete()
 
     if (simpleMeshData.idx_tri.length > 0 && simpleMeshData.idx_tri[0].length > 0 && simpleMeshData.idx_tri[0][0].length > 0) {
         if (toSpheres) {
