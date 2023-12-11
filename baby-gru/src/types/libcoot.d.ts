@@ -76,7 +76,7 @@ export namespace libcootApi {
         res_name: string;
         label: string;
     }
-    interface AutoReadMtzInfo extends emscriptem.instance<AutoReadMtzInfo> {
+    interface AutoReadMtzInfo {
         idx: number;
         F: string;
         phi: string;
@@ -98,7 +98,7 @@ export namespace libcootApi {
         is_allowed_flag: boolean;
         residue_name: () => string;
     }
-    interface InterestingPlaceT extends emscriptem.instance<InterestingPlaceT> {
+    interface InterestingPlaceT {
         feature_type: string;
         residue_spec: ResidueSpecT;
         x: number;
@@ -213,7 +213,7 @@ export namespace libcootApi {
         amplitude: () => number;
         size: number;
     }
-    interface Generic3dLinesBondsBoxT extends emscriptem.instance<Generic3dLinesBondsBoxT> {
+    interface Generic3dLinesBondsBoxT {
         line_segments: emscriptem.vector<emscriptem.vector<CootCartesianPair>>;
     }
     type Generic3dLinesBondsBoxJS = {
@@ -227,7 +227,7 @@ export namespace libcootApi {
         status: string;
         richardson_probability: number;
     }
-    interface SimpleMeshT extends emscriptem.instance<SimpleMeshT> {
+    interface SimpleMeshT {
         vertices: emscriptem.vector<VncVertex>;
         triangles: emscriptem.vector<gTriangle>;
     }
@@ -240,7 +240,7 @@ export namespace libcootApi {
         norm_tri: [[number[]]];
         col_tri: [[number[]]];
     }
-    interface SymmetryData extends emscriptem.instance<SymmetryData> {
+    interface SymmetryData {
         cell: CellTranslation;
         symm_trans: emscriptem.vector<PairType<SymmetryTransT, CellTranslation>>;
     }
@@ -280,7 +280,7 @@ export namespace libcootApi {
         suggested_contour_level: number;
         suggested_radius: number;
     }
-    interface ResidueSpecT extends emscriptem.instance<ResidueSpecT> {
+    interface ResidueSpecT {
         model_number: number;
         chain_id: string;
         res_no: number;
@@ -292,7 +292,7 @@ export namespace libcootApi {
         modelNumber: number;
         chainId: string;
     }
-    interface AtomSpecT extends emscriptem.instance<ResidueSpecT> {
+    interface AtomSpecT {
         chain_id: string;
         res_no: number;
         ins_code: string;
@@ -314,12 +314,12 @@ export namespace libcootApi {
         string_user_data: string;
         model_number: number;
     }
-    interface ResidueValidationInformationT extends emscriptem.instance<ResidueValidationInformationT> {
+    interface ResidueValidationInformationT {
         label: string;
         residue_spec: ResidueSpecT;
         function_value: number;
     }
-    interface ChainValidationInformationT extends emscriptem.instance<ChainValidationInformationT> {
+    interface ChainValidationInformationT {
         chain_id: string;
         rviv: emscriptem.vector<ResidueValidationInformationT>;
     }
@@ -355,22 +355,22 @@ export namespace libcootApi {
         colour: [number, number, number, number];
         orientation: [[number, number, number, number], [number, number, number, number], [number, number, number, number], [number, number, number, number]];
     }
-    interface gTriangle extends emscriptem.instance<gTriangle> {
+    interface gTriangle {
         point_id: [number, number, number];
     }
-    interface VncVertex extends emscriptem.instance<VncVertex> {
+    interface VncVertex {
         pos: [number, number, number];
         normal: [number, number, number];
         color: [number, number, number, number];
     }
-    interface InstancedGeomT extends emscriptem.instance<InstancedGeomT> {
+    interface InstancedGeomT {
         vertices: emscriptem.vector<VncVertex>;
         triangles: emscriptem.vector<gTriangle>;
         name: string;
         instancing_data_A: emscriptem.vector<InstancedDataType>;
         instancing_data_B: emscriptem.vector<InstancedDataType>;
     }
-    interface InstancedMeshT extends emscriptem.instance<InstancedMeshT> {
+    interface InstancedMeshT {
         geom: emscriptem.vector<InstancedGeomT>;
         markup: SimpleMeshT;
     }

@@ -82,7 +82,6 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
             thisNorm.push(vertNormal[0])
             thisNorm.push(vertNormal[1])
             thisNorm.push(vertNormal[2])
-            vert.delete()
         }
         vertices.delete()
 
@@ -170,7 +169,6 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
             }
         }
         Bs.delete()
-        inst.delete()
 
         totNorm.push(thisNorm)
         totPos.push(thisPos)
@@ -188,8 +186,7 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
     }
 
     geom.delete()
-    const simpleMeshData = simpleMeshToMeshData(markup) // simpleMeshToMeshData should do the "delete"
-    instanceMesh.delete()
+    const simpleMeshData = simpleMeshToMeshData(markup) 
 
     if (simpleMeshData.idx_tri.length > 0 && simpleMeshData.idx_tri[0].length > 0 && simpleMeshData.idx_tri[0][0].length > 0) {
         if (toSpheres) {
@@ -263,11 +260,8 @@ const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean 
         else
             totNorm.push(...vertNormal);
         totCol.push(...vertColor);
-        vert.delete()
     }
     vertices.delete()
-
-    simpleMesh.delete()
 
     return {
         prim_types: [["TRIANGLES"]],
@@ -307,11 +301,6 @@ const SuperposeResultsToJSArray = (superposeResults: libcootApi.SuperposeResults
                 label: movResidueData.label,
             }
         }
-        
-        movResidueData.delete()
-        movResidueSpec.delete()
-        refResidueData.delete()
-        refResidueSpec.delete()
 
         alignedPairsData.push(currentPairData)
     }
@@ -437,7 +426,6 @@ const symmetryToJSData = (symmetryDataPair: libcootApi.PairType<libcootApi.Symme
     cell.delete()
     symm_trans.delete()
     symmetryMatrices.delete()
-    symmetryData.delete()
     return result
 }
 
@@ -457,7 +445,6 @@ const mmrrccStatsToJSArray = (mmrrccStats: libcootApi.PairType<emscriptem.map<li
                 n: densityCorrStat.n,
                 correlation: densityCorrStat.correlation()
             })
-            residueSpec.delete()
             densityCorrStat.delete()
         }
         residueSpecs.delete()
@@ -493,7 +480,6 @@ const atomSpecToJSArray = (atomSpecs: emscriptem.vector<libcootApi.AtomSpecT>): 
             string_user_data: atom.string_user_data,
             model_number: atom.model_number
         })
-        atom.delete()
     }
     atomSpecs.delete()
     return returnResult
@@ -510,7 +496,6 @@ const residueSpecToJSArray = (residueSpecs: emscriptem.vector<libcootApi.Residue
             modelNumber: residue.model_number,
             chainId: residue.chain_id
         })
-        residue.delete()
     }
     residueSpecs.delete()
     return returnResult
@@ -537,12 +522,9 @@ const validationDataToJSArray = (validationData: libcootApi.ValidationInformatio
                     restype: "UNK",
                     value: residue.function_value
                 })
-                residue.delete()
-                residueSpec.delete()
             }
             resInfo.delete()
         }
-        chain.delete()
     }
     cviv.delete()
     validationData.delete()
@@ -577,7 +559,6 @@ const linesBoxToJSArray = (BoxData: libcootApi.Generic3dLinesBondsBoxT): libcoot
         envdata.push(thisEnvdata)
     }
     segments.delete()
-    BoxData.delete()
 
     return envdata
 }
@@ -638,8 +619,6 @@ const interestingPlaceDataToJSArray = (interestingPlaceData: emscriptem.vector<l
             coordY: residue.y,
             coordZ: residue.z
         })
-        residue.delete()
-        residueSpec.delete()
     }
     interestingPlaceData.delete()
     return returnResult
@@ -680,7 +659,6 @@ const autoReadMtzInfoVectToJSArray = (autoReadMtzInfoArray: emscriptem.vector<li
             sigF_obs: autoReadMtzInfo.sigF_obs,
             weights_used: autoReadMtzInfo.weights_used,
         })
-        autoReadMtzInfo.delete()
     }
     autoReadMtzInfoArray.delete()
     
@@ -734,11 +712,8 @@ const simpleMeshToLineMeshData = (simpleMesh: libcootApi.SimpleMeshT, normalLigh
         totPos.push(...vert.pos);
         totNorm.push(...vert.normal);
         totCol.push(...vert.color);
-        vert.delete()
     }
     vertices.delete()
-
-    simpleMesh.delete()
 
     if (normalLighting)
         return { prim_types: [["NORMALLINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], additional_norm_tri: [[totNorm]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
