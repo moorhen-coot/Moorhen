@@ -84,7 +84,7 @@ This should build all dependencies and then `Moorhen`.
 6. To run the Moorhen molecular graphics application:  
 `cd baby-gru`  
 `npm start`  
-And then point a web browser at `http://localhost:3000/` .  
+And then point a web browser at `http://localhost:5173/` .  
 
 ## **Updating**
 
