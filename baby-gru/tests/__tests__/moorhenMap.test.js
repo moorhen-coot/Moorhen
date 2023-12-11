@@ -293,10 +293,7 @@ describe("Testing MoorhenMap", () => {
 
         const f_1 = jest.spyOn(glRef.current, 'buildBuffers')
         const f_2 = jest.spyOn(glRef.current, 'drawScene')
-        const time_1 = performance.now()
         await map.doCootContour(55, 10, 10, 30, 0.48)
-        const time_2 = performance.now()
-        console.log(time_2 - time_1)
         expect(f_1).toHaveBeenCalledTimes(1)
         expect(f_2).toHaveBeenCalledTimes(1)
         expect(glRef.current.buffers).toHaveLength(1)

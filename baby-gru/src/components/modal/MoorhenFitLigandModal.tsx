@@ -78,7 +78,7 @@ export const MoorheFitLigandModal = (props: { show: boolean; setShow: React.Disp
     }
 
     const findLigand = useCallback(async () => {
-        if (!mapSelectRef.current.value || !ligandMoleculeRef.current.value) {
+        if (!mapSelectRef.current.value || !ligandMoleculeRef.current.value || !intoMoleculeRef.current.value) {
             console.warn("Missing input, cannot find ligand...")
             return
         }
@@ -124,7 +124,7 @@ export const MoorheFitLigandModal = (props: { show: boolean; setShow: React.Disp
                 type="switch"
                 checked={fitAnywhere}
                 onChange={() => { 
-                    fitAnywhereRef.current = !useConformers
+                    fitAnywhereRef.current = !fitAnywhere
                     setFitAnywhere(!fitAnywhere)
                 }}
                 label="Search everywhere"/>
