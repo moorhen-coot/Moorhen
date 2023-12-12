@@ -659,7 +659,8 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 this.parentMolecule.molNo, this.parentMolecule.gaussianSurfaceSettings.sigma,
                 this.parentMolecule.gaussianSurfaceSettings.countourLevel,
                 this.parentMolecule.gaussianSurfaceSettings.boxRadius,
-                this.parentMolecule.gaussianSurfaceSettings.gridScale
+                this.parentMolecule.gaussianSurfaceSettings.gridScale,
+                this.parentMolecule.gaussianSurfaceSettings.bFactor
             ]
         }, false) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
         try {
