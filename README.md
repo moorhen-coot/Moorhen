@@ -99,20 +99,6 @@ And then point a web browser at `http://localhost:5173/` .
 ![Moorhen](web_example/baby_gru.png)
 *The Moorhen WebGL application*
 
-## **What else can do with the compiled libraries?**
-
-See `example/example.cc` or `checkout/privateer-MKIV/src/privateer.cpp` to see how to create a command line (node) program. The
-latter is quite long and a patched version of the original privateer code. It might be more helpful to look at the patch file
-`patches/privateer-emscripten.patch`. This should show how to patch an existing command line program which reads files to one
-that will work within node.
-
-See `coot/moorhen-wrappers.cc` to see use of `EMSCRIPTEN_BINDINGS` to expose Coot methods to the web browser.
-
-Any program you write, which uses the *subset* of Coot, Clipper, Privateer code which this project compiles to WASM, can
-itself be compiled to WASM and used within node or Web Browser. Studying the examples should show you to do I/O, which is
-different in the 2 cases. If you require more classes or methods from the libraries to be exposed to JavaScript, then changes need to be made to
-`coot/moorhen-wrappers.cc`. This should only be necessary for browser usage - in node your whole program can be written in C++.
-
 ## **References**
 
 * Emscripten
