@@ -29,7 +29,7 @@ export const MoorhenCentreOnLigandMenuItem = (props: {
                                     key={`${molecule.molNo}-${ligand.cid}`}
                                     nodeId={`${molecule.molNo}-${ligand.cid}`}
                                     label={ligand.cid}
-                                    onClick={() => molecule.centreOn(ligand.cid, true)}/>
+                                    onClick={() => molecule.centreOn(ligand.cid, true, true)}/>
                             })}
                         </TreeItem>
                     })}

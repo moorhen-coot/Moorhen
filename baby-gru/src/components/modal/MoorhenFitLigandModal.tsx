@@ -49,7 +49,7 @@ export const MoorheFitLigandModal = (props: { show: boolean; setShow: React.Disp
                     </Col>
                     <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
                         <Tooltip title="View">
-                        <IconButton style={{marginRight:'0.5rem'}} onClick={() => newLigandMolecule.centreOn('/*/*/*/*', true)}>
+                        <IconButton style={{marginRight:'0.5rem'}} onClick={() => newLigandMolecule.centreOn('/*/*/*/*', true, true)}>
                             <CenterFocusWeakOutlined/>
                         </IconButton>
                         </Tooltip>

@@ -95,7 +95,7 @@ declare module 'moorhen' {
         fetchDefaultColourRules(): Promise<void>;
         fetchIfDirtyAndDraw(arg0: string): Promise<void>;
         drawEnvironment: (cid: string, labelled?: boolean) => Promise<void>;
-        centreOn: (selectionCid?: string, animate?: boolean) => Promise<void>;
+        centreOn: (selectionCid?: string, animate?: boolean, setZoom?: boolean) => Promise<void>;
         drawHover: (cid: string) => Promise<void>;
         drawResidueSelection: (cid: string) => Promise<void>;
         clearBuffersOfStyle: (style: string) => void;
