@@ -5,7 +5,7 @@ import { MoorhenValidationToolsModal } from '../modal/MoorhenValidationToolsModa
 import { MoorhenQuerySequenceModal } from '../modal/MoorhenQuerySequenceModal';
 import { MoorhenScriptModal } from '../modal/MoorhenScriptModal';
 import { MoorhenControlsModal } from '../modal/MoorhenControlsModal';
-import { MoorheFitLigandModal } from '../modal/MoorhenFitLigandModal';
+import { MoorheFindLigandModal } from '../modal/MoorhenFindLigandModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { moorhen } from '../../types/moorhen';
 import { setShowControlsModal, setShowCreateAcedrgLinkModal, setShowFitLigandModal, setShowMapsModal, setShowModelsModal, setShowQuerySequenceModal, setShowScriptingModal, setShowValidationModal } from '../../store/activeModalsSlice';
@@ -71,7 +71,7 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
         }
 
         {showFitLigandModal &&
-            <MoorheFitLigandModal
+            <MoorheFindLigandModal
             show={showFitLigandModal}
             setShow={(newVal: boolean) => dispatch(setShowFitLigandModal(newVal))}
             {...props} />

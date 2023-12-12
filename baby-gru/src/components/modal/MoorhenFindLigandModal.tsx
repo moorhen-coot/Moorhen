@@ -10,7 +10,7 @@ import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 import { Backdrop, IconButton, Tooltip } from "@mui/material";
 import { CenterFocusWeakOutlined, CrisisAlertOutlined, MergeTypeOutlined } from "@mui/icons-material";
 
-export const MoorheFitLigandModal = (props: { show: boolean; setShow: React.Dispatch<React.SetStateAction<boolean>>; }) => {    
+export const MoorheFindLigandModal = (props: { show: boolean; setShow: React.Dispatch<React.SetStateAction<boolean>>; }) => {    
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const maps = useSelector((state: moorhen.State) => state.maps)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
@@ -117,41 +117,46 @@ export const MoorheFitLigandModal = (props: { show: boolean; setShow: React.Disp
                 <MoorhenMoleculeSelect width="" molecules={molecules} label="Ligand molecule" allowAny={false} ref={ligandMoleculeRef} filterFunction={(molecule: moorhen.Molecule) => molecule.isLigand} />
             </Col>
         </Row>
-        <Row>
+        <Row style={{ padding: '0', margin: '0' }}>
+            <Col style={{ alignContent: 'start', alignItems: 'start', display: 'flex', flexDirection: 'column' }}>
+                <Form.Check
+                    style={{margin: '0.5rem'}} 
+                    type="radio"
+                    checked={!fitAnywhere}
+                    onChange={() => { 
+                        fitAnywhereRef.current = !fitAnywhere
+                        setFitAnywhere(!fitAnywhere)
+                    }}
+                    label="Search right here"/>
+                <Form.Check
+                    style={{margin: '0.5rem'}} 
+                    type="radio"
+                    checked={fitAnywhere}
+                    onChange={() => { 
+                        fitAnywhereRef.current = !fitAnywhere
+                        setFitAnywhere(!fitAnywhere)
+                    }}
+                    label="Search everywhere"/>
+            </Col>
             <Col style={{justifyContent:'center', alignContent:'center', alignItems:'center', display:'flex'}}>
                 <Form.Check
-                style={{margin: '0.5rem'}} 
-                type="switch"
-                checked={fitAnywhere}
-                onChange={() => { 
-                    fitAnywhereRef.current = !fitAnywhere
-                    setFitAnywhere(!fitAnywhere)
-                }}
-                label="Search everywhere"/>
+                    style={{margin: '0.5rem'}} 
+                    type="switch"
+                    checked={useConformers}
+                    onChange={() => { 
+                        useConformersRef.current = !useConformers
+                        setUseConformers(!useConformers)
+                    }}
+                    label="Flexible ligand"/>
             </Col>
             <Col style={{justifyContent:'center', alignContent:'center', alignItems:'center', display:'flex'}}>
-                <Form.Check
-                style={{margin: '0.5rem'}} 
-                type="switch"
-                checked={useConformers}
-                onChange={() => { 
-                    useConformersRef.current = !useConformers
-                    setUseConformers(!useConformers)
-                }}
-                label="Use flexible ligand"/>
+                <MoorhenNumberForm ref={conformerCountRef} label="No. of conformers" defaultValue={10} disabled={!useConformers} width="10rem" padding="0" margin="0"/>
             </Col>
         </Row>
-        {useConformers && 
-        <Row>
-            <Col style={{justifyContent:'center', alignContent:'center', alignItems:'center', display:'flex'}}>
-                <MoorhenNumberForm ref={conformerCountRef} label="No. of conformers" defaultValue={10}/>
-            </Col>
-        </Row>
-        }
         <hr></hr>
         <Row>
             {ligandCards?.length > 0 ? <span>Found {ligandCards.length} possible ligand location(s)</span> : null}
-            {ligandCards?.length > 0 ? <div style={{height: '100px', width: '100%'}}>{ligandCards}</div> : <span>No results found...</span>}
+            {ligandCards?.length > 0 ? <div style={{height: '100px', width: '100%'}}>{ligandCards}</div> : <span>No results...</span>}
         </Row>
     </>
 
@@ -179,7 +184,7 @@ export const MoorheFitLigandModal = (props: { show: boolean; setShow: React.Disp
                 defaultHeight={convertViewtoPx(10, height)}
                 defaultWidth={convertViewtoPx(10, width)}
                 minHeight={convertViewtoPx(15, height)}
-                minWidth={convertRemToPx(37)}
+                minWidth={convertRemToPx(40)}
                 maxHeight={convertViewtoPx(50, height)}
                 maxWidth={convertViewtoPx(50, width)}
                 additionalChildren={spinnerContent}
