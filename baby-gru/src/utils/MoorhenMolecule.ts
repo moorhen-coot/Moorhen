@@ -422,7 +422,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if (doRecentre) {
             newMolecule.setAtomsDirty(true)
             await newMolecule.fetchIfDirtyAndDraw(style)
-            await newMolecule.centreOn()
+            await newMolecule.centreOn('/*/*/*/*', true, true)
         }
         return newMolecule
     }
@@ -763,7 +763,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} selectionCid - CID selection for the residue to centre the view on
      * @param {boolean} [animate=true] - Indicates whether the change will be animated
      */
-    async centreOn(selectionCid: string = '/*/*/*/*', animate: boolean = true): Promise<void> {
+    async centreOn(selectionCid: string = '/*/*/*/*', animate: boolean = true, setZoom: boolean = false): Promise<void> {
         if (this.atomsDirty) {
             await this.updateAtoms()
         }
@@ -778,8 +778,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
         let selectionCentre = centreOnGemmiAtoms(selectionAtoms)
 
         if (animate) {
+            if (setZoom) this.glRef.current.setZoomAnimated(0.4)
             this.glRef.current.setOriginAnimated(selectionCentre);
         } else {
+            if (setZoom) this.glRef.current.setZoom(0.4)
             this.glRef.current.setOrigin(selectionCentre);
         }
     }

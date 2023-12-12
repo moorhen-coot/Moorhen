@@ -69,7 +69,7 @@ export const MoorhenFillMissingAtoms = (props: Props) => {
                                 {label}
                             </Col>
                             <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
-                                <Button style={{marginRight:'0.5rem'}} onClick={() => selectedMolecule.centreOn(`/*/${residue.chainId}/${residue.resNum}-${residue.resNum}/*`)}>
+                                <Button style={{marginRight:'0.5rem'}} onClick={() => selectedMolecule.centreOn(`/*/${residue.chainId}/${residue.resNum}-${residue.resNum}/*`, true, true)}>
                                     View
                                 </Button>
                                 <Button style={{marginRight:'0.5rem'}} onClick={() => {

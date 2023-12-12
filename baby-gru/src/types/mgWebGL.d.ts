@@ -18,7 +18,8 @@ export namespace webGL {
         createIndexBuffer(tri: number[]) : void;
         createSizeBuffer(tri: number[]) : void;
         addSupplementaryInfo(info: any, name: string) : void;
-
+        setZoomAnimated(newZoom: number): void;
+        drawZoomFrame(oldZoom: number, newZoom: number, iframe: number): void;
         createInstanceSizesBuffer(tri: number[]) : void;
         createVertexBuffer(tri: number[]) : void;
         createRealNormalBuffer(tri: number[]) : void;
@@ -115,7 +116,7 @@ export namespace webGL {
         appendOtherData(jsondata: any, skipRebuild?: boolean, name?: string) : any;
         setZoom(z: number, drawScene?: boolean);
         setOriginOrientationAndZoomAnimated(o: number[],q: quat4,z: number) : void;
-        setOriginAnimated(o: number[], doDrawScene=true) : void;
+        setOriginAnimated(o: number[]) : void;
         initTextureFramebuffer() : void;
         clearMeasureCylinderBuffers() : void;
         getFrontAndBackPos(event: KeyboardEvent) : [number[], number[], number, number];

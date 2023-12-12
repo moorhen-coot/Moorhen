@@ -474,7 +474,7 @@ export const MoorhenRamachandran = (props: Props) => {
             return
         }
 
-        molecules[selectedMoleculeIndex].centreOn(`/*/${clickedResidue.chain}/${clickedResidue.seqNum}-${clickedResidue.seqNum}/*`)
+        molecules[selectedMoleculeIndex].centreOn(`/*/${clickedResidue.chain}/${clickedResidue.seqNum}-${clickedResidue.seqNum}/*`, true, true)
 
     }, [clickedResidue])
 

@@ -145,7 +145,7 @@ export const MoorhenValidation = (props: Props) => {
             if(selectedMolecule) {
                 const clickedResidue = getResidueInfo(molecules, selectedMolecule.molNo, selectedChain, residueIndex)
                 if (clickedResidue) {
-                    selectedMolecule.centreOn(`/*/${clickedResidue.chain}/${clickedResidue.seqNum}-${clickedResidue.seqNum}/*`)
+                    selectedMolecule.centreOn(`/*/${clickedResidue.chain}/${clickedResidue.seqNum}-${clickedResidue.seqNum}/*`, true, true)
                 }
             }
         }

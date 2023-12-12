@@ -3459,7 +3459,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         requestAnimationFrame(this.setOriginOrientationAndZoomFrame.bind(this,[old_x,old_y,old_z],[dx,dy,dz],oldQuat,q,oldZoom,zoomDelta,1))
     }
 
-    setOriginAnimated(o: number[], doDrawScene=true) : void {
+    setOriginAnimated(o: number[]) : void {
         const [old_x, old_y, old_z] = this.origin
         const [new_x, new_y, new_z] = o
         const DX = new_x - old_x
@@ -3480,10 +3480,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.drawScene()
         if(iframe<this.nAnimationFrames){
             requestAnimationFrame(this.drawOriginFrame.bind(this,oo,d,iframe+1))
-            return
+        } else {
+            const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
+            document.dispatchEvent(originUpdateEvent)    
         }
-        const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
-        document.dispatchEvent(originUpdateEvent);
     }
 
     setOrigin(o: [number, number, number], doDrawScene=true, dispatchEvent=true) : void {
@@ -3552,6 +3552,34 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         document.dispatchEvent(wheelContourChanged);
 
         if (drawScene) this.drawScene();
+    }
+
+    drawZoomFrame(oldZoom: number, newZoom: number, iframe: number) {
+        const deltaZoom = (newZoom - oldZoom) / this.nAnimationFrames
+        const currentZoom = oldZoom + deltaZoom * iframe
+        this.zoom = currentZoom
+        this.drawScene()
+        if (iframe < this.nAnimationFrames) {
+            const fieldDepthFront = 8
+            const fieldDepthBack = 21
+            this.set_fog_range(this.fogClipOffset - (this.zoom * fieldDepthFront), this.fogClipOffset + (this.zoom * fieldDepthBack))
+            this.set_clip_range(0 - (this.zoom * fieldDepthFront), 0 + (this.zoom * fieldDepthBack))
+            requestAnimationFrame(this.drawZoomFrame.bind(this, oldZoom, newZoom, iframe + 1))
+        } else {
+            const zoomChanged = new CustomEvent("zoomChanged", {
+                "detail": {
+                    oldZoom,
+                    newZoom
+                }
+            });
+            document.dispatchEvent(zoomChanged);    
+        }
+    }
+
+    setZoomAnimated(newZoom: number) {
+        const oldZoom = this.zoom
+        this.nAnimationFrames = 15
+        requestAnimationFrame(this.drawZoomFrame.bind(this, oldZoom, newZoom, 1))
     }
 
     setZoom(z: number, drawScene?: boolean) {

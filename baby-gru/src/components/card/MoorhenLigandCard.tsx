@@ -72,7 +72,7 @@ export const MoorhenLigandCard = (props: {
                     <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
                         <Stack direction='vertical' gap={1} style={{display: 'flex', justifyContent: 'center'}}>
                             <Button variant="secondary" style={{marginRight:'0.5rem', display: 'flex', justifyContent: 'left'}} onClick={() => {
-                                molecule.centreOn(ligand.cid, true)
+                                molecule.centreOn(ligand.cid, true, true)
                             }}>
                                 <CenterFocusStrongOutlined style={{marginRight: '0.5rem'}}/>
                                 {ligand.cid}

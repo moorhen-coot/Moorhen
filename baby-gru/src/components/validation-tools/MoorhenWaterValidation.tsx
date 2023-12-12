@@ -39,7 +39,7 @@ export const MoorhenWaterValidation = (props: Props) => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel)
         if (selectedMolecule) {
             const cid = `/${water.model_number}/${water.chain_id}/${water.res_no}`
-            await selectedMolecule.centreOn(cid, true)
+            await selectedMolecule.centreOn(cid, true, true)
         }
     }, [molecules])
 
