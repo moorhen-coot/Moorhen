@@ -72,6 +72,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         countourLevel: number;
         boxRadius: number;
         gridScale: number;
+        bFactor: number;
     };
     isDarkBackground: boolean;
     defaultBondOptions: moorhen.cootBondOptions;
@@ -115,7 +116,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
             sigma: 4.4,
             countourLevel: 4.0,
             boxRadius: 5.0,
-            gridScale: 0.7
+            gridScale: 0.7,
+            bFactor: 100
         }
         this.defaultBondOptions = {
             smoothness: 1,

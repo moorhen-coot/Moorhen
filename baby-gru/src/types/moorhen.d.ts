@@ -175,6 +175,7 @@ export namespace moorhen {
             countourLevel: number;
             boxRadius: number;
             gridScale: number;
+            bFactor: number;
         };
         isDarkBackground: boolean;
         representations: MoleculeRepresentation[];

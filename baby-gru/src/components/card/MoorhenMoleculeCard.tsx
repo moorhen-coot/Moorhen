@@ -95,6 +95,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const [surfaceLevel, setSurfaceLevel] = useState<number>(4.0)
     const [surfaceRadius, setSurfaceRadius] = useState<number>(5.0)
     const [surfaceGridScale, setSurfaceGridScale] = useState<number>(0.7)
+    const [surfaceBFactor, setSurfaceBFactor] = useState<number>(100)
     const [symmetryRadius, setSymmetryRadius] = useState<number>(25.0)
 
     useImperativeHandle(cardRef, () => ({
@@ -114,8 +115,8 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     }
 
     const gaussianSettingsProps = {
-        surfaceSigma, setSurfaceSigma, surfaceLevel, setSurfaceLevel,
-        surfaceRadius, setSurfaceRadius, surfaceGridScale, setSurfaceGridScale
+        surfaceSigma, setSurfaceSigma, surfaceLevel, setSurfaceLevel, surfaceBFactor,
+        setSurfaceBFactor, surfaceRadius, setSurfaceRadius, surfaceGridScale, setSurfaceGridScale
     }
 
     const redrawMolIfDirty = async (representationIds: string[]) => {
@@ -328,6 +329,25 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
         }
 
     }, [surfaceGridScale]);
+
+    useEffect(() => {
+        if (surfaceBFactor === null) {
+            return
+        }
+
+        const representations = props.molecule.representations.filter(representation => representation.visible && representation.style === 'gaussian')
+
+        if (isVisible && representations.length > 0 && props.molecule.gaussianSurfaceSettings.bFactor !== surfaceBFactor) {
+            props.molecule.gaussianSurfaceSettings.bFactor = surfaceBFactor
+            isDirty.current = true
+            if (!busyRedrawing.current) {
+                redrawMolIfDirty(representations.map(representation => representation.uniqueId))
+            }
+        } else {
+            props.molecule.gaussianSurfaceSettings.bFactor = surfaceBFactor
+        }
+
+    }, [surfaceBFactor]);
 
     useEffect(() => {
         if (isVisible !== props.molecule.isVisible) {

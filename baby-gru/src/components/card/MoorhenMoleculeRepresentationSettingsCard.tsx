@@ -26,6 +26,8 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
         setSurfaceRadius: React.Dispatch<React.SetStateAction<number>>;
         surfaceGridScale: number;
         setSurfaceGridScale: React.Dispatch<React.SetStateAction<number>>;
+        surfaceBFactor: number;
+        setSurfaceBFactor: React.Dispatch<React.SetStateAction<number>>;
     };
     bondSettingsProps: {
         bondWidth: number;
@@ -47,8 +49,8 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
     } = props.bondSettingsProps
 
     const {
-        surfaceSigma, setSurfaceSigma, surfaceLevel, setSurfaceLevel,
-        surfaceRadius, setSurfaceRadius, surfaceGridScale, setSurfaceGridScale
+        surfaceSigma, setSurfaceSigma, surfaceLevel, setSurfaceLevel, surfaceBFactor,
+        surfaceRadius, setSurfaceRadius, surfaceGridScale, setSurfaceGridScale, setSurfaceBFactor
     } = props.gaussianSettingsProps
 
     const {
@@ -187,6 +189,17 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
                         incrementButton={getSliderButton(surfaceGridScale, setSurfaceGridScale, 0.1)}
                         minVal={0.01}
                         maxVal={1.5}
+                        logScale={false}/>
+                    <MoorhenSlider 
+                        sliderTitle="Gauss. Surf. B-Factor"
+                        initialValue={surfaceBFactor}
+                        externalValue={surfaceBFactor}
+                        setExternalValue={setSurfaceBFactor} 
+                        showMinMaxVal={false}
+                        decrementButton={getSliderButton(surfaceBFactor, setSurfaceBFactor, -10)}
+                        incrementButton={getSliderButton(surfaceBFactor, setSurfaceBFactor, 10)}
+                        minVal={0}
+                        maxVal={100}
                         logScale={false}/>
                 </div>
                 <div style={{paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', borderStyle: 'solid', borderWidth: '1px', borderColor: 'grey', borderRadius: '1.5rem'}}>
