@@ -37,8 +37,8 @@ cd ${BUILD_DIR}
 #Boost (has to be built in source tree as far as I am aware)
 cd ${SOURCE_DIR}/boost
 ./bootstrap.sh --with-libraries=serialization,regex,chrono,date_time,filesystem,iostreams,program_options,thread,math,random,system
-./b2 toolset=emscripten link=static variant=release cxxflags="-pthread" linkflags="-pthread" threading=multi runtime-link=static thread system filesystem regex serialization chrono date_time program_options random -j ${NUMPROCS}
-./b2 toolset=emscripten link=static variant=release cxxflags="-pthread" linkflags="-pthread" threading=multi runtime-link=static install --prefix=${INSTALL_DIR}
+./b2 toolset=emscripten link=static variant=release cxxflags="-Wno-enum-constexpr-conversion -pthread" linkflags="-pthread" threading=multi runtime-link=static thread system filesystem regex serialization chrono date_time program_options random -j ${NUMPROCS}
+./b2 toolset=emscripten link=static variant=release cxxflags="-Wno-enum-constexpr-conversion -pthread" linkflags="-pthread" threading=multi runtime-link=static install --prefix=${INSTALL_DIR}
 cd ${BUILD_DIR}
 
 emar q ${INSTALL_DIR}/lib/libboost_chrono.a ${INSTALL_DIR}/lib/libboost_chrono.bc
@@ -71,14 +71,6 @@ cd ${BUILD_DIR}
 mkdir -p ${BUILD_DIR}/gemmi_build
 cd ${BUILD_DIR}/gemmi_build
 emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/gemmi
-emmake make -j ${NUMPROCS}
-emmake make install
-cd ${BUILD_DIR}
-
-#rvapi
-mkdir -p ${BUILD_DIR}/rvapi_build
-cd ${BUILD_DIR}/rvapi_build
-emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/rvapi
 emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}

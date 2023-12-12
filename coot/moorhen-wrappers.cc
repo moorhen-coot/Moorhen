@@ -43,9 +43,7 @@
 #include "clipper/core/ramachandran.h"
 #include "clipper/clipper-ccp4.h"
 
-#include "cartesian.h"
-#include "geomutil.h"
-#include "matrix.h"
+#include "ccp4mg-utils/matrix.h"
 
 #include "smilestopdb.h"
 
