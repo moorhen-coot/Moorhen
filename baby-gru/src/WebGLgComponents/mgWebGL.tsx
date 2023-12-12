@@ -3459,20 +3459,42 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         requestAnimationFrame(this.setOriginOrientationAndZoomFrame.bind(this,[old_x,old_y,old_z],[dx,dy,dz],oldQuat,q,oldZoom,zoomDelta,1))
     }
 
-    setOriginAnimated(o: number[]) : void {
-        const [old_x, old_y, old_z] = this.origin
-        const [new_x, new_y, new_z] = o
-        const DX = new_x - old_x
-        const DY = new_y - old_y
-        const DZ = new_z - old_z
-        const distance = Math.sqrt(DX**2 + DY**2 + DZ**2)
-        // Optimal speed is 1A per frame, with upper limit of 15 frames and lower limit of 5
-        const nFrames = Math.floor(distance / 1.5)
-        this.nAnimationFrames = nFrames > 15 ? 15 : nFrames < 5 ? 5 : nFrames
-        const dx = DX/this.nAnimationFrames
-        const dy = DY/this.nAnimationFrames
-        const dz = DZ/this.nAnimationFrames
-        requestAnimationFrame(this.drawOriginFrame.bind(this,[old_x,old_y,old_z],[dx,dy,dz],1))
+    calculateOriginDelta(newOrigin: [number, number, number], oldOrigin: [number, number, number], nFrames: number): [number, number, number] {
+        const [old_x, old_y, old_z] = oldOrigin
+        const [new_x, new_y, new_z] = newOrigin
+        const DX = (new_x - old_x) / nFrames
+        const DY = (new_y - old_y) / nFrames
+        const DZ = (new_z - old_z) / nFrames
+        return [ DX, DY, DZ ]
+    }
+
+    setOriginAndZoomAnimated(newOrigin: [number, number, number], newZoom: number) {
+        this.nAnimationFrames = 15
+        const deltaOrigin = this.calculateOriginDelta(newOrigin, this.origin, this.nAnimationFrames)
+        const deltaZoom = (newZoom - this.zoom) / this.nAnimationFrames
+        requestAnimationFrame(this.drawOriginAndZoomFrame.bind(this, this.origin, this.zoom, deltaOrigin, deltaZoom, 1))
+    }
+
+    drawOriginAndZoomFrame(oldOrigin: [number, number, number], oldZoom: number, deltaOrigin: [number, number, number], deltaZoom: number, iframe: number) {
+        const [ DX, DY, DZ ] = deltaOrigin
+        const [ X, Y, Z ] = oldOrigin
+        this.origin = [ X + iframe * DX , Y + iframe * DY, Z + iframe * DZ ]
+        this.zoom = oldZoom + deltaZoom * iframe
+        this.drawScene()
+        if (iframe < this.nAnimationFrames) {
+            requestAnimationFrame(this.drawOriginAndZoomFrame.bind(this, oldOrigin, oldZoom, deltaOrigin, deltaZoom, iframe + 1))
+        } else {
+            const zoomChanged = new CustomEvent("zoomChanged", { detail: { oldZoom, newZoom: this.zoom } })
+            const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
+            document.dispatchEvent(zoomChanged)
+            document.dispatchEvent(originUpdateEvent)
+        }
+    }
+
+    setOriginAnimated(oldOrigin: number[]) : void {
+        this.nAnimationFrames = 15
+        const [ dx, dy, dz ] = this.calculateOriginDelta(oldOrigin as [number, number, number], this.origin, this.nAnimationFrames)
+        requestAnimationFrame(this.drawOriginFrame.bind(this, [...this.origin], [dx, dy, dz], 1))
     }
 
     drawOriginFrame(oo,d,iframe){
@@ -3585,7 +3607,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     setZoom(z: number, drawScene?: boolean) {
         const oldZoom = this.zoom
         this.zoom = z;
-        var zoomChanged = new CustomEvent("zoomChanged", {
+        const zoomChanged = new CustomEvent("zoomChanged", {
             "detail": {
                 oldZoom,
                 newZoom: z

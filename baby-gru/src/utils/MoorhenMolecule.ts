@@ -777,12 +777,15 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         let selectionCentre = centreOnGemmiAtoms(selectionAtoms)
 
-        if (animate) {
-            if (setZoom) this.glRef.current.setZoomAnimated(0.4)
-            this.glRef.current.setOriginAnimated(selectionCentre);
+        if (animate && setZoom) {
+            this.glRef.current.setOriginAndZoomAnimated(selectionCentre, 0.4)
+        } else if (animate) {
+            this.glRef.current.setOriginAnimated(selectionCentre)
+        } else if (setZoom) {
+            this.glRef.current.setOrigin(selectionCentre)
+            this.glRef.current.setZoom(0.4)
         } else {
-            if (setZoom) this.glRef.current.setZoom(0.4)
-            this.glRef.current.setOrigin(selectionCentre);
+            this.glRef.current.setOrigin(selectionCentre)
         }
     }
 

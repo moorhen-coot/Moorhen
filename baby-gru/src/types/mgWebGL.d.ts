@@ -18,6 +18,9 @@ export namespace webGL {
         createIndexBuffer(tri: number[]) : void;
         createSizeBuffer(tri: number[]) : void;
         addSupplementaryInfo(info: any, name: string) : void;
+        calculateOriginDelta(newOrigin: [number, number, number], oldOrigin: [number, number, number], nFrames: number): [number, number, number];
+        setOriginAndZoomAnimated(newOrigin: [number, number, number], newZoom: number): void;
+        drawOriginAndZoomFrame(oldOrigin: [number, number, number], oldZoom: number, deltaOrigin: [number, number, number], deltaZoom: number, iframe: number): void;
         setZoomAnimated(newZoom: number): void;
         drawZoomFrame(oldZoom: number, newZoom: number, iframe: number): void;
         createInstanceSizesBuffer(tri: number[]) : void;
