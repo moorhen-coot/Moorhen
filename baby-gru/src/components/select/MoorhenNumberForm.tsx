@@ -6,6 +6,10 @@ type MoorhenNumberFormPropsType = {
     allowNegativeValues?: boolean;
     defaultValue: number;
     label?: string;
+    disabled?: boolean;
+    width?: string;
+    margin?: string;
+    padding?: string;
 }
 
 export const MoorhenNumberForm = forwardRef<string, MoorhenNumberFormPropsType>((props, formRef) => {
@@ -29,10 +33,10 @@ export const MoorhenNumberForm = forwardRef<string, MoorhenNumberFormPropsType>(
         }
     }, [])
     
-    return  <Form.Group className='moorhen-form-group' controlId="MoorhenBlurMapMenuItem">
-                <Form.Label>{props.label}</Form.Label>
-                <Form.Control type="number" value={currentValue} 
-                style={{borderColor: isValidInput ? '#ced4da' : 'red'}}
+    return  <Form.Group className='moorhen-form-group' controlId="MoorhenBlurMapMenuItem" style={{padding: props.padding, margin: props.margin, width: props.width}}>
+                <Form.Label style={{color: props.disabled ? 'grey' : ''}}>{props.label}</Form.Label>
+                <Form.Control type="number" value={currentValue} disabled={props.disabled}
+                style={{color: props.disabled ? 'grey' : '', borderColor: isValidInput ? '#ced4da' : 'red'}}
                 onChange={(evt) => {
                     if (formRef !== null && typeof formRef !== 'function') {
                         const _isValid = checkIsValidInput(evt.target.value)
@@ -49,4 +53,6 @@ export const MoorhenNumberForm = forwardRef<string, MoorhenNumberFormPropsType>(
             </Form.Group>
 })
 
-MoorhenNumberForm.defaultProps = { allowNegativeValues: false, label: 'Input', onChange: () => {} }
+MoorhenNumberForm.defaultProps = { 
+    allowNegativeValues: false, label: 'Input', onChange: () => {}, disabled: false, width: '', margin: '', padding: ''
+ }
