@@ -1,21 +1,25 @@
-import { IconButton, Tooltip } from "@mui/material"
+import { IconButton, Popover, Tooltip } from "@mui/material"
 import { cidToSpec, guid } from "../../utils/MoorhenUtils"
 import { MoorhenNotification } from "./MoorhenNotification"
-import { AllOutOutlined, CloseOutlined, CopyAllOutlined, CrisisAlertOutlined, DeleteOutlined } from "@mui/icons-material"
+import { AllOutOutlined, CloseOutlined, CopyAllOutlined, CrisisAlertOutlined, DeleteOutlined, FormatColorFillOutlined } from "@mui/icons-material"
 import { useDispatch, useSelector } from "react-redux"
 import { moorhen } from "../../types/moorhen"
-import { Stack } from "react-bootstrap"
+import { Button, Stack } from "react-bootstrap"
 import { clearResidueSelection, setNotificationContent, setResidueSelection } from '../../store/generalStatesSlice';
 import { useCallback, useEffect, useRef, useState } from "react"
 import { addMolecule, removeMolecule } from "../../moorhen"
+import { HexColorPicker, RgbColorPicker } from "react-colorful"
 
 export const MoorhenResidueSelectionActions = (props) => {
 
     const notificationKeyRef = useRef<string>(guid())
     const notificationComponentRef = useRef()
+    const changeColourAnchorRef = useRef()
 
+    const [showColourPopover, setShowColourPopover] = useState<boolean>(false)
     const [selectionLabel, setSelectionLabel] = useState<null | string>(null)
     const [tooltipContents, setTooltipContents] = useState<null | string>(null)
+    const [selectedColour, setSelectedColour] = useState<string>('#808080')
 
     const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules)
@@ -185,10 +189,52 @@ export const MoorhenResidueSelectionActions = (props) => {
                 })
             )
         }
-}, [residueSelection, clearSelection])
+    }, [residueSelection, clearSelection])
+
+    const handleColourChange = useCallback(async () => {
+        let newColourRules: moorhen.ColourRule[] = []
+
+        if (residueSelection.isMultiCid && Array.isArray(residueSelection.cid)) {
+            residueSelection.cid.forEach(cid => newColourRules.push({
+                args: [cid, selectedColour],
+                isMultiColourRule: false,
+                ruleType: 'cid',
+                color: selectedColour,
+                label: cid,
+            }))
+        } else if (residueSelection.molecule && residueSelection.cid) {
+            newColourRules.push({
+                args: [residueSelection.cid as string, selectedColour],
+                isMultiColourRule: false,
+                ruleType: 'cid',
+                color: selectedColour,
+                label: residueSelection.cid as string,
+            })
+        } else if (residueSelection.molecule && residueSelection.first) {
+            const startResSpec = cidToSpec(residueSelection.first)
+            const cid =`/${startResSpec.mol_no}/${startResSpec.chain_id}/${startResSpec.res_no}-${startResSpec.res_no}`
+            newColourRules.push({
+                args: [cid as string, selectedColour],
+                isMultiColourRule: false,
+                ruleType: 'cid',
+                color: selectedColour,
+                label: cid as string,
+            })
+        }
+
+        newColourRules.forEach((newColourRule, idx) => {
+            residueSelection.molecule.defaultColourRules.push(newColourRule)
+            if (idx === newColourRules.length - 1) {
+                residueSelection.molecule.redraw()
+            }
+        })
+
+        setShowColourPopover(false)
+
+    }, [residueSelection, clearSelection, selectedColour])
 
     return  selectionLabel ?
-        <MoorhenNotification key={notificationKeyRef.current} width={16}>
+        <MoorhenNotification key={notificationKeyRef.current} width={19}>
             <Tooltip className="moorhen-tooltip" title={tooltipContents}>
             <Stack ref={notificationComponentRef} direction="vertical" gap={1}>
                 <div>
@@ -207,10 +253,31 @@ export const MoorhenResidueSelectionActions = (props) => {
                     <IconButton onClick={handleExpandSelection} onMouseEnter={() => setTooltipContents('Expand to neighbouring residues')}>
                         <AllOutOutlined/>
                     </IconButton>
+                    <IconButton ref={changeColourAnchorRef} onClick={() => setShowColourPopover(true)} onMouseEnter={() => setTooltipContents('Change colour')}>
+                        <FormatColorFillOutlined/>
+                    </IconButton>
                     <IconButton onClick={clearSelection} onMouseEnter={() => setTooltipContents('Clear selection')}>
                         <CloseOutlined/>
                     </IconButton>
                 </Stack>
+            <Popover 
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+                open={showColourPopover}
+                anchorEl={changeColourAnchorRef.current}
+                onClose={() => setShowColourPopover(false)}
+                sx={{
+                    '& .MuiPaper-root': {
+                        overflowY: 'hidden', borderRadius: '8px'
+                    }
+                }}>
+                <Stack gap={3} direction='horizontal'>
+                    <div style={{width: '100%', textAlign: 'center'}}>
+                        <HexColorPicker style={{padding: '0.05rem'}} color={selectedColour} onChange={(color) => setSelectedColour(color)}/>
+                        <Button size="sm" variant="primary" style={{width: '80%', margin: '0.25rem'}} onClick={handleColourChange}>Apply</Button>
+                    </div>
+                </Stack>
+            </Popover>
             </Stack>
             </Tooltip>
         </MoorhenNotification>
