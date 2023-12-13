@@ -524,6 +524,22 @@ emscripten::val getPositionsFromSimpleMesh(const coot::simple_mesh_t &m){
 
 }
 
+emscripten::val getReversedNormalsFromSimpleMesh(const coot::simple_mesh_t &m){
+
+    std::vector<float> floatArray;
+
+    const auto &vertices = m.vertices;
+
+    for(const auto &v : vertices){
+        floatArray.push_back(-v.normal[0]);
+        floatArray.push_back(-v.normal[1]);
+        floatArray.push_back(-v.normal[2]);
+    }
+
+    return float32ArrayFromVector(floatArray);
+
+}
+
 emscripten::val getNormalsFromSimpleMesh(const coot::simple_mesh_t &m){
 
     std::vector<float> floatArray;
@@ -556,6 +572,41 @@ emscripten::val getColoursFromSimpleMesh(const coot::simple_mesh_t &m){
     return float32ArrayFromVector(floatArray);
 
 }
+
+emscripten::val getTriangleIndicesFromSimpleMesh(const coot::simple_mesh_t &m){
+
+    std::vector<unsigned int> uintArray;
+
+    const auto &triangles = m.triangles;
+
+    for(const auto &t : triangles){
+        auto &idx = t.point_id;
+        uintArray.push_back(idx[0]);
+        uintArray.push_back(idx[1]);
+        uintArray.push_back(idx[2]);
+    }
+
+    return uint32ArrayFromVector(uintArray);
+
+}
+
+emscripten::val getPermutedTriangleIndicesFromSimpleMesh(const coot::simple_mesh_t &m){
+
+    std::vector<unsigned int> uintArray;
+
+    const auto &triangles = m.triangles;
+
+    for(const auto &t : triangles){
+        auto &idx = t.point_id;
+        uintArray.push_back(idx[0]);
+        uintArray.push_back(idx[2]);
+        uintArray.push_back(idx[1]);
+    }
+
+    return uint32ArrayFromVector(uintArray);
+
+}
+
 emscripten::val getLineIndicesFromSimpleMesh(const coot::simple_mesh_t &m){
 
     std::vector<unsigned int> uintArray;
@@ -595,9 +646,12 @@ emscripten::val testFloat32Array(const emscripten::val &floatArrayObject){
 EMSCRIPTEN_BINDINGS(my_module) {
     function("testFloat32Array", &testFloat32Array);
     function("getPositionsFromSimpleMesh", &getPositionsFromSimpleMesh);
+    function("getReversedNormalsFromSimpleMesh", &getReversedNormalsFromSimpleMesh);
     function("getNormalsFromSimpleMesh", &getNormalsFromSimpleMesh);
     function("getColoursFromSimpleMesh", &getColoursFromSimpleMesh);
     function("getLineIndicesFromSimpleMesh", &getLineIndicesFromSimpleMesh);
+    function("getPermutedTriangleIndicesFromSimpleMesh", &getPermutedTriangleIndicesFromSimpleMesh);
+    function("getTriangleIndicesFromSimpleMesh", &getTriangleIndicesFromSimpleMesh);
     class_<clipper::Coord_orth>("Coord_orth")
     .constructor<const clipper::ftype&, const clipper::ftype&, const clipper::ftype&>()
     .function("x", &clipper::Coord_orth::x)

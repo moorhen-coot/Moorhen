@@ -432,8 +432,11 @@ export namespace libcootApi {
         testFloat32Array( arg0: any ): Float32Array;
         getPositionsFromSimpleMesh( arg0: any ): Float32Array;
         getNormalsFromSimpleMesh( arg0: any ): Float32Array;
+        getReversedNormalsFromSimpleMesh( arg0: any ): Float32Array;
         getColoursFromSimpleMesh( arg0: any ): Float32Array;
         getLineIndicesFromSimpleMesh( arg0: any ): Uint32Array;
+        getPermutedTriangleIndicesFromSimpleMesh( arg0: any ): Uint32Array;
+        getTriangleIndicesFromSimpleMesh( arg0: any ): Uint32Array;
         Vectormoved_residue_t: { new(): emscriptem.vector<MovedResidueT>};
         moved_residue_t: { new(arg0: string, arg1: number, arg2: string): MovedResidueT};
         moved_atom_t: { new(arg0: string, arg1: string, arg2: number, arg3: number, arg4: number, arg5: number): MovedAtomT};

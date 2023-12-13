@@ -230,41 +230,26 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
 }
 
 const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean = false): libcootApi.SimpleMeshJS => {
-    const vertices = simpleMesh.vertices;
-    const triangles = simpleMesh.triangles;
-    let totIdxs: number[] = [];
-    let totPos: number[] = [];
-    let totNorm: number[] = [];
-    let totCol: number[] = [];
 
+    const print_timing = false;
     const ts = performance.now()
 
-    const trianglesSize = triangles.size()
-    for (let i = 0; i < trianglesSize; i++) {
-        const triangle = triangles.get(i)
-        const idxs = triangle.point_id;
-        if (perm)
-            totIdxs.push(...[idxs[0], idxs[2], idxs[1]]);
-        else
-            totIdxs.push(...idxs);
+    let totNorm
+    let totIdxs
+    let totPos  = Array.from(cootModule.getPositionsFromSimpleMesh(simpleMesh))
+    let totCol  = Array.from(cootModule.getColoursFromSimpleMesh(simpleMesh))
+    if (perm){
+        totNorm = Array.from(cootModule.getReversedNormalsFromSimpleMesh(simpleMesh))
+        totIdxs = Array.from(cootModule.getPermutedTriangleIndicesFromSimpleMesh(simpleMesh))
+    } else {
+        totNorm = Array.from(cootModule.getNormalsFromSimpleMesh(simpleMesh))
+        totIdxs = Array.from(cootModule.getTriangleIndicesFromSimpleMesh(simpleMesh))
     }
-    triangles.delete()
 
-    const verticesSize = vertices.size()
-    for (let i = 0; i < verticesSize; i++) {
-        const vert = vertices.get(i);
-        const vertPos = vert.pos
-        const vertNormal = vert.normal
-        const vertColor = vert.color
-        totPos.push(...vertPos);
-        if (perm)
-            totNorm.push(...[-vertNormal[0], -vertNormal[1], -vertNormal[2]]);
-        else
-            totNorm.push(...vertNormal);
-        totCol.push(...vertColor);
+    if(print_timing) {
+        const te = performance.now()
+        console.log("SIMPLE MESH TO MESH DATA",te-ts)
     }
-    vertices.delete()
-    const te = performance.now()
 
     return {
         prim_types: [["TRIANGLES"]],
