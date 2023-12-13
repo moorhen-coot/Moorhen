@@ -510,9 +510,10 @@ emscripten::val float32ArrayFromVector(const std::vector<float> &floatArray){
 
 emscripten::val getPositionsFromSimpleMesh(const coot::simple_mesh_t &m){
 
-    std::vector<float> floatArray;
-
     const auto &vertices = m.vertices;
+
+    std::vector<float> floatArray;
+    floatArray.reserve(vertices.size()*3);
 
     for(const auto &v : vertices){
         floatArray.push_back(v.pos[0]);
@@ -526,9 +527,10 @@ emscripten::val getPositionsFromSimpleMesh(const coot::simple_mesh_t &m){
 
 emscripten::val getReversedNormalsFromSimpleMesh(const coot::simple_mesh_t &m){
 
-    std::vector<float> floatArray;
-
     const auto &vertices = m.vertices;
+
+    std::vector<float> floatArray;
+    floatArray.reserve(vertices.size()*3);
 
     for(const auto &v : vertices){
         floatArray.push_back(-v.normal[0]);
@@ -542,9 +544,10 @@ emscripten::val getReversedNormalsFromSimpleMesh(const coot::simple_mesh_t &m){
 
 emscripten::val getNormalsFromSimpleMesh(const coot::simple_mesh_t &m){
 
-    std::vector<float> floatArray;
-
     const auto &vertices = m.vertices;
+
+    std::vector<float> floatArray;
+    floatArray.reserve(vertices.size()*3);
 
     for(const auto &v : vertices){
         floatArray.push_back(v.normal[0]);
@@ -558,9 +561,10 @@ emscripten::val getNormalsFromSimpleMesh(const coot::simple_mesh_t &m){
 
 emscripten::val getColoursFromSimpleMesh(const coot::simple_mesh_t &m){
 
-    std::vector<float> floatArray;
-
     const auto &vertices = m.vertices;
+
+    std::vector<float> floatArray;
+    floatArray.reserve(vertices.size()*4);
 
     for(const auto &v : vertices){
         floatArray.push_back(v.color[0]);
@@ -575,9 +579,10 @@ emscripten::val getColoursFromSimpleMesh(const coot::simple_mesh_t &m){
 
 emscripten::val getTriangleIndicesFromSimpleMesh(const coot::simple_mesh_t &m){
 
-    std::vector<unsigned int> uintArray;
-
     const auto &triangles = m.triangles;
+
+    std::vector<unsigned int> uintArray;
+    uintArray.reserve(triangles.size()*3);
 
     for(const auto &t : triangles){
         auto &idx = t.point_id;
@@ -592,9 +597,10 @@ emscripten::val getTriangleIndicesFromSimpleMesh(const coot::simple_mesh_t &m){
 
 emscripten::val getPermutedTriangleIndicesFromSimpleMesh(const coot::simple_mesh_t &m){
 
-    std::vector<unsigned int> uintArray;
-
     const auto &triangles = m.triangles;
+
+    std::vector<unsigned int> uintArray;
+    uintArray.reserve(triangles.size()*3);
 
     for(const auto &t : triangles){
         auto &idx = t.point_id;
@@ -609,9 +615,10 @@ emscripten::val getPermutedTriangleIndicesFromSimpleMesh(const coot::simple_mesh
 
 emscripten::val getLineIndicesFromSimpleMesh(const coot::simple_mesh_t &m){
 
-    std::vector<unsigned int> uintArray;
-
     const auto &triangles = m.triangles;
+
+    std::vector<unsigned int> uintArray;
+    uintArray.reserve(triangles.size()*6);
 
     for(const auto &t : triangles){
         auto &idx = t.point_id;
