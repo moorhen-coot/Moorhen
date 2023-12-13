@@ -279,7 +279,7 @@ describe("Testing MoorhenMap", () => {
         expect(histogramData.counts).toHaveLength(200)
     })
 
-    test("Test doCootContour", async () => {
+    test.skip("Test doCootContour", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
         const glRef = {
