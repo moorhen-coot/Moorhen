@@ -237,6 +237,8 @@ const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean 
     let totNorm: number[] = [];
     let totCol: number[] = [];
 
+    const ts = performance.now()
+
     const trianglesSize = triangles.size()
     for (let i = 0; i < trianglesSize; i++) {
         const triangle = triangles.get(i)
@@ -262,6 +264,7 @@ const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean 
         totCol.push(...vertColor);
     }
     vertices.delete()
+    const te = performance.now()
 
     return {
         prim_types: [["TRIANGLES"]],
@@ -691,29 +694,20 @@ const ramachandranDataToJSArray = (ramachandraData: emscriptem.vector<libcootApi
 }
 
 const simpleMeshToLineMeshData = (simpleMesh: libcootApi.SimpleMeshT, normalLighting: boolean): libcootApi.SimpleMeshJS => {
-    const vertices = simpleMesh.vertices;
-    const triangles = simpleMesh.triangles;
-    let totIdxs: number[] = [];
-    let totPos: number[] = [];
-    let totNorm: number[] = [];
-    let totCol: number[] = [];
 
-    const trianglesSize = triangles.size()
-    for (let i = 0; i < trianglesSize; i++) {
-        const triangle = triangles.get(i)
-        const idxs = triangle.point_id;
-        totIdxs.push(...[idxs[0], idxs[1], idxs[0], idxs[2], idxs[1], idxs[2]]);
-    }
-    triangles.delete()
+    const print_timing = false;
+    const ts = performance.now()
 
-    const verticesSize = vertices.size()
-    for (let i = 0; i < verticesSize; i++) {
-        const vert = vertices.get(i);
-        totPos.push(...vert.pos);
-        totNorm.push(...vert.normal);
-        totCol.push(...vert.color);
+    //FIXME - We should not have to convert back to Array
+    let totPos  = Array.from(cootModule.getPositionsFromSimpleMesh(simpleMesh))
+    let totNorm = Array.from(cootModule.getNormalsFromSimpleMesh(simpleMesh))
+    let totCol  = Array.from(cootModule.getColoursFromSimpleMesh(simpleMesh))
+    let totIdxs = Array.from(cootModule.getLineIndicesFromSimpleMesh(simpleMesh))
+
+    if(print_timing) {
+        const te = performance.now()
+        console.log("SIMPLE MESH TO LINE MESH DATA",te-ts)
     }
-    vertices.delete()
 
     if (normalLighting)
         return { prim_types: [["NORMALLINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], additional_norm_tri: [[totNorm]], norm_tri: [[totNorm]], col_tri: [[totCol]] };

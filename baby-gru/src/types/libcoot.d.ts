@@ -429,6 +429,11 @@ export namespace libcootApi {
         FS_unlink(tempFilename: string): void;
         FS_createDataFile(arg0: string, arg1: string, arg2: Uint8Array | string, arg3: boolean, arg4: boolean, arg5?: boolean): void;
         molecules_container_js: { new(verbose: boolean): MoleculesContainerJS };
+        testFloat32Array( arg0: any ): Float32Array;
+        getPositionsFromSimpleMesh( arg0: any ): Float32Array;
+        getNormalsFromSimpleMesh( arg0: any ): Float32Array;
+        getColoursFromSimpleMesh( arg0: any ): Float32Array;
+        getLineIndicesFromSimpleMesh( arg0: any ): Uint32Array;
         Vectormoved_residue_t: { new(): emscriptem.vector<MovedResidueT>};
         moved_residue_t: { new(arg0: string, arg1: number, arg2: string): MovedResidueT};
         moved_atom_t: { new(arg0: string, arg1: string, arg2: number, arg3: number, arg4: number, arg5: number): MovedAtomT};

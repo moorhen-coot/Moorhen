@@ -1559,6 +1559,7 @@ class DisplayBuffer {
     triangleNormals: number[];
     primitiveSizes: number[];
     bufferTypes: string[];
+    customColour: [number,number,number,number] | null;
     transformMatrix: number[];
     transformMatrixInteractive: number[];
     transformOriginInteractive: number[];
@@ -1587,8 +1588,12 @@ class DisplayBuffer {
         this.clearBuffers();
     }
 
+    setCustomColour(col) {
+        this.customColour = col;
+    }
+
     clearBuffers() {
-        this.triangleVertexRealNormalBuffer = []; // This is going to be for lit lines.
+        this.triangleVertexRealNormalBuffer = []; // This is for lit lines.
         this.triangleVertexNormalBuffer = [];
         this.triangleVertexPositionBuffer = [];
         this.triangleVertexIndexBuffer = [];
@@ -1606,6 +1611,7 @@ class DisplayBuffer {
         this.triangleNormals = [];
         this.primitiveSizes = [];
         this.bufferTypes = [];
+        this.customColour = null;
         this.transformMatrix = null;
         this.transformMatrixInteractive = null;
         this.transformOriginInteractive = [0, 0, 0];
@@ -1828,6 +1834,7 @@ interface ShaderTriangles extends MGWebGLShader {
     ySSAOScaling: WebGLUniformLocation;
     occludeDiffuse: WebGLUniformLocation;
     textureMatrixUniform: WebGLUniformLocation;
+    screenZ: WebGLUniformLocation;
 }
 
 interface ShaderGBuffersTriangles extends MGWebGLShader {
@@ -1999,7 +2006,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         cancelMouseTrack: boolean;
         circleTex: WebGLTexture;
         clipChangedEvent: Event;
-        context: CanvasRenderingContext2D;
+        context2d: CanvasRenderingContext2D;
         diskBuffer: DisplayBuffer;
         diskVertices: number[];
         doShadow: boolean;
@@ -2049,6 +2056,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         mouseTrackPositionBuffer: WebGLBuffer;
         moveFactor: number;
         mspfArray: number[];
+        pointsArray: number[];
         mvInvMatrix: Float32Array;
         mvMatrix: Float32Array;
         nAnimationFrames: number;
@@ -2158,9 +2166,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         ext: any;
         newTextLabels: any;
         drawingGBuffers: boolean;
+        axesTexture: any;
 
     resize(width: number, height: number) : void {
-        //TODO We need to be cleverer than this.
+
         let theWidth = width;
         let theHeight = height; //Keep it square for now
 
@@ -2193,14 +2202,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.fpsText = "";
         this.showShortCutHelp = null;
         this.mspfArray = [];
+        this.pointsArray = [];
         this.mouseTrackPoints = [];
 
         setInterval(() => {
-            if(!self.context) return;
+            if(!self.gl) return;
             const sum = this.mspfArray.reduce((a, b) => a + b, 0);
             const avg = (sum / this.mspfArray.length) || 0;
             const fps = 1.0/avg * 1000;
-            self.fpsText = avg.toFixed(2)+" ms/frame (" + (fps).toFixed(0)+" fps)";
+            self.fpsText = avg.toFixed(2)+" ms/frame (" + (fps).toFixed(0)+" fps) ["+this.canvas.width+" x "+this.canvas.height+"]";
             }, 1000);
 
         //Set to false to use WebGL 1
@@ -2234,16 +2244,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     draw() {
-
-        this.context = this.canvasRef.current.getContext('2d');
-        let ctx = this.context;
-        let c = this.canvasRef.current;
-
-        ctx.clearRect(0, 0, c.width, c.height);
-
-        ctx.fillStyle = 'red';
-        ctx.fillRect(0, 0, c.width, c.height);
-        //this.drawGradient(c.width/2, c.height/2);
     }
 
     setSSAORadius(radius) {
@@ -2362,13 +2362,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     setShadowDepthDebug(doShadowDebug) {
-        /*
-        this.doShadowDepthDebug = doShadowDebug;
-        this.doShadow = false;
-        if(this.doShadowDepthDebug)
-            this.doShadow = true;
-        if(this.doShadow&&!this.screenshotBuffersReady) this.initTextureFramebuffer();
-        */
     }
 
     componentDidUpdate(oldProps) {
@@ -2486,13 +2479,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.activeMolecule = null;
         this.draggableMolecule = null;
         this.currentlyDraggedAtom = null;
-        /*
-        window.addEventListener('resize',
-                function(evt){
-            self.setState({width:window.innerWidth/3, height:window.innerHeight/3}, ()=> self.resize(window.innerWidth/3, window.innerHeight/3));
-                },
-                false);
-                */
         this.fogClipOffset = 50;
         this.doPerspectiveProjection = false;
 
@@ -2612,314 +2598,24 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl_cursorPos[0] = this.canvas.width / 2.;
         this.gl_cursorPos[1] = this.canvas.height / 2.;
 
+
+        this.gl_nClipPlanes = 0;
+        this.gl_fog_start = this.fogClipOffset;
+        this.gl_fog_end = 1000.+this.fogClipOffset;
+
+        self.origin = [0.0, 0.0, 0.0];
+
+        self.mouseDown = false;
+        self.mouseDownButton = -1;
+
         const glc = initGL(this.canvas);
         this.gl = glc.gl;
         this.WEBGL2 = glc.WEBGL2;
 
         this.blurUBOBuffer = this.gl.createBuffer();
+        this.axesTexture = {};
 
-        //self.setState({width:window.innerWidth/3, height:window.innerHeight/3}, ()=> self.resize(window.innerWidth/3, window.innerHeight/3));
         const extensionArray = this.gl.getSupportedExtensions();
-
-        //this.stuartTexture = initTextures(this.gl);
-
-        if (this.WEBGL2) {
-            this.ext = true;
-            this.frag_depth_ext = true;
-            this.instanced_ext = true;
-            this.depth_texture = true;
-            const color_buffer_float_ext = this.gl.getExtension("EXT_color_buffer_float");
-            if(!color_buffer_float_ext){
-                alert("Bummer!!!");
-            } else {
-                console.log("color_buffer_float_ext?",color_buffer_float_ext)
-            }
-        } else {
-            this.ext = this.gl.getExtension("OES_element_index_uint");
-            if (!this.ext) {
-                alert("No OES_element_index_uint support");
-            }
-            console.log("##################################################");
-            console.log("Got extension");
-            console.log(this.ext);
-            this.frag_depth_ext = this.gl.getExtension("EXT_frag_depth");
-            this.depth_texture = this.gl.getExtension("WEBGL_depth_texture");
-            this.instanced_ext = this.gl.getExtension("ANGLE_instanced_arrays");
-            this.drawBuffersExt = this.gl.getExtension("WEBGL_draw_buffers");
-            if (!this.instanced_ext) {
-                alert("No instancing support");
-            }
-            if (!this.drawBuffersExt) {
-                alert("No WEBGL_draw_buffers support");
-            }
-            if (!this.depth_texture) {
-                this.depth_texture = this.gl.getExtension("MOZ_WEBGL_depth_texture");
-                if (!this.depth_texture) {
-                    this.depth_texture = this.gl.getExtension("WEBKIT_WEBGL_depth_texture");
-                    if (!this.depth_texture) {
-                        alert("No depth texture extension");
-                    }
-                }
-            }
-        }
-
-        this.textLegends = [];
-        this.newTextLabels = [];
-        //this.newTextLabels.push([{font:"20px helvetica",x:0,y:0,z:0,text:"Welcome to Moorhen"}]);
-
-        //this.textLegends.push({font:"40px helvetica",x:0,y:0,text:"So Moorhen is a cool program_œ∑´®¥¨^øπ“‘«æ…¬˚∆˙©ƒ∂ßåΩ≈ç√∫~µ≤≥¡€#¢∞§¶•ªº–≠§±;:|abcdefghijklmnopqrs"});
-        //this.textLegends.push({font:"40px times",x:0.25,y:0.25,text:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@£$%^&*()"});
-        //this.textLegends.push({font:"20px helvetica",x:0,y:0,text:"Welcome to Moorhen"});
-
-        this.textHeightScaling = 800.;
-        if(this.doShadow) this.initTextureFramebuffer(); //This is testing only
-
-        if (!this.frag_depth_ext) {
-            console.log("No EXT_frag_depth support");
-            console.log("This is supported in most browsers, except IE. And may never be supported in IE.");
-            console.log("This extension is supported in Microsoft Edge, so Windows 10 is required for perfect spheres in MS Browser.");
-            console.log("Other browers on Windows 7/8/8.1 do have this extension.");
-        }
-        this.textTex = this.gl.createTexture();
-        this.circleTex = this.gl.createTexture();
-
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.circleTex);
-        this.makeCircleCanvas("H", 128, 128, "black");
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.circleCtx.canvas);
-
-        this.gl_nClipPlanes = 0;
-        this.gl_fog_start = this.fogClipOffset;
-        this.gl_fog_end = 1000.+this.fogClipOffset;
-        //this.gl.lineWidth(2.0);
-        this.gl.blendFuncSeparate(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA, this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA);
-        this.gl.enable(this.gl.BLEND);
-
-        // Sigh doing the old-fashioned way for IE.
-        this.statusChangedEvent = document.createEvent('Event');
-        this.statusChangedEvent.initEvent('statusChanged', true, true);
-
-        this.viewChangedEvent = document.createEvent('Event');
-        this.viewChangedEvent.initEvent('viewChanged', true, true);
-
-        this.fogChangedEvent = document.createEvent('Event');
-        this.fogChangedEvent.initEvent('fogChanged', true, true);
-
-        this.clipChangedEvent = document.createEvent('Event');
-        this.clipChangedEvent.initEvent('clipChanged', true, true);
-
-        let vertexShader;
-        let fragmentShader;
-        let gBufferVertexShader;
-        let gBufferInstancedVertexShader;
-        let gBufferFragmentShader;
-        let gBufferTwodVertexShader;
-        let gBufferThickLineNormalVertexShader;
-        let gBufferPerfectSphereFragmentShader;
-        let blurVertexShader;
-        let ssaoFragmentShader;
-        let overlayFragmentShader;
-        let blurXFragmentShader;
-        let blurYFragmentShader;
-        let simpleBlurXFragmentShader;
-        let simpleBlurYFragmentShader;
-        let lineVertexShader;
-        let thickLineVertexShader;
-        let thickLineNormalVertexShader;
-        let lineFragmentShader;
-        let textVertexShader;
-        let textVertexShaderInstanced;
-        let circlesVertexShader;
-        let textFragmentShader;
-        let circlesFragmentShader;
-        let pointSpheresVertexShader;
-        let pointSpheresFragmentShader;
-        let twoDShapesFragmentShader;
-        let twoDShapesVertexShader;
-        let renderFrameBufferFragmentShader;
-        let perfectSphereFragmentShader;
-        let perfectSphereOutlineFragmentShader;
-
-        let shadowVertexShader; //Depth pass
-        let shadowVertexShaderInstanced; //Depth pass
-        let shadowFragmentShader; //Depth pass
-        let shadowDepthPerfectSphereFragmentShader; //Depth pass
-        let shadowDeptTwoDShapesVertexShader; //Depth pass
-
-        this.doRedraw = false;
-        setInterval(function () { self.drawSceneIfDirty() }, 16);
-
-        let ssao_fragment_shader_source = ssao_fragment_shader_source_webgl1;
-        let blur_vertex_shader_source = blur_vertex_shader_source_webgl1;
-        let blur_x_fragment_shader_source = blur_x_fragment_shader_source_webgl1;
-        //I'm giving up on WebGL1 now ...
-        let blur_x_simple_fragment_shader_source = blur_x_fragment_shader_source_webgl1;
-        let blur_y_simple_fragment_shader_source = blur_y_fragment_shader_source_webgl1;
-        let overlay_fragment_shader_source = overlay_fragment_shader_source_webgl1;
-        let blur_y_fragment_shader_source = blur_y_fragment_shader_source_webgl1;
-        let lines_fragment_shader_source = lines_fragment_shader_source_webgl1;
-        let text_instanced_vertex_shader_source = text_instanced_vertex_shader_source_webgl1;
-        let lines_vertex_shader_source = lines_vertex_shader_source_webgl1;
-        let perfect_sphere_fragment_shader_source = perfect_sphere_fragment_shader_source_webgl1;
-        let perfect_sphere_outline_fragment_shader_source = perfect_sphere_outline_fragment_shader_source_webgl1;
-        let pointspheres_fragment_shader_source = pointspheres_fragment_shader_source_webgl1;
-        let pointspheres_vertex_shader_source = pointspheres_vertex_shader_source_webgl1;
-        let render_framebuffer_fragment_shader_source = render_framebuffer_fragment_shader_source_webgl1;
-        let shadow_fragment_shader_source = shadow_fragment_shader_source_webgl1;
-        let flat_colour_fragment_shader_source = flat_colour_fragment_shader_source_webgl1;
-        let shadow_depth_perfect_sphere_fragment_shader_source = shadow_depth_perfect_sphere_fragment_shader_source_webgl1;
-        let shadow_depth_twod_vertex_shader_source = shadow_depth_twod_vertex_shader_source_webgl1;
-        let shadow_vertex_shader_source = shadow_vertex_shader_source_webgl1;
-        let shadow_instanced_vertex_shader_source = shadow_instanced_vertex_shader_source_webgl1;
-        let text_fragment_shader_source = text_fragment_shader_source_webgl1;
-        let circles_fragment_shader_source = circles_fragment_shader_source_webgl1;
-        let circles_vertex_shader_source = circles_vertex_shader_source_webgl1;
-        let thick_lines_vertex_shader_source = thick_lines_vertex_shader_source_webgl1;
-        let thick_lines_normal_vertex_shader_source = thick_lines_normal_vertex_shader_source_webgl1;
-        let triangle_fragment_shader_source = triangle_fragment_shader_source_webgl1;
-        let triangle_vertex_shader_source = triangle_vertex_shader_source_webgl1;
-        let twod_fragment_shader_source = twod_fragment_shader_source_webgl1;
-        let twod_vertex_shader_source = twod_vertex_shader_source_webgl1;
-        let triangle_instanced_vertex_shader_source = triangle_instanced_vertex_shader_source_webgl1;
-        let triangle_gbuffer_fragment_shader_source = triangle_gbuffer_fragment_shader_source_webgl1;
-        let triangle_gbuffer_vertex_shader_source = triangle_gbuffer_vertex_shader_source_webgl1;
-        let triangle_instanced_gbuffer_vertex_shader_source = triangle_instanced_gbuffer_vertex_shader_source_webgl1;
-        let perfect_sphere_gbuffer_fragment_shader_source = perfect_sphere_gbuffer_fragment_shader_source_webgl1;
-        let twod_gbuffer_vertex_shader_source = twod_gbuffer_vertex_shader_source_webgl1;
-        let thick_lines_normal_gbuffer_vertex_shader_source = thick_lines_normal_gbuffer_vertex_shader_source_webgl1;
-
-        if(this.WEBGL2){
-            ssao_fragment_shader_source = ssao_fragment_shader_source_webgl2;
-            blur_vertex_shader_source = blur_vertex_shader_source_webgl2;
-            blur_x_fragment_shader_source = blur_x_fragment_shader_source_webgl2;
-            blur_x_simple_fragment_shader_source = blur_x_simple_fragment_shader_source_webgl2;
-            blur_y_simple_fragment_shader_source = blur_y_simple_fragment_shader_source_webgl2;
-            overlay_fragment_shader_source = overlay_fragment_shader_source_webgl2;
-            blur_y_fragment_shader_source = blur_y_fragment_shader_source_webgl2;
-            lines_fragment_shader_source = lines_fragment_shader_source_webgl2;
-            text_instanced_vertex_shader_source = text_instanced_vertex_shader_source_webgl2;
-            lines_vertex_shader_source = lines_vertex_shader_source_webgl2;
-            perfect_sphere_fragment_shader_source = perfect_sphere_fragment_shader_source_webgl2;
-            perfect_sphere_outline_fragment_shader_source = perfect_sphere_outline_fragment_shader_source_webgl2;
-            pointspheres_fragment_shader_source = pointspheres_fragment_shader_source_webgl2;
-            pointspheres_vertex_shader_source = pointspheres_vertex_shader_source_webgl2;
-            render_framebuffer_fragment_shader_source = render_framebuffer_fragment_shader_source_webgl2;
-            shadow_fragment_shader_source = shadow_fragment_shader_source_webgl2;
-            flat_colour_fragment_shader_source = flat_colour_fragment_shader_source_webgl2;
-            shadow_depth_perfect_sphere_fragment_shader_source = shadow_depth_perfect_sphere_fragment_shader_source_webgl2;
-            shadow_depth_twod_vertex_shader_source = shadow_depth_twod_vertex_shader_source_webgl2;
-            shadow_vertex_shader_source = shadow_vertex_shader_source_webgl2;
-            shadow_instanced_vertex_shader_source = shadow_instanced_vertex_shader_source_webgl2;
-            text_fragment_shader_source = text_fragment_shader_source_webgl2;
-            circles_fragment_shader_source = circles_fragment_shader_source_webgl2;
-            circles_vertex_shader_source = circles_vertex_shader_source_webgl2;
-            thick_lines_vertex_shader_source = thick_lines_vertex_shader_source_webgl2;
-            thick_lines_normal_vertex_shader_source = thick_lines_normal_vertex_shader_source_webgl2;
-            triangle_fragment_shader_source = triangle_fragment_shader_source_webgl2;
-            triangle_vertex_shader_source = triangle_vertex_shader_source_webgl2;
-            twod_fragment_shader_source = twod_fragment_shader_source_webgl2;
-            twod_vertex_shader_source = twod_vertex_shader_source_webgl2;
-            triangle_instanced_vertex_shader_source = triangle_instanced_vertex_shader_source_webgl2;
-            triangle_gbuffer_fragment_shader_source = triangle_gbuffer_fragment_shader_source_webgl2;
-            triangle_gbuffer_vertex_shader_source = triangle_gbuffer_vertex_shader_source_webgl2;
-            triangle_instanced_gbuffer_vertex_shader_source = triangle_instanced_gbuffer_vertex_shader_source_webgl2;
-            perfect_sphere_gbuffer_fragment_shader_source = perfect_sphere_gbuffer_fragment_shader_source_webgl2;
-            twod_gbuffer_vertex_shader_source = twod_gbuffer_vertex_shader_source_webgl2;
-            thick_lines_normal_gbuffer_vertex_shader_source = thick_lines_normal_gbuffer_vertex_shader_source_webgl2;
-        }
-
-        vertexShader = getShader(self.gl, triangle_vertex_shader_source, "vertex");
-        const vertexShaderInstanced = getShader(self.gl, triangle_instanced_vertex_shader_source, "vertex");
-        fragmentShader = getShader(self.gl, triangle_fragment_shader_source, "fragment");
-        gBufferFragmentShader = getShader(self.gl, triangle_gbuffer_fragment_shader_source, "fragment");
-        gBufferInstancedVertexShader = getShader(self.gl, triangle_instanced_gbuffer_vertex_shader_source, "vertex");
-        gBufferTwodVertexShader = getShader(self.gl, twod_gbuffer_vertex_shader_source, "vertex");
-        gBufferThickLineNormalVertexShader = getShader(self.gl, thick_lines_normal_gbuffer_vertex_shader_source, "vertex");
-        gBufferPerfectSphereFragmentShader = getShader(self.gl, perfect_sphere_gbuffer_fragment_shader_source, "fragment");
-        gBufferVertexShader = getShader(self.gl, triangle_gbuffer_vertex_shader_source, "vertex");
-        self.initGBufferShaders(gBufferVertexShader, gBufferFragmentShader);
-        lineVertexShader = getShader(self.gl, lines_vertex_shader_source, "vertex");
-        thickLineVertexShader = getShader(self.gl, thick_lines_vertex_shader_source, "vertex");
-        thickLineNormalVertexShader = getShader(self.gl, thick_lines_normal_vertex_shader_source, "vertex");
-        blurVertexShader = getShader(self.gl, blur_vertex_shader_source, "vertex");
-        ssaoFragmentShader = getShader(self.gl, ssao_fragment_shader_source, "fragment");
-        blurXFragmentShader = getShader(self.gl, blur_x_fragment_shader_source, "fragment");
-        overlayFragmentShader = getShader(self.gl, overlay_fragment_shader_source, "fragment");
-        blurYFragmentShader = getShader(self.gl, blur_y_fragment_shader_source, "fragment");
-        simpleBlurXFragmentShader = getShader(self.gl, blur_x_simple_fragment_shader_source, "fragment");
-        simpleBlurYFragmentShader = getShader(self.gl, blur_y_simple_fragment_shader_source, "fragment");
-        lineFragmentShader = getShader(self.gl, lines_fragment_shader_source, "fragment");
-        textVertexShader = getShader(self.gl, triangle_vertex_shader_source, "vertex");
-        textVertexShaderInstanced = getShader(self.gl, text_instanced_vertex_shader_source, "vertex");
-        circlesVertexShader = getShader(self.gl, circles_vertex_shader_source, "vertex");
-        textFragmentShader = getShader(self.gl, text_fragment_shader_source, "fragment");
-        circlesFragmentShader = getShader(self.gl, circles_fragment_shader_source, "fragment");
-        pointSpheresVertexShader = getShader(self.gl, pointspheres_vertex_shader_source, "vertex");
-        pointSpheresFragmentShader = getShader(self.gl, pointspheres_fragment_shader_source, "fragment");
-        twoDShapesVertexShader = getShader(self.gl, twod_vertex_shader_source, "vertex");
-        twoDShapesFragmentShader = getShader(self.gl, twod_fragment_shader_source, "fragment");
-        renderFrameBufferFragmentShader = getShader(self.gl, render_framebuffer_fragment_shader_source, "fragment");
-        const flatColourFragmentShader = getShader(self.gl, flat_colour_fragment_shader_source, "fragment");
-        if (self.frag_depth_ext) {
-            perfectSphereFragmentShader = getShader(self.gl, perfect_sphere_fragment_shader_source, "fragment");
-            perfectSphereOutlineFragmentShader = getShader(self.gl, perfect_sphere_outline_fragment_shader_source, "fragment");
-            shadowVertexShader = getShader(self.gl, shadow_vertex_shader_source, "vertex");
-            shadowVertexShaderInstanced = getShader(self.gl, shadow_instanced_vertex_shader_source, "vertex");
-            shadowFragmentShader = getShader(self.gl, shadow_fragment_shader_source, "fragment");
-            self.initShadowShaders(shadowVertexShader, shadowFragmentShader);
-            self.initInstancedShadowShaders(shadowVertexShaderInstanced, shadowFragmentShader);
-            self.initInstancedOutlineShaders(vertexShaderInstanced, flatColourFragmentShader);
-        }
-
-        self.initRenderFrameBufferShaders(blurVertexShader, renderFrameBufferFragmentShader);
-        self.initLineShaders(lineVertexShader, lineFragmentShader);
-        self.initOverlayShader(blurVertexShader, overlayFragmentShader);
-        self.initBlurXShader(blurVertexShader, blurXFragmentShader);
-        self.initSSAOShader(blurVertexShader, ssaoFragmentShader);
-        self.initBlurYShader(blurVertexShader, blurYFragmentShader);
-        self.initSimpleBlurXShader(blurVertexShader, simpleBlurXFragmentShader);
-        self.initSimpleBlurYShader(blurVertexShader, simpleBlurYFragmentShader);
-        self.initThickLineShaders(thickLineVertexShader, lineFragmentShader);
-        self.initThickLineNormalShaders(thickLineNormalVertexShader, fragmentShader);
-        self.initPointSpheresShaders(pointSpheresVertexShader, pointSpheresFragmentShader);
-        self.initTwoDShapesShaders(twoDShapesVertexShader, twoDShapesFragmentShader);
-        self.initImageShaders(twoDShapesVertexShader, textFragmentShader);
-        if (self.frag_depth_ext) {
-            self.initPerfectSphereShaders(twoDShapesVertexShader, perfectSphereFragmentShader);
-            self.initPerfectSphereOutlineShaders(twoDShapesVertexShader, perfectSphereOutlineFragmentShader);
-            shadowDepthPerfectSphereFragmentShader = getShader(self.gl, shadow_depth_perfect_sphere_fragment_shader_source, "fragment");
-            shadowDeptTwoDShapesVertexShader = getShader(self.gl, shadow_depth_twod_vertex_shader_source, "vertex");
-            self.initDepthShadowPerfectSphereShaders(shadowDepthPerfectSphereFragmentShader, shadowDeptTwoDShapesVertexShader);
-        }
-        self.initTextBackgroundShaders(textVertexShader, textFragmentShader);
-        self.initTextInstancedShaders(textVertexShaderInstanced, textFragmentShader);
-        self.gl.disableVertexAttribArray(self.shaderProgramTextBackground.vertexTextureAttribute);
-        self.initCirclesShaders(circlesVertexShader, circlesFragmentShader);
-        self.gl.disableVertexAttribArray(self.shaderProgramCircles.vertexTextureAttribute);
-        self.initShaders(vertexShader, fragmentShader);
-        self.initOutlineShaders(vertexShader, flatColourFragmentShader);
-        self.initShadersInstanced(vertexShaderInstanced, fragmentShader);
-        self.initGBufferShadersInstanced(gBufferInstancedVertexShader, gBufferFragmentShader);
-        self.initGBufferShadersPerfectSphere(gBufferTwodVertexShader, gBufferPerfectSphereFragmentShader);
-        self.initGBufferThickLineNormalShaders(gBufferThickLineNormalVertexShader, gBufferFragmentShader);
-
-        this.ssaoRadius = 2.5;
-        this.ssaoBias = 0.025;
-        if(this.WEBGL2) this.initializeSSAOBuffers();
-
-        self.buildBuffers();
-
-        this.measureTextCanvasTexture = new TextCanvasTexture(this,1024,2048);
-        this.labelsTextCanvasTexture = new TextCanvasTexture(this,128,2048);
-
-        self.gl.clearColor(self.background_colour[0], self.background_colour[1], self.background_colour[2], self.background_colour[3]);
-        self.gl.enable(self.gl.DEPTH_TEST);
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-
-        self.origin = [0.0, 0.0, 0.0];
-        //const shader_version = self.gl.getParameter(self.gl.SHADING_LANGUAGE_VERSION);
-
-        self.mouseDown = false;
-        self.mouseDownButton = -1;
 
         if (this.doneEvents === undefined) {
             self.canvas.addEventListener("mousedown",
@@ -2960,6 +2656,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     evt.stopPropagation();
                 },
                 false);
+            console.log("addEventListener");
             self.canvas.addEventListener("mousemove",
                 function (evt) {
                     self.doMouseMove(evt, self);
@@ -3045,23 +2742,316 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
         this.doneEvents = true;
 
-        self.gl.viewportWidth = self.canvas.width;
-        self.gl.viewportHeight = self.canvas.height;
         self.light_positions = new Float32Array([0.0, 0.0, 60.0, 1.0]);
         self.light_colours_ambient = new Float32Array([0.0, 0.0, 0.0, 1.0]);
         self.light_colours_specular = new Float32Array([1.0, 1.0, 1.0, 1.0]);
         self.light_colours_diffuse = new Float32Array([1.0, 1.0, 1.0, 1.0]);
         self.specularPower = 64.0;
 
-        self.setBlurSize(self.blurSize);
+        this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], this.background_colour[3]);
+        if (this.WEBGL2) {
+            console.log("WebGL2")
+            this.ext = true;
+            this.frag_depth_ext = true;
+            this.instanced_ext = true;
+            this.depth_texture = true;
+            const color_buffer_float_ext = this.gl.getExtension("EXT_color_buffer_float");
+            if(!color_buffer_float_ext){
+                alert("No EXT_color_buffer_float!!!");
+            } else {
+                console.log("color_buffer_float_ext?",color_buffer_float_ext)
+            }
+            const float_blend_ext = this.gl.getExtension("EXT_float_blend");
+            if(!float_blend_ext){
+                alert("No float_blend_ext!!!");
+            } else {
+                console.log("float_blend_ext?",float_blend_ext)
+            }
+        } else {
+            this.ext = this.gl.getExtension("OES_element_index_uint");
+            if (!this.ext) {
+                alert("No OES_element_index_uint support");
+            }
+            console.log("##################################################");
+            console.log("Got extension");
+            console.log(this.ext);
+            this.frag_depth_ext = this.gl.getExtension("EXT_frag_depth");
+            this.depth_texture = this.gl.getExtension("WEBGL_depth_texture");
+            this.instanced_ext = this.gl.getExtension("ANGLE_instanced_arrays");
+            this.drawBuffersExt = this.gl.getExtension("WEBGL_draw_buffers");
+            if (!this.instanced_ext) {
+                alert("No instancing support");
+            }
+            if (!this.drawBuffersExt) {
+                alert("No WEBGL_draw_buffers support");
+            }
+            if (!this.depth_texture) {
+                this.depth_texture = this.gl.getExtension("MOZ_WEBGL_depth_texture");
+                if (!this.depth_texture) {
+                    this.depth_texture = this.gl.getExtension("WEBKIT_WEBGL_depth_texture");
+                    if (!this.depth_texture) {
+                        alert("No depth texture extension");
+                    }
+                }
+            }
+        }
 
+        setInterval(function () { self.drawSceneIfDirty() }, 16);
+        this.initializeShaders();
+
+        this.textLegends = [];
+        this.newTextLabels = [];
+
+        this.textHeightScaling = 800.;
+        if(this.doShadow) this.initTextureFramebuffer(); //This is testing only
+
+        if (!this.frag_depth_ext) {
+            console.log("No EXT_frag_depth support");
+            console.log("This is supported in most browsers, except IE. And may never be supported in IE.");
+            console.log("This extension is supported in Microsoft Edge, so Windows 10 is required for perfect spheres in MS Browser.");
+            console.log("Other browers on Windows 7/8/8.1 do have this extension.");
+        }
+        this.textTex = this.gl.createTexture();
+        this.circleTex = this.gl.createTexture();
+
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.circleTex);
+        this.makeCircleCanvas("H", 128, 128, "black");
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.circleCtx.canvas);
+
+        this.gl_nClipPlanes = 0;
+        this.gl_fog_start = this.fogClipOffset;
+        this.gl_fog_end = 1000.+this.fogClipOffset;
+        //this.gl.lineWidth(2.0);
+        this.gl.blendFuncSeparate(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA, this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA);
+        this.gl.enable(this.gl.BLEND);
+
+        this.ssaoRadius = 2.5;
+        this.ssaoBias = 0.025;
+        if(this.WEBGL2) this.initializeSSAOBuffers();
+
+        self.buildBuffers();
+
+        this.measureTextCanvasTexture = new TextCanvasTexture(this,1024,2048);
+        this.labelsTextCanvasTexture = new TextCanvasTexture(this,128,2048);
+
+        self.gl.clearColor(self.background_colour[0], self.background_colour[1], self.background_colour[2], self.background_colour[3]);
+        self.gl.enable(self.gl.DEPTH_TEST);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+
+        self.origin = [0.0, 0.0, 0.0];
+        //const shader_version = self.gl.getParameter(self.gl.SHADING_LANGUAGE_VERSION);
+
+        self.mouseDown = false;
+        self.mouseDownButton = -1;
+
+        self.setBlurSize(self.blurSize);
         self.drawScene();
         self.ready = true;
-        return;
 
     }
 
+    initializeShaders() : void {
+        let vertexShader;
+        let fragmentShader;
+        let gBufferVertexShader;
+        let gBufferInstancedVertexShader;
+        let gBufferFragmentShader;
+        let gBufferTwodVertexShader;
+        let gBufferThickLineNormalVertexShader;
+        let gBufferPerfectSphereFragmentShader;
+        let blurVertexShader;
+        let ssaoFragmentShader;
+        let overlayFragmentShader;
+        let blurXFragmentShader;
+        let blurYFragmentShader;
+        let simpleBlurXFragmentShader;
+        let simpleBlurYFragmentShader;
+        let lineVertexShader;
+        let thickLineVertexShader;
+        let thickLineNormalVertexShader;
+        let lineFragmentShader;
+        let textVertexShader;
+        let textVertexShaderInstanced;
+        let circlesVertexShader;
+        let textFragmentShader;
+        let circlesFragmentShader;
+        let pointSpheresVertexShader;
+        let pointSpheresFragmentShader;
+        let twoDShapesFragmentShader;
+        let twoDShapesVertexShader;
+        let renderFrameBufferFragmentShader;
+        let perfectSphereFragmentShader;
+        let perfectSphereOutlineFragmentShader;
+
+        let shadowVertexShader; //Depth pass
+        let shadowVertexShaderInstanced; //Depth pass
+        let shadowFragmentShader; //Depth pass
+        let shadowDepthPerfectSphereFragmentShader; //Depth pass
+        let shadowDeptTwoDShapesVertexShader; //Depth pass
+
+        this.doRedraw = false;
+
+        let ssao_fragment_shader_source = ssao_fragment_shader_source_webgl1;
+        let blur_vertex_shader_source = blur_vertex_shader_source_webgl1;
+        let blur_x_fragment_shader_source = blur_x_fragment_shader_source_webgl1;
+        //I'm giving up on WebGL1 now ...
+        let blur_x_simple_fragment_shader_source = blur_x_fragment_shader_source_webgl1;
+        let blur_y_simple_fragment_shader_source = blur_y_fragment_shader_source_webgl1;
+        let overlay_fragment_shader_source = overlay_fragment_shader_source_webgl1;
+        let blur_y_fragment_shader_source = blur_y_fragment_shader_source_webgl1;
+        let lines_fragment_shader_source = lines_fragment_shader_source_webgl1;
+        let text_instanced_vertex_shader_source = text_instanced_vertex_shader_source_webgl1;
+        let lines_vertex_shader_source = lines_vertex_shader_source_webgl1;
+        let perfect_sphere_fragment_shader_source = perfect_sphere_fragment_shader_source_webgl1;
+        let perfect_sphere_outline_fragment_shader_source = perfect_sphere_outline_fragment_shader_source_webgl1;
+        let pointspheres_fragment_shader_source = pointspheres_fragment_shader_source_webgl1;
+        let pointspheres_vertex_shader_source = pointspheres_vertex_shader_source_webgl1;
+        let render_framebuffer_fragment_shader_source = render_framebuffer_fragment_shader_source_webgl1;
+        let shadow_fragment_shader_source = shadow_fragment_shader_source_webgl1;
+        let flat_colour_fragment_shader_source = flat_colour_fragment_shader_source_webgl1;
+        let shadow_depth_perfect_sphere_fragment_shader_source = shadow_depth_perfect_sphere_fragment_shader_source_webgl1;
+        let shadow_depth_twod_vertex_shader_source = shadow_depth_twod_vertex_shader_source_webgl1;
+        let shadow_vertex_shader_source = shadow_vertex_shader_source_webgl1;
+        let shadow_instanced_vertex_shader_source = shadow_instanced_vertex_shader_source_webgl1;
+        let text_fragment_shader_source = text_fragment_shader_source_webgl1;
+        let circles_fragment_shader_source = circles_fragment_shader_source_webgl1;
+        let circles_vertex_shader_source = circles_vertex_shader_source_webgl1;
+        let thick_lines_vertex_shader_source = thick_lines_vertex_shader_source_webgl1;
+        let thick_lines_normal_vertex_shader_source = thick_lines_normal_vertex_shader_source_webgl1;
+        let triangle_fragment_shader_source = triangle_fragment_shader_source_webgl1;
+        let triangle_vertex_shader_source = triangle_vertex_shader_source_webgl1;
+        let twod_fragment_shader_source = twod_fragment_shader_source_webgl1;
+        let twod_vertex_shader_source = twod_vertex_shader_source_webgl1;
+        let triangle_instanced_vertex_shader_source = triangle_instanced_vertex_shader_source_webgl1;
+        let triangle_gbuffer_fragment_shader_source = triangle_gbuffer_fragment_shader_source_webgl1;
+        let triangle_gbuffer_vertex_shader_source = triangle_gbuffer_vertex_shader_source_webgl1;
+        let triangle_instanced_gbuffer_vertex_shader_source = triangle_instanced_gbuffer_vertex_shader_source_webgl1;
+        let perfect_sphere_gbuffer_fragment_shader_source = perfect_sphere_gbuffer_fragment_shader_source_webgl1;
+        let twod_gbuffer_vertex_shader_source = twod_gbuffer_vertex_shader_source_webgl1;
+        let thick_lines_normal_gbuffer_vertex_shader_source = thick_lines_normal_gbuffer_vertex_shader_source_webgl1;
+
+        if(this.WEBGL2){
+            ssao_fragment_shader_source = ssao_fragment_shader_source_webgl2;
+            blur_vertex_shader_source = blur_vertex_shader_source_webgl2;
+            blur_x_fragment_shader_source = blur_x_fragment_shader_source_webgl2;
+            blur_x_simple_fragment_shader_source = blur_x_simple_fragment_shader_source_webgl2;
+            blur_y_simple_fragment_shader_source = blur_y_simple_fragment_shader_source_webgl2;
+            overlay_fragment_shader_source = overlay_fragment_shader_source_webgl2;
+            blur_y_fragment_shader_source = blur_y_fragment_shader_source_webgl2;
+            lines_fragment_shader_source = lines_fragment_shader_source_webgl2;
+            text_instanced_vertex_shader_source = text_instanced_vertex_shader_source_webgl2;
+            lines_vertex_shader_source = lines_vertex_shader_source_webgl2;
+            perfect_sphere_fragment_shader_source = perfect_sphere_fragment_shader_source_webgl2;
+            perfect_sphere_outline_fragment_shader_source = perfect_sphere_outline_fragment_shader_source_webgl2;
+            pointspheres_fragment_shader_source = pointspheres_fragment_shader_source_webgl2;
+            pointspheres_vertex_shader_source = pointspheres_vertex_shader_source_webgl2;
+            render_framebuffer_fragment_shader_source = render_framebuffer_fragment_shader_source_webgl2;
+            shadow_fragment_shader_source = shadow_fragment_shader_source_webgl2;
+            flat_colour_fragment_shader_source = flat_colour_fragment_shader_source_webgl2;
+            shadow_depth_perfect_sphere_fragment_shader_source = shadow_depth_perfect_sphere_fragment_shader_source_webgl2;
+            shadow_depth_twod_vertex_shader_source = shadow_depth_twod_vertex_shader_source_webgl2;
+            shadow_vertex_shader_source = shadow_vertex_shader_source_webgl2;
+            shadow_instanced_vertex_shader_source = shadow_instanced_vertex_shader_source_webgl2;
+            text_fragment_shader_source = text_fragment_shader_source_webgl2;
+            circles_fragment_shader_source = circles_fragment_shader_source_webgl2;
+            circles_vertex_shader_source = circles_vertex_shader_source_webgl2;
+            thick_lines_vertex_shader_source = thick_lines_vertex_shader_source_webgl2;
+            thick_lines_normal_vertex_shader_source = thick_lines_normal_vertex_shader_source_webgl2;
+            triangle_fragment_shader_source = triangle_fragment_shader_source_webgl2;
+            triangle_vertex_shader_source = triangle_vertex_shader_source_webgl2;
+            twod_fragment_shader_source = twod_fragment_shader_source_webgl2;
+            twod_vertex_shader_source = twod_vertex_shader_source_webgl2;
+            triangle_instanced_vertex_shader_source = triangle_instanced_vertex_shader_source_webgl2;
+            triangle_gbuffer_fragment_shader_source = triangle_gbuffer_fragment_shader_source_webgl2;
+            triangle_gbuffer_vertex_shader_source = triangle_gbuffer_vertex_shader_source_webgl2;
+            triangle_instanced_gbuffer_vertex_shader_source = triangle_instanced_gbuffer_vertex_shader_source_webgl2;
+            perfect_sphere_gbuffer_fragment_shader_source = perfect_sphere_gbuffer_fragment_shader_source_webgl2;
+            twod_gbuffer_vertex_shader_source = twod_gbuffer_vertex_shader_source_webgl2;
+            thick_lines_normal_gbuffer_vertex_shader_source = thick_lines_normal_gbuffer_vertex_shader_source_webgl2;
+        }
+
+        vertexShader = getShader(this.gl, triangle_vertex_shader_source, "vertex");
+        const vertexShaderInstanced = getShader(this.gl, triangle_instanced_vertex_shader_source, "vertex");
+        fragmentShader = getShader(this.gl, triangle_fragment_shader_source, "fragment");
+        gBufferFragmentShader = getShader(this.gl, triangle_gbuffer_fragment_shader_source, "fragment");
+        gBufferInstancedVertexShader = getShader(this.gl, triangle_instanced_gbuffer_vertex_shader_source, "vertex");
+        gBufferTwodVertexShader = getShader(this.gl, twod_gbuffer_vertex_shader_source, "vertex");
+        gBufferThickLineNormalVertexShader = getShader(this.gl, thick_lines_normal_gbuffer_vertex_shader_source, "vertex");
+        gBufferPerfectSphereFragmentShader = getShader(this.gl, perfect_sphere_gbuffer_fragment_shader_source, "fragment");
+        gBufferVertexShader = getShader(this.gl, triangle_gbuffer_vertex_shader_source, "vertex");
+        this.initGBufferShaders(gBufferVertexShader, gBufferFragmentShader);
+        lineVertexShader = getShader(this.gl, lines_vertex_shader_source, "vertex");
+        thickLineVertexShader = getShader(this.gl, thick_lines_vertex_shader_source, "vertex");
+        thickLineNormalVertexShader = getShader(this.gl, thick_lines_normal_vertex_shader_source, "vertex");
+        blurVertexShader = getShader(this.gl, blur_vertex_shader_source, "vertex");
+        ssaoFragmentShader = getShader(this.gl, ssao_fragment_shader_source, "fragment");
+        blurXFragmentShader = getShader(this.gl, blur_x_fragment_shader_source, "fragment");
+        overlayFragmentShader = getShader(this.gl, overlay_fragment_shader_source, "fragment");
+        blurYFragmentShader = getShader(this.gl, blur_y_fragment_shader_source, "fragment");
+        simpleBlurXFragmentShader = getShader(this.gl, blur_x_simple_fragment_shader_source, "fragment");
+        simpleBlurYFragmentShader = getShader(this.gl, blur_y_simple_fragment_shader_source, "fragment");
+        lineFragmentShader = getShader(this.gl, lines_fragment_shader_source, "fragment");
+        textVertexShader = getShader(this.gl, triangle_vertex_shader_source, "vertex");
+        textVertexShaderInstanced = getShader(this.gl, text_instanced_vertex_shader_source, "vertex");
+        circlesVertexShader = getShader(this.gl, circles_vertex_shader_source, "vertex");
+        textFragmentShader = getShader(this.gl, text_fragment_shader_source, "fragment");
+        circlesFragmentShader = getShader(this.gl, circles_fragment_shader_source, "fragment");
+        pointSpheresVertexShader = getShader(this.gl, pointspheres_vertex_shader_source, "vertex");
+        pointSpheresFragmentShader = getShader(this.gl, pointspheres_fragment_shader_source, "fragment");
+        twoDShapesVertexShader = getShader(this.gl, twod_vertex_shader_source, "vertex");
+        twoDShapesFragmentShader = getShader(this.gl, twod_fragment_shader_source, "fragment");
+        renderFrameBufferFragmentShader = getShader(this.gl, render_framebuffer_fragment_shader_source, "fragment");
+        const flatColourFragmentShader = getShader(this.gl, flat_colour_fragment_shader_source, "fragment");
+        if (this.frag_depth_ext) {
+            perfectSphereFragmentShader = getShader(this.gl, perfect_sphere_fragment_shader_source, "fragment");
+            perfectSphereOutlineFragmentShader = getShader(this.gl, perfect_sphere_outline_fragment_shader_source, "fragment");
+            shadowVertexShader = getShader(this.gl, shadow_vertex_shader_source, "vertex");
+            shadowVertexShaderInstanced = getShader(this.gl, shadow_instanced_vertex_shader_source, "vertex");
+            shadowFragmentShader = getShader(this.gl, shadow_fragment_shader_source, "fragment");
+            this.initShadowShaders(shadowVertexShader, shadowFragmentShader);
+            this.initInstancedShadowShaders(shadowVertexShaderInstanced, shadowFragmentShader);
+            this.initInstancedOutlineShaders(vertexShaderInstanced, flatColourFragmentShader);
+        }
+
+        this.initRenderFrameBufferShaders(blurVertexShader, renderFrameBufferFragmentShader);
+        this.initLineShaders(lineVertexShader, lineFragmentShader);
+        this.initOverlayShader(blurVertexShader, overlayFragmentShader);
+        this.initBlurXShader(blurVertexShader, blurXFragmentShader);
+        this.initSSAOShader(blurVertexShader, ssaoFragmentShader);
+        this.initBlurYShader(blurVertexShader, blurYFragmentShader);
+        this.initSimpleBlurXShader(blurVertexShader, simpleBlurXFragmentShader);
+        this.initSimpleBlurYShader(blurVertexShader, simpleBlurYFragmentShader);
+        this.initThickLineShaders(thickLineVertexShader, lineFragmentShader);
+        this.initThickLineNormalShaders(thickLineNormalVertexShader, fragmentShader);
+        this.initPointSpheresShaders(pointSpheresVertexShader, pointSpheresFragmentShader);
+        this.initTwoDShapesShaders(twoDShapesVertexShader, twoDShapesFragmentShader);
+        this.initImageShaders(twoDShapesVertexShader, textFragmentShader);
+        if (this.frag_depth_ext) {
+            this.initPerfectSphereShaders(twoDShapesVertexShader, perfectSphereFragmentShader);
+            this.initPerfectSphereOutlineShaders(twoDShapesVertexShader, perfectSphereOutlineFragmentShader);
+            shadowDepthPerfectSphereFragmentShader = getShader(this.gl, shadow_depth_perfect_sphere_fragment_shader_source, "fragment");
+            shadowDeptTwoDShapesVertexShader = getShader(this.gl, shadow_depth_twod_vertex_shader_source, "vertex");
+            this.initDepthShadowPerfectSphereShaders(shadowDepthPerfectSphereFragmentShader, shadowDeptTwoDShapesVertexShader);
+        }
+        this.initTextBackgroundShaders(textVertexShader, textFragmentShader);
+        this.initTextInstancedShaders(textVertexShaderInstanced, textFragmentShader);
+        this.gl.disableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
+        this.initCirclesShaders(circlesVertexShader, circlesFragmentShader);
+        this.gl.disableVertexAttribArray(this.shaderProgramCircles.vertexTextureAttribute);
+        this.initShaders(vertexShader, fragmentShader);
+        this.initOutlineShaders(vertexShader, flatColourFragmentShader);
+        this.initShadersInstanced(vertexShaderInstanced, fragmentShader);
+        this.initGBufferShadersInstanced(gBufferInstancedVertexShader, gBufferFragmentShader);
+        this.initGBufferShadersPerfectSphere(gBufferTwodVertexShader, gBufferPerfectSphereFragmentShader);
+        this.initGBufferThickLineNormalShaders(gBufferThickLineNormalVertexShader, gBufferFragmentShader);
+    }
+
     setActiveMolecule(molecule: moorhen.Molecule) : void {
+        console.log("**************************************************")
+        console.log("**************************************************")
+        console.log("setActiveMolecule",molecule)
+        console.log("**************************************************")
+        console.log("**************************************************")
         this.activeMolecule = molecule;
     }
 
@@ -3345,6 +3335,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         self.buildBuffers();
         self.drawScene();
+        console.log(theseBuffers)
         return theseBuffers;
     }
 
@@ -3566,14 +3557,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     setWheelContour(contourFactor:number, drawScene:boolean) {
-        var wheelContourChanged = new CustomEvent("wheelContourLevelChanged", {
-            "detail": {
-                factor: contourFactor,
-            }
-        });
-        document.dispatchEvent(wheelContourChanged);
-
-        if (drawScene) this.drawScene();
     }
 
     drawZoomFrame(oldZoom: number, newZoom: number, iframe: number) {
@@ -3973,7 +3956,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
-
     quatDotProduct(q1,q2){
         return q1[0] * q2[0] + q1[1] * q2[1] + q1[2] * q2[2] + q1[3] * q2[3];
     }
@@ -4052,7 +4034,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     set_clip_range(clipStart: number, clipEnd: number, update?: boolean) : void {
-        //console.log("Clip "+clipStart+" "+clipEnd);
         if (typeof (this.gl) === 'undefined') {
             return;
         }
@@ -4099,7 +4080,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramInstancedOutline.vertexInstanceOrientationAttribute = this.gl.getAttribLocation(this.shaderProgramInstancedOutline, "instanceOrientation");
 
         this.shaderProgramInstancedOutline.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgramInstancedOutline, "aVertexNormal");
-        this.gl.enableVertexAttribArray(this.shaderProgramInstancedOutline.vertexNormalAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramInstancedOutline.vertexNormalAttribute);
 
         this.shaderProgramInstancedOutline.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramInstancedOutline, "aVertexPosition");
         this.gl.enableVertexAttribArray(this.shaderProgramInstancedOutline.vertexPositionAttribute);
@@ -4609,7 +4590,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramTextBackground.maxTextureS = this.gl.getUniformLocation(this.shaderProgramTextBackground, "maxTextureS");
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
-        this.gl.uniform4fv(this.shaderProgramTextBackground.fogColour, new Float32Array([1.0, 1.0, 1.0, 1.0, 1.0]));
+        this.gl.uniform4fv(this.shaderProgramTextBackground.fogColour, new Float32Array([1.0, 1.0, 1.0, 1.0]));
 
         this.shaderProgramTextBackground.clipPlane0 = this.gl.getUniformLocation(this.shaderProgramTextBackground, "clipPlane0");
         this.shaderProgramTextBackground.clipPlane1 = this.gl.getUniformLocation(this.shaderProgramTextBackground, "clipPlane1");
@@ -4874,6 +4855,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgram.light_colours_diffuse = this.gl.getUniformLocation(this.shaderProgram, "light_colours_diffuse");
 
         this.shaderProgram.specularPower = this.gl.getUniformLocation(this.shaderProgram, "specularPower");
+        this.shaderProgram.screenZ = this.gl.getUniformLocation(this.shaderProgram, "screenZFrag");
     }
 
     initShadersInstanced(vertexShader, fragmentShader) {
@@ -4955,6 +4937,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramInstanced.light_colours_diffuse = this.gl.getUniformLocation(this.shaderProgramInstanced, "light_colours_diffuse");
 
         this.shaderProgramInstanced.specularPower = this.gl.getUniformLocation(this.shaderProgramInstanced, "specularPower");
+        this.shaderProgramInstanced.screenZ = this.gl.getUniformLocation(this.shaderProgramInstanced, "screenZFrag");
     }
 
     initGBufferThickLineNormalShaders(vertexShader, fragmentShader) {
@@ -4962,7 +4945,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramGBuffersThickLinesNormal = this.gl.createProgram();
         this.gl.attachShader(this.shaderProgramGBuffersThickLinesNormal, vertexShader);
         this.gl.attachShader(this.shaderProgramGBuffersThickLinesNormal, fragmentShader);
-        //this.gl.bindAttribLocation(this.shaderProgramGBuffersThickLinesNormal, 0, "aVertexPosition");
+        this.gl.bindAttribLocation(this.shaderProgramGBuffersThickLinesNormal, 0, "aVertexPosition");
         //this.gl.bindAttribLocation(this.shaderProgramGBuffersThickLinesNormal, 1, "aVertexColour");
         //this.gl.bindAttribLocation(this.shaderProgramGBuffersThickLinesNormal, 2, "aVertexNormal");
         //this.gl.bindAttribLocation(this.shaderProgramGBuffersThickLinesNormal, 8, "aVertexRealNormal");//4,5,6,7 Give wrong normals. Why?
@@ -4978,14 +4961,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramGBuffersThickLinesNormal.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramGBuffersThickLinesNormal, "aVertexPosition");
         this.gl.enableVertexAttribArray(this.shaderProgramGBuffersThickLinesNormal.vertexPositionAttribute);
 
-        this.shaderProgramGBuffersThickLinesNormal.vertexColourAttribute = this.gl.getAttribLocation(this.shaderProgramGBuffersThickLinesNormal, "aVertexColour");
-        this.gl.enableVertexAttribArray(this.shaderProgramGBuffersThickLinesNormal.vertexColourAttribute);
-
         this.shaderProgramGBuffersThickLinesNormal.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgramGBuffersThickLinesNormal, "aVertexNormal");
-        this.gl.enableVertexAttribArray(this.shaderProgramGBuffersThickLinesNormal.vertexNormalAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramGBuffersThickLinesNormal.vertexNormalAttribute);
 
         this.shaderProgramGBuffersThickLinesNormal.vertexRealNormalAttribute = this.gl.getAttribLocation(this.shaderProgramGBuffersThickLinesNormal, "aVertexRealNormal");
-        this.gl.enableVertexAttribArray(this.shaderProgramGBuffersThickLinesNormal.vertexRealNormalAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramGBuffersThickLinesNormal.vertexRealNormalAttribute);
 
         this.shaderProgramGBuffersThickLinesNormal.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramGBuffersThickLinesNormal, "uPMatrix");
         this.shaderProgramGBuffersThickLinesNormal.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramGBuffersThickLinesNormal, "uMVMatrix");
@@ -5011,7 +4991,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramThickLinesNormal = this.gl.createProgram();
         this.gl.attachShader(this.shaderProgramThickLinesNormal, vertexShader);
         this.gl.attachShader(this.shaderProgramThickLinesNormal, fragmentShader);
-        //this.gl.bindAttribLocation(this.shaderProgramThickLinesNormal, 0, "aVertexPosition");
+        this.gl.bindAttribLocation(this.shaderProgramThickLinesNormal, 0, "aVertexPosition");
         //this.gl.bindAttribLocation(this.shaderProgramThickLinesNormal, 1, "aVertexColour");
         //this.gl.bindAttribLocation(this.shaderProgramThickLinesNormal, 2, "aVertexNormal");
         //this.gl.bindAttribLocation(this.shaderProgramThickLinesNormal, 8, "aVertexRealNormal");//4,5,6,7 Give wrong normals. Why?
@@ -5146,8 +5126,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramLines.vertexColourAttribute = this.gl.getAttribLocation(this.shaderProgramLines, "aVertexColour");
         this.gl.enableVertexAttribArray(this.shaderProgramLines.vertexColourAttribute);
 
-        //this.shaderProgramLines.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgramLines, "aVertexNormal");
-        //this.gl.enableVertexAttribArray(this.shaderProgramLines.vertexNormalAttribute);
+        this.shaderProgramLines.vertexNormalAttribute = -1;
 
         this.shaderProgramLines.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramLines, "uPMatrix");
         this.shaderProgramLines.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramLines, "uMVMatrix");
@@ -5187,19 +5166,19 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.useProgram(this.shaderDepthShadowProgramPerfectSpheres);
 
         this.shaderDepthShadowProgramPerfectSpheres.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderDepthShadowProgramPerfectSpheres, "aVertexPosition");
-        this.gl.enableVertexAttribArray(this.shaderDepthShadowProgramPerfectSpheres.vertexPositionAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderDepthShadowProgramPerfectSpheres.vertexPositionAttribute);
 
         this.shaderDepthShadowProgramPerfectSpheres.vertexColourAttribute = this.gl.getAttribLocation(this.shaderDepthShadowProgramPerfectSpheres, "aVertexColour");
-        this.gl.enableVertexAttribArray(this.shaderDepthShadowProgramPerfectSpheres.vertexColourAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderDepthShadowProgramPerfectSpheres.vertexColourAttribute);
 
         this.shaderDepthShadowProgramPerfectSpheres.vertexTextureAttribute = this.gl.getAttribLocation(this.shaderDepthShadowProgramPerfectSpheres, "aVertexTexture");
-        this.gl.enableVertexAttribArray(this.shaderDepthShadowProgramPerfectSpheres.vertexTextureAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderDepthShadowProgramPerfectSpheres.vertexTextureAttribute);
 
         this.shaderDepthShadowProgramPerfectSpheres.offsetAttribute = this.gl.getAttribLocation(this.shaderDepthShadowProgramPerfectSpheres, "offset");
-        this.gl.enableVertexAttribArray(this.shaderDepthShadowProgramPerfectSpheres.offsetAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderDepthShadowProgramPerfectSpheres.offsetAttribute);
 
         this.shaderDepthShadowProgramPerfectSpheres.sizeAttribute= this.gl.getAttribLocation(this.shaderDepthShadowProgramPerfectSpheres, "size");
-        this.gl.enableVertexAttribArray(this.shaderDepthShadowProgramPerfectSpheres.sizeAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderDepthShadowProgramPerfectSpheres.sizeAttribute);
 
         this.shaderDepthShadowProgramPerfectSpheres.pMatrixUniform = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "uPMatrix");
         this.shaderDepthShadowProgramPerfectSpheres.mvMatrixUniform = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "uMVMatrix");
@@ -5241,22 +5220,22 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.useProgram(this.shaderProgramPerfectSpheresOutline);
 
         this.shaderProgramPerfectSpheresOutline.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramPerfectSpheresOutline, "aVertexPosition");
-        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheresOutline.vertexPositionAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheresOutline.vertexPositionAttribute);
 
         this.shaderProgramPerfectSpheresOutline.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgramPerfectSpheresOutline, "aVertexNormal");
-        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheresOutline.vertexNormalAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheresOutline.vertexNormalAttribute);
 
         this.shaderProgramPerfectSpheresOutline.vertexColourAttribute = this.gl.getAttribLocation(this.shaderProgramPerfectSpheresOutline, "aVertexColour");
-        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheresOutline.vertexColourAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheresOutline.vertexColourAttribute);
 
         this.shaderProgramPerfectSpheresOutline.vertexTextureAttribute = this.gl.getAttribLocation(this.shaderProgramPerfectSpheresOutline, "aVertexTexture");
-        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheresOutline.vertexTextureAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheresOutline.vertexTextureAttribute);
 
         this.shaderProgramPerfectSpheresOutline.offsetAttribute = this.gl.getAttribLocation(this.shaderProgramPerfectSpheresOutline, "offset");
-        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheresOutline.offsetAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheresOutline.offsetAttribute);
 
         this.shaderProgramPerfectSpheresOutline.sizeAttribute= this.gl.getAttribLocation(this.shaderProgramPerfectSpheresOutline, "size");
-        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheresOutline.sizeAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheresOutline.sizeAttribute);
 
         this.shaderProgramPerfectSpheresOutline.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresOutline, "uPMatrix");
         this.shaderProgramPerfectSpheresOutline.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresOutline, "uMVMatrix");
@@ -5302,22 +5281,22 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.useProgram(this.shaderProgramPerfectSpheres);
 
         this.shaderProgramPerfectSpheres.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramPerfectSpheres, "aVertexPosition");
-        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheres.vertexPositionAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheres.vertexPositionAttribute);
 
         this.shaderProgramPerfectSpheres.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgramPerfectSpheres, "aVertexNormal");
-        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheres.vertexNormalAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheres.vertexNormalAttribute);
 
         this.shaderProgramPerfectSpheres.vertexColourAttribute = this.gl.getAttribLocation(this.shaderProgramPerfectSpheres, "aVertexColour");
-        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheres.vertexColourAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheres.vertexColourAttribute);
 
         this.shaderProgramPerfectSpheres.vertexTextureAttribute = this.gl.getAttribLocation(this.shaderProgramPerfectSpheres, "aVertexTexture");
-        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheres.vertexTextureAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheres.vertexTextureAttribute);
 
         this.shaderProgramPerfectSpheres.offsetAttribute = this.gl.getAttribLocation(this.shaderProgramPerfectSpheres, "offset");
-        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheres.offsetAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheres.offsetAttribute);
 
         this.shaderProgramPerfectSpheres.sizeAttribute= this.gl.getAttribLocation(this.shaderProgramPerfectSpheres, "size");
-        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheres.sizeAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheres.sizeAttribute);
 
         this.shaderProgramPerfectSpheres.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "uPMatrix");
         this.shaderProgramPerfectSpheres.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "uMVMatrix");
@@ -5379,13 +5358,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.useProgram(this.shaderProgramImages);
 
         this.shaderProgramImages.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramImages, "aVertexPosition");
-        this.gl.enableVertexAttribArray(this.shaderProgramImages.vertexPositionAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramImages.vertexPositionAttribute);
 
         this.shaderProgramImages.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgramImages, "aVertexNormal");
-        this.gl.enableVertexAttribArray(this.shaderProgramImages.vertexNormalAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramImages.vertexNormalAttribute);
 
         this.shaderProgramImages.vertexColourAttribute = this.gl.getAttribLocation(this.shaderProgramImages, "aVertexColour");
-        this.gl.enableVertexAttribArray(this.shaderProgramImages.vertexColourAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramImages.vertexColourAttribute);
 
         this.shaderProgramImages.vertexTextureAttribute = this.gl.getAttribLocation(this.shaderProgramImages, "aVertexTexture");
 
@@ -5421,13 +5400,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.useProgram(this.shaderProgramTwoDShapes);
 
         this.shaderProgramTwoDShapes.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramTwoDShapes, "aVertexPosition");
-        this.gl.enableVertexAttribArray(this.shaderProgramTwoDShapes.vertexPositionAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramTwoDShapes.vertexPositionAttribute);
 
         this.shaderProgramTwoDShapes.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgramTwoDShapes, "aVertexNormal");
-        this.gl.enableVertexAttribArray(this.shaderProgramTwoDShapes.vertexNormalAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramTwoDShapes.vertexNormalAttribute);
 
         this.shaderProgramTwoDShapes.vertexColourAttribute = this.gl.getAttribLocation(this.shaderProgramTwoDShapes, "aVertexColour");
-        this.gl.enableVertexAttribArray(this.shaderProgramTwoDShapes.vertexColourAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramTwoDShapes.vertexColourAttribute);
 
         this.shaderProgramTwoDShapes.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramTwoDShapes, "uPMatrix");
         this.shaderProgramTwoDShapes.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramTwoDShapes, "uMVMatrix");
@@ -5463,13 +5442,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.useProgram(this.shaderProgramPointSpheresShadow);
 
         this.shaderProgramPointSpheresShadow.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramPointSpheresShadow, "aVertexPosition");
-        this.gl.enableVertexAttribArray(this.shaderProgramPointSpheresShadow.vertexPositionAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramPointSpheresShadow.vertexPositionAttribute);
 
         this.shaderProgramPointSpheresShadow.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgramPointSpheresShadow, "aVertexNormal");
-        this.gl.enableVertexAttribArray(this.shaderProgramPointSpheresShadow.vertexNormalAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramPointSpheresShadow.vertexNormalAttribute);
 
         this.shaderProgramPointSpheresShadow.vertexColourAttribute = this.gl.getAttribLocation(this.shaderProgramPointSpheresShadow, "aVertexColour");
-        this.gl.enableVertexAttribArray(this.shaderProgramPointSpheresShadow.vertexColourAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramPointSpheresShadow.vertexColourAttribute);
 
         this.shaderProgramPointSpheresShadow.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPointSpheresShadow, "uPMatrix");
         this.shaderProgramPointSpheresShadow.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPointSpheresShadow, "uMVMatrix");
@@ -5510,13 +5489,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.useProgram(this.shaderProgramPointSpheres);
 
         this.shaderProgramPointSpheres.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramPointSpheres, "aVertexPosition");
-        this.gl.enableVertexAttribArray(this.shaderProgramPointSpheres.vertexPositionAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramPointSpheres.vertexPositionAttribute);
 
         this.shaderProgramPointSpheres.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgramPointSpheres, "aVertexNormal");
-        this.gl.enableVertexAttribArray(this.shaderProgramPointSpheres.vertexNormalAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramPointSpheres.vertexNormalAttribute);
 
         this.shaderProgramPointSpheres.vertexColourAttribute = this.gl.getAttribLocation(this.shaderProgramPointSpheres, "aVertexColour");
-        this.gl.enableVertexAttribArray(this.shaderProgramPointSpheres.vertexColourAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramPointSpheres.vertexColourAttribute);
 
         this.shaderProgramPointSpheres.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPointSpheres, "uPMatrix");
         this.shaderProgramPointSpheres.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPointSpheres, "uMVMatrix");
@@ -5545,9 +5524,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramPointSpheres.clipPlane7 = this.gl.getUniformLocation(this.shaderProgramPointSpheres, "clipPlane7");
         this.shaderProgramPointSpheres.nClipPlanes = this.gl.getUniformLocation(this.shaderProgramPointSpheres, "nClipPlanes");
     }
-
-    setLightUniforms(program) {
-        this.gl.uniform4fv(program.light_positions, this.light_positions);
+    setLightUniforms(program,transform=true) {
+        if(transform) {
+            let light_position = vec3.create();
+            vec3.transformMat4(light_position, this.light_positions, this.mvInvMatrix);
+            NormalizeVec3(light_position);
+            this.gl.uniform4fv(program.light_positions, new Float32Array([light_position[0],light_position[1],light_position[2],1.0]));
+        } else {
+            this.gl.uniform4fv(program.light_positions, this.light_positions);
+        }
         this.gl.uniform4fv(program.light_colours_ambient, this.light_colours_ambient);
         this.gl.uniform4fv(program.light_colours_specular, this.light_colours_specular);
         this.gl.uniform4fv(program.light_colours_diffuse, this.light_colours_diffuse);
@@ -5581,7 +5566,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     buildBuffers() : void {
+        const print_timing = false;
 
+        const tbb1 = performance.now()
         let xaxis = vec3Create([1.0, 0.0, 0.0]);
         let yaxis = vec3Create([0.0, 1.0, 0.0]);
         let zaxis = vec3Create([0.0, 0.0, 1.0]);
@@ -5688,10 +5675,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleInstanceSizes[j]), this.gl.STATIC_DRAW);
                         this.displayBuffers[idx].triangleInstanceSizeBuffer[j].itemSize = 3;
                     }
-                    if(this.displayBuffers[idx].triangleColourBuffer[j]){
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleColours[j]), this.gl.STATIC_DRAW);
-                        this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
+                    if(!this.displayBuffers[idx].customColour || this.displayBuffers[idx].customColour.length!==4){
+                        if(this.displayBuffers[idx].triangleColourBuffer[j]){
+                            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
+                            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleColours[j]), this.gl.STATIC_DRAW);
+                            this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
+                        }
                     }
 
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "POINTS") {
@@ -5874,14 +5863,16 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexPositionBuffer[j]);
                     this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(Vertices_new), this.gl.STATIC_DRAW);
                     this.displayBuffers[idx].triangleVertexPositionBuffer[j].itemSize = 3;
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(Colours_new), this.gl.STATIC_DRAW);
-                    this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
+                    if(!this.displayBuffers[idx].customColour || this.displayBuffers[idx].customColour.length!==4){
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
+                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(Colours_new), this.gl.STATIC_DRAW);
+                        this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
+                        this.displayBuffers[idx].triangleColourBuffer[j].numItems = Colours_new.length / 4;
+                    }
 
                     this.displayBuffers[idx].triangleVertexIndexBuffer[j].numItems = Indexs_new.length;
                     this.displayBuffers[idx].triangleVertexNormalBuffer[j].numItems = Normals_new.length / 3;
                     this.displayBuffers[idx].triangleVertexPositionBuffer[j].numItems = Vertices_new.length / 3;
-                    this.displayBuffers[idx].triangleColourBuffer[j].numItems = Colours_new.length / 4;
 
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "TORUSES") {
                     let PIBY2 = Math.PI * 2;
@@ -6051,12 +6042,16 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
 
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "NORMALLINES") {
-                    console.log("Treating normal lines specially");
                     const size = this.mapLineWidth;//1.0;
                     const useIndices = this.displayBuffers[idx].supplementary["useIndices"];
                     let thickLines;
+                    const t1 = performance.now()
+                    let doColour = false;
+                    if(!this.displayBuffers[idx].customColour || this.displayBuffers[idx].customColour.length!==4){
+                        doColour = true;
+                    }
                     if (useIndices) {
-                        thickLines = this.linesToThickLinesWithIndicesAndNormals(this.displayBuffers[idx].triangleVertices[j], this.displayBuffers[idx].triangleNormals[j], this.displayBuffers[idx].triangleColours[j], this.displayBuffers[idx].triangleIndexs[j], size);
+                        thickLines = this.linesToThickLinesWithIndicesAndNormals(this.displayBuffers[idx].triangleVertices[j], this.displayBuffers[idx].triangleNormals[j], this.displayBuffers[idx].triangleColours[j], this.displayBuffers[idx].triangleIndexs[j], size, doColour);
                     } else {
                         console.log("************************************************************");
                         console.log("************************************************************");
@@ -6065,43 +6060,61 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         console.log("************************************************************");
                         return;
                     }
+                    const t2 = performance.now()
+                    if(print_timing) console.log("linesToThickLines",t2-t1)
                     const Normals_new = thickLines["normals"];
                     const RealNormals_new = thickLines["realNormals"];
                     const Vertices_new = thickLines["vertices"];
                     const Colours_new = thickLines["colours"];
                     const Indexs_new = thickLines["indices"];
+                    const tsa = performance.now()
+                    const RealNormals_new_array =  RealNormals_new
+                    const Normals_new_array =  Normals_new
+                    const Vertices_new_array =  Vertices_new
+                    const Colours_new_array =  Colours_new
+                    const Indexs_new_array = Indexs_new
+                    const tea = performance.now()
                     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexIndexBuffer[j]);
-                    if (this.ext) {
-                        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(Indexs_new), this.gl.STATIC_DRAW);
-                    } else {
-                        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(Indexs_new), this.gl.STATIC_DRAW);
-                    }
+                    this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, Indexs_new_array, this.gl.DYNAMIC_DRAW);
                     this.displayBuffers[idx].triangleVertexIndexBuffer[j].itemSize = 1;
                     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexRealNormalBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(RealNormals_new), this.gl.STATIC_DRAW);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, RealNormals_new_array, this.gl.DYNAMIC_DRAW);
                     this.displayBuffers[idx].triangleVertexRealNormalBuffer[j].itemSize = 3;
                     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexNormalBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(Normals_new), this.gl.STATIC_DRAW);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, Normals_new_array, this.gl.DYNAMIC_DRAW);
                     this.displayBuffers[idx].triangleVertexNormalBuffer[j].itemSize = 3;
                     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexPositionBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(Vertices_new), this.gl.STATIC_DRAW);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, Vertices_new_array, this.gl.DYNAMIC_DRAW);
                     this.displayBuffers[idx].triangleVertexPositionBuffer[j].itemSize = 3;
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(Colours_new), this.gl.STATIC_DRAW);
-                    this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
+                    if(doColour){
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
+                        this.gl.bufferData(this.gl.ARRAY_BUFFER, Colours_new_array, this.gl.STATIC_DRAW);
+                        this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
+                        this.displayBuffers[idx].triangleColourBuffer[j].numItems = Colours_new.length / 4;
+                    }
+                    const teb = performance.now()
+                    if(print_timing) console.log("make typed arrays",tea-tsa)
+                    if(print_timing) console.log("buffer arrays",teb-tea)
 
                     this.displayBuffers[idx].triangleVertexIndexBuffer[j].numItems = Indexs_new.length;
                     this.displayBuffers[idx].triangleVertexNormalBuffer[j].numItems = Normals_new.length / 3;
                     this.displayBuffers[idx].triangleVertexRealNormalBuffer[j].numItems = RealNormals_new.length / 3;
                     this.displayBuffers[idx].triangleVertexPositionBuffer[j].numItems = Vertices_new.length / 3;
-                    this.displayBuffers[idx].triangleColourBuffer[j].numItems = Colours_new.length / 4;
+                    const t3 = performance.now()
+                    if(print_timing) console.log("buffering",t3-t2,j)
 
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "LINES") {
                     let size = this.mapLineWidth;
                     const useIndices = this.displayBuffers[idx].supplementary["useIndices"];
                     let thickLines;
+
+                    let doColour = false;
+                    if(!this.displayBuffers[idx].customColour || this.displayBuffers[idx].customColour.length!==4){
+                        doColour = true;
+                    }
+
                     if (useIndices) {
-                        thickLines = this.linesToThickLinesWithIndices(this.displayBuffers[idx].triangleVertices[j], this.displayBuffers[idx].triangleColours[j], this.displayBuffers[idx].triangleIndexs[j], size);
+                        thickLines = this.linesToThickLinesWithIndices(this.displayBuffers[idx].triangleVertices[j], this.displayBuffers[idx].triangleColours[j], this.displayBuffers[idx].triangleIndexs[j], size, null, doColour);
                     } else {
                         thickLines = this.linesToThickLines(this.displayBuffers[idx].triangleVertices[j], this.displayBuffers[idx].triangleColours[j], size);
                     }
@@ -6122,17 +6135,24 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexPositionBuffer[j]);
                     this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(Vertices_new), this.gl.STATIC_DRAW);
                     this.displayBuffers[idx].triangleVertexPositionBuffer[j].itemSize = 3;
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(Colours_new), this.gl.STATIC_DRAW);
-                    this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
+                    if(doColour){
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
+                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(Colours_new), this.gl.STATIC_DRAW);
+                        this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
+                        this.displayBuffers[idx].triangleColourBuffer[j].numItems = Colours_new.length / 4;
+                    }
 
                     this.displayBuffers[idx].triangleVertexIndexBuffer[j].numItems = Indexs_new.length;
                     this.displayBuffers[idx].triangleVertexNormalBuffer[j].numItems = Normals_new.length / 3;
                     this.displayBuffers[idx].triangleVertexPositionBuffer[j].numItems = Vertices_new.length / 3;
-                    this.displayBuffers[idx].triangleColourBuffer[j].numItems = Colours_new.length / 4;
 
                 } else {
-                    //console.log("This buffer type is "+this.displayBuffers[idx].bufferTypes[j]);
+
+                    this.displayBuffers[idx].triangleVertexNormalBuffer[j].numItems = this.displayBuffers[idx].triangleNormals[j].length / 3;
+                    this.displayBuffers[idx].triangleVertexPositionBuffer[j].numItems = this.displayBuffers[idx].triangleNormals[j].length / 3;
+                    this.displayBuffers[idx].triangleColourBuffer[j].numItems = this.displayBuffers[idx].triangleColours[j].length / 4;
+                    this.displayBuffers[idx].triangleVertexIndexBuffer[j].numItems = this.displayBuffers[idx].triangleIndexs[j].length;
+
                     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexIndexBuffer[j]);
                     if (this.ext) {
                         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(this.displayBuffers[idx].triangleIndexs[j]), this.gl.STATIC_DRAW);
@@ -6148,9 +6168,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexPositionBuffer[j]);
                     this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleVertices[j]), this.gl.STATIC_DRAW);
                     this.displayBuffers[idx].triangleVertexPositionBuffer[j].itemSize = 3;
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleColours[j]), this.gl.STATIC_DRAW);
-                    this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
+                    if(!this.displayBuffers[idx].customColour || this.displayBuffers[idx].customColour.length!==4){
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
+                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleColours[j]), this.gl.STATIC_DRAW);
+                        this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
+                    }
                     if(this.displayBuffers[idx].triangleInstanceSizeBuffer[j]){
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceSizeBuffer[j]);
                         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleInstanceSizes[j]), this.gl.STATIC_DRAW);
@@ -6168,10 +6190,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     }
                 }
             }
+            const tl = performance.now()
+            if(print_timing) console.log("Time at end of loop",tl-tbb1);
         }
         //console.log("Time to build buffers: "+(new Date().getTime()-start));
-    }
 
+        const tbb2 = performance.now()
+        if(print_timing) console.log("Time in buidBuffers",tbb2-tbb1)
+    }
 
     drawTransformMatrixInteractive(transformMatrix:number[], transformOrigin:number[], buffer:any, shader:MGWebGLShader, vertexType:number, bufferIdx:number, specialDrawBuffer?:number) {
 
@@ -6183,7 +6209,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.uniformMatrix4fv(shader.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
     }
 
-    applySymmetryMatrix(theShader,symmetryMatrix,tempMVMatrix,tempMVInvMatrix){
+    applySymmetryMatrix(theShader,symmetryMatrix,tempMVMatrix,tempMVInvMatrix,doTransform=true){
         let symt = mat4.create();
         let invsymt = mat4.create();
         mat4.set(symt,
@@ -6203,6 +6229,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         tempMVMatrix[14] = 0.0;
         mat4.invert(tempMVInvMatrix, tempMVMatrix);// All else
         this.gl.uniformMatrix4fv(theShader.mvInvMatrixUniform, false, tempMVInvMatrix);// All else
+
+        if(doTransform){
+            let light_position = vec3.create();
+            vec3.transformMat4(light_position, this.light_positions, tempMVInvMatrix);
+            NormalizeVec3(light_position);
+            this.gl.uniform4fv(theShader.light_positions, new Float32Array([light_position[0],light_position[1],light_position[2],1.0]));
+        }
+
         let screenZ = vec3.create();
         screenZ[0] = 0.0;
         screenZ[1] = 0.0;
@@ -6312,6 +6346,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         }
 
                     }
+                    this.setLightUniforms(theShader);
                     this.gl.uniformMatrix4fv(theShader.mvMatrixUniform, false, this.mvMatrix);// All else
                     this.gl.uniformMatrix4fv(theShader.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
                     this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
@@ -6347,6 +6382,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         }
 
                     }
+                    this.setLightUniforms(theShader);
                     this.gl.uniformMatrix4fv(theShader.mvMatrixUniform, false, this.mvMatrix);// All else
                     this.gl.uniformMatrix4fv(theShader.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
                     this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
@@ -6574,13 +6610,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     GLrender(calculatingShadowMap) {
-
-        //console.log("GLrender",calculatingShadowMap);
-
-        //const theVector = this.calculate3DVectorFrom2DVector([20,20]);
-        //console.log(theVector[0],theVector[1],theVector[2]);
-
-        //this.mouseDown = false; ???
         let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
 
         if (calculatingShadowMap) {
@@ -6850,13 +6879,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.drawTransparent(theMatrix);
             this.drawDistancesAndLabels(up, right);
             this.drawTextLabels(up, right);
-            this.drawCircles(up, right);
+            //this.drawCircles(up, right);
         }
 
         this.myQuat = quat4.clone(oldQuat);
 
         return invMat;
-
+        
     }
 
     drawScene() : void {
@@ -7130,6 +7159,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.pixel_data = pixels;
         }
 
+        if(this.useOffScreenBuffers&&this.offScreenReady){
+            this.depthBlur();
+        }
+
         if(this.showFPS){
             this.nFrames += 1;
             const thisTime = performance.now();
@@ -7137,10 +7170,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.mspfArray.push(mspf);
             if(this.mspfArray.length>200) this.mspfArray.shift();
             this.prevTime = thisTime;
-        }
-
-        if(this.useOffScreenBuffers&&this.offScreenReady){
-            this.depthBlur();
         }
 
     }
@@ -7544,25 +7573,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
             let primitiveSizes = this.displayBuffers[idx].primitiveSizes;
 
-            // FIXME - This is still way too slow, since there can be *lots* of displayBuffers per molecule.
-            //       - recalculating same symmetry for all of them is insane.
-            //       - And should only be done when origin changes!
-            let symmetry = null;
-            if (this.displayBuffers[idx].symmetry) {
-                symmetry = symmetries[idx];
-            }
-
-            //console.log("Drawing object "+idx+" it has "+triangleVertexIndexBuffer.length+" parts");
-
             for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
-                if (bufferTypes[j] === "NORMALLINES" || bufferTypes[j] === "LINES" || bufferTypes[j] === "LINE_LOOP" || bufferTypes[j] === "LINE_STRIP" || bufferTypes[j] === "DIAMONDS" || bufferTypes[j] === "TEXT" || bufferTypes[j] === "IMAGES" || bufferTypes[j] === "SQUARES" || bufferTypes[j] === "PENTAGONS" || bufferTypes[j] === "HEXAGONS" || bufferTypes[j] === "POINTS" || bufferTypes[j] === "SPHEROIDS" || bufferTypes[j] === "POINTS_SPHERES" || bufferTypes[j].substring(0, "CUSTOM_2D_SHAPE_".length) === "CUSTOM_2D_SHAPE_" || bufferTypes[j] === "PERFECT_SPHERES") {
-                    continue;
-                }
                 if (this.displayBuffers[idx].transparent&&!this.drawingGBuffers) {
                     //console.log("Not doing normal drawing way ....");
                     continue;
                 }
-
                 let theShader;
                 let scaleZ = false;
 
@@ -7626,15 +7641,16 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
                 if(typeof(theShader.vertexNormalAttribute!=="undefined") && theShader.vertexNormalAttribute!==null&&theShader.vertexNormalAttribute>-1){
                     if(!calculatingShadowMap){
+
                         this.gl.enableVertexAttribArray(theShader.vertexNormalAttribute);
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexNormalBuffer[j]);
-                        this.gl.vertexAttribPointer(theShader.vertexNormalAttribute, triangleVertexNormalBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                        if (bufferTypes[j] !== "PERFECT_SPHERES") this.gl.vertexAttribPointer(theShader.vertexNormalAttribute, triangleVertexNormalBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
                     }
                 }
 
                 this.gl.enableVertexAttribArray(theShader.vertexPositionAttribute);
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexPositionBuffer[j]);
-                this.gl.vertexAttribPointer(theShader.vertexPositionAttribute, triangleVertexPositionBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                if (bufferTypes[j] !== "PERFECT_SPHERES") this.gl.vertexAttribPointer(theShader.vertexPositionAttribute, triangleVertexPositionBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
                 this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, triangleVertexIndexBuffer[j]);
 
                 if(this.stencilPass){
@@ -7654,13 +7670,17 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         let outlineSize = vec3.create();
                         vec3.set(outlineSize, 0.0, 0.0, 0.0);
                         this.gl.uniform3fv(theShader.outlineSize, outlineSize);
-                        this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleColourBuffer[j]);
-                        this.gl.vertexAttribPointer(theShader.vertexColourAttribute, triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                        if(this.displayBuffers[idx].customColour&&this.displayBuffers[idx].customColour.length==4){
+                            this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
+                            this.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...this.displayBuffers[idx].customColour)
+                        } else {
+                            this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
+                            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleColourBuffer[j]);
+                            this.gl.vertexAttribPointer(theShader.vertexColourAttribute, triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                        }
                     }
                 }
-
-                if (bufferTypes[j] === "TRIANGLES" || bufferTypes[j] === "CAPCYLINDERS" || this.displayBuffers[idx].bufferTypes[j] === "TORUSES") {
+                if (bufferTypes[j] === "TRIANGLES") {
                     if (this.displayBuffers[idx].transformMatrix) {
                         this.drawTransformMatrix(this.displayBuffers[idx].transformMatrix, this.displayBuffers[idx], theShader, this.gl.TRIANGLES, j);
                     } else if (this.displayBuffers[idx].transformMatrixInteractive) {
@@ -7677,6 +7697,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.drawTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive, this.displayBuffers[idx].transformOriginInteractive, this.displayBuffers[idx], theShader, this.gl.TRIANGLES, j);
                         this.gl.uniform4fv(theShader.light_colours_ambient, this.light_colours_ambient);
                     } else {
+                        this.gl.uniform3fv(theShader.screenZ, this.screenZ);
                         if(this.stencilPass && scaleZ){
                             let outlineSize = vec3.create();
                             for(let i=0;i<10;i++){
@@ -7702,7 +7723,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     }
                 }
             }
-
             //shaderProgramPerfectSpheres
             //FIXME - broken with gbuffers
             for(let i = 0; i<16; i++)
@@ -7733,7 +7753,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.disableVertexAttribArray(program.vertexColourAttribute);
                 this.gl.enableVertexAttribArray(program.vertexPositionAttribute);
                 if (!calculatingShadowMap) {
-                    this.setLightUniforms(program);
+                    this.setLightUniforms(program,false);
                     if(program.clipCap!=null) this.gl.uniform1i(program.clipCap,this.clipCapPerfectSpheres);
                     if(program.vertexNormalAttribute!=null) this.gl.enableVertexAttribArray(program.vertexNormalAttribute);
                 }
@@ -7876,7 +7896,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             }
                             for (let isym = 0; isym < this.displayBuffers[idx].symmetryMatrices.length; isym++) {
 
-                                this.applySymmetryMatrix(program,this.displayBuffers[idx].symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix)
+                                this.applySymmetryMatrix(program,this.displayBuffers[idx].symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix,false)
                                     if (this.WEBGL2) {
                                         this.gl.drawElementsInstanced(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
                                     } else {
@@ -7961,8 +7981,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.vertexAttribPointer(shaderProgramThickLinesNormal.vertexRealNormalAttribute, triangleVertexRealNormalBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexPositionBuffer[j]);
                 this.gl.vertexAttribPointer(shaderProgramThickLinesNormal.vertexPositionAttribute, triangleVertexPositionBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleColourBuffer[j]);
-                this.gl.vertexAttribPointer(shaderProgramThickLinesNormal.vertexColourAttribute, triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                if(this.displayBuffers[idx].customColour&&this.displayBuffers[idx].customColour.length==4){
+                    this.gl.disableVertexAttribArray(this.shaderProgramThickLinesNormal.vertexColourAttribute);
+                    this.gl.vertexAttrib4f(this.shaderProgramThickLinesNormal.vertexColourAttribute, ...this.displayBuffers[idx].customColour)
+                } else {
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleColourBuffer[j]);
+                    this.gl.vertexAttribPointer(shaderProgramThickLinesNormal.vertexColourAttribute, triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                }
                 this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, triangleVertexIndexBuffer[j]);
 
                 if (this.displayBuffers[idx].transformMatrix) {
@@ -7991,6 +8016,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             if (calculatingShadowMap)
                 continue; //Nothing else implemented
             //Cylinders here
+                
 
             //vertex attribute settings are likely wrong from here on... (REALLY - I HOPE NOT! SJM 26/10/2023)
 
@@ -8205,7 +8231,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexPositionBuffer[j]);
                 this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexPositionAttribute, triangleVertexPositionBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleColourBuffer[j]);
-                this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexColourAttribute, triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                if(this.displayBuffers[idx].customColour&&this.displayBuffers[idx].customColour.length==4){
+                    this.gl.disableVertexAttribArray(this.shaderProgramThickLines.vertexColourAttribute);
+                    this.gl.vertexAttrib4f(this.shaderProgramThickLines.vertexColourAttribute, ...this.displayBuffers[idx].customColour)
+                } else {
+                    this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexColourAttribute);
+                    this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexColourAttribute, triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                }
                 this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, triangleVertexIndexBuffer[j]);
 
                 if (this.displayBuffers[idx].transformMatrix) {
@@ -9204,181 +9236,211 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
-    linesToThickLinesWithIndicesAndNormals(axesVertices, axesNormals, axesColours, axesIndices, size) {
-        return this.linesToThickLinesWithIndices(axesVertices, axesColours, axesIndices, size, axesNormals)
+    linesToThickLinesWithIndicesAndNormals(axesVertices, axesNormals, axesColours, axesIndices, size, doColour) {
+        return this.linesToThickLinesWithIndices(axesVertices, axesColours, axesIndices, size, axesNormals, doColour)
     }
 
-    linesToThickLinesWithIndices(axesVertices: number[], axesColours: number[], axesIndices: number[], size: number, axesNormals_old? : number) {
-        let axesNormals = [];
-        let axesNormals_new = [];
-        let axesVertices_new = [];
-        let axesColours_new = [];
-        let axesIndexs_new = [];
-        let axesIdx_new = 0;
+    linesToThickLinesWithIndices(axesVertices: number[], axesColours: number[], axesIndices: number[], size: number, axesNormals_old? : number[], doColour=false) {
 
-        for (let idx = 0; idx < axesIndices.length; idx += 2) {
+        //FIXME - This could all be pushed upstairs into the C++ -> JS mesh conversions
+        const print_timing = false;
+        const index_length = axesIndices.length;
+
+        const t1 = performance.now()
+        let axesNormals = new Float32Array(index_length * 9);
+        let axesNormals_new;
+        if (axesNormals_old) {
+            axesNormals_new = new Float32Array(index_length * 9);
+        }
+        let axesVertices_new = new Float32Array(index_length * 9);
+        let axesColours_new;
+        let axesIndexs_new;
+        if (this.ext) {
+             axesIndexs_new =  new Uint32Array(index_length * 3)
+        } else {
+             axesIndexs_new =  new Uint16Array(index_length * 3)
+        }
+        const t2 = performance.now()
+        if(print_timing) console.log("create buffer in linesToThickLines",t2-t1)
+
+        if(doColour){
+            axesColours_new = new Float32Array(index_length * 12);
+            for (let idx = 0; idx < index_length; idx += 2) {
+
+                const il = 3 * axesIndices[idx];
+                const idx12 = idx*12;
+                const il43 = il*4/3;
+
+                const r = axesColours[il43]
+                const g = axesColours[il43 + 1]
+                const b = axesColours[il43 + 2]
+                const a = axesColours[il43 + 3]
+
+                axesColours_new[idx12]     = r
+                axesColours_new[idx12 + 1] = g
+                axesColours_new[idx12 + 2] = b
+                axesColours_new[idx12 + 3] = a
+
+                axesColours_new[idx12 + 4] = r
+                axesColours_new[idx12 + 5] = g
+                axesColours_new[idx12 + 6] = b
+                axesColours_new[idx12 + 7] = a
+
+                axesColours_new[idx12 + 8]  = r
+                axesColours_new[idx12 + 9]  = g
+                axesColours_new[idx12 + 10] = b
+                axesColours_new[idx12 + 11] = a
+
+                axesColours_new[idx12 + 12] = r
+                axesColours_new[idx12 + 13] = g
+                axesColours_new[idx12 + 14] = b
+                axesColours_new[idx12 + 15] = a
+
+                axesColours_new[idx12 + 16] = r
+                axesColours_new[idx12 + 17] = g
+                axesColours_new[idx12 + 18] = b
+                axesColours_new[idx12 + 19] = a
+
+                axesColours_new[idx12 + 20] = r
+                axesColours_new[idx12 + 21] = g
+                axesColours_new[idx12 + 22] = b
+                axesColours_new[idx12 + 23] = a
+                
+            }
+        }
+
+        const t3 = performance.now()
+        if(print_timing) console.log("do colours in linesToThickLines",t3-t2)
+
+        for (let idx = 0; idx < index_length; idx += 2) {
 
             const il = 3 * axesIndices[idx];
             const il2 = 3 * axesIndices[idx + 1];
 
-            axesColours_new.push(axesColours[4 * il / 3]);
-            axesColours_new.push(axesColours[4 * il / 3 + 1]);
-            axesColours_new.push(axesColours[4 * il / 3 + 2]);
-            axesColours_new.push(axesColours[4 * il / 3 + 3]);
+            const idx9 = idx*9;
 
-            axesColours_new.push(axesColours[4 * il / 3]);
-            axesColours_new.push(axesColours[4 * il / 3 + 1]);
-            axesColours_new.push(axesColours[4 * il / 3 + 2]);
-            axesColours_new.push(axesColours[4 * il / 3 + 3]);
+            const x = axesVertices[il]
+            const y = axesVertices[il+1]
+            const z = axesVertices[il+2]
 
-            axesColours_new.push(axesColours[4 * il2 / 3]);
-            axesColours_new.push(axesColours[4 * il2 / 3 + 1]);
-            axesColours_new.push(axesColours[4 * il2 / 3 + 2]);
-            axesColours_new.push(axesColours[4 * il2 / 3 + 3]);
+            const x2 = axesVertices[il2]
+            const y2 = axesVertices[il2+1]
+            const z2 = axesVertices[il2+2]
 
-            axesColours_new.push(axesColours[4 * il / 3]);
-            axesColours_new.push(axesColours[4 * il / 3 + 1]);
-            axesColours_new.push(axesColours[4 * il / 3 + 2]);
-            axesColours_new.push(axesColours[4 * il / 3 + 3]);
+            axesVertices_new[idx9]     = x
+            axesVertices_new[idx9 + 1] = y
+            axesVertices_new[idx9 + 2] = z
 
-            axesColours_new.push(axesColours[4 * il2 / 3]);
-            axesColours_new.push(axesColours[4 * il2 / 3 + 1]);
-            axesColours_new.push(axesColours[4 * il2 / 3 + 2]);
-            axesColours_new.push(axesColours[4 * il2 / 3 + 3]);
+            axesVertices_new[idx9 + 3] = x
+            axesVertices_new[idx9 + 4] = y
+            axesVertices_new[idx9 + 5] = z
 
-            axesColours_new.push(axesColours[4 * il2 / 3]);
-            axesColours_new.push(axesColours[4 * il2 / 3 + 1]);
-            axesColours_new.push(axesColours[4 * il2 / 3 + 2]);
-            axesColours_new.push(axesColours[4 * il2 / 3 + 3]);
+            axesVertices_new[idx9 + 6] = x2
+            axesVertices_new[idx9 + 7] = y2
+            axesVertices_new[idx9 + 8] = z2
 
-            axesVertices_new.push(axesVertices[il]);
-            axesVertices_new.push(axesVertices[il + 1]);
-            axesVertices_new.push(axesVertices[il + 2]);
+            axesVertices_new[idx9 + 9]  = x
+            axesVertices_new[idx9 + 10] = y
+            axesVertices_new[idx9 + 11] = z
 
-            axesVertices_new.push(axesVertices[il]);
-            axesVertices_new.push(axesVertices[il + 1]);
-            axesVertices_new.push(axesVertices[il + 2]);
+            axesVertices_new[idx9 + 12] = x2
+            axesVertices_new[idx9 + 13] = y2
+            axesVertices_new[idx9 + 14] = z2
 
-            axesVertices_new.push(axesVertices[il2]);
-            axesVertices_new.push(axesVertices[il2 + 1]);
-            axesVertices_new.push(axesVertices[il2 + 2]);
+            axesVertices_new[idx9 + 15] = x2
+            axesVertices_new[idx9 + 16] = y2
+            axesVertices_new[idx9 + 17] = z2
 
             if (axesNormals_old) {
-                axesNormals_new.push(axesNormals_old[il]);
-                axesNormals_new.push(axesNormals_old[il + 1]);
-                axesNormals_new.push(axesNormals_old[il + 2]);
+                const nx = axesNormals_old[il]
+                const ny = axesNormals_old[il+1]
+                const nz = axesNormals_old[il+2]
 
-                axesNormals_new.push(axesNormals_old[il]);
-                axesNormals_new.push(axesNormals_old[il + 1]);
-                axesNormals_new.push(axesNormals_old[il + 2]);
+                const nx2 = axesNormals_old[il2]
+                const ny2 = axesNormals_old[il2+1]
+                const nz2 = axesNormals_old[il2+2]
 
-                axesNormals_new.push(axesNormals_old[il2]);
-                axesNormals_new.push(axesNormals_old[il2 + 1]);
-                axesNormals_new.push(axesNormals_old[il2 + 2]);
+                axesNormals_new[idx9]     = nx
+                axesNormals_new[idx9 + 1] = ny
+                axesNormals_new[idx9 + 2] = nz
+
+                axesNormals_new[idx9 + 3] = nx
+                axesNormals_new[idx9 + 4] = ny
+                axesNormals_new[idx9 + 5] = nz
+
+                axesNormals_new[idx9 + 6] = nx2
+                axesNormals_new[idx9 + 7] = ny2
+                axesNormals_new[idx9 + 8] = nz2
+
+                axesNormals_new[idx9 + 9]  = nx
+                axesNormals_new[idx9 + 10] = ny
+                axesNormals_new[idx9 + 11] = nz
+
+                axesNormals_new[idx9 + 12] = nx2
+                axesNormals_new[idx9 + 13] = ny2
+                axesNormals_new[idx9 + 14] = nz2
+
+                axesNormals_new[idx9 + 15] = nx2
+                axesNormals_new[idx9 + 16] = ny2
+                axesNormals_new[idx9 + 17] = nz2
+
             }
 
-            axesNormals.push(axesVertices[il2] - axesVertices[il]);
-            axesNormals.push(axesVertices[il2 + 1] - axesVertices[il + 1]);
-            axesNormals.push(axesVertices[il2 + 2] - axesVertices[il + 2]);
+            let dx = x2 - x
+            let dy = y2 - y
+            let dz = z2 - z
 
-            let d = Math.sqrt(axesNormals[axesNormals.length - 1 - 2] * axesNormals[axesNormals.length - 1 - 2] + axesNormals[axesNormals.length - 1 - 1] * axesNormals[axesNormals.length - 1 - 1] + axesNormals[axesNormals.length - 1 - 0] * axesNormals[axesNormals.length - 1 - 0]);
+            let d = Math.sqrt(dx*dx + dy*dy + dz*dz);
             if (d > 1e-8) {
-                axesNormals[axesNormals.length - 1 - 2] *= size / d;
-                axesNormals[axesNormals.length - 1 - 1] *= size / d;
-                axesNormals[axesNormals.length - 1] *= size / d;
+                dx *= size/d
+                dy *= size/d
+                dz *= size/d
             }
 
-            axesNormals.push(-(axesVertices[il2] - axesVertices[il]));
-            axesNormals.push(-(axesVertices[il2 + 1] - axesVertices[il + 1]));
-            axesNormals.push(-(axesVertices[il2 + 2] - axesVertices[il + 2]));
+            axesNormals[idx9]     = dx
+            axesNormals[idx9 + 1] = dy
+            axesNormals[idx9 + 2] = dz
 
-            if (d > 1e-8) {
-                axesNormals[axesNormals.length - 1 - 2] *= size / d;
-                axesNormals[axesNormals.length - 1 - 1] *= size / d;
-                axesNormals[axesNormals.length - 1] *= size / d;
-            }
+            axesNormals[idx9 + 3] = -dx
+            axesNormals[idx9 + 4] = -dy
+            axesNormals[idx9 + 5] = -dz
 
-            axesNormals.push(-(axesVertices[il2] - axesVertices[il]));
-            axesNormals.push(-(axesVertices[il2 + 1] - axesVertices[il + 1]));
-            axesNormals.push(-(axesVertices[il2 + 2] - axesVertices[il + 2]));
+            axesNormals[idx9 + 6] = -dx
+            axesNormals[idx9 + 7] = -dy
+            axesNormals[idx9 + 8] = -dz
 
-            if (d > 1e-8) {
-                axesNormals[axesNormals.length - 1 - 2] *= size / d;
-                axesNormals[axesNormals.length - 1 - 1] *= size / d;
-                axesNormals[axesNormals.length - 1] *= size / d;
-            }
-            axesVertices_new.push(axesVertices[il]);
-            axesVertices_new.push(axesVertices[il + 1]);
-            axesVertices_new.push(axesVertices[il + 2]);
+            axesNormals[idx9 + 9]  = dx
+            axesNormals[idx9 + 10] = dy
+            axesNormals[idx9 + 11] = dz
 
-            axesVertices_new.push(axesVertices[il2]);
-            axesVertices_new.push(axesVertices[il2 + 1]);
-            axesVertices_new.push(axesVertices[il2 + 2]);
+            axesNormals[idx9 + 12] = dx
+            axesNormals[idx9 + 13] = dy
+            axesNormals[idx9 + 14] = dz
 
-            axesVertices_new.push(axesVertices[il2]);
-            axesVertices_new.push(axesVertices[il2 + 1]);
-            axesVertices_new.push(axesVertices[il2 + 2]);
+            axesNormals[idx9 + 15] = -dx
+            axesNormals[idx9 + 16] = -dy
+            axesNormals[idx9 + 17] = -dz
 
-            if (axesNormals_old) {
-                axesNormals_new.push(axesNormals_old[il]);
-                axesNormals_new.push(axesNormals_old[il + 1]);
-                axesNormals_new.push(axesNormals_old[il + 2]);
-
-                axesNormals_new.push(axesNormals_old[il2]);
-                axesNormals_new.push(axesNormals_old[il2 + 1]);
-                axesNormals_new.push(axesNormals_old[il2 + 2]);
-
-                axesNormals_new.push(axesNormals_old[il2]);
-                axesNormals_new.push(axesNormals_old[il2 + 1]);
-                axesNormals_new.push(axesNormals_old[il2 + 2]);
-            }
-
-            axesNormals.push(axesVertices[il2] - axesVertices[il]);
-            axesNormals.push(axesVertices[il2 + 1] - axesVertices[il + 1]);
-            axesNormals.push(axesVertices[il2 + 2] - axesVertices[il + 2]);
-
-            if (d > 1e-8) {
-                axesNormals[axesNormals.length - 1 - 2] *= size / d;
-                axesNormals[axesNormals.length - 1 - 1] *= size / d;
-                axesNormals[axesNormals.length - 1] *= size / d;
-            }
-
-            axesNormals.push(axesVertices[il2] - axesVertices[il]);
-            axesNormals.push(axesVertices[il2 + 1] - axesVertices[il + 1]);
-            axesNormals.push(axesVertices[il2 + 2] - axesVertices[il + 2]);
-
-            if (d > 1e-8) {
-                axesNormals[axesNormals.length - 1 - 2] *= size / d;
-                axesNormals[axesNormals.length - 1 - 1] *= size / d;
-                axesNormals[axesNormals.length - 1] *= size / d;
-            }
-
-            axesNormals.push(-(axesVertices[il2] - axesVertices[il]));
-            axesNormals.push(-(axesVertices[il2 + 1] - axesVertices[il + 1]));
-            axesNormals.push(-(axesVertices[il2 + 2] - axesVertices[il + 2]));
-
-            if (d > 1e-8) {
-                axesNormals[axesNormals.length - 1 - 2] *= size / d;
-                axesNormals[axesNormals.length - 1 - 1] *= size / d;
-                axesNormals[axesNormals.length - 1] *= size / d;
-            }
-            let axesIdx_old = axesIdx_new;
-            axesIndexs_new.push(axesIdx_old);
-            axesIndexs_new.push(axesIdx_old+2);
-            axesIndexs_new.push(axesIdx_old+1);
-            axesIndexs_new.push(axesIdx_old+3);
-            axesIndexs_new.push(axesIdx_old+4);
-            axesIndexs_new.push(axesIdx_old+5);
-            axesIdx_new += 6;
-            /*
-            axesIndexs_new.push(axesIdx_new++);
-            axesIndexs_new.push(axesIdx_new++);
-            axesIndexs_new.push(axesIdx_new++);
-            axesIndexs_new.push(axesIdx_new++);
-            axesIndexs_new.push(axesIdx_new++);
-            axesIndexs_new.push(axesIdx_new++);
-            */
         }
+
+        const t4 = performance.now()
+        if(print_timing) console.log("do main loop in linesToThickLines",t4-t3)
+
+        let axesIdx_new = 0;
+        for (let idx = 0; idx < index_length; idx += 2) {
+            let axesIdx_old = axesIdx_new;
+            const idx3 = idx*3;
+            axesIndexs_new[idx3]     = axesIdx_old;
+            axesIndexs_new[idx3 +1 ] = axesIdx_old+2;
+            axesIndexs_new[idx3 +2 ] = axesIdx_old+1;
+            axesIndexs_new[idx3 +3 ] = axesIdx_old+3;
+            axesIndexs_new[idx3 +4 ] = axesIdx_old+4;
+            axesIndexs_new[idx3 +5 ] = axesIdx_old+5;
+            axesIdx_new += 6;
+        }
+
+        const t5 = performance.now()
+        if(print_timing) console.log("do index loop in linesToThickLines",t5-t4)
 
         let ret = {};
         ret["vertices"] = axesVertices_new;
@@ -9386,6 +9448,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         ret["normals"] = axesNormals;
         ret["colours"] = axesColours_new;
         ret["realNormals"] = axesNormals_new;
+
+        const t6 = performance.now()
+        if(print_timing) console.log("make object in linesToThickLines",t6-t5)
+
         return ret;
 
     }
@@ -9507,7 +9573,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         return ret;
 
     }
-
 
     drawCrosshairs(invMat) {
 
@@ -9877,6 +9942,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawAxes(invMat) {
+
+        for(let i = 0; i<16; i++)
+            this.gl.disableVertexAttribArray(i);
+
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.textTex);
         this.gl.depthFunc(this.gl.ALWAYS);
         this.gl.useProgram(this.shaderProgramTextBackground);
@@ -10024,8 +10093,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             [0., 0., 1., 1.],
             [0., 0., 1., 1.],
         )
-        //console.log("axesVertices",axesVertices);
-        //console.log("zoom",this.zoom);
 
         let size = 1.5;
         let thickLines = this.linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
@@ -10036,9 +10103,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         //console.log("thickLines",thickLines);
         this.gl.depthFunc(this.gl.ALWAYS);
-
-        for(let i = 0; i<7; i++)
-            this.gl.disableVertexAttribArray(i);
 
         this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexNormalAttribute);
         this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexPositionAttribute);
@@ -10067,9 +10131,23 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.gl.useProgram(this.shaderProgramTextBackground);
 
+        for(let i = 0; i<16; i++)
+            this.gl.disableVertexAttribArray(i);
+
+        this.gl.useProgram(this.shaderProgramTextBackground);
+        this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
+        this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
+        this.setMatrixUniforms(this.shaderProgramTextBackground);
+        this.gl.uniformMatrix4fv(this.shaderProgramTextBackground.pMatrixUniform, false, this.pmvMatrix);
+        this.gl.uniform3fv(this.shaderProgramTextBackground.screenZ, this.screenZ);
+        this.gl.uniform1f(this.shaderProgramTextBackground.pixelZoom, 0.04 * this.zoom);
+
+        this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexNormalAttribute);
+        this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexPositionAttribute);
+        this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexColourAttribute);
+
         this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
         this.setMatrixUniforms(this.shaderProgramTextBackground);
-        this.gl.uniformMatrix4fv(this.shaderProgramTextBackground.pMatrixUniform, false, pMatrix);
 
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextNormalBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]), this.gl.STATIC_DRAW);
@@ -10090,13 +10168,19 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         const drawStringAt = (string, colour, location, up, right) => {
-            const [base_x, base_y, base_z] = location
-            this.makeTextCanvas(string, 512, 32, colour);
+
+            if(!this.axesTexture[string]){
+                const [maxS,ctx] = this.makeTextCanvas(string, 64, 32, colour, "20px Arial");
+                const data = ctx.getImageData(0, 0, 64, 32);
+                this.axesTexture[string] = data;
+            }
+
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.axesTexture[string]);
+            this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.axesTexture[string]);
             const tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
             const tSizeY = 2.0 * this.zoom;
-            const data = this.textCtx.getImageData(0, 0, 512, 32);
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
-            this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
+
+            const [base_x, base_y, base_z] = location
             let textPositions = [base_x, base_y, base_z, base_x + tSizeX * right[0], base_y + tSizeX * right[1], base_z + tSizeX * right[2], base_x + tSizeY * up[0] + tSizeX * right[0], base_y + tSizeY * up[1] + tSizeX * right[1], base_z + tSizeY * up[2] + tSizeX * right[2]];
             textPositions = textPositions.concat([base_x, base_y, base_z, base_x + tSizeY * up[0] + tSizeX * right[0], base_y + tSizeY * up[1] + tSizeX * right[1], base_z + tSizeY * up[2] + tSizeX * right[2], base_x + tSizeY * up[0], base_y + tSizeY * up[1], base_z + tSizeY * up[2]]);
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextPositionBuffer);
@@ -10110,6 +10194,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 2, 3, 4, 5]), this.gl.STATIC_DRAW);
                 this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
             }
+                //this.gl.bindTexture(this.gl.TEXTURE_2D, null);
         }
 
         let base_x = xyzOff[0] + 3.0 * this.zoom;
@@ -10189,7 +10274,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         const drawStringAt = (string, colour, location, up, right, font) => {
             const [base_x, base_y, base_z] = location
-//FIXME - Be cleverer, return bigger texture if need be and do not create this.textCtx.canvas as a side effect. Return it!
             const [maxS,ctx] = this.makeTextCanvas(string, 512, 32, colour, font);
             const tSizeX = this.textHeightScaling/this.gl.viewportHeight * ctx.canvas.height/32 * 2.0 * ctx.canvas.width / ctx.canvas.height * this.zoom;
             const tSizeY = this.textHeightScaling/this.gl.viewportHeight * ctx.canvas.height/32 * 2.0 * this.zoom;
@@ -10210,7 +10294,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
             }
         }
-
 
         const drawString = (s, xpos, ypos, zpos, font, threeD) => {
             if(font) this.textCtx.font = font;
@@ -10324,7 +10407,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawSceneDirty() {
-        this.doRedraw = true;
     }
 
     drawSceneIfDirty() {
@@ -10391,6 +10473,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     calculate3DVectorFrom2DVector(inp) {
+        //What is this method for?
         const [dx,dy] = inp;
         const theVector = vec3.create();
         vec3.set(theVector, dx, dy, 0.0);
@@ -10402,7 +10485,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         return theVector;
     }
 
-    doMouseMove(event, self) {;
+    doMouseMove(event, self) {
         const activeMoleculeMotion = (this.activeMolecule != null) && (this.activeMolecule.representations.length > 0) && !self.keysDown['residue_camera_wiggle'];
 
         const centreOfMass = function (atoms) {
@@ -10449,7 +10532,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
             this.gl_cursorPos[0] = x;
             this.gl_cursorPos[1] = this.canvas.height - y;
-            self.drawSceneDirty();
         }
         if (!self.mouseDown) {
             self.init_x = event.pageX;
@@ -10501,7 +10583,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     }
                 }
             }
-            self.drawSceneDirty();
+            self.drawScene();
             return;
         }
 
@@ -10512,7 +10594,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 newZoom = 0.01;
             }
             self.setZoom(newZoom)
-            self.drawSceneDirty();
+            self.drawScene();
             return;
         }
 
@@ -10526,7 +10608,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             quat4.multiply(self.myQuat, self.myQuat, zQ);
 
         } else if (event.buttons === 1) {
-            //console.log("mouse move",self.dx,self.dy);
             let xQ = createXQuatFromDX(-self.dy);
             let yQ = createYQuatFromDY(-self.dx);
             //console.log(xQ);
@@ -10618,7 +10699,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
         }
 
-        self.drawSceneDirty();
+        self.drawScene();
     }
 
     doMouseDown(event, self) {
@@ -10657,6 +10738,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         if (!doContinue) return
+        
     }
 
     makeCircleCanvas(text, width, height, circleColour) {

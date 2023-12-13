@@ -395,44 +395,127 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     setupContourBuffers(objects: any[], keepCootColours: boolean = false) {
+        //TODO
+        // Sort out -ve winding/normals (same on moorhen.org)
+        const print_timing = false;
+        const t1 = performance.now();
         try {
             const diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] }
-            this.clearBuffersOfStyle("Coot")
             objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
-                object.col_tri.forEach((cols: number[][]) => {
-                    cols.forEach((col: number[]) => {
-                        for (let idx = 0; idx < col.length; idx += 4) {
-                            if (this.isDifference) {
-                                if (col[idx] < 0.5) {
-                                    diffMapColourBuffers.positiveDiffColour.push(idx)
-                                    col[idx] = this.rgba.positiveDiffColour.r
-                                    col[idx + 1] = this.rgba.positiveDiffColour.g
-                                    col[idx + 2] = this.rgba.positiveDiffColour.b    
+                let object_positive;
+                let object_negative;
+                if (this.isDifference) {
+                    object_positive = structuredClone(object);
+                    object_negative = structuredClone(object);
+                    object_positive.idx_tri = [];
+                    object_negative.idx_tri = [];
+                    const tc = performance.now();
+                    if(print_timing) console.log("End clone",tc-t1);
+                    let i = 0;
+                    object.idx_tri.forEach((idxss: number[][]) => {
+                        let j = 0;
+                        let pos_idx = [];
+                        let neg_idx = [];
+                        idxss.forEach((idxs: number[]) => {
+                            let this_pos_idx = [];
+                            let this_neg_idx = [];
+                            for (let idx = 0; idx < idxs.length; idx++) {
+                                const col = object.col_tri[i][j][idxs[idx]*4]
+                                if (col < 0.5) {
+                                    this_pos_idx.push(idxs[idx])
+                                    diffMapColourBuffers.positiveDiffColour.push(idxs[idx]*4)
+                                    object_positive.col_tri[i][j][idxs[idx]*4]   = this.rgba.positiveDiffColour.r
+                                    object_positive.col_tri[i][j][idxs[idx]*4+1] = this.rgba.positiveDiffColour.g
+                                    object_positive.col_tri[i][j][idxs[idx]*4+2] = this.rgba.positiveDiffColour.b
+                                    object_positive.col_tri[i][j][idxs[idx]*4+3] = this.rgba.a
                                 } else {
-                                    diffMapColourBuffers.negativeDiffColour.push(idx)
-                                    col[idx] = this.rgba.negativeDiffColour.r
-                                    col[idx + 1] = this.rgba.negativeDiffColour.g
-                                    col[idx + 2] = this.rgba.negativeDiffColour.b    
+                                    this_neg_idx.push(idxs[idx])
+                                    diffMapColourBuffers.negativeDiffColour.push(idxs[idx]*4)
+                                    object_negative.col_tri[i][j][idxs[idx]*4]   = this.rgba.negativeDiffColour.r
+                                    object_negative.col_tri[i][j][idxs[idx]*4+1] = this.rgba.negativeDiffColour.g
+                                    object_negative.col_tri[i][j][idxs[idx]*4+2] = this.rgba.negativeDiffColour.b
+                                    object_negative.col_tri[i][j][idxs[idx]*4+3] = this.rgba.a
                                 }
-                            } else if (!keepCootColours) {
-                                col[idx] = this.rgba.mapColour.r
-                                col[idx + 1] = this.rgba.mapColour.g
-                                col[idx + 2] = this.rgba.mapColour.b
                             }
-                            col[idx + 3] = this.rgba.a
-                        }
+                            pos_idx.push(this_pos_idx)
+                            neg_idx.push(this_neg_idx)
+                            j++;
+                        })
+                        object_positive.idx_tri.push(pos_idx)
+                        object_negative.idx_tri.push(neg_idx)
+                        i++;
                     })
-                })
-                let a = this.glRef.current.appendOtherData(object, true);
-                this.diffMapColourBuffers.positiveDiffColour = this.diffMapColourBuffers.positiveDiffColour.concat(diffMapColourBuffers.positiveDiffColour)
-                this.diffMapColourBuffers.negativeDiffColour = this.diffMapColourBuffers.negativeDiffColour.concat(diffMapColourBuffers.negativeDiffColour)
-                this.displayObjects['Coot'] = this.displayObjects['Coot'].concat(a)
+                    const tl = performance.now();
+                    if(print_timing) console.log("End loop",tl-t1)
+                } else {
+                    if(this.rgba.a<0.98){
+                        object.col_tri.forEach((cols: number[][]) => {
+                            cols.forEach((col: number[]) => {
+                                for (let idx = 0; idx < col.length; idx += 4) {
+                                    col[idx] = this.rgba.mapColour.r
+                                    col[idx + 1] = this.rgba.mapColour.g
+                                    col[idx + 2] = this.rgba.mapColour.b
+                                    col[idx + 3] = this.rgba.a
+                                }
+                            })
+                        })
+                    }
+                    const tl = performance.now();
+                    if(print_timing) console.log("End loop",tl-t1)
+                }
+                if (this.isDifference) {
+                    this.clearBuffersOfStyle("Coot")
+                    let a = this.glRef.current.appendOtherData(object_positive, true);
+                    let b = this.glRef.current.appendOtherData(object_negative, true);
+                    if(this.rgba.a<0.99){
+                        a[0].transparent = true;
+                        b[0].transparent = true;
+                    }
+                    const ta = performance.now();
+                    if(print_timing) console.log("End appendOtherData",ta-t1);
+                    this.diffMapColourBuffers.positiveDiffColour = this.diffMapColourBuffers.positiveDiffColour.concat(diffMapColourBuffers.positiveDiffColour);
+                    this.diffMapColourBuffers.negativeDiffColour = this.diffMapColourBuffers.negativeDiffColour.concat(diffMapColourBuffers.negativeDiffColour);
+                    this.displayObjects['Coot'] = this.displayObjects['Coot'].concat(a);
+                    this.displayObjects['Coot'] = this.displayObjects['Coot'].concat(b);
+                } else {
+                    //console.log("Old buffers?")
+                    if(this.displayObjects["Coot"].length>0 && (object.prim_types[0][0]===this.displayObjects["Coot"][0].bufferTypes[0])){
+                        this.displayObjects["Coot"][0].triangleVertices[0] = object.vert_tri[0][0]
+                        this.displayObjects["Coot"][0].triangleNormals[0] = object.norm_tri[0][0]
+                        if(this.rgba.a>0.98){
+                            this.displayObjects["Coot"][0].setCustomColour([this.rgba.mapColour.r,this.rgba.mapColour.g,this.rgba.mapColour.b,1.0])
+                        } else {
+                            this.displayObjects["Coot"][0].triangleColours[0] = object.col_tri[0][0]
+                        }
+                        this.displayObjects["Coot"][0].triangleIndexs[0] = object.idx_tri[0][0]
+                        this.displayObjects["Coot"][0].isDirty = true
+                    } else {
+                       this.clearBuffersOfStyle("Coot")
+                       let a = this.glRef.current.appendOtherData(object, true);
+                       if(this.rgba.a>0.98){
+                           a[0].setCustomColour([this.rgba.mapColour.r,this.rgba.mapColour.g,this.rgba.mapColour.b,1.0])
+                       }
+                       this.displayObjects['Coot'] = this.displayObjects['Coot'].concat(a);
+                    }
+
+                    const ta = performance.now();
+                    if(print_timing) console.log("End appendOtherData",ta-t1);
+                    this.diffMapColourBuffers.positiveDiffColour = this.diffMapColourBuffers.positiveDiffColour.concat(diffMapColourBuffers.positiveDiffColour);
+                    this.diffMapColourBuffers.negativeDiffColour = this.diffMapColourBuffers.negativeDiffColour.concat(diffMapColourBuffers.negativeDiffColour);
+                }
             })
+            if(print_timing) console.log("Start buildBuffers");
             this.glRef.current.buildBuffers();
+            const tb = performance.now();
+            if(print_timing) console.log("End buildBuffers",tb-t1);
             this.glRef.current.drawScene();
-            } catch(err) {
-                console.log(err)
-            } 
+            const ts = performance.now();
+            if(print_timing) console.log("After drawScene",ts-t1);
+        } catch(err) {
+            //console.log(err)
+        } 
+        const t2 = performance.now();
+        if(print_timing) console.log("Finished setupContourBuffers",t2-t1)
     }
 
     /**
@@ -504,18 +587,36 @@ export class MoorhenMap implements moorhen.Map {
         
         this.rgba[type] = { r, g, b }
         
-        this.displayObjects['Coot'].forEach((buffer, bufferIdx) => {
-            buffer.triangleColours.forEach((colbuffer, colBufferIdx) => {
-                for (const idx of this.diffMapColourBuffers[type]) {
-                    colbuffer[idx] = this.rgba[type].r
-                    colbuffer[idx + 1] = this.rgba[type].g
-                    colbuffer[idx + 2] = this.rgba[type].b
-                }
+        if (this.rgba.a < 0.99) {
+            this.displayObjects['Coot'].forEach((buffer, bufferIdx) => {
+                buffer.customColour = null;
+                buffer.transparent = true
+                buffer.triangleColours.forEach((colbuffer, colBufferIdx) => {
+                    for (const idx of this.diffMapColourBuffers[type]) {
+                        colbuffer[idx] = this.rgba[type].r
+                        colbuffer[idx + 1] = this.rgba[type].g
+                        colbuffer[idx + 2] = this.rgba[type].b
+                    }
+                })
+                buffer.isDirty = true
+                buffer.alphaChanged = true;
             })
-            buffer.isDirty = true
-        })
+        } else {
+            if(this.displayObjects['Coot'].length===2){
+                if(type==='positiveDiffColour'){
+                    this.displayObjects['Coot'][0].setCustomColour([r,g,b,1.0])
+                    this.displayObjects['Coot'][0].transparent = false
+                } else {
+                    this.displayObjects['Coot'][1].setCustomColour([r,g,b,1.0])
+                    this.displayObjects['Coot'][1].transparent = false
+                }
+            }
+        }
         
-        this.glRef.current.buildBuffers();
+        if (this.rgba.a < 0.99) {
+            this.glRef.current.buildBuffers();
+        }
+
         if (redraw) {
             this.glRef.current.drawScene();
         }
@@ -542,17 +643,28 @@ export class MoorhenMap implements moorhen.Map {
         this.rgba.mapColour = { r, g, b }
         
         this.displayObjects['Coot'].forEach(buffer => {
-            buffer.triangleColours.forEach(colbuffer => {
-                for (let idx = 0; idx < colbuffer.length; idx += 4) {
-                    colbuffer[idx] = this.rgba.mapColour.r
-                    colbuffer[idx + 1] = this.rgba.mapColour.g
-                    colbuffer[idx + 2] = this.rgba.mapColour.b
-                }
-            })
-            buffer.isDirty = true
+            if (this.rgba.a < 0.99) {
+                buffer.customColour = null;
+                buffer.transparent = true
+                buffer.triangleColours.forEach(colbuffer => {
+                    for (let idx = 0; idx < colbuffer.length; idx += 4) {
+                        colbuffer[idx] = this.rgba.mapColour.r
+                        colbuffer[idx + 1] = this.rgba.mapColour.g
+                        colbuffer[idx + 2] = this.rgba.mapColour.b
+                    }
+                })
+                buffer.isDirty = true;
+                buffer.alphaChanged = true;
+            } else {
+                buffer.setCustomColour([r,g,b,1.0])
+                buffer.transparent = false
+            }
         })
 
-        this.glRef.current.buildBuffers();
+        if (this.rgba.a < 0.99) {
+            this.glRef.current.buildBuffers();
+        }
+
         if (redraw) {
             this.glRef.current.drawScene();
         }
@@ -564,9 +676,18 @@ export class MoorhenMap implements moorhen.Map {
      * @param {boolean} [redraw=true] - Indicates whether the map needs to be redrawn after setting the new alpha
      */
     async setAlpha(alpha: number, redraw: boolean = true): Promise<void> {
+        /*
+        ??
+        if (this.isDifference) {
+            console.log("Need some more cleverness!",this.rgba.mapColour)
+        }
+        */
         this.rgba.a = alpha
         this.displayObjects['Coot'].forEach(buffer => {
             buffer.triangleColours.forEach(colbuffer => {
+                if (this.isDifference) {
+                    console.log("Setting alpha",this.rgba.a)
+                }
                 for (let idx = 3; idx < colbuffer.length; idx += 4) {
                     colbuffer[idx] = alpha
                 }
@@ -575,8 +696,24 @@ export class MoorhenMap implements moorhen.Map {
             buffer.alphaChanged = true
             if (alpha < 0.99) {
                 buffer.transparent = true
+                if(buffer.customColour&&buffer.customColour.length===4){
+                    buffer.customColour = null;
+                    if (this.isDifference) {
+                        console.log("Setting colours to",this.rgba.mapColour)
+                    }
+                    buffer.triangleColours.forEach(colbuffer => {
+                            for (let idx = 0; idx < colbuffer.length; idx += 4) {
+                            colbuffer[idx] = this.rgba.mapColour.r
+                            colbuffer[idx + 1] = this.rgba.mapColour.g
+                            colbuffer[idx + 2] = this.rgba.mapColour.b
+                            }
+                    })
+                }
             } else {
                 buffer.transparent = false
+                if(buffer.customColour&&buffer.customColour.length===4){
+                    buffer.setCustomColour([this.rgba.mapColour.r,this.rgba.mapColour.g,this.rgba.mapColour.b,1.0])
+                }
             }
         })
         this.glRef.current.buildBuffers();

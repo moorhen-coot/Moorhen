@@ -63,7 +63,7 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
     void main(void) {
       float silly_scale = 0.7071067811865475;
       float x = 2.0*(vTexture.x-.5);
-      float y = 2.0*(vTexture.y-.5);
+      float y = -2.0*(vTexture.y-.5);
       float zz =  1.0 - x*x - y*y;
       float z = sqrt(zz);
 
@@ -124,21 +124,17 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
       vec4 Ispec=vec4(0.0,0.0,0.0,0.0);
        vec3 norm = vec3(x,y,z);
 
-      // Baffled as to why I have to do this.
-      vec3 invertLightPos = vec3(light_positions.x,-light_positions.y,light_positions.z);
-      E = ( vec4(normalize(norm),1.0)).xyz;
-      //for (i = 0; i<nLights&&i<8; i++) {
-       L = normalize(invertLightPos);
-       //R = normalize(-reflect(L,norm));
-       //calculate Ambient Term:
-       Iamb += occ*light_colours_ambient;
-       //calculate Diffuse Term:
-       Idiff += light_colours_diffuse * max(dot(E,L), 0.0);
-       // calculate Specular Term:
-       y = max(max(light_colours_specular.r,light_colours_specular.g),light_colours_specular.b);
-       Ispec += light_colours_specular * pow(max(dot(E,L),0.0),specularPower);
-       Ispec.a *= y;
-      //}
+      E = normalize(norm);
+      L = normalize(light_positions.xyz);
+      //R = normalize(-reflect(L,norm));
+      //calculate Ambient Term:
+      Iamb += occ*light_colours_ambient;
+      //calculate Diffuse Term:
+      Idiff += light_colours_diffuse * max(dot(E,L), 0.0);
+      // calculate Specular Term:
+      y = max(max(light_colours_specular.r,light_colours_specular.g),light_colours_specular.b);
+      Ispec += light_colours_specular * pow(max(dot(E,L),0.0),specularPower);
+      Ispec.a *= y;
 
       float FogFragCoord = abs(eyePos.z/eyePos.w);
       float fogFactor = (fog_end - FogFragCoord)/(fog_end - fog_start);

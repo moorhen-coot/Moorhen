@@ -1,6 +1,5 @@
 var thick_lines_normal_gbuffer_vertex_shader_source = `#version 300 es\n
     in vec4 aVertexPosition;
-    in vec4 aVertexColour;
     in vec3 aVertexNormal;
     in vec3 aVertexRealNormal;
 

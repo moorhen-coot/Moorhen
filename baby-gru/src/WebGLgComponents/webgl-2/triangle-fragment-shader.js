@@ -3,7 +3,6 @@ var triangle_fragment_shader_source = `#version 300 es\n
     in lowp vec4 vColor;
     in lowp vec3 vNormal;
     in lowp vec4 eyePos;
-    in lowp vec3 v;
 
     in lowp vec4 ShadowCoord;
     uniform sampler2D ShadowMap;
@@ -45,6 +44,7 @@ var triangle_fragment_shader_source = `#version 300 es\n
     uniform vec4 light_colours_specular;
     uniform vec4 light_colours_diffuse;
     uniform float specularPower;
+    uniform vec3 screenZFrag;
 
     out vec4 fragColor;
 
@@ -65,6 +65,7 @@ var triangle_fragment_shader_source = `#version 300 es\n
     }
 
     void main(void) {
+
       if(dot(eyePos, clipPlane0)<0.0){
        discard;
       }
@@ -98,8 +99,8 @@ var triangle_fragment_shader_source = `#version 300 es\n
       vec4 Ispec=vec4(0.0,0.0,0.0,0.0);
       vec3 norm = normalize(vNormal);
 
-      E = (mvInvMatrix * vec4(normalize(-v),1.0)).xyz;
-      L = normalize((mvInvMatrix *light_positions).xyz);
+      E = screenZFrag;
+      L = light_positions.xyz;
       R = normalize(-reflect(L,norm));
       Iamb += occ*light_colours_ambient;
 
@@ -107,6 +108,7 @@ var triangle_fragment_shader_source = `#version 300 es\n
           Idiff += occ*light_colours_diffuse * max(dot(norm,L), 0.0);
       else
           Idiff += light_colours_diffuse * max(dot(norm,L), 0.0);
+
       float y = max(max(light_colours_specular.r,light_colours_specular.g),light_colours_specular.b);
       Ispec += light_colours_specular * pow(max(dot(R,E),0.0),specularPower);
       Ispec.a *= y;
@@ -117,7 +119,8 @@ var triangle_fragment_shader_source = `#version 300 es\n
 
       vec4 theColor = vec4(vColor);
 
-      vec4 color = (1.5*theColor*Iamb + 1.2*theColor* Idiff);
+      vec4 color = (theColor*Iamb + theColor* Idiff + Ispec);
+
       if(shad<0.5) {
           shad += .5;
           shad = min(shad,1.0);
@@ -125,17 +128,14 @@ var triangle_fragment_shader_source = `#version 300 es\n
       } else {
           color += Ispec;
       }
-      color.a = vColor.a;
 
       if(gl_FrontFacing!=true){
-          //FIXME - mix !!
           color = vec4(shad*vColor);
-          color.a = vColor.a;
       }
 
-      fragColor = mix(color, fogColour, fogFactor );
-      //if(doSSAO) fragColor = texture(SSAOMap, vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling) );
+      color.a = vColor.a;
 
+      fragColor = mix(color, fogColour, fogFactor );
     }
 `;
 

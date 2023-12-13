@@ -27,6 +27,7 @@
 
 #include <emscripten.h>
 #include <emscripten/bind.h>
+#include <emscripten/val.h>
 
 #include "geometry/residue-and-atom-specs.hh"
 #include "ligand/chi-angles.hh"
@@ -493,7 +494,110 @@ std::string GetInsCodeFromResidue(mmdb::Residue *res){
     return std::string(res->GetInsCode());
 }
 
+emscripten::val uint32ArrayFromVector(const std::vector<unsigned int> &uintArray){
+    emscripten::val view{ emscripten::typed_memory_view(uintArray.size(), uintArray.data()) };
+    auto result = emscripten::val::global("Uint32Array").new_(uintArray.size());
+    result.call<void>("set", view);
+    return result;
+}
+
+emscripten::val float32ArrayFromVector(const std::vector<float> &floatArray){
+    emscripten::val view{ emscripten::typed_memory_view(floatArray.size(), floatArray.data()) };
+    auto result = emscripten::val::global("Float32Array").new_(floatArray.size());
+    result.call<void>("set", view);
+    return result;
+}
+
+emscripten::val getPositionsFromSimpleMesh(const coot::simple_mesh_t &m){
+
+    std::vector<float> floatArray;
+
+    const auto &vertices = m.vertices;
+
+    for(const auto &v : vertices){
+        floatArray.push_back(v.pos[0]);
+        floatArray.push_back(v.pos[1]);
+        floatArray.push_back(v.pos[2]);
+    }
+
+    return float32ArrayFromVector(floatArray);
+
+}
+
+emscripten::val getNormalsFromSimpleMesh(const coot::simple_mesh_t &m){
+
+    std::vector<float> floatArray;
+
+    const auto &vertices = m.vertices;
+
+    for(const auto &v : vertices){
+        floatArray.push_back(v.normal[0]);
+        floatArray.push_back(v.normal[1]);
+        floatArray.push_back(v.normal[2]);
+    }
+
+    return float32ArrayFromVector(floatArray);
+
+}
+
+emscripten::val getColoursFromSimpleMesh(const coot::simple_mesh_t &m){
+
+    std::vector<float> floatArray;
+
+    const auto &vertices = m.vertices;
+
+    for(const auto &v : vertices){
+        floatArray.push_back(v.color[0]);
+        floatArray.push_back(v.color[1]);
+        floatArray.push_back(v.color[2]);
+        floatArray.push_back(v.color[3]);
+    }
+
+    return float32ArrayFromVector(floatArray);
+
+}
+emscripten::val getLineIndicesFromSimpleMesh(const coot::simple_mesh_t &m){
+
+    std::vector<unsigned int> uintArray;
+
+    const auto &triangles = m.triangles;
+
+    for(const auto &t : triangles){
+        auto &idx = t.point_id;
+        uintArray.push_back(idx[0]);
+        uintArray.push_back(idx[1]);
+        uintArray.push_back(idx[0]);
+        uintArray.push_back(idx[2]);
+        uintArray.push_back(idx[1]);
+        uintArray.push_back(idx[2]);
+    }
+
+    return uint32ArrayFromVector(uintArray);
+
+}
+
+
+emscripten::val testFloat32Array(const emscripten::val &floatArrayObject){
+
+    auto floatArray = emscripten::convertJSArrayToNumberVector<float>(floatArrayObject);
+    unsigned int length = floatArray.size();
+
+    std::cout << "In testFloat32Array " << length << " " << floatArray[0] << std::endl;
+    floatArray[0] = 555.555;
+
+    emscripten::val view{ emscripten::typed_memory_view(floatArray.size(), floatArray.data()) };
+    auto result = emscripten::val::global("Float32Array").new_(floatArray.size());
+    // copy data from generated floatArray to return object
+    result.call<void>("set", view);
+    return result;
+}
+
 EMSCRIPTEN_BINDINGS(my_module) {
+    function("testFloat32Array", &testFloat32Array);
+    function("getPositionsFromSimpleMesh", &getPositionsFromSimpleMesh);
+    function("getNormalsFromSimpleMesh", &getNormalsFromSimpleMesh);
+    function("getColoursFromSimpleMesh", &getColoursFromSimpleMesh);
+    function("getLineIndicesFromSimpleMesh", &getLineIndicesFromSimpleMesh);
     class_<clipper::Coord_orth>("Coord_orth")
     .constructor<const clipper::ftype&, const clipper::ftype&, const clipper::ftype&>()
     .function("x", &clipper::Coord_orth::x)

@@ -42,8 +42,8 @@ export namespace webGL {
         drawSceneIfDirty() : void;
         drawFPSMeter() : void;
         linesToThickLines(axesVertices: number[], axesColours: number[], size: number) : any;
-        linesToThickLinesWithIndicesAndNormals(axesVertices: number[], axesNormals: number[], axesColours: number[], axesIndices: number[], size: number) : any;
-        linesToThickLinesWithIndices(axesVertices: number[], axesColours: number[], axesIndices: number[], size: number, axesNormals_old? : number) : any;
+        linesToThickLinesWithIndicesAndNormals(axesVertices: number[], axesNormals: number[], axesColours: number[], axesIndices: number[], size: number, doColour : boolean|null) : any;
+        linesToThickLinesWithIndices(axesVertices: number[], axesColours: number[], axesIndices: number[], size: number, axesNormals_old? : number[], doColour : boolean|null) : any;
         doWheel(event: Event) : void;
         doHover(event: Event, self: any) : void;
         handleKeyUp(event: Event, self: any) : void;
@@ -238,7 +238,7 @@ export namespace webGL {
         cancelMouseTrack: boolean;
         circleTex: WebGLTexture;
         clipChangedEvent: Event;
-        context: CanvasRenderingContext2D;
+        context2d: CanvasRenderingContext2D;
         diskBuffer: DisplayBuffer;
         diskVertices: number[];
         doShadow: boolean;
@@ -288,6 +288,7 @@ export namespace webGL {
         mouseTrackPositionBuffer: WebGLBuffer;
         moveFactor: number;
         mspfArray: number[];
+        pointsArray: number[];
         mvInvMatrix: Float32Array;
         mvMatrix: Float32Array;
         nAnimationFrames: number;
@@ -397,6 +398,8 @@ export namespace webGL {
         ext: any;
         newTextLabels: any;
         drawingGBuffers: boolean;
+        initializeShaders() : void;
+        axesTexture: any;
 
     }
 }
