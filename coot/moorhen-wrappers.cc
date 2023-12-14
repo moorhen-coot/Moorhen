@@ -508,6 +508,119 @@ emscripten::val float32ArrayFromVector(const std::vector<float> &floatArray){
     return result;
 }
 
+void setFloat32ArrayFromVector(const std::vector<float> &floatArray, const emscripten::val &v){
+    emscripten::val view{ emscripten::typed_memory_view(floatArray.size(), floatArray.data()) };
+    v.call<void>("set", view);
+}
+
+void setUint32ArrayFromVector(const std::vector<unsigned> &uintArray, const emscripten::val &v){
+    emscripten::val view{ emscripten::typed_memory_view(uintArray.size(), uintArray.data()) };
+    v.call<void>("set", view);
+}
+
+void getPositionsFromSimpleMesh2(const coot::simple_mesh_t &m, const emscripten::val &v){
+    const auto &vertices = m.vertices;
+
+    std::vector<float> floatArray;
+    floatArray.reserve(vertices.size()*3);
+
+    for(const auto &v : vertices){
+        floatArray.push_back(v.pos[0]);
+        floatArray.push_back(v.pos[1]);
+        floatArray.push_back(v.pos[2]);
+    }
+
+    setFloat32ArrayFromVector(floatArray,v);
+}
+
+void getReversedNormalsFromSimpleMesh2(const coot::simple_mesh_t &m, const emscripten::val &v){
+
+    const auto &vertices = m.vertices;
+
+    std::vector<float> floatArray;
+    floatArray.reserve(vertices.size()*3);
+
+    for(const auto &v : vertices){
+        floatArray.push_back(-v.normal[0]);
+        floatArray.push_back(-v.normal[1]);
+        floatArray.push_back(-v.normal[2]);
+    }
+
+    setFloat32ArrayFromVector(floatArray,v);
+
+}
+
+void getNormalsFromSimpleMesh2(const coot::simple_mesh_t &m, const emscripten::val &v){
+
+    const auto &vertices = m.vertices;
+
+    std::vector<float> floatArray;
+    floatArray.reserve(vertices.size()*3);
+
+    for(const auto &v : vertices){
+        floatArray.push_back(v.normal[0]);
+        floatArray.push_back(v.normal[1]);
+        floatArray.push_back(v.normal[2]);
+    }
+
+    setFloat32ArrayFromVector(floatArray,v);
+
+}
+
+void getColoursFromSimpleMesh2(const coot::simple_mesh_t &m, const emscripten::val &v){
+
+    const auto &vertices = m.vertices;
+
+    std::vector<float> floatArray;
+    floatArray.reserve(vertices.size()*4);
+
+    for(const auto &v : vertices){
+        floatArray.push_back(v.color[0]);
+        floatArray.push_back(v.color[1]);
+        floatArray.push_back(v.color[2]);
+        floatArray.push_back(v.color[3]);
+    }
+
+    setFloat32ArrayFromVector(floatArray,v);
+
+}
+
+void getTriangleIndicesFromSimpleMesh2(const coot::simple_mesh_t &m, const emscripten::val &v){
+
+    const auto &triangles = m.triangles;
+
+    std::vector<unsigned int> uintArray;
+    uintArray.reserve(triangles.size()*3);
+
+    for(const auto &t : triangles){
+        auto &idx = t.point_id;
+        uintArray.push_back(idx[0]);
+        uintArray.push_back(idx[1]);
+        uintArray.push_back(idx[2]);
+    }
+
+    setUint32ArrayFromVector(uintArray,v);
+
+}
+
+void getPermutedTriangleIndicesFromSimpleMesh2(const coot::simple_mesh_t &m, const emscripten::val &v){
+
+    const auto &triangles = m.triangles;
+
+    std::vector<unsigned int> uintArray;
+    uintArray.reserve(triangles.size()*3);
+
+    for(const auto &t : triangles){
+        auto &idx = t.point_id;
+        uintArray.push_back(idx[0]);
+        uintArray.push_back(idx[2]);
+        uintArray.push_back(idx[1]);
+    }
+
+    setUint32ArrayFromVector(uintArray,v);
+
+}
+
 emscripten::val getPositionsFromSimpleMesh(const coot::simple_mesh_t &m){
 
     const auto &vertices = m.vertices;
@@ -613,6 +726,30 @@ emscripten::val getPermutedTriangleIndicesFromSimpleMesh(const coot::simple_mesh
 
 }
 
+void getLineIndicesFromSimpleMesh2(const coot::simple_mesh_t &m, const emscripten::val &v){
+
+    auto floatArray = emscripten::convertJSArrayToNumberVector<float>(v);
+    unsigned int length = floatArray.size();
+
+    const auto &triangles = m.triangles;
+
+    std::vector<unsigned int> uintArray;
+    uintArray.reserve(triangles.size()*6);
+
+    for(const auto &t : triangles){
+        auto &idx = t.point_id;
+        uintArray.push_back(idx[0]);
+        uintArray.push_back(idx[1]);
+        uintArray.push_back(idx[0]);
+        uintArray.push_back(idx[2]);
+        uintArray.push_back(idx[1]);
+        uintArray.push_back(idx[2]);
+    }
+
+    setUint32ArrayFromVector(uintArray,v);
+
+}
+
 emscripten::val getLineIndicesFromSimpleMesh(const coot::simple_mesh_t &m){
 
     const auto &triangles = m.triangles;
@@ -634,7 +771,6 @@ emscripten::val getLineIndicesFromSimpleMesh(const coot::simple_mesh_t &m){
 
 }
 
-
 emscripten::val testFloat32Array(const emscripten::val &floatArrayObject){
 
     auto floatArray = emscripten::convertJSArrayToNumberVector<float>(floatArrayObject);
@@ -652,6 +788,10 @@ emscripten::val testFloat32Array(const emscripten::val &floatArrayObject){
 
 EMSCRIPTEN_BINDINGS(my_module) {
     function("testFloat32Array", &testFloat32Array);
+    function("getPositionsFromSimpleMesh2", &getPositionsFromSimpleMesh2);
+    function("getReversedNormalsFromSimpleMesh2", &getReversedNormalsFromSimpleMesh2);
+    function("getNormalsFromSimpleMesh2", &getNormalsFromSimpleMesh2);
+    function("getColoursFromSimpleMesh2", &getColoursFromSimpleMesh2);
     function("getPositionsFromSimpleMesh", &getPositionsFromSimpleMesh);
     function("getReversedNormalsFromSimpleMesh", &getReversedNormalsFromSimpleMesh);
     function("getNormalsFromSimpleMesh", &getNormalsFromSimpleMesh);
@@ -659,6 +799,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("getLineIndicesFromSimpleMesh", &getLineIndicesFromSimpleMesh);
     function("getPermutedTriangleIndicesFromSimpleMesh", &getPermutedTriangleIndicesFromSimpleMesh);
     function("getTriangleIndicesFromSimpleMesh", &getTriangleIndicesFromSimpleMesh);
+    function("getLineIndicesFromSimpleMesh2", &getLineIndicesFromSimpleMesh2);
+    function("getPermutedTriangleIndicesFromSimpleMesh2", &getPermutedTriangleIndicesFromSimpleMesh2);
+    function("getTriangleIndicesFromSimpleMesh2", &getTriangleIndicesFromSimpleMesh2);
     class_<clipper::Coord_orth>("Coord_orth")
     .constructor<const clipper::ftype&, const clipper::ftype&, const clipper::ftype&>()
     .function("x", &clipper::Coord_orth::x)

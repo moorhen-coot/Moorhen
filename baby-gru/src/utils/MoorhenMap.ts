@@ -449,6 +449,7 @@ export class MoorhenMap implements moorhen.Map {
                     const tl = performance.now();
                     if(print_timing) console.log("End loop",tl-t1)
                 } else if (!keepCootColours)  {
+                    //console.log("DEBUG: MOORHEN MAP",object.col_tri)
                     if(this.rgba.a<0.98){
                         object.col_tri.forEach((cols: number[][]) => {
                             cols.forEach((col: number[]) => {
@@ -479,11 +480,12 @@ export class MoorhenMap implements moorhen.Map {
                     this.displayObjects['Coot'] = this.displayObjects['Coot'].concat(a);
                     this.displayObjects['Coot'] = this.displayObjects['Coot'].concat(b);
                 } else if (!keepCootColours) {
-                    //console.log("Old buffers?")
+                    //console.log("DEBUG: Old buffers?", object.vert_tri[0][0],object.norm_tri[0][0])
                     if(this.displayObjects["Coot"].length>0 && (object.prim_types[0][0]===this.displayObjects["Coot"][0].bufferTypes[0])){
                         this.displayObjects["Coot"][0].triangleVertices[0] = object.vert_tri[0][0]
                         this.displayObjects["Coot"][0].triangleNormals[0] = object.norm_tri[0][0]
                         if(this.rgba.a>0.98){
+                            //console.log("DEBUG: Old buffers setCustomColour")
                             this.displayObjects["Coot"][0].setCustomColour([this.rgba.mapColour.r,this.rgba.mapColour.g,this.rgba.mapColour.b,1.0])
                         } else {
                             this.displayObjects["Coot"][0].triangleColours[0] = object.col_tri[0][0]

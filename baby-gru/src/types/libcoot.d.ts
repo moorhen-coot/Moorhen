@@ -235,11 +235,11 @@ export namespace libcootApi {
     interface SimpleMeshJS {
         prim_types: [[string]];
         useIndices?: [[boolean]];
-        idx_tri: [[number[]]];
-        vert_tri: [[number[]]];
-        additional_norm_tri?: [[number[]]];
-        norm_tri: [[number[]]];
-        col_tri: [[number[]]];
+        idx_tri: [[number[]|Uint32Array]];
+        vert_tri: [[number[]|Float32Array]];
+        additional_norm_tri?: [[number[]|Float32Array]];
+        norm_tri: [[number[]|Float32Array]];
+        col_tri: [[number[]|Float32Array]];
     }
     interface SymmetryData {
         cell: CellTranslation;
@@ -435,9 +435,20 @@ export namespace libcootApi {
         getNormalsFromSimpleMesh( arg0: any ): Float32Array;
         getReversedNormalsFromSimpleMesh( arg0: any ): Float32Array;
         getColoursFromSimpleMesh( arg0: any ): Float32Array;
+
+        getPositionsFromSimpleMesh2( arg0: any, arg1: any ): void;
+        getNormalsFromSimpleMesh2( arg0: any, arg1: any ): void;
+        getReversedNormalsFromSimpleMesh2( arg0: any, arg1: any ): void;
+        getColoursFromSimpleMesh2( arg0: any, arg1: any ): void;
+
         getLineIndicesFromSimpleMesh( arg0: any ): Uint32Array;
         getPermutedTriangleIndicesFromSimpleMesh( arg0: any ): Uint32Array;
         getTriangleIndicesFromSimpleMesh( arg0: any ): Uint32Array;
+
+        getLineIndicesFromSimpleMesh2( arg0: any, arg1: any  ): void;
+        getPermutedTriangleIndicesFromSimpleMesh2( arg0: any, arg1: any ): void;
+        getTriangleIndicesFromSimpleMesh2( arg0: any, arg1: any ): void;
+
         Vectormoved_residue_t: { new(): emscriptem.vector<MovedResidueT>};
         moved_residue_t: { new(arg0: string, arg1: number, arg2: string): MovedResidueT};
         moved_atom_t: { new(arg0: string, arg1: string, arg2: number, arg3: number, arg4: number, arg5: number): MovedAtomT};

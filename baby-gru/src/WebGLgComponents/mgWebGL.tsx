@@ -6148,29 +6148,66 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
                 } else {
 
-                    this.displayBuffers[idx].triangleVertexNormalBuffer[j].numItems = this.displayBuffers[idx].triangleNormals[j].length / 3;
-                    this.displayBuffers[idx].triangleVertexPositionBuffer[j].numItems = this.displayBuffers[idx].triangleNormals[j].length / 3;
+                    let triangleNormals
+                    let triangleColours
+                    let triangleVertices
+                    let triangleIndexs
+
+                    let doColour = false;
+                    if(!this.displayBuffers[idx].customColour || this.displayBuffers[idx].customColour.length!==4){
+                        doColour = true;
+                    }
+                    //console.log("DEBUG: buildBuffers normals", this.displayBuffers[idx].triangleNormals[j])
+                    //console.log("DEBUG: buildBuffers colours", this.displayBuffers[idx].triangleColours[j])
+                    //console.log("DEBUG: buildBuffers positions", this.displayBuffers[idx].triangleVertices[j])
+                    //console.log("DEBUG: buildBuffers indices", this.displayBuffers[idx].triangleIndexs[j])
+                    //console.log("DEBUG: buildBuffers doColour", doColour,this.displayBuffers[idx].customColour)
+
+                    if(ArrayBuffer.isView(this.displayBuffers[idx].triangleNormals[j])){
+                        triangleNormals = this.displayBuffers[idx].triangleNormals[j]
+                    } else {
+                        triangleNormals = new Float32Array(this.displayBuffers[idx].triangleNormals[j])
+                    }
+                    if(ArrayBuffer.isView(this.displayBuffers[idx].triangleVertices[j])){
+                        triangleVertices = this.displayBuffers[idx].triangleVertices[j]
+                    } else {
+                        triangleVertices = new Float32Array(this.displayBuffers[idx].triangleVertices[j])
+                    }
+                    if(ArrayBuffer.isView(this.displayBuffers[idx].triangleColours[j])){
+                        triangleColours = this.displayBuffers[idx].triangleColours[j]
+                    } else if(doColour) {
+                        triangleColours = new Float32Array(this.displayBuffers[idx].triangleColours[j])
+                    }
+                    if(ArrayBuffer.isView(this.displayBuffers[idx].triangleIndexs[j])){
+                        triangleIndexs = this.displayBuffers[idx].triangleIndexs[j]
+                    } else {
+                        triangleIndexs = new Uint32Array(this.displayBuffers[idx].triangleIndexs[j])
+                    }
+
+                    this.displayBuffers[idx].triangleVertexNormalBuffer[j].numItems = triangleNormals.length / 3;
+                    this.displayBuffers[idx].triangleVertexPositionBuffer[j].numItems = triangleVertices.length / 3;
                     this.displayBuffers[idx].triangleColourBuffer[j].numItems = this.displayBuffers[idx].triangleColours[j].length / 4;
-                    this.displayBuffers[idx].triangleVertexIndexBuffer[j].numItems = this.displayBuffers[idx].triangleIndexs[j].length;
+                    this.displayBuffers[idx].triangleVertexIndexBuffer[j].numItems = triangleIndexs.length;
 
                     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexIndexBuffer[j]);
                     if (this.ext) {
-                        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(this.displayBuffers[idx].triangleIndexs[j]), this.gl.STATIC_DRAW);
+                        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, triangleIndexs, this.gl.STATIC_DRAW);
                     } else {
                         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.displayBuffers[idx].triangleIndexs[j]), this.gl.STATIC_DRAW);
                     }
                     this.displayBuffers[idx].triangleVertexIndexBuffer[j].itemSize = 1;
                     if (this.displayBuffers[idx].bufferTypes[j] !== "NORMALLINES" && this.displayBuffers[idx].bufferTypes[j] !== "LINES" && this.displayBuffers[idx].bufferTypes[j] !== "LINE_LOOP" && this.displayBuffers[idx].bufferTypes[j] !== "LINE_STRIP" && this.displayBuffers[idx].bufferTypes[j] !== "POINTS" && this.displayBuffers[idx].bufferTypes[j] !== "POINTS_SPHERES" && this.displayBuffers[idx].bufferTypes[j] !== "CAPCYLINDERS" && this.displayBuffers[idx].bufferTypes[j] !== "SPHEROIDS" && this.displayBuffers[idx].bufferTypes[j] !== "TORUSES" && this.displayBuffers[idx].bufferTypes[j] !== "CIRCLES") {
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexNormalBuffer[j]);
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleNormals[j]), this.gl.STATIC_DRAW);
+                        this.gl.bufferData(this.gl.ARRAY_BUFFER, triangleNormals, this.gl.STATIC_DRAW);
                         this.displayBuffers[idx].triangleVertexNormalBuffer[j].itemSize = 3;
                     }
                     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexPositionBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleVertices[j]), this.gl.STATIC_DRAW);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, triangleVertices, this.gl.STATIC_DRAW);
                     this.displayBuffers[idx].triangleVertexPositionBuffer[j].itemSize = 3;
-                    if(!this.displayBuffers[idx].customColour || this.displayBuffers[idx].customColour.length!==4){
+                    if(doColour){
+                        console.log("DEBUG: buffering colours")
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleColours[j]), this.gl.STATIC_DRAW);
+                        this.gl.bufferData(this.gl.ARRAY_BUFFER, triangleColours, this.gl.STATIC_DRAW);
                         this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
                     }
                     if(this.displayBuffers[idx].triangleInstanceSizeBuffer[j]){

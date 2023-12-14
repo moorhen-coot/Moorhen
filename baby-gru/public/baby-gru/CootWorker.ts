@@ -231,25 +231,45 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
 
 const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean = false): libcootApi.SimpleMeshJS => {
 
-    const print_timing = false;
+    const print_timing = true;
     const ts = performance.now()
 
-    let totNorm
-    let totIdxs
-    let totPos  = Array.from(cootModule.getPositionsFromSimpleMesh(simpleMesh))
-    let totCol  = Array.from(cootModule.getColoursFromSimpleMesh(simpleMesh))
+    const vertices = simpleMesh.vertices;
+    const triangles = simpleMesh.triangles;
+    
+    const verticesSize = vertices.size();
+    const trianglesSize = triangles.size()
+
+    let totIdxs_C = new Uint32Array(trianglesSize*3)
+    let totPos_C  = new Float32Array(verticesSize*3)
+    let totNorm_C = new Float32Array(verticesSize*3)
+    let totCol_C  = new Float32Array(verticesSize*4)
+
+    cootModule.getPositionsFromSimpleMesh2(simpleMesh,totPos_C)
+    cootModule.getColoursFromSimpleMesh2(simpleMesh,totCol_C)
+
     if (perm){
-        totNorm = Array.from(cootModule.getReversedNormalsFromSimpleMesh(simpleMesh))
-        totIdxs = Array.from(cootModule.getPermutedTriangleIndicesFromSimpleMesh(simpleMesh))
+        cootModule.getReversedNormalsFromSimpleMesh2(simpleMesh,totNorm_C)
+        cootModule.getPermutedTriangleIndicesFromSimpleMesh2(simpleMesh,totIdxs_C)
     } else {
-        totNorm = Array.from(cootModule.getNormalsFromSimpleMesh(simpleMesh))
-        totIdxs = Array.from(cootModule.getTriangleIndicesFromSimpleMesh(simpleMesh))
+        cootModule.getNormalsFromSimpleMesh2(simpleMesh,totNorm_C)
+        cootModule.getTriangleIndicesFromSimpleMesh2(simpleMesh,totIdxs_C)
     }
+
+    const tm = performance.now()
+    console.log("DEBUG: SIMPLE MESH TO MESH DATA C++",tm-ts)
+    let totPos =  totPos_C
+    let totCol =  totCol_C
+    let totNorm =  totNorm_C
+    let totIdxs =  totIdxs_C
 
     if(print_timing) {
         const te = performance.now()
-        console.log("SIMPLE MESH TO MESH DATA",te-ts)
+        console.log("DEBUG: SIMPLE MESH TO MESH DATA",te-ts)
     }
+
+    vertices.delete();
+    triangles.delete();
 
     return {
         prim_types: [["TRIANGLES"]],
@@ -680,19 +700,35 @@ const ramachandranDataToJSArray = (ramachandraData: emscriptem.vector<libcootApi
 
 const simpleMeshToLineMeshData = (simpleMesh: libcootApi.SimpleMeshT, normalLighting: boolean): libcootApi.SimpleMeshJS => {
 
+    const vertices = simpleMesh.vertices;
+    const triangles = simpleMesh.triangles;
+    const trianglesSize = triangles.size()
+    const verticesSize = vertices.size()
+
     const print_timing = false;
     const ts = performance.now()
 
+    let totIdxs_C = new Uint32Array(trianglesSize*6)
+    let totPos_C  = new Float32Array(verticesSize*3)
+    let totNorm_C = new Float32Array(verticesSize*3)
+    let totCol_C  = new Float32Array(verticesSize*4)
+    cootModule.getLineIndicesFromSimpleMesh2(simpleMesh,totIdxs_C)
+    cootModule.getPositionsFromSimpleMesh2(simpleMesh,totPos_C)
+    cootModule.getNormalsFromSimpleMesh2(simpleMesh,totNorm_C)
+    cootModule.getColoursFromSimpleMesh2(simpleMesh,totCol_C)
     //FIXME - We should not have to convert back to Array
-    let totPos  = Array.from(cootModule.getPositionsFromSimpleMesh(simpleMesh))
-    let totNorm = Array.from(cootModule.getNormalsFromSimpleMesh(simpleMesh))
-    let totCol  = Array.from(cootModule.getColoursFromSimpleMesh(simpleMesh))
-    let totIdxs = Array.from(cootModule.getLineIndicesFromSimpleMesh(simpleMesh))
+    let totIdxs = Array.from(totIdxs_C)
+    let totPos  = Array.from(totPos_C)
+    let totNorm = Array.from(totNorm_C)
+    let totCol  = Array.from(totCol_C)
 
     if(print_timing) {
         const te = performance.now()
         console.log("SIMPLE MESH TO LINE MESH DATA",te-ts)
     }
+
+    vertices.delete();
+    triangles.delete();
 
     if (normalLighting)
         return { prim_types: [["NORMALLINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], additional_norm_tri: [[totNorm]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
@@ -930,6 +966,7 @@ const doCootCommand = (messageData: {
             default:
                 returnResult = cootResult
                 break;
+            //cootResult.delete()
         }
 
         return {
