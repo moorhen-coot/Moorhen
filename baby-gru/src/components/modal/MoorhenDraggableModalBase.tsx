@@ -186,7 +186,7 @@ export const MoorhenDraggableModalBase = (props: {
             <Card
                 id={modalIdRef.current}
                 onClick={() => dispatch(focusOnModal(modalIdRef.current))}
-                className="moorhen-draggable-card"
+                className={`moorhen-draggable-card${focusHierarchy[0] === modalIdRef.current ? '-focused' : ''}`}
                 ref={draggableNodeRef}
                 style={{ display: props.show ? 'block' : 'none', position: 'absolute', opacity: opacity, zIndex: currentZIndex}}
                 onMouseOver={() => setOpacity(1.0)}
