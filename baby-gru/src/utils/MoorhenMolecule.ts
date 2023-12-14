@@ -1709,7 +1709,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {object[]} An array of objects indicating the residue CID and B-factor
      */
     getResidueBFactors() {
-        let result: { cid: string, bFactor: number }[] = []
+        let result: { cid: string; bFactor: number; normalised_bFactor: number }[] = []
         const resBfactorInfoVec = window.CCP4Module.get_structure_bfactors(this.gemmiStructure)
         const resBfactorInfoVecSize = resBfactorInfoVec.size()
         for (let i = 0; i < resBfactorInfoVecSize; i++) {

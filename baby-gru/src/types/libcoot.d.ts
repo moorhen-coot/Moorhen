@@ -21,7 +21,7 @@ export namespace libcootApi {
             cid: string;
         }>;
         guess_coord_data_format(coordDataString: string): number;
-        get_structure_bfactors(gemmiStructure: gemmi.Structure): emscriptem.vector<{ cid: string; bFactor: number }>;
+        get_structure_bfactors(gemmiStructure: gemmi.Structure): emscriptem.vector<{ cid: string; bFactor: number; normalised_bFactor }>;
         get_sequence_info(gemmiStructure: gemmi.Structure, molName: string): emscriptem.vector<SequenceEntry>;
         get_atom_info_for_selection(gemmiStructure: gemmi.Structure, arg1: string, arg2: string): emscriptem.vector<AtomInfo>;
         structure_is_ligand(gemmiStructure: gemmi.Structure): boolean;

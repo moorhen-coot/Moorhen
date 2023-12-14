@@ -98,7 +98,7 @@ export const MoorhenColourRuleCard = (props: {
                 </>
                 : rule.ruleType === "mol-symm" ?
                     <GrainOutlined style={{height:'23px', width:'`23px', marginLeft: '0.5rem', marginRight: '0.5rem', borderStyle: 'solid', borderColor: '#ced4da', borderWidth: '3px', borderRadius: '8px'}}/>            
-                : rule.ruleType === "b-factor" ?
+                : (rule.ruleType === "b-factor" || rule.ruleType === "b-factor-norm") ?
                     <img className="colour-rule-icon" src={`${urlPrefix}/baby-gru/pixmaps/temperature.svg`} alt='b-factor' style={{height:'28px', width:'`12px', margin: '0.1rem'}}/>
                 :
                 <>

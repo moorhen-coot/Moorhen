@@ -113,6 +113,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                     break
                 case 'mol-symm':
                 case "b-factor":
+                case "b-factor-norm":
                 case "af2-plddt":
                     const ruleArgs = await getMultiColourRuleArgs(props.molecule, colourModeSelectRef.current.value)
                     colourRules = [{

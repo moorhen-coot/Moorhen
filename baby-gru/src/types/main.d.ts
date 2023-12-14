@@ -83,7 +83,7 @@ declare module 'moorhen' {
         clearExtraRestraints(): Promise<_moorhen.WorkerResponse>;
         refineResiduesUsingAtomCid(cid: string, mode: string, ncyc?: number, redraw?: boolean): Promise<void>;
         getNcsRelatedChains(): Promise<string[][]>;
-        getResidueBFactors(): { cid: string, bFactor: number }[];
+        getResidueBFactors(): { cid: string; bFactor: number; normalised_bFactor: number }[];
         redo(): Promise<void>;
         undo(): Promise<void>;
         show(style: string, cid?: string): void;

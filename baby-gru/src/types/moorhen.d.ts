@@ -92,7 +92,7 @@ export namespace moorhen {
     
     interface Molecule {
         downloadAtoms(format?: 'mmcif' | 'pdb'): Promise<void>;
-        getResidueBFactors(): { cid: string, bFactor: number }[];
+        getResidueBFactors(): { cid: string; bFactor: number; normalised_bFactor: number }[];
         getNcsRelatedChains(): Promise<string[][]>;
         animateRefine(n_cyc: number, n_iteration: number, final_n_cyc?: number): Promise<void>;
         refineResidueRange(chainId: string, start: number, stop: number, ncyc?: number, redraw?: boolean): Promise<void>;
