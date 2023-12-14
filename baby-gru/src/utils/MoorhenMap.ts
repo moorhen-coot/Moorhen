@@ -395,6 +395,7 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     setupContourBuffers(objects: any[], keepCootColours: boolean = false) {
+        //console.log("MOORHEN MAP, setupContourBuffers, keepCootColours, isDiff",keepCootColours,this.isDifference)
         //TODO
         // Sort out -ve winding/normals (same on moorhen.org)
         const print_timing = false;
@@ -447,7 +448,7 @@ export class MoorhenMap implements moorhen.Map {
                     })
                     const tl = performance.now();
                     if(print_timing) console.log("End loop",tl-t1)
-                } else {
+                } else if (!keepCootColours)  {
                     if(this.rgba.a<0.98){
                         object.col_tri.forEach((cols: number[][]) => {
                             cols.forEach((col: number[]) => {
@@ -477,7 +478,7 @@ export class MoorhenMap implements moorhen.Map {
                     this.diffMapColourBuffers.negativeDiffColour = this.diffMapColourBuffers.negativeDiffColour.concat(diffMapColourBuffers.negativeDiffColour);
                     this.displayObjects['Coot'] = this.displayObjects['Coot'].concat(a);
                     this.displayObjects['Coot'] = this.displayObjects['Coot'].concat(b);
-                } else {
+                } else if (!keepCootColours) {
                     //console.log("Old buffers?")
                     if(this.displayObjects["Coot"].length>0 && (object.prim_types[0][0]===this.displayObjects["Coot"][0].bufferTypes[0])){
                         this.displayObjects["Coot"][0].triangleVertices[0] = object.vert_tri[0][0]
@@ -502,6 +503,11 @@ export class MoorhenMap implements moorhen.Map {
                     if(print_timing) console.log("End appendOtherData",ta-t1);
                     this.diffMapColourBuffers.positiveDiffColour = this.diffMapColourBuffers.positiveDiffColour.concat(diffMapColourBuffers.positiveDiffColour);
                     this.diffMapColourBuffers.negativeDiffColour = this.diffMapColourBuffers.negativeDiffColour.concat(diffMapColourBuffers.negativeDiffColour);
+                } else {
+                    //console.log("MOORHEN MAP do what keepCootColours wants")
+                    this.clearBuffersOfStyle("Coot")
+                    let a = this.glRef.current.appendOtherData(object, true);
+                    this.displayObjects['Coot'] = this.displayObjects['Coot'].concat(a);
                 }
             })
             if(print_timing) console.log("Start buildBuffers");
@@ -580,6 +586,7 @@ export class MoorhenMap implements moorhen.Map {
      * @returns {Promise<void>}
      */
     async setDiffMapColour(type: 'positiveDiffColour' | 'negativeDiffColour', r: number, g: number, b: number, redraw: boolean = true): Promise<void> {
+        //console.log("MOORHEN MAP, setDiffMapColour",this.otherMapForColouring)
         if (!this.isDifference) {
             console.error('Cannot use moorhen.Map.setDiffMapColour to change non-diff map colour. Use moorhen.Map.setColour instead...')
             return
@@ -631,6 +638,7 @@ export class MoorhenMap implements moorhen.Map {
      * @returns {Promise<void>}
      */
     async setColour(r: number, g: number, b: number, redraw: boolean = true): Promise<void> {
+        //console.log("MOORHEN MAP, setColour",this.otherMapForColouring)
         if (this.isDifference) {
             console.error('Cannot use moorhen.Map.setColour to change difference map colour. Use moorhen.Map.setDiffMapColour instead...')
             return
@@ -676,6 +684,7 @@ export class MoorhenMap implements moorhen.Map {
      * @param {boolean} [redraw=true] - Indicates whether the map needs to be redrawn after setting the new alpha
      */
     async setAlpha(alpha: number, redraw: boolean = true): Promise<void> {
+        //console.log("MOORHEN MAP, setAlpha",this.otherMapForColouring)
         /*
         ??
         if (this.isDifference) {
