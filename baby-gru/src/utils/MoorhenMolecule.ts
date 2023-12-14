@@ -1272,6 +1272,11 @@ export class MoorhenMolecule implements moorhen.Molecule {
     }
 
     addDictShim(fileContent: string): void {
+        if (!fileContent) {
+            console.warn('File contents for dictionary not found, doing nothing...')
+            return
+        }
+
         let possibleIndentedLines = fileContent.split("\n")
         let unindentedLines: string[] = []
         let comp_id = 'list'
@@ -1303,6 +1308,11 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} fileContent - The dictionary contents
      */
     async addDict(fileContent: string): Promise<void> {
+        if (!fileContent) {
+            console.warn('File contents for dictionary not found, doing nothing...')
+            return
+        }
+
         await this.commandCentre.current.cootCommand({
             returnType: "status",
             command: 'read_dictionary_string',

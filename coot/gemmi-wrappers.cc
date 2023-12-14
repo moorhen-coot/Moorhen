@@ -16,6 +16,7 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
+#include <gemmi/to_cif.hpp>
 #include <gemmi/to_pdb.hpp>
 #include <gemmi/span.hpp>
 #include <gemmi/neighbor.hpp>
@@ -73,6 +74,34 @@ gemmi::Structure read_structure_from_string(const std::string &data, const std::
     char *c_data = (char *)data.c_str();
     size_t size = data.length();
     return gemmi::read_structure_from_char_array(c_data,size,path);
+}
+
+struct LigandDictInfo {
+    std::string comp_id;
+    std::string dict_contents;
+};
+
+std::vector<LigandDictInfo> parse_ligand_dict_info(const std::string &data) {
+    std::vector<LigandDictInfo> result;
+    gemmi::cif::Document doc = gemmi::cif::read_string(data);
+    const auto blocks = doc.blocks;
+    for (auto blockIndex = 0; blockIndex < blocks.size(); blockIndex++) {
+        const auto block = blocks[blockIndex];
+        if (block.name != "comp_list") {
+            LigandDictInfo ligandDict;
+            const size_t pos = block.name.find("comp_");
+            if (pos != std::string::npos) {
+                ligandDict.comp_id = block.name.substr(pos + 5);
+            } else {
+                ligandDict.comp_id =  block.name;
+            }
+            std::ostringstream oss;
+            gemmi::cif::write_cif_block_to_stream(oss, block);
+            ligandDict.dict_contents = oss.str();
+            result.push_back(ligandDict);
+        }
+    }
+    return result;
 }
 
 std::vector<int> get_nearest_image_pbc_shift(const gemmi::NearestImage &ni){
@@ -2415,6 +2444,13 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
 
     register_vector<SequenceEntry>("VectorSequenceEntry");
 
+    value_object<LigandDictInfo>("LigandDictInfo")
+    .field("comp_id", &LigandDictInfo::comp_id)
+    .field("dict_contents", &LigandDictInfo::dict_contents)
+    ;
+
+    register_vector<LigandDictInfo>("VectorLigandDictInfo");
+
     value_object<SequenceResInfo>("SequenceResInfo")
     .field("resNum", &SequenceResInfo::resNum)
     .field("resCode", &SequenceResInfo::resCode)
@@ -2561,6 +2597,7 @@ GlobWalk
     function("get_pdb_string_from_gemmi_struct",&get_pdb_string_from_gemmi_struct);
     function("structure_is_ligand",&structure_is_ligand);
     function("read_structure_from_string",&read_structure_from_string);
+    function("parse_ligand_dict_info", &parse_ligand_dict_info);
     function("read_structure_file",&gemmi::read_structure_file);
     function("read_mtz_file",&gemmi::read_mtz_file);
     function("get_spacegroup_by_name",&gemmi::get_spacegroup_by_name);
