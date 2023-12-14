@@ -286,6 +286,8 @@ export const MoorhenImportDictionaryMenuItem = (props: {
     monomerLibraryPath: string;
  }) => {
     
+    const fileOrLibraryRef = useRef<string>("Library")
+    const tlcsOfFileRef = useRef<{ comp_id: string; dict_contents: string }[]>([])
     const filesRef = useRef<null | HTMLInputElement>(null)
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const moleculeSelectValueRef = useRef<null | string>(null)
@@ -298,15 +300,27 @@ export const MoorhenImportDictionaryMenuItem = (props: {
     const [tlc, setTlc] = useState<string>('')
     const [addToMolecule, setAddToMolecule] = useState<string>('')
     const [fileOrLibrary, setFileOrLibrary] = useState<string>("Library")
-    const fileOrLibraryRef = useRef<string>("Library")
     const [createInstance, setCreateInstance] = useState<boolean>(true)
     const [validDictFile, setValidDictFile] = useState<boolean>(true)
-    const [tlcsOfFile, setTlcsOfFile] = useState([])
+    const [tlcsOfFile, setTlcsOfFile] = useState<{ comp_id: string; dict_contents: string }[]>([])
 
     const collectedProps = {
         tlc, setTlc, createInstance, setCreateInstance, addToMolecule,
         setAddToMolecule, tlcValueRef, createRef, moleculeSelectRef, addToRef,
         addToMoleculeValueRef, moleculeSelectValueRef, ...props
+    }
+
+    const parseCifDict = async (file: File) => {
+        let result: { comp_id: string; dict_contents: string }[] = []
+        const fileContent = await readTextFile(file) as string
+        const compIdsVector = window.CCP4Module.parse_ligand_dict_info(fileContent)
+        const compIdsVectorSize = compIdsVector.size()
+        for (let i = 0; i < compIdsVectorSize; i++) {
+            const ligandInfo = compIdsVector.get(i)
+            result.push({ ...ligandInfo })
+        }
+        compIdsVector.delete()
+        return result
     }
 
     const panelContent = <>
@@ -321,14 +335,13 @@ export const MoorhenImportDictionaryMenuItem = (props: {
         {fileOrLibrary === 'File' ? <>
             <Form.Group key="uploadDicts" style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadDicts" className="mb-3"
                 onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
-                    const fileContent = await readTextFile(e.target.files[0]) as string
-                    const rx = /data_comp_(.*)/g;
-                    const tlcs = [...fileContent.matchAll(rx)].map(array => array[1]).filter(item => item !== 'list')
+                    const tlcs = await parseCifDict(e.target.files[0])
                     if (tlcs.length > 0) {
+                        tlcsOfFileRef.current = tlcs
                         setTlcsOfFile(tlcs)
-                        setTlc(tlcs[0])
+                        setTlc(tlcs[0].comp_id)
                         setValidDictFile(true)
-                        tlcValueRef.current = tlcs[0]
+                        tlcValueRef.current = tlcs[0].comp_id
                     } else {
                         setValidDictFile(false)
                     }
@@ -338,8 +351,11 @@ export const MoorhenImportDictionaryMenuItem = (props: {
                 {!validDictFile && <span>Unable to parse</span>}
             </Form.Group>
             {createInstance &&
-                <Form.Select ref={tlcSelectRef} value={tlc} onChange={(newVal) => { setTlc(newVal.target.value) }} style={{ width: '20rem', margin: '0.5rem' }} >
-                    {tlcsOfFile.map(tlcOfFile => <option key={tlcOfFile} value={tlcOfFile}>{tlcOfFile}</option>)}
+                <Form.Select ref={tlcSelectRef} value={tlc} style={{ width: '20rem', margin: '0.5rem' }} onChange={(newVal) => {
+                    setTlc(newVal.target.value) 
+                    tlcValueRef.current = newVal.target.value
+                }}>
+                    {tlcsOfFile.map(tlcOfFile => <option key={tlcOfFile.comp_id} value={tlcOfFile.comp_id}>{tlcOfFile.comp_id}</option>)}
                 </Form.Select>
             }
         </>
@@ -372,7 +388,8 @@ export const MoorhenImportDictionaryMenuItem = (props: {
 
     const fetchLigandDict = async (): Promise<string> => {
         if (fileOrLibraryRef.current === "File" && filesRef.current.files.length > 0 && tlcValueRef.current) {
-            return readTextFile(filesRef.current.files[0]) as Promise<string>
+            const ligandInfo = tlcsOfFileRef.current.find(lig => lig.comp_id === tlcValueRef.current)
+            if (ligandInfo) return ligandInfo.dict_contents
         }
         else if (fileOrLibraryRef.current === "Library" && tlcValueRef.current) {
             const url = `${props.monomerLibraryPath}/${tlcValueRef.current.toLowerCase()[0]}/${tlcValueRef.current.toUpperCase()}.cif`
