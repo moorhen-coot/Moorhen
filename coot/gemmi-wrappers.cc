@@ -323,6 +323,7 @@ std::vector<SequenceEntry> get_sequence_info(const gemmi::Structure &Structure, 
 
 struct ResidueBFactorInfo {
     std::string cid;
+    float normalised_bFactor;
     float bFactor;
 };
 
@@ -417,7 +418,8 @@ std::vector<gemmi::Selection> parse_multi_cid_selections(const std::string &cids
 }
 
 std::vector<ResidueBFactorInfo> get_structure_bfactors(const gemmi::Structure &Structure) {
-    std::vector<ResidueBFactorInfo> res_bfactor_info_vec;
+    std::vector<float> bfactor_vec;
+    std::vector<std::string> cid_vec;
     const auto models = Structure.models;
     for (int modelIndex = 0; modelIndex < models.size(); modelIndex++) {
         const auto model = models[modelIndex];
@@ -427,19 +429,33 @@ std::vector<ResidueBFactorInfo> get_structure_bfactors(const gemmi::Structure &S
             const auto residues = chain.residues;
             for (int residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
                 const auto residue = residues[residueIndex];
-                ResidueBFactorInfo res_bfactor_info;
-                res_bfactor_info.cid = "/" + model.name + "/" + chain.name + "/" + residue.seqid.str() +"(" + residue.name + ")/*";
-                res_bfactor_info.bFactor = 0;
+                cid_vec.push_back("/" + model.name + "/" + chain.name + "/" + residue.seqid.str() +"(" + residue.name + ")/*");
+                float bFactor = 0.0;
                 const auto atoms = residue.atoms;
                 for (int atomIndex = 0; atomIndex < atoms.size(); atomIndex++) {
                     const auto atom = atoms[atomIndex];
-                    res_bfactor_info.bFactor += atom.b_iso;
+                    bFactor += atom.b_iso;
                 }
-                res_bfactor_info.bFactor /= atoms.size();
-                res_bfactor_info_vec.push_back(res_bfactor_info);
+                bFactor /= atoms.size();
+                bfactor_vec.push_back(bFactor);
             }
         }
     }
+    
+    auto minMax = std::minmax_element(bfactor_vec.begin(), bfactor_vec.end());
+    float minBFactor = *minMax.first;
+    float maxBFactor = *minMax.second;
+    float range = maxBFactor - minBFactor;
+
+    std::vector<ResidueBFactorInfo> res_bfactor_info_vec;
+    for (int i = 0; i < bfactor_vec.size(); i++) {
+        ResidueBFactorInfo res_bfactor_info;
+        res_bfactor_info.cid = cid_vec[i];
+        res_bfactor_info.bFactor = bfactor_vec[i];
+        res_bfactor_info.normalised_bFactor = 100.0f * ( (bfactor_vec[i] - minBFactor) / (range) );
+        res_bfactor_info_vec.push_back(res_bfactor_info);
+    }
+    
     return res_bfactor_info_vec;
 }
 
@@ -2462,6 +2478,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     value_object<ResidueBFactorInfo>("ResidueBFactorInfo")
     .field("cid", &ResidueBFactorInfo::cid)
     .field("bFactor", &ResidueBFactorInfo::bFactor)
+    .field("normalised_bFactor", &ResidueBFactorInfo::normalised_bFactor)
     ;
 
     register_vector<ResidueBFactorInfo>("VectorResidueBFactorInfo");

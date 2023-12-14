@@ -717,8 +717,10 @@ describe("Testing MoorhenMolecule", () => {
         expect(bFactors).toHaveLength(650)
         expect(bFactors[0].cid).toBe('/1/A/4(SER)/*')
         expect(bFactors[0].bFactor).toBeCloseTo(27.18, 1)
+        expect(bFactors[0].normalised_bFactor).toBeCloseTo(39.99, 1)
         expect(bFactors[bFactors.length - 1].cid).toBe('/1/A/1248(HOH)/*')
         expect(bFactors[bFactors.length - 1].bFactor).toBeCloseTo(55.18, 1)
+        expect(bFactors[bFactors.length - 1].normalised_bFactor).toBeCloseTo(96.81, 1)
     })
 
     test("Test checkIsLigand pdb", async () => {

@@ -666,35 +666,32 @@ export function rgbToHex(r: number, g: number, b: number): string {
     return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b)
 }
 
-const getBfactorColourRules = (bFactors: { cid: string; bFactor: number; }[]): string => {
-    const bFactorList = bFactors.map(item => item.bFactor)
-    const min = Math.min(...bFactorList)
-    const max = Math.max(...bFactorList)
+const getBfactorColourRules = (bFactors: { cid: string; bFactor: number; normalised_bFactor: number }[], normaliseBFactors: boolean = true): string => {
 
     const getColour = (bFactor: number): string => {
         let r: number, g: number, b: number
-        const normalisedFactor = Math.round(100 * ((bFactor - min) / (max - min)))
-        if (normalisedFactor <= 25) {
+        if (bFactor <= 25) {
             r = 0
-            g = Math.round(10.2 * normalisedFactor)
+            g = Math.round(10.2 * bFactor)
             b = 255
-        } else if (normalisedFactor <= 50) {
+        } else if (bFactor <= 50) {
             r = 0
             g = 255
-            b = Math.round(510 - 10.2 * normalisedFactor)
-        } else if (normalisedFactor <= 75) {
-            r = Math.round(10.2 * (normalisedFactor - 50))
+            b = Math.round(510 - 10.2 * bFactor)
+        } else if (bFactor <= 75) {
+            r = Math.round(10.2 * (bFactor - 50))
             g = 255
             b = 0
         } else {
             r = 255
-            g = Math.round(510 - 10.2 * (normalisedFactor - 50))
+            g = Math.round(510 - 10.2 * (bFactor - 50))
             b = 0
         }
         return rgbToHex(r, g, b)
     }
-
-    return bFactors.map(item => `${item.cid}^${getColour(item.bFactor)}`).join('|')
+    
+    const bFactorAttr = normaliseBFactors ? 'normalised_bFactor' : 'bFactor'
+    return bFactors.map(item => `${item.cid}^${getColour(item[bFactorAttr])}`).join('|')
 }
 
 const getPlddtColourRules = (plddtList: { cid: string; bFactor: number; }[]): string => {
@@ -739,8 +736,9 @@ export const getMultiColourRuleArgs = async (molecule: moorhen.Molecule, ruleTyp
     let multiRulesArgs: string
     switch (ruleType) {
         case 'b-factor':
+        case 'b-factor-norm':
             const bFactors = molecule.getResidueBFactors()
-            multiRulesArgs = getBfactorColourRules(bFactors)
+            multiRulesArgs = getBfactorColourRules(bFactors, ruleType === 'b-factor-norm')
             break;
         case 'af2-plddt':
             const plddt = molecule.getResidueBFactors()
