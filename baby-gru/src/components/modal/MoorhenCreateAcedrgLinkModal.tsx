@@ -269,6 +269,7 @@ export const MoorhenCreateAcedrgLinkModal = (props: {
     }
 
     return <MoorhenDraggableModalBase 
+                modalId="create-acedrg-link-modal"
                 headerTitle="Create covalent link"
                 left={width / 2}
                 top={height / 3}

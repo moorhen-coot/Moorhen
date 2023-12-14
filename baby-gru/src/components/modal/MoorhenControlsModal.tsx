@@ -77,6 +77,7 @@ export const MoorhenControlsModal = (props: {
     }
 
     return <MoorhenDraggableModalBase
+                modalId="show-controls-modal"
                 left={width / 5}
                 top={height / 5}
                 defaultHeight={convertViewtoPx(60, height)}

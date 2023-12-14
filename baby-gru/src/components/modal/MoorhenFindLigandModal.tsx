@@ -177,6 +177,7 @@ export const MoorheFindLigandModal = (props: { show: boolean; setShow: React.Dis
                             </Backdrop>
 
     return <MoorhenDraggableModalBase
+                modalId="find-ligand-modal"
                 left={width / 6}
                 top={height / 6}
                 show={props.show}

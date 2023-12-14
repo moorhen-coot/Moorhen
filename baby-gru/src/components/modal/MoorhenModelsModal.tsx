@@ -23,7 +23,7 @@ export const MoorhenModelsModal = (props: MoorhenModelsModalProps) => {
 
     useEffect(() => {
         cardListRef.current = cardListRef.current.slice(0, molecules.length);
-    }, [molecules]); 
+    }, [molecules])
  
     const handleCollapseAll = useCallback(() => {
         cardListRef.current.forEach(card => {
@@ -50,6 +50,7 @@ export const MoorhenModelsModal = (props: MoorhenModelsModalProps) => {
     displayData.sort((a, b) => (a.props.index > b.props.index) ? 1 : ((b.props.index > a.props.index) ? -1 : 0))
 
     return <MoorhenDraggableModalBase
+                modalId="models-modal"
                 left={width - (convertRemToPx(55) + 100)}
                 top={height / 4}
                 show={props.show}

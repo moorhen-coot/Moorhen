@@ -62,6 +62,7 @@ export const MoorhenValidationToolsModal = (props: MoorhenValidationModalProps) 
     ]
 
     return <MoorhenDraggableModalBase
+                modalId="validation-tools-modal"
                 left={width / 6}
                 top={height / 3}
                 show={props.show}
