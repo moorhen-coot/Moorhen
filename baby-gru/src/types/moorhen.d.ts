@@ -822,6 +822,7 @@ export namespace moorhen {
             showScriptingModal: boolean;
             showControlsModal: boolean;
             showFitLigandModal: boolean;
+            focusHierarchy: string[];
         };
     }
     

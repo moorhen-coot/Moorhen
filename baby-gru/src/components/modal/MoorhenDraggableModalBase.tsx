@@ -6,27 +6,31 @@ import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
 import { Resizable } from "re-resizable";
 import { setEnableAtomHovering } from "../../moorhen";
+import { focusOnModal, unFocusModal } from "../../store/activeModalsSlice";
+import { guid } from "../../utils/MoorhenUtils";
 
 /**
  * The base component used to create draggable modals.
+ * @property {string} headerTitle - The title displayed on the modal header
+ * @property {boolean} show - Indicates if the modal is to be displayed
+ * @property {function} setShow - Setter function for props.show
+ * @property {JSX.Element} body - Element rendered as the modal body
+ * @property {string} [modalId=null] - The id assigned to the modal used to keep track of the focused modal and the z-index. If empty then random string is used.
  * @property {number} [width=35] - The width of the modal measured in wh
  * @property {number} [height=45] - The height of the modal measured in vh
  * @property {number} [top=500] - The intial top location of the modal
  * @property {number} [left=500] - The intial top location of the modal
  * @property {JSX.Element[]} [additionalHeaderButtons=null] - Additional buttons rendered on the modal header
  * @property {JSX.Element[]} [additionalChildren=null] - Additional JSX elements rendered inside the modal
- * @property {string} headerTitle - The title displayed on the modal header
  * @property {string} [overflowY="scroll"] - Indicates how to handle content overflow on vertical axis
  * @property {string} [handleClassName="handle"] - The css class name for the draggable handle
- * @property {boolean} show - Indicates if the modal is to be displayed
- * @property {function} setShow - Setter function for props.show
  * @property {JSX.Element} [footer=null] - Element rendered as the modal footer
- * @property {JSX.Element} body - Element rendered as the modal body
  * @example 
  * import { MoorhenDraggableModalBase } from "moorhen";
  * 
  * const example = () => {
  *   return <MoorhenDraggableModalBase 
+ *                modalId="example-modal-id"
  *                headerTitle="Create covalent link"
  *                additionalChildren={
  *                    <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={awaitAtomClick !== -1}>
@@ -59,8 +63,13 @@ import { setEnableAtomHovering } from "../../moorhen";
  * 
  */
 export const MoorhenDraggableModalBase = (props: {
-    enforceMaxBodyDimensions: boolean;
-    resizeNodeRef: null | React.RefObject<HTMLDivElement>;
+    headerTitle: string;
+    show: boolean;
+    setShow: React.Dispatch<React.SetStateAction<boolean>>;
+    body: JSX.Element | JSX.Element[];
+    modalId?: string;
+    enforceMaxBodyDimensions?: boolean;
+    resizeNodeRef?: null | React.RefObject<HTMLDivElement>;
     defaultWidth?: number;
     defaultHeight?: number;
     maxWidth?: number;
@@ -70,11 +79,7 @@ export const MoorhenDraggableModalBase = (props: {
     top?: number;
     left?: number;
     additionalHeaderButtons?: JSX.Element[];
-    headerTitle: string;
-    show: boolean;
-    setShow: React.Dispatch<React.SetStateAction<boolean>>;
-    body: JSX.Element | JSX.Element[];
-    footer: JSX.Element;
+    footer?: JSX.Element;
     additionalChildren?: JSX.Element;
     overflowY?: 'visible' | 'hidden' | 'clip' | 'scroll' | 'auto';
     overflowX?: 'visible' | 'hidden' | 'clip' | 'scroll' | 'auto';
@@ -86,11 +91,13 @@ export const MoorhenDraggableModalBase = (props: {
 }) => {
 
     const dispatch = useDispatch()
+    const focusHierarchy = useSelector((state: moorhen.State) => state.activeModals.focusHierarchy)
     const windowWidth = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const windowHeight = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.miscAppSettings.transparentModalsOnMouseOut)
     const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering)
     
+    const [currentZIndex, setCurrentZIndex] = useState<number>(999)
     const [opacity, setOpacity] = useState<number>(1.0)
     const [collapse, setCollapse] = useState<boolean>(false)
     const [position, setPosition] = useState<{x: number, y: number}>({x: props.left, y: props.top})
@@ -98,7 +105,26 @@ export const MoorhenDraggableModalBase = (props: {
     const draggableNodeRef = useRef<HTMLDivElement>();
     const resizeNodeRef = useRef<HTMLDivElement>();
     const cachedEnableAtomHovering = useRef<boolean>(false);
+    const modalIdRef = useRef<string>(props.modalId ? props.modalId : guid());
 
+    useEffect(() => {
+        const focusIndex = focusHierarchy.findIndex(item => item === modalIdRef.current)
+        setCurrentZIndex(999 - focusIndex)
+    }, [focusHierarchy])
+
+    useEffect(() => {
+        return () => {
+            dispatch(unFocusModal(modalIdRef.current))
+        }
+    }, [])
+
+    useEffect(() => {
+        if (props.show) {
+            dispatch(focusOnModal(modalIdRef.current))
+        } else {
+            dispatch(unFocusModal(modalIdRef.current))
+        }
+    }, [props.show])
 
     useEffect(() => {
         setPosition({
@@ -158,9 +184,11 @@ export const MoorhenDraggableModalBase = (props: {
                 onStart={handleStart}
                 >
             <Card
-                className="moorhen-draggable-card"
+                id={modalIdRef.current}
+                onClick={() => dispatch(focusOnModal(modalIdRef.current))}
+                className={`moorhen-draggable-card${focusHierarchy[0] === modalIdRef.current ? '-focused' : ''}`}
                 ref={draggableNodeRef}
-                style={{ display: props.show ? 'block' : 'none', position: 'absolute', opacity: opacity}}
+                style={{ display: props.show ? 'block' : 'none', position: 'absolute', opacity: opacity, zIndex: currentZIndex}}
                 onMouseOver={() => setOpacity(1.0)}
                 onMouseOut={() => {
                     if(transparentModalsOnMouseOut) setOpacity(0.5)
@@ -227,6 +255,6 @@ export const MoorhenDraggableModalBase = (props: {
 MoorhenDraggableModalBase.defaultProps = { 
     showCloseButton: true, handleClassName: 'handle', additionalHeaderButtons:null, additionalChildren: null, 
     enableResize: { top: false, right: true, bottom: true, left: false, topRight: false, bottomRight: true, bottomLeft: true, topLeft: false },
-    top: 500, left: 500, overflowY: 'auto', overflowX: 'hidden', lockAspectRatio: false, maxHeight: 100, maxWidth: 100, 
+    top: 500, left: 500, overflowY: 'auto', overflowX: 'hidden', lockAspectRatio: false, maxHeight: 100, maxWidth: 100, modalId: null,
     minHeight: 100, minWidth: 100, deafultWidth: 100, defaultHeight: 100, onResizeStop: () => {}, resizeNodeRef: null, enforceMaxBodyDimensions: true,
 }

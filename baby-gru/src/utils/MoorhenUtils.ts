@@ -667,7 +667,6 @@ export function rgbToHex(r: number, g: number, b: number): string {
 }
 
 const getBfactorColourRules = (bFactors: { cid: string; bFactor: number; normalised_bFactor: number }[], normaliseBFactors: boolean = true): string => {
-
     const getColour = (bFactor: number): string => {
         let r: number, g: number, b: number
         if (bFactor <= 25) {

@@ -46,6 +46,7 @@ export const MoorhenScriptModal = (props: {
     }, [])
 
     return <MoorhenDraggableModalBase
+                modalId="script-modal"
                 left={width / 5}
                 top={height / 6}
                 headerTitle="Interactive scripting"
