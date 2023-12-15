@@ -1,32 +1,39 @@
 import { IconButton, Popover, Tooltip } from "@mui/material"
 import { cidToSpec, guid } from "../../utils/MoorhenUtils"
 import { MoorhenNotification } from "./MoorhenNotification"
-import { AllOutOutlined, CloseOutlined, CopyAllOutlined, CrisisAlertOutlined, DeleteOutlined, FormatColorFillOutlined } from "@mui/icons-material"
+import { AdsClickOutlined, AllOutOutlined, CloseOutlined, CopyAllOutlined, CrisisAlertOutlined, DeleteOutlined, EditOutlined, FormatColorFillOutlined, Rotate90DegreesCw, SwipeRightAlt } from "@mui/icons-material"
 import { useDispatch, useSelector } from "react-redux"
 import { moorhen } from "../../types/moorhen"
 import { Button, Stack } from "react-bootstrap"
-import { clearResidueSelection, setNotificationContent, setResidueSelection } from '../../store/generalStatesSlice';
+import { clearResidueSelection, setNotificationContent, setResidueSelection, setShowResidueSelection } from '../../store/generalStatesSlice';
 import { useCallback, useEffect, useRef, useState } from "react"
 import { addMolecule, removeMolecule } from "../../moorhen"
-import { HexColorPicker, RgbColorPicker } from "react-colorful"
+import { HexColorPicker } from "react-colorful"
+import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm"
 
 export const MoorhenResidueSelectionActions = (props) => {
 
     const notificationKeyRef = useRef<string>(guid())
     const notificationComponentRef = useRef()
     const changeColourAnchorRef = useRef()
+    const cidAnchorRef = useRef()
+    const cidFormRef = useRef()
 
+    const [cidFormValue, setCidFormValue] = useState<null | string>(null)
+    const [showCidEditForm, setShowCidEditForm] = useState<boolean>(false)
+    const [invalidCid, setInvalidCid] = useState<boolean>(false)
     const [showColourPopover, setShowColourPopover] = useState<boolean>(false)
-    const [selectionLabel, setSelectionLabel] = useState<null | string>(null)
     const [tooltipContents, setTooltipContents] = useState<null | string>(null)
     const [selectedColour, setSelectedColour] = useState<string>('#808080')
 
     const dispatch = useDispatch()
+    const showResidueSelection = useSelector((state: moorhen.State) => state.generalStates.showResidueSelection)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const isChangingRotamers = useSelector((state: moorhen.State) => state.generalStates.isChangingRotamers)
     const isRotatingAtoms = useSelector((state: moorhen.State) => state.generalStates.isRotatingAtoms)
     const isDraggingAtoms = useSelector((state: moorhen.State) => state.generalStates.isDraggingAtoms)
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
+    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
     const updateScores = (molecule: moorhen.Molecule) => {
         const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {
@@ -38,7 +45,11 @@ export const MoorhenResidueSelectionActions = (props) => {
     const clearSelection = useCallback(() => {
         dispatch( clearResidueSelection() )
         dispatch( setNotificationContent(null) )
-        setSelectionLabel(null)
+        dispatch( setShowResidueSelection(false) )
+        setCidFormValue(null)
+        setShowCidEditForm(false)
+        setShowColourPopover(false)
+        setInvalidCid(false)
         molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
     }, [molecules])
 
@@ -62,10 +73,11 @@ export const MoorhenResidueSelectionActions = (props) => {
                     first: evt.detail.atom.label,
                     second: null,
                     cid: null,
-                    isMultiCid: false
+                    isMultiCid: false,
+                    label: `/${resSpec.mol_no}/${resSpec.chain_id}/${resSpec.res_no}`
                 })
             )
-            setSelectionLabel(`/${resSpec.mol_no}/${resSpec.chain_id}/${resSpec.res_no}`)
+            dispatch( setShowResidueSelection(true) )
             return
         }
 
@@ -83,10 +95,11 @@ export const MoorhenResidueSelectionActions = (props) => {
                     first: residueSelection.first,
                     second: evt.detail.atom.label,
                     cid: cid,
-                    isMultiCid: false
+                    isMultiCid: false,
+                    label: `/${startResSpec.mol_no}/${startResSpec.chain_id}/${sortedResNums[0]}-${sortedResNums[1]}`
                 })
             )
-            setSelectionLabel(`/${startResSpec.mol_no}/${startResSpec.chain_id}/${sortedResNums[0]}-${sortedResNums[1]}`)
+            dispatch( setShowResidueSelection(true) )
         }
     }, [clearSelection, residueSelection, isRotatingAtoms, isChangingRotamers, isDraggingAtoms])
 
@@ -96,6 +109,37 @@ export const MoorhenResidueSelectionActions = (props) => {
             document.removeEventListener('atomClicked', handleAtomClicked)
         }
     }, [handleAtomClicked])
+
+    const handleResidueCidChange =  useCallback(async () => {
+        if(!cidFormValue) {
+            console.warn('No cid input, doing nothing...')
+            return
+        }
+
+        if (!residueSelection.molecule) {
+            console.warn('Need to create valid selection before editing the CID, doing nothing...')
+            return
+        }
+        
+        try { 
+            const newSelection = await residueSelection.molecule.parseCidIntoSelection(cidFormValue)
+            if (!newSelection) {
+                throw new Error(`Specified CID resulted in no residue selection: ${cidFormValue}`)
+            }
+
+            await residueSelection.molecule.drawResidueSelection(cidFormValue)
+            dispatch( setResidueSelection(newSelection) )
+            setCidFormValue(null)
+            setShowCidEditForm(false)
+            setInvalidCid(false)
+            dispatch( setShowResidueSelection(true) )
+        } catch (err) {
+            console.warn(err)
+            console.warn('Error parsing the cid...')
+            setInvalidCid(true)
+        }
+
+    }, [residueSelection, clearResidueSelection, cidFormValue])
 
     const handleSelectionCopy = useCallback(async () => {
         let cid: string
@@ -161,7 +205,9 @@ export const MoorhenResidueSelectionActions = (props) => {
 
     const handleExpandSelection = useCallback(async () => {
         let cid: string
+        let label: string
         
+        // FIXME: We want to be able to expand multiCid selections since the user is now able to manually create them...
         if (residueSelection.isMultiCid) {
             // pass
         } else if (residueSelection.molecule && residueSelection.cid) {
@@ -169,11 +215,11 @@ export const MoorhenResidueSelectionActions = (props) => {
             const startResSpec = cidToSpec(residueSelection.first)
             const stopResSpec = cidToSpec(residueSelection.second)
             const sortedResNums = [startResSpec.res_no, stopResSpec.res_no].sort(function(a, b){return a - b})
-            setSelectionLabel(`/${startResSpec.mol_no}/${startResSpec.chain_id}/${sortedResNums[0]}-${sortedResNums[1]} +7Å`)
+            label = `/${startResSpec.mol_no}/${startResSpec.chain_id}/${sortedResNums[0]}-${sortedResNums[1]} +7Å`
         } else if (residueSelection.molecule && residueSelection.first) {
             const startResSpec = cidToSpec(residueSelection.first)
             cid = `/${startResSpec.mol_no}/${startResSpec.chain_id}/${startResSpec.res_no}-${startResSpec.res_no}`
-            setSelectionLabel(`/${startResSpec.mol_no}/${startResSpec.chain_id}/${startResSpec.res_no} +7Å`)
+            label = `/${startResSpec.mol_no}/${startResSpec.chain_id}/${startResSpec.res_no} +7Å`
         }
 
         if (cid) {
@@ -185,7 +231,8 @@ export const MoorhenResidueSelectionActions = (props) => {
                     first: residueSelection.first,
                     second: residueSelection.second,
                     cid: result,
-                    isMultiCid: true
+                    isMultiCid: true,
+                    label: label
                 })
             )
         }
@@ -233,34 +280,89 @@ export const MoorhenResidueSelectionActions = (props) => {
 
     }, [residueSelection, clearSelection, selectedColour])
 
-    return  selectionLabel ?
+    const handleRigidBodyFit = useCallback(async () => {
+        if (!activeMap) {
+            console.warn('Cannot do rigid body fit without an active map...')
+            return
+        }
+
+        let cid: string
+        
+        if (residueSelection.isMultiCid && Array.isArray(residueSelection.cid)) {
+            cid = residueSelection.cid.join('||')
+        } else if (residueSelection.molecule && residueSelection.cid) {
+            cid = residueSelection.cid as string
+        } else if (residueSelection.molecule && residueSelection.first) {
+            const startResSpec = cidToSpec(residueSelection.first)
+            cid = `/${startResSpec.mol_no}/${startResSpec.chain_id}/${startResSpec.res_no}-${startResSpec.res_no}`
+        }
+
+        if (cid) {
+            await residueSelection.molecule.rigidBodyFit(cid, activeMap.molNo, true)
+            updateScores(residueSelection.molecule)
+        }
+
+        clearSelection()
+    }, [activeMap, residueSelection, clearSelection])
+
+    return showResidueSelection ?
         <MoorhenNotification key={notificationKeyRef.current} width={19}>
             <Tooltip className="moorhen-tooltip" title={tooltipContents}>
             <Stack ref={notificationComponentRef} direction="vertical" gap={1}>
-                <div>
-                    <span>{selectionLabel}</span>
-                </div>
-                <Stack gap={2} direction='horizontal' style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-                    <IconButton onClick={handleRefinement} onMouseEnter={() => setTooltipContents('Refine')}>
-                        <CrisisAlertOutlined/>
-                    </IconButton>
-                    <IconButton onClick={handleDelete} onMouseEnter={() => setTooltipContents('Delete')}>
-                        <DeleteOutlined/>
-                    </IconButton>
-                    <IconButton onClick={handleSelectionCopy} onMouseEnter={() => setTooltipContents('Copy fragment')}>
-                        <CopyAllOutlined/>
-                    </IconButton>
-                    <IconButton onClick={handleExpandSelection} onMouseEnter={() => setTooltipContents('Expand to neighbouring residues')}>
-                        <AllOutOutlined/>
-                    </IconButton>
-                    <IconButton ref={changeColourAnchorRef} onClick={() => setShowColourPopover(true)} onMouseEnter={() => setTooltipContents('Change colour')}>
-                        <FormatColorFillOutlined/>
-                    </IconButton>
-                    <IconButton onClick={clearSelection} onMouseEnter={() => setTooltipContents('Clear selection')}>
+                <Stack gap={0} direction="horizontal" style={{ width: '100%', display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{paddingLeft: '2.2rem', width: '100%', display: 'flex', justifyContent: 'center'}}>{
+                        `${residueSelection.label.length > 16 ? residueSelection.label.substring(0, 12) + '...' : residueSelection.label}`
+                    }</span>
+                    <IconButton onClick={clearSelection} onMouseEnter={() => setTooltipContents('Clear selection')} style={{padding: 0}}>
                         <CloseOutlined/>
                     </IconButton>
                 </Stack>
+                <hr style={{margin: 0, padding: 0}}></hr>
+                <Stack gap={2} direction="vertical" style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                    <Stack gap={2} direction='horizontal' style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                        <IconButton onClick={handleRefinement} onMouseEnter={() => setTooltipContents('Refine')}>
+                            <CrisisAlertOutlined/>
+                        </IconButton>
+                        <IconButton onClick={() => {}} onMouseEnter={() => setTooltipContents('Drag atoms')}>
+                            <AdsClickOutlined/>
+                        </IconButton>
+                        <IconButton onClick={handleSelectionCopy} onMouseEnter={() => setTooltipContents('Copy fragment')}>
+                            <CopyAllOutlined/>
+                        </IconButton>
+                        <IconButton onClick={handleExpandSelection} onMouseEnter={() => setTooltipContents('Expand to neighbouring residues')}>
+                            <AllOutOutlined/>
+                        </IconButton>
+                        <IconButton onClick={handleDelete} onMouseEnter={() => setTooltipContents('Delete')}>
+                            <DeleteOutlined/>
+                        </IconButton>
+                    </Stack>
+                    <Stack gap={2} direction='horizontal' style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                        <IconButton ref={cidAnchorRef} onClick={() => {
+                            setShowCidEditForm((prev) => !prev)
+                            setCidFormValue(null)
+                            setShowColourPopover(false)
+                            setInvalidCid(false)
+                        }} onMouseEnter={() => setTooltipContents('Edit selection')}>
+                            <EditOutlined style={{height: '23px', width: '23px', padding: '0.05rem', marginLeft: '0.2rem'}}/>
+                        </IconButton>
+                        <IconButton ref={changeColourAnchorRef} onClick={() => {
+                            setShowColourPopover((prev) => !prev)
+                            setShowCidEditForm(false)
+                            setInvalidCid(false)
+                            setCidFormValue(null)
+                        }} onMouseEnter={() => setTooltipContents('Change colour')}>
+                            <FormatColorFillOutlined/>
+                        </IconButton>
+                        <IconButton onClick={() => {}} onMouseEnter={() => setTooltipContents('Rotate/Translate')}>
+                            <Rotate90DegreesCw/>
+                        </IconButton>
+                        <IconButton disabled={activeMap === null} onClick={handleRigidBodyFit} onMouseEnter={() => setTooltipContents('Rigid body fit')}>
+                            <SwipeRightAlt/>
+                        </IconButton>
+                    </Stack>
+                </Stack>
             <Popover 
+                onMouseEnter={() => setTooltipContents(null)} 
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
                 transformOrigin={{ vertical: 'top', horizontal: 'left' }}
                 open={showColourPopover}
@@ -275,6 +377,28 @@ export const MoorhenResidueSelectionActions = (props) => {
                     <div style={{width: '100%', textAlign: 'center'}}>
                         <HexColorPicker style={{padding: '0.05rem'}} color={selectedColour} onChange={(color) => setSelectedColour(color)}/>
                         <Button size="sm" variant="primary" style={{width: '80%', margin: '0.25rem'}} onClick={handleColourChange}>Apply</Button>
+                    </div>
+                </Stack>
+            </Popover>
+            <Popover 
+                onMouseEnter={() => setTooltipContents(null)} 
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+                open={showCidEditForm}
+                anchorEl={cidAnchorRef.current}
+                onClose={() => {
+                    setShowCidEditForm(false)
+                    setInvalidCid(false)
+                }}
+                sx={{
+                    '& .MuiPaper-root': {
+                        overflowY: 'hidden', borderRadius: '8px'
+                    }
+                }}>
+                <Stack gap={3} direction='horizontal'>
+                    <div style={{ padding: '0.2rem', textAlign: 'center'}}>
+                        <MoorhenCidInputForm margin="0" width="100%" onChange={(evt) => setCidFormValue(evt.target.value)} ref={cidFormRef} invalidCid={invalidCid}/>
+                        <Button size="sm" variant="primary" style={{width: '80%', margin: '0.25rem'}} onClick={handleResidueCidChange}>Apply</Button>
                     </div>
                 </Stack>
             </Popover>

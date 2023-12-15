@@ -1768,4 +1768,27 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.setAtomsDirty(true)
         await this.redraw()
     }
+
+    /**
+     * Parse a CID selection into a residue selection object
+     * @param {string} cid - The CID selection
+     * @returns {object} An object for the residue selection
+     */
+    async parseCidIntoSelection(cid: string): Promise<moorhen.ResidueSelection> {
+
+        const selectionAtoms = await this.gemmiAtomsForCid(cid)
+        if (!selectionAtoms || selectionAtoms.length === 0) {
+            console.warn(`Specified CID resulted in no residue selection: ${cid}`)
+            return 
+        }
+
+        return {
+            molecule: this,
+            first: selectionAtoms[0].label,
+            second: selectionAtoms[selectionAtoms.length - 1].label,
+            isMultiCid: cid.includes('||'),
+            cid: cid.includes('||') ? cid.split('||') : cid,
+            label: cid
+        }
+    }
 }
