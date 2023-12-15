@@ -988,8 +988,8 @@ describe("Testing MoorhenMolecule", () => {
         expect(newSelection.label).toBe('//A/1-10')
         expect(newSelection.cid).toBe('//A/1-10')
         expect(newSelection.isMultiCid).toBeFalsy()
-        expect(newSelection.first).toBe('//A/1')
-        expect(newSelection.second).toBe('//A/10')
+        expect(newSelection.first).toBe('/1/A/4(SER)/N')
+        expect(newSelection.second).toBe('/1/A/10(GLY)/O')
     })
 
     test("Test parseCidIntoSelection --multiCid", async () => {
@@ -1009,8 +1009,8 @@ describe("Testing MoorhenMolecule", () => {
         expect(newSelection.label).toBe('//A/1-10||//A/15-20')
         expect(newSelection.cid).toEqual(['//A/1-10', '//A/15-20'])
         expect(newSelection.isMultiCid).toBeTruthy()
-        expect(newSelection.first).toBe('//A/1')
-        expect(newSelection.second).toBe('//A/20')
+        expect(newSelection.first).toBe('/1/A/4(SER)/N')
+        expect(newSelection.second).toBe('/1/A/20(VAL)/CG2')
     })
 })
 
