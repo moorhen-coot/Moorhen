@@ -1199,6 +1199,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("replace_molecule_by_model_from_string", &molecules_container_js::replace_molecule_by_model_from_string)
     .function("read_dictionary_string", &molecules_container_js::read_dictionary_string)
     ;
+    value_object<molecules_container_t::fit_ligand_info_t>("fit_ligand_info_t")
+    .field("imol", &molecules_container_t::fit_ligand_info_t::imol)
+    .field("cluster_idx", &molecules_container_t::fit_ligand_info_t::cluster_idx)
+    .field("ligand_idx", &molecules_container_t::fit_ligand_info_t::ligand_idx)
+    ;
     value_object<generic_3d_lines_bonds_box_t>("generic_3d_lines_bonds_box_t")
     .field("line_segments", &generic_3d_lines_bonds_box_t::line_segments)
     ;
@@ -1403,6 +1408,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("altLoc",&moorhen::h_bond_atom::altLoc)
     ;
 
+    register_vector<molecules_container_t::fit_ligand_info_t>("VectorFitLigandInfo_t");
     register_vector<coot::atom_spec_t>("VectorAtomSpec_t");
     register_vector<molecules_container_t::auto_read_mtz_info_t>("VectorAutoReadMtzInfo_t");
     register_vector<coot::CartesianPair>("VectorCootCartesianPair");

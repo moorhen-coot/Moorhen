@@ -421,6 +421,11 @@ export namespace libcootApi {
         psi: number;
         is_pre_pro: boolean;
     }
+    type fitLigandInfo = {
+        imol: number;
+        cluster_idx: number;
+        ligand_idx: number;
+    }
     type CootModule = {
         SmilesToPDB(arg0: string, arg1: string, arg2: number, arg3: number): PairType<string, string>;
         FS: {
