@@ -257,7 +257,8 @@ const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean 
     }
 
     const tm = performance.now()
-    console.log("DEBUG: SIMPLE MESH TO MESH DATA C++",tm-ts)
+    if(print_timing) console.log("DEBUG: SIMPLE MESH TO MESH DATA C++",tm-ts)
+
     let totPos =  totPos_C
     let totCol =  totCol_C
     let totNorm =  totNorm_C
@@ -700,13 +701,13 @@ const ramachandranDataToJSArray = (ramachandraData: emscriptem.vector<libcootApi
 
 const simpleMeshToLineMeshData = (simpleMesh: libcootApi.SimpleMeshT, normalLighting: boolean): libcootApi.SimpleMeshJS => {
 
+    const print_timing = false;
+    const ts = performance.now()
+
     const vertices = simpleMesh.vertices;
     const triangles = simpleMesh.triangles;
     const trianglesSize = triangles.size()
     const verticesSize = vertices.size()
-
-    const print_timing = false;
-    const ts = performance.now()
 
     let totIdxs_C = new Uint32Array(trianglesSize*6)
     let totPos_C  = new Float32Array(verticesSize*3)
@@ -716,11 +717,14 @@ const simpleMeshToLineMeshData = (simpleMesh: libcootApi.SimpleMeshT, normalLigh
     cootModule.getPositionsFromSimpleMesh2(simpleMesh,totPos_C)
     cootModule.getNormalsFromSimpleMesh2(simpleMesh,totNorm_C)
     cootModule.getColoursFromSimpleMesh2(simpleMesh,totCol_C)
-    //FIXME - We should not have to convert back to Array
-    let totIdxs = Array.from(totIdxs_C)
-    let totPos  = Array.from(totPos_C)
-    let totNorm = Array.from(totNorm_C)
-    let totCol  = Array.from(totCol_C)
+
+    const tm = performance.now()
+    if(print_timing) console.log("DEBUG: SIMPLE MESH TO LINE MESH DATA C++",tm-ts)
+
+    let totIdxs = totIdxs_C
+    let totPos  = totPos_C
+    let totNorm = totNorm_C
+    let totCol  = totCol_C
 
     if(print_timing) {
         const te = performance.now()

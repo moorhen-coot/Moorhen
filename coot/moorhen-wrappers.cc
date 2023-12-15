@@ -728,9 +728,6 @@ emscripten::val getPermutedTriangleIndicesFromSimpleMesh(const coot::simple_mesh
 
 void getLineIndicesFromSimpleMesh2(const coot::simple_mesh_t &m, const emscripten::val &v){
 
-    auto floatArray = emscripten::convertJSArrayToNumberVector<float>(v);
-    unsigned int length = floatArray.size();
-
     const auto &triangles = m.triangles;
 
     std::vector<unsigned int> uintArray;

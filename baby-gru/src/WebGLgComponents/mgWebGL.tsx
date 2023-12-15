@@ -5566,7 +5566,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     buildBuffers() : void {
-        const print_timing = false;
+        const print_timing = false
 
         const tbb1 = performance.now()
         let xaxis = vec3Create([1.0, 0.0, 0.0]);
@@ -6105,7 +6105,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "LINES") {
                     let size = this.mapLineWidth;
-                    const useIndices = this.displayBuffers[idx].supplementary["useIndices"];
+                    const useIndices = this.displayBuffers[idx].supplementary["useIndices"][0];
                     let thickLines;
 
                     let doColour = false;
@@ -6113,31 +6113,32 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         doColour = true;
                     }
 
+                    const t1 = performance.now()
                     if (useIndices) {
                         thickLines = this.linesToThickLinesWithIndices(this.displayBuffers[idx].triangleVertices[j], this.displayBuffers[idx].triangleColours[j], this.displayBuffers[idx].triangleIndexs[j], size, null, doColour);
                     } else {
                         thickLines = this.linesToThickLines(this.displayBuffers[idx].triangleVertices[j], this.displayBuffers[idx].triangleColours[j], size);
                     }
+                    const t2 = performance.now()
+                    if(print_timing) console.log("linesToThickLines",t2-t1)
+
                     let Normals_new = thickLines["normals"];
                     let Vertices_new = thickLines["vertices"];
                     let Colours_new = thickLines["colours"];
                     let Indexs_new = thickLines["indices"];
+
                     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexIndexBuffer[j]);
-                    if (this.ext) {
-                        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(Indexs_new), this.gl.STATIC_DRAW);
-                    } else {
-                        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(Indexs_new), this.gl.STATIC_DRAW);
-                    }
+                    this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, Indexs_new, this.gl.STATIC_DRAW);
                     this.displayBuffers[idx].triangleVertexIndexBuffer[j].itemSize = 1;
                     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexNormalBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(Normals_new), this.gl.STATIC_DRAW);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, Normals_new, this.gl.STATIC_DRAW);
                     this.displayBuffers[idx].triangleVertexNormalBuffer[j].itemSize = 3;
                     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexPositionBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(Vertices_new), this.gl.STATIC_DRAW);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, Vertices_new, this.gl.STATIC_DRAW);
                     this.displayBuffers[idx].triangleVertexPositionBuffer[j].itemSize = 3;
                     if(doColour){
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(Colours_new), this.gl.STATIC_DRAW);
+                        this.gl.bufferData(this.gl.ARRAY_BUFFER, Colours_new, this.gl.STATIC_DRAW);
                         this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
                         this.displayBuffers[idx].triangleColourBuffer[j].numItems = Colours_new.length / 4;
                     }
