@@ -114,8 +114,6 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
                     0.0, 0.0, 1.0, 0.0,
                     0.0, 0.0, 0.0, 1.0,
                 ])
-
-                inst_data.delete()
             }
         }
         As.delete()
@@ -164,8 +162,6 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
                 thisInstance_orientations.push(instDataOrientation[3][1])
                 thisInstance_orientations.push(instDataOrientation[3][2])
                 thisInstance_orientations.push(instDataOrientation[3][3])
-
-                inst_data.delete()
             }
         }
         Bs.delete()

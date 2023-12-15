@@ -350,7 +350,7 @@ export namespace libcootApi {
         supperposeInfo: string,
         alignedPairsData: {reference: ValidationInformationJS, moving: ValidationInformationJS}[],
     }
-    interface InstancedDataType extends emscriptem.instance<InstancedDataType> {
+    type InstancedDataType = {
         position: [number, number, number];
         size: [number, number, number];
         colour: [number, number, number, number];
