@@ -9,6 +9,7 @@ type MoorhenCidInputFormPropsType = {
     placeholder?: string; 
     defaultValue?: string;
     onChange?: (arg0: React.ChangeEvent<HTMLInputElement>) => void;
+    invalidCid?: boolean;
 }
 
 export const MoorhenCidInputForm = forwardRef<HTMLInputElement, MoorhenCidInputFormPropsType>((props, cidFormRef) => {
@@ -22,9 +23,9 @@ export const MoorhenCidInputForm = forwardRef<HTMLInputElement, MoorhenCidInputF
 
     return  <Form.Group style={{ width: props.width, margin: props.margin, height:props.height }}>
                 <Form.Label>{props.label}</Form.Label>
-                <Form.Control size="sm" type='text' placeholder={props.placeholder} defaultValue={props.defaultValue} style={{width: "100%"}} onChange={handleChange} ref={cidFormRef}/>
+                <Form.Control size="sm" type='text' placeholder={props.placeholder} defaultValue={props.defaultValue} style={{width: "100%", color: props.invalidCid ? 'red' : '', borderColor: props.invalidCid ? 'red' : ''}} onChange={handleChange} ref={cidFormRef}/>
             </Form.Group>
 
 })
 
-MoorhenCidInputForm.defaultProps = { height: '4rem', width: '20rem', margin: '0.1rem', label: "Atom selection", placeholder: "", defaultValue: ""}
+MoorhenCidInputForm.defaultProps = { height: '4rem', width: '20rem', margin: '0.1rem', label: "Atom selection", placeholder: "", defaultValue: "", invalidCid: false}

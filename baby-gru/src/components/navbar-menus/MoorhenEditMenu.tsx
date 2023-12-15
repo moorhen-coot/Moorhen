@@ -7,6 +7,7 @@ import { MoorhenMergeMoleculesMenuItem } from "../menu-item/MoorhenMergeMolecule
 import { MoorhenAddSimpleMenuItem } from "../menu-item/MoorhenAddSimpleMenuItem";
 import { MoorhenAddRemoveHydrogenAtomsMenuItem } from "../menu-item/MoorhenAddRemoveHydrogenAtomsMenuItem"
 import { MoorhenMoveMoleculeHere } from "../menu-item/MoorhenMoveMoleculeHere"
+import { MoorhenCreateSelectionMenuItem } from "../menu-item/MoorhenCreateSelectionMenuItem"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
@@ -26,6 +27,7 @@ export const MoorhenEditMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             <MoorhenMergeMoleculesMenuItem key="merge" {...menuItemProps} />
             <MoorhenMoveMoleculeHere key="move" {...menuItemProps}/>
             <MoorhenDeleteUsingCidMenuItem key="delete" {...menuItemProps} />
+            <MoorhenCreateSelectionMenuItem key="create-selection" {...menuItemProps} />
             <MoorhenCopyFragmentUsingCidMenuItem key="copy_fragment" {...menuItemProps} />
             <MoorhenGoToMenuItem key="go_to_cid" {...menuItemProps} />
             {devMode &&

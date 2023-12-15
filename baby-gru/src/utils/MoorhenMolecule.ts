@@ -1668,7 +1668,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {Promise<moorhen.Molecule[]>} - A list of fitted ligands
      */
     async fitLigand(mapMolNo: number, ligandMolNo: number, fitRightHere: boolean = true, redraw: boolean = false, useConformers: boolean = false, conformerCount: number = 0): Promise<moorhen.Molecule[]> {
+        let newMolecules: moorhen.Molecule[] = []
         const command = fitRightHere ? 'fit_ligand_right_here' : 'fit_ligand'
+        const returnType = fitRightHere ? 'int_array' : 'fit_ligand_info_array'
         
         const commandArgs = fitRightHere ? [
             this.molNo, mapMolNo, ligandMolNo,
@@ -1680,18 +1682,18 @@ export class MoorhenMolecule implements moorhen.Molecule {
         ]
 
         const result = await this.commandCentre.current.cootCommand({
-            returnType: 'int_array',
+            returnType: returnType,
             command: command,
             commandArgs: commandArgs,
             changesMolecules: [this.molNo]
-        }, true) as moorhen.WorkerResponse<number[]>
+        }, true) as moorhen.WorkerResponse<(number[] | libcootApi.fitLigandInfo[])>
         
         if (result.data.result.status === "Completed") {
-            const newMolecules: moorhen.Molecule[] = await Promise.all(
-                result.data.result.result.map(async (molNo, idx) => {
+            newMolecules = await Promise.all(
+                result.data.result.result.map(async (fitLigandResult: (number | libcootApi.fitLigandInfo), idx: number) => {
                     const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.monomerLibraryPath)
-                    newMolecule.molNo = molNo
-                    newMolecule.name = `Fit. lig. #${idx}`
+                    newMolecule.molNo = fitRightHere ? fitLigandResult as number : (fitLigandResult as libcootApi.fitLigandInfo).imol 
+                    newMolecule.name = `Fit. lig. #${idx + 1}`
                     newMolecule.isDarkBackground = this.isDarkBackground
                     newMolecule.defaultBondOptions = this.defaultBondOptions
                     if (redraw) {
@@ -1700,8 +1702,11 @@ export class MoorhenMolecule implements moorhen.Molecule {
                     return newMolecule
                 })
             )
-            return newMolecules
+        } else {
+            console.warn('Something went wrong when finding ligands...')
         }
+        
+        return newMolecules
     }
 
     /**
@@ -1762,5 +1767,28 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }, false) as moorhen.WorkerResponse<number>
         this.setAtomsDirty(true)
         await this.redraw()
+    }
+
+    /**
+     * Parse a CID selection into a residue selection object
+     * @param {string} cid - The CID selection
+     * @returns {object} An object for the residue selection
+     */
+    async parseCidIntoSelection(cid: string): Promise<moorhen.ResidueSelection> {
+
+        const selectionAtoms = await this.gemmiAtomsForCid(cid)
+        if (!selectionAtoms || selectionAtoms.length === 0) {
+            console.warn(`Specified CID resulted in no residue selection: ${cid}`)
+            return 
+        }
+
+        return {
+            molecule: this,
+            first: selectionAtoms[0].label,
+            second: selectionAtoms[selectionAtoms.length - 1].label,
+            isMultiCid: cid.includes('||'),
+            cid: cid.includes('||') ? cid.split('||') : cid,
+            label: cid
+        }
     }
 }

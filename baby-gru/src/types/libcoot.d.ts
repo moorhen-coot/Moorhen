@@ -350,7 +350,7 @@ export namespace libcootApi {
         supperposeInfo: string,
         alignedPairsData: {reference: ValidationInformationJS, moving: ValidationInformationJS}[],
     }
-    interface InstancedDataType extends emscriptem.instance<InstancedDataType> {
+    type InstancedDataType = {
         position: [number, number, number];
         size: [number, number, number];
         colour: [number, number, number, number];
@@ -420,6 +420,11 @@ export namespace libcootApi {
         phi: number;
         psi: number;
         is_pre_pro: boolean;
+    }
+    type fitLigandInfo = {
+        imol: number;
+        cluster_idx: number;
+        ligand_idx: number;
     }
     type CootModule = {
         SmilesToPDB(arg0: string, arg1: string, arg2: number, arg3: number): PairType<string, string>;

@@ -91,6 +91,7 @@ export namespace moorhen {
     type coorFormats = 'pdb' | 'mmcif';
     
     interface Molecule {
+        parseCidIntoSelection(selectedCid: string): Promise<ResidueSelection>;
         downloadAtoms(format?: 'mmcif' | 'pdb'): Promise<void>;
         getResidueBFactors(): { cid: string; bFactor: number; normalised_bFactor: number }[];
         getNcsRelatedChains(): Promise<string[][]>;
@@ -240,6 +241,7 @@ export namespace moorhen {
         second: null | string;
         cid: null | string | string[];
         isMultiCid: boolean;
+        label: string;
     }
     
     type HoveredAtom = {
@@ -807,6 +809,7 @@ export namespace moorhen {
             isDraggingAtoms: boolean;
             isRotatingAtoms: boolean;
             newCootCommandAlert: boolean;
+            showResidueSelection: boolean;
         };
         hoveringStates: {
             enableAtomHovering: boolean;

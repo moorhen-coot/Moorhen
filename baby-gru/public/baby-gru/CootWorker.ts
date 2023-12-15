@@ -114,8 +114,6 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
                     0.0, 0.0, 1.0, 0.0,
                     0.0, 0.0, 0.0, 1.0,
                 ])
-
-                inst_data.delete()
             }
         }
         As.delete()
@@ -164,8 +162,6 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
                 thisInstance_orientations.push(instDataOrientation[3][1])
                 thisInstance_orientations.push(instDataOrientation[3][2])
                 thisInstance_orientations.push(instDataOrientation[3][3])
-
-                inst_data.delete()
             }
         }
         Bs.delete()
@@ -380,6 +376,19 @@ const mapMoleculeCentreInfoToJSObject = (mapMoleculeCentreInfo: libcootApi.MapMo
     }
     updatedCentre.delete()
     return returnResult;
+}
+
+const fitLigandInfoArrayToJSArray = (fitLigandInfoVec: emscriptem.vector<libcootApi.fitLigandInfo>): libcootApi.fitLigandInfo[] => {
+    const result: libcootApi.fitLigandInfo[] = []
+
+    const fitLigandInfoVecSize = fitLigandInfoVec.size()
+    for (let i = 0; i < fitLigandInfoVecSize; i++) {
+        const fitLigandInfo = fitLigandInfoVec.get(i)
+        result.push({ ...fitLigandInfo })
+    }
+
+    fitLigandInfoVec.delete()
+    return result
 }
 
 const intArrayToJSArray = (intArray: emscriptem.vector<number>) => {
@@ -885,6 +894,9 @@ const doCootCommand = (messageData: {
 
         let returnResult;
         switch (returnType) {
+            case 'fit_ligand_info_array':
+                returnResult = fitLigandInfoArrayToJSArray(cootResult)
+                break;
             case 'string_array_array':
                 returnResult = stringArrayArrayToJSArray(cootResult)
                 break;

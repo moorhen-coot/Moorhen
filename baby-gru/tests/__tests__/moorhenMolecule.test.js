@@ -970,6 +970,46 @@ describe("Testing MoorhenMolecule", () => {
         await molecule.addLigandOfType('NAG')
         expect(molecule.hasGlycans).toBeTruthy()
     })
+
+    test("Test parseCidIntoSelection", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+        const glRef = {
+            current: new MockWebGL()
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
+        const newSelection = await molecule.parseCidIntoSelection("//A/1-10")
+        expect(newSelection.label).toBe('//A/1-10')
+        expect(newSelection.cid).toBe('//A/1-10')
+        expect(newSelection.isMultiCid).toBeFalsy()
+        expect(newSelection.first).toBe('/1/A/4(SER)/N')
+        expect(newSelection.second).toBe('/1/A/10(GLY)/O')
+    })
+
+    test("Test parseCidIntoSelection --multiCid", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+        const glRef = {
+            current: new MockWebGL()
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
+        const newSelection = await molecule.parseCidIntoSelection("//A/1-10||//A/15-20")
+        expect(newSelection.label).toBe('//A/1-10||//A/15-20')
+        expect(newSelection.cid).toEqual(['//A/1-10', '//A/15-20'])
+        expect(newSelection.isMultiCid).toBeTruthy()
+        expect(newSelection.first).toBe('/1/A/4(SER)/N')
+        expect(newSelection.second).toBe('/1/A/20(VAL)/CG2')
+    })
 })
 
 const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']

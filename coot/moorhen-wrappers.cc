@@ -995,13 +995,13 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("moved_atoms", &coot::molecule_t::moved_residue_t::moved_atoms)
     .function("add_atom",&coot::molecule_t::moved_residue_t::add_atom)
     ;
-    class_<coot::Cell>("Coot_Cell")
-    .property("a", &coot::Cell::a)
-    .property("b", &coot::Cell::b)
-    .property("c", &coot::Cell::c)
-    .property("alpha", &coot::Cell::alpha)
-    .property("beta", &coot::Cell::beta)
-    .property("gamma", &coot::Cell::gamma)
+    value_object<coot::Cell>("Coot_Cell")
+    .field("a", &coot::Cell::a)
+    .field("b", &coot::Cell::b)
+    .field("c", &coot::Cell::c)
+    .field("alpha", &coot::Cell::alpha)
+    .field("beta", &coot::Cell::beta)
+    .field("gamma", &coot::Cell::gamma)
     ;
     value_object<coot::symmetry_info_t>("symmetry_info_t")
     .field("cell",&coot::symmetry_info_t::cell)
@@ -1196,6 +1196,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("replace_molecule_by_model_from_string", &molecules_container_js::replace_molecule_by_model_from_string)
     .function("read_dictionary_string", &molecules_container_js::read_dictionary_string)
     ;
+    value_object<molecules_container_t::fit_ligand_info_t>("fit_ligand_info_t")
+    .field("imol", &molecules_container_t::fit_ligand_info_t::imol)
+    .field("cluster_idx", &molecules_container_t::fit_ligand_info_t::cluster_idx)
+    .field("ligand_idx", &molecules_container_t::fit_ligand_info_t::ligand_idx)
+    ;
     value_object<generic_3d_lines_bonds_box_t>("generic_3d_lines_bonds_box_t")
     .field("line_segments", &generic_3d_lines_bonds_box_t::line_segments)
     ;
@@ -1223,16 +1228,16 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("restype", &ResiduePropertyInfo::restype)
     .property("property", &ResiduePropertyInfo::property)
     ;
-    class_<coot::instancing_data_type_A_t>("instancing_data_type_A_t")
-    .property("position",&coot::instancing_data_type_A_t::position)
-    .property("colour",&coot::instancing_data_type_A_t::colour)
-    .property("size",&coot::instancing_data_type_A_t::size)
+    value_object<coot::instancing_data_type_A_t>("instancing_data_type_A_t")
+    .field("position",&coot::instancing_data_type_A_t::position)
+    .field("colour",&coot::instancing_data_type_A_t::colour)
+    .field("size",&coot::instancing_data_type_A_t::size)
     ;
-    class_<coot::instancing_data_type_B_t>("instancing_data_type_B_t")
-    .property("position",&coot::instancing_data_type_B_t::position)
-    .property("colour",&coot::instancing_data_type_B_t::colour)
-    .property("size",&coot::instancing_data_type_B_t::size)
-    .property("orientation",&coot::instancing_data_type_B_t::orientation)
+    value_object<coot::instancing_data_type_B_t>("instancing_data_type_B_t")
+    .field("position",&coot::instancing_data_type_B_t::position)
+    .field("colour",&coot::instancing_data_type_B_t::colour)
+    .field("size",&coot::instancing_data_type_B_t::size)
+    .field("orientation",&coot::instancing_data_type_B_t::orientation)
     ;
     value_object<coot::instanced_geometry_t>("instanced_geometry_t")
     .field("vertices",&coot::instanced_geometry_t::vertices)
@@ -1400,6 +1405,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("altLoc",&moorhen::h_bond_atom::altLoc)
     ;
 
+    register_vector<molecules_container_t::fit_ligand_info_t>("VectorFitLigandInfo_t");
     register_vector<coot::atom_spec_t>("VectorAtomSpec_t");
     register_vector<molecules_container_t::auto_read_mtz_info_t>("VectorAutoReadMtzInfo_t");
     register_vector<coot::CartesianPair>("VectorCootCartesianPair");
