@@ -23,7 +23,7 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.ContextButtonPro
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
-    const rotateTranslateModes = ['RESIDUE', 'CHAIN', 'MOLECULE']
+    const rotateTranslateModes = ['ATOM', 'RESIDUE', 'CHAIN', 'MOLECULE']
 
     useEffect(() => {
         if (shortCuts) {
