@@ -1174,6 +1174,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_map_histogram",&molecules_container_t::get_map_histogram)
     .function("sharpen_blur_map_with_resample",&molecules_container_t::sharpen_blur_map_with_resample)
     .function("find_water_baddies",&molecules_container_t::find_water_baddies)
+    .function("get_gphl_chem_comp_info",&molecules_container_t::get_gphl_chem_comp_info)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<bool>()

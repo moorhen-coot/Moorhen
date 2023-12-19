@@ -484,6 +484,51 @@ std::vector<LigandInfo> get_ligand_info_for_structure(const gemmi::Structure &St
     return ligand_info_vec;
 }
 
+std::vector<std::string> parse_multi_cids(const gemmi::Structure &Structure, const std::string &cids) {
+    std::vector<std::string> result;
+    std::vector<gemmi::Selection> selections_vec = parse_multi_cid_selections(cids);
+    
+    auto structure_copy = Structure;
+    gemmi::remove_ligands_and_waters(structure_copy);
+    structure_copy.remove_empty_chains();
+    const auto model = structure_copy.first_model();
+    const auto chains = model.chains;
+
+    for (int i = 0; i < selections_vec.size(); i++) {
+        const gemmi::Selection selection = selections_vec[i];
+            
+        std::vector<std::string> chain_id_vec;
+        if (selection.chain_ids.all) {
+            for (auto chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
+                chain_id_vec.push_back(chains[chainIndex].name);
+            }
+        } else {
+            chain_id_vec.push_back(selection.chain_ids.str());
+        }
+
+        for (auto chainIndex = 0; chainIndex < chain_id_vec.size(); chainIndex++) {
+            if (!selection.from_seqid.empty()) {
+                if (selection.to_seqid.empty()) {
+                    result.push_back("/" + model.name + "/" + chain_id_vec[chainIndex] + "/" + selection.from_seqid.str() + "/*");
+                } else {
+                    for (auto resNum = selection.from_seqid.seqnum; resNum <= selection.to_seqid.seqnum; resNum++) {
+                        result.push_back("/" + model.name + "/" + chain_id_vec[chainIndex] + "/" + std::to_string(resNum) + "/*");
+                    }
+                }
+            } else {
+                const auto chain = model.find_chain(chain_id_vec[chainIndex]);
+                const auto residues = chain->residues;
+                for (int residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
+                    const auto residue = residues[residueIndex];
+                    result.push_back("/" + model.name + "/" + chain->name + "/" + residue.seqid.str() + "/*");
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
 // cids and excluded_cids are strings of CID selections separated with ||
 std::vector<AtomInfo> get_atom_info_for_selection(const gemmi::Structure &Structure, const std::string &cids, const std::string &excluded_cids) {
 
@@ -2672,4 +2717,5 @@ GlobWalk
     function("get_sequence_info", &get_sequence_info);
     function("get_structure_bfactors", &get_structure_bfactors);
     function("guess_coord_data_format", &guess_coord_data_format);
+    function("parse_multi_cids", &parse_multi_cids);
 }
