@@ -1552,50 +1552,39 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {boolean} [redraw=true] - Indicates if the molecule should be redrawn
      */
     async hideCid(cid: string, redraw: boolean = true): Promise&lt;void> {
-        await this.commandCentre.current.cootCommand({
-            message: 'coot_command',
-            command: "add_to_non_drawn_bonds",
-            returnType: 'status',
-            commandArgs: [this.molNo, cid],
-        }, false)
-
-        // A list with the segment CIDs
-        this.excludedSelections.push(cid)
-
-        // We also want a list with individual atom CIDs
-        const selection = new window.CCP4Module.Selection(cid)
-        const toSeqId = selection.to_seqid
-        const fromSeqId = selection.from_seqid
-        const chainIds = selection.chain_ids
-
-        let chainIdList: string[] = [chainIds.str()]
-        if (chainIds.all) {
-            chainIdList = this.sequences.map(sequence => sequence.chain)
-        }
-
-        if (!fromSeqId.empty()) {
-            chainIdList.forEach(chainName => {
-                if (toSeqId.empty()) {
-                    this.excludedCids.push(`//${chainName}/${fromSeqId.seqnum}/*`)
-                } else {
-                    for (let resNum = fromSeqId.seqnum; resNum &lt;= toSeqId.seqnum; resNum++) {
-                        this.excludedCids.push(`//${chainName}/${resNum}/*`)
-                    }
-                }
-            })
+        if (cid.includes('||')) {
+            await Promise.all(cid.split('||').map(i => {
+                this.commandCentre.current.cootCommand({
+                    message: 'coot_command',
+                    command: "add_to_non_drawn_bonds",
+                    returnType: 'status',
+                    commandArgs: [this.molNo, i],
+                }, false)
+            }))
         } else {
-            chainIdList.forEach(chainName => {
-                const currentSequence = this.sequences.find(sequence => sequence.chain === chainName)
-                currentSequence.sequence.forEach(residue => {
-                    this.excludedCids.push(`//${chainName}/${residue.resNum}/*`)                    
-                })
-            })
+            await this.commandCentre.current.cootCommand({
+                message: 'coot_command',
+                command: "add_to_non_drawn_bonds",
+                returnType: 'status',
+                commandArgs: [this.molNo, cid],
+            }, false)    
         }
-        
-        chainIds.delete()
-        toSeqId.delete()
-        fromSeqId.delete()
-        selection.delete()
+
+        // We want a list with the CID ranges (e.g. //A/1-10)
+        if (cid.includes("||")) {
+            this.excludedSelections.push(...cid.split("||"))
+        } else {
+            this.excludedSelections.push(cid)
+        }
+
+        // We also want a list with individual residue CIDs
+        const cidVect = window.CCP4Module.parse_multi_cids(this.gemmiStructure, cid)
+        const cidVectSize = cidVect.size()
+        for (let i = 0; i &lt; cidVectSize; i++) {
+            const cid = cidVect.get(i)
+            this.excludedCids.push(cid)
+        }
+        cidVect.delete()
 
         // Redraw to apply changes
         if (redraw) {
