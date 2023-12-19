@@ -358,8 +358,8 @@ export const MoorhenResidueSelectionActions = (props) => {
                 dispatch( setNotificationContent(null) )
                 clearSelection()
             }
+            molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
             batch(() => {
-                molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
                 dispatch( setShowResidueSelection(false) )
                 dispatch( setHoveredAtom({ molecule: null, cid: null }) )
                 dispatch( setIsDraggingAtoms(true) )
