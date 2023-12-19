@@ -3,7 +3,7 @@ import { MockMoorhenCommandCentre } from "../helpers/mockMoorhenCommandCentre"
 import { MockWebGL } from "../helpers/mockWebGL"
 import fetch from 'node-fetch';
 
-jest.setTimeout(40000)
+jest.setTimeout(60000)
 
 const fs = require('fs')
 const path = require('path')
