@@ -837,7 +837,80 @@ describe("Testing MoorhenMolecule", () => {
         expect(simpleMesh_3.data.result.result.instance_sizes).toEqual(simpleMesh_1.data.result.result.instance_sizes)
     })
 
-    test.skip("Test hideCid", async () => {
+    test("Test hideCid 1", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+        const glRef = {
+            current: new MockWebGL()
+        }
+
+        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule_1.loadToCootFromURL(fileUrl, 'mol-test-1')
+        expect(molecule_1.molNo).toBe(0)
+        await molecule_1.hideCid("A/32/*")
+        expect(molecule_1.excludedSelections).toEqual([ "A/32/*" ])
+        expect(molecule_1.excludedCids).toEqual([ '/1/A/32/*' ])
+    })
+
+    test("Test hideCid 2", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+        const glRef = {
+            current: new MockWebGL()
+        }
+
+        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule_1.loadToCootFromURL(fileUrl, 'mol-test-1')
+        expect(molecule_1.molNo).toBe(0)
+        await molecule_1.hideCid("A/32-33/*")
+        expect(molecule_1.excludedSelections).toEqual([ "A/32-33/*" ])
+        expect(molecule_1.excludedCids).toEqual([ '/1/A/32/*', '/1/A/33/*' ])
+    })
+
+    test("Test hideCid 3", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+        const glRef = {
+            current: new MockWebGL()
+        }
+
+        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule_1.loadToCootFromURL(fileUrl, 'mol-test-1')
+        expect(molecule_1.molNo).toBe(0)
+        await molecule_1.hideCid("A/32-33/*||//A/1-2")
+        expect(molecule_1.excludedSelections).toEqual([ "A/32-33/*", "//A/1-2" ])
+        expect(molecule_1.excludedCids).toEqual([ '/1/A/32/*', '/1/A/33/*', '/1/A/1/*', '/1/A/2/*' ])
+    })
+
+    test("Test hideCid 4", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+        const glRef = {
+            current: new MockWebGL()
+        }
+
+        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule_1.loadToCootFromURL(fileUrl, 'mol-test-1')
+        expect(molecule_1.molNo).toBe(0)
+        await molecule_1.hideCid("A/32-33/*")
+        await molecule_1.hideCid("A/1-2/*")
+        expect(molecule_1.excludedSelections).toEqual([ "A/32-33/*", "A/1-2/*" ])
+        expect(molecule_1.excludedCids).toEqual([ '/1/A/32/*', '/1/A/33/*', '/1/A/1/*', '/1/A/2/*' ])
+    })
+
+    test.skip("Test hideCid 5", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const commandCentre = {
