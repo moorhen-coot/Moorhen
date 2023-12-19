@@ -12,6 +12,7 @@ declare global {
 
 export namespace libcootApi {
     type CCP4ModuleType = {
+        parse_multi_cids(gemmiStructure: gemmi.Structure, cid: string): emscriptem.vector<string>;
         parse_ligand_dict_info(fileContent: string): emscriptem.vector<{ comp_id: string; dict_contents: string; }>;
         get_ligand_info_for_structure(gemmiStructure: gemmi.Structure): emscriptem.vector<{
             resName: string;
