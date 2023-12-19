@@ -5,12 +5,13 @@ import { AdsClickOutlined, AllOutOutlined, CloseOutlined, CopyAllOutlined, Crisi
 import { batch, useDispatch, useSelector } from "react-redux"
 import { moorhen } from "../../types/moorhen"
 import { Button, Stack } from "react-bootstrap"
-import { clearResidueSelection, setIsRotatingAtoms, setNotificationContent, setResidueSelection, setShowResidueSelection } from '../../store/generalStatesSlice';
+import { clearResidueSelection, setIsDraggingAtoms, setIsRotatingAtoms, setNotificationContent, setResidueSelection, setShowResidueSelection } from '../../store/generalStatesSlice';
 import { useCallback, useEffect, useRef, useState } from "react"
 import { addMolecule, removeMolecule, setHoveredAtom } from "../../moorhen"
 import { HexColorPicker } from "react-colorful"
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm"
 import { MoorhenAcceptRejectRotateTranslate } from "./MoorhenAcceptRejectRotateTranslate"
+import { MoorhenAcceptRejectDragAtoms } from "./MoorhenAcceptRejectDragAtoms"
 
 export const MoorhenResidueSelectionActions = (props) => {
 
@@ -335,7 +336,43 @@ export const MoorhenResidueSelectionActions = (props) => {
                         glRef={residueSelection.molecule.glRef}
                         moleculeRef={{current: residueSelection.molecule}}/>)
                 )
-            })    
+            })
+        }
+
+    }, [residueSelection, clearSelection])
+
+    const handleDragAtoms = useCallback(() => {
+        let cid: string[]
+        
+        if (residueSelection.isMultiCid && Array.isArray(residueSelection.cid)) {
+            cid = residueSelection.cid
+        } else if (residueSelection.molecule && residueSelection.cid) {
+            cid = [residueSelection.cid as string]
+        } else if (residueSelection.molecule && residueSelection.first) {
+            const startResSpec = cidToSpec(residueSelection.first)
+            cid = [`/${startResSpec.mol_no}/${startResSpec.chain_id}/${startResSpec.res_no}-${startResSpec.res_no}`]
+        }
+
+        if (cid) {
+            const onExit = () => {
+                dispatch( setNotificationContent(null) )
+                clearSelection()
+            }
+            batch(() => {
+                molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
+                dispatch( setShowResidueSelection(false) )
+                dispatch( setHoveredAtom({ molecule: null, cid: null }) )
+                dispatch( setIsDraggingAtoms(true) )
+                dispatch( setNotificationContent(
+                    <MoorhenAcceptRejectDragAtoms
+                        onExit={onExit}
+                        commandCentre={residueSelection.molecule.commandCentre}
+                        monomerLibraryPath={residueSelection.molecule.monomerLibraryPath}
+                        cidRef={{current: cid}}
+                        glRef={residueSelection.molecule.glRef}
+                        moleculeRef={{current: residueSelection.molecule}}/>)
+                )
+            })
         }
 
     }, [residueSelection, clearSelection])
@@ -358,7 +395,7 @@ export const MoorhenResidueSelectionActions = (props) => {
                         <IconButton onClick={handleRefinement} onMouseEnter={() => setTooltipContents('Refine')}>
                             <CrisisAlertOutlined/>
                         </IconButton>
-                        <IconButton onClick={() => {}} onMouseEnter={() => setTooltipContents('Drag atoms')}>
+                        <IconButton onClick={handleDragAtoms} onMouseEnter={() => setTooltipContents('Drag atoms')}>
                             <AdsClickOutlined/>
                         </IconButton>
                         <IconButton onClick={handleSelectionCopy} onMouseEnter={() => setTooltipContents('Copy fragment')}>
