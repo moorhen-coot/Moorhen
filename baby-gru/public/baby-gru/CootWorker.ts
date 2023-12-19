@@ -518,6 +518,17 @@ const residueSpecToJSArray = (residueSpecs: emscriptem.vector<libcootApi.Residue
     return returnResult
 }
 
+const stringPairVectorToJSArray = (stringPairsVector: emscriptem.vector<libcootApi.PairType<string, string>>) => {
+    let result: { first: string; second: string }[] = []
+    const stringPairsVectorSize = stringPairsVector.size()
+    for (let ic = 0; ic < stringPairsVectorSize; ic++) {
+        const data = stringPairsVector.get(ic)
+        result.push({first: data.first, second: data.second})
+    }
+    stringPairsVector.delete()
+    return result
+}
+
 const validationDataToJSArray = (validationData: libcootApi.ValidationInformationT, chainID: string | null = null): libcootApi.ValidationInformationJS[] => {
     let returnResult: { chainId: string; insCode: string; seqNum: number; restype: string; value: number; }[] = []
     const cviv = validationData.cviv
@@ -971,6 +982,9 @@ const doCootCommand = (messageData: {
             case 'status_instanced_mesh_pair':
                 returnResult = { status: cootResult.first, mesh: instancedMeshToMeshData(cootResult.second, false, false, 5) }
                 break;
+            case 'string_string_pair_vector':
+                returnResult = stringPairVectorToJSArray(cootResult)
+                break
             case 'void':
                 returnResult = null
                 break
