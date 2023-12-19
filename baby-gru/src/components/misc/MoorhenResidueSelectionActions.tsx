@@ -2,14 +2,15 @@ import { IconButton, Popover, Tooltip } from "@mui/material"
 import { cidToSpec, guid } from "../../utils/MoorhenUtils"
 import { MoorhenNotification } from "./MoorhenNotification"
 import { AdsClickOutlined, AllOutOutlined, CloseOutlined, CopyAllOutlined, CrisisAlertOutlined, DeleteOutlined, EditOutlined, FormatColorFillOutlined, Rotate90DegreesCw, SwipeRightAlt } from "@mui/icons-material"
-import { useDispatch, useSelector } from "react-redux"
+import { batch, useDispatch, useSelector } from "react-redux"
 import { moorhen } from "../../types/moorhen"
 import { Button, Stack } from "react-bootstrap"
-import { clearResidueSelection, setNotificationContent, setResidueSelection, setShowResidueSelection } from '../../store/generalStatesSlice';
+import { clearResidueSelection, setIsRotatingAtoms, setNotificationContent, setResidueSelection, setShowResidueSelection } from '../../store/generalStatesSlice';
 import { useCallback, useEffect, useRef, useState } from "react"
-import { addMolecule, removeMolecule } from "../../moorhen"
+import { addMolecule, removeMolecule, setHoveredAtom } from "../../moorhen"
 import { HexColorPicker } from "react-colorful"
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm"
+import { MoorhenAcceptRejectRotateTranslate } from "./MoorhenAcceptRejectRotateTranslate"
 
 export const MoorhenResidueSelectionActions = (props) => {
 
@@ -305,6 +306,40 @@ export const MoorhenResidueSelectionActions = (props) => {
         clearSelection()
     }, [activeMap, residueSelection, clearSelection])
 
+    const handleRotateTranslate = useCallback(async () => {
+        let cid: string
+        
+        if (residueSelection.isMultiCid && Array.isArray(residueSelection.cid)) {
+            cid = residueSelection.cid.join('||')
+        } else if (residueSelection.molecule && residueSelection.cid) {
+            cid = residueSelection.cid as string
+        } else if (residueSelection.molecule && residueSelection.first) {
+            const startResSpec = cidToSpec(residueSelection.first)
+            cid = `/${startResSpec.mol_no}/${startResSpec.chain_id}/${startResSpec.res_no}-${startResSpec.res_no}`
+        }
+
+        if (cid) {
+            const onExit = () => {
+                dispatch( setNotificationContent(null) )
+                clearSelection()
+            }
+            batch(() => {
+                molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
+                dispatch( setShowResidueSelection(false) )
+                dispatch( setHoveredAtom({ molecule: null, cid: null }) )
+                dispatch( setIsRotatingAtoms(true) )
+                dispatch( setNotificationContent(
+                    <MoorhenAcceptRejectRotateTranslate
+                        onExit={onExit}
+                        cidRef={{current: cid}}
+                        glRef={residueSelection.molecule.glRef}
+                        moleculeRef={{current: residueSelection.molecule}}/>)
+                )
+            })    
+        }
+
+    }, [residueSelection, clearSelection])
+
     return showResidueSelection ?
         <MoorhenNotification key={notificationKeyRef.current} width={19}>
             <Tooltip className="moorhen-tooltip" title={tooltipContents}>
@@ -353,7 +388,7 @@ export const MoorhenResidueSelectionActions = (props) => {
                         }} onMouseEnter={() => setTooltipContents('Change colour')}>
                             <FormatColorFillOutlined/>
                         </IconButton>
-                        <IconButton onClick={() => {}} onMouseEnter={() => setTooltipContents('Rotate/Translate')}>
+                        <IconButton onClick={handleRotateTranslate} onMouseEnter={() => setTooltipContents('Rotate/Translate')}>
                             <Rotate90DegreesCw/>
                         </IconButton>
                         <IconButton disabled={activeMap === null} onClick={handleRigidBodyFit} onMouseEnter={() => setTooltipContents('Rigid body fit')}>
