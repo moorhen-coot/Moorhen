@@ -705,9 +705,145 @@ describe('Testing molecules_container_js', () => {
 
         cleanUpVariables.push(merge_info, result_1, result_2, result_3, result_4)
     })
+
+    test("Test merge ligand and gemmi parse -mmcif", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        
+        const coordMolNo_1 = molecules_container.read_pdb('./5a3h.mmcif')
+        expect(coordMolNo_1).toBe(0)
+        
+        const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', -999999)
+        expect(result_import_dict).toBe(1)
+        
+        const ligandMolNo = molecules_container.get_monomer_and_position_at(
+            'LZA', -999999, 0, 0, 0
+        )
+        expect(ligandMolNo).toBe(1)
+
+        const merge_info = molecules_container.merge_molecules(coordMolNo_1, ligandMolNo.toString())
+        expect(merge_info.second.size()).toBe(1)
+        
+        const mmcifString = molecules_container.get_molecule_atoms(coordMolNo_1, 'mmcif')        
+        const st = cootModule.read_structure_from_string(mmcifString, 'test-molecule')
+        cootModule.gemmi_setup_entities(st)
+        cootModule.gemmi_add_entity_types(st, true)
+        const model = st.first_model()
+        const chains = model.chains
+        const chain = chains.get(2)
+        const ligands = chain.get_ligands_const()
+        expect(ligands.length()).toBe(1)
+
+        cleanUpVariables.push(merge_info, st, model, chains, chain, ligands)
+    })
+
+    test("Test merge ligand and gemmi parse -pdb", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        
+        const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
+        expect(coordMolNo_1).toBe(0)
+        
+        const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', -999999)
+        expect(result_import_dict).toBe(1)
+        
+        const ligandMolNo = molecules_container.get_monomer_and_position_at(
+            'LZA', -999999, 0, 0, 0
+        )
+        expect(ligandMolNo).toBe(1)
+
+        const merge_info = molecules_container.merge_molecules(coordMolNo_1, ligandMolNo.toString())
+        expect(merge_info.second.size()).toBe(1)
+        
+        const mmcifString = molecules_container.get_molecule_atoms(coordMolNo_1, 'pdb')
+        const st = cootModule.read_structure_from_string(mmcifString, 'test-molecule')
+        cootModule.gemmi_setup_entities(st)
+        cootModule.gemmi_add_entity_types(st, true)
+        const model = st.first_model()
+        const chains = model.chains
+        const chain = chains.get(2)
+        const ligands = chain.get_ligands_const()
+        expect(ligands.length()).toBe(1)
+
+        cleanUpVariables.push(merge_info, st, model, chains, chain, ligands)
+    })
+
+    test("Test merge ligand and gemmi parse cross-format 1", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        
+        const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
+        expect(coordMolNo_1).toBe(0)
+
+        const old_mmcifString = molecules_container.get_molecule_atoms(coordMolNo_1, 'mmcif')
+        const old_st = cootModule.read_structure_from_string(old_mmcifString, 'test-molecule')
+        cootModule.gemmi_setup_entities(old_st)
+        cootModule.gemmi_add_entity_types(old_st, true)
+        const old_model = old_st.first_model()
+        const old_chains = old_model.chains
+
+        const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', -999999)
+        expect(result_import_dict).toBe(1)
+        
+        const ligandMolNo = molecules_container.get_monomer_and_position_at(
+            'LZA', -999999, 0, 0, 0
+        )
+        expect(ligandMolNo).toBe(1)
+
+        const merge_info = molecules_container.merge_molecules(coordMolNo_1, ligandMolNo.toString())
+        expect(merge_info.second.size()).toBe(1)
+        
+        const mmcifString = molecules_container.get_molecule_atoms(coordMolNo_1, 'mmcif')
+        const st = cootModule.read_structure_from_string(mmcifString, 'test-molecule')
+        cootModule.gemmi_setup_entities(st)
+        cootModule.gemmi_add_entity_types(st, true)
+        const model = st.first_model()
+        const chains = model.chains
+        expect(chains.size()).toBe(old_chains.size() + 1)
+        const chain = chains.get(2)
+        const ligands = chain.get_ligands_const()
+        expect(ligands.length()).toBe(1)
+
+        cleanUpVariables.push(merge_info, old_chains, old_model, old_st, st, model, chains, chain, ligands)
+    })
+
+    test("Test merge ligand and gemmi parse cross-format 2", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        
+        const coordMolNo_1 = molecules_container.read_pdb('./5a3h.mmcif')
+        expect(coordMolNo_1).toBe(0)
+
+        const old_mmcifString = molecules_container.get_molecule_atoms(coordMolNo_1, 'pdb')
+        const old_st = cootModule.read_structure_from_string(old_mmcifString, 'test-molecule')
+        cootModule.gemmi_setup_entities(old_st)
+        cootModule.gemmi_add_entity_types(old_st, true)
+        const old_model = old_st.first_model()
+        const old_chains = old_model.chains
+
+        const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', -999999)
+        expect(result_import_dict).toBe(1)
+        
+        const ligandMolNo = molecules_container.get_monomer_and_position_at(
+            'LZA', -999999, 0, 0, 0
+        )
+        expect(ligandMolNo).toBe(1)
+
+        const merge_info = molecules_container.merge_molecules(coordMolNo_1, ligandMolNo.toString())
+        expect(merge_info.second.size()).toBe(1)
+        
+        const mmcifString = molecules_container.get_molecule_atoms(coordMolNo_1, 'pdb')
+        const st = cootModule.read_structure_from_string(mmcifString, 'test-molecule')
+        cootModule.gemmi_setup_entities(st)
+        cootModule.gemmi_add_entity_types(st, true)
+        const model = st.first_model()
+        const chains = model.chains
+        expect(chains.size()).toBe(old_chains.size() + 1)
+        const chain = chains.get(2)
+        const ligands = chain.get_ligands_const()
+        expect(ligands.length()).toBe(1)
+
+        cleanUpVariables.push(merge_info, old_chains, old_model, old_st, st, model, chains, chain, ligands)
+    })
 })
 
-const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
+const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'MOI.restraints.cif', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
 
 const setupFunctions = {
     removeTestDataFromFauxFS: () => {
