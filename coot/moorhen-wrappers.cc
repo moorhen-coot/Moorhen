@@ -1012,6 +1012,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("generate_local_self_restraints", &molecules_container_t::generate_local_self_restraints)
     .function("get_ncs_related_chains", &molecules_container_t::get_ncs_related_chains)
     .function("is_EM_map",&molecules_container_t::is_EM_map)
     .function("set_map_sampling_rate",&molecules_container_t::set_map_sampling_rate)
