@@ -1,10 +1,11 @@
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from 'react-redux';
 import { Button, Card, Col, Row, Stack, ToggleButton } from "react-bootstrap";
-import { useEffect, useState } from "react";
-import { CenterFocusStrongOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined } from "@mui/icons-material";
+import { useEffect, useRef, useState } from "react";
+import { CenterFocusStrongOutlined, HelpOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined } from "@mui/icons-material";
 import parse from 'html-react-parser'
-import { guid } from "../../utils/MoorhenUtils";
+import { convertViewtoPx, guid } from "../../utils/MoorhenUtils";
+import { Popover, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
 
 export const MoorhenLigandCard = (props: {
     ligand: moorhen.LigandInfo;
@@ -19,8 +20,14 @@ export const MoorhenLigandCard = (props: {
         'ligand_validation': 'Geom. Validation',
     }
 
+    const anchorEl = useRef(null)
+
     const [showState, setShowState] = useState<{ [key: string]: boolean }>({})
+    const [showInfoTable, setShowInfoTable] = useState<boolean>(false)
+    
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
 
     const { ligand, molecule } = props
 
@@ -64,10 +71,46 @@ export const MoorhenLigandCard = (props: {
 
     // For some reason a random key needs to be used here otherwise the scroll of the card list gets reset with every re-render
     return <Card key={guid()} style={{marginTop: '0.5rem'}}>
-            <Card.Body style={{padding:'0.5rem'}}>
+            <Card.Body ref={anchorEl} style={{padding:'0.5rem'}}>
                 <Row style={{display:'flex', justifyContent:'between'}}>
                     <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
-                        {ligand.svg ? parse(ligand.svg) : <span>{ligand.cid}</span>}
+                        {ligand.chem_comp_info?.length > 0 &&
+                            <Popover 
+                                anchorOrigin={{vertical: 'center', horizontal: 'center'}}
+                                transformOrigin={{vertical: 'center', horizontal: 'center'}}
+                                open={showInfoTable}
+                                onClose={() => setShowInfoTable(false)}
+                                anchorEl={{
+                                    nodeType: 1,
+                                    getBoundingClientRect: () => anchorEl.current.getBoundingClientRect()
+                                  }}
+                                sx={{
+                                    '& .MuiPaper-root': {
+                                        overflowY: 'hidden', borderRadius: '8px', padding: '0.5rem', background: isDark ? 'grey' : 'white'
+                                    }
+                                }}                            
+                            >
+                            <TableContainer style={{maxWidth: convertViewtoPx(40, width), maxHeight: convertViewtoPx(40, height), overflow: 'auto'}}>
+                                <Table stickyHeader={true}>
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell>Field</TableCell>
+                                            <TableCell>Value</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                    {ligand.chem_comp_info.map((chemInfo, idx) => 
+                                        <TableRow style={{backgroundColor: idx % 2 !== 0 ? 'white' : 'rgba(233, 233, 233, 0.3)'}} key={`${chemInfo.first} - ${chemInfo.second}`} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                                            <TableCell component="th" scope="row">{chemInfo.first}</TableCell>
+                                            <TableCell component="th" scope="row">{chemInfo.second}</TableCell>
+                                        </TableRow>
+
+                                    )}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                            </Popover>}
+                            {ligand.svg ? parse(ligand.svg) : <span>{ligand.cid}</span>}
                     </Col>
                     <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
                         <Stack direction='vertical' gap={1} style={{display: 'flex', justifyContent: 'center'}}>
@@ -80,6 +123,12 @@ export const MoorhenLigandCard = (props: {
                             {props.validationStyles.map(style => {
                                 return getToggleButton(style, validationLabels[style])
                             })}
+                            {ligand.chem_comp_info?.length > 0 &&
+                            <Button  variant="secondary" style={{marginRight:'0.5rem', display: 'flex', justifyContent: 'left'}} onClick={() => setShowInfoTable((prev) => !prev)}>
+                                <HelpOutlined style={{marginRight: '0.5rem'}}/>
+                                Show info
+                            </Button>
+                            }
                         </Stack>
                     </Col>
                 </Row>

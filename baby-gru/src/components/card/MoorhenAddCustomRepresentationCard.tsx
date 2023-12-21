@@ -175,7 +175,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 open={props.show}
                 anchorEl={props.anchorEl.current}
                 anchorOrigin={{ vertical: 'center', horizontal: 'center' }}
-                transformOrigin={{ vertical: 'center', horizontal: 'center', }}
+                transformOrigin={{ vertical: 'center', horizontal: 'center' }}
                 sx={{'& .MuiPaper-root': {backgroundColor: isDark ? 'grey' : 'white', marginTop: '0.1rem', borderRadius: '1rem', borderStyle: 'solid', borderColor: 'grey', borderWidth: '1px'}}}
                 
             >

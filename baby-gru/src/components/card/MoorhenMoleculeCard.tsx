@@ -537,7 +537,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                         Ligands
                     </AccordionSummary>
                     <AccordionDetails style={{padding: '0.2rem', backgroundColor: isDark ? '#ced5d6' : 'white'}}>
-                        <MoorhenLigandList setBusy={setBusyLoadingLigands} commandCentre={props.commandCentre} molecule={props.molecule} glRef={props.glRef} height={convertViewtoPx(30, height)}/>
+                        <MoorhenLigandList setBusy={setBusyLoadingLigands} commandCentre={props.commandCentre} molecule={props.molecule} glRef={props.glRef} height={convertViewtoPx(40, height)}/>
                     </AccordionDetails>
                 </Accordion>
             </div>
