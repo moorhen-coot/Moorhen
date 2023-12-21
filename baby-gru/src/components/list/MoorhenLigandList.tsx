@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Row, Col } from "react-bootstrap";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
@@ -31,8 +31,15 @@ export const MoorhenLigandList = (props: {
             let ligandList: moorhen.LigandInfo[] = []
 
             for (const ligand of props.molecule.ligands) {
-                const ligandSVG = await getLigandSVG(props.commandCentre, props.molecule.molNo, ligand.resName, isDark)
-                ligandList.push({svg: ligandSVG, ...ligand})
+                const [svg, chemCompInfo] = await Promise.all([
+                    getLigandSVG(props.commandCentre, props.molecule.molNo, ligand.resName, isDark),
+                    props.commandCentre.current.cootCommand({
+                        returnType: "string_string_pair_vector",
+                        command: 'get_gphl_chem_comp_info',
+                        commandArgs: [ligand.resName, props.molecule.molNo],
+                    }, false) as Promise<moorhen.WorkerResponse<{first: string; second: string}[]>>
+                ])
+                ligandList.push({ svg, chem_comp_info: chemCompInfo.data.result.result, ...ligand })
             }
 
             setLigandList(ligandList)

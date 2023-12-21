@@ -28,6 +28,7 @@ export namespace moorhen {
         modelName: string;
         cid: string;
         svg?: string;
+        chem_comp_info?: {first: string; second: string}[];
     }
     
     type Sequence = {
