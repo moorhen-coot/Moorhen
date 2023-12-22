@@ -616,8 +616,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
     async getAtoms(format?: 'mmcif' | 'pdb'): Promise<string> {
         const response = await this.commandCentre.current.cootCommand({
             returnType: "string",
-            command: 'get_molecule_atoms',
-            commandArgs: [this.molNo, format ? format : this.coordsFormat ? this.coordsFormat : 'pdb'],
+            command: format === 'mmcif' ? 'molecule_to_mmCIF_string' : 'molecule_to_PDB_string',
+            commandArgs: [this.molNo],
         }, false) as moorhen.WorkerResponse<string>
         return response.data.result.result
     }
