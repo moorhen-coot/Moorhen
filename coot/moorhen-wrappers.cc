@@ -1014,6 +1014,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .constructor<bool>()
     .function("generate_local_self_restraints", &molecules_container_t::generate_local_self_restraints)
     .function("get_ncs_related_chains", &molecules_container_t::get_ncs_related_chains)
+    .function("set_max_number_of_threads_in_thread_pool", &molecules_container_t::set_max_number_of_threads_in_thread_pool)
+    .function("set_map_is_contoured_with_thread_pool", &molecules_container_t::set_map_is_contoured_with_thread_pool)
     .function("is_EM_map",&molecules_container_t::is_EM_map)
     .function("set_map_sampling_rate",&molecules_container_t::set_map_sampling_rate)
     .function("get_mesh_for_ligand_validation_vs_dictionary",&molecules_container_t::get_mesh_for_ligand_validation_vs_dictionary)
