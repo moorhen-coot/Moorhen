@@ -901,6 +901,37 @@ describe('Testing molecules_container_js', () => {
 
         cleanUpVariables.push(merge_info, old_chains, old_model, old_st, st, model, chains, chain, ligands)
     })
+
+    test.skip('Test test_the_threading --pool false', () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
+        expect(mapMolNo).toBe(0)
+
+        molecules_container.set_map_is_contoured_with_thread_pool(false)
+        const maxThreads = 8
+        molecules_container.set_max_number_of_threads_in_thread_pool(maxThreads)
+        for (let nThreads = 1; nThreads < 9; nThreads++) {
+            for (let nIteration = 0; nIteration < 6; nIteration++) {
+                const t = molecules_container.test_the_threading(nThreads, mapMolNo)
+                console.log(`RESULT: ${nIteration} ${nThreads} ${t} 0 ${maxThreads}`)    
+            }
+        }
+    })
+
+    test.skip('Test test_the_threading --pool true', () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
+        expect(mapMolNo).toBe(0)
+
+        molecules_container.set_map_is_contoured_with_thread_pool(true)
+        for (let nThreads = 1; nThreads < 9; nThreads++) {
+            for (let nIteration = 0; nIteration < 6; nIteration++) {
+                const t = molecules_container.test_the_threading(nThreads, mapMolNo)
+                console.log(`RESULT: ${nIteration} ${nThreads} ${t} 1 0`)    
+            }
+        }
+    })
+
 })
 
 const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'MOI.restraints.cif', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
