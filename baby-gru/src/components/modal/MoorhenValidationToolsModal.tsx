@@ -13,6 +13,7 @@ import { MoorhenLigandValidation } from "../validation-tools/MoorhenLigandValida
 import { MoorhenUnmodelledBlobs } from "../validation-tools/MoorhenUnmodelledBlobs"
 import { convertRemToPx, convertViewtoPx} from '../../utils/MoorhenUtils';
 import { useSelector } from "react-redux";
+import {MoorhenPrivateerValidation} from "../validation-tools/MoorhenPrivateerValidation";
 
 interface MoorhenValidationModalProps extends moorhen.CollectedProps {
     show: boolean;
@@ -43,7 +44,8 @@ export const MoorhenValidationToolsModal = (props: MoorhenValidationModalProps) 
             {label: "Fill partial residues", toolWidget: <MoorhenFillMissingAtoms {...collectedProps}/>},
             {label: "Unmodelled blobs", toolWidget: <MoorhenUnmodelledBlobs {...collectedProps}/>},
             {label: "MMRRCC plot", toolWidget: <MoorhenMMRRCCPlot {...collectedProps}/>},
-            {label: "Water validation", toolWidget: <MoorhenWaterValidation {...collectedProps}/>}
+            {label: "Water validation", toolWidget: <MoorhenWaterValidation {...collectedProps}/>},
+            {label: "Glyco validation", toolWidget: <MoorhenPrivateerValidation {...collectedProps}/>}
     ]
 
     const handleChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {

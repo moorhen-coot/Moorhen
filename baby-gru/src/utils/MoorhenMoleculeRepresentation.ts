@@ -232,6 +232,8 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 break;
             case 'glycoBlocks':
                 objects = await this.getGlycoBlockBuffers(this.cid)
+                console.log("GLYCOBLOCKS*****")
+                console.log(objects)
                 break;
             case 'CRs':
             case 'MolecularSurface':
