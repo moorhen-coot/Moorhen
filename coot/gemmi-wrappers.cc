@@ -162,7 +162,7 @@ gemmi::Structure remove_selected_residues(const gemmi::Structure &Structure, con
     return new_structure;
 }
 
-gemmi::Structure remove_non_selected_residues(const gemmi::Structure &Structure, const gemmi::Selection &Selection) {
+gemmi::Structure remove_non_selected_atoms(const gemmi::Structure &Structure, const gemmi::Selection &Selection) {
     auto new_structure = Structure;
 
     gemmi::vector_remove_if(new_structure.models, [&](const gemmi::Model& model) { return !Selection.matches(model); });
@@ -571,7 +571,7 @@ std::vector<AtomInfo> get_atom_info_for_selection(const gemmi::Structure &Struct
 
     for (int i_selection = 0; i_selection < selections_vec.size(); i_selection++) {
         auto selection = selections_vec[i_selection];
-        auto structure_copy = remove_non_selected_residues(_structure, selection);
+        auto structure_copy = remove_non_selected_atoms(_structure, selection);
         auto models = structure_copy.models;
         for (int modelIndex = 0; modelIndex < models.size(); modelIndex++) {
             const auto model = models[modelIndex];
@@ -2678,7 +2678,7 @@ GlobWalk
     */
 
     //TODO Here we need to put *lots* of gemmi functions
-    function("remove_non_selected_residues",&remove_non_selected_residues);
+    function("remove_non_selected_atoms",&remove_non_selected_atoms);
     function("count_residues_in_selection",&count_residues_in_selection);
     function("get_pdb_string_from_gemmi_struct",&get_pdb_string_from_gemmi_struct);
     function("structure_is_ligand",&structure_is_ligand);
