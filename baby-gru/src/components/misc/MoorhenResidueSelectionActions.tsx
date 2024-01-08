@@ -1,7 +1,7 @@
 import { IconButton, Popover, Tooltip } from "@mui/material"
 import { cidToSpec, guid } from "../../utils/MoorhenUtils"
 import { MoorhenNotification } from "./MoorhenNotification"
-import { AdsClickOutlined, AllOutOutlined, CloseOutlined, CopyAllOutlined, CrisisAlertOutlined, DeleteOutlined, EditOutlined, FormatColorFillOutlined, Rotate90DegreesCw, SwipeRightAlt } from "@mui/icons-material"
+import { AdsClickOutlined, AllOutOutlined, CloseOutlined, CopyAllOutlined, CrisisAlertOutlined, DeleteOutlined, EditOutlined, FormatColorFillOutlined, Rotate90DegreesCw, SwapVertOutlined, SwipeRightAlt } from "@mui/icons-material"
 import { batch, useDispatch, useSelector } from "react-redux"
 import { moorhen } from "../../types/moorhen"
 import { Button, Stack } from "react-bootstrap"
@@ -240,6 +240,35 @@ export const MoorhenResidueSelectionActions = (props) => {
         }
     }, [residueSelection, clearSelection])
 
+    const handleInvertSelection = useCallback(async () => {
+        let cid: string
+        
+        if (residueSelection.isMultiCid && Array.isArray(residueSelection.cid)) {
+            cid = residueSelection.cid.join('||')
+        } else if (residueSelection.molecule && residueSelection.cid) {
+            cid = residueSelection.cid as string
+        } else if (residueSelection.molecule && residueSelection.first) {
+            const startResSpec = cidToSpec(residueSelection.first)
+            cid = `/${startResSpec.mol_no}/${startResSpec.chain_id}/${startResSpec.res_no}-${startResSpec.res_no}`
+        }
+
+        if (cid) {
+            const result = residueSelection.molecule.getNonSelectedCids(cid)
+            const newCid = result.join('||')
+            await residueSelection.molecule.drawResidueSelection(newCid)
+            dispatch(
+                setResidueSelection({
+                    molecule: residueSelection.molecule,
+                    first: residueSelection.first,
+                    second: residueSelection.second,
+                    cid: result,
+                    isMultiCid: true,
+                    label: newCid
+                })
+            )
+        }
+    }, [residueSelection, clearResidueSelection])
+
     const handleColourChange = useCallback(async () => {
         let newColourRules: moorhen.ColourRule[] = []
 
@@ -416,6 +445,9 @@ export const MoorhenResidueSelectionActions = (props) => {
                             setInvalidCid(false)
                         }} onMouseEnter={() => setTooltipContents('Edit selection')}>
                             <EditOutlined style={{height: '23px', width: '23px', padding: '0.05rem', marginLeft: '0.2rem'}}/>
+                        </IconButton>
+                        <IconButton onClick={handleInvertSelection} onMouseEnter={() => setTooltipContents('Invert selection')}>
+                            <SwapVertOutlined/>
                         </IconButton>
                         <IconButton ref={changeColourAnchorRef} onClick={() => {
                             setShowColourPopover((prev) => !prev)
