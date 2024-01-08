@@ -1032,7 +1032,9 @@ onmessage = function (e) {
                 molecules_container.set_show_timings(false)
                 molecules_container.fill_rotamer_probability_tables()
                 molecules_container.set_map_sampling_rate(1.7)
-                cootModule.FS.mkdir("COOT_BACKUP");
+                molecules_container.set_map_is_contoured_with_thread_pool(true)
+                molecules_container.set_max_number_of_threads_in_thread_pool(4)
+                cootModule.FS.mkdir("COOT_BACKUP")
             })
             .catch((e) => {
                 console.log(e)
