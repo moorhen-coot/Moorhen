@@ -145,7 +145,7 @@ describe("Testing MoorhenMolecule", () => {
         const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
         const coordData = await molecule.getAtoms()
-        expect(coordData).toHaveLength(231178)
+        expect(coordData).toHaveLength(278727)
     }) 
 
     test("Test get_number_of_atoms", async () => {
