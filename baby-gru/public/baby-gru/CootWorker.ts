@@ -1033,7 +1033,7 @@ onmessage = function (e) {
                 molecules_container.fill_rotamer_probability_tables()
                 molecules_container.set_map_sampling_rate(1.7)
                 molecules_container.set_map_is_contoured_with_thread_pool(true)
-                molecules_container.set_max_number_of_threads_in_thread_pool(4)
+                molecules_container.set_max_number_of_threads_in_thread_pool(3)
                 cootModule.FS.mkdir("COOT_BACKUP")
             })
             .catch((e) => {
