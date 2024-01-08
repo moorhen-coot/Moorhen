@@ -1149,7 +1149,7 @@ export const countResiduesInSelection = (gemmiStructure: gemmi.Structure, cidSel
 
 export const copyStructureSelection = (gemmiStructure: gemmi.Structure, cidSelection?: string) => {
     const selection = new window.CCP4Module.Selection(cidSelection ? cidSelection : '/*/*/*')
-    const newStruct = window.CCP4Module.remove_non_selected_residues(gemmiStructure, selection)
+    const newStruct = window.CCP4Module.remove_non_selected_atoms(gemmiStructure, selection)
     selection.delete()
     return newStruct
 }
