@@ -560,6 +560,96 @@ describe("Testing MoorhenMolecule", () => {
         ])
     })
 
+    test("Test getNonSelectedCids 1", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
+        molecule.setAtomsDirty(true)
+        await molecule.updateAtoms()
+        const result = molecule.getNonSelectedCids("//A")
+        expect(result).toEqual(["/1/B/"])
+    })
+
+    test("Test getNonSelectedCids 2", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
+        molecule.setAtomsDirty(true)
+        await molecule.updateAtoms()
+        const result = molecule.getNonSelectedCids("//A||//B/1")
+        expect(result).toEqual(["/1/B/2-2"])
+    })
+
+    test("Test getNonSelectedCids 3", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
+        molecule.setAtomsDirty(true)
+        await molecule.updateAtoms()
+        const result = molecule.getNonSelectedCids("//A/4-100")
+        expect(result).toEqual(["/1/A/101-303", "/1/A/901-1248", "/1/B/"])
+    })
+
+    test("Test getNonSelectedCids 4", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
+        molecule.setAtomsDirty(true)
+        await molecule.updateAtoms()
+        const result = molecule.getNonSelectedCids("//B||//A/4-100||//A/103-303")
+        expect(result).toEqual(["/1/A/101-102", "/1/A/901-1248"])
+    })
+
+    test("Test getNonSelectedCids 5", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
+        molecule.setAtomsDirty(true)
+        await molecule.updateAtoms()
+        const result = molecule.getNonSelectedCids("//B/1")
+        expect(result).toEqual(["/1/A/", "/1/B/2-2"])
+    })
+    
     test("Test parseSequences pdb", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')

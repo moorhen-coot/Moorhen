@@ -444,6 +444,75 @@ std::vector<gemmi::Selection> parse_multi_cid_selections(const std::string &cids
     return selections_vec;
 }
 
+std::vector<std::pair<int, int>> get_consecutive_ranges_gemmi(const std::vector<int> &numbers) {
+    std::vector<int> numbers_vec = numbers;
+    std::sort(numbers_vec.begin(), numbers_vec.end());
+
+    std::vector<std::pair<int, int>> ranges;
+    if (!numbers_vec.empty()) {
+        int start = numbers_vec[0];
+        int end = numbers_vec[0];
+        for (int i = 1; i < numbers_vec.size(); i++) {
+            int i_number = numbers_vec[i];
+            if (i_number == end + 1) {
+                end = i_number;
+            } else {
+                std::pair<int, int> i_pair(start, end);
+                ranges.push_back(i_pair);
+                start = i_number;
+                end = i_number;
+            }
+        }
+        std::pair<int, int> i_pair(start, end);
+        ranges.push_back(i_pair);
+    }
+
+    return ranges;
+}
+
+std::vector<std::string> get_non_selected_cids(const gemmi::Structure &Structure, const std::string &cids) {
+    std::vector<gemmi::Selection> selections_vec = parse_multi_cid_selections(cids);
+    std::vector<std::string> result;
+    
+    auto structure_copy = Structure;
+    for (int i_selection = 0; i_selection < selections_vec.size(); i_selection++) {
+        auto selection = selections_vec[i_selection];
+        structure_copy = remove_selected_residues(structure_copy, selection);
+    }
+
+    const auto models = structure_copy.models;
+    for (int modelIndex = 0; modelIndex < models.size(); modelIndex++) {
+        const auto model = models[modelIndex];
+        if (!selection_vector_matches_model(selections_vec, model)) {
+            result.push_back("/" + model.name + "//");
+            continue;
+        }
+        const auto chains = model.chains;
+        for (int chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
+            const auto chain = chains[chainIndex];
+            if (!selection_vector_matches_chain(selections_vec, chain)) {
+                result.push_back("/" + model.name + "/" + chain.name + "/");
+                continue;
+            }
+            const auto residues = chain.residues;
+            std::vector<int> resNums;
+            for (int residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
+                const auto residue = residues[residueIndex];
+                resNums.push_back(*residue.seqid.num);
+            }
+            if (resNums.size() > 0) {
+                auto residue_ranges = get_consecutive_ranges_gemmi(resNums);
+                for (int i_range = 0; i_range < residue_ranges.size(); i_range++) {
+                    auto i_residue_range = residue_ranges[i_range];
+                    result.push_back("/" + model.name + "/" + chain.name + "/" + std::to_string(i_residue_range.first) + "-" + std::to_string(i_residue_range.second));
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
 std::vector<ResidueBFactorInfo> get_structure_bfactors(const gemmi::Structure &Structure) {
     std::vector<float> bfactor_vec;
     std::vector<std::string> cid_vec;
@@ -2679,6 +2748,7 @@ GlobWalk
 
     //TODO Here we need to put *lots* of gemmi functions
     function("remove_non_selected_atoms",&remove_non_selected_atoms);
+    function("remove_selected_atoms",&remove_selected_atoms);
     function("count_residues_in_selection",&count_residues_in_selection);
     function("get_pdb_string_from_gemmi_struct",&get_pdb_string_from_gemmi_struct);
     function("structure_is_ligand",&structure_is_ligand);
@@ -2742,4 +2812,5 @@ GlobWalk
     function("get_structure_bfactors", &get_structure_bfactors);
     function("guess_coord_data_format", &guess_coord_data_format);
     function("parse_multi_cids", &parse_multi_cids);
+    function("get_non_selected_cids", &get_non_selected_cids);
 }
