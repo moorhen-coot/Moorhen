@@ -139,12 +139,10 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
     }, [isDark, props.showHistogram, width, height, zoomFactor])
 
     return <Row>
-        <Col style={{display: 'flex', marginTop: '0.5rem'}}>
-        <div className="histogram-plot-div" style={{width: '100%'}}>
-            <canvas id={`${props.map.molNo}-histogram`}></canvas>
-        </div>
-        </Col>
-        <Col style={{display: 'flex', paddingLeft: 0}} md="auto">
+        <Stack style={{display: 'flex', marginTop: '0.5rem'}} gap={1} direction="horizontal">
+            <div className="histogram-plot-div" style={{width: '95%'}}>
+                <canvas id={`${props.map.molNo}-histogram`}></canvas>
+            </div>
             <Stack style={{display: 'flex', width: '1.5rem', justifyContent: 'center', alignContent: 'center', alignItems: 'center', verticalAlign: 'center'}} gap={1} direction="vertical">
                 <IconButton onClick={() => setZoomFactor((prev) => {
                     if (prev + 2 > 20) {
@@ -164,6 +162,6 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
                     <ZoomOutOutlined/>
                 </IconButton>
             </Stack>
-        </Col>
+        </Stack>
     </Row>
 })

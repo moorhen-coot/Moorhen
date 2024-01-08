@@ -138,7 +138,31 @@ int count_residues_in_selection(const gemmi::Structure &Structure, const gemmi::
     return result;
 }
 
-gemmi::Structure remove_non_selected_residues(const gemmi::Structure &Structure, const gemmi::Selection &Selection) {
+gemmi::Structure remove_selected_residues(const gemmi::Structure &Structure, const gemmi::Selection &Selection) {
+    auto new_structure = Structure;
+
+    auto models = Structure.models;
+    for (auto modelIndex = 0; modelIndex < models.size(); modelIndex++) {
+        const auto model = models[modelIndex];
+        if (!Selection.matches(model)) {
+            continue;
+        }
+        const auto chains = model.chains;
+        for (auto chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
+            auto chain = chains[chainIndex];
+            if (!Selection.matches(chain)) {
+                continue;
+            }
+            gemmi::vector_remove_if(new_structure.models[modelIndex].chains[chainIndex].residues, [&](const gemmi::Residue& res) { return Selection.matches(res); });
+        }
+    }
+
+    new_structure.remove_empty_chains();
+
+    return new_structure;
+}
+
+gemmi::Structure remove_non_selected_atoms(const gemmi::Structure &Structure, const gemmi::Selection &Selection) {
     auto new_structure = Structure;
 
     gemmi::vector_remove_if(new_structure.models, [&](const gemmi::Model& model) { return !Selection.matches(model); });
@@ -146,6 +170,9 @@ gemmi::Structure remove_non_selected_residues(const gemmi::Structure &Structure,
         gemmi::vector_remove_if(new_structure.models[modelIndex].chains, [&](const gemmi::Chain& chain) { return !Selection.matches(chain); });
         for (auto chainIndex = 0; chainIndex < new_structure.models[modelIndex].chains.size(); chainIndex++) {
             gemmi::vector_remove_if(new_structure.models[modelIndex].chains[chainIndex].residues, [&](const gemmi::Residue& res) { return !Selection.matches(res); });
+            for (auto residueIndex = 0; residueIndex < new_structure.models[modelIndex].chains[chainIndex].residues.size(); residueIndex++) {
+                gemmi::vector_remove_if(new_structure.models[modelIndex].chains[chainIndex].residues[residueIndex].atoms, [&](const gemmi::Atom& atom) { return !Selection.matches(atom); });
+            }
         }
     }
     
@@ -417,6 +444,75 @@ std::vector<gemmi::Selection> parse_multi_cid_selections(const std::string &cids
     return selections_vec;
 }
 
+std::vector<std::pair<int, int>> get_consecutive_ranges_gemmi(const std::vector<int> &numbers) {
+    std::vector<int> numbers_vec = numbers;
+    std::sort(numbers_vec.begin(), numbers_vec.end());
+
+    std::vector<std::pair<int, int>> ranges;
+    if (!numbers_vec.empty()) {
+        int start = numbers_vec[0];
+        int end = numbers_vec[0];
+        for (int i = 1; i < numbers_vec.size(); i++) {
+            int i_number = numbers_vec[i];
+            if (i_number == end + 1) {
+                end = i_number;
+            } else {
+                std::pair<int, int> i_pair(start, end);
+                ranges.push_back(i_pair);
+                start = i_number;
+                end = i_number;
+            }
+        }
+        std::pair<int, int> i_pair(start, end);
+        ranges.push_back(i_pair);
+    }
+
+    return ranges;
+}
+
+std::vector<std::string> get_non_selected_cids(const gemmi::Structure &Structure, const std::string &cids) {
+    std::vector<gemmi::Selection> selections_vec = parse_multi_cid_selections(cids);
+    std::vector<std::string> result;
+    
+    auto structure_copy = Structure;
+    for (int i_selection = 0; i_selection < selections_vec.size(); i_selection++) {
+        auto selection = selections_vec[i_selection];
+        structure_copy = remove_selected_residues(structure_copy, selection);
+    }
+
+    const auto models = structure_copy.models;
+    for (int modelIndex = 0; modelIndex < models.size(); modelIndex++) {
+        const auto model = models[modelIndex];
+        if (!selection_vector_matches_model(selections_vec, model)) {
+            result.push_back("/" + model.name + "//");
+            continue;
+        }
+        const auto chains = model.chains;
+        for (int chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
+            const auto chain = chains[chainIndex];
+            if (!selection_vector_matches_chain(selections_vec, chain)) {
+                result.push_back("/" + model.name + "/" + chain.name + "/");
+                continue;
+            }
+            const auto residues = chain.residues;
+            std::vector<int> resNums;
+            for (int residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
+                const auto residue = residues[residueIndex];
+                resNums.push_back(*residue.seqid.num);
+            }
+            if (resNums.size() > 0) {
+                auto residue_ranges = get_consecutive_ranges_gemmi(resNums);
+                for (int i_range = 0; i_range < residue_ranges.size(); i_range++) {
+                    auto i_residue_range = residue_ranges[i_range];
+                    result.push_back("/" + model.name + "/" + chain.name + "/" + std::to_string(i_residue_range.first) + "-" + std::to_string(i_residue_range.second));
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
 std::vector<ResidueBFactorInfo> get_structure_bfactors(const gemmi::Structure &Structure) {
     std::vector<float> bfactor_vec;
     std::vector<std::string> cid_vec;
@@ -534,57 +630,54 @@ std::vector<AtomInfo> get_atom_info_for_selection(const gemmi::Structure &Struct
 
     std::vector<gemmi::Selection> selections_vec = parse_multi_cid_selections(cids);
     std::vector<gemmi::Selection> excluded_selections_vec = parse_multi_cid_selections(excluded_cids);
-
     std::vector<AtomInfo> atom_info_vec;
-    auto structure_copy = Structure;
-    auto models = structure_copy.models;
-    for (int modelIndex = 0; modelIndex < models.size(); modelIndex++) {
-        const auto model = models[modelIndex];
-        if (!selection_vector_matches_model(selections_vec, model)) {
-            continue;
-        }
-        const auto chains = model.chains;
-        for (int chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
-            auto chain = chains[chainIndex];
-            if (!selection_vector_matches_chain(selections_vec, chain)) {
-                continue;
-            }
-            const auto residues = chain.residues;
-            for (int residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
-                const auto residue = residues[residueIndex];
-                if (!selection_vector_matches_residue(selections_vec, residue) || selection_vector_matches_residue(excluded_selections_vec, residue)) {
-                    continue;
-                }
-                const auto atoms = residue.atoms;
-                for (int atomIndex = 0; atomIndex < atoms.size(); atomIndex++) {
-                    const auto atom = atoms[atomIndex];
-                    if (!selection_vector_matches_atom(selections_vec, atom)) {
-                        continue;
+
+    auto _structure = Structure;
+    for (int i_excl_selection = 0; i_excl_selection < excluded_selections_vec.size(); i_excl_selection++) {
+        auto selection = excluded_selections_vec[i_excl_selection];
+        _structure = remove_selected_residues(_structure, selection);
+    }
+
+    for (int i_selection = 0; i_selection < selections_vec.size(); i_selection++) {
+        auto selection = selections_vec[i_selection];
+        auto structure_copy = remove_non_selected_atoms(_structure, selection);
+        auto models = structure_copy.models;
+        for (int modelIndex = 0; modelIndex < models.size(); modelIndex++) {
+            const auto model = models[modelIndex];
+            const auto chains = model.chains;
+            for (int chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
+                auto chain = chains[chainIndex];
+                const auto residues = chain.residues;
+                for (int residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
+                    const auto residue = residues[residueIndex];
+                    const auto atoms = residue.atoms;
+                    for (int atomIndex = 0; atomIndex < atoms.size(); atomIndex++) {
+                        const auto atom = atoms[atomIndex];
+                        AtomInfo atom_info;
+                        atom_info.x = atom.pos.x;
+                        atom_info.y = atom.pos.y;
+                        atom_info.z = atom.pos.z;
+                        atom_info.charge = atom.charge;
+                        atom_info.element = get_element_name_as_string(atom.element);
+                        atom_info.symbol = get_element_name_as_string(atom.element);
+                        atom_info.tempFactor = atom.b_iso;
+                        atom_info.serial = atom.serial;
+                        atom_info.name = atom.name;
+                        atom_info.has_altloc = atom.has_altloc();
+                        atom_info.mol_name = model.name;
+                        atom_info.chain_id = chain.name;
+                        atom_info.res_no = residue.seqid.str();
+                        atom_info.res_name = residue.name;
+                        atom_info.label = "/" + model.name + "/" + chain.name + "/" + residue.seqid.str() +"(" + residue.name + ")/" + atom.name;
+                        if (atom.has_altloc()) {
+                            std::string altloc_str(1, atom.altloc);
+                            atom_info.label += ":" + altloc_str;
+                            atom_info.alt_loc = altloc_str;
+                        } else {
+                            atom_info.alt_loc = "";
+                        }
+                        atom_info_vec.push_back(atom_info);
                     }
-                    AtomInfo atom_info;
-                    atom_info.x = atom.pos.x;
-                    atom_info.y = atom.pos.y;
-                    atom_info.z = atom.pos.z;
-                    atom_info.charge = atom.charge;
-                    atom_info.element = get_element_name_as_string(atom.element);
-                    atom_info.symbol = get_element_name_as_string(atom.element);
-                    atom_info.tempFactor = atom.b_iso;
-                    atom_info.serial = atom.serial;
-                    atom_info.name = atom.name;
-                    atom_info.has_altloc = atom.has_altloc();
-                    atom_info.mol_name = model.name;
-                    atom_info.chain_id = chain.name;
-                    atom_info.res_no = residue.seqid.str();
-                    atom_info.res_name = residue.name;
-                    atom_info.label = "/" + model.name + "/" + chain.name + "/" + residue.seqid.str() +"(" + residue.name + ")/" + atom.name;
-                    if (atom.has_altloc()) {
-                        std::string altloc_str(1, atom.altloc);
-                        atom_info.label += ":" + altloc_str;
-                        atom_info.alt_loc = altloc_str;
-                    } else {
-                        atom_info.alt_loc = "";
-                    }
-                    atom_info_vec.push_back(atom_info);
                 }
             }
         }
@@ -2654,7 +2747,8 @@ GlobWalk
     */
 
     //TODO Here we need to put *lots* of gemmi functions
-    function("remove_non_selected_residues",&remove_non_selected_residues);
+    function("remove_non_selected_atoms",&remove_non_selected_atoms);
+    function("remove_selected_atoms",&remove_selected_atoms);
     function("count_residues_in_selection",&count_residues_in_selection);
     function("get_pdb_string_from_gemmi_struct",&get_pdb_string_from_gemmi_struct);
     function("structure_is_ligand",&structure_is_ligand);
@@ -2718,4 +2812,5 @@ GlobWalk
     function("get_structure_bfactors", &get_structure_bfactors);
     function("guess_coord_data_format", &guess_coord_data_format);
     function("parse_multi_cids", &parse_multi_cids);
+    function("get_non_selected_cids", &get_non_selected_cids);
 }

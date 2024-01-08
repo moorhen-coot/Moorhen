@@ -138,7 +138,7 @@ describe("Testing gemmi", () => {
         const selection = new cootModule.Selection('//A/31-33/*')
         const st_1 = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
         cootModule.gemmi_setup_entities(st_1)
-        const st_2 = cootModule.remove_non_selected_residues(st_1, selection)
+        const st_2 = cootModule.remove_non_selected_atoms(st_1, selection)
 
         const model_1 = st_1.first_model()
         const chains_1 = model_1.chains
@@ -167,7 +167,7 @@ describe("Testing gemmi", () => {
         expect(is_ligand_1).toBeFalsy()
 
         const selection = new cootModule.Selection('//B')
-        const st_2 = cootModule.remove_non_selected_residues(st_1, selection)
+        const st_2 = cootModule.remove_non_selected_atoms(st_1, selection)
         const is_ligand_2 = cootModule.structure_is_ligand(st_2)
         expect(is_ligand_2).toBeTruthy()
     })

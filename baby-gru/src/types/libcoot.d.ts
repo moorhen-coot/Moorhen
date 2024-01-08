@@ -12,6 +12,7 @@ declare global {
 
 export namespace libcootApi {
     type CCP4ModuleType = {
+        get_non_selected_cids(gemmiStructure: gemmi.Structure, cid: string): emscriptem.vector<string>;
         parse_multi_cids(gemmiStructure: gemmi.Structure, cid: string): emscriptem.vector<string>;
         parse_ligand_dict_info(fileContent: string): emscriptem.vector<{ comp_id: string; dict_contents: string; }>;
         get_ligand_info_for_structure(gemmiStructure: gemmi.Structure): emscriptem.vector<{
@@ -27,7 +28,7 @@ export namespace libcootApi {
         get_atom_info_for_selection(gemmiStructure: gemmi.Structure, arg1: string, arg2: string): emscriptem.vector<AtomInfo>;
         structure_is_ligand(gemmiStructure: gemmi.Structure): boolean;
         count_residues_in_selection(gemmiStructure: gemmi.Structure, selection: gemmi.Selection): number;
-        remove_non_selected_residues(gemmiStructure: gemmi.Structure, selection: gemmi.Selection): gemmi.Structure;
+        remove_non_selected_atoms(gemmiStructure: gemmi.Structure, selection: gemmi.Selection): gemmi.Structure;
         check_polymer_type(polymerConst: emscriptem.instance<number>): {value: number};
         remove_ligands_and_waters_chain(chain: gemmi.Chain): void;
         gemmi_setup_entities(gemmiStructure: gemmi.Structure): void;
@@ -463,6 +464,8 @@ export namespace libcootApi {
         getRamachandranData(arg0: string, arg1: string): emscriptem.vector<RamaData>
     }
     interface MoleculesContainerJS {
+        set_max_number_of_threads_in_thread_pool(arg0: number): void;
+        set_map_is_contoured_with_thread_pool(arg0: boolean): void;
         close_molecule(molNo: number): number;
         copy_fragment_using_residue_range(molNo: number, chainId: string, res_no_start: number, res_no_end: number): number;
         writeCCP4Map(molNo: number, tempFilename: string): void;

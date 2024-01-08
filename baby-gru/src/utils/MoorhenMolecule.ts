@@ -1527,9 +1527,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
      */
     async generateSelfRestraints(cid: string = "//", maxRadius: number = 4.2): Promise<void> {
         await this.commandCentre.current.cootCommand({
-            command: "generate_self_restraints",
+            command: "generate_local_self_restraints",
             returnType: 'status',
-            commandArgs: [this.molNo, maxRadius],
+            commandArgs: [this.molNo, maxRadius, cid],
         }, false)
         this.restraints.push({ maxRadius, cid })
     }
@@ -1785,5 +1785,22 @@ export class MoorhenMolecule implements moorhen.Molecule {
             cid: cid.includes('||') ? cid.split('||') : cid,
             label: cid
         }
+    }
+
+    /**
+     * Get the CIDs of residues not included in the input CID
+     * @param {string} cid - The input CID selection
+     * @returns {string[]} An array of CIDs for the residue ranges not included in the input CID
+     */
+    getNonSelectedCids(cid: string): string[] {
+        let result: string[] = []
+        const nonSelectedCidVec = window.CCP4Module.get_non_selected_cids(this.gemmiStructure, cid)
+        const nonSelectedCidVecSize = nonSelectedCidVec.size()
+        for (let i = 0; i < nonSelectedCidVecSize; i++) {
+            const iCid = nonSelectedCidVec.get(i)
+            result.push(iCid)
+        }
+        nonSelectedCidVec.delete()
+        return result
     }
 }

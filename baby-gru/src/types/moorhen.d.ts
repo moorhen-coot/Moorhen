@@ -92,6 +92,7 @@ export namespace moorhen {
     type coorFormats = 'pdb' | 'mmcif';
     
     interface Molecule {
+        getNonSelectedCids(cid: string): string[];
         parseCidIntoSelection(selectedCid: string): Promise<ResidueSelection>;
         downloadAtoms(format?: 'mmcif' | 'pdb'): Promise<void>;
         getResidueBFactors(): { cid: string; bFactor: number; normalised_bFactor: number }[];
