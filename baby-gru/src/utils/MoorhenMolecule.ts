@@ -1527,9 +1527,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
      */
     async generateSelfRestraints(cid: string = "//", maxRadius: number = 4.2): Promise<void> {
         await this.commandCentre.current.cootCommand({
-            command: "generate_self_restraints",
+            command: "generate_local_self_restraints",
             returnType: 'status',
-            commandArgs: [this.molNo, maxRadius],
+            commandArgs: [this.molNo, maxRadius, cid],
         }, false)
         this.restraints.push({ maxRadius, cid })
     }
