@@ -12,6 +12,7 @@ import miscAppSettingsReducer from './miscAppSettingsSlice'
 import generalStatesReducer from './generalStatesSlice'
 import hoveringStatesReducer from './hoveringStatesSlice'
 import activeModalsReducer from './activeModalsSlice'
+import mapContourSettingsReducer from './mapContourSettingsSlice'
 
 export default configureStore({
     reducer: {
@@ -27,7 +28,8 @@ export default configureStore({
         miscAppSettings: miscAppSettingsReducer,
         generalStates: generalStatesReducer,
         hoveringStates: hoveringStatesReducer,
-        activeModals: activeModalsReducer
+        activeModals: activeModalsReducer,
+        mapContourSettings: mapContourSettingsReducer
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({
