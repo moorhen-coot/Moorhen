@@ -464,7 +464,7 @@ export namespace libcootApi {
         getRamachandranData(arg0: string, arg1: string): emscriptem.vector<RamaData>
     }
     interface MoleculesContainerJS {
-        set_max_number_of_threads_in_thread_pool(arg0: number): void;
+        set_max_number_of_threads(arg0: number): void;
         set_map_is_contoured_with_thread_pool(arg0: boolean): void;
         close_molecule(molNo: number): number;
         copy_fragment_using_residue_range(molNo: number, chainId: string, res_no_start: number, res_no_end: number): number;
