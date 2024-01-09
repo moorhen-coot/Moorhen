@@ -13,7 +13,7 @@ import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { useSelector, useDispatch } from "react-redux";
 import { setDefaultExpandDisplayCards, setEnableRefineAfterMod, setTransparentModalsOnMouseOut } from "../../store/miscAppSettingsSlice";
 import { setAtomLabelDepthMode } from "../../store/labelSettingsSlice";
-import { setDefaultMapLitLines, setDefaultMapSurface } from "../../store/mapSettingsSlice";
+import { setDefaultMapLitLines, setDefaultMapSurface } from "../../store/mapContourSettingsSlice";
 import { setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
 import { setMakeBackups } from "../../store/backupSettingsSlice";
 import { setDevMode } from "../../store/generalStatesSlice";
@@ -24,8 +24,8 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
 
     const dispatch = useDispatch()
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
-    const defaultMapLitLines = useSelector((state: moorhen.State) => state.mapSettings.defaultMapLitLines)
-    const defaultMapSurface = useSelector((state: moorhen.State) => state.mapSettings.defaultMapSurface)
+    const defaultMapLitLines = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapLitLines)
+    const defaultMapSurface = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapSurface)
     const enableTimeCapsule = useSelector((state: moorhen.State) => state.backupSettings.enableTimeCapsule)
     const makeBackups = useSelector((state: moorhen.State) => state.backupSettings.makeBackups)
     const maxBackupCount = useSelector((state: moorhen.State) => state.backupSettings.maxBackupCount)

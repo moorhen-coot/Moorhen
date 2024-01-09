@@ -27,7 +27,7 @@ import {
 import { addMap, addMapList, removeMap, emptyMaps } from "./store/mapsSlice";
 import { setCursorStyle, setEnableAtomHovering, setHoveredAtom } from './store/hoveringStatesSlice';
 import { addAvailableFontList, setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } from './store/labelSettingsSlice';
-import { setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, setDefaultMapSurface } from './store/mapSettingsSlice';
+import { setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, setDefaultMapSurface } from './store/mapContourSettingsSlice';
 import {setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut, setEnableRefineAfterMod } from './store/miscAppSettingsSlice';
 import { addMolecule, removeMolecule, emptyMolecules, addMoleculeList } from './store/moleculesSlice';
 import { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity } from './store/mouseSettings';

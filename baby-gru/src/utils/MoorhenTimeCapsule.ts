@@ -1,6 +1,7 @@
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { guid } from "./MoorhenUtils";
+import MoorhenReduxStore from "../store/MoorhenReduxStore";
 
 export const getBackupLabel = (key: moorhen.backupKey): string => {
     const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' } as const
@@ -49,7 +50,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         this.modificationCount = 0
         this.modificationCountBackupThreshold = 5
         this.maxBackupCount = 10
-        this.version = 'v17'
+        this.version = 'v18'
         this.disableBackups = false
         this.storageInstance = null
         this.onIsBusyChange = null
@@ -136,7 +137,8 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         const keyStrings = await this.storageInstance.keys()
         const mtzFileNames = keyStrings.map((keyString: string) => JSON.parse(keyString)).filter((key: moorhen.backupKey) => key.type === 'mtzData').map((key: moorhen.backupKey) => key.name)
         const mapNames = keyStrings.map((keyString: string) => JSON.parse(keyString)).filter((key: moorhen.backupKey) => key.type === 'mapData').map((key: moorhen.backupKey) => key.name)
-        
+        const state = MoorhenReduxStore.getState()
+
         const promises = await Promise.all([
             ...this.moleculesRef.current.map(molecule => {
                 return molecule.getAtoms()
@@ -217,11 +219,11 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                 uniqueId: map.uniqueId,
                 mapData: mapDataPromises[index],
                 reflectionData: reflectionDataPromises[index],
-                isVisible: map.isVisible,
+                showOnLoad: state.mapContourSettings.visibleMaps.includes(map.molNo),
                 contourLevel: map.contourLevel,
                 radius: map.mapRadius,
-                colour: map.mapColour,
-                litLines: map.litLines,
+                rgba: map.rgba,
+                style: map.style,
                 isDifference: map.isDifference,
                 selectedColumns: map.selectedColumns,
                 hasReflectionData: map.hasReflectionData,

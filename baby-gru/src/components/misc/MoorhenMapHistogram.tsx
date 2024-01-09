@@ -15,7 +15,7 @@ Chart.register(annotationPlugin);
 type MapHistogramProps = {
     map: moorhen.Map;
     showHistogram: boolean;
-    setMapContourLevel: React.Dispatch<React.SetStateAction<number>>;
+    setMapContourLevel: (arg0: number) => void;
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
 }
 

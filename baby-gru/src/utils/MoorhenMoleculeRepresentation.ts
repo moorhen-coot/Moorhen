@@ -27,8 +27,8 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
 
     constructor(style: moorhen.RepresentationStyles, cid: string, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>) {
         this.uniqueId = guid()
-        this.style = style
         this.cid = cid
+        this.setStyle(style)
         this.commandCentre = commandCentre
         this.glRef = glRef
         this.parentMolecule = null
@@ -43,21 +43,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             smoothness: 1,
             width: 0.1,
             atomRadiusBondRatio: 1
-        }
-        this.styleHasAtomBuffers = ![
-            'contact_dots', 'ligand_validation', 'chemical_features', 'unitCell', 'MolecularSurface', 'VdWSurface', 'residueSelection',
-            'gaussian', 'allHBonds', 'rotamer', 'rama', 'environment', 'ligand_environment', 'hover', 'CDs', 'restraints'
-        ].includes(style)
-        this.styleHasSymmetry = ![
-            'hover', 'residueSelection', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 
-            'chemical_features', 'VdWSurface', 'restraints'
-        ].includes(style)
-        this.styleHasColourRules = ![
-            'allHBonds', 'rama', 'rotamer', 'unitCell', 'hover', 'environment', 'ligand_environment',
-            'contact_dots', 'chemical_features', 'ligand_validation', 'restraints', 'residueSelection'
-        ].includes(style)
-        if (style === "ligands" && (typeof cid !== 'string' || cid === '/*/*/*/*')) {
-            this.cid =  "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O)"
         }
     }
 
@@ -81,16 +66,16 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     setStyle(style: moorhen.RepresentationStyles) {
         this.style = style
         this.styleHasAtomBuffers = ![
-            'contact_dots', 'ligand_validation', 'chemical_features', 'unitCell', 'MolecularSurface', 'VdWSurface', 
-            'gaussian', 'allHBonds', 'rotamer', 'rama', 'environment', 'ligand_environment', 'hover', 'CDs', 'residueSelection'
+            'contact_dots', 'ligand_validation', 'chemical_features', 'unitCell', 'MolecularSurface', 'VdWSurface', 'residueSelection',
+            'gaussian', 'allHBonds', 'rotamer', 'rama', 'environment', 'ligand_environment', 'hover', 'CDs', 'restraints'
         ].includes(style)
         this.styleHasSymmetry = ![
-            'hover', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots',
-            'chemical_features', 'VdWSurface', 'residueSelection'
+            'hover', 'residueSelection', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 
+            'chemical_features', 'VdWSurface', 'restraints', 'environment', 'ligand_environment', 'CDs', 'ligand_validation'
         ].includes(style)
         this.styleHasColourRules = ![
             'allHBonds', 'rama', 'rotamer', 'unitCell', 'hover', 'environment', 'ligand_environment',
-            'contact_dots', 'chemical_features', 'ligand_validation', 'residueSelection'
+            'contact_dots', 'chemical_features', 'ligand_validation', 'restraints', 'residueSelection'
         ].includes(style)
         if (style === "ligands" && (typeof this.cid !== 'string' || this.cid === '/*/*/*/*')) {
             this.cid =  "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O)"

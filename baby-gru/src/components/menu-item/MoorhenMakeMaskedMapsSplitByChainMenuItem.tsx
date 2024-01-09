@@ -5,8 +5,9 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { webGL } from "../../types/mgWebGL";
-import { useDispatch, useSelector } from 'react-redux';
+import { batch, useDispatch, useSelector } from 'react-redux';
 import { addMap } from "../../store/mapsSlice";
+import { hideMap } from "../../store/mapContourSettingsSlice";
 
 export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
@@ -53,7 +54,10 @@ export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
                     await newMap.getSuggestedSettings()
                     newMap.suggestedContourLevel = selectedMap.contourLevel
                     newMap.suggestedRadius = selectedMap.mapRadius
-                    dispatch( addMap(newMap) )
+                    batch(() => {
+                        dispatch( hideMap(selectedMap) )
+                        dispatch( addMap(newMap) )
+                    })
                 })
             )
         }

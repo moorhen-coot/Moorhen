@@ -3562,6 +3562,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     setWheelContour(contourFactor:number, drawScene:boolean) {
+        const wheelContourChanged = new CustomEvent("wheelContourLevelChanged", {
+            "detail": {
+                factor: contourFactor,
+            }
+        });
+        document.dispatchEvent(wheelContourChanged);
+
+        if (drawScene) this.drawScene();
     }
 
     drawZoomFrame(oldZoom: number, newZoom: number, iframe: number) {

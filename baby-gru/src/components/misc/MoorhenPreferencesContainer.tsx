@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import { MoorhenPreferences } from "../../utils/MoorhenPreferences";
-import { setDefaultMapLitLines, setDefaultMapSamplingRate, setDefaultMapSurface, setMapLineWidth } from "../../store/mapSettingsSlice";
+import { setDefaultMapLitLines, setDefaultMapSamplingRate, setDefaultMapSurface, setMapLineWidth } from "../../store/mapContourSettingsSlice";
 import { useSelector, useDispatch } from "react-redux"
 import { setContourWheelSensitivityFactor, setMouseSensitivity, setZoomWheelSensitivityFactor } from "../../store/mouseSettings";
 import { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold } from "../../store/backupSettingsSlice";
@@ -23,10 +23,10 @@ export const MoorhenPreferencesContainer = (props: {
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
 
     // Map settings
-    const defaultMapLitLines = useSelector((state: moorhen.State) => state.mapSettings.defaultMapLitLines)
-    const defaultMapSamplingRate = useSelector((state: moorhen.State) => state.mapSettings.defaultMapSamplingRate)
-    const mapLineWidth = useSelector((state: moorhen.State) => state.mapSettings.mapLineWidth)
-    const defaultMapSurface = useSelector((state: moorhen.State) => state.mapSettings.defaultMapSurface)
+    const defaultMapLitLines = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapLitLines)
+    const defaultMapSamplingRate = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapSamplingRate)
+    const mapLineWidth = useSelector((state: moorhen.State) => state.mapContourSettings.mapLineWidth)
+    const defaultMapSurface = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapSurface)
 
     // Backup settings
     const enableTimeCapsule = useSelector((state: moorhen.State) => state.backupSettings.enableTimeCapsule)

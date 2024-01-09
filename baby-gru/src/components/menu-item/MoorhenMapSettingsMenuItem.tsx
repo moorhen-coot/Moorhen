@@ -1,34 +1,45 @@
 import { Form } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { MoorhenSlider } from "../misc/MoorhenSlider";
+import { moorhen } from "../../types/moorhen";
+import { useDispatch } from "react-redux";
+import { setMapAlpha, setMapStyle } from "../../store/mapContourSettingsSlice";
 
 export const MoorhenMapSettingsMenuItem = (props: {
-    mapSolid: boolean;
-    setMapSolid: React.Dispatch<React.SetStateAction<boolean>>;
-    mapLitLines: boolean;
-    setMapLitLines: React.Dispatch<React.SetStateAction<boolean>>;
+    map: moorhen.Map;
+    mapStyle: "solid" | "lit-lines" | "lines";
     mapOpacity: number;
-    setMapOpacity: React.Dispatch<React.SetStateAction<number>>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     disabled: boolean;
 }) => {
 
+    const dispatch = useDispatch()
+
     const panelContent =
         <>
+            {props.mapStyle !== "lit-lines" && 
             <Form.Check
                 type="switch"
-                checked={props.mapSolid}
-                onChange={() => { props.setMapSolid(!props.mapSolid) }}
+                checked={props.mapStyle === "solid"}
+                onChange={() => { dispatch( setMapStyle({ molNo: props.map.molNo, style: props.mapStyle === "solid" ? "lines" : "solid" }) ) }}
                 label="Draw as a surface" />
-            {!props.mapSolid &&
+            }
+            {props.mapStyle !== "solid" &&
                 <Form.Check
                     type="switch"
-                    checked={props.mapLitLines}
-                    onChange={() => { props.setMapLitLines(!props.mapLitLines) }}
+                    checked={props.mapStyle === "lit-lines"}
+                    onChange={() => { dispatch( setMapStyle({ molNo: props.map.molNo, style: props.mapStyle === "lit-lines" ? "lines" : "lit-lines" }) ) }}
                     label="Activate lit lines" />
             }
             <Form.Group style={{ width: '100%', margin: '0.1rem' }} controlId="MoorhenMapOpacitySlider">
-                <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false} sliderTitle="Opacity" initialValue={props.mapOpacity} externalValue={props.mapOpacity} setExternalValue={props.setMapOpacity} />
+                <MoorhenSlider
+                    minVal={0.0}
+                    maxVal={1.0}
+                    logScale={false}
+                    sliderTitle="Opacity"
+                    initialValue={props.mapOpacity}
+                    externalValue={props.mapOpacity}
+                    setExternalValue={(newVal: number) => dispatch( setMapAlpha({molNo: props.map.molNo, alpha: newVal}) )} />
             </Form.Group>
         </>
     return <MoorhenBaseMenuItem
@@ -39,5 +50,4 @@ export const MoorhenMapSettingsMenuItem = (props: {
         setPopoverIsShown={props.setPopoverIsShown}
         disabled={props.disabled}
     />
-
 }

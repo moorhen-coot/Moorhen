@@ -2748,7 +2748,7 @@ GlobWalk
 
     //TODO Here we need to put *lots* of gemmi functions
     function("remove_non_selected_atoms",&remove_non_selected_atoms);
-    function("remove_selected_atoms",&remove_selected_atoms);
+    function("remove_selected_residues",&remove_selected_residues);
     function("count_residues_in_selection",&count_residues_in_selection);
     function("get_pdb_string_from_gemmi_struct",&get_pdb_string_from_gemmi_struct);
     function("structure_is_ligand",&structure_is_ligand);

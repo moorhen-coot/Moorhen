@@ -12,6 +12,7 @@ import { addMolecule, emptyMolecules } from "../store/moleculesSlice";
 import { addMap, emptyMaps } from "../store/mapsSlice";
 import { batch } from "react-redux";
 import { setActiveMap } from "../store/generalStatesSlice";
+import { setMapAlpha, setMapStyle } from "../store/mapContourSettingsSlice";
 
 export const getLigandSVG = async (commandCentre: React.RefObject<moorhen.CommandCentre>, imol: number, compId: string, isDark: boolean): Promise<string> => {
     const result = await commandCentre.current.cootCommand({
@@ -294,7 +295,13 @@ export async function loadSessionData(
     })
 
     // Change props.maps
-    newMaps.forEach(map => {
+    newMaps.forEach((map, index) => {
+        const storedMapData = sessionData.mapData[index]
+        map.showOnLoad = storedMapData.showOnLoad
+        map.suggestedRadius = storedMapData.radius
+        map.suggestedContourLevel = storedMapData.contourLevel
+        map.rgba = storedMapData.rgba
+        map.style = storedMapData.style
         dispatch( addMap(map) )
     })
 
@@ -351,20 +358,10 @@ export async function loadSessionData(
     setTimeout(() => {
         newMaps.forEach((map, index) => {
             const storedMapData = sessionData.mapData[index]
-            map.mapColour = storedMapData.colour
-            let newMapContour: moorhen.NewMapContourEvent = new CustomEvent("newMapContour", {
-                "detail": {
-                    molNo: map.molNo,
-                    mapRadius: storedMapData.radius,
-                    isVisible: storedMapData.isVisible,
-                    contourLevel: storedMapData.contourLevel,
-                    mapColour: storedMapData.colour,
-                    litLines: storedMapData.litLines,
-                }
-            });               
-            document.dispatchEvent(newMapContour);
+            dispatch( setMapAlpha({molNo: map.molNo, alpha: storedMapData.rgba.a}) )
+            dispatch( setMapStyle({molNo: map.molNo, style: storedMapData.style}) )
         })
-    }, 2500);
+    }, 10);
 
     timeCapsuleRef.current.setBusy(false)
     return 0
