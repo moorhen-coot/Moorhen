@@ -735,12 +735,6 @@ export namespace moorhen {
     interface State {
         molecules: Molecule[];
         maps: Map[];
-        mapSettings: {
-            defaultMapSamplingRate: number;
-            defaultMapLitLines: boolean;
-            mapLineWidth: number;
-            defaultMapSurface: boolean;
-        };
         mouseSettings: {
             contourWheelSensitivityFactor: number;
             zoomWheelSensitivityFactor: number;
@@ -829,6 +823,17 @@ export namespace moorhen {
             showFitLigandModal: boolean;
             focusHierarchy: string[];
         };
+        mapContourSettings: {
+            visibleMaps: number[];
+            contourLevels: { molNo: number; contourLevel: number }[];
+            mapRadii: { molNo: number; radius: number }[];
+            mapAlpha: { molNo: number; alpha: number }[];
+            mapStyles: { molNo: number; style: "solid" | "lit-lines" | "lines" }[];
+            defaultMapSamplingRate: number;
+            defaultMapLitLines: boolean;
+            mapLineWidth: number;
+            defaultMapSurface: boolean;
+        }
     }
     
     type actionButtonSettings = {

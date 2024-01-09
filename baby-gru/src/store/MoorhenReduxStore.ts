@@ -1,7 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit'
 import moleculesReducer from './moleculesSlice'
 import mapsReducer from './mapsSlice'
-import mapSettingsReducer from './mapSettingsSlice'
 import mouseSettingsReducer from './mouseSettings'
 import backupSettingsReducer from './backupSettingsSlice'
 import updatingMapScoresSettingsReducer from './updatingMapScoresSettingsSlice'
@@ -18,7 +17,6 @@ export default configureStore({
     reducer: {
         molecules: moleculesReducer,
         maps: mapsReducer,
-        mapSettings: mapSettingsReducer,
         mouseSettings: mouseSettingsReducer,
         backupSettings: backupSettingsReducer,
         updatingMapScoresSettings: updatingMapScoresSettingsReducer,
