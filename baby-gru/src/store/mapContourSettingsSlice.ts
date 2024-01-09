@@ -8,7 +8,11 @@ export const mapContourSettingsSlice = createSlice({
     contourLevels: [],
     mapRadii: [],
     mapStyles: [],
-    mapAlpha: []
+    mapAlpha: [],
+    defaultMapSamplingRate: null,
+    defaultMapLitLines: null,
+    mapLineWidth: null,
+    defaultMapSurface: null,
   },
   reducers: {
     showMap: (state, action: {payload: moorhen.Map, type: string}) => {
@@ -40,9 +44,24 @@ export const mapContourSettingsSlice = createSlice({
       state = { ...state, mapRadii: [ ...state.mapRadii.filter(item => item.molNo !== action.payload.molNo), { molNo: action.payload.molNo, radius: map.radius + action.payload.factor } ] }
       return state
     },
+    setDefaultMapSamplingRate: (state, action: {payload: number, type: string}) => {
+      return {...state, defaultMapSamplingRate: action.payload}
+    },
+    setDefaultMapLitLines: (state, action: {payload: boolean, type: string}) => {
+      return {...state, defaultMapLitLines: action.payload}
+    },
+    setMapLineWidth: (state, action: {payload: number, type: string}) => {
+        return {...state, mapLineWidth: action.payload}
+    },
+    setDefaultMapSurface: (state, action: {payload: boolean, type: string}) => {
+      return {...state, defaultMapSurface: action.payload}
+    },
   },
 })
 
-export const { showMap, hideMap, setContourLevel, setMapRadius, setMapAlpha, setMapStyle, changeMapRadius } = mapContourSettingsSlice.actions
+export const {
+  showMap, hideMap, setContourLevel, setMapRadius, setMapAlpha, setMapStyle, changeMapRadius,
+  setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, setDefaultMapSurface
+} = mapContourSettingsSlice.actions
 
 export default mapContourSettingsSlice.reducer
