@@ -9,8 +9,9 @@ import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { webGL } from "../../types/mgWebGL";
-import { useDispatch, useSelector } from 'react-redux';
+import { batch, useDispatch, useSelector } from 'react-redux';
 import { addMap } from "../../store/mapsSlice";
+import { hideMap } from "../../store/mapContourSettingsSlice";
 
 export const MoorhenMapMaskingMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
@@ -110,7 +111,10 @@ export const MoorhenMapMaskingMenuItem = (props: {
             newMap.isDifference = selectedMap.isDifference
             newMap.suggestedContourLevel = selectedMap.contourLevel
             newMap.suggestedRadius = selectedMap.mapRadius
-            dispatch( addMap(newMap) )
+            batch(() => {
+                dispatch( hideMap(selectedMap) )
+                dispatch( addMap(newMap) )    
+            })
         }
 
     }, [commandCentre, maps, glRef])

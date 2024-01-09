@@ -2,7 +2,6 @@ import { moorhen as _moorhen } from "./moorhen"
 import { webGL } from "./mgWebGL";
 import { libcootApi } from "./libcoot";
 import { gemmi } from "./gemmi";
-import { emscriptem } from "./emscriptem";
 
 declare module 'moorhen' {
 
@@ -194,12 +193,10 @@ declare module 'moorhen' {
         glRef: React.RefObject<webGL.MGWebGL>;
         contourLevel: number;
         mapRadius: number;
-        mapColour: [number, number, number, number];
         webMGContour: boolean;
-        isVisible: boolean;
+        showOnLoad: boolean;
         displayObjects: any;
-        litLines: boolean;
-        solid: boolean;
+        style: "lines" | "lit-lines" | "solid";
         isDifference: boolean;
         hasReflectionData: boolean;
         selectedColumns: _moorhen.selectedMtzColumns;

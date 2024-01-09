@@ -4,8 +4,9 @@ import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { webGL } from "../../types/mgWebGL";
-import { useDispatch, useSelector } from "react-redux";
+import { batch, useDispatch, useSelector } from "react-redux";
 import { addMap } from "../../store/mapsSlice";
+import { hideMap } from "../../store/mapContourSettingsSlice";
 
 export const MoorhenFlipMapHandMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
@@ -43,7 +44,10 @@ export const MoorhenFlipMapHandMenuItem = (props: {
             newMap.isDifference = selectedMap.isDifference
             newMap.suggestedContourLevel = selectedMap.suggestedContourLevel
             newMap.contourLevel = selectedMap.contourLevel
-            dispatch( addMap(newMap) )
+            batch(() => {
+                dispatch( hideMap(selectedMap) )
+                dispatch( addMap(newMap) )    
+            })
         }
     }
 

@@ -400,12 +400,10 @@ export namespace moorhen {
         glRef: React.RefObject<webGL.MGWebGL>;
         contourLevel: number;
         mapRadius: number;
-        mapColour: [number, number, number, number];
         webMGContour: boolean;
-        isVisible: boolean;
+        showOnLoad: boolean;
         displayObjects: any;
-        litLines: boolean;
-        solid: boolean;
+        style: "lines" | "lit-lines" | "solid";
         isDifference: boolean;
         hasReflectionData: boolean;
         selectedColumns: selectedMtzColumns;
@@ -450,11 +448,16 @@ export namespace moorhen {
         uniqueId: string;
         mapData: Uint8Array;
         reflectionData: Uint8Array;
-        isVisible: boolean;
+        showOnLoad: boolean;
         contourLevel: number;
         radius: number;
-        colour: [number, number, number, number];
-        litLines: boolean;
+        rgba: {
+            mapColour: {r: number, g: number, b: number};
+            positiveDiffColour: {r: number, g: number, b: number};
+            negativeDiffColour: {r: number, g: number, b: number};
+            a: number;
+        };
+        style: "solid" | "lit-lines" | "lines";
         isDifference: boolean;
         selectedColumns: selectedMtzColumns;
         hasReflectionData: boolean;

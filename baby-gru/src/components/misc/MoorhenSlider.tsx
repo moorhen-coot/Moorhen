@@ -1,4 +1,4 @@
-import React, { forwardRef, useCallback, useEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Slider from '@mui/material/Slider';
@@ -17,7 +17,7 @@ type MoorhenSliderProps = {
     maxVal?: number;
     initialValue: number;
     externalValue: number;
-    setExternalValue?: React.Dispatch<React.SetStateAction<number>>;
+    setExternalValue?: (arg0: number) => void;
     allowExternalFeedback?: boolean;
     allowFloats?: boolean;
     showSliderTitle?: boolean;

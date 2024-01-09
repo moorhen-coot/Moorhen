@@ -12,6 +12,7 @@ import { Dispatch } from "react";
 import { AnyAction } from "@reduxjs/toolkit";
 import { setNotificationContent } from "../store/generalStatesSlice";
 import { setHoveredAtom } from "../store/hoveringStatesSlice";
+import { changeMapRadius } from "../store/mapContourSettingsSlice";
 
 const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, dispatch: Dispatch<AnyAction>) => {
     molecule.setAtomsDirty(true)
@@ -386,12 +387,7 @@ export const babyGruKeyPress = (
 
     else if (action === 'increase_map_radius' || action === 'decrease_map_radius') {
         if (activeMap) {
-            const mapRadiusChanged = new CustomEvent("mapRadiusChanged", {
-                "detail": {
-                    factor: action === 'increase_map_radius' ? 2 : -2,
-                }
-            })
-            document.dispatchEvent(mapRadiusChanged)
+            dispatch( changeMapRadius({ molNo: activeMap.molNo, factor: action === 'increase_map_radius' ? 2 : -2 }) )
         }
     }
 

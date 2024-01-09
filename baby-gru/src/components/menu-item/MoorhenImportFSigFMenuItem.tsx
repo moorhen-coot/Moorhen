@@ -4,7 +4,8 @@ import { MoorhenMapSelect } from "../select/MoorhenMapSelect"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { setContourLevel } from "../../store/mapContourSettingsSlice"
 
 export const MoorhenImportFSigFMenuItem = (props:{
     selectedMolNo?: number;
@@ -12,6 +13,7 @@ export const MoorhenImportFSigFMenuItem = (props:{
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
 }) => {
     
+    const dispatch = useDispatch()
     const mapSelectRef = useRef<null | HTMLSelectElement>(null)
     const twoFoFcSelectRef = useRef<null | HTMLSelectElement>(null)
     const foFcSelectRef = useRef<null | HTMLSelectElement>(null)
@@ -69,17 +71,7 @@ export const MoorhenImportFSigFMenuItem = (props:{
                     if (currentMap.isDifference) {
                         newContourLevel -= newContourLevel * 0.3
                     }
-                    const newMapContourEvt: moorhen.NewMapContourEvent = new CustomEvent("newMapContour", {
-                        "detail": {
-                            molNo: currentMap.molNo,
-                            mapRadius: currentMap.mapRadius,
-                            isVisible: currentMap.isVisible,
-                            contourLevel: newContourLevel,
-                            mapColour: currentMap.mapColour,
-                            litLines: currentMap.litLines,
-                        }
-                    })
-                    document.dispatchEvent(newMapContourEvt)
+                    dispatch( setContourLevel({ molNo: currentMap.molNo, contourLevel: newContourLevel }) )
                 })
             )
         }

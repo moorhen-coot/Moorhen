@@ -1,13 +1,12 @@
-import { IconButton, Slider } from "@mui/material";
+import { Slider } from "@mui/material";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { useEffect, useState } from "react";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from "react-redux";
-import { setDefaultMapSamplingRate, setMapLineWidth } from "../../store/mapSettingsSlice";
+import { setDefaultMapSamplingRate, setMapLineWidth } from "../../store/mapContourSettingsSlice";
 import { Form } from "react-bootstrap";
 import { MoorhenSlider } from "../misc/MoorhenSlider";
-import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
 
 const convertPercentageToSamplingRate = (oldValue: number, reverse: boolean = false) => {
     let [oldMax, oldMin, newMax, newMin]: number[] = []
@@ -35,9 +34,9 @@ export const MapContourSettingsMenuItem = (props: {
 
     const dispatch = useDispatch()
     const maps = useSelector((state: moorhen.State) => state.maps)
-    const defaultMapSamplingRate = useSelector((state: moorhen.State) => state.mapSettings.defaultMapSamplingRate)
-    const mapLineWidth = useSelector((state: moorhen.State) => state.mapSettings.mapLineWidth)
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
+    const defaultMapSamplingRate = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapSamplingRate)
+    const mapLineWidth = useSelector((state: moorhen.State) => state.mapContourSettings.mapLineWidth)
+    const visibleMaps = useSelector((state: moorhen.State) => state.mapContourSettings.visibleMaps)
 
     const [mapSampling, setMapSampling] = useState<number>(convertPercentageToSamplingRate(defaultMapSamplingRate, true))
 
@@ -65,7 +64,7 @@ export const MapContourSettingsMenuItem = (props: {
                                 command: 'shim_replace_map_by_mtz_from_file',
                                 commandArgs: [map.molNo, reflectionData.data.result.mtzData, map.selectedColumns]
                             }, true) as moorhen.WorkerResponse<number>
-                            if (map.isVisible) {
+                            if (visibleMaps.includes(map.molNo)) {
                                 return map.doCootContour(...props.glRef.current.origin.map(coord => -coord) as [number, number, number], map.mapRadius, map.contourLevel)
                             } else {
                                 return Promise.resolve()
