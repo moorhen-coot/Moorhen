@@ -124,8 +124,7 @@ import { libcootApi } from "../types/libcoot";
  * @property {number} molNo - The imol assigned to this map instance
  * @property {number} mapRadius - The map radius currently displayed
  * @property {number} contourLevel - The map contour level currently displayed
- * @property {boolean} litLines - Indicates whether the rendered map lines are "lit"
- * @property {boolean} solid - Indicates whether the map is being shown as a solid surface
+ * @property {string} style - Indicates whether the rendered map is drawn as lines, lit lines or a solid surphace
  * @property {boolean} isDifference - Indicates whether this is a difference map instance
  * @property {boolean} hasReflectionData - Indicates whether this map instance has been associated with observed reflection data
  * @property {object} rgba - Object that stores the map colour and alpha
@@ -164,12 +163,9 @@ export class MoorhenMap implements moorhen.Map {
     suggestedRadius: number
     contourLevel: number
     mapRadius: number
-    mapColour: [number, number, number, number]
     webMGContour: boolean
-    isVisible: boolean
+    showOnLoad: boolean
     displayObjects: any
-    litLines: boolean
-    solid: boolean
     isDifference: boolean
     hasReflectionData: boolean
     selectedColumns: moorhen.selectedMtzColumns
@@ -185,22 +181,21 @@ export class MoorhenMap implements moorhen.Map {
         negativeDiffColour: {r: number, g: number, b: number};
         a: number;
     }
+    style: "lines" | "lit-lines" | "solid";
 
     constructor(commandCentre: React.RefObject&lt;moorhen.CommandCentre>, glRef: React.RefObject&lt;webGL.MGWebGL>) {
         this.type = 'map'
         this.name = "unnamed"
+        this.style = 'lines'
         this.isEM = false
         this.molNo = null
         this.commandCentre = commandCentre
         this.glRef = glRef
         this.contourLevel = 0.8
         this.mapRadius = 13
-        this.mapColour = [0.3, 0.3, 1.0, 1.0]
         this.webMGContour = false
-        this.isVisible = true
+        this.showOnLoad = true
         this.displayObjects = { Coot: [] }
-        this.litLines = false
-        this.solid = false
         this.isDifference = false
         this.hasReflectionData = false
         this.selectedColumns = null
@@ -481,7 +476,6 @@ export class MoorhenMap implements moorhen.Map {
      * Contour the map and make it live
      */
     makeCootLive(): void {
-        this.isVisible = true
         this.doCootContour(...this.glRef.current.origin.map(coord => -coord) as [number, number, number], this.mapRadius, this.contourLevel)
         this.glRef.current.drawScene()
     }
@@ -490,7 +484,6 @@ export class MoorhenMap implements moorhen.Map {
      * Hide the map
      */
     makeCootUnlive(): void {
-        this.isVisible = false
         this.clearBuffersOfStyle('Coot')
         this.glRef.current.buildBuffers();
         this.glRef.current.drawScene();
@@ -652,9 +645,9 @@ export class MoorhenMap implements moorhen.Map {
     async doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number): Promise&lt;void> {
 
         let returnType: string
-        if (this.solid) {
+        if (this.style === 'solid') {
             returnType = "mesh_perm"
-        } else if (this.litLines) {
+        } else if (this.style === 'lit-lines') {
             returnType = "lit_lines_mesh"
         } else {
             returnType = "lines_mesh"
