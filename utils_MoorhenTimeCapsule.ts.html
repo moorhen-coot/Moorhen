@@ -96,7 +96,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenCommandCentre.html">MoorhenCommandCentre</a></li><li><a href="MoorhenMap.html">MoorhenMap</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenPreferences.html">MoorhenPreferences</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li></ul><h3>Global</h3><ul><li><a href="global.html#MoorhenContainer">MoorhenContainer</a></li><li><a href="global.html#MoorhenDraggableModalBase">MoorhenDraggableModalBase</a></li><li><a href="global.html#MoorhenMapSelect">MoorhenMapSelect</a></li><li><a href="global.html#MoorhenMoleculeSelect">MoorhenMoleculeSelect</a></li><li><a href="global.html#MoorhenReduxProvider">MoorhenReduxProvider</a></li><li><a href="global.html#loadSessionData">loadSessionData</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenCommandCentre.html">MoorhenCommandCentre</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenPreferences.html">MoorhenPreferences</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li><li><a href="-_DEFAULT_CONTOUR_LEVEL.html">_DEFAULT_CONTOUR_LEVEL</a></li></ul><h3>Global</h3><ul><li><a href="global.html#MoorhenContainer">MoorhenContainer</a></li><li><a href="global.html#MoorhenDraggableModalBase">MoorhenDraggableModalBase</a></li><li><a href="global.html#MoorhenMapSelect">MoorhenMapSelect</a></li><li><a href="global.html#MoorhenMoleculeSelect">MoorhenMoleculeSelect</a></li><li><a href="global.html#MoorhenReduxProvider">MoorhenReduxProvider</a></li><li><a href="global.html#loadSessionData">loadSessionData</a></li></ul></div>
                 
             </nav>
         </div>
@@ -335,10 +335,10 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                 mapData: mapDataPromises[index],
                 reflectionData: reflectionDataPromises[index],
                 showOnLoad: state.mapContourSettings.visibleMaps.includes(map.molNo),
-                contourLevel: map.contourLevel,
-                radius: map.mapRadius,
+                contourLevel: state.mapContourSettings.contourLevels.find(item => item.molNo === map.molNo)?.contourLevel,
+                radius: state.mapContourSettings.mapRadii.find(item => item.molNo === map.molNo)?.radius,
                 rgba: map.rgba,
-                style: map.style,
+                style: state.mapContourSettings.mapStyles.find(item => item.molNo === map.molNo)?.style,
                 isDifference: map.isDifference,
                 selectedColumns: map.selectedColumns,
                 hasReflectionData: map.hasReflectionData,

@@ -96,7 +96,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenCommandCentre.html">MoorhenCommandCentre</a></li><li><a href="MoorhenMap.html">MoorhenMap</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenPreferences.html">MoorhenPreferences</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li></ul><h3>Global</h3><ul><li><a href="global.html#MoorhenContainer">MoorhenContainer</a></li><li><a href="global.html#MoorhenDraggableModalBase">MoorhenDraggableModalBase</a></li><li><a href="global.html#MoorhenMapSelect">MoorhenMapSelect</a></li><li><a href="global.html#MoorhenMoleculeSelect">MoorhenMoleculeSelect</a></li><li><a href="global.html#MoorhenReduxProvider">MoorhenReduxProvider</a></li><li><a href="global.html#loadSessionData">loadSessionData</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenCommandCentre.html">MoorhenCommandCentre</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenPreferences.html">MoorhenPreferences</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li><li><a href="-_DEFAULT_CONTOUR_LEVEL.html">_DEFAULT_CONTOUR_LEVEL</a></li></ul><h3>Global</h3><ul><li><a href="global.html#MoorhenContainer">MoorhenContainer</a></li><li><a href="global.html#MoorhenDraggableModalBase">MoorhenDraggableModalBase</a></li><li><a href="global.html#MoorhenMapSelect">MoorhenMapSelect</a></li><li><a href="global.html#MoorhenMoleculeSelect">MoorhenMoleculeSelect</a></li><li><a href="global.html#MoorhenReduxProvider">MoorhenReduxProvider</a></li><li><a href="global.html#loadSessionData">loadSessionData</a></li></ul></div>
                 
             </nav>
         </div>
@@ -127,7 +127,7 @@ import { addMolecule, emptyMolecules } from "../store/moleculesSlice";
 import { addMap, emptyMaps } from "../store/mapsSlice";
 import { batch } from "react-redux";
 import { setActiveMap } from "../store/generalStatesSlice";
-import { setMapAlpha, setMapStyle } from "../store/mapContourSettingsSlice";
+import { setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../store/mapContourSettingsSlice";
 
 export const getLigandSVG = async (commandCentre: React.RefObject&lt;moorhen.CommandCentre>, imol: number, compId: string, isDark: boolean): Promise&lt;string> => {
     const result = await commandCentre.current.cootCommand({
@@ -404,20 +404,25 @@ export async function loadSessionData(
         })
     )
 
-    // Change props.molecules
+    // Add molecules
     newMolecules.forEach(molecule => {
         dispatch( addMolecule(molecule) )
     })
 
-    // Change props.maps
+    // Add maps
     newMaps.forEach((map, index) => {
         const storedMapData = sessionData.mapData[index]
         map.showOnLoad = storedMapData.showOnLoad
         map.suggestedRadius = storedMapData.radius
         map.suggestedContourLevel = storedMapData.contourLevel
         map.rgba = storedMapData.rgba
-        map.style = storedMapData.style
-        dispatch( addMap(map) )
+        batch(() => {
+            dispatch( setMapRadius({molNo: map.molNo, radius: storedMapData.radius}) )
+            dispatch( setContourLevel({molNo: map.molNo, contourLevel: storedMapData.contourLevel}) )
+            dispatch( setMapAlpha({molNo: map.molNo, alpha: storedMapData.rgba.a}) )
+            dispatch( setMapStyle({molNo: map.molNo, style: storedMapData.style}) )
+            dispatch( addMap(map) )                
+        })
     })
 
     // Set active map
@@ -469,15 +474,6 @@ export async function loadSessionData(
         document.dispatchEvent(connectedMapsEvent)
     }
     
-    // Set map visualisation details after map card is created using a timeout
-    setTimeout(() => {
-        newMaps.forEach((map, index) => {
-            const storedMapData = sessionData.mapData[index]
-            dispatch( setMapAlpha({molNo: map.molNo, alpha: storedMapData.rgba.a}) )
-            dispatch( setMapStyle({molNo: map.molNo, style: storedMapData.style}) )
-        })
-    }, 10);
-
     timeCapsuleRef.current.setBusy(false)
     return 0
 }

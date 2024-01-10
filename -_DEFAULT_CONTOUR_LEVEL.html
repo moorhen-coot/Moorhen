@@ -5,7 +5,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title> MoorhenPreferences</title>
+  <title> _DEFAULT_CONTOUR_LEVEL</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -102,7 +102,7 @@
             <div class="content">
                 <header class="page-title">
                     <p>Class</p>
-                    <h1>MoorhenPreferences</h1>
+                    <h1>_DEFAULT_CONTOUR_LEVEL</h1>
                 </header>
                 
 
@@ -113,9 +113,7 @@
 
 <header>
     
-        <h2><span class="attribs"><span class="type-signature"></span></span>MoorhenPreferences<span class="signature">(name)</span><span class="type-signature"></span></h2>
-        
-            <div class="class-description">Interface for the Moorhen preferences kept in the browser local storage</div>
+        <h2><span class="attribs"><span class="type-signature"></span></span>_DEFAULT_CONTOUR_LEVEL<span class="signature">(commandCentre, glRef)</span><span class="type-signature"></span></h2>
         
     
 </header>
@@ -134,18 +132,22 @@
 
 
     
-    <h4 class="name" id="MoorhenPreferences">
-        <a class="href-link" href="#MoorhenPreferences">#</a>
+    <h4 class="name" id="_DEFAULT_CONTOUR_LEVEL">
+        <a class="href-link" href="#_DEFAULT_CONTOUR_LEVEL">#</a>
         
         <span class="code-name">
             
-                new MoorhenPreferences<span class="signature">(name)</span><span class="type-signature"></span>
+                new _DEFAULT_CONTOUR_LEVEL<span class="signature">(commandCentre, glRef)</span><span class="type-signature"></span>
             
         </span>
     </h4>
     
 
     
+    
+    <div class="description">
+        Represents a map
+    </div>
     
 
 
@@ -182,13 +184,13 @@
             
 <tr class="deep-level-0">
   
-      <td class="name"><code>name</code></td>
+      <td class="name"><code>commandCentre</code></td>
   
 
   <td class="type">
   
       
-<code class="param-type">string</code>
+<code class="param-type">React.RefObject.&lt;moorhen.CommandCentre></code>
 
 
   
@@ -198,7 +200,32 @@
 
   
 
-  <td class="description last">The name of the local storage instance</td>
+  <td class="description last">A react reference to the command centre instance</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>glRef</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">React.RefObject.&lt;webGL.MGWebGL></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">A react reference to the MGWebGL instance</td>
 </tr>
 
 
@@ -253,20 +280,20 @@
 
     
 
-    <td class="description last">The name of the local storage instance</td>
+    <td class="description last">The name assigned to this map instance</td>
 </tr>
 
         
             
 <tr class="deep-level-0">
     
-        <td class="name"><code>localStorageInstance</code></td>
+        <td class="name"><code>molNo</code></td>
     
 
     <td class="type">
     
         
-<code class="param-type">LocalForage</code>
+<code class="param-type">number</code>
 
 
     
@@ -276,7 +303,191 @@
 
     
 
-    <td class="description last">The local storage instance</td>
+    <td class="description last">The imol assigned to this map instance</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>mapRadius</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">number</code>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last">The map radius currently displayed</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>contourLevel</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">number</code>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last">The map contour level currently displayed</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>style</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">string</code>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last">Indicates whether the rendered map is drawn as lines, lit lines or a solid surphace</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>isDifference</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">boolean</code>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last">Indicates whether this is a difference map instance</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>hasReflectionData</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">boolean</code>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last">Indicates whether this map instance has been associated with observed reflection data</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>rgba</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">object</code>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last">Object that stores the map colour and alpha</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>commandCentre</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">React.RefObject.&lt;moorhen.CommandCentre></code>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last">A react reference to the command centre instance</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>glRef</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">React.RefObject.&lt;webGL.MGWebGL></code>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last">A react reference to the MGWebGL instance</td>
 </tr>
 
         
@@ -319,9 +530,9 @@
 
     
         <p class="tag-source">
-            <a href="utils_MoorhenPreferences.ts.html" class="button">View Source</a>
+            <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenPreferences.ts.html">utils/MoorhenPreferences.ts</a>, <a href="utils_MoorhenPreferences.ts.html#line10">line 10</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line36">line 36</a>
             </span>
         </p>
     
@@ -347,6 +558,27 @@
 
 
 
+    <h5>Example</h5>
+    
+    
+        <pre class="prettyprint"><code>import { MoorhenMap } from "moorhen";
+
+// Create a new map
+const map = new MoorhenMap(commandCentre, glRef);
+
+// Load file from a URL
+const selectedColumns = { F: "FWT", PHI: "PHWT", Fobs: "FP", SigFobs: "SIGFP", FreeR: "FREE", isDifference: false, useWeight: false, calcStructFact: true }
+map.loadToCootFromMtzURL("/uri/to/file.mtz", "map-1", selectedColumns);
+
+// Draw map and set view on map centre
+map.drawMapContour();
+map.centreOnMap();
+
+// Delete map
+map.delete();</code></pre>
+    
+
+
 
                     </div>
                 </div>
@@ -359,13 +591,6 @@
 
     
 
-    
-        <h3 class="subsection-title">Classes</h3>
-
-        <dl>
-            <dt><a href="MoorhenPreferences.html">MoorhenPreferences</a></dt>
-            <dd></dd>
-        </dl>
     
 
     
