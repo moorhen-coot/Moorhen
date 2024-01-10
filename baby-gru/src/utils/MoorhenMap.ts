@@ -2,6 +2,7 @@ import { readDataFile, guid, rgbToHsv, hsvToRgb } from "./MoorhenUtils"
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { libcootApi } from "../types/libcoot";
+import MoorhenReduxStore from "../store/MoorhenReduxStore";
 
 /**
  * Represents a map
@@ -29,12 +30,18 @@ import { libcootApi } from "../types/libcoot";
  * map.loadToCootFromMtzURL("/uri/to/file.mtz", "map-1", selectedColumns);
  * 
  * // Draw map and set view on map centre
- * map.makeCootLive();
+ * map.drawMapContour();
  * map.centreOnMap();
  * 
  * // Delete map
  * map.delete();
 */
+
+const _DEFAULT_CONTOUR_LEVEL = 0.8
+const _DEFAULT_RADIUS = 13
+const _DEFAULT_STYLE = "lines"
+const _DEFAULT_ALPHA = 1.0
+
 export class MoorhenMap implements moorhen.Map {
     
     type: string
@@ -46,8 +53,6 @@ export class MoorhenMap implements moorhen.Map {
     mapCentre: [number, number, number]
     suggestedContourLevel: number
     suggestedRadius: number
-    contourLevel: number
-    mapRadius: number
     webMGContour: boolean
     showOnLoad: boolean
     displayObjects: any
@@ -76,8 +81,6 @@ export class MoorhenMap implements moorhen.Map {
         this.molNo = null
         this.commandCentre = commandCentre
         this.glRef = glRef
-        this.contourLevel = 0.8
-        this.mapRadius = 13
         this.webMGContour = false
         this.showOnLoad = true
         this.displayObjects = { Coot: [] }
@@ -171,7 +174,7 @@ export class MoorhenMap implements moorhen.Map {
         }, true) as moorhen.WorkerResponse<number>
 
         if (cootResponse.data.result.status === 'Completed') {
-            return this.doCootContour(...this.glRef.current.origin.map(coord => -coord) as [number, number, number], this.mapRadius, this.contourLevel);
+            return this.drawMapContour()
         }
 
         return Promise.reject(cootResponse.data.result.status)
@@ -811,8 +814,9 @@ export class MoorhenMap implements moorhen.Map {
         const reply = await this.getMap()
         const newMap = new MoorhenMap(this.commandCentre, this.glRef)
         await newMap.loadToCootFromMapData(reply.data.result.mapData, `Copy of ${this.name}`, this.isDifference)
-        newMap.suggestedContourLevel = this.contourLevel
-        newMap.suggestedRadius = this.mapRadius
+        const { mapRadius, contourLevel } = this.getMapContourParams()
+        newMap.suggestedContourLevel = contourLevel
+        newMap.suggestedRadius = mapRadius
         return newMap
     }
 
