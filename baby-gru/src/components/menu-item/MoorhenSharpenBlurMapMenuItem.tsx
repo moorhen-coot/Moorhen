@@ -28,7 +28,7 @@ export const MoorhenSharpenBlurMapMenuItem = (props: {
 
     const panelContent = <>
         <MoorhenMapSelect maps={maps} ref={selectRef} />
-        <MoorhenNumberForm ref={factorRef} defaultValue={50.} label="B-factor to apply" />
+        <MoorhenNumberForm ref={factorRef} label="B-factor to apply" defaultValue={50.} allowNegativeValues={true}/>
         <InputGroup className='moorhen-input-group-check' style={{width: '100%'}}>
             <Form.Check 
                 ref={useResampleSwitchRef}
@@ -37,7 +37,7 @@ export const MoorhenSharpenBlurMapMenuItem = (props: {
                 onChange={() => { setUseResample((prev) => !prev) }}
                 label="Use resample"/>
         </InputGroup>
-        {useResample && <MoorhenNumberForm ref={resampleFactorRef} defaultValue={1.4} label="Resampling factor"/> }
+        {useResample && <MoorhenNumberForm ref={resampleFactorRef} label="Resampling factor" defaultValue={1.4}/> }
     </>
 
     const onCompleted = async () => {
@@ -73,7 +73,7 @@ export const MoorhenSharpenBlurMapMenuItem = (props: {
         
         if (result.data.result.result !== -1) {
             newMap.molNo = result.data.result.result
-            newMap.name = `Map ${mapNo} blurred by ${bFactor}`
+            newMap.name = `Map ${mapNo} ${bFactor < 0 ? "sharpened" : "blurred"} by ${bFactor}`
             await newMap.getSuggestedSettings()
             newMap.isDifference = selectedMap.isDifference
             const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.getMapContourParams()
