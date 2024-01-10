@@ -394,7 +394,7 @@ export class MoorhenMap implements moorhen.Map {
     /**
      * Hide the map
      */
-    makeCootUnlive(): void {
+    hideMapContour(): void {
         this.clearBuffersOfStyle('Coot')
         this.glRef.current.buildBuffers();
         this.glRef.current.drawScene();
