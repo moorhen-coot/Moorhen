@@ -164,8 +164,9 @@ declare module 'moorhen' {
         centreOnMap(): Promise<void>;
         getSuggestedSettings(): Promise<void>;
         duplicate(): Promise<_moorhen.Map>;
-        makeCootUnlive(): void;
-        makeCootLive(): void;
+        hideMapContour(): void;
+        drawMapContour(): Promise<void>;
+        getMapContourParams(): { mapRadius: number; contourLevel: number; mapAlpha: number; mapStyle: "lines" | "solid" | "lit-lines" };
         setColour(r: number, g: number, b: number, redraw?: boolean): Promise<void> ;
         setDiffMapColour(type: 'positiveDiffColour' | 'negativeDiffColour', r: number, g: number, b: number, redraw?: boolean): Promise<void> ;
         fetchMapRmsd(): Promise<number>;
@@ -191,8 +192,6 @@ declare module 'moorhen' {
         molNo: number;
         commandCentre: React.RefObject<_moorhen.CommandCentre>;
         glRef: React.RefObject<webGL.MGWebGL>;
-        contourLevel: number;
-        mapRadius: number;
         webMGContour: boolean;
         showOnLoad: boolean;
         displayObjects: any;

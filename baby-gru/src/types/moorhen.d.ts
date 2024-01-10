@@ -371,8 +371,9 @@ export namespace moorhen {
         centreOnMap(): Promise<void>;
         getSuggestedSettings(): Promise<void>;
         duplicate(): Promise<Map>;
-        makeCootUnlive(): void;
-        makeCootLive(): void;
+        getMapContourParams(): { mapRadius: number; contourLevel: number; mapAlpha: number; mapStyle: "lines" | "solid" | "lit-lines" };
+        hideMapContour(): void;
+        drawMapContour(): Promise<void>;
         setColour(r: number, g: number, b: number, redraw?: boolean): Promise<void> ;
         setDiffMapColour(type: 'positiveDiffColour' | 'negativeDiffColour', r: number, g: number, b: number, redraw?: boolean): Promise<void> ;
         fetchMapRmsd(): Promise<number>;
@@ -398,8 +399,6 @@ export namespace moorhen {
         molNo: number;
         commandCentre: React.RefObject<CommandCentre>;
         glRef: React.RefObject<webGL.MGWebGL>;
-        contourLevel: number;
-        mapRadius: number;
         webMGContour: boolean;
         showOnLoad: boolean;
         displayObjects: any;
