@@ -16,7 +16,7 @@ import { MoorhenNotification } from "../misc/MoorhenNotification"
 import { useSelector, useDispatch, batch } from 'react-redux';
 import { setActiveMap, setNotificationContent } from "../../store/generalStatesSlice";
 import { addMap } from "../../store/mapsSlice";
-import { hideMap, setContourLevel, setMapRadius, showMap } from "../../store/mapContourSettingsSlice";
+import { hideMap, setContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle, setNegativeMapColours, setPositiveMapColours, showMap } from "../../store/mapContourSettingsSlice";
 
 type ActionButtonType = {
     label: string;
@@ -41,12 +41,6 @@ interface MoorhenMapCardPropsInterface extends moorhen.CollectedProps {
 }
 
 export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((props, cardRef) => {
-    const dispatch = useDispatch()
-    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
-    const contourWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.contourWheelSensitivityFactor)
-    const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.miscAppSettings.defaultExpandDisplayCards)
-    const mapIsVisible = useSelector((state: moorhen.State) => state.mapContourSettings.visibleMaps.includes(props.map.molNo))
     const mapRadius = useSelector((state: moorhen.State) => {
         const map = state.mapContourSettings.mapRadii.find(item => item.molNo === props.map.molNo)
         if (map) {
@@ -79,13 +73,47 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             return 1.0
         }
     })
+    const mapColourString = useSelector((state: moorhen.State) => {
+        const map = state.mapContourSettings.mapColours.find(item => item.molNo === props.map.molNo)
+        let result: {r: number, g: number, b: number}
+        if (map) {
+            result = map.rgb
+        } else {
+            result = {r: props.map.defaultMapColour.r * 255., g: props.map.defaultMapColour.g * 255., b: props.map.defaultMapColour.b * 255.}
+        }
+        // Need to stringify to ensure the selector is stable... (dont want to return a new obj reference)
+        return JSON.stringify(result)
+    })
+    const negativeMapColourString = useSelector((state: moorhen.State) => {
+        const map = state.mapContourSettings.negativeMapColours.find(item => item.molNo === props.map.molNo)
+        let result: {r: number, g: number, b: number}
+        if (map) {
+            result = map.rgb
+        } else {
+            result = {r: props.map.defaultNegativeMapColour.r * 255., g: props.map.defaultNegativeMapColour.g * 255., b: props.map.defaultNegativeMapColour.b * 255.}
+        }
+        return JSON.stringify(result)
+    })
+    const positiveMapColourString = useSelector((state: moorhen.State) => {
+        const map = state.mapContourSettings.positiveMapColours.find(item => item.molNo === props.map.molNo)
+        let result: {r: number, g: number, b: number}
+        if (map) {
+            result = map.rgb
+        } else {
+           result = {r: props.map.defaultPositiveMapColour.r * 255., g: props.map.defaultPositiveMapColour.g * 255., b: props.map.defaultPositiveMapColour.b * 255.}
+        }
+        return JSON.stringify(result)
+    })
+    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
+    const contourWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.contourWheelSensitivityFactor)
+    const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.miscAppSettings.defaultExpandDisplayCards)
+    const mapIsVisible = useSelector((state: moorhen.State) => state.mapContourSettings.visibleMaps.includes(props.map.molNo))
+    const dispatch = useDispatch()
 
     const [isCollapsed, setIsCollapsed] = useState<boolean>(!defaultExpandDisplayCards);
     const [currentName, setCurrentName] = useState<string>(props.map.name);
     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
-    const [mapColour, setMapColour] = useState<{ r: number; g: number; b: number; } | null>(null)
-    const [negativeMapColour, setNegativeMapColour] = useState<{ r: number; g: number; b: number; } | null>(null)
-    const [positiveMapColour, setPositiveMapColour] = useState<{ r: number; g: number; b: number; } | null>(null)
     const [showColourPicker, setShowColourPicker] = useState<boolean>(false)
     const [histogramBusy, setHistogramBusy] = useState<boolean>(false)
     
@@ -95,6 +123,10 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const isDirty = useRef<boolean>(false)
     const histogramRef = useRef(null)
 
+    const mapColour = JSON.parse(mapColourString)
+    const negativeMapColour = JSON.parse(negativeMapColourString)
+    const positiveMapColour = JSON.parse(positiveMapColourString)
+
     useImperativeHandle(cardRef, () => ({
         forceIsCollapsed: (value: boolean) => { 
             setIsCollapsed(value)
@@ -102,28 +134,10 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     }), 
     [setIsCollapsed])
 
-    useEffect(() => {
-        setMapColour({
-            r: 255 * props.map.rgba.mapColour.r,
-            g: 255 * props.map.rgba.mapColour.g,
-            b: 255 * props.map.rgba.mapColour.b,
-        })
-        setNegativeMapColour({
-            r: 255 * props.map.rgba.negativeDiffColour.r,
-            g: 255 * props.map.rgba.negativeDiffColour.g,
-            b: 255 * props.map.rgba.negativeDiffColour.b,
-        })
-        setPositiveMapColour({
-            r: 255 * props.map.rgba.positiveDiffColour.r,
-            g: 255 * props.map.rgba.positiveDiffColour.g,
-            b: 255 * props.map.rgba.positiveDiffColour.b,
-        })
-    }, [])
-
     const handlePositiveMapColorChange = (color: { r: number; g: number; b: number; }) => {
         try {
-            props.map.setDiffMapColour('positiveDiffColour', color.r / 255., color.g / 255., color.b / 255.)
-            setPositiveMapColour({r: color.r, g: color.g, b: color.b})
+            dispatch( setPositiveMapColours({ molNo: props.map.molNo, rgb: color}) )
+            props.map.setDiffMapColour('positiveDiffColour')
         }
         catch (err) {
             console.log('err', err)
@@ -132,8 +146,8 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
 
     const handleNegativeMapColorChange = (color: { r: number; g: number; b: number; }) => {
         try {
-            props.map.setDiffMapColour('negativeDiffColour', color.r / 255., color.g / 255., color.b / 255.)
-            setNegativeMapColour({r: color.r, g: color.g, b: color.b})
+            dispatch( setNegativeMapColours({ molNo: props.map.molNo, rgb: color}) )
+            props.map.setDiffMapColour('negativeDiffColour')
         }
         catch (err) {
             console.log('err', err)
@@ -142,8 +156,8 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
 
     const handleColorChange = (color: { r: number; g: number; b: number; }) => {
         try {
-            props.map.setColour(color.r / 255., color.g / 255., color.b / 255.)
-            setMapColour({r: color.r, g: color.g, b: color.b})
+            dispatch( setMapColours({ molNo: props.map.molNo, rgb: color}) )
+            props.map.setColour()
         }
         catch (err) {
             console.log('err', err)
@@ -332,13 +346,18 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     }, [handleWheelContourLevelCallback])
 
     useEffect(() => {
-        props.map.setAlpha(mapOpacity)
+        props.map.setAlpha()
     }, [mapOpacity])
 
     useEffect(() => {
         // This looks stupid but it is important otherwise the map is first drawn with the default contour and radius. Probably there's a problem somewhere...
+        dispatch(setMapAlpha({molNo: props.map.molNo, alpha: mapOpacity}))
+        dispatch(setMapStyle({molNo: props.map.molNo, style: mapStyle}))
         dispatch(setMapRadius({molNo: props.map.molNo, radius: mapRadius}))
         dispatch(setContourLevel({molNo: props.map.molNo, contourLevel: mapContourLevel}))
+        dispatch(setMapColours({molNo: props.map.molNo, rgb: mapColour}))
+        dispatch(setNegativeMapColours({molNo: props.map.molNo, rgb: negativeMapColour}))
+        dispatch(setPositiveMapColours({molNo: props.map.molNo, rgb: positiveMapColour}))
         // Show map only if specified
         if (props.map.showOnLoad) {
             dispatch(showMap(props.map))

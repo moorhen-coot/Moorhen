@@ -367,15 +367,23 @@ export namespace moorhen {
         getHistogram(nBins?: number, zoomFactor?: number): Promise<libcootApi.HistogramInfoJS>;
         setMapWeight(weight?: number): Promise<WorkerResponse>;
         estimateMapWeight(): Promise<void>;
-        setAlpha(alpha: number, redraw?: boolean): Promise<void>;
+        setAlpha(redraw?: boolean): Promise<void>;
         centreOnMap(): Promise<void>;
         getSuggestedSettings(): Promise<void>;
         duplicate(): Promise<Map>;
-        getMapContourParams(): { mapRadius: number; contourLevel: number; mapAlpha: number; mapStyle: "lines" | "solid" | "lit-lines" };
+        getMapContourParams(): { 
+            mapRadius: number; 
+            contourLevel: number; 
+            mapAlpha: number; 
+            mapStyle: "lines" | "solid" | "lit-lines"; 
+            mapColour: {r: number; g: number; b: number}; 
+            positiveMapColour: {r: number; g: number; b: number}; 
+            negativeMapColour: {r: number; g: number; b: number}
+        };
         hideMapContour(): void;
         drawMapContour(): Promise<void>;
-        setColour(r: number, g: number, b: number, redraw?: boolean): Promise<void> ;
-        setDiffMapColour(type: 'positiveDiffColour' | 'negativeDiffColour', r: number, g: number, b: number, redraw?: boolean): Promise<void> ;
+        setColour(redraw?: boolean): Promise<void> ;
+        setDiffMapColour(type: 'positiveDiffColour' | 'negativeDiffColour', redraw?: boolean): Promise<void> ;
         fetchMapRmsd(): Promise<number>;
         fetchSuggestedLevel(): Promise<number>;
         fetchMapCentre(): Promise<[number, number, number]>;
@@ -410,12 +418,9 @@ export namespace moorhen {
         otherMapForColouring: {molNo: number, min: number, max: number};
         mapRmsd: number;
         suggestedMapWeight: number;
-        rgba: {
-            mapColour: {r: number, g: number, b: number};
-            positiveDiffColour: {r: number, g: number, b: number};
-            negativeDiffColour: {r: number, g: number, b: number};
-            a: number;
-        }
+        defaultMapColour: {r: number, g: number, b: number};
+        defaultPositiveMapColour: {r: number, g: number, b: number};
+        defaultNegativeMapColour: {r: number, g: number, b: number};
     }
     
     interface backupKey {
@@ -834,6 +839,9 @@ export namespace moorhen {
             defaultMapLitLines: boolean;
             mapLineWidth: number;
             defaultMapSurface: boolean;
+            mapColours: { molNo: number; rgb: {r: number, g: number, b: number} }[];
+            negativeMapColours: { molNo: number; rgb: {r: number, g: number, b: number} }[];
+            positiveMapColours: { molNo: number; rgb: {r: number, g: number, b: number} }[];
         }
     }
     
