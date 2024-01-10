@@ -368,14 +368,6 @@ export class MoorhenMap implements moorhen.Map {
         const level = state.mapContourSettings.contourLevels.find(item => item.molNo === this.molNo)?.contourLevel
         const alpha = state.mapContourSettings.mapAlpha.find(item => item.molNo === this.molNo)?.alpha
         const style = state.mapContourSettings.mapStyles.find(item => item.molNo === this.molNo)?.style
-        console.log(
-            {
-                mapRadius: radius ? radius : _DEFAULT_RADIUS, 
-                contourLevel: level ? level : _DEFAULT_CONTOUR_LEVEL,
-                mapAlpha: alpha ? alpha : _DEFAULT_ALPHA,
-                mapStyle: style ? style : _DEFAULT_STYLE
-            }
-        )
         return {
             mapRadius: radius ? radius : _DEFAULT_RADIUS, 
             contourLevel: level ? level : _DEFAULT_CONTOUR_LEVEL,
