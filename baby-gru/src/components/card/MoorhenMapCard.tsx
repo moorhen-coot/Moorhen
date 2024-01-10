@@ -267,30 +267,24 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         </Fragment>
     }
 
-    const doContourIfDirty = () => {
+    const doContourIfDirty = useCallback(() => {
         if (isDirty.current) {
             busyContouring.current = true
             isDirty.current = false
-            props.map.doCootContour(
-                ...nextOrigin.current as [number, number, number],
-                props.map.mapRadius,
-                props.map.contourLevel
-            ).then(() => {
+            props.map.drawMapContour().then(() => {
                 busyContouring.current = false
                 doContourIfDirty()
             })
         }
-    }
+    }, [mapRadius, mapContourLevel, mapIsVisible, mapStyle])
 
     const handleOriginUpdate = useCallback((evt: moorhen.OriginUpdateEvent) => {
         nextOrigin.current = [...evt.detail.origin.map((coord: number) => -coord)]
-        props.map.contourLevel = mapContourLevel
-        props.map.mapRadius = mapRadius
         isDirty.current = true
         if (mapIsVisible && !busyContouring.current) {
                 doContourIfDirty()
         }
-    }, [mapIsVisible, mapContourLevel, mapRadius])
+    }, [doContourIfDirty])
 
     const handleWheelContourLevelCallback = useCallback((evt: moorhen.WheelContourLevelEvent) => {
         let newMapContourLevel: number
@@ -342,8 +336,10 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     }, [mapOpacity])
 
     useEffect(() => {
-        dispatch(setMapRadius({molNo: props.map.molNo, radius: props.initialRadius}))
-        dispatch(setContourLevel({molNo: props.map.molNo, contourLevel: props.initialContour}))
+        // This looks stupid but it is important otherwise the map is first drawn with the default contour and radius. Probably there's a problem somewhere...
+        dispatch(setMapRadius({molNo: props.map.molNo, radius: mapRadius}))
+        dispatch(setContourLevel({molNo: props.map.molNo, contourLevel: mapContourLevel}))
+        // Show map only if specified
         if (props.map.showOnLoad) {
             dispatch(showMap(props.map))
         }
@@ -351,8 +347,6 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
 
     useEffect(() => {
         props.map.style = mapStyle
-        props.map.contourLevel = mapContourLevel
-        props.map.mapRadius = mapRadius
         if (mapIsVisible) {
             nextOrigin.current = props.glRef.current.origin.map(coord => -coord)
             isDirty.current = true
@@ -360,10 +354,10 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                 doContourIfDirty()
             }
         } else {
-            props.map.makeCootUnlive()
+            props.map.hideMapContour()
         }
 
-    }, [mapIsVisible, mapRadius, mapContourLevel, mapStyle])
+    }, [doContourIfDirty])
 
     const increaseLevelButton = <IconButton onClick={() => dispatch( setContourLevel({ molNo: props.map.molNo, contourLevel: mapContourLevel + contourWheelSensitivityFactor }) )} style={{padding: 0, color: isDark ? 'white' : 'black'}}>
                                     <AddCircleOutline/>

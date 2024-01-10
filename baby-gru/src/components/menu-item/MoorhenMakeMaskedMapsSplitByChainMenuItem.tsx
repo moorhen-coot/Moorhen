@@ -7,7 +7,7 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { webGL } from "../../types/mgWebGL";
 import { batch, useDispatch, useSelector } from 'react-redux';
 import { addMap } from "../../store/mapsSlice";
-import { hideMap } from "../../store/mapContourSettingsSlice";
+import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
 
 export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
@@ -52,9 +52,12 @@ export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
                     newMap.name = `Chain ${listIndex} of ${selectedMap.name}`
                     newMap.isDifference = selectedMap.isDifference
                     await newMap.getSuggestedSettings()
-                    newMap.suggestedContourLevel = selectedMap.contourLevel
-                    newMap.suggestedRadius = selectedMap.mapRadius
+                    const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.getMapContourParams()
                     batch(() => {
+                        dispatch( setMapRadius({ molNo: newMap.molNo, radius: mapRadius }) )
+                        dispatch( setContourLevel({ molNo: newMap.molNo, contourLevel: contourLevel }) )
+                        dispatch( setMapAlpha({ molNo: newMap.molNo, alpha: mapAlpha }) )
+                        dispatch( setMapStyle({ molNo: newMap.molNo, style: mapStyle }) )
                         dispatch( hideMap(selectedMap) )
                         dispatch( addMap(newMap) )
                     })

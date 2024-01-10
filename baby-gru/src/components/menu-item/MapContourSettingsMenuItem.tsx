@@ -65,7 +65,7 @@ export const MapContourSettingsMenuItem = (props: {
                                 commandArgs: [map.molNo, reflectionData.data.result.mtzData, map.selectedColumns]
                             }, true) as moorhen.WorkerResponse<number>
                             if (visibleMaps.includes(map.molNo)) {
-                                return map.doCootContour(...props.glRef.current.origin.map(coord => -coord) as [number, number, number], map.mapRadius, map.contourLevel)
+                                return map.drawMapContour()
                             } else {
                                 return Promise.resolve()
                             }
