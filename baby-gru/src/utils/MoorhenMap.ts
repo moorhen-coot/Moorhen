@@ -600,7 +600,6 @@ export class MoorhenMap implements moorhen.Map {
      * @returns {Promise<void>}
      */
     async setDiffMapColour(type: 'positiveDiffColour' | 'negativeDiffColour', r: number, g: number, b: number, redraw: boolean = true): Promise<void> {
-        //console.log("MOORHEN MAP, setDiffMapColour",this.otherMapForColouring)
         if (!this.isDifference) {
             console.error('Cannot use moorhen.Map.setDiffMapColour to change non-diff map colour. Use moorhen.Map.setColour instead...')
             return
@@ -652,7 +651,6 @@ export class MoorhenMap implements moorhen.Map {
      * @returns {Promise<void>}
      */
     async setColour(r: number, g: number, b: number, redraw: boolean = true): Promise<void> {
-        //console.log("MOORHEN MAP, setColour",this.otherMapForColouring)
         if (this.isDifference) {
             console.error('Cannot use moorhen.Map.setColour to change difference map colour. Use moorhen.Map.setDiffMapColour instead...')
             return
@@ -698,13 +696,6 @@ export class MoorhenMap implements moorhen.Map {
      * @param {boolean} [redraw=true] - Indicates whether the map needs to be redrawn after setting the new alpha
      */
     async setAlpha(alpha: number, redraw: boolean = true): Promise<void> {
-        //console.log("MOORHEN MAP, setAlpha",this.otherMapForColouring)
-        /*
-        ??
-        if (this.isDifference) {
-            console.log("Need some more cleverness!",this.rgba.mapColour)
-        }
-        */
         this.rgba.a = alpha
         this.displayObjects['Coot'].forEach(buffer => {
             buffer.triangleColours.forEach(colbuffer => {
@@ -719,23 +710,23 @@ export class MoorhenMap implements moorhen.Map {
             buffer.alphaChanged = true
             if (alpha < 0.99) {
                 buffer.transparent = true
-                if(buffer.customColour&&buffer.customColour.length===4){
+                if (buffer.customColour && buffer.customColour.length===4) {
                     buffer.customColour = null;
                     if (this.isDifference) {
                         console.log("Setting colours to",this.rgba.mapColour)
                     }
                     buffer.triangleColours.forEach(colbuffer => {
-                            for (let idx = 0; idx < colbuffer.length; idx += 4) {
+                        for (let idx = 0; idx < colbuffer.length; idx += 4) {
                             colbuffer[idx] = this.rgba.mapColour.r
                             colbuffer[idx + 1] = this.rgba.mapColour.g
                             colbuffer[idx + 2] = this.rgba.mapColour.b
-                            }
+                        }
                     })
                 }
             } else {
                 buffer.transparent = false
-                if(buffer.customColour&&buffer.customColour.length===4){
-                    buffer.setCustomColour([this.rgba.mapColour.r,this.rgba.mapColour.g,this.rgba.mapColour.b,1.0])
+                if (buffer.customColour && buffer.customColour.length === 4) {
+                    buffer.setCustomColour([this.rgba.mapColour.r, this.rgba.mapColour.g, this.rgba.mapColour.b, 1.0])
                 }
             }
         })
