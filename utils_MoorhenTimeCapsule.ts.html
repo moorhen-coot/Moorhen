@@ -337,7 +337,12 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                 showOnLoad: state.mapContourSettings.visibleMaps.includes(map.molNo),
                 contourLevel: state.mapContourSettings.contourLevels.find(item => item.molNo === map.molNo)?.contourLevel,
                 radius: state.mapContourSettings.mapRadii.find(item => item.molNo === map.molNo)?.radius,
-                rgba: map.rgba,
+                rgba: {
+                    a: state.mapContourSettings.mapAlpha.find(item => item.molNo === map.molNo)?.alpha,
+                    mapColour: state.mapContourSettings.mapColours.find(item => item.molNo === map.molNo)?.rgb,
+                    positiveDiffColour: state.mapContourSettings.positiveMapColours.find(item => item.molNo === map.molNo)?.rgb,
+                    negativeDiffColour: state.mapContourSettings.negativeMapColours.find(item => item.molNo === map.molNo)?.rgb
+                },
                 style: state.mapContourSettings.mapStyles.find(item => item.molNo === map.molNo)?.style,
                 isDifference: map.isDifference,
                 selectedColumns: map.selectedColumns,

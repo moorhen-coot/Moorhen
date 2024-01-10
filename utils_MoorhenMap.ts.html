@@ -156,6 +156,9 @@ const _DEFAULT_CONTOUR_LEVEL = 0.8
 const _DEFAULT_RADIUS = 13
 const _DEFAULT_STYLE = "lines"
 const _DEFAULT_ALPHA = 1.0
+const _DEFAULT_MAP_COLOUR = { r: 0.30000001192092896, g: 0.30000001192092896, b: 0.699999988079071}
+const _DEFAULT_POSITIVE_MAP_COLOUR = {r: 0.4000000059604645, g: 0.800000011920929, b: 0.4000000059604645}
+const _DEFAULT_NEGATIVE_MAP_COLOUR = {r: 0.800000011920929, g: 0.4000000059604645, b: 0.4000000059604645}
 
 export class MoorhenMap implements moorhen.Map {
     
@@ -180,12 +183,9 @@ export class MoorhenMap implements moorhen.Map {
     suggestedMapWeight: number
     otherMapForColouring: {molNo: number, min: number, max: number};
     diffMapColourBuffers: { positiveDiffColour: number[], negativeDiffColour: number[] }
-    rgba: {
-        mapColour: {r: number, g: number, b: number};
-        positiveDiffColour: {r: number, g: number, b: number};
-        negativeDiffColour: {r: number, g: number, b: number};
-        a: number;
-    }
+    defaultMapColour: {r: number, g: number, b: number};
+    defaultPositiveMapColour: {r: number, g: number, b: number};
+    defaultNegativeMapColour: {r: number, g: number, b: number};
 
     constructor(commandCentre: React.RefObject&lt;moorhen.CommandCentre>, glRef: React.RefObject&lt;webGL.MGWebGL>) {
         this.type = 'map'
@@ -209,12 +209,9 @@ export class MoorhenMap implements moorhen.Map {
         this.mapCentre = null
         this.otherMapForColouring = null
         this.diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] }
-        this.rgba = {
-            mapColour: { r: 0.30000001192092896, g: 0.30000001192092896, b: 0.699999988079071},
-            positiveDiffColour: {r: 0.4000000059604645, g: 0.800000011920929, b: 0.4000000059604645},
-            negativeDiffColour: {r: 0.800000011920929, g: 0.4000000059604645, b: 0.4000000059604645},
-            a: 1.0
-        }
+        this.defaultMapColour = _DEFAULT_MAP_COLOUR
+        this.defaultPositiveMapColour = _DEFAULT_POSITIVE_MAP_COLOUR
+        this.defaultNegativeMapColour = _DEFAULT_NEGATIVE_MAP_COLOUR
     }
 
     /**
@@ -477,17 +474,31 @@ export class MoorhenMap implements moorhen.Map {
      * Get map contour parameters from the redux store
      * @returns {object} A description of map contour parameters as described in the redux store
      */
-    getMapContourParams(): { mapRadius: number; contourLevel: number; mapAlpha: number; mapStyle: "lines" | "solid" | "lit-lines" } {
+    getMapContourParams(): { 
+        mapRadius: number; 
+        contourLevel: number; 
+        mapAlpha: number; 
+        mapStyle: "lines" | "solid" | "lit-lines"; 
+        mapColour: {r: number; g: number; b: number}; 
+        positiveMapColour: {r: number; g: number; b: number}; 
+        negativeMapColour: {r: number; g: number; b: number}
+    } {
         const state = MoorhenReduxStore.getState()
         const radius = state.mapContourSettings.mapRadii.find(item => item.molNo === this.molNo)?.radius
         const level = state.mapContourSettings.contourLevels.find(item => item.molNo === this.molNo)?.contourLevel
         const alpha = state.mapContourSettings.mapAlpha.find(item => item.molNo === this.molNo)?.alpha
         const style = state.mapContourSettings.mapStyles.find(item => item.molNo === this.molNo)?.style
+        const mapColour = state.mapContourSettings.mapColours.find(item => item.molNo === this.molNo)?.rgb
+        const negativeMapColour = state.mapContourSettings.negativeMapColours.find(item => item.molNo === this.molNo)?.rgb
+        const positiveMapColour = state.mapContourSettings.positiveMapColours.find(item => item.molNo === this.molNo)?.rgb
         return {
             mapRadius: radius ? radius : _DEFAULT_RADIUS, 
             contourLevel: level ? level : _DEFAULT_CONTOUR_LEVEL,
             mapAlpha: alpha ? alpha : _DEFAULT_ALPHA,
-            mapStyle: style ? style : _DEFAULT_STYLE
+            mapStyle: style ? style : _DEFAULT_STYLE,
+            mapColour: mapColour ? {r: mapColour.r / 255., g: mapColour.g / 255., b: mapColour.b / 255.} : this.defaultMapColour,
+            negativeMapColour: negativeMapColour ? {r: negativeMapColour.r / 255., g: negativeMapColour.g / 255., b: negativeMapColour.b / 255.} : this.defaultNegativeMapColour,
+            positiveMapColour: positiveMapColour ? {r: positiveMapColour.r / 255., g: positiveMapColour.g / 255., b: positiveMapColour.b / 255.} : this.defaultPositiveMapColour  
         }
     }
 
@@ -522,9 +533,7 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     setupContourBuffers(objects: any[], keepCootColours: boolean = false) {
-        //console.log("MOORHEN MAP, setupContourBuffers, keepCootColours, isDiff",keepCootColours,this.isDifference)
-        //TODO
-        // Sort out -ve winding/normals (same on moorhen.org)
+        const { mapAlpha, mapColour, positiveMapColour, negativeMapColour } = this.getMapContourParams()
         const print_timing = false;
         const t1 = performance.now();
         try {
@@ -552,17 +561,17 @@ export class MoorhenMap implements moorhen.Map {
                                 if (col &lt; 0.5) {
                                     this_pos_idx.push(idxs[idx])
                                     diffMapColourBuffers.positiveDiffColour.push(idxs[idx]*4)
-                                    object_positive.col_tri[i][j][idxs[idx]*4]   = this.rgba.positiveDiffColour.r
-                                    object_positive.col_tri[i][j][idxs[idx]*4+1] = this.rgba.positiveDiffColour.g
-                                    object_positive.col_tri[i][j][idxs[idx]*4+2] = this.rgba.positiveDiffColour.b
-                                    object_positive.col_tri[i][j][idxs[idx]*4+3] = this.rgba.a
+                                    object_positive.col_tri[i][j][idxs[idx]*4]   = positiveMapColour.r
+                                    object_positive.col_tri[i][j][idxs[idx]*4+1] = positiveMapColour.g
+                                    object_positive.col_tri[i][j][idxs[idx]*4+2] = positiveMapColour.b
+                                    object_positive.col_tri[i][j][idxs[idx]*4+3] = mapAlpha
                                 } else {
                                     this_neg_idx.push(idxs[idx])
                                     diffMapColourBuffers.negativeDiffColour.push(idxs[idx]*4)
-                                    object_negative.col_tri[i][j][idxs[idx]*4]   = this.rgba.negativeDiffColour.r
-                                    object_negative.col_tri[i][j][idxs[idx]*4+1] = this.rgba.negativeDiffColour.g
-                                    object_negative.col_tri[i][j][idxs[idx]*4+2] = this.rgba.negativeDiffColour.b
-                                    object_negative.col_tri[i][j][idxs[idx]*4+3] = this.rgba.a
+                                    object_negative.col_tri[i][j][idxs[idx]*4]   = negativeMapColour.r
+                                    object_negative.col_tri[i][j][idxs[idx]*4+1] = negativeMapColour.g
+                                    object_negative.col_tri[i][j][idxs[idx]*4+2] = negativeMapColour.b
+                                    object_negative.col_tri[i][j][idxs[idx]*4+3] = mapAlpha
                                 }
                             }
                             pos_idx.push(this_pos_idx)
@@ -576,15 +585,14 @@ export class MoorhenMap implements moorhen.Map {
                     const tl = performance.now();
                     if(print_timing) console.log("End loop",tl-t1)
                 } else if (!keepCootColours)  {
-                    //console.log("DEBUG: MOORHEN MAP",object.col_tri)
-                    if(this.rgba.a&lt;0.98){
+                    if (mapAlpha &lt; 0.98) {
                         object.col_tri.forEach((cols: number[][]) => {
                             cols.forEach((col: number[]) => {
                                 for (let idx = 0; idx &lt; col.length; idx += 4) {
-                                    col[idx] = this.rgba.mapColour.r
-                                    col[idx + 1] = this.rgba.mapColour.g
-                                    col[idx + 2] = this.rgba.mapColour.b
-                                    col[idx + 3] = this.rgba.a
+                                    col[idx] = mapColour.r
+                                    col[idx + 1] = mapColour.g
+                                    col[idx + 2] = mapColour.b
+                                    col[idx + 3] = mapAlpha
                                 }
                             })
                         })
@@ -596,7 +604,7 @@ export class MoorhenMap implements moorhen.Map {
                     this.clearBuffersOfStyle("Coot")
                     let a = this.glRef.current.appendOtherData(object_positive, true);
                     let b = this.glRef.current.appendOtherData(object_negative, true);
-                    if(this.rgba.a&lt;0.99){
+                    if(mapAlpha&lt;0.99){
                         a[0].transparent = true;
                         b[0].transparent = true;
                     }
@@ -611,9 +619,9 @@ export class MoorhenMap implements moorhen.Map {
                     if(this.displayObjects["Coot"].length>0 &amp;&amp; (object.prim_types[0][0]===this.displayObjects["Coot"][0].bufferTypes[0])){
                         this.displayObjects["Coot"][0].triangleVertices[0] = object.vert_tri[0][0]
                         this.displayObjects["Coot"][0].triangleNormals[0] = object.norm_tri[0][0]
-                        if(this.rgba.a>0.98){
+                        if(mapAlpha>0.98){
                             //console.log("DEBUG: Old buffers setCustomColour")
-                            this.displayObjects["Coot"][0].setCustomColour([this.rgba.mapColour.r,this.rgba.mapColour.g,this.rgba.mapColour.b,1.0])
+                            this.displayObjects["Coot"][0].setCustomColour([mapColour.r,mapColour.g,mapColour.b,1.0])
                         } else {
                             this.displayObjects["Coot"][0].triangleColours[0] = object.col_tri[0][0]
                         }
@@ -622,8 +630,8 @@ export class MoorhenMap implements moorhen.Map {
                     } else {
                        this.clearBuffersOfStyle("Coot")
                        let a = this.glRef.current.appendOtherData(object, true);
-                       if(this.rgba.a>0.98){
-                           a[0].setCustomColour([this.rgba.mapColour.r,this.rgba.mapColour.g,this.rgba.mapColour.b,1.0])
+                       if(mapAlpha>0.98){
+                           a[0].setCustomColour([mapColour.r,mapColour.g,mapColour.b,1.0])
                        }
                        this.displayObjects['Coot'] = this.displayObjects['Coot'].concat(a);
                     }
@@ -706,32 +714,29 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     /**
-     * Set the colours for a difference map
+     * Set the colours for a difference map using values from redux store
      * @param {'positiveDiffColour' | 'negativeDiffColour'} type - Indicates whether the negative or positive colours will be set
-     * @param {number} r - Red component as a fraction of 1
-     * @param {number} g - Green component as a fraction of 1
-     * @param {number} b - Blue component as a fraction of 1
      * @param {boolean} [redraw=true] - Indicates whether the map needs to be redrawn after setting the new colours
      * @returns {Promise&lt;void>}
      */
-    async setDiffMapColour(type: 'positiveDiffColour' | 'negativeDiffColour', r: number, g: number, b: number, redraw: boolean = true): Promise&lt;void> {
-        //console.log("MOORHEN MAP, setDiffMapColour",this.otherMapForColouring)
+    async setDiffMapColour(type: 'positiveDiffColour' | 'negativeDiffColour', redraw: boolean = true): Promise&lt;void> {
         if (!this.isDifference) {
             console.error('Cannot use moorhen.Map.setDiffMapColour to change non-diff map colour. Use moorhen.Map.setColour instead...')
             return
         }
         
-        this.rgba[type] = { r, g, b }
-        
-        if (this.rgba.a &lt; 0.99) {
+        const { mapAlpha, positiveMapColour, negativeMapColour } = this.getMapContourParams()
+        const mapColour = type === 'positiveDiffColour' ? positiveMapColour : negativeMapColour
+       
+        if (mapAlpha &lt; 0.99) {
             this.displayObjects['Coot'].forEach((buffer, bufferIdx) => {
                 buffer.customColour = null;
                 buffer.transparent = true
                 buffer.triangleColours.forEach((colbuffer, colBufferIdx) => {
                     for (const idx of this.diffMapColourBuffers[type]) {
-                        colbuffer[idx] = this.rgba[type].r
-                        colbuffer[idx + 1] = this.rgba[type].g
-                        colbuffer[idx + 2] = this.rgba[type].b
+                        colbuffer[idx] = mapColour.r
+                        colbuffer[idx + 1] = mapColour.g
+                        colbuffer[idx + 2] = mapColour.b
                     }
                 })
                 buffer.isDirty = true
@@ -740,16 +745,16 @@ export class MoorhenMap implements moorhen.Map {
         } else {
             if(this.displayObjects['Coot'].length===2){
                 if(type==='positiveDiffColour'){
-                    this.displayObjects['Coot'][0].setCustomColour([r,g,b,1.0])
+                    this.displayObjects['Coot'][0].setCustomColour([mapColour.r,mapColour.g,mapColour.b,1.0])
                     this.displayObjects['Coot'][0].transparent = false
                 } else {
-                    this.displayObjects['Coot'][1].setCustomColour([r,g,b,1.0])
+                    this.displayObjects['Coot'][1].setCustomColour([mapColour.r,mapColour.g,mapColour.b,1.0])
                     this.displayObjects['Coot'][1].transparent = false
                 }
             }
         }
         
-        if (this.rgba.a &lt; 0.99) {
+        if (mapAlpha &lt; 0.99) {
             this.glRef.current.buildBuffers();
         }
 
@@ -759,15 +764,11 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     /**
-     * Set the colours for a non-difference map
-     * @param {number} r - Red component as a fraction of 1
-     * @param {number} g - Green component as a fraction of 1
-     * @param {number} b - Blue component as a fraction of 1
+     * Set the colours for a non-difference map using values from redux store
      * @param {boolean} [redraw=true] - Indicates whether the map needs to be redrawn after setting the new colours
      * @returns {Promise&lt;void>}
      */
-    async setColour(r: number, g: number, b: number, redraw: boolean = true): Promise&lt;void> {
-        //console.log("MOORHEN MAP, setColour",this.otherMapForColouring)
+    async setColour(redraw: boolean = true): Promise&lt;void> {
         if (this.isDifference) {
             console.error('Cannot use moorhen.Map.setColour to change difference map colour. Use moorhen.Map.setDiffMapColour instead...')
             return
@@ -777,28 +778,28 @@ export class MoorhenMap implements moorhen.Map {
             this.otherMapForColouring = null
         }
         
-        this.rgba.mapColour = { r, g, b }
+        const { mapAlpha, mapColour } = this.getMapContourParams()
         
         this.displayObjects['Coot'].forEach(buffer => {
-            if (this.rgba.a &lt; 0.99) {
+            if (mapAlpha &lt; 0.99) {
                 buffer.customColour = null;
                 buffer.transparent = true
                 buffer.triangleColours.forEach(colbuffer => {
                     for (let idx = 0; idx &lt; colbuffer.length; idx += 4) {
-                        colbuffer[idx] = this.rgba.mapColour.r
-                        colbuffer[idx + 1] = this.rgba.mapColour.g
-                        colbuffer[idx + 2] = this.rgba.mapColour.b
+                        colbuffer[idx] = mapColour.r
+                        colbuffer[idx + 1] = mapColour.g
+                        colbuffer[idx + 2] = mapColour.b
                     }
                 })
                 buffer.isDirty = true;
                 buffer.alphaChanged = true;
             } else {
-                buffer.setCustomColour([r,g,b,1.0])
+                buffer.setCustomColour([mapColour.r,mapColour.g,mapColour.b,1.0])
                 buffer.transparent = false
             }
         })
 
-        if (this.rgba.a &lt; 0.99) {
+        if (mapAlpha &lt; 0.99) {
             this.glRef.current.buildBuffers();
         }
 
@@ -808,49 +809,41 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     /**
-     * Set the alpha (transparency) for this map
-     * @param {number} alpha - The new alpha value as a fraction of 1
+     * Set the alpha (transparency) for this map using values from redux store
      * @param {boolean} [redraw=true] - Indicates whether the map needs to be redrawn after setting the new alpha
      */
-    async setAlpha(alpha: number, redraw: boolean = true): Promise&lt;void> {
-        //console.log("MOORHEN MAP, setAlpha",this.otherMapForColouring)
-        /*
-        ??
-        if (this.isDifference) {
-            console.log("Need some more cleverness!",this.rgba.mapColour)
-        }
-        */
-        this.rgba.a = alpha
+    async setAlpha(redraw: boolean = true): Promise&lt;void> {
+        const { mapAlpha, mapColour } = this.getMapContourParams()
         this.displayObjects['Coot'].forEach(buffer => {
             buffer.triangleColours.forEach(colbuffer => {
                 if (this.isDifference) {
-                    console.log("Setting alpha",this.rgba.a)
+                    console.log("Setting alpha", mapAlpha)
                 }
                 for (let idx = 3; idx &lt; colbuffer.length; idx += 4) {
-                    colbuffer[idx] = alpha
+                    colbuffer[idx] = mapAlpha
                 }
             })
             buffer.isDirty = true
             buffer.alphaChanged = true
-            if (alpha &lt; 0.99) {
+            if (mapAlpha &lt; 0.99) {
                 buffer.transparent = true
-                if(buffer.customColour&amp;&amp;buffer.customColour.length===4){
+                if (buffer.customColour &amp;&amp; buffer.customColour.length===4) {
                     buffer.customColour = null;
                     if (this.isDifference) {
-                        console.log("Setting colours to",this.rgba.mapColour)
+                        console.log("Setting colours to",mapColour)
                     }
                     buffer.triangleColours.forEach(colbuffer => {
-                            for (let idx = 0; idx &lt; colbuffer.length; idx += 4) {
-                            colbuffer[idx] = this.rgba.mapColour.r
-                            colbuffer[idx + 1] = this.rgba.mapColour.g
-                            colbuffer[idx + 2] = this.rgba.mapColour.b
-                            }
+                        for (let idx = 0; idx &lt; colbuffer.length; idx += 4) {
+                            colbuffer[idx] = mapColour.r
+                            colbuffer[idx + 1] = mapColour.g
+                            colbuffer[idx + 2] = mapColour.b
+                        }
                     })
                 }
             } else {
                 buffer.transparent = false
-                if(buffer.customColour&amp;&amp;buffer.customColour.length===4){
-                    buffer.setCustomColour([this.rgba.mapColour.r,this.rgba.mapColour.g,this.rgba.mapColour.b,1.0])
+                if (buffer.customColour &amp;&amp; buffer.customColour.length === 4) {
+                    buffer.setCustomColour([mapColour.r, mapColour.g, mapColour.b, 1.0])
                 }
             }
         })
@@ -1107,9 +1100,7 @@ export class MoorhenMap implements moorhen.Map {
             h -= 360
         }
         const [r, g, b] = hsvToRgb(h, s, v)
-        this.rgba.mapColour = {
-            r, g, b
-        }
+        this.defaultMapColour = { r, g, b }
     }
 }
 </code></pre>
