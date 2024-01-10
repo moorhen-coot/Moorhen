@@ -12,7 +12,7 @@ import { addMolecule, emptyMolecules } from "../store/moleculesSlice";
 import { addMap, emptyMaps } from "../store/mapsSlice";
 import { batch } from "react-redux";
 import { setActiveMap } from "../store/generalStatesSlice";
-import { setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../store/mapContourSettingsSlice";
+import { setContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle, setNegativeMapColours, setPositiveMapColours } from "../store/mapContourSettingsSlice";
 
 export const getLigandSVG = async (commandCentre: React.RefObject<moorhen.CommandCentre>, imol: number, compId: string, isDark: boolean): Promise<string> => {
     const result = await commandCentre.current.cootCommand({
@@ -300,8 +300,10 @@ export async function loadSessionData(
         map.showOnLoad = storedMapData.showOnLoad
         map.suggestedRadius = storedMapData.radius
         map.suggestedContourLevel = storedMapData.contourLevel
-        map.rgba = storedMapData.rgba
         batch(() => {
+            dispatch( setMapColours({molNo: map.molNo, rgb: storedMapData.rgba.mapColour}) )
+            dispatch( setNegativeMapColours({molNo: map.molNo, rgb: storedMapData.rgba.negativeDiffColour}) )
+            dispatch( setPositiveMapColours({molNo: map.molNo, rgb: storedMapData.rgba.positiveDiffColour}) )
             dispatch( setMapRadius({molNo: map.molNo, radius: storedMapData.radius}) )
             dispatch( setContourLevel({molNo: map.molNo, contourLevel: storedMapData.contourLevel}) )
             dispatch( setMapAlpha({molNo: map.molNo, alpha: storedMapData.rgba.a}) )

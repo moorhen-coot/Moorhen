@@ -9,6 +9,9 @@ export const mapContourSettingsSlice = createSlice({
     mapRadii: [],
     mapStyles: [],
     mapAlpha: [],
+    mapColours: [],
+    negativeMapColours: [],
+    positiveMapColours: [],
     defaultMapSamplingRate: null,
     defaultMapLitLines: null,
     mapLineWidth: null,
@@ -56,12 +59,25 @@ export const mapContourSettingsSlice = createSlice({
     setDefaultMapSurface: (state, action: {payload: boolean, type: string}) => {
       return {...state, defaultMapSurface: action.payload}
     },
+    setMapColours: (state, action: {payload: { molNo: number; rgb: {r: number, g: number, b: number} }, type: string}) => {
+      state = { ...state, mapColours: [ ...state.mapColours.filter(item => item.molNo !== action.payload.molNo), action.payload ] }
+      return state
+    },
+    setNegativeMapColours: (state, action: {payload: { molNo: number; rgb: {r: number, g: number, b: number} }, type: string}) => {
+      state = { ...state, negativeMapColours: [ ...state.negativeMapColours.filter(item => item.molNo !== action.payload.molNo), action.payload ] }
+      return state
+    },
+    setPositiveMapColours: (state, action: {payload: { molNo: number; rgb: {r: number, g: number, b: number} }, type: string}) => {
+      state = { ...state, positiveMapColours: [ ...state.positiveMapColours.filter(item => item.molNo !== action.payload.molNo), action.payload ] }
+      return state
+    },
   },
 })
 
 export const {
   showMap, hideMap, setContourLevel, setMapRadius, setMapAlpha, setMapStyle, changeMapRadius,
-  setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, setDefaultMapSurface
+  setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, setDefaultMapSurface,
+  setMapColours, setNegativeMapColours, setPositiveMapColours
 } = mapContourSettingsSlice.actions
 
 export default mapContourSettingsSlice.reducer
