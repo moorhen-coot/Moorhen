@@ -2,6 +2,7 @@ import { readDataFile, guid, rgbToHsv, hsvToRgb } from "./MoorhenUtils"
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { libcootApi } from "../types/libcoot";
+import MoorhenReduxStore from "../store/MoorhenReduxStore";
 
 /**
  * Represents a map
@@ -29,12 +30,18 @@ import { libcootApi } from "../types/libcoot";
  * map.loadToCootFromMtzURL("/uri/to/file.mtz", "map-1", selectedColumns);
  * 
  * // Draw map and set view on map centre
- * map.makeCootLive();
+ * map.drawMapContour();
  * map.centreOnMap();
  * 
  * // Delete map
  * map.delete();
 */
+
+const _DEFAULT_CONTOUR_LEVEL = 0.8
+const _DEFAULT_RADIUS = 13
+const _DEFAULT_STYLE = "lines"
+const _DEFAULT_ALPHA = 1.0
+
 export class MoorhenMap implements moorhen.Map {
     
     type: string
@@ -46,8 +53,6 @@ export class MoorhenMap implements moorhen.Map {
     mapCentre: [number, number, number]
     suggestedContourLevel: number
     suggestedRadius: number
-    contourLevel: number
-    mapRadius: number
     webMGContour: boolean
     showOnLoad: boolean
     displayObjects: any
@@ -66,18 +71,14 @@ export class MoorhenMap implements moorhen.Map {
         negativeDiffColour: {r: number, g: number, b: number};
         a: number;
     }
-    style: "lines" | "lit-lines" | "solid";
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>) {
         this.type = 'map'
         this.name = "unnamed"
-        this.style = 'lines'
         this.isEM = false
         this.molNo = null
         this.commandCentre = commandCentre
         this.glRef = glRef
-        this.contourLevel = 0.8
-        this.mapRadius = 13
         this.webMGContour = false
         this.showOnLoad = true
         this.displayObjects = { Coot: [] }
@@ -171,7 +172,7 @@ export class MoorhenMap implements moorhen.Map {
         }, true) as moorhen.WorkerResponse<number>
 
         if (cootResponse.data.result.status === 'Completed') {
-            return this.doCootContour(...this.glRef.current.origin.map(coord => -coord) as [number, number, number], this.mapRadius, this.contourLevel);
+            return this.drawMapContour()
         }
 
         return Promise.reject(cootResponse.data.result.status)
@@ -358,17 +359,35 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     /**
-     * Contour the map and make it live
+     * Get map contour parameters from the redux store
+     * @returns {object} A description of map contour parameters as described in the redux store
      */
-    makeCootLive(): void {
-        this.doCootContour(...this.glRef.current.origin.map(coord => -coord) as [number, number, number], this.mapRadius, this.contourLevel)
-        this.glRef.current.drawScene()
+    getMapContourParams(): { mapRadius: number; contourLevel: number; mapAlpha: number; mapStyle: "lines" | "solid" | "lit-lines" } {
+        const state = MoorhenReduxStore.getState()
+        const radius = state.mapContourSettings.mapRadii.find(item => item.molNo === this.molNo)?.radius
+        const level = state.mapContourSettings.contourLevels.find(item => item.molNo === this.molNo)?.contourLevel
+        const alpha = state.mapContourSettings.mapAlpha.find(item => item.molNo === this.molNo)?.alpha
+        const style = state.mapContourSettings.mapStyles.find(item => item.molNo === this.molNo)?.style
+        return {
+            mapRadius: radius ? radius : _DEFAULT_RADIUS, 
+            contourLevel: level ? level : _DEFAULT_CONTOUR_LEVEL,
+            mapAlpha: alpha ? alpha : _DEFAULT_ALPHA,
+            mapStyle: style ? style : _DEFAULT_STYLE
+        }
+    }
+
+    /**
+     * Contour the map with parameters from the redux store
+     */
+    drawMapContour(): Promise<void> {
+        const { mapRadius, contourLevel, mapStyle } = this.getMapContourParams()
+        return this.doCootContour(...this.glRef.current.origin.map(coord => -coord) as [number, number, number], mapRadius, contourLevel, mapStyle)
     }
 
     /**
      * Hide the map
      */
-    makeCootUnlive(): void {
+    hideMapContour(): void {
         this.clearBuffersOfStyle('Coot')
         this.glRef.current.buildBuffers();
         this.glRef.current.drawScene();
@@ -527,12 +546,12 @@ export class MoorhenMap implements moorhen.Map {
      * @param {number} radius - Radius around the origin that will be drawn
      * @param {number} contourLevel - The map contour level
      */
-    async doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number): Promise<void> {
+    async doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number, style: "solid" | "lines" | "lit-lines"): Promise<void> {
 
         let returnType: string
-        if (this.style === 'solid') {
+        if (style === 'solid') {
             returnType = "mesh_perm"
-        } else if (this.style === 'lit-lines') {
+        } else if (style === 'lit-lines') {
             returnType = "lit_lines_mesh"
         } else {
             returnType = "lines_mesh"
@@ -785,8 +804,9 @@ export class MoorhenMap implements moorhen.Map {
         const reply = await this.getMap()
         const newMap = new MoorhenMap(this.commandCentre, this.glRef)
         await newMap.loadToCootFromMapData(reply.data.result.mapData, `Copy of ${this.name}`, this.isDifference)
-        newMap.suggestedContourLevel = this.contourLevel
-        newMap.suggestedRadius = this.mapRadius
+        const { mapRadius, contourLevel } = this.getMapContourParams()
+        newMap.suggestedContourLevel = contourLevel
+        newMap.suggestedRadius = mapRadius
         return newMap
     }
 

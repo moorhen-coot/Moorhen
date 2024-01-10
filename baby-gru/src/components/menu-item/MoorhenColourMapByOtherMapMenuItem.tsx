@@ -46,7 +46,7 @@ export const MoorhenColourMapByOtherMapMenuItem = (props: {
         }
 
         referenceMap.setOtherMapForColouring(null)
-        referenceMap.doCootContour(...props.glRef.current.origin.map(coord => -coord) as [number, number, number], referenceMap.mapRadius, referenceMap.contourLevel)
+        referenceMap.drawMapContour()
     }
 
     const handleApply = useCallback(async (_evt) => {
@@ -63,7 +63,7 @@ export const MoorhenColourMapByOtherMapMenuItem = (props: {
         }
 
         referenceMap.setOtherMapForColouring(colouringMap.molNo, min, max)
-        referenceMap.doCootContour(...props.glRef.current.origin.map(coord => -coord) as [number, number, number], referenceMap.mapRadius, referenceMap.contourLevel)
+        referenceMap.drawMapContour()
 
     }, [maps, props.glRef])
 

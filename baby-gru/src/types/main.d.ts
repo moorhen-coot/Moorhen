@@ -164,8 +164,9 @@ declare module 'moorhen' {
         centreOnMap(): Promise<void>;
         getSuggestedSettings(): Promise<void>;
         duplicate(): Promise<_moorhen.Map>;
-        makeCootUnlive(): void;
-        makeCootLive(): void;
+        hideMapContour(): void;
+        drawMapContour(): Promise<void>;
+        getMapContourParams(): { mapRadius: number; contourLevel: number; mapAlpha: number; mapStyle: "lines" | "solid" | "lit-lines" };
         setColour(r: number, g: number, b: number, redraw?: boolean): Promise<void> ;
         setDiffMapColour(type: 'positiveDiffColour' | 'negativeDiffColour', r: number, g: number, b: number, redraw?: boolean): Promise<void> ;
         fetchMapRmsd(): Promise<number>;
@@ -174,7 +175,7 @@ declare module 'moorhen' {
         replaceMapWithMtzFile(fileUrl: RequestInfo | URL, selectedColumns: _moorhen.selectedMtzColumns): Promise<void>;
         associateToReflectionData (selectedColumns: _moorhen.selectedMtzColumns, reflectionData: Uint8Array | ArrayBuffer): Promise<void>;
         delete(): Promise<void> 
-        doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number): Promise<void>;
+        doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number, style: "lines" | "lit-lines" | "solid"): Promise<void>;
         fetchReflectionData(): Promise<_moorhen.WorkerResponse<Uint8Array>>;
         getMap(): Promise<_moorhen.WorkerResponse>;
         loadToCootFromMtzURL(url: RequestInfo | URL, name: string, selectedColumns: _moorhen.selectedMtzColumns, options?: RequestInit): Promise<_moorhen.Map>;
@@ -191,12 +192,9 @@ declare module 'moorhen' {
         molNo: number;
         commandCentre: React.RefObject<_moorhen.CommandCentre>;
         glRef: React.RefObject<webGL.MGWebGL>;
-        contourLevel: number;
-        mapRadius: number;
         webMGContour: boolean;
         showOnLoad: boolean;
         displayObjects: any;
-        style: "lines" | "lit-lines" | "solid";
         isDifference: boolean;
         hasReflectionData: boolean;
         selectedColumns: _moorhen.selectedMtzColumns;

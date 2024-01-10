@@ -280,11 +280,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             
             await Promise.all(
                 maps.filter(map => connectedMolNo.uniqueMaps.includes(map.molNo)).map(map => {
-                    return map.doCootContour(
-                        ...glRef.current.origin.map(coord => -coord) as [number, number, number],
-                        map.mapRadius,
-                        map.contourLevel
-                    )
+                    return map.drawMapContour()
                 })
             )
             

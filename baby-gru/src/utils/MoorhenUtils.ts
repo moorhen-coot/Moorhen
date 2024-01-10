@@ -12,7 +12,7 @@ import { addMolecule, emptyMolecules } from "../store/moleculesSlice";
 import { addMap, emptyMaps } from "../store/mapsSlice";
 import { batch } from "react-redux";
 import { setActiveMap } from "../store/generalStatesSlice";
-import { setMapAlpha, setMapStyle } from "../store/mapContourSettingsSlice";
+import { setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../store/mapContourSettingsSlice";
 
 export const getLigandSVG = async (commandCentre: React.RefObject<moorhen.CommandCentre>, imol: number, compId: string, isDark: boolean): Promise<string> => {
     const result = await commandCentre.current.cootCommand({
@@ -289,20 +289,25 @@ export async function loadSessionData(
         })
     )
 
-    // Change props.molecules
+    // Add molecules
     newMolecules.forEach(molecule => {
         dispatch( addMolecule(molecule) )
     })
 
-    // Change props.maps
+    // Add maps
     newMaps.forEach((map, index) => {
         const storedMapData = sessionData.mapData[index]
         map.showOnLoad = storedMapData.showOnLoad
         map.suggestedRadius = storedMapData.radius
         map.suggestedContourLevel = storedMapData.contourLevel
         map.rgba = storedMapData.rgba
-        map.style = storedMapData.style
-        dispatch( addMap(map) )
+        batch(() => {
+            dispatch( setMapRadius({molNo: map.molNo, radius: storedMapData.radius}) )
+            dispatch( setContourLevel({molNo: map.molNo, contourLevel: storedMapData.contourLevel}) )
+            dispatch( setMapAlpha({molNo: map.molNo, alpha: storedMapData.rgba.a}) )
+            dispatch( setMapStyle({molNo: map.molNo, style: storedMapData.style}) )
+            dispatch( addMap(map) )                
+        })
     })
 
     // Set active map
@@ -354,15 +359,6 @@ export async function loadSessionData(
         document.dispatchEvent(connectedMapsEvent)
     }
     
-    // Set map visualisation details after map card is created using a timeout
-    setTimeout(() => {
-        newMaps.forEach((map, index) => {
-            const storedMapData = sessionData.mapData[index]
-            dispatch( setMapAlpha({molNo: map.molNo, alpha: storedMapData.rgba.a}) )
-            dispatch( setMapStyle({molNo: map.molNo, style: storedMapData.style}) )
-        })
-    }, 10);
-
     timeCapsuleRef.current.setBusy(false)
     return 0
 }
