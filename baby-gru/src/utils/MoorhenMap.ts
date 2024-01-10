@@ -358,11 +358,37 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     /**
-     * Contour the map and make it live
+     * Get map contour parameters from the redux store
+     * @returns {object} A description of map contour parameters as described in the redux store
      */
-    makeCootLive(): void {
-        this.doCootContour(...this.glRef.current.origin.map(coord => -coord) as [number, number, number], this.mapRadius, this.contourLevel)
-        this.glRef.current.drawScene()
+    getMapContourParams(): { mapRadius: number; contourLevel: number; mapAlpha: number; mapStyle: "lines" | "solid" | "lit-lines" } {
+        const state = MoorhenReduxStore.getState()
+        const radius = state.mapContourSettings.mapRadii.find(item => item.molNo === this.molNo)?.radius
+        const level = state.mapContourSettings.contourLevels.find(item => item.molNo === this.molNo)?.contourLevel
+        const alpha = state.mapContourSettings.mapAlpha.find(item => item.molNo === this.molNo)?.alpha
+        const style = state.mapContourSettings.mapStyles.find(item => item.molNo === this.molNo)?.style
+        console.log(
+            {
+                mapRadius: radius ? radius : _DEFAULT_RADIUS, 
+                contourLevel: level ? level : _DEFAULT_CONTOUR_LEVEL,
+                mapAlpha: alpha ? alpha : _DEFAULT_ALPHA,
+                mapStyle: style ? style : _DEFAULT_STYLE
+            }
+        )
+        return {
+            mapRadius: radius ? radius : _DEFAULT_RADIUS, 
+            contourLevel: level ? level : _DEFAULT_CONTOUR_LEVEL,
+            mapAlpha: alpha ? alpha : _DEFAULT_ALPHA,
+            mapStyle: style ? style : _DEFAULT_STYLE
+        }
+    }
+
+    /**
+     * Contour the map with parameters from the redux store
+     */
+    drawMapContour(): Promise<void> {
+        const { mapRadius, contourLevel } = this.getMapContourParams()
+        return this.doCootContour(...this.glRef.current.origin.map(coord => -coord) as [number, number, number], mapRadius, contourLevel)
     }
 
     /**
