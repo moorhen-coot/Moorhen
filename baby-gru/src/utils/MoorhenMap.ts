@@ -71,12 +71,10 @@ export class MoorhenMap implements moorhen.Map {
         negativeDiffColour: {r: number, g: number, b: number};
         a: number;
     }
-    style: "lines" | "lit-lines" | "solid";
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>) {
         this.type = 'map'
         this.name = "unnamed"
-        this.style = 'lines'
         this.isEM = false
         this.molNo = null
         this.commandCentre = commandCentre
@@ -390,8 +388,8 @@ export class MoorhenMap implements moorhen.Map {
      * Contour the map with parameters from the redux store
      */
     drawMapContour(): Promise<void> {
-        const { mapRadius, contourLevel } = this.getMapContourParams()
-        return this.doCootContour(...this.glRef.current.origin.map(coord => -coord) as [number, number, number], mapRadius, contourLevel)
+        const { mapRadius, contourLevel, mapStyle } = this.getMapContourParams()
+        return this.doCootContour(...this.glRef.current.origin.map(coord => -coord) as [number, number, number], mapRadius, contourLevel, mapStyle)
     }
 
     /**
@@ -556,12 +554,12 @@ export class MoorhenMap implements moorhen.Map {
      * @param {number} radius - Radius around the origin that will be drawn
      * @param {number} contourLevel - The map contour level
      */
-    async doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number): Promise<void> {
+    async doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number, style: "solid" | "lines" | "lit-lines"): Promise<void> {
 
         let returnType: string
-        if (this.style === 'solid') {
+        if (style === 'solid') {
             returnType = "mesh_perm"
-        } else if (this.style === 'lit-lines') {
+        } else if (style === 'lit-lines') {
             returnType = "lit_lines_mesh"
         } else {
             returnType = "lines_mesh"

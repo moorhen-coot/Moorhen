@@ -346,7 +346,6 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     }, [])
 
     useEffect(() => {
-        props.map.style = mapStyle
         if (mapIsVisible) {
             nextOrigin.current = props.glRef.current.origin.map(coord => -coord)
             isDirty.current = true

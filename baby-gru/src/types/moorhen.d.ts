@@ -382,7 +382,7 @@ export namespace moorhen {
         replaceMapWithMtzFile(fileUrl: RequestInfo | URL, selectedColumns: selectedMtzColumns): Promise<void>;
         associateToReflectionData (selectedColumns: selectedMtzColumns, reflectionData: Uint8Array | ArrayBuffer): Promise<void>;
         delete(): Promise<void> 
-        doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number): Promise<void>;
+        doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number, style: "lines" | "lit-lines" | "solid"): Promise<void>;
         fetchReflectionData(): Promise<WorkerResponse<Uint8Array>>;
         getMap(): Promise<WorkerResponse>;
         loadToCootFromMtzURL(url: RequestInfo | URL, name: string, selectedColumns: selectedMtzColumns, options?: RequestInit): Promise<Map>;
@@ -402,7 +402,6 @@ export namespace moorhen {
         webMGContour: boolean;
         showOnLoad: boolean;
         displayObjects: any;
-        style: "lines" | "lit-lines" | "solid";
         isDifference: boolean;
         hasReflectionData: boolean;
         selectedColumns: selectedMtzColumns;

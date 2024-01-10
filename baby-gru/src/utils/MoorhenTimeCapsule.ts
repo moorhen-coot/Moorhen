@@ -223,7 +223,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                 contourLevel: state.mapContourSettings.contourLevels.find(item => item.molNo === map.molNo)?.contourLevel,
                 radius: state.mapContourSettings.mapRadii.find(item => item.molNo === map.molNo)?.radius,
                 rgba: map.rgba,
-                style: map.style,
+                style: state.mapContourSettings.mapStyles.find(item => item.molNo === map.molNo)?.style,
                 isDifference: map.isDifference,
                 selectedColumns: map.selectedColumns,
                 hasReflectionData: map.hasReflectionData,

@@ -301,7 +301,6 @@ export async function loadSessionData(
         map.suggestedRadius = storedMapData.radius
         map.suggestedContourLevel = storedMapData.contourLevel
         map.rgba = storedMapData.rgba
-        map.style = storedMapData.style
         batch(() => {
             dispatch( setMapRadius({molNo: map.molNo, radius: storedMapData.radius}) )
             dispatch( setContourLevel({molNo: map.molNo, contourLevel: storedMapData.contourLevel}) )
