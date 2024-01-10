@@ -289,12 +289,12 @@ export async function loadSessionData(
         })
     )
 
-    // Change props.molecules
+    // Add molecules
     newMolecules.forEach(molecule => {
         dispatch( addMolecule(molecule) )
     })
 
-    // Change props.maps
+    // Add maps
     newMaps.forEach((map, index) => {
         const storedMapData = sessionData.mapData[index]
         map.showOnLoad = storedMapData.showOnLoad
