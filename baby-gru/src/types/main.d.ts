@@ -175,7 +175,7 @@ declare module 'moorhen' {
             positiveMapColour: {r: number; g: number; b: number}; 
             negativeMapColour: {r: number; g: number; b: number}
         };
-        setColour(redraw?: boolean): Promise<void> ;
+        fetchColourAndRedraw(): Promise<void> ;
         fetchDiffMapColourAndRedraw(type: 'positiveDiffColour' | 'negativeDiffColour'): Promise<void> ;
         fetchMapRmsd(): Promise<number>;
         fetchSuggestedLevel(): Promise<number>;

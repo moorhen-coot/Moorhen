@@ -157,7 +157,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const handleColorChange = (color: { r: number; g: number; b: number; }) => {
         try {
             dispatch( setMapColours({ molNo: props.map.molNo, rgb: color}) )
-            props.map.setColour()
+            props.map.fetchColourAndRedraw()
         }
         catch (err) {
             console.log('err', err)

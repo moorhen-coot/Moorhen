@@ -382,7 +382,7 @@ export namespace moorhen {
         };
         hideMapContour(): void;
         drawMapContour(): Promise<void>;
-        setColour(redraw?: boolean): Promise<void> ;
+        fetchColourAndRedraw(): Promise<void> ;
         fetchDiffMapColourAndRedraw(type: 'positiveDiffColour' | 'negativeDiffColour'): Promise<void> ;
         fetchMapRmsd(): Promise<number>;
         fetchSuggestedLevel(): Promise<number>;
