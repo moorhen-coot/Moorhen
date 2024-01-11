@@ -1488,15 +1488,16 @@ class TextCanvasTexture {
         this.bigTextureScalings   = []
     }
 
-    removeBigTextureTextImages(textObjects) {
+    removeBigTextureTextImages(textObjects,uuid=null) {
         textObjects.forEach(label => {
-            this.removeBigTextureTextImage(label)
+            this.removeBigTextureTextImage(label,uuid)
         })
         this.recreateBigTextureBuffers();
     }
 
-    removeBigTextureTextImage(textObject) {
-        const key = textObject.text+"_"+textObject.x+"_"+textObject.y+"_"+textObject.z+"_"+textObject.font
+    removeBigTextureTextImage(textObject,uuid=null) {
+        let key = textObject.text+"_"+textObject.x+"_"+textObject.y+"_"+textObject.z+"_"+textObject.font
+        if(uuid) key += "-"+uuid;
         if(key in this.refI) {
             this.bigTextureTexOrigins[this.refI[key]] = [];
             this.bigTextureTexOffsets[this.refI[key]] = [];
@@ -1506,8 +1507,10 @@ class TextCanvasTexture {
         }
     }
 
-    addBigTextureTextImage(textObject) {
-        const key = textObject.text+"_"+textObject.x+"_"+textObject.y+"_"+textObject.z+"_"+textObject.font
+    addBigTextureTextImage(textObject,uuid=null) {
+        let key = textObject.text+"_"+textObject.x+"_"+textObject.y+"_"+textObject.z+"_"+textObject.font
+        if(uuid) key += "-"+uuid;
+
         const fontSize = parseInt(textObject.font);
         const x = textObject.x;
         const y = textObject.y;
@@ -3083,10 +3086,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             const label = {font:self.glTextFont,x:x,y:y,z:z,text:t};
                             labels.push(label);
                         }
+                        const uuid =  guid();
                         labels.forEach(label => {
-                            this.labelsTextCanvasTexture.addBigTextureTextImage({font:label.font,text:label.text,x:label.x,y:label.y,z:label.z})
+                            this.labelsTextCanvasTexture.addBigTextureTextImage({font:label.font,text:label.text,x:label.x,y:label.y,z:label.z},uuid)
                         })
-                        theseBuffers.push({labels:labels});
+                        theseBuffers.push({labels:labels,uuid:uuid});
                         this.labelsTextCanvasTexture.recreateBigTextureBuffers();
                         this.buildBuffers();
                         continue
@@ -8631,6 +8635,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.disableVertexAttribArray(i);
 
         [this.measureTextCanvasTexture,this.labelsTextCanvasTexture].forEach((canvasTexture) => {
+
+            //console.log(canvasTexture)
+
             this.gl.activeTexture(this.gl.TEXTURE0);
             this.gl.bindTexture(this.gl.TEXTURE_2D, canvasTexture.bigTextTex);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);

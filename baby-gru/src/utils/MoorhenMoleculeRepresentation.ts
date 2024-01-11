@@ -158,7 +158,11 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                         this.glRef.current.displayBuffers = this.glRef.current.displayBuffers.filter(glBuffer => glBuffer !== buffer)
                     }
                 } else if ("labels" in buffer) {
-                    this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels)
+                    if(buffer.uuid){
+                        this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels,buffer.uuid)
+                    } else {
+                        this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels)
+                    }
                 }
             })
             this.glRef.current.buildBuffers()
@@ -171,7 +175,19 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         try {
             this.visible = true
             if (this.buffers && this.buffers.length > 0) {
-                this.buffers.forEach(buffer => buffer.visible = true)
+                this.buffers.forEach(buffer => {
+                    buffer.visible = true
+                    if ("labels" in buffer) {
+                        buffer.labels.forEach(label => {
+                            if(buffer.uuid){
+                                this.glRef.current.labelsTextCanvasTexture.addBigTextureTextImage(label,buffer.uuid)
+                            } else {
+                                this.glRef.current.labelsTextCanvasTexture.addBigTextureTextImage(label)
+                            }
+                        })
+                        this.glRef.current.labelsTextCanvasTexture.recreateBigTextureBuffers()
+                    }
+                })
                 this.glRef.current.drawScene()
             } else {
                 this.draw()
@@ -184,7 +200,17 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     hide() {
         try {
             this.visible = false
-            this.buffers.forEach(buffer => buffer.visible = false)
+            this.buffers.forEach(buffer => {
+                 buffer.visible = false
+                 if ("labels" in buffer) {
+                     if(buffer.uuid){
+                         this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels,buffer.uuid)
+                     } else {
+                         this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels)
+                     }
+                 }
+                 this.glRef.current.labelsTextCanvasTexture.recreateBigTextureBuffers()
+            })
             this.glRef.current.drawScene()
         } catch (err) {
             console.log(err)
