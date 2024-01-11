@@ -192,11 +192,37 @@ describe("Testing MoorhenMap", () => {
         expect(map.mapCentre[2]).toBeCloseTo(2.94, 1)
         expect(map.suggestedContourLevel).toBeCloseTo(0.56, 1)
         expect(map.suggestedMapWeight).toBeCloseTo(42.24, 1)
-        expect(map.rgba.mapColour.r).toBeCloseTo(0.30, 1)
-        expect(map.rgba.mapColour.g).toBeCloseTo(0.30, 1)
-        expect(map.rgba.mapColour.b).toBeCloseTo(0.69, 1)
         // No suggested radius for MX maps
         expect(map.suggestedRadius).toBe(null)
+    })
+
+    test("Test setDefaultColour", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
+        const glRef = {
+            current: new MockWebGL()
+        }
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+        
+        const map_1 = new MoorhenMap(commandCentre, glRef)
+        await map_1.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
+        expect(map_1.molNo).toBe(0)
+        expect(map_1.defaultMapColour.r).toBeCloseTo(0.30, 1)
+        expect(map_1.defaultMapColour.g).toBeCloseTo(0.30, 1)
+        expect(map_1.defaultMapColour.b).toBeCloseTo(0.69, 1)
+
+        const map_diff = new MoorhenMap(commandCentre, glRef)
+        await map_diff.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: true, useWeight: false, calcStructFact: false })
+        expect(map_diff.molNo).toBe(1)
+
+        const map_2 = new MoorhenMap(commandCentre, glRef)
+        await map_2.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
+        expect(map_2.molNo).toBe(2)
+        expect(map_2.defaultMapColour.r).toBeCloseTo(0.36, 1)
+        expect(map_2.defaultMapColour.g).toBeCloseTo(0.30, 1)
+        expect(map_2.defaultMapColour.b).toBeCloseTo(0.69, 1)
     })
 
     test("Test fetchMapRmsd", async () => {
