@@ -50,16 +50,11 @@ bool structure_is_ligand(const gemmi::Structure &Structure) {
     gemmi::remove_ligands_and_waters(structure_copy);
     gemmi::remove_hydrogens(structure_copy);
     structure_copy.remove_empty_chains();
-
-    auto models = structure_copy.models;
-    for (auto modelIndex = 0; (modelIndex < models.size()) && isLigand; modelIndex++) {
-        const auto model = models[modelIndex];
-        const auto chains = model.chains;
-        if (chains.size() > 0) {
+    for (const auto& model : structure_copy.models) {
+        if (model.chains.size() > 0) {
             isLigand = false;
         }
-    }
-    
+    }    
     return isLigand;
 }
 
@@ -84,9 +79,7 @@ struct LigandDictInfo {
 std::vector<LigandDictInfo> parse_ligand_dict_info(const std::string &data) {
     std::vector<LigandDictInfo> result;
     gemmi::cif::Document doc = gemmi::cif::read_string(data);
-    const auto blocks = doc.blocks;
-    for (auto blockIndex = 0; blockIndex < blocks.size(); blockIndex++) {
-        const auto block = blocks[blockIndex];
+    for (const auto& block : doc.blocks) {
         if (block.name != "comp_list") {
             LigandDictInfo ligandDict;
             const size_t pos = block.name.find("comp_");
@@ -114,21 +107,15 @@ std::vector<int> get_nearest_image_pbc_shift(const gemmi::NearestImage &ni){
 
 int count_residues_in_selection(const gemmi::Structure &Structure, const gemmi::Selection &Selection) {
     int result = 0;
-    auto models = Structure.models;
-    for (auto modelIndex = 0; modelIndex < models.size(); modelIndex++) {
-        const auto model = models[modelIndex];
+    for (const auto& model : Structure.models) {
         if (!Selection.matches(model)) {
             continue;
         }
-        const auto chains = model.chains;
-        for (auto chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
-            auto chain = chains[chainIndex];
+        for (const auto& chain : model.chains) {
             if (!Selection.matches(chain)) {
                 continue;
             }
-            const auto residues = chain.residues;
-            for (auto residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
-                const auto residue = residues[residueIndex];
+            for (const auto& residue : chain.residues) {
                 if (Selection.matches(residue)) {
                     result += 1;
                 }
@@ -141,15 +128,13 @@ int count_residues_in_selection(const gemmi::Structure &Structure, const gemmi::
 gemmi::Structure remove_selected_residues(const gemmi::Structure &Structure, const gemmi::Selection &Selection) {
     auto new_structure = Structure;
 
-    auto models = Structure.models;
-    for (auto modelIndex = 0; modelIndex < models.size(); modelIndex++) {
-        const auto model = models[modelIndex];
+    for (auto modelIndex = 0; modelIndex < Structure.models.size(); modelIndex++) {
+        const auto& model = Structure.models[modelIndex];
         if (!Selection.matches(model)) {
             continue;
         }
-        const auto chains = model.chains;
-        for (auto chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
-            auto chain = chains[chainIndex];
+        for (auto chainIndex = 0; chainIndex < Structure.models[modelIndex].chains.size(); chainIndex++) {
+            const auto& chain = Structure.models[modelIndex].chains[chainIndex];
             if (!Selection.matches(chain)) {
                 continue;
             }
@@ -314,18 +299,12 @@ std::vector<SequenceEntry> get_sequence_info(const gemmi::Structure &Structure, 
 
     gemmi::remove_ligands_and_waters(structure_copy);
     structure_copy.remove_empty_chains();
-    const auto models = structure_copy.models;
-    for (auto modelIndex = 0; modelIndex < models.size(); modelIndex++) {
-        const auto model = models[modelIndex];
-        const auto chains = model.chains;
-        for (auto chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
+    for (const auto& model : structure_copy.models) {
+        for (const auto& chain : model.chains) {
             std::vector<SequenceResInfo> currentSequence;
-            auto chain = chains[chainIndex];
-            const auto residues = chain.residues;
             const auto polymerType = gemmi::check_polymer_type(chain.get_polymer());
-            for (auto residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
+            for (const auto& residue : chain.residues) {
                 SequenceResInfo seq_entry;
-                const auto residue = residues[residueIndex];
                 seq_entry.resNum = std::stoi(residue.seqid.str());
                 seq_entry.cid = "//"+chain.name+"/"+residue.seqid.str()+"("+residue.name+")/";
                 if(polymerType==gemmi::PolymerType::Dna||polymerType==gemmi::PolymerType::Rna||polymerType==gemmi::PolymerType::DnaRnaHybrid){ // More than just nucleic and peptide ...
@@ -383,8 +362,7 @@ struct AtomInfo {
 
 bool selection_vector_matches_model(const std::vector<gemmi::Selection> &selections_vec, const gemmi::Model &model) {
     bool is_match = false;
-    for (int selectionIndex = 0; selectionIndex < selections_vec.size(); selectionIndex++) {
-        gemmi::Selection selection = selections_vec[selectionIndex];
+    for (const auto& selection : selections_vec) {
         if (selection.matches(model)) {
             is_match = true;
             break;
@@ -395,8 +373,7 @@ bool selection_vector_matches_model(const std::vector<gemmi::Selection> &selecti
 
 bool selection_vector_matches_chain(const std::vector<gemmi::Selection> &selections_vec, const gemmi::Chain &chain) {
     bool is_match = false;
-    for (int selectionIndex = 0; selectionIndex < selections_vec.size(); selectionIndex++) {
-        gemmi::Selection selection = selections_vec[selectionIndex];
+    for (const auto& selection : selections_vec) {
         if (selection.matches(chain)) {
             is_match = true;
             break;
@@ -407,8 +384,7 @@ bool selection_vector_matches_chain(const std::vector<gemmi::Selection> &selecti
 
 bool selection_vector_matches_residue(const std::vector<gemmi::Selection> &selections_vec, const gemmi::Residue &residue) {
     bool is_match = false;
-    for (int selectionIndex = 0; selectionIndex < selections_vec.size(); selectionIndex++) {
-        gemmi::Selection selection = selections_vec[selectionIndex];
+    for (const auto& selection : selections_vec) {
         if (selection.matches(residue)) {
             is_match = true;
             break;
@@ -419,8 +395,7 @@ bool selection_vector_matches_residue(const std::vector<gemmi::Selection> &selec
 
 bool selection_vector_matches_atom(const std::vector<gemmi::Selection> &selections_vec, const gemmi::Atom &atom) {
     bool is_match = false;
-    for (int selectionIndex = 0; selectionIndex < selections_vec.size(); selectionIndex++) {
-        gemmi::Selection selection = selections_vec[selectionIndex];
+    for (const auto& selection : selections_vec) {
         if (selection.matches(atom)) {
             is_match = true;
             break;
@@ -475,35 +450,27 @@ std::vector<std::string> get_non_selected_cids(const gemmi::Structure &Structure
     std::vector<std::string> result;
     
     auto structure_copy = Structure;
-    for (int i_selection = 0; i_selection < selections_vec.size(); i_selection++) {
-        auto selection = selections_vec[i_selection];
+    for (const auto& selection : selections_vec) {
         structure_copy = remove_selected_residues(structure_copy, selection);
     }
 
-    const auto models = structure_copy.models;
-    for (int modelIndex = 0; modelIndex < models.size(); modelIndex++) {
-        const auto model = models[modelIndex];
+    for (const auto& model : structure_copy.models) {
         if (!selection_vector_matches_model(selections_vec, model)) {
             result.push_back("/" + model.name + "//");
             continue;
         }
-        const auto chains = model.chains;
-        for (int chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
-            const auto chain = chains[chainIndex];
+        for (const auto& chain : model.chains) {
             if (!selection_vector_matches_chain(selections_vec, chain)) {
                 result.push_back("/" + model.name + "/" + chain.name + "/");
                 continue;
             }
-            const auto residues = chain.residues;
             std::vector<int> resNums;
-            for (int residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
-                const auto residue = residues[residueIndex];
+            for (const auto& residue : chain.residues) {
                 resNums.push_back(*residue.seqid.num);
             }
             if (resNums.size() > 0) {
                 auto residue_ranges = get_consecutive_ranges_gemmi(resNums);
-                for (int i_range = 0; i_range < residue_ranges.size(); i_range++) {
-                    auto i_residue_range = residue_ranges[i_range];
+                for (const auto& i_residue_range : residue_ranges) {
                     result.push_back("/" + model.name + "/" + chain.name + "/" + std::to_string(i_residue_range.first) + "-" + std::to_string(i_residue_range.second));
                 }
             }
@@ -516,23 +483,15 @@ std::vector<std::string> get_non_selected_cids(const gemmi::Structure &Structure
 std::vector<ResidueBFactorInfo> get_structure_bfactors(const gemmi::Structure &Structure) {
     std::vector<float> bfactor_vec;
     std::vector<std::string> cid_vec;
-    const auto models = Structure.models;
-    for (int modelIndex = 0; modelIndex < models.size(); modelIndex++) {
-        const auto model = models[modelIndex];
-        const auto chains = model.chains;
-        for (int chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
-            const auto chain = chains[chainIndex];
-            const auto residues = chain.residues;
-            for (int residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
-                const auto residue = residues[residueIndex];
+    for (const auto& model : Structure.models) {
+        for (const auto& chain : model.chains) {
+            for (const auto& residue : chain.residues) {
                 cid_vec.push_back("/" + model.name + "/" + chain.name + "/" + residue.seqid.str() +"(" + residue.name + ")/*");
                 float bFactor = 0.0;
-                const auto atoms = residue.atoms;
-                for (int atomIndex = 0; atomIndex < atoms.size(); atomIndex++) {
-                    const auto atom = atoms[atomIndex];
+                for (const auto& atom : residue.atoms) {
                     bFactor += atom.b_iso;
                 }
-                bFactor /= atoms.size();
+                bFactor /= residue.atoms.size();
                 bfactor_vec.push_back(bFactor);
             }
         }
@@ -557,16 +516,10 @@ std::vector<ResidueBFactorInfo> get_structure_bfactors(const gemmi::Structure &S
 
 std::vector<LigandInfo> get_ligand_info_for_structure(const gemmi::Structure &Structure) {
     std::vector<LigandInfo> ligand_info_vec;
-    auto structure_copy = Structure;
-    auto models = structure_copy.models;
-    for (int modelIndex = 0; modelIndex < models.size(); modelIndex++) {
-        const auto model = models[modelIndex];
-        const auto chains = model.chains;
-        for (int chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
-            auto chain = chains[chainIndex];
+    for (const auto& model : Structure.models) {
+        for (const auto& chain : model.chains) {
             const auto ligands = chain.get_ligands();
-            for (int ligandIndex = 0; ligandIndex < ligands.size(); ligandIndex++) {
-                auto ligand = ligands[ligandIndex];
+            for (const auto& ligand : ligands) {
                 LigandInfo ligand_info;
                 ligand_info.resName = ligand.name;
                 ligand_info.resNum = ligand.seqid.str();
@@ -587,16 +540,14 @@ std::vector<std::string> parse_multi_cids(const gemmi::Structure &Structure, con
     auto structure_copy = Structure;
     gemmi::remove_ligands_and_waters(structure_copy);
     structure_copy.remove_empty_chains();
-    const auto model = structure_copy.first_model();
-    const auto chains = model.chains;
+    const auto& model = structure_copy.first_model();
 
-    for (int i = 0; i < selections_vec.size(); i++) {
-        const gemmi::Selection selection = selections_vec[i];
+    for (const auto& selection : selections_vec) {
             
         std::vector<std::string> chain_id_vec;
         if (selection.chain_ids.all) {
-            for (auto chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
-                chain_id_vec.push_back(chains[chainIndex].name);
+            for (const auto& chain : model.chains) {
+                chain_id_vec.push_back(chain.name);
             }
         } else {
             chain_id_vec.push_back(selection.chain_ids.str());
@@ -613,7 +564,7 @@ std::vector<std::string> parse_multi_cids(const gemmi::Structure &Structure, con
                 }
             } else {
                 const auto chain = model.find_chain(chain_id_vec[chainIndex]);
-                const auto residues = chain->residues;
+                const auto& residues = chain->residues;
                 for (int residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
                     const auto residue = residues[residueIndex];
                     result.push_back("/" + model.name + "/" + chain->name + "/" + residue.seqid.str() + "/*");
@@ -633,26 +584,16 @@ std::vector<AtomInfo> get_atom_info_for_selection(const gemmi::Structure &Struct
     std::vector<AtomInfo> atom_info_vec;
 
     auto _structure = Structure;
-    for (int i_excl_selection = 0; i_excl_selection < excluded_selections_vec.size(); i_excl_selection++) {
-        auto selection = excluded_selections_vec[i_excl_selection];
+    for (const auto& selection : excluded_selections_vec) {
         _structure = remove_selected_residues(_structure, selection);
     }
 
-    for (int i_selection = 0; i_selection < selections_vec.size(); i_selection++) {
-        auto selection = selections_vec[i_selection];
+    for (const auto& selection : selections_vec) {
         auto structure_copy = remove_non_selected_atoms(_structure, selection);
-        auto models = structure_copy.models;
-        for (int modelIndex = 0; modelIndex < models.size(); modelIndex++) {
-            const auto model = models[modelIndex];
-            const auto chains = model.chains;
-            for (int chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
-                auto chain = chains[chainIndex];
-                const auto residues = chain.residues;
-                for (int residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
-                    const auto residue = residues[residueIndex];
-                    const auto atoms = residue.atoms;
-                    for (int atomIndex = 0; atomIndex < atoms.size(); atomIndex++) {
-                        const auto atom = atoms[atomIndex];
+        for (const auto& model : structure_copy.models) {
+            for (const auto& chain : model.chains) {
+                for (const auto& residue : chain.residues) {
+                    for (const auto& atom : residue.atoms) {
                         AtomInfo atom_info;
                         atom_info.x = atom.pos.x;
                         atom_info.y = atom.pos.y;
