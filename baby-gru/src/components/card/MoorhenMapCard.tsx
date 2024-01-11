@@ -137,7 +137,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const handlePositiveMapColorChange = (color: { r: number; g: number; b: number; }) => {
         try {
             dispatch( setPositiveMapColours({ molNo: props.map.molNo, rgb: color}) )
-            props.map.setDiffMapColour('positiveDiffColour')
+            props.map.fetchDiffMapColourAndRedraw('positiveDiffColour')
         }
         catch (err) {
             console.log('err', err)
@@ -147,7 +147,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const handleNegativeMapColorChange = (color: { r: number; g: number; b: number; }) => {
         try {
             dispatch( setNegativeMapColours({ molNo: props.map.molNo, rgb: color}) )
-            props.map.setDiffMapColour('negativeDiffColour')
+            props.map.fetchDiffMapColourAndRedraw('negativeDiffColour')
         }
         catch (err) {
             console.log('err', err)

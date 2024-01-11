@@ -599,14 +599,13 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     /**
-     * Set the colours for a difference map using values from redux store
+     * Fetch the colours for a difference map using values from redux store and redraw the map
      * @param {'positiveDiffColour' | 'negativeDiffColour'} type - Indicates whether the negative or positive colours will be set
-     * @param {boolean} [redraw=true] - Indicates whether the map needs to be redrawn after setting the new colours
      * @returns {Promise<void>}
      */
-    async setDiffMapColour(type: 'positiveDiffColour' | 'negativeDiffColour', redraw: boolean = true): Promise<void> {
+    async fetchDiffMapColourAndRedraw(type: 'positiveDiffColour' | 'negativeDiffColour'): Promise<void> {
         if (!this.isDifference) {
-            console.error('Cannot use moorhen.Map.setDiffMapColour to change non-diff map colour. Use moorhen.Map.setColour instead...')
+            console.error('Cannot use moorhen.Map.fetchDiffMapColourAndRedraw to change non-diff map colour. Use moorhen.Map.setColour instead...')
             return
         }
         
@@ -643,9 +642,7 @@ export class MoorhenMap implements moorhen.Map {
             this.glRef.current.buildBuffers();
         }
 
-        if (redraw) {
-            this.glRef.current.drawScene();
-        }
+        this.glRef.current.drawScene();
     }
 
     /**
@@ -655,7 +652,7 @@ export class MoorhenMap implements moorhen.Map {
      */
     async setColour(redraw: boolean = true): Promise<void> {
         if (this.isDifference) {
-            console.error('Cannot use moorhen.Map.setColour to change difference map colour. Use moorhen.Map.setDiffMapColour instead...')
+            console.error('Cannot use moorhen.Map.setColour to change difference map colour. Use moorhen.Map.fetchDiffMapColourAndRedraw instead...')
             return
         }
 
