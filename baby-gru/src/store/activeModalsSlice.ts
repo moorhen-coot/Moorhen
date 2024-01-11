@@ -11,9 +11,39 @@ export const activeModalsSlice = createSlice({
     showScriptingModal: false,
     showControlsModal: false,
     showFitLigandModal: false,
+    showRamaPlotModal: false,
+    showDiffMapPeaksModal: false,
+    showValidationPlotModal: false,
+    showLigandValidationModal: false,
+    showPepFlipsValidationModal: false,
+    showFillPartialResValidationModal: false,
+    showUnmodelledBlobsModal: false,
+    showMmrrccModal: false,
+    showWaterValidationModal: false,
     focusHierarchy: [],
   },
   reducers: {
+    setShowWaterValidationModal: (state, action: { payload: boolean, type: string }) => {
+      return { ...state, showWaterValidationModal: action.payload }
+    },
+    setShowMmrrccModal: (state, action: { payload: boolean, type: string }) => {
+      return { ...state, showMmrrccModal: action.payload }
+    },
+    setShowUnmodelledBlobsModal: (state, action: { payload: boolean, type: string }) => {
+      return { ...state, showUnmodelledBlobsModal: action.payload }
+    },
+    setShowValidationPlotModal: (state, action: { payload: boolean, type: string }) => {
+      return { ...state, showValidationPlotModal: action.payload }
+    },
+    setShowLigandValidationModal: (state, action: { payload: boolean, type: string }) => {
+      return { ...state, showLigandValidationModal: action.payload }
+    },
+    setShowPepFlipsValidationModal: (state, action: { payload: boolean, type: string }) => {
+      return { ...state, showPepFlipsValidationModal: action.payload }
+    },
+    setShowFillPartialResValidationModal: (state, action: { payload: boolean, type: string }) => {
+      return { ...state, showFillPartialResValidationModal: action.payload }
+    },
     focusOnModal: (state, action: { payload: string, type: string }) => {
       return { ...state, focusHierarchy: [action.payload, ...state.focusHierarchy.filter(item => item !== action.payload)] }
     },
@@ -44,13 +74,22 @@ export const activeModalsSlice = createSlice({
     setShowControlsModal: (state, action: { payload: boolean, type: string }) => {
       return { ...state, showControlsModal: action.payload }
     },
+    setShowRamaPlotModal: (state, action: { payload: boolean, type: string }) => {
+      return { ...state, showRamaPlotModal: action.payload }
+    },
+    setShowDiffMapPeaksModal: (state, action: { payload: boolean, type: string }) => {
+      return { ...state, showDiffMapPeaksModal: action.payload }
+    },
   }
 })
 
 export const {
   setShowModelsModal, setShowMapsModal, setShowCreateAcedrgLinkModal, 
   setShowQuerySequenceModal, setShowScriptingModal, setShowControlsModal,
-  focusOnModal, unFocusModal, setShowValidationModal, setShowFitLigandModal
+  focusOnModal, unFocusModal, setShowValidationModal, setShowFitLigandModal,
+  setShowRamaPlotModal, setShowDiffMapPeaksModal, setShowFillPartialResValidationModal,
+  setShowLigandValidationModal, setShowPepFlipsValidationModal, setShowMmrrccModal,
+  setShowWaterValidationModal, setShowValidationPlotModal, setShowUnmodelledBlobsModal
 } = activeModalsSlice.actions
 
 export default activeModalsSlice.reducer
