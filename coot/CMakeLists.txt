@@ -79,6 +79,7 @@ ${coot_src}/coot-utils/atom-selection-container.cc
 ${coot_src}/coot-utils/dictionary-atom-types.cc
 ${coot_src}/coot-utils/cod-db-access.cc
 ${coot_src}/coot-utils/diff-diff-map-peaks.cc
+${coot_src}/coot-utils/gltf-export.cc
 ${coot_src}/src/coot-hydrogens.cc
 ${coot_src}/src/cfc.cc
 ${coot_src}/MoleculesToTriangles/CXXSurface/CXXBall.cpp
@@ -149,6 +150,7 @@ ${coot_src}/MoleculesToTriangles/CXXClasses/Vector2.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/Vector3.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/VertexColorNormalPrimitive.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/lfit.c
+${coot_src}/api/instancing.cc
 ${coot_src}/api/rigid-body-fit.cc
 ${coot_src}/api/molecules_container_bucca_ml_growing.cc
 ${coot_src}/api/molecules_container_mmrrcc.cc
