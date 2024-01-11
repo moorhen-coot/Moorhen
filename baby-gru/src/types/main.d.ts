@@ -163,7 +163,7 @@ declare module 'moorhen' {
         fetchMapAlphaAndRedraw(): Promise<void>;
         centreOnMap(): Promise<void>;
         getSuggestedSettings(): Promise<void>;
-        duplicate(): Promise<_moorhen.Map>;
+        copyMap(): Promise<_moorhen.Map>;
         hideMapContour(): void;
         drawMapContour(): Promise<void>;
         getMapContourParams(): { 

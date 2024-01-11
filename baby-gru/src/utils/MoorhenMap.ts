@@ -785,7 +785,7 @@ export class MoorhenMap implements moorhen.Map {
      * Create a copy of the map
      * @returns {Promise<moorhen.Map>} New map instance
      */
-    async duplicate(): Promise<moorhen.Map> {
+    async copyMap(): Promise<moorhen.Map> {
         const reply = await this.getMap()
         const newMap = new MoorhenMap(this.commandCentre, this.glRef)
         await newMap.loadToCootFromMapData(reply.data.result.mapData, `Copy of ${this.name}`, this.isDifference)

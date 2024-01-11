@@ -370,7 +370,7 @@ export namespace moorhen {
         fetchMapAlphaAndRedraw(): Promise<void>;
         centreOnMap(): Promise<void>;
         getSuggestedSettings(): Promise<void>;
-        duplicate(): Promise<Map>;
+        copyMap(): Promise<Map>;
         getMapContourParams(): { 
             mapRadius: number; 
             contourLevel: number; 
