@@ -175,9 +175,9 @@ export const MoorhenMMRRCCPlot = (props: {
         const tooltipFontSize = 12
         const axisLabelsFontSize = convertViewtoPx(70, height) / 60
         
-        const containerBody = document.getElementById('myContainerBody')
+        const containerBody = document.getElementById('mmrrcc-container-body')
         containerBody.style.width = (labels.length*barWidth)+ "px";
-        const canvas = document.getElementById("myChart") as HTMLCanvasElement
+        const canvas = document.getElementById("mmrrcc-chart-canvas") as HTMLCanvasElement
         let ctx = canvas.getContext("2d")
 
         let scales = {
@@ -316,14 +316,14 @@ export const MoorhenMMRRCCPlot = (props: {
                     </Form.Group>
                 </Form>
                 <div ref={chartCardRef} className="validation-plot-div" >
-                    <div ref={chartBoxRef} style={{height: '100%'}} className="chartBox" id="myChartBox">
+                    <div ref={chartBoxRef} style={{height: '100%'}} className="chartBox" id="mmrrcc-chart-box">
                         <div ref={containerRef} className="validation-plot-container" style={{height: '100%', overflowX: 'auto'}}>
-                            <div ref={containerBodyRef} style={{height: '100%', minHeight: convertViewtoPx(45, height)}} className="containerBody" id="myContainerBody">
-                                <canvas ref={canvasRef} id="myChart"></canvas>
+                            <div ref={containerBodyRef} style={{height: '100%', minHeight: convertViewtoPx(45, height)}} className="containerBody" id="mmrrcc-container-body">
+                                <canvas ref={canvasRef} id="mmrrcc-chart-canvas"></canvas>
                             </div>
                         </div>
                     </div>
-                <canvas id="myChartAxis"></canvas>
+                <canvas id="mmrrcc-chart-axis"></canvas>
                 </div> 
             </Fragment>
 

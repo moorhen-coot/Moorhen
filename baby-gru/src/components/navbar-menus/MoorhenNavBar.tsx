@@ -9,6 +9,7 @@ import { MoorhenHistoryMenu } from './MoorhenHistoryMenu';
 import { MoorhenEditMenu } from './MoorhenEditMenu';
 import { MoorhenDevMenu } from './MoorhenDevMenu';
 import { MoorhenCryoMenu } from './MoorhenCryoMenu';
+import { MoorhenValidationMenu } from './MoorhenValidationMenu'
 import { MoorhenCalculateMenu } from './MoorhenCalculateMenu';
 import { ClickAwayListener, Fab, MenuItem, IconButton, MenuList, Popper, Grow } from "@mui/material";
 import { convertRemToPx, convertViewtoPx } from '../../utils/MoorhenUtils';
@@ -19,7 +20,7 @@ import {
  } from '@mui/icons-material';
 import { moorhen } from '../../types/moorhen';
 import { useDispatch, useSelector } from 'react-redux';
-import { setShowMapsModal, setShowModelsModal, setShowValidationModal } from '../../store/activeModalsSlice';
+import { setShowMapsModal, setShowModelsModal } from '../../store/activeModalsSlice';
 
 export interface MoorhenNavBarExtendedControlsInterface extends moorhen.CollectedProps {
     dropdownId: string;
@@ -127,10 +128,6 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
                 dispatch(setShowMapsModal(true))
                 setNavBarActiveMenu('-1')
                 break
-            case "Validation":
-                dispatch(setShowValidationModal(true))
-                setNavBarActiveMenu('-1')
-                break
             default:
                 const selectedExtraNavBarModal = props.extraNavBarModals.find(modal => modal.name === navBarActiveMenu)
                 if (selectedExtraNavBarModal) {
@@ -218,6 +215,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
                         { navBarActiveMenu === 'Edit' && <MoorhenEditMenu dropdownId="Edit" {...collectedProps} /> }
                         { navBarActiveMenu === 'Calculate' && <MoorhenCalculateMenu dropdownId="Calculate" {...collectedProps} /> }
                         { navBarActiveMenu === 'Ligand' && <MoorhenLigandMenu dropdownId="Ligand" {...collectedProps} /> }
+                        { navBarActiveMenu === 'Validation' && <MoorhenValidationMenu dropdownId="Validation" {...collectedProps} /> }
                         { navBarActiveMenu === 'View' && <MoorhenViewMenu dropdownId="View" {...collectedProps} /> }
                         { navBarActiveMenu === 'Preferences' && <MoorhenPreferencesMenu dropdownId="Preferences" {...collectedProps} /> }
                         { navBarActiveMenu === 'History' && <MoorhenHistoryMenu dropdownId="History" {...collectedProps} /> }

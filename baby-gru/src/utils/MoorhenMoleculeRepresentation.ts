@@ -158,11 +158,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                         this.glRef.current.displayBuffers = this.glRef.current.displayBuffers.filter(glBuffer => glBuffer !== buffer)
                     }
                 } else if ("labels" in buffer) {
-                    if(buffer.uuid){
-                        this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels,buffer.uuid)
-                    } else {
-                        this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels)
-                    }
+                    this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels, buffer.uuid)
                 }
             })
             this.glRef.current.buildBuffers()
@@ -179,11 +175,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                     buffer.visible = true
                     if ("labels" in buffer) {
                         buffer.labels.forEach(label => {
-                            if(buffer.uuid){
-                                this.glRef.current.labelsTextCanvasTexture.addBigTextureTextImage(label,buffer.uuid)
-                            } else {
-                                this.glRef.current.labelsTextCanvasTexture.addBigTextureTextImage(label)
-                            }
+                            this.glRef.current.labelsTextCanvasTexture.addBigTextureTextImage(label, buffer.uuid)
                         })
                         this.glRef.current.labelsTextCanvasTexture.recreateBigTextureBuffers()
                     }
@@ -203,11 +195,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             this.buffers.forEach(buffer => {
                  buffer.visible = false
                  if ("labels" in buffer) {
-                     if(buffer.uuid){
-                         this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels,buffer.uuid)
-                     } else {
-                         this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels)
-                     }
+                    this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels, buffer.uuid)
                  }
                  this.glRef.current.labelsTextCanvasTexture.recreateBigTextureBuffers()
             })

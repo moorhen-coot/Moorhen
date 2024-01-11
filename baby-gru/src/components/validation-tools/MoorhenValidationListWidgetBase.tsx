@@ -31,7 +31,6 @@ export const MoorhenValidationListWidgetBase = (props: {
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const maps = useSelector((state: moorhen.State) => state.maps)
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
     const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedModel(parseInt(evt.target.value))
@@ -105,7 +104,7 @@ export const MoorhenValidationListWidgetBase = (props: {
                     </Form.Group>
                 </Form>
                 <div style={{overflowY: 'auto', height:'100%', paddingTop:'0.5rem', paddingLeft:'0.25rem', paddingRight:'0.25rem'}} >
-                    {cardList}
+                    {cardList.length > 0 ? cardList : <b>Nothing to show here...</b>}
                 </div>
             </Fragment>
 }

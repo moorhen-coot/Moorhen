@@ -4,7 +4,6 @@ import { Chart, registerables } from 'chart.js';
 import { MoorhenChainSelect } from '../select/MoorhenChainSelect'
 import { MoorhenMapSelect } from '../select/MoorhenMapSelect'
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
-import { gemmi } from "../../types/gemmi";
 import annotationPlugin from 'chartjs-plugin-annotation'
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
@@ -24,6 +23,7 @@ type ValidationChartProps = {
     extraControlForm?: JSX.Element;
     extraControlFormValue?: any;
     enableChainSelect?: boolean;
+    chartId: string;
 }
 
 export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChartProps>((props, chartRef) => {
@@ -97,7 +97,7 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
             return;
         }
         
-        const canvas = document.getElementById('myChart') as HTMLCanvasElement;
+        const canvas = document.getElementById(`${props.chartId}-canvas`) as HTMLCanvasElement;
         const ctx = canvas.getContext("2d")
         const chartData = props.getChart(selectedModel, selectedMap, props.enableChainSelect ? chainSelectRef.current.value : null, plotData)
         if (!chartData) {
@@ -131,10 +131,10 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
                     </Form.Group>
                 </Form>
                 <div className="validation-plot-div" >
-                    <div style={{height: '100%'}} className="chartBox" id="myChartBox">
-                        <div id="myValidationPlotContainer" className="validation-plot-container" style={{height: '100%', overflowX: 'auto'}}>
-                            <div style={{height: '100%', minHeight: convertViewtoPx(45, height)}} className="containerBody" id="myContainerBody">
-                                <canvas id="myChart"></canvas>
+                    <div style={{height: '100%'}} className="chartBox" id={`${props.chartId}-box`}>
+                        <div id={`${props.chartId}-container`} className="validation-plot-container" style={{height: '100%', overflowX: 'auto'}}>
+                            <div style={{height: '100%', minHeight: convertViewtoPx(45, height)}} className="containerBody" id={`${props.chartId}-container-body`}>
+                                <canvas id={`${props.chartId}-canvas`}></canvas>
                             </div>
                         </div>
                     </div>

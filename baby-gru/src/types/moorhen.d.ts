@@ -822,11 +822,19 @@ export namespace moorhen {
             showModelsModal: boolean;
             showMapsModal: boolean;
             showCreateAcedrgLinkModal: boolean;
-            showValidationModal: boolean;
             showQuerySequenceModal: boolean;
             showScriptingModal: boolean;
             showControlsModal: boolean;
             showFitLigandModal: boolean;
+            showRamaPlotModal: boolean;
+            showDiffMapPeaksModal: boolean;
+            showValidationPlotModal: boolean;
+            showLigandValidationModal: boolean;
+            showPepFlipsValidationModal: boolean;
+            showFillPartialResValidationModal: boolean;
+            showUnmodelledBlobsModal: boolean;
+            showMmrrccModal: boolean;
+            showWaterValidationModal: boolean;
             focusHierarchy: string[];
         };
         mapContourSettings: {
