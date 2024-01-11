@@ -822,7 +822,6 @@ export namespace moorhen {
             showModelsModal: boolean;
             showMapsModal: boolean;
             showCreateAcedrgLinkModal: boolean;
-            showValidationModal: boolean;
             showQuerySequenceModal: boolean;
             showScriptingModal: boolean;
             showControlsModal: boolean;

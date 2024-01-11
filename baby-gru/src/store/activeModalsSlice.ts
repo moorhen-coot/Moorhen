@@ -6,7 +6,6 @@ export const activeModalsSlice = createSlice({
     showModelsModal: false,
     showMapsModal: false,
     showCreateAcedrgLinkModal: false,
-    showValidationModal: false,
     showQuerySequenceModal: false,
     showScriptingModal: false,
     showControlsModal: false,
@@ -62,9 +61,6 @@ export const activeModalsSlice = createSlice({
     setShowCreateAcedrgLinkModal: (state, action: { payload: boolean, type: string }) => {
       return { ...state, showCreateAcedrgLinkModal: action.payload }
     },
-    setShowValidationModal: (state, action: { payload: boolean, type: string }) => {
-      return { ...state, showValidationModal: action.payload }
-    },
     setShowQuerySequenceModal: (state, action: { payload: boolean, type: string }) => {
       return { ...state, showQuerySequenceModal: action.payload }
     },
@@ -86,10 +82,10 @@ export const activeModalsSlice = createSlice({
 export const {
   setShowModelsModal, setShowMapsModal, setShowCreateAcedrgLinkModal, 
   setShowQuerySequenceModal, setShowScriptingModal, setShowControlsModal,
-  focusOnModal, unFocusModal, setShowValidationModal, setShowFitLigandModal,
-  setShowRamaPlotModal, setShowDiffMapPeaksModal, setShowFillPartialResValidationModal,
+  focusOnModal, unFocusModal, setShowFitLigandModal, setShowRamaPlotModal, 
   setShowLigandValidationModal, setShowPepFlipsValidationModal, setShowMmrrccModal,
-  setShowWaterValidationModal, setShowValidationPlotModal, setShowUnmodelledBlobsModal
+  setShowWaterValidationModal, setShowValidationPlotModal, setShowUnmodelledBlobsModal,
+  setShowDiffMapPeaksModal, setShowFillPartialResValidationModal
 } = activeModalsSlice.actions
 
 export default activeModalsSlice.reducer
