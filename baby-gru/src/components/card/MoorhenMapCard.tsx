@@ -346,7 +346,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     }, [handleWheelContourLevelCallback])
 
     useEffect(() => {
-        props.map.setAlpha()
+        props.map.fetchMapAlphaAndRedraw()
     }, [mapOpacity])
 
     useEffect(() => {

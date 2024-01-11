@@ -160,7 +160,7 @@ declare module 'moorhen' {
         getHistogram(nBins?: number, zoomFactor?: number): Promise<libcootApi.HistogramInfoJS>;
         setMapWeight(weight?: number): Promise<_moorhen.WorkerResponse>;
         estimateMapWeight(): Promise<void>;
-        setAlpha(redraw?: boolean): Promise<void>;
+        fetchMapAlphaAndRedraw(): Promise<void>;
         centreOnMap(): Promise<void>;
         getSuggestedSettings(): Promise<void>;
         duplicate(): Promise<_moorhen.Map>;

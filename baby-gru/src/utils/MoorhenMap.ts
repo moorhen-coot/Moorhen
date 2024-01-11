@@ -694,10 +694,9 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     /**
-     * Set the alpha (transparency) for this map using values from redux store
-     * @param {boolean} [redraw=true] - Indicates whether the map needs to be redrawn after setting the new alpha
+     * Fetch the map alpha (transparency) for this map using values from redux store and redraw the map
      */
-    async setAlpha(redraw: boolean = true): Promise<void> {
+    async fetchMapAlphaAndRedraw(): Promise<void> {
         const { mapAlpha, mapColour } = this.getMapContourParams()
         this.displayObjects['Coot'].forEach(buffer => {
             buffer.triangleColours.forEach(colbuffer => {
@@ -733,9 +732,7 @@ export class MoorhenMap implements moorhen.Map {
             }
         })
         this.glRef.current.buildBuffers();
-        if (redraw) {
-            this.glRef.current.drawScene();
-        }
+        this.glRef.current.drawScene();
     }
 
     /**
