@@ -599,14 +599,13 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     /**
-     * Set the colours for a difference map using values from redux store
+     * Fetch the colours for a difference map using values from redux store and redraw the map
      * @param {'positiveDiffColour' | 'negativeDiffColour'} type - Indicates whether the negative or positive colours will be set
-     * @param {boolean} [redraw=true] - Indicates whether the map needs to be redrawn after setting the new colours
      * @returns {Promise<void>}
      */
-    async setDiffMapColour(type: 'positiveDiffColour' | 'negativeDiffColour', redraw: boolean = true): Promise<void> {
+    async fetchDiffMapColourAndRedraw(type: 'positiveDiffColour' | 'negativeDiffColour'): Promise<void> {
         if (!this.isDifference) {
-            console.error('Cannot use moorhen.Map.setDiffMapColour to change non-diff map colour. Use moorhen.Map.setColour instead...')
+            console.error('Cannot use moorhen.Map.fetchDiffMapColourAndRedraw to change non-diff map colour. Use moorhen.Map.fetchColourAndRedraw instead...')
             return
         }
         
@@ -643,9 +642,7 @@ export class MoorhenMap implements moorhen.Map {
             this.glRef.current.buildBuffers();
         }
 
-        if (redraw) {
-            this.glRef.current.drawScene();
-        }
+        this.glRef.current.drawScene();
     }
 
     /**
@@ -653,9 +650,9 @@ export class MoorhenMap implements moorhen.Map {
      * @param {boolean} [redraw=true] - Indicates whether the map needs to be redrawn after setting the new colours
      * @returns {Promise<void>}
      */
-    async setColour(redraw: boolean = true): Promise<void> {
+    async fetchColourAndRedraw(): Promise<void> {
         if (this.isDifference) {
-            console.error('Cannot use moorhen.Map.setColour to change difference map colour. Use moorhen.Map.setDiffMapColour instead...')
+            console.error('Cannot use moorhen.Map.fetchColourAndRedraw to change difference map colour. Use moorhen.Map.fetchDiffMapColourAndRedraw instead...')
             return
         }
 
@@ -688,16 +685,13 @@ export class MoorhenMap implements moorhen.Map {
             this.glRef.current.buildBuffers();
         }
 
-        if (redraw) {
-            this.glRef.current.drawScene();
-        }
+        this.glRef.current.drawScene();
     }
 
     /**
-     * Set the alpha (transparency) for this map using values from redux store
-     * @param {boolean} [redraw=true] - Indicates whether the map needs to be redrawn after setting the new alpha
+     * Fetch the map alpha (transparency) for this map using values from redux store and redraw the map
      */
-    async setAlpha(redraw: boolean = true): Promise<void> {
+    async fetchMapAlphaAndRedraw(): Promise<void> {
         const { mapAlpha, mapColour } = this.getMapContourParams()
         this.displayObjects['Coot'].forEach(buffer => {
             buffer.triangleColours.forEach(colbuffer => {
@@ -733,9 +727,7 @@ export class MoorhenMap implements moorhen.Map {
             }
         })
         this.glRef.current.buildBuffers();
-        if (redraw) {
-            this.glRef.current.drawScene();
-        }
+        this.glRef.current.drawScene();
     }
 
     /**
@@ -793,7 +785,7 @@ export class MoorhenMap implements moorhen.Map {
      * Create a copy of the map
      * @returns {Promise<moorhen.Map>} New map instance
      */
-    async duplicate(): Promise<moorhen.Map> {
+    async copyMap(): Promise<moorhen.Map> {
         const reply = await this.getMap()
         const newMap = new MoorhenMap(this.commandCentre, this.glRef)
         await newMap.loadToCootFromMapData(reply.data.result.mapData, `Copy of ${this.name}`, this.isDifference)

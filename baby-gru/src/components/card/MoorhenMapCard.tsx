@@ -137,7 +137,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const handlePositiveMapColorChange = (color: { r: number; g: number; b: number; }) => {
         try {
             dispatch( setPositiveMapColours({ molNo: props.map.molNo, rgb: color}) )
-            props.map.setDiffMapColour('positiveDiffColour')
+            props.map.fetchDiffMapColourAndRedraw('positiveDiffColour')
         }
         catch (err) {
             console.log('err', err)
@@ -147,7 +147,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const handleNegativeMapColorChange = (color: { r: number; g: number; b: number; }) => {
         try {
             dispatch( setNegativeMapColours({ molNo: props.map.molNo, rgb: color}) )
-            props.map.setDiffMapColour('negativeDiffColour')
+            props.map.fetchDiffMapColourAndRedraw('negativeDiffColour')
         }
         catch (err) {
             console.log('err', err)
@@ -157,7 +157,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const handleColorChange = (color: { r: number; g: number; b: number; }) => {
         try {
             dispatch( setMapColours({ molNo: props.map.molNo, rgb: color}) )
-            props.map.setColour()
+            props.map.fetchColourAndRedraw()
         }
         catch (err) {
             console.log('err', err)
@@ -179,8 +179,8 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         props.setCurrentDropdownMolNo(-1)
     }, [mapIsVisible])
 
-    const handleDuplicate = async () => {
-        const newMap = await props.map.duplicate()
+    const handleCopyMap = async () => {
+        const newMap = await props.map.copyMap()
         dispatch( addMap(newMap) )
     }
 
@@ -214,10 +214,10 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             expanded: null
         },
         5: {
-            label: "Duplicate map",
-            compressed: () => { return (<MenuItem key='duplicate-map' onClick={handleDuplicate}>Duplicate map</MenuItem>) },
+            label: "Copy map",
+            compressed: () => { return (<MenuItem key='copy-map' onClick={handleCopyMap}>Copy map</MenuItem>) },
             expanded: () => {
-                return (<Button key='duplicate-map' size="sm" variant="outlined" onClick={handleDuplicate}>
+                return (<Button key='copy-map' size="sm" variant="outlined" onClick={handleCopyMap}>
                     <FileCopyOutlined />
                 </Button>)
             },
@@ -346,7 +346,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     }, [handleWheelContourLevelCallback])
 
     useEffect(() => {
-        props.map.setAlpha()
+        props.map.fetchMapAlphaAndRedraw()
     }, [mapOpacity])
 
     useEffect(() => {

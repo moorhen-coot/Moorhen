@@ -160,10 +160,10 @@ declare module 'moorhen' {
         getHistogram(nBins?: number, zoomFactor?: number): Promise<libcootApi.HistogramInfoJS>;
         setMapWeight(weight?: number): Promise<_moorhen.WorkerResponse>;
         estimateMapWeight(): Promise<void>;
-        setAlpha(redraw?: boolean): Promise<void>;
+        fetchMapAlphaAndRedraw(): Promise<void>;
         centreOnMap(): Promise<void>;
         getSuggestedSettings(): Promise<void>;
-        duplicate(): Promise<_moorhen.Map>;
+        copyMap(): Promise<_moorhen.Map>;
         hideMapContour(): void;
         drawMapContour(): Promise<void>;
         getMapContourParams(): { 
@@ -175,8 +175,8 @@ declare module 'moorhen' {
             positiveMapColour: {r: number; g: number; b: number}; 
             negativeMapColour: {r: number; g: number; b: number}
         };
-        setColour(redraw?: boolean): Promise<void> ;
-        setDiffMapColour(type: 'positiveDiffColour' | 'negativeDiffColour', redraw?: boolean): Promise<void> ;
+        fetchColourAndRedraw(): Promise<void> ;
+        fetchDiffMapColourAndRedraw(type: 'positiveDiffColour' | 'negativeDiffColour'): Promise<void> ;
         fetchMapRmsd(): Promise<number>;
         fetchSuggestedLevel(): Promise<number>;
         fetchMapCentre(): Promise<[number, number, number]>;
