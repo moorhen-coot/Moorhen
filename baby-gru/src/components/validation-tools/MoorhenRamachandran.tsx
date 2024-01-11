@@ -408,7 +408,7 @@ export const MoorhenRamachandran = (props: Props) => {
 
     useEffect(() => {
         setTimeout(() => {
-            let plotHeigth = (props.resizeNodeRef.current.clientHeight) - convertRemToPx(10)
+            let plotHeigth = (props.resizeNodeRef.current.clientHeight) - convertRemToPx(7)
             let plotWidth = (props.resizeNodeRef.current.clientWidth) - convertRemToPx(3)
             if (plotHeigth > 0 && plotWidth > 0) {
                 plotHeigth > plotWidth ? setRamaPlotDimensions(plotWidth) : setRamaPlotDimensions(plotHeigth)

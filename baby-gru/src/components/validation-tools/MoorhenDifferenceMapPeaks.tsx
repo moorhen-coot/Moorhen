@@ -18,6 +18,7 @@ interface Props extends moorhen.CollectedProps {
     setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
     sideBarWidth: number;
     showSideBar: boolean;
+    chartId: string;
 }
 
 export const MoorhenDifferenceMapPeaks = (props: Props) => {
@@ -124,7 +125,7 @@ export const MoorhenDifferenceMapPeaks = (props: Props) => {
         const tooltipFontSize = 12
         const axisLabelsFontSize = convertViewtoPx(70, height) / 60
         
-        const containerBody = document.getElementById('myContainerBody')
+        const containerBody = document.getElementById(`${props.chartId}-container-body`)
         containerBody.style.width = (labels.length*barWidth)+ "px";
         
         let scales = {
@@ -229,6 +230,7 @@ export const MoorhenDifferenceMapPeaks = (props: Props) => {
 
     return <MoorhenValidationChartWidgetBase
                 ref={chartRef}
+                chartId={props.chartId}
                 fetchData={fetchData}
                 getChart={getChart} 
                 filterMapFunction={filterMapFunction}
