@@ -408,7 +408,7 @@ export const MoorhenResidueSelectionActions = (props) => {
 
     return showResidueSelection ?
         <MoorhenNotification key={notificationKeyRef.current} width={19}>
-            <Tooltip className="moorhen-tooltip" title={tooltipContents}>
+            <Tooltip className="moorhen-tooltip" title={tooltipContents} style={{zIndex: 99}}>
             <Stack ref={notificationComponentRef} direction="vertical" gap={1}>
                 <Stack gap={0} direction="horizontal" style={{ width: '100%', display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{paddingLeft: '2.2rem', width: '100%', display: 'flex', justifyContent: 'center'}}>{
