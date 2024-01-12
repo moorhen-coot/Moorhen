@@ -20,16 +20,11 @@ The sources of CCP4, Coot, Privateer, FFTW, and GSL are not included. They are d
 the `get_sources` script, which is part of the build process of this project.
 
 The following libraries/programs are compiled to Web Assembly:
-* libccp4 (bzr)
-* clipper (bzr)
-* ssm (bzr)
-* mmdb2 (bzr)
-* ccp4srs (bzr)
+* libccp4 (8.0.0)
+* clipper (2.1)
+* ssm (1.4.0)
+* mmdb2 (2.0.22)
 * gemmi 0.5.8
-* rvapi (bzr)
-* gesamt (bzr)
-* ccp4mg (partial) (bzr)
-* privateer MKIV
 * Coot 1.0 ('gtk3' git branch)
 * fftw 2.1.5
 * gsl 2.7.1
@@ -50,7 +45,6 @@ Binaries are available on the releases page. Please read the instructions there 
 **Requirements** 
 
 * A Bourne-like shell
-* bzr
 * git
 * curl
 * patch
@@ -101,14 +95,9 @@ And then point a web browser at `http://localhost:5173/` .
 
 ## **What else can do with the compiled libraries?**
 
-See `example/example.cc` or `checkout/privateer-MKIV/src/privateer.cpp` to see how to create a command line (node) program. The
-latter is quite long and a patched version of the original privateer code. It might be more helpful to look at the patch file
-`patches/privateer-emscripten.patch`. This should show how to patch an existing command line program which reads files to one
-that will work within node.
-
 See `coot/moorhen-wrappers.cc` to see use of `EMSCRIPTEN_BINDINGS` to expose Coot methods to the web browser.
 
-Any program you write, which uses the *subset* of Coot, Clipper, Privateer code which this project compiles to WASM, can
+Any program you write, which uses the *subset* of Coot, Clipper, code which this project compiles to WASM, can
 itself be compiled to WASM and used within node or Web Browser. Studying the examples should show you to do I/O, which is
 different in the 2 cases. If you require more classes or methods from the libraries to be exposed to JavaScript, then changes need to be made to
 `coot/moorhen-wrappers.cc`. This should only be necessary for browser usage - in node your whole program can be written in C++.
