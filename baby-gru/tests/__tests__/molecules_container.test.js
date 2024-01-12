@@ -932,9 +932,153 @@ describe('Testing molecules_container_js', () => {
         }
     })
 
+    test.skip("Test find ligand (long ligand name)", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo = molecules_container.read_pdb('./1cxq.cif')
+        const mapMolNo = molecules_container.read_mtz('./1cxq_phases.mtz', 'FWT', 'PHWT', "", false, false)
+        expect(coordMolNo).toBe(0)
+        expect(mapMolNo).toBe(1)
+
+        // Delete the original ligand
+        const result_cid = molecules_container.delete_using_cid(coordMolNo, "/1/A/300/*", "LITERAL")
+
+        // Import ligand with long name
+        const result_import_dict = molecules_container.import_cif_dictionary('./7ZTVU.cif', -999999)
+        expect(result_import_dict).toBe(1)
+
+        const ligandMolNo = molecules_container.get_monomer_and_position_at(
+            '7ZTVU', -999999, 0, 0, 0
+        )
+        expect(ligandMolNo).toBe(2)
+
+        // Find and merge the ligand
+        const fit_ligand_result = molecules_container.fit_ligand(
+            coordMolNo, mapMolNo, ligandMolNo, 1., false, 10
+        )
+        expect(fit_ligand_result.size()).toBeGreaterThan(0)
+        const first_fitted_ligand_imol = fit_ligand_result.get(0).imol
+        const mergeMols = first_fitted_ligand_imol.toString()
+        molecules_container.merge_molecules(coordMolNo, mergeMols)
+
+        // Now parse the result with GEMMI
+        const mmcif_string = molecules_container.molecule_to_mmCIF_string(coordMolNo)
+        const gemmi_structure = cootModule.read_structure_from_string(mmcif_string, '1cxq')
+        cootModule.gemmi_setup_entities(gemmi_structure)
+        cootModule.gemmi_add_entity_types(gemmi_structure, true)
+
+        const model = gemmi_structure.first_model()
+        const chains = model.chains
+        
+        const chain = chains.get(0)
+        expect(chain.name).toBe('A')
+        
+        const ligands = chain.get_ligands_const()
+        expect(ligands.size()).toBe(3) // ---> HERE IT FAILS. There were already 2 ligands in this chain so I'm looking for 3
+
+        const ligand = ligands.at(2)
+        expect(ligand.name).toBe('7ZTVU')
+
+        cleanUpVariables.push(fit_ligand_result, model, chain, ligands, gemmi_structure)
+
+    })
+
+    test.skip("Test merge ligand (long ligand name)", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo = molecules_container.read_pdb('./1cxq.cif')
+        const mapMolNo = molecules_container.read_mtz('./1cxq_phases.mtz', 'FWT', 'PHWT', "", false, false)
+        expect(coordMolNo).toBe(0)
+        expect(mapMolNo).toBe(1)
+
+        // Delete the original ligand
+        const result_cid = molecules_container.delete_using_cid(coordMolNo, "/1/A/300/*", "LITERAL")
+
+        // Import ligand with long name
+        const result_import_dict = molecules_container.import_cif_dictionary('./7ZTVU.cif', -999999)
+        expect(result_import_dict).toBe(1)
+
+        const ligandMolNo = molecules_container.get_monomer_and_position_at(
+            '7ZTVU', -999999, 0, 0, 0
+        )
+        expect(ligandMolNo).toBe(2)
+
+        // Merge the ligand (WITHOUT USING FIND LIGAND)
+        const mergeMols = ligandMolNo.toString()
+        molecules_container.merge_molecules(coordMolNo, mergeMols)
+
+        // Now parse the result with GEMMI
+        const mmcif_string = molecules_container.molecule_to_mmCIF_string(coordMolNo)
+        const gemmi_structure = cootModule.read_structure_from_string(mmcif_string, '1cxq')
+        cootModule.gemmi_setup_entities(gemmi_structure)
+        cootModule.gemmi_add_entity_types(gemmi_structure, true)
+
+        const model = gemmi_structure.first_model()
+        const chains = model.chains
+        
+        // Unlike in previous test, the ligand gets added to chain B instead of A
+        const chain = chains.get(1)
+        expect(chain.name).toBe('B')
+        
+        const ligands = chain.get_ligands_const()
+        expect(ligands.size()).toBe(1)
+
+        const ligand = ligands.at(0)
+        expect(ligand.name).toBe('7ZTVU')
+
+        cleanUpVariables.push(model, chain, ligands, gemmi_structure)
+
+    })
+
+    test.skip("Test refine & merge ligand (long ligand name)", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo = molecules_container.read_pdb('./1cxq.cif')
+        const mapMolNo = molecules_container.read_mtz('./1cxq_phases.mtz', 'FWT', 'PHWT', "", false, false)
+        expect(coordMolNo).toBe(0)
+        expect(mapMolNo).toBe(1)
+
+        // Delete the original ligand
+        const result_cid = molecules_container.delete_using_cid(coordMolNo, "/1/A/300/*", "LITERAL")
+
+        // Import ligand with long name
+        const result_import_dict = molecules_container.import_cif_dictionary('./7ZTVU.cif', -999999)
+        expect(result_import_dict).toBe(1)
+
+        const ligandMolNo = molecules_container.get_monomer_and_position_at(
+            '7ZTVU', -999999, 0, 0, 0
+        )
+        expect(ligandMolNo).toBe(2)
+
+        // Now refine the ligand
+        molecules_container.refine_residues_using_atom_cid(ligandMolNo, "//", "LITERAL", 4000)
+
+        // Merge the ligand (WITHOUT USING FIND LIGAND)
+        const mergeMols = ligandMolNo.toString()
+        molecules_container.merge_molecules(coordMolNo, mergeMols)
+
+        // Now parse the result with GEMMI
+        const mmcif_string = molecules_container.molecule_to_mmCIF_string(coordMolNo)
+        const gemmi_structure = cootModule.read_structure_from_string(mmcif_string, '1cxq')
+        cootModule.gemmi_setup_entities(gemmi_structure)
+        cootModule.gemmi_add_entity_types(gemmi_structure, true)
+
+        const model = gemmi_structure.first_model()
+        const chains = model.chains
+        
+        // Unlike in previous test, the ligand gets added to chain B instead of A
+        const chain = chains.get(1)
+        expect(chain.name).toBe('B')
+        
+        const ligands = chain.get_ligands_const()
+        expect(ligands.size()).toBe(1)
+
+        const ligand = ligands.at(0)
+        expect(ligand.name).toBe('7ZTVU')
+
+        cleanUpVariables.push(model, chain, ligands, gemmi_structure)
+
+    })
 })
 
-const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'MOI.restraints.cif', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
+const testDataFiles = ['1cxq_phases.mtz', '1cxq.mmcif', '7ZTVU.cif', '5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'MOI.restraints.cif', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
 
 const setupFunctions = {
     removeTestDataFromFauxFS: () => {

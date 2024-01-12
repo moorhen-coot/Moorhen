@@ -1,0 +1,264 @@
+#
+data_comp_list
+loop_
+_chem_comp.id
+_chem_comp.three_letter_code
+_chem_comp.name
+_chem_comp.group
+_chem_comp.number_atoms_all
+_chem_comp.number_atoms_nh
+_chem_comp.desc_level
+ZT   7ZTVU       "4-(2-HYDROXYETHYL)-1-PIPERAZINE        ETHANESULFONIC        ACID"        NON-POLYMER        33        15        .        
+#
+data_comp_7ZTVU
+#
+loop_
+_chem_comp_atom.comp_id
+_chem_comp_atom.atom_id
+_chem_comp_atom.type_symbol
+_chem_comp_atom.type_energy
+_chem_comp_atom.charge
+_chem_comp_atom.x
+_chem_comp_atom.y
+_chem_comp_atom.z
+_chem_comp_atom.pdbx_model_Cartn_x_ideal
+_chem_comp_atom.pdbx_model_Cartn_y_ideal
+_chem_comp_atom.pdbx_model_Cartn_z_ideal
+7ZTVU     N1      N       N30     0       61.683      47.309      51.666      61.683      47.309      51.666      
+7ZTVU     C2      C       CH2     0       63.089      46.999      51.976      63.089      46.999      51.976      
+7ZTVU     C3      C       CH2     0       63.999      47.416      50.843      63.999      47.416      50.843      
+7ZTVU     N4      N       N30     0       63.631      46.733      49.592      63.631      46.733      49.592      
+7ZTVU     C5      C       CH2     0       62.226      47.042      49.278      62.226      47.042      49.278      
+7ZTVU     C6      C       CH2     0       61.311      46.635      50.411      61.311      46.635      50.411      
+7ZTVU     C7      C       CH2     0       64.533      47.092      48.482      64.533      47.092      48.482      
+7ZTVU     C8      C       CH2     0       65.897      46.443      48.537      65.897      46.443      48.537      
+7ZTVU     O8      O       OH1     0       65.800      45.041      48.725      65.800      45.041      48.725      
+7ZTVU     C9      C       CH2     0       60.775      46.968      52.784      60.775      46.968      52.784      
+7ZTVU     C10     C       CH2     0       60.796      47.991      53.909      60.796      47.991      53.909      
+7ZTVU     S       S       S3      0       59.472      47.733      55.057      59.472      47.733      55.057      
+7ZTVU     O1S     O       O       0       59.680      48.647      56.146      59.680      48.647      56.146      
+7ZTVU     O2S     O       O       0       59.439      46.326      55.349      59.439      46.326      55.349      
+7ZTVU     O3S     O       OH1     0       58.256      48.133      54.267      58.256      48.133      54.267      
+7ZTVU     H21     H       H       0       63.353      47.466      52.790      63.353      47.466      52.790      
+7ZTVU     H22     H       H       0       63.183      46.041      52.131      63.183      46.041      52.131      
+7ZTVU     H31     H       H       0       64.921      47.200      51.075      64.921      47.200      51.075      
+7ZTVU     H32     H       H       0       63.937      48.381      50.716      63.937      48.381      50.716      
+7ZTVU     H51     H       H       0       61.962      46.569      48.467      61.962      46.569      48.467      
+7ZTVU     H52     H       H       0       62.134      47.998      49.115      62.134      47.998      49.115      
+7ZTVU     H61     H       H       0       60.392      46.864      50.180      60.392      46.864      50.180      
+7ZTVU     H62     H       H       0       61.360      45.669      50.537      61.360      45.669      50.537      
+7ZTVU     H71     H       H       0       64.647      48.064      48.475      64.647      48.064      48.475      
+7ZTVU     H72     H       H       0       64.107      46.840      47.638      64.107      46.840      47.638      
+7ZTVU     H81     H       H       0       66.413      46.836      49.272      66.413      46.836      49.272      
+7ZTVU     H82     H       H       0       66.375      46.627      47.701      66.375      46.627      47.701      
+7ZTVU     HO8     H       H       0       66.536      44.689      48.502      66.536      44.689      48.502      
+7ZTVU     H91     H       H       0       61.027      46.095      53.146      61.027      46.095      53.146      
+7ZTVU     H92     H       H       0       59.861      46.897      52.445      59.861      46.897      52.445      
+7ZTVU     H101    H       H       0       60.717      48.877      53.531      60.717      48.877      53.531      
+7ZTVU     H102    H       H       0       61.638      47.924      54.381      61.638      47.924      54.381      
+7ZTVU     HOS3    H       H       0       57.851      47.474      53.850      57.851      47.474      53.850      
+loop_
+_chem_comp_acedrg.comp_id
+_chem_comp_acedrg.atom_id
+_chem_comp_acedrg.atom_type
+7ZTVU        N1    N[6](C[6]C[6]HH)2(CCHH){1|N<3>,4|H<1>}
+7ZTVU        C2    C[6](C[6]N[6]HH)(N[6]C[6]C)(H)2{2|C<4>,2|H<1>}
+7ZTVU        C3    C[6](C[6]N[6]HH)(N[6]C[6]C)(H)2{2|C<4>,2|H<1>}
+7ZTVU        N4    N[6](C[6]C[6]HH)2(CCHH){1|N<3>,4|H<1>}
+7ZTVU        C5    C[6](C[6]N[6]HH)(N[6]C[6]C)(H)2{2|C<4>,2|H<1>}
+7ZTVU        C6    C[6](C[6]N[6]HH)(N[6]C[6]C)(H)2{2|C<4>,2|H<1>}
+7ZTVU        C7    C(N[6]C[6]2)(CHHO)(H)2
+7ZTVU        C8    C(CN[6]HH)(OH)(H)2
+7ZTVU        O8    O(CCHH)(H)
+7ZTVU        C9    C(N[6]C[6]2)(CHHS)(H)2
+7ZTVU       C10    C(CN[6]HH)(SO3)(H)2
+7ZTVU         S    S(CCHH)(OH)(O)2
+7ZTVU       O1S    O(SCOO)
+7ZTVU       O2S    O(SCOO)
+7ZTVU       O3S    O(SCOO)(H)
+7ZTVU       H21    H(C[6]C[6]N[6]H)
+7ZTVU       H22    H(C[6]C[6]N[6]H)
+7ZTVU       H31    H(C[6]C[6]N[6]H)
+7ZTVU       H32    H(C[6]C[6]N[6]H)
+7ZTVU       H51    H(C[6]C[6]N[6]H)
+7ZTVU       H52    H(C[6]C[6]N[6]H)
+7ZTVU       H61    H(C[6]C[6]N[6]H)
+7ZTVU       H62    H(C[6]C[6]N[6]H)
+7ZTVU       H71    H(CN[6]CH)
+7ZTVU       H72    H(CN[6]CH)
+7ZTVU       H81    H(CCHO)
+7ZTVU       H82    H(CCHO)
+7ZTVU       HO8    H(OC)
+7ZTVU       H91    H(CN[6]CH)
+7ZTVU       H92    H(CN[6]CH)
+7ZTVU      H101    H(CCHS)
+7ZTVU      H102    H(CCHS)
+7ZTVU      HOS3    H(OS)
+loop_
+_chem_comp_bond.comp_id
+_chem_comp_bond.atom_id_1
+_chem_comp_bond.atom_id_2
+_chem_comp_bond.type
+_chem_comp_bond.aromatic
+_chem_comp_bond.value_dist_nucleus
+_chem_comp_bond.value_dist_nucleus_esd
+_chem_comp_bond.value_dist
+_chem_comp_bond.value_dist_esd
+7ZTVU          N1          C2      SINGLE       n     1.468  0.0110     1.468  0.0110
+7ZTVU          N1          C6      SINGLE       n     1.468  0.0110     1.468  0.0110
+7ZTVU          N1          C9      SINGLE       n     1.468  0.0200     1.468  0.0200
+7ZTVU          C2          C3      SINGLE       n     1.509  0.0132     1.509  0.0132
+7ZTVU          C3          N4      SINGLE       n     1.468  0.0110     1.468  0.0110
+7ZTVU          N4          C5      SINGLE       n     1.468  0.0110     1.468  0.0110
+7ZTVU          N4          C7      SINGLE       n     1.471  0.0100     1.471  0.0100
+7ZTVU          C5          C6      SINGLE       n     1.509  0.0132     1.509  0.0132
+7ZTVU          C7          C8      SINGLE       n     1.510  0.0165     1.510  0.0165
+7ZTVU          C8          O8      SINGLE       n     1.418  0.0127     1.418  0.0127
+7ZTVU          C9         C10      SINGLE       n     1.520  0.0107     1.520  0.0107
+7ZTVU         C10           S      SINGLE       n     1.771  0.0100     1.771  0.0100
+7ZTVU           S         O1S      DOUBLE       n     1.437  0.0100     1.437  0.0100
+7ZTVU           S         O2S      DOUBLE       n     1.437  0.0100     1.437  0.0100
+7ZTVU           S         O3S      SINGLE       n     1.503  0.0200     1.503  0.0200
+7ZTVU          C2         H21      SINGLE       n     1.092  0.0100     0.975  0.0100
+7ZTVU          C2         H22      SINGLE       n     1.092  0.0100     0.975  0.0100
+7ZTVU          C3         H31      SINGLE       n     1.092  0.0100     0.975  0.0100
+7ZTVU          C3         H32      SINGLE       n     1.092  0.0100     0.975  0.0100
+7ZTVU          C5         H51      SINGLE       n     1.092  0.0100     0.975  0.0100
+7ZTVU          C5         H52      SINGLE       n     1.092  0.0100     0.975  0.0100
+7ZTVU          C6         H61      SINGLE       n     1.092  0.0100     0.975  0.0100
+7ZTVU          C6         H62      SINGLE       n     1.092  0.0100     0.975  0.0100
+7ZTVU          C7         H71      SINGLE       n     1.092  0.0100     0.978  0.0107
+7ZTVU          C7         H72      SINGLE       n     1.092  0.0100     0.978  0.0107
+7ZTVU          C8         H81      SINGLE       n     1.092  0.0100     0.980  0.0132
+7ZTVU          C8         H82      SINGLE       n     1.092  0.0100     0.980  0.0132
+7ZTVU          O8         HO8      SINGLE       n     0.972  0.0180     0.846  0.0200
+7ZTVU          C9         H91      SINGLE       n     1.092  0.0100     0.978  0.0107
+7ZTVU          C9         H92      SINGLE       n     1.092  0.0100     0.978  0.0107
+7ZTVU         C10        H101      SINGLE       n     1.092  0.0100     0.967  0.0200
+7ZTVU         C10        H102      SINGLE       n     1.092  0.0100     0.967  0.0200
+7ZTVU         O3S        HOS3      SINGLE       n     0.972  0.0180     0.879  0.0200
+loop_
+_chem_comp_angle.comp_id
+_chem_comp_angle.atom_id_1
+_chem_comp_angle.atom_id_2
+_chem_comp_angle.atom_id_3
+_chem_comp_angle.value_angle
+_chem_comp_angle.value_angle_esd
+7ZTVU          C2          N1          C6     108.598    1.50
+7ZTVU          C2          N1          C9     111.163    2.70
+7ZTVU          C6          N1          C9     111.163    2.70
+7ZTVU          N1          C2          C3     110.921    1.50
+7ZTVU          N1          C2         H21     109.441    1.50
+7ZTVU          N1          C2         H22     109.441    1.50
+7ZTVU          C3          C2         H21     109.518    1.50
+7ZTVU          C3          C2         H22     109.518    1.50
+7ZTVU         H21          C2         H22     108.210    1.50
+7ZTVU          C2          C3          N4     110.921    1.50
+7ZTVU          C2          C3         H31     109.518    1.50
+7ZTVU          C2          C3         H32     109.518    1.50
+7ZTVU          N4          C3         H31     109.441    1.50
+7ZTVU          N4          C3         H32     109.441    1.50
+7ZTVU         H31          C3         H32     108.210    1.50
+7ZTVU          C3          N4          C5     108.598    1.50
+7ZTVU          C3          N4          C7     110.979    2.04
+7ZTVU          C5          N4          C7     110.979    2.04
+7ZTVU          N4          C5          C6     110.921    1.50
+7ZTVU          N4          C5         H51     109.441    1.50
+7ZTVU          N4          C5         H52     109.441    1.50
+7ZTVU          C6          C5         H51     109.518    1.50
+7ZTVU          C6          C5         H52     109.518    1.50
+7ZTVU         H51          C5         H52     108.210    1.50
+7ZTVU          N1          C6          C5     110.921    1.50
+7ZTVU          N1          C6         H61     109.441    1.50
+7ZTVU          N1          C6         H62     109.441    1.50
+7ZTVU          C5          C6         H61     109.518    1.50
+7ZTVU          C5          C6         H62     109.518    1.50
+7ZTVU         H61          C6         H62     108.210    1.50
+7ZTVU          N4          C7          C8     114.503    3.00
+7ZTVU          N4          C7         H71     108.706    1.50
+7ZTVU          N4          C7         H72     108.706    1.50
+7ZTVU          C8          C7         H71     109.060    1.50
+7ZTVU          C8          C7         H72     109.060    1.50
+7ZTVU         H71          C7         H72     107.982    1.50
+7ZTVU          C7          C8          O8     111.367    3.00
+7ZTVU          C7          C8         H81     109.327    1.50
+7ZTVU          C7          C8         H82     109.327    1.50
+7ZTVU          O8          C8         H81     109.517    1.50
+7ZTVU          O8          C8         H82     109.517    1.50
+7ZTVU         H81          C8         H82     108.118    1.50
+7ZTVU          C8          O8         HO8     108.433    3.00
+7ZTVU          N1          C9         C10     113.603    3.00
+7ZTVU          N1          C9         H91     109.088    1.50
+7ZTVU          N1          C9         H92     109.088    1.50
+7ZTVU         C10          C9         H91     109.064    1.50
+7ZTVU         C10          C9         H92     109.064    1.50
+7ZTVU         H91          C9         H92     107.977    1.50
+7ZTVU          C9         C10           S     110.778    3.00
+7ZTVU          C9         C10        H101     108.834    1.50
+7ZTVU          C9         C10        H102     108.834    1.50
+7ZTVU           S         C10        H101     108.786    1.50
+7ZTVU           S         C10        H102     108.786    1.50
+7ZTVU        H101         C10        H102     108.248    3.00
+7ZTVU         C10           S         O1S     106.718    1.50
+7ZTVU         C10           S         O2S     106.718    1.50
+7ZTVU         C10           S         O3S     102.407    3.00
+7ZTVU         O1S           S         O2S     117.601    3.00
+7ZTVU         O1S           S         O3S     109.792    3.00
+7ZTVU         O2S           S         O3S     109.792    3.00
+7ZTVU           S         O3S        HOS3     114.950    3.00
+loop_
+_chem_comp_tor.comp_id
+_chem_comp_tor.id
+_chem_comp_tor.atom_id_1
+_chem_comp_tor.atom_id_2
+_chem_comp_tor.atom_id_3
+_chem_comp_tor.atom_id_4
+_chem_comp_tor.value_angle
+_chem_comp_tor.value_angle_esd
+_chem_comp_tor.period
+7ZTVU             sp3_sp3_2          C3          C2          N1          C9     180.000    10.0     3
+7ZTVU            sp3_sp3_38          C5          C6          N1          C9     -60.000    10.0     3
+7ZTVU            sp3_sp3_44         C10          C9          N1          C2     -60.000    10.0     3
+7ZTVU            sp3_sp3_76          C9         C10           S         O1S     180.000    10.0     3
+7ZTVU            sp3_sp3_87        HOS3         O3S           S         C10      60.000    10.0     3
+7ZTVU             sp3_sp3_7          N1          C2          C3          N4     -60.000    10.0     3
+7ZTVU            sp3_sp3_17          C2          C3          N4          C7     180.000    10.0     3
+7ZTVU            sp3_sp3_23          C6          C5          N4          C7      60.000    10.0     3
+7ZTVU            sp3_sp3_50          C8          C7          N4          C3     -60.000    10.0     3
+7ZTVU            sp3_sp3_28          N4          C5          C6          N1      60.000    10.0     3
+7ZTVU            sp3_sp3_55          N4          C7          C8          O8     180.000    10.0     3
+7ZTVU            sp3_sp3_64          C7          C8          O8         HO8     180.000    10.0     3
+7ZTVU            sp3_sp3_67           S         C10          C9          N1     180.000    10.0     3
+loop_
+_chem_comp_chir.comp_id
+_chem_comp_chir.id
+_chem_comp_chir.atom_id_centre
+_chem_comp_chir.atom_id_1
+_chem_comp_chir.atom_id_2
+_chem_comp_chir.atom_id_3
+_chem_comp_chir.volume_sign
+7ZTVU    chir_1    N1    C9    C2    C6    both
+7ZTVU    chir_2    N4    C7    C3    C5    both
+7ZTVU    chir_3    S    O1S    O2S    O3S    both
+loop_
+_pdbx_chem_comp_descriptor.comp_id
+_pdbx_chem_comp_descriptor.type
+_pdbx_chem_comp_descriptor.program
+_pdbx_chem_comp_descriptor.program_version
+_pdbx_chem_comp_descriptor.descriptor
+7ZTVU  SMILES            ACDLabs               10.04  "O=S(=O)(O)CCN1CCN(CCO)CC1"
+7ZTVU  SMILES_CANONICAL  CACTVS                3.341  "OCCN1CCN(CC1)CC[S](O)(=O)=O"
+7ZTVU  SMILES            CACTVS                3.341  "OCCN1CCN(CC1)CC[S](O)(=O)=O"
+7ZTVU  SMILES_CANONICAL  "OpenEye OEToolkits"  1.5.0  "C1CN(CCN1CCO)CCS(=O)(=O)O"
+7ZTVU  SMILES            "OpenEye OEToolkits"  1.5.0  "C1CN(CCN1CCO)CCS(=O)(=O)O"
+7ZTVU  InChI             InChI                 1.03   "InChI=1S/C8H18N2O4S/c11-7-5-9-1-3-10(4-2-9)6-8-15(12,13)14/h11H,1-8H2,(H,12,13,14)"
+7ZTVU  InChIKey          InChI                 1.03   JKMHFZQWWAIEOD-UHFFFAOYSA-N
+loop_
+_pdbx_chem_comp_description_generator.comp_id
+_pdbx_chem_comp_description_generator.program_name
+_pdbx_chem_comp_description_generator.program_version
+_pdbx_chem_comp_description_generator.descriptor
+7ZTVU acedrg               277         "dictionary generator"                  
+7ZTVU acedrg_database      12          "data source"                           
+7ZTVU rdkit                2019.09.1   "Chemoinformatics tool"
+7ZTVU refmac5              5.8.0419    "optimization tool"                     
