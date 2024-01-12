@@ -147,16 +147,11 @@ compilation.</p>
 the <code>get_sources</code> script, which is part of the build process of this project.</p>
 <p>The following libraries/programs are compiled to Web Assembly:</p>
 <ul>
-<li>libccp4 (bzr)</li>
-<li>clipper (bzr)</li>
-<li>ssm (bzr)</li>
-<li>mmdb2 (bzr)</li>
-<li>ccp4srs (bzr)</li>
+<li>libccp4 (8.0.0)</li>
+<li>clipper (2.1)</li>
+<li>ssm (1.4.0)</li>
+<li>mmdb2 (2.0.22)</li>
 <li>gemmi 0.5.8</li>
-<li>rvapi (bzr)</li>
-<li>gesamt (bzr)</li>
-<li>ccp4mg (partial) (bzr)</li>
-<li>privateer MKIV</li>
 <li>Coot 1.0 ('gtk3' git branch)</li>
 <li>fftw 2.1.5</li>
 <li>gsl 2.7.1</li>
@@ -172,7 +167,6 @@ the <code>get_sources</code> script, which is part of the build process of this 
 <p><strong>Requirements</strong></p>
 <ul>
 <li>A Bourne-like shell</li>
-<li>bzr</li>
 <li>git</li>
 <li>curl</li>
 <li>patch</li>
@@ -231,12 +225,8 @@ And then point a web browser at <code>http://localhost:5173/</code> .</p>
 <p><img src="web_example/baby_gru.png" alt="Moorhen">
 <em>The Moorhen WebGL application</em></p>
 <h2><strong>What else can do with the compiled libraries?</strong></h2>
-<p>See <code>example/example.cc</code> or <code>checkout/privateer-MKIV/src/privateer.cpp</code> to see how to create a command line (node) program. The
-latter is quite long and a patched version of the original privateer code. It might be more helpful to look at the patch file
-<code>patches/privateer-emscripten.patch</code>. This should show how to patch an existing command line program which reads files to one
-that will work within node.</p>
 <p>See <code>coot/moorhen-wrappers.cc</code> to see use of <code>EMSCRIPTEN_BINDINGS</code> to expose Coot methods to the web browser.</p>
-<p>Any program you write, which uses the <em>subset</em> of Coot, Clipper, Privateer code which this project compiles to WASM, can
+<p>Any program you write, which uses the <em>subset</em> of Coot, Clipper, code which this project compiles to WASM, can
 itself be compiled to WASM and used within node or Web Browser. Studying the examples should show you to do I/O, which is
 different in the 2 cases. If you require more classes or methods from the libraries to be exposed to JavaScript, then changes need to be made to
 <code>coot/moorhen-wrappers.cc</code>. This should only be necessary for browser usage - in node your whole program can be written in C++.</p>
