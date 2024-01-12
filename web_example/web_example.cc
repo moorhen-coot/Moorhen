@@ -36,47 +36,9 @@
 //#define _SAJSON_H_INCLUDED_
 //#include "privateer-lib.h"
 
-#include "mmut_nma.h"
-#include "cartesian.h"
-#include "matrix.h"
-
 #include "headers.h"
 
 using namespace emscripten;
-
-class MGNormalModeDisplacements {
-        std::vector<std::vector<std::vector<double> > > displacements;
-    public:
-        MGNormalModeDisplacements(const NormalModeAnalysis &nma, int nsteps){
-            NormalModeDisplacements displacements_mg = nma.GetDisplacements(nsteps);
-            int nmodes = displacements_mg.getNumberOfModes();
-            for(int imode=0;imode<nmodes;imode++){
-                displacements.push_back(std::vector<std::vector<double> >());
-                for(int istep=0;istep<nsteps;istep++){
-                    displacements.back().push_back(std::vector<double>());
-                    const std::vector<Cartesian> carts = displacements_mg.getDisplacements(imode,istep);
-                    for(unsigned icart=0;icart<carts.size();icart++){
-                        displacements.back().back().push_back(carts[icart].get_x());
-                        displacements.back().back().push_back(carts[icart].get_y());
-                        displacements.back().back().push_back(carts[icart].get_z());
-                    }
-                }
-            }
-        }
-        const int nModes() const { return displacements.size(); }
-        const int nSteps() const { if(displacements.size()>0) return displacements[0].size(); else return 0; }
-        const std::vector<double> getDisplacements(int mode, int step) const { return  displacements[mode][step]; }
-};
-
-class MGmatrix : public matrix {
-    public:
-       MGmatrix() : matrix() {};
-       unsigned get_rows() { return matrix::get_rows();};
-       unsigned get_columns() { return matrix::get_columns();};
-       MGmatrix(unsigned int x,unsigned int y) : matrix(x,y) {};
-
-       double get(unsigned i, unsigned j) { return (*this)(i,j); }
-};
 
 int superpose_main(const std::vector<std::string> &files, const std::vector<std::string> &selections);
 //int gesamt_main(const std::vector<std::string> &_argv);
@@ -346,40 +308,6 @@ std::vector<std::string> mmdb2_example(const std::string &filename){
     return ligandTypes;
 }
 
-MGNormalModeDisplacements GetDisplacements(const NormalModeAnalysis& nma){
-    MGNormalModeDisplacements displacements(nma,10);
-    return displacements;
-}
-
-std::vector<MGmatrix> GetEigen(const NormalModeAnalysis& nma){
-    std::vector<MGmatrix> mgmats;
-    std::vector<matrix> mats = nma.GetEigen();
-
-    for(unsigned k=0;k<mats.size();k++){
-        //std::cout << k << " " << mats[k].get_rows() << " " << mats[k].get_columns() << std::endl;
-        MGmatrix mgmat(mats[k].get_rows(),mats[k].get_columns());
-        for(unsigned i=0;i<mats[k].get_rows();i++){
-            for(unsigned j=0;j<mats[k].get_columns();j++){
-                mgmat(i,j) = mats[k](i,j);
-                //std::cout << k << " " << i << " " << j << " " <<  mats[k](i,j) << std::endl;
-            }
-        }
-        mgmats.push_back(mgmat);
-    }
-    return mgmats;
-}
-
-MGmatrix GetCorrelations(const NormalModeAnalysis& nma, double norm){
-    matrix mat = nma.GetCorrelations(norm);
-    MGmatrix mgmat(mat.get_rows(),mat.get_columns());
-    for(unsigned i=0;i<mat.get_rows();i++){
-        for(unsigned j=0;j<mat.get_columns();j++){
-            mgmat(i,j) = mat(i,j);
-        }
-    }
-    return mgmat;
-}
-
 std::vector<double> get_CA_bvalues_from_file(const std::string& pdb_file_name){
 
     std::vector<double> bvals;
@@ -405,35 +333,6 @@ std::vector<double> get_CA_bvalues_from_file(const std::string& pdb_file_name){
     }
 
     return bvals;
-}
-
-NormalModeAnalysis calculate_normal_modes(const std::string& pdb_file_name, int mode=MMUT_GNM){
-    NormalModeAnalysis nma;
-    printf("Normal mode analysis");
-
-    std::vector<Cartesian> carts;
-    mmdb::Manager *molHnd = new mmdb::Manager();
-
-    const char *filename_cp = pdb_file_name.c_str();
-
-    printf("Reading a PDB file: %s\n",filename_cp);
-    int RC = molHnd->ReadCoorFile(filename_cp);
-    printf("RC:%d\n",RC);
-    assert(RC==0);
-
-    int selHnd = molHnd->NewSelection();
-    molHnd->SelectAtoms(selHnd, 0,"*",mmdb::ANY_RES,"*",mmdb::ANY_RES,"*","*","CA","C","*",mmdb::SKEY_NEW);
-
-    mmdb::Atom** SelAtoms=0;
-    int nAtoms;
-    molHnd->GetSelIndex(selHnd,SelAtoms,nAtoms);
-    printf("nAtoms:%d\n",nAtoms);
-    for(int i=0;i<nAtoms;i++){
-        carts.push_back(Cartesian(SelAtoms[i]->x,SelAtoms[i]->y,SelAtoms[i]->z));
-    }
-    nma.Calculate(carts,mode);
-    
-    return nma;
 }
 
 std::vector<std::string>  get_mtz_columns(const std::string& mtz_file_name){
@@ -516,7 +415,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<std::string>("VectorString");
     register_vector<double>("VectorDouble");
     register_vector<float>("VectorFloat");
-    register_vector<MGmatrix>("MatrixDouble");
     register_vector<int>("VectorInt");
     register_vector<char>("VectorChar");
     function("initialize_cif_pdb",&initialize_cif_pdb);
@@ -565,22 +463,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("close_read",&clipper::CCP4MAPfile::close_read)
     .function("close_write",&clipper::CCP4MAPfile::close_write)
     ;
-    class_<MGmatrix>("MGmatrix")
-    .constructor()
-    .function("get_rows",&MGmatrix::get_rows)
-    .function("get_columns",&MGmatrix::get_columns)
-    .function("get",&MGmatrix::get)
-    ;
-    class_<MGNormalModeDisplacements>("MGNormalModeDisplacements")
-    .function("nModes",&MGNormalModeDisplacements::nModes)
-    .function("nSteps",&MGNormalModeDisplacements::nSteps)
-    .function("getDisplacements",&MGNormalModeDisplacements::getDisplacements)
-    ;
-    class_<NormalModeAnalysis>("NormalModeAnalysis")
-    .constructor()
-    .function("GetBValues",&NormalModeAnalysis::GetBValues)
-    .function("GetModeShapes",&NormalModeAnalysis::GetModeShapes)
-    ;
     function("clipper_example",&clipper_example);
     function("get_mtz_columns",&get_mtz_columns);
     function("clipper_example_with_cols",&clipper_example_with_cols);
@@ -592,10 +474,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     //function("get_annotated_glycans",&get_annotated_glycans);
     //function("get_annotated_glycans_hierarchical",&get_annotated_glycans_hierarchical);
     function("get_CA_bvalues_from_file",&get_CA_bvalues_from_file);
-    function("calculate_normal_modes",&calculate_normal_modes);
-    function("GetCorrelations",&GetCorrelations);
-    function("GetEigen",&GetEigen);
-    function("GetDisplacements",&GetDisplacements);
     function("getXYZResNo",&getXYZResNo);
     function("getXYZSeqNumInsCode",&getXYZSeqNumInsCode);
 

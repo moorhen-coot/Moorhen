@@ -39,6 +39,15 @@
  
    printf (
      "\n"
+@@ -114,7 +129,7 @@
+ #endif
+     " Protein Structure Superposition\n"
+     " -------------------------------\n"
+-    " v."superpose_version" from "superpose_date" built with SSM v.%i.%i.%i, "
++    " v." superpose_version " from " superpose_date " built with SSM v.%i.%i.%i, "
+     "MMDB v.%i.%i.%i\n"
+     "\n"
+     " USAGE:\n"
 @@ -255,8 +270,23 @@
  }
  */
@@ -84,7 +93,7 @@
  #ifdef _ccp4_
      printf ( "<!--SUMMARY_END-->\n" );
      ccperror ( 1,"No input" );
-@@ -281,18 +319,20 @@
+@@ -281,21 +319,23 @@
      return 1;
    }
  
@@ -105,7 +114,11 @@
 +#endif
  
    printf ( "\n"
-     " Superpose v." superpose_version " from " superpose_date " "
+-    " Superpose v."superpose_version" from "superpose_date" "
++    " Superpose v." superpose_version " from " superpose_date " "
+                                         "(based on SSM algorithm)\n"
+     " ---------------------------------------------------------\n\n"
+    );
 @@ -323,22 +363,39 @@
    argNo = 1;
    rc    = 0;
@@ -147,4 +160,3 @@
    }
  
    if (!rc)  {
-

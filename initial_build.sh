@@ -75,14 +75,6 @@ emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
 
-#rvapi
-mkdir -p ${BUILD_DIR}/rvapi_build
-cd ${BUILD_DIR}/rvapi_build
-emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/rvapi
-emmake make -j ${NUMPROCS}
-emmake make install
-cd ${BUILD_DIR}
-
 #Moorhen
 mkdir -p ${BUILD_DIR}/moorhen_build
 cd ${BUILD_DIR}/moorhen_build
