@@ -106,7 +106,7 @@ declare module 'moorhen' {
         hide: (style: string, cid?: string) => void;
         redraw: () => Promise<void>;
         setAtomsDirty: (newVal: boolean) => void;
-        hasVisibleBuffers: (excludeBuffers?: string[]) => boolean;
+        isVisible: (excludeBuffers?: string[]) => boolean;
         centreAndAlignViewOn(selectionCid: string, animate?: boolean): Promise<void>;
         buffersInclude: (bufferIn: { id: string; }) => boolean;
         redrawRepresentation: (id: string) => Promise<void>;
@@ -117,7 +117,6 @@ declare module 'moorhen' {
         commandCentre: React.RefObject<_moorhen.CommandCentre>;
         glRef: React.RefObject<webGL.MGWebGL>;
         atomsDirty: boolean;
-        isVisible: boolean;
         name: string;
         molNo: number;
         gemmiStructure: gemmi.Structure;

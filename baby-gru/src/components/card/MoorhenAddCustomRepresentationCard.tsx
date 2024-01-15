@@ -31,6 +31,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     initialColourMode?: string;
     initialCid?: string;
     initialApplyColourToNonCarbonAtoms?: boolean;
+    changeCustomRepresentationList?: (arg0: {action: "Add" | "Remove"; item: moorhen.MoleculeRepresentation}) => void;
 }) => {
 
     const applyColourToNonCarbonAtomsSwitchRef = useRef<HTMLInputElement | null>(null)
@@ -43,6 +44,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const colourModeSelectRef = useRef<HTMLSelectElement | null>(null)
     const colourSwatchRef = useRef<HTMLDivElement | null>(null)
     const residueRangeSelectRef = useRef<any>()
+    
     const [representationStyle, setRepresentationStyle] = useState<string>(props.initialRepresentationStyleValue)
     const [colourMode, setColourMode] = useState<string>(props.initialColourMode)
     const [showColourPicker, setShowColourPicker] = useState<boolean>(false)
@@ -56,6 +58,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState<number>( props.initialAtomRadiusBondRatio ? props.initialAtomRadiusBondRatio : props.molecule.defaultBondOptions.atomRadiusBondRatio)
     const [bondWidth, setBondWidth] = useState<number>(props.initialBondWidth ? props.initialBondWidth : props.molecule.defaultBondOptions.width)
     const [bondSmoothness, setBondSmoothness] = useState<number>(props.molecule.defaultBondOptions.smoothness === 1 ? 1 : props.molecule.defaultBondOptions.smoothness === 2 ? 50 : 100)
+    
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
 
@@ -140,7 +143,8 @@ export const MoorhenAddCustomRepresentationCard = (props: {
         }
 
         if (props.mode === 'add') {
-            props.molecule.addRepresentation(styleSelectRef.current.value, cidSelection, true, colourRules, bondOptions, applyColourToNonCarbonAtomsSwitchRef.current?.checked)
+            const representation = await props.molecule.addRepresentation(styleSelectRef.current.value, cidSelection, true, colourRules, bondOptions, applyColourToNonCarbonAtomsSwitchRef.current?.checked)
+            props.changeCustomRepresentationList({action: "Add", item: representation})
         } else if (props.mode === 'edit' && props.representationId) {
             const representation = props.molecule.representations.find(item => item.uniqueId === props.representationId)
             if (representation) {
@@ -339,5 +343,6 @@ export const MoorhenAddCustomRepresentationCard = (props: {
 MoorhenAddCustomRepresentationCard.defaultProps = { 
     mode: 'add', initialColourMode: 'custom', initialRepresentationStyleValue: 'CBs', 
     initialUseDefaultColoursValue: true, initialRuleType: 'molecule', initialColour: '#47d65f',
-    initialCid: '', initialUseDefaultBondSettings: true, initialApplyColourToNonCarbonAtoms: false
+    initialCid: '', initialUseDefaultBondSettings: true, initialApplyColourToNonCarbonAtoms: false,
+    changeCustomRepresentationList: () => {}
 }

@@ -52,6 +52,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const [showContextMenu, setShowContextMenu] = useState<false | moorhen.AtomRightClickEventInfo>(false)
     const [defaultActionButtonSettings, setDefaultActionButtonSettings] = useReducer(actionButtonSettingsReducer, intialDefaultActionButtonSettings)
 
+    const visibleMolecules = useSelector((state: moorhen.State) => state.moleculeRepresentations.visibleMolecules)
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
     const isChangingRotamers = useSelector((state: moorhen.State) => state.generalStates.isChangingRotamers)
     const isDraggingAtoms = useSelector((state: moorhen.State) => state.generalStates.isDraggingAtoms)
@@ -140,8 +141,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             busyDrawingHBonds.current = true
             hBondsDirty.current = false
 
-            const visibleMolecules: moorhen.Molecule[] = molecules.filter(molecule => molecule.isVisible && molecule.hasVisibleBuffers())
-            if (visibleMolecules.length === 0) {
+            const _visibleMolecules: moorhen.Molecule[] = molecules.filter(molecule => molecule.isVisible())
+            if (_visibleMolecules.length === 0) {
                 busyDrawingHBonds.current = false
                 return
             }
@@ -149,7 +150,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             const response = await props.commandCentre.current.cootCommand({
                 returnType: "int_string_pair",
                 command: "get_active_atom",
-                commandArgs: [...glRef.current.origin.map(coord => -coord), visibleMolecules.map(molecule => molecule.molNo).join(':')]
+                commandArgs: [...glRef.current.origin.map(coord => -coord), _visibleMolecules.map(molecule => molecule.molNo).join(':')]
             }, false) as moorhen.WorkerResponse<libcootApi.PairType<number, string>>
             const moleculeMolNo: number = response.data.result.result.first
             const residueCid: string = response.data.result.result.second
@@ -163,7 +164,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             drawHBonds()
         }
 
-    }, [props.commandCentre, molecules, glRef])
+    }, [props.commandCentre, molecules, glRef, visibleMolecules])
 
     const clearHBonds = useCallback(async () => {
         if(!drawInteractions) {
