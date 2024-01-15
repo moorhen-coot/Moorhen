@@ -11,6 +11,7 @@ import { webGL } from "../types/mgWebGL"
 import { gemmi } from "../types/gemmi"
 import { libcootApi } from '../types/libcoot';
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
+import { hideMolecule } from '../store/moleculeRepresentationsSlice';
 
 /**
  * Represents a molecule
@@ -1200,7 +1201,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             let promises = []
             otherMolecules.forEach(molecule => {
                 if (doHide) {
-                    molecule.representations.forEach(item => item.hide())
+                    MoorhenReduxStore.dispatch(hideMolecule(molecule))
                 }
                 Object.keys(molecule.ligandDicts).forEach(key => {
                     if (!Object.hasOwn(this.ligandDicts, key)) {
