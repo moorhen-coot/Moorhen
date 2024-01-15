@@ -150,7 +150,7 @@ export namespace moorhen {
         hide: (style: string, cid?: string) => void;
         redraw: () => Promise<void>;
         setAtomsDirty: (newVal: boolean) => void;
-        hasVisibleBuffers: (excludeBuffers?: string[]) => boolean;
+        isVisible: (excludeBuffers?: string[]) => boolean;
         centreAndAlignViewOn(selectionCid: string, animate?: boolean): Promise<void>;
         buffersInclude: (bufferIn: { id: string; }) => boolean;
         redrawRepresentation: (id: string) => Promise<void>;
@@ -160,7 +160,7 @@ export namespace moorhen {
         commandCentre: React.RefObject<CommandCentre>;
         glRef: React.RefObject<webGL.MGWebGL>;
         atomsDirty: boolean;
-        isVisible: boolean;
+        showOnLoad: boolean;
         name: string;
         molNo: number;
         gemmiStructure: gemmi.Structure;
@@ -850,7 +850,12 @@ export namespace moorhen {
             mapColours: { molNo: number; rgb: {r: number, g: number, b: number} }[];
             negativeMapColours: { molNo: number; rgb: {r: number, g: number, b: number} }[];
             positiveMapColours: { molNo: number; rgb: {r: number, g: number, b: number} }[];
-        }
+        };
+        moleculeRepresentations: {
+            visibleMolecules: number[];
+            representations: { molNo: number; representationId: string }[];
+            visibleRepresentations: { molNo: number; representationId: string }[];        
+        };
     }
     
     type actionButtonSettings = {

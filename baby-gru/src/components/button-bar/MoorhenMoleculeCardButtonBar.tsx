@@ -1,4 +1,4 @@
-import { useState, useMemo, Fragment, useRef } from "react";
+import { useState, useMemo, Fragment, useRef, useCallback } from "react";
 import { Button, DropdownButton } from "react-bootstrap";
 import { convertViewtoPx } from '../../utils/MoorhenUtils';
 import { MenuItem } from "@mui/material";
@@ -8,7 +8,8 @@ import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDi
 import { clickedResidueType } from "../card/MoorhenMoleculeCard";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { hideMolecule, showMolecule } from "../../store/moleculeRepresentationsSlice";
 
 type MoorhenMoleculeCardButtonBarPropsType = {
     handleCentering: () => void;
@@ -16,11 +17,9 @@ type MoorhenMoleculeCardButtonBarPropsType = {
     handleDownload: () => Promise<void>;
     handleRedo: () => Promise<void>;
     handleUndo: () => Promise<void>;
-    handleVisibility: () => void;
     molecule: moorhen.Molecule;
     glRef: React.RefObject<webGL.MGWebGL>;
     sideBarWidth: number;
-    isVisible: boolean;
     isCollapsed: boolean;
     setIsCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
     clickedResidue: clickedResidueType;
@@ -31,10 +30,14 @@ type MoorhenMoleculeCardButtonBarPropsType = {
 
 export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBarPropsType) => {
     const dropdownCardButtonRef = useRef<HTMLDivElement>()
+    
     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
     const [currentName, setCurrentName] = useState<string>(props.molecule.name);
+    
+    const dispatch = useDispatch()
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const makeBackups = useSelector((state: moorhen.State) => state.backupSettings.makeBackups)
+    const isVisible = useSelector((state: moorhen.State) => state.moleculeRepresentations.visibleMolecules.includes(props.molecule.molNo))
 
     useMemo(() => {
         if (currentName === "") {
@@ -44,14 +47,18 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
 
     }, [currentName]);
 
+    const handleVisibility = useCallback(() => {
+        dispatch( isVisible ? hideMolecule(props.molecule) : showMolecule(props.molecule) )
+        props.setCurrentDropdownMolNo(-1)
+    }, [isVisible])
 
     const actionButtons: { [key: number]: { label: string; compressed: () => JSX.Element; expanded: null | (() => JSX.Element); } } = {
         1: {
-            label: props.isVisible ? "Hide molecule" : "Show molecule",
-            compressed: () => { return (<MenuItem key={1} onClick={props.handleVisibility}>{props.isVisible ? "Hide molecule" : "Show molecule"}</MenuItem>) },
+            label: isVisible ? "Hide molecule" : "Show molecule",
+            compressed: () => { return (<MenuItem key={1} onClick={handleVisibility}>{isVisible ? "Hide molecule" : "Show molecule"}</MenuItem>) },
             expanded: () => {
-                return (<Button key={1} size="sm" variant="outlined" onClick={props.handleVisibility}>
-                    {props.isVisible ? <VisibilityOffOutlined /> : <VisibilityOutlined />}
+                return (<Button key={1} size="sm" variant="outlined" onClick={handleVisibility}>
+                    {isVisible ? <VisibilityOffOutlined /> : <VisibilityOutlined />}
                 </Button>)
             }
         },

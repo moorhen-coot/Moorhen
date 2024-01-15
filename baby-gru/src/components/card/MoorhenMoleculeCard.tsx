@@ -16,6 +16,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { addMolecule } from '../../store/moleculesSlice';
+import { hideMolecule, showMolecule } from '../../store/moleculeRepresentationsSlice';
 
 const allRepresentations = [ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks', 'restraints' ]
 
@@ -71,6 +72,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops)
     const userPreferencesMounted = useSelector((state: moorhen.State) => state.generalStates.userPreferencesMounted)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const isVisible = useSelector((state: moorhen.State) => state.moleculeRepresentations.visibleMolecules.includes(props.molecule.molNo))
 
     const addColourRulesAnchorDivRef = useRef<HTMLDivElement | null>(null)
     const busyRedrawing = useRef<boolean>(false)
@@ -87,7 +89,6 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const [selectedResidues, setSelectedResidues] = useState<[number, number] | null>(null);
     const [clickedResidue, setClickedResidue] = useState<clickedResidueType | null>(null);
     const [isCollapsed, setIsCollapsed] = useState<boolean>(!defaultExpandDisplayCards);
-    const [isVisible, setIsVisible] = useState<boolean>(true)
     const [bondWidth, setBondWidth] = useState<number>(props.molecule.defaultBondOptions.width)
     const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState<number>(props.molecule.defaultBondOptions.atomRadiusBondRatio)
     const [bondSmoothness, setBondSmoothness] = useState<number>(props.molecule.defaultBondOptions.smoothness === 1 ? 1 : props.molecule.defaultBondOptions.smoothness === 2 ? 50 : 100)
@@ -350,10 +351,20 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     }, [surfaceBFactor]);
 
     useEffect(() => {
-        if (isVisible !== props.molecule.isVisible) {
-            props.molecule.isVisible = isVisible
+        if (props.molecule.showOnLoad) {
+            dispatch( showMolecule(props.molecule) )
+        } else {
+            dispatch( hideMolecule(props.molecule) )
         }
-    }, [isVisible]);
+    }, []);
+    
+    useEffect(() => {
+        if (isVisible) {
+            props.molecule.representations.forEach(item => item.show())
+        } else {
+            props.molecule.representations.forEach(item => item.hide())
+        }
+    }, [isVisible])
 
     useEffect(() => {
         props.molecule.representations
@@ -364,7 +375,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                 key: item.style, state: displayObjects.length > 0 && displayObjects[0].visible
             })
         })
-    }, [props.molecule.representations])
+    }, [isVisible])
 
     useEffect(() => {
         if (!clickedResidue) {
@@ -382,18 +393,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
         };
 
     }, [handleOriginUpdate])
-
-    const handleVisibility = () => {
-        if (isVisible) {
-            props.molecule.representations.forEach(item => showState[item.style] ? item.hide() : null)
-            setIsVisible(false)
-        } else {
-            props.molecule.representations.forEach(item => showState[item.style] ? item.show() : null)
-            setIsVisible(true)
-        }
-        props.setCurrentDropdownMolNo(-1)
-    }
-
+ 
     const handleDownload = async () => {
         await props.molecule.downloadAtoms()
         props.setCurrentDropdownMolNo(-1)
@@ -436,7 +436,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
         props.setCurrentDropdownMolNo(-1)
     }
 
-    const handleProps = { handleCentering, handleCopyFragment, handleDownload, handleRedo, handleUndo, handleVisibility }
+    const handleProps = { handleCentering, handleCopyFragment, handleDownload, handleRedo, handleUndo }
 
     return <><Card ref={cardRef} className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.molecule.molNo}>
         <Card.Header style={{ padding: '0.1rem' }}>
@@ -449,7 +449,6 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                         molecule={props.molecule}
                         glRef={props.glRef}
                         sideBarWidth={props.sideBarWidth}
-                        isVisible={isVisible}
                         isCollapsed={isCollapsed}
                         setIsCollapsed={setIsCollapsed}
                         clickedResidue={clickedResidue}

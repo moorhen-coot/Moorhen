@@ -48,7 +48,7 @@ export const babyGruKeyPress = (
     } = collectedProps;
 
     const getCentreAtom = async (): Promise<[moorhen.Molecule, string]> => {
-        const visibleMolecules: moorhen.Molecule[] = molecules.filter((molecule: moorhen.Molecule) => molecule.isVisible && molecule.hasVisibleBuffers())
+        const visibleMolecules: moorhen.Molecule[] = molecules.filter((molecule: moorhen.Molecule) => molecule.isVisible())
         if (visibleMolecules.length === 0) {
             return
         }

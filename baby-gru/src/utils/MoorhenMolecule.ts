@@ -10,6 +10,7 @@ import { moorhen } from "../types/moorhen"
 import { webGL } from "../types/mgWebGL"
 import { gemmi } from "../types/gemmi"
 import { libcootApi } from '../types/libcoot';
+import MoorhenReduxStore from "../store/MoorhenReduxStore";
 
 /**
  * Represents a molecule
@@ -17,7 +18,7 @@ import { libcootApi } from '../types/libcoot';
  * @property {number} molNo - The imol assigned to this molecule instance
  * @property {boolean} atomsDirty - Whether the cached atoms are outdated 
  * @property {boolean} symmetryOn - Whether the symmetry is currently being displayed
- * @property {boolean} isVisible - Whether any of the buffers are currently being displayed
+ * @property {boolean} showOnLoad - Whether the molecule is to be displayed right after loading
  * @property {object} sequences - List of sequences present in the molecule
  * @property {object} gemmiStructure - Object representation of the cached gemmi structure for this molecule
  * @property {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
@@ -53,7 +54,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     atomsDirty: boolean;
-    isVisible: boolean;
+    showOnLoad: boolean;
     name: string;
     molNo: number | null
     gemmiStructure: gemmi.Structure;
@@ -95,7 +96,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.commandCentre = commandCentre
         this.glRef = glRef
         this.atomsDirty = true
-        this.isVisible = true
+        this.showOnLoad = true
         this.name = "unnamed"
         this.molNo = null
         this.coordsFormat = null
@@ -1397,13 +1398,16 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     /**
      * Determine whether this molecule instance has any visible buffers
-     * @param {string[]} excludeBuffers - A list of buffers that should be excluded from this check
+     * @param {string[]} excludeStyles - A list of representation styles that should be excluded from this check
      * @returns {boolean} True if the molecule has any visible buffers
      */
-    hasVisibleBuffers(excludeBuffers: string[] = ['hover', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface']): boolean {
-        const representations = this.representations.filter(item => !excludeBuffers.includes(item.style))
-        const isVisible = representations.some(item => item.visible)
-        return isVisible
+    isVisible(excludeStyles: string[] = ['hover', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface']): boolean {
+        const state = MoorhenReduxStore.getState()
+        const isVisible = state.moleculeRepresentations.visibleMolecules.some(molNo => molNo === this.molNo)
+        const hasVisibleBuffers = this.representations
+            .filter(item => !excludeStyles.includes(item.style))
+            .some(item => item.visible)
+        return hasVisibleBuffers && isVisible
     }
 
     /**
