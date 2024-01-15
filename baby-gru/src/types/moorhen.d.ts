@@ -160,7 +160,6 @@ export namespace moorhen {
         commandCentre: React.RefObject<CommandCentre>;
         glRef: React.RefObject<webGL.MGWebGL>;
         atomsDirty: boolean;
-        showOnLoad: boolean;
         name: string;
         molNo: number;
         gemmiStructure: gemmi.Structure;

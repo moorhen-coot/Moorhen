@@ -117,7 +117,6 @@ declare module 'moorhen' {
         commandCentre: React.RefObject<_moorhen.CommandCentre>;
         glRef: React.RefObject<webGL.MGWebGL>;
         atomsDirty: boolean;
-        showOnLoad: boolean;
         name: string;
         molNo: number;
         gemmiStructure: gemmi.Structure;
