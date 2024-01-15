@@ -43,6 +43,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const colourModeSelectRef = useRef<HTMLSelectElement | null>(null)
     const colourSwatchRef = useRef<HTMLDivElement | null>(null)
     const residueRangeSelectRef = useRef<any>()
+    
     const [representationStyle, setRepresentationStyle] = useState<string>(props.initialRepresentationStyleValue)
     const [colourMode, setColourMode] = useState<string>(props.initialColourMode)
     const [showColourPicker, setShowColourPicker] = useState<boolean>(false)
@@ -56,6 +57,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState<number>( props.initialAtomRadiusBondRatio ? props.initialAtomRadiusBondRatio : props.molecule.defaultBondOptions.atomRadiusBondRatio)
     const [bondWidth, setBondWidth] = useState<number>(props.initialBondWidth ? props.initialBondWidth : props.molecule.defaultBondOptions.width)
     const [bondSmoothness, setBondSmoothness] = useState<number>(props.molecule.defaultBondOptions.smoothness === 1 ? 1 : props.molecule.defaultBondOptions.smoothness === 2 ? 50 : 100)
+    
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
 
