@@ -351,30 +351,23 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     }, [surfaceBFactor]);
 
     useEffect(() => {
-        if (props.molecule.showOnLoad) {
-            dispatch( showMolecule(props.molecule) )
-        } else {
-            dispatch( hideMolecule(props.molecule) )
-        }
+        dispatch( showMolecule(props.molecule) )
+        props.molecule.representations
+            .filter(item => { return !item.isCustom && item.style !== 'hover' })
+            .forEach(item => {
+                const displayObjects = item.buffers
+                changeShowState({
+                    key: item.style, state: displayObjects.length > 0 && displayObjects[0].visible
+                })
+            })
     }, []);
     
     useEffect(() => {
         if (isVisible) {
-            props.molecule.representations.forEach(item => item.show())
+            props.molecule.representations.forEach(item => showState[item.style] ? item.show() : null)
         } else {
-            props.molecule.representations.forEach(item => item.hide())
+            props.molecule.representations.forEach(item => showState[item.style] ? item.hide() : null)
         }
-    }, [isVisible])
-
-    useEffect(() => {
-        props.molecule.representations
-        .filter(item => { return !item.isCustom && item.style !== 'hover' })
-        .forEach(item => {
-            const displayObjects = item.buffers
-            changeShowState({
-                key: item.style, state: displayObjects.length > 0 && displayObjects[0].visible
-            })
-        })
     }, [isVisible])
 
     useEffect(() => {
@@ -488,7 +481,6 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                                                     addColourRulesAnchorDivRef={addColourRulesAnchorDivRef}
                                                     molecule={props.molecule}
                                                     representation={representation}
-                                                    isVisible={isVisible}
                                                     changeCustomRepresentationList={changeCustomRepresentationList}/>
                                     })}
                                 </FormGroup>
@@ -632,19 +624,29 @@ const CustomRepresentationChip = (props: {
     urlPrefix: string;
     addColourRulesAnchorDivRef: React.RefObject<HTMLDivElement>;
     glRef: React.RefObject<webGL.MGWebGL>;
-    isVisible: boolean;
     molecule: moorhen.Molecule;
     representation: moorhen.MoleculeRepresentation; 
     changeCustomRepresentationList: (arg0: {action: "Add" | "Remove"; item: moorhen.MoleculeRepresentation}) => void;
 }) => {
     
-    const { representation, molecule, isVisible } = props
+    const { representation, molecule } = props
 
     const [representationIsVisible, setRepresentationIsVisible] = useState<boolean>(true)
     const [showEditRepresentation, setShowEditRepresentation] = useState<boolean>(false)
+    
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
+    const isVisible = useSelector((state: moorhen.State) => state.moleculeRepresentations.visibleMolecules.some(molNo => molNo === molecule.molNo))
 
-    const chipStyle = getChipStyle(representation.colourRules, representationIsVisible, isDark)
+    const chipStyle = getChipStyle(representation.colourRules, representationIsVisible && isVisible, isDark)
+    if (!isVisible) chipStyle['opacity'] = '0.3'
+
+    useEffect(() => {
+        if (!isVisible) {
+            representation.hide()
+        } else if (representationIsVisible) {
+            representation.show()
+        }
+    }, [isVisible])
     
     useEffect(() => {
         representationIsVisible ? representation.show() : representation.hide()

@@ -54,7 +54,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     atomsDirty: boolean;
-    showOnLoad: boolean;
     name: string;
     molNo: number | null
     gemmiStructure: gemmi.Structure;
@@ -96,7 +95,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.commandCentre = commandCentre
         this.glRef = glRef
         this.atomsDirty = true
-        this.showOnLoad = true
         this.name = "unnamed"
         this.molNo = null
         this.coordsFormat = null
