@@ -852,8 +852,6 @@ export namespace moorhen {
         };
         moleculeRepresentations: {
             visibleMolecules: number[];
-            representations: { molNo: number; representationId: string }[];
-            visibleRepresentations: { molNo: number; representationId: string }[];        
         };
     }
     

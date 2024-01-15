@@ -16,7 +16,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { addMolecule } from '../../store/moleculesSlice';
-import { hideMolecule, showMolecule } from '../../store/moleculeRepresentationsSlice';
+import { showMolecule } from '../../store/moleculeRepresentationsSlice';
 
 const allRepresentations = [ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks', 'restraints' ]
 
@@ -45,7 +45,7 @@ const initialCustomRep = []
 const customRepReducer = (oldList: moorhen.MoleculeRepresentation[], change: {action: "Add" | "Remove"; item: moorhen.MoleculeRepresentation}) => {
     switch (change.action) {
         case "Add": 
-            oldList.push(change.item)
+            if (oldList.every(representation => representation.uniqueId !== change.item.uniqueId)) oldList.push(change.item)
             break
         case "Remove":
             oldList = oldList.filter(representation => representation.uniqueId !== change.item.uniqueId)
@@ -473,7 +473,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                             <hr style={{ marginTop: '0.5rem', marginBottom: "0.5rem", marginLeft: '0.5rem', marginRight: '0.5rem' }}></hr>
                             {props.molecule.representations.some(representation => representation.isCustom) ?
                                 <FormGroup style={{ margin: "0px", padding: "0px" }} row>
-                                    {props.molecule.representations.filter(representation => representation.isCustom).map(representation => {
+                                    {customRepresentationList.map(representation => {
                                         return <CustomRepresentationChip
                                                     key={representation.uniqueId}
                                                     urlPrefix={props.urlPrefix}
@@ -504,7 +504,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                     </Col>
                     <MoorhenMoleculeRepresentationSettingsCard symmetrySettingsProps={symmetrySettingsProps} gaussianSettingsProps={gaussianSettingsProps} bondSettingsProps={bondSettingsProps} glRef={props.glRef} urlPrefix={props.urlPrefix} molecule={props.molecule} anchorEl={addColourRulesAnchorDivRef} show={showCreateRepresentationSettingsModal} setShow={setShowCreateRepresentationSettingsModal}/>
                     <MoorhenModifyColourRulesCard anchorEl={addColourRulesAnchorDivRef} urlPrefix={props.urlPrefix} glRef={props.glRef} commandCentre={props.commandCentre} molecule={props.molecule} showColourRulesToast={showColourRulesModal} setShowColourRulesToast={setShowColourRulesModal}/>
-                    <MoorhenAddCustomRepresentationCard glRef={props.glRef} urlPrefix={props.urlPrefix} molecule={props.molecule} anchorEl={addColourRulesAnchorDivRef} show={showCreateCustomRepresentation} setShow={setShowCreateCustomRepresentation}/>
+                    <MoorhenAddCustomRepresentationCard glRef={props.glRef} urlPrefix={props.urlPrefix} molecule={props.molecule} anchorEl={addColourRulesAnchorDivRef} show={showCreateCustomRepresentation} setShow={setShowCreateCustomRepresentation} changeCustomRepresentationList={changeCustomRepresentationList}/>
                 </Row>
             <div>
                 <Accordion className="moorhen-accordion"  disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }}>
