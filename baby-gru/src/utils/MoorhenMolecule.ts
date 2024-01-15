@@ -19,7 +19,6 @@ import { hideMolecule } from '../store/moleculeRepresentationsSlice';
  * @property {number} molNo - The imol assigned to this molecule instance
  * @property {boolean} atomsDirty - Whether the cached atoms are outdated 
  * @property {boolean} symmetryOn - Whether the symmetry is currently being displayed
- * @property {boolean} showOnLoad - Whether the molecule is to be displayed right after loading
  * @property {object} sequences - List of sequences present in the molecule
  * @property {object} gemmiStructure - Object representation of the cached gemmi structure for this molecule
  * @property {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
