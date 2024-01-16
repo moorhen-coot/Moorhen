@@ -2,7 +2,7 @@ import { createSlice } from '@reduxjs/toolkit'
 import { moorhen } from '../types/moorhen'
 
 export const connectedMapsSlice = createSlice({
-  name: 'hoveringStates',
+  name: 'connectedMapsSlice',
   initialState: {
     updatingMapsIsEnabled: false,
     connectedMolecule: null,
