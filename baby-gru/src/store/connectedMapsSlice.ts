@@ -10,13 +10,28 @@ export const connectedMapsSlice = createSlice({
     twoFoFcMap: null,
     foFcMap: null,
     uniqueMaps: [],
+    defaultUpdatingScores: null,
+    showScoresToast: null,
   },
   reducers: {
+    setShowScoresToast: (state, action: {payload: boolean, type: string}) => {
+        return {...state, showScoresToast: action.payload}
+    },
+    addMapUpdatingScore: (state, action: {payload: string, type: string}) => {
+        return {...state, defaultUpdatingScores: [...state.defaultUpdatingScores, action.payload]}
+    },
+    removeMapUpdatingScore: (state, action: {payload: string, type: string}) => {
+      return {...state, defaultUpdatingScores: state.defaultUpdatingScores.filter(item => item !== action.payload)}
+    },
+    overwriteMapUpdatingScores: (state, action: {payload: string[], type: string}) => {
+      return {...state, defaultUpdatingScores: action.payload}
+    },  
     enableUpdatingMaps: (state) => {
         return {...state, updatingMapsIsEnabled: true }
     },
     disableUpdatingMaps: (state) => {
         return {
+            ...state,
             updatingMapsIsEnabled: false,
             connectedMolecule: null,
             reflectionMap: null,
@@ -74,9 +89,10 @@ export const connectedMapsSlice = createSlice({
 }})
 
 export const {
-    setConnectedMolecule, enableUpdatingMaps, disableUpdatingMaps,
-    setReflectionMap, setFoFcMap, setTwoFoFcMap, setReflectionMapMolNo,
-    setConnectedMoleculeMolNo, setFoFcMapMolNo, setTwoFoFcMapMolNo
+    setConnectedMolecule, enableUpdatingMaps, disableUpdatingMaps, setReflectionMap,
+    setFoFcMap, setTwoFoFcMap, setReflectionMapMolNo, overwriteMapUpdatingScores,
+    setConnectedMoleculeMolNo, setFoFcMapMolNo, setTwoFoFcMapMolNo, removeMapUpdatingScore,
+    setShowScoresToast, addMapUpdatingScore
 } = connectedMapsSlice.actions
 
 export default connectedMapsSlice.reducer

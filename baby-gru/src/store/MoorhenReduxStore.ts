@@ -3,7 +3,6 @@ import moleculesReducer from './moleculesSlice'
 import mapsReducer from './mapsSlice'
 import mouseSettingsReducer from './mouseSettings'
 import backupSettingsReducer from './backupSettingsSlice'
-import updatingMapScoresSettingsReducer from './updatingMapScoresSettingsSlice'
 import shortcutSettingsReducer from './shortCutsSlice'
 import labelSettingsReducer from './labelSettingsSlice'
 import sceneSettingsReducer from './sceneSettingsSlice'
@@ -21,7 +20,6 @@ export default configureStore({
         maps: mapsReducer,
         mouseSettings: mouseSettingsReducer,
         backupSettings: backupSettingsReducer,
-        updatingMapScoresSettings: updatingMapScoresSettingsReducer,
         shortcutSettings: shortcutSettingsReducer,
         labelSettings: labelSettingsReducer,
         sceneSettings: sceneSettingsReducer,

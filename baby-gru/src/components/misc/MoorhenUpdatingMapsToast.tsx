@@ -23,8 +23,8 @@ export const MoorhenUpdatingMapsToast = (props: {
     const uniqueMaps = useSelector((state: moorhen.State) => state.connectedMaps.uniqueMaps)
     const connectedMoleculeMolNo = useSelector((state: moorhen.State) => state.connectedMaps.connectedMolecule)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
-    const defaultUpdatingScores = useSelector((state: moorhen.State) => state.updatingMapScoresSettings.defaultUpdatingScores)
-    const showScoresToast = useSelector((state: moorhen.State) => state.updatingMapScoresSettings.showScoresToast)
+    const defaultUpdatingScores = useSelector((state: moorhen.State) => state.connectedMaps.defaultUpdatingScores)
+    const showScoresToast = useSelector((state: moorhen.State) => state.connectedMaps.showScoresToast)
     const maps = useSelector((state: moorhen.State) => state.maps)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
 

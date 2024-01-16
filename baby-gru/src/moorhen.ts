@@ -32,7 +32,7 @@ import {setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut, setEnableR
 import { addMolecule, removeMolecule, emptyMolecules, addMoleculeList } from './store/moleculesSlice';
 import { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity } from './store/mouseSettings';
 import { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts } from './store/shortCutsSlice';
-import { setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores } from './store/updatingMapScoresSettingsSlice'
+import { setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores } from './store/connectedMapsSlice'
 
 export {
     ErrorBoundary, MoorhenApp, MoorhenContainer, MoorhenTimeCapsule, MoorhenMoleculeSelect, MoorhenMolecule, MoorhenMap,

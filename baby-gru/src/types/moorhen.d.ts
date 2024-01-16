@@ -743,10 +743,6 @@ export namespace moorhen {
             maxBackupCount: number;
             modificationCountBackupThreshold: number;     
         };
-        updatingMapScoresSettings: {
-            defaultUpdatingScores: string[];
-            showScoresToast: boolean;
-        };
         shortcutSettings: {
             shortcutOnHoveredAtom: boolean;
             showShortcutToast: boolean;
@@ -852,6 +848,8 @@ export namespace moorhen {
             twoFoFcMap: number;
             foFcMap: number;
             uniqueMaps: number[];
+            defaultUpdatingScores: string[];
+            showScoresToast: boolean;
         };
     }
     
