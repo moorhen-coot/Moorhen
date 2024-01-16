@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useEffect, useState, useRef, useCallback, useMemo, Fragment } from "react"
 import { Card, Form, Button, Col, DropdownButton, Stack, OverlayTrigger, ToggleButton, Spinner } from "react-bootstrap"
-import { doDownload, guid } from '../../utils/MoorhenUtils'
+import { doDownload, guid, rgbToHex } from '../../utils/MoorhenUtils'
 import { getNameLabel } from "./cardUtils"
 import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings, FileCopyOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined, AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
 import { MoorhenMapSettingsMenuItem } from "../menu-item/MoorhenMapSettingsMenuItem";
@@ -9,8 +9,8 @@ import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDi
 import { MoorhenSetMapWeight } from "../menu-item/MoorhenSetMapWeight"
 import { MoorhenMapHistogram } from "../misc/MoorhenMapHistogram"
 import { MoorhenSlider } from "../misc/MoorhenSlider";
-import { Accordion, AccordionDetails, AccordionSummary, IconButton, MenuItem, Popover, Tooltip } from "@mui/material"
-import { RgbColorPicker } from "react-colorful"
+import { Accordion, AccordionDetails, AccordionSummary, IconButton, MenuItem, Popover, Tooltip, hexToRgb } from "@mui/material"
+import { HexColorInput, RgbColorPicker } from "react-colorful"
 import { moorhen } from "../../types/moorhen"
 import { MoorhenNotification } from "../misc/MoorhenNotification"
 import { useSelector, useDispatch, batch } from 'react-redux';
@@ -84,6 +84,16 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         // Need to stringify to ensure the selector is stable... (dont want to return a new obj reference)
         return JSON.stringify(result)
     })
+    const mapColourHex = useSelector((state: moorhen.State) => {
+        const map = state.mapContourSettings.mapColours.find(item => item.molNo === props.map.molNo)
+        let result: string
+        if (map) {
+            result = rgbToHex(map.rgb.r, map.rgb.g, map.rgb.b)
+        } else {
+            result = rgbToHex(props.map.defaultMapColour.r, props.map.defaultMapColour.g, props.map.defaultMapColour.b)
+        }
+        return result
+    })
     const negativeMapColourString = useSelector((state: moorhen.State) => {
         const map = state.mapContourSettings.negativeMapColours.find(item => item.molNo === props.map.molNo)
         let result: {r: number, g: number, b: number}
@@ -94,6 +104,16 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         }
         return JSON.stringify(result)
     })
+    const negativeMapColourHex = useSelector((state: moorhen.State) => {
+        const map = state.mapContourSettings.negativeMapColours.find(item => item.molNo === props.map.molNo)
+        let result: string
+        if (map) {
+            result = rgbToHex(map.rgb.r, map.rgb.g, map.rgb.b)
+        } else {
+            result = rgbToHex(props.map.defaultNegativeMapColour.r, props.map.defaultNegativeMapColour.g, props.map.defaultNegativeMapColour.b)
+        }
+        return JSON.stringify(result)
+    })
     const positiveMapColourString = useSelector((state: moorhen.State) => {
         const map = state.mapContourSettings.positiveMapColours.find(item => item.molNo === props.map.molNo)
         let result: {r: number, g: number, b: number}
@@ -101,6 +121,16 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             result = map.rgb
         } else {
            result = {r: props.map.defaultPositiveMapColour.r * 255., g: props.map.defaultPositiveMapColour.g * 255., b: props.map.defaultPositiveMapColour.b * 255.}
+        }
+        return JSON.stringify(result)
+    })
+    const positiveMapColourHex = useSelector((state: moorhen.State) => {
+        const map = state.mapContourSettings.positiveMapColours.find(item => item.molNo === props.map.molNo)
+        let result: string
+        if (map) {
+            result = rgbToHex(map.rgb.r, map.rgb.g, map.rgb.b)
+        } else {
+            result = rgbToHex(props.map.defaultPositiveMapColour.r, props.map.defaultPositiveMapColour.g, props.map.defaultPositiveMapColour.b)
         }
         return JSON.stringify(result)
     })
@@ -123,9 +153,9 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const isDirty = useRef<boolean>(false)
     const histogramRef = useRef(null)
 
-    const mapColour = JSON.parse(mapColourString)
-    const negativeMapColour = JSON.parse(negativeMapColourString)
-    const positiveMapColour = JSON.parse(positiveMapColourString)
+    const mapColour: {r: number; g: number; b: number;} = JSON.parse(mapColourString)
+    const negativeMapColour: {r: number; g: number; b: number;} = JSON.parse(negativeMapColourString)
+    const positiveMapColour: {r: number; g: number; b: number;} = JSON.parse(positiveMapColourString)
 
     useImperativeHandle(cardRef, () => ({
         forceIsCollapsed: (value: boolean) => { 
@@ -425,10 +455,24 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                     <div style={{width: '100%', textAlign: 'center'}}>
                         <span>Positive</span>
                         <RgbColorPicker color={positiveMapColour} onChange={handlePositiveMapColorChange} />
+                        <div style={{width: '100%', display: 'flex', justifyContent: 'center'}}>
+                            <div className="moorhen-hex-input-decorator">#</div>
+                            <HexColorInput className="moorhen-hex-input" color={positiveMapColourHex} onChange={(hex) => {
+                                const [r, g, b] = hexToRgb(hex).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+                                handlePositiveMapColorChange({r, g, b})
+                            }}/>
+                        </div>
                     </div>
                     <div style={{width: '100%', textAlign: 'center'}}>
                         <span>Negative</span>
                         <RgbColorPicker color={negativeMapColour} onChange={handleNegativeMapColorChange} />
+                        <div style={{width: '100%', display: 'flex', justifyContent: 'center'}}>
+                            <div className="moorhen-hex-input-decorator">#</div>
+                            <HexColorInput className="moorhen-hex-input" color={negativeMapColourHex} onChange={(hex) => {
+                                const [r, g, b] = hexToRgb(hex).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+                                handleNegativeMapColorChange({r, g, b})
+                            }}/>
+                        </div>
                     </div>
                     
                 </Stack>
@@ -460,6 +504,13 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                         }}
                     >
                         <RgbColorPicker color={mapColour} onChange={handleColorChange} />
+                        <div style={{width: '100%', display: 'flex', justifyContent: 'center', marginBottom: '0.1rem'}}>
+                            <div className="moorhen-hex-input-decorator">#</div>
+                            <HexColorInput className="moorhen-hex-input" color={mapColourHex} onChange={(hex) => {
+                                const [r, g, b] = hexToRgb(hex).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+                                handleColorChange({r, g, b})
+                            }}/>
+                        </div>
                     </Popover>
             </>
         } 
