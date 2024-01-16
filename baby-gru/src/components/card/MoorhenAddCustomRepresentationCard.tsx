@@ -114,6 +114,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                         label: cidSelection
                     }]
                     break
+                case 'colour-ramp':
                 case 'mol-symm':
                 case "b-factor":
                 case "b-factor-norm":
