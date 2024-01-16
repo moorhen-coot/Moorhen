@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, useReducer } from "react";
 import { Button, Stack, Form, FormSelect } from "react-bootstrap";
 import { CirclePicker } from "react-color";
-import { HexColorPicker } from "react-colorful";
+import { HexColorPicker, HexColorInput } from "react-colorful";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenColourRuleCard } from "./MoorhenColourRuleCard"
 import { convertRemToPx, convertViewtoPx, getMultiColourRuleArgs } from "../../utils/MoorhenUtils";
@@ -272,7 +272,10 @@ export const MoorhenModifyColourRulesCard = (props: {
                     <div style={{padding: '0.5rem', margin: 0, justifyContent: 'center', display: 'flex', backgroundColor: '#e3e1e1', borderRadius: '8px'}}>
                         <CirclePicker width={convertRemToPx(15)} circleSize={convertRemToPx(15)/20} color={selectedColour} onChange={handleColourCircleClick}/>
                     </div>
-                    
+                    <div style={{padding: 0, margin: 0, justifyContent: 'center', display: 'flex', }}>
+                        <div className="moorhen-hex-input-decorator">#</div>
+                        <HexColorInput className="moorhen-hex-input" color={selectedColour} onChange={handleColorChange}/>
+                    </div>
                 </Stack>
                 }
             </Stack>

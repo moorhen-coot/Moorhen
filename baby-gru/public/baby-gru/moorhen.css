@@ -64,6 +64,37 @@ div.darkly text.base {fill:#000!important;}
 div.darkly text.start-label {fill:#FFF !important;}
 div.darkly text.end-label {fill:#FFF !important;}
 
+.moorhen-hex-input-decorator {
+  display: flex;
+  align-items: "center";
+  justify-content: "center";
+  float: left;
+  border: 1px solid #ddd;
+  border-radius: 4px 0px 0px 4px;
+  background: #eee;
+  color: #98a1a4;
+  outline: none;
+  margin: 0.1rem 0 0;
+  padding: 0.1rem;
+  vertical-align: baseline;
+  text-align: center
+}
+
+.moorhen-hex-input {
+  display: block;
+  box-sizing: border-box;
+  width: 90px;
+  margin: 0.1rem 0 0;
+  padding: 0.1rem;
+  border: 1px solid #ddd;
+  border-radius: 0px 4px 4px 0px;
+  background: #f0f0f0;
+  outline: none;
+  font: inherit;
+  text-transform: uppercase;
+  text-align: center;
+}
+
 .tab-content{
   height: calc(100% - 3rem);
 }
