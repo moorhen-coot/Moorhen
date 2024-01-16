@@ -542,20 +542,12 @@ export namespace moorhen {
     type ScoresUpdateEvent = CustomEvent<{
         modifiedMolecule: number;
     }>
-    
-    type ConnectMapsInfo = {
-        molecule: number;
-        maps: [number, number, number];
-        uniqueMaps: number[];
-    }
 
     type AtomClickedEvent = CustomEvent<{
         buffer: { id: string };
         atom: { label: string };
         isResidueSelection: boolean;
     }>
-
-    type ConnectMapsEvent = CustomEvent<ConnectMapsInfo>
 
     type NewMapContourEvent = CustomEvent<{
         molNo: number;
@@ -852,6 +844,14 @@ export namespace moorhen {
         };
         moleculeRepresentations: {
             visibleMolecules: number[];
+        };
+        connectedMaps: {
+            updatingMapsIsEnabled: boolean;
+            connectedMolecule: number;
+            reflectionMap: number;
+            twoFoFcMap: number;
+            foFcMap: number;
+            uniqueMaps: number[];
         };
     }
     

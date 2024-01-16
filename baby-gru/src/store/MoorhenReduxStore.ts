@@ -13,6 +13,7 @@ import hoveringStatesReducer from './hoveringStatesSlice'
 import activeModalsReducer from './activeModalsSlice'
 import mapContourSettingsReducer from './mapContourSettingsSlice'
 import moleculeRepresentationsReducer from './moleculeRepresentationsSlice'
+import connectedMapsReducer from './connectedMapsSlice'
 
 export default configureStore({
     reducer: {
@@ -29,7 +30,8 @@ export default configureStore({
         hoveringStates: hoveringStatesReducer,
         activeModals: activeModalsReducer,
         mapContourSettings: mapContourSettingsReducer,
-        moleculeRepresentations: moleculeRepresentationsReducer
+        moleculeRepresentations: moleculeRepresentationsReducer,
+        connectedMaps: connectedMapsReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

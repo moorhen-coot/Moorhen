@@ -4,22 +4,25 @@ import { MoorhenMapSelect } from "../select/MoorhenMapSelect"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
-import { useDispatch, useSelector } from 'react-redux';
+import { batch, useDispatch, useSelector } from 'react-redux';
 import { setContourLevel } from "../../store/mapContourSettingsSlice"
+import { enableUpdatingMaps, setConnectedMoleculeMolNo, setFoFcMapMolNo, setReflectionMapMolNo, setTwoFoFcMapMolNo } from "../../store/connectedMapsSlice"
 
 export const MoorhenImportFSigFMenuItem = (props:{
     selectedMolNo?: number;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
 }) => {
-    
-    const dispatch = useDispatch()
+      
     const mapSelectRef = useRef<null | HTMLSelectElement>(null)
     const twoFoFcSelectRef = useRef<null | HTMLSelectElement>(null)
     const foFcSelectRef = useRef<null | HTMLSelectElement>(null)
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
+    
+    const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const maps = useSelector((state: moorhen.State) => state.maps)
+    const connectedMoleculeMolNo = useSelector((state: moorhen.State) => state.connectedMaps.connectedMolecule)
 
     const connectMap = async () => {
         const [molecule, reflectionMap, twoFoFcMap, foFcMap] = [
@@ -53,14 +56,20 @@ export const MoorhenImportFSigFMenuItem = (props:{
                 returnType: 'status'
             }, false)
 
-            const connectedMapsEvent = new CustomEvent("connectMaps", {
-                "detail": {
-                    molecule: molecule,
-                    maps: [reflectionMap, twoFoFcMap, foFcMap],
-                    uniqueMaps: uniqueMaps
-                }
+            // If there was a previous connected molecule, disconnect it
+            if (connectedMoleculeMolNo) {
+                const previousConnectedMolecule = molecules.find(molecule => molecule.molNo === connectedMoleculeMolNo)
+                previousConnectedMolecule.connectedToMaps = null
+            }
+
+            // Dispatch redux
+            batch(() => {
+                dispatch( setFoFcMapMolNo(foFcMap) )
+                dispatch( setTwoFoFcMapMolNo(twoFoFcMap) )
+                dispatch( setReflectionMapMolNo(reflectionMap) )
+                dispatch( setConnectedMoleculeMolNo(molecule) )
+                dispatch( enableUpdatingMaps() )
             })
-            document.dispatchEvent(connectedMapsEvent)
 
             //Adjust contour to match previous rmsd
             await Promise.all(

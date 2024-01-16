@@ -13,6 +13,7 @@ import { addMap, emptyMaps } from "../store/mapsSlice";
 import { batch } from "react-redux";
 import { setActiveMap } from "../store/generalStatesSlice";
 import { setContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle, setNegativeMapColours, setPositiveMapColours } from "../store/mapContourSettingsSlice";
+import { enableUpdatingMaps, setConnectedMoleculeMolNo, setFoFcMapMolNo, setReflectionMapMolNo, setTwoFoFcMapMolNo } from "../store/connectedMapsSlice";
 
 export const getLigandSVG = async (commandCentre: React.RefObject<moorhen.CommandCentre>, imol: number, compId: string, isDark: boolean): Promise<string> => {
     const result = await commandCentre.current.cootCommand({
@@ -350,15 +351,14 @@ export async function loadSessionData(
             commandArgs: sFcalcArgs,
             returnType: 'status'
         }, false)
-                
-        const connectedMapsEvent: moorhen.ConnectMapsEvent = new CustomEvent("connectMaps", {
-            "detail": {
-                molecule: molecule,
-                maps: [reflectionMap, twoFoFcMap, foFcMap],
-                uniqueMaps: [...new Set([reflectionMap, twoFoFcMap, foFcMap].slice(1))]
-            }
+
+        batch(() => {
+            dispatch( setFoFcMapMolNo(foFcMap) )
+            dispatch( setTwoFoFcMapMolNo(twoFoFcMap) )
+            dispatch( setReflectionMapMolNo(reflectionMap) )
+            dispatch( setConnectedMoleculeMolNo(molecule) )
+            dispatch( enableUpdatingMaps() )
         })
-        document.dispatchEvent(connectedMapsEvent)
     }
     
     timeCapsuleRef.current.setBusy(false)
