@@ -2,7 +2,8 @@ import { Col, Row, Card, Button } from 'react-bootstrap';
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 import { moorhen } from "../../types/moorhen";
 import { libcootApi } from '../../types/libcoot';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { triggerScoresUpdate } from '../../store/connectedMapsSlice';
 
 interface Props extends moorhen.CollectedProps {
     dropdownId: number;
@@ -13,6 +14,7 @@ interface Props extends moorhen.CollectedProps {
 }
 
 export const MoorhenFillMissingAtoms = (props: Props) => {
+    const dispatch = useDispatch()
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
 
@@ -34,8 +36,7 @@ export const MoorhenFillMissingAtoms = (props: Props) => {
         }
         selectedMolecule.setAtomsDirty(true)
         selectedMolecule.redraw()
-        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {modifiedMolecule: selectedMolecule.molNo} })
-        document.dispatchEvent(scoresUpdateEvent);    
+        dispatch( triggerScoresUpdate(selectedMolecule.molNo) )
     }
 
     const handleAtomFill = (...args: [moorhen.Molecule, string, number, string]) => {

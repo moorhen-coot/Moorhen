@@ -12,8 +12,18 @@ export const connectedMapsSlice = createSlice({
     uniqueMaps: [],
     defaultUpdatingScores: null,
     showScoresToast: null,
+    scoresUpdate: { toggle: false, molNo: null },
   },
   reducers: {
+    triggerScoresUpdate: (state, action: {payload: number, type: string}) => {
+        return {
+            ...state, 
+            scoresUpdate: {
+                molNo: action.payload,
+                toggle: !state.scoresUpdate.toggle
+            }
+        }
+    },  
     setShowScoresToast: (state, action: {payload: boolean, type: string}) => {
         return {...state, showScoresToast: action.payload}
     },
@@ -92,7 +102,7 @@ export const {
     setConnectedMolecule, enableUpdatingMaps, disableUpdatingMaps, setReflectionMap,
     setFoFcMap, setTwoFoFcMap, setReflectionMapMolNo, overwriteMapUpdatingScores,
     setConnectedMoleculeMolNo, setFoFcMapMolNo, setTwoFoFcMapMolNo, removeMapUpdatingScore,
-    setShowScoresToast, addMapUpdatingScore
+    setShowScoresToast, addMapUpdatingScore, triggerScoresUpdate
 } = connectedMapsSlice.actions
 
 export default connectedMapsSlice.reducer

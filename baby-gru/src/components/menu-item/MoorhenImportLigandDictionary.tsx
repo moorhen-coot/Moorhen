@@ -10,6 +10,7 @@ import { webGL } from "../../types/mgWebGL";
 import { libcootApi } from "../../types/libcoot"
 import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice"
+import { triggerScoresUpdate } from "../../store/connectedMapsSlice"
 
 const MoorhenImportLigandDictionary = (props: { 
     id: string;
@@ -98,9 +99,8 @@ const MoorhenImportLigandDictionary = (props: {
                     if (typeof toMolecule !== 'undefined') {
                         const otherMolecules = [newMolecule]
                         await toMolecule.mergeMolecules(otherMolecules, true)
-                        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { modifiedMolecule: toMolecule.molNo } })
-                        document.dispatchEvent(scoresUpdateEvent)
                         await toMolecule.redraw()
+                        dispatch( triggerScoresUpdate(toMolecule.molNo) )
                     } else {
                         await newMolecule.redraw()
                     }

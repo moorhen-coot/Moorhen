@@ -9,6 +9,7 @@ import { cidToSpec } from '../../utils/MoorhenUtils';
 import { webGL } from "../../types/mgWebGL"
 import { setIsDraggingAtoms } from "../../store/generalStatesSlice"
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
+import { triggerScoresUpdate } from "../../store/connectedMapsSlice"
 
 export const MoorhenAcceptRejectDragAtoms = (props: {
     onExit: () => void;
@@ -51,8 +52,7 @@ export const MoorhenAcceptRejectDragAtoms = (props: {
             }, true)
             props.moleculeRef.current.atomsDirty = true
             await props.moleculeRef.current.redraw()
-            const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { modifiedMolecule: props.moleculeRef.current.molNo } })
-            document.dispatchEvent(scoresUpdateEvent)
+            dispatch( triggerScoresUpdate(props.moleculeRef.current.molNo) )
         }
         moltenFragmentRef.current.delete()
         props.moleculeRef.current.unhideAll()

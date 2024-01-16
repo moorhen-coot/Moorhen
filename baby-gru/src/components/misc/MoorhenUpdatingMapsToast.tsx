@@ -4,7 +4,7 @@ import { convertViewtoPx } from '../../utils/MoorhenUtils';
 import { useDispatch, useSelector } from 'react-redux';
 import { moorhen } from '../../types/moorhen';
 import { webGL } from '../../types/mgWebGL';
-import { disableUpdatingMaps } from '../../store/connectedMapsSlice';
+import { disableUpdatingMaps, triggerScoresUpdate } from '../../store/connectedMapsSlice';
 
 export const MoorhenUpdatingMapsToast = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -16,6 +16,8 @@ export const MoorhenUpdatingMapsToast = (props: {
     const [scoresToastContents, setScoreToastContents] = useState<null | JSX.Element>(null)
 
     const dispatch = useDispatch()
+    const scoresUpdateMolNo = useSelector((state: moorhen.State) => state.connectedMaps.scoresUpdate.molNo)
+    const toggleScoresUpdate = useSelector((state: moorhen.State) => state.connectedMaps.scoresUpdate.toggle)
     const updatingMapsIsEnabled = useSelector((state: moorhen.State) => state.connectedMaps.updatingMapsIsEnabled)
     const reflectionMap = useSelector((state: moorhen.State) => state.connectedMaps.reflectionMap)
     const foFcMap = useSelector((state: moorhen.State) => state.connectedMaps.foFcMap)
@@ -28,80 +30,83 @@ export const MoorhenUpdatingMapsToast = (props: {
     const maps = useSelector((state: moorhen.State) => state.maps)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
 
-    const handleScoreUpdates = useCallback(async (e: moorhen.ScoresUpdateEvent) => {
-        if (e.detail?.modifiedMolecule !== null && connectedMoleculeMolNo === e.detail.modifiedMolecule && props.glRef !== null && typeof props.glRef !== 'function') {
-            
-            await Promise.all(
-                maps.filter(map => uniqueMaps.includes(map.molNo)).map(map => {
-                    return map.drawMapContour()
-                })
-            )
-            
-            const currentScores = await props.commandCentre.current.cootCommand({
-                returnType: "r_factor_stats",
-                command: "get_r_factor_stats",
-                commandArgs: [],
-            }, false) as moorhen.WorkerResponse<{r_factor: number; free_r_factor: number; rail_points_total: number; }>
-
-            const newToastContents =    <Toast.Body style={{width: '100%'}}>
-                                            {defaultUpdatingScores.includes('Rfactor') && 
-                                                <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
-                                                    Clipper R-Factor {currentScores.data.result.result.r_factor.toFixed(3)}
-                                                </p>
-                                            }
-                                            {defaultUpdatingScores.includes('Rfree') && 
-                                                <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
-                                                    Clipper R-Free {currentScores.data.result.result.free_r_factor.toFixed(3)}
-                                                </p>
-                                            }
-                                            {defaultUpdatingScores.includes('Moorhen Points') && 
-                                                <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
-                                                    Moorhen Points {currentScores.data.result.result.rail_points_total}
-                                                </p>
-                                            }
-                                        </Toast.Body>
-            
-            if (scores !== null) {
-                const moorhenPointsDiff = currentScores.data.result.result.rail_points_total - scores.current.moorhenPoints
-                const rFactorDiff = currentScores.data.result.result.r_factor - scores.current.rFactor
-                const rFreeDiff = currentScores.data.result.result.free_r_factor - scores.current.rFree
-
-                setScoreToastContents(
-                        <Toast.Body style={{width: '100%'}}>
-                            {defaultUpdatingScores.includes('Rfactor') && 
-                                <p style={{paddingLeft: '0.5rem', marginBottom:'0rem', color: rFactorDiff < 0 ? 'green' : 'red'}}>
-                                    Clipper R-Factor {scores.current.rFactor.toFixed(3)} {`${rFactorDiff < 0 ? '' : '+'}${rFactorDiff.toFixed(3)}`}
-                                </p>
-                            }
-                            {defaultUpdatingScores.includes('Rfree') && 
-                                <p style={{paddingLeft: '0.5rem', marginBottom:'0rem', color: rFreeDiff < 0 ? 'green' : 'red'}}>
-                                    Clipper R-Free {scores.current.rFree.toFixed(3)} {`${rFreeDiff < 0 ? '' : '+'}${rFreeDiff.toFixed(3)}`}
-                                </p>
-                            }
-                            {defaultUpdatingScores.includes('Moorhen Points') && 
-                                <p style={{paddingLeft: '0.5rem', marginBottom:'0rem', color: moorhenPointsDiff < 0 ? 'red' : 'green'}}>
-                                    Moorhen Points {scores.current.moorhenPoints} {`${moorhenPointsDiff < 0 ? '' : '+'}${moorhenPointsDiff}`}
-                                </p>
-                            }
-                        </Toast.Body>
+    useEffect(() => {
+        const handleScoresUpdate = async () => {
+            console.log('>>>>>>>>>>>>>>>>>>>>>>>>> HI!!!! ', toggleScoresUpdate, scoresUpdateMolNo)
+            if (scoresUpdateMolNo !== null && connectedMoleculeMolNo === scoresUpdateMolNo && props.glRef !== null && typeof props.glRef !== 'function') {
+                
+                await Promise.all(
+                    maps.filter(map => uniqueMaps.includes(map.molNo)).map(map => {
+                        return map.drawMapContour()
+                    })
                 )
+                
+                const currentScores = await props.commandCentre.current.cootCommand({
+                    returnType: "r_factor_stats",
+                    command: "get_r_factor_stats",
+                    commandArgs: [],
+                }, false) as moorhen.WorkerResponse<{r_factor: number; free_r_factor: number; rail_points_total: number; }>
 
-                setTimeout(() => {
+                const newToastContents =    <Toast.Body style={{width: '100%'}}>
+                                                {defaultUpdatingScores.includes('Rfactor') && 
+                                                    <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
+                                                        Clipper R-Factor {currentScores.data.result.result.r_factor.toFixed(3)}
+                                                    </p>
+                                                }
+                                                {defaultUpdatingScores.includes('Rfree') && 
+                                                    <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
+                                                        Clipper R-Free {currentScores.data.result.result.free_r_factor.toFixed(3)}
+                                                    </p>
+                                                }
+                                                {defaultUpdatingScores.includes('Moorhen Points') && 
+                                                    <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
+                                                        Moorhen Points {currentScores.data.result.result.rail_points_total}
+                                                    </p>
+                                                }
+                                            </Toast.Body>
+                
+                if (scores !== null) {
+                    const moorhenPointsDiff = currentScores.data.result.result.rail_points_total - scores.current.moorhenPoints
+                    const rFactorDiff = currentScores.data.result.result.r_factor - scores.current.rFactor
+                    const rFreeDiff = currentScores.data.result.result.free_r_factor - scores.current.rFree
+
+                    setScoreToastContents(
+                            <Toast.Body style={{width: '100%'}}>
+                                {defaultUpdatingScores.includes('Rfactor') && 
+                                    <p style={{paddingLeft: '0.5rem', marginBottom:'0rem', color: rFactorDiff < 0 ? 'green' : 'red'}}>
+                                        Clipper R-Factor {scores.current.rFactor.toFixed(3)} {`${rFactorDiff < 0 ? '' : '+'}${rFactorDiff.toFixed(3)}`}
+                                    </p>
+                                }
+                                {defaultUpdatingScores.includes('Rfree') && 
+                                    <p style={{paddingLeft: '0.5rem', marginBottom:'0rem', color: rFreeDiff < 0 ? 'green' : 'red'}}>
+                                        Clipper R-Free {scores.current.rFree.toFixed(3)} {`${rFreeDiff < 0 ? '' : '+'}${rFreeDiff.toFixed(3)}`}
+                                    </p>
+                                }
+                                {defaultUpdatingScores.includes('Moorhen Points') && 
+                                    <p style={{paddingLeft: '0.5rem', marginBottom:'0rem', color: moorhenPointsDiff < 0 ? 'red' : 'green'}}>
+                                        Moorhen Points {scores.current.moorhenPoints} {`${moorhenPointsDiff < 0 ? '' : '+'}${moorhenPointsDiff}`}
+                                    </p>
+                                }
+                            </Toast.Body>
+                    )
+
+                    setTimeout(() => {
+                        setScoreToastContents(newToastContents)
+                    }, 3000);
+            
+                } else {
                     setScoreToastContents(newToastContents)
-                }, 3000);
-        
-            } else {
-                setScoreToastContents(newToastContents)
-            }
+                }
 
-            scores.current = {
-                moorhenPoints: currentScores.data.result.result.rail_points_total,
-                rFactor: currentScores.data.result.result.r_factor,
-                rFree: currentScores.data.result.result.free_r_factor
-            }
-        } 
-
-    }, [props.commandCentre, connectedMoleculeMolNo, uniqueMaps, scores, defaultUpdatingScores, props.glRef, maps])
+                scores.current = {
+                    moorhenPoints: currentScores.data.result.result.rail_points_total,
+                    rFactor: currentScores.data.result.result.r_factor,
+                    rFree: currentScores.data.result.result.free_r_factor
+                }
+            } 
+        }
+        handleScoresUpdate()
+    }, [toggleScoresUpdate])
     
     useEffect(() => {
         const handleConnectMaps = async () => {
@@ -171,13 +176,6 @@ export const MoorhenUpdatingMapsToast = (props: {
             )
         }
     }, [defaultUpdatingScores, showScoresToast]);
-
-    useEffect(() => {
-        document.addEventListener("scoresUpdate", handleScoreUpdates);
-        return () => {
-            document.removeEventListener("scoresUpdate", handleScoreUpdates);
-        };
-    }, [handleScoreUpdates]);
 
     const disconnectMaps = () => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === connectedMoleculeMolNo)

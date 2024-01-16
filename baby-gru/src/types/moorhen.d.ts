@@ -539,10 +539,6 @@ export namespace moorhen {
 
     type MapRadiusChangeEvent = CustomEvent<{ factor: number; }>
 
-    type ScoresUpdateEvent = CustomEvent<{
-        modifiedMolecule: number;
-    }>
-
     type AtomClickedEvent = CustomEvent<{
         buffer: { id: string };
         atom: { label: string };
@@ -850,6 +846,7 @@ export namespace moorhen {
             uniqueMaps: number[];
             defaultUpdatingScores: string[];
             showScoresToast: boolean;
+            scoresUpdate: {toggle: boolean, molNo: number};
         };
     }
     

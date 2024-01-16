@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { getTooltipShortcutLabel } from '../../utils/MoorhenUtils';
 import { setIsRotatingAtoms } from "../../store/generalStatesSlice"
 import { webGL } from "../../types/mgWebGL"
+import { triggerScoresUpdate } from "../../store/connectedMapsSlice"
 
 export const MoorhenAcceptRejectRotateTranslate = (props: {
     onExit: () => void;
@@ -29,8 +30,7 @@ export const MoorhenAcceptRejectRotateTranslate = (props: {
         if (acceptTransform) {
             const transformedAtoms = fragmentMoleculeRef.current.transformedCachedAtomsAsMovedAtoms()
             await props.moleculeRef.current.updateWithMovedAtoms(transformedAtoms)
-            const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { modifiedMolecule: props.moleculeRef.current.molNo } })
-            document.dispatchEvent(scoresUpdateEvent)       
+            dispatch( triggerScoresUpdate(props.moleculeRef.current.molNo) )
         }
         fragmentMoleculeRef.current.delete()
         props.moleculeRef.current.unhideAll()

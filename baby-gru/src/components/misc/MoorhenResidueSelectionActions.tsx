@@ -12,6 +12,7 @@ import { HexColorInput, HexColorPicker } from "react-colorful"
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm"
 import { MoorhenAcceptRejectRotateTranslate } from "./MoorhenAcceptRejectRotateTranslate"
 import { MoorhenAcceptRejectDragAtoms } from "./MoorhenAcceptRejectDragAtoms"
+import { triggerScoresUpdate } from "../../store/connectedMapsSlice"
 
 export const MoorhenResidueSelectionActions = (props) => {
 
@@ -36,13 +37,6 @@ export const MoorhenResidueSelectionActions = (props) => {
     const isDraggingAtoms = useSelector((state: moorhen.State) => state.generalStates.isDraggingAtoms)
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
-
-    const updateScores = (molecule: moorhen.Molecule) => {
-        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {
-            modifiedMolecule: molecule.molNo
-        }})
-        document.dispatchEvent(scoresUpdateEvent)
-    }
 
     const clearSelection = useCallback(() => {
         dispatch( clearResidueSelection() )
@@ -171,11 +165,11 @@ export const MoorhenResidueSelectionActions = (props) => {
             const stopResSpec = cidToSpec(residueSelection.second)
             const sortedResNums = [startResSpec.res_no, stopResSpec.res_no].sort(function(a, b){return a - b})
             await residueSelection.molecule.refineResidueRange(startResSpec.chain_id, sortedResNums[0], sortedResNums[1], 5000, true)
-            updateScores(residueSelection.molecule)
+            dispatch( triggerScoresUpdate(residueSelection.molecule.molNo) )
         } else if (residueSelection.molecule && residueSelection.first) {
             const startResSpec = cidToSpec(residueSelection.first)
             await residueSelection.molecule.refineResidueRange(startResSpec.chain_id, startResSpec.res_no, startResSpec.res_no, 5000, true)
-            updateScores(residueSelection.molecule)
+            dispatch( triggerScoresUpdate(residueSelection.molecule.molNo) )
         }
         clearSelection()
     }, [clearSelection, residueSelection])
@@ -199,7 +193,7 @@ export const MoorhenResidueSelectionActions = (props) => {
                 await residueSelection.molecule.delete()
                 dispatch(removeMolecule(residueSelection.molecule))
             }
-            updateScores(residueSelection.molecule)
+            dispatch( triggerScoresUpdate(residueSelection.molecule.molNo) )
         }
 
         clearSelection()
@@ -330,7 +324,7 @@ export const MoorhenResidueSelectionActions = (props) => {
 
         if (cid) {
             await residueSelection.molecule.rigidBodyFit(cid, activeMap.molNo, true)
-            updateScores(residueSelection.molecule)
+            dispatch( triggerScoresUpdate(residueSelection.molecule.molNo) )
         }
 
         clearSelection()

@@ -3,7 +3,8 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { triggerScoresUpdate } from "../../store/connectedMapsSlice";
 
 export const MoorhenMergeMoleculesMenuItem = (props: {
     fromMolNo?: null | number; 
@@ -15,6 +16,8 @@ export const MoorhenMergeMoleculesMenuItem = (props: {
 
     const toRef = useRef<null | HTMLSelectElement>(null)
     const fromRef = useRef<null | HTMLSelectElement>(null)
+
+    const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules)
 
     const panelContent = <>
@@ -32,8 +35,7 @@ export const MoorhenMergeMoleculesMenuItem = (props: {
         }
         await toMolecule.mergeMolecules(otherMolecules, true)
         props.setPopoverIsShown(false)
-        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { modifiedMolecule: toMolecule.molNo } })
-        document.dispatchEvent(scoresUpdateEvent)
+        dispatch( triggerScoresUpdate(toMolecule.molNo) )
     }, [toRef.current, fromRef.current, molecules, props.fromMolNo, props.glRef])
 
     return <MoorhenBaseMenuItem

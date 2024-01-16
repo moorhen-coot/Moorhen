@@ -43,8 +43,6 @@ const doTest = async (props: any) => {
 
         molecule.setAtomsDirty(true)
         await molecule.redraw()
-        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { modifiedMolecule: molecule.molNo } })
-        document.dispatchEvent(scoresUpdateEvent)
         
         if (TRIAL_COUNT <= 99) {
             setTimeout(() => doTest(props), 8000)
