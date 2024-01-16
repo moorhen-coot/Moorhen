@@ -7,7 +7,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { removeMolecule } from "../../store/moleculesSlice";
 
 export const MoorhenDeleteButton = (props: moorhen.ContextButtonProps) => {
-    const [panelParameters, setPanelParameters] = useState<string>('RESIDUE')
     const [toolTipLabel, setToolTipLabel] = useState<string>("Delete Item")
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
     const dispatch = useDispatch()

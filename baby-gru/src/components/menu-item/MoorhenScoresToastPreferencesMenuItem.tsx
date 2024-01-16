@@ -1,7 +1,7 @@
 import { Form, InputGroup } from "react-bootstrap";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { useSelector, useDispatch } from "react-redux";
-import { addMapUpdatingScore, removeMapUpdatingScore, setShowScoresToast } from "../../store/updatingMapScoresSettingsSlice";
+import { addMapUpdatingScore, removeMapUpdatingScore, setShowScoresToast } from "../../store/connectedMapsSlice";
 import { moorhen } from "../../types/moorhen";
 import { useCallback } from "react";
 
@@ -10,8 +10,8 @@ export const MoorhenScoresToastPreferencesMenuItem = (props: {
 }) => {
 
     const dispatch = useDispatch()
-    const showScoresToast = useSelector((state: moorhen.State) => state.updatingMapScoresSettings.showScoresToast)
-    const defaultUpdatingScores = useSelector((state: moorhen.State) => state.updatingMapScoresSettings.defaultUpdatingScores)
+    const showScoresToast = useSelector((state: moorhen.State) => state.connectedMaps.showScoresToast)
+    const defaultUpdatingScores = useSelector((state: moorhen.State) => state.connectedMaps.defaultUpdatingScores)
 
     const handleScoreChange = useCallback((score: string) => {
         dispatch(

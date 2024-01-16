@@ -3,7 +3,8 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { triggerScoresUpdate } from "../../store/connectedMapsSlice";
 
 export const MoorhenMoveMoleculeHere = (props: {
     popoverPlacement?: 'left' | 'right'
@@ -11,8 +12,10 @@ export const MoorhenMoveMoleculeHere = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
-    const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
+    const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules)
+
+    const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
 
     const panelContent = <>
         <MoorhenMoleculeSelect molecules={molecules} allowAny={false} ref={moleculeSelectRef} />
@@ -25,10 +28,7 @@ export const MoorhenMoveMoleculeHere = (props: {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
         if (selectedMolecule) {
             await selectedMolecule.moveMoleculeHere(...props.glRef.current.origin.map(coord => -coord) as [number, number, number])
-            const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {
-                modifiedMolecule: selectedMolecule.molNo 
-            } })
-            document.dispatchEvent(scoresUpdateEvent)
+            dispatch( triggerScoresUpdate(selectedMolecule.molNo) )
         }
     }, [molecules])
 

@@ -17,6 +17,7 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { addMolecule } from '../../store/moleculesSlice';
 import { showMolecule } from '../../store/moleculeRepresentationsSlice';
+import { triggerScoresUpdate } from '../../store/connectedMapsSlice';
 
 const allRepresentations = [ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks', 'restraints' ]
 
@@ -409,19 +410,13 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const handleUndo = async () => {
         await props.molecule.undo()
         props.setCurrentDropdownMolNo(-1)
-        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", {
-            detail: { modifiedMolecule: props.molecule.molNo } 
-        })
-        document.dispatchEvent(scoresUpdateEvent)
+        dispatch( triggerScoresUpdate(props.molecule.molNo) )
     }
 
     const handleRedo = async () => {
         await props.molecule.redo()
         props.setCurrentDropdownMolNo(-1)
-        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", {
-            detail: { modifiedMolecule: props.molecule.molNo } 
-        })
-        document.dispatchEvent(scoresUpdateEvent)
+        dispatch( triggerScoresUpdate(props.molecule.molNo) )
     }
 
     const handleCentering = () => {

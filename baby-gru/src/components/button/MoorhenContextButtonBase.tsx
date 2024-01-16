@@ -3,7 +3,8 @@ import { useCallback, useEffect, useRef } from "react"
 import { Button, FormLabel, FormSelect, Stack } from "react-bootstrap"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { triggerScoresUpdate } from "../../store/connectedMapsSlice";
 
 const MoorhenPopoverOptions = (props: {
     showContextMenu: false | moorhen.AtomRightClickEventInfo;
@@ -97,6 +98,7 @@ export const MoorhenContextButtonBase = (props: {
     };
 }) => {
     
+    const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
@@ -123,10 +125,7 @@ export const MoorhenContextButtonBase = (props: {
             }
         }
         
-        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { 
-            modifiedMolecule: props.selectedMolecule.molNo
-        }})
-        document.dispatchEvent(scoresUpdateEvent)
+        dispatch( triggerScoresUpdate(props.selectedMolecule.molNo) )
         props.selectedMolecule.setAtomsDirty(true)
         props.selectedMolecule.clearBuffersOfStyle('hover')
         await props.selectedMolecule.redraw()

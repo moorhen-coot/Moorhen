@@ -4,7 +4,8 @@ import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBa
 import { MoorhenSlider } from '../misc/MoorhenSlider' 
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { triggerScoresUpdate } from "../../store/connectedMapsSlice";
 
 interface Props extends moorhen.CollectedProps {
     dropdownId: number;
@@ -15,10 +16,13 @@ interface Props extends moorhen.CollectedProps {
 }
 
 export const MoorhenPepflipsDifferenceMap = (props: Props) => {
-    const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    
     const [selectedRmsd, setSelectedRmsd] = useState<number>(4.5)
     
+    const dispatch = useDispatch()
+    const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
+
     const filterMapFunction = (map: moorhen.Map) => map.isDifference
 
     const flipPeptide = async (selectedMolNo: number, chainId: string, insCode: string,  seqNum: number) => {
@@ -41,8 +45,7 @@ export const MoorhenPepflipsDifferenceMap = (props: Props) => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedMolNo)
         selectedMolecule.setAtomsDirty(true)
         selectedMolecule.redraw()
-        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {modifiedMolecule: selectedMolecule.molNo} })
-        document.dispatchEvent(scoresUpdateEvent)
+        dispatch( triggerScoresUpdate(selectedMolecule.molNo) )
     }
 
     const handleFlip = (...args: [number, string, string, number]) => {

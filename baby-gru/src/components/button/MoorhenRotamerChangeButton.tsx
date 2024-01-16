@@ -10,6 +10,7 @@ import { useSelector, useDispatch, batch } from 'react-redux';
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { removeMolecule } from "../../store/moleculesSlice";
 import { setIsChangingRotamers } from "../../store/generalStatesSlice";
+import { triggerScoresUpdate } from "../../store/connectedMapsSlice";
 
 export const MoorhenRotamerChangeButton = (props: moorhen.ContextButtonProps) => {
     const fragmentMolecule = useRef<null | moorhen.Molecule>(null)
@@ -46,8 +47,7 @@ export const MoorhenRotamerChangeButton = (props: moorhen.ContextButtonProps) =>
         fragmentMolecule.current.delete()
         chosenMolecule.current.unhideAll()
 
-        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { modifiedMolecule: chosenMolecule.current.molNo } })
-        document.dispatchEvent(scoresUpdateEvent)
+        dispatch( triggerScoresUpdate(chosenMolecule.current.molNo) )
         dispatch(setIsChangingRotamers(false))
 
     }, [props.commandCentre, props.glRef])
