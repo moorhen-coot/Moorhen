@@ -32,7 +32,6 @@ export const MoorhenUpdatingMapsToast = (props: {
 
     useEffect(() => {
         const handleScoresUpdate = async () => {
-            console.log('>>>>>>>>>>>>>>>>>>>>>>>>> HI!!!! ', toggleScoresUpdate, scoresUpdateMolNo)
             if (scoresUpdateMolNo !== null && connectedMoleculeMolNo === scoresUpdateMolNo && props.glRef !== null && typeof props.glRef !== 'function') {
                 
                 await Promise.all(
