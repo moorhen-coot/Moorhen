@@ -253,6 +253,7 @@ export const MoorhenModifyColourRulesCard = (props: {
                         <Form.Label>Property</Form.Label>
                             <FormSelect size="sm" ref={ruleSelectRef} defaultValue={'b-factor'} onChange={(val) => setColourProperty(val.target.value)}>
                                 {devMode && <option value={'mol-symm'} key={'mol-symm'}>Mol. Symmetry</option>}
+                                <option value={'colour-ramp'} key={'colour-ramp'}>Colour ramp</option>
                                 <option value={'b-factor'} key={'b-factor'}>B-Factor</option>
                                 <option value={'b-factor-norm'} key={'b-factor-norm'}>B-Factor (normalised)</option>
                                 <option value={'af2-plddt'} key={'af2-plddt'}>AF2 PLDDT</option>

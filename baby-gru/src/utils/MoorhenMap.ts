@@ -8,12 +8,9 @@ import MoorhenReduxStore from "../store/MoorhenReduxStore";
  * Represents a map
  * @property {string} name - The name assigned to this map instance
  * @property {number} molNo - The imol assigned to this map instance
- * @property {number} mapRadius - The map radius currently displayed
- * @property {number} contourLevel - The map contour level currently displayed
  * @property {string} style - Indicates whether the rendered map is drawn as lines, lit lines or a solid surphace
  * @property {boolean} isDifference - Indicates whether this is a difference map instance
  * @property {boolean} hasReflectionData - Indicates whether this map instance has been associated with observed reflection data
- * @property {object} rgba - Object that stores the map colour and alpha
  * @property {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
  * @property {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance
  * @constructor
@@ -396,7 +393,7 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     /**
-     * Hide the map
+     * Hide the map contour
      */
     hideMapContour(): void {
         this.clearBuffersOfStyle('Coot')

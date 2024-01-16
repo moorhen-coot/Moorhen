@@ -96,6 +96,13 @@ export const MoorhenColourRuleCard = (props: {
                         <RgbColorPicker color={{r, g, b}} onChange={handleColorChange} />
                     </Popover>
                 </>
+                : rule.ruleType === "colour-ramp" ?
+                <>
+                    <div style={{borderColor: 'rgb(255, 0, 0)', borderWidth:'5px', backgroundColor:  'rgb(255, 0, 0)', height:'20px', width:'5px', margin: '0rem', padding: '0rem'}}/>
+                    <div style={{borderColor: 'rgb(255, 255, 0)', borderWidth:'5px', backgroundColor: 'rgb(255, 255, 0)', height:'20px', width:'5px', margin: '0rem', padding: '0rem'}}/>
+                    <div style={{borderColor: 'rgb(0, 255, 0)', borderWidth:'5px', backgroundColor: 'rgb(0, 255, 0)', height:'20px', width:'5px', margin: '0rem', padding: '0rem'}}/>
+                    <div style={{borderColor: 'rgb(0, 0, 255)', borderWidth:'5px', backgroundColor: 'rgb(0, 0, 255)', height:'20px', width:'5px', margin: '0rem', padding: '0rem'}}/>
+                </>
                 : rule.ruleType === "mol-symm" ?
                     <GrainOutlined style={{height:'23px', width:'`23px', marginLeft: '0.5rem', marginRight: '0.5rem', borderStyle: 'solid', borderColor: '#ced4da', borderWidth: '3px', borderRadius: '8px'}}/>            
                 : (rule.ruleType === "b-factor" || rule.ruleType === "b-factor-norm") ?
