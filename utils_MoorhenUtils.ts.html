@@ -776,6 +776,16 @@ export function rgbToHex(r: number, g: number, b: number): string {
     return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b)
 }
 
+const getChainColourRamp = (residueCids: string[]) => {
+    const delta = 240 / residueCids.length
+    const colours = residueCids.map((cid, index) => {
+        const rgb = hsvToRgb(240 - Math.round(delta * index), 1, 1)
+        const hex = rgbToHex(...rgb.map(i => Math.round(i * 255)) as [number, number, number])
+        return `${cid}^${hex}`
+    })
+    return colours.join('|')
+}
+
 const getBfactorColourRules = (bFactors: { cid: string; bFactor: number; normalised_bFactor: number }[], normaliseBFactors: boolean = true): string => {
     const getColour = (bFactor: number): string => {
         let r: number, g: number, b: number
@@ -844,6 +854,15 @@ export const getMultiColourRuleArgs = async (molecule: moorhen.Molecule, ruleTyp
 
     let multiRulesArgs: string
     switch (ruleType) {
+        case 'colour-ramp':
+            const chainResidueInfo = molecule.sequences.map(sequence => sequence.sequence.map(residue => {
+                return residue.cid
+            }))
+            const ts = performance.now()
+            multiRulesArgs = chainResidueInfo.map(chainInfo => getChainColourRamp(chainInfo)).join("|")
+            const te = performance.now()
+            console.log('HI! ', te-ts)
+            break;
         case 'b-factor':
         case 'b-factor-norm':
             const bFactors = molecule.getResidueBFactors()
