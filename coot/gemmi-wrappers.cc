@@ -728,19 +728,19 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
         .value("Anomalous", gemmi::DataType::Anomalous)
     ;
 
-    enum_<gemmi::ResidueInfo::Kind>("ResidueInfoKind")
-        .value("UNKNOWN", gemmi::ResidueInfo::Kind::UNKNOWN)
-        .value("AA", gemmi::ResidueInfo::Kind::AA)
-        .value("AAD", gemmi::ResidueInfo::Kind::AAD)
-        .value("PAA", gemmi::ResidueInfo::Kind::PAA)
-        .value("MAA", gemmi::ResidueInfo::Kind::MAA)
-        .value("RNA", gemmi::ResidueInfo::Kind::RNA)
-        .value("DNA", gemmi::ResidueInfo::Kind::DNA)
-        .value("BUF", gemmi::ResidueInfo::Kind::BUF)
-        .value("HOH", gemmi::ResidueInfo::Kind::HOH)
-        .value("PYR", gemmi::ResidueInfo::Kind::PYR)
-        .value("KET", gemmi::ResidueInfo::Kind::KET)
-        .value("ELS", gemmi::ResidueInfo::Kind::ELS)
+    enum_<gemmi::ResidueKind>("ResidueInfoKind")
+        .value("UNKNOWN", gemmi::ResidueKind::UNKNOWN)
+        .value("AA", gemmi::ResidueKind::AA)
+        .value("AAD", gemmi::ResidueKind::AAD)
+        .value("PAA", gemmi::ResidueKind::PAA)
+        .value("MAA", gemmi::ResidueKind::MAA)
+        .value("RNA", gemmi::ResidueKind::RNA)
+        .value("DNA", gemmi::ResidueKind::DNA)
+        .value("BUF", gemmi::ResidueKind::BUF)
+        .value("HOH", gemmi::ResidueKind::HOH)
+        .value("PYR", gemmi::ResidueKind::PYR)
+        .value("KET", gemmi::ResidueKind::KET)
+        .value("ELS", gemmi::ResidueKind::ELS)
     ;
 
     enum_<gemmi::EnerLib::RadiusType>("EnerLibRadiusType")
@@ -1321,8 +1321,11 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     //.function("scale",&GemmiSMat33double::scale) // this causes compiler to give a const usage error.
     //.function("scaled",&GemmiSMat33double::scaled) // this causes all kinds of trouble
     .function("added_kI",&GemmiSMat33double::added_kI)
-    .function("r_u_r",select_overload<double(const gemmi::Vec3&)const>(&GemmiSMat33double::r_u_r))
-    .function("r_u_rArray",select_overload<double(const std::array<int,3>&)const>(&GemmiSMat33double::r_u_r))
+
+    //Do not work with 0.6.4
+    //.function("r_u_r",select_overload<double(const gemmi::Vec3&)const>(&GemmiSMat33double::r_u_r))
+    //.function("r_u_rArray",select_overload<double(const std::array<int,3>&)const>(&GemmiSMat33double::r_u_r))
+
     .function("multiply",&GemmiSMat33double::multiply)
     //.function("transformed_by",&GemmiSMat33double::transformed_by)
     .function("determinant",&GemmiSMat33double::determinant)
@@ -1337,8 +1340,11 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     //.function("scale",&GemmiSMat33float::scale) // this causes compiler to give a const usage error.
     //.function("scaled",&GemmiSMat33float::scaled) // this causes all kinds of trouble
     .function("added_kI",&GemmiSMat33float::added_kI)
-    .function("r_u_r",select_overload<double(const gemmi::Vec3&)const>(&GemmiSMat33float::r_u_r))
-    .function("r_u_rArray",select_overload<double(const std::array<int,3>&)const>(&GemmiSMat33float::r_u_r))
+
+    //Do not work with 0.6.4
+    //.function("r_u_r",select_overload<double(const gemmi::Vec3&)const>(&GemmiSMat33float::r_u_r))
+    //.function("r_u_rArray",select_overload<double(const std::array<int,3>&)const>(&GemmiSMat33float::r_u_r))
+
     .function("multiply",&GemmiSMat33float::multiply)
     //.function("transformed_by",&GemmiSMat33float::transformed_by)
     .function("determinant",&GemmiSMat33float::determinant)
@@ -2344,7 +2350,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     //.function("extend_min_max_1_d2",&gemmi::Mtz::extend_min_max_1_d2)// Does not compile ... ?
     .function("calculate_min_max_1_d2",&gemmi::Mtz::calculate_min_max_1_d2)//std::array<double,2>
     .function("update_reso",&gemmi::Mtz::update_reso)
-    .function("toggle_endiannes",&gemmi::Mtz::toggle_endiannes)
+    .function("toggle_endianness",&gemmi::Mtz::toggle_endianness)
     .function("setup_spacegroup",&gemmi::Mtz::setup_spacegroup)
     .function("read_file",&gemmi::Mtz::read_file)
     .function("sorted_row_indices",&gemmi::Mtz::sorted_row_indices)
