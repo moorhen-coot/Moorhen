@@ -8,7 +8,7 @@ import { Button, Stack } from "react-bootstrap"
 import { clearResidueSelection, setIsDraggingAtoms, setIsRotatingAtoms, setNotificationContent, setResidueSelection, setShowResidueSelection } from '../../store/generalStatesSlice';
 import { useCallback, useEffect, useRef, useState } from "react"
 import { addMolecule, removeMolecule, setHoveredAtom } from "../../moorhen"
-import { HexColorPicker } from "react-colorful"
+import { HexColorInput, HexColorPicker } from "react-colorful"
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm"
 import { MoorhenAcceptRejectRotateTranslate } from "./MoorhenAcceptRejectRotateTranslate"
 import { MoorhenAcceptRejectDragAtoms } from "./MoorhenAcceptRejectDragAtoms"
@@ -480,6 +480,10 @@ export const MoorhenResidueSelectionActions = (props) => {
                 <Stack gap={3} direction='horizontal'>
                     <div style={{width: '100%', textAlign: 'center'}}>
                         <HexColorPicker style={{padding: '0.05rem'}} color={selectedColour} onChange={(color) => setSelectedColour(color)}/>
+                        <div style={{width: '100%', display: 'flex', justifyContent: 'center'}}>
+                            <div className="moorhen-hex-input-decorator">#</div>
+                            <HexColorInput className="moorhen-hex-input" color={selectedColour} onChange={(color) => setSelectedColour(color)}/>
+                        </div>
                         <Button size="sm" variant="primary" style={{width: '80%', margin: '0.25rem'}} onClick={handleColourChange}>Apply</Button>
                     </div>
                 </Stack>
