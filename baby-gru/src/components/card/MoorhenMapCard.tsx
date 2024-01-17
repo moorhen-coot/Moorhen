@@ -220,7 +220,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             compressed: () => { return (<MenuItem key='hide-show-map' onClick={handleVisibility}>{mapIsVisible ? "Hide map" : "Show map"}</MenuItem>) },
             expanded: () => {
                 return (<Button key='hide-show-map' size="sm" variant="outlined" onClick={handleVisibility}>
-                    {mapIsVisible ? <VisibilityOffOutlined /> : <VisibilityOutlined />}
+                    {mapIsVisible ? <VisibilityOutlined /> : <VisibilityOffOutlined />}
                 </Button>)
             },
         },
