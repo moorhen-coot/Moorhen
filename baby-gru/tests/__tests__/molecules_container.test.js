@@ -1076,6 +1076,37 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(model, chain, ligands, gemmi_structure)
 
     })
+
+    test("Test updating maps", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', 'FOM', false, false)
+        const diffMapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'DELFWT', 'PHDELWT', 'FOM', false, true)
+        expect(coordMolNo).toBe(0)
+        expect(mapMolNo).toBe(1)
+        expect(diffMapMolNo).toBe(2)
+
+        molecules_container.associate_data_mtz_file_with_map(mapMolNo, './5a3h_sigmaa.mtz', 'FP', 'SIGFP', 'FREE')
+        molecules_container.connect_updating_maps(coordMolNo, mapMolNo, mapMolNo, diffMapMolNo)
+        molecules_container.sfcalc_genmaps_using_bulk_solvent(coordMolNo, mapMolNo, diffMapMolNo, mapMolNo)
+
+        const scores_1 =  molecules_container.get_r_factor_stats()
+        const map_mesh_1 = molecules_container.get_map_contours_mesh(mapMolNo, 0, 0, 0, 13, 0.48)
+        expect(scores_1.r_factor).toBeCloseTo(0.103, 2)
+        expect(scores_1.free_r_factor).toBeCloseTo(0.155, 2)
+        expect(scores_1.rail_points_total).toBe(0)
+        expect(scores_1.rail_points_new).toBe(0)
+
+        molecules_container.delete_using_cid(coordMolNo, "/1/A/300/*", "LITERAL")
+        const map_mesh_2 = molecules_container.get_map_contours_mesh(mapMolNo, 0, 0, 0, 13, 0.48)
+        const scores_2 =  molecules_container.get_r_factor_stats()
+        expect(scores_2.r_factor).toBeCloseTo(0.108, 2)
+        expect(scores_2.free_r_factor).toBeCloseTo(0.158, 2)
+        expect(scores_2.rail_points_total).toBe(-300)
+        expect(scores_2.rail_points_new).toBe(-300)
+
+        expect(map_mesh_1.vertices.size()).not.toBe(map_mesh_2.vertices.size())
+    })
 })
 
 const testDataFiles = ['1cxq_phases.mtz', '1cxq.cif', '7ZTVU.cif', '5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'MOI.restraints.cif', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
