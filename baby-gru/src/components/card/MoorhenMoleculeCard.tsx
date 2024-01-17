@@ -161,7 +161,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             return
         } else if (innerDrawMissingLoopsRef.current !== drawMissingLoops) {
             innerDrawMissingLoopsRef.current = drawMissingLoops
-            const representations = props.molecule.representations.filter(representation => representation.visible && ['CBs', 'ligands'].includes(representation.style))
+            const representations = props.molecule.representations.filter(representation => representation.visible && ['CBs', 'CAs', 'ligands'].includes(representation.style))
             if (isVisible && representations.length > 0) {
                 isDirty.current = true
                 if (!busyRedrawing.current) {
