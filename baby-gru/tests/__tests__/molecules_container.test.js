@@ -1107,6 +1107,76 @@ describe('Testing molecules_container_js', () => {
 
         expect(map_mesh_1.vertices.size()).not.toBe(map_mesh_2.vertices.size())
     })
+
+    test("Test get_diff_diff_map_peaks", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', 'FOM', false, false)
+        const diffMapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'DELFWT', 'PHDELWT', 'FOM', false, true)
+
+        molecules_container.associate_data_mtz_file_with_map(mapMolNo, './5a3h_sigmaa.mtz', 'FP', 'SIGFP', 'FREE')
+        molecules_container.connect_updating_maps(coordMolNo, mapMolNo, mapMolNo, diffMapMolNo)
+        molecules_container.sfcalc_genmaps_using_bulk_solvent(coordMolNo, mapMolNo, diffMapMolNo, mapMolNo)
+
+        molecules_container.get_r_factor_stats()
+        molecules_container.get_map_contours_mesh(mapMolNo, 0, 0, 0, 13, 0.48)
+
+        molecules_container.delete_using_cid(coordMolNo, "/1/A/300/*", "LITERAL")
+        molecules_container.get_map_contours_mesh(mapMolNo, 0, 0, 0, 13, 0.48)
+        molecules_container.get_r_factor_stats()
+
+        const diff_diff_map_peaks = molecules_container.get_diff_diff_map_peaks(diffMapMolNo, 77.501, 45.049, 22.663)
+        expect(diff_diff_map_peaks.size()).toBeGreaterThan(0)
+    })
+
+    test("Test export_imol_as_gltf_string", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', 'FOM', false, false)
+        molecules_container.get_map_contours_mesh(mapMolNo, 0, 0, 0, 13, 0.48)
+        molecules_container.get_bonds_mesh_instanced(coordMolNo, 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1)
+
+        const fileName_1 = 'test-mol.gltf'
+        cootModule.FS_createDataFile(".", fileName_1, "", true, true);
+        molecules_container.export_map_molecule_as_gltf(coordMolNo, fileName_1)
+        const fileContents_1 = cootModule.FS.readFile(fileName_1, { encoding: 'utf8' })
+        cootModule.FS_unlink(fileName_1)
+        expect(fileContents_1).not.toBe("")
+
+        const fileName_2 = 'test-map.gltf'
+        cootModule.FS_createDataFile(".", fileName_2, "", true, true);
+        molecules_container.export_map_molecule_as_gltf(mapMolNo, fileName_2)
+        const fileContents_2 = cootModule.FS.readFile(fileName_2, { encoding: 'utf8' })
+        cootModule.FS_unlink(fileName_2)
+        expect(fileContents_2).not.toBe("")
+    })
+
+    test("Test export_model_molecule_as_gltf", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        molecules_container.get_bonds_mesh_instanced(coordMolNo, 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1)
+
+        const fileName = 'test.gltf'
+        cootModule.FS_createDataFile(".", fileName, "", true, true);
+        molecules_container.export_map_molecule_as_gltf(coordMolNo, fileName)
+        const fileContents = cootModule.FS.readFile(fileName, { encoding: 'utf8' })
+        cootModule.FS_unlink(fileName)
+        expect(fileContents).not.toBe("")
+    })
+
+    test("Test export_map_molecule_as_gltf", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', 'FOM', false, false)
+        molecules_container.get_map_contours_mesh(mapMolNo, 0, 0, 0, 13, 0.48)
+
+        const fileName = 'test.gltf'
+        cootModule.FS_createDataFile(".", fileName, "", true, true);
+        molecules_container.export_map_molecule_as_gltf(mapMolNo, fileName)
+        const fileContents = cootModule.FS.readFile(fileName, { encoding: 'utf8' })
+        cootModule.FS_unlink(fileName)
+        expect(fileContents).not.toBe("")
+    })
+
 })
 
 const testDataFiles = ['1cxq_phases.mtz', '1cxq.cif', '7ZTVU.cif', '5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'MOI.restraints.cif', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
