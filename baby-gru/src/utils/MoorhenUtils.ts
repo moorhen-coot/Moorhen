@@ -739,7 +739,7 @@ export const getMultiColourRuleArgs = async (molecule: moorhen.Molecule, ruleTyp
 
     let multiRulesArgs: string
     switch (ruleType) {
-        case 'colour-ramp':
+        case 'jones-rainbow':
             const chainResidueInfo = molecule.sequences.map(sequence => sequence.sequence.map(residue => {
                 return residue.cid
             }))

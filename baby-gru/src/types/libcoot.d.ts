@@ -224,6 +224,10 @@ export namespace libcootApi {
         end: { x: number; y: number; z: number };
         dist: number;
     }
+    type DiffDiffMapPeaksJS = {
+        value: number; 
+        coord: { x: number; y: number; z: number };
+    }[]
     type RotamerInfoJS = {
         name: string;
         rank: number;

@@ -96,7 +96,7 @@ export const MoorhenColourRuleCard = (props: {
                         <RgbColorPicker color={{r, g, b}} onChange={handleColorChange} />
                     </Popover>
                 </>
-                : rule.ruleType === "colour-ramp" ?
+                : rule.ruleType === "jones-rainbow" ?
                 <>
                     <div style={{borderColor: 'rgb(255, 0, 0)', borderWidth:'5px', backgroundColor:  'rgb(255, 0, 0)', height:'20px', width:'5px', margin: '0rem', padding: '0rem'}}/>
                     <div style={{borderColor: 'rgb(255, 255, 0)', borderWidth:'5px', backgroundColor: 'rgb(255, 255, 0)', height:'20px', width:'5px', margin: '0rem', padding: '0rem'}}/>
