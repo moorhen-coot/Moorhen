@@ -144,7 +144,7 @@ bool isSugar(const std::string &resName);
 class molecules_container_js : public molecules_container_t {
     public:
         explicit molecules_container_js(bool verbose=true) : molecules_container_t(verbose) {
-
+            use_gemmi = false;
         }
 
         coot::instanced_mesh_t DrawGlycoBlocks(int imol, const std::string &cid_str) {
@@ -256,6 +256,24 @@ class molecules_container_js : public molecules_container_t {
                 std::cout << "Error: " << err.what() << std::endl;
             }
             return "";
+        }
+
+        std::string export_imol_as_gltf_string(int imol) {
+            std::string file_name = generate_rand_str(32);
+            file_name += ".gltf";
+            
+            if (molecules_container_t::is_valid_model_molecule(imol)) {
+                molecules_container_t::export_model_molecule_as_gltf(imol, file_name);
+            } else if (molecules_container_t::is_valid_map_molecule(imol)) {
+                molecules_container_t::export_map_molecule_as_gltf(imol, file_name);
+            } else {
+                std::cout << "Invalid imol " << imol << " in export_imol_as_gltf_string" << std::endl;
+                return "";
+            }
+            
+            const std::string gltf_string = read_text_file(file_name);
+            remove_file(file_name);
+            return gltf_string;
         }
 
         int read_pdb_string(const std::string &pdb_string, const std::string &molecule_name) {
@@ -1144,6 +1162,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("rotamer_analysis",&molecules_container_t::rotamer_analysis)
     .function("associate_data_mtz_file_with_map",&molecules_container_t::associate_data_mtz_file_with_map)
     .function("connect_updating_maps",&molecules_container_t::connect_updating_maps)
+    .function("get_diff_diff_map_peaks", &molecules_container_t::get_diff_diff_map_peaks)
+    .function("export_model_molecule_as_gltf", &molecules_container_t::export_model_molecule_as_gltf)
+    .function("export_map_molecule_as_gltf", &molecules_container_t::export_map_molecule_as_gltf)
     .function("residues_with_missing_atoms",&molecules_container_t::residues_with_missing_atoms)
     .function("ramachandran_validation",&molecules_container_t::ramachandran_validation)
     .function("merge_molecules", select_overload<std::pair<int, std::vector<merge_molecule_results_info_t> >(int,const std::string &)>(&molecules_container_t::merge_molecules))
@@ -1180,6 +1201,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("sharpen_blur_map_with_resample",&molecules_container_t::sharpen_blur_map_with_resample)
     .function("find_water_baddies",&molecules_container_t::find_water_baddies)
     .function("get_gphl_chem_comp_info",&molecules_container_t::get_gphl_chem_comp_info)
+    .property("use_gemmi", &molecules_container_t::use_gemmi)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<bool>()
@@ -1201,6 +1223,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("smiles_to_pdb", &molecules_container_js::smiles_to_pdb)
     .function("replace_molecule_by_model_from_string", &molecules_container_js::replace_molecule_by_model_from_string)
     .function("read_dictionary_string", &molecules_container_js::read_dictionary_string)
+    .function("export_imol_as_gltf_string", &molecules_container_js::export_imol_as_gltf_string)
     ;
     value_object<molecules_container_t::fit_ligand_info_t>("fit_ligand_info_t")
     .field("imol", &molecules_container_t::fit_ligand_info_t::imol)
@@ -1421,6 +1444,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_map<unsigned int, std::array<float, 3>>("MapIntFloat3");
     register_map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>("Map_residue_spec_t_density_correlation_stats_info_t");
     register_vector<std::array<float, 16>>("VectorArrayFloat16");
+    register_vector<std::pair<clipper::Coord_orth, float>>("VectorClipperCoordOrth_float_pair");
     register_vector<std::pair<int, int>>("VectorInt_pair");
     register_vector<std::pair<std::string, unsigned int> >("VectorStringUInt_pair");
     register_vector<std::pair<symm_trans_t, Cell_Translation>>("Vectorsym_trans_t_Cell_Translation_pair");
@@ -1461,14 +1485,16 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("bulk_correction",&coot::util::sfcalc_genmap_stats_t::bulk_correction)
         .field("n_splines",&coot::util::sfcalc_genmap_stats_t::n_splines)
     ;
-
     value_object<molecules_container_t::r_factor_stats>("r_factor_stats")
         .field("r_factor",&molecules_container_t::r_factor_stats::r_factor)
         .field("free_r_factor",&molecules_container_t::r_factor_stats::free_r_factor)
         .field("rail_points_total",&molecules_container_t::r_factor_stats::rail_points_total)
         .field("rail_points_new",&molecules_container_t::r_factor_stats::rail_points_new)
     ;
-
+    value_object<std::pair<clipper::Coord_orth, float>>("pair_clipper_coord_orth_float")
+        .field("first",&std::pair<clipper::Coord_orth, float>::first)
+        .field("second",&std::pair<clipper::Coord_orth, float>::second)
+    ;
     value_object<std::pair<int,std::vector<merge_molecule_results_info_t>>>("int_vector_merge_molecule_results_info_t_pair")
         .field("first",&std::pair<int,std::vector<merge_molecule_results_info_t>>::first)
         .field("second",&std::pair<int,std::vector<merge_molecule_results_info_t>>::second)
