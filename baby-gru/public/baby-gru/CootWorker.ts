@@ -719,6 +719,25 @@ const ramachandranDataToJSArray = (ramachandraData: emscriptem.vector<libcootApi
     return returnResult
 }
 
+const vectorPairClipperCoordFloatToJSArray = (vectorData: emscriptem.vector<{first: libcootApi.CootCartesian; second: number}>): libcootApi.DiffDiffMapPeaksJS => {
+    let result: {value: number; coord: { x: number; y: number; z: number }}[] = []
+    const vectorSize = vectorData.size()
+    for(let i = 0; i < vectorSize; i++) {
+        const pair = vectorData.get(i)
+        const value = pair.second
+        const clipperCoord = pair.first
+        const coord = {
+            x: clipperCoord.x(),
+            y: clipperCoord.y(),
+            z: clipperCoord.z(),
+        }
+        clipperCoord.delete()
+        result.push({value, coord})
+    }
+    vectorData.delete()
+    return result
+}
+
 const simpleMeshToLineMeshData = (simpleMesh: libcootApi.SimpleMeshT, normalLighting: boolean): libcootApi.SimpleMeshJS => {
 
     const print_timing = false;
@@ -991,6 +1010,9 @@ const doCootCommand = (messageData: {
                 break
             case 'void':
                 returnResult = null
+                break
+            case 'vector_pair_clipper_coord_float':
+                returnResult = vectorPairClipperCoordFloatToJSArray(cootResult)
                 break
             case 'status':
             default:
