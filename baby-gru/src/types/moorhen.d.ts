@@ -819,6 +819,7 @@ export namespace moorhen {
             showUnmodelledBlobsModal: boolean;
             showMmrrccModal: boolean;
             showWaterValidationModal: boolean;
+            showSceneSettingsModal: boolean;
             focusHierarchy: string[];
         };
         mapContourSettings: {

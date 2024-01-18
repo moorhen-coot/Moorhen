@@ -1,9 +1,5 @@
 import { Form, InputGroup } from "react-bootstrap";
 import { useState } from "react";
-import { MoorhenClipFogMenuItem } from "../menu-item/MoorhenClipFogMenuItem";
-import { MoorhenLightingMenuItem } from "../menu-item/MoorhenLightingMenuItem"
-import { MoorhenBlurMenuItem } from "../menu-item/MoorhenBlurMenuItem"
-import { MoorhenBackgroundColorMenuItem } from "../menu-item/MoorhenBackgroundColorMenuItem"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MoorhenScenePresetMenuItem } from "../menu-item/MoorhenScenePresetMenuItem"
 import { moorhen } from "../../types/moorhen";
@@ -11,6 +7,8 @@ import { useSelector, useDispatch } from "react-redux";
 import { setDoPerspectiveProjection, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawInteractions, setDrawMissingLoops } from "../../store/sceneSettingsSlice";
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { convertViewtoPx } from "../../utils/MoorhenUtils";
+import { MenuItem } from "@mui/material";
+import { setShowSceneSettingsModal } from "../../store/activeModalsSlice";
 
 export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
@@ -84,10 +82,7 @@ export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                 </InputGroup>
                 <hr></hr>
                 <MoorhenScenePresetMenuItem {...menuItemProps} />
-                <MoorhenBackgroundColorMenuItem {...menuItemProps} />
-                <MoorhenClipFogMenuItem {...menuItemProps} />
-                <MoorhenLightingMenuItem {...menuItemProps} />
-                {props.glRef.current.isWebGL2 () && <MoorhenBlurMenuItem {...menuItemProps} />}
+                <MenuItem onClick={() => dispatch(setShowSceneSettingsModal(true))}>Scene Settings...</MenuItem>
         </div>
     </>
 }
