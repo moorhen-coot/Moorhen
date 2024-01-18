@@ -1255,6 +1255,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_neighbours_cid",&molecules_container_js::get_neighbours_cid)
     .function("make_exportable_environment_bond_box",&molecules_container_js::make_exportable_environment_bond_box)
     .function("DrawGlycoBlocks",&molecules_container_js::DrawGlycoBlocks)
+    .function("GetSecondaryStructure",&molecules_container_js::GetSecondaryStructure)
     .function("DrawMoorhenMetaBalls",&molecules_container_js::DrawMoorhenMetaBalls)
     .function("model_has_glycans",&molecules_container_js::model_has_glycans)
     .function("get_molecule_atoms", &molecules_container_js::get_molecule_atoms)
