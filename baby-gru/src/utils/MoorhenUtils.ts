@@ -743,10 +743,7 @@ export const getMultiColourRuleArgs = async (molecule: moorhen.Molecule, ruleTyp
             const chainResidueInfo = molecule.sequences.map(sequence => sequence.sequence.map(residue => {
                 return residue.cid
             }))
-            const ts = performance.now()
             multiRulesArgs = chainResidueInfo.map(chainInfo => getChainColourRamp(chainInfo)).join("|")
-            const te = performance.now()
-            console.log('HI! ', te-ts)
             break;
         case 'b-factor':
         case 'b-factor-norm':
