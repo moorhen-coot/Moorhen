@@ -72,40 +72,34 @@ struct ResiduePropertyInfo {
     double property;
 };
 
-std::vector<std::pair<std::string,std::string> > getSecondaryStructure(mmdb::Manager *m, int imodel=1){
-    std::vector<std::pair<std::string,std::string> > v;
+std::vector<coot::residue_spec_t> getSecondaryStructure(mmdb::Manager *m, int imodel=1){
+    /* int_user_data is an int of secondary structure as defined in MMDB:
+
+        enum SSE_FLAG  {
+          SSE_None   = 0,
+          SSE_Strand = 1,
+          SSE_Bulge  = 2,
+          SSE_3Turn  = 3,
+          SSE_4Turn  = 4,
+          SSE_5Turn  = 5,
+          SSE_Helix  = 6
+        };
+    */
+
+    std::vector<coot::residue_spec_t> v;
     mmdb::Model *mod = m->GetModel(imodel);
     mod->CalcSecStructure(0,-1);
     int nRes;
     mmdb::Residue **resTable=NULL;
     mod->GetResidueTable(resTable,nRes);
     for(int i=0;i<nRes;i++){
-        std::string cid = std::string(resTable[i]->GetChainID()) + std::string("/") + std::to_string(resTable[i]->seqNum);
-        switch(resTable[i]->SSE){
-            case mmdb::SSE_None:
-                v.push_back(std::pair<std::string,std::string>(cid,"None"));
-                break;
-            case mmdb::SSE_Strand:
-                v.push_back(std::pair<std::string,std::string>(cid,"Strand"));
-                break;
-            case mmdb::SSE_Bulge:
-                v.push_back(std::pair<std::string,std::string>(cid,"Bulge"));
-                break;
-            case mmdb::SSE_3Turn:
-                v.push_back(std::pair<std::string,std::string>(cid,"3Turn"));
-                break;
-            case mmdb::SSE_4Turn:
-                v.push_back(std::pair<std::string,std::string>(cid,"4Turn"));
-                break;
-            case mmdb::SSE_5Turn:
-                v.push_back(std::pair<std::string,std::string>(cid,"5Turn"));
-                break;
-            case mmdb::SSE_Helix:
-                v.push_back(std::pair<std::string,std::string>(cid,"Helix"));
-                break;
-            default:
-                v.push_back(std::pair<std::string,std::string>(cid,"Unknowm"));
-        }
+        coot::residue_spec_t cid;
+        cid.model_number = imodel;
+        cid.chain_id = std::string(resTable[i]->GetChainID());
+        cid.res_no = resTable[i]->GetResidueNo();
+        cid.ins_code = resTable[i]->insCode;
+        cid.int_user_data = resTable[i]->SSE;
+        v.push_back(cid);
     }
     delete [] resTable;
     return v;
@@ -185,6 +179,11 @@ class molecules_container_js : public molecules_container_t {
     public:
         explicit molecules_container_js(bool verbose=true) : molecules_container_t(verbose) {
             use_gemmi = false;
+        }
+
+        std::vector<coot::residue_spec_t> GetSecondaryStructure(int imol, int imodel=1) {
+            mmdb::Manager *mol = get_mol(imol);
+            return getSecondaryStructure(mol,imodel);
         }
 
         coot::instanced_mesh_t DrawGlycoBlocks(int imol, const std::string &cid_str) {
