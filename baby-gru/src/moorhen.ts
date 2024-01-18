@@ -27,7 +27,7 @@ import {
 import { addMap, addMapList, removeMap, emptyMaps } from "./store/mapsSlice";
 import { setCursorStyle, setEnableAtomHovering, setHoveredAtom } from './store/hoveringStatesSlice';
 import { addAvailableFontList, setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } from './store/labelSettingsSlice';
-import { setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, setDefaultMapSurface } from './store/mapContourSettingsSlice';
+import { setPositiveMapColours, setNegativeMapColours, setMapAlpha, setMapColours, setMapRadius, setMapStyle, setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, setDefaultMapSurface } from './store/mapContourSettingsSlice';
 import {setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut, setEnableRefineAfterMod } from './store/miscAppSettingsSlice';
 import { addMolecule, removeMolecule, emptyMolecules, addMoleculeList } from './store/moleculesSlice';
 import { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity } from './store/mouseSettings';
@@ -49,5 +49,6 @@ export {
     addMolecule, removeMolecule, emptyMolecules, addMoleculeList, setContourWheelSensitivityFactor, MoorhenFetchOnlineSourcesForm,
     setZoomWheelSensitivityFactor, setMouseSensitivity, setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts,
     setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores, MoorhenSlider,
-    addMap, addMapList, removeMap, emptyMaps, MoorhenQuerySequenceModal, MoorhenPreferences
+    addMap, addMapList, removeMap, emptyMaps, setPositiveMapColours, setNegativeMapColours, setMapAlpha, setMapColours, 
+    setMapRadius, setMapStyle, MoorhenQuerySequenceModal, MoorhenPreferences
 };
