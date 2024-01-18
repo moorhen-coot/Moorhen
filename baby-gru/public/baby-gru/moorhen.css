@@ -93,6 +93,7 @@ div.darkly text.end-label {fill:#FFF !important;}
   font: inherit;
   text-transform: uppercase;
   text-align: center;
+  color: #000;
 }
 
 .tab-content{

@@ -229,6 +229,24 @@ declare module 'moorhen' {
     ): Promise<number>;
     module.exports = loadSessionData;
 
+    function setPositiveMapColours(arg0: {molNo: number, rgb: {r: number; g: number; b: number}}): any;
+    module.exports = setPositiveMapColours;
+    
+    function setNegativeMapColours(arg0: {molNo: number, rgb: {r: number; g: number; b: number}}): any;
+    module.exports = setNegativeMapColours;
+    
+    function setMapColours(arg0: {molNo: number, rgb: {r: number; g: number; b: number}}): any;
+    module.exports = setMapColours;
+
+    function setMapAlpha(arg0: {molNo: number, alpha: number}): any;
+    module.exports = setMapAlpha;
+    
+    function setMapStyle(arg0: {molNo: number, style: "lines" | "solid" | "lit-lines"}): any;
+    module.exports = setMapStyle;
+
+    function setMapRadius(arg0: {molNo: number, radius: number}): any;
+    module.exports = setMapRadius;
+
     function setDefaultBackgroundColor(arg0: [number, number, number, number]): any;
     module.exports = setDefaultBackgroundColor;
     
