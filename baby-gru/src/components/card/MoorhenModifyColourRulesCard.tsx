@@ -197,7 +197,15 @@ export const MoorhenModifyColourRulesCard = (props: {
                 args: [ruleArgs],
                 isMultiColourRule: true,
                 ruleType: `${ruleSelectRef.current.value}`,
-                label: `${ruleSelectRef.current.value}`,
+                label: `${
+                    ruleSelectRef.current.value === 'secondary-structure' ? 'Secondary struct.'
+                    : ruleSelectRef.current.value === 'jones-rainbow' ? 'Jones-Rainbow'
+                    : ruleSelectRef.current.value === 'mol-symm' ? 'Mol. Symm.'
+                    : ruleSelectRef.current.value === "b-factor" ? 'B-factor'
+                    : ruleSelectRef.current.value === "b-factor-norm" ? 'B-factor norm.'
+                    : ruleSelectRef.current.value === "af2-plddt" ? 'PLDDT'
+                    : ''
+                }`,
             }
         }
 
@@ -253,6 +261,7 @@ export const MoorhenModifyColourRulesCard = (props: {
                         <Form.Label>Property</Form.Label>
                             <FormSelect size="sm" ref={ruleSelectRef} defaultValue={'b-factor'} onChange={(val) => setColourProperty(val.target.value)}>
                                 {devMode && <option value={'mol-symm'} key={'mol-symm'}>Mol. Symmetry</option>}
+                                <option value={'secondary-structure'} key={'secondary-structure'}>Secondary structure</option>
                                 <option value={'jones-rainbow'} key={'jones-rainbow'}>Jones' rainbow</option>
                                 <option value={'b-factor'} key={'b-factor'}>B-Factor</option>
                                 <option value={'b-factor-norm'} key={'b-factor-norm'}>B-Factor (normalised)</option>

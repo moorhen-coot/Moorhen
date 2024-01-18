@@ -14,6 +14,7 @@ import { batch } from "react-redux";
 import { setActiveMap } from "../store/generalStatesSlice";
 import { setContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle, setNegativeMapColours, setPositiveMapColours } from "../store/mapContourSettingsSlice";
 import { enableUpdatingMaps, setConnectedMoleculeMolNo, setFoFcMapMolNo, setReflectionMapMolNo, setTwoFoFcMapMolNo } from "../store/connectedMapsSlice";
+import { libcootApi } from "../types/libcoot";
 
 export const getLigandSVG = async (commandCentre: React.RefObject<moorhen.CommandCentre>, imol: number, compId: string, isDark: boolean): Promise<string> => {
     const result = await commandCentre.current.cootCommand({
@@ -735,10 +736,44 @@ const getNcsColourRules = (ncsRelatedChains: string[][]): string => {
     return result.join('|')
 }
 
+const getSecondaryStructureColourRules = (secondaryStructureInfo: libcootApi.ResidueSpecJS[]): string => {
+    let result: string[] = []
+    let chainSS2Info: { [chainId: string]: { [ss2: number]: number[] } } = {}
+
+    const alphaHelix = '#d13d62'
+    const betaStrand = '#4b57bd'
+    const turn = '#d1c03d'
+    
+    secondaryStructureInfo.forEach(residue => {
+        if (!(residue.chainId in chainSS2Info)) {
+            chainSS2Info[residue.chainId] = { 1: [], 2: [], 3: [] }
+        }
+        const ss2Type = residue.intUserData === 6 ? 1 : [1, 2].includes(residue.intUserData) ? 2 : 3
+        chainSS2Info[residue.chainId][ss2Type].push(residue.resNum)
+    })
+    
+    for (let chainId in chainSS2Info) {
+        for (let ss2Info in chainSS2Info[chainId]) {
+            if (chainSS2Info[chainId][ss2Info].length > 0) {
+                const residueRanges = findConsecutiveRanges(chainSS2Info[chainId][ss2Info])
+                residueRanges.forEach(residueRange => {
+                    result.push(`//${chainId}/${residueRange[0]}-${residueRange[1]}^${ss2Info === '1' ? alphaHelix : ss2Info === '2' ? betaStrand : turn}`)
+                })
+            }
+        }
+    }
+
+    return result.join('|')
+}
+
 export const getMultiColourRuleArgs = async (molecule: moorhen.Molecule, ruleType: string): Promise<string> => {
 
     let multiRulesArgs: string
     switch (ruleType) {
+        case 'secondary-structure':
+            const secondaryStructureInfo = await molecule.getSecondaryStructInfo()
+            multiRulesArgs = getSecondaryStructureColourRules(secondaryStructureInfo)
+            break;
         case 'jones-rainbow':
             const chainResidueInfo = molecule.sequences.map(sequence => sequence.sequence.map(residue => {
                 return residue.cid
