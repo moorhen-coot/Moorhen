@@ -1177,6 +1177,16 @@ describe('Testing molecules_container_js', () => {
         expect(fileContents).not.toBe("")
     })
 
+    test("Test getSecondaryStructure", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+
+        const ss2_vector = molecules_container.GetSecondaryStructure(coordMolNo, 1)
+        expect(ss2_vector.size()).toBe(650)
+        expect(ss2_vector.get(5).int_user_data).toBe(6)
+        cleanUpVariables.push(ss2_vector)
+    })
+
 })
 
 const testDataFiles = ['1cxq_phases.mtz', '1cxq.cif', '7ZTVU.cif', '5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'MOI.restraints.cif', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
