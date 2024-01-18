@@ -291,13 +291,15 @@ export namespace libcootApi {
         model_number: number;
         chain_id: string;
         res_no: number;
-        ins_code: string;    
+        ins_code: string;
+        int_user_data: number;
     }
     interface ResidueSpecJS {
         resNum: number;
         insCode: string;
         modelNumber: number;
         chainId: string;
+        intUserData: number;
     }
     interface AtomSpecT {
         chain_id: string;

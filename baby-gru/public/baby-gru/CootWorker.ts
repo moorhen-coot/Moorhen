@@ -504,7 +504,7 @@ const atomSpecToJSArray = (atomSpecs: emscriptem.vector<libcootApi.AtomSpecT>): 
 }
 
 const residueSpecToJSArray = (residueSpecs: emscriptem.vector<libcootApi.ResidueSpecT>): libcootApi.ResidueSpecJS[] => {
-    let returnResult: { resNum: number; insCode: string; modelNumber: number; chainId: string; }[] = []
+    let returnResult: { resNum: number; insCode: string; modelNumber: number; chainId: string; intUserData: number; }[] = []
     const residuesSize = residueSpecs.size()
     for (let ic = 0; ic < residuesSize; ic++) {
         const residue = residueSpecs.get(ic)
@@ -512,7 +512,8 @@ const residueSpecToJSArray = (residueSpecs: emscriptem.vector<libcootApi.Residue
             resNum: residue.res_no,
             insCode: residue.ins_code,
             modelNumber: residue.model_number,
-            chainId: residue.chain_id
+            chainId: residue.chain_id,
+            intUserData: residue.int_user_data
         })
     }
     residueSpecs.delete()
@@ -618,6 +619,7 @@ const vectorHBondToJSArray = (HBondData: emscriptem.vector<libcootApi.MoorhenHBo
 
 const interestingPlaceDataToJSArray = (interestingPlaceData: emscriptem.vector<libcootApi.InterestingPlaceT>): libcootApi.InterestingPlaceDataJS[] => {
     let returnResult: { 
+        intUserData: number;
         modelNumber: number;
         chainId: string;
         insCode: string;
@@ -636,6 +638,7 @@ const interestingPlaceDataToJSArray = (interestingPlaceData: emscriptem.vector<l
         const residue = interestingPlaceData.get(ir)
         const residueSpec = residue.residue_spec
         returnResult.push({
+            intUserData: residueSpec.int_user_data,
             modelNumber: residueSpec.model_number,
             chainId: residueSpec.chain_id,
             insCode: residueSpec.ins_code,
