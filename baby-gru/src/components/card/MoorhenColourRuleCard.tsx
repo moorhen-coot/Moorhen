@@ -96,6 +96,8 @@ export const MoorhenColourRuleCard = (props: {
                         <RgbColorPicker color={{r, g, b}} onChange={handleColorChange} />
                     </Popover>
                 </>
+                : rule.ruleType === "secondary-structure" ?
+                    <img className='colour-rule-icon' src={`${urlPrefix}/baby-gru/pixmaps/secondary-structure-grey.svg`} alt='ss2' style={{height:'28px', width:'`12px', margin: '0.1rem'}}/>
                 : rule.ruleType === "jones-rainbow" ?
                 <>
                     <div style={{borderColor: 'rgb(255, 0, 0)', borderWidth:'5px', backgroundColor:  'rgb(255, 0, 0)', height:'20px', width:'5px', margin: '0rem', padding: '0rem'}}/>

@@ -96,7 +96,7 @@ std::vector<coot::residue_spec_t> getSecondaryStructure(mmdb::Manager *m, int im
         coot::residue_spec_t cid;
         cid.model_number = imodel;
         cid.chain_id = std::string(resTable[i]->GetChainID());
-        cid.res_no = resTable[i]->GetResidueNo();
+        cid.res_no = resTable[i]->seqNum;
         cid.ins_code = resTable[i]->insCode;
         cid.int_user_data = resTable[i]->SSE;
         v.push_back(cid);

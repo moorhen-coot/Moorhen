@@ -1805,4 +1805,19 @@ export class MoorhenMolecule implements moorhen.Molecule {
         nonSelectedCidVec.delete()
         return result
     }
+
+    /**
+     * Get the secondary structure information for the residues in the current molecule
+     * @param {number} modelNumber - The model number to extract secondary structure information from
+     * @returns {object[]} An array of objects containing the secondary structure information for each residue
+     */
+    async getSecondaryStructInfo(modelNumber: number = 1): Promise<libcootApi.ResidueSpecJS[]> {
+        const secondaryStructInfoVec = await this.commandCentre.current.cootCommand({
+            returnType: 'residue_specs',
+            command: 'GetSecondaryStructure',
+            commandArgs: [this.molNo, modelNumber],
+        }, false) as moorhen.WorkerResponse<libcootApi.ResidueSpecJS[]>
+        
+        return secondaryStructInfoVec.data.result.result
+    }
 }

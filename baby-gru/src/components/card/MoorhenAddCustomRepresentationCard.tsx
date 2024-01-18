@@ -114,6 +114,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                         label: cidSelection
                     }]
                     break
+                case 'secondary-structure':
                 case 'jones-rainbow':
                 case 'mol-symm':
                 case "b-factor":
@@ -125,7 +126,15 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                         isMultiColourRule: true,
                         color: colour,
                         ruleType: `${colourModeSelectRef.current.value}`,
-                        label: `${colourModeSelectRef.current.value}`,
+                        label: `${
+                            colourModeSelectRef.current.value === 'secondary-structure' ? 'Secondary struct.'
+                            : colourModeSelectRef.current.value === 'jones-rainbow' ? 'Jones-Rainbow'
+                            : colourModeSelectRef.current.value === 'mol-symm' ? 'Mol. Symm.'
+                            : colourModeSelectRef.current.value === "b-factor" ? 'B-factor'
+                            : colourModeSelectRef.current.value === "b-factor-norm" ? 'B-factor norm.'
+                            : colourModeSelectRef.current.value === "af2-plddt" ? 'PLDDT'
+                            : ''
+                        }`,
                     }]
                     break
                 default:
