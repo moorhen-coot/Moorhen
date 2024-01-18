@@ -19,6 +19,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <fstream>
+#include <utility>
 
 #include <math.h>
 #ifndef M_PI
@@ -70,6 +71,45 @@ struct ResiduePropertyInfo {
     std::string restype;
     double property;
 };
+
+std::vector<std::pair<std::string,std::string> > getSecondaryStructure(mmdb::Manager *m, int imodel=1){
+    std::vector<std::pair<std::string,std::string> > v;
+    mmdb::Model *mod = m->GetModel(imodel);
+    mod->CalcSecStructure(0,-1);
+    int nRes;
+    mmdb::Residue **resTable=NULL;
+    mod->GetResidueTable(resTable,nRes);
+    for(int i=0;i<nRes;i++){
+        std::string cid = std::string(resTable[i]->GetChainID()) + std::string("/") + std::to_string(resTable[i]->seqNum);
+        switch(resTable[i]->SSE){
+            case mmdb::SSE_None:
+                v.push_back(std::pair<std::string,std::string>(cid,"None"));
+                break;
+            case mmdb::SSE_Strand:
+                v.push_back(std::pair<std::string,std::string>(cid,"Strand"));
+                break;
+            case mmdb::SSE_Bulge:
+                v.push_back(std::pair<std::string,std::string>(cid,"Bulge"));
+                break;
+            case mmdb::SSE_3Turn:
+                v.push_back(std::pair<std::string,std::string>(cid,"3Turn"));
+                break;
+            case mmdb::SSE_4Turn:
+                v.push_back(std::pair<std::string,std::string>(cid,"4Turn"));
+                break;
+            case mmdb::SSE_5Turn:
+                v.push_back(std::pair<std::string,std::string>(cid,"5Turn"));
+                break;
+            case mmdb::SSE_Helix:
+                v.push_back(std::pair<std::string,std::string>(cid,"Helix"));
+                break;
+            default:
+                v.push_back(std::pair<std::string,std::string>(cid,"Unknowm"));
+        }
+    }
+    delete [] resTable;
+    return v;
+}
 
 std::map<std::string,std::vector<coot::simple_rotamer> > getRotamersMap(){
 
