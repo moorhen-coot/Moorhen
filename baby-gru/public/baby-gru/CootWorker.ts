@@ -417,7 +417,6 @@ const symmetryToJSData = (symmetryDataPair: libcootApi.PairType<libcootApi.Symme
     let result: { x: number; y: number; z: number; asString: string; isym: number; us: number; ws: number; vs: number; matrix: number[][]; }[]= []
     const symmetryData = symmetryDataPair.first
     const symmetryMatrices = symmetryDataPair.second
-    const cell = symmetryData.cell
     const symm_trans = symmetryData.symm_trans
     const symmetrySize = symm_trans.size()
 
@@ -441,7 +440,6 @@ const symmetryToJSData = (symmetryDataPair: libcootApi.PairType<libcootApi.Symme
         symTransT.delete()
     }
 
-    cell.delete()
     symm_trans.delete()
     symmetryMatrices.delete()
     return result
