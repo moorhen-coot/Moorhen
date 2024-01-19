@@ -297,6 +297,7 @@ class molecules_container_js : public molecules_container_t {
             return "";
         }
 
+        /** Let's comment this out for the time being
         std::string export_imol_as_gltf_string(int imol) {
             std::string file_name = generate_rand_str(32);
             file_name += ".gltf";
@@ -313,7 +314,8 @@ class molecules_container_js : public molecules_container_t {
             const std::string gltf_string = read_text_file(file_name);
             remove_file(file_name);
             return gltf_string;
-        }
+        } 
+        */
 
         int read_pdb_string(const std::string &pdb_string, const std::string &molecule_name) {
             std::string file_name = generate_rand_str(32);
@@ -1263,7 +1265,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("smiles_to_pdb", &molecules_container_js::smiles_to_pdb)
     .function("replace_molecule_by_model_from_string", &molecules_container_js::replace_molecule_by_model_from_string)
     .function("read_dictionary_string", &molecules_container_js::read_dictionary_string)
-    .function("export_imol_as_gltf_string", &molecules_container_js::export_imol_as_gltf_string)
+    // .function("export_imol_as_gltf_string", &molecules_container_js::export_imol_as_gltf_string)
     ;
     value_object<molecules_container_t::fit_ligand_info_t>("fit_ligand_info_t")
     .field("imol", &molecules_container_t::fit_ligand_info_t::imol)
