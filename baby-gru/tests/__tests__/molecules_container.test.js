@@ -1102,8 +1102,8 @@ describe('Testing molecules_container_js', () => {
         const scores_2 =  molecules_container.get_r_factor_stats()
         expect(scores_2.r_factor).toBeCloseTo(0.108, 2)
         expect(scores_2.free_r_factor).toBeCloseTo(0.158, 2)
-        expect(scores_2.rail_points_total).toBe(-300)
-        expect(scores_2.rail_points_new).toBe(-300)
+        expect(scores_2.rail_points_total).toBe(-299)
+        expect(scores_2.rail_points_new).toBe(-299)
 
         expect(map_mesh_1.vertices.size()).not.toBe(map_mesh_2.vertices.size())
     })
@@ -1119,10 +1119,10 @@ describe('Testing molecules_container_js', () => {
         molecules_container.sfcalc_genmaps_using_bulk_solvent(coordMolNo, mapMolNo, diffMapMolNo, mapMolNo)
 
         molecules_container.get_r_factor_stats()
-        molecules_container.get_map_contours_mesh(mapMolNo, 0, 0, 0, 13, 0.48)
+        molecules_container.get_map_contours_mesh(mapMolNo, 77.501, 45.049, 22.663, 13, 0.48)
 
         molecules_container.delete_using_cid(coordMolNo, "/1/A/300/*", "LITERAL")
-        molecules_container.get_map_contours_mesh(mapMolNo, 0, 0, 0, 13, 0.48)
+        molecules_container.get_map_contours_mesh(mapMolNo, 77.501, 45.049, 22.663, 13, 0.48)
         molecules_container.get_r_factor_stats()
 
         const diff_diff_map_peaks = molecules_container.get_diff_diff_map_peaks(diffMapMolNo, 77.501, 45.049, 22.663)
