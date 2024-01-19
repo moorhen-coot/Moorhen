@@ -3,14 +3,16 @@ import { moorhen } from "../../types/moorhen";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, Card, Col, Form, Row, Spinner, Stack } from "react-bootstrap";
 import { convertRemToPx, convertViewtoPx} from '../../utils/MoorhenUtils';
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 import { Backdrop, IconButton, Tooltip } from "@mui/material";
 import { CenterFocusWeakOutlined, CrisisAlertOutlined, MergeTypeOutlined } from "@mui/icons-material";
+import { triggerScoresUpdate } from "../../store/connectedMapsSlice";
 
 export const MoorheFindLigandModal = (props: { show: boolean; setShow: React.Dispatch<React.SetStateAction<boolean>>; }) => {    
+    const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const maps = useSelector((state: moorhen.State) => state.maps)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
@@ -61,6 +63,7 @@ export const MoorheFindLigandModal = (props: { show: boolean; setShow: React.Dis
                         <Tooltip title="Merge">
                         <IconButton style={{marginRight:'0.5rem'}} onClick={() => {
                             molecule.mergeMolecules([newLigandMolecule], true).then(_ => newLigandMolecule.delete())
+                            dispatch( triggerScoresUpdate(molecule.molNo) )
                             setLigandResults((prevLigands) => prevLigands.filter(ligand => ligand.molNo !== newLigandMolecule.molNo))
                         }}>
                             <MergeTypeOutlined/>

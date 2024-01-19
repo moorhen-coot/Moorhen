@@ -240,6 +240,21 @@ declare module 'moorhen' {
 
     function setMapAlpha(arg0: {molNo: number, alpha: number}): any;
     module.exports = setMapAlpha;
+
+    function showMap(arg0: {molNo: number, show: boolean}): any;
+    module.exports = showMap;
+
+    function hideMap(arg0: {molNo: number}): any;
+    module.exports = hideMap;
+
+    function setContourLevel(arg0: {molNo: number, level: number}): any;
+    module.exports = setContourLevel;
+
+    function showMolecule(arg0: {molNo: number, show: boolean}): any;
+    module.exports = showMolecule;
+
+    function hideMolecule(arg0: {molNo: number}): any;
+    module.exports = hideMolecule;
     
     function setMapStyle(arg0: {molNo: number, style: "lines" | "solid" | "lit-lines"}): any;
     module.exports = setMapStyle;

@@ -27,12 +27,16 @@ import {
 import { addMap, addMapList, removeMap, emptyMaps } from "./store/mapsSlice";
 import { setCursorStyle, setEnableAtomHovering, setHoveredAtom } from './store/hoveringStatesSlice';
 import { addAvailableFontList, setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } from './store/labelSettingsSlice';
-import { setPositiveMapColours, setNegativeMapColours, setMapAlpha, setMapColours, setMapRadius, setMapStyle, setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, setDefaultMapSurface } from './store/mapContourSettingsSlice';
+import { 
+    showMap, hideMap, setPositiveMapColours, setNegativeMapColours, setMapAlpha, setMapColours, setMapRadius, 
+    setMapStyle, setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, setDefaultMapSurface, setContourLevel
+} from './store/mapContourSettingsSlice';
 import { setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut, setEnableRefineAfterMod } from './store/miscAppSettingsSlice';
 import { addMolecule, removeMolecule, emptyMolecules, addMoleculeList } from './store/moleculesSlice';
 import { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity } from './store/mouseSettings';
 import { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts } from './store/shortCutsSlice';
 import { setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores } from './store/connectedMapsSlice'
+import { showMolecule, hideMolecule } from "./store/moleculeRepresentationsSlice";
 
 export {
     ErrorBoundary, MoorhenApp, MoorhenContainer, MoorhenTimeCapsule, MoorhenMoleculeSelect, MoorhenMolecule, MoorhenMap,
@@ -50,5 +54,6 @@ export {
     setZoomWheelSensitivityFactor, setMouseSensitivity, setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts,
     setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores, MoorhenSlider,
     addMap, addMapList, removeMap, emptyMaps, setPositiveMapColours, setNegativeMapColours, setMapAlpha, setMapColours, 
-    setMapRadius, setMapStyle, MoorhenQuerySequenceModal, MoorhenPreferences
+    setMapRadius, setMapStyle, showMap, hideMap, setContourLevel, showMolecule, hideMolecule, 
+    MoorhenQuerySequenceModal, MoorhenPreferences
 };
