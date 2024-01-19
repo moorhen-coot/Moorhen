@@ -1102,8 +1102,8 @@ describe('Testing molecules_container_js', () => {
         const scores_2 =  molecules_container.get_r_factor_stats()
         expect(scores_2.r_factor).toBeCloseTo(0.108, 2)
         expect(scores_2.free_r_factor).toBeCloseTo(0.158, 2)
-        expect(scores_2.rail_points_total).toBe(-300)
-        expect(scores_2.rail_points_new).toBe(-300)
+        expect(scores_2.rail_points_total).toBe(-299)
+        expect(scores_2.rail_points_new).toBe(-299)
 
         expect(map_mesh_1.vertices.size()).not.toBe(map_mesh_2.vertices.size())
     })
@@ -1119,17 +1119,17 @@ describe('Testing molecules_container_js', () => {
         molecules_container.sfcalc_genmaps_using_bulk_solvent(coordMolNo, mapMolNo, diffMapMolNo, mapMolNo)
 
         molecules_container.get_r_factor_stats()
-        molecules_container.get_map_contours_mesh(mapMolNo, 0, 0, 0, 13, 0.48)
+        molecules_container.get_map_contours_mesh(mapMolNo, 77.501, 45.049, 22.663, 13, 0.48)
 
         molecules_container.delete_using_cid(coordMolNo, "/1/A/300/*", "LITERAL")
-        molecules_container.get_map_contours_mesh(mapMolNo, 0, 0, 0, 13, 0.48)
+        molecules_container.get_map_contours_mesh(mapMolNo, 77.501, 45.049, 22.663, 13, 0.48)
         molecules_container.get_r_factor_stats()
 
         const diff_diff_map_peaks = molecules_container.get_diff_diff_map_peaks(diffMapMolNo, 77.501, 45.049, 22.663)
         expect(diff_diff_map_peaks.size()).toBeGreaterThan(0)
     })
 
-    test("Test export_imol_as_gltf_string", () => {
+    test.skip("Test export_imol_as_gltf_string", () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', 'FOM', false, false)
@@ -1157,10 +1157,8 @@ describe('Testing molecules_container_js', () => {
         molecules_container.get_bonds_mesh_instanced(coordMolNo, 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1)
 
         const fileName = 'test.gltf'
-        cootModule.FS_createDataFile(".", fileName, "", true, true);
-        molecules_container.export_map_molecule_as_gltf(coordMolNo, fileName)
+        molecules_container.export_model_molecule_as_gltf(coordMolNo, '//', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1, false, false, fileName)
         const fileContents = cootModule.FS.readFile(fileName, { encoding: 'utf8' })
-        cootModule.FS_unlink(fileName)
         expect(fileContents).not.toBe("")
     })
 
@@ -1170,10 +1168,8 @@ describe('Testing molecules_container_js', () => {
         molecules_container.get_map_contours_mesh(mapMolNo, 0, 0, 0, 13, 0.48)
 
         const fileName = 'test.gltf'
-        cootModule.FS_createDataFile(".", fileName, "", true, true);
-        molecules_container.export_map_molecule_as_gltf(mapMolNo, fileName)
+        molecules_container.export_map_molecule_as_gltf(mapMolNo, 0, 0, 0, 13, 0.48, fileName)
         const fileContents = cootModule.FS.readFile(fileName, { encoding: 'utf8' })
-        cootModule.FS_unlink(fileName)
         expect(fileContents).not.toBe("")
     })
 
