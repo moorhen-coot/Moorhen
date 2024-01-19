@@ -15,7 +15,6 @@ import { hexToRgb } from "@mui/material";
 const BackgroundColorPanel = (props: {}) => {
     
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const dispatch = useDispatch()
 
     const [innerBackgroundColor, setInnerBackgroundColor] = useState<{ r: number; g: number; b: number; }>({
@@ -54,12 +53,14 @@ const BackgroundColorPanel = (props: {}) => {
         }
     }
 
-    return <Stack gap={1} direction="vertical" style={{display: 'flex', justifyContent: 'center', width: '100%', height: '100%', padding: '0.5rem', borderStyle: 'solid', borderRadius: '0.5rem', borderColor: 'grey', borderWidth: '1px'}}>
+    return <Stack gap={1} direction="vertical" className="scene-settings-panel-flex-center">
         <div style={{padding: 0, margin: 0, justifyContent: 'center', display: 'flex'}}>
             <RgbColorPicker color={innerBackgroundColor} onChange={handleColorChange} />
         </div>
-        <div style={{padding: '0.5rem', margin: '0.15rem', justifyContent: 'center', display: 'flex', backgroundColor: '#e3e1e1', borderRadius: '8px'}}>
-            <CirclePicker onChange={handleCircleClick} color={innerBackgroundColor} colors={['#000000', '#5c5c5c', '#8a8a8a', '#cccccc', '#ffffff']}/>
+        <div style={{display: 'flex', justifyContent: 'center'}}>
+            <div style={{width: '11rem', padding: '0.5rem', margin: '0.15rem', justifyContent: 'center', display: 'flex', backgroundColor: '#e3e1e1', borderRadius: '8px'}}>
+                <CirclePicker onChange={handleCircleClick} width='10rem' circleSize={convertRemToPx(10)/9} color={innerBackgroundColor} colors={['#000000', '#5c5c5c', '#8a8a8a', '#cccccc', '#ffffff']}/>
+            </div>
         </div>
         <div style={{padding: 0, margin: 0, justifyContent: 'center', display: 'flex' }}>
             <div className="moorhen-hex-input-decorator">#</div>
@@ -82,7 +83,7 @@ const DepthBlurPanel = (props: {
     const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth)
     const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius)
     
-    return <div style={{width: '100%', height: '100%', padding: '0.5rem', borderStyle: 'solid', borderRadius: '0.5rem', borderColor: 'grey', borderWidth: '1px'}}>
+    return <div className="scene-settings-panel-flex-between">
             <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false} sliderTitle="Blur depth" initialValue={depthBlurDepth} externalValue={depthBlurDepth} setExternalValue={(val: number) => dispatch(setDepthBlurDepth(val))}/>
             <MoorhenSlider minVal={2} maxVal={16} logScale={false} sliderTitle="Blur radius" initialValue={depthBlurRadius} externalValue={depthBlurRadius} allowFloats={false} setExternalValue={(val: number) => dispatch(setDepthBlurRadius(val))}/>
             <InputGroup className='moorhen-input-group-check'>
@@ -118,7 +119,7 @@ const ClipFogPanel = (props: {
         }
     }, [props.glRef.current.gl_clipPlane1[3], props.glRef.current.gl_clipPlane0[3], props.glRef.current.gl_fog_start, props.glRef.current.gl_fog_end])
 
-    return <div style={{width: '100%', height: '100%', padding: '0.5rem', borderStyle: 'solid', borderRadius: '0.5rem', borderColor: 'grey', borderWidth: '1px'}}>
+    return <div className="scene-settings-panel-flex-between">
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Front clip"
             initialValue={props.glRef.current.fogClipOffset + props.glRef.current.gl_clipPlane0[3]}
@@ -210,7 +211,7 @@ const LightingPanel = (props: {
         }
     }, [props.glRef.current.specularPower, props.glRef.current.light_positions, props.glRef.current.light_colours_diffuse, props.glRef.current.light_colours_specular, props.glRef.current.light_colours_ambient])
 
-    return <div style={{width: '100%', height: '100%', padding: '0.5rem', borderStyle: 'solid', borderRadius: '0.5rem', borderColor: 'grey', borderWidth: '1px'}}>
+    return <div className="scene-settings-panel">
         <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
             sliderTitle="Diffuse"
             initialValue={props.glRef.current.light_colours_diffuse[0]}
@@ -281,8 +282,9 @@ export const MoorhenSceneSettingsModal = (props: {
                 minWidth={convertRemToPx(40)}
                 maxHeight={convertViewtoPx(65, height)}
                 maxWidth={convertRemToPx(60)}
+                enforceMaxBodyDimensions={false}
                 body={
-                    <Stack gap={2} direction="horizontal" style={{display: 'flex', alignItems: 'start'}}>
+                    <Stack gap={2} direction="horizontal" style={{display: 'flex', alignItems: 'start', width: '100%', height:'100%'}}>
                         <Stack gap={2} direction="vertical">
                             <ClipFogPanel glRef={props.glRef}/>
                             <BackgroundColorPanel/>
