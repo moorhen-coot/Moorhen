@@ -568,7 +568,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                         <span>{`Lvl: ${mapContourLevel.toFixed(2)} ${props.map.mapRmsd ? '(' + (mapContourLevel / props.map.mapRmsd).toFixed(2) + ' rmsd)' : ''}`}</span>
                         <MoorhenSlider
                             minVal={0.001}
-                            maxVal={5}
+                            maxVal={props.map.isEM ? 15 : 5}
                             showMinMaxVal={false}
                             decrementButton={decreaseLevelButton}
                             incrementButton={increaseLevelButton}
