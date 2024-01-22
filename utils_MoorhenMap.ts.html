@@ -96,7 +96,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenCommandCentre.html">MoorhenCommandCentre</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenPreferences.html">MoorhenPreferences</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li><li><a href="-_DEFAULT_CONTOUR_LEVEL.html">_DEFAULT_CONTOUR_LEVEL</a></li></ul><h3>Global</h3><ul><li><a href="global.html#MoorhenContainer">MoorhenContainer</a></li><li><a href="global.html#MoorhenDraggableModalBase">MoorhenDraggableModalBase</a></li><li><a href="global.html#MoorhenMapSelect">MoorhenMapSelect</a></li><li><a href="global.html#MoorhenMoleculeSelect">MoorhenMoleculeSelect</a></li><li><a href="global.html#MoorhenReduxProvider">MoorhenReduxProvider</a></li><li><a href="global.html#loadSessionData">loadSessionData</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenCommandCentre.html">MoorhenCommandCentre</a></li><li><a href="MoorhenMap.html">MoorhenMap</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenPreferences.html">MoorhenPreferences</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li></ul><h3>Global</h3><ul><li><a href="global.html#MoorhenContainer">MoorhenContainer</a></li><li><a href="global.html#MoorhenDraggableModalBase">MoorhenDraggableModalBase</a></li><li><a href="global.html#MoorhenMapSelect">MoorhenMapSelect</a></li><li><a href="global.html#MoorhenMoleculeSelect">MoorhenMoleculeSelect</a></li><li><a href="global.html#MoorhenReduxProvider">MoorhenReduxProvider</a></li><li><a href="global.html#loadSessionData">loadSessionData</a></li></ul></div>
                 
             </nav>
         </div>
@@ -118,6 +118,14 @@ import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { libcootApi } from "../types/libcoot";
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
+
+const _DEFAULT_CONTOUR_LEVEL = 0.8
+const _DEFAULT_RADIUS = 13
+const _DEFAULT_STYLE = "lines"
+const _DEFAULT_ALPHA = 1.0
+const _DEFAULT_MAP_COLOUR = { r: 0.30000001192092896, g: 0.30000001192092896, b: 0.699999988079071}
+const _DEFAULT_POSITIVE_MAP_COLOUR = {r: 0.4000000059604645, g: 0.800000011920929, b: 0.4000000059604645}
+const _DEFAULT_NEGATIVE_MAP_COLOUR = {r: 0.800000011920929, g: 0.4000000059604645, b: 0.4000000059604645}
 
 /**
  * Represents a map
@@ -148,14 +156,6 @@ import MoorhenReduxStore from "../store/MoorhenReduxStore";
  * // Delete map
  * map.delete();
 */
-
-const _DEFAULT_CONTOUR_LEVEL = 0.8
-const _DEFAULT_RADIUS = 13
-const _DEFAULT_STYLE = "lines"
-const _DEFAULT_ALPHA = 1.0
-const _DEFAULT_MAP_COLOUR = { r: 0.30000001192092896, g: 0.30000001192092896, b: 0.699999988079071}
-const _DEFAULT_POSITIVE_MAP_COLOUR = {r: 0.4000000059604645, g: 0.800000011920929, b: 0.4000000059604645}
-const _DEFAULT_NEGATIVE_MAP_COLOUR = {r: 0.800000011920929, g: 0.4000000059604645, b: 0.4000000059604645}
 
 export class MoorhenMap implements moorhen.Map {
     
@@ -1090,6 +1090,21 @@ export class MoorhenMap implements moorhen.Map {
         }
         const [r, g, b] = hsvToRgb(h, s, v)
         this.defaultMapColour = { r, g, b }
+    }
+
+    /**
+     * Export the map as a gltf in binary format
+     * @returns {ArrayBuffer} - The contents of the gltf file (binary format)
+     */
+    async exportAsGltf(): Promise&lt;ArrayBuffer> {
+        const { mapRadius, contourLevel } = this.getMapContourParams()
+        const result = await this.commandCentre.current.cootCommand({
+            returnType: "arrayBuffer",
+            command: 'shim_export_map_as_gltf',
+            commandArgs: [ this.molNo, ...this.glRef.current.origin.map(coord => -coord), mapRadius, contourLevel ],
+            changesMolecules: [ ]
+        }, false) as moorhen.WorkerResponse&lt;ArrayBuffer>
+        return result.data.result.result
     }
 }
 </code></pre>

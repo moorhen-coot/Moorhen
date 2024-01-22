@@ -96,7 +96,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenCommandCentre.html">MoorhenCommandCentre</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenPreferences.html">MoorhenPreferences</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li><li><a href="-_DEFAULT_CONTOUR_LEVEL.html">_DEFAULT_CONTOUR_LEVEL</a></li></ul><h3>Global</h3><ul><li><a href="global.html#MoorhenContainer">MoorhenContainer</a></li><li><a href="global.html#MoorhenDraggableModalBase">MoorhenDraggableModalBase</a></li><li><a href="global.html#MoorhenMapSelect">MoorhenMapSelect</a></li><li><a href="global.html#MoorhenMoleculeSelect">MoorhenMoleculeSelect</a></li><li><a href="global.html#MoorhenReduxProvider">MoorhenReduxProvider</a></li><li><a href="global.html#loadSessionData">loadSessionData</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenCommandCentre.html">MoorhenCommandCentre</a></li><li><a href="MoorhenMap.html">MoorhenMap</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenPreferences.html">MoorhenPreferences</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li></ul><h3>Global</h3><ul><li><a href="global.html#MoorhenContainer">MoorhenContainer</a></li><li><a href="global.html#MoorhenDraggableModalBase">MoorhenDraggableModalBase</a></li><li><a href="global.html#MoorhenMapSelect">MoorhenMapSelect</a></li><li><a href="global.html#MoorhenMoleculeSelect">MoorhenMoleculeSelect</a></li><li><a href="global.html#MoorhenReduxProvider">MoorhenReduxProvider</a></li><li><a href="global.html#loadSessionData">loadSessionData</a></li></ul></div>
                 
             </nav>
         </div>
@@ -1930,10 +1930,25 @@ export class MoorhenMolecule implements moorhen.Molecule {
         const secondaryStructInfoVec = await this.commandCentre.current.cootCommand({
             returnType: 'residue_specs',
             command: 'GetSecondaryStructure',
-            commandArgs: [this.molNo, modelNumber],
+            commandArgs: [ this.molNo, modelNumber ],
         }, false) as moorhen.WorkerResponse&lt;libcootApi.ResidueSpecJS[]>
         
         return secondaryStructInfoVec.data.result.result
+    }
+
+    /**
+     * Export the current molecule as a gltf file in binary format
+     * @param {string} representationId - The id of the representation to export
+     * @returns {ArrayBuffer} - The contents of the gltf file in binary format
+     */
+    async exportAsGltf(representationId: string): Promise&lt;ArrayBuffer> {
+        const selectedRepresentation = this.representations.find(item => item.uniqueId === representationId)
+        if (selectedRepresentation) {
+            const fileContents = await selectedRepresentation.exportAsGltf()
+            return fileContents
+        } else {
+            console.warn(`Could not find representation with id ${representationId}`)
+        }
     }
 }
 </code></pre>
