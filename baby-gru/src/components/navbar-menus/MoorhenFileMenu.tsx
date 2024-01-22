@@ -21,6 +21,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { setNotificationContent } from "../../store/generalStatesSlice";
 import { addMoleculeList } from "../../store/moleculesSlice";
 import { setShowQuerySequenceModal } from "../../store/activeModalsSlice";
+import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 
 export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     
@@ -218,7 +219,11 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     
                     <MoorhenBackupsMenuItem {...menuItemProps} disabled={!enableTimeCapsule} loadSession={loadSession} />
 
-                    <MenuItem id='screenshot-menu-item' onClick={() => props.videoRecorderRef.current?.takeScreenShot("moorhen.png")}>
+                    <MenuItem id='screenshot-menu-item' onClick={() =>  {
+                        dispatch(setHoveredAtom({ molecule: null, cid: null }))
+                        molecules.forEach(molecule => molecule.clearBuffersOfStyle('hover'))
+                        props.videoRecorderRef.current?.takeScreenShot("moorhen.png")}
+                        }>
                         Screenshot
                     </MenuItem>
 

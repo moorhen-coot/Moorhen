@@ -389,6 +389,8 @@ export const babyGruKeyPress = (
     }
 
     else if (action === 'take_screenshot') {
+        dispatch(setHoveredAtom({ molecule: null, cid: null }))
+        molecules.forEach(molecule => molecule.clearBuffersOfStyle('hover'))
         videoRecorderRef.current?.takeScreenShot("moorhen.png")
     }
 
