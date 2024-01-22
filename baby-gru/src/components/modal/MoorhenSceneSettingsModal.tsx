@@ -54,6 +54,7 @@ const BackgroundColorPanel = (props: {}) => {
     }
 
     return <Stack gap={1} direction="vertical" className="scene-settings-panel-flex-center">
+        <span>Background Colour</span>
         <div style={{padding: 0, margin: 0, justifyContent: 'center', display: 'flex'}}>
             <RgbColorPicker color={innerBackgroundColor} onChange={handleColorChange} />
         </div>
