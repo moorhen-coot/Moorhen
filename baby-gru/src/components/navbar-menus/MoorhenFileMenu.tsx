@@ -82,21 +82,25 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         return newMolecule        
     }
 
-    const handleExportGltf = () => {
-        maps.forEach(map => map.exportAsGltf().then(gltfData => {
+    const handleExportGltf = async () => {
+        for (let map of maps) {
+            const gltfData = await map.exportAsGltf()
             if (gltfData) {
                 doDownload([gltfData], `${map.name}.glb`)
             }
-        }))
-        molecules.forEach(molecule => molecule.representations.forEach((representation, index) => {
-            if (representation.visible) {
-                representation.exportAsGltf().then(gltfData => {
+        }
+        for (let molecule of molecules) {
+            let index = 0
+            for (let representation of molecule.representations) {
+                if (representation.visible) {
+                    const gltfData = await representation.exportAsGltf()
                     if (gltfData) {
+                        index += 1
                         doDownload([gltfData], `${molecule.name}-${index}.glb`)
                     }
-                })
+                }
             }
-        }))
+        }
     }
 
     const handleSessionUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
