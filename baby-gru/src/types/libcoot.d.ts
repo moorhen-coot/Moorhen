@@ -470,6 +470,8 @@ export namespace libcootApi {
         getRamachandranData(arg0: string, arg1: string): emscriptem.vector<RamaData>
     }
     interface MoleculesContainerJS {
+        export_model_molecule_as_gltf(imol: number, cid: string, mode: string, isDark: boolean, bondWidth: number, atomRadius: number, bondSmoothness: number, drawHydrogens: boolean, drawMissingResidues: boolean, fileName: string): void;
+        export_map_molecule_as_gltf(imol: number, x: number, y: number, z: number, radius: number, contourLevel: number, fileName: string): void;
         set_max_number_of_threads(arg0: number): void;
         set_map_is_contoured_with_thread_pool(arg0: boolean): void;
         close_molecule(molNo: number): number;

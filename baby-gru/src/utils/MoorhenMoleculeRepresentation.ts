@@ -3,6 +3,7 @@ import { webGL } from '../types/mgWebGL';
 import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, countResiduesInSelection, copyStructureSelection } from './MoorhenUtils';
 import { libcootApi } from '../types/libcoot';
 import { hexToRgb } from '@mui/material';
+import MoorhenReduxStore from "../store/MoorhenReduxStore";
 
 // TODO: It might be better to do this.glRef.current.drawScene() in the molecule... 
 export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresentation {
@@ -418,33 +419,31 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         return [response.data.result.result]
     }
 
-    async getCootSelectionBondBuffers(name: string, cid: null | string): Promise<libcootApi.InstancedMeshJS[]> {
-        let meshCommand: Promise<moorhen.WorkerResponse<libcootApi.InstancedMeshJS>>
-        let style = "COLOUR-BY-CHAIN-AND-DICTIONARY"
-        let returnType = "instanced_mesh"
-        if (name === "VdwSpheres") {
-            style = "VDW-BALLS"
-            returnType = "instanced_mesh_perfect_spheres"
-        } else if (name === "CAs") {
-            style = "CA+LIGANDS"
-        }
-
-        let bondSettings: [boolean, number, number, number]
+    getBondContourParams(name: string): [string, boolean, number, number, number] {
+        let bondSettings: (string | boolean | number)[] = [
+            name === "VdwSpheres" ? "VDW-BALLS" : name === "CAs" ? "CA+LIGANDS" : "COLOUR-BY-CHAIN-AND-DICTIONARY",
+            this.parentMolecule.isDarkBackground
+        ]
         if (this.useDefaultBondOptions) {
-            bondSettings = [
-                this.parentMolecule.isDarkBackground,
+            bondSettings.push(
                 name === 'ligands' ? this.parentMolecule.defaultBondOptions.width * 1.5 : this.parentMolecule.defaultBondOptions.width,
                 name === 'ligands' ? this.parentMolecule.defaultBondOptions.atomRadiusBondRatio * 1.5 : this.parentMolecule.defaultBondOptions.atomRadiusBondRatio,
                 this.parentMolecule.defaultBondOptions.smoothness
-            ]
+            )
         } else {
-            bondSettings = [
-                this.parentMolecule.isDarkBackground,
+            bondSettings.push(
                 name === 'ligands' ? this.bondOptions.width * 1.5 : this.bondOptions.width,
                 name === 'ligands' ? this.bondOptions.atomRadiusBondRatio * 1.5 : this.bondOptions.atomRadiusBondRatio,
-                this.bondOptions.smoothness
-            ]
+                this.bondOptions.smoothness    
+            )
         }
+        return bondSettings as [string, boolean, number, number, number]
+    }
+
+    async getCootSelectionBondBuffers(name: string, cid: null | string): Promise<libcootApi.InstancedMeshJS[]> {
+        const bondSettings = this.getBondContourParams(name)
+        let meshCommand: Promise<moorhen.WorkerResponse<libcootApi.InstancedMeshJS>>
+        let returnType = name === 'VdwSpheres' ? "instanced_mesh_perfect_spheres" : "instanced_mesh"
 
         if (typeof cid !== 'string' || cid === '/*/*/*/*') {
             meshCommand = this.commandCentre.current.cootCommand({
@@ -452,7 +451,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 command: "get_bonds_mesh_instanced",
                 commandArgs: [
                     this.parentMolecule.molNo,
-                    style,
                     ...bondSettings
                 ]
             }, false)
@@ -463,7 +461,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 commandArgs: [
                     this.parentMolecule.molNo,
                     cid,
-                    style,
                     ...bondSettings
                 ]
             }, false)
@@ -771,5 +768,29 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 )
             }
         }
+    }
+
+    /**
+     * Export the current representation as a gltf binary file
+     * @returns {ArrayBuffer} - The contents of the gltf binary file
+     */
+    async exportAsGltf(): Promise<ArrayBuffer> {
+        if (!['ligands', 'CBs', 'VdwSpheres', 'CAs'].includes(this.style)) {
+            console.warn(`Unable to export molecule representation of style ${this.style} as gltf`)
+            return
+        }
+        
+        const bondOptions = this.getBondContourParams(this.style)
+        const state = MoorhenReduxStore.getState()
+        const drawMissingLoops = state.sceneSettings.drawMissingLoops
+        const drawHydrogens = false
+
+        const result = await this.commandCentre.current.cootCommand({
+            returnType: 'string',
+            command: 'shim_export_molecule_as_gltf',
+            commandArgs: [ this.parentMolecule.molNo, this.cid, ...bondOptions, drawHydrogens, drawMissingLoops ],
+        }, false) as moorhen.WorkerResponse<ArrayBuffer>
+        
+        return result.data.result.result
     }
 }

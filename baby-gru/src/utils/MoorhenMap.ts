@@ -976,4 +976,19 @@ export class MoorhenMap implements moorhen.Map {
         const [r, g, b] = hsvToRgb(h, s, v)
         this.defaultMapColour = { r, g, b }
     }
+
+    /**
+     * Export the map as a gltf in binary format
+     * @returns {ArrayBuffer} - The contents of the gltf file (binary format)
+     */
+    async exportAsGltf(): Promise<ArrayBuffer> {
+        const { mapRadius, contourLevel } = this.getMapContourParams()
+        const result = await this.commandCentre.current.cootCommand({
+            returnType: "arrayBuffer",
+            command: 'shim_export_map_as_gltf',
+            commandArgs: [ this.molNo, ...this.glRef.current.origin.map(coord => -coord), mapRadius, contourLevel ],
+            changesMolecules: [ ]
+        }, false) as moorhen.WorkerResponse<ArrayBuffer>
+        return result.data.result.result
+    }
 }

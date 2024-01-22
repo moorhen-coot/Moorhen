@@ -413,6 +413,36 @@ const stringArrayToJSArray = (stringArray: emscriptem.vector<string>) => {
     return returnResult;
 }
 
+const export_map_as_gltf = (imol: number, x: number, y: number, z: number, radius: number, contourLevel: number) => {
+    const fileName = `${guid()}.glb`
+    molecules_container.export_map_molecule_as_gltf(imol, x, y, z, radius, contourLevel, fileName)
+    const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
+    cootModule.FS_unlink(fileName)
+    return fileContents.buffer
+}
+
+const export_molecule_as_gltf = (
+    imol: number, cid: string, mode: string, isDark: boolean, bondWidth: number, 
+    atomRadius: number, bondSmoothness: number, drawHydrogens: boolean, drawMissingResidues: boolean
+) => {
+    const fileName = `${guid()}.glb`
+    molecules_container.export_model_molecule_as_gltf(
+        imol,
+        cid,
+        mode,
+        isDark,
+        bondWidth,
+        atomRadius,
+        bondSmoothness,
+        drawHydrogens,
+        drawMissingResidues,
+        fileName
+    )
+    const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
+    cootModule.FS_unlink(fileName)
+    return fileContents.buffer
+}
+
 const symmetryToJSData = (symmetryDataPair: libcootApi.PairType<libcootApi.SymmetryData, emscriptem.vector<number[][]>>) => {
     let result: { x: number; y: number; z: number; asString: string; isym: number; us: number; ws: number; vs: number; matrix: number[][]; }[]= []
     const symmetryData = symmetryDataPair.first
@@ -917,6 +947,12 @@ const doCootCommand = (messageData: {
                 break
             case 'shim_set_bond_colours':
                 cootResult = setUserDefinedBondColours(...commandArgs as [number, { cid: string; rgb: [number, number, number] }[], boolean])
+                break
+            case 'shim_export_map_as_gltf':
+                cootResult = export_map_as_gltf(...commandArgs as [number, number, number, number, number, number])
+                break
+            case 'shim_export_molecule_as_gltf':
+                cootResult = export_molecule_as_gltf(...commandArgs as [number, string, string, boolean, number, number, number, boolean, boolean])
                 break
             default:
                 cootResult = molecules_container[command](...commandArgs)
