@@ -54,6 +54,7 @@ const BackgroundColorPanel = (props: {}) => {
     }
 
     return <Stack gap={1} direction="vertical" className="scene-settings-panel-flex-center">
+        <span>Background Colour</span>
         <div style={{padding: 0, margin: 0, justifyContent: 'center', display: 'flex'}}>
             <RgbColorPicker color={innerBackgroundColor} onChange={handleColorChange} />
         </div>
@@ -280,9 +281,9 @@ export const MoorhenSceneSettingsModal = (props: {
                 defaultWidth={convertViewtoPx(40, width)}
                 minHeight={convertViewtoPx(40, height)}
                 minWidth={convertRemToPx(40)}
-                maxHeight={convertViewtoPx(65, height)}
+                maxHeight={convertViewtoPx(75, height)}
                 maxWidth={convertRemToPx(60)}
-                enforceMaxBodyDimensions={false}
+                enforceMaxBodyDimensions={true}
                 body={
                     <Stack gap={2} direction="horizontal" style={{display: 'flex', alignItems: 'start', width: '100%', height:'100%'}}>
                         <Stack gap={2} direction="vertical">
