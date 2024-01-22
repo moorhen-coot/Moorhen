@@ -780,6 +780,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             return
         }
         
+        await this.applyColourRules()
         const bondSettings = this.getBondSettings(this.style)
         const state = MoorhenReduxStore.getState()
         const drawMissingLoops = state.sceneSettings.drawMissingLoops
