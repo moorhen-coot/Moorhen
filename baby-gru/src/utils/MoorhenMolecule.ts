@@ -1815,9 +1815,24 @@ export class MoorhenMolecule implements moorhen.Molecule {
         const secondaryStructInfoVec = await this.commandCentre.current.cootCommand({
             returnType: 'residue_specs',
             command: 'GetSecondaryStructure',
-            commandArgs: [this.molNo, modelNumber],
+            commandArgs: [ this.molNo, modelNumber ],
         }, false) as moorhen.WorkerResponse<libcootApi.ResidueSpecJS[]>
         
         return secondaryStructInfoVec.data.result.result
+    }
+
+    /**
+     * Export the current molecule as a gltf file in binary format
+     * @param {string} representationId - The id of the representation to export
+     * @returns {ArrayBuffer} - The contents of the gltf file in binary format
+     */
+    async exportAsGltf(representationId: string): Promise<ArrayBuffer> {
+        const selectedRepresentation = this.representations.find(item => item.uniqueId === representationId)
+        if (selectedRepresentation) {
+            const fileContents = await selectedRepresentation.exportAsGltf()
+            return fileContents
+        } else {
+            console.warn(`Could not find representation with id ${representationId}`)
+        }
     }
 }

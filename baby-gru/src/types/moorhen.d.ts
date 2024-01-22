@@ -92,6 +92,7 @@ export namespace moorhen {
     type coorFormats = 'pdb' | 'mmcif';
     
     interface Molecule {
+        exportAsGltf(representationId: string): Promise<ArrayBuffer>;
         getSecondaryStructInfo(modelNumber?: number): Promise<libcootApi.ResidueSpecJS[]>;
         getNonSelectedCids(cid: string): string[];
         parseCidIntoSelection(selectedCid: string): Promise<ResidueSelection>;
@@ -203,6 +204,7 @@ export namespace moorhen {
     'residueSelection' | 'MetaBalls'
 
     interface MoleculeRepresentation {
+        exportAsGltf(): Promise<ArrayBuffer>;
         setApplyColourToNonCarbonAtoms(newVal: boolean): void;
         setBondOptions(bondOptions: cootBondOptions): void;
         setStyle(style: string): void;
@@ -398,6 +400,7 @@ export namespace moorhen {
         setActive(): Promise<void>;
         setupContourBuffers(objects: any[], keepCootColours?: boolean): void;
         setOtherMapForColouring(molNo: number, min?: number, max?: number): void;
+        exportAsGltf(): Promise<ArrayBuffer>;
         isEM: boolean;
         suggestedContourLevel: number;
         suggestedRadius: number;

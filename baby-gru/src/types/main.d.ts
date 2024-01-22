@@ -49,6 +49,7 @@ declare module 'moorhen' {
 
     class MoorhenMolecule implements _moorhen.Molecule {
         constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibrary: string)
+        exportAsGltf(representationId: string): Promise<ArrayBuffer>;
         getNonSelectedCids(cid: string): string[];
         getSecondaryStructInfo(modelNumber?: number): Promise<libcootApi.ResidueSpecJS[]>;
         parseCidIntoSelection(selectedCid: string): Promise<_moorhen.ResidueSelection>;
@@ -157,6 +158,7 @@ declare module 'moorhen' {
     
     class MoorhenMap implements _moorhen.Map {
         constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>)
+        exportAsGltf(): Promise<ArrayBuffer>;
         getHistogram(nBins?: number, zoomFactor?: number): Promise<libcootApi.HistogramInfoJS>;
         setMapWeight(weight?: number): Promise<_moorhen.WorkerResponse>;
         estimateMapWeight(): Promise<void>;

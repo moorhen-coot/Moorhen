@@ -1,56 +1,12 @@
 import { Form, InputGroup } from "react-bootstrap";
 import { useRef, useState } from "react";
 import { MenuItem } from "@mui/material";
-import { cidToSpec } from "../../utils/MoorhenUtils";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenSlider } from "../misc/MoorhenSlider"
 import { useSelector, useDispatch } from "react-redux";
 import { setDoOutline, setDoSSAO, setDoShadow, setDoSpinTest, setSsaoBias, setSsaoRadius } from "../../store/sceneSettingsSlice";
-
-const doTest = async (props: any) => {
-    let TRIAL_COUNT = 0
-    TRIAL_COUNT += 1
-    console.log(`########################################## ${TRIAL_COUNT}`)
-    const molecule = props.molecules.find(molecule => molecule.molNo === 0)
-    const chosenAtom = cidToSpec('/1/A/14/C')
-    try {
-        const result = await props.commandCentre.current.cootCommand({
-            returnType: "status",
-            command: 'flipPeptide_cid',
-            commandArgs: [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, ''],
-            changesMolecules: [molecule.molNo]
-        }, true)
-
-        console.log(result.data.timeMainThreadToWorker)
-        console.log(result.data.timelibcootAPI)
-        console.log(result.data.timeconvertingWASMJS)
-        console.log(result)
-        console.log(`Message from worker back to main thread took ${Date.now() - result.data.messageSendTime} ms (flipPeptide_cid) - (${result.data.messageId.slice(0, 5)})`)
-                    
-        const test = await props.commandCentre.current.cootCommand({
-            returnType: "status",
-            command: 'refine_residues_using_atom_cid',
-            commandArgs: [ molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, 'TRIPLE', 4000],
-            changesMolecules: [molecule.molNo]
-        }, true)
-                    
-        console.log(test.data.timeMainThreadToWorker)
-        console.log(test.data.timelibcootAPI)
-        console.log(test.data.timeconvertingWASMJS)
-        console.log(test)
-        console.log(`Message from worker back to main thread took ${Date.now() - test.data.messageSendTime} ms (refine_residues_using_atom_cid) - (${test.data.messageId.slice(0, 5)})`)
-
-        molecule.setAtomsDirty(true)
-        await molecule.redraw()
-        
-        if (TRIAL_COUNT <= 99) {
-            setTimeout(() => doTest(props), 8000)
-        }
-    } catch (err) {
-            console.log('Encountered', err)
-    }
-}
+import { doDownload } from "../../utils/MoorhenUtils";
 
 export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
@@ -64,10 +20,17 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
     const ssaoRadius = useSelector((state: moorhen.State) => state.sceneSettings.ssaoRadius)
 
     const menuItemProps = {setPopoverIsShown, customCid, ...props}
-   
+
+    const doTest = async () => {
+        props.moleculesRef.current[0].representations.forEach(async (representation) => {
+            const result = await props.moleculesRef.current[0].exportAsGltf(representation.uniqueId)
+            doDownload([result], `${props.moleculesRef.current[0].name}.glb`)    
+        })
+    }
+       
     return <>
-                    <MenuItem onClick={() => doTest(menuItemProps)}>
-                        Do a timing test...
+                    <MenuItem onClick={() => doTest()}>
+                        Do a test...
                     </MenuItem>
                     <hr></hr>
                     <InputGroup className='moorhen-input-group-check'>
