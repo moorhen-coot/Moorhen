@@ -82,6 +82,23 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         return newMolecule        
     }
 
+    const handleExportGltf = () => {
+        maps.forEach(map => map.exportAsGltf().then(gltfData => {
+            if (gltfData) {
+                doDownload([gltfData], `${map.name}.glb`)
+            }
+        }))
+        molecules.forEach(molecule => molecule.representations.forEach((representation, index) => {
+            if (representation.visible) {
+                representation.exportAsGltf().then(gltfData => {
+                    if (gltfData) {
+                        doDownload([gltfData], `${molecule.name}-${index}.glb`)
+                    }
+                })
+            }
+        }))
+    }
+
     const handleSessionUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         try {
             const sessionData = await readTextFile(e.target.files[0]) as string
@@ -225,6 +242,10 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                         props.videoRecorderRef.current?.takeScreenShot("moorhen.png")}
                         }>
                         Screenshot
+                    </MenuItem>
+
+                    <MenuItem id='export-gltf-menu-item' onClick={handleExportGltf}>
+                        Export scene as gltf
                     </MenuItem>
 
                     <MenuItem id='recording-menu-item' onClick={handleRecording}>
