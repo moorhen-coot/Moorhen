@@ -282,7 +282,7 @@ export const MoorhenSceneSettingsModal = (props: {
                 minWidth={convertRemToPx(40)}
                 maxHeight={convertViewtoPx(75, height)}
                 maxWidth={convertRemToPx(60)}
-                enforceMaxBodyDimensions={false}
+                enforceMaxBodyDimensions={true}
                 body={
                     <Stack gap={2} direction="horizontal" style={{display: 'flex', alignItems: 'start', width: '100%', height:'100%'}}>
                         <Stack gap={2} direction="vertical">
