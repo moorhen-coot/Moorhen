@@ -419,7 +419,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         return [response.data.result.result]
     }
 
-    getBondContourParams(name: string): [string, boolean, number, number, number] {
+    getBondSettings(name: string): [string, boolean, number, number, number] {
         let bondSettings: (string | boolean | number)[] = [
             name === "VdwSpheres" ? "VDW-BALLS" : name === "CAs" ? "CA+LIGANDS" : "COLOUR-BY-CHAIN-AND-DICTIONARY",
             this.parentMolecule.isDarkBackground
@@ -441,7 +441,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     async getCootSelectionBondBuffers(name: string, cid: null | string): Promise<libcootApi.InstancedMeshJS[]> {
-        const bondSettings = this.getBondContourParams(name)
+        const bondSettings = this.getBondSettings(name)
         let meshCommand: Promise<moorhen.WorkerResponse<libcootApi.InstancedMeshJS>>
         let returnType = name === 'VdwSpheres' ? "instanced_mesh_perfect_spheres" : "instanced_mesh"
 
@@ -780,7 +780,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             return
         }
         
-        const bondOptions = this.getBondContourParams(this.style)
+        const bondSettings = this.getBondSettings(this.style)
         const state = MoorhenReduxStore.getState()
         const drawMissingLoops = state.sceneSettings.drawMissingLoops
         const drawHydrogens = false
@@ -788,7 +788,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         const result = await this.commandCentre.current.cootCommand({
             returnType: 'string',
             command: 'shim_export_molecule_as_gltf',
-            commandArgs: [ this.parentMolecule.molNo, this.cid, ...bondOptions, drawHydrogens, drawMissingLoops ],
+            commandArgs: [ this.parentMolecule.molNo, this.cid, ...bondSettings, drawHydrogens, drawMissingLoops ],
         }, false) as moorhen.WorkerResponse<ArrayBuffer>
         
         return result.data.result.result
