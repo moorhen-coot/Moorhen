@@ -4,6 +4,14 @@ import { webGL } from "../types/mgWebGL";
 import { libcootApi } from "../types/libcoot";
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
 
+const _DEFAULT_CONTOUR_LEVEL = 0.8
+const _DEFAULT_RADIUS = 13
+const _DEFAULT_STYLE = "lines"
+const _DEFAULT_ALPHA = 1.0
+const _DEFAULT_MAP_COLOUR = { r: 0.30000001192092896, g: 0.30000001192092896, b: 0.699999988079071}
+const _DEFAULT_POSITIVE_MAP_COLOUR = {r: 0.4000000059604645, g: 0.800000011920929, b: 0.4000000059604645}
+const _DEFAULT_NEGATIVE_MAP_COLOUR = {r: 0.800000011920929, g: 0.4000000059604645, b: 0.4000000059604645}
+
 /**
  * Represents a map
  * @property {string} name - The name assigned to this map instance
@@ -33,14 +41,6 @@ import MoorhenReduxStore from "../store/MoorhenReduxStore";
  * // Delete map
  * map.delete();
 */
-
-const _DEFAULT_CONTOUR_LEVEL = 0.8
-const _DEFAULT_RADIUS = 13
-const _DEFAULT_STYLE = "lines"
-const _DEFAULT_ALPHA = 1.0
-const _DEFAULT_MAP_COLOUR = { r: 0.30000001192092896, g: 0.30000001192092896, b: 0.699999988079071}
-const _DEFAULT_POSITIVE_MAP_COLOUR = {r: 0.4000000059604645, g: 0.800000011920929, b: 0.4000000059604645}
-const _DEFAULT_NEGATIVE_MAP_COLOUR = {r: 0.800000011920929, g: 0.4000000059604645, b: 0.4000000059604645}
 
 export class MoorhenMap implements moorhen.Map {
     
