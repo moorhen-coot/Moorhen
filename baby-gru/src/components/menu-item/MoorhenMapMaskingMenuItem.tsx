@@ -12,6 +12,7 @@ import { webGL } from "../../types/mgWebGL";
 import { batch, useDispatch, useSelector } from 'react-redux';
 import { addMap } from "../../store/mapsSlice";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
+import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 
 export const MoorhenMapMaskingMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
@@ -24,11 +25,14 @@ export const MoorhenMapMaskingMenuItem = (props: {
     const molecules = useSelector((state: moorhen.State) => state.molecules)
 
     const [invertFlag, setInvertFlag] = useState<boolean>(false)
+    const [useDefaultMaskRadius, setUseDefaultMaskRadius] = useState<boolean>(true)
     const [maskType, setMaskType] = useState<string>('molecule')
 
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const maskTypeSelectRef = useRef<null | HTMLSelectElement>(null)
     const invertFlagRef = useRef<null | HTMLInputElement>(null)
+    const maskRadiusFormRef = useRef<string>(null)
+    const useDefaultMaskRadiusRef = useRef<null | HTMLInputElement>(null)
     const mapSelectRef = useRef<null | HTMLSelectElement>(null)
     const chainSelectRef = useRef<null | HTMLSelectElement>(null)
     const ligandSelectRef = useRef<null | HTMLSelectElement>(null)
@@ -54,6 +58,15 @@ export const MoorhenMapMaskingMenuItem = (props: {
         {maskTypeSelectRef.current?.value === 'cid' && <MoorhenCidInputForm {...props} width='20rem' margin='0.5rem' ref={cidInputRef} />}
         {maskTypeSelectRef.current?.value === 'chain' && <MoorhenChainSelect {...props} molecules={molecules} selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)} ref={chainSelectRef} />}
         {maskTypeSelectRef.current?.value === 'ligand' && <MoorhenLigandSelect {...props} molecules={molecules} selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)} ref={ligandSelectRef} />}
+        {!useDefaultMaskRadius && <MoorhenNumberForm ref={maskRadiusFormRef} defaultValue={2.5} label="Mask radius" allowNegativeValues={false}/>}
+        <Form.Group className='moorhen-form-group'>
+            <Form.Check
+                ref={useDefaultMaskRadiusRef}
+                type="switch"
+                checked={useDefaultMaskRadius}
+                onChange={() => setUseDefaultMaskRadius(!useDefaultMaskRadius)}
+                label="Use default mask radius" />
+        </Form.Group>
         <Form.Group className='moorhen-form-group'>
             <Form.Check
                 ref={invertFlagRef}
@@ -97,10 +110,16 @@ export const MoorhenMapMaskingMenuItem = (props: {
                 break
         }
 
+        const maskRadius = useDefaultMaskRadiusRef.current.checked ? -1 : parseFloat(maskRadiusFormRef.current)
+        if (!maskRadius) {
+            console.log('Mask radius is invalid...')
+            return
+        }
+
         const result = await commandCentre.current.cootCommand({
             returnType: 'status',
             command: 'mask_map_by_atom_selection',
-            commandArgs: [molNo, mapNo, cidLabel, invertFlagRef.current.checked]
+            commandArgs: [molNo, mapNo, cidLabel, maskRadius, invertFlagRef.current.checked]
         }, false) as moorhen.WorkerResponse<number>
         
         if (result.data.result.result !== -1) {
