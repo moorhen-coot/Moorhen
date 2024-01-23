@@ -46,6 +46,11 @@ echo "Downloading RDKit source"
 rdkit_release="Release_2023_09_1"
 curl -L https://github.com/rdkit/rdkit/archive/refs/tags/$rdkit_release.tar.gz -o "$rdkit_release.tar.gz"
 
+echo "Downloading and Unpacking Privateer"
+curl -L https://github.com/glycojones/privateer/archive/refs/tags/WASM-0.3.tar.gz -o privateer-wasm.tar.gz
+tar xf privateer-wasm.tar.gz
+mv privateer-WASM-* privateer-wasm
+
 echo "Unpacking libccp4 source"
 tar xf libccp4-8.0.0.tar.gz
 ln -s libccp4-8.0.0 libccp4

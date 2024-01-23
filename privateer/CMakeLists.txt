@@ -20,10 +20,19 @@ if(OPENMP_FOUND)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}
- .. ${CMAKE_SOURCE_DIR}/checkout/privateer/src/privateer/cpp ${CMAKE_SOURCE_DIR}/checkout/privateer/src/privateer/cpp/pybind11 ../checkout/mmdb2 ../checkout/ssm/ssm ../checkout/libccp4/ccp4 ../checkout/clipper ../checkout/ccp4srs ../checkout/gemmi/include)
-
 set(privateer_src ${CMAKE_SOURCE_DIR}/checkout/privateer-wasm/src/privateer/cpp/ )
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}
+ ..
+ ${privateer_src}
+ ${privateer_src}/pybind11
+ ../checkout/mmdb2
+ ../checkout/ssm/ssm
+ ../checkout/libccp4/ccp4
+ ../checkout/clipper
+ ../checkout/ccp4srs
+ ../checkout/gemmi/include)
+
 
 add_library(privateer STATIC
             ${privateer_src}/clipper-glyco.cpp
@@ -39,8 +48,8 @@ add_library(privateer STATIC
             ${privateer_src}/privateer-xray.cpp
             )
 
-target_link_directories(privateer PUBLIC ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../fftw ../rfftw ../ccp4 ../gemmi)
-target_link_libraries(privateer mmdb2 clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 nodefs.js)
+target_link_directories(privateer PUBLIC ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../clipper/gemmi ../fftw ../rfftw ../ccp4 ../gemmi)
+target_link_libraries(privateer mmdb2 clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 clipper-gemmi gemmi_cpp fftw rfftw ccp4 nodefs.js)
 
 target_compile_options(privateer PUBLIC "-DFFTW_ENABLE_FLOAT")
 
