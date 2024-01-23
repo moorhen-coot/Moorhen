@@ -10771,20 +10771,34 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     handleKeyUp(event, self) {
-        for (const key of Object.keys(self.props.keyboardAccelerators)) {
+        Object.keys(self.props.keyboardAccelerators).forEach(key => {
             if (event.key && self.props.keyboardAccelerators[key].keyPress === event.key.toLowerCase() && self.props.keyboardAccelerators[key]) {
                 self.keysDown[key] = false;
             }
-        }
+        })
     }
 
     handleKeyDown(event, self) {
-        for (const key of Object.keys(self.props.keyboardAccelerators)) {
-            if (event.key && self.props.keyboardAccelerators[key].keyPress === event.key.toLowerCase() && self.props.keyboardAccelerators[key].modifiers.every(modifier => event[modifier])) {
-                self.keysDown[key] = true;
-            }
-        }
+        let eventModifiersCodes: string[] = []
 
+        if (event.shiftKey) eventModifiersCodes.push('shiftKey')
+        if (event.ctrlKey) eventModifiersCodes.push('ctrlKey')
+        if (event.metaKey) eventModifiersCodes.push('metaKey')
+        if (event.altKey) eventModifiersCodes.push('altKey')
+
+        Object.keys(self.props.keyboardAccelerators).forEach(key => {
+            if (
+                event.key &&
+                self.props.keyboardAccelerators[key].keyPress === event.key.toLowerCase() &&
+                self.props.keyboardAccelerators[key].modifiers.every(modifier => event[modifier]) &&
+                eventModifiersCodes.every(modifier => self.props.keyboardAccelerators[key].modifiers.includes(modifier))
+            ) {
+                self.keysDown[key] = true
+            } else {
+                self.keysDown[key] = false
+            }
+        })
+        
         /**
          * No longer necessary but leaving it here in case we want to handle something
          * not taken care of upstairs
