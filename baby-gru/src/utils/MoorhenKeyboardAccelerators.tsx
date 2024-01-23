@@ -454,7 +454,7 @@ export const babyGruKeyPress = (
             } else {
                 return
             }
-            selectedMolecule.centreAndAlignViewOn(`/*/${chosenAtom.chain_id}/${nextResNum}-${nextResNum}/`)
+            selectedMolecule.centreAndAlignViewOn(`/*/${chosenAtom.chain_id}/${nextResNum}-${nextResNum}/`, true)
         })
         .catch(err => console.log(err))
 
