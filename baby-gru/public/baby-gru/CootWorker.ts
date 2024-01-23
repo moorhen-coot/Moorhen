@@ -1,5 +1,6 @@
 import { libcootApi } from "../../src/types/libcoot"
 import { emscriptem } from "../../src/types/emscriptem"
+import { PrivateerResultsEntry } from "../../src/types/privateer";
 
 // @ts-ignore
 importScripts('./wasm/moorhen.js')
@@ -911,6 +912,37 @@ const setUserDefinedBondColours = (imol: number, colours: { cid: string; rgb: [n
     colourMap.delete()
 }
 
+const run_privateer_validation = (fileContents: string, fileName: string) => { 
+    return cootModule.validate(fileContents, fileName)
+}
+
+const extract_carbohydrate_validation = (results: any) : PrivateerResultsEntry[] => {
+
+    const sanitizeID = (id: string): string => {
+        const regex = /: *32/g;
+        return id.replace(regex, '');
+    }
+
+    const data: PrivateerResultsEntry[] = [];
+    for (let i = 0; i < results.size(); i++) {
+        const entry = results.get(i);
+
+        entry.id = sanitizeID(entry.id as string);
+
+        const collectedTorsions: any[] = [];
+        for (let j = 0; j < entry.torsions.size(); j++) {
+            collectedTorsions.push(entry.torsions.get(j));
+        }
+        entry.torsions = collectedTorsions;
+        const regex = /: *32/g;
+        entry.svg = entry.svg.replace(regex, '');
+        data.push(entry as PrivateerResultsEntry);
+    }
+
+    return data;
+
+}
+
 const doCootCommand = (messageData: { 
     myTimeStamp: number;
     chainID?: string;
@@ -953,6 +985,9 @@ const doCootCommand = (messageData: {
                 break
             case 'shim_export_molecule_as_gltf':
                 cootResult = export_molecule_as_gltf(...commandArgs as [number, string, string, boolean, number, number, number, boolean, boolean])
+                break
+            case 'shim_privateer_validate':
+                cootResult = run_privateer_validation(...commandArgs as [string, string])
                 break
             default:
                 cootResult = molecules_container[command](...commandArgs)
@@ -1044,6 +1079,9 @@ const doCootCommand = (messageData: {
                 break;
             case 'string_string_pair_vector':
                 returnResult = stringPairVectorToJSArray(cootResult)
+                break
+            case 'privateer_results':
+                returnResult = extract_carbohydrate_validation(cootResult)
                 break
             case 'void':
                 returnResult = null

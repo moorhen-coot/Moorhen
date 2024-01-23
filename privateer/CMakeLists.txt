@@ -23,7 +23,8 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}
  .. ${CMAKE_SOURCE_DIR}/checkout/privateer/src/privateer/cpp ${CMAKE_SOURCE_DIR}/checkout/privateer/src/privateer/cpp/pybind11 ../checkout/mmdb2 ../checkout/ssm/ssm ../checkout/libccp4/ccp4 ../checkout/clipper ../checkout/ccp4srs ../checkout/gemmi/include)
 
-set(privateer_src ${CMAKE_SOURCE_DIR}/checkout/privateer/src/privateer/cpp/ )
+set(privateer_src ${CMAKE_SOURCE_DIR}/checkout/privateer-wasm/src/privateer/cpp/ )
+
 add_library(privateer STATIC
             ${privateer_src}/clipper-glyco.cpp
             ${privateer_src}/clipper-glyco_data.cpp

@@ -46,7 +46,8 @@ export namespace libcootApi {
         NeighborSearch: { new(model: gemmi.Model, unitCell: gemmi.UnitCell, radius: number): gemmi.NeighborSearch };
         Position: { new(x: number, y: number, z: number): gemmi.Position };
         Fractional: { new(x: number, y: number, z: number): gemmi.Fractional };
-        cifDocument: { new(): gemmi.cifDocument }
+        cifDocument: { new(): gemmi.cifDocument };
+        validate: (file: string, name: string) => any[];
     }
     type SequenceResInfo = {
         resNum: number;
@@ -467,7 +468,9 @@ export namespace libcootApi {
         moved_atom_t: { new(arg0: string, arg1: string, arg2: number, arg3: number, arg4: number, arg5: number): MovedAtomT};
         MapIntFloat3: { new(): emscriptem.map<[number, number, number], number>};
         VectorStringUInt_pair: { new(): emscriptem.vector<{ first: string, second: number }>};
-        getRamachandranData(arg0: string, arg1: string): emscriptem.vector<RamaData>
+        getRamachandranData(arg0: string, arg1: string): emscriptem.vector<RamaData>;
+
+        validate(arg0: string, arg1: string): emscriptem.vector<any>
     }
     interface MoleculesContainerJS {
         export_model_molecule_as_gltf(imol: number, cid: string, mode: string, isDark: boolean, bondWidth: number, atomRadius: number, bondSmoothness: number, drawHydrogens: boolean, drawMissingResidues: boolean, fileName: string): void;
