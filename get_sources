@@ -8,7 +8,8 @@ curl -L http://ftp.ccp4.ac.uk/opensource/libccp4-8.0.0.tar.gz -o libccp4-8.0.0.t
 echo
 
 echo "Checking out clipper"
-curl -L http://ftp.ccp4.ac.uk/opensource/clipper-2.1.20201109.tar.gz -o clipper-2.1.20201109.tar.gz
+#curl -L http://ftp.ccp4.ac.uk/opensource/clipper-2.1.20201109.tar.gz -o clipper-2.1.20201109.tar.gz
+curl -L http://www.ysbl.york.ac.uk/jsd523/clipper-gemmi-wrapper-20240123.tar.gz -o clipper-gemmi-wrapper.tar.gz
 echo
 
 echo "Checking out ssm"
@@ -57,8 +58,11 @@ ln -s libccp4-8.0.0 libccp4
 echo
 
 echo "Unpacking clipper source"
-tar xf clipper-2.1.20201109.tar.gz
-ln -s clipper-2.1 clipper
+#tar xf clipper-2.1.20201109.tar.gz
+#ln -s clipper-2.1 clipper
+tar xf clipper-gemmi-wrapper.tar.gz
+mv clipper-gemmi-wrapper clipper
+
 echo
 
 echo "Unpacking ssm source"

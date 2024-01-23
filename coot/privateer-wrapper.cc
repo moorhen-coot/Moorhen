@@ -49,7 +49,7 @@ std::vector<TableEntry> validate(const std::string &file, const std::string &nam
   }
 
   ::gemmi::Structure structure = ::gemmi::read_structure_from_char_array(c_data, size, name);
-  clipper::GEMMIFile gemmi_file;
+  clipper::GEMMIfile gemmi_file;
   // clipper::GemmiStructure *gemmi_structure = &gemmi_file;
   gemmi_file.set_gemmi_structure(structure);
   std::cout << "[Privateer] Structure successfully imported" << std::endl;
