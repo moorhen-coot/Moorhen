@@ -692,9 +692,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
     /**
      * Centre the view and align it with the axis of a particular residue
      * @param {string} selectionCid - CID selection for the residue to centre the view on
-     * @param {boolean} [animate=true] - Indicates whether the change will be animated
+     * @param {boolean} [alignWithCB=false] - Indicates whether to align with the CB atom for better view of the side chain (when present in the residue)
+     * @param {number} [zoomLevel=0.3] - Indicates the zoom level to use
      */
-    async centreAndAlignViewOn(selectionCid: string, animate: boolean = true): Promise<void> {
+    async centreAndAlignViewOn(selectionCid: string, alignWithCB: boolean = false, zoomLevel: number = 0.3): Promise<void> {
 
         if (this.atomsDirty) {
             await this.updateAtoms()
@@ -712,17 +713,18 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
 
         let CA: number[]
+        let CB: number[]
         let C: number[]
         let O: number[]
 
         selectionAtomsAlign.forEach(atom => {
             if (atom.name === "CA") {
                 CA = [atom.x, atom.y, atom.z]
-            }
-            if (atom.name === "C") {
+            } else if (atom.name === "CB") {
+                CB = [atom.x, atom.y, atom.z]
+            } else if (atom.name === "C") {
                 C = [atom.x, atom.y, atom.z]
-            }
-            if (atom.name === "O") {
+            } else if (atom.name === "O") {
                 O = [atom.x, atom.y, atom.z]
             }
         })
@@ -736,7 +738,11 @@ export class MoorhenMolecule implements moorhen.Molecule {
             vec3.normalize(rightNorm, right);
 
             let upInit = vec3.create()
-            vec3.set(upInit, O[0] - C[0], O[1] - C[1], O[2] - C[2])
+            if (CB && alignWithCB) {
+                vec3.set(upInit, CB[0] - C[0], CB[1] - C[1], CB[2] - C[2])
+            } else {
+                vec3.set(upInit, O[0] - C[0], O[1] - C[1], O[2] - C[2])
+            }
             let upInitNorm = vec3.create()
             vec3.normalize(upInitNorm, upInit);
 
@@ -761,7 +767,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         let selectionCentre = centreOnGemmiAtoms(selectionAtomsCentre)
         if (newQuat) {
-            this.glRef.current.setOriginOrientationAndZoomAnimated(selectionCentre, newQuat, 0.20);
+            this.glRef.current.setOriginOrientationAndZoomAnimated(selectionCentre, newQuat, zoomLevel);
         }
     }
 
