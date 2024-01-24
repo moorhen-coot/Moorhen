@@ -47,16 +47,11 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                             onChange={() => {dispatch( setDoSSAO(!doSSAO) )}}
                             label="Occlusion"/>
                     </InputGroup>
-                    <MoorhenSlider minVal={0.0} maxVal={10} logScale={false}
+                    <MoorhenSlider minVal={0.0} maxVal={2.0} logScale={false}
                         sliderTitle="Occlusion radius"
                         initialValue={ssaoRadius}
                         externalValue={ssaoRadius}
                         setExternalValue={(val: number) => dispatch(setSsaoRadius(val))} />
-                    <MoorhenSlider minVal={0.0} maxVal={.2} logScale={false}
-                        sliderTitle="Occlusion bias"
-                        initialValue={ssaoBias}
-                        externalValue={ssaoBias}
-                        setExternalValue={(val: number) => dispatch(setSsaoBias(val))}/>
                     <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"

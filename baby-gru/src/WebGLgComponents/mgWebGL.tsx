@@ -2396,13 +2396,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     initializeSSAOBuffers() {
         this.ssaoKernel = [];
-        for (let i = 0; i < 64; ++i) {
+        for (let i = 0; i < 16; ++i) {
 
             let sample = vec3Create([Math.random() * 2.0 - 1.0, Math.random() * 2.0 - 1.0, Math.random()]);
 
             NormalizeVec3(sample);
             vec3.scale(sample,sample,Math.random());
-            let scale = i / 64.0;
+            let scale = i / 16.0;
 
             // scale samples s.t. they're more aligned to center of kernel
             scale = this.lerp(0.1, 1.0, scale * scale);
@@ -2471,7 +2471,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const bigFloatArray = new Float32Array(this.ssaoKernel);
         this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, this.ssaoKernelBuffer);
         this.gl.bindBufferBase(this.gl.UNIFORM_BUFFER, 0, this.ssaoKernelBuffer);
-        this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["samples"].offset,  bigFloatArray.subarray( 0, 256), 0);
+        this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["samples"].offset,  bigFloatArray.subarray( 0, 64), 0);
         this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, null);
 
     }
@@ -2828,7 +2828,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.blendFuncSeparate(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA, this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA);
         this.gl.enable(this.gl.BLEND);
 
-        this.ssaoRadius = 2.5;
+        this.ssaoRadius = 0.4;
         this.ssaoBias = 0.025;
         if(this.WEBGL2) this.initializeSSAOBuffers();
 

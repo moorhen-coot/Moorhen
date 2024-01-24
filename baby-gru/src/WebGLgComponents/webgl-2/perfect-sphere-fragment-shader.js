@@ -70,13 +70,14 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
       if(zz <= 0.06)
           discard;
 
-      vec4 pos = eyePos;
-      pos.z += silly_scale*z*size_v;
-      pos = projMatrix * pos;
-
       if(dot(eyePos, clipPlane1)<0.0){
            discard;
       }
+
+      vec4 pos = eyePos;
+      pos.z += silly_scale*z*size_v;
+      pos = projMatrix * pos;
+      gl_FragDepth = (pos.z / pos.w + 1.0) / 2.0;
 
       float clipd;
       float clipd_back;
@@ -110,8 +111,6 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
           }
       }
 
-      gl_FragDepth = (pos.z / pos.w + 1.0) / 2.0;
-
       float occ = 1.0;
       if(doSSAO)
           occ = texture(SSAOMap, vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling) ).x;
@@ -128,7 +127,7 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
       L = normalize(light_positions.xyz);
       //R = normalize(-reflect(L,norm));
       //calculate Ambient Term:
-      Iamb += occ*light_colours_ambient;
+      Iamb += light_colours_ambient;
       //calculate Diffuse Term:
       Idiff += light_colours_diffuse * max(dot(E,L), 0.0);
       // calculate Specular Term:
@@ -142,7 +141,7 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
 
       vec4 theColor = vec4(vColor);
 
-      vec4 color = (1.5*theColor*Iamb + 1.2*theColor* Idiff);
+      vec4 color = (theColor*Iamb + theColor* Idiff);
       if(shad<0.5) {
           shad += .5;
           shad = min(shad,1.0);
@@ -150,8 +149,11 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
       } else {
           color += Ispec;
       }
+
+      color *= occ;
       color.a = vColor.a;
       fragColor = mix(color, fogColour, fogFactor );
+      //fragColor = vec4(occ,occ,occ, vColor.a);
 
       //if(doSSAO) fragColor = texture(SSAOMap, vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling) );
 
