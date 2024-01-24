@@ -153,7 +153,7 @@ export namespace moorhen {
         redraw: () => Promise<void>;
         setAtomsDirty: (newVal: boolean) => void;
         isVisible: (excludeBuffers?: string[]) => boolean;
-        centreAndAlignViewOn(selectionCid: string, animate?: boolean): Promise<void>;
+        centreAndAlignViewOn: (selectionCid: string, alignWithCB?: boolean, zoomLevel?: number) => Promise<void>;
         buffersInclude: (bufferIn: { id: string; }) => boolean;
         redrawRepresentation: (id: string) => Promise<void>;
         type: string;
