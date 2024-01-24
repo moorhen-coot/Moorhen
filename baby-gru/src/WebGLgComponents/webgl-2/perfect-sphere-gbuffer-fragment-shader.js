@@ -42,8 +42,8 @@ var perfect_sphere_gbuffer_fragment_shader_source = `#version 300 es\n
           discard;
       }
 
+      fragData0 = pos;
       gl_FragDepth = (pos.z / pos.w + 1.0) / 2.0;
-      fragData0 = vec4(v.x, v.y, (pos.z / pos.w + 1.0) / 2.0, 1.0);
       fragData1 = vec4(-x,-y,-z,1.0);
 
     }
