@@ -22,8 +22,6 @@ export const MoorhenCarbohydrateValidationModal = (props: MoorhenValidationModal
         accordionDropdownId: 1, setAccordionDropdownId: (arg0) => {}, showSideBar: true, ...props
     }
 
-    useEffect(() => {console.log(props)}, [])
-
     return <MoorhenDraggableModalBase
                 modalId="carbohydrate-validation-modal"
                 left={width / 6}
