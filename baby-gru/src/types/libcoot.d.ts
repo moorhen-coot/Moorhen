@@ -1,6 +1,7 @@
 
 import { emscriptem } from "./emscriptem";
 import { gemmi } from "./gemmi"
+import {PrivateerResultsEntry} from "./privateer";
 
 // Warning: do not import moorhen namespace otherwise worker code breaks during transpilation
 
@@ -470,7 +471,7 @@ export namespace libcootApi {
         VectorStringUInt_pair: { new(): emscriptem.vector<{ first: string, second: number }>};
         getRamachandranData(arg0: string, arg1: string): emscriptem.vector<RamaData>;
 
-        validate(arg0: string, arg1: string): emscriptem.vector<any>
+        validate(arg0: string, arg1: string): emscriptem.vector<PrivateerResultsEntry>
     }
     interface MoleculesContainerJS {
         export_model_molecule_as_gltf(imol: number, cid: string, mode: string, isDark: boolean, bondWidth: number, atomRadius: number, bondSmoothness: number, drawHydrogens: boolean, drawMissingResidues: boolean, fileName: string): void;

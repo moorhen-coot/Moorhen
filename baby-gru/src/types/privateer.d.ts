@@ -1,4 +1,4 @@
-export interface TorsionEntry {
+export type TorsionEntry = {
     sugar_1: string;
     sugar_2: string;
     atom_number_1: string;
@@ -7,7 +7,7 @@ export interface TorsionEntry {
     psi: number;
 }
 
-export interface PrivateerResultsEntry {
+export type PrivateerResultsEntry = {
     svg: string;
     wurcs: string;
     chain: string;

@@ -1,6 +1,6 @@
 import { libcootApi } from "../../src/types/libcoot"
 import { emscriptem } from "../../src/types/emscriptem"
-import { PrivateerResultsEntry } from "../../src/types/privateer";
+import {PrivateerResultsEntry, TorsionEntry} from "../../src/types/privateer";
 
 // @ts-ignore
 importScripts('./wasm/moorhen.js')
@@ -924,21 +924,38 @@ const extract_carbohydrate_validation = (results: any) : PrivateerResultsEntry[]
     }
 
     const data: PrivateerResultsEntry[] = [];
-    for (let i = 0; i < results.size(); i++) {
+    const resultSize = results.size();
+    for (let i = 0; i < resultSize ; i++) {
         const entry = results.get(i);
 
-        entry.id = sanitizeID(entry.id as string);
-
-        const collectedTorsions: any[] = [];
-        for (let j = 0; j < entry.torsions.size(); j++) {
+        const collectedTorsions: TorsionEntry[] = [];
+        const torsionSize = entry.torsions.size();
+        for (let j = 0; j < torsionSize; j++) {
             collectedTorsions.push(entry.torsions.get(j));
         }
-        entry.torsions = collectedTorsions;
-        const regex = /: *32/g;
-        entry.svg = entry.svg.replace(regex, '');
-        data.push(entry as PrivateerResultsEntry);
+
+        const regex: RegExp = /: *32/g;
+        const sanitisedSVG = entry.svg.replace(regex, '');
+        const sanitisedID = sanitizeID(entry.id as string);
+        const entryJS: PrivateerResultsEntry = {
+            torsions: collectedTorsions,
+            svg: sanitisedSVG,
+            id: sanitisedID,
+            chain: entry.chain,
+            wurcs: entry.wurcs,
+            glyconnect_id: entry.glyconnect_id,
+            glytoucan_id: entry.glytoucan_id,
+            torsion_err: entry.torsion_err,
+            anomer_err: entry.anomer_err,
+            conformation_err: entry.conformation_err,
+            puckering_err: entry.puckering_err,
+            chirality_err: entry.chirality_err
+        }
+
+        data.push(entryJS);
     }
 
+    results.delete();
     return data;
 
 }

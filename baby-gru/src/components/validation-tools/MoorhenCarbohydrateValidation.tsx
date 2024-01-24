@@ -18,7 +18,7 @@ interface Props extends moorhen.CollectedProps {
 function PrivateerValidation(props: {data: PrivateerResultsEntry[], selectedModel: any, clickCallback: (e) => void}) {
 
     const molecules = useSelector((state: any) => state.molecules);
-    async function handleClick(e) {
+    const handleClick = useCallback(async (e) => {
         const newCenterString =
             e.target.dataset.chainid +
             '/' +
@@ -31,8 +31,11 @@ function PrivateerValidation(props: {data: PrivateerResultsEntry[], selectedMode
         const selectedMolecule = molecules.find(
             (molecule) => molecule.molNo === props.selectedModel
         );
-        const _center = await selectedMolecule.centreOn(newCenterString);
-    }
+
+        if (selectedMolecule !== null) {
+            const _center = await selectedMolecule.centreOn(newCenterString);
+        }
+    }, [molecules]);
 
     const sugarRef = useCallback(
         (node: HTMLElement | null) => {
@@ -59,10 +62,9 @@ function PrivateerValidation(props: {data: PrivateerResultsEntry[], selectedMode
         {props.data.map((item, index) => {
             return (
                 <div style={{padding: "0 0 1rem 1rem", borderBottom: "solid"}}>
-                    <div style={{display: "flex", justifyContent: "space-between", padding: "1rem 1rem 0rem 1rem"}}>
+                    <div style={{display: "flex", justifyContent: "center", padding: "1rem 1rem 0rem 1rem"}}>
                     <p>Glycan ID: {item.id}</p>
-                        <p>GlyToucan ID: {item.glytoucan_id}</p>
-                            <p>GlyConnect ID: {item.glyconnect_id}</p>
+
                     </div>
                 <div
                     style={{display: "flex", padding: "1rem"}}
@@ -75,8 +77,6 @@ function PrivateerValidation(props: {data: PrivateerResultsEntry[], selectedMode
                 </div>
             )
         })}
-
-        <p style={{margin: "auto"}}><i>Powered by Privateer</i></p>
     </>
 
 }
@@ -84,14 +84,9 @@ function PrivateerValidation(props: {data: PrivateerResultsEntry[], selectedMode
 export const MoorhenCarbohydrateValidation = (props: Props) => {
 
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
-    const mapSelectRef = useRef<undefined | HTMLSelectElement>();
     const moleculeSelectRef = useRef<undefined | HTMLSelectElement>();
-
     const molecules = useSelector((state: moorhen.State) => state.molecules)
-    const maps = useSelector((state: moorhen.State) => state.maps)
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
-    const [selectedMap, setSelectedMap] = useState<null | number>(null)
-
     const [privateerData, setPrivateerData] = useState<null | PrivateerResultsEntry[]>(null)
 
 
@@ -99,9 +94,6 @@ export const MoorhenCarbohydrateValidation = (props: Props) => {
         setSelectedModel(parseInt(evt.target.value))
     }
 
-    const handleMapChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
-        setSelectedMap(parseInt(evt.target.value))
-    }
 
     const dispatch = useDispatch()
     const handleHover = useCallback((residueLabel: string) => {
@@ -116,16 +108,6 @@ export const MoorhenCarbohydrateValidation = (props: Props) => {
     }, [selectedModel, molecules])
 
 
-    const handleClick = useCallback((residueLabel: string) => {
-        if (selectedModel !== null) {
-            const molecule = molecules.find(item => item.molNo === selectedModel)
-            if (molecule) {
-                const [chain, resName, resNum] = residueLabel.split('/')
-                const cid = `//${chain}/${resNum}(${resName})`
-                molecule.centreOn(cid)
-            }
-        }
-    }, [selectedModel, molecules])
 
     useEffect(() => {
         if (molecules.length === 0) {
@@ -163,9 +145,6 @@ export const MoorhenCarbohydrateValidation = (props: Props) => {
                             <Col>
                                 <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef}/>
                             </Col>
-                            {/* <Col>
-                                <MoorhenMapSelect width="" onChange={handleMapChange} maps={maps} ref={mapSelectRef}/>
-                            </Col> */}
                             <Col style={{ display:'flex', alignItems: 'center', alignContent: 'center', verticalAlign: 'center'}}>
                                 <Button variant="secondary" size='lg' onClick={() => {validate()}} style={{width: '80%', marginTop:'10%'}}>
                                     Validate
@@ -176,7 +155,10 @@ export const MoorhenCarbohydrateValidation = (props: Props) => {
                 </Form>
                 {
                     privateerData !== null ? 
-                    <PrivateerValidation data={privateerData} selectedModel={selectedModel} clickCallback={(e) => {console.log(e)}}/> : <></>
+                    <PrivateerValidation data={privateerData} selectedModel={selectedModel} clickCallback={(e) => {}}/> :
+                        <>
+                        <span>No data</span>
+                        </>
                 }
             </Fragment>
 }
