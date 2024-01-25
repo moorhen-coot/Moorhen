@@ -429,6 +429,74 @@ export class MoorhenMolecule implements moorhen.Molecule {
     }
 
     /**
+     * Copy a fragment of the current model into a new molecule for refinement
+     * @param {string[]} cid - The CID selection indicating the residues that will be copied into the new fragment
+     * @param {moorhen.Map} refinementMap - The map instance used in the refinement
+     * @returns {moorhen.Molecule} A new molecule instance that can be used for refinement
+     */
+    async copyFragmentForRefinement(cid: string[], refinementMap: moorhen.Map, redraw: boolean = true): Promise<moorhen.Molecule> {
+        const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.monomerLibraryPath)
+        const copyResult = await this.commandCentre.current.cootCommand({
+            returnType: 'int',
+            command: 'copy_fragment_for_refinement_using_cid',
+            commandArgs: [this.molNo, cid.join('||')]
+        }, false)
+        
+        if (copyResult.data.result.result !== -1) {
+            newMolecule.molNo = copyResult.data.result.result
+            await this.commandCentre.current.cootCommand({
+                returnType: 'status',
+                command: 'init_refinement_of_molecule_as_fragment_based_on_reference',
+                commandArgs: [newMolecule.molNo, this.molNo, refinementMap.molNo]
+            }, false)
+            if (redraw) {
+                newMolecule.setAtomsDirty(true)
+                await newMolecule.fetchIfDirtyAndDraw('CBs')
+                await Promise.all(cid.map(cid => {
+                    return this.hideCid(cid, false)
+                }))
+                await this.redraw()
+            }
+        } else {
+            console.warn(`Unable to copy fragment for refinement using cid ${cid} for molecule ${this.molNo}`)
+        }
+        
+        return newMolecule    
+    }
+
+    /**
+     * Merge a fragment that was used for refinement into the current molecule
+     * @param {string[]} cid - The CID selection used to create the fragment
+     * @param {moorhen.Molecule} fragmentMolecule - The fragment molecule
+     * @param {boolean} [acceptTransform=true] - Indicates whether the transformation should be accepted
+     * @param {boolean} [refineAfterMod=false] - Indicates whether another cycle of refinement should be run after mergin the fragment
+     */
+    async mergeFragmentFromRefinement(cid: string, fragmentMolecule: moorhen.Molecule, acceptTransform: boolean = true, refineAfterMod: boolean = false) {
+        
+        await this.commandCentre.current.cootCommand({
+            returnType: 'status',
+            command: 'clear_refinement',
+            commandArgs: [this.molNo],
+        }, false)
+        
+        if (acceptTransform) {
+            await this.commandCentre.current.cootCommand({
+                returnType: 'status',
+                command: 'replace_fragment',
+                commandArgs: [this.molNo, fragmentMolecule.molNo, cid],
+                changesMolecules: [this.molNo]
+            }, true)    
+            if (refineAfterMod) {
+                await this.refineResiduesUsingAtomCid(cid, 'LITERAL', 4000, false)
+            }
+            this.setAtomsDirty(true)
+        }
+
+        await this.unhideAll()
+        await fragmentMolecule.delete()
+    }
+
+    /**
      * Load a new molecule from a file URL
      * @param {string} url - The url to the path with the data for the new molecule
      * @param {string} molName - The new molecule name
@@ -1601,7 +1669,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     /**
      * Refine a molecule with animation effect
-     * @param {number} n_cyc - The totale number of refinement cycles for each iteration
+     * @param {number} n_cyc - The total number of refinement cycles for each iteration
      * @param {number} n_iteration - The number of iterations
      * @param {number} [final_n_cyc=100] - Number of refinement cycles in the last iteration
      */
