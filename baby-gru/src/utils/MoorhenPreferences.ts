@@ -39,7 +39,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
         enableTimeCapsule: true,
         defaultExpandDisplayCards: true,
         defaultMapLitLines: false,
-        enableRefineAfterMod: false,
+        enableRefineAfterMod: true,
         drawCrosshairs: true,
         drawScaleBar: false,
         drawAxes: false,
