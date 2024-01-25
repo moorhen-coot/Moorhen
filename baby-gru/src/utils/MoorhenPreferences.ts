@@ -41,6 +41,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
         defaultMapLitLines: false,
         enableRefineAfterMod: false,
         drawCrosshairs: true,
+        drawScaleBar: false,
         drawAxes: false,
         drawFPS: false,
         drawMissingLoops: true,

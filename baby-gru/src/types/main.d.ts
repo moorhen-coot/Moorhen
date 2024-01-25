@@ -269,6 +269,9 @@ declare module 'moorhen' {
     function setDefaultBackgroundColor(arg0: [number, number, number, number]): any;
     module.exports = setDefaultBackgroundColor;
     
+    function setDrawScaleBar(arg0: boolean): any;
+    module.exports = setDrawScaleBar;
+    
     function setDrawCrosshairs(arg0: boolean): any;
     module.exports = setDrawCrosshairs;
     

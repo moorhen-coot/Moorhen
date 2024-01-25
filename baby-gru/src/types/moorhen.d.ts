@@ -636,6 +636,7 @@ export namespace moorhen {
         defaultExpandDisplayCards: boolean;
         defaultMapLitLines: boolean;
         enableRefineAfterMod: boolean; 
+        drawScaleBar: boolean; 
         drawCrosshairs: boolean; 
         drawAxes: boolean; 
         drawFPS: boolean; 
@@ -759,6 +760,7 @@ export namespace moorhen {
         };
         sceneSettings: {
             defaultBackgroundColor: [number, number, number, number];
+            drawScaleBar: boolean; 
             drawCrosshairs: boolean; 
             drawAxes: boolean; 
             drawFPS: boolean; 
