@@ -1088,6 +1088,7 @@ onmessage = function (e) {
                 postMessage({ consoleMessage: 'Initialized molecules_container', message: e.data.message, messageId: e.data.messageId })
                 cootModule = returnedModule;
                 molecules_container = new cootModule.molecules_container_js(false)
+                molecules_container.set_use_gemmi(false)
                 molecules_container.set_show_timings(false)
                 molecules_container.fill_rotamer_probability_tables()
                 molecules_container.set_map_sampling_rate(1.7)

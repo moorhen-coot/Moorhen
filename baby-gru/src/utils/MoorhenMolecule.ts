@@ -768,6 +768,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
         let selectionCentre = centreOnGemmiAtoms(selectionAtomsCentre)
         if (newQuat) {
             this.glRef.current.setOriginOrientationAndZoomAnimated(selectionCentre, newQuat, zoomLevel);
+        } else {
+            await this.centreOn(selectionCid, true, true)
         }
     }
 
