@@ -547,9 +547,11 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * Copy a fragment of the current model into a new molecule for refinement
      * @param {string[]} cid - The CID selection indicating the residues that will be copied into the new fragment
      * @param {moorhen.Map} refinementMap - The map instance used in the refinement
+     * @param {boolean} redraw - Indicate if the molecules should be redrawn
+     * @param {boolean} redrawFragmentFirst - Indicate if the fragment should be redrawn first
      * @returns {moorhen.Molecule} A new molecule instance that can be used for refinement
      */
-    async copyFragmentForRefinement(cid: string[], refinementMap: moorhen.Map, redraw: boolean = true): Promise&lt;moorhen.Molecule> {
+    async copyFragmentForRefinement(cid: string[], refinementMap: moorhen.Map, redraw: boolean = true, redrawFragmentFirst: boolean = true): Promise&lt;moorhen.Molecule> {
         const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.monomerLibraryPath)
         const copyResult = await this.commandCentre.current.cootCommand({
             returnType: 'int',
@@ -566,11 +568,16 @@ export class MoorhenMolecule implements moorhen.Molecule {
             }, false)
             if (redraw) {
                 newMolecule.setAtomsDirty(true)
-                await newMolecule.fetchIfDirtyAndDraw('CBs')
                 await Promise.all(cid.map(cid => {
                     return this.hideCid(cid, false)
                 }))
-                await this.redraw()
+                if (redrawFragmentFirst) { 
+                    await newMolecule.fetchIfDirtyAndDraw('CBs')
+                    await this.redraw()
+                } else {
+                    await this.redraw()
+                    await newMolecule.fetchIfDirtyAndDraw('CBs')
+                }
             }
         } else {
             console.warn(`Unable to copy fragment for refinement using cid ${cid} for molecule ${this.molNo}`)
