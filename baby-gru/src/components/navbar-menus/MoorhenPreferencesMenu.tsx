@@ -96,7 +96,7 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
                             type="switch"
                             checked={enableRefineAfterMod}
                             onChange={() => {dispatch( setEnableRefineAfterMod(!enableRefineAfterMod) )}}
-                            label="Automatic triple refine post-modification"/>
+                            label="Automatic refinement post-modification"/>
                     </InputGroup>
                     <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
