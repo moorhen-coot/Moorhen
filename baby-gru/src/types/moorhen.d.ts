@@ -498,6 +498,7 @@ export namespace moorhen {
     }
     
     interface TimeCapsule {
+        toggleSkipTracking(): void;
         setBusy: (arg0: boolean) => void;
         onIsBusyChange: (arg0: boolean) => void;
         getSortedKeys(): Promise<backupKey[]>;

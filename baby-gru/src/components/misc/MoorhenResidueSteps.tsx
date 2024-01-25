@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Stack } from "react-bootstrap";
 import { moorhen } from "../../types/moorhen";
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { MoorhenNotification } from "./MoorhenNotification";
 import { IconButton, LinearProgress } from "@mui/material";
 import { PauseCircleOutlined, PlayCircleOutlined, StopCircleOutlined } from "@mui/icons-material";
@@ -22,7 +22,6 @@ export const MoorhenResidueSteps = (props: {
     sleepTime?: number;
  }) => {
     const dispatch = useDispatch()
-    const timeCapsuleIsEnabled = useSelector((state: moorhen.State) => state.backupSettings.enableTimeCapsule)
     
     const [isRunning, setIsRunning] = useState<boolean>(false)
     const [progress, setProgress] = useState<number>(0)
@@ -32,17 +31,17 @@ export const MoorhenResidueSteps = (props: {
     const isClosedRef = useRef<boolean>(false)
     const isRunningRef = useRef<boolean>(false)
 
-    const exit = useCallback(async () => {
+    const exit = async () => {
         props.onStop()
-        if (props.disableTimeCapsule) props.timeCapsuleRef.current.disableBackups = !timeCapsuleIsEnabled
+        if (props.disableTimeCapsule) props.timeCapsuleRef.current.toggleSkipTracking()
         await props.timeCapsuleRef.current.addModification()
         dispatch( setNotificationContent(null) )
-    }, [timeCapsuleIsEnabled])
+    }
 
     const init = async () => {
         await props.onStart()
         dispatch( setHoveredAtom({molecule: null, cid: null}) )
-        if (props.disableTimeCapsule) props.timeCapsuleRef.current.disableBackups = true
+        if (props.disableTimeCapsule) props.timeCapsuleRef.current.toggleSkipTracking()
     }
 
     const steppedRefine = async () => {
