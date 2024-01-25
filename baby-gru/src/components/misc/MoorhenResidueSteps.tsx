@@ -10,7 +10,7 @@ import { setHoveredAtom } from '../../store/hoveringStatesSlice';
 import { sleep } from "../../utils/MoorhenUtils";
 
 export const MoorhenResidueSteps = (props: { 
-    timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>
+    timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
     residueList: { cid: string }[];
     onStep: (stepInput: any) => Promise<void>;
     onStart?: () => Promise<void>;
@@ -33,7 +33,7 @@ export const MoorhenResidueSteps = (props: {
 
     const exit = async () => {
         props.onStop()
-        if (props.disableTimeCapsule) props.timeCapsuleRef.current.toggleSkipTracking()
+        if (props.disableTimeCapsule) props.timeCapsuleRef.current.toggleDisableBackups()
         await props.timeCapsuleRef.current.addModification()
         dispatch( setNotificationContent(null) )
     }
@@ -41,7 +41,7 @@ export const MoorhenResidueSteps = (props: {
     const init = async () => {
         await props.onStart()
         dispatch( setHoveredAtom({molecule: null, cid: null}) )
-        if (props.disableTimeCapsule) props.timeCapsuleRef.current.toggleSkipTracking()
+        if (props.disableTimeCapsule) props.timeCapsuleRef.current.toggleDisableBackups()
     }
 
     const steppedRefine = async () => {
