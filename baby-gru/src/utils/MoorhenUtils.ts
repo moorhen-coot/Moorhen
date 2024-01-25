@@ -16,6 +16,8 @@ import { setContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle,
 import { enableUpdatingMaps, setConnectedMoleculeMolNo, setFoFcMapMolNo, setReflectionMapMolNo, setTwoFoFcMapMolNo } from "../store/connectedMapsSlice";
 import { libcootApi } from "../types/libcoot";
 
+export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
 export const getLigandSVG = async (commandCentre: React.RefObject<moorhen.CommandCentre>, imol: number, compId: string, isDark: boolean): Promise<string> => {
     const result = await commandCentre.current.cootCommand({
         returnType: "string",
