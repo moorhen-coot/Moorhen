@@ -92,6 +92,8 @@ export namespace moorhen {
     type coorFormats = 'pdb' | 'mmcif';
     
     interface Molecule {
+        mergeFragmentFromRefinement(cid: string, fragmentMolecule: moorhen.Molecule, acceptTransform?: boolean, refineAfterMod?: boolean): Promise<void>;
+        copyFragmentForRefinement(cid: string[], refinementMap: moorhen.Map): Promise<moorhen.Molecule>;
         exportAsGltf(representationId: string): Promise<ArrayBuffer>;
         getSecondaryStructInfo(modelNumber?: number): Promise<libcootApi.ResidueSpecJS[]>;
         getNonSelectedCids(cid: string): string[];
@@ -668,6 +670,7 @@ export namespace moorhen {
         defaultUpdatingScores: string[],
         maxBackupCount: number;
         modificationCountBackupThreshold: number;
+        animateRefine: boolean;
         devMode: boolean; 
         shortCuts: string | {
             [label: string]: Shortcut;
@@ -786,6 +789,7 @@ export namespace moorhen {
             defaultExpandDisplayCards: boolean; 
             transparentModalsOnMouseOut: boolean; 
             enableRefineAfterMod: boolean; 
+            animateRefine: boolean;
         };
         generalStates: {
             devMode: boolean; 

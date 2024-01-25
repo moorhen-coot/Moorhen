@@ -32,7 +32,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
     }
 
     static defaultPreferencesValues: moorhen.PreferencesValues = {
-        version: 'v32',
+        version: 'v33',
         transparentModalsOnMouseOut: false,
         defaultBackgroundColor: [1, 1, 1, 1],
         atomLabelDepthMode: true,
@@ -75,6 +75,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
         defaultUpdatingScores: ['Rfree', 'Rfactor', 'Moorhen Points'],
         maxBackupCount: 10,
         modificationCountBackupThreshold: 5,
+        animateRefine: true,
         devMode: false,
         shortCuts: {
             "decrease_front_clip": {

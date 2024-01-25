@@ -8,7 +8,7 @@ import { overwriteMapUpdatingScores, setShowScoresToast } from "../../store/conn
 import { setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
 import { setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } from "../../store/labelSettingsSlice";
 import { setClipCap, setDefaultBackgroundColor, setDefaultBondSmoothness, setDepthBlurDepth, setDepthBlurRadius, setDoOutline, setDoPerspectiveProjection, setDoSSAO, setDoShadow, setDoShadowDepthDebug, setDoSpinTest, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawInteractions, setDrawMissingLoops, setResetClippingFogging, setSsaoBias, setSsaoRadius, setUseOffScreenBuffers, setDrawScaleBar } from "../../store/sceneSettingsSlice";
-import { setDefaultExpandDisplayCards, setEnableRefineAfterMod, setTransparentModalsOnMouseOut } from "../../store/miscAppSettingsSlice";
+import { setAnimateRefine, setDefaultExpandDisplayCards, setEnableRefineAfterMod, setTransparentModalsOnMouseOut } from "../../store/miscAppSettingsSlice";
 import { setDevMode, setUserPreferencesMounted } from "../../store/generalStatesSlice";
 import { moorhen } from "../../types/moorhen"
 
@@ -80,6 +80,7 @@ export const MoorhenPreferencesContainer = (props: {
     const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.miscAppSettings.defaultExpandDisplayCards)
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
     const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.miscAppSettings.transparentModalsOnMouseOut)
+    const animateRefine = useSelector((state: moorhen.State) => state.miscAppSettings.animateRefine)
 
     // Value setter here corresponds with whatever needs to be called with a new value to set the *initial* value loaded from the local storage
     const preferencesMap = {
@@ -127,6 +128,7 @@ export const MoorhenPreferencesContainer = (props: {
         42: { label: "ssaoRadius", value: ssaoRadius, valueSetter: setSsaoRadius},
         43: { label: "ssaoBias", value: ssaoBias, valueSetter: setSsaoBias},
         44: { label: "drawScaleBar", value: drawScaleBar, valueSetter: setDrawScaleBar},
+        45: { label: "animateRefine", value: animateRefine, valueSetter: setAnimateRefine},
     }
 
     const restoreDefaults = (preferences: moorhen.Preferences, defaultValues: moorhen.PreferencesValues)=> {
@@ -445,6 +447,16 @@ export const MoorhenPreferencesContainer = (props: {
         localForageInstanceRef.current?.localStorageInstance.setItem('depthBlurDepth', depthBlurDepth)
         .then(_ => props.onUserPreferencesChange('depthBlurDepth', depthBlurDepth));
     }, [depthBlurDepth]);
+
+    useMemo(() => {
+
+        if (animateRefine === null) {
+            return
+        }
+
+        localForageInstanceRef.current?.localStorageInstance.setItem('animateRefine', animateRefine)
+        .then(_ => props.onUserPreferencesChange('animateRefine', animateRefine));
+    }, [animateRefine]);
 
     useMemo(() => {
 
