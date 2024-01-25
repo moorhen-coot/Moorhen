@@ -16,6 +16,7 @@ export const MoorhenConvertCisTransButton = (props: moorhen.ContextButtonProps) 
     return <MoorhenContextButtonBase
         icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/cis-trans.svg`} alt='Cis/Trans' />}
         needsMapData={false}
+        refineAfterMod={false}
         toolTipLabel={"Cis/Trans isomerisation"}
         cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}
         {...props}

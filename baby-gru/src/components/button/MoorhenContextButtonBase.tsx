@@ -5,6 +5,7 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from "react-redux";
 import { triggerScoresUpdate } from "../../store/connectedMapsSlice";
+import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 
 const MoorhenPopoverOptions = (props: {
     showContextMenu: false | moorhen.AtomRightClickEventInfo;
@@ -103,8 +104,12 @@ export const MoorhenContextButtonBase = (props: {
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
+    const animateRefine = useSelector((state: moorhen.State) => state.miscAppSettings.animateRefine)
 
     const doEdit = async (cootCommandInput: moorhen.cootCommandKwargs) => {
+        dispatch( setHoveredAtom({molecule: null, cid: null}) )
+        props.setShowContextMenu(false)
+        
         const cootResult = await props.commandCentre.current.cootCommand(cootCommandInput, true)
         
         if (props.onCompleted) {
@@ -113,12 +118,14 @@ export const MoorhenContextButtonBase = (props: {
         
         if (props.refineAfterMod && enableRefineAfterMod && activeMap) {
             try {
-                await props.commandCentre.current.cootCommand({
-                    returnType: "status",
-                    command: 'refine_residues_using_atom_cid',
-                    commandArgs: [ props.selectedMolecule.molNo, `//${props.chosenAtom.chain_id}/${props.chosenAtom.res_no}`, 'TRIPLE', 4000],
-                    changesMolecules: [props.selectedMolecule.molNo]
-                }, true)
+                if (animateRefine) {
+                    const cid = await props.selectedMolecule.getNeighborResiduesCids(`//${props.chosenAtom.chain_id}/${props.chosenAtom.res_no}`, 6)
+                    const newMolecule = await props.selectedMolecule.copyFragmentForRefinement(cid, activeMap, true, false)
+                    await newMolecule.animateRefine(50, 30, 50)
+                    await props.selectedMolecule.mergeFragmentFromRefinement(cid.join('||'), newMolecule, true, true)            
+                } else {
+                    await props.selectedMolecule.refineResiduesUsingAtomCid(`//${props.chosenAtom.chain_id}/${props.chosenAtom.res_no}`, 'TRIPLE', 4000, false)
+                }
             }
             catch (err) {
                 console.log(`Exception raised in Refine [${err}]`)
@@ -132,9 +139,7 @@ export const MoorhenContextButtonBase = (props: {
       
         if(props.onExit) {
             props.onExit(props.selectedMolecule, props.chosenAtom, cootResult)
-        }
-        
-        props.setShowContextMenu(false)
+        }        
     }
   
     const handleClick = useCallback(async () => {
@@ -165,6 +170,6 @@ export const MoorhenContextButtonBase = (props: {
   
 MoorhenContextButtonBase.defaultProps = {
     needsMapData: false, needsAtomData: true, 
-    refineAfterMod: false, onExit: null, onCompleted: null
+    refineAfterMod: true, onExit: null, onCompleted: null
 }
   
