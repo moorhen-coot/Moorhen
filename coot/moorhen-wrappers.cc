@@ -178,7 +178,7 @@ bool isSugar(const std::string &resName);
 class molecules_container_js : public molecules_container_t {
     public:
         explicit molecules_container_js(bool verbose=true) : molecules_container_t(verbose) {
-            use_gemmi = false;
+            
         }
 
         std::vector<coot::residue_spec_t> GetSecondaryStructure(int imol, int imodel=1) {
@@ -1068,6 +1068,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("get_use_gemmi", &molecules_container_t::get_use_gemmi)
+    .function("set_use_gemmi", &molecules_container_t::set_use_gemmi)
     .function("generate_local_self_restraints", &molecules_container_t::generate_local_self_restraints)
     .function("get_ncs_related_chains", &molecules_container_t::get_ncs_related_chains)
     .function("set_max_number_of_threads", &molecules_container_t::set_max_number_of_threads)
