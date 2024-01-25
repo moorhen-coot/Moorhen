@@ -67,7 +67,6 @@ export const MoorhenFillMissingAtoms = (props: Props) => {
         dispatch( setShowFillPartialResValidationModal(false) )
         if (selectedMolecule) {
             const handleStepFillAtoms = async (cid: string) => {
-                console.log('>>>>>>>>>>> STEP!!! ', cid)
                 const resSpec = cidToSpec(cid)
                 await selectedMolecule.centreAndAlignViewOn(cid, true)
                 await sleep(1000)
