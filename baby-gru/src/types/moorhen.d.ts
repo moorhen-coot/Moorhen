@@ -669,6 +669,7 @@ export namespace moorhen {
         defaultUpdatingScores: string[],
         maxBackupCount: number;
         modificationCountBackupThreshold: number;
+        animateRefine: boolean;
         devMode: boolean; 
         shortCuts: string | {
             [label: string]: Shortcut;
@@ -786,6 +787,7 @@ export namespace moorhen {
             defaultExpandDisplayCards: boolean; 
             transparentModalsOnMouseOut: boolean; 
             enableRefineAfterMod: boolean; 
+            animateRefine: boolean;
         };
         generalStates: {
             devMode: boolean; 

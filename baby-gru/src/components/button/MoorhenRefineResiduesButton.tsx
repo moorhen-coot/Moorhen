@@ -6,11 +6,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 
 export const MoorhenRefineResiduesButton = (props: moorhen.ContextButtonProps) => {
-    const [toolTipLabel, setToolTipLabel] = useState<string>("Refine Residues")
     const dispatch = useDispatch()
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
+    const animateRefine = useSelector((state: moorhen.State) => state.miscAppSettings.animateRefine)
 
+    const [toolTipLabel, setToolTipLabel] = useState<string>("Refine Residues")
+    
     useEffect(() => {
         if (shortCuts) {
             const shortCut = JSON.parse(shortCuts as string).sphere_refine
@@ -42,7 +44,8 @@ export const MoorhenRefineResiduesButton = (props: moorhen.ContextButtonProps) =
         needsMapData={true}
         refineAfterMod={false}
         toolTipLabel={toolTipLabel}
-        nonCootCommand={nonCootCommand}
+        cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}
+        nonCootCommand={animateRefine ? nonCootCommand : null}
         {...props}
     />
 }
