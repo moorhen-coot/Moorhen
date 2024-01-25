@@ -265,6 +265,7 @@ export namespace moorhen {
         getModifiedMolNo: () => number[];
         lastModifiedMolNo: () => number;
         rebase: (id: string) => void;
+        toggleSkipTracking(): void;
         entries: HistoryEntry[];
         headId: string;
         headIsDetached: boolean;
@@ -498,7 +499,6 @@ export namespace moorhen {
     }
     
     interface TimeCapsule {
-        toggleSkipTracking(): void;
         setBusy: (arg0: boolean) => void;
         onIsBusyChange: (arg0: boolean) => void;
         getSortedKeys(): Promise<backupKey[]>;
@@ -507,6 +507,7 @@ export namespace moorhen {
         updateDataFiles(): Promise<(string | void)[]>;
         createBackup(keyString: string, sessionString: string): Promise<string>;
         fetchSession(arg0: boolean): Promise<backupSession>;
+        toggleDisableBackups(): void;
         moleculesRef: React.RefObject<Molecule[]>;
         mapsRef: React.RefObject<Map[]>;
         glRef: React.RefObject<webGL.MGWebGL>;
