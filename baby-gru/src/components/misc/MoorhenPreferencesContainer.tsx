@@ -7,7 +7,7 @@ import { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificatio
 import { overwriteMapUpdatingScores, setShowScoresToast } from "../../store/connectedMapsSlice";
 import { setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
 import { setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } from "../../store/labelSettingsSlice";
-import { setClipCap, setDefaultBackgroundColor, setDefaultBondSmoothness, setDepthBlurDepth, setDepthBlurRadius, setDoOutline, setDoPerspectiveProjection, setDoSSAO, setDoShadow, setDoShadowDepthDebug, setDoSpinTest, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawInteractions, setDrawMissingLoops, setResetClippingFogging, setSsaoBias, setSsaoRadius, setUseOffScreenBuffers } from "../../store/sceneSettingsSlice";
+import { setClipCap, setDefaultBackgroundColor, setDefaultBondSmoothness, setDepthBlurDepth, setDepthBlurRadius, setDoOutline, setDoPerspectiveProjection, setDoSSAO, setDoShadow, setDoShadowDepthDebug, setDoSpinTest, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawInteractions, setDrawMissingLoops, setResetClippingFogging, setSsaoBias, setSsaoRadius, setUseOffScreenBuffers, setDrawScaleBar } from "../../store/sceneSettingsSlice";
 import { setDefaultExpandDisplayCards, setEnableRefineAfterMod, setTransparentModalsOnMouseOut } from "../../store/miscAppSettingsSlice";
 import { setDevMode, setUserPreferencesMounted } from "../../store/generalStatesSlice";
 import { moorhen } from "../../types/moorhen"
@@ -55,6 +55,7 @@ export const MoorhenPreferencesContainer = (props: {
 
     // Scene settings
     const defaultBackgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.defaultBackgroundColor)
+    const drawScaleBar = useSelector((state: moorhen.State) => state.sceneSettings.drawScaleBar)
     const drawCrosshairs = useSelector((state: moorhen.State) => state.sceneSettings.drawCrosshairs)
     const drawFPS = useSelector((state: moorhen.State) => state.sceneSettings.drawFPS)
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops)
@@ -125,6 +126,7 @@ export const MoorhenPreferencesContainer = (props: {
         41: { label: "doSSAO", value: doSSAO, valueSetter: setDoSSAO},
         42: { label: "ssaoRadius", value: ssaoRadius, valueSetter: setSsaoRadius},
         43: { label: "ssaoBias", value: ssaoBias, valueSetter: setSsaoBias},
+        44: { label: "drawScaleBar", value: drawScaleBar, valueSetter: setDrawScaleBar},
     }
 
     const restoreDefaults = (preferences: moorhen.Preferences, defaultValues: moorhen.PreferencesValues)=> {
@@ -383,6 +385,16 @@ export const MoorhenPreferencesContainer = (props: {
         localForageInstanceRef.current?.localStorageInstance.setItem('drawAxes', drawAxes)
         .then(_ => props.onUserPreferencesChange('drawAxes', drawAxes));
     }, [drawAxes]);
+
+    useMemo(() => {
+
+        if (drawScaleBar === null) {
+            return
+        }
+       
+        localForageInstanceRef.current?.localStorageInstance.setItem('drawScaleBar', drawScaleBar)
+        .then(_ => props.onUserPreferencesChange('drawScaleBar', drawScaleBar));
+    }, [drawScaleBar]);
 
     useMemo(() => {
 

@@ -35,6 +35,7 @@ export namespace webGL {
         mouseMoveAnimateTrack(force: boolean,count: number) : void;
         drawTextOverlays(invMat: number[]) : void;
         drawAxes(invMat: number[]) : void;
+        drawScaleBar(invMat: number[]) : void;
         drawCrosshairs(invMat: number[]) : void;
         drawMouseTrack() : void;
         reContourMaps() : void;
@@ -360,6 +361,7 @@ export namespace webGL {
         shaderDepthShadowProgramPerfectSpheres: ShaderPerfectSpheres;
         shinyBack: boolean;
         showAxes: boolean;
+        showScaleBar: boolean;
         showCrosshairs: boolean;
         showFPS: boolean;
         silhouetteBufferReady: boolean;
