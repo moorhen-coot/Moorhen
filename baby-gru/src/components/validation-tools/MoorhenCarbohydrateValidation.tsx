@@ -125,11 +125,9 @@ export const MoorhenCarbohydrateValidation = (props: Props) => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel)
 
         if (selectedMolecule) {
-
-            const atoms = await selectedMolecule.getAtoms()
             const privateerResult = await props.commandCentre.current.cootCommand({
-                command: 'shim_privateer_validate',
-                commandArgs: [atoms, selectedMolecule.name],
+                command: 'privateer_validate',
+                commandArgs: [selectedMolecule.molNo],
                 returnType: 'privateer_results'
             }, false)
 
