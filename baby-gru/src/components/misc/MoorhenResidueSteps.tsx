@@ -10,7 +10,7 @@ import { setHoveredAtom } from '../../store/hoveringStatesSlice';
 import { sleep } from "../../utils/MoorhenUtils";
 
 export const MoorhenResidueSteps = (props: { 
-    timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>
+    timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
     residueList: { cid: string }[];
     onStep: (stepInput: any) => Promise<void>;
     onStart?: () => Promise<void>;
@@ -23,7 +23,7 @@ export const MoorhenResidueSteps = (props: {
  }) => {
     const dispatch = useDispatch()
     const timeCapsuleIsEnabled = useSelector((state: moorhen.State) => state.backupSettings.enableTimeCapsule)
-    
+
     const [isRunning, setIsRunning] = useState<boolean>(false)
     const [progress, setProgress] = useState<number>(0)
     const [buffer, setBuffer] = useState<number>(1)

@@ -92,7 +92,8 @@ export namespace moorhen {
     type coorFormats = 'pdb' | 'mmcif';
     
     interface Molecule {
-        mergeFragmentFromRefinement(cid: string, fragmentMolecule: moorhen.Molecule, acceptTransform?: boolean, refineAfterMod?: boolean): Promise<void>;
+        refineResiduesUsingAtomCidAnimated(cid: string, activeMap: moorhen.Map, dist?: number, redraw?: boolean, redrawFragmentFirst?: boolean): Promise<void>;
+        mergeFragmentFromRefinement(cid: string, fragmentMolecule: moorhen.Molecule, acceptTransform?: boolean, refineAfterMerge?: boolean): Promise<void>;
         copyFragmentForRefinement(cid: string[], refinementMap: moorhen.Map, redraw?: boolean, readrawFragmentFirst?: boolean): Promise<moorhen.Molecule>;
         exportAsGltf(representationId: string): Promise<ArrayBuffer>;
         getSecondaryStructInfo(modelNumber?: number): Promise<libcootApi.ResidueSpecJS[]>;
@@ -265,9 +266,11 @@ export namespace moorhen {
         getModifiedMolNo: () => number[];
         lastModifiedMolNo: () => number;
         rebase: (id: string) => void;
+        toggleSkipTracking(): void;
         entries: HistoryEntry[];
         headId: string;
         headIsDetached: boolean;
+        timeCapsule: React.RefObject<TimeCapsule>;
     }
 
     interface HistoryEntry extends cootCommandKwargs{
@@ -506,6 +509,7 @@ export namespace moorhen {
         updateDataFiles(): Promise<(string | void)[]>;
         createBackup(keyString: string, sessionString: string): Promise<string>;
         fetchSession(arg0: boolean): Promise<backupSession>;
+        toggleDisableBackups(): void;
         moleculesRef: React.RefObject<Molecule[]>;
         mapsRef: React.RefObject<Map[]>;
         glRef: React.RefObject<webGL.MGWebGL>;

@@ -113,8 +113,9 @@ declare module 'moorhen' {
         buffersInclude: (bufferIn: { id: string; }) => boolean;
         redrawRepresentation: (id: string) => Promise<void>;
         downloadAtoms(format?: 'mmcif' | 'pdb'): Promise<void>;
-        mergeFragmentFromRefinement(cid: string, fragmentMolecule: _moorhen.Molecule, acceptTransform?: boolean, refineAfterMod?: boolean): Promise<void>;
+        mergeFragmentFromRefinement(cid: string, fragmentMolecule: _moorhen.Molecule, acceptTransform?: boolean, refineAfterMerge?: boolean): Promise<void>;
         copyFragmentForRefinement(cid: string[], refinementMap: _moorhen.Map, redraw?: boolean, readrawFragmentFirst?: boolean): Promise<_moorhen.Molecule>;
+        refineResiduesUsingAtomCidAnimated(cid: string, activeMap: moorhen.Map, dist?: number, redraw?: boolean, redrawFragmentFirst?: boolean): Promise<void>;
         isLigand: boolean;
         type: string;
         excludedCids: string[];

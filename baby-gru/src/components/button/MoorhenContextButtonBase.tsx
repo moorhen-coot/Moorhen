@@ -119,23 +119,21 @@ export const MoorhenContextButtonBase = (props: {
         if (props.refineAfterMod && enableRefineAfterMod && activeMap) {
             try {
                 if (animateRefine) {
-                    const cid = await props.selectedMolecule.getNeighborResiduesCids(`//${props.chosenAtom.chain_id}/${props.chosenAtom.res_no}`, 6)
-                    const newMolecule = await props.selectedMolecule.copyFragmentForRefinement(cid, activeMap, true, false)
-                    await newMolecule.animateRefine(50, 30, 50)
-                    await props.selectedMolecule.mergeFragmentFromRefinement(cid.join('||'), newMolecule, true, true)            
+                    props.selectedMolecule.refineResiduesUsingAtomCidAnimated(`//${props.chosenAtom.chain_id}/${props.chosenAtom.res_no}`, activeMap, 3, true, false)
                 } else {
-                    await props.selectedMolecule.refineResiduesUsingAtomCid(`//${props.chosenAtom.chain_id}/${props.chosenAtom.res_no}`, 'TRIPLE', 4000, false)
+                    await props.selectedMolecule.refineResiduesUsingAtomCid(`//${props.chosenAtom.chain_id}/${props.chosenAtom.res_no}`, 'TRIPLE', 4000, true)
                 }
             }
             catch (err) {
                 console.log(`Exception raised in Refine [${err}]`)
             }
+        } else {
+            props.selectedMolecule.setAtomsDirty(true)
+            await props.selectedMolecule.redraw()
         }
         
         dispatch( triggerScoresUpdate(props.selectedMolecule.molNo) )
-        props.selectedMolecule.setAtomsDirty(true)
         props.selectedMolecule.clearBuffersOfStyle('hover')
-        await props.selectedMolecule.redraw()
       
         if(props.onExit) {
             props.onExit(props.selectedMolecule, props.chosenAtom, cootResult)
