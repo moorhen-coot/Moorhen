@@ -234,6 +234,13 @@ export class MoorhenHistory implements moorhen.History {
     }
 
     /**
+     * Toggle the skipTracking attribute
+     */
+    toggleSkipTracking() {
+        this.skipTracking = !this.skipTracking
+    }
+
+    /**
      * A setter for the commandCentre attribute
      * @param {moorhen.CommandCentre} commandCentre 
      */

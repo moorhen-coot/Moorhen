@@ -185,6 +185,13 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
     }
 
     /**
+     * Toggles the time capsule disabled state
+     */
+    toggleDisableBackups() {
+        this.disableBackups = !this.disableBackups
+    }
+
+    /**
      * Sets instance attr. this.busy and calls this.onIsBusyChange()
      * @param {boolea} newValue - The new value for the busy attr.
      */
