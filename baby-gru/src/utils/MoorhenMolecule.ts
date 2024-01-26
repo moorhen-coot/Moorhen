@@ -504,21 +504,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
     }
 
     /**
-     * Refine a residue CID with animation
-     * @param {string[]} cid - The CID selection used to create the fragment
-     * @param {moorhen.Map} activeMap - The map instance used in the refinement
-     * @param {number} dist - The maximum distance used to get neighboring residues for the refinement
-     * @param {boolean} redraw - Indicate if the molecules should be redrawn
-     * @param {boolean} redrawFragmentFirst - Indicate if the fragment should be redrawn first
-     */
-    async refineResiduesUsingAtomCidAnimated(cid: string, activeMap: moorhen.Map, dist: number = 6, redraw: boolean = true, redrawFragmentFirst: boolean = true) {
-        const cidList = await this.getNeighborResiduesCids(cid, dist)
-        const newMolecule = await this.copyFragmentForRefinement(cidList, activeMap, redraw, redrawFragmentFirst)
-        await newMolecule.animateRefine(50, 30, 50)
-        await this.mergeFragmentFromRefinement(cidList.join('||'), newMolecule, true, true)
-    }
-
-    /**
      * Load a new molecule from a file URL
      * @param {string} url - The url to the path with the data for the new molecule
      * @param {string} molName - The new molecule name
@@ -1687,6 +1672,26 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if (redraw) {
             await this.redraw()
         }
+    }
+
+    /**
+     * Refine a residue CID with animation
+     * @param {string[]} cid - The CID selection used to create the fragment
+     * @param {moorhen.Map} activeMap - The map instance used in the refinement
+     * @param {number} dist - The maximum distance used to get neighboring residues for the refinement. Use -1 for literal CID instead of neighbours.
+     * @param {boolean} redraw - Indicate if the molecules should be redrawn
+     * @param {boolean} redrawFragmentFirst - Indicate if the fragment should be redrawn first
+     */
+    async refineResiduesUsingAtomCidAnimated(cid: string, activeMap: moorhen.Map, dist: number = 6, redraw: boolean = true, redrawFragmentFirst: boolean = true) {
+        let cidList: string[]
+        if (dist <= 0) {
+            cidList = [cid]
+        } else {
+            cidList = await this.getNeighborResiduesCids(cid, dist)
+        }
+        const newMolecule = await this.copyFragmentForRefinement(cidList, activeMap, redraw, redrawFragmentFirst)
+        await newMolecule.animateRefine(50, 30, 50)
+        await this.mergeFragmentFromRefinement(cidList.join('||'), newMolecule, true, true)
     }
 
     /**
