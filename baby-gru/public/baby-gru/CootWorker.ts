@@ -1003,9 +1003,6 @@ const doCootCommand = (messageData: {
             case 'shim_export_molecule_as_gltf':
                 cootResult = export_molecule_as_gltf(...commandArgs as [number, string, string, boolean, number, number, number, boolean, boolean])
                 break
-            case 'shim_privateer_validate':
-                cootResult = run_privateer_validation(...commandArgs as [string, string])
-                break
             default:
                 cootResult = molecules_container[command](...commandArgs)
                 break
@@ -1096,9 +1093,6 @@ const doCootCommand = (messageData: {
                 break;
             case 'string_string_pair_vector':
                 returnResult = stringPairVectorToJSArray(cootResult)
-                break
-            case 'privateer_results':
-                returnResult = extract_carbohydrate_validation(cootResult)
                 break
             case 'void':
                 returnResult = null
