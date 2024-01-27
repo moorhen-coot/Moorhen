@@ -359,7 +359,7 @@ class molecules_container_js : public molecules_container_t {
             std::cout << "[Privateer] Calculating Carbohydrate Validation for Molecule Number:  " << imol << std::endl;
             auto file_content = molecules_container_t::molecule_to_mmCIF_string(imol);
             auto results =  validate(file_content, "");
-            std::cout << "[Privateer] Calculated Carbohydrate Validation for " << v.size() << " entities" << std::endl;
+            std::cout << "[Privateer] Calculated Carbohydrate Validation for " << results.size() << " entities" << std::endl;
             return results;
         }
 
