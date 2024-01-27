@@ -356,9 +356,11 @@ class molecules_container_js : public molecules_container_t {
         }
 
         std::vector<TableEntry> privateer_validate(int imol) {
-            std::cout << "P called with " << imol << std::endl;
+            std::cout << "[Privateer] Calculating Carbohydrate Validation for Molecule Number:  " << imol << std::endl;
             auto file_content = molecules_container_t::molecule_to_mmCIF_string(imol);
-            return validate(file_content, "");
+            auto results =  validate(file_content, "");
+            std::cout << "[Privateer] Calculated Carbohydrate Validation for " << v.size() << " entities" << std::endl;
+            return results;
         }
 
         coot::simple_mesh_t DrawMoorhenMetaBalls(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel) {

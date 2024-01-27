@@ -912,10 +912,6 @@ const setUserDefinedBondColours = (imol: number, colours: { cid: string; rgb: [n
     colourMap.delete()
 }
 
-const run_privateer_validation = (fileContents: string, fileName: string) => { 
-    return cootModule.validate(fileContents, fileName)
-}
-
 const extract_carbohydrate_validation = (results: any) : PrivateerResultsEntry[] => {
 
     const sanitizeID = (id: string): string => {
@@ -1099,6 +1095,9 @@ const doCootCommand = (messageData: {
                 break
             case 'vector_pair_clipper_coord_float':
                 returnResult = vectorPairClipperCoordFloatToJSArray(cootResult)
+                break
+            case 'privateer_results':
+                returnResult = extract_carbohydrate_validation(cootResult)
                 break
             case 'status':
             default:
