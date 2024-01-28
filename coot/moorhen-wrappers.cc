@@ -136,11 +136,12 @@ std::vector<TableEntry> validate(const std::string &file, const std::string &nam
 
   std::cout << "[Privateer] Molecule generated" << std::endl;
 
-//   privateer::json::GlobalTorsionZScore torsions_zscore_database = privateer::json::read_json_file_for_torsions_zscore_database("/data/privateer_data/privateer_torsions_z_score_database.json");
+  privateer::json::GlobalTorsionZScore torsions_zscore_database = privateer::json::read_json_file_for_torsions_zscore_database("/data/privateer_data/privateer_torsions_z_score_database.json");
 
-  // const clipper::MAtomNonBond &manb = clipper::MAtomNonBond(mol, 1.0); // was 1.0
+  const clipper::MAtomNonBond &manb = clipper::MAtomNonBond(mol, 1.0); // was 1.0
 
-  clipper::MGlycology mgl = clipper::MGlycology(mol, false, "");
+//   clipper::MGlycology mgl = clipper::MGlycology(mol, false, ""); <- use this constructor if you do not want to use torsions DB
+    clipper::MGlycology mgl = clipper::MGlycology(mol, manb, torsions_zscore_database, false);
 
   std::vector<clipper::MGlycan> list_of_glycans = mgl.get_list_of_glycans();
 

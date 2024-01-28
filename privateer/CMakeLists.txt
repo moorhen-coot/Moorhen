@@ -26,6 +26,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}
  ..
  ${privateer_src}
  ${privateer_src}/pybind11
+  ${privateer_src}/third-party/simdjson/
  ../checkout/mmdb2
  ../checkout/ssm/ssm
  ../checkout/libccp4/ccp4
@@ -46,6 +47,7 @@ add_library(privateer STATIC
             ${privateer_src}/privateer-lib.cpp
             ${privateer_src}/privateer-modelling.cpp
             ${privateer_src}/privateer-xray.cpp
+            ${privateer_src}/third-party/simdjson/simdjson.cpp
             )
 
 target_link_directories(privateer PUBLIC ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../clipper/gemmi ../fftw ../rfftw ../ccp4 ../gemmi)
@@ -67,6 +69,8 @@ ${privateer_src}/privateer-json.h
 ${privateer_src}/privateer-lib.h
 ${privateer_src}/privateer-modelling.h
 ${privateer_src}/privateer-xray.h
+${privateer_src}/third-party/simdjson/simdjson.h
+
 )
 
 set_target_properties(privateer PROPERTIES PUBLIC_HEADER "${privateer_HEADERS}")
