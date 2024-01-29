@@ -4,6 +4,7 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { ChevronRightOutlined, ExpandMoreOutlined } from "@mui/icons-material";
 import { TreeView, TreeItem } from '@mui/x-tree-view';
 import { useSelector } from 'react-redux';
+import { convertViewtoPx } from "../../utils/MoorhenUtils";
 
 export const MoorhenCentreOnLigandMenuItem = (props: { 
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -11,29 +12,42 @@ export const MoorhenCentreOnLigandMenuItem = (props: {
  }) => {
 
     const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
     return <MoorhenBaseMenuItem
             key='centre-on-ligand-menu-item'
             id='centre-on-ligand-menu-item'
             popoverContent={
                 molecules.some(molecule => molecule.ligands.length > 0) ?
+                <div style={{overflowY: 'auto', maxHeight: convertViewtoPx(30, height)}}>
                 <TreeView
                 aria-label="file system navigator"
                 defaultCollapseIcon={<ExpandMoreOutlined />}
                 defaultExpandIcon={<ChevronRightOutlined />}
                 >
                     {molecules.filter(molecule => molecule.ligands.length > 0).map(molecule => {
+                        let uniqueChainNames: string[] = molecule.ligands.reduce((uniqueChains: string[], lig) => {
+                            if (!uniqueChains.includes(lig.chainName)) {
+                                uniqueChains.push(lig.chainName)
+                            }
+                            return uniqueChains
+                        }, [])
                         return <TreeItem key={molecule.molNo} nodeId={molecule.molNo.toString()} label={molecule.name}>
-                            {molecule.ligands.map(ligand => {
-                                return <TreeItem
-                                    key={`${molecule.molNo}-${ligand.cid}`}
-                                    nodeId={`${molecule.molNo}-${ligand.cid}`}
-                                    label={ligand.cid}
-                                    onClick={() => molecule.centreOn(ligand.cid, true, true)}/>
+                            {uniqueChainNames.map(chainName => {
+                                return <TreeItem key={`${molecule.molNo}-${chainName}`} nodeId={`${molecule.molNo}-${chainName}`} label={`Chain ${chainName}`}>
+                                    {molecule.ligands.filter(lig => lig.chainName === chainName).map(ligand => {
+                                        return <TreeItem
+                                        key={`${molecule.molNo}-${ligand.cid}`}
+                                        nodeId={`${molecule.molNo}-${ligand.cid}`}
+                                        label={ligand.cid}
+                                        onClick={() => molecule.centreOn(ligand.cid, true, true)}/>
+                                    })}
+                                </TreeItem>
                             })}
                         </TreeItem>
                     })}
                 </TreeView>
+                </div>
                 :
                 <span>No ligands...</span>
             }
