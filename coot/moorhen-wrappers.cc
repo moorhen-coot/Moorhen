@@ -50,8 +50,9 @@
 #include "matrix.h"
 
 #include "smilestopdb.h"
-
 using namespace emscripten;
+
+#include "privateer-wrappers.h"
 
 struct RamachandranInfo {
     std::string chainId;
@@ -189,6 +190,12 @@ class molecules_container_js : public molecules_container_t {
         coot::instanced_mesh_t DrawGlycoBlocks(int imol, const std::string &cid_str) {
             mmdb::Manager *mol = get_mol(imol);
             return DrawSugarBlocks(mol,cid_str);
+        }
+
+        std::vector<TableEntry> privateer_validate(int imol) {
+            auto file_content = molecules_container_t::molecule_to_mmCIF_string(imol);
+            auto results =  validate(file_content, "");
+            return results;
         }
 
         coot::simple_mesh_t DrawMoorhenMetaBalls(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel) {
@@ -843,6 +850,38 @@ emscripten::val testFloat32Array(const emscripten::val &floatArrayObject){
 }
 
 EMSCRIPTEN_BINDINGS(my_module) {
+// PRIVATEER
+ value_object<TorsionEntry>("TorsionEntry")
+      .field("sugar_1", &TorsionEntry::sugar_1)
+      .field("sugar_2", &TorsionEntry::sugar_2)
+      .field("atom_number_1", &TorsionEntry::atom_number_1)
+      .field("atom_number_2", &TorsionEntry::atom_number_2)
+      .field("phi", &TorsionEntry::phi)
+      .field("psi", &TorsionEntry::psi);
+
+    register_vector<TorsionEntry>("vector<TorsionEntry>");
+
+
+  value_object<TableEntry>("TableEntry")
+      .field("svg", &TableEntry::svg)
+      .field("wurcs", &TableEntry::wurcs)
+      .field("chain", &TableEntry::chain)
+      .field("glyconnect_id", &TableEntry::glyconnect_id)
+      .field("glytoucan_id", &TableEntry::glytoucan_id)
+      .field("id", &TableEntry::id)
+      .field("torsion_err", &TableEntry::torsion_err)
+      .field("conformation_err", &TableEntry::conformation_err)
+      .field("anomer_err", &TableEntry::anomer_err)
+      .field("puckering_err", &TableEntry::puckering_err)
+      .field("chirality_err", &TableEntry::chirality_err)
+      .field("torsions", &TableEntry::torsions)
+      ;
+
+ function("validate", &validate);
+  register_vector<TableEntry>("Table");
+// END PRIVATEER
+
+
     function("testFloat32Array", &testFloat32Array);
     function("getPositionsFromSimpleMesh2", &getPositionsFromSimpleMesh2);
     function("getReversedNormalsFromSimpleMesh2", &getReversedNormalsFromSimpleMesh2);
@@ -1257,6 +1296,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_neighbours_cid",&molecules_container_js::get_neighbours_cid)
     .function("make_exportable_environment_bond_box",&molecules_container_js::make_exportable_environment_bond_box)
     .function("DrawGlycoBlocks",&molecules_container_js::DrawGlycoBlocks)
+     .function("privateer_validate",&molecules_container_js::privateer_validate)
+
     .function("GetSecondaryStructure",&molecules_container_js::GetSecondaryStructure)
     .function("DrawMoorhenMetaBalls",&molecules_container_js::DrawMoorhenMetaBalls)
     .function("model_has_glycans",&molecules_container_js::model_has_glycans)

@@ -240,8 +240,8 @@ const LightingPanel = (props: {
                 props.glRef.current.drawScene()
                 setAmbient([newValue, newValue, newValue, 1.0])
             }} />
-        <MoorhenSlider minVal={1.0} maxVal={128.0} logScale={false}
-            sliderTitle="Specular Power"
+        <MoorhenSlider minVal={1.0} maxVal={600.0} logScale={false}
+            sliderTitle="Specular power"
             initialValue={props.glRef.current.specularPower}
             externalValue={props.glRef.current.specularPower}
             setExternalValue={(newValue: number) => {

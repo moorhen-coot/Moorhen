@@ -19,7 +19,7 @@ export const MoorhenLigandValidation = (props: Props) => {
     const fetchCardData = async (selectedModel: number, selectedMap: number): Promise<moorhen.LigandInfo[]> => {
         let ligandInfo: moorhen.LigandInfo[] = []
         const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel)
-        
+
         if (selectedMolecule) {
             ligandInfo = await Promise.all(selectedMolecule.ligands.map(async (ligand) => {
                 const ligandSVG = await getLigandSVG(props.commandCentre, selectedModel, ligand.resName, isDark)
@@ -32,7 +32,7 @@ export const MoorhenLigandValidation = (props: Props) => {
 
     const getCards = (selectedModel: number, selectedMap: number, ligandInfo: moorhen.LigandInfo[]): JSX.Element[] => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel)
-        
+
         if (!selectedMolecule) {
             return []
         }
@@ -42,13 +42,13 @@ export const MoorhenLigandValidation = (props: Props) => {
         })
     }
 
-    return <MoorhenValidationListWidgetBase 
-                sideBarWidth={props.sideBarWidth}
-                dropdownId={props.dropdownId}
-                accordionDropdownId={props.accordionDropdownId}
-                showSideBar={props.showSideBar}
-                enableMapSelect={false}
-                fetchData={fetchCardData}
-                getCards={getCards}
-            />
+    return <MoorhenValidationListWidgetBase
+        sideBarWidth={props.sideBarWidth}
+        dropdownId={props.dropdownId}
+        accordionDropdownId={props.accordionDropdownId}
+        showSideBar={props.showSideBar}
+        enableMapSelect={false}
+        fetchData={fetchCardData}
+        getCards={getCards}
+    />
 }

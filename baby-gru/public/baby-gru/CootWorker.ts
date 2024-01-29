@@ -1,5 +1,6 @@
 import { libcootApi } from "../../src/types/libcoot"
 import { emscriptem } from "../../src/types/emscriptem"
+import {privateer} from "../../src/types/privateer";
 
 // @ts-ignore
 importScripts('./wasm/moorhen.js')
@@ -911,6 +912,52 @@ const setUserDefinedBondColours = (imol: number, colours: { cid: string; rgb: [n
     colourMap.delete()
 }
 
+const extract_carbohydrate_validation = (results: emscriptem.vector<privateer.ResultsEntry>) : privateer.ResultsEntry[] => {
+
+    const sanitizeID = (id: string): string => {
+        const regex = /: *32/g;
+        return id.replace(regex, '');
+    }
+
+    const data: privateer.ResultsEntry[] = [];
+    const resultSize = results.size();
+    for (let i = 0; i < resultSize ; i++) {
+        const entry = results.get(i);
+
+        const collectedTorsions: privateer.TorsionEntry[] = [];
+        const torsionsVec = entry.torsions;
+        const torsionSize = torsionsVec.size();
+        for (let j = 0; j < torsionSize; j++) {
+            collectedTorsions.push(torsionsVec.get(j));
+        }
+        torsionsVec.delete()
+
+        const regex: RegExp = /: *32/g;
+        const sanitisedSVG = entry.svg.replace(regex, '');
+        const sanitisedID = sanitizeID(entry.id as string);
+        const entryJS: privateer.ResultsEntry = {
+            torsions: collectedTorsions,
+            svg: sanitisedSVG,
+            id: sanitisedID,
+            chain: entry.chain,
+            wurcs: entry.wurcs,
+            glyconnect_id: entry.glyconnect_id,
+            glytoucan_id: entry.glytoucan_id,
+            torsion_err: entry.torsion_err,
+            anomer_err: entry.anomer_err,
+            conformation_err: entry.conformation_err,
+            puckering_err: entry.puckering_err,
+            chirality_err: entry.chirality_err
+        }
+
+        data.push(entryJS);
+    }
+
+    results.delete();
+    return data;
+
+}
+
 const doCootCommand = (messageData: { 
     myTimeStamp: number;
     chainID?: string;
@@ -1050,6 +1097,9 @@ const doCootCommand = (messageData: {
                 break
             case 'vector_pair_clipper_coord_float':
                 returnResult = vectorPairClipperCoordFloatToJSArray(cootResult)
+                break
+            case 'privateer_results':
+                returnResult = extract_carbohydrate_validation(cootResult)
                 break
             case 'status':
             default:

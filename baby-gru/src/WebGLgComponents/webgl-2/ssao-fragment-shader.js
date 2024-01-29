@@ -11,7 +11,7 @@ uniform float zoom;
 in vec2 out_TexCoord0;
 
 // parameters (you'd probably want to use them as uniforms to more easily tweak the effect)
-int kernelSize = 64;
+int kernelSize = 16;
 
 uniform float radius;// = 2.5;
 uniform float bias;// = 0.025;
@@ -22,7 +22,7 @@ const vec2 noiseScale = vec2(1024.0/4.0, 1024.0/4.0);
 in mediump mat4 pMatrix;
 
 uniform sampleBuffer {
-    vec4 samples[64];
+    vec4 samples[16];
 };
 
 void main() {
@@ -61,11 +61,11 @@ void main() {
             // get sample depth
             float sampleDepth = texture(gPosition, offset.xy).z; // get depth value of kernel sample
 
-            // range check & accumulate
-            float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));
-            occlusion += (sampleDepth >= samplePos.z + bias ? 1.0 : 0.0) * rangeCheck;           
+            float   dz = max ( fragPos.z - sampleDepth, 0.0 ) * 30.0;
+            occlusion += 1.0 / ( 1.0 + dz*dz );
+
         }
-        occlusion = (occlusion / float(kernelSize));
+        occlusion = pow(occlusion / float(kernelSize),1.5);
     } else {
         occlusion = 1.0;
     }

@@ -11,6 +11,7 @@ import { MoorhenValidationPlotModal } from '../modal/MoorhenValidationPlotModal'
 import { MoorhenMmrrccModal } from '../modal/MoorhenMmrrccModal';
 import { MoorhenWaterValidationModal } from '../modal/MoorhenWaterValidationModal';
 import { MoorhenLigandValidationModal } from '../modal/MoorhenLigandValidationModal';
+import { MoorhenCarbohydrateValidationModal } from '../modal/MoorhenCarbohydrateValidationModal';
 import { MoorhenPepFlipsModal } from '../modal/MoorhenPepFlipsModal';
 import { MoorhenUnmodelledBlobsModal } from '../modal/MoorhenUnmodelledBlobsModal';
 import { MoorhenFillPartialResiduesModal } from '../modal/MoorhenFillPartialResiduesModal';
@@ -18,6 +19,7 @@ import { MoorhenSceneSettingsModal } from '../modal/MoorhenSceneSettingsModal'
 import { useDispatch, useSelector } from 'react-redux';
 import { moorhen } from '../../types/moorhen';
 import { 
+    setShowCarbohydrateValidationModal,
     setShowControlsModal, setShowCreateAcedrgLinkModal, setShowDiffMapPeaksModal, setShowFillPartialResValidationModal, setShowFitLigandModal, setShowLigandValidationModal, setShowMapsModal, 
     setShowMmrrccModal, setShowModelsModal, setShowPepFlipsValidationModal, setShowQuerySequenceModal, setShowRamaPlotModal, setShowSceneSettingsModal, setShowScriptingModal, 
     setShowUnmodelledBlobsModal, setShowValidationPlotModal, setShowWaterValidationModal 
@@ -41,6 +43,8 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
     const showFillPartialResValidationModal = useSelector((state: moorhen.State) => state.activeModals.showFillPartialResValidationModal)
     const showPepFlipsValidationModal = useSelector((state: moorhen.State) => state.activeModals.showPepFlipsValidationModal)
     const showUnmodelledBlobsModal = useSelector((state: moorhen.State) => state.activeModals.showUnmodelledBlobsModal)
+    const showCarbohydrateValidationModal = useSelector((state: moorhen.State) => state.activeModals.showCarbohydrateModal)
+
     const showSceneSettingsModal = useSelector((state: moorhen.State) => state.activeModals.showSceneSettingsModal)
 
     return <>
@@ -133,6 +137,13 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
             setShow={(newVal: boolean) => dispatch(setShowLigandValidationModal(newVal))}
             {...props} />
         }
+
+        {showCarbohydrateValidationModal &&
+                <MoorhenCarbohydrateValidationModal
+                show={showCarbohydrateValidationModal}
+                setShow={(newVal: boolean) => dispatch(setShowCarbohydrateValidationModal(newVal))}
+                {...props} />
+            }
 
         {showPepFlipsValidationModal &&
             <MoorhenPepFlipsModal
