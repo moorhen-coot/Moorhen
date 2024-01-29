@@ -36,7 +36,7 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
 
         const file = filesRef.current.files[0]
         const mtzWrapper = new MoorhenMtzWrapper()
-        let allColumnNames = await mtzWrapper.loadHeaderFromFile(file)
+        await mtzWrapper.loadHeaderFromFile(file)
 
         const response = await props.commandCentre.current.cootCommand({
             returnType: "auto_read_mtz_info_array",
@@ -56,12 +56,13 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
             }, false) as Promise<moorhen.WorkerResponse<boolean>>
         }))
 
+        if (response.data.result.result.length === 0 || response.data.result.result.every(item => item.idx === -1)) {
+            dispatch(setNotificationContent(props.getWarningToast('Error reading mtz file')))
+            return
+        }
+
         await Promise.all(
-            response.data.result.result.map(async (autoReadInfo, index) => {
-                if (autoReadInfo.idx === -1) {
-                    dispatch(setNotificationContent(props.getWarningToast('Error reading mtz file')))
-                    return
-                }
+            response.data.result.result.filter(item => item.idx !== -1).map(async (autoReadInfo, index) => {
                 const newMap = new MoorhenMap(props.commandCentre, props.glRef)
                 newMap.molNo = autoReadInfo.idx
                 newMap.name = `${file.name.replace('mtz', '')}-map-${index}`
