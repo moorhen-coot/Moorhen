@@ -1161,6 +1161,16 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(ss2_vector)
     })
 
+    test("Test privateer_validate", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo = molecules_container.read_pdb('./5fjj.pdb')
+        const results = molecules_container.privateer_validate(coordMolNo)
+        const first = results.get(0)
+        expect(first.wurcs).toBe("WURCS=2.0/2,3,2/[a2122h-1b_1-5_2*NCC/3=O][a1122h-1b_1-5]/1-1-2/a4-b1_b4-c1")
+        expect(results.size()).toBe(38)
+        cleanUpVariables.push(first, results)
+    });
+
 })
 
 const testDataFiles = ['1cxq_phases.mtz', '1cxq.cif', '7ZTVU.cif', '5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'MOI.restraints.cif', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
