@@ -1,20 +1,18 @@
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from 'react-redux';
 import {Card, Col, Row } from "react-bootstrap";
-import {useCallback, useEffect, useRef, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import { guid } from "../../utils/MoorhenUtils";
-import {PrivateerResultsEntry} from "../../types/privateer";
+import {privateer} from "../../types/privateer";
 
 export const MoorhenCarbohydrateCard = (props: {
-    carbohydrate: PrivateerResultsEntry;
+    carbohydrate: privateer.ResultsEntry;
     molecule: moorhen.Molecule;
 }) => {
 
-    const anchorEl = useRef(null)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
-
+    let globalUseList;
     const { carbohydrate, molecule } = props
-    const molecules = useSelector((state: any) => state.molecules);
 
     const handleClick = useCallback(async (e) => {
         const newCenterString =
@@ -28,7 +26,18 @@ export const MoorhenCarbohydrateCard = (props: {
         if (molecule !== null) {
             await molecule.centreOn(newCenterString);
         }
-    }, [molecules]);
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            if (globalUseList === null) {return}
+            for (let i = 0; i < globalUseList.length; i++) {
+                globalUseList[i].removeEventListener('click', handleClick);
+                globalUseList[i].removeEventListener('mousedown', (e) => {e.stopPropagation();});
+                globalUseList[i].removeEventListener('touchstart', (e) => {e.stopPropagation();});
+            }
+        }
+    }, []);
 
     const sugarRef = useCallback(
         (node: HTMLElement | null) => {
@@ -37,7 +46,7 @@ export const MoorhenCarbohydrateCard = (props: {
                 node.querySelector('svg').style.margin = 'auto';
 
                 const useList = node.querySelectorAll('use');
-
+                globalUseList = useList
                 for (let i = 0; i < useList.length; i++) {
                     useList[i].addEventListener('click', handleClick);
                     useList[i].addEventListener('mousedown', (e) => {
@@ -54,7 +63,7 @@ export const MoorhenCarbohydrateCard = (props: {
 
     // For some reason a random key needs to be used here otherwise the scroll of the card list gets reset with every re-render
     return <Card key={guid()} style={{marginTop: '0.5rem'}}>
-            <Card.Body ref={anchorEl} style={{padding:'0.5rem'}}>
+            <Card.Body style={{padding:'0.5rem'}}>
                 <Row style={{display:'flex', justifyContent:'between'}}>
                     <Col style={{alignItems:'center', justifyContent:'center', display:'flex'}}>
                         <div style={{display: "flex", flexDirection: "column", width: width}}>

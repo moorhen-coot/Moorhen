@@ -1,7 +1,7 @@
 
 import { emscriptem } from "./emscriptem";
 import { gemmi } from "./gemmi"
-import {PrivateerResultsEntry} from "./privateer";
+import {privateer} from "./privateer";
 
 // Warning: do not import moorhen namespace otherwise worker code breaks during transpilation
 
@@ -48,7 +48,7 @@ export namespace libcootApi {
         Position: { new(x: number, y: number, z: number): gemmi.Position };
         Fractional: { new(x: number, y: number, z: number): gemmi.Fractional };
         cifDocument: { new(): gemmi.cifDocument };
-        validate: (file: string, name: string) => any[];
+        validate: (file: string, name: string) => emscriptem.vector<privateer.ResultsEntry>;
     }
     type SequenceResInfo = {
         resNum: number;

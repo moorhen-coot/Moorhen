@@ -1,11 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Row, Col } from "react-bootstrap";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useSelector } from "react-redux";
-import { getLigandSVG } from "../../utils/MoorhenUtils";
 import { MoorhenCarbohydrateCard } from "../card/MoorhenCarbohydrateCard";
-import {PrivateerResultsEntry} from "../../types/privateer";
+import {privateer} from "../../types/privateer";
 
 export const MoorhenCarbohydrateList = (props: {
     setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -15,28 +14,27 @@ export const MoorhenCarbohydrateList = (props: {
     height?: number | string;
 }) => {
 
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
-
-    const [carbohydrateList, setCarbohydrateList] = useState<PrivateerResultsEntry[] | null>(null)
+    const newCootCommandAlert = useSelector((state: moorhen.State) => state.generalStates.newCootCommandAlert)
+    const [carbohydrateList, setCarbohydrateList] = useState<privateer.ResultsEntry[] | null>(null)
 
     const validate = async () => {
         if (props.molecule) {
-            console.log(props.molecule)
             const privateerResult = await props.commandCentre.current.cootCommand({
                 command: 'privateer_validate',
                 commandArgs: [props.molecule.molNo],
                 returnType: 'privateer_results'
             }, false)
 
-            const privateerData: PrivateerResultsEntry[] = privateerResult.data.result.result;
-            console.log(privateerResult)
+            const privateerData: privateer.ResultsEntry[] = privateerResult.data.result.result;
             setCarbohydrateList(privateerData)
         }
     }
 
     useEffect(() => {
+        props.setBusy(true)
         validate()
-    }, [props.molecule])
+        props.setBusy(false)
+    }, [newCootCommandAlert])
 
     return <>
             {carbohydrateList === null ?

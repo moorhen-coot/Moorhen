@@ -1,6 +1,6 @@
 import { libcootApi } from "../../src/types/libcoot"
 import { emscriptem } from "../../src/types/emscriptem"
-import {PrivateerResultsEntry, TorsionEntry} from "../../src/types/privateer";
+import {privateer} from "../../src/types/privateer";
 
 // @ts-ignore
 importScripts('./wasm/moorhen.js')
@@ -912,28 +912,30 @@ const setUserDefinedBondColours = (imol: number, colours: { cid: string; rgb: [n
     colourMap.delete()
 }
 
-const extract_carbohydrate_validation = (results: any) : PrivateerResultsEntry[] => {
+const extract_carbohydrate_validation = (results: emscriptem.vector<privateer.ResultsEntry>) : privateer.ResultsEntry[] => {
 
     const sanitizeID = (id: string): string => {
         const regex = /: *32/g;
         return id.replace(regex, '');
     }
 
-    const data: PrivateerResultsEntry[] = [];
+    const data: privateer.ResultsEntry[] = [];
     const resultSize = results.size();
     for (let i = 0; i < resultSize ; i++) {
         const entry = results.get(i);
 
-        const collectedTorsions: TorsionEntry[] = [];
-        const torsionSize = entry.torsions.size();
+        const collectedTorsions: privateer.TorsionEntry[] = [];
+        const torsionsVec = entry.torsions;
+        const torsionSize = torsionsVec.size();
         for (let j = 0; j < torsionSize; j++) {
-            collectedTorsions.push(entry.torsions.get(j));
+            collectedTorsions.push(torsionsVec.get(j));
         }
+        torsionsVec.delete()
 
         const regex: RegExp = /: *32/g;
         const sanitisedSVG = entry.svg.replace(regex, '');
         const sanitisedID = sanitizeID(entry.id as string);
-        const entryJS: PrivateerResultsEntry = {
+        const entryJS: privateer.ResultsEntry = {
             torsions: collectedTorsions,
             svg: sanitisedSVG,
             id: sanitisedID,
