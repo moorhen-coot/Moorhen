@@ -19,6 +19,7 @@ export const MoorhenCarbohydrateList = (props: {
 
     const validate = async () => {
         if (props.molecule) {
+            props.setBusy(true)
             const privateerResult = await props.commandCentre.current.cootCommand({
                 command: 'privateer_validate',
                 commandArgs: [props.molecule.molNo],
@@ -27,13 +28,12 @@ export const MoorhenCarbohydrateList = (props: {
 
             const privateerData: privateer.ResultsEntry[] = privateerResult.data.result.result;
             setCarbohydrateList(privateerData)
+            props.setBusy(false)
         }
     }
 
     useEffect(() => {
-        props.setBusy(true)
         validate()
-        props.setBusy(false)
     }, [newCootCommandAlert])
 
     return <>
