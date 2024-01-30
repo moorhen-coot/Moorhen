@@ -18,6 +18,7 @@ import { webGL } from "../../types/mgWebGL";
 import { addMolecule } from '../../store/moleculesSlice';
 import { showMolecule } from '../../store/moleculeRepresentationsSlice';
 import { triggerScoresUpdate } from '../../store/connectedMapsSlice';
+import {MoorhenCarbohydrateList} from "../list/MoorhenCarbohydrateList";
 
 const allRepresentations = [ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks', 'restraints' ]
 
@@ -82,6 +83,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     
     const [busyLoadingSequences, setBusyLoadingSequences] = useState<boolean>(false)
     const [busyLoadingLigands, setBusyLoadingLigands] = useState<boolean>(false)
+    const [busyLoadingCarbohydrates, setBusyLoadingCarbohydrates] = useState<boolean>(false)
     const [showColourRulesModal, setShowColourRulesModal] = useState<boolean>(false)
     const [showCreateCustomRepresentation, setShowCreateCustomRepresentation] = useState<boolean>(false)
     const [showCreateRepresentationSettingsModal, setShowCreateRepresentationSettingsModal] = useState<boolean>(false)
@@ -524,6 +526,14 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                     </AccordionSummary>
                     <AccordionDetails style={{padding: '0.2rem', backgroundColor: isDark ? '#ced5d6' : 'white'}}>
                         <MoorhenLigandList setBusy={setBusyLoadingLigands} commandCentre={props.commandCentre} molecule={props.molecule} glRef={props.glRef} height={convertViewtoPx(40, height)}/>
+                    </AccordionDetails>
+                </Accordion>
+                <Accordion className="moorhen-accordion" disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }}>
+                    <AccordionSummary style={{backgroundColor: isDark ? '#adb5bd' : '#ecf0f1'}} expandIcon={busyLoadingCarbohydrates ? <Spinner animation='border'/> : <ExpandMoreOutlined />} >
+                        Carbohydrates
+                    </AccordionSummary>
+                    <AccordionDetails style={{padding: '0.2rem', backgroundColor: isDark ? '#ced5d6' : 'white'}}>
+                        <MoorhenCarbohydrateList setBusy={setBusyLoadingCarbohydrates} commandCentre={props.commandCentre} molecule={props.molecule} glRef={props.glRef} height={convertViewtoPx(40, height)}/>
                     </AccordionDetails>
                 </Accordion>
             </div>

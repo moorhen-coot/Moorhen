@@ -8,7 +8,8 @@ curl -L http://ftp.ccp4.ac.uk/opensource/libccp4-8.0.0.tar.gz -o libccp4-8.0.0.t
 echo
 
 echo "Checking out clipper"
-curl -L http://ftp.ccp4.ac.uk/opensource/clipper-2.1.20201109.tar.gz -o clipper-2.1.20201109.tar.gz
+#curl -L http://ftp.ccp4.ac.uk/opensource/clipper-2.1.20201109.tar.gz -o clipper-2.1.20201109.tar.gz
+curl -L http://www.ysbl.york.ac.uk/jsd523/clipper-gemmi-wrapper-20240123.tar.gz -o clipper-gemmi-wrapper.tar.gz
 echo
 
 echo "Checking out ssm"
@@ -46,14 +47,22 @@ echo "Downloading RDKit source"
 rdkit_release="Release_2023_09_1"
 curl -L https://github.com/rdkit/rdkit/archive/refs/tags/$rdkit_release.tar.gz -o "$rdkit_release.tar.gz"
 
+echo "Downloading and Unpacking Privateer"
+curl -L https://github.com/glycojones/privateer/archive/refs/tags/WASM-0.3.4.tar.gz -o privateer-wasm.tar.gz
+tar xf privateer-wasm.tar.gz
+mv privateer-WASM-* privateer-wasm
+
 echo "Unpacking libccp4 source"
 tar xf libccp4-8.0.0.tar.gz
 ln -s libccp4-8.0.0 libccp4
 echo
 
 echo "Unpacking clipper source"
-tar xf clipper-2.1.20201109.tar.gz
-ln -s clipper-2.1 clipper
+#tar xf clipper-2.1.20201109.tar.gz
+#ln -s clipper-2.1 clipper
+tar xf clipper-gemmi-wrapper.tar.gz
+mv clipper-gemmi-wrapper clipper
+
 echo
 
 echo "Unpacking ssm source"
