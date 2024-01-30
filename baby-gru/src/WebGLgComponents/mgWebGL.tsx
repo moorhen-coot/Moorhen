@@ -9713,11 +9713,21 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         //Begin *almost* copy/paste from crosshairs
         // Actual axes
 
+        const scale_fac = 10*this.zoom* this.gl.viewportWidth / this.gl.viewportHeight
+        const scale_pow = Math.pow(10,Math.floor(Math.log(scale_fac)/Math.log(10)))
+        let scale_length_fac = scale_pow / scale_fac 
+
+        if(scale_length_fac<0.5) scale_length_fac *=2
+        if(scale_length_fac<0.5) scale_length_fac *=2.5
+
         let horizontalHairStart = vec3.create();
         let horizontalHairEnd = vec3.create();
-        vec3.set(horizontalHairStart, 10 * this.zoom * ratio, -22.0 * this.zoom, 0.0);
+
+        const scale_start_x = 18 - 10 * scale_length_fac
+
+        vec3.set(horizontalHairStart, scale_start_x * this.zoom * ratio, -22.0 * this.zoom, 0.0);
         vec3.transformMat4(horizontalHairStart, horizontalHairStart, invMat);
-        vec3.set(horizontalHairEnd, 20 * this.zoom * ratio, -22.0 * this.zoom, 0.0);
+        vec3.set(horizontalHairEnd, 18 * this.zoom * ratio, -22.0 * this.zoom, 0.0);
         vec3.transformMat4(horizontalHairEnd, horizontalHairEnd, invMat);
 
         addSegment(renderArrays,
@@ -9726,9 +9736,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             hairColour, hairColour
         )
 
-        vec3.set(horizontalHairStart, 10 * this.zoom * ratio, -22.5 * this.zoom, 0.0);
+        vec3.set(horizontalHairStart, scale_start_x * this.zoom * ratio, -22.5 * this.zoom, 0.0);
         vec3.transformMat4(horizontalHairStart, horizontalHairStart, invMat);
-        vec3.set(horizontalHairEnd, 10 * this.zoom * ratio, -21.5 * this.zoom, 0.0);
+        vec3.set(horizontalHairEnd, scale_start_x * this.zoom * ratio, -21.5 * this.zoom, 0.0);
         vec3.transformMat4(horizontalHairEnd, horizontalHairEnd, invMat);
 
         addSegment(renderArrays,
@@ -9737,9 +9747,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             hairColour, hairColour
         )
 
-        vec3.set(horizontalHairStart, 20 * this.zoom * ratio, -22.5 * this.zoom, 0.0);
+        vec3.set(horizontalHairStart, 18 * this.zoom * ratio, -22.5 * this.zoom, 0.0);
         vec3.transformMat4(horizontalHairStart, horizontalHairStart, invMat);
-        vec3.set(horizontalHairEnd, 20 * this.zoom * ratio, -21.5 * this.zoom, 0.0);
+        vec3.set(horizontalHairEnd, 18 * this.zoom * ratio, -21.5 * this.zoom, 0.0);
         vec3.transformMat4(horizontalHairEnd, horizontalHairEnd, invMat);
 
         addSegment(renderArrays,
@@ -10573,11 +10583,23 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 let ypos = label.y * 48.0 -24.;
                 drawString(label.text,xpos,ypos, 0.0, label.font, false);
         });
-        const scale_length = 10.0*this.zoom* this.gl.viewportWidth / this.gl.viewportHeight;
         if(this.showFPS) drawString(this.fpsText, -23.5*ratio, -23.5, 0.0, "20px helvetica", false);
-        //These locations are a bit tricky ...
-        let scale_bar_text_x = 14 * this.gl.viewportWidth / this.gl.viewportHeight;
-        if(this.showScaleBar) drawString(scale_length.toFixed(2)+"Å", scale_bar_text_x, -21.5, 0.0, "30px helvetica", false);
+
+        const scale_fac = 10.0*this.zoom* this.gl.viewportWidth / this.gl.viewportHeight;
+        let scale_pow = Math.pow(10,Math.floor(Math.log(scale_fac)/Math.log(10)))
+        let scale_length_fac = scale_pow / scale_fac
+        if(scale_length_fac<0.5) scale_pow *=2
+        if(scale_length_fac*2<0.5) scale_pow *=2.5
+
+        let scale_bar_text_x = 18.5 * this.gl.viewportWidth / this.gl.viewportHeight;
+        if(this.showScaleBar){
+            if(scale_pow>1.1){
+                drawString(Math.floor(scale_pow)+"Å", scale_bar_text_x, -22.5, 0.0, "30px helvetica", false);
+            } else {
+                drawString(scale_pow.toFixed(1)+"Å", scale_bar_text_x, -22.5, 0.0, "30px helvetica", false);
+            }
+        }
+
         if(this.showShortCutHelp) {
             const fontSize = this.gl.viewportHeight * 0.02
             const font = `${fontSize > 20 ? 20 : fontSize}px helvetica`
