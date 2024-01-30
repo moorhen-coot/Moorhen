@@ -1,17 +1,19 @@
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from 'react-redux';
-import {Card, Col, Row } from "react-bootstrap";
-import {useCallback, useEffect, useState} from "react";
+import { Card, Col, Row } from "react-bootstrap";
+import { useCallback, useEffect, useRef } from "react";
 import { guid } from "../../utils/MoorhenUtils";
-import {privateer} from "../../types/privateer";
+import { privateer } from "../../types/privateer";
 
 export const MoorhenCarbohydrateCard = (props: {
     carbohydrate: privateer.ResultsEntry;
     molecule: moorhen.Molecule;
 }) => {
 
+    const divRef = useRef<HTMLDivElement | null>(null)
+    
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
-    let globalUseList;
+
     const { carbohydrate, molecule } = props
 
     const handleClick = useCallback(async (e) => {
@@ -21,38 +23,27 @@ export const MoorhenCarbohydrateCard = (props: {
         }
     }, []);
 
+    const stopPropagation = useCallback((e) => {
+        e.stopPropagation();
+    }, [])
+
     useEffect(() => {
-        return () => {
-            if (globalUseList === null) {return}
-            for (let i = 0; i < globalUseList.length; i++) {
-                globalUseList[i].removeEventListener('click', handleClick);
-                globalUseList[i].removeEventListener('mousedown', (e) => {e.stopPropagation();});
-                globalUseList[i].removeEventListener('touchstart', (e) => {e.stopPropagation();});
+        if (divRef.current !== null) {
+            var useList = divRef.current.querySelectorAll('use');
+            for (let i = 0; i < useList.length; i++) {
+                useList[i].addEventListener('click', handleClick);
+                useList[i].addEventListener('mousedown', stopPropagation, {passive: true});
+                useList[i].addEventListener('touchstart', stopPropagation, {passive: true});
             }
         }
-    }, []);
-
-    const sugarRef = useCallback(
-        (node: HTMLElement | null) => {
-            if (node !== null) {
-                node.querySelector('svg').style.display = 'block';
-                node.querySelector('svg').style.margin = 'auto';
-
-                const useList = node.querySelectorAll('use');
-                globalUseList = useList
-                for (let i = 0; i < useList.length; i++) {
-                    useList[i].addEventListener('click', handleClick);
-                    useList[i].addEventListener('mousedown', (e) => {
-                        e.stopPropagation();
-                    }, {passive: true});
-                    useList[i].addEventListener('touchstart', (e) => {
-                        e.stopPropagation();
-                    }, {passive: true});
-                }
+        return () => {
+            for (let i = 0; i < useList.length; i++) {
+                useList[i].removeEventListener('click', handleClick);
+                useList[i].removeEventListener('mousedown', stopPropagation);
+                useList[i].removeEventListener('touchstart', stopPropagation);
             }
-        }, []
-    );
-
+        }
+    }, [handleClick, stopPropagation]);
 
     // For some reason a random key needs to be used here otherwise the scroll of the card list gets reset with every re-render
     return <Card key={guid()} style={{marginTop: '0.5rem'}}>
@@ -62,12 +53,12 @@ export const MoorhenCarbohydrateCard = (props: {
                         <div style={{display: "flex", flexDirection: "column", width: width}}>
                             <h4>ID: {carbohydrate.id}</h4>
                             <div
+                            ref={divRef}
                             style={{display: "flex", padding: "1rem"}}
                                 id="svgContainer"
                                 dangerouslySetInnerHTML={{
                                 __html: carbohydrate.svg,
                             }}
-                            ref={sugarRef}
                             />
                         </div>
                     </Col>
