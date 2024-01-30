@@ -17,6 +17,8 @@ export const MoorheFindLigandModal = (props: { show: boolean; setShow: React.Dis
     const maps = useSelector((state: moorhen.State) => state.maps)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const animateRefine = useSelector((state: moorhen.State) => state.miscAppSettings.animateRefine)
+    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
     const intoMoleculeRef = useRef<HTMLSelectElement | null>(null)
     const ligandMoleculeRef = useRef<HTMLSelectElement | null>(null)
@@ -40,6 +42,14 @@ export const MoorheFindLigandModal = (props: { show: boolean; setShow: React.Dis
         }
     }, [ligandResults])
 
+    const handleRefinement = useCallback(async (ligandMolecule: moorhen.Molecule) => {
+        if (animateRefine) {
+            ligandMolecule.refineResiduesUsingAtomCidAnimated('//', activeMap, -1)
+        } else {
+            ligandMolecule.refineResiduesUsingAtomCid('//', 'ALL')
+        }
+    }, [animateRefine, activeMap])
+
     const getLigandCard = (molecule: moorhen.Molecule, newLigandMolecule: moorhen.Molecule) => {
         return <Card key={newLigandMolecule.molNo} style={{marginTop: '0.5rem'}}>
             <Card.Body style={{padding:'0.5rem'}}>
@@ -56,7 +66,7 @@ export const MoorheFindLigandModal = (props: { show: boolean; setShow: React.Dis
                         </IconButton>
                         </Tooltip>
                         <Tooltip title="Refine">
-                        <IconButton style={{marginRight:'0.5rem'}} onClick={() => newLigandMolecule.refineResiduesUsingAtomCid('//', 'ALL') }>
+                        <IconButton style={{marginRight:'0.5rem'}} onClick={() => handleRefinement(newLigandMolecule)}>
                             <CrisisAlertOutlined/>
                         </IconButton>
                         </Tooltip>

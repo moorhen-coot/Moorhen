@@ -715,13 +715,27 @@ const autoReadMtzInfoVectToJSArray = (autoReadMtzInfoArray: emscriptem.vector<li
             F: autoReadMtzInfo.F,
             phi: autoReadMtzInfo.phi,
             w: autoReadMtzInfo.w,
-            Rfree: autoReadMtzInfo.Rfree,
-            F_obs: autoReadMtzInfo.F_obs,
-            sigF_obs: autoReadMtzInfo.sigF_obs,
             weights_used: autoReadMtzInfo.weights_used,
+            // This relies on the column label being of the form /crystal/dataset/label
+            Rfree: autoReadMtzInfo.Rfree ? autoReadMtzInfo.Rfree.split('/')[3] : "",
+            F_obs: autoReadMtzInfo.F_obs ? autoReadMtzInfo.F_obs.split('/')[3] : "",
+            sigF_obs: autoReadMtzInfo.sigF_obs ? autoReadMtzInfo.sigF_obs.split('/')[3] : "",
         })
     }
     autoReadMtzInfoArray.delete()
+
+    // Add the column labels for the observations to the returned maps
+    if (returnResult.some(item => item.idx === -1)) {
+        const obsColumnsData = returnResult.find(item => item.idx === -1)
+        if (obsColumnsData && obsColumnsData.F_obs && obsColumnsData.Rfree && obsColumnsData.sigF_obs) {
+            returnResult.forEach(item => {
+                item.F_obs = obsColumnsData.F_obs
+                item.sigF_obs = obsColumnsData.sigF_obs
+                item.Rfree = obsColumnsData.Rfree
+            })
+        }
+        returnResult = returnResult.filter(item => item.idx !== -1)
+    }
     
     return returnResult
 }
@@ -1138,6 +1152,7 @@ onmessage = function (e) {
                 postMessage({ consoleMessage: 'Initialized molecules_container', message: e.data.message, messageId: e.data.messageId })
                 cootModule = returnedModule;
                 molecules_container = new cootModule.molecules_container_js(false)
+                molecules_container.set_use_gemmi(false)
                 molecules_container.set_show_timings(false)
                 molecules_container.fill_rotamer_probability_tables()
                 molecules_container.set_map_sampling_rate(1.7)

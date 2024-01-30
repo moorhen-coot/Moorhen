@@ -8,7 +8,6 @@ import { useCallback, useEffect, useRef } from "react"
 import { cidToSpec } from '../../utils/MoorhenUtils';
 import { webGL } from "../../types/mgWebGL"
 import { setIsDraggingAtoms } from "../../store/generalStatesSlice"
-import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import { triggerScoresUpdate } from "../../store/connectedMapsSlice"
 
 export const MoorhenAcceptRejectDragAtoms = (props: {
@@ -38,24 +37,10 @@ export const MoorhenAcceptRejectDragAtoms = (props: {
             setTimeout(() => finishDragging(acceptTransform), 100)
             return
         }
+        props.moleculeRef.current.mergeFragmentFromRefinement(props.cidRef.current.join('||'), moltenFragmentRef.current, acceptTransform, false)
         if (acceptTransform) {
-            await props.commandCentre.current.cootCommand({
-                returnType: 'status',
-                command: 'clear_refinement',
-                commandArgs: [props.moleculeRef.current.molNo],
-            }, false)
-            await props.commandCentre.current.cootCommand({
-                returnType: 'status',
-                command: 'replace_fragment',
-                commandArgs: [props.moleculeRef.current.molNo, moltenFragmentRef.current.molNo, props.cidRef.current.join('||')],
-                changesMolecules: [props.moleculeRef.current.molNo]
-            }, true)
-            props.moleculeRef.current.atomsDirty = true
-            await props.moleculeRef.current.redraw()
             dispatch( triggerScoresUpdate(props.moleculeRef.current.molNo) )
         }
-        moltenFragmentRef.current.delete()
-        props.moleculeRef.current.unhideAll()
         dispatch( setIsDraggingAtoms(false) )
     }
 
@@ -157,33 +142,14 @@ export const MoorhenAcceptRejectDragAtoms = (props: {
             // This is only necessary in development because React.StrictMode mounts components twice
             // @ts-ignore
             moltenFragmentRef.current = 1
+    
             /* Copy the component to move into a new molecule */
-            const copyResult = await props.commandCentre.current.cootCommand({
-                returnType: 'int',
-                command: 'copy_fragment_for_refinement_using_cid',
-                commandArgs: [props.moleculeRef.current.molNo, props.cidRef.current.join('||')]
-            }, false)
-            const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath)
-            newMolecule.molNo = copyResult.data.result.result
+            const newMolecule = await props.moleculeRef.current.copyFragmentForRefinement(props.cidRef.current, activeMap)
             moltenFragmentRef.current = newMolecule
-    
-            /* Initiate refinement */
-            await props.commandCentre.current.cootCommand({
-                returnType: 'status',
-                command: 'init_refinement_of_molecule_as_fragment_based_on_reference',
-                commandArgs: [moltenFragmentRef.current.molNo, props.moleculeRef.current.molNo, activeMap.molNo]
-            }, false)
-    
-            /* Redraw with animation after delay so that the context menu does not refresh empty*/
-            setTimeout(async () => {
-                await Promise.all(props.cidRef.current.map(cid => {
-                    return props.moleculeRef.current.hideCid(cid)
-                }))
-                moltenFragmentRef.current.setAtomsDirty(true)
-                await moltenFragmentRef.current.fetchIfDirtyAndDraw('CBs')
-                await moltenFragmentRef.current.animateRefine(10, 5, 10)
-                props.glRef.current.setDraggableMolecule(newMolecule)
-            }, 1)
+        
+            /* Redraw with animation*/
+            await moltenFragmentRef.current.animateRefine(10, 5, 10)
+            props.glRef.current.setDraggableMolecule(newMolecule)
         }
         
         startDragging()    

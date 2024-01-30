@@ -4,6 +4,7 @@ export const sceneSettingsSlice = createSlice({
   name: 'sceneSettings',
   initialState: {
     defaultBackgroundColor: null,
+    drawScaleBar: null,
     drawCrosshairs: null,
     drawFPS: null,
     drawMissingLoops: null,
@@ -31,6 +32,9 @@ export const sceneSettingsSlice = createSlice({
   reducers: {
     setDefaultBackgroundColor: (state, action: {payload: [number, number, number, number], type: string}) => {
         return {...state, defaultBackgroundColor: action.payload}
+    },
+    setDrawScaleBar: (state, action: {payload: boolean, type: string}) => {
+      return {...state, drawScaleBar: action.payload}
     },
     setDrawCrosshairs: (state, action: {payload: boolean, type: string}) => {
       return {...state, drawCrosshairs: action.payload}
@@ -104,7 +108,7 @@ export const sceneSettingsSlice = createSlice({
 }})
 
 export const {
-    setDefaultBackgroundColor, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
+    setDefaultBackgroundColor, setDrawCrosshairs, setDrawScaleBar, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
     setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap,  
     setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpinTest, setDoOutline, setDepthBlurRadius,
     setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setBackgroundColor

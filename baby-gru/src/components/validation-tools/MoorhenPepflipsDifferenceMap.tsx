@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import { Col, Row, Form, Card, Button } from 'react-bootstrap';
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase"
 import { MoorhenSlider } from '../misc/MoorhenSlider' 
@@ -6,6 +6,10 @@ import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
 import { triggerScoresUpdate } from "../../store/connectedMapsSlice";
+import { MoorhenResidueSteps } from '../misc/MoorhenResidueSteps';
+import { setNotificationContent } from '../../store/generalStatesSlice';
+import { cidToSpec, sleep } from '../../utils/MoorhenUtils';
+import { setShowPepFlipsValidationModal } from "../../store/activeModalsSlice";
 
 interface Props extends moorhen.CollectedProps {
     dropdownId: number;
@@ -25,30 +29,29 @@ export const MoorhenPepflipsDifferenceMap = (props: Props) => {
 
     const filterMapFunction = (map: moorhen.Map) => map.isDifference
 
-    const flipPeptide = async (selectedMolNo: number, chainId: string, insCode: string,  seqNum: number) => {
+    const flipPeptide = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string) => {
         await props.commandCentre.current.cootCommand({
             returnType: "status",
             command: "flipPeptide_cid",
-            commandArgs: [selectedMolNo, `/${insCode}/${chainId}/${seqNum}/C`, ''],
-            changesMolecules: [selectedMolNo]
+            commandArgs: [selectedMolecule.molNo, `//${chainId}/${seqNum}/C`, ''],
+            changesMolecules: [selectedMolecule.molNo]
         }, true)
 
         if (enableRefineAfterMod) {
             await props.commandCentre.current.cootCommand({
                 returnType: "status",
                 command: 'refine_residues_using_atom_cid',
-                commandArgs: [selectedMolNo, `/${insCode}/${chainId}/${seqNum}`, 'TRIPLE', 4000],
-                changesMolecules: [selectedMolNo]
+                commandArgs: [selectedMolecule.molNo, `//${chainId}/${seqNum}`, 'TRIPLE', 4000],
+                changesMolecules: [selectedMolecule.molNo]
             }, true)    
         }
 
-        const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedMolNo)
         selectedMolecule.setAtomsDirty(true)
-        selectedMolecule.redraw()
+        await selectedMolecule.redraw()
         dispatch( triggerScoresUpdate(selectedMolecule.molNo) )
     }
 
-    const handleFlip = (...args: [number, string, string, number]) => {
+    const handleFlip = (...args: [moorhen.Molecule, string, number, string]) => {
         if (args.every(arg => arg !== null)) {
             flipPeptide(...args)
         }
@@ -72,9 +75,43 @@ export const MoorhenPepflipsDifferenceMap = (props: Props) => {
 
         return newPepflips
     }
+
+    const handleFlipAll = useCallback(async (selectedMolecule: moorhen.Molecule, residues: libcootApi.InterestingPlaceDataJS[]) => {
+        dispatch( setShowPepFlipsValidationModal(false) )
+        if (selectedMolecule) {
+            const handleStepFlipPeptide = async (cid: string) => {
+                const resSpec = cidToSpec(cid)
+                await selectedMolecule.centreAndAlignViewOn(cid, false)
+                await sleep(1000)
+                await flipPeptide(selectedMolecule, resSpec.chain_id, resSpec.res_no, resSpec.ins_code)
+            }
+
+            const residueList = residues.map(residue => {
+                return {
+                    cid: `//${residue.chainId}/${residue.resNum}/`
+                }
+            })
+        
+            dispatch( setNotificationContent(
+                <MoorhenResidueSteps 
+                    timeCapsuleRef={props.timeCapsuleRef}
+                    residueList={residueList}
+                    sleepTime={1500}
+                    onStep={handleStepFlipPeptide}
+                    onStart={async () => {
+                        await selectedMolecule.fetchIfDirtyAndDraw('rama')
+                    }}
+                    onStop={() => {
+                        selectedMolecule.clearBuffersOfStyle('rama')
+                    }}
+                />
+            ))
+        }
+    }, [molecules])
     
-    const getCards = (selectedModel: number, selectedMap: number, newPepflips: libcootApi.InterestingPlaceDataJS[]): JSX.Element[] => {
-        return newPepflips.map((flip, index) => {
+    const getCards = useCallback((selectedModel: number, selectedMap: number, newPepflips: libcootApi.InterestingPlaceDataJS[]): JSX.Element[] => {
+        const selectedMolecule =  molecules.find(molecule => molecule.molNo === selectedModel)
+        let cards = newPepflips.map((flip, index) => {
             return <Card key={index} style={{marginTop: '0.5rem'}}>
                     <Card.Body style={{padding:'0.5rem'}}>
                         <Row style={{display:'flex', justifyContent:'between'}}>
@@ -82,13 +119,11 @@ export const MoorhenPepflipsDifferenceMap = (props: Props) => {
                                 {flip.buttonLabel}
                             </Col>
                             <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
-                                <Button style={{marginRight:'0.5rem'}} onClick={() => {
-                                            props.glRef.current.setOriginAnimated([-flip.coordX, -flip.coordY, -flip.coordZ])
-                                }}>
+                                <Button style={{marginRight:'0.5rem'}} onClick={() => selectedMolecule.centreAndAlignViewOn(`//${flip.chainId}/${flip.resNum}-${flip.resNum}/`, false)}>
                                     View
                                 </Button>
                                 <Button style={{marginRight:'0.5rem'}} onClick={() => {
-                                            handleFlip(selectedModel, flip.chainId, flip.insCode,  flip.resNum)
+                                    handleFlip(selectedMolecule, flip.chainId, flip.resNum, flip.insCode)
                                 }}>
                                     Flip
                                 </Button>
@@ -97,7 +132,14 @@ export const MoorhenPepflipsDifferenceMap = (props: Props) => {
                     </Card.Body>
                 </Card>
         })
-    }
+        if (cards.length > 0) {
+            const button = <Button style={{width: '100%'}} onClick={() => handleFlipAll(selectedMolecule, newPepflips)} key='flip-all-button'>
+                Flip all
+            </Button>
+            cards = [button, ...cards]
+        }
+        return cards
+    }, [molecules])
 
     return <MoorhenValidationListWidgetBase 
                 sideBarWidth={props.sideBarWidth}

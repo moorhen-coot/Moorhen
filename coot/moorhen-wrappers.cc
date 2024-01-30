@@ -179,7 +179,7 @@ bool isSugar(const std::string &resName);
 class molecules_container_js : public molecules_container_t {
     public:
         explicit molecules_container_js(bool verbose=true) : molecules_container_t(verbose) {
-            use_gemmi = false;
+            
         }
 
         std::vector<coot::residue_spec_t> GetSecondaryStructure(int imol, int imodel=1) {
@@ -303,26 +303,6 @@ class molecules_container_js : public molecules_container_t {
             }
             return "";
         }
-
-        /** Let's comment this out for the time being
-        std::string export_imol_as_gltf_string(int imol) {
-            std::string file_name = generate_rand_str(32);
-            file_name += ".gltf";
-            
-            if (molecules_container_t::is_valid_model_molecule(imol)) {
-                molecules_container_t::export_model_molecule_as_gltf(imol, file_name);
-            } else if (molecules_container_t::is_valid_map_molecule(imol)) {
-                molecules_container_t::export_map_molecule_as_gltf(imol, file_name);
-            } else {
-                std::cout << "Invalid imol " << imol << " in export_imol_as_gltf_string" << std::endl;
-                return "";
-            }
-            
-            const std::string gltf_string = read_text_file(file_name);
-            remove_file(file_name);
-            return gltf_string;
-        } 
-        */
 
         int read_pdb_string(const std::string &pdb_string, const std::string &molecule_name) {
             std::string file_name = generate_rand_str(32);
@@ -1071,6 +1051,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     value_object<molecules_container_t::auto_read_mtz_info_t>("auto_read_mtz_info_t")
     .field("idx", &molecules_container_t::auto_read_mtz_info_t::idx)
     .field("F", &molecules_container_t::auto_read_mtz_info_t::F)
+    .field("F_obs", &molecules_container_t::auto_read_mtz_info_t::F_obs)
+    .field("sigF_obs", &molecules_container_t::auto_read_mtz_info_t::sigF_obs)
+    .field("Rfree", &molecules_container_t::auto_read_mtz_info_t::Rfree)
     .field("phi", &molecules_container_t::auto_read_mtz_info_t::phi)
     .field("w", &molecules_container_t::auto_read_mtz_info_t::w)
     .field("weights_used", &molecules_container_t::auto_read_mtz_info_t::weights_used)
@@ -1107,6 +1090,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("get_use_gemmi", &molecules_container_t::get_use_gemmi)
+    .function("set_use_gemmi", &molecules_container_t::set_use_gemmi)
     .function("generate_local_self_restraints", &molecules_container_t::generate_local_self_restraints)
     .function("get_ncs_related_chains", &molecules_container_t::get_ncs_related_chains)
     .function("set_max_number_of_threads", &molecules_container_t::set_max_number_of_threads)

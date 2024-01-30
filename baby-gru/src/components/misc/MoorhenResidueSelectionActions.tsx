@@ -37,6 +37,7 @@ export const MoorhenResidueSelectionActions = (props) => {
     const isDraggingAtoms = useSelector((state: moorhen.State) => state.generalStates.isDraggingAtoms)
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
+    const animateRefine = useSelector((state: moorhen.State) => state.miscAppSettings.animateRefine)
 
     const clearSelection = useCallback(() => {
         dispatch( clearResidueSelection() )
@@ -158,21 +159,33 @@ export const MoorhenResidueSelectionActions = (props) => {
     }, [residueSelection, clearSelection])
 
     const handleRefinement = useCallback(async () => {
+        molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
         if (residueSelection.isMultiCid && Array.isArray(residueSelection.cid)) {
-            await residueSelection.molecule.refineResiduesUsingAtomCid(residueSelection.cid.join('||'), 'LITERAL')
+            if (animateRefine) {
+                await residueSelection.molecule.refineResiduesUsingAtomCidAnimated(residueSelection.cid.join('||'), activeMap, -1)
+            } else {
+                await residueSelection.molecule.refineResiduesUsingAtomCid(residueSelection.cid.join('||'), 'LITERAL')
+            }
         } else if (residueSelection.molecule && residueSelection.cid) {
             const startResSpec = cidToSpec(residueSelection.first)
             const stopResSpec = cidToSpec(residueSelection.second)
             const sortedResNums = [startResSpec.res_no, stopResSpec.res_no].sort(function(a, b){return a - b})
-            await residueSelection.molecule.refineResidueRange(startResSpec.chain_id, sortedResNums[0], sortedResNums[1], 5000, true)
-            dispatch( triggerScoresUpdate(residueSelection.molecule.molNo) )
+            if (animateRefine) {
+                await residueSelection.molecule.refineResiduesUsingAtomCidAnimated(`/${startResSpec.mol_no}/${startResSpec.chain_id}/${sortedResNums[0]}-${sortedResNums[1]}`, activeMap, -1)
+            } else {
+                await residueSelection.molecule.refineResidueRange(startResSpec.chain_id, sortedResNums[0], sortedResNums[1], 5000, true)
+            }
         } else if (residueSelection.molecule && residueSelection.first) {
             const startResSpec = cidToSpec(residueSelection.first)
-            await residueSelection.molecule.refineResidueRange(startResSpec.chain_id, startResSpec.res_no, startResSpec.res_no, 5000, true)
-            dispatch( triggerScoresUpdate(residueSelection.molecule.molNo) )
+            if (animateRefine) {
+                await residueSelection.molecule.refineResiduesUsingAtomCidAnimated(`/${startResSpec.mol_no}/${startResSpec.chain_id}/${startResSpec.res_no}-${startResSpec.res_no}`, activeMap, -1)
+            } else {
+                await residueSelection.molecule.refineResidueRange(startResSpec.chain_id, startResSpec.res_no, startResSpec.res_no, 5000, true)
+            }
         }
+        dispatch( triggerScoresUpdate(residueSelection.molecule.molNo) )
         clearSelection()
-    }, [clearSelection, residueSelection])
+    }, [clearSelection, residueSelection, animateRefine, activeMap])
 
     const handleDelete = useCallback(async () => {
         let cid: string

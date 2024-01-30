@@ -4,7 +4,7 @@ import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MoorhenScenePresetMenuItem } from "../menu-item/MoorhenScenePresetMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch } from "react-redux";
-import { setDoPerspectiveProjection, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawInteractions, setDrawMissingLoops } from "../../store/sceneSettingsSlice";
+import { setDoPerspectiveProjection, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawInteractions, setDrawMissingLoops, setDrawScaleBar } from "../../store/sceneSettingsSlice";
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { convertViewtoPx } from "../../utils/MoorhenUtils";
 import { MenuItem } from "@mui/material";
@@ -13,6 +13,7 @@ import { setShowSceneSettingsModal } from "../../store/activeModalsSlice";
 export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
     const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering)
+    const drawScaleBar = useSelector((state: moorhen.State) => state.sceneSettings.drawScaleBar)
     const drawCrosshairs = useSelector((state: moorhen.State) => state.sceneSettings.drawCrosshairs)
     const drawFPS = useSelector((state: moorhen.State) => state.sceneSettings.drawFPS)
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops)
@@ -51,6 +52,13 @@ export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                         checked={drawCrosshairs}
                         onChange={() => {dispatch( setDrawCrosshairs(!drawCrosshairs) )}}
                         label="Show crosshairs"/>
+                </InputGroup>
+                <InputGroup className='moorhen-input-group-check'>
+                    <Form.Check 
+                        type="switch"
+                        checked={drawScaleBar}
+                        onChange={() => {dispatch( setDrawScaleBar(!drawScaleBar) )}}
+                        label="Show scale bar"/>
                 </InputGroup>
                 <InputGroup className='moorhen-input-group-check'>
                     <Form.Check 
