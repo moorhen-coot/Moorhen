@@ -5,6 +5,7 @@ import { webGL } from "../../types/mgWebGL";
 import { useSelector } from "react-redux";
 import { MoorhenCarbohydrateCard } from "../card/MoorhenCarbohydrateCard";
 import { privateer } from "../../types/privateer";
+import { LinearProgress } from "@mui/material";
 
 export const MoorhenCarbohydrateList = (props: {
     setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -16,7 +17,7 @@ export const MoorhenCarbohydrateList = (props: {
 
     const newCootCommandAlert = useSelector((state: moorhen.State) => state.generalStates.newCootCommandAlert)
     
-    const [carbohydrateList, setCarbohydrateList] = useState<privateer.ResultsEntry[]>([])
+    const [carbohydrateList, setCarbohydrateList] = useState<privateer.ResultsEntry[] | null>(null)
 
     useEffect(() => {
         const validate = async () => {
@@ -35,7 +36,9 @@ export const MoorhenCarbohydrateList = (props: {
     }, [newCootCommandAlert])
 
     return <>
-            {carbohydrateList.length > 0 ?
+            {carbohydrateList === null ?
+                <LinearProgress variant="indeterminate"/>
+            : carbohydrateList.length > 0 ?
                 <>
                     <Row style={{ maxHeight: props.height, overflowY: 'auto' }}>
                         <Col style={{paddingLeft: '0.5rem', paddingRight: '0.5rem'}}>
