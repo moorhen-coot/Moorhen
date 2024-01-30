@@ -1,4 +1,4 @@
-import {emscriptem} from "./emscriptem";
+import { emscriptem } from "./emscriptem";
 
 export namespace privateer {
     type TorsionEntry = {

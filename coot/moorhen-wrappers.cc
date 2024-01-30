@@ -830,19 +830,19 @@ emscripten::val testFloat32Array(const emscripten::val &floatArrayObject){
 }
 
 EMSCRIPTEN_BINDINGS(my_module) {
-// PRIVATEER
- value_object<TorsionEntry>("TorsionEntry")
+    // PRIVATEER
+    value_object<TorsionEntry>("TorsionEntry")
       .field("sugar_1", &TorsionEntry::sugar_1)
       .field("sugar_2", &TorsionEntry::sugar_2)
       .field("atom_number_1", &TorsionEntry::atom_number_1)
       .field("atom_number_2", &TorsionEntry::atom_number_2)
       .field("phi", &TorsionEntry::phi)
-      .field("psi", &TorsionEntry::psi);
+      .field("psi", &TorsionEntry::psi)
+    ;
 
     register_vector<TorsionEntry>("vector<TorsionEntry>");
 
-
-  value_object<TableEntry>("TableEntry")
+    value_object<TableEntry>("TableEntry")
       .field("svg", &TableEntry::svg)
       .field("wurcs", &TableEntry::wurcs)
       .field("chain", &TableEntry::chain)
@@ -855,12 +855,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
       .field("puckering_err", &TableEntry::puckering_err)
       .field("chirality_err", &TableEntry::chirality_err)
       .field("torsions", &TableEntry::torsions)
-      ;
+    ;
 
- function("validate", &validate);
-  register_vector<TableEntry>("Table");
-// END PRIVATEER
-
+    function("validate", &validate);
+    register_vector<TableEntry>("Table");
+    // END PRIVATEER
 
     function("testFloat32Array", &testFloat32Array);
     function("getPositionsFromSimpleMesh2", &getPositionsFromSimpleMesh2);
@@ -1281,7 +1280,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_neighbours_cid",&molecules_container_js::get_neighbours_cid)
     .function("make_exportable_environment_bond_box",&molecules_container_js::make_exportable_environment_bond_box)
     .function("DrawGlycoBlocks",&molecules_container_js::DrawGlycoBlocks)
-     .function("privateer_validate",&molecules_container_js::privateer_validate)
+    .function("privateer_validate",&molecules_container_js::privateer_validate)
 
     .function("GetSecondaryStructure",&molecules_container_js::GetSecondaryStructure)
     .function("DrawMoorhenMetaBalls",&molecules_container_js::DrawMoorhenMetaBalls)

@@ -43,12 +43,12 @@ export const MoorhenLigandValidation = (props: Props) => {
     }
 
     return <MoorhenValidationListWidgetBase
-        sideBarWidth={props.sideBarWidth}
-        dropdownId={props.dropdownId}
-        accordionDropdownId={props.accordionDropdownId}
-        showSideBar={props.showSideBar}
-        enableMapSelect={false}
-        fetchData={fetchCardData}
-        getCards={getCards}
-    />
+                sideBarWidth={props.sideBarWidth}
+                dropdownId={props.dropdownId}
+                accordionDropdownId={props.accordionDropdownId}
+                showSideBar={props.showSideBar}
+                enableMapSelect={false}
+                fetchData={fetchCardData}
+                getCards={getCards}
+            />
 }

@@ -1,8 +1,9 @@
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from 'react-redux';
-import {privateer} from "../../types/privateer"
-import {MoorhenCarbohydrateCard} from "../card/MoorhenCarbohydrateCard";
-import {MoorhenValidationListWidgetBase} from "./MoorhenValidationListWidgetBase";
+import { privateer } from "../../types/privateer";
+import { MoorhenCarbohydrateCard } from "../card/MoorhenCarbohydrateCard";
+import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
+
 interface Props extends moorhen.CollectedProps {
     dropdownId: number;
     accordionDropdownId: number;
@@ -18,16 +19,12 @@ export const MoorhenCarbohydrateValidation = (props: Props) => {
     const fetchCardData = async (selectedModel: number): Promise<privateer.ResultsEntry[]> => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel)
         if (selectedMolecule) {
-            return new Promise(async (resolve, _) => {
-                const privateerResult = await props.commandCentre.current.cootCommand({
-                    command: 'privateer_validate',
-                    commandArgs: [selectedMolecule.molNo],
-                    returnType: 'privateer_results'
-                }, false)
-
-                const privateerData: privateer.ResultsEntry[] = privateerResult.data.result.result;
-                resolve(privateerData)
-            })
+            const result = await props.commandCentre.current.cootCommand({
+                command: 'privateer_validate',
+                commandArgs: [selectedMolecule.molNo],
+                returnType: 'privateer_results'
+            }, false) as moorhen.WorkerResponse<privateer.ResultsEntry[]>
+            return result.data.result.result
         }
     }
 
@@ -39,7 +36,7 @@ export const MoorhenCarbohydrateValidation = (props: Props) => {
         }
 
         return privateerResults.map((carbohydrate) => {
-            return <MoorhenCarbohydrateCard carbohydrate={carbohydrate} molecule={selectedMolecule}/>
+            return <MoorhenCarbohydrateCard key={carbohydrate.id} carbohydrate={carbohydrate} molecule={selectedMolecule}/>
         })
     }
 

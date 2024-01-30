@@ -4,7 +4,8 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useSelector } from "react-redux";
 import { MoorhenCarbohydrateCard } from "../card/MoorhenCarbohydrateCard";
-import {privateer} from "../../types/privateer";
+import { privateer } from "../../types/privateer";
+import { LinearProgress } from "@mui/material";
 
 export const MoorhenCarbohydrateList = (props: {
     setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -15,36 +16,34 @@ export const MoorhenCarbohydrateList = (props: {
 }) => {
 
     const newCootCommandAlert = useSelector((state: moorhen.State) => state.generalStates.newCootCommandAlert)
+    
     const [carbohydrateList, setCarbohydrateList] = useState<privateer.ResultsEntry[] | null>(null)
 
-    const validate = async () => {
-        if (props.molecule) {
-            props.setBusy(true)
-            const privateerResult = await props.commandCentre.current.cootCommand({
-                command: 'privateer_validate',
-                commandArgs: [props.molecule.molNo],
-                returnType: 'privateer_results'
-            }, false)
-
-            const privateerData: privateer.ResultsEntry[] = privateerResult.data.result.result;
-            setCarbohydrateList(privateerData)
-            props.setBusy(false)
-        }
-    }
-
     useEffect(() => {
+        const validate = async () => {
+            if (props.molecule) {
+                props.setBusy(true)
+                const result = await props.commandCentre.current.cootCommand({
+                    command: 'privateer_validate',
+                    commandArgs: [props.molecule.molNo],
+                    returnType: 'privateer_results'
+                }, false) as moorhen.WorkerResponse<privateer.ResultsEntry[]>
+                setCarbohydrateList(result.data.result.result)
+                props.setBusy(false)
+            }
+        }
         validate()
     }, [newCootCommandAlert])
 
     return <>
             {carbohydrateList === null ?
-            null
+                <LinearProgress variant="indeterminate"/>
             : carbohydrateList.length > 0 ?
                 <>
                     <Row style={{ maxHeight: props.height, overflowY: 'auto' }}>
                         <Col style={{paddingLeft: '0.5rem', paddingRight: '0.5rem'}}>
                             {carbohydrateList.map((carbohydrate, index) => {
-                                return <MoorhenCarbohydrateCard key={`${carbohydrate.id}`} carbohydrate={carbohydrate} molecule={props.molecule}/>
+                                return <MoorhenCarbohydrateCard key={carbohydrate.id} carbohydrate={carbohydrate} molecule={props.molecule}/>
                             })}
                         </Col>
                     </Row>

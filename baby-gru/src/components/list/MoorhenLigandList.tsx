@@ -5,6 +5,7 @@ import { webGL } from "../../types/mgWebGL";
 import { useSelector } from "react-redux";
 import { getLigandSVG } from "../../utils/MoorhenUtils";
 import { MoorhenLigandCard } from "../card/MoorhenLigandCard";
+import { LinearProgress } from "@mui/material";
 
 export const MoorhenLigandList = (props: { 
     setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -52,7 +53,7 @@ export const MoorhenLigandList = (props: {
 
     return <>
             {ligandList === null ?
-            null
+                <LinearProgress variant="indeterminate"/>
             : ligandList.length > 0 ? 
                 <>
                     <Row style={{ maxHeight: props.height, overflowY: 'auto' }}>
