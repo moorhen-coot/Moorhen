@@ -15,16 +15,9 @@ export const MoorhenCarbohydrateCard = (props: {
     const { carbohydrate, molecule } = props
 
     const handleClick = useCallback(async (e) => {
-        const newCenterString =
-            e.target.dataset.chainid +
-            '/' +
-            e.target.dataset.seqnum +
-            '(' +
-            e.target.dataset.resname +
-            ')';
-
-        if (molecule !== null) {
-            await molecule.centreOn(newCenterString);
+        if (e.target.dataset.chainid && e.target.dataset.seqnum && e.target.dataset.resname && molecule !== null) {
+            const newCenterString = `${e.target.dataset.chainid}/${e.target.dataset.seqnum}(${e.target.dataset.resname})`
+            await molecule.centreOn(newCenterString, true, true);
         }
     }, []);
 
