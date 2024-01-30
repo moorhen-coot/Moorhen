@@ -40,7 +40,6 @@ export const MoorhenMutateButton = (props: moorhen.ContextButtonProps) => {
 
     return <MoorhenContextButtonBase
         icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/mutate.svg`} alt='Mutate' />}
-        refineAfterMod={false}
         needsMapData={true}
         onCompleted={autoFitRotamer}
         toolTipLabel="Mutate residue"

@@ -11,7 +11,7 @@ import { MapContourSettingsMenuItem } from "../menu-item/MapContourSettingsMenuI
 import { MoorhenSlider } from '../misc/MoorhenSlider' 
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { useSelector, useDispatch } from "react-redux";
-import { setDefaultExpandDisplayCards, setEnableRefineAfterMod, setTransparentModalsOnMouseOut } from "../../store/miscAppSettingsSlice";
+import { setAnimateRefine, setDefaultExpandDisplayCards, setEnableRefineAfterMod, setTransparentModalsOnMouseOut } from "../../store/miscAppSettingsSlice";
 import { setAtomLabelDepthMode } from "../../store/labelSettingsSlice";
 import { setDefaultMapLitLines, setDefaultMapSurface } from "../../store/mapContourSettingsSlice";
 import { setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
@@ -37,6 +37,7 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
     const zoomWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.zoomWheelSensitivityFactor)
     const contourWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.contourWheelSensitivityFactor)
     const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.miscAppSettings.defaultExpandDisplayCards)
+    const animateRefine = useSelector((state: moorhen.State) => state.miscAppSettings.animateRefine)
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
     const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.miscAppSettings.transparentModalsOnMouseOut)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
@@ -95,7 +96,14 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
                             type="switch"
                             checked={enableRefineAfterMod}
                             onChange={() => {dispatch( setEnableRefineAfterMod(!enableRefineAfterMod) )}}
-                            label="Automatic triple refine post-modification"/>
+                            label="Automatic refinement post-modification"/>
+                    </InputGroup>
+                    <InputGroup className='moorhen-input-group-check'>
+                        <Form.Check 
+                            type="switch"
+                            checked={animateRefine}
+                            onChange={() => {dispatch( setAnimateRefine(!animateRefine) )}}
+                            label="Show animation during refinement"/>
                     </InputGroup>
                     <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
