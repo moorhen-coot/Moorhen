@@ -1,7 +1,7 @@
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from 'react-redux';
 import { Card, Col, Row } from "react-bootstrap";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useRef } from "react";
 import { guid } from "../../utils/MoorhenUtils";
 import { privateer } from "../../types/privateer";
 
