@@ -528,6 +528,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                         <MoorhenLigandList setBusy={setBusyLoadingLigands} commandCentre={props.commandCentre} molecule={props.molecule} glRef={props.glRef} height={convertViewtoPx(40, height)}/>
                     </AccordionDetails>
                 </Accordion>
+                {props.molecule.hasGlycans && 
                 <Accordion className="moorhen-accordion" disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }}>
                     <AccordionSummary style={{backgroundColor: isDark ? '#adb5bd' : '#ecf0f1'}} expandIcon={busyLoadingCarbohydrates ? <Spinner animation='border'/> : <ExpandMoreOutlined />} >
                         Carbohydrates
@@ -535,7 +536,8 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                     <AccordionDetails style={{padding: '0.2rem', backgroundColor: isDark ? '#ced5d6' : 'white'}}>
                         <MoorhenCarbohydrateList setBusy={setBusyLoadingCarbohydrates} commandCentre={props.commandCentre} molecule={props.molecule} glRef={props.glRef} height={convertViewtoPx(40, height)}/>
                     </AccordionDetails>
-                </Accordion>
+                </Accordion>            
+                }
             </div>
             </Stack>
         </Card.Body>
