@@ -18,16 +18,12 @@ export const MoorhenCarbohydrateValidation = (props: Props) => {
     const fetchCardData = async (selectedModel: number): Promise<privateer.ResultsEntry[]> => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel)
         if (selectedMolecule) {
-            return new Promise(async (resolve, _) => {
-                const privateerResult = await props.commandCentre.current.cootCommand({
-                    command: 'privateer_validate',
-                    commandArgs: [selectedMolecule.molNo],
-                    returnType: 'privateer_results'
-                }, false)
-
-                const privateerData: privateer.ResultsEntry[] = privateerResult.data.result.result;
-                resolve(privateerData)
-            })
+            const result = await props.commandCentre.current.cootCommand({
+                command: 'privateer_validate',
+                commandArgs: [selectedMolecule.molNo],
+                returnType: 'privateer_results'
+            }, false)
+            return result.data.result.result
         }
     }
 
