@@ -39,7 +39,7 @@ export const MoorhenCarbohydrateValidation = (props: Props) => {
         }
 
         return privateerResults.map((carbohydrate) => {
-            return <MoorhenCarbohydrateCard carbohydrate={carbohydrate} molecule={selectedMolecule}/>
+            return <MoorhenCarbohydrateCard key={`${carbohydrate.id}`} carbohydrate={carbohydrate} molecule={selectedMolecule}/>
         })
     }
 

@@ -1,7 +1,7 @@
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from 'react-redux';
 import {Card, Col, Row } from "react-bootstrap";
-import {useCallback, useEffect, useState} from "react";
+import {useCallback, useEffect, useRef} from "react";
 import { guid } from "../../utils/MoorhenUtils";
 import {privateer} from "../../types/privateer";
 
@@ -12,6 +12,7 @@ export const MoorhenCarbohydrateCard = (props: {
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     let globalUseList;
+    const ref = useRef(null)
     const { carbohydrate, molecule } = props
 
     const handleClick = useCallback(async (e) => {
@@ -29,6 +30,22 @@ export const MoorhenCarbohydrateCard = (props: {
     }, []);
 
     useEffect(() => {
+        if (ref.current !== null) {
+            ref.current.querySelector('svg').style.display = 'block';
+            ref.current.querySelector('svg').style.margin = 'auto';
+
+            const useList = ref.current.querySelectorAll('use');
+            globalUseList = useList
+            for (let i = 0; i < useList.length; i++) {
+                useList[i].addEventListener('click', handleClick);
+                useList[i].addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                }, {passive: true});
+                useList[i].addEventListener('touchstart', (e) => {
+                    e.stopPropagation();
+                }, {passive: true});
+            }
+        }
         return () => {
             if (globalUseList === null) {return}
             for (let i = 0; i < globalUseList.length; i++) {
@@ -37,28 +54,7 @@ export const MoorhenCarbohydrateCard = (props: {
                 globalUseList[i].removeEventListener('touchstart', (e) => {e.stopPropagation();});
             }
         }
-    }, []);
-
-    const sugarRef = useCallback(
-        (node: HTMLElement | null) => {
-            if (node !== null) {
-                node.querySelector('svg').style.display = 'block';
-                node.querySelector('svg').style.margin = 'auto';
-
-                const useList = node.querySelectorAll('use');
-                globalUseList = useList
-                for (let i = 0; i < useList.length; i++) {
-                    useList[i].addEventListener('click', handleClick);
-                    useList[i].addEventListener('mousedown', (e) => {
-                        e.stopPropagation();
-                    }, {passive: true});
-                    useList[i].addEventListener('touchstart', (e) => {
-                        e.stopPropagation();
-                    }, {passive: true});
-                }
-            }
-        }, []
-    );
+    }, [ref.current]);
 
 
     // For some reason a random key needs to be used here otherwise the scroll of the card list gets reset with every re-render
@@ -74,7 +70,7 @@ export const MoorhenCarbohydrateCard = (props: {
                                 dangerouslySetInnerHTML={{
                                 __html: carbohydrate.svg,
                             }}
-                            ref={sugarRef}
+                            ref={ref}
                             />
                         </div>
                     </Col>
