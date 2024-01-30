@@ -17,33 +17,11 @@ export const MoorhenCarbohydrateCard = (props: {
     const { carbohydrate, molecule } = props
 
     const handleClick = useCallback(async (e) => {
-        if (e.target.dataset.chainid && e.target.dataset.seqnum && e.target.dataset.resname && molecule !== null) {
+        if (e.target.dataset?.chainid && e.target.dataset?.seqnum && e.target.dataset?.resname && molecule !== null) {
             const newCenterString = `${e.target.dataset.chainid}/${e.target.dataset.seqnum}(${e.target.dataset.resname})`
             await molecule.centreOn(newCenterString, true, true);
         }
     }, []);
-
-    const stopPropagation = useCallback((e) => {
-        e.stopPropagation();
-    }, [])
-
-    useEffect(() => {
-        if (divRef.current !== null) {
-            var useList = divRef.current.querySelectorAll('use');
-            for (let i = 0; i < useList.length; i++) {
-                useList[i].addEventListener('click', handleClick);
-                useList[i].addEventListener('mousedown', stopPropagation, {passive: true});
-                useList[i].addEventListener('touchstart', stopPropagation, {passive: true});
-            }
-        }
-        return () => {
-            for (let i = 0; i < useList.length; i++) {
-                useList[i].removeEventListener('click', handleClick);
-                useList[i].removeEventListener('mousedown', stopPropagation);
-                useList[i].removeEventListener('touchstart', stopPropagation);
-            }
-        }
-    }, [handleClick, stopPropagation]);
 
     // For some reason a random key needs to be used here otherwise the scroll of the card list gets reset with every re-render
     return <Card key={guid()} style={{marginTop: '0.5rem'}}>
@@ -53,6 +31,7 @@ export const MoorhenCarbohydrateCard = (props: {
                         <div style={{display: "flex", flexDirection: "column", width: width}}>
                             <h4>ID: {carbohydrate.id}</h4>
                             <div
+                            onClick={handleClick}
                             ref={divRef}
                             style={{display: "flex", padding: "1rem"}}
                                 id="svgContainer"
