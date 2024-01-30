@@ -23,7 +23,7 @@ export const MoorhenCarbohydrateValidation = (props: Props) => {
                 command: 'privateer_validate',
                 commandArgs: [selectedMolecule.molNo],
                 returnType: 'privateer_results'
-            }, false)
+            }, false) as moorhen.WorkerResponse<privateer.ResultsEntry[]>
             return result.data.result.result
         }
     }
