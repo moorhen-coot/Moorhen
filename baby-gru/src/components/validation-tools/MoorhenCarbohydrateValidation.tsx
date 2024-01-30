@@ -1,8 +1,9 @@
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from 'react-redux';
-import {privateer} from "../../types/privateer"
-import {MoorhenCarbohydrateCard} from "../card/MoorhenCarbohydrateCard";
-import {MoorhenValidationListWidgetBase} from "./MoorhenValidationListWidgetBase";
+import { privateer } from "../../types/privateer";
+import { MoorhenCarbohydrateCard } from "../card/MoorhenCarbohydrateCard";
+import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
+
 interface Props extends moorhen.CollectedProps {
     dropdownId: number;
     accordionDropdownId: number;
