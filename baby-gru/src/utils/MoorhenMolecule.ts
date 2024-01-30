@@ -300,7 +300,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             returnType: "status",
             command: 'get_neighbours_cid',
             commandArgs: [this.molNo, selectionCid, maxDist]
-        }, true) as moorhen.WorkerResponse<string>
+        }, false) as moorhen.WorkerResponse<string>
 
         const multiCidRanges: string[] = response.data.result.result.split('||')
         return multiCidRanges
@@ -426,6 +426,81 @@ export class MoorhenMolecule implements moorhen.Molecule {
             await newMolecule.centreOn('/*/*/*/*', true, true)
         }
         return newMolecule
+    }
+
+    /**
+     * Copy a fragment of the current model into a new molecule for refinement
+     * @param {string[]} cid - The CID selection indicating the residues that will be copied into the new fragment
+     * @param {moorhen.Map} refinementMap - The map instance used in the refinement
+     * @param {boolean} redraw - Indicate if the molecules should be redrawn
+     * @param {boolean} redrawFragmentFirst - Indicate if the fragment should be redrawn first
+     * @returns {moorhen.Molecule} A new molecule instance that can be used for refinement
+     */
+    async copyFragmentForRefinement(cid: string[], refinementMap: moorhen.Map, redraw: boolean = true, redrawFragmentFirst: boolean = true): Promise<moorhen.Molecule> {
+        const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.monomerLibraryPath)
+        const copyResult = await this.commandCentre.current.cootCommand({
+            returnType: 'int',
+            command: 'copy_fragment_for_refinement_using_cid',
+            commandArgs: [this.molNo, cid.join('||')]
+        }, false)
+        
+        if (copyResult.data.result.result !== -1) {
+            newMolecule.molNo = copyResult.data.result.result
+            await this.commandCentre.current.cootCommand({
+                returnType: 'status',
+                command: 'init_refinement_of_molecule_as_fragment_based_on_reference',
+                commandArgs: [newMolecule.molNo, this.molNo, refinementMap.molNo]
+            }, false)
+            newMolecule.setAtomsDirty(true)
+            if (redraw) {
+                await Promise.all(cid.map(cid => {
+                    return this.hideCid(cid, false)
+                }))
+                if (redrawFragmentFirst) { 
+                    await newMolecule.fetchIfDirtyAndDraw('CBs')
+                    await this.redraw()
+                } else {
+                    await this.redraw()
+                    await newMolecule.fetchIfDirtyAndDraw('CBs')
+                }
+            }
+        } else {
+            console.warn(`Unable to copy fragment for refinement using cid ${cid} for molecule ${this.molNo}`)
+        }
+        
+        return newMolecule    
+    }
+
+    /**
+     * Merge a fragment that was used for refinement into the current molecule
+     * @param {string[]} cid - The CID selection used to create the fragment
+     * @param {moorhen.Molecule} fragmentMolecule - The fragment molecule
+     * @param {boolean} [acceptTransform=true] - Indicates whether the transformation should be accepted
+     * @param {boolean} [refineAfterMerge=false] - Indicates whether another cycle of refinement should be run after merging the fragment
+     */
+    async mergeFragmentFromRefinement(cid: string, fragmentMolecule: moorhen.Molecule, acceptTransform: boolean = true, refineAfterMerge: boolean = false) {
+        
+        await this.commandCentre.current.cootCommand({
+            returnType: 'status',
+            command: 'clear_refinement',
+            commandArgs: [this.molNo],
+        }, false)
+        
+        if (acceptTransform) {
+            await this.commandCentre.current.cootCommand({
+                returnType: 'status',
+                command: 'replace_fragment',
+                commandArgs: [this.molNo, fragmentMolecule.molNo, cid],
+                changesMolecules: [this.molNo]
+            }, false)    
+            if (refineAfterMerge) {
+                await this.refineResiduesUsingAtomCid(cid, 'LITERAL', 4000, false)
+            }
+            this.setAtomsDirty(true)
+        }
+
+        await this.unhideAll()
+        await fragmentMolecule.delete()
     }
 
     /**
@@ -768,6 +843,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
         let selectionCentre = centreOnGemmiAtoms(selectionAtomsCentre)
         if (newQuat) {
             this.glRef.current.setOriginOrientationAndZoomAnimated(selectionCentre, newQuat, zoomLevel);
+        } else {
+            await this.centreOn(selectionCid, true, true)
         }
     }
 
@@ -1598,8 +1675,28 @@ export class MoorhenMolecule implements moorhen.Molecule {
     }
 
     /**
+     * Refine a residue CID with animation
+     * @param {string[]} cid - The CID selection used to create the fragment
+     * @param {moorhen.Map} activeMap - The map instance used in the refinement
+     * @param {number} dist - The maximum distance used to get neighboring residues for the refinement. Use -1 for literal CID instead of neighbours.
+     * @param {boolean} redraw - Indicate if the molecules should be redrawn
+     * @param {boolean} redrawFragmentFirst - Indicate if the fragment should be redrawn first
+     */
+    async refineResiduesUsingAtomCidAnimated(cid: string, activeMap: moorhen.Map, dist: number = 6, redraw: boolean = true, redrawFragmentFirst: boolean = true) {
+        let cidList: string[]
+        if (dist <= 0) {
+            cidList = [cid]
+        } else {
+            cidList = await this.getNeighborResiduesCids(cid, dist)
+        }
+        const newMolecule = await this.copyFragmentForRefinement(cidList, activeMap, redraw, redrawFragmentFirst)
+        await newMolecule.animateRefine(50, 30, 50)
+        await this.mergeFragmentFromRefinement(cidList.join('||'), newMolecule, true, true)
+    }
+
+    /**
      * Refine a molecule with animation effect
-     * @param {number} n_cyc - The totale number of refinement cycles for each iteration
+     * @param {number} n_cyc - The total number of refinement cycles for each iteration
      * @param {number} n_iteration - The number of iterations
      * @param {number} [final_n_cyc=100] - Number of refinement cycles in the last iteration
      */

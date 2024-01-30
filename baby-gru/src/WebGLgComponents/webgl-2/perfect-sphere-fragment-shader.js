@@ -141,7 +141,7 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
 
       vec4 theColor = vec4(vColor);
 
-      vec4 color = (theColor*Iamb + theColor* Idiff);
+      vec4 color = (1.5*theColor*Iamb + 1.2*theColor*Idiff);
       if(shad<0.5) {
           shad += .5;
           shad = min(shad,1.0);

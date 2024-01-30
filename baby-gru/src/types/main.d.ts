@@ -109,10 +109,13 @@ declare module 'moorhen' {
         redraw: () => Promise<void>;
         setAtomsDirty: (newVal: boolean) => void;
         isVisible: (excludeBuffers?: string[]) => boolean;
-        centreAndAlignViewOn(selectionCid: string, animate?: boolean): Promise<void>;
+        centreAndAlignViewOn: (selectionCid: string, alignWithCB?: boolean, zoomLevel?: number) => Promise<void>;
         buffersInclude: (bufferIn: { id: string; }) => boolean;
         redrawRepresentation: (id: string) => Promise<void>;
         downloadAtoms(format?: 'mmcif' | 'pdb'): Promise<void>;
+        mergeFragmentFromRefinement(cid: string, fragmentMolecule: _moorhen.Molecule, acceptTransform?: boolean, refineAfterMerge?: boolean): Promise<void>;
+        copyFragmentForRefinement(cid: string[], refinementMap: _moorhen.Map, redraw?: boolean, readrawFragmentFirst?: boolean): Promise<_moorhen.Molecule>;
+        refineResiduesUsingAtomCidAnimated(cid: string, activeMap: moorhen.Map, dist?: number, redraw?: boolean, redrawFragmentFirst?: boolean): Promise<void>;
         isLigand: boolean;
         type: string;
         excludedCids: string[];
@@ -266,6 +269,9 @@ declare module 'moorhen' {
 
     function setDefaultBackgroundColor(arg0: [number, number, number, number]): any;
     module.exports = setDefaultBackgroundColor;
+    
+    function setDrawScaleBar(arg0: boolean): any;
+    module.exports = setDrawScaleBar;
     
     function setDrawCrosshairs(arg0: boolean): any;
     module.exports = setDrawCrosshairs;

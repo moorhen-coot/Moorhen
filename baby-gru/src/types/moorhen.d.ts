@@ -92,6 +92,9 @@ export namespace moorhen {
     type coorFormats = 'pdb' | 'mmcif';
     
     interface Molecule {
+        refineResiduesUsingAtomCidAnimated(cid: string, activeMap: moorhen.Map, dist?: number, redraw?: boolean, redrawFragmentFirst?: boolean): Promise<void>;
+        mergeFragmentFromRefinement(cid: string, fragmentMolecule: moorhen.Molecule, acceptTransform?: boolean, refineAfterMerge?: boolean): Promise<void>;
+        copyFragmentForRefinement(cid: string[], refinementMap: moorhen.Map, redraw?: boolean, readrawFragmentFirst?: boolean): Promise<moorhen.Molecule>;
         exportAsGltf(representationId: string): Promise<ArrayBuffer>;
         getSecondaryStructInfo(modelNumber?: number): Promise<libcootApi.ResidueSpecJS[]>;
         getNonSelectedCids(cid: string): string[];
@@ -153,7 +156,7 @@ export namespace moorhen {
         redraw: () => Promise<void>;
         setAtomsDirty: (newVal: boolean) => void;
         isVisible: (excludeBuffers?: string[]) => boolean;
-        centreAndAlignViewOn(selectionCid: string, animate?: boolean): Promise<void>;
+        centreAndAlignViewOn: (selectionCid: string, alignWithCB?: boolean, zoomLevel?: number) => Promise<void>;
         buffersInclude: (bufferIn: { id: string; }) => boolean;
         redrawRepresentation: (id: string) => Promise<void>;
         type: string;
@@ -263,9 +266,11 @@ export namespace moorhen {
         getModifiedMolNo: () => number[];
         lastModifiedMolNo: () => number;
         rebase: (id: string) => void;
+        toggleSkipTracking(): void;
         entries: HistoryEntry[];
         headId: string;
         headIsDetached: boolean;
+        timeCapsule: React.RefObject<TimeCapsule>;
     }
 
     interface HistoryEntry extends cootCommandKwargs{
@@ -504,6 +509,7 @@ export namespace moorhen {
         updateDataFiles(): Promise<(string | void)[]>;
         createBackup(keyString: string, sessionString: string): Promise<string>;
         fetchSession(arg0: boolean): Promise<backupSession>;
+        toggleDisableBackups(): void;
         moleculesRef: React.RefObject<Molecule[]>;
         mapsRef: React.RefObject<Map[]>;
         glRef: React.RefObject<webGL.MGWebGL>;
@@ -634,6 +640,7 @@ export namespace moorhen {
         defaultExpandDisplayCards: boolean;
         defaultMapLitLines: boolean;
         enableRefineAfterMod: boolean; 
+        drawScaleBar: boolean; 
         drawCrosshairs: boolean; 
         drawAxes: boolean; 
         drawFPS: boolean; 
@@ -667,6 +674,7 @@ export namespace moorhen {
         defaultUpdatingScores: string[],
         maxBackupCount: number;
         modificationCountBackupThreshold: number;
+        animateRefine: boolean;
         devMode: boolean; 
         shortCuts: string | {
             [label: string]: Shortcut;
@@ -756,6 +764,7 @@ export namespace moorhen {
         };
         sceneSettings: {
             defaultBackgroundColor: [number, number, number, number];
+            drawScaleBar: boolean; 
             drawCrosshairs: boolean; 
             drawAxes: boolean; 
             drawFPS: boolean; 
@@ -784,6 +793,7 @@ export namespace moorhen {
             defaultExpandDisplayCards: boolean; 
             transparentModalsOnMouseOut: boolean; 
             enableRefineAfterMod: boolean; 
+            animateRefine: boolean;
         };
         generalStates: {
             devMode: boolean; 

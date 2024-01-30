@@ -115,12 +115,17 @@ export const MoorhenQuerySequenceModal = (props: {
             "return_type": "polymer_entity"
         }
 
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 10000)
         try {
-            const reponse = await fetch(`https://search.rcsb.org/rcsbsearch/v2/query?json=${encodeURIComponent(JSON.stringify(searchParams))}`)
+            const reponse = await fetch(`https://search.rcsb.org/rcsbsearch/v2/query?json=${encodeURIComponent(JSON.stringify(searchParams))}`, { signal: controller.signal })
             const result = await reponse.json()
             return result
         } catch (err) {
             console.log(err)
+            console.warn('Unable to query PDB...')
+        } finally {
+            clearTimeout(timeoutId)
         }
     }
 

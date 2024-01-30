@@ -110,7 +110,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
     const fetchFilesFromPDBRedo = () => {
         const pdbCode = pdbCodeFetchInputRef.current.value
         const coordUrl = `https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.pdb`
-        const mtzUrl = `https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.mtz/`
+        const mtzUrl = `https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.mtz`
         if (pdbCode && fetchMapDataCheckRef.current?.checked) {
             Promise.all([
                 fetchMoleculeFromURL(coordUrl, `${pdbCode}-redo`),

@@ -1937,6 +1937,7 @@ interface MGWebGLPropsInterface {
                     zoomWheelSensitivityFactor :  number | null;
                     keyboardAccelerators : Dictionary<string>;
                     showCrosshairs : boolean | null;
+                    showScaleBar : boolean | null;
                     showAxes : boolean | null;
                     showFPS : boolean | null;
                     mapLineWidth : number;
@@ -2132,6 +2133,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         shinyBack: boolean;
         showAxes: boolean;
         showCrosshairs: boolean;
+        showScaleBar: boolean;
         showFPS: boolean;
         silhouetteBufferReady: boolean;
         silhouetteDepthTexture: WebGLTexture;
@@ -2222,6 +2224,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.canvasRef = React.createRef();
         this.keysDown = {};
         this.atomLabelDepthMode = true;
+        this.showScaleBar = false
         this.showCrosshairs = false
         this.trackMouse = false
         this.showAxes = false;
@@ -2230,6 +2233,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         if (this.props.showAxes !== null) {
             this.showAxes = this.props.showAxes
+        }
+        if (this.props.showScaleBar !== null) {
+            this.showScaleBar = this.props.showScaleBar
         }
         if (this.props.showCrosshairs !== null) {
             this.showCrosshairs = this.props.showCrosshairs
@@ -2370,6 +2376,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     componentDidUpdate(oldProps) {
         if (oldProps.width !== this.props.width || oldProps.height !== this.props.height) {
             this.resize(this.props.width, this.props.height)
+        }
+        if (oldProps.showScaleBar !== this.props.showScaleBar){
+            this.showScaleBar = this.props.showScaleBar
+            this.drawScene()
         }
         if (oldProps.showCrosshairs !== this.props.showCrosshairs){
             this.showCrosshairs = this.props.showCrosshairs
@@ -6748,6 +6758,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             atom_span = Math.min(1000.0,atom_span);
             this.atom_span = atom_span;
 
+            //The extent (24) should probably be scaled to viewable area - lets see if we can show that.
             mat4.ortho(this.pMatrix, -24 * ratio / this.zoom, 24 * ratio / this.zoom, -24 / this.zoom, 24 / this.zoom, 0.1, shadowExtent);//??
             mat4.translate(this.mvMatrix, this.mvMatrix, [0, 0, -atom_span]);
 
@@ -7125,8 +7136,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if (this.showAxes) {
             this.drawAxes(invMat);
         }
+
         if (this.showCrosshairs) {
             this.drawCrosshairs(invMat);
+        }
+
+        if (this.showScaleBar) {
+            this.drawScaleBar(invMat);
         }
 
         this.drawTextOverlays(invMat);
@@ -9632,6 +9648,158 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
+    drawScaleBar(invMat) {
+        this.gl.depthFunc(this.gl.ALWAYS);
+
+        //Begin copy/paste from crosshairs
+        let axesOffset = vec3.create();
+        vec3.set(axesOffset, 0, 0, 0);
+        const xyzOff = this.origin.map((coord, iCoord) => -coord + this.zoom * axesOffset[iCoord])
+
+        this.gl.useProgram(this.shaderProgramThickLines);
+        this.setMatrixUniforms(this.shaderProgramThickLines);
+        let pmvMatrix = mat4.create();
+        let pMatrix = mat4.create();
+        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+
+        if(this.renderToTexture){
+            if(this.gl.viewportWidth > this.gl.viewportHeight){
+        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+                mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.0);
+            } else {
+                mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
+            }
+        } else {
+            mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24, 24, 0.1, 1000.0);
+        }
+        mat4.scale(pMatrix, pMatrix, [1. / this.zoom, 1. / this.zoom, 1.0]);
+        mat4.multiply(pmvMatrix, pMatrix, this.mvMatrix);
+
+        this.gl.uniformMatrix4fv(this.shaderProgramThickLines.pMatrixUniform, false, pmvMatrix);
+        this.gl.uniform3fv(this.shaderProgramThickLines.screenZ, this.screenZ);
+        this.gl.uniform1f(this.shaderProgramThickLines.pixelZoom, 0.04 * this.zoom);
+
+        if (typeof (this.axesPositionBuffer) === "undefined") {
+            this.axesPositionBuffer = this.gl.createBuffer();
+            this.axesColourBuffer = this.gl.createBuffer();
+            this.axesIndexBuffer = this.gl.createBuffer();
+            this.axesNormalBuffer = this.gl.createBuffer();
+            this.axesTextNormalBuffer = this.gl.createBuffer();
+            this.axesTextColourBuffer = this.gl.createBuffer();
+            this.axesTextPositionBuffer = this.gl.createBuffer();
+            this.axesTextTexCoordBuffer = this.gl.createBuffer();
+            this.axesTextIndexesBuffer = this.gl.createBuffer();
+        }
+        const renderArrays = {
+            axesVertices: [],
+            axesColours: [],
+            axesIdx: []
+        }
+        const addSegment = (renderArrays, point1, point2, colour1, colour2) => {
+            renderArrays.axesIdx.push(renderArrays.axesVertices.length)
+            renderArrays.axesVertices = renderArrays.axesVertices.concat(point1)
+            renderArrays.axesIdx.push(renderArrays.axesVertices.length)
+            renderArrays.axesVertices = renderArrays.axesVertices.concat(point2)
+            renderArrays.axesColours = renderArrays.axesColours.concat([...colour1, ...colour2])
+        }
+
+        let hairColour = [0., 0., 0., 1.];
+        let y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
+        if (y < 0.5) {
+            hairColour = [1., 1., 1., 1.];
+        }
+        //End copy/paste from crosshairs
+
+        //Begin *almost* copy/paste from crosshairs
+        // Actual axes
+
+        const scale_fac = 10*this.zoom* this.gl.viewportWidth / this.gl.viewportHeight
+        const scale_pow = Math.pow(10,Math.floor(Math.log(scale_fac)/Math.log(10)))
+        let scale_length_fac = scale_pow / scale_fac 
+
+        if(scale_length_fac<0.5) scale_length_fac *=2
+        if(scale_length_fac<0.5) scale_length_fac *=2.5
+
+        let horizontalHairStart = vec3.create();
+        let horizontalHairEnd = vec3.create();
+
+        const scale_start_x = 18 - 10 * scale_length_fac
+
+        vec3.set(horizontalHairStart, scale_start_x * this.zoom * ratio, -22.0 * this.zoom, 0.0);
+        vec3.transformMat4(horizontalHairStart, horizontalHairStart, invMat);
+        vec3.set(horizontalHairEnd, 18 * this.zoom * ratio, -22.0 * this.zoom, 0.0);
+        vec3.transformMat4(horizontalHairEnd, horizontalHairEnd, invMat);
+
+        addSegment(renderArrays,
+            xyzOff.map((coord, iCoord) => coord + horizontalHairStart[iCoord]),
+            xyzOff.map((coord, iCoord) => coord + horizontalHairEnd[iCoord]),
+            hairColour, hairColour
+        )
+
+        vec3.set(horizontalHairStart, scale_start_x * this.zoom * ratio, -22.5 * this.zoom, 0.0);
+        vec3.transformMat4(horizontalHairStart, horizontalHairStart, invMat);
+        vec3.set(horizontalHairEnd, scale_start_x * this.zoom * ratio, -21.5 * this.zoom, 0.0);
+        vec3.transformMat4(horizontalHairEnd, horizontalHairEnd, invMat);
+
+        addSegment(renderArrays,
+            xyzOff.map((coord, iCoord) => coord + horizontalHairStart[iCoord]),
+            xyzOff.map((coord, iCoord) => coord + horizontalHairEnd[iCoord]),
+            hairColour, hairColour
+        )
+
+        vec3.set(horizontalHairStart, 18 * this.zoom * ratio, -22.5 * this.zoom, 0.0);
+        vec3.transformMat4(horizontalHairStart, horizontalHairStart, invMat);
+        vec3.set(horizontalHairEnd, 18 * this.zoom * ratio, -21.5 * this.zoom, 0.0);
+        vec3.transformMat4(horizontalHairEnd, horizontalHairEnd, invMat);
+
+        addSegment(renderArrays,
+            xyzOff.map((coord, iCoord) => coord + horizontalHairStart[iCoord]),
+            xyzOff.map((coord, iCoord) => coord + horizontalHairEnd[iCoord]),
+            hairColour, hairColour
+        )
+
+        let size = 1.5;
+        const thickLines = this.linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
+        let axesNormals = thickLines["normals"];
+        let axesVertices_new = thickLines["vertices"];
+        let axesColours_new = thickLines["colours"];
+        let axesIndexs_new = thickLines["indices"];
+
+        //console.log("thickLines",thickLines);
+        this.gl.depthFunc(this.gl.ALWAYS);
+
+        for(let i = 0; i<16; i++)
+            this.gl.disableVertexAttribArray(i);
+
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexNormalAttribute);
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexPositionAttribute);
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexColourAttribute);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesNormalBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesNormals), this.gl.DYNAMIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesPositionBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesVertices_new), this.gl.DYNAMIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesColourBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesColours_new), this.gl.DYNAMIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.axesIndexBuffer);
+        if (this.ext) {
+            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(axesIndexs_new), this.gl.DYNAMIC_DRAW);
+            this.gl.drawElements(this.gl.TRIANGLES, axesIndexs_new.length, this.gl.UNSIGNED_INT, 0);
+        } else {
+            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(axesIndexs_new), this.gl.DYNAMIC_DRAW);
+            this.gl.drawElements(this.gl.TRIANGLES, axesIndexs_new.length, this.gl.UNSIGNED_SHORT, 0);
+        }
+        //End *almost* copy/paste from crosshairs
+
+        this.gl.depthFunc(this.gl.LESS)
+    }
+
     drawCrosshairs(invMat) {
 
         this.gl.depthFunc(this.gl.ALWAYS);
@@ -10416,6 +10584,22 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 drawString(label.text,xpos,ypos, 0.0, label.font, false);
         });
         if(this.showFPS) drawString(this.fpsText, -23.5*ratio, -23.5, 0.0, "20px helvetica", false);
+
+        const scale_fac = 10.0*this.zoom* this.gl.viewportWidth / this.gl.viewportHeight;
+        let scale_pow = Math.pow(10,Math.floor(Math.log(scale_fac)/Math.log(10)))
+        let scale_length_fac = scale_pow / scale_fac
+        if(scale_length_fac<0.5) scale_pow *=2
+        if(scale_length_fac*2<0.5) scale_pow *=2.5
+
+        let scale_bar_text_x = 18.5 * this.gl.viewportWidth / this.gl.viewportHeight;
+        if(this.showScaleBar){
+            if(scale_pow>1.1){
+                drawString(Math.floor(scale_pow)+"Å", scale_bar_text_x, -22.5, 0.0, "30px helvetica", false);
+            } else {
+                drawString(scale_pow.toFixed(1)+"Å", scale_bar_text_x, -22.5, 0.0, "30px helvetica", false);
+            }
+        }
+
         if(this.showShortCutHelp) {
             const fontSize = this.gl.viewportHeight * 0.02
             const font = `${fontSize > 20 ? 20 : fontSize}px helvetica`
@@ -10848,21 +11032,21 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             theCtx.canvas.height = height;
             theCtx.textBaseline = "alphabetic";
             theCtx.font = font;
-            let textMetric = theCtx.measureText("Mgq!^(){}|'\"~`√∫");
-            let actualHeight = textMetric.actualBoundingBoxAscent + textMetric.actualBoundingBoxDescent;
+            let textMetric = theCtx.measureText("Mgq!^(){}|'\"~`√∫Å");
+            let actualHeight = textMetric.fontBoundingBoxAscent + textMetric.fontBoundingBoxDescent;
             let loop = 0;
             while(actualHeight>theCtx.canvas.height&&loop<3){
                 theCtx.canvas.height *= 2;
                 theCtx.font = font;
                 textMetric = theCtx.measureText("M");
-                actualHeight = textMetric.actualBoundingBoxAscent + textMetric.actualBoundingBoxDescent;
+                actualHeight = textMetric.fontBoundingBoxAscent + textMetric.fontBoundingBoxDescent;
                 loop += 1;
             }
             theCtx.textAlign = "left";
             theCtx.fillStyle = "#00000000";
             theCtx.fillRect(0, 0, theCtx.canvas.width, theCtx.canvas.height);
             theCtx.fillStyle = textColour;
-            theCtx.fillText(text, 0, theCtx.canvas.height / 2,theCtx.canvas.width);
+            theCtx.fillText(text, 0, theCtx.canvas.height + textMetric.ideographicBaseline,theCtx.canvas.width);
             if(!this.extraFontCtxs)
                 this.extraFontCtxs = {};
             this.extraFontCtxs[font] = theCtx;

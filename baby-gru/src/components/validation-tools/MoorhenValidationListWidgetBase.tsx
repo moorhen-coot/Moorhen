@@ -3,7 +3,6 @@ import { Col, Row, Form } from 'react-bootstrap';
 import { MoorhenMapSelect } from '../select/MoorhenMapSelect'
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
 import { moorhen } from "../../types/moorhen";
-import { gemmi } from "../../types/gemmi";
 import { useSelector } from "react-redux";
 
 export const MoorhenValidationListWidgetBase = (props: {

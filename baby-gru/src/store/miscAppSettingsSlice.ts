@@ -5,9 +5,13 @@ export const miscAppSettings = createSlice({
   initialState: {
     defaultExpandDisplayCards: null,
     transparentModalsOnMouseOut: null,
-    enableRefineAfterMod: null
+    enableRefineAfterMod: null,
+    animateRefine: null,
   },
   reducers: {
+    setAnimateRefine: (state, action: {payload: boolean, type: string}) => {
+      return {...state, animateRefine: action.payload}
+    },
     setDefaultExpandDisplayCards: (state, action: {payload: boolean, type: string}) => {
       return {...state, defaultExpandDisplayCards: action.payload}
     },
@@ -19,6 +23,9 @@ export const miscAppSettings = createSlice({
     }
 }})
 
-export const { setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut, setEnableRefineAfterMod } = miscAppSettings.actions
+export const { 
+  setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut, 
+  setEnableRefineAfterMod, setAnimateRefine
+} = miscAppSettings.actions
 
 export default miscAppSettings.reducer
