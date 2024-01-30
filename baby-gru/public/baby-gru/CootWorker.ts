@@ -1,6 +1,6 @@
 import { libcootApi } from "../../src/types/libcoot"
 import { emscriptem } from "../../src/types/emscriptem"
-import {privateer} from "../../src/types/privateer";
+import { privateer } from "../../src/types/privateer";
 
 // @ts-ignore
 importScripts('./wasm/moorhen.js')
@@ -926,7 +926,7 @@ const setUserDefinedBondColours = (imol: number, colours: { cid: string; rgb: [n
     colourMap.delete()
 }
 
-const extract_carbohydrate_validation = (results: emscriptem.vector<privateer.ResultsEntry>) : privateer.ResultsEntry[] => {
+const privateerValidationToJSArray = (results: emscriptem.vector<privateer.ResultsEntry>) : privateer.ResultsEntry[] => {
 
     const sanitizeID = (id: string): string => {
         const regex = /: *32/g;
@@ -1113,7 +1113,7 @@ const doCootCommand = (messageData: {
                 returnResult = vectorPairClipperCoordFloatToJSArray(cootResult)
                 break
             case 'privateer_results':
-                returnResult = extract_carbohydrate_validation(cootResult)
+                returnResult = privateerValidationToJSArray(cootResult)
                 break
             case 'status':
             default:

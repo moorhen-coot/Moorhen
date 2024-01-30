@@ -1,7 +1,7 @@
 
 import { emscriptem } from "./emscriptem";
 import { gemmi } from "./gemmi"
-import {privateer} from "./privateer";
+import { privateer } from "./privateer";
 
 // Warning: do not import moorhen namespace otherwise worker code breaks during transpilation
 
@@ -43,12 +43,12 @@ export namespace libcootApi {
         FS_unlink: (arg0: string) => void;
         cif_parse_string: (arg0: gemmi.cifDocument, arg1: string) => void;
         get_pdb_string_from_gemmi_struct: (arg0:gemmi.Structure) => string;
+        validate: (file: string, name: string) => emscriptem.vector<privateer.ResultsEntry>;
         Selection: { new(cid: string): gemmi.Selection };
         NeighborSearch: { new(model: gemmi.Model, unitCell: gemmi.UnitCell, radius: number): gemmi.NeighborSearch };
         Position: { new(x: number, y: number, z: number): gemmi.Position };
         Fractional: { new(x: number, y: number, z: number): gemmi.Fractional };
         cifDocument: { new(): gemmi.cifDocument };
-        validate: (file: string, name: string) => emscriptem.vector<privateer.ResultsEntry>;
     }
     type SequenceResInfo = {
         resNum: number;
@@ -444,34 +444,29 @@ export namespace libcootApi {
         };
         FS_unlink(tempFilename: string): void;
         FS_createDataFile(arg0: string, arg1: string, arg2: Uint8Array | string, arg3: boolean, arg4: boolean, arg5?: boolean): void;
-        molecules_container_js: { new(verbose: boolean): MoleculesContainerJS };
         testFloat32Array( arg0: any ): Float32Array;
         getPositionsFromSimpleMesh( arg0: any ): Float32Array;
         getNormalsFromSimpleMesh( arg0: any ): Float32Array;
         getReversedNormalsFromSimpleMesh( arg0: any ): Float32Array;
         getColoursFromSimpleMesh( arg0: any ): Float32Array;
-
         getPositionsFromSimpleMesh2( arg0: any, arg1: any ): void;
         getNormalsFromSimpleMesh2( arg0: any, arg1: any ): void;
         getReversedNormalsFromSimpleMesh2( arg0: any, arg1: any ): void;
         getColoursFromSimpleMesh2( arg0: any, arg1: any ): void;
-
         getLineIndicesFromSimpleMesh( arg0: any ): Uint32Array;
         getPermutedTriangleIndicesFromSimpleMesh( arg0: any ): Uint32Array;
         getTriangleIndicesFromSimpleMesh( arg0: any ): Uint32Array;
-
         getLineIndicesFromSimpleMesh2( arg0: any, arg1: any  ): void;
         getPermutedTriangleIndicesFromSimpleMesh2( arg0: any, arg1: any ): void;
         getTriangleIndicesFromSimpleMesh2( arg0: any, arg1: any ): void;
-
+        getRamachandranData(arg0: string, arg1: string): emscriptem.vector<RamaData>;
+        validate(arg0: string, arg1: string): emscriptem.vector<PrivateerResultsEntry>
+        molecules_container_js: { new(verbose: boolean): MoleculesContainerJS };
         Vectormoved_residue_t: { new(): emscriptem.vector<MovedResidueT>};
         moved_residue_t: { new(arg0: string, arg1: number, arg2: string): MovedResidueT};
         moved_atom_t: { new(arg0: string, arg1: string, arg2: number, arg3: number, arg4: number, arg5: number): MovedAtomT};
         MapIntFloat3: { new(): emscriptem.map<[number, number, number], number>};
         VectorStringUInt_pair: { new(): emscriptem.vector<{ first: string, second: number }>};
-        getRamachandranData(arg0: string, arg1: string): emscriptem.vector<RamaData>;
-
-        validate(arg0: string, arg1: string): emscriptem.vector<PrivateerResultsEntry>
     }
     interface MoleculesContainerJS {
         set_use_gemmi(arg0: boolean): void;

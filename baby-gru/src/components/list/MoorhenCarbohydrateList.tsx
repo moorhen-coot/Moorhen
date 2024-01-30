@@ -4,7 +4,7 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useSelector } from "react-redux";
 import { MoorhenCarbohydrateCard } from "../card/MoorhenCarbohydrateCard";
-import {privateer} from "../../types/privateer";
+import { privateer } from "../../types/privateer";
 
 export const MoorhenCarbohydrateList = (props: {
     setBusy?: React.Dispatch<React.SetStateAction<boolean>>;

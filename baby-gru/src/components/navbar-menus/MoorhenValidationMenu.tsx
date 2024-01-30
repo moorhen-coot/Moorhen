@@ -3,7 +3,8 @@ import { MenuItem } from "@mui/material";
 import { useDispatch } from "react-redux";
 import { 
     setShowDiffMapPeaksModal, setShowFillPartialResValidationModal, setShowLigandValidationModal, setShowMmrrccModal, 
-    setShowPepFlipsValidationModal, setShowRamaPlotModal, setShowUnmodelledBlobsModal, setShowValidationPlotModal, setShowCarbohydrateValidationModal ,setShowWaterValidationModal
+    setShowPepFlipsValidationModal, setShowRamaPlotModal, setShowUnmodelledBlobsModal, setShowValidationPlotModal, 
+    setShowCarbohydrateValidationModal ,setShowWaterValidationModal
 } from "../../store/activeModalsSlice";
 
 export const MoorhenValidationMenu = (props: MoorhenNavBarExtendedControlsInterface) => {

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useReducer, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { Card, Row, Col, Stack, Button, Spinner } from "react-bootstrap";
 import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
-import { convertRemToPx, convertViewtoPx, doDownload, representationLabelMapping } from '../../utils/MoorhenUtils';
+import { convertRemToPx, convertViewtoPx, representationLabelMapping } from '../../utils/MoorhenUtils';
 import { isDarkBackground } from '../../WebGLgComponents/mgWebGL'
 import { MoorhenSequenceList } from "../list/MoorhenSequenceList";
 import { MoorhenMoleculeCardButtonBar } from "../button-bar/MoorhenMoleculeCardButtonBar"
@@ -18,7 +18,7 @@ import { webGL } from "../../types/mgWebGL";
 import { addMolecule } from '../../store/moleculesSlice';
 import { showMolecule } from '../../store/moleculeRepresentationsSlice';
 import { triggerScoresUpdate } from '../../store/connectedMapsSlice';
-import {MoorhenCarbohydrateList} from "../list/MoorhenCarbohydrateList";
+import { MoorhenCarbohydrateList } from "../list/MoorhenCarbohydrateList";
 
 const allRepresentations = [ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks', 'restraints' ]
 
