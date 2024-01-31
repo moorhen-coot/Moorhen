@@ -119,7 +119,7 @@ export const MoorhenContextButtonBase = (props: {
         if (props.refineAfterMod && enableRefineAfterMod && activeMap) {
             try {
                 if (animateRefine) {
-                    props.selectedMolecule.refineResiduesUsingAtomCidAnimated(`//${props.chosenAtom.chain_id}/${props.chosenAtom.res_no}`, activeMap, 3, true, false)
+                    await props.selectedMolecule.refineResiduesUsingAtomCidAnimated(`//${props.chosenAtom.chain_id}/${props.chosenAtom.res_no}`, activeMap, 3, true, false)
                 } else {
                     await props.selectedMolecule.refineResiduesUsingAtomCid(`//${props.chosenAtom.chain_id}/${props.chosenAtom.res_no}`, 'TRIPLE', 4000, true)
                 }
