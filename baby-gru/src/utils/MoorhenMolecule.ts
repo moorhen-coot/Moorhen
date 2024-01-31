@@ -1949,7 +1949,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {Promise<privateer.ResultsEntry[]>} A list of results from privateer validation
      */
     async getPrivateerValidation(useCache: boolean = false): Promise<privateer.ResultsEntry[]> {
-        console.log('>>>>>> HI!!! ', this.atomsDirty)
         if (useCache && this.cachedPrivateerValidation && !this.atomsDirty) {
             return this.cachedPrivateerValidation
         }
