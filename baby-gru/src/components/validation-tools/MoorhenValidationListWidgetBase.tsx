@@ -28,7 +28,8 @@ export const MoorhenValidationListWidgetBase = (props: {
     const [cardList, setCardList] = useState<JSX.Element[]>([])
     const [busy, setBusy] = useState<boolean>(false)
 
-    const newCootCommandAlert = useSelector((state: moorhen.State) => state.generalStates.newCootCommandAlert)
+    const scoresUpdateMolNo = useSelector((state: moorhen.State) => state.connectedMaps.scoresUpdate.molNo)
+    const toggleScoresUpdate = useSelector((state: moorhen.State) => state.connectedMaps.scoresUpdate.toggle)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const maps = useSelector((state: moorhen.State) => state.maps)
@@ -65,21 +66,26 @@ export const MoorhenValidationListWidgetBase = (props: {
 
     }, [maps.length])
 
-    useEffect(() => {
-        async function fetchData() {
-            setBusy(true)
-            if (selectedModel === null || (props.enableMapSelect && selectedMap === null)) {
-                setCardData(null)
-            } else {
-                let newData = await props.fetchData(selectedModel, selectedMap)
-                setCardData(newData)
-            }
-            setBusy(false)      
-        }        
-    
-        fetchData()   
+    async function fetchData() {
+        setBusy(true)
+        if (selectedModel === null || (props.enableMapSelect && selectedMap === null)) {
+            setCardData(null)
+        } else {
+            let newData = await props.fetchData(selectedModel, selectedMap)
+            setCardData(newData)
+        }
+        setBusy(false)      
+    }        
 
-    }, [selectedMap, selectedModel, newCootCommandAlert, props.extraControlFormValue])
+    useEffect(() => {
+        fetchData()
+    }, [selectedMap, selectedModel, props.extraControlFormValue])
+
+    useEffect(() => {
+        if (selectedModel !== null  && selectedModel === scoresUpdateMolNo) {
+            fetchData()
+        }
+    }, [toggleScoresUpdate])
 
     useEffect(() => {
         if (selectedModel === null || (props.enableMapSelect && selectedMap === null) || cardData === null || props.dropdownId !== props.accordionDropdownId || !props.showSideBar) {

@@ -2,6 +2,7 @@ import { moorhen as _moorhen } from "./moorhen"
 import { webGL } from "./mgWebGL";
 import { libcootApi } from "./libcoot";
 import { gemmi } from "./gemmi";
+import { privateer } from "./privateer";
 
 declare module 'moorhen' {
 
@@ -115,7 +116,9 @@ declare module 'moorhen' {
         downloadAtoms(format?: 'mmcif' | 'pdb'): Promise<void>;
         mergeFragmentFromRefinement(cid: string, fragmentMolecule: _moorhen.Molecule, acceptTransform?: boolean, refineAfterMerge?: boolean): Promise<void>;
         copyFragmentForRefinement(cid: string[], refinementMap: _moorhen.Map, redraw?: boolean, readrawFragmentFirst?: boolean): Promise<_moorhen.Molecule>;
-        refineResiduesUsingAtomCidAnimated(cid: string, activeMap: moorhen.Map, dist?: number, redraw?: boolean, redrawFragmentFirst?: boolean): Promise<void>;
+        refineResiduesUsingAtomCidAnimated(cid: string, activeMap: _moorhen.Map, dist?: number, redraw?: boolean, redrawFragmentFirst?: boolean): Promise<void>;
+        getPrivateerValidation(useCache?: boolean): Promise<privateer.ResultsEntry[]>;
+        cachedPrivateerValidation: privateer.ResultsEntry[];
         isLigand: boolean;
         type: string;
         excludedCids: string[];

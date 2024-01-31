@@ -15,25 +15,29 @@ export const MoorhenCarbohydrateList = (props: {
     height?: number | string;
 }) => {
 
-    const newCootCommandAlert = useSelector((state: moorhen.State) => state.generalStates.newCootCommandAlert)
+    const scoresUpdateMolNo = useSelector((state: moorhen.State) => state.connectedMaps.scoresUpdate.molNo)
+    const toggleScoresUpdate = useSelector((state: moorhen.State) => state.connectedMaps.scoresUpdate.toggle)
     
     const [carbohydrateList, setCarbohydrateList] = useState<privateer.ResultsEntry[] | null>(null)
 
+    const validate = async () => {
+        props.setBusy(true)
+        const result = await props.molecule.getPrivateerValidation(true)
+        setCarbohydrateList(result)
+        props.setBusy(false)
+    }
+    
     useEffect(() => {
-        const validate = async () => {
-            if (props.molecule) {
-                props.setBusy(true)
-                const result = await props.commandCentre.current.cootCommand({
-                    command: 'privateer_validate',
-                    commandArgs: [props.molecule.molNo],
-                    returnType: 'privateer_results'
-                }, false) as moorhen.WorkerResponse<privateer.ResultsEntry[]>
-                setCarbohydrateList(result.data.result.result)
-                props.setBusy(false)
-            }
+        if (props.molecule?.molNo === scoresUpdateMolNo) {
+            validate()
         }
-        validate()
-    }, [newCootCommandAlert])
+    }, [toggleScoresUpdate])
+
+    useEffect(() => {
+        if (props.molecule) {
+            validate()
+        }
+    }, [])
 
     return <>
             {carbohydrateList === null ?

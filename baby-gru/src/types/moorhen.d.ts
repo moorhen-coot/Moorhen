@@ -159,7 +159,9 @@ export namespace moorhen {
         centreAndAlignViewOn: (selectionCid: string, alignWithCB?: boolean, zoomLevel?: number) => Promise<void>;
         buffersInclude: (bufferIn: { id: string; }) => boolean;
         redrawRepresentation: (id: string) => Promise<void>;
+        getPrivateerValidation(useCache?: boolean): Promise<privateer.ResultsEntry[]>;
         type: string;
+        cachedPrivateerValidation: privateer.ResultsEntry[];
         isLigand: boolean;
         excludedCids: string[];
         commandCentre: React.RefObject<CommandCentre>;
