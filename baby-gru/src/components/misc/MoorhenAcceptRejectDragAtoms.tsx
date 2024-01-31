@@ -37,7 +37,7 @@ export const MoorhenAcceptRejectDragAtoms = (props: {
             setTimeout(() => finishDragging(acceptTransform), 100)
             return
         }
-        props.moleculeRef.current.mergeFragmentFromRefinement(props.cidRef.current.join('||'), moltenFragmentRef.current, acceptTransform, false)
+        await props.moleculeRef.current.mergeFragmentFromRefinement(props.cidRef.current.join('||'), moltenFragmentRef.current, acceptTransform, false)
         if (acceptTransform) {
             dispatch( triggerScoresUpdate(props.moleculeRef.current.molNo) )
         }
