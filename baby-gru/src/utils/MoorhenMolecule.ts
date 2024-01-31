@@ -3,6 +3,7 @@ import { guid, readTextFile, readGemmiStructure, centreOnGemmiAtoms, getRandomMo
 import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation"
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
+import { hideMolecule } from '../store/moleculeRepresentationsSlice';
 import * as vec3 from 'gl-matrix/vec3';
 import * as mat3 from 'gl-matrix/mat3';
 import * as quat4 from 'gl-matrix/quat';
@@ -10,8 +11,8 @@ import { moorhen } from "../types/moorhen"
 import { webGL } from "../types/mgWebGL"
 import { gemmi } from "../types/gemmi"
 import { libcootApi } from '../types/libcoot';
+import { privateer } from '../types/privateer';
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
-import { hideMolecule } from '../store/moleculeRepresentationsSlice';
 
 /**
  * Represents a molecule
@@ -88,7 +89,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
     hasDNA: boolean;
     restraints: {maxRadius: number, cid: string}[];
     isLigand: boolean;
-    coordsFormat: moorhen.coorFormats
+    coordsFormat: moorhen.coorFormats;
+    cachedPrivateerValidation: privateer.ResultsEntry[];
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibraryPath = "./baby-gru/monomers") {
         this.type = 'molecule'
@@ -100,6 +102,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.coordsFormat = null
         this.gemmiStructure = null
         this.sequences = []
+        this.cachedPrivateerValidation = null
         this.ligands = null
         this.ligandDicts = {}
         this.connectedToMaps = null
@@ -716,6 +719,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {Promise<boolean>} - True if the current molecule has glycans
      */
     async checkHasGlycans(): Promise<boolean> {
+        this.cachedPrivateerValidation = null
         const result = await this.commandCentre.current.cootCommand({
             returnType: 'boolean',
             command: 'model_has_glycans',
@@ -1937,5 +1941,29 @@ export class MoorhenMolecule implements moorhen.Molecule {
         } else {
             console.warn(`Could not find representation with id ${representationId}`)
         }
+    }
+
+    /**
+     * Get results of privateer validation for this molecule instance
+     * @param {boolean} useCache - Whether to use the cached results or not
+     * @returns {Promise<privateer.ResultsEntry[]>} A list of results from privateer validation
+     */
+    async getPrivateerValidation(useCache: boolean = false): Promise<privateer.ResultsEntry[]> {
+        console.log('>>>>>> HI!!! ', this.atomsDirty)
+        if (useCache && this.cachedPrivateerValidation && !this.atomsDirty) {
+            return this.cachedPrivateerValidation
+        }
+        
+        const result = await this.commandCentre.current.cootCommand({
+            command: 'privateer_validate',
+            commandArgs: [this.molNo],
+            returnType: 'privateer_results'
+        }, false) as moorhen.WorkerResponse<privateer.ResultsEntry[]>
+        
+        if (useCache) {
+            this.cachedPrivateerValidation = result.data.result.result
+        }
+
+        return result.data.result.result
     }
 }

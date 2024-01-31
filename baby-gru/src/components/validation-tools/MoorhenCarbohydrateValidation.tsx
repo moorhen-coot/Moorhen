@@ -19,12 +19,8 @@ export const MoorhenCarbohydrateValidation = (props: Props) => {
     const fetchCardData = async (selectedModel: number): Promise<privateer.ResultsEntry[]> => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel)
         if (selectedMolecule) {
-            const result = await props.commandCentre.current.cootCommand({
-                command: 'privateer_validate',
-                commandArgs: [selectedMolecule.molNo],
-                returnType: 'privateer_results'
-            }, false) as moorhen.WorkerResponse<privateer.ResultsEntry[]>
-            return result.data.result.result
+            const result = await selectedMolecule.getPrivateerValidation(true)
+            return result
         }
     }
 
