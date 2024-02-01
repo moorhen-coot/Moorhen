@@ -2,7 +2,6 @@ import { moorhen } from "../../types/moorhen";
 import { useSelector } from 'react-redux';
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 import { MoorhenLigandCard } from "../card/MoorhenLigandCard";
-import { getLigandSVG } from "../../utils/MoorhenUtils";
 
 interface Props extends moorhen.CollectedProps {
     dropdownId: number;
@@ -14,7 +13,6 @@ interface Props extends moorhen.CollectedProps {
 
 export const MoorhenLigandValidation = (props: Props) => {
     const molecules = useSelector((state: moorhen.State) => state.molecules)
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
     const fetchCardData = async (selectedModel: number, selectedMap: number): Promise<moorhen.LigandInfo[]> => {
         let ligandInfo: moorhen.LigandInfo[] = []
@@ -22,7 +20,7 @@ export const MoorhenLigandValidation = (props: Props) => {
 
         if (selectedMolecule) {
             ligandInfo = await Promise.all(selectedMolecule.ligands.map(async (ligand) => {
-                const ligandSVG = await getLigandSVG(props.commandCentre, selectedModel, ligand.resName, isDark)
+                const ligandSVG = await selectedMolecule.getLigandSVG(ligand.resName, true)
                 return {...ligand, svg: ligandSVG}
             }))
         }

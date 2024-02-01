@@ -118,6 +118,8 @@ declare module 'moorhen' {
         copyFragmentForRefinement(cid: string[], refinementMap: _moorhen.Map, redraw?: boolean, readrawFragmentFirst?: boolean): Promise<_moorhen.Molecule>;
         refineResiduesUsingAtomCidAnimated(cid: string, activeMap: _moorhen.Map, dist?: number, redraw?: boolean, redrawFragmentFirst?: boolean): Promise<void>;
         getPrivateerValidation(useCache?: boolean): Promise<privateer.ResultsEntry[]>;
+        getLigandSVG(resName: string, useCache?: boolean): Promise<string>;
+        cachedLigandSVGs: {[key: string]: string}[];
         cachedPrivateerValidation: privateer.ResultsEntry[];
         isLigand: boolean;
         type: string;
