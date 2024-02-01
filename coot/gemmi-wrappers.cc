@@ -148,21 +148,21 @@ gemmi::Structure remove_selected_residues(const gemmi::Structure &Structure, con
     return new_structure;
 }
 
-std::string cifDocument_as_string_with_style(const gemmi::cif::Document &doc, const std::string &filename, const gemmi::cif::Style &style) {
+std::string cifDocument_as_string_with_style(const gemmi::cif::Document &doc, const gemmi::cif::Style &style) {
         std::ostringstream os;
         write_cif_to_stream(os, doc, style);
         return os.str();
 }
 
-std::string cifDocument_as_string_with_options(const gemmi::cif::Document &doc, const std::string &filename, const gemmi::cif::WriteOptions &opt) {
+std::string cifDocument_as_string_with_options(const gemmi::cif::Document &doc, const gemmi::cif::WriteOptions &opt) {
         std::ostringstream os;
         write_cif_to_stream(os, doc, opt);
         return os.str();
 }
 
-std::string cifDocument_as_string(const gemmi::cif::Document &doc, const std::string &filename) {
+std::string cifDocument_as_string(const gemmi::cif::Document &doc) {
         gemmi::cif::WriteOptions opt;
-        return cifDocument_as_string_with_options(doc,filename,opt);
+        return cifDocument_as_string_with_options(doc,opt);
 }
 
 void cifDocument_write_file_with_style(const gemmi::cif::Document &doc, const std::string &filename, const gemmi::cif::Style &style) {
