@@ -44,7 +44,7 @@ export const MoorhenRotamerChangeButton = (props: moorhen.ContextButtonProps) =>
 
         chosenMolecule.current.atomsDirty = true
         await chosenMolecule.current.redraw()
-        fragmentMolecule.current.delete()
+        fragmentMolecule.current.delete(true)
         chosenMolecule.current.unhideAll()
 
         dispatch( triggerScoresUpdate(chosenMolecule.current.molNo) )
@@ -54,7 +54,7 @@ export const MoorhenRotamerChangeButton = (props: moorhen.ContextButtonProps) =>
 
     const rejectTransform = async () => {
         dispatch(removeMolecule(fragmentMolecule.current))
-        fragmentMolecule.current.delete()
+        fragmentMolecule.current.delete(true)
         chosenMolecule.current.unhideAll()
         dispatch(setIsChangingRotamers(false))
     }
