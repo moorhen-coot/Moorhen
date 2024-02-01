@@ -1089,6 +1089,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("pop_back", &molecules_container_t::pop_back)
     .function("get_use_gemmi", &molecules_container_t::get_use_gemmi)
     .function("set_use_gemmi", &molecules_container_t::set_use_gemmi)
     .function("generate_local_self_restraints", &molecules_container_t::generate_local_self_restraints)

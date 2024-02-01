@@ -140,8 +140,8 @@ export namespace moorhen {
         setSymmetryRadius(radius: number): Promise<void>;
         drawSymmetry: (fetchSymMatrix?: boolean) => Promise<void>;
         getUnitCellParams():  { a: number; b: number; c: number; alpha: number; beta: number; gamma: number; };
-        replaceModelWithFile(fileUrl: string): Promise<void>
-        delete(): Promise<WorkerResponse> 
+        replaceModelWithFile(fileUrl: string): Promise<void>;
+        delete(popBackImol?: boolean): Promise<WorkerResponse>;
         fetchDefaultColourRules(): Promise<void>;
         fetchIfDirtyAndDraw(arg0: string): Promise<void>;
         drawEnvironment: (cid: string, labelled?: boolean) => Promise<void>;
