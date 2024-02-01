@@ -8,7 +8,7 @@ import { HexColorPicker } from "react-colorful";
 import { MoorhenSequenceRangeSelect } from '../sequence-viewer/MoorhenSequenceRangeSelect';
 import { webGL } from '../../types/mgWebGL';
 import { MoorhenSlider } from '../misc/MoorhenSlider';
-import { AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
+import { AddCircleOutline, GrainOutlined, RemoveCircleOutline } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 
 const customRepresentations = [ 'CBs', 'CAs', 'CRs', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'MetaBalls' ]
@@ -304,12 +304,26 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 <>
                 <Row style={{paddingLeft: '1rem'}}>
                     <FormSelect style={{ width: '50%', marginRight: '0.5rem' }} size="sm" ref={colourModeSelectRef} defaultValue={colourMode} onChange={(val) => { setColourMode(val.target.value) }}>
-                            <option value={'custom'} key={'custom'}>User defined colour</option>
-                            <option value={'b-factor'} key={'b-factor'}>B-Factor</option>
-                            <option value={'af2-plddt'} key={'af2-plddt'}>AF2 PLDDT</option>
+                        <option value={'custom'} key={'custom'}>User defined colour</option>
+                        <option value={'secondary-structure'} key={'secondary-structure'}>Secondary structure</option>
+                        <option value={'jones-rainbow'} key={'jones-rainbow'}>Jones' rainbow</option>
+                        <option value={'b-factor'} key={'b-factor'}>B-Factor</option>
+                        <option value={'b-factor-norm'} key={'b-factor-norm'}>B-Factor (normalised)</option>
+                        <option value={'af2-plddt'} key={'af2-plddt'}>AF2 PLDDT</option>
                     </FormSelect>
-                    {colourMode === 'b-factor' ?
-                    <img className="colour-rule-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/temperature.svg`} alt='b-factor' style={{ width: '36px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}}/>
+                    {(colourMode === 'b-factor' || colourMode === 'b-factor-norm') ?
+                        <img className="colour-rule-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/temperature.svg`} alt='b-factor' style={{ width: '36px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}}/>
+                    : colourMode === "secondary-structure" ?
+                        <img className='colour-rule-icon' src={`${props.urlPrefix}/baby-gru/pixmaps/secondary-structure-grey.svg`} alt='ss2' style={{ width: '36px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}}/>
+                    : colourMode === "jones-rainbow" ?
+                    <>
+                        <div style={{borderColor: 'rgb(255, 0, 0)', borderWidth:'5px', backgroundColor:  'rgb(255, 0, 0)', height:'20px', width:'5px', marginTop: '0.2rem', padding: '0rem'}}/>
+                        <div style={{borderColor: 'rgb(255, 255, 0)', borderWidth:'5px', backgroundColor: 'rgb(255, 255, 0)', height:'20px', width:'5px', marginTop: '0.2rem', padding: '0rem'}}/>
+                        <div style={{borderColor: 'rgb(0, 255, 0)', borderWidth:'5px', backgroundColor: 'rgb(0, 255, 0)', height:'20px', width:'5px', marginTop: '0.2rem', padding: '0rem'}}/>
+                        <div style={{borderColor: 'rgb(0, 0, 255)', borderWidth:'5px', backgroundColor: 'rgb(0, 0, 255)', height:'20px', width:'5px', marginTop: '0.2rem', padding: '0rem'}}/>
+                    </>
+                    : colourMode === "mol-symm" ?
+                        <GrainOutlined style={{height:'30px', width:'36px', marginLeft: '0.5rem', marginRight: '0.5rem', borderStyle: 'solid', borderColor: '#ced4da', borderWidth: '3px', borderRadius: '8px'}}/>            
                     :
                     colourMode === 'custom' ?
                     <div 

@@ -106,7 +106,7 @@ export const MoorhenColourRuleCard = (props: {
                     <div style={{borderColor: 'rgb(0, 0, 255)', borderWidth:'5px', backgroundColor: 'rgb(0, 0, 255)', height:'20px', width:'5px', margin: '0rem', padding: '0rem'}}/>
                 </>
                 : rule.ruleType === "mol-symm" ?
-                    <GrainOutlined style={{height:'23px', width:'`23px', marginLeft: '0.5rem', marginRight: '0.5rem', borderStyle: 'solid', borderColor: '#ced4da', borderWidth: '3px', borderRadius: '8px'}}/>            
+                    <GrainOutlined style={{height:'23px', width:'23px', marginLeft: '0.5rem', marginRight: '0.5rem', borderStyle: 'solid', borderColor: '#ced4da', borderWidth: '3px', borderRadius: '8px'}}/>            
                 : (rule.ruleType === "b-factor" || rule.ruleType === "b-factor-norm") ?
                     <img className="colour-rule-icon" src={`${urlPrefix}/baby-gru/pixmaps/temperature.svg`} alt='b-factor' style={{height:'28px', width:'`12px', margin: '0.1rem'}}/>
                 :

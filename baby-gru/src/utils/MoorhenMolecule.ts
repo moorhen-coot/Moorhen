@@ -354,8 +354,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     /**
      * Delete this molecule instance
+     * @param {boolean} [popBackImol=false] - Indicates whether the imol for this molecule instance should be popped back (useful for ephemeral molecules)
      */
-    async delete(): Promise<moorhen.WorkerResponse> {
+    async delete(popBackImol: boolean = false): Promise<moorhen.WorkerResponse> {
         this.hoverRepresentation?.deleteBuffers()
         this.unitCellRepresentation?.deleteBuffers()
         this.environmentRepresentation?.deleteBuffers()
@@ -364,8 +365,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.glRef.current.drawScene()
         const response = await this.commandCentre.current.cootCommand({
             returnType: "status",
-            command: 'close_molecule',
-            commandArgs: [this.molNo]
+            command: popBackImol ? 'pop_back' : 'close_molecule',
+            commandArgs: popBackImol ? [ ] : [ this.molNo ]
         }, true) as moorhen.WorkerResponse<number>
         if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
             this.gemmiStructure.delete()
@@ -495,7 +496,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 command: 'replace_fragment',
                 commandArgs: [this.molNo, fragmentMolecule.molNo, cid],
                 changesMolecules: [this.molNo]
-            }, false)    
+            }, false)
             if (refineAfterMerge) {
                 await this.refineResiduesUsingAtomCid(cid, 'LITERAL', 4000, false)
             }
@@ -503,7 +504,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
 
         await this.unhideAll()
-        await fragmentMolecule.delete()
+        await fragmentMolecule.delete(true)
     }
 
     /**

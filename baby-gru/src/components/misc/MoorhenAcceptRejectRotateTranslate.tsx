@@ -32,7 +32,7 @@ export const MoorhenAcceptRejectRotateTranslate = (props: {
             await props.moleculeRef.current.updateWithMovedAtoms(transformedAtoms)
             dispatch( triggerScoresUpdate(props.moleculeRef.current.molNo) )
         }
-        fragmentMoleculeRef.current.delete()
+        fragmentMoleculeRef.current.delete(true)
         props.moleculeRef.current.unhideAll()
         dispatch( setIsRotatingAtoms(false) )
     }, [props, props.moleculeRef, fragmentMoleculeRef])

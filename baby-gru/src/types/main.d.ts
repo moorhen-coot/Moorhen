@@ -95,7 +95,7 @@ declare module 'moorhen' {
         drawSymmetry: (fetchSymMatrix?: boolean) => Promise<void>;
         getUnitCellParams():  { a: number; b: number; c: number; alpha: number; beta: number; gamma: number; };
         replaceModelWithFile(fileUrl: string): Promise<void>
-        delete(): Promise<_moorhen.WorkerResponse> 
+        delete(popBackImol?: boolean): Promise<_moorhen.WorkerResponse>;
         fetchDefaultColourRules(): Promise<void>;
         fetchIfDirtyAndDraw(arg0: string): Promise<void>;
         drawEnvironment: (cid: string, labelled?: boolean) => Promise<void>;
