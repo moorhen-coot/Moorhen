@@ -1,5 +1,5 @@
 import 'pako';
-import { guid, readTextFile, readGemmiStructure, centreOnGemmiAtoms, getRandomMoleculeColour, doDownload } from './MoorhenUtils'
+import { guid, readTextFile, readGemmiStructure, centreOnGemmiAtoms, getRandomMoleculeColour, doDownload, formatLigandSVG } from './MoorhenUtils'
 import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation"
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
@@ -91,6 +91,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     isLigand: boolean;
     coordsFormat: moorhen.coorFormats;
     cachedPrivateerValidation: privateer.ResultsEntry[];
+    cachedLigandSVGs: {[key: string]: string}[];
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibraryPath = "./baby-gru/monomers") {
         this.type = 'molecule'
@@ -102,6 +103,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.coordsFormat = null
         this.gemmiStructure = null
         this.sequences = []
+        this.cachedLigandSVGs = null
         this.cachedPrivateerValidation = null
         this.ligands = null
         this.ligandDicts = {}
@@ -1447,6 +1449,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * Update the ligand dictionaries for this molecule instance
      */
     async updateLigands(): Promise<void> {
+        this.cachedLigandSVGs = null
         let ligandList: moorhen.LigandInfo[] = []
         const ligandInfoVec = window.CCP4Module.get_ligand_info_for_structure(this.gemmiStructure)
         const ligandInfoVecSize = ligandInfoVec.size()
@@ -1965,5 +1968,34 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
 
         return result.data.result.result
+    }
+
+    /**
+     * Get SVG descriptions for the ligands in this molecule instance
+     * @param {string} resName - The name of the ligand to get SVG descriptions for
+     * @param {boolean} useCache - Whether to use the cached results or not
+     * @returns {Promise<string[]>} A list of SVG descriptions for the ligands in this molecule instance
+     */
+    async getLigandSVG(resName: string, useCache: boolean = false): Promise<string> {
+        if (useCache && this.cachedLigandSVGs && !this.atomsDirty && resName in this.cachedLigandSVGs) {
+            return this.cachedLigandSVGs[resName]
+        }
+
+        const state = MoorhenReduxStore.getState()
+        const isDark = state.sceneSettings.isDark
+
+        const result = await this.commandCentre.current.cootCommand({
+                returnType: "string",
+                command: 'get_svg_for_residue_type',
+                commandArgs: [this.molNo, resName, false, isDark],
+            }, false) as moorhen.WorkerResponse<string>
+
+        const ligandSVG = formatLigandSVG(result.data.result.result)
+
+        if (useCache) {
+            this.cachedLigandSVGs = { ...this.cachedLigandSVGs, [resName]: ligandSVG }
+        }
+
+        return ligandSVG
     }
 }

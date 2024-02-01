@@ -160,7 +160,9 @@ export namespace moorhen {
         buffersInclude: (bufferIn: { id: string; }) => boolean;
         redrawRepresentation: (id: string) => Promise<void>;
         getPrivateerValidation(useCache?: boolean): Promise<privateer.ResultsEntry[]>;
+        getLigandSVG(resName: string, useCache?: boolean): Promise<string>;
         type: string;
+        cachedLigandSVGs: {[key: string]: string}[];
         cachedPrivateerValidation: privateer.ResultsEntry[];
         isLigand: boolean;
         excludedCids: string[];

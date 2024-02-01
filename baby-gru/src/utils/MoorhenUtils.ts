@@ -18,15 +18,10 @@ import { libcootApi } from "../types/libcoot";
 
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-export const getLigandSVG = async (commandCentre: React.RefObject<moorhen.CommandCentre>, imol: number, compId: string, isDark: boolean): Promise<string> => {
-    const result = await commandCentre.current.cootCommand({
-        returnType: "string",
-        command: 'get_svg_for_residue_type',
-        commandArgs: [imol, compId, false, isDark],
-    }, false) as moorhen.WorkerResponse<string>
+export const formatLigandSVG = (svg: string): string => {
     
     const parser = new DOMParser()
-    let theText = result.data.result.result
+    let theText = svg
     let doc = parser.parseFromString(theText, "image/svg+xml")
     let xmin = 999
     let ymin = 999
