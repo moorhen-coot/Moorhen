@@ -15,12 +15,6 @@ jobs:
           cd /home/runner/work/Moorhen/
           mv Moorhen ccp4_wasm
 
-      - name: Install dependencies 
-        working-directory: /home/runner/work/Moorhen/       
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y bzr nodejs npm
-      
       # EMSDK
       - name: Restore cache emsdk
         id: cache-emsdk
@@ -50,6 +44,12 @@ jobs:
           cd /home/runner/work/Moorhen/emsdk/
           ./emsdk activate latest
 
+      - name: Install dependencies 
+        working-directory: /home/runner/work/Moorhen/       
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y bzr nodejs npm
+      
       # Sources
       - name: Cache Moorhen sources
         id: cache-moorhen-sources
