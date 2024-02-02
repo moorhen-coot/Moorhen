@@ -3,37 +3,69 @@ name: Nightly tests
 on:
   schedule:
   - cron: "0 0 * * *"
-  
+
 jobs:
   runTests:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
-       - uses: actions/checkout@v1
-       - name: Rename folder
-         run: |
-           cd /home/runner/work/Moorhen/
-           mv Moorhen ccp4_wasm
-       - name: Install dependencies 
-         working-directory: /home/runner/work/Moorhen/       
-         run: |
-           sudo apt-get update -y
-           sudo apt-get install -y bzr nodejs npm                  
-           cd /home/runner/work/Moorhen/
-           git clone https://github.com/emscripten-core/emsdk.git
-           cd /home/runner/work/Moorhen/emsdk/
-           ./emsdk install latest
-           ./emsdk activate latest
-       - name: Download sources and create bindings
-         working-directory: /home/runner/work/Moorhen/ccp4_wasm
-         run: |
-           cd /home/runner/work/Moorhen/ccp4_wasm         
-           source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
-           ./get_sources
-           ./initial_build.sh
-       - name: Run tests
-         working-directory: /home/runner/work/Moorhen/ccp4_wasm/baby-gru
-         run: |             
-           cd /home/runner/work/Moorhen/ccp4_wasm/baby-gru
-           source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
-           npm test
+      - uses: actions/checkout@v1
+      
+      - name: Rename folder
+        run: |
+          cd /home/runner/work/Moorhen/
+          mv Moorhen ccp4_wasm
+
+      - name: Install dependencies 
+        working-directory: /home/runner/work/Moorhen/       
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y bzr nodejs npm
+      
+      # EMSDK
+      - name: Restore cache emsdk
+        id: cache-emsdk
+        uses: actions/cache@v4
+        with:
+          path: /home/runner/work/Moorhen/emsdk/
+          key: moorhen-emsdk-cache
+
+      - name: Download and install emsdk
+        if: steps.cache-emsdk.outputs.cache-hit != 'true'
+        run: |
+          cd /home/runner/work/Moorhen/
+          git clone https://github.com/emscripten-core/emsdk.git
+          cd /home/runner/work/Moorhen/emsdk/
+          ./emsdk install latest
+
+      - name: Save emsdk cache
+        id: cache-emsdk-save
+        if: steps.cache-emsdk.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with: 
+          path: /home/runner/work/Moorhen/emsdk/
+          key: moorhen-emsdk-cache
+
+      - name: Activate emsdk
+        run: |
+          cd /home/runner/work/Moorhen/emsdk/
+          ./emsdk activate latest
+
+      # Sources
+      - name: Cache Moorhen sources
+        id: cache-moorhen-sources
+        uses: actions/cache@v4
+      - name: Download sources and create bindings
+        working-directory: /home/runner/work/Moorhen/ccp4_wasm
+        run: |
+          cd /home/runner/work/Moorhen/ccp4_wasm         
+          source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
+          ./get_sources
+          ./initial_build.sh
+
+      - name: Run tests
+        working-directory: /home/runner/work/Moorhen/ccp4_wasm/baby-gru
+        run: |             
+          cd /home/runner/work/Moorhen/ccp4_wasm/baby-gru
+          source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
+          npm test
