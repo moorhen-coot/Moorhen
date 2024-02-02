@@ -54,18 +54,7 @@ jobs:
           ./emsdk activate latest
 
       # Sources
-      - name: Cache Moorhen sources
-        id: cache-moorhen-sources
-        uses: actions/cache@v4
-        with:
-          path: |
-            /home/runner/work/Moorhen/Moorhen/checkout/*
-            /home/runner/work/Moorhen/Moorhen/patches/*
-            !/home/runner/work/Moorhen/Moorhen/checkout/coot-1.0
-          key: moorhen-sources-cache
-
       - name: Download and patch Moorhen sources
-        if: steps.cache-moorhen-sources.outputs.cache-hit != 'true'
         working-directory: /home/runner/work/Moorhen/Moorhen
         run: |
           cd /home/runner/work/Moorhen/Moorhen         
@@ -74,7 +63,6 @@ jobs:
 
       - name: Save Moorhen sources
         id: cache-moorhen-sources-save
-        if: steps.cache-moorhen-sources.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with: 
           path: |
