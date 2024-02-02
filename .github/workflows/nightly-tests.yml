@@ -1,28 +1,26 @@
 name: Nightly tests
 
 on:
-  schedule:
-  - cron: "0 0 * * *"
+  push:
 
 jobs:
   runTests:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v1
-      
-      - name: Rename folder
-        run: |
-          cd /home/runner/work/Moorhen/
-          mv Moorhen ccp4_wasm
 
+      # Checkout repository
+      - uses: actions/checkout@v1
+        name: Checkout Moorhen
+
+      # Install some general dependencies
       - name: Install dependencies 
         working-directory: /home/runner/work/Moorhen/       
         run: |
           sudo apt-get update -y
           sudo apt-get install -y bzr nodejs npm
       
-      # EMSDK
+      # Download and install emsdk cache
       - name: Restore cache emsdk
         id: cache-emsdk
         uses: actions/cache@v4
@@ -55,17 +53,55 @@ jobs:
       - name: Cache Moorhen sources
         id: cache-moorhen-sources
         uses: actions/cache@v4
-      - name: Download sources and create bindings
-        working-directory: /home/runner/work/Moorhen/ccp4_wasm
+        with:
+          path: |
+            /home/runner/work/Moorhen/Moorhen/checkout/*
+            /home/runner/work/Moorhen/Moorhen/patches/*
+            !/home/runner/work/Moorhen/Moorhen/checkout/coot-1.0
+          key: moorhen-sources-cache-test
+
+      - name: Download and patch Moorhen sources
+        if: steps.cache-moorhen-sources.outputs.cache-hit != 'true'
+        working-directory: /home/runner/work/Moorhen/Moorhen
         run: |
-          cd /home/runner/work/Moorhen/ccp4_wasm         
+          cd /home/runner/work/Moorhen/Moorhen         
           source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
           ./get_sources
+
+      - name: Save Moorhen sources
+        id: cache-moorhen-sources-save
+        if: steps.cache-moorhen-sources.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with: 
+          path: |
+            /home/runner/work/Moorhen/Moorhen/checkout/*
+            /home/runner/work/Moorhen/Moorhen/patches/*
+            !/home/runner/work/Moorhen/Moorhen/checkout/coot-1.0
+          key: moorhen-sources-cache-test
+
+      # Download Coot sources (unless we downloaded the sources from fresh instead of the cache in which case its already there)
+      - name: Download coot source
+        if: steps.cache-moorhen-sources.outputs.cache-hit == 'true'
+        working-directory: /home/runner/work/Moorhen/Moorhen
+        run: |
+          cd /home/runner/work/Moorhen/Moorhen         
+          source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
+          git clone --branch main https://github.com/pemsley/coot.git coot-1.0
+
+      # Install bindings
+      - name: Cache Moorhen sources
+        id: cache-moorhen-sources
+        uses: actions/cache@v4
+      - name: Install bindings
+        working-directory: /home/runner/work/Moorhen/Moorhen
+        run: |
+          cd /home/runner/work/Moorhen/Moorhen         
+          source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
           ./initial_build.sh
 
       - name: Run tests
-        working-directory: /home/runner/work/Moorhen/ccp4_wasm/baby-gru
+        working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
         run: |             
-          cd /home/runner/work/Moorhen/ccp4_wasm/baby-gru
+          cd /home/runner/work/Moorhen/Moorhen/baby-gru
           source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
           npm test
