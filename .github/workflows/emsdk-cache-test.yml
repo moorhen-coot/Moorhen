@@ -27,7 +27,7 @@ jobs:
 
       - name: Save emsk source cache
         id: cache-emsdk-source-save
-        if: steps.cache-emsdk-source.cache-hit != 'true'
+        if: steps.cache-emsdk-source.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with: 
           path: /home/runner/work/Moorhen/emsdk/
