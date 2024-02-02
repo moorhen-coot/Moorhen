@@ -82,4 +82,5 @@ jobs:
       - name: Post cache test
         if: steps.cache-moorhen-sources.outputs.cache-hit == 'true'
         run: |
-          ls -R /home/runner/work/Moorhen/checkout/
+          ls /home/runner/work/Moorhen/Moorhen/checkout/
+          ls /home/runner/work/Moorhen/Moorhen/patches
