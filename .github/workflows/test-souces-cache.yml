@@ -9,6 +9,17 @@ jobs:
     timeout-minutes: 120
     steps:
 
+      # Checkout repository
+      - uses: actions/checkout@v1
+        name: Checkout Moorhen
+
+      # Install some general dependencies
+      - name: Install dependencies 
+        working-directory: /home/runner/work/Moorhen/       
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y bzr nodejs npm
+      
       # Download and install emsdk cache
       - name: Restore cache emsdk
         id: cache-emsdk
@@ -38,38 +49,22 @@ jobs:
           cd /home/runner/work/Moorhen/emsdk/
           ./emsdk activate latest
 
-      # Checkout repository
-      - uses: actions/checkout@v1
-        name: Checkout Moorhen
-
-      - name: Rename folder
-        run: |
-          cd /home/runner/work/Moorhen/
-          mv Moorhen ccp4_wasm
-
-      # Install some general dependencies
-      - name: Install dependencies 
-        working-directory: /home/runner/work/Moorhen/       
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y bzr nodejs npm
-      
       # Sources
       - name: Cache Moorhen sources
         id: cache-moorhen-sources
         uses: actions/cache@v4
         with:
           path: |
-            /home/runner/work/Moorhen/checkout/
-            /home/runner/work/Moorhen/patches/
-            !/home/runner/work/Moorhen/checkout/coot-1.0
+            /home/runner/work/Moorhen/Moorhen/checkout/
+            /home/runner/work/Moorhen/Moorhen/patches/
+            !/home/runner/work/Moorhen/Moorhen/checkout/coot-1.0
           key: moorhen-sources-cache-test
 
       - name: Download and patch Moorhen sources
         if: steps.cache-moorhen-sources.outputs.cache-hit != 'true'
-        working-directory: /home/runner/work/Moorhen/ccp4_wasm
+        working-directory: /home/runner/work/Moorhen/Moorhen
         run: |
-          cd /home/runner/work/Moorhen/ccp4_wasm         
+          cd /home/runner/work/Moorhen/Moorhen         
           source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
           ./get_sources
 
@@ -79,9 +74,9 @@ jobs:
         uses: actions/cache/save@v4
         with: 
           path: |
-            /home/runner/work/Moorhen/checkout/
-            /home/runner/work/Moorhen/patches/
-            !/home/runner/work/Moorhen/checkout/coot-1.0
+            /home/runner/work/Moorhen/Moorhen/checkout/
+            /home/runner/work/Moorhen/Moorhen/patches/
+            !/home/runner/work/Moorhen/Moorhen/checkout/coot-1.0
           key: moorhen-sources-cache-test
       
       - name: Post cache test
