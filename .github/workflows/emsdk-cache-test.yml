@@ -29,10 +29,10 @@ jobs:
         uses: actions/cache/save@v4
         with: 
           path: /home/runner/work/Moorhen/emsdk/
-          key: ${{ steps.cache-emsdk-source.outputs.cache-primary-key }}
+          key: moorhen-emsdk-source-cache
 
       - name: Activate emsdk
-        run:
+        run: |
           cd /home/runner/work/Moorhen/emsdk/
           ./emsdk install latest
           ./emsdk activate latest
