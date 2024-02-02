@@ -58,8 +58,8 @@ Binaries are available on the releases page. Please read the instructions there 
 `git clone https://github.com/emscripten-core/emsdk.git`  
 `cd emsdk`  
 `git pull`  
-`./emsdk install latest`  
-`./emsdk activate latest`
+`./emsdk install 3.1.51`  
+`./emsdk activate 3.1.51`
 
 2. Each time you want to use emscripten:  
 `source ./emsdk_env.sh`
