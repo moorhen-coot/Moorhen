@@ -1,7 +1,7 @@
 name: Test cache sources
 
 on:
-  - cron: "0 0 * * *"
+  push:
 
 jobs:
   runTests:
