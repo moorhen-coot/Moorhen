@@ -1,7 +1,8 @@
 name: Update node modules
 
 on:
-  push:
+  schedule:
+  - cron: "0 1 * * 0"
 
 jobs:
   updateNodeModulesCache:
@@ -56,7 +57,7 @@ jobs:
           source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
           npm install
 
-      - name: Save Moorhen sources
+      - name: Save node modules cache
         id: cache-moorhen-npm-save
         uses: actions/cache/save@v4
         with: 
