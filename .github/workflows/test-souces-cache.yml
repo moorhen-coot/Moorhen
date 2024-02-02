@@ -70,7 +70,7 @@ jobs:
           ./get_sources
 
       - name: Save Moorhen sources
-        id: cache-moorhen-sources
+        id: cache-moorhen-sources-save
         if: steps.cache-moorhen-sources.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with: 
