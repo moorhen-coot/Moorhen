@@ -59,7 +59,7 @@ jobs:
             /home/runner/work/Moorhen/checkout/
             /home/runner/work/Moorhen/patches/
             !/home/runner/work/Moorhen/checkout/coot-1.0
-        key: moorhen-sources-cache-test
+          key: moorhen-sources-cache-test
 
       - name: Download and patch Moorhen sources
         if: steps.cache-moorhen-sources.outputs.cache-hit != 'true'
