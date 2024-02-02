@@ -8,7 +8,6 @@ curl -L http://ftp.ccp4.ac.uk/opensource/libccp4-8.0.0.tar.gz -o libccp4-8.0.0.t
 echo
 
 echo "Checking out clipper"
-#curl -L http://ftp.ccp4.ac.uk/opensource/clipper-2.1.20201109.tar.gz -o clipper-2.1.20201109.tar.gz
 curl -L http://www.ysbl.york.ac.uk/jsd523/clipper-gemmi-wrapper-20240123.tar.gz -o clipper-gemmi-wrapper.tar.gz
 echo
 
@@ -34,18 +33,23 @@ echo
 echo "Downloading out fftw-2.1.5"
 curl -L http://www.fftw.org/fftw-2.1.5.tar.gz -o fftw-2.1.5.tar.gz
 echo
+
 echo "Downloading gsl-2.7.1"
 curl -L https://mirror.ibcp.fr/pub/gnu/gsl/gsl-2.7.1.tar.gz -o gsl-2.7.1.tar.gz
 echo
+
 echo "Downloading coot-1"
 git clone --branch main https://github.com/pemsley/coot.git coot-1.0
 echo
+
 echo "Downloading glm"
 curl -L https://github.com/g-truc/glm/archive/refs/tags/0.9.9.8.tar.gz -o glm-0.9.9.8.tar.gz
+echo
 
 echo "Downloading RDKit source"
 rdkit_release="Release_2023_09_1"
 curl -L https://github.com/rdkit/rdkit/archive/refs/tags/$rdkit_release.tar.gz -o "$rdkit_release.tar.gz"
+echo
 
 echo "Downloading and Unpacking Privateer"
 curl -L https://github.com/glycojones/privateer/archive/refs/tags/WASM-0.3.4.tar.gz -o privateer-wasm.tar.gz
@@ -58,11 +62,8 @@ ln -s libccp4-8.0.0 libccp4
 echo
 
 echo "Unpacking clipper source"
-#tar xf clipper-2.1.20201109.tar.gz
-#ln -s clipper-2.1 clipper
 tar xf clipper-gemmi-wrapper.tar.gz
 mv clipper-gemmi-wrapper clipper
-
 echo
 
 echo "Unpacking ssm source"
@@ -78,9 +79,11 @@ echo
 echo "Unpacking RDKit source"
 tar xf "$rdkit_release.tar.gz"
 echo
+
 echo "Unpacking fftw-2.1.5"
 tar xf fftw-2.1.5.tar.gz
 echo
+
 echo "Unpacking glm-0.9.9.8"
 tar xf glm-0.9.9.8.tar.gz
 echo
@@ -94,7 +97,7 @@ echo "Unpacking gsl-2.7.1"
 tar xf checkout/gsl-2.7.1.tar.gz
 echo
 
-#Create an empty file silly.c and then compile it with USE_ZLIB and USE_LIBPNG to force emsdk to get zlib/png.
+# Create an empty file silly.c and then compile it with USE_ZLIB and USE_LIBPNG to force emsdk to get zlib/png.
 echo "Attempting to get emsdk zlib/png ports"
 echo
 echo "" > silly.c
@@ -103,16 +106,17 @@ rm -f silly.c
 rm -f a.out.js
 rm -f a.out.wasm
 
-#Get PapaParse
+# Get PapaParse
 echo "Downloading papaparse.min.js"
 echo
 curl -L https://unpkg.com/papaparse@latest/papaparse.min.js -o web_example/papaparse.min.js
 
-#Get Chart.Js
+# Get Chart.Js
 echo "Downloading chart.js"
 echo
 curl -L https://cdn.jsdelivr.net/npm/chart.js -o web_example/chart.js
 
+# Boost
 echo "Checking out boost"
 cd checkout
 curl -L https://boostorg.jfrog.io/artifactory/main/release/1.83.0/source/boost_1_83_0.tar.bz2 -o boost_1_83_0.tar.bz2
