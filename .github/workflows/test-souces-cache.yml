@@ -55,8 +55,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            /home/runner/work/Moorhen/Moorhen/checkout/
-            /home/runner/work/Moorhen/Moorhen/patches/
+            /home/runner/work/Moorhen/Moorhen/checkout/*
+            /home/runner/work/Moorhen/Moorhen/patches/*
             !/home/runner/work/Moorhen/Moorhen/checkout/coot-1.0
           key: moorhen-sources-cache-test
 
@@ -74,8 +74,8 @@ jobs:
         uses: actions/cache/save@v4
         with: 
           path: |
-            /home/runner/work/Moorhen/Moorhen/checkout/
-            /home/runner/work/Moorhen/Moorhen/patches/
+            /home/runner/work/Moorhen/Moorhen/checkout/*
+            /home/runner/work/Moorhen/Moorhen/patches/*
             !/home/runner/work/Moorhen/Moorhen/checkout/coot-1.0
           key: moorhen-sources-cache-test
       
@@ -83,4 +83,5 @@ jobs:
         if: steps.cache-moorhen-sources.outputs.cache-hit == 'true'
         run: |
           ls /home/runner/work/Moorhen/Moorhen/checkout/
-          ls /home/runner/work/Moorhen/Moorhen/patches
+          ls /home/runner/work/Moorhen/Moorhen/patches/
+          ls /home/runner/work/Moorhen/Moorhen/checkout/coot-1.0
