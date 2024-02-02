@@ -34,7 +34,7 @@ jobs:
           cd /home/runner/work/Moorhen/
           git clone https://github.com/emscripten-core/emsdk.git
           cd /home/runner/work/Moorhen/emsdk/
-          ./emsdk install latest
+          ./emsdk install 3.1.51
 
       - name: Save emsdk cache
         id: cache-emsdk-save
@@ -47,7 +47,7 @@ jobs:
       - name: Activate emsdk
         run: |
           cd /home/runner/work/Moorhen/emsdk/
-          ./emsdk activate latest
+          ./emsdk activate 3.1.51
 
       # Sources
       - name: Restore cache Moorhen sources
@@ -132,6 +132,7 @@ jobs:
         run: |
           cd /home/runner/work/Moorhen/Moorhen         
           source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
+          ls 
           ./initial_build.sh
 
       - name: Run tests
