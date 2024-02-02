@@ -1,7 +1,7 @@
 name: Test cache sources
 
 on:
-  push:
+  - cron: "0 0 * * *"
 
 jobs:
   runTests:
@@ -9,7 +9,7 @@ jobs:
     timeout-minutes: 120
     steps:
 
-      # EMSDK
+      # Download and install emsdk cache
       - name: Restore cache emsdk
         id: cache-emsdk
         uses: actions/cache@v4
@@ -38,8 +38,10 @@ jobs:
           cd /home/runner/work/Moorhen/emsdk/
           ./emsdk activate latest
 
+      # Checkout repository
       - uses: actions/checkout@v1
-      
+        name: Checkout Moorhen
+
       - name: Rename folder
         run: |
           cd /home/runner/work/Moorhen/
