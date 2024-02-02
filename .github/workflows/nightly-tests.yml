@@ -58,7 +58,7 @@ jobs:
             /home/runner/work/Moorhen/Moorhen/checkout/*
             /home/runner/work/Moorhen/Moorhen/patches/*
             !/home/runner/work/Moorhen/Moorhen/checkout/coot-1.0
-          key: moorhen-sources-cache-test
+          key: moorhen-sources-cache
 
       - name: Download and patch Moorhen sources
         if: steps.cache-moorhen-sources.outputs.cache-hit != 'true'
@@ -77,7 +77,7 @@ jobs:
             /home/runner/work/Moorhen/Moorhen/checkout/*
             /home/runner/work/Moorhen/Moorhen/patches/*
             !/home/runner/work/Moorhen/Moorhen/checkout/coot-1.0
-          key: moorhen-sources-cache-test
+          key: moorhen-sources-cache
 
       # Download Coot sources (unless we downloaded the sources from fresh instead of the cache in which case its already there)
       - name: Download coot source
