@@ -89,9 +89,6 @@ jobs:
           git clone --branch main https://github.com/pemsley/coot.git coot-1.0
 
       # Install bindings
-      - name: Cache Moorhen sources
-        id: cache-moorhen-sources
-        uses: actions/cache@v4
       - name: Install bindings
         working-directory: /home/runner/work/Moorhen/Moorhen
         run: |
