@@ -1,8 +1,11 @@
 name: Update moorhen sources cache
 
 on:
-  schedule:
-  - cron: "0 1 * * 0"
+  push:
+    branches:
+      - master
+    paths:
+      - 'get_sources'
 
 jobs:
   updateMoorhenSourcesCache:
