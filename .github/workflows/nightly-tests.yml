@@ -117,8 +117,8 @@ jobs:
         shell: bash
         working-directory: /home/runner/work/Moorhen/Moorhen
         run: |
-          source ../VERSIONS
           cd /home/runner/work/Moorhen/Moorhen   
+          source ./VERSIONS
           tar xf checkout/gsl-$gsl_release.tar.gz
           ln -s checkout/rdkit-$rdkit_release rdkit      
           ln -s checkout/boost_$boost_release boost
