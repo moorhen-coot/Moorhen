@@ -8,12 +8,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v1
-      
-      - name: Rename folder
-        run: |
-          cd /home/runner/work/Moorhen/
-          mv Moorhen ccp4_wasm
 
       # EMSDK
       - name: Restore cache emsdk
@@ -44,6 +38,14 @@ jobs:
           cd /home/runner/work/Moorhen/emsdk/
           ./emsdk activate latest
 
+      - uses: actions/checkout@v1
+      
+      - name: Rename folder
+        run: |
+          cd /home/runner/work/Moorhen/
+          mv Moorhen ccp4_wasm
+
+      # Install some general dependencies
       - name: Install dependencies 
         working-directory: /home/runner/work/Moorhen/       
         run: |
