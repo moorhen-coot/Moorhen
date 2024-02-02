@@ -18,7 +18,7 @@ jobs:
           key: moorhen-emsdk-sourcsde-cache
 
       - name: Download emsk source
-        if: steps.cache-emsdk-source.cache-hit != 'true'
+        if: steps.cache-emsdk-source.outputs.cache-hit != 'true'
         run: |
           cd /home/runner/work/Moorhen/
           git clone https://github.com/emscripten-core/emsdk.git
