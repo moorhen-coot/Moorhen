@@ -1,0 +1,39 @@
+name: Nightly tests
+
+on:
+  push
+  
+jobs:
+  runTests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+
+      # EMSDK
+      - name: Cache emsdk source
+        id: cache-emsdk-source
+        uses: actions/cache@v4
+        with:
+          path: /home/runner/work/Moorhen/emsdk/
+          key: moorhen-emsdk-source-cache
+
+      - name: Download emsk source
+        if: steps.cache-emsdk-source.cache-hit != 'true'
+        run: |
+          cd /home/runner/work/Moorhen/
+          git clone https://github.com/emscripten-core/emsdk.git
+
+      - name: Save emsk source cache
+        id: cache-emsdk-source-save
+        if: steps.cache-emsdk-source.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with: 
+          path: /home/runner/work/Moorhen/emsdk/
+          key: ${{ steps.cache-emsdk-source.outputs.cache-primary-key }}
+
+      - name: Activate emsdk
+        run:
+          cd /home/runner/work/Moorhen/emsdk/
+          ./emsdk install latest
+          ./emsdk activate latest
+
