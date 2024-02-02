@@ -50,7 +50,7 @@ jobs:
           ./emsdk activate latest
 
       # Sources
-      - name: Cache Moorhen sources
+      - name: Restore cache Moorhen sources
         id: cache-moorhen-sources
         uses: actions/cache@v4
         with:
@@ -68,7 +68,7 @@ jobs:
           source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
           ./get_sources
 
-      - name: Save Moorhen sources
+      - name: Save Moorhen sources cache
         id: cache-moorhen-sources-save
         if: steps.cache-moorhen-sources.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
@@ -87,6 +87,30 @@ jobs:
           cd /home/runner/work/Moorhen/Moorhen         
           source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
           git clone --branch main https://github.com/pemsley/coot.git coot-1.0
+      
+      # Install npm modules
+      - name: Restore cache npm modules
+        id: cache-moorhen-npm
+        uses: actions/cache@v4
+        with:
+          path: /home/runner/work/Moorhen/Moorhen/baby-gru/node_modules
+          key: moorhen-npm-cache
+
+      - name: Install npm modules
+        if: steps.cache-moorhen-npm.outputs.cache-hit != 'true'
+        working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
+        run: |
+          cd /home/runner/work/Moorhen/Moorhen/baby-gru         
+          source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
+          npm install
+
+      - name: Save npm modules cache
+        id: cache-moorhen-npm-save
+        if: steps.cache-moorhen-npm.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with: 
+          path: /home/runner/work/Moorhen/Moorhen/baby-gru/node_modules
+          key: moorhen-npm-cache
 
       # Install bindings
       - name: Install bindings
