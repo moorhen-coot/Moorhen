@@ -169,7 +169,7 @@ jobs:
         if: steps.cache-moorhen-install.outputs.cache-hit == 'true'
         working-directory: /home/runner/work/Moorhen/Moorhen/CCP4_WASM_BUILD
         run: |
-          cd /home/runner/work/Moorhen/Moorhen/CCP4_WASM_BUILD
+          cd /home/runner/work/Moorhen/Moorhen/CCP4_WASM_BUILD/moorhen_build/
           source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
           make install
 
