@@ -2,9 +2,14 @@ name: Update install cache
 
 on:
   push:
+    branches:
+      - master
+    paths:
+      - 'get_sources'
+      - 'VERSIONS'
 
 jobs:
-  runTests:
+  updateInstallCache:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
