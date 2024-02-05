@@ -35,10 +35,12 @@ export const MoorhenCarbohydrateList = (props: {
     }, [toggleScoresUpdate])
 
     useEffect(() => {
-        if (props.molecule) {
+        if (showModelsModal) {
             validate()
+        } else {
+            setCarbohydrateList(null)
         }
-    }, [])
+    }, [showModelsModal])
 
     return <>
             {carbohydrateList === null ?

@@ -48,8 +48,12 @@ export const MoorhenLigandList = (props: {
     }
     
     useEffect(() => {
-        updateLigandList()
-    }, [])
+        if (showModelsModal) {
+            updateLigandList()
+        } else {
+            setLigandList(null)
+        }
+    }, [showModelsModal])
     
     useEffect(() => {
         if (props.molecule?.molNo === scoresUpdateMolNo && showModelsModal) {
