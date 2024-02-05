@@ -18,7 +18,7 @@ jobs:
         working-directory: /home/runner/work/Moorhen/       
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y bzr nodejs npm
+          sudo apt-get install -y bzr nodejs npm pkg-config
       
       # Download and install emsdk cache
       - name: Restore cache emsdk
@@ -132,7 +132,6 @@ jobs:
         run: |
           cd /home/runner/work/Moorhen/Moorhen
           source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
-          ls /home/runner/work/Moorhen/Moorhen/checkout/coot-1.0
           ./initial_build.sh
 
       - name: Run tests
