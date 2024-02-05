@@ -596,6 +596,12 @@ std::vector<Cartesian> DrawSugarBlockInt(mmdb::Residue* res1, int selHnd, mmdb::
     //std::cout << "Possibly drawing " << res->GetResName() << std::endl;
     std::vector<Cartesian> retval;
 
+    const auto blue_col = glm::vec4(0,0.56,0.73,1);
+    const auto green_col = glm::vec4(0,0.65,0.31,1);
+    const auto yellow_col = glm::vec4(0.8,0.63,0,1);
+    const auto red_col = glm::vec4(0.92,0.1,0.14,1);
+    const auto orange_col = glm::vec4(1,0.49,0,1);
+
     // Should not be able to get here with these not already registered.
     int udd_C1X = molHnd->GetUDDHandle ( UDR_RESIDUE,"GLYCO_BLOCK_C1X" );
     int udd_C1Y = molHnd->GetUDDHandle ( UDR_RESIDUE,"GLYCO_BLOCK_C1Y" );
@@ -734,11 +740,11 @@ std::vector<Cartesian> DrawSugarBlockInt(mmdb::Residue* res1, int selHnd, mmdb::
 
                 glm::vec3 block_pos(centre.get_x(),centre.get_y(),centre.get_z());
                 if(strncmp(res->GetResName(),"GCS",3)==0||strncmp(res->GetResName(),"PA1",3)==0||strncmp(res->GetResName(),"NDG",3)==0||strncmp(res->GetResName(),"NAG",3)==0||strncmp(res->GetResName(),"NAC",3)==0||strncmp(res->GetResName(),"NBG",3)==0)
-                    block_col = glm::vec4(0,0,1,1);
+                    block_col = blue_col;
                 if(strncmp(res->GetResName(),"A2G",3)==0||strncmp(res->GetResName(),"NGA",3)==0||strncmp(res->GetResName(),"NG1",3)==0||strncmp(res->GetResName(),"NG6",3)==0)
-                    block_col = glm::vec4(1,1,0,1);
+                    block_col = yellow_col;
                 if(strncmp(res->GetResName(),"BM3",3)==0)
-                    block_col = glm::vec4(0,1,0,1);
+                    block_col = green_col;
 
                 glm::vec3 block_size(sugar_block_scale,sugar_block_scale,sugar_block_thickness);
                 coot::instancing_data_type_B_t block(block_pos, block_col, block_size, R3);
@@ -766,11 +772,11 @@ std::vector<Cartesian> DrawSugarBlockInt(mmdb::Residue* res1, int selHnd, mmdb::
 
                 glm::vec3 circle_pos(centre.get_x(),centre.get_y(),centre.get_z());
                 if(strncmp(res->GetResName(),"GLC",3)==0||strncmp(res->GetResName(),"BGC",3)==0)
-                    circle_col = glm::vec4(0,0,1,1);
+                    circle_col = blue_col;
                 if(strncmp(res->GetResName(),"GAL",3)==0||strncmp(res->GetResName(),"GLA",3)==0)
-                    circle_col = glm::vec4(1,1,0,1);
+                    circle_col = yellow_col;
                 if(strncmp(res->GetResName(),"MAN",3)==0||strncmp(res->GetResName(),"BMA",3)==0)
-                    circle_col = glm::vec4(0,1,0,1);
+                    circle_col = green_col;
 
                 glm::vec3 circle_size(sugar_block_scale,sugar_block_scale,sugar_block_thickness);
                 coot::instancing_data_type_B_t test_circle(circle_pos, circle_col, circle_size, R);
@@ -818,7 +824,7 @@ std::vector<Cartesian> DrawSugarBlockInt(mmdb::Residue* res1, int selHnd, mmdb::
                 // ADD TO MESH - FUC and friends
 
                 glm::vec4 triangle_col;
-                triangle_col = glm::vec4(1,0,0,1);
+                triangle_col = red_col;
                 c1c4.normalize();
 
                 Cartesian c1c4p = Cartesian::CrossProduct(c1c4,normal);
@@ -904,7 +910,7 @@ std::vector<Cartesian> DrawSugarBlockInt(mmdb::Residue* res1, int selHnd, mmdb::
 
                 // ADD TO MESH - XLS and friends
 
-                glm::vec4 pentagram_col = glm::vec4(1,0.5,0,1);
+                glm::vec4 pentagram_col = orange_col;
                 c1c4.normalize();
 
                 Cartesian c1c4p = Cartesian::CrossProduct(c1c4,normal);
@@ -1282,8 +1288,10 @@ coot::instanced_mesh_t DrawSugarBlocks(mmdb::Manager *molHnd, const std::string 
        interaction_colour[3] = stick_col_v[3];
        }
      */
-    sugar_block_thickness = 0.2;//params.GetFloat("glycoblock_thickness");
+    sugar_block_thickness = 0.4;//params.GetFloat("glycoblock_thickness");
     sugar_block_scale = 1.4;//params.GetFloat("glycoblock_scale");
+    float stick_thickness = sugar_block_thickness * 0.5;
+    float ball_thickness = sugar_block_thickness * 0.9;
     interaction_cylinder_radius = 0.1;//params.GetFloat("glycoblock_interaction_cylinder_radius");
     interaction_line_width = 2;//params.GetInt("glycoblock_interaction_line_width");
     std::string interaction_style_pref = "Dashed cylinder";//params.GetString("glycoblock_interaction_style");
@@ -1451,11 +1459,11 @@ coot::instanced_mesh_t DrawSugarBlocks(mmdb::Manager *molHnd, const std::string 
                         final_b.normalize();
                         glm::mat4 R = get_orientation_matrix(final_b,Cartesian(0.0,0.0,1.0));
                         glm::vec4 bond_col(0.5,0.5,0.5,1);
-                        glm::vec3 bond_size(sugar_block_thickness,sugar_block_thickness,min_length*.5);
+                        glm::vec3 bond_size(stick_thickness, stick_thickness,min_length*.5);
                         coot::instancing_data_type_B_t bond_cyclinder(bond_pos, bond_col, bond_size, R);
                         glyco_shapes.circle_geom.instancing_data_B.push_back(bond_cyclinder);
 
-                        glm::vec3 sphere_size(sugar_block_thickness,sugar_block_thickness,sugar_block_thickness);
+                        glm::vec3 sphere_size(ball_thickness, ball_thickness,sugar_block_thickness);
                         coot::instancing_data_type_A_t bond_s1(s1_pos, bond_col, sphere_size);
                         glyco_shapes.sphere_geom.instancing_data_A.push_back(bond_s1);
                         coot::instancing_data_type_A_t bond_s2(s2_pos, bond_col, sphere_size);
