@@ -35,6 +35,7 @@
 #include <gemmi/assembly.hpp>
 #include <gemmi/calculate.hpp>
 #include <gemmi/util.hpp>
+#include <gemmi/fstream.hpp>
 
 using namespace emscripten;
 
@@ -145,6 +146,38 @@ gemmi::Structure remove_selected_residues(const gemmi::Structure &Structure, con
     new_structure.remove_empty_chains();
 
     return new_structure;
+}
+
+std::string cifDocument_as_string_with_style(const gemmi::cif::Document &doc, const gemmi::cif::Style &style) {
+        std::ostringstream os;
+        write_cif_to_stream(os, doc, style);
+        return os.str();
+}
+
+std::string cifDocument_as_string_with_options(const gemmi::cif::Document &doc, const gemmi::cif::WriteOptions &opt) {
+        std::ostringstream os;
+        write_cif_to_stream(os, doc, opt);
+        return os.str();
+}
+
+std::string cifDocument_as_string(const gemmi::cif::Document &doc) {
+        gemmi::cif::WriteOptions opt;
+        return cifDocument_as_string_with_options(doc,opt);
+}
+
+void cifDocument_write_file_with_style(const gemmi::cif::Document &doc, const std::string &filename, const gemmi::cif::Style &style) {
+        gemmi::Ofstream os(filename);
+        write_cif_to_stream(os.ref(), doc, style);
+}
+
+void cifDocument_write_file_with_options(const gemmi::cif::Document &doc, const std::string &filename, const gemmi::cif::WriteOptions &opt) {
+        gemmi::Ofstream os(filename);
+        write_cif_to_stream(os.ref(), doc, opt);
+}
+
+void cifDocument_write_file(const gemmi::cif::Document &doc, const std::string &filename) {
+        gemmi::cif::WriteOptions opt;
+        cifDocument_write_file_with_options(doc,filename,opt);
 }
 
 gemmi::Structure remove_non_selected_atoms(const gemmi::Structure &Structure, const gemmi::Selection &Selection) {
@@ -702,6 +735,15 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     register_vector<gemmi::Residue>("VectorGemmiResidue");
     register_vector<gemmi::ResidueSpan>("VectorGemmiResidueSpan");
     register_vector<gemmi::ConstResidueSpan>("VectorGemmiConstResidueSpan");
+
+    enum_<gemmi::cif::Style>("CifStyle")
+        .value("Simple", gemmi::cif::Style::Simple)
+        .value("NoBlankLines", gemmi::cif::Style::NoBlankLines)
+        .value("PreferPairs", gemmi::cif::Style::PreferPairs)
+        .value("Pdbx", gemmi::cif::Style::Pdbx)
+        .value("Indent35", gemmi::cif::Style::Indent35)
+        .value("Aligned", gemmi::cif::Style::Aligned)
+    ;
 
     enum_<gemmi::GridSizeRounding>("GridSizeRounding")
         .value("Nearest", gemmi::GridSizeRounding::Nearest)
@@ -1884,6 +1926,15 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("find_loop",&gemmi::cif::Block::find_loop)
     ;
 
+    class_<gemmi::cif::WriteOptions>("WriteOptions")
+    .constructor<>()
+    .property("prefer_pairs", &gemmi::cif::WriteOptions::prefer_pairs)
+    .property("compact", &gemmi::cif::WriteOptions::compact)
+    .property("misuse_hash", &gemmi::cif::WriteOptions::misuse_hash)
+    .property("align_pairs", &gemmi::cif::WriteOptions::align_pairs)
+    .property("align_loops", &gemmi::cif::WriteOptions::align_loops)
+    ;
+
     class_<gemmi::cif::Document>("cifDocument")
     .constructor<>()
     .property("source",&gemmi::cif::Document::source)
@@ -1892,6 +1943,12 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("clear",&gemmi::cif::Document::clear)
     .function("sole_block",select_overload<gemmi::cif::Block&()>(&gemmi::cif::Document::sole_block))
     .function("sole_block_const",select_overload<const gemmi::cif::Block&()const>(&gemmi::cif::Document::sole_block))
+    .function("write_file",&cifDocument_write_file)
+    .function("write_file_with_options",&cifDocument_write_file_with_options)
+    .function("write_file_with_style",&cifDocument_write_file_with_style)
+    .function("as_string",&cifDocument_as_string)
+    .function("as_string_with_options",&cifDocument_as_string_with_options)
+    .function("as_string_with_style",&cifDocument_as_string_with_style)
     ;
 
     class_<gemmi::cif::Column>("cifColumn")
