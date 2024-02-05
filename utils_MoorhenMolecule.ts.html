@@ -574,6 +574,14 @@ export class MoorhenMolecule implements moorhen.Molecule {
             }, false)
             newMolecule.setAtomsDirty(true)
             if (redraw) {
+                const drawMissingLoops = MoorhenReduxStore.getState().sceneSettings.drawMissingLoops
+                if (drawMissingLoops) {
+                    await this.commandCentre.current.cootCommand({
+                        command: "set_draw_missing_residue_loops",
+                        returnType:'status',
+                        commandArgs: [ false ],
+                    }, false)
+                }    
                 await Promise.all(cid.map(cid => {
                     return this.hideCid(cid, false)
                 }))
@@ -600,7 +608,15 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {boolean} [refineAfterMerge=false] - Indicates whether another cycle of refinement should be run after merging the fragment
      */
     async mergeFragmentFromRefinement(cid: string, fragmentMolecule: moorhen.Molecule, acceptTransform: boolean = true, refineAfterMerge: boolean = false) {
-        
+        const drawMissingLoops = MoorhenReduxStore.getState().sceneSettings.drawMissingLoops
+        if (drawMissingLoops) {
+            await this.commandCentre.current.cootCommand({
+                command: "set_draw_missing_residue_loops",
+                returnType:'status',
+                commandArgs: [ true ],
+            }, false)
+        }
+
         await this.commandCentre.current.cootCommand({
             returnType: 'status',
             command: 'clear_refinement',
@@ -1812,9 +1828,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
         } else {
             cidList = await this.getNeighborResiduesCids(cid, dist)
         }
+
         const newMolecule = await this.copyFragmentForRefinement(cidList, activeMap, redraw, redrawFragmentFirst)
         await newMolecule.animateRefine(50, 30, 50)
-        await this.mergeFragmentFromRefinement(cidList.join('||'), newMolecule, true, true)
+        await this.mergeFragmentFromRefinement(cidList.join('||'), newMolecule, true, true)        
     }
 
     /**
