@@ -189,7 +189,7 @@ describe('Testing molecules_container_js', () => {
         const isValid_2 = molecules_container.is_valid_model_molecule(coordMolNo_1)
         expect(isValid_2).toBeFalsy()
         const coordMolNo_2 = molecules_container.read_pdb('./5a3h.pdb')
-        expect(coordMolNo_2).toBe(0)
+        expect(coordMolNo_2).toBe(coordMolNo_1)
     })
 
     test('Test delete methods', () => {
