@@ -178,6 +178,20 @@ describe('Testing molecules_container_js', () => {
         expect(isValid_2).toBeFalsy()
     })
 
+    test("Test pop_back", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
+        expect(coordMolNo_1).toBe(0)
+        const isValid_1 = molecules_container.is_valid_model_molecule(coordMolNo_1)
+        expect(isValid_1).toBeTruthy()
+        molecules_container.pop_back()
+        const isValid_2 = molecules_container.is_valid_model_molecule(coordMolNo_1)
+        expect(isValid_2).toBeFalsy()
+        const coordMolNo_2 = molecules_container.read_pdb('./5a3h.pdb')
+        expect(coordMolNo_2).toBe(0)
+    })
+
     test('Test delete methods', () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(false)
