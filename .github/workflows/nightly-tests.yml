@@ -57,6 +57,7 @@ jobs:
           path: |
             /home/runner/work/Moorhen/Moorhen/checkout/*
             /home/runner/work/Moorhen/Moorhen/patches/*
+            /home/runner/work/Moorhen/Moorhen/web_example/*
             !/home/runner/work/Moorhen/Moorhen/checkout/coot-1.0
           key: moorhen-sources-cache
 
@@ -76,6 +77,7 @@ jobs:
           path: |
             /home/runner/work/Moorhen/Moorhen/checkout/*
             /home/runner/work/Moorhen/Moorhen/patches/*
+            /home/runner/work/Moorhen/Moorhen/web_example/*
             !/home/runner/work/Moorhen/Moorhen/checkout/coot-1.0
           key: moorhen-sources-cache
 
@@ -133,13 +135,45 @@ jobs:
           ln -s ../checkout/glm-$glm_release/glm glm
       
       # Install bindings
+      - name: Restore install cache
+        id: cache-moorhen-install
+        uses: actions/cache/save@v4
+        with: 
+          path: |
+            /home/runner/work/Moorhen/Moorhen/install
+            /home/runner/work/Moorhen/Moorhen/CCP4_WASM_BUILD
+            /home/runner/work/Moorhen/Moorhen/baby-gru/public/baby-gru/wasm
+          key: moorhen-install-cache
+
       - name: Install bindings
+        if: steps.cache-moorhen-install.outputs.cache-hit != 'true'
         working-directory: /home/runner/work/Moorhen/Moorhen
         run: |
           cd /home/runner/work/Moorhen/Moorhen
           source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
           ./initial_build.sh
 
+      - name: Save install cache
+        id: cache-moorhen-install-save
+        if: steps.cache-moorhen-install.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with: 
+          path: |
+            /home/runner/work/Moorhen/Moorhen/install
+            /home/runner/work/Moorhen/Moorhen/CCP4_WASM_BUILD
+            /home/runner/work/Moorhen/Moorhen/baby-gru/public/baby-gru/wasm
+          key: moorhen-install-cache
+
+      # Install coot (unless we had to run initial_build.sh)
+      - name: Install Coot
+        if: steps.cache-moorhen-install.outputs.cache-hit == 'true'
+        working-directory: /home/runner/work/Moorhen/Moorhen/CCP4_WASM_BUILD
+        run: |
+          cd /home/runner/work/Moorhen/Moorhen/CCP4_WASM_BUILD
+          source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
+          make install
+
+      # Run the tests
       - name: Run tests
         working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
         run: |             
