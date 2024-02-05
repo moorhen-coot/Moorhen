@@ -45,6 +45,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test loadToCootFromURL", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -59,6 +60,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test guessCoordFormat pdb", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -74,6 +76,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test guessCoordFormat mmcif", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.mmcif')
         const glRef = {
             current: new MockWebGL()
@@ -89,6 +92,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test guessCoordFormat ligandCif", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', 'LZA.cif')
         const glRef = {
             current: new MockWebGL()
@@ -104,6 +108,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test delete", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -120,6 +125,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test get_atoms pdb", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -135,6 +141,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test get_atoms mmcif", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.mmcif')
         const glRef = {
             current: new MockWebGL()
@@ -150,6 +157,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test get_number_of_atoms", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const glRef = {
             current: new MockWebGL()
         }
@@ -172,6 +180,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test replaceModelWithFile", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const fileUrl_2 = path.join(__dirname, '..', 'test_data', '5fjj.pdb')
         const glRef = {
@@ -195,6 +204,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test copyMolecule", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -216,6 +226,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test copyFragmentUsingCid", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -235,6 +246,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test mergeMolecules", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -262,6 +274,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test addLigandOfType", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -292,6 +305,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test loadMissingMonomers", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -311,6 +325,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test gemmiAtomsForCid 1 -pdb", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -331,6 +346,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test gemmiAtomsForCid 1 -mmcif", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.mmcif')
         const glRef = {
             current: new MockWebGL()
@@ -351,6 +367,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test gemmiAtomsForCid 2 -pdb", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -391,6 +408,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test gemmiAtomsForCid 2 -mmcif", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.mmcif')
         const glRef = {
             current: new MockWebGL()
@@ -431,6 +449,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test gemmiAtomsForCid 3", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -451,6 +470,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test gemmiAtomsForCid 4", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -516,6 +536,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test gemmiAtomsForCid 5", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -562,6 +583,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test getNonSelectedCids 1", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -580,6 +602,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test getNonSelectedCids 2", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -598,6 +621,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test getNonSelectedCids 3", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -616,6 +640,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test getNonSelectedCids 4", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -634,6 +659,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test getNonSelectedCids 5", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -652,6 +678,7 @@ describe("Testing MoorhenMolecule", () => {
     
     test("Test parseSequences pdb", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -683,6 +710,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test parseSequences mmcif", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.mmcif')
         const glRef = {
             current: new MockWebGL()
@@ -714,6 +742,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test updateAtoms pdb", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -739,6 +768,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test updateAtoms mmcif", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.mmcif')
         const glRef = {
             current: new MockWebGL()
@@ -764,6 +794,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test getNeighborResiduesCids 1", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -781,6 +812,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test getNeighborResiduesCids 2", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -815,6 +847,7 @@ describe("Testing MoorhenMolecule", () => {
     
     test("Test getNeighborResiduesCids 3", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -838,6 +871,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test getResidueBFactors", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -861,6 +895,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test checkIsLigand pdb", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const glRef = {
             current: new MockWebGL()
@@ -884,6 +919,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test checkIsLigand mmcif", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.mmcif')
         const glRef = {
             current: new MockWebGL()
@@ -975,6 +1011,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test hideCid 1", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const commandCentre = {
             current: new MockMoorhenCommandCentre(molecules_container, cootModule)
@@ -993,6 +1030,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test hideCid 2", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const commandCentre = {
             current: new MockMoorhenCommandCentre(molecules_container, cootModule)
@@ -1011,6 +1049,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test hideCid 3", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const commandCentre = {
             current: new MockMoorhenCommandCentre(molecules_container, cootModule)
@@ -1029,6 +1068,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test hideCid 4", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const commandCentre = {
             current: new MockMoorhenCommandCentre(molecules_container, cootModule)
@@ -1048,6 +1088,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test.skip("Test hideCid 5", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const commandCentre = {
             current: new MockMoorhenCommandCentre(molecules_container, cootModule)
@@ -1133,6 +1174,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test hasDNA pdb", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join('https://files.rcsb.org/download/3L1P.pdb')
         const commandCentre = {
             current: new MockMoorhenCommandCentre(molecules_container, cootModule)
@@ -1149,6 +1191,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test hasDNA mmcif", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join('https://files.rcsb.org/download/3L1P.cif')
         const commandCentre = {
             current: new MockMoorhenCommandCentre(molecules_container, cootModule)
@@ -1165,6 +1208,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test hasGlycans", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
         const commandCentre = {
             current: new MockMoorhenCommandCentre(molecules_container, cootModule)
@@ -1182,6 +1226,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test parseCidIntoSelection", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
         const commandCentre = {
             current: new MockMoorhenCommandCentre(molecules_container, cootModule)
@@ -1202,6 +1247,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test parseCidIntoSelection --multiCid", async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
         const commandCentre = {
             current: new MockMoorhenCommandCentre(molecules_container, cootModule)
