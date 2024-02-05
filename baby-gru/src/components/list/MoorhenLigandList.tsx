@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Row, Col } from "react-bootstrap";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
@@ -16,6 +16,7 @@ export const MoorhenLigandList = (props: {
 
     const scoresUpdateMolNo = useSelector((state: moorhen.State) => state.connectedMaps.scoresUpdate.molNo)
     const toggleScoresUpdate = useSelector((state: moorhen.State) => state.connectedMaps.scoresUpdate.toggle)
+    const showModelsModal = useSelector((state: moorhen.State) => state.activeModals.showModelsModal)
 
     const [ligandList, setLigandList] = useState<moorhen.LigandInfo[]>(null)
 
@@ -47,11 +48,15 @@ export const MoorhenLigandList = (props: {
     }
     
     useEffect(() => {
-        updateLigandList()
-    }, [])
+        if (showModelsModal) {
+            updateLigandList()
+        } else {
+            setLigandList(null)
+        }
+    }, [showModelsModal])
     
     useEffect(() => {
-        if (props.molecule?.molNo === scoresUpdateMolNo) {
+        if (props.molecule?.molNo === scoresUpdateMolNo && showModelsModal) {
             updateLigandList()
         }
     }, [toggleScoresUpdate])

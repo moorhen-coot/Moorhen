@@ -17,6 +17,7 @@ export const MoorhenCarbohydrateList = (props: {
 
     const scoresUpdateMolNo = useSelector((state: moorhen.State) => state.connectedMaps.scoresUpdate.molNo)
     const toggleScoresUpdate = useSelector((state: moorhen.State) => state.connectedMaps.scoresUpdate.toggle)
+    const showModelsModal = useSelector((state: moorhen.State) => state.activeModals.showModelsModal)
     
     const [carbohydrateList, setCarbohydrateList] = useState<privateer.ResultsEntry[] | null>(null)
 
@@ -26,18 +27,20 @@ export const MoorhenCarbohydrateList = (props: {
         setCarbohydrateList(result)
         props.setBusy(false)
     }
-    
+   
     useEffect(() => {
-        if (props.molecule?.molNo === scoresUpdateMolNo) {
+        if (props.molecule?.molNo === scoresUpdateMolNo && showModelsModal) {
             validate()
         }
     }, [toggleScoresUpdate])
 
     useEffect(() => {
-        if (props.molecule) {
+        if (showModelsModal) {
             validate()
+        } else {
+            setCarbohydrateList(null)
         }
-    }, [])
+    }, [showModelsModal])
 
     return <>
             {carbohydrateList === null ?

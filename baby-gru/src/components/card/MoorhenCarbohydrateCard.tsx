@@ -1,7 +1,7 @@
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from 'react-redux';
 import { Card, Col, Row } from "react-bootstrap";
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 import { guid } from "../../utils/MoorhenUtils";
 import { privateer } from "../../types/privateer";
 
@@ -9,9 +9,7 @@ export const MoorhenCarbohydrateCard = (props: {
     carbohydrate: privateer.ResultsEntry;
     molecule: moorhen.Molecule;
 }) => {
-
-    const divRef = useRef<HTMLDivElement | null>(null)
-    
+   
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
 
     const { carbohydrate, molecule } = props
@@ -32,7 +30,6 @@ export const MoorhenCarbohydrateCard = (props: {
                             <h4>ID: {carbohydrate.id}</h4>
                             <div
                             onClick={handleClick}
-                            ref={divRef}
                             style={{display: "flex", padding: "1rem"}}
                                 id="svgContainer"
                                 dangerouslySetInnerHTML={{

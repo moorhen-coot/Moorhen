@@ -1288,7 +1288,7 @@ function initGL(canvas) {
         WEBGL2 = false;
     }
     if (!gl) {
-        alert("Could not initialise WebGL, sorry :-(");
+        alert("Could not initialise WebGL, sorry... Make sure harware acceleration is enabled in your browser settings.");
     }
     gl.viewportWidth = canvas.width;
     gl.viewportHeight = canvas.height;
