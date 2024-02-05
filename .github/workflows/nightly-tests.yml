@@ -137,7 +137,7 @@ jobs:
       # Install bindings
       - name: Restore install cache
         id: cache-moorhen-install
-        uses: actions/cache/save@v4
+        uses: actions/cache@v4
         with: 
           path: |
             /home/runner/work/Moorhen/Moorhen/install
