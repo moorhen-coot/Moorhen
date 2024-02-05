@@ -1,0 +1,26 @@
+name: Update emsdk
+
+on:
+  schedule:
+  - cron: "0 3 * * 0"
+
+jobs:
+  updateEmsdkCache:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+
+      - name: Download and install emsdk
+        run: |
+          cd /home/runner/work/Moorhen/
+          git clone https://github.com/emscripten-core/emsdk.git
+          cd /home/runner/work/Moorhen/emsdk/
+          ./emsdk install latest
+
+      - name: Overwrite new emsdk cache
+        id: cache-emsdk-save
+        uses: actions/cache/save@v4
+        with: 
+          path: /home/runner/work/Moorhen/emsdk/
+          key: moorhen-emsdk-cache
+

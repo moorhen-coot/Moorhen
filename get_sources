@@ -1,29 +1,30 @@
-#!/bin/sh
+#!/bin/bash
+
+source VERSIONS
 
 mkdir -p checkout
 cd checkout
 
 echo "Checking out libccp4"
-curl -L http://ftp.ccp4.ac.uk/opensource/libccp4-8.0.0.tar.gz -o libccp4-8.0.0.tar.gz
+curl -L http://ftp.ccp4.ac.uk/opensource/libccp4-$libccp4_release.tar.gz -o libccp4-$libccp4_release.tar.gz
 echo
 
 echo "Checking out clipper"
-#curl -L http://ftp.ccp4.ac.uk/opensource/clipper-2.1.20201109.tar.gz -o clipper-2.1.20201109.tar.gz
-curl -L http://www.ysbl.york.ac.uk/jsd523/clipper-gemmi-wrapper-20240123.tar.gz -o clipper-gemmi-wrapper.tar.gz
+curl -L http://www.ysbl.york.ac.uk/jsd523/clipper-gemmi-wrapper-$clipper_release.tar.gz -o clipper-gemmi-wrapper.tar.gz
 echo
 
 echo "Checking out ssm"
-curl http://ftp.ccp4.ac.uk/opensource/ssm-1.4.0.tar.gz -o ssm-1.4.0.tar.gz
+curl http://ftp.ccp4.ac.uk/opensource/ssm-$ssm_release.tar.gz -o ssm-$ssm_release.tar.gz
 echo
 
 echo "Checking out mmdb2"
-curl -L http://ftp.ccp4.ac.uk/opensource/mmdb2-2.0.22.tar.gz -o mmdb2-2.0.22.tar.gz
+curl -L http://ftp.ccp4.ac.uk/opensource/mmdb2-$mmdb_release.tar.gz -o mmdb2-$mmdb_release.tar.gz
 echo
 
 echo "Checking out gemmi"
 git clone https://github.com/project-gemmi/gemmi.git gemmi
 cd gemmi
-git checkout v0.6.4
+git checkout $gemmi_release
 cd ..
 echo
 
@@ -31,21 +32,25 @@ echo "Checking out monomers"
 git clone https://github.com/MonomerLibrary/monomers monomers
 echo
 
-echo "Downloading out fftw-2.1.5"
-curl -L http://www.fftw.org/fftw-2.1.5.tar.gz -o fftw-2.1.5.tar.gz
+echo "Downloading out fftw-$fftw_release"
+curl -L http://www.fftw.org/fftw-$fftw_release.tar.gz -o fftw-$fftw_release.tar.gz
 echo
-echo "Downloading gsl-2.7.1"
-curl -L https://mirror.ibcp.fr/pub/gnu/gsl/gsl-2.7.1.tar.gz -o gsl-2.7.1.tar.gz
+
+echo "Downloading gsl-$gsl_release"
+curl -L https://mirror.ibcp.fr/pub/gnu/gsl/gsl-$gsl_release.tar.gz -o gsl-$gsl_release.tar.gz
 echo
+
 echo "Downloading coot-1"
 git clone --branch main https://github.com/pemsley/coot.git coot-1.0
 echo
+
 echo "Downloading glm"
-curl -L https://github.com/g-truc/glm/archive/refs/tags/0.9.9.8.tar.gz -o glm-0.9.9.8.tar.gz
+curl -L https://github.com/g-truc/glm/archive/refs/tags/$glm_release.tar.gz -o glm-$glm_release.tar.gz
+echo
 
 echo "Downloading RDKit source"
-rdkit_release="Release_2023_09_1"
 curl -L https://github.com/rdkit/rdkit/archive/refs/tags/$rdkit_release.tar.gz -o "$rdkit_release.tar.gz"
+echo
 
 echo "Downloading and Unpacking Privateer"
 curl -L https://github.com/glycojones/privateer/archive/refs/tags/WASM-0.3.4.tar.gz -o privateer-wasm.tar.gz
@@ -53,36 +58,35 @@ tar xf privateer-wasm.tar.gz
 mv privateer-WASM-* privateer-wasm
 
 echo "Unpacking libccp4 source"
-tar xf libccp4-8.0.0.tar.gz
-ln -s libccp4-8.0.0 libccp4
+tar xf libccp4-$libccp4_release.tar.gz
+ln -s libccp4-$libccp4_release libccp4
 echo
 
 echo "Unpacking clipper source"
-#tar xf clipper-2.1.20201109.tar.gz
-#ln -s clipper-2.1 clipper
 tar xf clipper-gemmi-wrapper.tar.gz
 mv clipper-gemmi-wrapper clipper
-
 echo
 
 echo "Unpacking ssm source"
-tar xf ssm-1.4.0.tar.gz
-ln -s ssm-1.4.0 ssm
+tar xf ssm-$ssm_release.tar.gz
+ln -s ssm-$ssm_release ssm
 echo
 
 echo "Unpacking mmdb2 source"
-tar xf mmdb2-2.0.22.tar.gz
-ln -s mmdb2-2.0.22 mmdb2
+tar xf mmdb2-$mmdb_release.tar.gz
+ln -s mmdb2-$mmdb_release mmdb2
 echo
 
 echo "Unpacking RDKit source"
 tar xf "$rdkit_release.tar.gz"
 echo
-echo "Unpacking fftw-2.1.5"
-tar xf fftw-2.1.5.tar.gz
+
+echo "Unpacking fftw-$fftw_release"
+tar xf fftw-$fftw_release.tar.gz
 echo
-echo "Unpacking glm-0.9.9.8"
-tar xf glm-0.9.9.8.tar.gz
+
+echo "Unpacking glm-$glm_release"
+tar xf glm-$glm_release.tar.gz
 echo
 
 patch -p0 < ../patches/ccp4-emscripten.patch 
@@ -90,11 +94,11 @@ patch -p0 < ../patches/superpose-emscripten.patch
 cd ..
 echo
 
-echo "Unpacking gsl-2.7.1"
-tar xf checkout/gsl-2.7.1.tar.gz
+echo "Unpacking gsl-$gsl_release"
+tar xf checkout/gsl-$gsl_release.tar.gz
 echo
 
-#Create an empty file silly.c and then compile it with USE_ZLIB and USE_LIBPNG to force emsdk to get zlib/png.
+# Create an empty file silly.c and then compile it with USE_ZLIB and USE_LIBPNG to force emsdk to get zlib/png.
 echo "Attempting to get emsdk zlib/png ports"
 echo
 echo "" > silly.c
@@ -103,22 +107,25 @@ rm -f silly.c
 rm -f a.out.js
 rm -f a.out.wasm
 
-#Get PapaParse
+# Get PapaParse
 echo "Downloading papaparse.min.js"
 echo
 curl -L https://unpkg.com/papaparse@latest/papaparse.min.js -o web_example/papaparse.min.js
+echo
 
-#Get Chart.Js
+# Get Chart.Js
 echo "Downloading chart.js"
 echo
 curl -L https://cdn.jsdelivr.net/npm/chart.js -o web_example/chart.js
+echo
 
+# Boost
 echo "Checking out boost"
 cd checkout
-curl -L https://boostorg.jfrog.io/artifactory/main/release/1.83.0/source/boost_1_83_0.tar.bz2 -o boost_1_83_0.tar.bz2
-tar xf boost_1_83_0.tar.bz2
+curl -L https://boostorg.jfrog.io/artifactory/main/release/1.83.0/source/boost_$boost_release.tar.bz2 -o boost_$boost_release.tar.bz2
+tar xf boost_$boost_release.tar.bz2
 cd ..
-ln -s checkout/boost_1_83_0 boost
+ln -s checkout/boost_$boost_release boost
 echo
 patch -p0 < patches/boost-emscripten.patch
 patch -p0 < patches/boost-cxx-17.patch
@@ -128,5 +135,5 @@ ln -s checkout/rdkit-$rdkit_release rdkit
 echo "Linking glm headers"
 mkdir -p include
 cd include
-ln -s ../checkout/glm-0.9.9.8/glm glm
+ln -s ../checkout/glm-$glm_release/glm glm
 cd ..
