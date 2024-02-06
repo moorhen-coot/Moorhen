@@ -203,6 +203,10 @@ class molecules_container_js : public molecules_container_t {
             return GenerateMoorhenMetaBalls(mol,cid_str,gridSize,radius,isoLevel);
         }
 
+        std::pair<std::string, std::string> mol_text_to_pdb(const std::string &mol_text_cpp, const std::string &TLC, int nconf, int maxIters, bool keep_orig_coords) {
+            return MolTextToPDB(mol_text_cpp, TLC, nconf, maxIters, keep_orig_coords);
+        }
+
         std::pair<std::string, std::string> smiles_to_pdb(const std::string &smile_cpp, const std::string &TLC, int nconf, int maxIters) {
             return SmilesToPDB(smile_cpp, TLC, nconf, maxIters);
         }
@@ -1289,6 +1293,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_molecule_atoms", &molecules_container_js::get_molecule_atoms)
     .function("read_pdb_string", &molecules_container_js::read_pdb_string)
     .function("smiles_to_pdb", &molecules_container_js::smiles_to_pdb)
+    .function("mol_text_to_pdb", &molecules_container_js::mol_text_to_pdb)
     .function("replace_molecule_by_model_from_string", &molecules_container_js::replace_molecule_by_model_from_string)
     .function("read_dictionary_string", &molecules_container_js::read_dictionary_string)
     // .function("export_imol_as_gltf_string", &molecules_container_js::export_imol_as_gltf_string)
