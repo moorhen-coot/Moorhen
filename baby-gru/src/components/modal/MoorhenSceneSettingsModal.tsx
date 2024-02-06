@@ -5,12 +5,36 @@ import { convertRemToPx, convertViewtoPx, rgbToHex } from "../../utils/MoorhenUt
 import { MoorhenSlider } from "../misc/MoorhenSlider";
 import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
 import { Form, InputGroup, Stack } from "react-bootstrap";
-import { setBackgroundColor, setClipCap, setDepthBlurDepth, setDepthBlurRadius, setResetClippingFogging, setUseOffScreenBuffers } from "../../moorhen";
+import { setBackgroundColor, setClipCap, setDepthBlurDepth, setDepthBlurRadius, setDoSSAO, setResetClippingFogging, setSsaoRadius, setUseOffScreenBuffers } from "../../moorhen";
 import { HexColorInput, RgbColorPicker } from "react-colorful";
 import { CirclePicker } from "react-color"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { hexToRgb } from "@mui/material";
+
+const OcclusionPanel = (props: {}) => {
+    const dispatch = useDispatch()
+    const doSSAO = useSelector((state: moorhen.State) => state.sceneSettings.doSSAO)
+    const ssaoRadius = useSelector((state: moorhen.State) => state.sceneSettings.ssaoRadius)
+    
+    return <div className="scene-settings-panel-flex-between">
+        <MoorhenSlider minVal={0.0} maxVal={2.0} logScale={false}
+            isDisabled={!doSSAO}
+            sliderTitle="Occlusion radius"
+            initialValue={ssaoRadius}
+            externalValue={ssaoRadius}
+            setExternalValue={(val: number) => dispatch(setSsaoRadius(val))} />
+        <InputGroup className='moorhen-input-group-check'>
+            <Form.Check 
+                type="switch"
+                checked={doSSAO}
+                onChange={() => { dispatch(
+                    setDoSSAO(!doSSAO)
+                )}}
+                label="Ambient occlusion"/>
+        </InputGroup>
+    </div>
+}
 
 const BackgroundColorPanel = (props: {}) => {
     
@@ -85,8 +109,25 @@ const DepthBlurPanel = (props: {
     const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius)
     
     return <div className="scene-settings-panel-flex-between">
-            <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false} sliderTitle="Blur depth" initialValue={depthBlurDepth} externalValue={depthBlurDepth} setExternalValue={(val: number) => dispatch(setDepthBlurDepth(val))}/>
-            <MoorhenSlider minVal={2} maxVal={16} logScale={false} sliderTitle="Blur radius" initialValue={depthBlurRadius} externalValue={depthBlurRadius} allowFloats={false} setExternalValue={(val: number) => dispatch(setDepthBlurRadius(val))}/>
+            <MoorhenSlider
+                isDisabled={!useOffScreenBuffers}
+                minVal={0.0}
+                maxVal={1.0}
+                logScale={false}
+                sliderTitle="Blur depth"
+                initialValue={depthBlurDepth}
+                externalValue={depthBlurDepth}
+                setExternalValue={(val: number) => dispatch(setDepthBlurDepth(val))}/>
+            <MoorhenSlider
+                isDisabled={!useOffScreenBuffers}
+                minVal={2}
+                maxVal={16}
+                logScale={false}
+                sliderTitle="Blur radius"
+                initialValue={depthBlurRadius}
+                externalValue={depthBlurRadius}
+                allowFloats={false}
+                setExternalValue={(val: number) => dispatch(setDepthBlurRadius(val))}/>
             <InputGroup className='moorhen-input-group-check'>
                 <Form.Check 
                     type="switch"
@@ -279,7 +320,7 @@ export const MoorhenSceneSettingsModal = (props: {
                 headerTitle="Scene settings"
                 defaultHeight={convertViewtoPx(40, height)}
                 defaultWidth={convertViewtoPx(40, width)}
-                minHeight={convertViewtoPx(40, height)}
+                minHeight={convertViewtoPx(60, height)}
                 minWidth={convertRemToPx(40)}
                 maxHeight={convertViewtoPx(75, height)}
                 maxWidth={convertRemToPx(60)}
@@ -293,6 +334,7 @@ export const MoorhenSceneSettingsModal = (props: {
                         <Stack gap={1} direction="vertical">
                             <LightingPanel glRef={props.glRef}/>
                             {props.glRef.current.isWebGL2() && <DepthBlurPanel/>}
+                            <OcclusionPanel/>
                         </Stack>
                     </Stack>
                 }
