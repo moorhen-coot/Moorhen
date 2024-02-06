@@ -88,6 +88,7 @@ export const MoorhenSelfRestraintsMenuItem = (props: {
             ref={cidSelectRef}
             margin="0.5rem"
             onChange={(evt) => setCid(evt.target.value)}
+            allowUseCurrentSelection={true}
             placeholder={cidSelectRef.current ? "" : "Input custom selection e.g. //A,B"}/>}
         <MoorhenSlider
             ref={maxDistSliderRef}

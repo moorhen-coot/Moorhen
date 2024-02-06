@@ -161,6 +161,7 @@ export namespace moorhen {
         redrawRepresentation: (id: string) => Promise<void>;
         getPrivateerValidation(useCache?: boolean): Promise<privateer.ResultsEntry[]>;
         getLigandSVG(resName: string, useCache?: boolean): Promise<string>;
+        isValidSelection(cid: string): Promise<boolean>;
         type: string;
         cachedLigandSVGs: {[key: string]: string}[];
         cachedPrivateerValidation: privateer.ResultsEntry[];
