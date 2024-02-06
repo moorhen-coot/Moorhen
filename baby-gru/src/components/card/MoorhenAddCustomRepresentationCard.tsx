@@ -10,6 +10,7 @@ import { webGL } from '../../types/mgWebGL';
 import { MoorhenSlider } from '../misc/MoorhenSlider';
 import { AddCircleOutline, GrainOutlined, RemoveCircleOutline } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
+import { MoorhenCidInputForm } from '../form/MoorhenCidInputForm';
 
 const customRepresentations = [ 'CBs', 'CAs', 'CRs', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'MetaBalls' ]
 
@@ -98,8 +99,13 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 cidSelection = cidFormRef.current.value
                 break
             default:
-                console.log('Unrecgnised residue selection for the custom representation')    
+                console.warn('Unrecognised residue selection for the custom representation')    
                 break
+        }
+
+        if (!cidSelection) {
+            console.warn('Invalid CID selection to create a custom representation')
+            return
         }
 
         let colourRules: moorhen.ColourRule[] = []
@@ -211,10 +217,14 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                             <option value={'cid'} key={'cid'}>Atom selection</option>
                         </FormSelect>
                 </Form.Group>
+                {ruleType === 'cid' && 
+                    <MoorhenCidInputForm ref={cidFormRef} label='Atom selection' margin='0.5rem' width='97%' defaultValue={props.initialCid} allowUseCurrentSelection={true}/>
+                }
+                {(ruleType === 'chain' || ruleType === 'residue-range')  &&
                 <div style={{justifyContent: 'center', display: 'flex'}}>
-                    {(ruleType === 'chain' || ruleType === 'residue-range')  && <MoorhenChainSelect molecules={molecules} onChange={handleChainChange} selectedCoordMolNo={props.molecule.molNo} ref={chainSelectRef} allowedTypes={[1, 2]}/>}
-                    {ruleType === 'cid' && <Form.Control ref={cidFormRef} defaultValue={props.initialCid} size="sm" type='text' placeholder={'Atom selection'} style={{margin: '0.5rem'}}/> }
+                    <MoorhenChainSelect molecules={molecules} onChange={handleChainChange} selectedCoordMolNo={props.molecule.molNo} ref={chainSelectRef} allowedTypes={[1, 2]}/>
                 </div>
+                }
                 {ruleType === 'residue-range' && 
                     <div style={{width: '100%'}}>
                         {sequenceRangeSelect}

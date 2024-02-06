@@ -1,10 +1,12 @@
-import { useRef, useState } from "react"
+import { useCallback, useRef, useState } from "react"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
-import { Form } from "react-bootstrap"
+import { Button } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
+import { clearResidueSelection } from "../../store/generalStatesSlice";
 
 export const MoorhenDeleteUsingCidMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
@@ -12,44 +14,61 @@ export const MoorhenDeleteUsingCidMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
-    const fromRef = useRef<null | HTMLSelectElement>(null)
-    const cidRef = useRef<null |HTMLInputElement>(null)
+    const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
+    const cidFormRef = useRef<null |HTMLInputElement>(null)
+    
     const [cid, setCid] = useState<string>("")
+    const [invalidCid, setInvalidCid] = useState<boolean>(false)
+    
+    const dispatch = useDispatch()
+    const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
 
-    const panelContent = <>
-        <MoorhenMoleculeSelect molecules={molecules} label="From molecule" allowAny={false} ref={fromRef} />
-        <Form.Group className='moorhen-form-group' controlId="cid">
-            <Form.Label>Selection to delete</Form.Label>
-            <Form.Control ref={cidRef} type="text" value={cid} onChange={(e) => {
-                setCid(e.target.value)
-            }} />
-        </Form.Group>
-
-    </>
-
-    const onCompleted = async () => {
-        if (!fromRef.current || !fromRef.current.value) {
+    const deleteSelection = useCallback(async () => {
+        const selectedCid = cidFormRef.current.value
+        if (!selectedCid || !moleculeSelectRef.current.value) {
             return
         }
-
-        const fromMolecule = molecules.find(molecule => molecule.molNo === parseInt(fromRef.current.value))
-        const cidToDelete = cidRef.current.value
-
-        if (!fromMolecule || !cidToDelete) {
-            return
-        }
-
-        await fromMolecule.deleteCid(cidToDelete)
         
-        props.setPopoverIsShown(false)
-    }
+        const molecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
+        if (!molecule) {
+            return
+        }
+
+        const isValidSelection = await molecule.isValidSelection(selectedCid)
+        if (!isValidSelection) {
+            setInvalidCid(true)
+            return
+        }
+
+        try {
+            setInvalidCid(false)
+            molecule.deleteCid(selectedCid)
+            props.setPopoverIsShown(false)
+            document.body.click()
+            if (selectedCid === residueSelection.cid) {
+                dispatch( clearResidueSelection() )
+            }
+        } catch (err) {
+            setInvalidCid(true)
+            console.warn(err)
+        }
+    }, [residueSelection, molecules])
+
+    const panelContent = <>
+        <MoorhenMoleculeSelect molecules={molecules} label="From molecule" allowAny={false} ref={moleculeSelectRef} />
+        <MoorhenCidInputForm margin={'0.5rem'} width="95%" label="Selection to delete" onChange={(evt) => setCid(evt.target.value)} ref={cidFormRef} invalidCid={invalidCid} allowUseCurrentSelection={true}/> 
+        <Button variant="primary" onClick={deleteSelection}>
+            OK
+        </Button>
+    </>
 
     return <MoorhenBaseMenuItem
         popoverPlacement='right'
         popoverContent={panelContent}
         menuItemText="Delete atom selection..."
-        onCompleted={onCompleted}
+        onCompleted={() => {}}
+        showOkButton={false}
         setPopoverIsShown={props.setPopoverIsShown}
     />
 }

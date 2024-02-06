@@ -1265,6 +1265,58 @@ describe("Testing MoorhenMolecule", () => {
         expect(newSelection.first).toBe('/1/A/4(SER)/N')
         expect(newSelection.second).toBe('/1/A/20(VAL)/CG2')
     })
+
+    test("Test isValidSelection", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+        const glRef = {
+            current: new MockWebGL()
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
+        const isValid = await molecule.isValidSelection("//A/15-20")
+        expect(isValid).toBeTruthy()
+    })
+
+    test("Test isValidSelection --falsy", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+        const glRef = {
+            current: new MockWebGL()
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
+        const isValid = await molecule.isValidSelection("//X/1-10")
+        expect(isValid).toBeFalsy()
+    })
+
+    test("Test isValidSelection --multiCid", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+        const glRef = {
+            current: new MockWebGL()
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
+        const isValid = await molecule.isValidSelection("//A/1-10||//A/15-20")
+        expect(isValid).toBeTruthy()
+    })
+
 })
 
 const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']

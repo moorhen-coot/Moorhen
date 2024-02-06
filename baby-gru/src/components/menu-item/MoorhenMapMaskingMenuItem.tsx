@@ -55,7 +55,7 @@ export const MoorhenMapMaskingMenuItem = (props: {
         </Form.Group>
         <MoorhenMapSelect maps={maps} ref={mapSelectRef} />
         <MoorhenMoleculeSelect {...props} molecules={molecules} allowAny={false} ref={moleculeSelectRef} />
-        {maskTypeSelectRef.current?.value === 'cid' && <MoorhenCidInputForm {...props} width='20rem' margin='0.5rem' ref={cidInputRef} />}
+        {maskTypeSelectRef.current?.value === 'cid' && <MoorhenCidInputForm {...props} width='20rem' margin='0.5rem' ref={cidInputRef} allowUseCurrentSelection={true}/>}
         {maskTypeSelectRef.current?.value === 'chain' && <MoorhenChainSelect {...props} molecules={molecules} selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)} ref={chainSelectRef} />}
         {maskTypeSelectRef.current?.value === 'ligand' && <MoorhenLigandSelect {...props} molecules={molecules} selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)} ref={ligandSelectRef} />}
         {!useDefaultMaskRadius && <MoorhenNumberForm ref={maskRadiusFormRef} defaultValue={2.5} label="Mask radius" allowNegativeValues={false}/>}
