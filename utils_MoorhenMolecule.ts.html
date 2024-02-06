@@ -2033,6 +2033,24 @@ export class MoorhenMolecule implements moorhen.Molecule {
     }
 
     /**
+     * Test whether an atom selection is valid
+     * @param {string} cid - The CID selection
+     * @returns {boolean} Whether the selection is valid
+     */
+    async isValidSelection(cid: string): Promise&lt;boolean> {
+        try {
+            const selectedAtoms = await this.gemmiAtomsForCid(cid)
+            if (!selectedAtoms || selectedAtoms.length === 0) {
+                return false
+            }
+        } catch (error) {
+            console.warn(error)
+            return false
+        }
+        return true
+    }
+
+    /**
      * Get the CIDs of residues not included in the input CID
      * @param {string} cid - The input CID selection
      * @returns {string[]} An array of CIDs for the residue ranges not included in the input CID
