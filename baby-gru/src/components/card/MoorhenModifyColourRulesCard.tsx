@@ -190,6 +190,8 @@ export const MoorhenModifyColourRulesCard = (props: {
                     color: selectedColour,
                     label: cidLabel,
                 }
+            } else {
+                console.warn('Invalid CID selection used to create a colour rule')
             }
         } else {
             const ruleArgs = await getMultiColourRuleArgs(props.molecule, ruleSelectRef.current.value)
@@ -255,7 +257,7 @@ export const MoorhenModifyColourRulesCard = (props: {
                         </FormSelect>
                     </Form.Group>
                     {(ruleType === 'chain' || ruleType === 'residue-range')  && <MoorhenChainSelect width="100%" margin={'0px'} molecules={molecules} onChange={handleChainChange} selectedCoordMolNo={props.molecule.molNo} ref={chainSelectRef}/>}
-                    {ruleType === 'cid' && <MoorhenCidInputForm margin={'0px'} width="100%" onChange={handleResidueCidChange} ref={cidFormRef}/> }
+                    {ruleType === 'cid' && <MoorhenCidInputForm allowUseCurrentSelection={true} margin={'0px'} width="100%" onChange={handleResidueCidChange} ref={cidFormRef}/> }
                     {ruleType === 'property' && 
                     <Form.Group style={{ margin: '0px', width: '100%' }}>
                         <Form.Label>Property</Form.Label>
