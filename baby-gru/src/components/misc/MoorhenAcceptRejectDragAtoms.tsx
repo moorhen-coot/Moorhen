@@ -8,7 +8,7 @@ import { useCallback, useEffect, useRef } from "react"
 import { cidToSpec } from '../../utils/MoorhenUtils';
 import { webGL } from "../../types/mgWebGL"
 import { setIsDraggingAtoms } from "../../store/generalStatesSlice"
-import { triggerScoresUpdate } from "../../store/connectedMapsSlice"
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
 
 export const MoorhenAcceptRejectDragAtoms = (props: {
     onExit: () => void;
@@ -39,7 +39,7 @@ export const MoorhenAcceptRejectDragAtoms = (props: {
         }
         await props.moleculeRef.current.mergeFragmentFromRefinement(props.cidRef.current.join('||'), moltenFragmentRef.current, acceptTransform, false)
         if (acceptTransform) {
-            dispatch( triggerScoresUpdate(props.moleculeRef.current.molNo) )
+            dispatch( triggerUpdate(props.moleculeRef.current.molNo) )
         }
         dispatch( setIsDraggingAtoms(false) )
     }

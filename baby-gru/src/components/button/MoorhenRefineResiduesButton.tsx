@@ -4,7 +4,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 import { useDispatch, useSelector } from "react-redux";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
-import { triggerScoresUpdate } from "../../store/connectedMapsSlice";
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 
 export const MoorhenRefineResiduesButton = (props: moorhen.ContextButtonProps) => {
     const dispatch = useDispatch()
@@ -29,7 +29,7 @@ export const MoorhenRefineResiduesButton = (props: moorhen.ContextButtonProps) =
         } else  {
             await molecule.refineResiduesUsingAtomCid(`//${chosenAtom.chain_id}/${chosenAtom.res_no}`, 'SPHERE', 4000)
         }
-        dispatch( triggerScoresUpdate(molecule.molNo) )
+        dispatch( triggerUpdate(molecule.molNo) )
     }, [animateRefine])
     
     return <MoorhenContextButtonBase

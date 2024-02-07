@@ -4,7 +4,7 @@ import { Button, FormLabel, FormSelect, Stack } from "react-bootstrap"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from "react-redux";
-import { triggerScoresUpdate } from "../../store/connectedMapsSlice";
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 
 const MoorhenPopoverOptions = (props: {
@@ -132,7 +132,7 @@ export const MoorhenContextButtonBase = (props: {
             await props.selectedMolecule.redraw()
         }
         
-        dispatch( triggerScoresUpdate(props.selectedMolecule.molNo) )
+        dispatch( triggerUpdate(props.selectedMolecule.molNo) )
         props.selectedMolecule.clearBuffersOfStyle('hover')
       
         if(props.onExit) {

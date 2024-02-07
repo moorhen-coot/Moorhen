@@ -36,8 +36,8 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
     const [selectedMap, setSelectedMap] = useState<number | null>(null)
     const [selectedChain, setSelectedChain] = useState<string | null>(null)
 
-    const scoresUpdateMolNo = useSelector((state: moorhen.State) => state.connectedMaps.scoresUpdate.molNo)
-    const toggleScoresUpdate = useSelector((state: moorhen.State) => state.connectedMaps.scoresUpdate.toggle)
+    const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo)
+    const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
@@ -90,10 +90,10 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
     }, [selectedChain, selectedMap, selectedModel, props.extraControlFormValue])
 
     useEffect(() => {
-        if (selectedModel !== null  && selectedModel === scoresUpdateMolNo) {
+        if (selectedModel !== null  && selectedModel === updateMolNo) {
             fetchData()
         }
-    }, [toggleScoresUpdate])
+    }, [updateSwitch])
 
     useEffect(() => {
         if (chartRef !== null && typeof chartRef !== 'function' && chartRef.current) {

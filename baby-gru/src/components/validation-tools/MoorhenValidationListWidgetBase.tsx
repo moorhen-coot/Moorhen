@@ -28,8 +28,8 @@ export const MoorhenValidationListWidgetBase = (props: {
     const [cardList, setCardList] = useState<JSX.Element[]>([])
     const [busy, setBusy] = useState<boolean>(false)
 
-    const scoresUpdateMolNo = useSelector((state: moorhen.State) => state.connectedMaps.scoresUpdate.molNo)
-    const toggleScoresUpdate = useSelector((state: moorhen.State) => state.connectedMaps.scoresUpdate.toggle)
+    const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo)
+    const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const maps = useSelector((state: moorhen.State) => state.maps)
@@ -82,10 +82,10 @@ export const MoorhenValidationListWidgetBase = (props: {
     }, [selectedMap, selectedModel, props.extraControlFormValue])
 
     useEffect(() => {
-        if (selectedModel !== null  && selectedModel === scoresUpdateMolNo) {
+        if (selectedModel !== null  && selectedModel === updateMolNo) {
             fetchData()
         }
-    }, [toggleScoresUpdate])
+    }, [updateSwitch])
 
     useEffect(() => {
         if (selectedModel === null || (props.enableMapSelect && selectedMap === null) || cardData === null || props.dropdownId !== props.accordionDropdownId || !props.showSideBar) {

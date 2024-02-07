@@ -9,7 +9,7 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 import { Backdrop, IconButton, Tooltip } from "@mui/material";
 import { CenterFocusWeakOutlined, CrisisAlertOutlined, MergeTypeOutlined } from "@mui/icons-material";
-import { triggerScoresUpdate } from "../../store/connectedMapsSlice";
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 
 export const MoorheFindLigandModal = (props: { show: boolean; setShow: React.Dispatch<React.SetStateAction<boolean>>; }) => {    
     const dispatch = useDispatch()
@@ -73,7 +73,7 @@ export const MoorheFindLigandModal = (props: { show: boolean; setShow: React.Dis
                         <Tooltip title="Merge">
                         <IconButton style={{marginRight:'0.5rem'}} onClick={() => {
                             molecule.mergeMolecules([newLigandMolecule], true).then(_ => newLigandMolecule.delete())
-                            dispatch( triggerScoresUpdate(molecule.molNo) )
+                            dispatch( triggerUpdate(molecule.molNo) )
                             setLigandResults((prevLigands) => prevLigands.filter(ligand => ligand.molNo !== newLigandMolecule.molNo))
                         }}>
                             <MergeTypeOutlined/>

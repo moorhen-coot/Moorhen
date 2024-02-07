@@ -812,7 +812,8 @@ export namespace moorhen {
             isChangingRotamers: boolean;
             isDraggingAtoms: boolean;
             isRotatingAtoms: boolean;
-            newCootCommandAlert: boolean;
+            newCootCommandExit: boolean;
+            newCootCommandStart: boolean;        
             showResidueSelection: boolean;
         };
         hoveringStates: {
@@ -858,7 +859,7 @@ export namespace moorhen {
         moleculeRepresentations: {
             visibleMolecules: number[];
         };
-        connectedMaps: {
+        moleculeMapUpdate: {
             updatingMapsIsEnabled: boolean;
             connectedMolecule: number;
             reflectionMap: number;
@@ -867,7 +868,7 @@ export namespace moorhen {
             uniqueMaps: number[];
             defaultUpdatingScores: string[];
             showScoresToast: boolean;
-            scoresUpdate: {toggle: boolean, molNo: number};
+            moleculeUpdate: { switch: boolean, molNo: number };
         };
     }
     

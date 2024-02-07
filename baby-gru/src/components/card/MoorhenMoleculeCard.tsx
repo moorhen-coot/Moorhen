@@ -17,7 +17,7 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { addMolecule } from '../../store/moleculesSlice';
 import { showMolecule } from '../../store/moleculeRepresentationsSlice';
-import { triggerScoresUpdate } from '../../store/connectedMapsSlice';
+import { triggerUpdate } from '../../store/moleculeMapUpdateSlice';
 import { MoorhenCarbohydrateList } from "../list/MoorhenCarbohydrateList";
 
 const allRepresentations = [ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks', 'restraints' ]
@@ -412,13 +412,13 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const handleUndo = async () => {
         await props.molecule.undo()
         props.setCurrentDropdownMolNo(-1)
-        dispatch( triggerScoresUpdate(props.molecule.molNo) )
+        dispatch( triggerUpdate(props.molecule.molNo) )
     }
 
     const handleRedo = async () => {
         await props.molecule.redo()
         props.setCurrentDropdownMolNo(-1)
-        dispatch( triggerScoresUpdate(props.molecule.molNo) )
+        dispatch( triggerUpdate(props.molecule.molNo) )
     }
 
     const handleCentering = () => {

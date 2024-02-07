@@ -13,13 +13,13 @@ import { AnyAction } from "@reduxjs/toolkit";
 import { setNotificationContent } from "../store/generalStatesSlice";
 import { setHoveredAtom } from "../store/hoveringStatesSlice";
 import { changeMapRadius } from "../store/mapContourSettingsSlice";
-import { triggerScoresUpdate } from "../store/connectedMapsSlice";
+import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
 
 const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, dispatch: Dispatch<AnyAction>) => {
     molecule.setAtomsDirty(true)
     molecule.redraw()
     dispatch( setHoveredAtom({ molecule: null, cid: null }) )
-    dispatch( triggerScoresUpdate(molecule.molNo) )
+    dispatch( triggerUpdate(molecule.molNo) )
 }
 
 export const babyGruKeyPress = (
@@ -158,7 +158,7 @@ export const babyGruKeyPress = (
             promise = selectedMolecule.redo()
         }
         promise.then(_ => {
-            dispatch( triggerScoresUpdate(selectedMolecule.molNo) )
+            dispatch( triggerUpdate(selectedMolecule.molNo) )
         })
         return false
     }

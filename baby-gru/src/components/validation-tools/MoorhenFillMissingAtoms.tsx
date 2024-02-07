@@ -3,7 +3,7 @@ import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBa
 import { moorhen } from "../../types/moorhen";
 import { libcootApi } from '../../types/libcoot';
 import { useDispatch, useSelector } from 'react-redux';
-import { triggerScoresUpdate } from '../../store/connectedMapsSlice';
+import { triggerUpdate } from '../../store/moleculeMapUpdateSlice';
 import { useCallback } from 'react';
 import { MoorhenResidueSteps } from '../misc/MoorhenResidueSteps';
 import { setNotificationContent } from '../../store/generalStatesSlice';
@@ -41,7 +41,7 @@ export const MoorhenFillMissingAtoms = (props: Props) => {
         }
         selectedMolecule.setAtomsDirty(true)
         await selectedMolecule.redraw()
-        dispatch( triggerScoresUpdate(selectedMolecule.molNo) )
+        dispatch( triggerUpdate(selectedMolecule.molNo) )
     }
 
     const handleAtomFill = (...args: [moorhen.Molecule, string, number, string]) => {
