@@ -4,15 +4,17 @@ import { Zoom } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { moorhen } from '../../types/moorhen';
 
-export const MoorhenNotification = (props: {width?: number, hideDelay?: number, children: JSX.Element}) => {
+export const MoorhenNotification = (props: {width?: number, hideDelay?: number, children: JSX.Element, placeOnTop?: boolean}) => {
     const canvasElement = document.getElementById('moorhen-canvas-background')
     let canvasTop: number
+    let canvasBottom: number
     let canvasLeft: number
     let canvasRight: number
     if (canvasElement !== null) {
         const rect = canvasElement.getBoundingClientRect()
         canvasLeft = rect.left
         canvasTop = rect.top
+        canvasBottom = rect.bottom
         canvasRight = rect.right
     } else {
         canvasLeft = 0
@@ -38,7 +40,8 @@ export const MoorhenNotification = (props: {width?: number, hideDelay?: number, 
         style={{
             position: 'absolute',
             width: `${props.width}rem`,
-            top: canvasTop + convertRemToPx(0.5),
+            top: props.placeOnTop ? canvasTop + convertRemToPx(0.5) : null,
+            bottom: !props.placeOnTop ? canvasTop + convertRemToPx(0.5) : null,
             left: canvasLeft + (width / 2) - convertRemToPx(props.width / 2),
             color: isDark ? 'white' : 'grey',
             backgroundColor: isDark ? 'grey' : 'white',
@@ -48,4 +51,4 @@ export const MoorhenNotification = (props: {width?: number, hideDelay?: number, 
         </Zoom>
 }
 
-MoorhenNotification.defaultProps = { width: 14 }
+MoorhenNotification.defaultProps = { width: 14, placeOnTop: true }

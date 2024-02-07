@@ -13,10 +13,11 @@ import { MoorhenModalsContainer } from './misc/MoorhenModalsContainer'
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
 import { MoorhenPreferencesContainer } from './misc/MoorhenPreferencesContainer'
+import { MoorhenLongJobNotification } from './misc/MoorhenLongJobNotification'
 import { MoorhenResidueSelectionActions } from './misc/MoorhenResidueSelectionActions'
 import { useSelector, useDispatch } from 'react-redux';
 import { setDefaultBackgroundColor, setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/sceneSettingsSlice';
-import { setCootInitialized, setNotificationContent, setTheme, toggleCootCommandAlert } from '../store/generalStatesSlice';
+import { setCootInitialized, setNotificationContent, setTheme, toggleCootCommandExit, toggleCootCommandStart } from '../store/generalStatesSlice';
 import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSlice';
 
 /**
@@ -285,7 +286,10 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 dispatch( setCootInitialized(true) )
             },
             onCommandExit: (kwargs) => {
-
+                dispatch( toggleCootCommandExit() )
+            },
+            onCommandStart: (kwargs) => {
+                dispatch( toggleCootCommandStart() )
             }
         })
         return () => {
@@ -423,6 +427,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             </Col>
         </Row>
         {notificationContent}
+        <MoorhenLongJobNotification commandCentre={props.commandCentre}/>
     </Container>
     </>
 }
