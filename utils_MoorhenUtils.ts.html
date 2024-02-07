@@ -128,7 +128,7 @@ import { addMap, emptyMaps } from "../store/mapsSlice";
 import { batch } from "react-redux";
 import { setActiveMap } from "../store/generalStatesSlice";
 import { setContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle, setNegativeMapColours, setPositiveMapColours } from "../store/mapContourSettingsSlice";
-import { enableUpdatingMaps, setConnectedMoleculeMolNo, setFoFcMapMolNo, setReflectionMapMolNo, setTwoFoFcMapMolNo } from "../store/connectedMapsSlice";
+import { enableUpdatingMaps, setConnectedMoleculeMolNo, setFoFcMapMolNo, setReflectionMapMolNo, setTwoFoFcMapMolNo } from "../store/moleculeMapUpdateSlice";
 import { libcootApi } from "../types/libcoot";
 
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))

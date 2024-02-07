@@ -189,6 +189,8 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
     });
     
     const dispatch = useDispatch()
+    const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo)
+    const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch)
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
 
@@ -424,7 +426,16 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
      * Hook used to update the displayed sequence after adding/removing/mutating a residue in the sequence
      */
     useEffect(()=> {
-        const [newRulerStart, newSeqLenght, newDisplaySequence, newStart, newEnd] = parseSequenceData(props.sequence.sequence)
+        if (props.molecule.molNo !== updateMolNo) {
+            return
+        }
+
+        const newSequence = props.molecule.sequences.find(sequence => sequence.name === props.sequence.name)?.sequence
+        if (!newSequence) {
+            return
+        }
+        
+        const [newRulerStart, newSeqLenght, newDisplaySequence, newStart, newEnd] = parseSequenceData(newSequence)
         
         if (newDisplaySequence !== displaySettings.displaySequence) {
             sequenceRef.current.sequence = newDisplaySequence
@@ -437,9 +448,9 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                 seqLenght: newSeqLenght,
                 displaySequence: newDisplaySequence     
             })
-        }
+        } 
 
-    }, [props.sequence.sequence])
+    }, [updateSwitch])
     
     /**
      * Hook used to clear the current selection if user selects residue from different chain
