@@ -48,7 +48,8 @@ export const MoorhenRamachandran = (props: Props) => {
     const [molName, setMolName] = useState<null | string>(null)
     const [chainId, setChainId] = useState<null | string>(null)
     
-    const newCootCommandAlert = useSelector((state: moorhen.State) => state.generalStates.newCootCommandAlert)
+    const scoresUpdateMolNo = useSelector((state: moorhen.State) => state.connectedMaps.scoresUpdate.molNo)
+    const toggleScoresUpdate = useSelector((state: moorhen.State) => state.connectedMaps.scoresUpdate.toggle)
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
@@ -417,21 +418,27 @@ export const MoorhenRamachandran = (props: Props) => {
 
     }, [width, height, props.resizeTrigger])
 
-    useEffect(() => {
-        async function fetchRamaData() {
-            if (!moleculeSelectRef.current.value || !chainSelectRef.current.value) {
-                setRamaPlotData(null)
-                return
-            }
-            const inputData = {message:'coot_command', command:'ramachandran_validation', returnType:'ramachandran_data', commandArgs:[parseInt(moleculeSelectRef.current.value)], chainID: chainSelectRef.current.value}
-            let response = await props.commandCentre.current.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.RamaDataJS[]>
-            setRamaPlotData(response.data.result.result)
+    const fetchRamaData = useCallback( async () => {
+        if (!moleculeSelectRef.current.value || !chainSelectRef.current.value) {
+            setRamaPlotData(null)
+            return
         }
+        const inputData = {message:'coot_command', command:'ramachandran_validation', returnType:'ramachandran_data', commandArgs:[parseInt(moleculeSelectRef.current.value)], chainID: chainSelectRef.current.value}
+        let response = await props.commandCentre.current.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.RamaDataJS[]>
+        setRamaPlotData(response.data.result.result)
+    }, [])
+
+    useEffect(() => {
 
         fetchRamaData()
 
-    }, [selectedModel, selectedChain])
+    }, [selectedModel, selectedChain, fetchRamaData])
 
+    useEffect(() => {
+        if (selectedModel === scoresUpdateMolNo && ramaPlotData !== null && selectedModel !== null && chainSelectRef.current.value !== null && molecules.length !== 0) {
+            fetchRamaData()
+        }
+    }, [toggleScoresUpdate, fetchRamaData])
 
     useEffect(() => {
         if (molecules.length === 0) {
@@ -443,25 +450,6 @@ export const MoorhenRamachandran = (props: Props) => {
         }
 
     }, [molecules.length])
-
-    useEffect(() => {
-        if (ramaPlotData === null || selectedModel === null || chainSelectRef.current.value === null || molecules.length === 0) {
-            return;
-        }
-
-        async function fetchRamaData() {
-            if (!moleculeSelectRef.current.value || !chainSelectRef.current.value) {
-                setRamaPlotData(null)
-                return
-            }
-            const inputData = {message:'coot_command', command:'ramachandran_validation', returnType:'ramachandran_data', commandArgs:[parseInt(moleculeSelectRef.current.value)], chainID: chainSelectRef.current.value}
-            let response = await props.commandCentre.current.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.RamaDataJS[]>
-            setRamaPlotData(response.data.result.result)
-        }
-        
-        fetchRamaData()
-
-    }, [newCootCommandAlert])
 
     useEffect(() => {
         if (!clickedResidue) {
