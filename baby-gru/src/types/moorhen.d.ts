@@ -812,7 +812,8 @@ export namespace moorhen {
             isChangingRotamers: boolean;
             isDraggingAtoms: boolean;
             isRotatingAtoms: boolean;
-            newCootCommandAlert: boolean;
+            newCootCommandExit: boolean;
+            newCootCommandStart: boolean;        
             showResidueSelection: boolean;
         };
         hoveringStates: {

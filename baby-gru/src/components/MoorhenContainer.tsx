@@ -285,9 +285,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 dispatch( setCootInitialized(true) )
             },
             onCommandExit: (kwargs) => {
-                if (kwargs.doJournal) {
-                    dispatch( toggleCootCommandAlert() )
-                }
+
             }
         })
         return () => {
