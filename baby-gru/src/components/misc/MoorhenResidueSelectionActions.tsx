@@ -12,7 +12,7 @@ import { HexColorInput, HexColorPicker } from "react-colorful"
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm"
 import { MoorhenAcceptRejectRotateTranslate } from "./MoorhenAcceptRejectRotateTranslate"
 import { MoorhenAcceptRejectDragAtoms } from "./MoorhenAcceptRejectDragAtoms"
-import { triggerScoresUpdate } from "../../store/connectedMapsSlice"
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
 
 export const MoorhenResidueSelectionActions = (props) => {
 
@@ -188,7 +188,7 @@ export const MoorhenResidueSelectionActions = (props) => {
                 await residueSelection.molecule.refineResidueRange(startResSpec.chain_id, startResSpec.res_no, startResSpec.res_no, 5000, true)
             }
         }
-        dispatch( triggerScoresUpdate(residueSelection.molecule.molNo) )
+        dispatch( triggerUpdate(residueSelection.molecule.molNo) )
         dispatch( clearResidueSelection() )
     }, [residueSelection, animateRefine, activeMap])
 
@@ -211,7 +211,7 @@ export const MoorhenResidueSelectionActions = (props) => {
                 await residueSelection.molecule.delete()
                 dispatch(removeMolecule(residueSelection.molecule))
             }
-            dispatch( triggerScoresUpdate(residueSelection.molecule.molNo) )
+            dispatch( triggerUpdate(residueSelection.molecule.molNo) )
         }
 
         dispatch( clearResidueSelection() )
@@ -342,7 +342,7 @@ export const MoorhenResidueSelectionActions = (props) => {
 
         if (cid) {
             await residueSelection.molecule.rigidBodyFit(cid, activeMap.molNo, true)
-            dispatch( triggerScoresUpdate(residueSelection.molecule.molNo) )
+            dispatch( triggerUpdate(residueSelection.molecule.molNo) )
         }
 
         dispatch( clearResidueSelection() )

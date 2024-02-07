@@ -35,7 +35,7 @@ import { setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut, setEnable
 import { addMolecule, removeMolecule, emptyMolecules, addMoleculeList } from './store/moleculesSlice';
 import { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity } from './store/mouseSettings';
 import { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts } from './store/shortCutsSlice';
-import { setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores } from './store/connectedMapsSlice'
+import { setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores } from './store/moleculeMapUpdateSlice'
 import { showMolecule, hideMolecule } from "./store/moleculeRepresentationsSlice";
 
 export {

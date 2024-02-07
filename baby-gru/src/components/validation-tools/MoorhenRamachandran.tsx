@@ -48,8 +48,8 @@ export const MoorhenRamachandran = (props: Props) => {
     const [molName, setMolName] = useState<null | string>(null)
     const [chainId, setChainId] = useState<null | string>(null)
     
-    const scoresUpdateMolNo = useSelector((state: moorhen.State) => state.connectedMaps.scoresUpdate.molNo)
-    const toggleScoresUpdate = useSelector((state: moorhen.State) => state.connectedMaps.scoresUpdate.toggle)
+    const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo)
+    const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch)
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
@@ -435,10 +435,10 @@ export const MoorhenRamachandran = (props: Props) => {
     }, [selectedModel, selectedChain, fetchRamaData])
 
     useEffect(() => {
-        if (selectedModel === scoresUpdateMolNo && ramaPlotData !== null && selectedModel !== null && chainSelectRef.current.value !== null && molecules.length !== 0) {
+        if (selectedModel === updateMolNo && ramaPlotData !== null && selectedModel !== null && chainSelectRef.current.value !== null && molecules.length !== 0) {
             fetchRamaData()
         }
-    }, [toggleScoresUpdate, fetchRamaData])
+    }, [updateSwitch, fetchRamaData])
 
     useEffect(() => {
         if (molecules.length === 0) {

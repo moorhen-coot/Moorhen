@@ -4,7 +4,7 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from 'react-redux';
-import { triggerScoresUpdate } from "../../store/connectedMapsSlice";
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 
 export const MoorhenMergeMoleculesMenuItem = (props: {
     fromMolNo?: null | number; 
@@ -35,7 +35,7 @@ export const MoorhenMergeMoleculesMenuItem = (props: {
         }
         await toMolecule.mergeMolecules(otherMolecules, true)
         props.setPopoverIsShown(false)
-        dispatch( triggerScoresUpdate(toMolecule.molNo) )
+        dispatch( triggerUpdate(toMolecule.molNo) )
     }, [toRef.current, fromRef.current, molecules, props.fromMolNo, props.glRef])
 
     return <MoorhenBaseMenuItem

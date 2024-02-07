@@ -14,8 +14,8 @@ export const MoorhenLigandList = (props: {
     height?: number | string;
 }) => {
 
-    const scoresUpdateMolNo = useSelector((state: moorhen.State) => state.connectedMaps.scoresUpdate.molNo)
-    const toggleScoresUpdate = useSelector((state: moorhen.State) => state.connectedMaps.scoresUpdate.toggle)
+    const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo)
+    const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch)
     const showModelsModal = useSelector((state: moorhen.State) => state.activeModals.showModelsModal)
 
     const [ligandList, setLigandList] = useState<moorhen.LigandInfo[]>(null)
@@ -56,10 +56,10 @@ export const MoorhenLigandList = (props: {
     }, [showModelsModal])
     
     useEffect(() => {
-        if (props.molecule?.molNo === scoresUpdateMolNo && showModelsModal) {
+        if (props.molecule?.molNo === updateMolNo && showModelsModal) {
             updateLigandList()
         }
-    }, [toggleScoresUpdate])
+    }, [updateSwitch])
 
     return <>
             {ligandList === null ?

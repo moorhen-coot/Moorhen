@@ -5,7 +5,7 @@ import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
-import { triggerScoresUpdate } from "../../store/connectedMapsSlice";
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 
 interface Props extends moorhen.CollectedProps {
     dropdownId: number;
@@ -50,7 +50,7 @@ export const MoorhenWaterValidation = (props: Props) => {
         if (selectedMolecule) {
             const cid = `/${water.model_number}/${water.chain_id}/${water.res_no}`
             await selectedMolecule.deleteCid(cid)
-            dispatch( triggerScoresUpdate(selectedModel) )
+            dispatch( triggerUpdate(selectedModel) )
         }
     }, [molecules])
 
@@ -59,7 +59,7 @@ export const MoorhenWaterValidation = (props: Props) => {
         if (selectedMolecule) {
             const cid = `/${water.model_number}/${water.chain_id}/${water.res_no}`
             await selectedMolecule.refineResiduesUsingAtomCid(cid, 'SNGLE')
-            dispatch( triggerScoresUpdate(selectedModel) )
+            dispatch( triggerUpdate(selectedModel) )
         }
     }, [molecules])
 

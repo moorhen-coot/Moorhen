@@ -4,7 +4,7 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from 'react-redux';
-import { triggerScoresUpdate } from "../../store/connectedMapsSlice";
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 
 export const MoorhenMoveMoleculeHere = (props: {
     popoverPlacement?: 'left' | 'right'
@@ -28,7 +28,7 @@ export const MoorhenMoveMoleculeHere = (props: {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
         if (selectedMolecule) {
             await selectedMolecule.moveMoleculeHere(...props.glRef.current.origin.map(coord => -coord) as [number, number, number])
-            dispatch( triggerScoresUpdate(selectedMolecule.molNo) )
+            dispatch( triggerUpdate(selectedMolecule.molNo) )
         }
     }, [molecules])
 
