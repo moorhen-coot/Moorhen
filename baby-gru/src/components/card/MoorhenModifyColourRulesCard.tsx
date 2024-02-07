@@ -88,7 +88,6 @@ export const MoorhenModifyColourRulesCard = (props: {
     const [sequenceRangeSelect, setSequenceRangeSelect] = useState(null)
     const [ruleList, setRuleList] = useReducer(itemReducer, initialRuleState, () => { return props.molecule.defaultColourRules })
     
-    const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
@@ -262,7 +261,7 @@ export const MoorhenModifyColourRulesCard = (props: {
                     <Form.Group style={{ margin: '0px', width: '100%' }}>
                         <Form.Label>Property</Form.Label>
                             <FormSelect size="sm" ref={ruleSelectRef} defaultValue={'b-factor'} onChange={(val) => setColourProperty(val.target.value)}>
-                                {devMode && <option value={'mol-symm'} key={'mol-symm'}>Mol. Symmetry</option>}
+                                <option value={'mol-symm'} key={'mol-symm'}>Mol. Symmetry</option>
                                 <option value={'secondary-structure'} key={'secondary-structure'}>Secondary structure</option>
                                 <option value={'jones-rainbow'} key={'jones-rainbow'}>Jones' rainbow</option>
                                 <option value={'b-factor'} key={'b-factor'}>B-Factor</option>
