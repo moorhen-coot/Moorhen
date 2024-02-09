@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { Row, Button, Card, Col, OverlayTrigger, Tooltip, Form, FormSelect } from "react-bootstrap";
 import { ArrowUpwardOutlined, ArrowDownwardOutlined, DeleteOutlined, GrainOutlined } from '@mui/icons-material';
-import { RgbColorPicker } from "react-colorful";
+import { HexColorInput, RgbColorPicker } from "react-colorful";
 import { rgbToHex } from "../../utils/MoorhenUtils";
 import { moorhen } from "../../types/moorhen";
 import { Popover, hexToRgb } from "@mui/material";
@@ -93,21 +93,6 @@ const NcsColourSwatch = (props: {
         applyColourChange()
     }
 
-    const handleColorChange = (color: { r: number; g: number; b: number; }) => {
-        try {
-            if (rule.ruleType === 'mol-symm') {
-                newNcsHexValueRef.current = rgbToHex(color.r, color.g, color.b)
-            } else {
-                rule.color = rgbToHex(color.r, color.g, color.b)
-                if (!rule.isMultiColourRule) rule.args[1] = rule.color 
-                applyColourChange()
-            }
-        }
-        catch (err) {
-            console.log('err', err)
-        }
-    }
-
     return  <>
         <GrainOutlined ref={ncsSwatchRef} onClick={() => {
             setShowColourPicker(true)
@@ -143,7 +128,18 @@ const NcsColourSwatch = (props: {
                     })}
                 </FormSelect>
             </Form.Group>
-            <RgbColorPicker color={rgb} onChange={handleColorChange} />
+            <RgbColorPicker color={rgb} onChange={(color: { r: number; g: number; b: number; }) => {
+                newNcsHexValueRef.current = rgbToHex(color.r, color.g, color.b)
+                setRgb(color)
+            }}/>
+            <div style={{width: '100%', display: 'flex', justifyContent: 'center'}}>
+                <div className="moorhen-hex-input-decorator">#</div>
+                <HexColorInput className="moorhen-hex-input" color={rgbToHex(rgb.r, rgb.g, rgb.b)} onChange={(hex) => {
+                    const [r, g, b] = hexToRgb(hex).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+                    newNcsHexValueRef.current = rgbToHex(r, g, b)
+                    setRgb({r, g, b})
+                }}/>
+            </div>
             <Button style={{marginTop: '0.2rem'}} onClick={applyNcsColourChange}>
                 Apply
             </Button>
