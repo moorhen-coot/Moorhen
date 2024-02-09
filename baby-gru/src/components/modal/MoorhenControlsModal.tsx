@@ -13,6 +13,7 @@ const shortCutMouseActions = {
     measure_distances: ['circle-left-mouse-click', 'one-finger-tap'],
     measure_angles: ['circle-left-mouse-click', 'one-finger-tap'],
     label_atom: ['circle-left-mouse-click', 'one-finger-tap'],
+    dist_ang_2d: ['circle-left-mouse-click', 'one-finger-tap'],
     center_atom: ['middle-right-mouse-click', 'one-finger-tap'],
     set_map_contour: ['middle-right-mouse-click', 'mouse-scroll-arrows', 'two-finger-scroll'],
     pan_view: ['circle-left-mouse-click', 'mouse-move', 'one-finger-move'],

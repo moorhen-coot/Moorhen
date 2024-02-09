@@ -36,6 +36,7 @@ export namespace webGL {
         drawTextOverlays(invMat: number[]) : void;
         drawAxes(invMat: number[]) : void;
         drawScaleBar(invMat: number[]) : void;
+        drawLineMeasures(invMat: number[]) : void;
         drawCrosshairs(invMat: number[]) : void;
         drawMouseTrack() : void;
         reContourMaps() : void;
@@ -54,7 +55,12 @@ export namespace webGL {
         doMouseMove(event: Event, self: any) : void;
         doDoubleClick(event: Event, self: any) : void;
         doMouseUp(event: Event, self: any) : void;
+        doMouseUpMeasure(event: Event, self: any) : void;
+        doMouseDownMeasure(event: Event, self: any) : void;
+        doMouseMoveMeasure(event: Event, self: any) : void;
         getAtomFomMouseXY(event: Event, self: any) : number[];
+        getMouseXYGL(event: Event, self: any) : any;
+        canvasPointToGLPoint(point: any) : any;
         updateLabels(): void;
         doRightClick(event: Event, self: any): void;
         doClick(event: Event, self: any): void;
@@ -66,7 +72,7 @@ export namespace webGL {
         drawImagesAndText(invMat: mat4) : void;
         drawTransparent(theMatrix: mat4) : void;
         bindFramebufferDrawBuffers() : void;
-        GLrender(calculatingShadowMap: boolean) : mat4; 
+        GLrender(calculatingShadowMap: boolean) : mat4;
         drawTransformMatrixInteractivePMV(transformMatrix:number[], transformOrigin:number[], buffer:any, shader:any, vertexType:number, bufferIdx:number) : any;
         drawTransformMatrixPMV(transformMatrix:number[], buffer:any, shader:any, vertexType:number, bufferIdx:number) : any;
         setupModelViewTransformMatrixInteractive(transformMatrix:number[], transformOrigin:number[], buffer: any, shader: MGWebGLShader, vertexType: number, bufferIdx: number, specialDrawBuffer: any) : void;
@@ -277,7 +283,12 @@ export namespace webGL {
         mapLineWidth: number;
         measureCylinderBuffers: DisplayBuffer[];
         measureTextCanvasTexture: TextCanvasTexture;
+        measureText2DCanvasTexture: TextCanvasTexture;
         mouseDown: boolean;
+        measurePointsArray: any[];
+        measureHit: any;
+        measureButton: number;
+        measureDownPos: any;
         mouseDown_x: number;
         mouseDown_y: number;
         mouseDownedAt: number;
