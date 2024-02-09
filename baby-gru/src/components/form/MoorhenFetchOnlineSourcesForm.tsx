@@ -196,7 +196,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
     }
 
     return <Form.Group className='moorhen-form-group' controlId="fetch-pdbe-form">
-        <Form.Label>Fetch coords from online services</Form.Label>
+        <Form.Label>Fetch from online services</Form.Label>
         <InputGroup>
             <SplitButton title={remoteSource} id="fetch-coords-online-source-select">
                 {props.sources.map(source => {
