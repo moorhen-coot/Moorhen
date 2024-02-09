@@ -5,6 +5,8 @@ import { libcootApi } from '../types/libcoot';
 import { hexToRgb } from '@mui/material';
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
 
+const LIGANDS_CID = "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O,G,C,U,A,T)"
+
 // TODO: It might be better to do this.glRef.current.drawScene() in the molecule... 
 export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresentation {
 
@@ -78,8 +80,8 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             'allHBonds', 'rama', 'rotamer', 'unitCell', 'hover', 'environment', 'ligand_environment',
             'contact_dots', 'chemical_features', 'ligand_validation', 'restraints', 'residueSelection'
         ].includes(style)
-        if (style === "ligands" && (typeof this.cid !== 'string' || this.cid === '/*/*/*/*')) {
-            this.cid =  "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O)"
+        if (style === "ligands") {
+            this.cid = this.parentMolecule?.ligands?.length > 0 ? this.parentMolecule.ligands.map(ligand => ligand.cid).join('||') : LIGANDS_CID
         }
     }
 
@@ -110,6 +112,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.parentMolecule = molecule
         this.colourRules = this.parentMolecule.defaultColourRules
         this.bondOptions = this.parentMolecule.defaultBondOptions
+        if (this.style === "ligands") {
+            this.cid = this.parentMolecule?.ligands?.length > 0 ? this.parentMolecule.ligands.map(ligand => ligand.cid).join('||') : LIGANDS_CID
+        }
     }
 
     async buildBuffers(objects: moorhen.DisplayObject[]) {
@@ -444,6 +449,10 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         const bondSettings = this.getBondSettings(name)
         let meshCommand: Promise<moorhen.WorkerResponse<libcootApi.InstancedMeshJS>>
         let returnType = name === 'VdwSpheres' ? "instanced_mesh_perfect_spheres" : "instanced_mesh"
+
+        if (name === "ligands") {
+            this.cid = this.parentMolecule.ligands.length > 0 ? this.parentMolecule.ligands.map(ligand => ligand.cid).join('||') : LIGANDS_CID
+        }
 
         if (typeof cid !== 'string' || cid === '/*/*/*/*') {
             meshCommand = this.commandCentre.current.cootCommand({
