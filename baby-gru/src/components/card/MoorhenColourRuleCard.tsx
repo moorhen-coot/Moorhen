@@ -13,20 +13,23 @@ const ColourSwatch = (props: {
 }) => {
 
     const colourSwatchRef = useRef<null | HTMLDivElement>(null)
-
-    const [showColourPicker, setShowColourPicker] = useState<boolean>(false)
+    const newHexValueRef = useRef<string>('')
 
     const { rule, applyColourChange } = props
     
     let [r, g, b]: number[] = []
     if (!rule.isMultiColourRule) {
         [r, g, b] = hexToRgb(rule.color).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+    } else {
+        [r, g, b] = [100, 100, 100]
     }
 
+    const [rgb, setRgb] = useState<{r: number, g: number, b: number}>({r, g, b})
+    const [showColourPicker, setShowColourPicker] = useState<boolean>(false)
 
-    const handleColorChange = (color: { r: number; g: number; b: number; }) => {
+    const handleClick = () => {
         try {
-            rule.color = rgbToHex(color.r, color.g, color.b)
+            rule.color = newHexValueRef.current
             if (!rule.isMultiColourRule) rule.args[1] = rule.color 
             applyColourChange()
         }
@@ -60,7 +63,23 @@ const ColourSwatch = (props: {
                 }
             }}
         >
-            <RgbColorPicker color={{r, g, b}} onChange={handleColorChange} />
+        <div style={{ padding: '0.5rem', width: '100%', margin: 0, justifyContent: 'center', display: 'flex', flexDirection: 'column'}}>
+            <RgbColorPicker color={rgb} onChange={(color: { r: number; g: number; b: number; }) => {
+                newHexValueRef.current = rgbToHex(color.r, color.g, color.b)
+                setRgb(color)
+            }}/>
+            <div style={{width: '100%', display: 'flex', justifyContent: 'center'}}>
+                <div className="moorhen-hex-input-decorator">#</div>
+                <HexColorInput className="moorhen-hex-input" color={rgbToHex(rgb.r, rgb.g, rgb.b)} onChange={(hex) => {
+                    const [r, g, b] = hexToRgb(hex).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+                    newHexValueRef.current = rgbToHex(r, g, b)
+                    setRgb({r, g, b})
+                }}/>
+            </div>
+            <Button style={{marginTop: '0.2rem'}} onClick={handleClick}>
+                Apply
+            </Button>
+        </div>
         </Popover>
     </>
 }
@@ -110,8 +129,7 @@ const NcsColourSwatch = (props: {
                 '& .MuiPaper-root': {
                     overflowY: 'hidden', borderRadius: '8px'
                 }
-            }}
-        >
+            }}>
         <div style={{ padding: '0.5rem', width: '100%', margin: 0, justifyContent: 'center', display: 'flex', flexDirection: 'column'}}>
             <Form.Group >
                 <Form.Label style={{ justifyContent: 'center', display: 'flex'}}>NCS colours</Form.Label>
