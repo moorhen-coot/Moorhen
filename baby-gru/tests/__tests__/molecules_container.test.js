@@ -1487,6 +1487,54 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(instanceMesh_1, instanceMesh_2, indexedResiduesVec, colourMap, geom_2, geom_1)
     })
 
+    test("Test non-drawn bonds and multi CID selection mesh --first", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+
+        const instanceMesh_1 = molecules_container.get_bonds_mesh_for_selection_instanced(
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+        
+        molecules_container.add_to_non_drawn_bonds(coordMolNo, '//A/12-15')
+
+        const instanceMesh_2 = molecules_container.get_bonds_mesh_for_selection_instanced(
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+
+        expect(
+            instanceMesh_2.geom.get(1).instancing_data_B.size()
+        ).not.toBe(
+            instanceMesh_1.geom.get(1).instancing_data_B.size()
+        )
+
+        cleanUpVariables.push(instanceMesh_1, instanceMesh_2)
+    })
+
+    test("Test non-drawn bonds and multi CID selection mesh --second", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+
+        const instanceMesh_1 = molecules_container.get_bonds_mesh_for_selection_instanced(
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+        
+        molecules_container.add_to_non_drawn_bonds(coordMolNo, '//A/26-27')
+
+        const instanceMesh_2 = molecules_container.get_bonds_mesh_for_selection_instanced(
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+
+        expect(
+            instanceMesh_2.geom.get(1).instancing_data_B.size()
+        ).not.toBe(
+            instanceMesh_1.geom.get(1).instancing_data_B.size()
+        )
+
+        cleanUpVariables.push(instanceMesh_1, instanceMesh_2)
+    })
+    
     test("Test non-drawn bonds and bonds mesh", () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(false)
