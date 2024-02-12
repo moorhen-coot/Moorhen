@@ -176,6 +176,7 @@ ${coot_src}/api/coot_molecule_replace_fragment.cc
 ${coot_src}/api/add-terminal-residue.cc
 ${coot_src}/api/molecules_container.cc
 ${coot_src}/api/rama-plot-phi-psi.cc
+${coot_src}/api/coot_molecule_change_chain_id.cc
 ${coot_src}/analysis/daca.cc
 ${coot_src}/analysis/kolmogorov.cc
 ${coot_src}/analysis/stats.cc
