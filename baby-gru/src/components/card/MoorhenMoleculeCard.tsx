@@ -158,7 +158,6 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
         if (moleculeMolNo === props.molecule.molNo) {
             await props.molecule.drawAdaptativeBonds(residueCid, 10)
         }
-
     }
 
     const handleOriginUpdate = useCallback(() => {
