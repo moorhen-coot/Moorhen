@@ -1241,6 +1241,14 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(results)
     });
 
+    test("Test get molecule diameter", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const diameter = molecules_container.get_molecule_diameter(coordMolNo)
+        expect(diameter).toBeCloseTo(43.90, 1)
+    })
+
 })
 
 const testDataFiles = ['1cxq_phases.mtz', '1cxq.cif', '7ZTVU.cif', '5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'MOI.restraints.cif', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
