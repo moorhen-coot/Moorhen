@@ -147,6 +147,20 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
         }
     }
 
+    const redrawAdaptativeBonds = async () => {
+        const response = await props.commandCentre.current.cootCommand({
+            returnType: "int_string_pair",
+            command: "get_active_atom",
+            commandArgs: [...props.glRef.current.origin.map(coord => coord * -1), props.molecule.molNo.toString()]
+        }, false) as moorhen.WorkerResponse<libcootApi.PairType<number, string>>
+        const moleculeMolNo: number = response.data.result.result.first
+        const residueCid: string = response.data.result.result.second
+        if (moleculeMolNo === props.molecule.molNo) {
+            await props.molecule.drawAdaptativeBonds(residueCid, 10)
+        }
+
+    }
+
     const handleOriginUpdate = useCallback(() => {
         isDirty.current = true
         if (!busyRedrawing.current) {
