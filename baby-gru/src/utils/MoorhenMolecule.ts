@@ -2051,4 +2051,26 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         return ligandSVG
     }
+
+    /**
+     * Change the ID of a given chain
+     * @param {string} oldId - The old chain ID
+     * @param {string} newId - The new chain ID
+     * @param {number} startResNo - The start residue number
+     * @param {number} endResNo - The end residue number
+     * @returns {number} - Status code -1 on a conflict, 1 on good, 0 on did nothing
+     */
+    async changeChainId(oldId: string, newId: string, startResNo?: number, endResNo?: number): Promise<number> {
+        const status = await this.commandCentre.current.cootCommand({
+            returnType: 'int',
+            command: 'change_chain_id',
+            commandArgs: [ this.molNo, oldId, newId, (startResNo !== undefined && endResNo !== undefined), startResNo ? startResNo : 0, endResNo ? endResNo : 0 ],
+        }, false) as moorhen.WorkerResponse<number>
+        
+        if (status.data.result.result !== 0) {
+            this.setAtomsDirty(true)
+        }
+        
+        return status.data.result.result
+    }
 }
