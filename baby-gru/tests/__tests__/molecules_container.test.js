@@ -1534,7 +1534,7 @@ describe('Testing molecules_container_js', () => {
 
         cleanUpVariables.push(instanceMesh_1, instanceMesh_2)
     })
-    
+
     test("Test non-drawn bonds and bonds mesh", () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(false)
@@ -1559,6 +1559,80 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(instanceMesh_1, instanceMesh_2)
     })
 
+    test.only("Test change chain ID", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+
+        let original_chains = []
+        const original_chains_vec = molecules_container.get_chains_in_model(coordMolNo)
+        const original_chains_vec_size = original_chains_vec.size()
+        for (let i = 0; i < original_chains_vec_size; i++) {
+            const chain_name = original_chains_vec.get(i)
+            original_chains.push(chain_name)
+        }
+
+        molecules_container.change_chain_id(coordMolNo, 'A', 'X', false, 0, 0)
+        
+        let new_chains = []
+        const new_chains_vec = molecules_container.get_chains_in_model(coordMolNo)
+        const new_chains_vec_size = new_chains_vec.size()
+        for (let i = 0; i < new_chains_vec_size; i++) {
+            const chain_name = new_chains_vec.get(i)
+            new_chains.push(chain_name)
+        }
+
+        expect(new_chains).not.toEqual(original_chains)
+        expect(original_chains.includes('X')).toBeFalsy()
+        expect(new_chains.includes('X')).toBeTruthy()
+
+        cleanUpVariables.push(original_chains_vec, new_chains_vec)
+    })
+
+    test.only("Test change chain ID", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+
+        let original_chains = []
+        const original_chains_vec = molecules_container.get_chains_in_model(coordMolNo)
+        const original_chains_vec_size = original_chains_vec.size()
+        for (let i = 0; i < original_chains_vec_size; i++) {
+            const chain_name = original_chains_vec.get(i)
+            original_chains.push(chain_name)
+        }
+
+        molecules_container.change_chain_id(coordMolNo, 'A', 'X', true, 10, 20)
+        
+        let new_chains = []
+        const new_chains_vec = molecules_container.get_chains_in_model(coordMolNo)
+        const new_chains_vec_size = new_chains_vec.size()
+        for (let i = 0; i < new_chains_vec_size; i++) {
+            const chain_name = new_chains_vec.get(i)
+            new_chains.push(chain_name)
+        }
+
+        expect(new_chains).not.toEqual(original_chains)
+        expect(original_chains.includes('X')).toBeFalsy()
+        expect(new_chains.includes('X')).toBeTruthy()
+
+        const original_chain_res_names = []
+        for (let idx = 10; idx < 21; idx++) {
+            const resName = molecules_container.get_residue_name(coordMolNo, 'A', idx, '')
+            original_chain_res_names.push(resName)   
+        }
+
+        const new_chain_res_names = []
+        for (let idx = 10; idx < 21; idx++) {
+            const resName = molecules_container.get_residue_name(coordMolNo, 'X', idx, '')
+            new_chain_res_names.push(resName)   
+        }
+
+        expect(new_chain_res_names.every(item => item !== '')).toBeTruthy()
+        expect(original_chain_res_names.every(item => item === '')).toBeTruthy()
+        
+        cleanUpVariables.push(original_chains_vec, new_chains_vec)
+    })
 })
 
 const testDataFiles = ['1cxq_phases.mtz', '1cxq.cif', '7ZTVU.cif', '5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'MOI.restraints.cif', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
