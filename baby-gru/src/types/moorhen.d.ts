@@ -92,6 +92,7 @@ export namespace moorhen {
     type coorFormats = 'pdb' | 'mmcif';
     
     interface Molecule {
+        drawAdaptativeBonds(selectionString?: string, maxDist?: number): Promise<void>;
         changeChainId(oldId: string, newId: string, startResNo?: number, endResNo?: number): Promise<number>;
         refineResiduesUsingAtomCidAnimated(cid: string, activeMap: moorhen.Map, dist?: number, redraw?: boolean, redrawFragmentFirst?: boolean): Promise<void>;
         mergeFragmentFromRefinement(cid: string, fragmentMolecule: moorhen.Molecule, acceptTransform?: boolean, refineAfterMerge?: boolean): Promise<void>;
@@ -198,6 +199,7 @@ export namespace moorhen {
         defaultColourRules: ColourRule[];
         restraints: {maxRadius: number, cid: string}[];
         monomerLibraryPath: string;
+        adaptativeBondsRepresentation: { bonds: moorhen.MoleculeRepresentation; alphas: moorhen.MoleculeRepresentation };
         hoverRepresentation: MoleculeRepresentation;
         unitCellRepresentation: MoleculeRepresentation;
         environmentRepresentation: MoleculeRepresentation;
