@@ -1249,6 +1249,55 @@ describe('Testing molecules_container_js', () => {
         expect(diameter).toBeCloseTo(43.90, 1)
     })
 
+    test("Test non-drawn bonds and selection mesh", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+
+        const instanceMesh_1 = molecules_container.get_bonds_mesh_for_selection_instanced(
+            coordMolNo, '//A/10-20', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+        
+        molecules_container.add_to_non_drawn_bonds(coordMolNo, '//A/12-15')
+
+        const instanceMesh_2 = molecules_container.get_bonds_mesh_for_selection_instanced(
+            coordMolNo, '//A/10-20', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+
+        expect(
+            instanceMesh_2.geom.get(1).instancing_data_B.size()
+        ).not.toBe(
+            instanceMesh_1.geom.get(1).instancing_data_B.size()
+        )
+
+        cleanUpVariables.push(instanceMesh_1, instanceMesh_2)
+    })
+
+
+    test("Test non-drawn bonds and bonds mesh", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+
+        const instanceMesh_1 = molecules_container.get_bonds_mesh_instanced(
+            coordMolNo, 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+        
+        molecules_container.add_to_non_drawn_bonds(coordMolNo, '//A/12-15')
+
+        const instanceMesh_2 = molecules_container.get_bonds_mesh_instanced(
+            coordMolNo, 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+
+        expect(
+            instanceMesh_2.geom.get(1).instancing_data_B.size()
+        ).not.toBe(
+            instanceMesh_1.geom.get(1).instancing_data_B.size()
+        )
+
+        cleanUpVariables.push(instanceMesh_1, instanceMesh_2)
+    })
+
 })
 
 const testDataFiles = ['1cxq_phases.mtz', '1cxq.cif', '7ZTVU.cif', '5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'MOI.restraints.cif', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
