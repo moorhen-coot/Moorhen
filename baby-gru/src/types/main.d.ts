@@ -162,6 +162,7 @@ declare module 'moorhen' {
         hasDNA: boolean;
         hasGlycans: boolean;
         coordsFormat: _moorhen.coorFormats;
+        moleculeDiameter: number;
     }
     module.exports.MoorhenMolecule = MoorhenMolecule
     

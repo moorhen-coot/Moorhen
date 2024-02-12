@@ -71,7 +71,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         await Promise.all(drawPromises)
 
         dispatch( addMoleculeList(newMolecules) )
-        newMolecules.at(-1).centreOn('/*/*/*/*', false)
+        newMolecules.at(-1).centreOn('/*/*/*/*', true)
     }
 
     const readPdbFile = async (file: File): Promise<moorhen.Molecule> => {
