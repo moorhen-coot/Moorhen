@@ -54,7 +54,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
         const newDiffMap = new MoorhenMap(props.commandCentre, props.glRef)
         await newMolecule.loadToCootFromURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `mol-${tutorialNumber}`)
         await newMolecule.fetchIfDirtyAndDraw('CBs')
-        await newMolecule.centreOn('/*/*/*/*', false)
+        await newMolecule.centreOn('/*/*/*/*', true)
         await newMap.loadToCootFromMtzURL(
             `${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`,
             `map-${tutorialNumber}`,

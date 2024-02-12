@@ -92,6 +92,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     coordsFormat: moorhen.coorFormats;
     cachedPrivateerValidation: privateer.ResultsEntry[];
     cachedLigandSVGs: {[key: string]: string}[];
+    moleculeDiameter: number;
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibraryPath = "./baby-gru/monomers") {
         this.type = 'molecule'
@@ -136,6 +137,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.uniqueId = guid()
         this.monomerLibraryPath = monomerLibraryPath
         this.defaultColourRules = null
+        this.moleculeDiameter = null
         this.unitCellRepresentation = new MoorhenMoleculeRepresentation('unitCell', '/*/*/*/*', this.commandCentre, this.glRef)
         this.unitCellRepresentation.setParentMolecule(this)
         this.environmentRepresentation = new MoorhenMoleculeRepresentation('environment', null, this.commandCentre, this.glRef)
@@ -144,22 +146,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.hoverRepresentation.setParentMolecule(this)
         this.selectionRepresentation = new MoorhenMoleculeRepresentation('residueSelection', null, this.commandCentre, this.glRef)
         this.selectionRepresentation.setParentMolecule(this)
-    }
-
-    /**
-     * Rename a given chain with a new ID
-     * @param {string} oldId - The old chain ID
-     * @param {string} newId - The new chain ID
-     */
-    async changeChainId(oldId: string, newId: string) {
-        await this.commandCentre.current.cootCommand({
-            returnType: "status",
-            command: 'rename_chain',
-            commandArgs: [this.molNo, oldId, newId],
-            changesMolecules: [this.molNo]
-        }, true)
-        this.setAtomsDirty(true)
-        await this.redraw()
     }
 
     /**
@@ -622,7 +608,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 this.getNumberOfAtoms(),
                 this.loadMissingMonomers(),
                 this.checkHasGlycans(),
-                this.fetchDefaultColourRules()
+                this.fetchDefaultColourRules(),
+                this.getMoleculeDiameter()
             ])
             return this
         } catch (err) {
@@ -749,15 +736,32 @@ export class MoorhenMolecule implements moorhen.Molecule {
     }
 
     /**
+     * Get the diameter of this molecule
+     * @returns {number} The molecule diameter
+     */
+    async getMoleculeDiameter(): Promise<number> {
+        const diameter = await this.commandCentre.current.cootCommand({
+            returnType: 'int',
+            command: 'get_molecule_diameter',
+            commandArgs: [ this.molNo ],
+        }, false) as moorhen.WorkerResponse<number>
+        
+        this.moleculeDiameter = diameter.data.result.result
+        
+        return diameter.data.result.result
+    }
+
+    /**
      * Update the cached atoms with the latest information from the libcoot api
      */
     async updateAtoms() {
         if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
             this.gemmiStructure.delete()
         }
-        const [_hasGlycans, coordString] = await Promise.all([
+        const [_hasGlycans, coordString, _diameter] = await Promise.all([
             this.checkHasGlycans(),
-            this.getAtoms()
+            this.getAtoms(),
+            this.getMoleculeDiameter()
         ])
         try {
             this.updateGemmiStructure(coordString)
@@ -876,7 +880,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} selectionCid - CID selection for the residue to centre the view on
      * @param {boolean} [animate=true] - Indicates whether the change will be animated
      */
-    async centreOn(selectionCid: string = '/*/*/*/*', animate: boolean = true, setZoom: boolean = false): Promise<void> {
+    async centreOn(selectionCid: string = '/*/*/*/*', animate: boolean = true, setZoom: boolean = true): Promise<void> {
         if (this.atomsDirty) {
             await this.updateAtoms()
         }
@@ -888,15 +892,27 @@ export class MoorhenMolecule implements moorhen.Molecule {
             return
         }
 
-        let selectionCentre = centreOnGemmiAtoms(selectionAtoms)
+        let zoomLevel: number
+        if (selectionCid === '/*/*/*/*' || selectionCid === '//') {
+            if (this.moleculeDiameter === null) {
+                this.moleculeDiameter = await this.getMoleculeDiameter()
+            }
+            zoomLevel = this.moleculeDiameter / 40
+        } else {
+            zoomLevel = 0.4
+        }
 
+        console.log('>>>> HI!')
+        console.log(zoomLevel)
+
+        let selectionCentre = centreOnGemmiAtoms(selectionAtoms)
         if (animate && setZoom) {
-            this.glRef.current.setOriginAndZoomAnimated(selectionCentre, 0.4)
+            this.glRef.current.setOriginAndZoomAnimated(selectionCentre, zoomLevel)
         } else if (animate) {
             this.glRef.current.setOriginAnimated(selectionCentre)
         } else if (setZoom) {
             this.glRef.current.setOrigin(selectionCentre)
-            this.glRef.current.setZoom(0.4)
+            this.glRef.current.setZoom(zoomLevel)
         } else {
             this.glRef.current.setOrigin(selectionCentre)
         }
