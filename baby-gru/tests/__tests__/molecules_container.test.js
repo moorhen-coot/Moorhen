@@ -1559,7 +1559,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(instanceMesh_1, instanceMesh_2)
     })
 
-    test.only("Test change chain ID", () => {
+    test("Test change chain ID", () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
@@ -1589,7 +1589,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(original_chains_vec, new_chains_vec)
     })
 
-    test.only("Test change chain ID", () => {
+    test("Test change chain ID", () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
