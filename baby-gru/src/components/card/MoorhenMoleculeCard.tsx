@@ -19,6 +19,7 @@ import { addMolecule } from '../../store/moleculesSlice';
 import { showMolecule } from '../../store/moleculeRepresentationsSlice';
 import { triggerUpdate } from '../../store/moleculeMapUpdateSlice';
 import { MoorhenCarbohydrateList } from "../list/MoorhenCarbohydrateList";
+import { libcootApi } from '../../types/libcoot';
 
 const allRepresentations = [ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks', 'restraints' ]
 
@@ -144,6 +145,19 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                 busyRedrawing.current = false
                 redrawSymmetryIfDirty()
             })
+        }
+    }
+
+    const redrawAdaptativeBonds = async () => {
+        const response = await props.commandCentre.current.cootCommand({
+            returnType: "int_string_pair",
+            command: "get_active_atom",
+            commandArgs: [...props.glRef.current.origin.map(coord => coord * -1), props.molecule.molNo.toString()]
+        }, false) as moorhen.WorkerResponse<libcootApi.PairType<number, string>>
+        const moleculeMolNo: number = response.data.result.result.first
+        const residueCid: string = response.data.result.result.second
+        if (moleculeMolNo === props.molecule.molNo) {
+            await props.molecule.drawAdaptativeBonds(residueCid, 10)
         }
     }
 

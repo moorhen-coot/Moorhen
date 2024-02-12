@@ -1145,6 +1145,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_molecule_diameter", &molecules_container_t::get_molecule_diameter)
     .function("multiply_residue_temperature_factors", &molecules_container_t::multiply_residue_temperature_factors)
     .function("shift_field_b_factor_refinement", &molecules_container_t::shift_field_b_factor_refinement)
+    .function("change_chain_id", &molecules_container_t::change_chain_id)
     .function("write_map",&molecules_container_t::write_map)
     .function("delete_atom",&molecules_container_t::delete_atom)
     .function("delete_atom_using_cid",&molecules_container_t::delete_atom_using_cid)

@@ -1249,6 +1249,390 @@ describe('Testing molecules_container_js', () => {
         expect(diameter).toBeCloseTo(43.90, 1)
     })
 
+    test("Test non-drawn bonds and selection mesh", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+
+        const instanceMesh_1 = molecules_container.get_bonds_mesh_for_selection_instanced(
+            coordMolNo, '//A/10-20', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+        
+        molecules_container.add_to_non_drawn_bonds(coordMolNo, '//A/12-15')
+
+        const instanceMesh_2 = molecules_container.get_bonds_mesh_for_selection_instanced(
+            coordMolNo, '//A/10-20', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+
+        expect(
+            instanceMesh_2.geom.get(1).instancing_data_B.size()
+        ).not.toBe(
+            instanceMesh_1.geom.get(1).instancing_data_B.size()
+        )
+
+        cleanUpVariables.push(instanceMesh_1, instanceMesh_2)
+    })
+
+    test("Test colour rules and bond mesh", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+
+        const instanceMesh_1 = molecules_container.get_bonds_mesh_instanced(
+            coordMolNo, 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+        
+        const geom_1 = instanceMesh_1.geom
+        const geomSize_1 = geom_1.size()
+        let colours_1 = []
+        for (let i = 0; i < geomSize_1; i++) {
+            const inst = geom_1.get(i);
+            const As = inst.instancing_data_A;
+            const Asize = As.size();
+    
+            for (let j = 0; j < Asize; j++) {
+                const inst_data = As.get(j)
+                const instDataColour = inst_data.colour
+                colours_1.push(instDataColour[0])
+                colours_1.push(instDataColour[1])
+                colours_1.push(instDataColour[2])
+                colours_1.push(instDataColour[3])    
+            }
+            As.delete()
+        }
+
+        let colourMap = new cootModule.MapIntFloat3()
+        let indexedResiduesVec = new cootModule.VectorStringUInt_pair()
+        
+        const colours = [
+            { cid: "//A/12-15", rgb: [1, 0, 0] }
+        ]
+        colours.forEach((colour, index) => {
+            colourMap.set(index + 51, colour.rgb)
+            const i = { first: colour.cid, second: index + 51 }
+            indexedResiduesVec.push_back(i)
+        })
+    
+        molecules_container.set_user_defined_bond_colours(coordMolNo, colourMap)
+        molecules_container.set_user_defined_atom_colour_by_selection(coordMolNo, indexedResiduesVec, false)
+
+        const instanceMesh_2 = molecules_container.get_bonds_mesh_instanced(
+            coordMolNo, 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+
+        const geom_2 = instanceMesh_2.geom
+        const geomSize_2 = geom_2.size()
+        let colours_2 = []
+        for (let i = 0; i < geomSize_2; i++) {
+            const inst = geom_2.get(i);
+            const As = inst.instancing_data_A;
+            const Asize = As.size();
+    
+            for (let j = 0; j < Asize; j++) {
+                const inst_data = As.get(j)
+                const instDataColour = inst_data.colour
+                colours_2.push(instDataColour[0])
+                colours_2.push(instDataColour[1])
+                colours_2.push(instDataColour[2])
+                colours_2.push(instDataColour[3])    
+            }
+            As.delete()
+        }
+
+        expect(colours_2).not.toEqual(colours_1)
+
+        cleanUpVariables.push(instanceMesh_1, instanceMesh_2, indexedResiduesVec, colourMap, geom_2, geom_1)
+    })
+
+
+    test("Test colour rules and multi CID selection mesh --first", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+
+        const instanceMesh_1 = molecules_container.get_bonds_mesh_for_selection_instanced(
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+        
+        const geom_1 = instanceMesh_1.geom
+        const geomSize_1 = geom_1.size()
+        let colours_1 = []
+        for (let i = 0; i < geomSize_1; i++) {
+            const inst = geom_1.get(i);
+            const As = inst.instancing_data_A;
+            const Asize = As.size();
+    
+            for (let j = 0; j < Asize; j++) {
+                const inst_data = As.get(j)
+                const instDataColour = inst_data.colour
+                colours_1.push(instDataColour[0])
+                colours_1.push(instDataColour[1])
+                colours_1.push(instDataColour[2])
+                colours_1.push(instDataColour[3])    
+            }
+            As.delete()
+        }
+
+        let colourMap = new cootModule.MapIntFloat3()
+        let indexedResiduesVec = new cootModule.VectorStringUInt_pair()
+        
+        const colours = [
+            { cid: "//A/12-15", rgb: [1, 0, 0] }
+        ]
+        colours.forEach((colour, index) => {
+            colourMap.set(index + 51, colour.rgb)
+            const i = { first: colour.cid, second: index + 51 }
+            indexedResiduesVec.push_back(i)
+        })
+    
+        molecules_container.set_user_defined_bond_colours(coordMolNo, colourMap)
+        molecules_container.set_user_defined_atom_colour_by_selection(coordMolNo, indexedResiduesVec, false)
+
+        const instanceMesh_2 = molecules_container.get_bonds_mesh_for_selection_instanced(
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+
+        const geom_2 = instanceMesh_2.geom
+        const geomSize_2 = geom_2.size()
+        let colours_2 = []
+        for (let i = 0; i < geomSize_2; i++) {
+            const inst = geom_2.get(i);
+            const As = inst.instancing_data_A;
+            const Asize = As.size();
+    
+            for (let j = 0; j < Asize; j++) {
+                const inst_data = As.get(j)
+                const instDataColour = inst_data.colour
+                colours_2.push(instDataColour[0])
+                colours_2.push(instDataColour[1])
+                colours_2.push(instDataColour[2])
+                colours_2.push(instDataColour[3])    
+            }
+            As.delete()
+        }
+
+        expect(colours_2).not.toEqual(colours_1)
+
+        cleanUpVariables.push(instanceMesh_1, instanceMesh_2, indexedResiduesVec, colourMap, geom_2, geom_1)
+    })
+
+    test("Test colour rules and multi CID selection mesh --second", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+
+        const instanceMesh_1 = molecules_container.get_bonds_mesh_for_selection_instanced(
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+        
+        const geom_1 = instanceMesh_1.geom
+        const geomSize_1 = geom_1.size()
+        let colours_1 = []
+        for (let i = 0; i < geomSize_1; i++) {
+            const inst = geom_1.get(i);
+            const As = inst.instancing_data_A;
+            const Asize = As.size();
+    
+            for (let j = 0; j < Asize; j++) {
+                const inst_data = As.get(j)
+                const instDataColour = inst_data.colour
+                colours_1.push(instDataColour[0])
+                colours_1.push(instDataColour[1])
+                colours_1.push(instDataColour[2])
+                colours_1.push(instDataColour[3])    
+            }
+            As.delete()
+        }
+
+        let colourMap = new cootModule.MapIntFloat3()
+        let indexedResiduesVec = new cootModule.VectorStringUInt_pair()
+        
+        const colours = [
+            { cid: "//A/26-29", rgb: [1, 0, 0] }
+        ]
+        colours.forEach((colour, index) => {
+            colourMap.set(index + 51, colour.rgb)
+            const i = { first: colour.cid, second: index + 51 }
+            indexedResiduesVec.push_back(i)
+        })
+    
+        molecules_container.set_user_defined_bond_colours(coordMolNo, colourMap)
+        molecules_container.set_user_defined_atom_colour_by_selection(coordMolNo, indexedResiduesVec, false)
+
+        const instanceMesh_2 = molecules_container.get_bonds_mesh_for_selection_instanced(
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+
+        const geom_2 = instanceMesh_2.geom
+        const geomSize_2 = geom_2.size()
+        let colours_2 = []
+        for (let i = 0; i < geomSize_2; i++) {
+            const inst = geom_2.get(i);
+            const As = inst.instancing_data_A;
+            const Asize = As.size();
+    
+            for (let j = 0; j < Asize; j++) {
+                const inst_data = As.get(j)
+                const instDataColour = inst_data.colour
+                colours_2.push(instDataColour[0])
+                colours_2.push(instDataColour[1])
+                colours_2.push(instDataColour[2])
+                colours_2.push(instDataColour[3])    
+            }
+            As.delete()
+        }
+
+        expect(colours_2).not.toEqual(colours_1)
+
+        cleanUpVariables.push(instanceMesh_1, instanceMesh_2, indexedResiduesVec, colourMap, geom_2, geom_1)
+    })
+
+    test("Test non-drawn bonds and multi CID selection mesh --first", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+
+        const instanceMesh_1 = molecules_container.get_bonds_mesh_for_selection_instanced(
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+        
+        molecules_container.add_to_non_drawn_bonds(coordMolNo, '//A/12-15')
+
+        const instanceMesh_2 = molecules_container.get_bonds_mesh_for_selection_instanced(
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+
+        expect(
+            instanceMesh_2.geom.get(1).instancing_data_B.size()
+        ).not.toBe(
+            instanceMesh_1.geom.get(1).instancing_data_B.size()
+        )
+
+        cleanUpVariables.push(instanceMesh_1, instanceMesh_2)
+    })
+
+    test("Test non-drawn bonds and multi CID selection mesh --second", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+
+        const instanceMesh_1 = molecules_container.get_bonds_mesh_for_selection_instanced(
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+        
+        molecules_container.add_to_non_drawn_bonds(coordMolNo, '//A/26-27')
+
+        const instanceMesh_2 = molecules_container.get_bonds_mesh_for_selection_instanced(
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+
+        expect(
+            instanceMesh_2.geom.get(1).instancing_data_B.size()
+        ).not.toBe(
+            instanceMesh_1.geom.get(1).instancing_data_B.size()
+        )
+
+        cleanUpVariables.push(instanceMesh_1, instanceMesh_2)
+    })
+
+    test("Test non-drawn bonds and bonds mesh", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+
+        const instanceMesh_1 = molecules_container.get_bonds_mesh_instanced(
+            coordMolNo, 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+        
+        molecules_container.add_to_non_drawn_bonds(coordMolNo, '//A/12-15')
+
+        const instanceMesh_2 = molecules_container.get_bonds_mesh_instanced(
+            coordMolNo, 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+
+        expect(
+            instanceMesh_2.geom.get(1).instancing_data_B.size()
+        ).not.toBe(
+            instanceMesh_1.geom.get(1).instancing_data_B.size()
+        )
+
+        cleanUpVariables.push(instanceMesh_1, instanceMesh_2)
+    })
+
+    test.only("Test change chain ID", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+
+        let original_chains = []
+        const original_chains_vec = molecules_container.get_chains_in_model(coordMolNo)
+        const original_chains_vec_size = original_chains_vec.size()
+        for (let i = 0; i < original_chains_vec_size; i++) {
+            const chain_name = original_chains_vec.get(i)
+            original_chains.push(chain_name)
+        }
+
+        molecules_container.change_chain_id(coordMolNo, 'A', 'X', false, 0, 0)
+        
+        let new_chains = []
+        const new_chains_vec = molecules_container.get_chains_in_model(coordMolNo)
+        const new_chains_vec_size = new_chains_vec.size()
+        for (let i = 0; i < new_chains_vec_size; i++) {
+            const chain_name = new_chains_vec.get(i)
+            new_chains.push(chain_name)
+        }
+
+        expect(new_chains).not.toEqual(original_chains)
+        expect(original_chains.includes('X')).toBeFalsy()
+        expect(new_chains.includes('X')).toBeTruthy()
+
+        cleanUpVariables.push(original_chains_vec, new_chains_vec)
+    })
+
+    test.only("Test change chain ID", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+
+        let original_chains = []
+        const original_chains_vec = molecules_container.get_chains_in_model(coordMolNo)
+        const original_chains_vec_size = original_chains_vec.size()
+        for (let i = 0; i < original_chains_vec_size; i++) {
+            const chain_name = original_chains_vec.get(i)
+            original_chains.push(chain_name)
+        }
+
+        molecules_container.change_chain_id(coordMolNo, 'A', 'X', true, 10, 20)
+        
+        let new_chains = []
+        const new_chains_vec = molecules_container.get_chains_in_model(coordMolNo)
+        const new_chains_vec_size = new_chains_vec.size()
+        for (let i = 0; i < new_chains_vec_size; i++) {
+            const chain_name = new_chains_vec.get(i)
+            new_chains.push(chain_name)
+        }
+
+        expect(new_chains).not.toEqual(original_chains)
+        expect(original_chains.includes('X')).toBeFalsy()
+        expect(new_chains.includes('X')).toBeTruthy()
+
+        const original_chain_res_names = []
+        for (let idx = 10; idx < 21; idx++) {
+            const resName = molecules_container.get_residue_name(coordMolNo, 'A', idx, '')
+            original_chain_res_names.push(resName)   
+        }
+
+        const new_chain_res_names = []
+        for (let idx = 10; idx < 21; idx++) {
+            const resName = molecules_container.get_residue_name(coordMolNo, 'X', idx, '')
+            new_chain_res_names.push(resName)   
+        }
+
+        expect(new_chain_res_names.every(item => item !== '')).toBeTruthy()
+        expect(original_chain_res_names.every(item => item === '')).toBeTruthy()
+        
+        cleanUpVariables.push(original_chains_vec, new_chains_vec)
+    })
 })
 
 const testDataFiles = ['1cxq_phases.mtz', '1cxq.cif', '7ZTVU.cif', '5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'MOI.restraints.cif', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
