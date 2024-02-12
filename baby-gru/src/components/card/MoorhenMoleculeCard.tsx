@@ -19,6 +19,7 @@ import { addMolecule } from '../../store/moleculesSlice';
 import { showMolecule } from '../../store/moleculeRepresentationsSlice';
 import { triggerUpdate } from '../../store/moleculeMapUpdateSlice';
 import { MoorhenCarbohydrateList } from "../list/MoorhenCarbohydrateList";
+import { libcootApi } from '../../types/libcoot';
 
 const allRepresentations = [ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks', 'restraints' ]
 
