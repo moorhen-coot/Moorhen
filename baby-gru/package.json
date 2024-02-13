@@ -152,7 +152,7 @@
     "nightingale-linegraph-track": "^3.8.10",
     "node-fetch": "^2.7.0",
     "nodemon": "^2.0.22",
-    "pako": "^2.0.4",
+    "pako": "^2.1.0",
     "parcel-bundler": "^1.12.5",
     "pca-js": "^1.0.2",
     "plotly.js": "^2.12.1",

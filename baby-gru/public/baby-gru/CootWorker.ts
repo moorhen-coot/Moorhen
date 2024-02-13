@@ -904,8 +904,14 @@ const read_ccp4_map = (mapData: ArrayBufferLike, name: string, isDiffMap: boolea
     cootModule.FS_createDataFile(".", `${theGuid}${fileExtension}`, asUint8Array, true, true);
     const tempFilename = `./${theGuid}${fileExtension}`
     const read_map_args: [string, boolean] = [tempFilename, isDiffMap]
-    const molNo = molecules_container.read_ccp4_map(...read_map_args)
-    cootModule.FS_unlink(tempFilename)
+    let molNo = -1
+    try {
+        molNo = molecules_container.read_ccp4_map(...read_map_args)
+    } catch (err) {
+        console.warn(err)
+    } finally {
+        cootModule.FS_unlink(tempFilename)
+    }
     return molNo
 }
 
