@@ -2269,18 +2269,32 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {number} endResNo - The end residue number
      * @returns {number} - Status code -1 on a conflict, 1 on good, 0 on did nothing
      */
-    async changeChainId(oldId: string, newId: string, startResNo?: number, endResNo?: number): Promise&lt;number> {
+    async changeChainId(oldId: string, newId: string, redraw: boolean = false, startResNo?: number, endResNo?: number): Promise&lt;number> {
         const status = await this.commandCentre.current.cootCommand({
-            returnType: 'int',
+            returnType: 'pair_int_str',
             command: 'change_chain_id',
             commandArgs: [ this.molNo, oldId, newId, (startResNo !== undefined &amp;&amp; endResNo !== undefined), startResNo ? startResNo : 0, endResNo ? endResNo : 0 ],
-        }, false) as moorhen.WorkerResponse&lt;number>
+        }, false) as moorhen.WorkerResponse&lt;{first: number; second: string}>
         
-        if (status.data.result.result !== 0) {
+        if (status.data.result.result.first === 1) {
             this.setAtomsDirty(true)
+            // If the chain is new, then we need to create a random colour rule for it...
+            const selectedColour = getRandomMoleculeColour()
+            this.defaultColourRules.push({
+                args: [`//${newId}`, selectedColour],
+                isMultiColourRule: false,
+                ruleType: 'chain',
+                color: selectedColour,
+                label: `//${newId}`,
+            })
+            if (redraw) {
+                await this.redraw()
+            }
+        } else {
+            console.warn(status.data.result.result.second)
+            console.warn(`change_chain_id returned status ${status.data.result.result.first}`)
         }
-        
-        return status.data.result.result
+        return status.data.result.result.first
     }
 }
 </code></pre>
