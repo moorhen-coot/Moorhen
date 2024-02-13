@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react"
-import { Col, Form, Row } from "react-bootstrap"
+import { Button, Col, Form, Row } from "react-bootstrap"
 import { MoorhenMap } from "../../utils/MoorhenMap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
@@ -22,6 +22,43 @@ export const MoorhenImportMapMenuItem = (props: {
     const filesRef = useRef<null | HTMLInputElement>(null)
     const isDiffRef = useRef<undefined | HTMLInputElement>()
 
+    const readMap = useCallback(async () => {
+        if (filesRef.current.files.length > 0) {
+            const file = filesRef.current.files[0]
+            const newMap = new MoorhenMap(props.commandCentre, props.glRef)
+            try {
+                try {
+                    await newMap.loadToCootFromMapFile(file, isDiffRef.current.checked)
+                } catch (err) {
+                    // Try again if this is a compressed file...
+                    if (file.name.includes('.gz')) {
+                        await newMap.loadToCootFromMapFile(file, isDiffRef.current.checked, true)
+                    } else {
+                        console.warn(err)
+                        throw new Error("Cannot read the fetched map...")
+                    }
+                }
+                if (newMap.molNo === -1) {
+                    throw new Error('Cannot read the map file!')
+                }
+                if (molecules.length === 0 && maps.length === 0) {
+                    await newMap.centreOnMap()
+                }
+                batch(() => {
+                    dispatch( addMap(newMap) )
+                    dispatch( setActiveMap(newMap) )
+                })
+            } catch (err) {
+                console.warn(err)
+                dispatch(setNotificationContent(props.getWarningToast('Error reading map file')))
+                console.log(`Cannot read file`)
+            } finally {
+                props.setPopoverIsShown(false)
+                document.body.click()
+            }
+        }
+    }, [filesRef.current, isDiffRef.current, props.glRef, props.commandCentre, molecules, maps])
+
     const panelContent = <>
         <Row>
             <Form.Group style={{ width: '30rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadCCP4Map" className="mb-3">
@@ -34,36 +71,17 @@ export const MoorhenImportMapMenuItem = (props: {
                 <Form.Check label={'is diff map'} name={`isDifference`} type="checkbox" ref={isDiffRef} />
             </Col>
         </Row>
+        <Button variant="primary" onClick={readMap}>
+            OK
+        </Button>
     </>
-
-    const onCompleted = useCallback(async () => {
-        if (filesRef.current.files.length > 0) {
-            const file = filesRef.current.files[0]
-            const newMap = new MoorhenMap(props.commandCentre, props.glRef)
-            try {
-                await newMap.loadToCootFromMapFile(file, isDiffRef.current.checked)
-                if (newMap.molNo === -1) {
-                    throw new Error('Cannot read the map file!')
-                }
-                if (molecules.length === 0 && maps.length === 0) {
-                    await newMap.centreOnMap()
-                }
-                batch(() => {
-                    dispatch( addMap(newMap) )
-                    dispatch( setActiveMap(newMap) )
-                })
-            } catch (err) {
-                dispatch(setNotificationContent(props.getWarningToast('Error reading map file')))
-                console.log(`Cannot read file`)    
-            }
-        }
-    }, [filesRef.current, isDiffRef.current, props.glRef, props.commandCentre, molecules, maps])
 
     return <MoorhenBaseMenuItem
         id='import-map-menu-item'
         popoverContent={panelContent}
         menuItemText="CCP4/MRC map..."
-        onCompleted={onCompleted}
+        onCompleted={() => {}}
+        showOkButton={false}
         setPopoverIsShown={props.setPopoverIsShown}
     />
 }

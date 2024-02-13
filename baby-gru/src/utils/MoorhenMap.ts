@@ -255,6 +255,7 @@ export class MoorhenMap implements moorhen.Map {
      * @param {string} url - The url to the MTZ file
      * @param {string} name - The name that will be assigned to the map
      * @param {boolean} [isDiffMap=false] - Indicates whether the new map is a difference map
+     * @param {boolean} [decompress=false] - Indicates whether the new map should be decompressed before being passed to libcoot api
      * @param {object} [options] - Options passed to fetch API
      * @returns {Promise<moorhen.Map>} This moorhenMap instance
      */
@@ -295,8 +296,10 @@ export class MoorhenMap implements moorhen.Map {
                 commandArgs: [data, name, isDiffMap]
             }, true)
             if (reply.data.result?.status === 'Exception') {
+                console.warn('Exception raised when reading map')
                 return Promise.reject(reply.data.result.consoleMessage)
             } else if (reply.data.result?.result === -1) {
+                console.warn('Returned map has molNo -1')
                 return Promise.reject(reply.data.result.consoleMessage)
             }
             this.molNo = reply.data.result.result
@@ -304,6 +307,7 @@ export class MoorhenMap implements moorhen.Map {
             await this.getSuggestedSettings()
             return this    
         } catch(err) {
+            console.warn(err)
             return Promise.reject(err)
         }
     }
@@ -311,13 +315,22 @@ export class MoorhenMap implements moorhen.Map {
     /**
      * Load a map to moorhen from a map file data blob
      * @param {File} source - The map file
-     * @param {boolean} isDiffMap - Indicates whether the new map is a difference map
+     * @param {boolean} [isDiffMap=false] - Indicates whether the new map is a difference map
+     * @param {boolean} [decompress=false] - Indicates whether the new map should be decompressed before being passed to libcoot api
      * @returns {Promise<moorhen.Map>} This moorhenMap instance
      */
-    async loadToCootFromMapFile (source: File, isDiffMap: boolean): Promise<moorhen.Map> {
-        const mapData = await readDataFile(source)
-        const asUIntArray = new Uint8Array(mapData)
-        return this.loadToCootFromMapData(asUIntArray, source.name, isDiffMap)
+    async loadToCootFromMapFile (source: File, isDiffMap: boolean = false, decompress: boolean = false): Promise<moorhen.Map> {
+        const arrayBuffer = await readDataFile(source)
+        let mapData: ArrayBuffer | Uint8Array;
+        let mapName: string;
+        if (decompress) {
+            mapData = pako.inflate(arrayBuffer)
+            mapName = source.name.replace('.gz', '')
+        } else {
+            mapData = new Uint8Array(arrayBuffer)
+            mapName = source.name
+        }
+        return this.loadToCootFromMapData(mapData, mapName, isDiffMap)
     }
 
     /**
