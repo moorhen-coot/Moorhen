@@ -162,7 +162,17 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
     const fetchMapFromURL = async (url: RequestInfo | URL, mapName: string, isDiffMap: boolean = false, contourLevel?: number): Promise<moorhen.Map> => {
         const newMap = new MoorhenMap(commandCentre, glRef)
         try {
-            await newMap.loadToCootFromMapURL(url, mapName, isDiffMap)
+            try {
+                await newMap.loadToCootFromMapURL(url, mapName, isDiffMap)
+            } catch (err) {
+                // Try again if this is a compressed file...
+                if (url.toString().includes('.gz')) {
+                    await newMap.loadToCootFromMapURL(url, mapName.replace('.gz', ''), isDiffMap, true)
+                } else {
+                    console.warn(err)
+                    throw new Error("Cannot read the fetched map...")
+                }
+            }
             if (newMap.molNo === -1) throw new Error("Cannot read the fetched map...")
             if (contourLevel) newMap.suggestedContourLevel = contourLevel
             batch(() => {
