@@ -1559,7 +1559,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(instanceMesh_1, instanceMesh_2)
     })
 
-    test("Test change chain ID", () => {
+    test("Test change chain ID --first", () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
@@ -1584,12 +1584,13 @@ describe('Testing molecules_container_js', () => {
 
         expect(new_chains).not.toEqual(original_chains)
         expect(original_chains.includes('X')).toBeFalsy()
+        expect(new_chains.includes('A')).toBeFalsy()
         expect(new_chains.includes('X')).toBeTruthy()
 
         cleanUpVariables.push(original_chains_vec, new_chains_vec)
     })
 
-    test("Test change chain ID", () => {
+    test("Test change chain ID --second", () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
