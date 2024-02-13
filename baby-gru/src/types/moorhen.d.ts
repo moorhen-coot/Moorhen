@@ -93,7 +93,7 @@ export namespace moorhen {
     
     interface Molecule {
         drawAdaptativeBonds(selectionString?: string, maxDist?: number): Promise<void>;
-        changeChainId(oldId: string, newId: string, startResNo?: number, endResNo?: number): Promise<number>;
+        changeChainId(oldId: string, newId: string, redraw?: boolean, startResNo?: number, endResNo?: number): Promise<number>;
         refineResiduesUsingAtomCidAnimated(cid: string, activeMap: moorhen.Map, dist?: number, redraw?: boolean, redrawFragmentFirst?: boolean): Promise<void>;
         mergeFragmentFromRefinement(cid: string, fragmentMolecule: moorhen.Molecule, acceptTransform?: boolean, refineAfterMerge?: boolean): Promise<void>;
         copyFragmentForRefinement(cid: string[], refinementMap: moorhen.Map, redraw?: boolean, readrawFragmentFirst?: boolean): Promise<moorhen.Molecule>;

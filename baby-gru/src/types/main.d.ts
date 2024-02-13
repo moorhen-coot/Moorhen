@@ -120,7 +120,7 @@ declare module 'moorhen' {
         getPrivateerValidation(useCache?: boolean): Promise<privateer.ResultsEntry[]>;
         getLigandSVG(resName: string, useCache?: boolean): Promise<string>;
         isValidSelection(cid: string): Promise<boolean>;
-        changeChainId(oldId: string, newId: string, startResNo?: number, endResNo?: number): Promise<number>;
+        changeChainId(oldId: string, newId: string, redraw?: boolean, startResNo?: number, endResNo?: number): Promise<number>;
         drawAdaptativeBonds(selectionString?: string, maxDist?: number): Promise<void>;
         cachedLigandSVGs: {[key: string]: string}[];
         cachedPrivateerValidation: privateer.ResultsEntry[];

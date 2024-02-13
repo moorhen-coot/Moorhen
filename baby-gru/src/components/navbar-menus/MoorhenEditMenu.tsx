@@ -7,6 +7,7 @@ import { MoorhenMergeMoleculesMenuItem } from "../menu-item/MoorhenMergeMolecule
 import { MoorhenAddSimpleMenuItem } from "../menu-item/MoorhenAddSimpleMenuItem";
 import { MoorhenAddRemoveHydrogenAtomsMenuItem } from "../menu-item/MoorhenAddRemoveHydrogenAtomsMenuItem"
 import { MoorhenMoveMoleculeHere } from "../menu-item/MoorhenMoveMoleculeHere"
+import { MoorhenChangeChainIdMenuItem } from "../menu-item/MoorhenChangeChainIdMenuItem"
 import { MoorhenCreateSelectionMenuItem } from "../menu-item/MoorhenCreateSelectionMenuItem"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { moorhen } from "../../types/moorhen";
@@ -26,6 +27,7 @@ export const MoorhenEditMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             <MoorhenAddRemoveHydrogenAtomsMenuItem key='add_remove_hydrogens' {...menuItemProps}/>
             <MoorhenMergeMoleculesMenuItem key="merge" {...menuItemProps} />
             <MoorhenMoveMoleculeHere key="move" {...menuItemProps}/>
+            <MoorhenChangeChainIdMenuItem key="change_chain_id" {...menuItemProps}/>
             <MoorhenDeleteUsingCidMenuItem key="delete" {...menuItemProps} />
             <MoorhenCreateSelectionMenuItem key="create-selection" {...menuItemProps} />
             <MoorhenCopyFragmentUsingCidMenuItem key="copy_fragment" {...menuItemProps} />
