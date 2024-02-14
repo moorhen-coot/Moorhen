@@ -2714,6 +2714,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     self.mouseDownedAt = (e.timeStamp)
                     e.stopPropagation();
                     e.preventDefault();
+                    // Create a timeout that will check if the user is holding down on the same spot to open the context menu
+                    setTimeout(() => {
+                        if (self.mouseDown && !self.mouseMoved) {
+                            self.doRightClick(evt, self);
+                        }
+                    }, 1000)
                 }, false)
 
             self.canvas.addEventListener('touchmove',
