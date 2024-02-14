@@ -913,9 +913,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
             zoomLevel = 0.4
         }
 
-        console.log('>>>> HI!')
-        console.log(zoomLevel)
-
         let selectionCentre = centreOnGemmiAtoms(selectionAtoms)
         if (animate && setZoom) {
             this.glRef.current.setOriginAndZoomAnimated(selectionCentre, zoomLevel)
