@@ -16,7 +16,7 @@ import { MoorhenNotification } from "../misc/MoorhenNotification"
 import { useSelector, useDispatch, batch } from 'react-redux';
 import { setActiveMap, setNotificationContent } from "../../store/generalStatesSlice";
 import { addMap } from "../../store/mapsSlice";
-import { hideMap, setContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle, setNegativeMapColours, setPositiveMapColours, showMap } from "../../store/mapContourSettingsSlice";
+import { hideMap, setContourLevel, changeContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle, setNegativeMapColours, setPositiveMapColours, showMap, changeMapRadius } from "../../store/mapContourSettingsSlice";
 
 type ActionButtonType = {
     label: string;
@@ -152,6 +152,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const busyContouring = useRef<boolean>(false)
     const isDirty = useRef<boolean>(false)
     const histogramRef = useRef(null)
+    const intervalRef = useRef(null)
 
     const mapColour: {r: number; g: number; b: number;} = JSON.parse(mapColourString)
     const negativeMapColour: {r: number; g: number; b: number;} = JSON.parse(negativeMapColourString)
@@ -407,18 +408,54 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
 
     }, [doContourIfDirty])
 
-    const increaseLevelButton = <IconButton onClick={() => dispatch( setContourLevel({ molNo: props.map.molNo, contourLevel: mapContourLevel + contourWheelSensitivityFactor }) )} style={{padding: 0, color: isDark ? 'white' : 'black'}}>
-                                    <AddCircleOutline/>
-                                </IconButton>
-    const decreaseLevelButton = <IconButton onClick={() => dispatch( setContourLevel({ molNo: props.map.molNo, contourLevel: mapContourLevel - contourWheelSensitivityFactor }) )} style={{padding: 0, color: isDark ? 'white' : 'black'}}>
-                                    <RemoveCircleOutline/>
-                                </IconButton>
-    const increaseRadiusButton = <IconButton onClick={() => dispatch( setMapRadius({ molNo: props.map.molNo, radius: mapRadius + 2 }) )} style={{padding: 0, color: isDark ? 'white' : 'black'}}>
-                                    <AddCircleOutline/>
-                                </IconButton>
-    const decreaseRadiusButton = <IconButton onClick={() => dispatch( setMapRadius({ molNo: props.map.molNo, radius: mapRadius - 2 }) )} style={{padding: 0, color: isDark ? 'white' : 'black'}}>
-                                    <RemoveCircleOutline/>
-                                </IconButton>
+    const increaseLevelButton = <IconButton 
+        style={{padding: 0, color: isDark ? 'white' : 'black'}}
+        onClick={() => dispatch( changeContourLevel({ molNo: props.map.molNo, factor: contourWheelSensitivityFactor }) )} 
+        onMouseDown={() => {
+            intervalRef.current = setInterval(() => {
+                dispatch( changeContourLevel({ molNo: props.map.molNo, factor: contourWheelSensitivityFactor }) )
+            }, 100)
+        }} onMouseUp={() => {
+            clearInterval(intervalRef.current)                   
+        }}>
+            <AddCircleOutline/>
+    </IconButton>
+    const decreaseLevelButton = <IconButton 
+        style={{padding: 0, color: isDark ? 'white' : 'black'}}
+        onClick={() => dispatch( changeContourLevel({ molNo: props.map.molNo, factor: -contourWheelSensitivityFactor }) )} 
+        onMouseDown={() => {
+            intervalRef.current = setInterval(() => {
+                dispatch( changeContourLevel({ molNo: props.map.molNo, factor: -contourWheelSensitivityFactor }) )
+            }, 100)
+        }} onMouseUp={() => {
+            clearInterval(intervalRef.current)                   
+        }}>
+            <RemoveCircleOutline/>
+    </IconButton>
+    const increaseRadiusButton = <IconButton 
+        style={{padding: 0, color: isDark ? 'white' : 'black'}}
+        onClick={() => dispatch( changeMapRadius({ molNo: props.map.molNo, factor: 2 }) )} 
+        onMouseDown={() => {
+            intervalRef.current = setInterval(() => {
+                dispatch( changeMapRadius({ molNo: props.map.molNo, factor: 2 }) )
+            }, 100)
+        }} onMouseUp={() => {
+            clearInterval(intervalRef.current)                   
+        }}>
+            <AddCircleOutline/>
+    </IconButton>
+    const decreaseRadiusButton = <IconButton 
+        style={{padding: 0, color: isDark ? 'white' : 'black'}}
+        onClick={() => dispatch( changeMapRadius({ molNo: props.map.molNo, factor: -2 }) )}
+        onMouseDown={() => {
+            intervalRef.current = setInterval(() => {
+                dispatch( changeMapRadius({ molNo: props.map.molNo, factor: -2 }) )
+            }, 100)
+        }} onMouseUp={() => {
+            clearInterval(intervalRef.current)                   
+        }}>
+            <RemoveCircleOutline/>
+    </IconButton>
 
     const getMapColourSelector = () => {
         if (mapColour === null) {
