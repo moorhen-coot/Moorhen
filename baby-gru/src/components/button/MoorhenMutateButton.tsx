@@ -33,7 +33,11 @@ export const MoorhenMutateButton = (props: moorhen.ContextButtonProps) => {
             message: 'coot_command',
             returnType: "status",
             command: 'mutate',
-            commandArgs: [selectedMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, selectedMode],
+            commandArgs: [
+                selectedMolecule.molNo,
+                `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`,
+                selectedMode
+            ],
             changesMolecules: [selectedMolecule.molNo]
         }
     }
