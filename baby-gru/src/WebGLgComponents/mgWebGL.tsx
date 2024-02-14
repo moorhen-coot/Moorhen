@@ -2765,8 +2765,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 false);
             self.canvas.addEventListener('touchstart',
                 function (e) {
-                    e.stopPropagation();
-                    e.preventDefault();
                     const touchobj = e.changedTouches[0];
                     let evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
                     //alert(e.changedTouches.length)
@@ -2778,15 +2776,20 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     }
                     self.doMouseDown(evt, self);
                     self.mouseDownedAt = (e.timeStamp)
-
+                    e.stopPropagation();
+                    e.preventDefault();
+                    // Create a timeout that will check if the user is holding down on the same spot to open the context menu
+                    setTimeout(() => {
+                        if (self.mouseDown && !self.mouseMoved) {
+                            self.doRightClick(evt, self);
+                        }
+                    }, 1000)
                 }, false)
 
             self.canvas.addEventListener('touchmove',
                 function (e) {
-                    e.stopPropagation();
-                    e.preventDefault();
                     const touchobj = e.touches[0]; // reference first touch point for this event
-                    let evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
+                    let evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, buttons: 1 };
                     if (e.touches.length === 1) {
                     }
                     else if (e.touches.length === 2) {
@@ -2794,13 +2797,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         evt.altKey = true;
                     }
                     self.doMouseMove(evt, self);
-
+                    e.stopPropagation();
+                    e.preventDefault();
                 }, false)
 
             self.canvas.addEventListener('touchend',
                 function (e) {
-                    e.stopPropagation();
-                    e.preventDefault();
                     var touchobj = e.changedTouches[0]; // reference first touch point for this event
                     var evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
                     if (e.changedTouches.length === 1) {
@@ -2812,9 +2814,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     var deltaTime = e.timeStamp - self.mouseDownedAt;
                     if (deltaTime < 300) {
                         self.doClick(evt, self);
-                        //alert("Doclicking");
                     }
                     self.doMouseUp(evt, self);
+                    e.stopPropagation();
+                    e.preventDefault();
                 }, false)
         }
         this.doneEvents = true;
