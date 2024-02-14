@@ -1148,17 +1148,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.adaptativeBondsEnabled = true
         const drawMissingLoops = MoorhenReduxStore.getState().sceneSettings.drawMissingLoops
         
-        await Promise.all(neighBoringResidues.map(i => {
-            this.commandCentre.current.cootCommand({
-                message: 'coot_command',
-                command: "add_to_non_drawn_bonds",
-                returnType: 'status',
-                commandArgs: [this.molNo, i],
-            }, false)
-        }))
-
-        await this.adaptativeBondsRepresentation.alphas.redraw()
-
         if (drawMissingLoops) {
             await this.commandCentre.current.cootCommand({
                 command: "set_draw_missing_residue_loops",
@@ -1176,6 +1165,17 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 commandArgs: [ true ],
             }, false)
         }
+
+        await Promise.all(neighBoringResidues.map(i => {
+            this.commandCentre.current.cootCommand({
+                message: 'coot_command',
+                command: "add_to_non_drawn_bonds",
+                returnType: 'status',
+                commandArgs: [this.molNo, i],
+            }, false)
+        }))
+
+        await this.adaptativeBondsRepresentation.alphas.redraw()
 
         await this.commandCentre.current.cootCommand({
             message: 'coot_command',
