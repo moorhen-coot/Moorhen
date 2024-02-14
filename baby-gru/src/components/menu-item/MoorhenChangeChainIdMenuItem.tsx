@@ -164,13 +164,25 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
                 marks={true}
                 sx={{
                     marginTop: '1.5rem',
-                    '& .MuiSlider-valueLabel': {
-                        fontSize: 14,
-                        fontWeight: 'bold',
-                        top: -1,
-                        color: 'grey',
-                        backgroundColor: 'unset',
+                    marginBottom: '0.8rem',
+                    '& .MuiSlider-thumb[data-index="1"]': {
+                        '& .MuiSlider-valueLabel': {
+                            top: -1,
+                            fontSize: 14,
+                            fontWeight: 'bold',
+                            color: 'grey',
+                            backgroundColor: 'unset',
+                        },
                     },
+                    '& .MuiSlider-thumb[data-index="0"]': {
+                        '& .MuiSlider-valueLabel': {
+                            top:'3rem',
+                            fontSize: 14,
+                            fontWeight: 'bold',
+                            color: 'grey',
+                            backgroundColor: 'unset',
+                        },    
+                    }
                 }}
             />
         </div>
