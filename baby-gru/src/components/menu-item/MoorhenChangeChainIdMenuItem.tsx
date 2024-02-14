@@ -3,9 +3,10 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { useSelector } from 'react-redux';
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
-import { Button, Form } from "react-bootstrap";
+import { Button, Form, Stack } from "react-bootstrap";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
-import { Slider } from "@mui/material";
+import { IconButton, Slider } from "@mui/material";
+import { AddCircleOutline, RemoveCircleOutline, RemoveCircleOutlined } from "@mui/icons-material";
 
 export const MoorhenChangeChainIdMenuItem = (props) => {
 
@@ -13,13 +14,14 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const newChainIdFormRef = useRef<null |HTMLInputElement>(null)
     const minMaxValueRef = useRef<[number, number]>([1, 100])
-
+    const intervalRef = useRef(null)
     const [sequenceLength, setSequenceLength] = useState<null | number>(null)
     const [minMaxValue, setMinMaxValue]  = useState<[number, number]>([1, 100])
     const [invalidNewId, setInvalidNewId] = useState<boolean>(false)
     const [selectedChain, setSelectedChain] = useState<string>(null)
     const [selectedModel, setSelectedModel] = useState<number | null>(null)
 
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const molecules = useSelector((state: moorhen.State) => state.molecules)
 
     const handleModelChange = useCallback((evt: React.ChangeEvent<HTMLSelectElement>) => {
@@ -133,7 +135,7 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
     
     }, [molecules, selectedModel, selectedChain])
 
-    const handleMinMaxChange = (event: Event, newValue: [number, number]) => {
+    const handleMinMaxChange = (_event: any, newValue: [number, number]) => {
         setMinMaxValue(newValue)
         minMaxValueRef.current = newValue
     }
@@ -150,7 +152,36 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
             onChange={handleChainChange}
             ref={chainSelectRef}/>
         <span style={{margin: '0.5rem'}}>Residue range</span>
-        <div style={{ paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.5rem', paddingBottom: '0.5rem'}}>
+        <Stack direction='horizontal' gap={1} style={{ }}>
+            <Stack direction='vertical' gap={0} style={{justifyContent: 'center'}}>
+                <IconButton onMouseDown={() => {
+                    intervalRef.current = setInterval(() => {
+                        const newValue = [minMaxValueRef.current[0] + 1, minMaxValueRef.current[1]] as [number, number]
+                        handleMinMaxChange(null, newValue)                    
+                    }, 100)
+                }} onMouseUp={() => {
+                    clearInterval(intervalRef.current)                   
+                }} onClick={() => {
+                    const newValue = [minMaxValueRef.current[0] + 1, minMaxValueRef.current[1]] as [number, number]
+                    handleMinMaxChange(null, newValue)
+                }} style={{padding: 0, color: isDark ? 'white' : 'grey'}}>
+                    <AddCircleOutline/>
+                </IconButton>
+                <IconButton onMouseDown={() => {
+                    intervalRef.current = setInterval(() => {
+                        const newValue = [minMaxValueRef.current[0] - 1, minMaxValueRef.current[1]] as [number, number]
+                        handleMinMaxChange(null, newValue)                    
+                    }, 100)
+                }} onMouseUp={() => {
+                    clearInterval(intervalRef.current)                   
+                }} onClick={() => {
+                    const newValue = [minMaxValueRef.current[0] - 1, minMaxValueRef.current[1]] as [number, number]
+                    handleMinMaxChange(null, newValue)
+                }} style={{padding: 0, color: isDark ? 'white' : 'grey'}}>
+                    <RemoveCircleOutline/>
+                </IconButton>
+            </Stack>
+            <div style={{ width: '80%', paddingLeft: '1rem', paddingRight: '1rem', paddingTop: '0.1rem', paddingBottom: '0.1rem' }}>
             <Slider
                 getAriaLabel={() => 'Residue range'}
                 value={minMaxValue}
@@ -163,11 +194,11 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
                 step={1}
                 marks={true}
                 sx={{
-                    marginTop: '1.5rem',
+                    marginTop: '1.7rem',
                     marginBottom: '0.8rem',
                     '& .MuiSlider-thumb[data-index="1"]': {
                         '& .MuiSlider-valueLabel': {
-                            top: -1,
+                            top: '-0.7rem',
                             fontSize: 14,
                             fontWeight: 'bold',
                             color: 'grey',
@@ -176,7 +207,7 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
                     },
                     '& .MuiSlider-thumb[data-index="0"]': {
                         '& .MuiSlider-valueLabel': {
-                            top:'3rem',
+                            top:'3.5rem',
                             fontSize: 14,
                             fontWeight: 'bold',
                             color: 'grey',
@@ -185,7 +216,36 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
                     }
                 }}
             />
-        </div>
+            </div>
+            <Stack direction='vertical' gap={0} style={{display: 'flex', verticalAlign: 'center', justifyContent: 'center'}}>
+                <IconButton onMouseDown={() => {
+                    intervalRef.current = setInterval(() => {
+                        const newValue = [minMaxValueRef.current[0], minMaxValueRef.current[1] + 1] as [number, number]
+                        handleMinMaxChange(null, newValue)                    
+                    }, 100)
+                }} onMouseUp={() => {
+                    clearInterval(intervalRef.current)                   
+                }} onClick={() => {
+                    const newValue = [minMaxValueRef.current[0], minMaxValueRef.current[1] + 1] as [number, number]
+                    handleMinMaxChange(null, newValue)                    
+                }} style={{padding: 0, color: isDark ? 'white' : 'grey'}}>
+                    <AddCircleOutline/>
+                </IconButton>
+                <IconButton onMouseDown={() => {
+                    intervalRef.current = setInterval(() => {
+                        const newValue = [minMaxValueRef.current[0], minMaxValueRef.current[1] - 1] as [number, number]
+                        handleMinMaxChange(null, newValue)                    
+                    }, 100)
+                }} onMouseUp={() => {
+                    clearInterval(intervalRef.current)                   
+                }} onClick={() => {
+                    const newValue = [minMaxValueRef.current[0], minMaxValueRef.current[1] - 1] as [number, number]
+                    handleMinMaxChange(null, newValue)                    
+                }} style={{padding: 0, color: isDark ? 'white' : 'grey'}}>
+                    <RemoveCircleOutline/>
+                </IconButton>
+            </Stack>
+        </Stack>
         <Form.Group style={{ width: "95%", margin: "0.5rem", height: "4rem" }}>
             <Form.Label>New chain ID</Form.Label>
             <Form.Control
