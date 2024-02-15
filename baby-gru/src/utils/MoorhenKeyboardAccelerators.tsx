@@ -1,12 +1,11 @@
 import { List, ListItem } from "@mui/material"
-import { cidToSpec, guid } from "./MoorhenUtils"
+import { cidToSpec, getCentreAtom, guid } from "./MoorhenUtils"
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4.js';
 import { getDeviceScale, vec3Create } from '../WebGLgComponents/mgWebGL';
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
-import { libcootApi } from "../types/libcoot";
 import { MoorhenNotification } from "../components/misc/MoorhenNotification";
 import { Dispatch } from "react";
 import { AnyAction } from "@reduxjs/toolkit";
@@ -47,29 +46,13 @@ export const babyGruKeyPress = (
         timeCapsuleRef, viewOnly, videoRecorderRef, isDark, windowWidth
     } = collectedProps;
 
-    const getCentreAtom = async (): Promise<[moorhen.Molecule, string]> => {
-        const visibleMolecules: moorhen.Molecule[] = molecules.filter((molecule: moorhen.Molecule) => molecule.isVisible())
-        if (visibleMolecules.length === 0) {
-            return
-        }
-        const response = await commandCentre.current.cootCommand({
-            returnType: "int_string_pair",
-            command: "get_active_atom",
-            commandArgs: [...glRef.current.origin.map(coord => coord * -1), visibleMolecules.map(molecule => molecule.molNo).join(':')]
-        }, false) as moorhen.WorkerResponse<libcootApi.PairType<number, string>>
-        const moleculeMolNo: number = response.data.result.result.first
-        const residueCid: string = response.data.result.result.second
-        const selectedMolecule = visibleMolecules.find((molecule: moorhen.Molecule) => molecule.molNo === moleculeMolNo)
-        return [selectedMolecule, residueCid]
-    }
-    
     const doShortCut = async (cootCommand: string, formatArgs: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec) => any[]): Promise<boolean> => {
         let chosenMolecule: moorhen.Molecule
         let chosenAtom: moorhen.ResidueSpec
         let residueCid: string
         
         if (!shortcutOnHoveredAtom) {
-            [chosenMolecule, residueCid] = await getCentreAtom()
+            [chosenMolecule, residueCid] = await getCentreAtom(molecules, commandCentre, glRef)
             if (typeof chosenMolecule === 'undefined' || !residueCid) {
                 console.log('Cannot find atom in the centre of the view...')
                 return true
@@ -427,7 +410,7 @@ export const babyGruKeyPress = (
     }
 
     else if (action === 'jump_next_residue' || action === 'jump_previous_residue') {
-        getCentreAtom()
+        getCentreAtom(molecules, commandCentre, glRef)
         .then(result => {
             if (!result) {
                 return
