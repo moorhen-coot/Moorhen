@@ -1810,6 +1810,18 @@ describe('Testing molecules_container_js', () => {
         expect(mapMolNo).toBe(1)
         expect(diffMapMolNo).toBe(2)
 
+        const pdbString_1  = molecules_container.get_molecule_atoms(coordMolNo, "pdb")
+        const st_1 = cootModule.read_structure_from_string(pdbString_1, 'test-molecule')
+        cootModule.gemmi_setup_entities(st_1)
+        cootModule.gemmi_add_entity_types(st_1, true)
+        const bfactor_vec_1 = cootModule.get_structure_bfactors(st_1)
+        const bfactor_vec_1_size = bfactor_vec_1.size()
+        let bfactors_1 = []
+        for (let i = 0; i < bfactor_vec_1_size; i++) {
+            const resInfo = bfactor_vec_1.get(i)
+            bfactors_1.push({...resInfo})
+        }
+
         molecules_container.associate_data_mtz_file_with_map(mapMolNo, './5a3h_sigmaa.mtz', 'FP', 'SIGFP', 'FREE')
         molecules_container.connect_updating_maps(coordMolNo, mapMolNo, mapMolNo, diffMapMolNo)
         molecules_container.sfcalc_genmaps_using_bulk_solvent(coordMolNo, mapMolNo, diffMapMolNo, mapMolNo)
@@ -1821,11 +1833,45 @@ describe('Testing molecules_container_js', () => {
         const result = molecules_container.shift_field_b_factor_refinement(coordMolNo, mapMolNo)
         expect(result).toBeTruthy()
 
+        const pdbString_2  = molecules_container.get_molecule_atoms(coordMolNo, "pdb")
+        const st_2 = cootModule.read_structure_from_string(pdbString_2, 'test-molecule')
+        cootModule.gemmi_setup_entities(st_2)
+        cootModule.gemmi_add_entity_types(st_2, true)
+        const bfactor_vec_2 = cootModule.get_structure_bfactors(st_2)
+        const bfactor_vec_2_size = bfactor_vec_2.size()
+        let bfactors_2 = []
+        for (let i = 0; i < bfactor_vec_2_size; i++) {
+            const resInfo = bfactor_vec_2.get(i)
+            bfactors_2.push({...resInfo})
+        }
+
         const map_mesh_2 = molecules_container.get_map_contours_mesh(mapMolNo, 0, 0, 0, 13, 0.48)
         const scores_2 =  molecules_container.get_r_factor_stats()
 
         expect(scores_2.r_factor).not.toBe(-1)
         expect(scores_1).not.toEqual(scores_2)
+
+        expect(
+            bfactors_1.map(item => item.cid)
+        ).toEqual(
+            bfactors_2.map(item => item.cid)
+        )
+
+        expect(
+            bfactors_1.map(item => item.bFactor)
+        ).not.toEqual(
+            bfactors_2.map(item => item.bFactor)
+        )
+        
+        expect(
+            bfactors_1.map(item => item.normalised_bFactor)
+        ).not.toEqual(
+            bfactors_2.map(item => item.normalised_bFactor)
+        )
+        
+        cleanUpVariables.push(
+            st_2, bfactor_vec_2, bfactor_vec_1
+        )
     })
 
     test("Test multiply_residue_temperature_factors", () => {
@@ -1859,6 +1905,7 @@ describe('Testing molecules_container_js', () => {
         expect(scores_1.r_factor).not.toBe(-1)
 
         molecules_container.multiply_residue_temperature_factors(coordMolNo, '//', 2)
+        
         const pdbString_2  = molecules_container.get_molecule_atoms(coordMolNo, "pdb")
         const st_2 = cootModule.read_structure_from_string(pdbString_2, 'test-molecule')
         cootModule.gemmi_setup_entities(st_2)
