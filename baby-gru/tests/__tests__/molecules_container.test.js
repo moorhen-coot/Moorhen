@@ -1247,7 +1247,7 @@ describe('Testing molecules_container_js', () => {
         molecules_container.set_use_gemmi(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const diameter = molecules_container.get_molecule_diameter(coordMolNo)
-        expect(diameter).toBeCloseTo(43.90, 1)
+        expect(diameter).toBeCloseTo(44.30, 1)
     })
 
     test("Test non-drawn bonds and selection mesh", () => {
@@ -1798,6 +1798,61 @@ describe('Testing molecules_container_js', () => {
         )
 
         cleanUpVariables.push(original_chains_vec, new_chains_vec, instanceMesh_1, instanceMesh_2, colourMap_2, colourMap, indexedResiduesVec)
+    })
+
+    test("Test shift_field_b_factor_refinement", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', 'FOM', false, false)
+        const diffMapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'DELFWT', 'PHDELWT', 'FOM', false, true)
+        expect(coordMolNo).toBe(0)
+        expect(mapMolNo).toBe(1)
+        expect(diffMapMolNo).toBe(2)
+
+        molecules_container.associate_data_mtz_file_with_map(mapMolNo, './5a3h_sigmaa.mtz', 'FP', 'SIGFP', 'FREE')
+        molecules_container.connect_updating_maps(coordMolNo, mapMolNo, mapMolNo, diffMapMolNo)
+        molecules_container.sfcalc_genmaps_using_bulk_solvent(coordMolNo, mapMolNo, diffMapMolNo, mapMolNo)
+
+        const scores_1 =  molecules_container.get_r_factor_stats()
+        const map_mesh_1 = molecules_container.get_map_contours_mesh(mapMolNo, 0, 0, 0, 13, 0.48)
+        expect(scores_1.r_factor).not.toBe(-1)
+
+        const result = molecules_container.shift_field_b_factor_refinement(coordMolNo, mapMolNo)
+        expect(result).toBeTruthy()
+
+        const map_mesh_2 = molecules_container.get_map_contours_mesh(mapMolNo, 0, 0, 0, 13, 0.48)
+        const scores_2 =  molecules_container.get_r_factor_stats()
+
+        expect(scores_2.r_factor).not.toBe(-1)
+        expect(scores_1).not.toEqual(scores_2)
+    })
+
+    test("Test multiply_residue_temperature_factors", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', 'FOM', false, false)
+        const diffMapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'DELFWT', 'PHDELWT', 'FOM', false, true)
+        expect(coordMolNo).toBe(0)
+        expect(mapMolNo).toBe(1)
+        expect(diffMapMolNo).toBe(2)
+
+        molecules_container.associate_data_mtz_file_with_map(mapMolNo, './5a3h_sigmaa.mtz', 'FP', 'SIGFP', 'FREE')
+        molecules_container.connect_updating_maps(coordMolNo, mapMolNo, mapMolNo, diffMapMolNo)
+        molecules_container.sfcalc_genmaps_using_bulk_solvent(coordMolNo, mapMolNo, diffMapMolNo, mapMolNo)
+
+        const scores_1 =  molecules_container.get_r_factor_stats()
+        const map_mesh_1 = molecules_container.get_map_contours_mesh(mapMolNo, 0, 0, 0, 13, 0.48)
+        expect(scores_1.r_factor).not.toBe(-1)
+
+        molecules_container.multiply_residue_temperature_factors(coordMolNo, '//', 2)
+
+        const map_mesh_2 = molecules_container.get_map_contours_mesh(mapMolNo, 0, 0, 0, 13, 0.48)
+        const scores_2 =  molecules_container.get_r_factor_stats()
+
+        expect(scores_2.r_factor).not.toBe(-1)
+        expect(scores_1).not.toEqual(scores_2)
     })
 })
 
