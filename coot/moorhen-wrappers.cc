@@ -1093,6 +1093,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("split_multi_model_molecule", &molecules_container_t::split_multi_model_molecule)
     .function("print_non_drawn_bonds", &molecules_container_t::print_non_drawn_bonds)
     .function("pop_back", &molecules_container_t::pop_back)
     .function("get_use_gemmi", &molecules_container_t::get_use_gemmi)

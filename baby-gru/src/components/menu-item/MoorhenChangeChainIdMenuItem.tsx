@@ -15,6 +15,7 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
     const newChainIdFormRef = useRef<null |HTMLInputElement>(null)
     const minMaxValueRef = useRef<[number, number]>([1, 100])
     const intervalRef = useRef(null)
+
     const [sequenceLength, setSequenceLength] = useState<null | number>(null)
     const [minMaxValue, setMinMaxValue]  = useState<[number, number]>([1, 100])
     const [invalidNewId, setInvalidNewId] = useState<boolean>(false)
@@ -212,7 +213,7 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
                             fontWeight: 'bold',
                             color: 'grey',
                             backgroundColor: 'unset',
-                        },    
+                        },
                     }
                 }}
             />

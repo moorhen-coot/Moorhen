@@ -1,3 +1,4 @@
+import { experimental_sx } from "@mui/material";
 import { MoorhenMolecule } from "../../tsDist/src/utils/MoorhenMolecule"
 import { MockMoorhenCommandCentre } from "../helpers/mockMoorhenCommandCentre"
 import { MockWebGL } from "../helpers/mockWebGL"
@@ -25,6 +26,19 @@ global.fetch = (url) => {
                 return fileContents
             }
         })
+    }
+}
+
+// Mock DOMParser which is used to get ligand SVGs
+global.DOMParser = class DOMParser {
+    constructor() {
+
+    }
+
+    parseFromString(input, type) {
+        return {
+            getElementsByTagName: () => { return [] }
+        }
     }
 }
 
@@ -1317,6 +1331,74 @@ describe("Testing MoorhenMolecule", () => {
         expect(isValid).toBeTruthy()
     })
 
+    test("Test changeChainId", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+        const glRef = {
+            current: new MockWebGL()
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
+
+        const status = await molecule.changeChainId('A', 'X', false)
+        expect(status).toBe(1)
+        expect(molecule.defaultColourRules).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    label: '//X'
+                })
+            ])
+        )
+    })
+
+    test("Test getPrivateerValidation --cache", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5fjj.pdb')
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+        const glRef = {
+            current: new MockWebGL()
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
+        expect(molecule.cachedPrivateerValidation).toBe(null)
+
+        const result = await molecule.getPrivateerValidation(true)
+        expect(
+            molecule.cachedPrivateerValidation.map(item => item.wurcs)
+        ).toEqual(
+            result.map(item => item.wurcs)
+        )
+    })
+
+    test("Test getLigandSVG --cache", async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
+        const commandCentre = {
+            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
+        }
+        const glRef = {
+            current: new MockWebGL()
+        }
+
+        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
+        expect(molecule.cachedLigandSVGs).toBe(null)
+
+        const result = await molecule.getLigandSVG('BGC', true)
+        expect(result).not.toBe('')
+        expect('BGC' in molecule.cachedLigandSVGs).toBeTruthy()
+        expect(molecule.cachedLigandSVGs['BGC']).toBe(result)
+    })
 })
 
 const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']

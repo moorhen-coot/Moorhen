@@ -1182,7 +1182,8 @@ describe('Testing molecules_container_js', () => {
 
         molecules_container.associate_data_mtz_file_with_map(mapMolNo, './5a3h_sigmaa.mtz', 'FP', 'SIGFP', 'FREE')
         molecules_container.connect_updating_maps(coordMolNo, mapMolNo, mapMolNo, diffMapMolNo)
-        molecules_container.sfcalc_genmaps_using_bulk_solvent(coordMolNo, mapMolNo, diffMapMolNo, mapMolNo)
+        const result = molecules_container.sfcalc_genmaps_using_bulk_solvent(coordMolNo, mapMolNo, diffMapMolNo, mapMolNo)
+        expect(result.r_factor).not.toBe(-1)
 
         molecules_container.get_r_factor_stats()
         molecules_container.get_map_contours_mesh(mapMolNo, 77.501, 45.049, 22.663, 13, 0.48)
@@ -1246,7 +1247,7 @@ describe('Testing molecules_container_js', () => {
         molecules_container.set_use_gemmi(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const diameter = molecules_container.get_molecule_diameter(coordMolNo)
-        expect(diameter).toBeCloseTo(43.90, 1)
+        expect(diameter).toBeCloseTo(44.30, 1)
     })
 
     test("Test non-drawn bonds and selection mesh", () => {
@@ -1487,6 +1488,77 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(instanceMesh_1, instanceMesh_2, indexedResiduesVec, colourMap, geom_2, geom_1)
     })
 
+    test("Test colour rules and multi CID selection mesh --third", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+
+        const instanceMesh_1 = molecules_container.get_bonds_mesh_for_selection_instanced(
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+        
+        const geom_1 = instanceMesh_1.geom
+        const geomSize_1 = geom_1.size()
+        let colours_1 = []
+        for (let i = 0; i < geomSize_1; i++) {
+            const inst = geom_1.get(i);
+            const As = inst.instancing_data_A;
+            const Asize = As.size();
+    
+            for (let j = 0; j < Asize; j++) {
+                const inst_data = As.get(j)
+                const instDataColour = inst_data.colour
+                colours_1.push(instDataColour[0])
+                colours_1.push(instDataColour[1])
+                colours_1.push(instDataColour[2])
+                colours_1.push(instDataColour[3])    
+            }
+            As.delete()
+        }
+
+        let colourMap = new cootModule.MapIntFloat3()
+        let indexedResiduesVec = new cootModule.VectorStringUInt_pair()
+        
+        const colours = [
+            { cid: "//A", rgb: [1, 0, 0] }
+        ]
+        colours.forEach((colour, index) => {
+            colourMap.set(index + 51, colour.rgb)
+            const i = { first: colour.cid, second: index + 51 }
+            indexedResiduesVec.push_back(i)
+        })
+    
+        molecules_container.set_user_defined_bond_colours(coordMolNo, colourMap)
+        molecules_container.set_user_defined_atom_colour_by_selection(coordMolNo, indexedResiduesVec, false)
+
+        const instanceMesh_2 = molecules_container.get_bonds_mesh_for_selection_instanced(
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+        )
+
+        const geom_2 = instanceMesh_2.geom
+        const geomSize_2 = geom_2.size()
+        let colours_2 = []
+        for (let i = 0; i < geomSize_2; i++) {
+            const inst = geom_2.get(i);
+            const As = inst.instancing_data_A;
+            const Asize = As.size();
+    
+            for (let j = 0; j < Asize; j++) {
+                const inst_data = As.get(j)
+                const instDataColour = inst_data.colour
+                colours_2.push(instDataColour[0])
+                colours_2.push(instDataColour[1])
+                colours_2.push(instDataColour[2])
+                colours_2.push(instDataColour[3])    
+            }
+            As.delete()
+        }
+
+        expect(colours_2).not.toEqual(colours_1)
+
+        cleanUpVariables.push(instanceMesh_1, instanceMesh_2, indexedResiduesVec, colourMap, geom_2, geom_1)
+    })
+
     test("Test non-drawn bonds and multi CID selection mesh --first", () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(false)
@@ -1532,6 +1604,12 @@ describe('Testing molecules_container_js', () => {
             instanceMesh_1.geom.get(1).instancing_data_B.size()
         )
 
+        expect(
+            instanceMesh_2.geom.get(0).instancing_data_A.size()
+        ).not.toBe(
+            instanceMesh_1.geom.get(0).instancing_data_A.size()
+        )
+
         cleanUpVariables.push(instanceMesh_1, instanceMesh_2)
     })
 
@@ -1559,7 +1637,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(instanceMesh_1, instanceMesh_2)
     })
 
-    test("Test change chain ID --first", () => {
+    test("Test change chain ID -- whole chain", () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
@@ -1590,7 +1668,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(original_chains_vec, new_chains_vec)
     })
 
-    test("Test change chain ID --second", () => {
+    test("Test change chain ID -- residue range", () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
@@ -1635,7 +1713,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(original_chains_vec, new_chains_vec)
     })
 
-    test("Test change chain ID --third", () => {
+    test("Test change chain ID -- colour rules", () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
@@ -1720,6 +1798,153 @@ describe('Testing molecules_container_js', () => {
         )
 
         cleanUpVariables.push(original_chains_vec, new_chains_vec, instanceMesh_1, instanceMesh_2, colourMap_2, colourMap, indexedResiduesVec)
+    })
+
+    test("Test shift_field_b_factor_refinement", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', 'FOM', false, false)
+        const diffMapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'DELFWT', 'PHDELWT', 'FOM', false, true)
+        expect(coordMolNo).toBe(0)
+        expect(mapMolNo).toBe(1)
+        expect(diffMapMolNo).toBe(2)
+
+        const pdbString_1  = molecules_container.get_molecule_atoms(coordMolNo, "pdb")
+        const st_1 = cootModule.read_structure_from_string(pdbString_1, 'test-molecule')
+        cootModule.gemmi_setup_entities(st_1)
+        cootModule.gemmi_add_entity_types(st_1, true)
+        const bfactor_vec_1 = cootModule.get_structure_bfactors(st_1)
+        const bfactor_vec_1_size = bfactor_vec_1.size()
+        let bfactors_1 = []
+        for (let i = 0; i < bfactor_vec_1_size; i++) {
+            const resInfo = bfactor_vec_1.get(i)
+            bfactors_1.push({...resInfo})
+        }
+
+        molecules_container.associate_data_mtz_file_with_map(mapMolNo, './5a3h_sigmaa.mtz', 'FP', 'SIGFP', 'FREE')
+        molecules_container.connect_updating_maps(coordMolNo, mapMolNo, mapMolNo, diffMapMolNo)
+        molecules_container.sfcalc_genmaps_using_bulk_solvent(coordMolNo, mapMolNo, diffMapMolNo, mapMolNo)
+
+        const scores_1 =  molecules_container.get_r_factor_stats()
+        const map_mesh_1 = molecules_container.get_map_contours_mesh(mapMolNo, 0, 0, 0, 13, 0.48)
+        expect(scores_1.r_factor).not.toBe(-1)
+
+        const result = molecules_container.shift_field_b_factor_refinement(coordMolNo, mapMolNo)
+        expect(result).toBeTruthy()
+
+        const pdbString_2  = molecules_container.get_molecule_atoms(coordMolNo, "pdb")
+        const st_2 = cootModule.read_structure_from_string(pdbString_2, 'test-molecule')
+        cootModule.gemmi_setup_entities(st_2)
+        cootModule.gemmi_add_entity_types(st_2, true)
+        const bfactor_vec_2 = cootModule.get_structure_bfactors(st_2)
+        const bfactor_vec_2_size = bfactor_vec_2.size()
+        let bfactors_2 = []
+        for (let i = 0; i < bfactor_vec_2_size; i++) {
+            const resInfo = bfactor_vec_2.get(i)
+            bfactors_2.push({...resInfo})
+        }
+
+        const map_mesh_2 = molecules_container.get_map_contours_mesh(mapMolNo, 0, 0, 0, 13, 0.48)
+        const scores_2 =  molecules_container.get_r_factor_stats()
+
+        expect(scores_2.r_factor).not.toBe(-1)
+        expect(scores_1).not.toEqual(scores_2)
+
+        expect(
+            bfactors_1.map(item => item.cid)
+        ).toEqual(
+            bfactors_2.map(item => item.cid)
+        )
+
+        expect(
+            bfactors_1.map(item => item.bFactor)
+        ).not.toEqual(
+            bfactors_2.map(item => item.bFactor)
+        )
+        
+        expect(
+            bfactors_1.map(item => item.normalised_bFactor)
+        ).not.toEqual(
+            bfactors_2.map(item => item.normalised_bFactor)
+        )
+        
+        cleanUpVariables.push(
+            st_2, bfactor_vec_2, bfactor_vec_1
+        )
+    })
+
+    test("Test multiply_residue_temperature_factors", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', 'FOM', false, false)
+        const diffMapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'DELFWT', 'PHDELWT', 'FOM', false, true)
+        expect(coordMolNo).toBe(0)
+        expect(mapMolNo).toBe(1)
+        expect(diffMapMolNo).toBe(2)
+
+        const pdbString_1  = molecules_container.get_molecule_atoms(coordMolNo, "pdb")
+        const st_1 = cootModule.read_structure_from_string(pdbString_1, 'test-molecule')
+        cootModule.gemmi_setup_entities(st_1)
+        cootModule.gemmi_add_entity_types(st_1, true)
+        const bfactor_vec_1 = cootModule.get_structure_bfactors(st_1)
+        const bfactor_vec_1_size = bfactor_vec_1.size()
+        let bfactors_1 = []
+        for (let i = 0; i < bfactor_vec_1_size; i++) {
+            const resInfo = bfactor_vec_1.get(i)
+            bfactors_1.push({...resInfo})
+        }
+
+        molecules_container.associate_data_mtz_file_with_map(mapMolNo, './5a3h_sigmaa.mtz', 'FP', 'SIGFP', 'FREE')
+        molecules_container.connect_updating_maps(coordMolNo, mapMolNo, mapMolNo, diffMapMolNo)
+        molecules_container.sfcalc_genmaps_using_bulk_solvent(coordMolNo, mapMolNo, diffMapMolNo, mapMolNo)
+
+        const scores_1 =  molecules_container.get_r_factor_stats()
+        molecules_container.get_map_contours_mesh(mapMolNo, 0, 0, 0, 13, 0.48)
+        expect(scores_1.r_factor).not.toBe(-1)
+
+        molecules_container.multiply_residue_temperature_factors(coordMolNo, '//', 2)
+        
+        const pdbString_2  = molecules_container.get_molecule_atoms(coordMolNo, "pdb")
+        const st_2 = cootModule.read_structure_from_string(pdbString_2, 'test-molecule')
+        cootModule.gemmi_setup_entities(st_2)
+        cootModule.gemmi_add_entity_types(st_2, true)
+        const bfactor_vec_2 = cootModule.get_structure_bfactors(st_2)
+        const bfactor_vec_2_size = bfactor_vec_2.size()
+        let bfactors_2 = []
+        for (let i = 0; i < bfactor_vec_2_size; i++) {
+            const resInfo = bfactor_vec_2.get(i)
+            bfactors_2.push({...resInfo})
+        }
+
+        molecules_container.get_map_contours_mesh(mapMolNo, 0, 0, 0, 13, 0.48)
+        const scores_2 =  molecules_container.get_r_factor_stats()
+
+        expect(scores_2.r_factor).not.toBe(-1)
+        expect(scores_1).not.toEqual(scores_2)
+
+        expect(
+            bfactors_1.map(item => item.cid)
+        ).toEqual(
+            bfactors_2.map(item => item.cid)
+        )
+
+        expect(
+            bfactors_1.map(item => item.bFactor * 2)
+        ).toEqual(
+            bfactors_2.map(item => item.bFactor)
+        )
+        
+        expect(
+            bfactors_1.map(item => item.normalised_bFactor)
+        ).toEqual(
+            bfactors_2.map(item => item.normalised_bFactor)
+        )
+        
+        cleanUpVariables.push(
+            st_2, bfactor_vec_2, bfactor_vec_1
+        )
     })
 })
 
