@@ -131,6 +131,22 @@ import { setContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle,
 import { enableUpdatingMaps, setConnectedMoleculeMolNo, setFoFcMapMolNo, setReflectionMapMolNo, setTwoFoFcMapMolNo } from "../store/moleculeMapUpdateSlice";
 import { libcootApi } from "../types/libcoot";
 
+export const getCentreAtom = async (molecules: moorhen.Molecule[], commandCentre: React.RefObject&lt;moorhen.CommandCentre>, glRef: React.RefObject&lt;webGL.MGWebGL>): Promise&lt;[moorhen.Molecule, string]> => {
+    const visibleMolecules: moorhen.Molecule[] = molecules.filter((molecule: moorhen.Molecule) => molecule.isVisible())
+    if (visibleMolecules.length === 0) {
+        return [null, null]
+    }
+    const response = await commandCentre.current.cootCommand({
+        returnType: "int_string_pair",
+        command: "get_active_atom",
+        commandArgs: [...glRef.current.origin.map(coord => coord * -1), visibleMolecules.map(molecule => molecule.molNo).join(':')]
+    }, false) as moorhen.WorkerResponse&lt;libcootApi.PairType&lt;number, string>>
+    const moleculeMolNo: number = response.data.result.result.first
+    const residueCid: string = response.data.result.result.second
+    const selectedMolecule = visibleMolecules.find((molecule: moorhen.Molecule) => molecule.molNo === moleculeMolNo)
+    return [selectedMolecule, residueCid]
+}
+
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export const formatLigandSVG = (svg: string): string => {
