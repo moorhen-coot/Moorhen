@@ -6482,7 +6482,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.setLightUniforms(theShader);
                     this.gl.uniformMatrix4fv(theShader.mvMatrixUniform, false, this.mvMatrix);// All else
                     this.gl.uniformMatrix4fv(theShader.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
-                    this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
+                    if(theShader.vertexColourAttribute>1) this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
                 }
                 if(theShader.light_colours_diffuse) this.gl.uniform4fv(theShader.light_colours_diffuse, this.light_colours_diffuse);
                 if(theShader.light_colours_specular) this.gl.uniform4fv(theShader.light_colours_specular, this.light_colours_specular);
@@ -6518,7 +6518,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.setLightUniforms(theShader);
                     this.gl.uniformMatrix4fv(theShader.mvMatrixUniform, false, this.mvMatrix);// All else
                     this.gl.uniformMatrix4fv(theShader.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
-                    this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
+                    if(theShader.vertexColourAttribute>1) this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
                 }
                 this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0);
             }
@@ -6885,6 +6885,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     } else {
                         //mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, -(this.gl_clipPlane0[3]+this.fogClipOffset), 1000.0);
                         const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
+                        //FIXME This can go -ve, causing reverse fog to be apparent with very large molecules. Boo.
                         mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, -(this.gl_clipPlane0[3]+this.fogClipOffset), b);
                     }
                 }

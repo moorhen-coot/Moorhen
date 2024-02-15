@@ -79,6 +79,7 @@ declare module 'moorhen' {
         addDict(fileContent: string): Promise<void>;
         addDictShim(fileContent: string): void;
         toggleSymmetry(): Promise<void>;
+        toggleBiomolecule(): void;
         getDict(newTlc: string): string;
         addLigandOfType(resType: string, fromMolNo?: number): Promise<_moorhen.WorkerResponse>;
         updateAtoms(): Promise<void>;
@@ -93,6 +94,7 @@ declare module 'moorhen' {
         show(style: string, cid?: string): void;
         setSymmetryRadius(radius: number): Promise<void>;
         drawSymmetry: (fetchSymMatrix?: boolean) => Promise<void>;
+        drawBiomolecule (fetchSymMatrix?: boolean) : void;
         getUnitCellParams():  { a: number; b: number; c: number; alpha: number; beta: number; gamma: number; };
         replaceModelWithFile(fileUrl: string): Promise<void>
         delete(popBackImol?: boolean): Promise<_moorhen.WorkerResponse>;
@@ -140,6 +142,7 @@ declare module 'moorhen' {
         connectedToMaps: number[];
         excludedSelections: string[];
         symmetryOn: boolean;
+        biomolOn: boolean;
         symmetryRadius : number;
         symmetryMatrices: number[][][];
         gaussianSurfaceSettings: {
