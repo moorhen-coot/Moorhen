@@ -157,7 +157,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const handleOriginUpdate = useCallback(() => {
         isDirty.current = true
         if (!busyRedrawing.current) {
-                        redrawSymmetryIfDirty()
+            redrawSymmetryIfDirty()
         }
 
     }, [props.molecule, props.glRef])
