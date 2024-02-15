@@ -1560,7 +1560,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(instanceMesh_1, instanceMesh_2)
     })
 
-    test("Test change chain ID --first", () => {
+    test("Test change chain ID -- whole chain", () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
@@ -1591,7 +1591,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(original_chains_vec, new_chains_vec)
     })
 
-    test("Test change chain ID --second", () => {
+    test("Test change chain ID -- residue range", () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
@@ -1636,7 +1636,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(original_chains_vec, new_chains_vec)
     })
 
-    test("Test change chain ID --third", () => {
+    test("Test change chain ID -- colour rules", () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
