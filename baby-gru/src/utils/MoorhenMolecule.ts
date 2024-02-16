@@ -66,6 +66,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     excludedSelections: string[];
     excludedCids: string[];
     symmetryOn: boolean;
+    biomolOn: boolean;
     symmetryRadius: number;
     symmetryMatrices: number[][][];
     gaussianSurfaceSettings: {
@@ -115,6 +116,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.excludedSelections = []
         this.excludedCids = []
         this.symmetryOn = false
+        this.biomolOn = false
         this.symmetryRadius = 25
         this.symmetryMatrices = []
         this.isDarkBackground = false
@@ -195,8 +197,21 @@ export class MoorhenMolecule implements moorhen.Molecule {
     /**
      * Turn on/off molecule symmetry
      */
+    toggleBiomolecule() : void {
+        this.biomolOn = !this.biomolOn;
+        if(this.biomolOn)
+            this.symmetryOn = false;
+        return this.drawBiomolecule()
+
+    }
+
+    /**
+     * Turn on/off molecule symmetry
+     */
     toggleSymmetry(): Promise<void> {
         this.symmetryOn = !this.symmetryOn;
+        if(this.symmetryOn)
+            this.biomolOn = false;
         return this.drawSymmetry()
     }
 
@@ -207,6 +222,45 @@ export class MoorhenMolecule implements moorhen.Molecule {
     setSymmetryRadius(radius: number): Promise<void> {
         this.symmetryRadius = radius
         return this.drawSymmetry()
+    }
+
+    /**
+     * Fetch the matrices representing the biomolecule of the current model from gemmi
+     */
+    fetchBiomoleculeMatrix() : void {
+        if (!this.biomolOn) {
+            this.symmetryMatrices = []
+        } else {
+            this.symmetryMatrices = []
+            const assemblies = this.gemmiStructure.assemblies
+            const n_assembly = assemblies.size()
+            if(n_assembly>0){
+                const assembly = assemblies.get(0)
+                const generators = assembly.generators
+                const n_gen = generators.size()
+                if(n_gen>0){
+                    const gen = generators.get(0)
+                    const operators = gen.operators
+                    const n_op = operators.size()
+                    for(let i_op=0;i_op<n_op;i_op++){
+                        let mat16 = []
+                        const op = operators.get(i_op)
+                        const transform = op.transform
+                        const vec = transform.vec
+                        const mat = transform.mat
+                        const mat_array = mat.as_array()
+                        mat16.push(mat_array[0]); mat16.push(mat_array[1]); mat16.push(mat_array[2]); mat16.push(vec.x);
+                        mat16.push(mat_array[3]); mat16.push(mat_array[4]); mat16.push(mat_array[5]); mat16.push(vec.y);
+                        mat16.push(mat_array[6]); mat16.push(mat_array[7]); mat16.push(mat_array[8]); mat16.push(vec.z);
+                        mat16.push(0.0);          mat16.push(0.0);          mat16.push(0.0);          mat16.push(1.0);
+                        this.symmetryMatrices.push(mat16);
+                    }
+                    operators.delete()
+                }
+                generators.delete()
+            }
+            assemblies.delete()
+        }
     }
 
     /**
@@ -230,7 +284,22 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * Draw symmetry mates for the current molecule
      * @param {boolean} [fetchSymMatrix=true] - Indicates whether a new symmetry matrix must be fetched from libcoot api
      */
+    drawBiomolecule(fetchSymMatrix: boolean = true): void {
+        if (fetchSymMatrix) {
+            this.fetchBiomoleculeMatrix()
+        }
+        this.representations.forEach(representation => representation.drawSymmetry())
+    }
+
+    /**
+     * Draw symmetry mates for the current molecule
+     * @param {boolean} [fetchSymMatrix=true] - Indicates whether a new symmetry matrix must be fetched from libcoot api
+     */
     async drawSymmetry(fetchSymMatrix: boolean = true): Promise<void> {
+        if(this.biomolOn) {
+            console.log("Crystal symmetry will not be drawn when biomolecule is being shown.")
+            return;
+        }
         if (fetchSymMatrix) {
             await this.fetchSymmetryMatrix()
         }
@@ -971,6 +1040,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         await representation.draw()
         this.representations.push(representation)
         await this.drawSymmetry(false)
+        await this.drawBiomolecule(false)
         return representation
     }
 

@@ -667,6 +667,20 @@ void GemmiSelectionRemoveNotSelectedResidue(gemmi::Selection &s, gemmi::Residue 
     s.remove_not_selected(r);
 }
 
+std::array<double, 9> Mat33ToDoubleArray(const gemmi::Mat33 &mat){
+    std::array<double, 9> retval;
+    retval[0] = mat[0][0];
+    retval[1] = mat[0][1];
+    retval[2] = mat[0][2];
+    retval[3] = mat[1][0];
+    retval[4] = mat[1][1];
+    retval[5] = mat[1][2];
+    retval[6] = mat[2][0];
+    retval[7] = mat[2][1];
+    retval[8] = mat[2][2];
+    return retval;
+}
+
 EMSCRIPTEN_BINDINGS(gemmi_module) {
     //complex could be generally useful, but only used by gemmi at present?
     class_<std::complex<double>>("complexdouble")
@@ -1354,6 +1368,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("inverse",&gemmi::Mat33::inverse)
     .function("is_identity",&gemmi::Mat33::is_identity)
     .function("column_dot",&gemmi::Mat33::column_dot)
+    .function("as_array",&Mat33ToDoubleArray)
     ;
 
     class_<GemmiSMat33double>("SMat33double")
@@ -1619,6 +1634,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .property("type",&gemmi::Assembly::Operator::type)
     .property("transform",&gemmi::Assembly::Operator::transform)
     ;
+    register_vector<gemmi::Assembly::Operator>("VectorAssemblyOperator");
 
     class_<gemmi::Assembly::Gen>("AssemblyGen")
     .property("chains",&gemmi::Assembly::Gen::chains)
@@ -2817,4 +2833,17 @@ GlobWalk
     function("guess_coord_data_format", &guess_coord_data_format);
     function("parse_multi_cids", &parse_multi_cids);
     function("get_non_selected_cids", &get_non_selected_cids);
+
+    value_array<std::array<double, 9>>("array_native_double_9")
+        .element(emscripten::index<0>())
+        .element(emscripten::index<1>())
+        .element(emscripten::index<2>())
+        .element(emscripten::index<3>())
+        .element(emscripten::index<4>())
+        .element(emscripten::index<5>())
+        .element(emscripten::index<6>())
+        .element(emscripten::index<7>())
+        .element(emscripten::index<8>())
+    ;
+
 }

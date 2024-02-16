@@ -34,6 +34,122 @@ describe("Testing gemmi", () => {
         cleanUpVariables = []
     })
 
+    test("Test assembly 3j2w.pdb", () => {
+        const st = cootModule.read_structure_file('./3j2w.pdb', cootModule.CoorFormat.Pdb)
+        const assemblies = st.assemblies
+        const n_assembly = assemblies.size()
+        expect(n_assembly).toBe(1)
+        const i = 0
+        const assembly = assemblies.get(i)
+        const generators = assembly.generators
+        const n_gen = generators.size()
+        expect(n_gen).toBe(1)
+        const j = 0
+        const gen = generators.get(j)
+        const chains = gen.chains
+        const subchains = gen.subchains
+        const operators = gen.operators
+        const n_ch = chains.size()
+        const n_sub_ch = subchains.size()
+        const n_op = operators.size()
+        expect(n_ch).toBe(20)
+        expect(n_sub_ch).toBe(0)
+        expect(n_op).toBe(60)
+        const ch_A = chains.get(0)
+        cleanUpVariables.push(ch_A)
+        const ch_M = chains.get(1)
+        cleanUpVariables.push(ch_M)
+        const ch_B = chains.get(2)
+        cleanUpVariables.push(ch_B)
+        const ch_N = chains.get(3)
+        cleanUpVariables.push(ch_N)
+        expect(ch_A).toBe("A")
+        expect(ch_B).toBe("B")
+        expect(ch_N).toBe("N")
+        expect(ch_M).toBe("M")
+
+        const op = operators.get(59)
+        const transform = op.transform
+        const vec = transform.vec
+        const mat = transform.mat
+        const mat_array = mat.as_array()
+        expect(vec.x).toBeCloseTo(0.0,3)
+        expect(vec.y).toBeCloseTo(0.0,3)
+        expect(vec.z).toBeCloseTo(0.0,3)
+        expect(mat_array[0]).toBeCloseTo( 0.809017,5)
+        expect(mat_array[1]).toBeCloseTo(-0.309017,5)
+        expect(mat_array[2]).toBeCloseTo(-0.5,5)
+        expect(mat_array[3]).toBeCloseTo( 0.309017,5)
+        expect(mat_array[4]).toBeCloseTo(-0.5,5)
+        expect(mat_array[5]).toBeCloseTo( 0.809017,5)
+        expect(mat_array[6]).toBeCloseTo(-0.5,5)
+        expect(mat_array[7]).toBeCloseTo(-0.809017,5)
+        expect(mat_array[8]).toBeCloseTo(-0.309017,5)
+        cleanUpVariables.push(op,transform,vec,mat)
+
+        cleanUpVariables.push(gen,chains,subchains,operators)
+        cleanUpVariables.push(assembly,generators)
+        cleanUpVariables.push(assemblies,st)
+    })
+
+    test("Test assembly 3j2w_updated.cif", () => {
+        const st = cootModule.read_structure_file('./3j2w_updated.cif', cootModule.CoorFormat.Mmcif)
+        const assemblies = st.assemblies
+        const n_assembly = assemblies.size()
+        expect(n_assembly).toBe(1)
+        const i = 0
+        const assembly = assemblies.get(i)
+        const generators = assembly.generators
+        const n_gen = generators.size()
+        expect(n_gen).toBe(1)
+        const j = 0
+        const gen = generators.get(j)
+        const chains = gen.chains
+        const subchains = gen.subchains
+        const operators = gen.operators
+        const n_ch = chains.size()
+        const n_sub_ch = subchains.size()
+        const n_op = operators.size()
+        expect(n_ch).toBe(0)
+        expect(n_sub_ch).toBe(20)
+        expect(n_op).toBe(60)
+        const ch_A = subchains.get(0)
+        cleanUpVariables.push(ch_A)
+        const ch_B = subchains.get(1)
+        cleanUpVariables.push(ch_B)
+        const ch_C = subchains.get(2)
+        cleanUpVariables.push(ch_C)
+        const ch_D = subchains.get(3)
+        cleanUpVariables.push(ch_D)
+        expect(ch_A).toBe("A")
+        expect(ch_B).toBe("B")
+        expect(ch_C).toBe("C")
+        expect(ch_D).toBe("D")
+
+        const op = operators.get(59)
+        const transform = op.transform
+        const vec = transform.vec
+        const mat = transform.mat
+        const mat_array = mat.as_array()
+        expect(vec.x).toBeCloseTo(0.0,3)
+        expect(vec.y).toBeCloseTo(0.0,3)
+        expect(vec.z).toBeCloseTo(0.0,3)
+        expect(mat_array[0]).toBeCloseTo( 0.809017,5)
+        expect(mat_array[1]).toBeCloseTo(-0.309017,5)
+        expect(mat_array[2]).toBeCloseTo(-0.5,5)
+        expect(mat_array[3]).toBeCloseTo( 0.309017,5)
+        expect(mat_array[4]).toBeCloseTo(-0.5,5)
+        expect(mat_array[5]).toBeCloseTo( 0.809017,5)
+        expect(mat_array[6]).toBeCloseTo(-0.5,5)
+        expect(mat_array[7]).toBeCloseTo(-0.809017,5)
+        expect(mat_array[8]).toBeCloseTo(-0.309017,5)
+        cleanUpVariables.push(op,transform,vec,mat)
+
+        cleanUpVariables.push(gen,chains,subchains,operators)
+        cleanUpVariables.push(assembly,generators)
+        cleanUpVariables.push(assemblies,st)
+    })
+
     test("Test read structure file", () => {
         const st = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
         const models = st.models
@@ -173,7 +289,7 @@ describe("Testing gemmi", () => {
     })
 })
 
-const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
+const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb', '3j2w.pdb', '3j2w_updated.cif']
 
 const setupFunctions = {
     removeTestDataFromFauxFS: () => {

@@ -107,7 +107,7 @@ var triangle_fragment_shader_source = `#version 300 es\n
       Idiff += light_colours_diffuse * max(dot(norm,L), 0.0);
 
       float y = max(max(light_colours_specular.r,light_colours_specular.g),light_colours_specular.b);
-      Ispec += light_colours_specular * pow(max(dot(R,E),0.0),specularPower);
+      Ispec += light_colours_specular * pow(max(dot(R,E),0.0),specularPower)*occ;
       Ispec.a *= y;
 
       float FogFragCoord = abs(eyePos.z/eyePos.w);

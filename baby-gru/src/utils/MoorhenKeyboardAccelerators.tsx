@@ -292,6 +292,7 @@ export const babyGruKeyPress = (
     else if (action === 'clear_labels') {
         glRef.current.labelledAtoms = []
         glRef.current.measuredAtoms = []
+        glRef.current.measurePointsArray = []
         glRef.current.clearMeasureCylinderBuffers()
         glRef.current.drawScene()
         molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
@@ -361,6 +362,7 @@ export const babyGruKeyPress = (
         glRef.current.setZoom(1.0)
         glRef.current.labelledAtoms = []
         glRef.current.measuredAtoms = []
+        glRef.current.measurePointsArray = []
         glRef.current.clearMeasureCylinderBuffers()
         glRef.current.drawScene()
     }
