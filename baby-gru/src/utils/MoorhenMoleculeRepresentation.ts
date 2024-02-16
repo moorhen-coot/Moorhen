@@ -138,7 +138,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         const objects = await this.getBufferObjects()
         this.buildBuffers(objects)
         if (this.styleHasAtomBuffers) {
-            let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.cid, true)
+            let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.style === 'adaptativeBonds' ? '/*/*/*/*' : this.cid, true)
             this.setAtomBuffers(atomBuffers)
         }
     }
@@ -150,7 +150,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.deleteBuffers()
         this.buildBuffers(objects)
         if (this.styleHasAtomBuffers) {
-            let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.cid, true)
+            let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.style === 'adaptativeBonds' ? '/*/*/*/*' : this.cid, true)
             this.setAtomBuffers(atomBuffers)
         }
     }
@@ -273,11 +273,83 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             case 'MetaBalls':
                 objects = await this.getMetaBallBuffers()
                 break
+            case 'adaptativeBonds':
+                objects = await this.getAdaptativeBondBuffers(this.cid)
+                break
             default:
                 console.log(`Unrecognised style ${this.style}...`)
                 break
         }
         return objects
+    }
+
+    async getAdaptativeBondBuffers(cid: string, maxDist: number = 8) {
+        if (!cid) {
+            console.warn('No selection string provided when drawing origin bonds')
+            return []
+        }  
+
+        const neighBoringResidues = await this.parentMolecule.getNeighborResiduesCids(cid, maxDist)
+        const bondCids = neighBoringResidues.join('||')
+
+        if (!bondCids) {
+            console.warn(`Cannot find neighboring residues for ${cid}`)
+            return []
+        }
+
+        const drawMissingLoops = MoorhenReduxStore.getState().sceneSettings.drawMissingLoops
+        
+        if (drawMissingLoops) {
+            await this.commandCentre.current.cootCommand({
+                command: "set_draw_missing_residue_loops",
+                returnType:'status',
+                commandArgs: [ false ],
+            }, false)
+        }
+
+        const bondObjects = await this.getCootSelectionBondBuffers('CBs', bondCids)
+        
+        if (drawMissingLoops) {
+            await this.commandCentre.current.cootCommand({
+                command: "set_draw_missing_residue_loops",
+                returnType:'status',
+                commandArgs: [ true ],
+            }, false)
+        }
+
+        await Promise.all(neighBoringResidues.map(i => {
+            this.commandCentre.current.cootCommand({
+                message: 'coot_command',
+                command: "add_to_non_drawn_bonds",
+                returnType: 'status',
+                commandArgs: [this.parentMolecule.molNo, i],
+            }, false)
+        }))
+
+        const alphaObjects = await this.getCootSelectionBondBuffers('CAs', '/*/*/*/*')
+
+        await this.commandCentre.current.cootCommand({
+            message: 'coot_command',
+            command: "clear_non_drawn_bonds",
+            returnType: 'status',
+            commandArgs: [this.parentMolecule.molNo],
+        }, false)    
+
+        await Promise.all(this.parentMolecule.excludedSelections.map(i => {
+            this.commandCentre.current.cootCommand({
+                message: 'coot_command',
+                command: "add_to_non_drawn_bonds",
+                returnType: 'status',
+                commandArgs: [this.parentMolecule.molNo, i],
+            }, false)
+        }))
+
+        let objects = {}
+        for (let key in bondObjects[0]) {
+            objects = {...objects, [key]: bondObjects[0][key].concat(alphaObjects[0][key])}
+        }
+
+        return [objects]
     }
 
     async getRestraintsMeshBuffers() {

@@ -42,6 +42,7 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
     const [symmetryOn, setSymmetryOn] = useState<boolean>(false)
     const [biomolOn, setBiomolOn] = useState<boolean>(false)
     const [showUnitCell, setShowUnitCell] = useState<boolean>(false)
+    
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
     const {
@@ -231,6 +232,7 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
                         }}
                         label="Show biomolecule" />
                     <MoorhenSlider
+                        isDisabled={!symmetryOn}
                         sliderTitle="Symmetry Radius"
                         initialValue={symmetryRadius}
                         externalValue={symmetryRadius}

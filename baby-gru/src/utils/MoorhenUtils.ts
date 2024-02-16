@@ -388,21 +388,22 @@ export function convertViewtoPx(input: number, height: number): number {
 }
 
 export const representationLabelMapping = {
-    rama: "Rama.",
-    rotamer: "Rota.",
+    rama: "Rama. Balls",
+    rotamer: "Rota. Dodec.",
     CBs: "Bonds",
-    CAs: "C-As",
+    CAs: "C-Alpha",
     CRs: "Ribbons",
     CDs: "Cont. dots",
-    MolecularSurface: "Surf.",
-    gaussian: "Gauss.",
+    MolecularSurface: "VdW Surf.",
+    gaussian: "Gauss. Surf.",
     ligands: "Ligands",
     DishyBases: "Bases",
     VdwSpheres: "Spheres",
     allHBonds: "H-Bonds",
-    glycoBlocks: "GlycoBlocks",
+    glycoBlocks: "Glyco-Blocks",
     restraints: "Restraints",
-    MetaBalls: "MetaBalls"
+    MetaBalls: "MetaBalls",
+    adaptativeBonds: "Adapt. Bonds",
 }
 
 export const residueCodesOneToThree = {
