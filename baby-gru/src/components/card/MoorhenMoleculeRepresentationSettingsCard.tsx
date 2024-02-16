@@ -232,6 +232,7 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
                         }}
                         label="Show biomolecule" />
                     <MoorhenSlider
+                        isDisabled={!symmetryOn}
                         sliderTitle="Symmetry Radius"
                         initialValue={symmetryRadius}
                         externalValue={symmetryRadius}
