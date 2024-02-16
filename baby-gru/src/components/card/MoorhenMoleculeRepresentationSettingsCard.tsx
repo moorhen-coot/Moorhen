@@ -72,8 +72,6 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
 
     useEffect(() => {
         if (props.molecule.biomolOn !== biomolOn) {
-            if(biomolOn)
-                props.molecule.symmetryOn = false
             props.molecule.toggleBiomolecule()
         }
     }, [biomolOn])
@@ -219,12 +217,18 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
                     <Form.Check
                         type="switch"
                         checked={symmetryOn}
-                        onChange={() => { setSymmetryOn(!symmetryOn) }}
+                        onChange={() => { 
+                            if(biomolOn && !symmetryOn) setBiomolOn(false)
+                            setSymmetryOn(!symmetryOn)
+                        }}
                         label="Show symmetry mates" />
                     <Form.Check
                         type="switch"
                         checked={biomolOn}
-                        onChange={() => { setBiomolOn(!biomolOn) }}
+                        onChange={() => { 
+                            if(symmetryOn && !biomolOn) setSymmetryOn(false)
+                            setBiomolOn(!biomolOn)
+                        }}
                         label="Show biomolecule" />
                     <MoorhenSlider
                         sliderTitle="Symmetry Radius"

@@ -210,6 +210,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
      */
     toggleSymmetry(): Promise<void> {
         this.symmetryOn = !this.symmetryOn;
+        if(this.symmetryOn)
+            this.biomolOn = false;
         return this.drawSymmetry()
     }
 
@@ -253,8 +255,11 @@ export class MoorhenMolecule implements moorhen.Molecule {
                         mat16.push(0.0);          mat16.push(0.0);          mat16.push(0.0);          mat16.push(1.0);
                         this.symmetryMatrices.push(mat16);
                     }
+                    operators.delete()
                 }
+                generators.delete()
             }
+            assemblies.delete()
         }
     }
 
@@ -291,7 +296,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {boolean} [fetchSymMatrix=true] - Indicates whether a new symmetry matrix must be fetched from libcoot api
      */
     async drawSymmetry(fetchSymMatrix: boolean = true): Promise<void> {
-        if(this.biomolOn) return;
+        if(this.biomolOn) {
+            console.log("Crystal symmetry will not be drawn when biomolecule is being shown.")
+            return;
+        }
         if (fetchSymMatrix) {
             await this.fetchSymmetryMatrix()
         }
