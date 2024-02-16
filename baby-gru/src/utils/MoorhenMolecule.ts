@@ -1,5 +1,8 @@
 import 'pako';
-import { guid, readTextFile, readGemmiStructure, centreOnGemmiAtoms, getRandomMoleculeColour, doDownload, formatLigandSVG } from './MoorhenUtils'
+import { 
+    guid, readTextFile, readGemmiStructure, centreOnGemmiAtoms, 
+    getRandomMoleculeColour, doDownload, formatLigandSVG, getCentreAtom
+ } from './MoorhenUtils'
 import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation"
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
@@ -82,7 +85,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     uniqueId: string;
     monomerLibraryPath: string;
     defaultColourRules: moorhen.ColourRule[];
-    adaptativeBondsRepresentation: { bonds: moorhen.MoleculeRepresentation; alphas: moorhen.MoleculeRepresentation };
+    adaptativeBondsRepresentation: moorhen.MoleculeRepresentation;
     hoverRepresentation: moorhen.MoleculeRepresentation;
     unitCellRepresentation: moorhen.MoleculeRepresentation;
     environmentRepresentation: moorhen.MoleculeRepresentation;
@@ -151,12 +154,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.hoverRepresentation.setParentMolecule(this)
         this.selectionRepresentation = new MoorhenMoleculeRepresentation('residueSelection', null, this.commandCentre, this.glRef)
         this.selectionRepresentation.setParentMolecule(this)
-        this.adaptativeBondsRepresentation = {
-            bonds: new MoorhenMoleculeRepresentation('CBs', null, this.commandCentre, this.glRef),
-            alphas: new MoorhenMoleculeRepresentation('CAs', '/*/*/*/*', this.commandCentre, this.glRef)
-        }
-        this.adaptativeBondsRepresentation.bonds.setParentMolecule(this)
-        this.adaptativeBondsRepresentation.alphas.setParentMolecule(this)
+        this.adaptativeBondsRepresentation = new MoorhenMoleculeRepresentation('adaptativeBonds', null, this.commandCentre, this.glRef)
+        this.adaptativeBondsRepresentation.setParentMolecule(this)
     }
 
     /**
@@ -304,6 +303,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
             await this.fetchSymmetryMatrix()
         }
         this.representations.forEach(representation => representation.drawSymmetry())
+        if (this.adaptativeBondsEnabled) {
+            this.adaptativeBondsRepresentation.drawSymmetry()
+        }
     }
 
     /**
@@ -427,8 +429,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.unitCellRepresentation?.deleteBuffers()
         this.environmentRepresentation?.deleteBuffers()
         this.selectionRepresentation?.deleteBuffers()
-        this.adaptativeBondsRepresentation?.bonds.deleteBuffers()
-        this.adaptativeBondsRepresentation?.alphas.deleteBuffers()
+        this.adaptativeBondsRepresentation?.deleteBuffers()
         this.representations.forEach(representation => representation.deleteBuffers())
         this.glRef.current.drawScene()
         const response = await this.commandCentre.current.cootCommand({
@@ -1114,8 +1115,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         } else if (style === 'residueSelection') {
             this.selectionRepresentation?.deleteBuffers()
         } else if (style === 'adaptativeBonds') {
-            this.adaptativeBondsRepresentation?.bonds.deleteBuffers()
-            this.adaptativeBondsRepresentation?.alphas.deleteBuffers()   
+            this.adaptativeBondsRepresentation?.deleteBuffers()
         } else {
             this.representations.forEach(representation => representation.style === style ? representation.deleteBuffers() : null)
             this.representations = this.representations.filter(representation => representation.style !== style)
@@ -1148,8 +1148,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 }   
             }
             if (this.adaptativeBondsEnabled) {
-                for (let key in this.adaptativeBondsRepresentation) {
-                    for (let buffer of this.adaptativeBondsRepresentation[key].buffers) {
+                if (Array.isArray(this.adaptativeBondsRepresentation.buffers)) {
+                    for (let buffer of this.adaptativeBondsRepresentation.buffers) {
                         if (bufferIn.id === buffer.id) {
                             return true
                         }
@@ -1182,7 +1182,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     async drawHover(selectionString: string): Promise<void> {
         if (typeof selectionString === 'string') {
             this.hoverRepresentation.cid = selectionString
-            this.hoverRepresentation.redraw()
+            await this.hoverRepresentation.redraw()
         }
     }
 
@@ -1193,7 +1193,33 @@ export class MoorhenMolecule implements moorhen.Molecule {
     async drawResidueSelection(selectionString: string): Promise<void> {
         if (typeof selectionString === 'string') {
             this.selectionRepresentation.cid = selectionString
-            this.selectionRepresentation.redraw()
+            await this.selectionRepresentation.redraw()
+        }
+    }
+
+    /**
+     * Get the active atom for this molecule
+     * @returns {string} The active atom CID
+     */
+    async getActiveAtom(): Promise<string> {
+        const [_molecule, activeAtomCid] = await getCentreAtom([this], this.commandCentre, this.glRef)
+        return activeAtomCid
+    }
+
+    /**
+     * Value setter for MoorhenMolecule.adaptativeBondsEnabled
+     * @param {boolean} newValue - The new value
+     */
+    async setDrawAdaptativeBonds(newValue: boolean) {
+        this.adaptativeBondsEnabled = newValue
+        if (newValue) {
+            const activeAtomCid = await this.getActiveAtom()
+            if (activeAtomCid === this.adaptativeBondsRepresentation.cid) {
+                this.adaptativeBondsRepresentation.show()
+            }
+            await this.redrawAdaptativeBonds(activeAtomCid)
+        } else {
+            this.adaptativeBondsRepresentation.hide()
         }
     }
 
@@ -1202,66 +1228,21 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} selectionString - The CID selection for the residues that will be highlighted
      * @param {number} maxDist - The maximum distance from the central residue to draw bonds
      */
-    async drawAdaptativeBonds(selectionString?: string, maxDist: number = 8): Promise<void> {
-        let neighBoringResidues: string[] = []
-        if (!selectionString && !this.adaptativeBondsRepresentation.bonds.cid) {
+    async redrawAdaptativeBonds(selectionCid?: string, maxDist: number = 8): Promise<void> {
+        if (!this.adaptativeBondsEnabled) {
+            this.adaptativeBondsRepresentation?.deleteBuffers()
+            this.adaptativeBondsEnabled = false
+            return
+        } else if (!selectionCid && !this.adaptativeBondsRepresentation.cid) {
             console.warn(`No selection string provided when drawing origin bonds`)
             this.adaptativeBondsEnabled = false
             return
-        } else if (!selectionString) {
-            neighBoringResidues = this.adaptativeBondsRepresentation.bonds.cid.split('||')
-        } else {
-            neighBoringResidues = await this.getNeighborResiduesCids(selectionString, maxDist)
-            this.adaptativeBondsRepresentation.bonds.cid = neighBoringResidues.join('||')   
-        }
+        } else if (selectionCid) {
+            this.adaptativeBondsRepresentation.cid = selectionCid
+        } 
 
         this.adaptativeBondsEnabled = true
-        const drawMissingLoops = MoorhenReduxStore.getState().sceneSettings.drawMissingLoops
-        
-        if (drawMissingLoops) {
-            await this.commandCentre.current.cootCommand({
-                command: "set_draw_missing_residue_loops",
-                returnType:'status',
-                commandArgs: [ false ],
-            }, false)
-        }
-
-        await this.adaptativeBondsRepresentation.bonds.redraw()
-
-        if (drawMissingLoops) {
-            await this.commandCentre.current.cootCommand({
-                command: "set_draw_missing_residue_loops",
-                returnType:'status',
-                commandArgs: [ true ],
-            }, false)
-        }
-
-        await Promise.all(neighBoringResidues.map(i => {
-            this.commandCentre.current.cootCommand({
-                message: 'coot_command',
-                command: "add_to_non_drawn_bonds",
-                returnType: 'status',
-                commandArgs: [this.molNo, i],
-            }, false)
-        }))
-
-        await this.adaptativeBondsRepresentation.alphas.redraw()
-
-        await this.commandCentre.current.cootCommand({
-            message: 'coot_command',
-            command: "clear_non_drawn_bonds",
-            returnType: 'status',
-            commandArgs: [this.molNo],
-        }, false)    
-
-        await Promise.all(this.excludedSelections.map(i => {
-            this.commandCentre.current.cootCommand({
-                message: 'coot_command',
-                command: "add_to_non_drawn_bonds",
-                returnType: 'status',
-                commandArgs: [this.molNo, i],
-            }, false)
-        }))
+        await this.adaptativeBondsRepresentation.redraw()
     }
 
     /**
@@ -1272,7 +1253,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     async drawEnvironment(selectionCid: string, labelled: boolean = false): Promise<void> {
         if (typeof selectionCid === 'string') {
             this.environmentRepresentation.cid = selectionCid
-            this.environmentRepresentation.redraw()
+            await this.environmentRepresentation.redraw()
         }
     }
 
@@ -1297,10 +1278,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             }
         }
 
-        if (this.adaptativeBondsEnabled) {
-            await this.drawAdaptativeBonds()
-        }
-
+        await this.redrawAdaptativeBonds()
         await this.drawSymmetry(false)
     }
 
@@ -1691,7 +1669,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         const hasVisibleBuffers = this.representations
             .filter(item => !excludeStyles.includes(item.style))
             .some(item => item.visible)
-        return hasVisibleBuffers && isVisible
+        return (hasVisibleBuffers || this.adaptativeBondsEnabled) && isVisible
     }
 
     /**

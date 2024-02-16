@@ -20,7 +20,7 @@ import { showMolecule } from '../../store/moleculeRepresentationsSlice';
 import { triggerUpdate } from '../../store/moleculeMapUpdateSlice';
 import { MoorhenCarbohydrateList } from "../list/MoorhenCarbohydrateList";
 
-const allRepresentations = [ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks', 'restraints' ]
+const allRepresentations = [ 'CBs', 'adaptativeBonds', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks', 'restraints' ]
 
 interface MoorhenMoleculeCardPropsInterface extends moorhen.CollectedProps {
     dropdownId: number;
@@ -68,6 +68,7 @@ export type clickedResidueType = {
 
 export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInterface>((props, cardRef) => {
     const dispatch = useDispatch()
+    const molecules = useSelector((state: moorhen.State) => state.molecules)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.miscAppSettings.defaultExpandDisplayCards)
@@ -135,32 +136,29 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
         }
     }
     
-    const redrawSymmetryIfDirty = () => {
+    const redrawOriginRepresentations = useCallback(async () => {
         if (isDirty.current) {
             busyRedrawing.current = true
             isDirty.current = false
-            props.molecule.drawSymmetry()
-            .then(_ => {
-                busyRedrawing.current = false
-                redrawSymmetryIfDirty()
-            })
+            if (props.molecule.adaptativeBondsEnabled) {
+                const [molecule, residueCid] = await getCentreAtom(molecules, props.commandCentre, props.glRef)
+                if (molecule.molNo === props.molecule.molNo) {
+                    await props.molecule.redrawAdaptativeBonds(residueCid, 10)
+                }    
+            }
+            await props.molecule.drawSymmetry()
+            busyRedrawing.current = false
+            redrawOriginRepresentations()
         }
-    }
-
-    const redrawAdaptativeBonds = async () => {
-        const [molecule, residueCid] = await getCentreAtom([props.molecule], props.commandCentre, props.glRef)
-        if (molecule.molNo === props.molecule.molNo) {
-            await props.molecule.drawAdaptativeBonds(residueCid, 10)
-        }
-    }
+    }, [molecules, props.molecule])
 
     const handleOriginUpdate = useCallback(() => {
         isDirty.current = true
-        if (!busyRedrawing.current) {
-            redrawSymmetryIfDirty()
+        if (!busyRedrawing.current && isVisible) {
+            redrawOriginRepresentations()
         }
 
-    }, [props.molecule, props.glRef])
+    }, [redrawOriginRepresentations, isVisible])
 
     useEffect(() => {
         if (!userPreferencesMounted || drawMissingLoops === null) {
@@ -596,7 +594,7 @@ const RepresentationCheckbox = (props: {
     const [repState, setRepState] = useState<boolean>(false)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
-    const chipStyle = getChipStyle(props.molecule.defaultColourRules, repState, isDark, `${convertRemToPx(6.5)}px`)
+    const chipStyle = getChipStyle(props.molecule.defaultColourRules, repState, isDark, `${convertRemToPx(9)}px`)
     const disabled: boolean = (
         !props.isVisible 
         || (props.repKey === 'ligands' && props.molecule.ligands.length === 0) 
@@ -616,10 +614,11 @@ const RepresentationCheckbox = (props: {
 
     const handleClick = useCallback(() => {
         if (!disabled) {
-            if (repState) {
+            if (props.repKey === 'adaptativeBonds') {
+                props.molecule.setDrawAdaptativeBonds(!repState)
+            } else if (repState) {
                 props.molecule.hide(props.repKey)
-            }
-            else {
+            } else {
                 props.molecule.show(props.repKey)
             }
             props.changeShowState({ key: props.repKey, state: !repState })

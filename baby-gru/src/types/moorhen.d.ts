@@ -92,7 +92,9 @@ export namespace moorhen {
     type coorFormats = 'pdb' | 'mmcif';
     
     interface Molecule {
-        drawAdaptativeBonds(selectionString?: string, maxDist?: number): Promise<void>;
+        getActiveAtom(): Promise<string>;
+        setDrawAdaptativeBonds(newValue: boolean): Promise<void>;
+        redrawAdaptativeBonds(selectionString?: string, maxDist?: number): Promise<void>;
         changeChainId(oldId: string, newId: string, redraw?: boolean, startResNo?: number, endResNo?: number): Promise<number>;
         refineResiduesUsingAtomCidAnimated(cid: string, activeMap: moorhen.Map, dist?: number, redraw?: boolean, redrawFragmentFirst?: boolean): Promise<void>;
         mergeFragmentFromRefinement(cid: string, fragmentMolecule: moorhen.Molecule, acceptTransform?: boolean, refineAfterMerge?: boolean): Promise<void>;
@@ -167,6 +169,7 @@ export namespace moorhen {
         getLigandSVG(resName: string, useCache?: boolean): Promise<string>;
         isValidSelection(cid: string): Promise<boolean>;
         type: string;
+        adaptativeBondsEnabled: boolean;
         cachedLigandSVGs: {[key: string]: string}[];
         cachedPrivateerValidation: privateer.ResultsEntry[];
         isLigand: boolean;
@@ -202,7 +205,7 @@ export namespace moorhen {
         defaultColourRules: ColourRule[];
         restraints: {maxRadius: number, cid: string}[];
         monomerLibraryPath: string;
-        adaptativeBondsRepresentation: { bonds: moorhen.MoleculeRepresentation; alphas: moorhen.MoleculeRepresentation };
+        adaptativeBondsRepresentation: moorhen.MoleculeRepresentation;
         hoverRepresentation: MoleculeRepresentation;
         unitCellRepresentation: MoleculeRepresentation;
         environmentRepresentation: MoleculeRepresentation;
@@ -216,7 +219,7 @@ export namespace moorhen {
     type RepresentationStyles = 'VdwSpheres' | 'ligands' | 'CAs' | 'CBs' | 'CDs' | 'gaussian' | 'allHBonds' | 'rama' | 
     'rotamer' | 'CRs' | 'MolecularSurface' | 'DishyBases' | 'VdWSurface' | 'Calpha' | 'unitCell' | 'hover' | 'environment' | 
     'ligand_environment' | 'contact_dots' | 'chemical_features' | 'ligand_validation' | 'glycoBlocks' | 'restraints' | 
-    'residueSelection' | 'MetaBalls'
+    'residueSelection' | 'MetaBalls' | 'adaptativeBonds'
 
     interface MoleculeRepresentation {
         exportAsGltf(): Promise<ArrayBuffer>;
