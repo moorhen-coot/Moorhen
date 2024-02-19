@@ -2699,7 +2699,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     } else {
                         self.doMouseUp(evt, self);
                     }
-                    evt.stopPropagation();
                 },
                 false);
             self.canvas.addEventListener("contextmenu",
