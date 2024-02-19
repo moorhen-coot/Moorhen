@@ -68,8 +68,7 @@ export namespace libcootApi {
         y: number;
         z: number;
         charge: number;
-        element: emscriptem.instance<string>;
-        symbol: string;
+        element: string;
         tempFactor: number;
         serial: number;
         name: string;
@@ -79,7 +78,7 @@ export namespace libcootApi {
         chain_id: string;
         res_no: string;
         res_name: string;
-        label: string;
+        label: string
     }
     interface AutoReadMtzInfo {
         idx: number;

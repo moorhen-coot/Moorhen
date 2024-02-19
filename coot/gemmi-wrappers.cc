@@ -345,7 +345,7 @@ std::vector<SequenceEntry> get_sequence_info(const gemmi::Structure &Structure, 
                 } else {
                     seq_entry.resCode = residueCodesThreeToOne[residue.name];
                 }
-                currentSequence.push_back(seq_entry);
+                currentSequence.push_back(std::move(seq_entry));
             }
             if (currentSequence.size() > 0) {
                 SequenceEntry seq_entry;
@@ -353,7 +353,7 @@ std::vector<SequenceEntry> get_sequence_info(const gemmi::Structure &Structure, 
                 seq_entry.chain = chain.name;
                 seq_entry.sequence = currentSequence;
                 seq_entry.type = int(polymerType);
-                sequences.push_back(seq_entry);
+                sequences.push_back(std::move(seq_entry));
             }
         }
     }
@@ -614,7 +614,7 @@ std::vector<AtomInfo> get_atom_info_for_selection(const gemmi::Structure &Struct
 
     std::vector<gemmi::Selection> selections_vec = parse_multi_cid_selections(cids);
     std::vector<gemmi::Selection> excluded_selections_vec = parse_multi_cid_selections(excluded_cids);
-    std::vector<AtomInfo> atom_info_vec;
+std::vector<AtomInfo> atom_info_vec;
 
     auto _structure = Structure;
     for (const auto& selection : excluded_selections_vec) {
@@ -633,7 +633,6 @@ std::vector<AtomInfo> get_atom_info_for_selection(const gemmi::Structure &Struct
                         atom_info.z = atom.pos.z;
                         atom_info.charge = atom.charge;
                         atom_info.element = get_element_name_as_string(atom.element);
-                        atom_info.symbol = get_element_name_as_string(atom.element);
                         atom_info.tempFactor = atom.b_iso;
                         atom_info.serial = atom.serial;
                         atom_info.name = atom.name;
@@ -642,15 +641,11 @@ std::vector<AtomInfo> get_atom_info_for_selection(const gemmi::Structure &Struct
                         atom_info.chain_id = chain.name;
                         atom_info.res_no = residue.seqid.str();
                         atom_info.res_name = residue.name;
-                        atom_info.label = "/" + model.name + "/" + chain.name + "/" + residue.seqid.str() +"(" + residue.name + ")/" + atom.name;
                         if (atom.has_altloc()) {
                             std::string altloc_str(1, atom.altloc);
-                            atom_info.label += ":" + altloc_str;
                             atom_info.alt_loc = altloc_str;
-                        } else {
-                            atom_info.alt_loc = "";
-                        }
-                        atom_info_vec.push_back(atom_info);
+                        } 
+                        atom_info_vec.push_back(std::move(atom_info)); 
                     }
                 }
             }
@@ -2657,7 +2652,6 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .field("z", &AtomInfo::z)
     .field("charge", &AtomInfo::charge)
     .field("element", &AtomInfo::element)
-    .field("symbol", &AtomInfo::symbol)
     .field("tempFactor", &AtomInfo::tempFactor)
     .field("serial", &AtomInfo::serial)
     .field("name", &AtomInfo::name)
@@ -2667,7 +2661,6 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .field("chain_id", &AtomInfo::chain_id)
     .field("res_no", &AtomInfo::res_no)
     .field("res_name", &AtomInfo::res_name)
-    .field("label", &AtomInfo::label)
     ;
 
     register_vector<AtomInfo>("VectorAtomInfo");

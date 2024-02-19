@@ -1342,8 +1342,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
                         const atomAltLoc = atom.altloc
                         const atomSerial = atom.serial
                         const atomHasAltLoc = atom.has_altloc()
-                        const atomSymbol: string = window.CCP4Module.getElementNameAsString(atomElement)
-                        const atomName = atomSymbol.length === 2 ? (atom.name).padEnd(4, " ") : (" " + atom.name).padEnd(4, " ")
+                        const atomElementString: string = window.CCP4Module.getElementNameAsString(atomElement)
+                        const atomName = atomElementString.length === 2 ? (atom.name).padEnd(4, " ") : (" " + atom.name).padEnd(4, " ")
                         const diff = this.displayObjectsTransformation.centre
                         let x = gemmiAtomPos.x + this.glRef.current.origin[0] - diff[0]
                         let y = gemmiAtomPos.y + this.glRef.current.origin[1] - diff[1]
@@ -1367,7 +1367,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                                 res_no: residueSeqId.str(),
                                 res_name: residue.name,
                                 name: atomName,
-                                element: atomElement,
+                                element: atomElementString,
                                 pos: [
                                     transPos[0] - this.glRef.current.origin[0] + diff[0],
                                     transPos[1] - this.glRef.current.origin[1] + diff[1],
@@ -1375,7 +1375,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
                                 ],
                                 tempFactor: atom.b_iso,
                                 charge: atom.charge,
-                                symbol: atomSymbol,
                                 x: transPos[0] - this.glRef.current.origin[0] + diff[0],
                                 y: transPos[1] - this.glRef.current.origin[1] + diff[1],
                                 z: transPos[2] - this.glRef.current.origin[2] + diff[2],
@@ -1657,13 +1656,17 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if (this.atomsDirty || this.gemmiStructure.isDeleted()) {
             await this.updateAtoms()
         }
-        
+
         let result: moorhen.AtomInfo[] = []
         const atomInfoVec = window.CCP4Module.get_atom_info_for_selection(this.gemmiStructure, cid, omitExcludedCids ? this.excludedSelections.join("||") : "")
         const atomInfoVecSize = atomInfoVec.size()
         for (let i = 0; i < atomInfoVecSize; i++) {
             const atomInfo = atomInfoVec.get(i)
-            result.push({...atomInfo, pos: [atomInfo.x, atomInfo.y, atomInfo.z]})
+            result.push({
+                ...atomInfo,
+                pos: [atomInfo.x, atomInfo.y, atomInfo.z],
+                label: `/${atomInfo.mol_name}/${atomInfo.chain_id}/${atomInfo.res_no}(${atomInfo.res_name})/${atomInfo.name}${atomInfo.has_altloc ? `:${atomInfo.alt_loc}` : ""}`
+            })
         }
         atomInfoVec.delete()
         

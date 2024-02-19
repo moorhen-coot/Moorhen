@@ -56,8 +56,7 @@ export namespace moorhen {
         y: number;
         z: number;
         charge: number;
-        element: emscriptem.instance<string>;
-        symbol: string;
+        element: string;
         tempFactor: number;
         serial: number;
         name: string;
