@@ -127,7 +127,8 @@ declare module 'moorhen' {
         setDrawAdaptativeBonds(newValue: boolean): Promise<void>;
         getActiveAtom(): Promise<string>;
         adaptativeBondsEnabled: boolean;
-        cachedLigandSVGs: {[key: string]: string}[];
+        cachedLigandSVGs: {[key: string]: string};
+        cachedGemmiAtoms: _moorhen.AtomInfo[];
         cachedPrivateerValidation: privateer.ResultsEntry[];
         isLigand: boolean;
         type: string;

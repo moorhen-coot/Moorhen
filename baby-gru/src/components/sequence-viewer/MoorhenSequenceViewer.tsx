@@ -8,7 +8,7 @@ import { webGL } from "../../types/mgWebGL";
 import { clickedResidueType } from '../card/MoorhenMoleculeCard';
 import { useSelector, useDispatch } from 'react-redux';
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
-import { cidToSpec } from "../../utils/MoorhenUtils";
+import { cidToAtomInfo, cidToSpec } from "../../utils/MoorhenUtils";
 
 !window.customElements.get('protvista-navigation') && window.customElements.define("protvista-navigation", ProtvistaNavigation);
 !window.customElements.get('protvista-sequence') && window.customElements.define("protvista-sequence", ProtvistaSequence);
@@ -222,7 +222,7 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                 } else if (shiftKey.current && props.useMainStateResidueSelections) {
                     let atomClicked: moorhen.AtomClickedEvent = new CustomEvent("atomClicked", {
                         "detail": {
-                            atom: {label: residue.cid},
+                            atom: cidToAtomInfo(residue.cid),
                             buffer: {id: props.molecule.representations[0]?.buffers[0]?.id},
                             isResidueSelection: true
                         }

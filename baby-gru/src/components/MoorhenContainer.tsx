@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useRef, useMemo } from 'react';
 import { Container, Col, Row, Spinner } from 'react-bootstrap';
 import { MoorhenWebMG } from './webMG/MoorhenWebMG';
-import { getTooltipShortcutLabel, createLocalStorageInstance } from '../utils/MoorhenUtils';
+import { getTooltipShortcutLabel, createLocalStorageInstance, getAtomInfoLabel } from '../utils/MoorhenUtils';
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre"
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
 import { Backdrop } from "@mui/material";
@@ -310,7 +310,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         checkMoleculeSizes()
     }, [molecules])
 
-    const onAtomHovered = useCallback((identifier: { buffer: { id: string; }; atom: { label: string; }; }) => {
+    const onAtomHovered = useCallback((identifier: { buffer: { id: string; }; atom: moorhen.AtomInfo; }) => {
         if (identifier == null) {
             if (lastHoveredAtomRef.current !== null && lastHoveredAtomRef.current.molecule !== null) {
                 dispatch( setHoveredAtom({ molecule: null, cid: null }) )
@@ -319,8 +319,9 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         else {
             molecules.forEach(molecule => {
                 if (molecule.buffersInclude(identifier.buffer)) {
-                    if (molecule !== hoveredAtom.molecule || identifier.atom.label !== hoveredAtom.cid) {
-                        dispatch( setHoveredAtom({ molecule: molecule, cid: identifier.atom.label }) )
+                    const newCid = getAtomInfoLabel(identifier.atom)
+                    if (molecule !== hoveredAtom.molecule || newCid !== hoveredAtom.cid) {
+                        dispatch( setHoveredAtom({ molecule: molecule, cid: newCid }) )
                     }
                 }
             })

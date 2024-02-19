@@ -1,5 +1,5 @@
 import { IconButton, Popover, Tooltip } from "@mui/material"
-import { cidToSpec, guid } from "../../utils/MoorhenUtils"
+import { atomInfoToResSpec, cidToSpec, getAtomInfoLabel, guid } from "../../utils/MoorhenUtils"
 import { MoorhenNotification } from "./MoorhenNotification"
 import { AdsClickOutlined, AllOutOutlined, CloseOutlined, CopyAllOutlined, CrisisAlertOutlined, DeleteOutlined, EditOutlined, FormatColorFillOutlined, Rotate90DegreesCw, SwapVertOutlined, SwipeRightAlt } from "@mui/icons-material"
 import { batch, useDispatch, useSelector } from "react-redux"
@@ -67,12 +67,12 @@ export const MoorhenResidueSelectionActions = (props) => {
         }
         
         if (residueSelection.first === null || residueSelection.molecule === null || residueSelection.molecule.molNo !== selectedMolecule.molNo) {
-            const resSpec = cidToSpec(evt.detail.atom.label)
+            const resSpec = atomInfoToResSpec(evt.detail.atom)
             await selectedMolecule.drawResidueSelection(`/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*`)
             dispatch(
                 setResidueSelection({
                     molecule: selectedMolecule,
-                    first: evt.detail.atom.label,
+                    first: resSpec.cid,
                     second: null,
                     cid: null,
                     isMultiCid: false,
@@ -84,7 +84,7 @@ export const MoorhenResidueSelectionActions = (props) => {
         }
 
         const startResSpec = cidToSpec(residueSelection.first)
-        const stopResSpec = cidToSpec(evt.detail.atom.label)
+        const stopResSpec = atomInfoToResSpec(evt.detail.atom)
         if (startResSpec.chain_id !== stopResSpec.chain_id) {
             dispatch( clearResidueSelection() )
         } else {
@@ -95,7 +95,7 @@ export const MoorhenResidueSelectionActions = (props) => {
                 setResidueSelection({
                     molecule: selectedMolecule,
                     first: residueSelection.first,
-                    second: evt.detail.atom.label,
+                    second: stopResSpec.cid,
                     cid: cid,
                     isMultiCid: false,
                     label: `/${startResSpec.mol_no}/${startResSpec.chain_id}/${sortedResNums[0]}-${sortedResNums[1]}`

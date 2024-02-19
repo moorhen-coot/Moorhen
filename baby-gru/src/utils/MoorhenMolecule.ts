@@ -1,7 +1,7 @@
 import 'pako';
 import { 
     guid, readTextFile, readGemmiStructure, centreOnGemmiAtoms, 
-    getRandomMoleculeColour, doDownload, formatLigandSVG, getCentreAtom
+    getRandomMoleculeColour, doDownload, formatLigandSVG, getCentreAtom, getAtomInfoLabel
  } from './MoorhenUtils'
 import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation"
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
@@ -96,7 +96,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
     isLigand: boolean;
     coordsFormat: moorhen.coorFormats;
     cachedPrivateerValidation: privateer.ResultsEntry[];
-    cachedLigandSVGs: {[key: string]: string}[];
+    cachedGemmiAtoms:moorhen.AtomInfo[];
+    cachedLigandSVGs: {[key: string]: string};
     moleculeDiameter: number;
     adaptativeBondsEnabled: boolean;
 
@@ -110,6 +111,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.coordsFormat = null
         this.gemmiStructure = null
         this.sequences = []
+        this.cachedGemmiAtoms = null
         this.cachedLigandSVGs = null
         this.cachedPrivateerValidation = null
         this.ligands = null
@@ -335,6 +337,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
             this.gemmiStructure.delete()
         }
+        this.cachedGemmiAtoms = null
         this.gemmiStructure = readGemmiStructure(coordString, this.name)
         window.CCP4Module.gemmi_setup_entities(this.gemmiStructure)
         // Only override if this is mmcif
@@ -981,7 +984,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         const selectionAtoms = await this.gemmiAtomsForCid(selectionCid)
 
         if (selectionAtoms.length === 0) {
-            console.log('Unable to selet any atoms, skip centering...')
+            console.log('Unable to select any atoms, skip centering...')
             return
         }
 
@@ -1342,15 +1345,14 @@ export class MoorhenMolecule implements moorhen.Molecule {
                         const atomAltLoc = atom.altloc
                         const atomSerial = atom.serial
                         const atomHasAltLoc = atom.has_altloc()
-                        const atomSymbol: string = window.CCP4Module.getElementNameAsString(atomElement)
-                        const atomName = atomSymbol.length === 2 ? (atom.name).padEnd(4, " ") : (" " + atom.name).padEnd(4, " ")
+                        const atomElementString: string = window.CCP4Module.getElementNameAsString(atomElement)
+                        const atomName = atomElementString.length === 2 ? (atom.name).padEnd(4, " ") : (" " + atom.name).padEnd(4, " ")
                         const diff = this.displayObjectsTransformation.centre
                         let x = gemmiAtomPos.x + this.glRef.current.origin[0] - diff[0]
                         let y = gemmiAtomPos.y + this.glRef.current.origin[1] - diff[1]
                         let z = gemmiAtomPos.z + this.glRef.current.origin[2] - diff[2]
                         const origin = this.displayObjectsTransformation.origin
                         const quat = this.displayObjectsTransformation.quat
-                        const cid = `/${model.name}/${chain.name}/${residueSeqId.str()}/${atom.name}${atomHasAltLoc ? ':' + String.fromCharCode(atomAltLoc) : ''}`
                         if (quat) {
                             const theMatrix = quatToMat4(quat)
                             theMatrix[12] = origin[0]
@@ -1367,22 +1369,15 @@ export class MoorhenMolecule implements moorhen.Molecule {
                                 res_no: residueSeqId.str(),
                                 res_name: residue.name,
                                 name: atomName,
-                                element: atomElement,
-                                pos: [
-                                    transPos[0] - this.glRef.current.origin[0] + diff[0],
-                                    transPos[1] - this.glRef.current.origin[1] + diff[1],
-                                    transPos[2] - this.glRef.current.origin[2] + diff[2]
-                                ],
+                                element: atomElementString,
                                 tempFactor: atom.b_iso,
                                 charge: atom.charge,
-                                symbol: atomSymbol,
                                 x: transPos[0] - this.glRef.current.origin[0] + diff[0],
                                 y: transPos[1] - this.glRef.current.origin[1] + diff[1],
                                 z: transPos[2] - this.glRef.current.origin[2] + diff[2],
                                 serial: atomSerial,
                                 has_altloc: atomHasAltLoc,
                                 alt_loc: atomHasAltLoc ? String.fromCharCode(atomAltLoc) : '',
-                                label: cid
                             })
                         }
                         atom.delete()
@@ -1657,16 +1652,24 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if (this.atomsDirty || this.gemmiStructure.isDeleted()) {
             await this.updateAtoms()
         }
-        
+
+        if (this.cachedGemmiAtoms && (cid === '/*/*/*/*' || cid === '//')) {
+            return this.cachedGemmiAtoms
+        }
+
         let result: moorhen.AtomInfo[] = []
         const atomInfoVec = window.CCP4Module.get_atom_info_for_selection(this.gemmiStructure, cid, omitExcludedCids ? this.excludedSelections.join("||") : "")
         const atomInfoVecSize = atomInfoVec.size()
         for (let i = 0; i < atomInfoVecSize; i++) {
             const atomInfo = atomInfoVec.get(i)
-            result.push({...atomInfo, pos: [atomInfo.x, atomInfo.y, atomInfo.z]})
+            result.push(atomInfo)
         }
         atomInfoVec.delete()
-        
+
+        if (cid === '/*/*/*/*' || cid === '//') {
+            this.cachedGemmiAtoms = result
+        }
+
         return result
     }
 
@@ -2078,8 +2081,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         return {
             molecule: this,
-            first: selectionAtoms[0].label,
-            second: selectionAtoms[selectionAtoms.length - 1].label,
+            first: getAtomInfoLabel(selectionAtoms[0]),
+            second: getAtomInfoLabel(selectionAtoms[selectionAtoms.length - 1]),
             isMultiCid: cid.includes('||'),
             cid: cid.includes('||') ? cid.split('||') : cid,
             label: cid

@@ -25,7 +25,7 @@ const MoorhenPopoverOptions = (props: {
     const selectRef = useRef<HTMLSelectElement | null>(null)
     const extraInputRef = useRef(null)
     
-    const handleRightClick = useCallback((e) => {
+    const handleRightClick = useCallback((e: moorhen.AtomRightClickEvent) => {
         if (props.showContextMenu) {
             props.setShowOverlay(false)
         }

@@ -51,13 +51,11 @@ export namespace moorhen {
     }
     
     type AtomInfo = {
-        pos: [number, number, number];
         x: number;
         y: number;
         z: number;
         charge: number;
-        element: emscriptem.instance<string>;
-        symbol: string;
+        element: string;
         tempFactor: number;
         serial: number;
         name: string;
@@ -67,7 +65,6 @@ export namespace moorhen {
         chain_id: string;
         res_no: string;
         res_name: string;
-        label: string;
     }
     
     type DisplayObject = {
@@ -170,7 +167,8 @@ export namespace moorhen {
         isValidSelection(cid: string): Promise<boolean>;
         type: string;
         adaptativeBondsEnabled: boolean;
-        cachedLigandSVGs: {[key: string]: string}[];
+        cachedLigandSVGs: {[key: string]: string};
+        cachedGemmiAtoms: AtomInfo[];
         cachedPrivateerValidation: privateer.ResultsEntry[];
         isLigand: boolean;
         excludedCids: string[];
@@ -542,7 +540,7 @@ export namespace moorhen {
     }
 
     type AtomRightClickEventInfo = {
-        atom: {label: string};
+        atom: moorhen.AtomInfo;
         buffer: {id: string};
         coords: string,
         pageX: number;
@@ -551,12 +549,10 @@ export namespace moorhen {
 
     type AtomRightClickEvent = CustomEvent<AtomRightClickEventInfo>
     
-    type AtomDraggedEvent = CustomEvent<{ atom: {
-        atom: {
-            label: string;
-        };
+    type AtomDraggedEvent = CustomEvent<{ 
+        atom: moorhen.AtomInfo
         buffer: any;
-    } }>
+    }>
 
     type OriginUpdateEvent = CustomEvent<{ origin: [number, number, number]; }>
 
@@ -566,7 +562,7 @@ export namespace moorhen {
 
     type AtomClickedEvent = CustomEvent<{
         buffer: { id: string };
-        atom: { label: string };
+        atom: moorhen.AtomInfo;
         isResidueSelection: boolean;
     }>
 
