@@ -287,14 +287,25 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         if (!cid) {
             console.warn('No selection string provided when drawing origin bonds')
             return []
-        }  
+        }
 
-        const neighBoringResidues = await this.parentMolecule.getNeighborResiduesCids(cid, maxDist)
-        const bondCids = neighBoringResidues.join('||')
+        let neighBoringResidues = await this.parentMolecule.getNeighborResiduesCids(cid, maxDist)
+        let bondCids = neighBoringResidues.join('||')
 
         if (!bondCids) {
-            console.warn(`Cannot find neighboring residues for ${cid}`)
-            return []
+            const isValid = await this.parentMolecule.isValidSelection(cid)
+            if (isValid) {
+                console.warn(`Cannot find neighboring residues for ${cid}`)                
+                return []
+            } 
+            const currentActiveAtom = await this.parentMolecule.getActiveAtom()
+            neighBoringResidues = await this.parentMolecule.getNeighborResiduesCids(currentActiveAtom, maxDist)
+            bondCids = neighBoringResidues.join('||')
+            if (!bondCids) {
+                console.warn(`Cannot find neighboring residues for ${cid}`)                
+                return []
+            } 
+            console.warn(`Cannot find neighboring residues for ${cid}, defaulting to active atom ${currentActiveAtom}`)
         }
 
         const drawMissingLoops = MoorhenReduxStore.getState().sceneSettings.drawMissingLoops
@@ -344,12 +355,25 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             }, false)
         }))
 
-        let objects = {}
-        for (let key in bondObjects[0]) {
-            objects = {...objects, [key]: bondObjects[0][key].concat(alphaObjects[0][key])}
+        if (alphaObjects.length !== bondObjects.length) {
+            console.warn('CBs and CAs object arrays have different lengthts, cannot merge them...')
+            return []
         }
 
-        return [objects]
+        let objects = []
+        for (let i=0; i < bondObjects.length; i++) {
+            let iObjects = {}
+            for (let key in bondObjects[i]) {
+                if (!(key in alphaObjects[i])) {
+                    console.warn(`Attr. ${key} not found in CAs buffer object with index ${i}, skipping...`)
+                } else {
+                    iObjects[key] = bondObjects[i][key].concat(alphaObjects[i][key])
+                }
+            }
+            objects.push(iObjects)
+        }
+
+        return objects
     }
 
     async getRestraintsMeshBuffers() {
