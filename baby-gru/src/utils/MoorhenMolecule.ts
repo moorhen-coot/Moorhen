@@ -96,7 +96,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
     isLigand: boolean;
     coordsFormat: moorhen.coorFormats;
     cachedPrivateerValidation: privateer.ResultsEntry[];
-    cachedLigandSVGs: {[key: string]: string}[];
+    cachedGemmiAtoms:moorhen.AtomInfo[];
+    cachedLigandSVGs: {[key: string]: string};
     moleculeDiameter: number;
     adaptativeBondsEnabled: boolean;
 
@@ -110,6 +111,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.coordsFormat = null
         this.gemmiStructure = null
         this.sequences = []
+        this.cachedGemmiAtoms = null
         this.cachedLigandSVGs = null
         this.cachedPrivateerValidation = null
         this.ligands = null
@@ -335,6 +337,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
             this.gemmiStructure.delete()
         }
+        this.cachedGemmiAtoms = null
         this.gemmiStructure = readGemmiStructure(coordString, this.name)
         window.CCP4Module.gemmi_setup_entities(this.gemmiStructure)
         // Only override if this is mmcif
@@ -981,7 +984,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         const selectionAtoms = await this.gemmiAtomsForCid(selectionCid)
 
         if (selectionAtoms.length === 0) {
-            console.log('Unable to selet any atoms, skip centering...')
+            console.log('Unable to select any atoms, skip centering...')
             return
         }
 
@@ -1650,6 +1653,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
             await this.updateAtoms()
         }
 
+        if (this.cachedGemmiAtoms && (cid === '/*/*/*/*' || cid === '//')) {
+            return this.cachedGemmiAtoms
+        }
+
         let result: moorhen.AtomInfo[] = []
         const atomInfoVec = window.CCP4Module.get_atom_info_for_selection(this.gemmiStructure, cid, omitExcludedCids ? this.excludedSelections.join("||") : "")
         const atomInfoVecSize = atomInfoVec.size()
@@ -1658,6 +1665,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
             result.push(atomInfo)
         }
         atomInfoVec.delete()
+
+        if (cid === '/*/*/*/*' || cid === '//') {
+            this.cachedGemmiAtoms = result
+        }
 
         return result
     }

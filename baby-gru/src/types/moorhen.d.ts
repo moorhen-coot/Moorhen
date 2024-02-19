@@ -167,7 +167,8 @@ export namespace moorhen {
         isValidSelection(cid: string): Promise<boolean>;
         type: string;
         adaptativeBondsEnabled: boolean;
-        cachedLigandSVGs: {[key: string]: string}[];
+        cachedLigandSVGs: {[key: string]: string};
+        cachedGemmiAtoms: AtomInfo[];
         cachedPrivateerValidation: privateer.ResultsEntry[];
         isLigand: boolean;
         excludedCids: string[];
