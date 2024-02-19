@@ -51,7 +51,6 @@ export namespace moorhen {
     }
     
     type AtomInfo = {
-        pos: [number, number, number];
         x: number;
         y: number;
         z: number;

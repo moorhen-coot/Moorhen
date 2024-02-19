@@ -1368,11 +1368,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
                                 res_name: residue.name,
                                 name: atomName,
                                 element: atomElementString,
-                                pos: [
-                                    transPos[0] - this.glRef.current.origin[0] + diff[0],
-                                    transPos[1] - this.glRef.current.origin[1] + diff[1],
-                                    transPos[2] - this.glRef.current.origin[2] + diff[2]
-                                ],
                                 tempFactor: atom.b_iso,
                                 charge: atom.charge,
                                 x: transPos[0] - this.glRef.current.origin[0] + diff[0],
@@ -1664,7 +1659,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
             const atomInfo = atomInfoVec.get(i)
             result.push({
                 ...atomInfo,
-                pos: [atomInfo.x, atomInfo.y, atomInfo.z],
                 label: `/${atomInfo.mol_name}/${atomInfo.chain_id}/${atomInfo.res_no}(${atomInfo.res_name})/${atomInfo.name}${atomInfo.has_altloc ? `:${atomInfo.alt_loc}` : ""}`
             })
         }

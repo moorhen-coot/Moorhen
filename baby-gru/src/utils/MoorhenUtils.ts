@@ -910,7 +910,7 @@ export const getDashedCylinder = (nsteps: number, cylinder_accu: number): [numbe
 }
 
 export const gemmiAtomPairsToCylindersInfo = (
-    atoms: [{ pos: [number, number, number], serial: (number | string) }, { pos: [number, number, number], serial: (number | string) }][],
+    atoms: [{ x: number, y: number, z: number, serial: (number | string) }, { x: number, y: number, z: number, serial: (number | string) }][],
     size: number,
     colourScheme: { [x: string]: number[]; },
     labelled: boolean = false,
@@ -952,8 +952,8 @@ export const gemmiAtomPairsToCylindersInfo = (
         let ab = vec3.create()
         let midpoint = vec3.create()
 
-        vec3.set(ab, at0.pos[0] - at1.pos[0], at0.pos[1] - at1.pos[1], at0.pos[2] - at1.pos[2])
-        vec3.set(midpoint, 0.5 * (at0.pos[0] + at1.pos[0]), 0.5 * (at0.pos[1] + at1.pos[1]), 0.5 * (at0.pos[2] + at1.pos[2]))
+        vec3.set(ab, at0.x - at1.x, at0.y - at1.y, at0.z - at1.z)
+        vec3.set(midpoint, 0.5 * (at0.x + at1.x), 0.5 * (at0.y + at1.y), 0.5 * (at0.z + at1.z))
         const l = vec3.length(ab)
 
         totTextLabels.push(l.toFixed(2))
@@ -967,13 +967,17 @@ export const gemmiAtomPairsToCylindersInfo = (
             thisInstance_colours.push(colourScheme[`${at0.serial}`][ip])
             totTextPrimCol.push(colourScheme[`${at0.serial}`][ip])
         }
-        thisInstance_origins.push(...at0.pos)
+        thisInstance_origins.push(at0.x, at0.y, at0.z)
         thisInstance_sizes.push(...[size, size, l])
         let v = vec3.create()
         let au = vec3.create()
         let a = vec3.create()
         let b = vec3.create()
-        let aup = at0.pos.map((v, i) => v - at1.pos[i])
+        const aup = [
+            at0.x - at1.x,
+            at0.y - at1.y,
+            at0.z - at1.z
+        ]
         vec3.set(au, ...aup)
         vec3.normalize(a, au)
         vec3.set(b, 0.0, 0.0, -1.0)
@@ -1070,22 +1074,14 @@ export const gemmiAtomsToCirclesSpheresInfo = (atoms: moorhen.AtomInfo[], size: 
 
     for (let iat = 0; iat < atoms.length; iat++) {
         sphere_idx_tri.push(iat);
-        sphere_vert_tri.push(atoms[iat].pos[0]);
-        sphere_vert_tri.push(atoms[iat].pos[1]);
-        sphere_vert_tri.push(atoms[iat].pos[2]);
+        sphere_vert_tri.push(atoms[iat].x);
+        sphere_vert_tri.push(atoms[iat].y);
+        sphere_vert_tri.push(atoms[iat].z);
         for (let ip = 0; ip < colourScheme[`${atoms[iat].serial}`].length; ip++) {
             sphere_col_tri.push(colourScheme[`${atoms[iat].serial}`][ip])
         }
         sphere_sizes.push(size);
-        let atom = {};
-        atom["x"] = atoms[iat].pos[0];
-        atom["y"] = atoms[iat].pos[1];
-        atom["z"] = atoms[iat].pos[2];
-        atom["tempFactor"] = atoms[iat].tempFactor;
-        atom["charge"] = atoms[iat].charge;
-        atom["symbol"] = atoms[iat].element;
-        atom["label"] = ""
-        sphere_atoms.push(atom);
+        sphere_atoms.push(atoms[iat]);
         if (primType === "PERFECT_SPHERES") {
             totInstanceUseColours.push(true);
             totInstance_orientations.push(...[
@@ -1146,7 +1142,7 @@ export const findConsecutiveRanges = (numbers: number[]): [number, number][] => 
     return ranges;
 }
 
-export function getCubeLines(unitCell: gemmi.UnitCell): [{ pos: [number, number, number], serial: string }, { pos: [number, number, number], serial: string }][] {
+export function getCubeLines(unitCell: gemmi.UnitCell): [{ x: number, y: number, z: number, serial: string }, { x: number, y: number, z: number, serial: string }][] {
 
     const orthogonalize = (x: number, y: number, z: number) => {
         const fractPosition = new window.CCP4Module.Fractional(x, y, z)
@@ -1183,15 +1179,23 @@ export function getCubeLines(unitCell: gemmi.UnitCell): [{ pos: [number, number,
         [3, 7]
     ];
 
-    const lines: [{ pos: [number, number, number], serial: string }, { pos: [number, number, number], serial: string }][] = [];
+    const lines: [{ x: number, y: number, z: number, serial: string }, { x: number, y: number, z: number, serial: string }][] = [];
     edges.forEach(edge => {
         const [v1Index, v2Index] = edge
+        
+        const [v1_x, v1_y, v1_z] = orthogonalize(...vertices[v1Index])
         const v1 = {
-            pos: orthogonalize(...vertices[v1Index]),
+            x: v1_x,
+            y: v1_y,
+            z: v1_z,
             serial: 'unit_cell'
         };
+        
+        const [v2_x, v2_y, v2_z] = orthogonalize(...vertices[v2Index])
         const v2 = {
-            pos: orthogonalize(...vertices[v2Index]),
+            x: v2_x,
+            y: v2_y,
+            z: v2_z,
             serial: 'unit_cell'
         };
         lines.push([v1, v2]);
