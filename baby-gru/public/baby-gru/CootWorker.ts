@@ -852,10 +852,8 @@ const new_positions_for_residue_atoms = (molToUpDate: number, residues: libcootA
     const movedResidueVector  = new cootModule.Vectormoved_residue_t()
     residues.forEach(atoms => {
         if (atoms.length > 0) {
-            const cidFields = atoms[0].label.split('/')
-            let [resNoStr, insCode] = cidFields[3].split(".")
-            insCode = insCode ? insCode : ""
-            const movedResidue = new cootModule.moved_residue_t(cidFields[2], parseInt(resNoStr), insCode)
+            const atomInfo = atoms[0]
+            const movedResidue = new cootModule.moved_residue_t(atomInfo.chain_id, parseInt(atomInfo.res_no), "")
             atoms.forEach(atom => {
                 const movedAtom = new cootModule.moved_atom_t(atom.name, atom.alt_loc, atom.x, atom.y, atom.z, -1)
                 movedResidue.add_atom(movedAtom)

@@ -96,7 +96,7 @@ import { thick_lines_normal_gbuffer_vertex_shader_source as thick_lines_normal_g
 import { DistanceBetweenPointAndLine, DihedralAngle } from './mgMaths.js';
 import { determineFontHeight } from './fontHeight.js';
 
-import { guid } from '../utils/MoorhenUtils';
+import { getAtomInfoLabel, guid } from '../utils/MoorhenUtils';
 
 import { quatToMat4, quat4Inverse } from './quatToMat4.js';
 
@@ -1972,7 +1972,7 @@ interface ShaderOverlay extends MGWebGLShader {
 }
 
 interface MGWebGLPropsInterface {
-                    onAtomHovered : (identifier: { buffer: { id: string; }; atom: { label: string; }; }) => void;
+                    onAtomHovered : (identifier: { buffer: { id: string; }; atom: moorhen.AtomInfo; }) => void;
                     onKeyPress : (event: KeyboardEvent) =>  boolean | Promise<boolean>;
                     messageChanged : ((d:Dictionary<string>) => void);
                     mouseSensitivityFactor :  number | null;
@@ -2024,7 +2024,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         doRedraw: boolean;
         circleCanvasInitialized: boolean;
         textCanvasInitialized: boolean;
-        currentlyDraggedAtom: null | {atom: {charge: number, tempFactor: number, x: number, y: number, z: number, symbol: string, label:string}, buffer: DisplayBuffer};
+        currentlyDraggedAtom: null | {atom: moorhen.AtomInfo; buffer: DisplayBuffer};
         gl_cursorPos: Float32Array;
         textCtx: CanvasRenderingContext2D;
         circleCtx: CanvasRenderingContext2D;
@@ -8992,13 +8992,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if (self.activeMolecule === null) {
 
             const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
-            let rightClick = new CustomEvent("rightClick", {
+            let rightClick: moorhen.AtomRightClickEvent = new CustomEvent("rightClick", {
             "detail": {
                 atom: minidx > -1 ? self.displayBuffers[minidx].atoms[minj] : null,
                 buffer: minidx > -1 ? self.displayBuffers[minidx] : null,
                 coords: "",
                 pageX: event.pageX,
-                pageY: event.pageY
+                pageY: event.pageY,
             }
             });
             document.dispatchEvent(rightClick);
@@ -9016,24 +9016,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
             if (minidx > -1) {
                 let theAtom : clickAtom = {
-                   x: self.displayBuffers[minidx].atoms[minj].x,
-                   y: self.displayBuffers[minidx].atoms[minj].y,
-                   z: self.displayBuffers[minidx].atoms[minj].z,
-                   charge: self.displayBuffers[minidx].atoms[minj].charge,
-                   label: self.displayBuffers[minidx].atoms[minj].label,
-                   symbol: self.displayBuffers[minidx].atoms[minj].symbol,
+                   ...self.displayBuffers[minidx].atoms[minj],
+                   label: getAtomInfoLabel(self.displayBuffers[minidx].atoms[minj]),
                    displayBuffer: self.displayBuffers[minidx]
                 };
-                let atx = theAtom.x;
-                let aty = theAtom.y;
-                let atz = theAtom.z;
-                let label = theAtom.label;
-                let tempFactorLabel = "";
-                if (self.displayBuffers[minidx].atoms[minj].tempFactor) {
-                    tempFactorLabel = ", B: " + self.displayBuffers[minidx].atoms[minj].tempFactor;
-                }
-                this.props.messageChanged({ message: label + ", xyz:(" + atx + " " + aty + " " + atz + ")" + tempFactorLabel });
-
                 let atomClicked: moorhen.AtomClickedEvent = new CustomEvent("atomClicked", {
                     "detail": {
                         atom: self.displayBuffers[minidx].atoms[minj],
@@ -9282,24 +9268,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if (this.props.onAtomHovered) {
             const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
             if (minidx > -1) {
-                let theAtom : clickAtom = {
-                   x: self.displayBuffers[minidx].atoms[minj].x,
-                   y: self.displayBuffers[minidx].atoms[minj].y,
-                   z: self.displayBuffers[minidx].atoms[minj].z,
-                   charge: self.displayBuffers[minidx].atoms[minj].charge,
-                   label: self.displayBuffers[minidx].atoms[minj].label,
-                   symbol: self.displayBuffers[minidx].atoms[minj].symbol,
-                   displayBuffer: self.displayBuffers[minidx]
-                };
-                let atx = theAtom.x;
-                let aty = theAtom.y;
-                let atz = theAtom.z;
-                let label = theAtom.label;
-                let tempFactorLabel = "";
-                if (self.displayBuffers[minidx].atoms[minj].tempFactor) {
-                    tempFactorLabel = ", B: " + self.displayBuffers[minidx].atoms[minj].tempFactor;
-                }
-                this.props.messageChanged({ message: label + ", xyz:(" + atx + " " + aty + " " + atz + ")" + tempFactorLabel });
                 this.props.onAtomHovered({ atom: self.displayBuffers[minidx].atoms[minj], buffer: self.displayBuffers[minidx] });
             }
             else {
@@ -11076,7 +11044,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
                 // ###############
 
-                const draggedAtomEvent = new CustomEvent("atomDragged", { detail: {atom: this.currentlyDraggedAtom} });
+                const draggedAtomEvent: moorhen.AtomDraggedEvent = new CustomEvent("atomDragged", { detail: this.currentlyDraggedAtom });
                 document.dispatchEvent(draggedAtomEvent);
                 return
 

@@ -1,7 +1,7 @@
 import 'pako';
 import { 
     guid, readTextFile, readGemmiStructure, centreOnGemmiAtoms, 
-    getRandomMoleculeColour, doDownload, formatLigandSVG, getCentreAtom
+    getRandomMoleculeColour, doDownload, formatLigandSVG, getCentreAtom, getAtomInfoLabel
  } from './MoorhenUtils'
 import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation"
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
@@ -1350,7 +1350,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
                         let z = gemmiAtomPos.z + this.glRef.current.origin[2] - diff[2]
                         const origin = this.displayObjectsTransformation.origin
                         const quat = this.displayObjectsTransformation.quat
-                        const cid = `/${model.name}/${chain.name}/${residueSeqId.str()}/${atom.name}${atomHasAltLoc ? ':' + String.fromCharCode(atomAltLoc) : ''}`
                         if (quat) {
                             const theMatrix = quatToMat4(quat)
                             theMatrix[12] = origin[0]
@@ -1376,7 +1375,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
                                 serial: atomSerial,
                                 has_altloc: atomHasAltLoc,
                                 alt_loc: atomHasAltLoc ? String.fromCharCode(atomAltLoc) : '',
-                                label: cid
                             })
                         }
                         atom.delete()
@@ -1657,13 +1655,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
         const atomInfoVecSize = atomInfoVec.size()
         for (let i = 0; i < atomInfoVecSize; i++) {
             const atomInfo = atomInfoVec.get(i)
-            result.push({
-                ...atomInfo,
-                label: `/${atomInfo.mol_name}/${atomInfo.chain_id}/${atomInfo.res_no}(${atomInfo.res_name})/${atomInfo.name}${atomInfo.has_altloc ? `:${atomInfo.alt_loc}` : ""}`
-            })
+            result.push(atomInfo)
         }
         atomInfoVec.delete()
-        
+
         return result
     }
 
@@ -2075,8 +2070,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         return {
             molecule: this,
-            first: selectionAtoms[0].label,
-            second: selectionAtoms[selectionAtoms.length - 1].label,
+            first: getAtomInfoLabel(selectionAtoms[0]),
+            second: getAtomInfoLabel(selectionAtoms[selectionAtoms.length - 1]),
             isMultiCid: cid.includes('||'),
             cid: cid.includes('||') ? cid.split('||') : cid,
             label: cid

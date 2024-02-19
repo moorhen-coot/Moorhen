@@ -16,7 +16,7 @@ interface MoorhenWebMGPropsInterface {
     viewOnly: boolean;
     urlPrefix: string;
     extraDraggableModals: JSX.Element[];
-    onAtomHovered: (identifier: { buffer: { id: string; }; atom: { label: string; }; }) => void;
+    onAtomHovered: (identifier: { buffer: { id: string; }; atom: moorhen.AtomInfo; }) => void;
     onKeyPress: (event: KeyboardEvent) =>  boolean | Promise<boolean>;
     videoRecorderRef: React.MutableRefObject<null | moorhen.ScreenRecorder>;
 }

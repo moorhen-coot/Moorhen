@@ -16,6 +16,10 @@ import { setContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle,
 import { enableUpdatingMaps, setConnectedMoleculeMolNo, setFoFcMapMolNo, setReflectionMapMolNo, setTwoFoFcMapMolNo } from "../store/moleculeMapUpdateSlice";
 import { libcootApi } from "../types/libcoot";
 
+export const getAtomInfoLabel = (atomInfo: moorhen.AtomInfo) => {
+    return `/${atomInfo.mol_name}/${atomInfo.chain_id}/${atomInfo.res_no}(${atomInfo.res_name})/${atomInfo.name}${atomInfo.has_altloc ? `:${atomInfo.alt_loc}` : ""}`
+}
+
 export const getCentreAtom = async (molecules: moorhen.Molecule[], commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>): Promise<[moorhen.Molecule, string]> => {
     const visibleMolecules: moorhen.Molecule[] = molecules.filter((molecule: moorhen.Molecule) => molecule.isVisible())
     if (visibleMolecules.length === 0) {
@@ -614,6 +618,22 @@ export const centreOnGemmiAtoms = (atoms: moorhen.AtomInfo[]): [number, number, 
     return [-xtot / atomCount, -ytot / atomCount, -ztot / atomCount]
 }
 
+export const atomInfoToResSpec = (atom: moorhen.AtomInfo) => {
+    return { 
+        mol_no: atom.mol_name,
+        chain_id: atom.chain_id,
+        res_no: parseInt(atom.res_no), 
+        res_name: atom.res_name,
+        atom_name: atom.name,
+        // FIXME: Atom info does not contain a ins_code field ?? Or is it atom.serial ?
+        ins_code: "",
+        alt_conf: atom.alt_loc,
+        cid: getAtomInfoLabel(atom),
+        // FIXME: Atom info does not contain a model name. This is probably not a problem...
+        mol_name: "",
+    }
+}
+
 export const cidToSpec = (cid: string): moorhen.ResidueSpec => {
     //molNo, chain_id, res_no, ins_code, alt_conf
     const ResNameRegExp = /\(([^)]+)\)/;
@@ -627,6 +647,27 @@ export const cidToSpec = (cid: string): moorhen.ResidueSpec => {
     const atom_name = cidTokens.length > 4 ? cidTokens[4].split(":")[0] : ""
     const alt_conf = atom_name && cidTokens[4].split(":").length > 1 ? cidTokens[4].split(":")[1] : ""
     return { mol_name, mol_no, chain_id, res_no, res_name, atom_name, ins_code, alt_conf, cid }
+}
+
+
+export const cidToAtomInfo = (cid: string): moorhen.AtomInfo => {
+    const resSpec = cidToSpec(cid)
+    return {
+        x: null,
+        y: null,
+        z: null,
+        charge: null,
+        element: null,
+        tempFactor: null,
+        serial: null,
+        name: resSpec.atom_name,
+        has_altloc: resSpec.alt_conf !== "",
+        alt_loc: resSpec.alt_conf,
+        mol_name: resSpec.mol_no,
+        chain_id: resSpec.chain_id,
+        res_no: resSpec.res_no.toString(),
+        res_name: resSpec.res_name,
+    }
 }
 
 type ResidueInfoType = {

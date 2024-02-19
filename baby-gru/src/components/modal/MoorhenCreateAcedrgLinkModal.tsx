@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
-import { cidToSpec, convertRemToPx, convertViewtoPx } from "../../utils/MoorhenUtils";
+import { cidToSpec, convertRemToPx, convertViewtoPx, getAtomInfoLabel } from "../../utils/MoorhenUtils";
 import { Button, Card, Dropdown, Form, InputGroup, Row, Spinner, SplitButton, Stack } from "react-bootstrap";
 import { Backdrop, TextField } from "@mui/material";
 import { moorhen } from "../../types/moorhen";
@@ -157,7 +157,10 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
                     }}>No</Dropdown.Item>
                 </SplitButton>
                 <Form.Select disabled={!deleteAtom} ref={deleteSelectedAtomValueRef}>
-                    {monomerAtoms.map(atom => <option key={atom.label} value={atom.label}>{atom.has_altloc ? `${atom.name}:${atom.alt_loc}` : atom.name}</option>) }
+                    {monomerAtoms.map(atom => {
+                        const label = getAtomInfoLabel(atom)
+                        return <option key={label} value={label}>{atom.has_altloc ? `${atom.name}:${atom.alt_loc}` : atom.name}</option>
+                    }) }
                 </Form.Select>
             </InputGroup>
             </div>
@@ -206,7 +209,10 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
                     }}>No</Dropdown.Item>
                 </SplitButton>
                 <Form.Select disabled={!changeAtomCharge} ref={changeSelectedAtomChargeValueRef}>
-                    {monomerAtoms.map(atom => <option key={atom.label} value={atom.label}>{atom.has_altloc ? `${atom.name}:${atom.alt_loc}` : atom.name}</option>) }
+                    {monomerAtoms.map(atom => {
+                        const label = getAtomInfoLabel(atom)
+                        return <option key={label} value={label}>{atom.has_altloc ? `${atom.name}:${atom.alt_loc}` : atom.name}</option>
+                    }) }
                 </Form.Select>
             </InputGroup>
             <Row style={{justifyContent: 'center', display: changeAtomCharge ? 'flex' : 'none'}}>

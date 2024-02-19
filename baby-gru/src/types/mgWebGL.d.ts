@@ -217,7 +217,7 @@ export namespace webGL {
         doRedraw: boolean;
         circleCanvasInitialized: boolean;
         textCanvasInitialized: boolean;
-        currentlyDraggedAtom: null | {atom: {charge: number, tempFactor: number, x: number, y: number, z: number, symbol: string, label:string}, buffer: DisplayBuffer};
+        currentlyDraggedAtom: null | {atom: moorhen.AtomInfo; buffer: DisplayBuffer};
         gl_cursorPos: Float32Array;
         textCtx: CanvasRenderingContext2D;
         circleCtx: CanvasRenderingContext2D;

@@ -78,7 +78,6 @@ export namespace libcootApi {
         chain_id: string;
         res_no: string;
         res_name: string;
-        label: string
     }
     interface AutoReadMtzInfo {
         idx: number;

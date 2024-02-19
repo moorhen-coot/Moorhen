@@ -65,7 +65,6 @@ export namespace moorhen {
         chain_id: string;
         res_no: string;
         res_name: string;
-        label: string;
     }
     
     type DisplayObject = {
@@ -540,7 +539,7 @@ export namespace moorhen {
     }
 
     type AtomRightClickEventInfo = {
-        atom: {label: string};
+        atom: moorhen.AtomInfo;
         buffer: {id: string};
         coords: string,
         pageX: number;
@@ -549,12 +548,10 @@ export namespace moorhen {
 
     type AtomRightClickEvent = CustomEvent<AtomRightClickEventInfo>
     
-    type AtomDraggedEvent = CustomEvent<{ atom: {
-        atom: {
-            label: string;
-        };
+    type AtomDraggedEvent = CustomEvent<{ 
+        atom: moorhen.AtomInfo
         buffer: any;
-    } }>
+    }>
 
     type OriginUpdateEvent = CustomEvent<{ origin: [number, number, number]; }>
 
@@ -564,7 +561,7 @@ export namespace moorhen {
 
     type AtomClickedEvent = CustomEvent<{
         buffer: { id: string };
-        atom: { label: string };
+        atom: moorhen.AtomInfo;
         isResidueSelection: boolean;
     }>
 
