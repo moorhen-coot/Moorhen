@@ -34,12 +34,14 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
     in lowp vec4 ShadowCoord;
     uniform sampler2D ShadowMap;
     uniform sampler2D SSAOMap;
+    uniform sampler2D edgeDetectMap;
     uniform float xPixelOffset;
     uniform float yPixelOffset;
     uniform float xSSAOScaling;
     uniform float ySSAOScaling;
     uniform bool doShadows;
     uniform bool doSSAO;
+    uniform bool doEdgeDetect;
     uniform int shadowQuality;
 
     uniform bool clipCap;
@@ -151,6 +153,10 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
       }
 
       color *= occ;
+      if(doEdgeDetect){
+          float edge = texture(edgeDetectMap, vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling) ).x;
+          color *= edge;
+      }
       color.a = vColor.a;
       fragColor = mix(color, fogColour, fogFactor );
       //fragColor = vec4(occ,occ,occ, vColor.a);

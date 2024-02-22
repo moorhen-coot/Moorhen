@@ -12,6 +12,7 @@ export const sceneSettingsSlice = createSlice({
     drawAxes: null,
     drawInteractions: null,
     doSSAO: null,
+    doEdgeDetect: null,
     ssaoRadius: null,
     ssaoBias: null,
     resetClippingFogging: null,
@@ -56,6 +57,9 @@ export const sceneSettingsSlice = createSlice({
     },
     setDoSSAO: (state, action: {payload: boolean, type: string}) => {
         return {...state, doSSAO: action.payload}
+    },
+    setDoEdgeDetect: (state, action: {payload: boolean, type: string}) => {
+        return {...state, doEdgeDetect: action.payload}
     },
     setSsaoRadius: (state, action: {payload: number, type: string}) => {
         return {...state, ssaoRadius: action.payload}
@@ -111,7 +115,7 @@ export const {
     setDefaultBackgroundColor, setDrawCrosshairs, setDrawScaleBar, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
     setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap,  
     setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpinTest, setDoOutline, setDepthBlurRadius,
-    setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setBackgroundColor
+    setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setBackgroundColor, setDoEdgeDetect
 } = sceneSettingsSlice.actions
 
 export default sceneSettingsSlice.reducer

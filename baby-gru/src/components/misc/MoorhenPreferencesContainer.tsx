@@ -7,7 +7,7 @@ import { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificatio
 import { overwriteMapUpdatingScores, setShowScoresToast } from "../../store/moleculeMapUpdateSlice";
 import { setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
 import { setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } from "../../store/labelSettingsSlice";
-import { setClipCap, setDefaultBackgroundColor, setDefaultBondSmoothness, setDepthBlurDepth, setDepthBlurRadius, setDoOutline, setDoPerspectiveProjection, setDoSSAO, setDoShadow, setDoShadowDepthDebug, setDoSpinTest, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawInteractions, setDrawMissingLoops, setResetClippingFogging, setSsaoBias, setSsaoRadius, setUseOffScreenBuffers, setDrawScaleBar } from "../../store/sceneSettingsSlice";
+import { setClipCap, setDefaultBackgroundColor, setDefaultBondSmoothness, setDepthBlurDepth, setDepthBlurRadius, setDoOutline, setDoPerspectiveProjection, setDoSSAO, setDoShadow, setDoShadowDepthDebug, setDoSpinTest, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawInteractions, setDrawMissingLoops, setResetClippingFogging, setSsaoBias, setSsaoRadius, setUseOffScreenBuffers, setDrawScaleBar, setDoEdgeDetect} from "../../store/sceneSettingsSlice";
 import { setAnimateRefine, setDefaultExpandDisplayCards, setEnableRefineAfterMod, setTransparentModalsOnMouseOut } from "../../store/miscAppSettingsSlice";
 import { setDevMode, setUserPreferencesMounted } from "../../store/generalStatesSlice";
 import { moorhen } from "../../types/moorhen"
@@ -63,6 +63,7 @@ export const MoorhenPreferencesContainer = (props: {
     const drawAxes = useSelector((state: moorhen.State) => state.sceneSettings.drawAxes)
     const drawInteractions = useSelector((state: moorhen.State) => state.sceneSettings.drawInteractions)
     const doSSAO = useSelector((state: moorhen.State) => state.sceneSettings.doSSAO)
+    const doEdgeDetect = useSelector((state: moorhen.State) => state.sceneSettings.doEdgeDetect)
     const ssaoRadius = useSelector((state: moorhen.State) => state.sceneSettings.ssaoRadius)
     const ssaoBias = useSelector((state: moorhen.State) => state.sceneSettings.ssaoBias)
     const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging)
@@ -129,6 +130,7 @@ export const MoorhenPreferencesContainer = (props: {
         43: { label: "ssaoBias", value: ssaoBias, valueSetter: setSsaoBias},
         44: { label: "drawScaleBar", value: drawScaleBar, valueSetter: setDrawScaleBar},
         45: { label: "animateRefine", value: animateRefine, valueSetter: setAnimateRefine},
+        46: { label: "doEdgeDetect", value: doEdgeDetect, valueSetter: setDoEdgeDetect},
     }
 
     const restoreDefaults = (preferences: moorhen.Preferences, defaultValues: moorhen.PreferencesValues)=> {
@@ -537,6 +539,16 @@ export const MoorhenPreferencesContainer = (props: {
         localForageInstanceRef.current?.localStorageInstance.setItem('doSSAO', doSSAO)
         .then(_ => props.onUserPreferencesChange('doSSAO', doSSAO));
     }, [doSSAO]);
+
+    useMemo(() => {
+
+        if (doEdgeDetect === null) {
+            return
+        }
+
+        localForageInstanceRef.current?.localStorageInstance.setItem('doEdgeDetect', doEdgeDetect)
+        .then(_ => props.onUserPreferencesChange('doEdgeDetect', doEdgeDetect));
+    }, [doEdgeDetect]);
 
     useMemo(() => {
 

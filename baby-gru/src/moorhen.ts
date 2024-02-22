@@ -17,7 +17,8 @@ import { MoorhenReduxProvider } from "./components/misc/MoorhenReduxProvider";
 import { setDefaultBackgroundColor, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
     setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap,  
     setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpinTest, setDoOutline, setDepthBlurRadius,
-    setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setBackgroundColor, setDrawScaleBar
+    setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setBackgroundColor, setDrawScaleBar,
+    setDoEdgeDetect
 } from './store/sceneSettingsSlice';
 import { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold } from './store/backupSettingsSlice';
 import { 
@@ -55,5 +56,5 @@ export {
     setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores, MoorhenSlider,
     addMap, addMapList, removeMap, emptyMaps, setPositiveMapColours, setNegativeMapColours, setMapAlpha, setMapColours, 
     setMapRadius, setMapStyle, showMap, hideMap, setContourLevel, showMolecule, hideMolecule, 
-    MoorhenQuerySequenceModal, MoorhenPreferences
+    MoorhenQuerySequenceModal, MoorhenPreferences, setDoEdgeDetect
 };

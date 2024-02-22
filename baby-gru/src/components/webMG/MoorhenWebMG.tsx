@@ -57,6 +57,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const drawAxes = useSelector((state: moorhen.State) => state.sceneSettings.drawAxes)
     const drawInteractions = useSelector((state: moorhen.State) => state.sceneSettings.drawInteractions)
     const doSSAO = useSelector((state: moorhen.State) => state.sceneSettings.doSSAO)
+    const doEdgeDetect = useSelector((state: moorhen.State) => state.sceneSettings.doEdgeDetect)
     const ssaoRadius = useSelector((state: moorhen.State) => state.sceneSettings.ssaoRadius)
     const ssaoBias = useSelector((state: moorhen.State) => state.sceneSettings.ssaoBias)
     const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging)
@@ -214,6 +215,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [doSSAO])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setEdgeDetectOn(doEdgeDetect)
+            glRef.current.drawScene()
+        }
+    }, [doEdgeDetect])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
