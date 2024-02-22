@@ -254,6 +254,9 @@ export namespace moorhen {
         styleHasSymmetry: boolean;
         isCustom: boolean;
         styleHasColourRules: boolean;
+        ligandsCid: string;
+        hoverColor: number[];
+        residueSelectionColor: number[];    
     }
 
     type ResidueSelection = {
