@@ -21,10 +21,10 @@ the `get_sources` script, which is part of the build process of this project.
 
 The following libraries/programs are compiled to Web Assembly:
 * libccp4 (8.0.0)
-* clipper (2.1)
+* clipper (20240123)
 * ssm (1.4.0)
 * mmdb2 (2.0.22)
-* gemmi 0.5.8
+* gemmi 0.6.4
 * Coot 1.0 ('gtk3' git branch)
 * fftw 2.1.5
 * gsl 2.7.1
