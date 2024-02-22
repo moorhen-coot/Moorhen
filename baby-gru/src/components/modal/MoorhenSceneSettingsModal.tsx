@@ -5,12 +5,28 @@ import { convertRemToPx, convertViewtoPx, rgbToHex } from "../../utils/MoorhenUt
 import { MoorhenSlider } from "../misc/MoorhenSlider";
 import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
 import { Form, InputGroup, Stack } from "react-bootstrap";
-import { setBackgroundColor, setClipCap, setDepthBlurDepth, setDepthBlurRadius, setDoSSAO, setResetClippingFogging, setSsaoRadius, setUseOffScreenBuffers } from "../../moorhen";
+import { setBackgroundColor, setClipCap, setDepthBlurDepth, setDepthBlurRadius, setDoSSAO, setResetClippingFogging, setSsaoRadius, setUseOffScreenBuffers, setDoEdgeDetect } from "../../moorhen";
 import { HexColorInput, RgbColorPicker } from "react-colorful";
 import { CirclePicker } from "react-color"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { hexToRgb } from "@mui/material";
+
+const EdgeDetectPanel = (props: {}) => {
+    const dispatch = useDispatch()
+    const doEdgeDetect = useSelector((state: moorhen.State) => state.sceneSettings.doEdgeDetect)
+    return <div className="scene-settings-panel-flex-between">
+        <InputGroup className='moorhen-input-group-check'>
+            <Form.Check 
+                type="switch"
+                checked={doEdgeDetect}
+                onChange={() => { dispatch(
+                    setDoEdgeDetect(!doEdgeDetect)
+                )}}
+                label="Edge detection"/>
+        </InputGroup>
+    </div>
+}
 
 const OcclusionPanel = (props: {}) => {
     const dispatch = useDispatch()
@@ -335,6 +351,7 @@ export const MoorhenSceneSettingsModal = (props: {
                             <LightingPanel glRef={props.glRef}/>
                             {props.glRef.current.isWebGL2() && <DepthBlurPanel/>}
                             <OcclusionPanel/>
+                            <EdgeDetectPanel/>
                         </Stack>
                     </Stack>
                 }
