@@ -96,7 +96,8 @@ declare module 'moorhen' {
         drawSymmetry: (fetchSymMatrix?: boolean) => Promise<void>;
         drawBiomolecule (fetchSymMatrix?: boolean) : void;
         getUnitCellParams():  { a: number; b: number; c: number; alpha: number; beta: number; gamma: number; };
-        replaceModelWithFile(fileUrl: string): Promise<void>
+        replaceModelWithFile(fileUrl: string): Promise<void>;
+        replaceModelWithCoordData(coordData: string): Promise<void>;
         delete(popBackImol?: boolean): Promise<_moorhen.WorkerResponse>;
         fetchDefaultColourRules(): Promise<void>;
         fetchIfDirtyAndDraw(arg0: string): Promise<void>;
