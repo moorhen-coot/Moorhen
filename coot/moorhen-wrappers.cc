@@ -35,7 +35,7 @@
 #include "ligand/primitive-chi-angles.hh"
 #include "ligand/rotamer.hh"
 #include "api/interfaces.hh"
-#include "api/molecules_container.hh"
+#include "api/molecules-container.hh"
 #include "api/validation-information.hh"
 #include "coot-utils/g_triangle.hh"
 #include "coot-utils/vertex.hh"
@@ -1108,6 +1108,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("molecule_to_mmCIF_string", &molecules_container_t::molecule_to_mmCIF_string)
     .function("molecule_to_PDB_string", &molecules_container_t::molecule_to_PDB_string)
     .function("clear_refinement",&molecules_container_t::clear_refinement)
+    .function("fourier_shell_correlation",&molecules_container_t::fourier_shell_correlation)
     .function("get_suggested_initial_contour_level",&molecules_container_t::get_suggested_initial_contour_level)
     .function("clear_target_position_restraints",&molecules_container_t::clear_target_position_restraints)
     .function("add_target_position_restraint_and_refine",&molecules_container_t::add_target_position_restraint_and_refine)
@@ -1526,6 +1527,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<std::array<float, 16>>("VectorArrayFloat16");
     register_vector<std::pair<clipper::Coord_orth, float>>("VectorClipperCoordOrth_float_pair");
     register_vector<std::pair<int, int>>("VectorInt_pair");
+    register_vector<std::pair<float, float>>("VectorFloat_pair");
+    register_vector<std::pair<double, double>>("VectorDouble_pair");
     register_vector<std::pair<std::string, unsigned int> >("VectorStringUInt_pair");
     register_vector<std::pair<symm_trans_t, Cell_Translation>>("Vectorsym_trans_t_Cell_Translation_pair");
     register_vector<std::pair<std::string, std::string>>("Vectorstring_string_pair");
@@ -1610,6 +1613,14 @@ EMSCRIPTEN_BINDINGS(my_module) {
     value_object<std::pair<int,int>>("int_int_pair")
         .field("first",&std::pair<int,int>::first)
         .field("second",&std::pair<int,int>::second)
+    ;
+    value_object<std::pair<float,float>>("float_float_pair")
+        .field("first",&std::pair<float,float>::first)
+        .field("second",&std::pair<float,float>::second)
+    ;
+    value_object<std::pair<double,double>>("double_double_pair")
+        .field("first",&std::pair<double,double>::first)
+        .field("second",&std::pair<double,double>::second)
     ;
     value_object<std::pair<std::string, unsigned int>>("string_uint_pair")
         .field("first",&std::pair<std::string, unsigned int>::first)
