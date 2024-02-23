@@ -180,8 +180,8 @@ export namespace webGL {
         clearTextPositionBuffers(): void;
         recreateSilhouetteBuffers() : void;
         createSSAOFramebufferBuffer() : void;
-        createGBuffers() : void;
-        createEdgeDetectFramebufferBuffer() : void;
+        createGBuffers(width : number,height : number) : void;
+        createEdgeDetectFramebufferBuffer(width : number,height : number) : void;
         recreateOffScreeenBuffers(width: number,  height: number) : void;
         createSimpleBlurOffScreeenBuffers() : void;
         draggableMolecule: moorhen.Molecule

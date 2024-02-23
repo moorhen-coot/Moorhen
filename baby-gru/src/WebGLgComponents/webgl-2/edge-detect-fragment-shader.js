@@ -16,10 +16,10 @@ void main() {
 
     float depthThreshold = 0.3;
     float _NormalThreshold = 0.4;
-    float scaleDepth = 2.0;
+    float scaleDepth = 1.0;
     float scaleNormal = 1.0;
 
-    float pixelFrac = 1.0 / 1024.0;
+    float pixelFrac = 2.0 / 1024.0;
 
     float halfScaleFloorDepth = floor(scaleDepth * 0.5);
     float halfScaleCeilDepth = ceil(scaleDepth * 0.5);
