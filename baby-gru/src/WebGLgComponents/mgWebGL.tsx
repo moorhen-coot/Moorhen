@@ -1918,6 +1918,7 @@ interface ShaderSSAO extends MGWebGLShader {
     gNormalTexture: WebGLUniformLocation;
     texNoiseTexture: WebGLUniformLocation;
     zoom: WebGLUniformLocation | null;
+    depthBufferSize: WebGLUniformLocation | null;
     samples: WebGLUniformLocation | null;
     radius: WebGLUniformLocation | null;
     bias: WebGLUniformLocation | null;
@@ -4444,6 +4445,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramSSAO.zoom = this.gl.getUniformLocation(this.shaderProgramSSAO, "zoom");
         this.shaderProgramSSAO.radius = this.gl.getUniformLocation(this.shaderProgramSSAO, "radius");
         this.shaderProgramSSAO.bias = this.gl.getUniformLocation(this.shaderProgramSSAO, "bias");
+        this.shaderProgramSSAO.depthBufferSize = this.gl.getUniformLocation(this.shaderProgramSSAO, "depthBufferSize");
     }
 
     initBlurXShader(vertexShaderBlurX, fragmentShaderBlurX) {
@@ -6973,6 +6975,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.cullFace(this.gl.BACK);
             //mat4.perspective(45, this.gl.viewportWidth / this.gl.viewportHeight, 0.1, 10000.0, this.pMatrix);
             if(this.renderToTexture){
+                //FIXME - drawingGBuffers stanza?
                 if(this.doPerspectiveProjection){
                     if(this.gl.viewportWidth > this.gl.viewportHeight){
                         mat4.perspective(this.pMatrix, 1.0*ratio, 1.0, 0.1, 100.0);
@@ -7207,6 +7210,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.uniform1i(this.shaderProgramSSAO.gPositionTexture,0);
             this.gl.uniform1i(this.shaderProgramSSAO.gNormalTexture,1);
             this.gl.uniform1i(this.shaderProgramSSAO.texNoiseTexture,2);
+
+            const f = this.gl_clipPlane0[3]+this.fogClipOffset;
+            const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
+
+            this.gl.uniform1f(this.shaderProgramSSAO.depthBufferSize,b+f);
+
             this.gl.uniform1f(this.shaderProgramSSAO.radius,this.ssaoRadius);
             this.gl.uniform1f(this.shaderProgramSSAO.bias,this.ssaoBias);
             this.gl.activeTexture(this.gl.TEXTURE0);
