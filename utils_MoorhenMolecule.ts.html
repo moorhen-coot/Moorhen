@@ -295,6 +295,14 @@ export class MoorhenMolecule implements moorhen.Molecule {
             return Promise.reject(`Error fetching data from url ${fileUrl}`)
         }
 
+        return this.replaceModelWithCoordData(coordData)
+    }
+
+    /**
+     * Replace the current molecule some file contents
+     * @param {string} coordData - The coord data for new model
+     */
+    async replaceModelWithCoordData(coordData: string): Promise&lt;void> {
         const cootResponse = await this.commandCentre.current.cootCommand({
             returnType: "status",
             command: 'replace_molecule_by_model_from_string',
