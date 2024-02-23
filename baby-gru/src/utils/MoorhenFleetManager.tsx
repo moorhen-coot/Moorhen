@@ -86,7 +86,7 @@ export class MoorhenFleetManager {
     }
 
     handleUserUpdate(evt: Y.YMapEvent<{id: string; hexColor: string; name: string; rgbaColor: number[]}>) {
-        evt.changes.keys.forEach(async (change, clientId) => {
+        evt.changes.keys.forEach((change, clientId) => {
             if (clientId !== this.clientId) {
                 if (change.action === 'add') {
                     const representation = new MoorhenMoleculeRepresentation('hover', null, this.commandCentre, this.glRef)
@@ -160,7 +160,7 @@ export class MoorhenFleetManager {
     }
 
     handleViewUpdate(evt: Y.YMapEvent<{zoom: number; origin: number[]}>) {
-        evt.changes.keys.forEach(async (change, clientId) => {
+        evt.changes.keys.forEach((change, clientId) => {
             if (this.followViewClientId === clientId && change.action === 'update') {
                 this.setClientView(this.followViewClientId)
             }
@@ -176,7 +176,7 @@ export class MoorhenFleetManager {
     }
     
     handleAtomHovering(evt: Y.YMapEvent<{id: string; hoveredAtom: {cid: string, molNo: string}}>) {
-        evt.changes.keys.forEach(async (change, clientId) => {
+        evt.changes.keys.forEach((change, clientId) => {
             if (this.clientId !== clientId && change.action === 'update') {
                 const { molNo, cid } = this.hoveredAtoms.get(clientId).hoveredAtom
                 const molecule = this.moleculesRef.current.find(mol => mol.molNo === parseInt(molNo))
