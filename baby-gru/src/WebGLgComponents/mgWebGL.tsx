@@ -1928,6 +1928,7 @@ interface ShaderEdgeDetect extends MGWebGLShader {
     vertexTextureAttribute: GLint;
     gPositionTexture: WebGLUniformLocation;
     gNormalTexture: WebGLUniformLocation;
+    depthBufferSize: WebGLUniformLocation | null;
     zoom: WebGLUniformLocation | null;
 }
 
@@ -4404,6 +4405,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramEdgeDetect.gNormalTexture = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "gNormal");
 
         this.shaderProgramEdgeDetect.zoom = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "zoom");
+        this.shaderProgramEdgeDetect.depthBufferSize = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "depthBufferSize");
     }
 
     initSSAOShader(vertexShaderSSAO, fragmentShaderSSAO) {
@@ -7161,6 +7163,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.drawBuffers([this.gl.COLOR_ATTACHMENT0]);
         }
 
+        const f = this.gl_clipPlane0[3]+this.fogClipOffset;
+        const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
+
         if (this.doEdgeDetect&&this.WEBGL2) {
 
             if(!this.edgeDetectFramebuffer) this.createEdgeDetectFramebufferBuffer();
@@ -7171,6 +7176,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.uniform1i(this.shaderProgramEdgeDetect.gPositionTexture,0);
             this.gl.uniform1i(this.shaderProgramEdgeDetect.gNormalTexture,1);
             this.gl.uniform1f(this.shaderProgramEdgeDetect.zoom,this.zoom);
+            this.gl.uniform1f(this.shaderProgramEdgeDetect.depthBufferSize,b+f);
             this.gl.activeTexture(this.gl.TEXTURE0);
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.gBufferPositionTexture);
             this.gl.activeTexture(this.gl.TEXTURE1);
@@ -7210,9 +7216,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.uniform1i(this.shaderProgramSSAO.gPositionTexture,0);
             this.gl.uniform1i(this.shaderProgramSSAO.gNormalTexture,1);
             this.gl.uniform1i(this.shaderProgramSSAO.texNoiseTexture,2);
-
-            const f = this.gl_clipPlane0[3]+this.fogClipOffset;
-            const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
 
             this.gl.uniform1f(this.shaderProgramSSAO.depthBufferSize,b+f);
 

@@ -7,6 +7,7 @@ uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 
 uniform float zoom;
+uniform float depthBufferSize;
 
 in mediump mat4 pMatrix;
 in vec2 out_TexCoord0;
@@ -15,7 +16,7 @@ void main() {
 
     float depthThreshold = 0.3;
     float _NormalThreshold = 0.4;
-    float scaleDepth = 2.5;
+    float scaleDepth = 2.0;
     float scaleNormal = 1.0;
 
     float pixelFrac = 1.0 / 1024.0;
@@ -39,7 +40,7 @@ void main() {
     float depthFiniteDifference0 = depth1 - depth0;
     float depthFiniteDifference1 = depth3 - depth2;
 
-    float diff = 1.0 - sqrt(pow(depthFiniteDifference0, 2.0) + pow(depthFiniteDifference1, 2.0)) * 10.0;
+    float diff = 1.0 - sqrt(pow(depthFiniteDifference0, 2.0) + pow(depthFiniteDifference1, 2.0)) * 10.0 * depthBufferSize/60.;
 
     fragColor = vec4(depth0,depth0,depth0,1.0);
 
