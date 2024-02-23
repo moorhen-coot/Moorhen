@@ -20,7 +20,7 @@ export const MoorhenShiftFieldBFactorRefinement = (props) => {
         }
 
         const selectedMoleculeMolNo = parseInt(moleculeSelectRef.current.value)
-        const selectedMapMolNo = parseInt(moleculeSelectRef.current.value)
+        const selectedMapMolNo = parseInt(mapSelectRef.current.value)
 
         await props.commandCentre.current.cootCommand({
             command: 'shift_field_b_factor_refinement',

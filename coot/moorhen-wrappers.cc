@@ -1220,6 +1220,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("add_alternative_conformation",&molecules_container_t::add_alternative_conformation)
     .function("delete_using_cid",&molecules_container_t::delete_using_cid)
     .function("get_bonds_mesh",&molecules_container_t::get_bonds_mesh)
+    .function("get_goodsell_style_mesh_instanced", &molecules_container_t::get_goodsell_style_mesh_instanced)
+    .function("clear", &molecules_container_t::clear)
     .function("get_bonds_mesh_instanced",&molecules_container_t::get_bonds_mesh_instanced)
     .function("get_bonds_mesh_for_selection_instanced",&molecules_container_t::get_bonds_mesh_for_selection_instanced)
     .function("go_to_blob",&molecules_container_t::go_to_blob)

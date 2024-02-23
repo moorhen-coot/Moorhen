@@ -195,6 +195,8 @@
     "webpack-cli": "^5.0.1",
     "webpack-dev-server": "^4.11.1",
     "webpack-node-externals": "^3.0.0",
-    "worker-loader": "^3.0.8"
+    "worker-loader": "^3.0.8",
+    "y-websocket": "^1.5.3",
+    "yjs": "^13.6.12"
   }
 }

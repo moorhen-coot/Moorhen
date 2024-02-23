@@ -144,6 +144,7 @@ export namespace moorhen {
         drawBiomolecule(fetchSymMatrix?: boolean) : void;
         getUnitCellParams():  { a: number; b: number; c: number; alpha: number; beta: number; gamma: number; };
         replaceModelWithFile(fileUrl: string): Promise<void>;
+        replaceModelWithCoordData(coordData: string): Promise<void>;
         delete(popBackImol?: boolean): Promise<WorkerResponse>;
         fetchDefaultColourRules(): Promise<void>;
         fetchIfDirtyAndDraw(arg0: string): Promise<void>;
@@ -253,6 +254,9 @@ export namespace moorhen {
         styleHasSymmetry: boolean;
         isCustom: boolean;
         styleHasColourRules: boolean;
+        ligandsCid: string;
+        hoverColor: number[];
+        residueSelectionColor: number[];    
     }
 
     type ResidueSelection = {

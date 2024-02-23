@@ -5,8 +5,6 @@ import { libcootApi } from '../types/libcoot';
 import { hexToRgb } from '@mui/material';
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
 
-const LIGANDS_CID = "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O,G,C,U,A,T)"
-
 // TODO: It might be better to do this.glRef.current.drawScene() in the molecule... 
 export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresentation {
 
@@ -27,6 +25,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     useDefaultColourRules: boolean;
     applyColourToNonCarbonAtoms: boolean;
     bondOptions: moorhen.cootBondOptions;
+    ligandsCid: string;
+    hoverColor: number[];
+    residueSelectionColor: number[];
 
     constructor(style: moorhen.RepresentationStyles, cid: string, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>) {
         this.uniqueId = guid()
@@ -47,6 +48,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             width: 0.1,
             atomRadiusBondRatio: 1
         }
+        this.ligandsCid = "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O,G,C,U,A,T)"
+        this.hoverColor = [1.0, 0.5, 0.0, 0.35]
+        this.residueSelectionColor = [0.25, 1.0, 0.25, 0.35]
     }
 
     setApplyColourToNonCarbonAtoms(newVal: boolean) {
@@ -81,7 +85,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             'contact_dots', 'chemical_features', 'ligand_validation', 'restraints', 'residueSelection'
         ].includes(style)
         if (style === "ligands") {
-            this.cid = this.parentMolecule?.ligands?.length > 0 ? this.parentMolecule.ligands.map(ligand => ligand.cid).join('||') : LIGANDS_CID
+            this.cid = this.parentMolecule?.ligands?.length > 0 ? this.parentMolecule.ligands.map(ligand => ligand.cid).join('||') : this.ligandsCid
         }
     }
 
@@ -113,7 +117,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.colourRules = this.parentMolecule.defaultColourRules
         this.bondOptions = this.parentMolecule.defaultBondOptions
         if (this.style === "ligands") {
-            this.cid = this.parentMolecule?.ligands?.length > 0 ? this.parentMolecule.ligands.map(ligand => ligand.cid).join('||') : LIGANDS_CID
+            this.cid = this.parentMolecule?.ligands?.length > 0 ? this.parentMolecule.ligands.map(ligand => ligand.cid).join('||') : this.ligandsCid
         }
     }
 
@@ -249,10 +253,10 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 objects = this.getUnitCellRepresentationBuffers()
                 break
             case 'hover':
-                objects = this.getResidueHighlightBuffers(this.cid, [1.0, 0.5, 0.0, 0.35])
+                objects = this.getResidueHighlightBuffers(this.cid, this.hoverColor)
                 break
             case 'residueSelection':
-                objects = this.getResidueHighlightBuffers(this.cid, [0.25, 1.0, 0.25, 0.35], true)
+                objects = this.getResidueHighlightBuffers(this.cid, this.residueSelectionColor, true)
                 break
             case 'environment':
             case 'ligand_environment':
@@ -547,7 +551,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         let returnType = name === 'VdwSpheres' ? "instanced_mesh_perfect_spheres" : "instanced_mesh"
 
         if (name === "ligands") {
-            this.cid = this.parentMolecule.ligands.length > 0 ? this.parentMolecule.ligands.map(ligand => ligand.cid).join('||') : LIGANDS_CID
+            this.cid = this.parentMolecule.ligands.length > 0 ? this.parentMolecule.ligands.map(ligand => ligand.cid).join('||') : this.ligandsCid
         }
 
         if (typeof cid !== 'string' || cid === '/*/*/*/*') {
