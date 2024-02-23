@@ -3779,7 +3779,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
-    createEdgeDetectFramebufferBuffer(){
+    createEdgeDetectFramebufferBuffer(width : number,height : number){
 
         if(!this.edgeDetectFramebuffer){
             this.edgeDetectFramebuffer = this.gl.createFramebuffer();
@@ -3790,16 +3790,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
 
-            //FIXME - Sizes?
             const edgeDetectRenderbuffer = this.gl.createRenderbuffer();
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.edgeDetectFramebuffer);
-            this.edgeDetectFramebuffer.width = this.edgeDetectFramebufferSize;
-            this.edgeDetectFramebuffer.height = this.edgeDetectFramebufferSize;
+            this.edgeDetectFramebuffer.width = width;
+            this.edgeDetectFramebuffer.height = height;
 
             this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, edgeDetectRenderbuffer);
 
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.edgeDetectTexture);
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.edgeDetectFramebufferSize, this.edgeDetectFramebufferSize, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, width, height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
             this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.edgeDetectTexture, 0);
 
             const status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
@@ -3812,7 +3811,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
-    createGBuffers(){
+    createGBuffers(width : number,height : number){
         if(!this.gFramebuffer){
             this.gFramebuffer = this.gl.createFramebuffer();
             this.gBufferDepthTexture = this.gl.createTexture();
@@ -3839,30 +3838,30 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             //FIXME - Sizes?
             const gBufferRenderbuffer = this.gl.createRenderbuffer();
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.gFramebuffer);
-            this.gFramebuffer.width = this.gBuffersFramebufferSize;
-            this.gFramebuffer.height = this.gBuffersFramebufferSize;
+            this.gFramebuffer.width = width;
+            this.gFramebuffer.height = height;
 
             this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, gBufferRenderbuffer);
             this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, gBufferRenderbuffer);
             if (this.WEBGL2) {
-                this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT32F, this.gBuffersFramebufferSize, this.gBuffersFramebufferSize);
+                this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT32F, width, height);
             } else {
-                this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, this.gBuffersFramebufferSize, this.gBuffersFramebufferSize);
+                this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, width, height);
             }
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.gBufferDepthTexture);
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT32F, this.gBuffersFramebufferSize, this.gBuffersFramebufferSize, 0, this.gl.DEPTH_COMPONENT, this.gl.FLOAT, null);
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT32F, width, height, 0, this.gl.DEPTH_COMPONENT, this.gl.FLOAT, null);
             this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.TEXTURE_2D, this.gBufferDepthTexture, 0);
 
             this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.RENDERBUFFER, gBufferRenderbuffer);
-            this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.RGBA32F, this.gBuffersFramebufferSize, this.gBuffersFramebufferSize);
+            this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.RGBA32F, width, height);
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.gBufferPositionTexture);
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA32F, this.gBuffersFramebufferSize, this.gBuffersFramebufferSize, 0, this.gl.RGBA, this.gl.FLOAT, null);
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA32F, width, height, 0, this.gl.RGBA, this.gl.FLOAT, null);
             this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.gBufferPositionTexture, 0);
 
             this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT1, this.gl.RENDERBUFFER, gBufferRenderbuffer);
-            this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.RGBA32F, this.gBuffersFramebufferSize, this.gBuffersFramebufferSize);
+            this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.RGBA32F, width, height);
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.gBufferNormalTexture);
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA32F, this.gBuffersFramebufferSize, this.gBuffersFramebufferSize, 0, this.gl.RGBA, this.gl.FLOAT, null);
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA32F, width, height, 0, this.gl.RGBA, this.gl.FLOAT, null);
             this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT1, this.gl.TEXTURE_2D, this.gBufferNormalTexture, 0);
 
             const status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
@@ -7150,7 +7149,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         var oldMouseDown = this.mouseDown;
 
         if ((this.doEdgeDetect||this.doSSAO)&&this.WEBGL2) {
-            if(!this.gFramebuffer) this.createGBuffers();
+            if(this.renderToTexture) {
+                this.gBuffersFramebufferSize = 4096;
+                if(this.gFramebuffer){
+                    this.gl.deleteFramebuffer(this.gFramebuffer);
+                    this.gFramebuffer = null;
+                }
+                this.createGBuffers(this.gBuffersFramebufferSize,this.gBuffersFramebufferSize);
+            }
+            if(!this.gFramebuffer) this.createGBuffers(this.gBuffersFramebufferSize,this.gBuffersFramebufferSize);
             //console.log("Do G-buffer pass for gPosition and gNormal)")
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.gFramebuffer);
             this.gl.drawBuffers([this.gl.COLOR_ATTACHMENT0,this.gl.COLOR_ATTACHMENT1]);
@@ -7168,7 +7175,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         if (this.doEdgeDetect&&this.WEBGL2) {
 
-            if(!this.edgeDetectFramebuffer) this.createEdgeDetectFramebufferBuffer();
+            if(this.renderToTexture) {
+                this.edgeDetectFramebufferSize = 4096;
+                if(this.edgeDetectFramebuffer){
+                    this.gl.deleteFramebuffer(this.edgeDetectFramebuffer);
+                    this.edgeDetectFramebuffer = null;
+                }
+                this.createGBuffers(this.gBuffersFramebufferSize,this.gBuffersFramebufferSize);
+            }
+            if(!this.edgeDetectFramebuffer) this.createEdgeDetectFramebufferBuffer(this.edgeDetectFramebufferSize,this.edgeDetectFramebufferSize);
 
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.edgeDetectFramebuffer);
 
@@ -7485,6 +7500,18 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.prevTime = thisTime;
         }
 
+        if(this.renderToTexture) {
+            this.edgeDetectFramebufferSize = 1024;
+            this.gBuffersFramebufferSize = 1024;
+            if(this.edgeDetectFramebuffer){
+                this.gl.deleteFramebuffer(this.edgeDetectFramebuffer);
+                this.edgeDetectFramebuffer = null;
+            }
+            if(this.gFramebuffer){
+                this.gl.deleteFramebuffer(this.gFramebuffer);
+                this.gFramebuffer = null;
+            }
+        }
     }
 
     depthBlur() {
