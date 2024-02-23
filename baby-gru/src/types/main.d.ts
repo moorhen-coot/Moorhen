@@ -309,6 +309,9 @@ declare module 'moorhen' {
     function setDoSSAO(arg0: boolean): any;
     module.exports = setDoSSAO;
     
+    function setDoEdgeDetect(arg0: boolean): any;
+    module.exports = setDoEdgeDetect;
+    
     function setSsaoRadius(arg0: number): any;
     module.exports = setSsaoRadius;
     

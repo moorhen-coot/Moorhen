@@ -600,6 +600,7 @@ export namespace moorhen {
         setDefaultBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
         setDoShadow: React.Dispatch<React.SetStateAction<boolean>>;
         setDoSSAO: React.Dispatch<React.SetStateAction<boolean>>;
+        setDoEdgeDetect: React.Dispatch<React.SetStateAction<boolean>>;
         setDoOutline: React.Dispatch<React.SetStateAction<boolean>>;
         setDoSpinTest: React.Dispatch<React.SetStateAction<boolean>>;
         setClipCap: React.Dispatch<React.SetStateAction<boolean>>;
@@ -670,6 +671,7 @@ export namespace moorhen {
         doShadowDepthDebug: boolean; 
         doShadow: boolean; 
         doSSAO: boolean; 
+        doEdgeDetect: boolean; 
         doOutline: boolean; 
         GLLabelsFontFamily: string;
         GLLabelsFontSize: number;
@@ -794,6 +796,7 @@ export namespace moorhen {
             doShadowDepthDebug: boolean; 
             doShadow: boolean; 
             doSSAO: boolean; 
+            doEdgeDetect: boolean; 
             doOutline: boolean; 
             doSpinTest: boolean;
             defaultBondSmoothness: number,

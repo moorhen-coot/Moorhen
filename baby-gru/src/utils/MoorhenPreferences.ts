@@ -56,6 +56,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
         doShadowDepthDebug: false,
         doShadow: false,
         doSSAO: false,
+        doEdgeDetect: false,
         doOutline: false,
         GLLabelsFontFamily: "Arial",
         GLLabelsFontSize: 18,
