@@ -15,6 +15,7 @@ export const MoorhenModelTrajectoryManager = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     molecule: moorhen.Molecule;
+    representationStyle: moorhen.RepresentationStyles;
 }) => {
 
     const dispatch = useDispatch()
@@ -69,9 +70,7 @@ export const MoorhenModelTrajectoryManager = (props: {
             const nSteps = framesRef.current.length
             const stepPercent = nSteps / 100
             const singleStepPercent = 1 / stepPercent
-    
-            dispatch(hideMolecule(props.molecule))
-    
+       
             while (iFrameRef.current < framesRef.current.length) {
                 representationRef.current.deleteBuffers()
                 await representationRef.current.buildBuffers(framesRef.current[iFrameRef.current])
@@ -89,11 +88,13 @@ export const MoorhenModelTrajectoryManager = (props: {
     useEffect(() => {
         const loadFrames = async () => {
             dispatch(setIsAnimatingTrajectory(true))
-            representationRef.current = new MoorhenMoleculeRepresentation('CRs', '/*/*/*/*', props.commandCentre, props.glRef)
+            representationRef.current = new MoorhenMoleculeRepresentation(props.representationStyle, '/*/*/*/*', props.commandCentre, props.glRef)
             setBusyComputingFrames(true)
             framesRef.current = await computeFrames(props.molecule, representationRef.current)
             setNFrames(framesRef.current.length)
-            setBusyComputingFrames(false)    
+            setBusyComputingFrames(false)
+            dispatch(hideMolecule(props.molecule))
+            await representationRef.current.buildBuffers(framesRef.current[0])    
         }
         loadFrames()
     }, [])
