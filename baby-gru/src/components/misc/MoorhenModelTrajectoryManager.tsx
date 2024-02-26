@@ -9,7 +9,7 @@ import { webGL } from '../../types/mgWebGL';
 import { IconButton, LinearProgress, Slider } from "@mui/material";
 import { Stack } from "react-bootstrap";
 import { PauseCircleOutline, PlayCircleOutline, ReplayCircleFilledOutlined, StopCircleOutlined } from "@mui/icons-material";
-import { setNotificationContent } from "../../store/generalStatesSlice";
+import { setNotificationContent, setIsAnimatingTrajectory } from "../../store/generalStatesSlice";
 
 export const MoorhenModelTrajectoryManager = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -88,6 +88,7 @@ export const MoorhenModelTrajectoryManager = (props: {
 
     useEffect(() => {
         const loadFrames = async () => {
+            dispatch(setIsAnimatingTrajectory(true))
             representationRef.current = new MoorhenMoleculeRepresentation('CRs', '/*/*/*/*', props.commandCentre, props.glRef)
             setBusyComputingFrames(true)
             framesRef.current = await computeFrames(props.molecule, representationRef.current)
@@ -114,6 +115,7 @@ export const MoorhenModelTrajectoryManager = (props: {
                 setIsPlayingAnimation(false)
                 representationRef.current?.deleteBuffers()
                 dispatch(showMolecule(props.molecule))
+                dispatch(setIsAnimatingTrajectory(false))
                 dispatch(setNotificationContent(null))
             }}>
                 <StopCircleOutlined/>

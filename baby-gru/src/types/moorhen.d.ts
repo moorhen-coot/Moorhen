@@ -825,6 +825,7 @@ export namespace moorhen {
             activeMap: Map;
             theme: string;
             residueSelection: ResidueSelection;
+            isAnimatingTrajectory: boolean;
             isChangingRotamers: boolean;
             isDraggingAtoms: boolean;
             isRotatingAtoms: boolean;
