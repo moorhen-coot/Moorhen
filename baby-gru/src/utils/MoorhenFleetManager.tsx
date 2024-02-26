@@ -2,7 +2,7 @@ import * as Y from 'yjs'
 import { webGL } from "../types/mgWebGL";
 import { moorhen } from "../types/moorhen";
 import { WebsocketProvider } from 'y-websocket'
-import { guid, moorhenSpecies } from './MoorhenUtils';
+import { guid, railSpecies } from './MoorhenUtils';
 import { MoorhenMoleculeRepresentation } from './MoorhenMoleculeRepresentation';
 import { hexToRgb } from '@mui/material';
 
@@ -74,7 +74,7 @@ export class MoorhenFleetManager {
         const rgbaColor = [...hexColor.replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item) / 255), 0.35]
         this.connectedClients.set(this.clientId, {
             id: this.clientId,
-            name: moorhenSpecies[Math.floor(Math.random() * moorhenSpecies.length)],
+            name: railSpecies[Math.floor(Math.random() * railSpecies.length)],
             hexColor: hexColor,
             rgbaColor: rgbaColor,
         })

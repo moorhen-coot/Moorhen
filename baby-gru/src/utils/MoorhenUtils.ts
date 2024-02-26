@@ -1259,7 +1259,7 @@ export const copyStructureSelection = (gemmiStructure: gemmi.Structure, cidSelec
     return newStruct
 }
 
-export const moorhenSpecies = [
+export const railSpecies = [
     'African Swamphen',
     'Allens Gallinule',
     'American Coot',
