@@ -222,6 +222,8 @@ export namespace moorhen {
     'residueSelection' | 'MetaBalls' | 'adaptativeBonds'
 
     interface MoleculeRepresentation {
+        getBufferObjects(): Promise<any>;
+        applyColourRules(): Promise<void>;
         exportAsGltf(): Promise<ArrayBuffer>;
         setApplyColourToNonCarbonAtoms(newVal: boolean): void;
         setBondOptions(bondOptions: cootBondOptions): void;

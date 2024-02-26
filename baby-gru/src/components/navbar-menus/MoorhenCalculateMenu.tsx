@@ -8,6 +8,7 @@ import { MoorhenAddWatersMenuItem } from "../menu-item/MoorhenAddWatersMenuItem"
 import { MoorhenStepRefinementMenuItem } from "../menu-item/MoorhenStepRefinementMenuItem"
 import { MoorhenShiftFieldBFactorRefinement } from "../menu-item/MoorhenShiftFieldBFactorRefinement"
 import { MoorhenMultiplyBfactorMenuItem } from "../menu-item/MoorhenMultiplyBfactorMenuItem"
+import { MoorhenCalculateTrajectoryMenuItem } from "../menu-item/MoorhenCalculateTrajectoryMenuItem"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MenuItem } from "@mui/material";
 import { libcootApi } from "../../types/libcoot";
@@ -28,6 +29,7 @@ export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterfa
             <MoorhenStepRefinementMenuItem key="step-refinement" {...menuItemProps}/>
             <MoorhenMultiplyBfactorMenuItem key="bfactor-multiply" {...menuItemProps}/>
             <MoorhenShiftFieldBFactorRefinement key="bfactor-refinement" {...menuItemProps}/>
+            <MoorhenCalculateTrajectoryMenuItem key="calcualte-trajectory" {...menuItemProps}/>
             <MoorhenSelfRestraintsMenuItem
                 glRef={props.glRef}
                 commandCentre={props.commandCentre}
