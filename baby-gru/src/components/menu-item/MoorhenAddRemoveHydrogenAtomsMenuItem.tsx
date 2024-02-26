@@ -49,7 +49,7 @@ export const MoorhenAddRemoveHydrogenAtomsMenuItem = (props: {
         id='add-hydrogens-menu-item'
         popoverPlacement={props.popoverPlacement}
         popoverContent={panelContent}
-        menuItemText="Add/Remove hydrogen atoms"
+        menuItemText="Add/Remove hydrogen atoms..."
         setPopoverIsShown={props.setPopoverIsShown}
         showOkButton={false}
     />

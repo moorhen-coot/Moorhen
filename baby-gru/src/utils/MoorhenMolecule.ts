@@ -2249,4 +2249,40 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
         return status.data.result.result.first
     }
+
+    /**
+     * Split a molecule with multiple models into separate molecules (one for each model)
+     * @param {boolean} [draw=false] - Indicates whether the new molecules should be drawn
+     * @returns {moorhen.Molecule[]} - A list with the new molecules
+     */
+    async splitMultiModels(draw: boolean = false): Promise<moorhen.Molecule[]> {
+        const result = await this.commandCentre.current.cootCommand({
+            returnType: 'int_array',
+            command: 'split_multi_model_molecule',
+            commandArgs: [ this.molNo ],
+        }, false) as moorhen.WorkerResponse<number[]>
+        
+        if (result.data.result.status === 'Completed') {
+            return await Promise.all(
+                result.data.result.result.map(async (molNo, index) => {
+                    const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.monomerLibraryPath)
+                    newMolecule.name = `${this.name}-${index+1}`
+                    newMolecule.molNo = molNo
+                    newMolecule.isDarkBackground = this.isDarkBackground
+                    newMolecule.defaultBondOptions = this.defaultBondOptions
+                    newMolecule.coordsFormat = this.coordsFormat        
+                    newMolecule.setAtomsDirty(true)
+                    await Promise.all(Object.keys(this.ligandDicts).map(key => newMolecule.addDict(this.ligandDicts[key])))
+                    await newMolecule.fetchDefaultColourRules()
+                    if (draw) {
+                        await newMolecule.fetchIfDirtyAndDraw('CBs')
+                    }
+                    return newMolecule
+                })
+            )
+        } 
+        else {
+            console.warn(result.data.consoleMessage)
+        }
+    }
 }

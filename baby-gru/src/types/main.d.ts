@@ -50,6 +50,7 @@ declare module 'moorhen' {
 
     class MoorhenMolecule implements _moorhen.Molecule {
         constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibrary: string)
+        splitMultiModels(draw?: boolean): Promise<_moorhen.Molecule[]>;
         exportAsGltf(representationId: string): Promise<ArrayBuffer>;
         getNonSelectedCids(cid: string): string[];
         getSecondaryStructInfo(modelNumber?: number): Promise<libcootApi.ResidueSpecJS[]>;
