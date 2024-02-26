@@ -2263,6 +2263,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }, false) as moorhen.WorkerResponse<number[]>
         
         if (result.data.result.status === 'Completed') {
+            if (draw) {
+                MoorhenReduxStore.dispatch(hideMolecule(this))
+            }
             return await Promise.all(
                 result.data.result.result.map(async (molNo, index) => {
                     const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.monomerLibraryPath)
