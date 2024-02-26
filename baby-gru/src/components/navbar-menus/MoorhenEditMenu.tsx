@@ -9,8 +9,7 @@ import { MoorhenAddRemoveHydrogenAtomsMenuItem } from "../menu-item/MoorhenAddRe
 import { MoorhenMoveMoleculeHere } from "../menu-item/MoorhenMoveMoleculeHere"
 import { MoorhenChangeChainIdMenuItem } from "../menu-item/MoorhenChangeChainIdMenuItem"
 import { MoorhenCreateSelectionMenuItem } from "../menu-item/MoorhenCreateSelectionMenuItem"
-import { MoorhenShiftFieldBFactorRefinement } from "../menu-item/MoorhenShiftFieldBFactorRefinement"
-import { MoorhenMultiplyBfactorMenuItem } from "../menu-item/MoorhenMultiplyBfactorMenuItem"
+import { MoorhenSplitModelsMenuItem } from "../menu-item/MoorhenSplitModelsMenuItem"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
@@ -30,8 +29,7 @@ export const MoorhenEditMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             <MoorhenMergeMoleculesMenuItem key="merge" {...menuItemProps} />
             <MoorhenMoveMoleculeHere key="move" {...menuItemProps}/>
             <MoorhenChangeChainIdMenuItem key="change_chain_id" {...menuItemProps}/>
-            <MoorhenMultiplyBfactorMenuItem key="bfactor-multiply" {...menuItemProps}/>
-            <MoorhenShiftFieldBFactorRefinement key="bfactor-refinement" {...menuItemProps}/>
+            <MoorhenSplitModelsMenuItem key="split_models" {...menuItemProps}/>
             <MoorhenDeleteUsingCidMenuItem key="delete" {...menuItemProps} />
             <MoorhenCreateSelectionMenuItem key="create-selection" {...menuItemProps} />
             <MoorhenCopyFragmentUsingCidMenuItem key="copy_fragment" {...menuItemProps} />

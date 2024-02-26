@@ -14,6 +14,7 @@ export const generalStatesSlice = createSlice({
     viewOnly: false,
     residueSelection: { molecule: null, first: null, second: null, cid: null, isMultiCid: false, label: null } as moorhen.ResidueSelection,
     showResidueSelection: false,
+    isAnimatingTrajectory: false,
     isChangingRotamers: false,
     isDraggingAtoms: false,
     isRotatingAtoms: false,
@@ -21,6 +22,9 @@ export const generalStatesSlice = createSlice({
     newCootCommandStart: false,
   },
   reducers: {
+    setIsAnimatingTrajectory: (state, action: {payload: boolean, type: string}) => {
+      return {...state, isAnimatingTrajectory: action.payload}
+    },
     setShowResidueSelection: (state, action: {payload: boolean, type: string}) => {
       return {...state, showResidueSelection: action.payload}
     },
@@ -93,7 +97,7 @@ export const {
   setStopResidueSelection, setStartResidueSelection, clearResidueSelection,
   setMoleculeResidueSelection, setResidueSelection, setCidResidueSelection,
   setIsRotatingAtoms, setIsChangingRotamers, setShowResidueSelection,
-  toggleCootCommandExit, toggleCootCommandStart
+  toggleCootCommandExit, toggleCootCommandStart, setIsAnimatingTrajectory
 } = generalStatesSlice.actions
 
 export default generalStatesSlice.reducer

@@ -89,13 +89,14 @@ export namespace moorhen {
     type coorFormats = 'pdb' | 'mmcif';
     
     interface Molecule {
+        splitMultiModels(draw?: boolean): Promise<Molecule[]>;
         getActiveAtom(): Promise<string>;
         setDrawAdaptativeBonds(newValue: boolean): Promise<void>;
         redrawAdaptativeBonds(selectionString?: string, maxDist?: number): Promise<void>;
         changeChainId(oldId: string, newId: string, redraw?: boolean, startResNo?: number, endResNo?: number): Promise<number>;
-        refineResiduesUsingAtomCidAnimated(cid: string, activeMap: moorhen.Map, dist?: number, redraw?: boolean, redrawFragmentFirst?: boolean): Promise<void>;
-        mergeFragmentFromRefinement(cid: string, fragmentMolecule: moorhen.Molecule, acceptTransform?: boolean, refineAfterMerge?: boolean): Promise<void>;
-        copyFragmentForRefinement(cid: string[], refinementMap: moorhen.Map, redraw?: boolean, readrawFragmentFirst?: boolean): Promise<moorhen.Molecule>;
+        refineResiduesUsingAtomCidAnimated(cid: string, activeMap: Map, dist?: number, redraw?: boolean, redrawFragmentFirst?: boolean): Promise<void>;
+        mergeFragmentFromRefinement(cid: string, fragmentMolecule: Molecule, acceptTransform?: boolean, refineAfterMerge?: boolean): Promise<void>;
+        copyFragmentForRefinement(cid: string[], refinementMap: Map, redraw?: boolean, readrawFragmentFirst?: boolean): Promise<Molecule>;
         exportAsGltf(representationId: string): Promise<ArrayBuffer>;
         getSecondaryStructInfo(modelNumber?: number): Promise<libcootApi.ResidueSpecJS[]>;
         getNonSelectedCids(cid: string): string[];
@@ -221,6 +222,8 @@ export namespace moorhen {
     'residueSelection' | 'MetaBalls' | 'adaptativeBonds'
 
     interface MoleculeRepresentation {
+        getBufferObjects(): Promise<any>;
+        applyColourRules(): Promise<void>;
         exportAsGltf(): Promise<ArrayBuffer>;
         setApplyColourToNonCarbonAtoms(newVal: boolean): void;
         setBondOptions(bondOptions: cootBondOptions): void;
@@ -822,6 +825,7 @@ export namespace moorhen {
             activeMap: Map;
             theme: string;
             residueSelection: ResidueSelection;
+            isAnimatingTrajectory: boolean;
             isChangingRotamers: boolean;
             isDraggingAtoms: boolean;
             isRotatingAtoms: boolean;

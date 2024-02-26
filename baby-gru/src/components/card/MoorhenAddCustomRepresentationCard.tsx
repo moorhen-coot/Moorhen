@@ -209,13 +209,13 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                     </FormSelect>
                 </Form.Group>
                 <Form.Group style={{ width: '100%', margin: 0 }}>
-                        <Form.Label>Residue selection</Form.Label>
-                        <FormSelect size="sm" ref={ruleSelectRef} defaultValue={ruleType} onChange={(val) => setRuleType(val.target.value)}>
-                            <option value={'molecule'} key={'molecule'}>All molecule</option>
-                            <option value={'chain'} key={'chain'}>Chain</option>
-                            <option value={'residue-range'} key={'residue-range'}>Residue range</option>
-                            <option value={'cid'} key={'cid'}>Atom selection</option>
-                        </FormSelect>
+                    <Form.Label>Residue selection</Form.Label>
+                    <FormSelect size="sm" ref={ruleSelectRef} defaultValue={ruleType} onChange={(val) => setRuleType(val.target.value)}>
+                        <option value={'molecule'} key={'molecule'}>All molecule</option>
+                        <option value={'chain'} key={'chain'}>Chain</option>
+                        <option value={'residue-range'} key={'residue-range'}>Residue range</option>
+                        <option value={'cid'} key={'cid'}>Atom selection</option>
+                    </FormSelect>
                 </Form.Group>
                 {ruleType === 'cid' && 
                     <MoorhenCidInputForm ref={cidFormRef} label='Atom selection' margin='0.5rem' width='97%' defaultValue={props.initialCid} allowUseCurrentSelection={true}/>

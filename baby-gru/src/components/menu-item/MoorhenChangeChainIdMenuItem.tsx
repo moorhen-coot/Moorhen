@@ -264,7 +264,7 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
     id='change-chain-id-menu-item'
     popoverPlacement={props.popoverPlacement}
     popoverContent={panelContent}
-    menuItemText="Change chain ID"
+    menuItemText="Change chain ID..."
     setPopoverIsShown={props.setPopoverIsShown}
     onCompleted={() => {}}
     showOkButton={false}

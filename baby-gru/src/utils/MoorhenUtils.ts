@@ -1259,13 +1259,15 @@ export const copyStructureSelection = (gemmiStructure: gemmi.Structure, cidSelec
     return newStruct
 }
 
-export const moorhenSpecies = [
+export const railSpecies = [
     'African Swamphen',
     'Allens Gallinule',
     'American Coot',
     'Andean Coot',
     'Australasian Swamphen',
     'Azure Gallinule',
+    'Baillons Crake',
+    'Band-bellied Crake',
     'Black Crake',
     'Black Rail',
     'Black-backed Moorhen',
@@ -1294,6 +1296,7 @@ export const moorhenSpecies = [
     'Forest Crake',
     'Giant Coot',
     'Gough Moorhen',
+    'Guam Rail',
     'Gray-headed Swamphen',
     'Green-backed Gallinule',
     'Grey-headed Swamphen',
@@ -1302,6 +1305,7 @@ export const moorhenSpecies = [
     'Henderson Crake',
     'Horned Coot',
     'King Rail',
+    'Kosrae Crake',
     'Laysan Rail',
     'Least Moorhen',
     'Lesser Moorhen',
@@ -1323,6 +1327,7 @@ export const moorhenSpecies = [
     'Papuan Swamphen',
     'Purple Gallinule',
     'Purple Swamphen',
+    'Red Rail',
     'Red-fronted Coot',
     'Red-gartered Coot',
     'Red-knobbed Coot',
@@ -1333,7 +1338,8 @@ export const moorhenSpecies = [
     'Samoan Moorhen',
     'Samoan Woodhen',
     'Slaty-breasted Rail',
-    'South Island Takahe',
+    'Slaty-legged crake',
+    'Sora',
     'Speckled Gallinule',
     'Spot-flanked gallinule',
     'Spotless Crake',
