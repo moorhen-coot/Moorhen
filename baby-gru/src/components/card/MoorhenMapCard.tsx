@@ -73,67 +73,74 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             return 1.0
         }
     })
+    
+    // Need to stringify to ensure the selector is stable... (dont want to return a new obj reference)
     const mapColourString = useSelector((state: moorhen.State) => {
         const map = state.mapContourSettings.mapColours.find(item => item.molNo === props.map.molNo)
-        let result: {r: number, g: number, b: number}
-        if (map) {
-            result = map.rgb
-        } else {
-            result = {r: props.map.defaultMapColour.r * 255., g: props.map.defaultMapColour.g * 255., b: props.map.defaultMapColour.b * 255.}
-        }
-        // Need to stringify to ensure the selector is stable... (dont want to return a new obj reference)
-        return JSON.stringify(result)
+        return map ? JSON.stringify(map.rgb) : ""
     })
-    const mapColourHex = useSelector((state: moorhen.State) => {
-        const map = state.mapContourSettings.mapColours.find(item => item.molNo === props.map.molNo)
-        let result: string
-        if (map) {
-            result = rgbToHex(map.rgb.r, map.rgb.g, map.rgb.b)
-        } else {
-            result = rgbToHex(props.map.defaultMapColour.r, props.map.defaultMapColour.g, props.map.defaultMapColour.b)
-        }
-        return result
-    })
+    
     const negativeMapColourString = useSelector((state: moorhen.State) => {
         const map = state.mapContourSettings.negativeMapColours.find(item => item.molNo === props.map.molNo)
-        let result: {r: number, g: number, b: number}
-        if (map) {
-            result = map.rgb
-        } else {
-            result = {r: props.map.defaultNegativeMapColour.r * 255., g: props.map.defaultNegativeMapColour.g * 255., b: props.map.defaultNegativeMapColour.b * 255.}
-        }
-        return JSON.stringify(result)
+        return map ? JSON.stringify(map.rgb) : ""
     })
-    const negativeMapColourHex = useSelector((state: moorhen.State) => {
-        const map = state.mapContourSettings.negativeMapColours.find(item => item.molNo === props.map.molNo)
-        let result: string
-        if (map) {
-            result = rgbToHex(map.rgb.r, map.rgb.g, map.rgb.b)
-        } else {
-            result = rgbToHex(props.map.defaultNegativeMapColour.r, props.map.defaultNegativeMapColour.g, props.map.defaultNegativeMapColour.b)
-        }
-        return JSON.stringify(result)
-    })
+
     const positiveMapColourString = useSelector((state: moorhen.State) => {
         const map = state.mapContourSettings.positiveMapColours.find(item => item.molNo === props.map.molNo)
-        let result: {r: number, g: number, b: number}
-        if (map) {
-            result = map.rgb
-        } else {
-           result = {r: props.map.defaultPositiveMapColour.r * 255., g: props.map.defaultPositiveMapColour.g * 255., b: props.map.defaultPositiveMapColour.b * 255.}
-        }
-        return JSON.stringify(result)
+        return map ? JSON.stringify(map.rgb) : ""
     })
-    const positiveMapColourHex = useSelector((state: moorhen.State) => {
-        const map = state.mapContourSettings.positiveMapColours.find(item => item.molNo === props.map.molNo)
-        let result: string
-        if (map) {
-            result = rgbToHex(map.rgb.r, map.rgb.g, map.rgb.b)
+
+    const mapColour: {r: number; g: number; b: number;} = useMemo(() => {
+        if (mapColourString) {
+            return JSON.parse(mapColourString)
         } else {
-            result = rgbToHex(props.map.defaultPositiveMapColour.r, props.map.defaultPositiveMapColour.g, props.map.defaultPositiveMapColour.b)
+            return {r: props.map.defaultMapColour.r * 255., g: props.map.defaultMapColour.g * 255., b: props.map.defaultMapColour.b * 255.}
         }
-        return JSON.stringify(result)
-    })
+    }, [mapColourString])
+    
+    const mapColourHex: string  = useMemo(() => {
+        if (mapColourString) {
+            const rgb = JSON.parse(mapColourString)
+            return rgbToHex(rgb.r, rgb.g, rgb.b)
+        } else {
+            return rgbToHex(props.map.defaultMapColour.r, props.map.defaultMapColour.g, props.map.defaultMapColour.b)
+        }
+    }, [mapColourString])
+
+    const negativeMapColour: {r: number; g: number; b: number;} = useMemo(() => {
+        if (negativeMapColourString) {
+            return JSON.parse(negativeMapColourString)
+        } else {
+            return {r: props.map.defaultNegativeMapColour.r * 255., g: props.map.defaultNegativeMapColour.g * 255., b: props.map.defaultNegativeMapColour.b * 255.}
+        }
+    }, [negativeMapColourString])
+
+    const negativeMapColourHex: string  = useMemo(() => {
+        if (negativeMapColourString) {
+            const rgb = JSON.parse(negativeMapColourString)
+            return rgbToHex(rgb.r, rgb.g, rgb.b)
+        } else {
+            return rgbToHex(props.map.defaultNegativeMapColour.r, props.map.defaultNegativeMapColour.g, props.map.defaultNegativeMapColour.b)
+        }
+    }, [negativeMapColourString])
+
+    const positiveMapColour: {r: number; g: number; b: number;} = useMemo(() => {
+        if (positiveMapColourString) {
+            return JSON.parse(positiveMapColourString)
+        } else {
+            return {r: props.map.defaultPositiveMapColour.r * 255., g: props.map.defaultPositiveMapColour.g * 255., b: props.map.defaultPositiveMapColour.b * 255.}
+        }
+    }, [positiveMapColourString])
+
+    const positiveMapColourHex: string  = useMemo(() => {
+        if (positiveMapColourString) {
+            const rgb = JSON.parse(positiveMapColourString)
+            return rgbToHex(rgb.r, rgb.g, rgb.b)
+        } else {
+            return rgbToHex(props.map.defaultPositiveMapColour.r, props.map.defaultPositiveMapColour.g, props.map.defaultPositiveMapColour.b)
+        }
+    }, [positiveMapColourString])
+
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const contourWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.contourWheelSensitivityFactor)
@@ -153,10 +160,6 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const isDirty = useRef<boolean>(false)
     const histogramRef = useRef(null)
     const intervalRef = useRef(null)
-
-    const mapColour: {r: number; g: number; b: number;} = JSON.parse(mapColourString)
-    const negativeMapColour: {r: number; g: number; b: number;} = JSON.parse(negativeMapColourString)
-    const positiveMapColour: {r: number; g: number; b: number;} = JSON.parse(positiveMapColourString)
 
     useImperativeHandle(cardRef, () => ({
         forceIsCollapsed: (value: boolean) => { 

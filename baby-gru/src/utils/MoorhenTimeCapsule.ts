@@ -251,6 +251,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             diffuseLight: this.glRef.current.light_colours_diffuse,
             lightPosition: this.glRef.current.light_positions,
             specularLight: this.glRef.current.light_colours_specular,
+            specularPower: this.glRef.current.specularPower,
             fogStart: this.glRef.current.gl_fog_start,
             fogEnd: this.glRef.current.gl_fog_end,
             zoom: this.glRef.current.zoom,
@@ -277,7 +278,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             moleculeData: moleculeData,
             mapData: mapData,
             viewData: viewData,
-            activeMapIndex: this.mapsRef.current.findIndex(map => map.molNo === this.activeMapRef.current.molNo),
+            activeMapIndex: this.mapsRef.current.findIndex(map => map.molNo === this.activeMapRef.current?.molNo),
             version: this.version
         }
 
