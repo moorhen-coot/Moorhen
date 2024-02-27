@@ -90,7 +90,7 @@ export const MoorhenModifyColourRulesCard = (props: {
     
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const handleChainChange = (evt) => {
         setSelectedChain(evt.target.value)

@@ -28,7 +28,7 @@ export const MoorhenUpdatingMapsToast = (props: {
     const defaultUpdatingScores = useSelector((state: moorhen.State) => state.moleculeMapUpdate.defaultUpdatingScores)
     const showScoresToast = useSelector((state: moorhen.State) => state.moleculeMapUpdate.showScoresToast)
     const maps = useSelector((state: moorhen.State) => state.maps)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     useEffect(() => {
         const handleScoresUpdate = async () => {

@@ -11,7 +11,6 @@ import generalStatesReducer from './generalStatesSlice'
 import hoveringStatesReducer from './hoveringStatesSlice'
 import activeModalsReducer from './activeModalsSlice'
 import mapContourSettingsReducer from './mapContourSettingsSlice'
-import moleculeRepresentationsReducer from './moleculeRepresentationsSlice'
 import moleculeMapUpdateReducer from './moleculeMapUpdateSlice'
 
 export default configureStore({
@@ -28,7 +27,6 @@ export default configureStore({
         hoveringStates: hoveringStatesReducer,
         activeModals: activeModalsReducer,
         mapContourSettings: mapContourSettingsReducer,
-        moleculeRepresentations: moleculeRepresentationsReducer,
         moleculeMapUpdate: moleculeMapUpdateReducer,
     },
     middleware: (getDefaultMiddleware) =>

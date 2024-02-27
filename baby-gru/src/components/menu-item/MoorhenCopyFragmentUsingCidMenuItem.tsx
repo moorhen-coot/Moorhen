@@ -24,7 +24,7 @@ export const MoorhenCopyFragmentUsingCidMenuItem = (props: {
     
     const dispatch = useDispatch()
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const createSelection = useCallback(async () => {
         const selectedCid = cidFormRef.current.value

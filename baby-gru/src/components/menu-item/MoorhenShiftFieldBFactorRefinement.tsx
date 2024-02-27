@@ -12,7 +12,7 @@ export const MoorhenShiftFieldBFactorRefinement = (props) => {
     
     const dispatch = useDispatch()
     const maps = useSelector((state: moorhen.State) => state.maps)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const doRefinement = async () => {
         if (!moleculeSelectRef.current.value || !mapSelectRef.current.value) {

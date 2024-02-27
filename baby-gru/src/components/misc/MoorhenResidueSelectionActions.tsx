@@ -31,7 +31,7 @@ export const MoorhenResidueSelectionActions = (props) => {
 
     const dispatch = useDispatch()
     const showResidueSelection = useSelector((state: moorhen.State) => state.generalStates.showResidueSelection)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const isChangingRotamers = useSelector((state: moorhen.State) => state.generalStates.isChangingRotamers)
     const isRotatingAtoms = useSelector((state: moorhen.State) => state.generalStates.isRotatingAtoms)
     const isDraggingAtoms = useSelector((state: moorhen.State) => state.generalStates.isDraggingAtoms)

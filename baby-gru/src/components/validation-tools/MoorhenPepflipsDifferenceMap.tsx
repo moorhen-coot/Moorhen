@@ -25,7 +25,7 @@ export const MoorhenPepflipsDifferenceMap = (props: Props) => {
     
     const dispatch = useDispatch()
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const filterMapFunction = (map: moorhen.Map) => map.isDifference
 

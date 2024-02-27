@@ -53,7 +53,7 @@ export const MoorhenRamachandran = (props: Props) => {
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const dispatch = useDispatch()
 
     const getMolName = useCallback((selectedMolNo: number) => {

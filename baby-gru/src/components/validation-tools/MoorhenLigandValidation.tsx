@@ -12,7 +12,7 @@ interface Props extends moorhen.CollectedProps {
 }
 
 export const MoorhenLigandValidation = (props: Props) => {
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const fetchCardData = async (selectedModel: number, selectedMap: number): Promise<moorhen.LigandInfo[]> => {
         let ligandInfo: moorhen.LigandInfo[] = []

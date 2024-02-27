@@ -14,7 +14,7 @@ interface Props extends moorhen.CollectedProps {
 
 export const MoorhenCarbohydrateValidation = (props: Props) => {
 
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const fetchCardData = async (selectedModel: number): Promise<privateer.ResultsEntry[]> => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel)

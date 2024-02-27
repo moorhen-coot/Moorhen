@@ -22,7 +22,7 @@ export const MoorhenMapMaskingMenuItem = (props: {
 
     const dispatch = useDispatch()
     const maps = useSelector((state: moorhen.State) => state.maps)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const [invertFlag, setInvertFlag] = useState<boolean>(false)
     const [useDefaultMaskRadius, setUseDefaultMaskRadius] = useState<boolean>(true)

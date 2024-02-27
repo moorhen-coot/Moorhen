@@ -115,7 +115,7 @@ export const MoorhenContextMenu = (props: {
   const [opacity, setOpacity] = useState<number>(1.0)
   const [toolTip, setToolTip] = useState<string>('')
   
-  const molecules = useSelector((state: moorhen.State) => state.molecules)
+  const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
   const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
   const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 

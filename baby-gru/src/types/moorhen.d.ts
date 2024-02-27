@@ -466,7 +466,14 @@ export namespace moorhen {
         name: string;
         molNo: number;
         coordString: string;
-        representations: { cid: string, style: string, isCustom: boolean, colourRules: ColourRule[], bondOptions: cootBondOptions }[];
+        representations: { 
+            cid: string;
+            style: strin;
+            isCustom: boolean;
+            colourRules: ColourRule[];
+            bondOptions: cootBondOptions;
+            applyColoursToNonCarbonAtoms: boolean;
+         }[];
         defaultBondOptions: cootBondOptions;
         defaultColourRules: ColourRule[];
         connectedToMaps: number[];
@@ -509,6 +516,10 @@ export namespace moorhen {
         clipStart: number;
         clipEnd: number;
         quat4: any[];
+        shadows: boolean;
+        ssao: {enabled: boolean; radius: number; bias: number};
+        edgeDetection: boolean;
+        blur: {enabled: boolean; depth: number; radius: number};
     }
     
     type backupSession = {
@@ -758,7 +769,11 @@ export namespace moorhen {
     interface CollectedProps extends ContainerRefs, ContainerOptionalProps { }
 
     interface State {
-        molecules: Molecule[];
+        molecules: {
+            moleculeList: Molecule[];
+            visibleMolecules: number[];
+            customRepresentations: MoleculeRepresentation[];
+        };
         maps: Map[];
         mouseSettings: {
             contourWheelSensitivityFactor: number;
@@ -872,9 +887,6 @@ export namespace moorhen {
             mapColours: { molNo: number; rgb: {r: number, g: number, b: number} }[];
             negativeMapColours: { molNo: number; rgb: {r: number, g: number, b: number} }[];
             positiveMapColours: { molNo: number; rgb: {r: number, g: number, b: number} }[];
-        };
-        moleculeRepresentations: {
-            visibleMolecules: number[];
         };
         moleculeMapUpdate: {
             updatingMapsIsEnabled: boolean;

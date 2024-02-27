@@ -15,7 +15,7 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
 
     const dispatch = useDispatch()
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const maps = useSelector((state: moorhen.State) => state.maps)
 
     const getWarningToast = (message: string) => <MoorhenNotification key={guid()} hideDelay={3000} width={20}>

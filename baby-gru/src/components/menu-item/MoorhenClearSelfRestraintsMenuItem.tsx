@@ -13,7 +13,7 @@ export const MoorhenClearSelfRestraintsMenuItem = (props: {
 }) => {
 
     const moleculeSelectRef = useRef<HTMLSelectElement | null>(null)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const panelContent = <>
         <MoorhenMoleculeSelect

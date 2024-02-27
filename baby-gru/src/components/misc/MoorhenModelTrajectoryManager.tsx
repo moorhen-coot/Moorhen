@@ -3,7 +3,7 @@ import { MoorhenNotification } from './MoorhenNotification';
 import { useDispatch } from 'react-redux';
 import { MoorhenMoleculeRepresentation } from "../../utils/MoorhenMoleculeRepresentation";
 import { sleep } from "../../utils/MoorhenUtils";
-import { hideMolecule, showMolecule } from "../../store/moleculeRepresentationsSlice";
+import { hideMolecule, showMolecule } from "../../store/moleculesSlice";
 import { moorhen } from '../../types/moorhen';
 import { webGL } from '../../types/mgWebGL';
 import { IconButton, LinearProgress, Slider } from "@mui/material";

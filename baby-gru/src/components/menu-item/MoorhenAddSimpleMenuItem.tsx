@@ -17,7 +17,7 @@ export const MoorhenAddSimpleMenuItem = (props: {
     const moleculeSelectRef = useRef<HTMLSelectElement | null>(null)
 
     const dispatch = useDispatch()
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const molTypes = ['HOH', 'SO4', 'PO4', 'GOL', 'CIT', 'EDO', 'IOD', 'NA', 'CA']
 

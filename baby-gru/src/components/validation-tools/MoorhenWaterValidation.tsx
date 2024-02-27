@@ -35,7 +35,7 @@ export const MoorhenWaterValidation = (props: Props) => {
     const [ignoreZeroOcc, setIgnoreZeroOcc] = useState<boolean>(false)
 
     const dispatch = useDispatch()
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const viewWater = useCallback(async (selectedModel: number, water: libcootApi.AtomSpecJS) => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel)
