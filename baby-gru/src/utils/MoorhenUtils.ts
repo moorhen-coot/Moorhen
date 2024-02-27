@@ -8,7 +8,7 @@ import { moorhen } from "../types/moorhen";
 import { gemmi } from "../types/gemmi";
 import { webGL } from "../types/mgWebGL";
 import { AnyAction, Dispatch } from "@reduxjs/toolkit";
-import { addMolecule, emptyMolecules } from "../store/moleculesSlice";
+import { addCustomRepresentation, addMolecule, emptyMolecules } from "../store/moleculesSlice";
 import { addMap, emptyMaps } from "../store/mapsSlice";
 import { batch } from "react-redux";
 import { setActiveMap } from "../store/generalStatesSlice";
@@ -279,7 +279,8 @@ export async function loadSessionData(
         molecule.defaultColourRules = storedMoleculeData.defaultColourRules
         molecule.defaultBondOptions = storedMoleculeData.defaultBondOptions
         for (const item of storedMoleculeData.representations) {
-            await molecule.addRepresentation(item.style, item.cid, item.isCustom, item.colourRules, item.bondOptions, item.applyColoursToNonCarbonAtoms)
+            const representation = await molecule.addRepresentation(item.style, item.cid, item.isCustom, item.colourRules, item.bondOptions, item.applyColoursToNonCarbonAtoms)
+            dispatch( addCustomRepresentation(representation) )
         }
     }
     
