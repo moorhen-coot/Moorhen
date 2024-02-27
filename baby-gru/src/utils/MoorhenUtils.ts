@@ -348,6 +348,14 @@ export async function loadSessionData(
     glRef.current.background_colour = sessionData.viewData.backgroundColor
     glRef.current.setOrigin(sessionData.viewData.origin, false)
     glRef.current.setQuat(sessionData.viewData.quat4)
+    glRef.current.setEdgeDetectOn(sessionData.viewData.edgeDetection)
+    glRef.current.setShadowsOn(sessionData.viewData.shadows)
+    glRef.current.setSSAOOn(sessionData.viewData.ssao.enabled)
+    glRef.current.setSSAOBias(sessionData.viewData.ssao.bias)
+    glRef.current.setSSAORadius(sessionData.viewData.ssao.radius)
+    glRef.current.useOffScreenBuffers = sessionData.viewData.blur.enabled
+    glRef.current.blurDepth = sessionData.viewData.blur.depth
+    glRef.current.setBlurSize(sessionData.viewData.blur.radius)
 
     // Set connected maps and molecules if any
     const connectedMoleculeIndex = sessionData.moleculeData.findIndex(molecule => molecule.connectedToMaps !== null)

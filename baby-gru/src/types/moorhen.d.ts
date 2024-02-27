@@ -509,6 +509,10 @@ export namespace moorhen {
         clipStart: number;
         clipEnd: number;
         quat4: any[];
+        shadows: boolean;
+        ssao: {enabled: boolean; radius: number; bias: number};
+        edgeDetection: boolean;
+        blur: {enabled: boolean; depth: number; radius: number};
     }
     
     type backupSession = {
