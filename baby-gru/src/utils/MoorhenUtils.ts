@@ -15,6 +15,7 @@ import { setActiveMap } from "../store/generalStatesSlice";
 import { setContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle, setNegativeMapColours, setPositiveMapColours } from "../store/mapContourSettingsSlice";
 import { enableUpdatingMaps, setConnectedMoleculeMolNo, setFoFcMapMolNo, setReflectionMapMolNo, setTwoFoFcMapMolNo } from "../store/moleculeMapUpdateSlice";
 import { libcootApi } from "../types/libcoot";
+import { setBackgroundColor, setDepthBlurDepth, setDepthBlurRadius, setDoEdgeDetect, setDoSSAO, setDoShadow, setSsaoBias, setSsaoRadius, setUseOffScreenBuffers } from "../store/sceneSettingsSlice";
 
 export const getAtomInfoLabel = (atomInfo: moorhen.AtomInfo) => {
     return `/${atomInfo.mol_name}/${atomInfo.chain_id}/${atomInfo.res_no}(${atomInfo.res_name})/${atomInfo.name}${atomInfo.has_altloc ? `:${atomInfo.alt_loc}` : ""}`
@@ -278,7 +279,7 @@ export async function loadSessionData(
         molecule.defaultColourRules = storedMoleculeData.defaultColourRules
         molecule.defaultBondOptions = storedMoleculeData.defaultBondOptions
         for (const item of storedMoleculeData.representations) {
-            await molecule.addRepresentation(item.style, item.cid, item.isCustom, item.colourRules, item.bondOptions)
+            await molecule.addRepresentation(item.style, item.cid, item.isCustom, item.colourRules, item.bondOptions, item.applyColoursToNonCarbonAtoms)
         }
     }
     
@@ -345,17 +346,20 @@ export async function loadSessionData(
     glRef.current.set_fog_range(sessionData.viewData.fogStart, sessionData.viewData.fogEnd, false)
     glRef.current.set_clip_range(sessionData.viewData.clipStart, sessionData.viewData.clipEnd, false)
     glRef.current.doDrawClickedAtomLines = sessionData.viewData.doDrawClickedAtomLines
-    glRef.current.background_colour = sessionData.viewData.backgroundColor
     glRef.current.setOrigin(sessionData.viewData.origin, false)
     glRef.current.setQuat(sessionData.viewData.quat4)
-    glRef.current.setEdgeDetectOn(sessionData.viewData.edgeDetection)
-    glRef.current.setShadowsOn(sessionData.viewData.shadows)
-    glRef.current.setSSAOOn(sessionData.viewData.ssao.enabled)
-    glRef.current.setSSAOBias(sessionData.viewData.ssao.bias)
-    glRef.current.setSSAORadius(sessionData.viewData.ssao.radius)
-    glRef.current.useOffScreenBuffers = sessionData.viewData.blur.enabled
-    glRef.current.blurDepth = sessionData.viewData.blur.depth
-    glRef.current.setBlurSize(sessionData.viewData.blur.radius)
+    batch(() => {
+        dispatch(setBackgroundColor(sessionData.viewData.backgroundColor))
+        dispatch(setDoEdgeDetect(sessionData.viewData.edgeDetection))
+        dispatch(setDoShadow(sessionData.viewData.shadows))
+        dispatch(setDoSSAO(sessionData.viewData.ssao.enabled))
+        dispatch(setSsaoBias(sessionData.viewData.ssao.bias))
+        dispatch(setSsaoRadius(sessionData.viewData.ssao.radius))
+        dispatch(setUseOffScreenBuffers(sessionData.viewData.blur.enabled))
+        dispatch(setDepthBlurDepth(sessionData.viewData.blur.depth))
+        dispatch(setDepthBlurRadius(sessionData.viewData.blur.radius))
+        dispatch(setUseOffScreenBuffers(sessionData.viewData.blur.enabled))
+    })
 
     // Set connected maps and molecules if any
     const connectedMoleculeIndex = sessionData.moleculeData.findIndex(molecule => molecule.connectedToMaps !== null)

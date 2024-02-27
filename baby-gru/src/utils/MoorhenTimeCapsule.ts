@@ -210,7 +210,8 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                     style: item.style,
                     isCustom: item.isCustom,
                     colourRules: item.useDefaultColourRules ? null : item.colourRules,
-                    bondOptions: item.useDefaultBondOptions ? null : item.bondOptions
+                    bondOptions: item.useDefaultBondOptions ? null : item.bondOptions,
+                    applyColoursToNonCarbonAtoms: item.applyColourToNonCarbonAtoms,
                 }}),
                 defaultColourRules: molecule.defaultColourRules,
                 defaultBondOptions: molecule.defaultBondOptions,

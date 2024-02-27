@@ -466,7 +466,14 @@ export namespace moorhen {
         name: string;
         molNo: number;
         coordString: string;
-        representations: { cid: string, style: string, isCustom: boolean, colourRules: ColourRule[], bondOptions: cootBondOptions }[];
+        representations: { 
+            cid: string;
+            style: strin;
+            isCustom: boolean;
+            colourRules: ColourRule[];
+            bondOptions: cootBondOptions;
+            applyColoursToNonCarbonAtoms: boolean;
+         }[];
         defaultBondOptions: cootBondOptions;
         defaultColourRules: ColourRule[];
         connectedToMaps: number[];
