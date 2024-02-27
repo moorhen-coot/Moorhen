@@ -61,7 +61,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const [bondSmoothness, setBondSmoothness] = useState<number>(props.molecule.defaultBondOptions.smoothness === 1 ? 1 : props.molecule.defaultBondOptions.smoothness === 2 ? 50 : 100)
     
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const handleChainChange = (evt) => {
         setSelectedChain(evt.target.value)

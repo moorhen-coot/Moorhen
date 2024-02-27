@@ -19,7 +19,7 @@ export const MoorhenModelsModal = (props: MoorhenModelsModalProps) => {
     
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     useEffect(() => {
         cardListRef.current = cardListRef.current.slice(0, molecules.length);

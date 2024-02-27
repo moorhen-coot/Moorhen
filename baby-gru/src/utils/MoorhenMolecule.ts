@@ -6,7 +6,7 @@ import {
 import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation"
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
-import { hideMolecule } from '../store/moleculeRepresentationsSlice';
+import { hideMolecule } from '../store/moleculesSlice';
 import * as vec3 from 'gl-matrix/vec3';
 import * as mat3 from 'gl-matrix/mat3';
 import * as quat4 from 'gl-matrix/quat';
@@ -1688,7 +1688,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      */
     isVisible(excludeStyles: string[] = ['hover', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface']): boolean {
         const state = MoorhenReduxStore.getState()
-        const isVisible = state.moleculeRepresentations.visibleMolecules.some(molNo => molNo === this.molNo)
+        const isVisible = state.molecules.visibleMolecules.some(molNo => molNo === this.molNo)
         const hasVisibleBuffers = this.representations
             .filter(item => !excludeStyles.includes(item.style))
             .some(item => item.visible)

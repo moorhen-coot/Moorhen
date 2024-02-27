@@ -36,7 +36,7 @@ const MoorhenImportLigandDictionary = (props: {
     const dispatch = useDispatch()
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const {
         createInstance, setCreateInstance, addToMolecule, fetchLigandDict, panelContent,

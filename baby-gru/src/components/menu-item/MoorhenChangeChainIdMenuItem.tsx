@@ -23,7 +23,7 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
     const [selectedModel, setSelectedModel] = useState<number | null>(null)
 
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const handleModelChange = useCallback((evt: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedModel(parseInt(evt.target.value))

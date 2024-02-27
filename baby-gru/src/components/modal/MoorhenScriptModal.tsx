@@ -26,7 +26,7 @@ export const MoorhenScriptModal = (props: {
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const maps = useSelector((state: moorhen.State) => state.maps)
 
     const handleScriptExe = useCallback(async () => {

@@ -18,7 +18,7 @@ export const MoorhenSelfRestraintsMenuItem = (props: {
     popoverPlacement?: 'left' | 'right';
 }) => {
     
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     
     const modeTypeSelectRef = useRef<HTMLSelectElement | null>(null)

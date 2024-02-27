@@ -17,7 +17,7 @@ export const MoorhenAddWatersMenuItem = (props: {
     const mapSelectRef = useRef<null | HTMLSelectElement>(null)
     
     const dispatch = useDispatch()
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const maps = useSelector((state: moorhen.State) => state.maps)
 
     const panelContent = <>

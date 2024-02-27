@@ -15,8 +15,7 @@ import { MoorhenModifyColourRulesCard } from './MoorhenModifyColourRulesCard';
 import { useSelector, useDispatch } from 'react-redux';
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { addMolecule } from '../../store/moleculesSlice';
-import { showMolecule } from '../../store/moleculeRepresentationsSlice';
+import { addMolecule, showMolecule } from '../../store/moleculesSlice';
 import { triggerUpdate } from '../../store/moleculeMapUpdateSlice';
 import { MoorhenCarbohydrateList } from "../list/MoorhenCarbohydrateList";
 
@@ -68,14 +67,14 @@ export type clickedResidueType = {
 
 export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInterface>((props, cardRef) => {
     const dispatch = useDispatch()
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.miscAppSettings.defaultExpandDisplayCards)
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops)
     const userPreferencesMounted = useSelector((state: moorhen.State) => state.generalStates.userPreferencesMounted)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    const isVisible = useSelector((state: moorhen.State) => state.moleculeRepresentations.visibleMolecules.includes(props.molecule.molNo))
+    const isVisible = useSelector((state: moorhen.State) => state.molecules.visibleMolecules.includes(props.molecule.molNo))
 
     const addColourRulesAnchorDivRef = useRef<HTMLDivElement | null>(null)
     const busyRedrawing = useRef<boolean>(false)
@@ -648,7 +647,7 @@ const CustomRepresentationChip = (props: {
     const [showEditRepresentation, setShowEditRepresentation] = useState<boolean>(false)
     
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
-    const isVisible = useSelector((state: moorhen.State) => state.moleculeRepresentations.visibleMolecules.some(molNo => molNo === molecule.molNo))
+    const isVisible = useSelector((state: moorhen.State) => state.molecules.visibleMolecules.some(molNo => molNo === molecule.molNo))
 
     const chipStyle = getChipStyle(representation.colourRules, representationIsVisible && isVisible, isDark)
     if (!isVisible) chipStyle['opacity'] = '0.3'

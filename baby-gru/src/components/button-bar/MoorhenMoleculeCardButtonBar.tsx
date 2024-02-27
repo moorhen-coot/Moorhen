@@ -9,7 +9,7 @@ import { clickedResidueType } from "../card/MoorhenMoleculeCard";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from "react-redux";
-import { hideMolecule, showMolecule } from "../../store/moleculeRepresentationsSlice";
+import { hideMolecule, showMolecule } from "../../store/moleculesSlice";
 
 type MoorhenMoleculeCardButtonBarPropsType = {
     handleCentering: () => void;
@@ -37,7 +37,7 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
     const dispatch = useDispatch()
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const makeBackups = useSelector((state: moorhen.State) => state.backupSettings.makeBackups)
-    const isVisible = useSelector((state: moorhen.State) => state.moleculeRepresentations.visibleMolecules.includes(props.molecule.molNo))
+    const isVisible = useSelector((state: moorhen.State) => state.molecules.visibleMolecules.includes(props.molecule.molNo))
 
     useMemo(() => {
         if (currentName === "") {

@@ -33,7 +33,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
     const changeSelectedBondOrderValueRef = useRef<HTMLSelectElement | null>(null)
     const newBondOrderValueRef = useRef<HTMLSelectElement | null>(null)
 
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     useImperativeHandle(ref, () => ({
         getFormData: (): moorhen.createCovLinkAtomInput => {return {

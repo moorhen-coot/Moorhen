@@ -769,7 +769,11 @@ export namespace moorhen {
     interface CollectedProps extends ContainerRefs, ContainerOptionalProps { }
 
     interface State {
-        molecules: Molecule[];
+        molecules: {
+            moleculeList: Molecule[];
+            visibleMolecules: number[];
+            customRepresentations: MoleculeRepresentation[];
+        };
         maps: Map[];
         mouseSettings: {
             contourWheelSensitivityFactor: number;
@@ -883,9 +887,6 @@ export namespace moorhen {
             mapColours: { molNo: number; rgb: {r: number, g: number, b: number} }[];
             negativeMapColours: { molNo: number; rgb: {r: number, g: number, b: number} }[];
             positiveMapColours: { molNo: number; rgb: {r: number, g: number, b: number} }[];
-        };
-        moleculeRepresentations: {
-            visibleMolecules: number[];
         };
         moleculeMapUpdate: {
             updatingMapsIsEnabled: boolean;

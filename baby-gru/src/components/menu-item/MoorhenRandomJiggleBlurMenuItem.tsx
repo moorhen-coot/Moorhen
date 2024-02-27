@@ -21,7 +21,7 @@ export const MoorhenRandomJiggleBlurMenuItem = (props: {
     const dispatch = useDispatch()
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
     const maps = useSelector((state: moorhen.State) => state.maps)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)

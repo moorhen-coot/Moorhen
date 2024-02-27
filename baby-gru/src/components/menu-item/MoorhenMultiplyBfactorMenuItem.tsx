@@ -19,7 +19,7 @@ export const MoorhenMultiplyBfactorMenuItem = (props) => {
     const bfactorValueRef = useRef<null | number>(0)
 
     const dispatch = useDispatch()
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const [cid, setCid] = useState<string>("")
     const [invalidCid, setInvalidCid] = useState<boolean>(false)
