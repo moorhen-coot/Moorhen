@@ -278,7 +278,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             moleculeData: moleculeData,
             mapData: mapData,
             viewData: viewData,
-            activeMapIndex: this.mapsRef.current.findIndex(map => map.molNo === this.activeMapRef.current.molNo),
+            activeMapIndex: this.mapsRef.current.findIndex(map => map.molNo === this.activeMapRef.current?.molNo),
             version: this.version
         }
 
