@@ -251,6 +251,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             diffuseLight: this.glRef.current.light_colours_diffuse,
             lightPosition: this.glRef.current.light_positions,
             specularLight: this.glRef.current.light_colours_specular,
+            specularPower: this.glRef.current.specularPower,
             fogStart: this.glRef.current.gl_fog_start,
             fogEnd: this.glRef.current.gl_fog_end,
             zoom: this.glRef.current.zoom,

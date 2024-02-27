@@ -349,6 +349,7 @@ export async function loadSessionData(
     glRef.current.doDrawClickedAtomLines = sessionData.viewData.doDrawClickedAtomLines
     glRef.current.setOrigin(sessionData.viewData.origin, false)
     glRef.current.setQuat(sessionData.viewData.quat4)
+    glRef.current.specularPower = sessionData.viewData.specularPower
     batch(() => {
         dispatch(setBackgroundColor(sessionData.viewData.backgroundColor))
         dispatch(setDoEdgeDetect(sessionData.viewData.edgeDetection))

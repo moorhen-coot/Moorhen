@@ -509,6 +509,7 @@ export namespace moorhen {
         diffuseLight: [number, number, number, number];
         lightPosition: [number, number, number, number];
         specularLight: [number, number, number, number];
+        specularPower: number;
         fogStart: number;
         fogEnd: number;
         zoom: number;
