@@ -110,13 +110,13 @@ rm -f a.out.wasm
 # Get PapaParse
 echo "Downloading papaparse.min.js"
 echo
-curl -L https://unpkg.com/papaparse@latest/papaparse.min.js -o web_example/papaparse.min.js
+curl -L https://unpkg.com/papaparse@latest/papaparse.min.js -o wasm_src_frontend/papaparse.min.js
 echo
 
 # Get Chart.Js
 echo "Downloading chart.js"
 echo
-curl -L https://cdn.jsdelivr.net/npm/chart.js -o web_example/chart.js
+curl -L https://cdn.jsdelivr.net/npm/chart.js -o wasm_src_frontend/chart.js
 echo
 
 # Boost
