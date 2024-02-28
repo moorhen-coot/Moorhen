@@ -1929,6 +1929,10 @@ interface ShaderEdgeDetect extends MGWebGLShader {
     gPositionTexture: WebGLUniformLocation;
     gNormalTexture: WebGLUniformLocation;
     depthBufferSize: WebGLUniformLocation | null;
+    depthThreshold: WebGLUniformLocation | null;
+    normalThreshold: WebGLUniformLocation | null;
+    scaleDepth: WebGLUniformLocation | null;
+    scaleNormal: WebGLUniformLocation | null;
     zoom: WebGLUniformLocation | null;
 }
 
@@ -2077,6 +2081,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         doShadow: boolean;
         doSSAO: boolean;
         doEdgeDetect: boolean;
+        depthThreshold: number;
+        normalThreshold: number;
+        scaleDepth: number;
+        scaleNormal: number;
         occludeDiffuse: boolean;
         doShadowDepthDebug: boolean;
         doSpin: boolean;
@@ -2436,6 +2444,22 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.doSSAO = doSSAO;
     }
 
+    setEdgeDetectDepthThreshold(depthThreshold) {
+        this.depthThreshold = depthThreshold;
+    }
+
+    setEdgeDetectNormalThreshold(normalThreshold) {
+        this.normalThreshold = normalThreshold;
+    }
+
+    setEdgeDetectDepthScale(depthScale) {
+        this.scaleDepth = depthScale;
+    }
+
+    setEdgeDetectNormalScale(normalScale) {
+        this.scaleNormal = normalScale;
+    }
+
     setEdgeDetectOn(doEdgeDetect) {
         this.doEdgeDetect = doEdgeDetect;
     }
@@ -2635,6 +2659,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.doSSAO = false;
         this.doEdgeDetect = false;
         this.occludeDiffuse = false;
+
+        this.depthThreshold = 0.4; // 0.1 - 2.0 ?
+        this.normalThreshold = 0.3; //0.2 - 0.4 for spheres. 0.5+ for ribbons
+        this.scaleDepth = 1.0;
+        this.scaleNormal = 1.0;
 
         this.doSpin = false;
 
@@ -4405,6 +4434,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.shaderProgramEdgeDetect.zoom = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "zoom");
         this.shaderProgramEdgeDetect.depthBufferSize = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "depthBufferSize");
+
+        this.shaderProgramEdgeDetect.depthThreshold = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "depthThreshold");
+        this.shaderProgramEdgeDetect.normalThreshold = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "normalThreshold");
+        this.shaderProgramEdgeDetect.scaleDepth = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "scaleDepth");
+        this.shaderProgramEdgeDetect.scaleNormal = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "scaleNormal");
     }
 
     initSSAOShader(vertexShaderSSAO, fragmentShaderSSAO) {
@@ -7192,6 +7226,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.uniform1i(this.shaderProgramEdgeDetect.gNormalTexture,1);
             this.gl.uniform1f(this.shaderProgramEdgeDetect.zoom,this.zoom);
             this.gl.uniform1f(this.shaderProgramEdgeDetect.depthBufferSize,b+f);
+
+            this.gl.uniform1f(this.shaderProgramEdgeDetect.depthThreshold,this.depthThreshold);
+            this.gl.uniform1f(this.shaderProgramEdgeDetect.normalThreshold,this.normalThreshold);
+            this.gl.uniform1f(this.shaderProgramEdgeDetect.scaleDepth,this.scaleDepth);
+            this.gl.uniform1f(this.shaderProgramEdgeDetect.scaleNormal,this.scaleNormal);
+
             this.gl.activeTexture(this.gl.TEXTURE0);
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.gBufferPositionTexture);
             this.gl.activeTexture(this.gl.TEXTURE1);

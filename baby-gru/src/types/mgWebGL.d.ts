@@ -156,6 +156,10 @@ export namespace webGL {
         setShadowsOn(doShadow: boolean): void;
         setSSAOOn(doSSAO: boolean): void;
         setEdgeDetectOn(doEdgeDetect: boolean): void;
+        setEdgeDetectDepthThreshold(depthThreshold: number): void;
+        setEdgeDetectNormalThreshold(normalThreshold: number): void;
+        setEdgeDetectDepthScale(depthScale: number): void;
+        setEdgeDetectNormalScale(normalScale: number): void;
         setOccludeDiffuse(doOccludeDiffuse: boolean): void;
         setOutlinesOn(doOutline: boolean): void;
         setSpinTestState(doSpinTest: boolean): void;
@@ -257,6 +261,10 @@ export namespace webGL {
         doShadow: boolean;
         doSSAO: boolean;
         doEdgeDetect: boolean;
+        depthThreshold: number;
+        normalThreshold: number;
+        scaleDepth: number;
+        scaleNormal: number;
         occludeDiffuse: boolean;
         doShadowDepthDebug: boolean;
         doSpin: boolean;

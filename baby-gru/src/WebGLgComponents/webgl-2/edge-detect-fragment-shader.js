@@ -9,15 +9,15 @@ uniform sampler2D gNormal;
 uniform float zoom;
 uniform float depthBufferSize;
 
+uniform float depthThreshold;
+uniform float normalThreshold;
+uniform float scaleDepth;
+uniform float scaleNormal;
+
 in mediump mat4 pMatrix;
 in vec2 out_TexCoord0;
 
 void main() {
-
-    float depthThreshold = 0.3;
-    float _NormalThreshold = 0.4;
-    float scaleDepth = 1.0;
-    float scaleNormal = 1.0;
 
     float pixelFrac = 2.0 / 1024.0;
 
@@ -40,21 +40,20 @@ void main() {
     float depthFiniteDifference0 = depth1 - depth0;
     float depthFiniteDifference1 = depth3 - depth2;
 
-    float diff = 1.0 - sqrt(pow(depthFiniteDifference0, 2.0) + pow(depthFiniteDifference1, 2.0)) * 10.0 * depthBufferSize/60.;
+    float diff = sqrt(pow(depthFiniteDifference0, 2.0) + pow(depthFiniteDifference1, 2.0)) * 10.0 * depthBufferSize/60.;
 
     fragColor = vec4(depth0,depth0,depth0,1.0);
 
-    if(diff>depthThreshold) diff = 1.0;
+    diff = diff > depthThreshold ? 1.0 : 0.0;
+
+    diff = 1.0 - diff;
 
     vec3 normalFiniteDifference0 = normal1 - normal0;
     vec3 normalFiniteDifference1 = normal3 - normal2;
 
     float edgeNormal = sqrt(dot(normalFiniteDifference0, normalFiniteDifference0) + dot(normalFiniteDifference1, normalFiniteDifference1));
-    edgeNormal = edgeNormal > _NormalThreshold ? 1.0 : 0.0;
+    edgeNormal = edgeNormal > normalThreshold ? 1.0 : 0.0;
     edgeNormal = 1.0 - edgeNormal;
-
-    fragColor = vec4(diff,diff,diff,1.0);
-    fragColor = vec4(edgeNormal,edgeNormal,edgeNormal,1.0);
 
     float edgeVal = min(edgeNormal,diff);
     fragColor = vec4(edgeVal,edgeVal,edgeVal,1.0);

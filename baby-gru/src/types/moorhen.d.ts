@@ -616,6 +616,10 @@ export namespace moorhen {
         setDoShadow: React.Dispatch<React.SetStateAction<boolean>>;
         setDoSSAO: React.Dispatch<React.SetStateAction<boolean>>;
         setDoEdgeDetect: React.Dispatch<React.SetStateAction<boolean>>;
+        setEdgeDetectDepthThreshold: React.Dispatch<React.SetStateAction<number>>;
+        setEdgeDetectNormalThreshold: React.Dispatch<React.SetStateAction<number>>;
+        setEdgeDetectDepthScale: React.Dispatch<React.SetStateAction<number>>;
+        setEdgeDetectNormalScale: React.Dispatch<React.SetStateAction<number>>;
         setDoOutline: React.Dispatch<React.SetStateAction<boolean>>;
         setDoSpinTest: React.Dispatch<React.SetStateAction<boolean>>;
         setClipCap: React.Dispatch<React.SetStateAction<boolean>>;
@@ -687,6 +691,10 @@ export namespace moorhen {
         doShadow: boolean; 
         doSSAO: boolean; 
         doEdgeDetect: boolean; 
+        edgeDetectDepthThreshold: number;
+        edgeDetectNormalThreshold: number;
+        edgeDetectDepthScale: number;
+        edgeDetectNormalScale: number;
         doOutline: boolean; 
         GLLabelsFontFamily: string;
         GLLabelsFontSize: number;
@@ -816,6 +824,10 @@ export namespace moorhen {
             doShadow: boolean; 
             doSSAO: boolean; 
             doEdgeDetect: boolean; 
+            edgeDetectDepthThreshold: number;
+            edgeDetectNormalThreshold: number;
+            edgeDetectDepthScale: number;
+            edgeDetectNormalScale: number;
             doOutline: boolean; 
             doSpinTest: boolean;
             defaultBondSmoothness: number,
