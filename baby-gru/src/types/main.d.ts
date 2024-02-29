@@ -346,8 +346,8 @@ declare module 'moorhen' {
     function setDoShadow(arg0: boolean): any;
     module.exports = setDoShadow;
     
-    function setDoSpinTest(arg0: boolean): any;
-    module.exports = setDoSpinTest;
+    function setDoSpin(arg0: boolean): any;
+    module.exports = setDoSpin;
     
     function setDoOutline(arg0: boolean): any;
     module.exports = setDoOutline;

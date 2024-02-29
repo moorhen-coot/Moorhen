@@ -627,7 +627,6 @@ export namespace moorhen {
         setEdgeDetectDepthScale: React.Dispatch<React.SetStateAction<number>>;
         setEdgeDetectNormalScale: React.Dispatch<React.SetStateAction<number>>;
         setDoOutline: React.Dispatch<React.SetStateAction<boolean>>;
-        setDoSpinTest: React.Dispatch<React.SetStateAction<boolean>>;
         setClipCap: React.Dispatch<React.SetStateAction<boolean>>;
         setResetClippingFogging: React.Dispatch<React.SetStateAction<boolean>>;
         setUseOffScreenBuffers: React.Dispatch<React.SetStateAction<boolean>>;
@@ -834,7 +833,7 @@ export namespace moorhen {
             edgeDetectDepthScale: number;
             edgeDetectNormalScale: number;
             doOutline: boolean; 
-            doSpinTest: boolean;
+            doSpin: boolean;
             defaultBondSmoothness: number,
             resetClippingFogging: boolean; 
             clipCap: boolean;

@@ -16,7 +16,7 @@ import { loadSessionData } from "./utils/MoorhenUtils";
 import { MoorhenReduxProvider } from "./components/misc/MoorhenReduxProvider";
 import { setDefaultBackgroundColor, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
     setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap,  
-    setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpinTest, setDoOutline, setDepthBlurRadius,
+    setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius,
     setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setBackgroundColor, setDrawScaleBar,
     setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setEdgeDetectNormalScale
 } from './store/sceneSettingsSlice';
@@ -43,7 +43,7 @@ export {
     MoorhenCommandCentre, loadSessionData, MoorhenMapSelect, MoorhenDraggableModalBase, MoorhenReduxProvider, 
     setDefaultBackgroundColor, setDrawCrosshairs, setDrawScaleBar, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
     setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap,  
-    setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpinTest, setDoOutline, setDepthBlurRadius,
+    setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius,
     setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, 
     setModificationCountBackupThreshold, setHeight, setWidth, setIsDark, setBackgroundColor, setNotificationContent, 
     setActiveMap, setCootInitialized, setAppTittle, setUserPreferencesMounted, setDevMode, setTheme, setViewOnly,
