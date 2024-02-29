@@ -25,7 +25,7 @@ export const sceneSettingsSlice = createSlice({
     useOffScreenBuffers: null,
     doShadowDepthDebug: null,
     doShadow: null,
-    doSpinTest: null,
+    doSpin: null,
     doOutline: null,
     depthBlurRadius: null,
     depthBlurDepth: null,
@@ -101,8 +101,8 @@ export const sceneSettingsSlice = createSlice({
     setDoShadow: (state, action: {payload: boolean, type: string}) => {
         return {...state, doShadow: action.payload}
     },
-    setDoSpinTest: (state, action: {payload: boolean, type: string}) => {
-        return {...state, doSpinTest: action.payload}
+    setDoSpin: (state, action: {payload: boolean, type: string}) => {
+        return {...state, doSpin: action.payload}
     },
     setDoOutline: (state, action: {payload: boolean, type: string}) => {
         return {...state, doOutline: action.payload}
@@ -130,7 +130,7 @@ export const sceneSettingsSlice = createSlice({
 export const {
     setDefaultBackgroundColor, setDrawCrosshairs, setDrawScaleBar, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
     setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap,  
-    setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpinTest, setDoOutline, setDepthBlurRadius,
+    setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius,
     setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setBackgroundColor,
     setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setEdgeDetectNormalScale
 } = sceneSettingsSlice.actions

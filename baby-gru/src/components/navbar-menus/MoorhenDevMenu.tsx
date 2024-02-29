@@ -13,7 +13,6 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
     const dispatch = useDispatch()
     const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline)
-    const doSpinTest = useSelector((state: moorhen.State) => state.sceneSettings.doSpinTest)
 
     const menuItemProps = {setPopoverIsShown, customCid, ...props}
 
@@ -42,13 +41,6 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                             checked={doOutline}
                             onChange={() => {dispatch( setDoOutline(!doOutline) )}}
                             label="Outlines"/>
-                    </InputGroup>
-                    <InputGroup className='moorhen-input-group-check'>
-                        <Form.Check 
-                            type="switch"
-                            checked={doSpinTest}
-                            onChange={() => {dispatch( setDoSpinTest(!doSpinTest) )}}
-                            label="Spin test"/>
                     </InputGroup>
         </>
     }

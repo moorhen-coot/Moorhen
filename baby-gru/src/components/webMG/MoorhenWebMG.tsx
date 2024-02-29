@@ -70,7 +70,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers)
     const doShadowDepthDebug = useSelector((state: moorhen.State) => state.sceneSettings.doShadowDepthDebug)
     const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
-    const doSpinTest = useSelector((state: moorhen.State) => state.sceneSettings.doSpinTest)
+    const doSpin = useSelector((state: moorhen.State) => state.sceneSettings.doSpin)
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline)
     const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius)
     const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth)
@@ -264,10 +264,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setSpinTestState(doSpinTest)
+            glRef.current.setSpinTestState(doSpin)
             glRef.current.drawScene()
         }
-    }, [doSpinTest])
+    }, [doSpin])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
