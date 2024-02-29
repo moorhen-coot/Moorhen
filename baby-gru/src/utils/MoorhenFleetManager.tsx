@@ -5,11 +5,14 @@ import { WebsocketProvider } from 'y-websocket'
 import { guid, railSpecies } from './MoorhenUtils';
 import { MoorhenMoleculeRepresentation } from './MoorhenMoleculeRepresentation';
 import { hexToRgb } from '@mui/material';
+import { setIsInSharedSession } from '../store/sharedSessionSlice';
+import MoorhenReduxStore from "../store/MoorhenReduxStore";
 
 export class MoorhenFleetManager {
     
     moleculesRef: React.RefObject<moorhen.Molecule[]>;
     mapsRef: React.RefObject<moorhen.Map[]>;
+    activeMapRef: React.RefObject<moorhen.Map>;
     followViewClientId: string;
     clientId: string;
     doc: Y.Doc;
@@ -17,10 +20,24 @@ export class MoorhenFleetManager {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     websocketProvider: WebsocketProvider;
-    molecules: Y.Map<string>;
-    maps: Y.Map<string>;
+    molecules: Y.Map<{
+        molNo: number;
+        coordData: string;
+        format: string;
+        molName: string;
+    }>;
+    maps: Y.Map<{
+        mapData: Uint8Array;
+        mapName: string;
+        molNo: number;
+        isEM: boolean;
+        isDiff: boolean;
+        isActiveMap: boolean;
+    }>;
     locks: Y.Map<boolean>;
-    view: Y.Map<{zoom: number; origin: number[]}>;
+    view: Y.Map<{zoom: number; origin: number[]; quat4: number[]}>;
+    viewFollowers: Y.Array<string>;
+    viewFollowersAll: Y.Map<Y.Array<string>>;
     connectedClients: Y.Map<{id: string; hexColor: string, rgbaColor: number[], name: string}>;
     hoveredAtoms: Y.Map<{id: string; hoveredAtom: {cid: string, molNo: string}}>;
     hoverRepresentations: {[key: string]: moorhen.MoleculeRepresentation};
@@ -28,11 +45,12 @@ export class MoorhenFleetManager {
     lastActiveClientId: string;
     isLocked: boolean;
 
-    constructor(moleculesRef: React.RefObject<moorhen.Molecule[]>, mapsRef: React.RefObject<moorhen.Map[]>, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>) {
+    constructor(moleculesRef: React.RefObject<moorhen.Molecule[]>, mapsRef: React.RefObject<moorhen.Map[]>, activeMapRef: React.RefObject<moorhen.Map>, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>) {
         this.commandCentre = commandCentre
         this.glRef = glRef
         this.moleculesRef = moleculesRef
         this.mapsRef = mapsRef
+        this.activeMapRef = activeMapRef
         this.isConnected = false
         this.doc = null
         this.clientId = null
@@ -44,12 +62,24 @@ export class MoorhenFleetManager {
         this.lastActiveClientId = null
         this.hoveredAtoms = null
         this.followViewClientId = null
+        this.viewFollowers = null
+        this.viewFollowersAll = null
         this.locks = null
         this.isLocked = false
         this.hoverRepresentations = {}
     }
 
+    setIsConnected(newValue: boolean) {
+        this.isConnected = newValue
+        MoorhenReduxStore.dispatch( setIsInSharedSession(newValue) )
+    }
+
     joinSession(sessionToken?: string) {
+        this.setIsConnected(true)
+
+        this.commandCentre.current?.history.reset()
+        this.commandCentre.current?.history.setSkipTracking(true)
+
         this.doc = new Y.Doc()
         this.sessionToken = sessionToken ? sessionToken : guid()
         this.websocketProvider = new WebsocketProvider(
@@ -58,18 +88,18 @@ export class MoorhenFleetManager {
 
         this.clientId = this.doc.clientID.toString()
         this.connectedClients = this.doc.getMap('connectedClients')
+        this.viewFollowers = new Y.Array()
+        this.viewFollowersAll = this.doc.getMap('viewFollowersAll')
         this.hoveredAtoms = this.doc.getMap('hoveredAtoms')
         this.molecules = this.doc.getMap('molecules')
         this.maps = this.doc.getMap('maps')
         this.view = this.doc.getMap('view')
         this.locks = this.doc.getMap('locks')
         this.setInitialStates()
-        this.isConnected = true
     }
 
     setInitialStates() {
         this.locks.set(this.clientId, false)
-        this.locks.observe(this.handleLockUpdate.bind(this))
         const hexColor = hexToRgb(`#${guid().slice(0, 6)}`)
         const rgbaColor = [...hexColor.replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item) / 255), 0.35]
         this.connectedClients.set(this.clientId, {
@@ -82,6 +112,7 @@ export class MoorhenFleetManager {
             id: this.clientId,
             hoveredAtom: null,
         })
+        this.viewFollowersAll.set(this.clientId, this.viewFollowers)
         this.pushViewUpdate()
     }
 
@@ -107,7 +138,12 @@ export class MoorhenFleetManager {
         const newCoordData = await molecule.getAtoms()
         this.doc.transact(() => {
             this.locks.set(this.clientId, false)
-            this.molecules.set(molecule.molNo.toString(), newCoordData)    
+            this.molecules.set(molecule.molNo.toString(), {
+                coordData: newCoordData,
+                molName: molecule.name,
+                format: molecule.coordsFormat,
+                molNo: molecule.molNo
+            })    
         })
     }
 
@@ -125,7 +161,7 @@ export class MoorhenFleetManager {
             } else if (change.action === 'delete') {
                 // Delete molecule
             } else {
-                const coordData = this.molecules.get(key)
+                const coordData = this.molecules.get(key).coordData
                 await molecule.replaceModelWithCoordData(coordData)
             }
         })
@@ -133,29 +169,43 @@ export class MoorhenFleetManager {
 
     async pushMapUpdate(map: moorhen.Map) {
         const response = await map.getMap()
-        this.doc.transact(() => {
-            this.maps.set(map.molNo.toString(), response.data.result.mapData)    
-        })
+        this.maps.set(map.molNo.toString(), {
+            mapData: new Uint8Array(response.data.result.mapData),
+            mapName: map.name,
+            molNo: map.molNo,
+            isEM: map.isEM,
+            isDiff: map.isDifference,
+            isActiveMap: this.activeMapRef.current.molNo === map.molNo
+        })    
     }
 
     setFollowViewClient(clientId: string | null) {
-        if (this.clientId !== clientId) {
+        if (clientId && this.clientId !== clientId) {
             this.followViewClientId = clientId
+            this.viewFollowersAll.get(clientId).push([this.clientId])
+            this.setClientView(clientId)
         } else {
-            console.warn('Clients cannot follow view of themselves')
+            const followersArray = this.viewFollowersAll.get(this.followViewClientId)
+            const index = followersArray.toArray().findIndex(item => item === this.clientId)
+            if (index !== -1) {
+                followersArray.delete(index, 1)
+            } else {
+                console.warn(`Cannot find ${this.clientId} among followers for ${this.followViewClientId}`)
+            }
             this.followViewClientId = null
         }
     }
 
     setClientView(clientId: string) {
         const newView = this.view.get(clientId)
-        this.glRef.current.setOriginAndZoomAnimated(newView.origin as [number, number, number], newView.zoom)
+        this.glRef.current.setViewAnimated(newView.origin as [number, number, number], newView.quat4, newView.zoom)
     }
 
     pushViewUpdate() {
         this.view.set(this.clientId, {
             zoom: this.glRef.current.zoom,
-            origin: this.glRef.current.origin
+            origin: this.glRef.current.origin,
+            quat4: this.glRef.current.myQuat
         })
     }
 
@@ -221,7 +271,7 @@ export class MoorhenFleetManager {
         for (let clientId in this.hoverRepresentations) {
             this.hoverRepresentations[clientId]?.deleteBuffers()
         }
-        this.isConnected = false
+        this.setIsConnected(false)
     }
 
     getClientList() {
