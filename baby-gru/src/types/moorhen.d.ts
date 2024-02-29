@@ -704,7 +704,6 @@ export namespace moorhen {
         doOutline: boolean; 
         GLLabelsFontFamily: string;
         GLLabelsFontSize: number;
-        doSpinTest: boolean;
         mouseSensitivity: number;
         zoomWheelSensitivityFactor: number;
         contourWheelSensitivityFactor: number;
