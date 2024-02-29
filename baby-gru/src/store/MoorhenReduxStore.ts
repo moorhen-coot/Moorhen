@@ -12,6 +12,7 @@ import hoveringStatesReducer from './hoveringStatesSlice'
 import activeModalsReducer from './activeModalsSlice'
 import mapContourSettingsReducer from './mapContourSettingsSlice'
 import moleculeMapUpdateReducer from './moleculeMapUpdateSlice'
+import sharedSessionReducer from './sharedSessionSlice'
 
 export default configureStore({
     reducer: {
@@ -28,6 +29,7 @@ export default configureStore({
         activeModals: activeModalsReducer,
         mapContourSettings: mapContourSettingsReducer,
         moleculeMapUpdate: moleculeMapUpdateReducer,
+        sharedSession: sharedSessionReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

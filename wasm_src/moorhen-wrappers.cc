@@ -1093,6 +1093,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("set_refinement_is_verbose", &molecules_container_t::set_refinement_is_verbose)
     .function("split_multi_model_molecule", &molecules_container_t::split_multi_model_molecule)
     .function("print_non_drawn_bonds", &molecules_container_t::print_non_drawn_bonds)
     .function("pop_back", &molecules_container_t::pop_back)
@@ -1296,7 +1297,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("make_exportable_environment_bond_box",&molecules_container_js::make_exportable_environment_bond_box)
     .function("DrawGlycoBlocks",&molecules_container_js::DrawGlycoBlocks)
     .function("privateer_validate",&molecules_container_js::privateer_validate)
-
     .function("GetSecondaryStructure",&molecules_container_js::GetSecondaryStructure)
     .function("DrawMoorhenMetaBalls",&molecules_container_js::DrawMoorhenMetaBalls)
     .function("model_has_glycans",&molecules_container_js::model_has_glycans)
@@ -1306,7 +1306,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("mol_text_to_pdb", &molecules_container_js::mol_text_to_pdb)
     .function("replace_molecule_by_model_from_string", &molecules_container_js::replace_molecule_by_model_from_string)
     .function("read_dictionary_string", &molecules_container_js::read_dictionary_string)
-    // .function("export_imol_as_gltf_string", &molecules_container_js::export_imol_as_gltf_string)
     ;
     value_object<molecules_container_t::fit_ligand_info_t>("fit_ligand_info_t")
     .field("imol", &molecules_container_t::fit_ligand_info_t::imol)

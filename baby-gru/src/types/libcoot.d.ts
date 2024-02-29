@@ -467,6 +467,7 @@ export namespace libcootApi {
         VectorStringUInt_pair: { new(): emscriptem.vector<{ first: string, second: number }>};
     }
     interface MoleculesContainerJS {
+        set_refinement_is_verbose(arg0: boolean): void;
         set_use_gemmi(arg0: boolean): void;
         get_use_gemmi(): boolean;
         export_model_molecule_as_gltf(imol: number, cid: string, mode: string, isDark: boolean, bondWidth: number, atomRadius: number, bondSmoothness: number, drawHydrogens: boolean, drawMissingResidues: boolean, fileName: string): void;

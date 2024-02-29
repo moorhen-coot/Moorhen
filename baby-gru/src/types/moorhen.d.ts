@@ -861,6 +861,11 @@ export namespace moorhen {
             newCootCommandStart: boolean;        
             showResidueSelection: boolean;
         };
+        sharedSession: {
+            isInSharedSession: boolean;
+            sharedSessionToken: string;
+            showSharedSessionManager: boolean;
+        };
         hoveringStates: {
             enableAtomHovering: boolean;
             hoveredAtom: HoveredAtom;

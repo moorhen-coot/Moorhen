@@ -97,7 +97,7 @@ export const {
   setStopResidueSelection, setStartResidueSelection, clearResidueSelection,
   setMoleculeResidueSelection, setResidueSelection, setCidResidueSelection,
   setIsRotatingAtoms, setIsChangingRotamers, setShowResidueSelection,
-  toggleCootCommandExit, toggleCootCommandStart, setIsAnimatingTrajectory
+  toggleCootCommandExit, toggleCootCommandStart, setIsAnimatingTrajectory,
 } = generalStatesSlice.actions
 
 export default generalStatesSlice.reducer

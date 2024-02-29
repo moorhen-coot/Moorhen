@@ -19,6 +19,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { setDefaultBackgroundColor, setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/sceneSettingsSlice';
 import { setCootInitialized, setNotificationContent, setTheme, toggleCootCommandExit, toggleCootCommandStart } from '../store/generalStatesSlice';
 import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSlice';
+import { MoorhenSharedSessionManager } from './misc/MoorhenSharedSessionManager';
 
 /**
  * A container for the Moorhen app. Needs to be rendered within a MoorhenReduxprovider.
@@ -398,6 +399,15 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange}/>
 
     <MoorhenResidueSelectionActions/>
+
+    <MoorhenSharedSessionManager
+        commandCentre={props.commandCentre}
+        glRef={props.glRef}
+        monomerLibrary={monomerLibraryPath}
+        moleculesRef={moleculesRef}
+        mapsRef={mapsRef}
+        activeMapRef={activeMapRef}
+    />
 
     <Container fluid className={`baby-gru ${theme}`}>
         <Row>

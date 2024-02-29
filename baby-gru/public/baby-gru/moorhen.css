@@ -213,7 +213,8 @@ div.darkly text.end-label {fill:#FFF !important;}
   width: 14rem;
   min-height: 3rem;
   height: fit-content;
-  max-height: 10rem;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 0.5rem;
   display: flex;
   border-radius: 2rem;

@@ -1158,6 +1158,7 @@ onmessage = function (e) {
                 molecules_container = new cootModule.molecules_container_js(false)
                 molecules_container.set_use_gemmi(false)
                 molecules_container.set_show_timings(false)
+                molecules_container.set_refinement_is_verbose(false)
                 molecules_container.fill_rotamer_probability_tables()
                 molecules_container.set_map_sampling_rate(1.7)
                 molecules_container.set_map_is_contoured_with_thread_pool(true)
