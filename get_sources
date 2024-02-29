@@ -32,6 +32,14 @@ echo "Checking out monomers"
 git clone https://github.com/MonomerLibrary/monomers monomers
 echo
 
+echo "Checking out SliceNDice"
+git clone https://github.com/hlasimpk/slicendice_cpp.git
+echo
+
+echo "Checking out JsonCpp"
+git clone https://github.com/open-source-parsers/jsoncpp.git
+echo
+
 echo "Downloading out fftw-$fftw_release"
 curl -L http://www.fftw.org/fftw-$fftw_release.tar.gz -o fftw-$fftw_release.tar.gz
 echo
