@@ -50,7 +50,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         this.modificationCount = 0
         this.modificationCountBackupThreshold = 5
         this.maxBackupCount = 10
-        this.version = 'v19'
+        this.version = 'v20'
         this.disableBackups = false
         this.storageInstance = null
         this.onIsBusyChange = null
@@ -259,7 +259,13 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             clipStart: (this.glRef.current.gl_clipPlane0[3] + this.glRef.current.fogClipOffset) * -1,
             clipEnd: this.glRef.current.gl_clipPlane1[3] - this.glRef.current.fogClipOffset,
             quat4: this.glRef.current.myQuat,
-            edgeDetection: this.glRef.current.doEdgeDetect,
+            edgeDetection: {
+                enabled: this.glRef.current.doEdgeDetect,
+                depthScale: this.glRef.current.scaleDepth,
+                depthThreshold: this.glRef.current.depthThreshold,
+                normalScale: this.glRef.current.scaleNormal,
+                normalThreshold: this.glRef.current.normalThreshold
+            },
             shadows: this.glRef.current.doShadow,
             ssao: {
                 enabled: this.glRef.current.doSSAO,

@@ -15,7 +15,10 @@ import { setActiveMap } from "../store/generalStatesSlice";
 import { setContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle, setNegativeMapColours, setPositiveMapColours } from "../store/mapContourSettingsSlice";
 import { enableUpdatingMaps, setConnectedMoleculeMolNo, setFoFcMapMolNo, setReflectionMapMolNo, setTwoFoFcMapMolNo } from "../store/moleculeMapUpdateSlice";
 import { libcootApi } from "../types/libcoot";
-import { setBackgroundColor, setDepthBlurDepth, setDepthBlurRadius, setDoEdgeDetect, setDoSSAO, setDoShadow, setSsaoBias, setSsaoRadius, setUseOffScreenBuffers } from "../store/sceneSettingsSlice";
+import { 
+    setBackgroundColor, setDepthBlurDepth, setDepthBlurRadius, setDoEdgeDetect, setDoSSAO, setDoShadow, 
+    setEdgeDetectDepthScale, setEdgeDetectDepthThreshold, setEdgeDetectNormalScale, setEdgeDetectNormalThreshold, setSsaoBias, setSsaoRadius, setUseOffScreenBuffers 
+} from "../store/sceneSettingsSlice";
 
 export const getAtomInfoLabel = (atomInfo: moorhen.AtomInfo) => {
     return `/${atomInfo.mol_name}/${atomInfo.chain_id}/${atomInfo.res_no}(${atomInfo.res_name})/${atomInfo.name}${atomInfo.has_altloc ? `:${atomInfo.alt_loc}` : ""}`
@@ -352,7 +355,11 @@ export async function loadSessionData(
     glRef.current.specularPower = sessionData.viewData.specularPower
     batch(() => {
         dispatch(setBackgroundColor(sessionData.viewData.backgroundColor))
-        dispatch(setDoEdgeDetect(sessionData.viewData.edgeDetection))
+        dispatch(setEdgeDetectDepthScale(sessionData.viewData.edgeDetection.depthScale))
+        dispatch(setEdgeDetectDepthThreshold(sessionData.viewData.edgeDetection.depthThreshold))
+        dispatch(setEdgeDetectNormalScale(sessionData.viewData.edgeDetection.normalScale))
+        dispatch(setEdgeDetectNormalThreshold(sessionData.viewData.edgeDetection.normalThreshold))
+        dispatch(setDoEdgeDetect(sessionData.viewData.edgeDetection.enabled))
         dispatch(setDoShadow(sessionData.viewData.shadows))
         dispatch(setDoSSAO(sessionData.viewData.ssao.enabled))
         dispatch(setSsaoBias(sessionData.viewData.ssao.bias))

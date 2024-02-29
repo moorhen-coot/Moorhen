@@ -519,7 +519,13 @@ export namespace moorhen {
         quat4: any[];
         shadows: boolean;
         ssao: {enabled: boolean; radius: number; bias: number};
-        edgeDetection: boolean;
+        edgeDetection: {
+            enabled: boolean;
+            depthScale: number;
+            normalScale: number;
+            depthThreshold: number;
+            normalThreshold: number;
+        };
         blur: {enabled: boolean; depth: number; radius: number};
     }
     
