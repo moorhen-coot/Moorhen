@@ -5,7 +5,7 @@ import { convertRemToPx, convertViewtoPx, rgbToHex } from "../../utils/MoorhenUt
 import { MoorhenSlider } from "../misc/MoorhenSlider";
 import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
 import { Form, InputGroup, Stack } from "react-bootstrap";
-import { setBackgroundColor, setClipCap, setDepthBlurDepth, setDepthBlurRadius, setDoSSAO, setResetClippingFogging, setSsaoRadius, setUseOffScreenBuffers, setDoEdgeDetect } from "../../moorhen";
+import { setBackgroundColor, setClipCap, setDepthBlurDepth, setDepthBlurRadius, setDoSSAO, setResetClippingFogging, setSsaoRadius, setUseOffScreenBuffers, setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setEdgeDetectNormalScale } from "../../moorhen";
 import { HexColorInput, RgbColorPicker } from "react-colorful";
 import { CirclePicker } from "react-color"
 import { moorhen } from "../../types/moorhen";
@@ -15,6 +15,10 @@ import { hexToRgb } from "@mui/material";
 const EdgeDetectPanel = (props: {}) => {
     const dispatch = useDispatch()
     const doEdgeDetect = useSelector((state: moorhen.State) => state.sceneSettings.doEdgeDetect)
+    const edgeDetectDepthThreshold = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectDepthThreshold)
+    const edgeDetectNormalThreshold = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectNormalThreshold)
+    const edgeDetectDepthScale = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectDepthScale)
+    const edgeDetectNormalScale = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectNormalScale)
     return <div className="scene-settings-panel-flex-between">
         <InputGroup className='moorhen-input-group-check'>
             <Form.Check 
@@ -25,6 +29,44 @@ const EdgeDetectPanel = (props: {}) => {
                 )}}
                 label="Edge detection"/>
         </InputGroup>
+        <MoorhenSlider
+                isDisabled={!doEdgeDetect}
+                minVal={0}
+                maxVal={4}
+                allowFloats={false}
+                logScale={false}
+                sliderTitle="Depth scale"
+                initialValue={edgeDetectDepthScale}
+                externalValue={edgeDetectDepthScale}
+                setExternalValue={(val: number) => dispatch(setEdgeDetectDepthScale(val))}/>
+        <MoorhenSlider
+                isDisabled={!doEdgeDetect}
+                minVal={0}
+                maxVal={4}
+                allowFloats={false}
+                logScale={false}
+                sliderTitle="Normal scale"
+                initialValue={edgeDetectNormalScale}
+                externalValue={edgeDetectNormalScale}
+                setExternalValue={(val: number) => dispatch(setEdgeDetectNormalScale(val))}/>
+        <MoorhenSlider
+                isDisabled={!doEdgeDetect}
+                minVal={0.1}
+                maxVal={2.0}
+                logScale={false}
+                sliderTitle="Depth threshold"
+                initialValue={edgeDetectDepthThreshold}
+                externalValue={edgeDetectDepthThreshold}
+                setExternalValue={(val: number) => dispatch(setEdgeDetectDepthThreshold(val))}/>
+        <MoorhenSlider
+                isDisabled={!doEdgeDetect}
+                minVal={0.1}
+                maxVal={1.0}
+                logScale={false}
+                sliderTitle="Normal threshold"
+                initialValue={edgeDetectNormalThreshold}
+                externalValue={edgeDetectNormalThreshold}
+                setExternalValue={(val: number) => dispatch(setEdgeDetectNormalThreshold(val))}/>
     </div>
 }
 

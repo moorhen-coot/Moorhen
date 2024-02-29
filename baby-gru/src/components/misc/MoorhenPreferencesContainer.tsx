@@ -7,7 +7,7 @@ import { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificatio
 import { overwriteMapUpdatingScores, setShowScoresToast } from "../../store/moleculeMapUpdateSlice";
 import { setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
 import { setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } from "../../store/labelSettingsSlice";
-import { setClipCap, setDefaultBackgroundColor, setDefaultBondSmoothness, setDepthBlurDepth, setDepthBlurRadius, setDoOutline, setDoPerspectiveProjection, setDoSSAO, setDoShadow, setDoShadowDepthDebug, setDoSpinTest, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawInteractions, setDrawMissingLoops, setResetClippingFogging, setSsaoBias, setSsaoRadius, setUseOffScreenBuffers, setDrawScaleBar, setDoEdgeDetect} from "../../store/sceneSettingsSlice";
+import { setClipCap, setDefaultBackgroundColor, setDefaultBondSmoothness, setDepthBlurDepth, setDepthBlurRadius, setDoOutline, setDoPerspectiveProjection, setDoSSAO, setDoShadow, setDoShadowDepthDebug, setDoSpinTest, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawInteractions, setDrawMissingLoops, setResetClippingFogging, setSsaoBias, setSsaoRadius, setUseOffScreenBuffers, setDrawScaleBar, setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setEdgeDetectNormalScale} from "../../store/sceneSettingsSlice";
 import { setAnimateRefine, setDefaultExpandDisplayCards, setEnableRefineAfterMod, setTransparentModalsOnMouseOut } from "../../store/miscAppSettingsSlice";
 import { setDevMode, setUserPreferencesMounted } from "../../store/generalStatesSlice";
 import { moorhen } from "../../types/moorhen"
@@ -64,6 +64,10 @@ export const MoorhenPreferencesContainer = (props: {
     const drawInteractions = useSelector((state: moorhen.State) => state.sceneSettings.drawInteractions)
     const doSSAO = useSelector((state: moorhen.State) => state.sceneSettings.doSSAO)
     const doEdgeDetect = useSelector((state: moorhen.State) => state.sceneSettings.doEdgeDetect)
+    const edgeDetectDepthThreshold = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectDepthThreshold)
+    const edgeDetectNormalThreshold = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectNormalThreshold)
+    const edgeDetectDepthScale = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectDepthScale)
+    const edgeDetectNormalScale = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectNormalScale)
     const ssaoRadius = useSelector((state: moorhen.State) => state.sceneSettings.ssaoRadius)
     const ssaoBias = useSelector((state: moorhen.State) => state.sceneSettings.ssaoBias)
     const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging)
@@ -131,6 +135,10 @@ export const MoorhenPreferencesContainer = (props: {
         44: { label: "drawScaleBar", value: drawScaleBar, valueSetter: setDrawScaleBar},
         45: { label: "animateRefine", value: animateRefine, valueSetter: setAnimateRefine},
         46: { label: "doEdgeDetect", value: doEdgeDetect, valueSetter: setDoEdgeDetect},
+        47: { label: "edgeDetectDepthThreshold", value: edgeDetectDepthThreshold, valueSetter: setEdgeDetectDepthThreshold},
+        48: { label: "edgeDetectNormalThreshold", value: edgeDetectNormalThreshold, valueSetter: setEdgeDetectNormalThreshold},
+        49: { label: "edgeDetectDepthScale", value: edgeDetectDepthScale, valueSetter: setEdgeDetectDepthScale},
+        50: { label: "edgeDetectNormalScale", value: edgeDetectNormalScale, valueSetter: setEdgeDetectNormalScale},
     }
 
     const restoreDefaults = (preferences: moorhen.Preferences, defaultValues: moorhen.PreferencesValues)=> {
@@ -459,6 +467,46 @@ export const MoorhenPreferencesContainer = (props: {
         localForageInstanceRef.current?.localStorageInstance.setItem('animateRefine', animateRefine)
         .then(_ => props.onUserPreferencesChange('animateRefine', animateRefine));
     }, [animateRefine]);
+
+    useMemo(() => {
+
+        if (edgeDetectDepthThreshold === null) {
+            return
+        }
+
+        localForageInstanceRef.current?.localStorageInstance.setItem('edgeDetectDepthThreshold', edgeDetectDepthThreshold)
+        .then(_ => props.onUserPreferencesChange('edgeDetectDepthThreshold', edgeDetectDepthThreshold));
+    }, [edgeDetectDepthThreshold]);
+
+    useMemo(() => {
+
+        if (edgeDetectNormalThreshold === null) {
+            return
+        }
+
+        localForageInstanceRef.current?.localStorageInstance.setItem('edgeDetectNormalThreshold', edgeDetectNormalThreshold)
+        .then(_ => props.onUserPreferencesChange('edgeDetectNormalThreshold', edgeDetectNormalThreshold));
+    }, [edgeDetectNormalThreshold]);
+
+    useMemo(() => {
+
+        if (edgeDetectDepthScale === null) {
+            return
+        }
+
+        localForageInstanceRef.current?.localStorageInstance.setItem('edgeDetectDepthScale', edgeDetectDepthScale)
+        .then(_ => props.onUserPreferencesChange('edgeDetectDepthScale', edgeDetectDepthScale));
+    }, [edgeDetectDepthScale]);
+
+    useMemo(() => {
+
+        if (edgeDetectNormalScale === null) {
+            return
+        }
+
+        localForageInstanceRef.current?.localStorageInstance.setItem('edgeDetectNormalScale', edgeDetectNormalScale)
+        .then(_ => props.onUserPreferencesChange('edgeDetectNormalScale', edgeDetectNormalScale));
+    }, [edgeDetectNormalScale]);
 
     useMemo(() => {
 

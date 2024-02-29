@@ -312,7 +312,19 @@ declare module 'moorhen' {
     
     function setDoEdgeDetect(arg0: boolean): any;
     module.exports = setDoEdgeDetect;
-    
+
+    function setEdgeDetectDepthThreshold(arg0: number): any;
+    module.exports = setEdgeDetectDepthThreshold;
+
+    function setEdgeDetectNormalThreshold(arg0: number): any;
+    module.exports = setEdgeDetectNormalThreshold;
+
+    function setEdgeDetectDepthScale(arg0: number): any;
+    module.exports = setEdgeDetectDepthScale;
+
+    function setEdgeDetectNormalScale(arg0: number): any;
+    module.exports = setEdgeDetectNormalScale;
+
     function setSsaoRadius(arg0: number): any;
     module.exports = setSsaoRadius;
     

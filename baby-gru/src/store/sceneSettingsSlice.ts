@@ -13,6 +13,10 @@ export const sceneSettingsSlice = createSlice({
     drawInteractions: null,
     doSSAO: null,
     doEdgeDetect: null,
+    edgeDetectDepthThreshold: null,
+    edgeDetectNormalThreshold: null,
+    edgeDetectDepthScale: null,
+    edgeDetectNormalScale: null,
     ssaoRadius: null,
     ssaoBias: null,
     resetClippingFogging: null,
@@ -60,6 +64,18 @@ export const sceneSettingsSlice = createSlice({
     },
     setDoEdgeDetect: (state, action: {payload: boolean, type: string}) => {
         return {...state, doEdgeDetect: action.payload}
+    },
+    setEdgeDetectDepthThreshold: (state, action: {payload: number, type: string}) => {
+        return {...state, edgeDetectDepthThreshold: action.payload}
+    },
+    setEdgeDetectNormalThreshold: (state, action: {payload: number, type: string}) => {
+        return {...state, edgeDetectNormalThreshold: action.payload}
+    },
+    setEdgeDetectDepthScale: (state, action: {payload: number, type: string}) => {
+        return {...state, edgeDetectDepthScale: action.payload}
+    },
+    setEdgeDetectNormalScale: (state, action: {payload: number, type: string}) => {
+        return {...state, edgeDetectNormalScale: action.payload}
     },
     setSsaoRadius: (state, action: {payload: number, type: string}) => {
         return {...state, ssaoRadius: action.payload}
@@ -115,7 +131,8 @@ export const {
     setDefaultBackgroundColor, setDrawCrosshairs, setDrawScaleBar, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
     setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap,  
     setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpinTest, setDoOutline, setDepthBlurRadius,
-    setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setBackgroundColor, setDoEdgeDetect
+    setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setBackgroundColor,
+    setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setEdgeDetectNormalScale
 } = sceneSettingsSlice.actions
 
 export default sceneSettingsSlice.reducer
