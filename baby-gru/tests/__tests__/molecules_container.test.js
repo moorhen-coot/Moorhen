@@ -1946,6 +1946,34 @@ describe('Testing molecules_container_js', () => {
             st_2, bfactor_vec_2, bfactor_vec_1
         )
     })
+
+    test.only("Test clear", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', 'FOM', false, false)
+        const diffMapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'DELFWT', 'PHDELWT', 'FOM', false, true)
+        expect(coordMolNo).toBe(0)
+        expect(mapMolNo).toBe(1)
+        expect(diffMapMolNo).toBe(2)
+
+        const isValid_1 = molecules_container.is_valid_model_molecule(coordMolNo)
+        const isValid_2 = molecules_container.is_valid_map_molecule(mapMolNo)
+        const isValid_3 = molecules_container.is_valid_map_molecule(diffMapMolNo)
+        expect(isValid_1).toBeTruthy()
+        expect(isValid_2).toBeTruthy()
+        expect(isValid_3).toBeTruthy()
+
+        molecules_container.clear()
+
+        const isValid_4 = molecules_container.is_valid_model_molecule(coordMolNo)
+        const isValid_5 = molecules_container.is_valid_map_molecule(mapMolNo)
+        const isValid_6 = molecules_container.is_valid_map_molecule(diffMapMolNo)
+        expect(isValid_4).toBeFalsy()
+        expect(isValid_5).toBeFalsy()
+        expect(isValid_6).toBeFalsy()
+
+    })
 })
 
 const testDataFiles = ['1cxq_phases.mtz', '1cxq.cif', '7ZTVU.cif', '5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'MOI.restraints.cif', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
