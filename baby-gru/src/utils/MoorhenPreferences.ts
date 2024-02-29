@@ -32,7 +32,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
     }
 
     static defaultPreferencesValues: moorhen.PreferencesValues = {
-        version: 'v33',
+        version: 'v34',
         transparentModalsOnMouseOut: false,
         defaultBackgroundColor: [1, 1, 1, 1],
         atomLabelDepthMode: true,
