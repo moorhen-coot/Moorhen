@@ -2,7 +2,7 @@ name: Nightly tests
 
 on:
   schedule:
-  - cron: "0 0 * * 0"
+  - cron: "0 0 * * *"
 
 jobs:
   runTests:
@@ -58,7 +58,7 @@ jobs:
           path: |
             /home/runner/work/Moorhen/Moorhen/checkout/*
             /home/runner/work/Moorhen/Moorhen/patches/*
-            /home/runner/work/Moorhen/Moorhen/web_example/*
+            /home/runner/work/Moorhen/Moorhen/wasm_src_frontend/*
             !/home/runner/work/Moorhen/Moorhen/checkout/coot-1.0
           key: moorhen-sources-cache
 
@@ -78,7 +78,7 @@ jobs:
           path: |
             /home/runner/work/Moorhen/Moorhen/checkout/*
             /home/runner/work/Moorhen/Moorhen/patches/*
-            /home/runner/work/Moorhen/Moorhen/web_example/*
+            /home/runner/work/Moorhen/Moorhen/wasm_src_frontend/*
             !/home/runner/work/Moorhen/Moorhen/checkout/coot-1.0
           key: moorhen-sources-cache
 

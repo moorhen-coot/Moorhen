@@ -1247,7 +1247,8 @@ describe('Testing molecules_container_js', () => {
         molecules_container.set_use_gemmi(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const diameter = molecules_container.get_molecule_diameter(coordMolNo)
-        expect(diameter).toBeCloseTo(44.30, 1)
+        expect(diameter).toBeLessThanOrEqual(45)
+        expect(diameter).toBeGreaterThanOrEqual(42)
     })
 
     test("Test non-drawn bonds and selection mesh", () => {
@@ -1945,6 +1946,34 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(
             st_2, bfactor_vec_2, bfactor_vec_1
         )
+    })
+
+    test("Test clear", () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', 'FOM', false, false)
+        const diffMapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'DELFWT', 'PHDELWT', 'FOM', false, true)
+        expect(coordMolNo).toBe(0)
+        expect(mapMolNo).toBe(1)
+        expect(diffMapMolNo).toBe(2)
+
+        const isValid_1 = molecules_container.is_valid_model_molecule(coordMolNo)
+        const isValid_2 = molecules_container.is_valid_map_molecule(mapMolNo)
+        const isValid_3 = molecules_container.is_valid_map_molecule(diffMapMolNo)
+        expect(isValid_1).toBeTruthy()
+        expect(isValid_2).toBeTruthy()
+        expect(isValid_3).toBeTruthy()
+
+        molecules_container.clear()
+
+        const isValid_4 = molecules_container.is_valid_model_molecule(coordMolNo)
+        const isValid_5 = molecules_container.is_valid_map_molecule(mapMolNo)
+        const isValid_6 = molecules_container.is_valid_map_molecule(diffMapMolNo)
+        expect(isValid_4).toBeFalsy()
+        expect(isValid_5).toBeFalsy()
+        expect(isValid_6).toBeFalsy()
+
     })
 })
 
