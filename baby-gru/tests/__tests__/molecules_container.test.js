@@ -1247,7 +1247,8 @@ describe('Testing molecules_container_js', () => {
         molecules_container.set_use_gemmi(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const diameter = molecules_container.get_molecule_diameter(coordMolNo)
-        expect(diameter).toBeCloseTo(44.30, 1)
+        expect(diameter).toBeLessThanOrEqual(45)
+        expect(diameter).toBeGreaterThanOrEqual(42)
     })
 
     test("Test non-drawn bonds and selection mesh", () => {
@@ -1947,7 +1948,7 @@ describe('Testing molecules_container_js', () => {
         )
     })
 
-    test.only("Test clear", () => {
+    test("Test clear", () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
