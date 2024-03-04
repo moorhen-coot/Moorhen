@@ -19,7 +19,7 @@ jobs:
         working-directory: /home/runner/work/Moorhen/       
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y bzr nodejs npm pkg-config libfreetype6-dev libxft-dev blt-dev build-essential zlib1g-dev autoconf autotools-dev libtool gcc cmake patch curl
+          sudo apt-get install -y bzr nodejs npm pkg-config libfreetype6-dev libxft-dev blt-dev build-essential zlib1g-dev autoconf autotools-dev libtool gcc cmake patch curl libeigen3-dev
       
       # Download and install emsdk cache
       - name: Restore cache emsdk
