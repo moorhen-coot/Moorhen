@@ -3,11 +3,11 @@ module.exports = {
     globalTeardown: "<rootDir>/tests/teardown.js",
     projects: [
         {
-            displayName: 'api',
+            displayName: 'api-utils',
             testMatch: ["<rootDir>/tests/__tests__/*.test.js"]
         },
         {
-            displayName: 'jsx',
+            displayName: 'react-components',
             testMatch: ['<rootDir>/tests/__tests__/*.test.jsx'],
             testEnvironment: "jsdom",
             preset: 'ts-jest',
