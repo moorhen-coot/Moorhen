@@ -3,7 +3,7 @@ module.exports = {
     globalTeardown: "<rootDir>/tests/teardown.js",
     projects: [
         {
-            displayName: 'utils',
+            displayName: 'api',
             testMatch: ["<rootDir>/tests/__tests__/*.test.js"]
         },
         {
