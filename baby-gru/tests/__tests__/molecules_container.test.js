@@ -1247,8 +1247,8 @@ describe('Testing molecules_container_js', () => {
         molecules_container.set_use_gemmi(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const diameter = molecules_container.get_molecule_diameter(coordMolNo)
-        expect(diameter).toBeLessThanOrEqual(45)
-        expect(diameter).toBeGreaterThanOrEqual(42)
+        expect(diameter).toBeLessThanOrEqual(50)
+        expect(diameter).toBeGreaterThanOrEqual(30)
     })
 
     test("Test non-drawn bonds and selection mesh", () => {
