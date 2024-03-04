@@ -20,10 +20,6 @@ jobs:
       run: | 
         sudo apt-get update -y   
         sudo apt-get install -y npm
-    - name: Create mock version file
-      working-directory: /home/runner/work/Moorhen/       
-      run: |    
-        echo "export const version = 0.1" > /home/runner/work/Moorhen/Moorhen/baby-gru/src/version.js
     - name: npm install
       working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
       run: npm install
