@@ -1,0 +1,34 @@
+name: Test react components
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  reactTests:
+    name: reactTests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v1
+    - name: Install node.js v16
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16
+    - name: Install dependencies 
+      working-directory: /home/runner/work/Moorhen/
+      run: | 
+        sudo apt-get update -y   
+        sudo apt-get install -y npm
+    - name: Create mock version file
+      working-directory: /home/runner/work/Moorhen/       
+      run: |    
+        echo "export const version = 0.1" > /home/runner/work/Moorhen/Moorhen/baby-gru/src/version.js
+    - name: npm install
+      working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
+      run: npm install
+    - name: Run tests
+      working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
+      run: |             
+        cd /home/runner/work/Moorhen/Moorhen/baby-gru/
+        npm run test-react
