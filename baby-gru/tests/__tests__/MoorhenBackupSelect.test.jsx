@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom'
-import { render, screen, cleanup, waitFor }  from '@testing-library/react'
+import { render, screen, cleanup }  from '@testing-library/react'
 import { MoorhenBackupSelect }  from '../../src/components/select/MoorhenBackupSelect'
 import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
