@@ -40,10 +40,10 @@ export const MoorhenCidInputForm = forwardRef<HTMLInputElement, MoorhenCidInputF
 
     return  <>
     <Form.Group style={{ width: props.width, margin: props.margin, height:props.height }}>
-        <Form.Label htmlFor="moorhen-cid-form">{props.label}</Form.Label>
-        <Form.Control id="moorhen-cid-form" size="sm" type='text' placeholder={props.placeholder} defaultValue={props.defaultValue} style={{width: "100%", color: props.invalidCid ? 'red' : '', borderColor: props.invalidCid ? 'red' : ''}} onChange={handleChange} ref={cidFormRef}/>
+        <Form.Label>{props.label}</Form.Label>
+        <Form.Control size="sm" type='text' placeholder={props.placeholder} defaultValue={props.defaultValue} style={{width: "100%", color: props.invalidCid ? 'red' : '', borderColor: props.invalidCid ? 'red' : ''}} onChange={handleChange} ref={cidFormRef}/>
     </Form.Group>
-    {props.allowUseCurrentSelection && showResidueSelection && <Form.Check type="checkbox" id='cid-input-checkbox' label="Use current selection?" style={{width: props.width, margin: props.margin}} onChange={handleFillCurrentSelection}/>}
+    {props.allowUseCurrentSelection && showResidueSelection && <Form.Check type="checkbox" label="Use current selection?" style={{width: props.width, margin: props.margin}} onChange={handleFillCurrentSelection}/>}
     </>
 })
 

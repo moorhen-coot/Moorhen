@@ -18,8 +18,9 @@ describe('Testing MoorhenCidIputForm', () => {
             </Provider> 
         )
 
-        const formNode = screen.getByLabelText('Test Label')
-        expect(formNode).toBeVisible()
+        const labelNode = screen.getByText('Test Label')
+        expect(labelNode).toBeVisible()
+        const formNode = screen.getByRole('textbox')
         expect(formNode).toHaveValue('')
     })
 
@@ -30,7 +31,7 @@ describe('Testing MoorhenCidIputForm', () => {
             </Provider> 
         )
 
-        const formNode = screen.getByLabelText('Atom selection')
+        const formNode = screen.getByRole('textbox')
         expect(formNode).toBeVisible()
         expect(formNode).toHaveValue('//A')
     })
@@ -42,7 +43,7 @@ describe('Testing MoorhenCidIputForm', () => {
             </Provider> 
         )
 
-        const formNode = screen.getByLabelText('Atom selection')
+        const formNode = screen.getByRole('textbox')
 
         const user = userEvent.setup()
         await user.type(formNode, "//B");
@@ -56,7 +57,7 @@ describe('Testing MoorhenCidIputForm', () => {
             </Provider> 
         )
 
-        const formNode = screen.getByLabelText('Atom selection')
+        const formNode = screen.getByRole('textbox')
         expect(formNode).toHaveStyle({
             width: "100%",
         })
@@ -69,7 +70,7 @@ describe('Testing MoorhenCidIputForm', () => {
             </Provider> 
         )
 
-        const formNode = screen.getByLabelText('Atom selection')
+        const formNode = screen.getByRole('textbox')
         expect(formNode).toHaveStyle({
             width: "100%",
             color: 'red',
@@ -100,8 +101,8 @@ describe('Testing MoorhenCidIputForm', () => {
             MoorhenStore.dispatch( setShowResidueSelection(true) )    
         })
         
-        const formNode = screen.getByLabelText('Atom selection')
-        const checkBoxNode = screen.getByLabelText('Use current selection?')
+        const formNode = screen.getByRole('textbox')
+        const checkBoxNode = screen.getByRole('checkbox')
         
         expect(formNode).toBeVisible()
         expect(checkBoxNode).toBeVisible()
