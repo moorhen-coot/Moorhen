@@ -33,7 +33,7 @@ export const MoorhenNumberForm = forwardRef<string, MoorhenNumberFormPropsType>(
         }
     }, [])
     
-    return  <Form.Group className='moorhen-form-group' controlId="MoorhenBlurMapMenuItem" style={{padding: props.padding, margin: props.margin, width: props.width}}>
+    return  <Form.Group className='moorhen-form-group' controlId="MoorhenNumberForm" style={{padding: props.padding, margin: props.margin, width: props.width}}>
                 <Form.Label style={{color: props.disabled ? 'grey' : ''}}>{props.label}</Form.Label>
                 <Form.Control type="number" value={currentValue} disabled={props.disabled}
                 style={{color: props.disabled ? 'grey' : '', borderColor: isValidInput ? '#ced4da' : 'red'}}
