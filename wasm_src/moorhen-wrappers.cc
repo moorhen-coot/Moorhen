@@ -20,6 +20,10 @@
 #include <cstdlib>
 #include <fstream>
 #include <utility>
+#include <gemmi/mmdb.hpp>
+
+#include "kmeans.h"
+#include "Eigen/Dense"
 
 #include <math.h>
 #ifndef M_PI
@@ -180,6 +184,70 @@ class molecules_container_js : public molecules_container_t {
     public:
         explicit molecules_container_js(bool verbose=true) : molecules_container_t(verbose) {
             
+        }
+
+        std::vector<std::pair<std::string,int>> slicendice_slice(int imol, int nclusters, const std::string &clustering_method){
+            std::vector<std::pair<std::string,int>> cid_label_pair;
+            mmdb::Manager *mol = get_mol(imol);
+            gemmi::Structure st = gemmi::copy_from_mmdb(mol);
+            gemmi::setup_entities(st);
+            gemmi::remove_ligands_and_waters(st);
+            std::string molecule_type = "protein";
+
+            std::vector<std::pair<std::string,std::array<float,3>>> atoms;
+
+            for(const auto &model : st.models){
+                for(const auto &chain : model.chains){
+                    for(const auto &residue : chain.residues){
+                        //FIXME molecule_type should be changeable and mixed, nucleic should be allowed.
+                        bool doneThisRes = false;
+                        for (const gemmi::Atom& atom : residue.atoms){
+                            if (molecule_type == "protein" && atom.name == " CA " && !doneThisRes) {
+                                std::array<float,3> at;
+                                at[0] = atom.pos.x;
+                                at[1] = atom.pos.y;
+                                at[2] = atom.pos.z;
+                                std::stringstream cidbuffer;
+                                cidbuffer << "/" << model.name << "/" << chain.name + "/" << residue.seqid.num.value;
+                                if(residue.seqid.icode!=' ')
+                                    cidbuffer << "." << residue.seqid.icode;
+                                const std::string cid = cidbuffer.str();
+                                std::pair<std::string,std::array<float,3>> thePair;
+                                thePair.first = cid;
+                                thePair.second = at;
+                                atoms.push_back(thePair);
+                                doneThisRes = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if(atoms.size()>0){
+                Eigen::VectorXi labels;
+                Eigen::MatrixXd atomic_matrix(atoms.size(), 3);
+
+                for (int i = 0; i < atoms.size(); i++) {
+                    atomic_matrix(i, 0) = atoms[i].second[0];
+                    atomic_matrix(i, 1) = atoms[i].second[1];
+                    atomic_matrix(i, 2) = atoms[i].second[2];
+                }
+
+                //FIXME - the other clustering methods.
+                KMeans kmeans(nclusters);
+
+                kmeans.fit(atomic_matrix);
+                labels = kmeans.labels_;
+
+                for (int i = 0; i < labels.size(); i++) {
+                    std::pair<std::string,int> thePair;
+                    thePair.first = atoms[i].first;
+                    thePair.second = labels[i];
+                    cid_label_pair.push_back(thePair);
+                }
+            }
+            return cid_label_pair;
+
         }
 
         std::vector<coot::residue_spec_t> GetSecondaryStructure(int imol, int imodel=1) {
@@ -1306,6 +1374,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("mol_text_to_pdb", &molecules_container_js::mol_text_to_pdb)
     .function("replace_molecule_by_model_from_string", &molecules_container_js::replace_molecule_by_model_from_string)
     .function("read_dictionary_string", &molecules_container_js::read_dictionary_string)
+    .function("slicendice_slice", &molecules_container_js::slicendice_slice)
     ;
     value_object<molecules_container_t::fit_ligand_info_t>("fit_ligand_info_t")
     .field("imol", &molecules_container_t::fit_ligand_info_t::imol)
@@ -1527,6 +1596,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>("Map_residue_spec_t_density_correlation_stats_info_t");
     register_vector<std::array<float, 16>>("VectorArrayFloat16");
     register_vector<std::pair<clipper::Coord_orth, float>>("VectorClipperCoordOrth_float_pair");
+    register_vector<std::pair<std::string, int>>("VectorStringInt_pair");
     register_vector<std::pair<int, int>>("VectorInt_pair");
     register_vector<std::pair<float, float>>("VectorFloat_pair");
     register_vector<std::pair<double, double>>("VectorDouble_pair");
@@ -1598,6 +1668,10 @@ EMSCRIPTEN_BINDINGS(my_module) {
     value_object<std::pair<std::string,std::string>>("string_string_pair")
         .field("first",&std::pair<std::string, std::string>::first)
         .field("second",&std::pair<std::string, std::string>::second)
+    ;
+    value_object<std::pair<std::string,int>>("string_int_pair")
+        .field("first",&std::pair<std::string,int>::first)
+        .field("second",&std::pair<std::string,int>::second)
     ;
     value_object<std::pair<int,std::string>>("int_string_pair")
         .field("first",&std::pair<int,std::string>::first)
