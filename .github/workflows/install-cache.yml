@@ -31,7 +31,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /home/runner/work/Moorhen/emsdk/
-          key: moorhen-emsdk-cache
+          key: emsdk-cache
 
       - name: Download and install emsdk
         if: steps.cache-emsdk.outputs.cache-hit != 'true'
@@ -47,7 +47,7 @@ jobs:
         uses: actions/cache/save@v4
         with: 
           path: /home/runner/work/Moorhen/emsdk/
-          key: moorhen-emsdk-cache
+          key: emsdk-cache
 
       - name: Activate emsdk
         run: |
@@ -64,7 +64,7 @@ jobs:
             /home/runner/work/Moorhen/Moorhen/patches/*
             /home/runner/work/Moorhen/Moorhen/wasm_src_frontend/*
             !/home/runner/work/Moorhen/Moorhen/checkout/coot-1.0
-          key: moorhen-sources-cache
+          key: sources-cache
 
       - name: Download and patch Moorhen sources
         if: steps.cache-moorhen-sources.outputs.cache-hit != 'true'
@@ -84,7 +84,7 @@ jobs:
             /home/runner/work/Moorhen/Moorhen/patches/*
             /home/runner/work/Moorhen/Moorhen/wasm_src_frontend/*
             !/home/runner/work/Moorhen/Moorhen/checkout/coot-1.0
-          key: moorhen-sources-cache
+          key: sources-cache
 
       # Download Coot sources (unless we downloaded the sources from fresh instead of the cache in which case its already there)
       - name: Download coot source
@@ -101,7 +101,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /home/runner/work/Moorhen/Moorhen/baby-gru/node_modules
-          key: moorhen-npm-cache
+          key: emdsk-node-modules-cache
 
       - name: Install npm modules
         if: steps.cache-moorhen-npm.outputs.cache-hit != 'true'
@@ -117,7 +117,7 @@ jobs:
         uses: actions/cache/save@v4
         with: 
           path: /home/runner/work/Moorhen/Moorhen/baby-gru/node_modules
-          key: moorhen-npm-cache
+          key: emdsk-node-modules-cache
         
       # Patching and symlinks
       - name: Create symlinks
