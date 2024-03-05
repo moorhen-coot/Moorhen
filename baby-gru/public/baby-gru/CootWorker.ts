@@ -228,7 +228,7 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
 
 const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean = false): libcootApi.SimpleMeshJS => {
 
-    const print_timing = true;
+    const print_timing = false
     const ts = performance.now()
 
     const vertices = simpleMesh.vertices;
