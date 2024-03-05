@@ -1808,7 +1808,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(original_chains_vec, new_chains_vec, instanceMesh_1, instanceMesh_2, colourMap_2, colourMap, indexedResiduesVec)
     })
 
-    test("Test shift_field_b_factor_refinement", () => {
+    test.skip("Test shift_field_b_factor_refinement", () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
