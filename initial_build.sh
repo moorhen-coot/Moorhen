@@ -75,14 +75,6 @@ emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
 
-#jsoncpp
-mkdir -p ${BUILD_DIR}/jsoncpp_build
-cd ${BUILD_DIR}/jsoncpp_build
-emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/jsoncpp -DJSONCPP_WITH_TESTS=OFF -DJSONCPP_WITH_POST_BUILD_UNITTEST=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_OBJECT_LIBS=OFF
-emmake make -j ${NUMPROCS}
-emmake make install
-cd ${BUILD_DIR}
-
 #Moorhen
 mkdir -p ${BUILD_DIR}/moorhen_build
 cd ${BUILD_DIR}/moorhen_build
