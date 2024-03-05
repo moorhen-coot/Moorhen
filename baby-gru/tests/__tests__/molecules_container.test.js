@@ -50,7 +50,7 @@ describe('Testing molecules_container_js', () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(false)
         const coordMol = molecules_container.read_pdb('./7rb4.pdb')
-        const retval = molecules_container.slicendice_slice(coordMol,3,"kmeans")
+        const retval = molecules_container.slicendice_slice(coordMol, 3, "kmeans")
         cleanUpVariables.push(retval)
     })
 
