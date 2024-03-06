@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom'
-import { render, screen, cleanup, act }  from '@testing-library/react'
+import { render, screen, cleanup, act, within }  from '@testing-library/react'
 import { MoorhenNavBar }  from '../../src/components/navbar-menus/MoorhenNavBar'
 import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
@@ -206,5 +206,58 @@ describe('Testing MoorhenNavBar', () => {
 
         const menuItems = screen.getAllByRole('menuitem')
         expect(menuItems.map(item => item.textContent)).toEqual(collectedProps.includeNavBarMenuNames)
+    })
+
+    test.only('Test MoorhenNavBar click interactions', async () => {
+
+        render(
+            <Provider store={MoorhenStore}> 
+                <MoorhenNavBar ref={navBarRef} {...collectedProps}/>
+                <button>Dummy button</button>
+            </Provider> 
+        )
+
+        const button = screen.getByRole('button', { name: /moorhen/i })
+
+        const user = userEvent.setup()
+        await user.click(button)
+
+        const fileMenuItem = screen.queryByRole('menuitem', { name: /file/i })
+        const fileButton = within(fileMenuItem).getByRole('button')
+        const editMenuItem = screen.queryByRole('menuitem', { name: /edit/i })
+        const editButton = within(editMenuItem).getByRole('button')
+        const calculateMenuItem = screen.queryByRole('menuitem', { name: /calculate/i })
+        const calculateButton = within(calculateMenuItem).getByRole('button')
+        expect(fileButton).toBeInTheDocument()
+        expect(fileButton).toBeVisible()
+        expect(editButton).toBeInTheDocument()
+        expect(editButton).toBeVisible()
+        expect(calculateButton).toBeInTheDocument()
+        expect(calculateButton).toBeVisible()
+
+        await user.click(fileButton)
+
+        const tutorialDataMenuItem = screen.getByRole('menuitem', { name: /load tutorial data\.\.\./i })
+        expect(tutorialDataMenuItem).toBeInTheDocument()
+        expect(tutorialDataMenuItem).toBeVisible()
+
+        await user.click(editButton)
+        
+        const mergeMoleculesMenuItem = screen.getByRole('menuitem', { name: /merge molecules\.\.\./i })
+        expect(tutorialDataMenuItem).not.toBeInTheDocument()
+        expect(mergeMoleculesMenuItem).toBeInTheDocument()
+        expect(mergeMoleculesMenuItem).toBeVisible()
+
+        await user.click(editButton)
+        expect(mergeMoleculesMenuItem).not.toBeInTheDocument()
+
+        await user.click(calculateButton)
+        const superposeMenuItem = screen.getByRole('menuitem', { name: /superpose structures\.\.\./i })
+        expect(superposeMenuItem).toBeInTheDocument()
+        expect(superposeMenuItem).toBeVisible()
+
+        const dummyButton = screen.getByText(/dummy button/i)
+        await user.click(dummyButton)
+        expect(superposeMenuItem).not.toBeInTheDocument()
     })
 })
