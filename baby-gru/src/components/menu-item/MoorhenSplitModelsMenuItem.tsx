@@ -4,7 +4,7 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from 'react-redux';
-import { addMoleculeList } from "../../moorhen";
+import { addMoleculeList } from "../../store/moleculesSlice";
 
 export const MoorhenSplitModelsMenuItem = (props: {
     popoverPlacement?: 'left' | 'right'

@@ -11,7 +11,7 @@ import { MoorhenSlider } from '../misc/MoorhenSlider';
 import { AddCircleOutline, GrainOutlined, RemoveCircleOutline } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { MoorhenCidInputForm } from '../form/MoorhenCidInputForm';
-import { addCustomRepresentation } from '../../moorhen';
+import { addCustomRepresentation } from '../../store/moleculesSlice';
 
 const customRepresentations = [ 'CBs', 'CAs', 'CRs', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'MetaBalls' ]
 

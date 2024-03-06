@@ -13,7 +13,7 @@ import { setSharedSessionToken, setShowSharedSessionManager } from "../../store/
 import { addMolecule } from "../../store/moleculesSlice";
 import { addMap, emptyMaps } from '../../store/mapsSlice';
 import { emptyMolecules } from '../../store/moleculesSlice';
-import { setActiveMap } from "../../moorhen";
+import { setActiveMap } from "../../store/generalStatesSlice";
 
 export const MoorhenSharedSessionManager = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;

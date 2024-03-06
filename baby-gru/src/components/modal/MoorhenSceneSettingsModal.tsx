@@ -5,7 +5,11 @@ import { convertRemToPx, convertViewtoPx, rgbToHex } from "../../utils/MoorhenUt
 import { MoorhenSlider } from "../misc/MoorhenSlider";
 import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
 import { Form, InputGroup, Stack } from "react-bootstrap";
-import { setBackgroundColor, setClipCap, setDepthBlurDepth, setDepthBlurRadius, setDoSSAO, setResetClippingFogging, setSsaoRadius, setUseOffScreenBuffers, setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setEdgeDetectNormalScale } from "../../moorhen";
+import { 
+    setBackgroundColor, setClipCap, setDepthBlurDepth, setDepthBlurRadius, setDoSSAO, setResetClippingFogging,
+    setSsaoRadius, setUseOffScreenBuffers, setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, 
+    setEdgeDetectDepthScale, setEdgeDetectNormalScale
+} from "../../store/sceneSettingsSlice";
 import { HexColorInput, RgbColorPicker } from "react-colorful";
 import { CirclePicker } from "react-color"
 import { moorhen } from "../../types/moorhen";

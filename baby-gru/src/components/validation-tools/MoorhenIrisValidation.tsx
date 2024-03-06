@@ -8,7 +8,7 @@ import { moorhen } from "../../types/moorhen"
 import iris_module from "iris-validation-backend"
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect"
 import { gemmi } from "../../types/gemmi";
-import { setHoveredAtom } from "../../moorhen"
+import { setHoveredAtom } from "../../store/hoveringStatesSlice"
 
 export const MoorhenIrisValidation = (props: {
     sideBarWidth: number;
