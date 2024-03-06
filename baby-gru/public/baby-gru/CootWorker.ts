@@ -765,6 +765,20 @@ const ramachandranDataToJSArray = (ramachandraData: emscriptem.vector<libcootApi
     return returnResult
 }
 
+const vectorPairStringIntToJSArray = (vectorData: emscriptem.vector<{first: string; second: number}>) => {
+    let result: {residue: string; slice: number; }[] = []
+    const vectorSize = vectorData.size()
+    for(let i = 0; i < vectorSize; i++) {
+        const pair = vectorData.get(i)
+        const residue = pair.first
+        const slice = pair.second
+        const jspair = {residue: residue, slice: slice }
+        result.push(jspair)
+    }
+    vectorData.delete()
+    return result
+}
+
 const vectorPairClipperCoordFloatToJSArray = (vectorData: emscriptem.vector<{first: libcootApi.CootCartesian; second: number}>): libcootApi.DiffDiffMapPeaksJS => {
     let result: {value: number; coord: { x: number; y: number; z: number }}[] = []
     const vectorSize = vectorData.size()
@@ -1115,6 +1129,9 @@ const doCootCommand = (messageData: {
                 break
             case 'vector_pair_clipper_coord_float':
                 returnResult = vectorPairClipperCoordFloatToJSArray(cootResult)
+                break
+            case 'vector_pair_string_int':
+                returnResult = vectorPairStringIntToJSArray(cootResult)
                 break
             case 'privateer_results':
                 returnResult = privateerValidationToJSArray(cootResult)
