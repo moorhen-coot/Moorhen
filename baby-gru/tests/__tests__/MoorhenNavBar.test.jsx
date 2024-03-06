@@ -129,7 +129,8 @@ describe('Testing MoorhenNavBar', () => {
 
         collectedProps.extraNavBarMenus = [{
             name: 'test',
-            JSXElement: <button>Test extra navBar menus</button>
+            ref: createRef(null),
+            JSXElement: <div>Test extra navBar menus</div>
         }]
 
         render(
@@ -144,10 +145,18 @@ describe('Testing MoorhenNavBar', () => {
         await user.click(button)
 
         const testMenuItem = screen.getByRole('menuitem', { name: /test/i })
+        const testButton = within(testMenuItem).getByRole('button')
         expect(testMenuItem).toBeInTheDocument()
         expect(testMenuItem).toBeVisible()
-    })
+        expect(testButton).toBeInTheDocument()
+        expect(testButton).toBeVisible()
 
+        await user.click(testButton)
+
+        const testMenuPopover = screen.getByText(/test extra navbar menus/i)
+        expect(testMenuPopover).toBeInTheDocument()
+        expect(testMenuPopover).toBeVisible()
+    })
 
     test('Test MoorhenNavBar render with specific menu items', async () => {
 
