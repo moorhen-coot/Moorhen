@@ -82,14 +82,17 @@ describe('Testing MoorhenNavBar', () => {
 
         const button = screen.getByRole('button', { name: /moorhen/i })
         const icon = screen.getByRole('img', { name: /moorhen/i })
+        const menu_hidden = screen.queryByRole('menu')
         expect(button).toBeInTheDocument()
         expect(button).toBeVisible()
         expect(icon).toBeInTheDocument()
         expect(icon).toBeVisible()
+        expect(menu_hidden).not.toBeInTheDocument()
 
         const user = userEvent.setup()
         await user.click(button)
-        
+
+        const menu = screen.getByRole('menu')
         const file = screen.getByRole('menuitem', { name: /file/i })
         const edit = screen.getByRole('menuitem', { name: /edit/i })
         const calculate = screen.getByRole('menuitem', { name: /calculate/i })
@@ -101,6 +104,7 @@ describe('Testing MoorhenNavBar', () => {
         const history = screen.getByRole('menuitem', { name: /history/i })
         const preferences = screen.getByRole('menuitem', { name: /preferences/i })
         const help = screen.getByRole('menuitem', { name: /help/i })
+        expect(menu).toBeInTheDocument()
         expect(file).toBeInTheDocument()
         expect(file).toBeVisible()
         expect(edit).toBeInTheDocument()
