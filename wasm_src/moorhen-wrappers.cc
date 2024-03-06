@@ -20,6 +20,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <utility>
+#include <cctype>
 #include <gemmi/mmdb.hpp>
 
 #include "kmeans.h"
@@ -187,6 +188,7 @@ class molecules_container_js : public molecules_container_t {
         }
 
         std::vector<std::pair<std::string,int>> slicendice_slice(int imol, int nclusters, const std::string &clustering_method){
+
             std::vector<std::pair<std::string,int>> cid_label_pair;
             mmdb::Manager *mol = get_mol(imol);
             gemmi::Structure st = gemmi::copy_from_mmdb(mol);
@@ -202,7 +204,10 @@ class molecules_container_js : public molecules_container_t {
                         //FIXME molecule_type should be changeable and mixed, nucleic should be allowed.
                         bool doneThisRes = false;
                         for (const gemmi::Atom& atom : residue.atoms){
-                            if (molecule_type == "protein" && atom.name == " CA " && !doneThisRes) {
+                            //std::cout << "--" << atom.name << "--" << std::endl;
+                            std::string s = atom.name;
+                            s.erase(std::remove_if(s.begin(), s.end(), ::isspace), s.end());
+                            if (molecule_type == "protein" && s == "CA" && !doneThisRes) {
                                 std::array<float,3> at;
                                 at[0] = atom.pos.x;
                                 at[1] = atom.pos.y;
@@ -222,6 +227,7 @@ class molecules_container_js : public molecules_container_t {
                     }
                 }
             }
+            std::cout << "slicendice_slice atoms.size() " << atoms.size() << std::endl;
 
             if(atoms.size()>0){
                 Eigen::VectorXi labels;
@@ -243,9 +249,11 @@ class molecules_container_js : public molecules_container_t {
                     std::pair<std::string,int> thePair;
                     thePair.first = atoms[i].first;
                     thePair.second = labels[i];
+                    //std::cout << "Adding " << thePair.first << " " << thePair.second << std::endl;
                     cid_label_pair.push_back(thePair);
                 }
             }
+            std::cout << "slicendice_slice return vector of size:" << cid_label_pair.size() << std::endl;
             return cid_label_pair;
 
         }
