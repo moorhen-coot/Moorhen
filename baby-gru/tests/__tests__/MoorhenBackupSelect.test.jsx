@@ -5,7 +5,7 @@ import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
 import MoorhenStore from "../../src/store/MoorhenReduxStore"
 import { createRef } from 'react'
-import { MockTimeCapsule } from '../helpers/mockTimeCapsule'
+import { MockTimeCapsule } from '../__mocks__/mockTimeCapsule'
 
 describe('Testing MoorhenBackupSelect', () => {
     

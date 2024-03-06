@@ -1,6 +1,6 @@
 import { MoorhenMolecule } from "../../tsDist/src/utils/MoorhenMolecule"
-import { MockMoorhenCommandCentre } from "../helpers/mockMoorhenCommandCentre"
-import { MockWebGL } from "../helpers/mockWebGL"
+import { MockMoorhenCommandCentre } from "../__mocks__/mockMoorhenCommandCentre"
+import { MockWebGL } from "../__mocks__/mockWebGL"
 import { getAtomInfoLabel } from "../../tsDist/src/utils/MoorhenUtils";
 import fetch from 'node-fetch';
 

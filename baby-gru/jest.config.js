@@ -15,6 +15,10 @@ module.exports = {
                 '^.+\\.(ts|tsx)?$': 'ts-jest',
                 '^.+\\.(js|jsx)$': 'babel-jest'
             },
+            moduleNameMapper: {
+                '\\.(css|less)$': '<rootDir>/tests/__mocks__/mockStyle.js',
+                "mockService": "<rootDir>/tests/__mocks__"
+            }
         }
     ],
   }

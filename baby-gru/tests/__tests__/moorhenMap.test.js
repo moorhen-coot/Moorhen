@@ -1,6 +1,6 @@
 import { MoorhenMap } from "../../tsDist/src/utils/MoorhenMap"
-import { MockMoorhenCommandCentre } from "../helpers/mockMoorhenCommandCentre"
-import { MockWebGL } from "../helpers/mockWebGL"
+import { MockMoorhenCommandCentre } from "../__mocks__/mockMoorhenCommandCentre"
+import { MockWebGL } from "../__mocks__/mockWebGL"
 import fetch from 'node-fetch';
 
 jest.setTimeout(40000)
