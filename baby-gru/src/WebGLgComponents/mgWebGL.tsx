@@ -2660,9 +2660,27 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.doEdgeDetect = false;
         this.occludeDiffuse = false;
 
-        this.depthThreshold = 0.4; // 0.1 - 2.0 ?
-        this.normalThreshold = 0.3; //0.2 - 0.4 for spheres. 0.5+ for ribbons
-        this.scaleDepth = 1.0;
+        /*
+            Suitable(?) Edge detect settings:
+            Ribbons, Gaussian, VdW, Rama balls, Dodos, glycoblocks, H-Bonds:
+               Depth scale:         2
+               Normal scale:        1
+               Depth threshold:   1.4
+               Normal threshoold: 0.5
+            Bonds:
+               Depth scale:         2
+               Normal scale:        0
+               Depth threshold:   1.0
+               Normal threshoold: N/A
+            Spheres:
+               Depth scale:         2
+               Normal scale:        2 (or 0 depending on desired effect)
+               Depth threshold:   1.4
+               Normal threshoold: 0.5
+        */
+        this.depthThreshold = 1.4;
+        this.normalThreshold = 0.5;
+        this.scaleDepth = 2.0;
         this.scaleNormal = 1.0;
 
         this.doSpin = false;
@@ -7225,7 +7243,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.uniform1i(this.shaderProgramEdgeDetect.gPositionTexture,0);
             this.gl.uniform1i(this.shaderProgramEdgeDetect.gNormalTexture,1);
             this.gl.uniform1f(this.shaderProgramEdgeDetect.zoom,this.zoom);
-            this.gl.uniform1f(this.shaderProgramEdgeDetect.depthBufferSize,b+f);
+            this.gl.uniform1f(this.shaderProgramEdgeDetect.depthBufferSize,(f+b)*2.);
 
             this.gl.uniform1f(this.shaderProgramEdgeDetect.depthThreshold,this.depthThreshold);
             this.gl.uniform1f(this.shaderProgramEdgeDetect.normalThreshold,this.normalThreshold);
