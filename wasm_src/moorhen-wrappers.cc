@@ -24,6 +24,7 @@
 #include <gemmi/mmdb.hpp>
 
 #include "kmeans.h"
+#include "agglomerative.h"
 #include "Eigen/Dense"
 
 #include <math.h>
@@ -213,7 +214,7 @@ class molecules_container_js : public molecules_container_t {
                                 at[1] = atom.pos.y;
                                 at[2] = atom.pos.z;
                                 std::stringstream cidbuffer;
-                                cidbuffer << "/" << model.name << "/" << chain.name + "/" << residue.seqid.num.value;
+                                cidbuffer << "/" << model.name << "/" << chain.name << "/" << residue.seqid.num.value;
                                 if(residue.seqid.icode!=' ')
                                     cidbuffer << "." << residue.seqid.icode;
                                 const std::string cid = cidbuffer.str();
@@ -239,11 +240,17 @@ class molecules_container_js : public molecules_container_t {
                     atomic_matrix(i, 2) = atoms[i].second[2];
                 }
 
-                //FIXME - the other clustering methods.
-                KMeans kmeans(nclusters);
-
-                kmeans.fit(atomic_matrix);
-                labels = kmeans.labels_;
+                if (clustering_method == "kmeans") {
+                    KMeans kmeans(nclusters);
+                    kmeans.fit(atomic_matrix);
+                    labels = kmeans.labels_;
+                } else if (clustering_method == "agglomerative") {
+                    Agglomerative agglomerative(nclusters);
+                    agglomerative.fit(atomic_matrix);
+                    labels = agglomerative.labels_;
+                } else {
+                    std::cout << "Clustering method: " << clustering_method << " not yet implemented." << std::endl;
+                }
 
                 for (int i = 0; i < labels.size(); i++) {
                     std::pair<std::string,int> thePair;
