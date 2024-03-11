@@ -119,6 +119,7 @@ import * as vec3 from 'gl-matrix/vec3';
 import * as mat3 from 'gl-matrix/mat3';
 import { MoorhenMolecule } from "./MoorhenMolecule";
 import { MoorhenMap } from "./MoorhenMap";
+import { MoorhenColourRule } from "./MoorhenColourRule";
 import { moorhen } from "../types/moorhen";
 import { gemmi } from "../types/gemmi";
 import { webGL } from "../types/mgWebGL";
@@ -394,11 +395,22 @@ export async function loadSessionData(
         const molecule = newMolecules[i]
         const storedMoleculeData = sessionData.moleculeData[i]
         await Promise.all(Object.keys(storedMoleculeData.ligandDicts).map(compId => molecule.addDict(storedMoleculeData.ligandDicts[compId])))
-        molecule.defaultColourRules = storedMoleculeData.defaultColourRules
+        molecule.defaultColourRules = storedMoleculeData.defaultColourRules.map(item => {
+            const colourRule = MoorhenColourRule.initFromDataObject(item, commandCentre, molecule)
+            return colourRule
+        })
         molecule.defaultBondOptions = storedMoleculeData.defaultBondOptions
         for (const item of storedMoleculeData.representations) {
-            const representation = await molecule.addRepresentation(item.style, item.cid, item.isCustom, item.colourRules, item.bondOptions, item.applyColoursToNonCarbonAtoms)
-            dispatch( addCustomRepresentation(representation) )
+            const colourRules = !item.colourRules ? null : item.colourRules.map(item => {
+                const colourRule = MoorhenColourRule.initFromDataObject(item, commandCentre, molecule)
+                return colourRule
+            })
+            const representation = await molecule.addRepresentation(
+                item.style, item.cid, item.isCustom, colourRules, item.bondOptions
+            )
+            if (item.isCustom) {
+                dispatch( addCustomRepresentation(representation) )
+            }
         }
     }
     

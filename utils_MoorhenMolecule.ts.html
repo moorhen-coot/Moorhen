@@ -119,6 +119,7 @@ import {
     getRandomMoleculeColour, doDownload, formatLigandSVG, getCentreAtom, getAtomInfoLabel
  } from './MoorhenUtils'
 import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation"
+import { MoorhenColourRule } from "./MoorhenColourRule"
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { hideMolecule } from '../store/moleculesSlice';
@@ -1157,6 +1158,16 @@ export class MoorhenMolecule implements moorhen.Molecule {
         representation.show()
     }
 
+    addColourRule(ruleType: string, cid: string, color: string, args: (string | number)[], isMultiColourRule: boolean = false, applyColourToNonCarbonAtoms: boolean = false, label?: string) {
+        const newColourRule = new MoorhenColourRule(ruleType, cid, color, this.commandCentre, isMultiColourRule, applyColourToNonCarbonAtoms)
+        newColourRule.setParentMolecule(this)
+        newColourRule.setArgs(args)
+        if (label) {
+            newColourRule.setLabel(label)
+        }
+        this.defaultColourRules.push(newColourRule)
+    }
+
     /**
      * Add a representation to the molecule
      * @param {string} style - The style of the new representation
@@ -1166,7 +1177,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {moorhen.cootBondOptions} [bondOptions=undefined] - An object that describes bond width, atom/bond ratio and other bond settings.
      * @param {boolean} [applyColourToNonCarbonAtoms=undefined] - If true then colours are applied to non-carbon atoms also.
      */
-    async addRepresentation(style: moorhen.RepresentationStyles, cid: string = '/*/*/*/*', isCustom: boolean = false, colourRules?: moorhen.ColourRule[], bondOptions?: moorhen.cootBondOptions, applyColourToNonCarbonAtoms?: boolean) {
+    async addRepresentation(style: moorhen.RepresentationStyles, cid: string = '/*/*/*/*', isCustom: boolean = false, colourRules?: moorhen.ColourRule[], bondOptions?: moorhen.cootBondOptions) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules()
         }
@@ -1175,7 +1186,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
         representation.setParentMolecule(this)
         representation.setColourRules(colourRules)
         representation.setBondOptions(bondOptions)
-        representation.setApplyColourToNonCarbonAtoms(applyColourToNonCarbonAtoms)
         await representation.draw()
         this.representations.push(representation)
         await this.drawSymmetry(false)
@@ -1606,13 +1616,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             const newChains = currentChains.filter(chainName => !prevChainNames.includes(chainName))
             newChains.forEach(chainName => {
                 const selectedColour = getRandomMoleculeColour()
-                this.defaultColourRules.push({
-                    args: [`//${chainName}`, selectedColour],
-                    isMultiColourRule: false,
-                    ruleType: 'chain',
-                    color: selectedColour,
-                    label: `//${chainName}`,
-                })
+                this.addColourRule('chain', `//${chainName}`, selectedColour, [`//${chainName}`, selectedColour])
             })
 
             await this.redraw()
@@ -1819,8 +1823,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
             return
         }
 
-        let rules: moorhen.ColourRule[] = []
-
         const response = await this.commandCentre.current.cootCommand({
             message: 'coot_command',
             command: "get_colour_rules",
@@ -1828,17 +1830,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
             commandArgs: [this.molNo],
         }, false) as moorhen.WorkerResponse&lt;libcootApi.PairType&lt;string, string>[]>
         
-        response.data.result.result.forEach(rule => {
-            rules.push({
-                args: [rule.first, rule.second],
-                isMultiColourRule: false,
-                ruleType: 'chain',
-                color: rule.second,
-                label: rule.first
-            })
-        })
-
-        this.defaultColourRules = rules
+        this.defaultColourRules = []
+        for (let rule of response.data.result.result) {
+            this.addColourRule('chain',  rule.first, rule.second, [rule.first, rule.second])
+        }
     }
 
     /**
@@ -2348,13 +2343,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             this.setAtomsDirty(true)
             // If the chain is new, then we need to create a random colour rule for it...
             const selectedColour = getRandomMoleculeColour()
-            this.defaultColourRules.push({
-                args: [`//${newId}`, selectedColour],
-                isMultiColourRule: false,
-                ruleType: 'chain',
-                color: selectedColour,
-                label: `//${newId}`,
-            })
+            this.addColourRule('chain', `//${newId}`, selectedColour, [`//${newId}`, selectedColour])
             if (redraw) {
                 await this.redraw()
             }
