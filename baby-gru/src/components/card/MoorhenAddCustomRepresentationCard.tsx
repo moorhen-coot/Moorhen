@@ -12,6 +12,7 @@ import { AddCircleOutline, GrainOutlined, RemoveCircleOutline } from '@mui/icons
 import { useDispatch, useSelector } from 'react-redux';
 import { MoorhenCidInputForm } from '../form/MoorhenCidInputForm';
 import { addCustomRepresentation } from '../../store/moleculesSlice';
+import { MoorhenColourRule } from '../../utils/MoorhenColourRule';
 
 const customRepresentations = [ 'CBs', 'CAs', 'CRs', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'MetaBalls' ]
 
@@ -109,17 +110,15 @@ export const MoorhenAddCustomRepresentationCard = (props: {
             return
         }
 
-        let colourRules: moorhen.ColourRule[] = []
+        let colourRule: moorhen.ColourRule
         if (!useDefaultColoursSwitchRef.current.checked) {
             switch(colourModeSelectRef.current.value) {
                 case "custom":
-                    colourRules = [{
-                        args: [cidSelection, colour],
-                        isMultiColourRule: false,
-                        ruleType: ruleSelectRef.current.value,
-                        color: colour,
-                        label: cidSelection
-                    }]
+                    colourRule = new MoorhenColourRule(
+                        ruleSelectRef.current.value, cidSelection, colour, props.molecule.commandCentre, false, applyColourToNonCarbonAtomsSwitchRef.current?.checked
+                    )
+                    colourRule.setArgs([ cidSelection, colour ])
+                    colourRule.setParentMolecule(props.molecule)
                     break
                 case 'secondary-structure':
                 case 'jones-rainbow':
@@ -127,22 +126,21 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 case "b-factor":
                 case "b-factor-norm":
                 case "af2-plddt":
+                    colourRule = new MoorhenColourRule(
+                        colourModeSelectRef.current.value, "/*/*/*/*", "#ffffff", props.molecule.commandCentre, true, applyColourToNonCarbonAtomsSwitchRef.current?.checked
+                    )
+                    colourRule.setLabel(`${
+                        colourModeSelectRef.current.value === 'secondary-structure' ? 'Secondary struct.'
+                        : colourModeSelectRef.current.value === 'jones-rainbow' ? 'Jones-Rainbow'
+                        : colourModeSelectRef.current.value === 'mol-symm' ? 'Mol. Symm.'
+                        : colourModeSelectRef.current.value === "b-factor" ? 'B-factor'
+                        : colourModeSelectRef.current.value === "b-factor-norm" ? 'B-factor norm.'
+                        : colourModeSelectRef.current.value === "af2-plddt" ? 'PLDDT'
+                        : ''
+                    }`)
                     const ruleArgs = await getMultiColourRuleArgs(props.molecule, colourModeSelectRef.current.value)
-                    colourRules = [{
-                        args: [ruleArgs],
-                        isMultiColourRule: true,
-                        color: colour,
-                        ruleType: `${colourModeSelectRef.current.value}`,
-                        label: `${
-                            colourModeSelectRef.current.value === 'secondary-structure' ? 'Secondary struct.'
-                            : colourModeSelectRef.current.value === 'jones-rainbow' ? 'Jones-Rainbow'
-                            : colourModeSelectRef.current.value === 'mol-symm' ? 'Mol. Symm.'
-                            : colourModeSelectRef.current.value === "b-factor" ? 'B-factor'
-                            : colourModeSelectRef.current.value === "b-factor-norm" ? 'B-factor norm.'
-                            : colourModeSelectRef.current.value === "af2-plddt" ? 'PLDDT'
-                            : ''
-                        }`,
-                    }]
+                    colourRule.setArgs([ ruleArgs ])
+                    colourRule.setParentMolecule(props.molecule)
                     break
                 default:
                     console.log('Unrecognised colour mode')
@@ -160,17 +158,22 @@ export const MoorhenAddCustomRepresentationCard = (props: {
         }
 
         if (props.mode === 'add') {
-            const representation = await props.molecule.addRepresentation(styleSelectRef.current.value, cidSelection, true, colourRules, bondOptions, applyColourToNonCarbonAtomsSwitchRef.current?.checked)
+            const representation = await props.molecule.addRepresentation(
+                styleSelectRef.current.value,
+                cidSelection, 
+                true,
+                colourRule ? [ colourRule ] : null,
+                bondOptions
+            )
             dispatch( addCustomRepresentation(representation) )
         } else if (props.mode === 'edit' && props.representationId) {
             const representation = props.molecule.representations.find(item => item.uniqueId === props.representationId)
             if (representation) {
                 representation.cid = cidSelection
                 representation.setStyle(styleSelectRef.current.value)
-                representation.setUseDefaultColourRules(!colourRules || colourRules?.length === 0)
-                representation.setColourRules(colourRules)
+                representation.setUseDefaultColourRules(!colourRule)
+                representation.setColourRules(colourRule ? [ colourRule ] : null)
                 representation.setBondOptions(bondOptions)
-                representation.setApplyColourToNonCarbonAtoms(applyColourToNonCarbonAtomsSwitchRef.current?.checked)
                 representation.redraw()
             }
         }

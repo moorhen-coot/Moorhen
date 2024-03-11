@@ -11,6 +11,7 @@ import { setActiveMap, setNotificationContent } from "../../store/generalStatesS
 import { addMolecule } from "../../store/moleculesSlice";
 import { addMap } from "../../store/mapsSlice";
 import { webGL } from "../../types/mgWebGL";
+import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 
 export const MoorhenFetchOnlineSourcesForm = (props: {
     monomerLibraryPath: string;
@@ -137,14 +138,14 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
             if (newMolecule.molNo === -1) {
                 throw new Error("Cannot read the fetched molecule...")
             } else if (isAF2) {
+                const newColourRule = new MoorhenColourRule(
+                    'af2-plddt', "/*/*/*/*", "#ffffff", commandCentre, true
+                )
+                newColourRule.setLabel("PLDDT")
                 const ruleArgs = await getMultiColourRuleArgs(newMolecule, 'af2-plddt')
-                const newRule = {
-                    args: [ruleArgs],
-                    isMultiColourRule: true,
-                    ruleType: 'af2-plddt',
-                    label: `//*`
-                }
-                newMolecule.defaultColourRules = [newRule]
+                newColourRule.setArgs([ ruleArgs ])
+                newColourRule.setParentMolecule(newMolecule)
+                newMolecule.defaultColourRules = [ newColourRule ]
             }
             await newMolecule.fetchIfDirtyAndDraw(newMolecule.atomCount >= 50000 ? 'CRs' : 'CBs')
             await newMolecule.centreOn('/*/*/*/*', true)

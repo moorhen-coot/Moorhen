@@ -1176,6 +1176,13 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("set_use_rama_plot_restraints", &molecules_container_t::set_use_rama_plot_restraints)
+    .function("set_rama_plot_restraints_weight", &molecules_container_t::set_rama_plot_restraints_weight)
+    .function("get_rama_plot_restraints_weight", &molecules_container_t::get_rama_plot_restraints_weight)
+    .function("set_use_torsion_restraints", &molecules_container_t::set_use_torsion_restraints)
+    .function("set_torsion_restraints_weight", &molecules_container_t::set_torsion_restraints_weight)
+    .function("get_torsion_restraints_weight", &molecules_container_t::get_torsion_restraints_weight)
+    .function("minimize_energy", &molecules_container_t::minimize_energy)
     .function("set_refinement_is_verbose", &molecules_container_t::set_refinement_is_verbose)
     .function("split_multi_model_molecule", &molecules_container_t::split_multi_model_molecule)
     .function("print_non_drawn_bonds", &molecules_container_t::print_non_drawn_bonds)

@@ -78,17 +78,48 @@ export namespace moorhen {
         atomRadiusBondRatio: number;
     }
     
-    type ColourRule = {
-        args: (string | number)[];
-        color?: string;
+    type ColourRuleObject = {
+        cid: string;
+        color: string;
+        applyColourToNonCarbonAtoms: boolean;
         isMultiColourRule: boolean;
         ruleType: string;
+        args: (string | number)[];
         label: string;
+        uniqueId: string;
+        parentMoleculeMolNo: number;
+        parentRepresentationUniqueId: string;
+    };
+
+    type ColourRule = {
+        ruleType: string;
+        cid: string;
+        color: string;
+        args: (string | number)[];
+        label: string;
+        isMultiColourRule: boolean;
+        commandCentre: React.RefObject<moorhen.CommandCentre>;
+        parentMolecule: moorhen.Molecule;
+        parentRepresentation: moorhen.MoleculeRepresentation;
+        applyColourToNonCarbonAtoms: boolean;
+        uniqueId: string;
+        static initFromDataObject(data: ColourRuleObject, commandCentre: React.RefObject<CommandCentre>, molecule: Molecule): ColourRule;
+        static initFromString(stringData: string, commandCentre: React.RefObject<CommandCentre>, molecule: Molecule): ColourRule;
+        objectify(): ColourRuleObject;
+        stringify(): string;
+        setLabel(label: string): void;
+        setArgs(args: (string | number)[]): void;
+        setParentMolecule(molecule: moorhen.Molecule): void;
+        setParentRepresentation(representation: moorhen.MoleculeRepresentation): void;    
+        setApplyColourToNonCarbonAtoms(newVal: boolean): void;
+        getUserDefinedColours(): { cid: string; rgb: [number, number, number]; applyColourToNonCarbonAtoms: boolean }[];
+        apply(style: string, ruleIndex: number): Promise<void>;
     }
 
     type coorFormats = 'pdb' | 'mmcif';
     
     interface Molecule {
+        addColourRule(ruleType: string, cid: string, color: string, args: (string | number)[], isMultiColourRule?: boolean, applyColourToNonCarbonAtoms?: boolean, label?: string): void;
         splitMultiModels(draw?: boolean): Promise<Molecule[]>;
         getActiveAtom(): Promise<string>;
         setDrawAdaptativeBonds(newValue: boolean): Promise<void>;
@@ -115,7 +146,7 @@ export namespace moorhen {
         fitLigand(mapMolNo: number, ligandMolNo: number, fitRightHere?: boolean, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<Molecule[]>;
         checkIsLigand(): boolean;
         removeRepresentation(representationId: string): void;
-        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: ColourRule[], bondOptions?: cootBondOptions, applyColourToNonCarbonAtoms?: boolean): Promise<MoleculeRepresentation>;
+        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: ColourRule[], bondOptions?: cootBondOptions): Promise<MoleculeRepresentation>;
         getNeighborResiduesCids(selectionCid: string, maxDist: number): Promise<string[]>;
         drawWithStyleFromMesh(style: string, meshObjects: any[], cid?: string): Promise<void>;
         updateWithMovedAtoms(movedResidues: AtomInfo[][]): Promise<void>;
@@ -222,10 +253,10 @@ export namespace moorhen {
     'residueSelection' | 'MetaBalls' | 'adaptativeBonds'
 
     interface MoleculeRepresentation {
+        addColourRule(ruleType: string, cid: string, color: string, args: (string | number)[], isMultiColourRule?: boolean, applyColourToNonCarbonAtoms?: boolean, label?: string): void;
         getBufferObjects(): Promise<any>;
         applyColourRules(): Promise<void>;
         exportAsGltf(): Promise<ArrayBuffer>;
-        setApplyColourToNonCarbonAtoms(newVal: boolean): void;
         setBondOptions(bondOptions: cootBondOptions): void;
         setStyle(style: string): void;
         setUseDefaultColourRules(arg0: boolean): void;
@@ -243,7 +274,6 @@ export namespace moorhen {
         bondOptions: cootBondOptions;
         useDefaultColourRules: boolean;
         useDefaultBondOptions: boolean;
-        applyColourToNonCarbonAtoms: boolean;
         uniqueId: string;
         style: string;
         cid: string;
@@ -470,12 +500,11 @@ export namespace moorhen {
             cid: string;
             style: strin;
             isCustom: boolean;
-            colourRules: ColourRule[];
+            colourRules: ColourRuleObject[];
             bondOptions: cootBondOptions;
-            applyColoursToNonCarbonAtoms: boolean;
          }[];
         defaultBondOptions: cootBondOptions;
-        defaultColourRules: ColourRule[];
+        defaultColourRules: ColourRuleObject[];
         connectedToMaps: number[];
         ligandDicts: {[comp_id: string]: string};
     }
