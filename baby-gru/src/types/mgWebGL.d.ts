@@ -78,6 +78,7 @@ export namespace webGL {
         setupModelViewTransformMatrixInteractive(transformMatrix:number[], transformOrigin:number[], buffer: any, shader: MGWebGLShader, vertexType: number, bufferIdx: number, specialDrawBuffer: any) : void;
         drawTransformMatrix(transformMatrix:number[], buffer:any, shader:any, vertexType:number, bufferIdx:number, specialDrawBuffer?:any) : void;
         drawBuffer(theBuffer:any,theShaderIn:MGWebGLShader|ShaderTrianglesInstanced,j:number,vertexType:number,specialDrawBuffer?:any) : void;
+        drawMaxElementsUInt(vertexType:number, numItems:number) : void;
         drawTransformMatrixInteractive(transformMatrix:number[], transformOrigin:number[], buffer:any, shader:MGWebGLShader, vertexType:number, bufferIdx:number, specialDrawBuffer?:number) : void;
         applySymmetryMatrix(theShader: MGWebGLShader,symmetryMatrix: number[],tempMVMatrix: number[],tempMVInvMatrix: number[]) : void;
         setMatrixUniforms(program: MGWebGLShader) : void;
@@ -203,6 +204,7 @@ export namespace webGL {
         gl_clipPlane1: null | Float32Array;
         fogClipOffset: number;
         zoom: number;
+        max_elements_indices: number;
         gl_fog_end: number;
         //light_colours_specular: Float32Array;
         //light_colours_diffuse: Float32Array;

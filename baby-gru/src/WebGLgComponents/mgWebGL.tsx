@@ -1294,19 +1294,21 @@ function initGL(canvas) {
     }
     gl.viewportWidth = canvas.width;
     gl.viewportHeight = canvas.height;
-    /*
-    console.log("Max texture size:",gl.getParameter(gl.MAX_TEXTURE_SIZE))
-    console.log("Max cube map texture size:",gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE))
-    console.log("Max renderbuffer size:",gl.getParameter(gl.MAX_RENDERBUFFER_SIZE))
-    console.log("Max viewport size:",gl.getParameter(gl.MAX_VIEWPORT_DIMS))
-    console.log("Max vertex attribs:",gl.getParameter(gl.MAX_VERTEX_ATTRIBS))
-    console.log("Max varying vectors:",gl.getParameter(gl.MAX_VARYING_VECTORS))
-    console.log("Max vertex uniform vectors:",gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS))
-    console.log("Max fragment uniform vectors:",gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS))
-    console.log("Max texture image units:",gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS))
-    console.log("Max vertex texture image units:",gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS))
-    console.log("Max combined texture image units:",gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS))
-    */
+    if(WEBGL2){
+        console.log("Max texture size:",gl.getParameter(gl.MAX_TEXTURE_SIZE))
+        console.log("Max cube map texture size:",gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE))
+        console.log("Max renderbuffer size:",gl.getParameter(gl.MAX_RENDERBUFFER_SIZE))
+        console.log("Max viewport size:",gl.getParameter(gl.MAX_VIEWPORT_DIMS))
+        console.log("Max vertex attribs:",gl.getParameter(gl.MAX_VERTEX_ATTRIBS))
+        console.log("Max varying vectors:",gl.getParameter(gl.MAX_VARYING_VECTORS))
+        console.log("Max vertex uniform vectors:",gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS))
+        console.log("Max fragment uniform vectors:",gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS))
+        console.log("Max texture image units:",gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS))
+        console.log("Max vertex texture image units:",gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS))
+        console.log("Max combined texture image units:",gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS))
+        console.log("MAX_ELEMENTS_INDICES:",gl.getParameter(gl.MAX_ELEMENTS_INDICES))
+        console.log("MAX_ELEMENT_INDEX:",gl.getParameter(gl.MAX_ELEMENT_INDEX))
+    }
     return {gl:gl,WEBGL2:WEBGL2};
 }
 
@@ -2250,6 +2252,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         newTextLabels: any;
         drawingGBuffers: boolean;
         axesTexture: any;
+        max_elements_indices: number;
 
     resize(width: number, height: number) : void {
 
@@ -2754,6 +2757,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const glc = initGL(this.canvas);
         this.gl = glc.gl;
         this.WEBGL2 = glc.WEBGL2;
+        if(this.WEBGL2){
+            this.max_elements_indices = this.gl.getParameter(this.gl.MAX_ELEMENTS_INDICES)
+        }
 
         this.blurUBOBuffer = this.gl.createBuffer();
         this.axesTexture = {black:{},white:{}};
@@ -6692,11 +6698,27 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.gl.uniformMatrix4fv(theShader.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
                     if(theShader.vertexColourAttribute>1) this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
                 }
-                this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0);
+                this.drawMaxElementsUInt(vertexType, drawBuffer.numItems);
             }
         } else {
             this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_SHORT, 0);
         }
+    }
+
+    drawMaxElementsUInt(vertexType, numItems) {
+
+        if(numItems<this.max_elements_indices){
+            this.gl.drawElements(vertexType, numItems, this.gl.UNSIGNED_INT, 0);
+        } else {
+            let inum=0;
+            for( ; inum <  numItems / this.max_elements_indices-1; inum++){
+                this.gl.drawElements(vertexType, this.max_elements_indices, this.gl.UNSIGNED_INT, inum*this.max_elements_indices*4);
+            }
+            if((numItems % this.max_elements_indices)>0){
+                this.gl.drawElements(vertexType, numItems % this.max_elements_indices, this.gl.UNSIGNED_INT, inum*this.max_elements_indices*4);
+            }
+        }
+
     }
 
     setupModelViewTransformMatrixInteractive(transformMatrix, transformOrigin, buffer, shader, vertexType, bufferIdx, specialDrawBuffer) {
