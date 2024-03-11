@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { MoorhenCentreOnLigandMenuItem } from "../menu-item/MoorhenCentreOnLigandMenuItem"
 import { MoorhenSMILESToLigandMenuItem, MoorhenImportDictionaryMenuItem } from "../menu-item/MoorhenImportLigandDictionary";
-import { MoorhenGetMonomerMenuItem } from "../menu-item/MoorhenGetMonomerMenuItem"
+import { MoorhenGetMonomerMenuItem } from "../menu-item/MoorhenGetMonomerMenuItem";
+import { MoorhenMinimizeEnergyMenuItem } from "../menu-item/MoorhenMinimizeEnergyMenuItem";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MenuItem } from "@mui/material";
 import { useDispatch } from "react-redux";
@@ -19,6 +20,7 @@ export const MoorhenLigandMenu = (props: MoorhenNavBarExtendedControlsInterface)
             <MoorhenImportDictionaryMenuItem {...menuItemProps} />
             <MoorhenSMILESToLigandMenuItem {...menuItemProps} />
             <MoorhenCentreOnLigandMenuItem {...menuItemProps} />
+            <MoorhenMinimizeEnergyMenuItem {...menuItemProps} />
             <MenuItem onClick={() => {
                 dispatch(setShowFitLigandModal(true))
                 document.body.click()
