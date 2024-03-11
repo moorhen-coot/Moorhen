@@ -6687,7 +6687,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
                         this.applySymmetryMatrix(theShader,theBuffer.symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix)
                         if (this.WEBGL2) {
-                            this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0);
+                            this.drawMaxElementsUInt(vertexType, drawBuffer.numItems);
                         } else {
                             this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_SHORT, 0);
                         }
@@ -6872,7 +6872,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         vec3.transformMat4(screenZ, screenZ, tempMVInvMatrix);
         this.gl.uniform3fv(shader.screenZ, screenZ);
         if (this.ext) {
-            this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0);
+            this.drawMaxElementsUInt(vertexType, drawBuffer.numItems);
         } else {
             this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_SHORT, 0);
         }
@@ -6926,7 +6926,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         vec3.transformMat4(screenZ, screenZ, tempMVInvMatrix);
         this.gl.uniform3fv(shader.screenZ, screenZ);
         if (this.ext) {
-            this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0);
+            this.drawMaxElementsUInt(vertexType, drawBuffer.numItems);
         } else {
             this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_SHORT, 0);
         }
@@ -8424,7 +8424,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.drawTransformMatrixPMV(this.displayBuffers[idx].transformMatrix, this.displayBuffers[idx], shaderProgramThickLinesNormal, this.gl.TRIANGLES, j);
                 } else {
                     if (this.ext) {
-                        this.gl.drawElements(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_INT, 0);
+                        this.drawMaxElementsUInt(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems);
                     } else {
                         this.gl.drawElements(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_SHORT, 0);
                     }
@@ -8505,7 +8505,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             this.drawTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive, this.displayBuffers[idx].transformOriginInteractive, buffer, sphereProgram, this.gl.TRIANGLES, j);
                         } else {
                             if (this.ext) {
-                                this.gl.drawElements(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0);
+                                this.drawMaxElementsUInt(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems);
                             } else {
                                 this.gl.drawElements(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_SHORT, 0);
                             }
@@ -8525,7 +8525,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             this.drawTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive, this.displayBuffers[idx].transformOriginInteractive, buffer, sphereProgram, this.gl.TRIANGLES, j);
                         } else {
                             if (this.ext) {
-                                this.gl.drawElements(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0);
+                                this.drawMaxElementsUInt(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems);
                             } else {
                                 this.gl.drawElements(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_SHORT, 0);
                             }
@@ -8675,7 +8675,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.drawTransformMatrixInteractivePMV(this.displayBuffers[idx].transformMatrixInteractive, this.displayBuffers[idx].transformOriginInteractive, this.displayBuffers[idx], this.shaderProgramThickLines, this.gl.TRIANGLES, j);
                 } else {
                     if (this.ext) {
-                        this.gl.drawElements(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_INT, 0);
+                        this.drawMaxElementsUInt(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems);
                     } else {
                         this.gl.drawElements(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_SHORT, 0);
                     }
@@ -8803,7 +8803,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     // FIXME - hmm, one is /3, the other is not ....
                     if (this.ext) {
                         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(allIndexs), this.gl.STATIC_DRAW);
-                        this.gl.drawElements(this.gl.TRIANGLES, allIndexs.length, this.gl.UNSIGNED_INT, 0);
+                        this.drawMaxElementsUInt(this.gl.TRIANGLES, allIndexs.length);
                     } else {
                         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(allIndexs), this.gl.STATIC_DRAW);
                         this.gl.drawElements(this.gl.TRIANGLES, allIndexs.length / 3, this.gl.UNSIGNED_SHORT, 0);
@@ -9227,7 +9227,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
             if (this.ext) {
                 this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(circlesIndexes), this.gl.DYNAMIC_DRAW);
-                this.gl.drawElements(this.gl.TRIANGLES, circlesIndexes.length, this.gl.UNSIGNED_INT, 0);
+                this.drawMaxElementsUInt(this.gl.TRIANGLES, circlesIndexes.length);
             } else {
                 this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(circlesIndexes), this.gl.DYNAMIC_DRAW);
                 this.gl.drawElements(this.gl.TRIANGLES, circlesIndexes.length, this.gl.UNSIGNED_SHORT, 0);
