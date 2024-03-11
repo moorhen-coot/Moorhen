@@ -893,6 +893,8 @@ export namespace moorhen {
             newCootCommandExit: boolean;
             newCootCommandStart: boolean;        
             showResidueSelection: boolean;
+            useRamaRefinementRestraints: boolean;
+            useTorsionRefinementRestraints: boolean;        
         };
         sharedSession: {
             isInSharedSession: boolean;
