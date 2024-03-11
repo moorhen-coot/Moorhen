@@ -157,7 +157,6 @@ export const MoorhenRandomJiggleBlurMenuItem = (props: {
             initialValue={scaleFactor}
             externalValue={scaleFactor}
             setExternalValue={setScaleFactor}/>
-
     </>
 
     const onCompleted = useCallback(async () => {
