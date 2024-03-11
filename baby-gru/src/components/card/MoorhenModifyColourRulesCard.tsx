@@ -137,7 +137,7 @@ export const MoorhenModifyColourRulesCard = (props: {
 
     const applyRules = useCallback(async () => {
         if (props.molecule?.defaultColourRules) {
-            if (JSON.stringify(props.molecule.defaultColourRules.map(rule => rule.stringify())) === JSON.stringify(ruleList.map(rule => rule.stringify()))) {
+            if (JSON.stringify(props.molecule.defaultColourRules.map(rule => rule.objectify())) === JSON.stringify(ruleList.map(rule => rule.objectify()))) {
                 return
             }
             props.molecule.defaultColourRules = ruleList
