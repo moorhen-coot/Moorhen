@@ -14,6 +14,7 @@ import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice";
 import { setNotificationContent } from "../../store/generalStatesSlice";
+import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 
 export const MoorhenQuerySequenceModal = (props: {
     show: boolean;
@@ -135,14 +136,14 @@ export const MoorhenQuerySequenceModal = (props: {
             return
         }
         if (source === 'AFDB') {
-            let ruleArgs = await getMultiColourRuleArgs(newMolecule, 'af2-plddt')
-            const newRule = {
-                args: [ruleArgs],
-                isMultiColourRule: true,
-                ruleType: 'af2-plddt',
-                label: `//*`
-            }
-            newMolecule.defaultColourRules = [newRule]
+            const colourRule = new MoorhenColourRule(
+                'af2-plddt', "//*", "#ffffff", props.commandCentre, true
+            )
+            colourRule.setLabel("PLDDT")
+            const ruleArgs = await getMultiColourRuleArgs(newMolecule, 'af2-plddt')
+            colourRule.setArgs([ ruleArgs ])
+            colourRule.setParentMolecule(newMolecule)
+            newMolecule.defaultColourRules = [ colourRule ]
         } 
         await props.commandCentre.current.cootCommand({
             message: 'coot_command',

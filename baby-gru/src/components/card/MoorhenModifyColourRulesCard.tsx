@@ -11,6 +11,7 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { Popover } from "@mui/material";
 import { useSelector } from "react-redux";
+import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 
 type colourRuleChange = {
     action: "Add" | "Remove" | "Overwrite" | "MoveUp" | "MoveDown" | "Empty";
@@ -24,7 +25,7 @@ const itemReducer = (oldList: moorhen.ColourRule[], change: colourRuleChange) =>
         return [...oldList, change.item]
     }
     else if (change.action === 'Remove') {
-        return oldList.filter(item => item !== change.item)
+        return oldList.filter(item => item.uniqueId !== change.item.uniqueId)
     }
     else if (change.action === 'Empty') {
         return []
@@ -33,7 +34,7 @@ const itemReducer = (oldList: moorhen.ColourRule[], change: colourRuleChange) =>
         return [...change.items]
     }
     else if (change.action === 'MoveUp') {
-        const itemIndex = oldList.findIndex(item => item === change.item)
+        const itemIndex = oldList.findIndex(item => item.uniqueId === change.item.uniqueId)
         if (itemIndex === 0) {
             return oldList
         }
@@ -43,7 +44,7 @@ const itemReducer = (oldList: moorhen.ColourRule[], change: colourRuleChange) =>
         return newList
     }
     else if (change.action === 'MoveDown') {
-        const itemIndex = oldList.findIndex(item => item === change.item)
+        const itemIndex = oldList.findIndex(item => item.uniqueId === change.item.uniqueId)
         if (itemIndex === oldList.length - 1) {
             return oldList
         }
@@ -53,7 +54,7 @@ const itemReducer = (oldList: moorhen.ColourRule[], change: colourRuleChange) =>
         return newList
     }
     else if (change.action === 'UpdateColor') {
-        const itemIndex = oldList.findIndex(item => item === change.item)
+        const itemIndex = oldList.findIndex(item => item.uniqueId === change.item.uniqueId)
         const newItem = {...oldList[itemIndex]}
         newItem.color = change.color
         if (!newItem.isMultiColourRule) newItem.args[1] = change.color
@@ -122,7 +123,7 @@ export const MoorhenModifyColourRulesCard = (props: {
         const setIntialRules = async () => {
             if (!props.molecule) {
                 return 
-            } else if (props.molecule.defaultColourRules?.length === 0) {
+            } else if (!props.molecule.defaultColourRules || props.molecule.defaultColourRules.length === 0) {
                 await props.molecule.fetchDefaultColourRules()
             }
             if (props.molecule.defaultColourRules.length > 0) {
@@ -136,7 +137,7 @@ export const MoorhenModifyColourRulesCard = (props: {
 
     const applyRules = useCallback(async () => {
         if (props.molecule?.defaultColourRules) {
-            if (JSON.stringify(props.molecule.defaultColourRules) === JSON.stringify(ruleList)) {
+            if (JSON.stringify(props.molecule.defaultColourRules.map(rule => rule.stringify())) === JSON.stringify(ruleList.map(rule => rule.stringify()))) {
                 return
             }
             props.molecule.defaultColourRules = ruleList
@@ -182,32 +183,30 @@ export const MoorhenModifyColourRulesCard = (props: {
                     break
             }
             if (cidLabel) {
-                newRule = {
-                    args: [cidLabel, selectedColour],
-                    isMultiColourRule: false,
-                    ruleType: `${ruleType}`,
-                    color: selectedColour,
-                    label: cidLabel,
-                }
+                newRule = new MoorhenColourRule(
+                    ruleType, cidLabel, selectedColour, props.commandCentre, false
+                )
+                newRule.setParentMolecule(props.molecule)
+                newRule.setArgs([ cidLabel, selectedColour ])
             } else {
                 console.warn('Invalid CID selection used to create a colour rule')
             }
         } else {
             const ruleArgs = await getMultiColourRuleArgs(props.molecule, ruleSelectRef.current.value)
-            newRule = {
-                args: [ruleArgs],
-                isMultiColourRule: true,
-                ruleType: `${ruleSelectRef.current.value}`,
-                label: `${
-                    ruleSelectRef.current.value === 'secondary-structure' ? 'Secondary struct.'
-                    : ruleSelectRef.current.value === 'jones-rainbow' ? 'Jones-Rainbow'
-                    : ruleSelectRef.current.value === 'mol-symm' ? 'Mol. Symm.'
-                    : ruleSelectRef.current.value === "b-factor" ? 'B-factor'
-                    : ruleSelectRef.current.value === "b-factor-norm" ? 'B-factor norm.'
-                    : ruleSelectRef.current.value === "af2-plddt" ? 'PLDDT'
-                    : ''
-                }`,
-            }
+            newRule = new MoorhenColourRule(
+                ruleSelectRef.current.value, "/*/*/*/*", "#ffffff", props.commandCentre, true
+            )
+            newRule.setParentMolecule(props.molecule)
+            newRule.setArgs([ ruleArgs ])
+            newRule.setLabel(`${
+                ruleSelectRef.current.value === 'secondary-structure' ? 'Secondary struct.'
+                : ruleSelectRef.current.value === 'jones-rainbow' ? 'Jones-Rainbow'
+                : ruleSelectRef.current.value === 'mol-symm' ? 'Mol. Symm.'
+                : ruleSelectRef.current.value === "b-factor" ? 'B-factor'
+                : ruleSelectRef.current.value === "b-factor-norm" ? 'B-factor norm.'
+                : ruleSelectRef.current.value === "af2-plddt" ? 'PLDDT'
+                : ''
+            }`)
         }
 
         if (newRule) {

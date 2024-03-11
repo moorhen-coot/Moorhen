@@ -2,8 +2,8 @@ import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
 import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, countResiduesInSelection, copyStructureSelection } from './MoorhenUtils';
 import { libcootApi } from '../types/libcoot';
-import { hexToRgb } from '@mui/material';
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
+import { MoorhenColourRule } from './MoorhenColourRule';
 
 // TODO: It might be better to do this.glRef.current.drawScene() in the molecule... 
 export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresentation {
@@ -23,7 +23,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     isCustom: boolean;
     useDefaultBondOptions: boolean;
     useDefaultColourRules: boolean;
-    applyColourToNonCarbonAtoms: boolean;
     bondOptions: moorhen.cootBondOptions;
     ligandsCid: string;
     hoverColor: number[];
@@ -42,7 +41,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.isCustom = false
         this.useDefaultColourRules = true
         this.useDefaultBondOptions = true
-        this.applyColourToNonCarbonAtoms = false
         this.bondOptions = {
             smoothness: 1,
             width: 0.1,
@@ -51,14 +49,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.ligandsCid = "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O,G,C,U,A,T)"
         this.hoverColor = [1.0, 0.5, 0.0, 0.35]
         this.residueSelectionColor = [0.25, 1.0, 0.25, 0.35]
-    }
-
-    setApplyColourToNonCarbonAtoms(newVal: boolean) {
-        if (newVal) {
-            this.applyColourToNonCarbonAtoms = newVal
-        } else {
-            this.applyColourToNonCarbonAtoms = false
-        }
     }
 
     setBondOptions(bondOptions: moorhen.cootBondOptions) {
@@ -93,9 +83,26 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.useDefaultColourRules = newVal
     }
 
+    addColourRule(ruleType: string, cid: string, color: string, args: (string | number)[], isMultiColourRule: boolean = false, applyColourToNonCarbonAtoms: boolean = false, label?: string) {
+        const newColourRule = new MoorhenColourRule(ruleType, cid, color, this.commandCentre, isMultiColourRule, applyColourToNonCarbonAtoms)
+        newColourRule.setParentRepresentation(this)
+        newColourRule.setArgs(args)
+        if (label) {
+            newColourRule.setLabel(label)
+        }
+   
+        this.useDefaultColourRules = false
+        if (this.colourRules === null) {
+            this.colourRules = [ newColourRule ]
+        } else {
+            this.colourRules.push(newColourRule)
+        }
+    }
+
     setColourRules(colourRules: moorhen.ColourRule[]) {
         if (colourRules && colourRules.length > 0) {
             this.colourRules = colourRules
+            colourRules.forEach(rule => rule.setParentRepresentation(this))
             this.useDefaultColourRules = false
         } else {
             this.useDefaultColourRules = true
@@ -844,37 +851,23 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
 
         if (this.colourRules?.length > 0) {
             if (['CBs', 'VdwSpheres', 'ligands', 'CAs'].includes(this.style)) {
-                let colourObjectList: {cid: string, rgb: number[]}[] = []
+                let colourObjectList: {cid: string; rgb: number[]; applyColourToNonCarbonAtoms: boolean}[] = []
                 this.colourRules.forEach(rule => {
-                    if(rule.isMultiColourRule) {
-                        const allColours = rule.args[0] as string
-                        allColours.split('|').forEach(colour => {
-                            const [cid, hex] = colour.split('^')
-                            const [r, g, b] = hexToRgb(hex).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
-                            colourObjectList.push({ cid: cid, rgb: [r / 255, g / 255, b / 255] })
-                        })
-                    } else {
-                        const [r, g, b] = hexToRgb(rule.color).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
-                        colourObjectList.push({ cid: rule.label, rgb: [r / 255, g / 255, b / 255] })
-                    }
+                    colourObjectList.push(...rule.getUserDefinedColours())
                 })
                 await this.commandCentre.current.cootCommand({
                     message: 'coot_command',
                     command: 'shim_set_bond_colours',
                     returnType: 'status',
-                    commandArgs: [this.parentMolecule.molNo, colourObjectList, this.applyColourToNonCarbonAtoms]
+                    // FIXME: Here we just take applyColourToNonCarbonAtoms from the first colour rule but this needs 
+                    // to be done in a colour by colour basis.
+                    commandArgs: [this.parentMolecule.molNo, colourObjectList, colourObjectList[0].applyColourToNonCarbonAtoms]
                 }, false)
             } else {
-                await Promise.all(
-                    this.colourRules.map(rule => {
-                        return this.commandCentre.current.cootCommand({
-                            message: 'coot_command',
-                            command: rule.isMultiColourRule ? 'add_colour_rules_multi' : 'add_colour_rule',
-                            returnType: 'status',
-                            commandArgs: [this.parentMolecule.molNo, ...rule.args]
-                        }, false)
-                    })
-                )
+                for (let colourRuleIndex = 0; colourRuleIndex < this.colourRules.length; colourRuleIndex++) {
+                    const colourRule = this.colourRules[colourRuleIndex]
+                    await colourRule.apply(this.style, colourRuleIndex)
+                }    
             }
         }
     }

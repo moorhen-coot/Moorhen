@@ -14,6 +14,7 @@ import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm"
 import { MoorhenAcceptRejectRotateTranslate } from "./MoorhenAcceptRejectRotateTranslate"
 import { MoorhenAcceptRejectDragAtoms } from "./MoorhenAcceptRejectDragAtoms"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
+import { MoorhenColourRule } from "../../utils/MoorhenColourRule"
 
 export const MoorhenResidueSelectionActions = (props) => {
 
@@ -286,31 +287,29 @@ export const MoorhenResidueSelectionActions = (props) => {
         let newColourRules: moorhen.ColourRule[] = []
 
         if (residueSelection.isMultiCid && Array.isArray(residueSelection.cid)) {
-            residueSelection.cid.forEach(cid => newColourRules.push({
-                args: [cid, selectedColour],
-                isMultiColourRule: false,
-                ruleType: 'cid',
-                color: selectedColour,
-                label: cid,
-            }))
-        } else if (residueSelection.molecule && residueSelection.cid) {
-            newColourRules.push({
-                args: [residueSelection.cid as string, selectedColour],
-                isMultiColourRule: false,
-                ruleType: 'cid',
-                color: selectedColour,
-                label: residueSelection.cid as string,
+            residueSelection.cid.forEach(cid => {
+                const newColourRule = new MoorhenColourRule(
+                    'cid', cid, selectedColour, residueSelection.molecule.commandCentre, false
+                )
+                newColourRule.setArgs([ cid, selectedColour ])
+                newColourRule.setParentMolecule(residueSelection.molecule)
+                newColourRules.push(newColourRule)
             })
+        } else if (residueSelection.molecule && residueSelection.cid) {
+            const newColourRule = new MoorhenColourRule(
+                'cid', residueSelection.cid as string, selectedColour, residueSelection.molecule.commandCentre, false
+            )
+            newColourRule.setArgs([ residueSelection.cid as string, selectedColour ])
+            newColourRule.setParentMolecule(residueSelection.molecule)
+            newColourRules.push(newColourRule)
         } else if (residueSelection.molecule && residueSelection.first) {
             const startResSpec = cidToSpec(residueSelection.first)
             const cid =`/${startResSpec.mol_no}/${startResSpec.chain_id}/${startResSpec.res_no}-${startResSpec.res_no}`
-            newColourRules.push({
-                args: [cid as string, selectedColour],
-                isMultiColourRule: false,
-                ruleType: 'cid',
-                color: selectedColour,
-                label: cid as string,
-            })
+            const newColourRule = new MoorhenColourRule(
+                'cid', cid as string, selectedColour, residueSelection.molecule.commandCentre, false
+            )
+            newColourRule.setArgs([ cid as string, selectedColour ])
+            newColourRule.setParentMolecule(residueSelection.molecule)
         }
 
         newColourRules.forEach((newColourRule, idx) => {
