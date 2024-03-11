@@ -126,8 +126,8 @@ echo
 # Boost
 echo "Checking out boost"
 cd checkout
-curl -L https://boostorg.jfrog.io/artifactory/main/release/1.83.0/source/boost_$boost_release.tar.bz2 -o boost_$boost_release.tar.bz2
-tar xf boost_$boost_release.tar.bz2
+curl -L https://github.com/boostorg/boost/releases/download/boost-$boost_release/boost-$boost_release.tar.gz  -o boost_$boost_release.tar.gz
+tar xf boost_$boost_release.tar.gz
 cd ..
 ln -s checkout/boost_$boost_release boost
 echo
