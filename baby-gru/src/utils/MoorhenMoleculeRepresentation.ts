@@ -747,7 +747,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         const response = await this.commandCentre.current.cootCommand({
                 returnType: "mesh_perm",
                 command: "DrawMoorhenMetaBalls",
-                commandArgs: [this.parentMolecule.molNo, this.cid, 0.2, 0.65, 1.8]
+                commandArgs: [this.parentMolecule.molNo, this.cid, 0.2, 0.67, 1.8]
         }, false) as moorhen.WorkerResponse<libcootApi.SimpleMeshJS>;
         const objects = [response.data.result.result];
         return objects

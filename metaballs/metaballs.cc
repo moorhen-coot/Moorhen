@@ -10,13 +10,23 @@
 #define MC_IMPLEM_ENABLE
 #include "MC.h"
 
+#include "metaballs.h"
+
 namespace MoorhenMetaBalls {
 
-MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points, float isoLevel, float gridSize){
+float smoothstep(float edge0, float edge1, float x)
+{
+    // Scale, bias and saturate x to 0..1 range
+    x = std::clamp(float((x - edge0) / (edge1 - edge0)), 0.0f, 1.0f);
+    // Evaluate polynomial
+    return x*x*(3 - 2 * x);
+}
+
+moorhenMesh GenerateMeshFromPoints(const std::vector<std::pair<std::array<float,4>,std::array<float,4>>> &points, float isoLevel, float gridSize){
 
     auto t_start = std::chrono::high_resolution_clock::now();
 
-    MC::mcMesh mesh;
+    moorhenMesh mesh;
 
     float padding = 4.0f;
 
@@ -28,9 +38,9 @@ MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points
     float max_z = -1e8;
 
     for(unsigned ip=0;ip<points.size();ip++){
-        float x = points[ip][0];
-        float y = points[ip][1];
-        float z = points[ip][2];
+        float x = points[ip].first[0];
+        float y = points[ip].first[1];
+        float z = points[ip].first[2];
         if(x<min_x) min_x = x;
         if(x>max_x) max_x = x;
         if(y<min_y) min_y = y;
@@ -75,10 +85,10 @@ MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points
     auto t_field_fill = std::chrono::high_resolution_clock::now();
 
     for(unsigned ip=0;ip<np;ip++){
-        float x0 = points[ip][0];
-        float y0 = points[ip][1];
-        float z0 = points[ip][2];
-        float r0 = points[ip][3];
+        float x0 = points[ip].first[0];
+        float y0 = points[ip].first[1];
+        float z0 = points[ip].first[2];
+        float r0 = points[ip].first[3];
         float rr = r0 * r0;
         for(unsigned iz=0;iz<ncell_z;iz++){
             float z = min_z + iz * cell_z;
@@ -92,7 +102,13 @@ MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points
                     float x = min_x + ix * cell_x;
                     float xx = (x - x0)*(x - x0);
                     int newIdx = idx_z + idx_y + ix;
+                    //Potential cutoff and obscure fudge factor.
+                    float d2 = (xx + yy + zz);
+                    d2 = smoothstep(0.0f,12.0f,d2) * sqrt(1.0*np)*5.;
+                    field[newIdx] += rr / d2;
+                    /*
                     field[newIdx] += rr / (xx + yy + zz);
+                    */
                 }
             }
         }
@@ -139,17 +155,28 @@ MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points
         float f_dy = 0.0;
         float f_dz = 0.0;
 
+        std::vector<std::pair<unsigned,float>> idx_frac_pair_vec;
+
         for(unsigned ip=0;ip<np;ip++){
-            float x0 = points[ip][0];
-            float y0 = points[ip][1];
-            float z0 = points[ip][2];
-            float r0 = points[ip][3];
+            float x0 = points[ip].first[0];
+            float y0 = points[ip].first[1];
+            float z0 = points[ip].first[2];
+            float r0 = points[ip].first[3];
 
             float rr = r0 * r0;
 
             float xx = (x - x0)*(x - x0);
             float yy = (y - y0)*(y - y0);
             float zz = (z - z0)*(z - z0);
+
+            float sumsq = xx+yy+zz;
+            if(sumsq<22.){
+                float frac = 1.0-smoothstep(0.3,2.8,sumsq);
+                std::pair<unsigned,float> idx_frac_pair;
+                idx_frac_pair.first = ip;
+                idx_frac_pair.second = frac;
+                idx_frac_pair_vec.push_back(idx_frac_pair);
+            }
 
             float dxx = (dx - x0)*(dx - x0);
             float dyy = (dy - y0)*(dy - y0);
@@ -161,9 +188,25 @@ MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points
 
             f += rr / (xx + yy + zz);
         }
+
+        float totFrac = 0.0;
+        for(unsigned ip=0;ip<idx_frac_pair_vec.size();ip++){
+            totFrac += idx_frac_pair_vec[ip].second;
+        }
+        std::array<float,4> theColor{0.0,0.0,0.0,0.0};
+        if(idx_frac_pair_vec.size()>0 && fabs(totFrac)>1e-4){
+            for(unsigned ip=0;ip<idx_frac_pair_vec.size();ip++){
+                theColor[0] += idx_frac_pair_vec[ip].second * points[idx_frac_pair_vec[ip].first].second[0] / totFrac;
+                theColor[1] += idx_frac_pair_vec[ip].second * points[idx_frac_pair_vec[ip].first].second[1] / totFrac;
+                theColor[2] += idx_frac_pair_vec[ip].second * points[idx_frac_pair_vec[ip].first].second[2] / totFrac;
+                theColor[3] += idx_frac_pair_vec[ip].second * points[idx_frac_pair_vec[ip].first].second[3] / totFrac;
+            }
+        }
+
         MC::mcVec3f new_norm({f_dx-f,f_dy-f,f_dz-f});
         new_norm = MC::mc_internalNormalize(new_norm);
         mesh.normals[ii] = new_norm;
+        mesh.colors.push_back(theColor);
     }
 
     auto t_smooth = std::chrono::high_resolution_clock::now();

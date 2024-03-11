@@ -42,9 +42,126 @@
 #include <iomanip>
 
 #include "coot-utils/simple-mesh.hh"
+#include "coords/graphical-bonds-container.hh"
 
 #include "MC.h"
 #include "metaballs.h"
+
+std::map<std::string,std::array<float,4>> colLookup = {
+{"AC", {0.7,0.7,0.7,1.0}},
+{"AG", {0.7,0.7,0.7,1.0}},
+{"AL", {0.7,0.7,0.7,1.0}},
+{"AM", {0.7,0.7,0.7,1.0}},
+{"AR", {0.7,0.7,0.7,1.0}},
+{"AS", {0.7,0.7,0.7,1.0}},
+{"AT", {0.7,0.7,0.7,1.0}},
+{"AU", {0.7,0.7,0.7,1.0}},
+{"B", {0.7,0.7,0.7,1.0}},
+{"BA", {0.7,0.7,0.7,1.0}},
+{"BE", {0.7,0.7,0.7,1.0}},
+{"BH", {0.7,0.7,0.7,1.0}},//UNK
+{"BI", {0.7,0.7,0.7,1.0}},
+{"BK", {0.7,0.7,0.7,1.0}},//UNK
+{"BR", {0.7,0.7,0.7,1.0}},
+{"C", {0.2,0.2,0.2,1.0}},
+{"CA", {0.7,0.7,0.7,1.0}},
+{"CD", {0.7,0.7,0.7,1.0}},
+{"CE", {0.7,0.7,0.7,1.0}},
+{"CF", {0.7,0.7,0.7,1.0}},//UNK
+{"CL", {0.7,0.7,0.7,1.0}},
+{"CM", {0.7,0.7,0.7,1.0}},
+{"CO", {0.7,0.7,0.7,1.0}},
+{"CR", {0.7,0.7,0.7,1.0}},
+{"CS", {0.7,0.7,0.7,1.0}},
+{"CU", {0.7,0.7,0.7,1.0}},
+{"DB", {0.7,0.7,0.7,1.0}},//UNK
+{"DY", {0.7,0.7,0.7,1.0}},
+{"ER", {0.7,0.7,0.7,1.0}},
+{"ES", {0.7,0.7,0.7,1.0}},//UNK
+{"EU", {0.7,0.7,0.7,1.0}},
+{"F", {0.1,0.9,0.1,1.0}},
+{"FE", {0.7,0.7,0.7,1.0}},
+{"FM", {0.7,0.7,0.7,1.0}},//UNK
+{"FR", {0.7,0.7,0.7,1.0}},//UNK
+{"GA", {0.7,0.7,0.7,1.0}},
+{"GD", {0.7,0.7,0.7,1.0}},
+{"GE", {0.7,0.7,0.7,1.0}},
+{"H", {0.8,0.8,0.8,1.0}},
+{"HE", {0.7,0.7,0.7,1.0}},
+{"HF", {0.7,0.7,0.7,1.0}},
+{"HG", {0.7,0.7,0.7,1.0}},
+{"HO", {0.7,0.7,0.7,1.0}},
+{"HS", {0.7,0.7,0.7,1.0}},//UNK
+{"I", {0.7,0.7,0.7,1.0}},
+{"IN", {0.7,0.7,0.7,1.0}},
+{"IR", {0.7,0.7,0.7,1.0}},
+{"K", {0.7,0.7,0.7,1.0}},
+{"KR", {0.7,0.7,0.7,1.0}},
+{"LA", {0.7,0.7,0.7,1.0}},
+{"LI", {0.7,0.7,0.7,1.0}},
+{"LR", {0.7,0.7,0.7,1.0}},//UNK
+{"LU", {0.7,0.7,0.7,1.0}},
+{"MD", {0.7,0.7,0.7,1.0}},//UNK
+{"MG", {0.7,0.7,0.7,1.0}},
+{"MN", {0.7,0.7,0.7,1.0}},
+{"MO", {0.7,0.7,0.7,1.0}},
+{"MT", {0.7,0.7,0.7,1.0}},//UNK
+{"N", {0.0,0.0,1.0,1.0}},
+{"NA", {0.7,0.7,0.7,1.0}},
+{"NB", {0.7,0.7,0.7,1.0}},
+{"ND", {0.7,0.7,0.7,1.0}},
+{"ND", {0.7,0.7,0.7,1.0}},
+{"NE", {0.7,0.7,0.7,1.0}},
+{"NI", {0.7,0.7,0.7,1.0}},
+{"NO", {0.7,0.7,0.7,1.0}},//UNK
+{"NP", {0.7,0.7,0.7,1.0}},
+{"O", {1.0,0.0,0.0,1.0}},
+{"OSE", {0.7,0.7,0.7,1.0}},
+{"P", {1.0,0.0,1.0,1.0}},
+{"PA", {0.7,0.7,0.7,1.0}},
+{"PB", {0.7,0.7,0.7,1.0}},
+{"PD", {0.7,0.7,0.7,1.0}},
+{"PM", {0.7,0.7,0.7,1.0}},//UNK
+{"PO", {0.7,0.7,0.7,1.0}},
+{"PR", {0.7,0.7,0.7,1.0}},
+{"PT", {0.7,0.7,0.7,1.0}},
+{"PU", {0.7,0.7,0.7,1.0}},
+{"PU", {0.7,0.7,0.7,1.0}},
+{"RA", {0.7,0.7,0.7,1.0}},
+{"RB", {0.7,0.7,0.7,1.0}},
+{"RB", {0.7,0.7,0.7,1.0}},
+{"RB", {0.7,0.7,0.7,1.0}},
+{"RE", {0.7,0.7,0.7,1.0}},
+{"RF", {0.7,0.7,0.7,1.0}},//UNK
+{"RH", {0.7,0.7,0.7,1.0}},
+{"RN", {0.7,0.7,0.7,1.0}},
+{"RU", {0.7,0.7,0.7,1.0}},
+{"S", {1.0,1.0,0.0,1.0}},
+{"SB", {0.7,0.7,0.7,1.0}},
+{"SC", {0.7,0.7,0.7,1.0}},
+{"SE", {0.7,0.7,0.7,1.0}},
+{"SG", {0.7,0.7,0.7,1.0}},//UNK
+{"SI", {0.7,0.7,0.7,1.0}},
+{"SM", {0.7,0.7,0.7,1.0}},
+{"SN", {0.7,0.7,0.7,1.0}},
+{"SR", {0.7,0.7,0.7,1.0}},
+{"TA", {0.7,0.7,0.7,1.0}},
+{"TB", {0.7,0.7,0.7,1.0}},
+{"TC", {0.7,0.7,0.7,1.0}},
+{"TE", {0.7,0.7,0.7,1.0}},
+{"TH", {0.7,0.7,0.7,1.0}},
+{"TI", {0.7,0.7,0.7,1.0}},
+{"TL", {0.7,0.7,0.7,1.0}},
+{"TM", {0.7,0.7,0.7,1.0}},
+{"U", {0.7,0.7,0.7,1.0}},
+{"V", {0.7,0.7,0.7,1.0}},
+{"W", {0.7,0.7,0.7,1.0}},
+{"XE", {0.7,0.7,0.7,1.0}},
+{"Y", {0.7,0.7,0.7,1.0}},
+{"YB", {0.7,0.7,0.7,1.0}},
+{"ZN", {0.7,0.7,0.7,1.0}},
+{"ZR", {0.7,0.7,0.7,1.0}},
+};
 
 std::map<std::string,float> multLookup = { 
 {"AC", 1.95},
@@ -200,17 +317,17 @@ static inline std::string trim_copy(std::string s) {
     return s;
 }
 
-void mergeLastTwoGroupsIfNecessary(std::vector<std::vector<std::array<float,4>>> &all_points){
+void mergeLastTwoGroupsIfNecessary(std::vector<std::vector<std::pair<std::array<float,4>,std::array<float,4>>>> &all_points){
 
-    std::vector<std::array<float,4>> last   = all_points[all_points.size()-1];
-    std::vector<std::array<float,4>> &penult = all_points[all_points.size()-2];
+    std::vector<std::pair<std::array<float,4>,std::array<float,4>>> last   = all_points[all_points.size()-1];
+    std::vector<std::pair<std::array<float,4>,std::array<float,4>>> &penult = all_points[all_points.size()-2];
 
     bool connected = false;
 
     for(unsigned ii=0;ii<last.size();ii++){
-        std::array<float,4> &pl = last[ii];
+        std::array<float,4> &pl = last[ii].first;
         for(unsigned jj=0;jj<penult.size();jj++){
-            std::array<float,4> &pp = penult[jj];
+            std::array<float,4> &pp = penult[jj].first;
             float distsq = (pl[0]-pp[0])*(pl[0]-pp[0]) + (pl[1]-pp[1])*(pl[1]-pp[1]) + (pl[2]-pp[2])*(pl[2]-pp[2]);
             if(distsq<6.7) {
                 connected = true;
@@ -245,10 +362,8 @@ coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::s
 
     if(nHetAtoms==0) return coot_mesh;
 
-    std::vector<std::vector<std::array<float,4>>> all_points;
-    std::vector<std::array<float,4>> points;
-
-    //TODO - double?
+    std::vector<std::vector<std::pair<std::array<float,4>,std::array<float,4>>>> all_points;
+    std::vector<std::pair<std::array<float,4>,std::array<float,4>>> points;
 
     mmdb::Residue *currentResidue = 0;
     for(int i=0;i<nHetAtoms;i++){
@@ -259,6 +374,7 @@ coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::s
             if(strncmp(HetAtoms[i]->residue->name,"HOH",3)!=0){
                 //std::cout << element << " " << atomMult << std::endl;
                 std::array<float,4> point{float(HetAtoms[i]->x),float(HetAtoms[i]->y),float(HetAtoms[i]->z),r*atomMult/1.7f};
+                std::array<float,4> atomCol = colLookup[element];
                 if(HetAtoms[i]->residue!=currentResidue){
                     //std::cout << "New residue!" << std::endl;
                     currentResidue = HetAtoms[i]->residue;
@@ -273,7 +389,10 @@ coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::s
                     }
                 }
                 //std::cout << "Adding atom " << HetAtoms[i]->residue->name << " / " << HetAtoms[i]->name << std::endl;
-                points.push_back(point);
+                std::pair<std::array<float,4>,std::array<float,4>> point_col;
+                point_col.first = point;
+                point_col.second = atomCol;
+                points.push_back(point_col);
             }
         }
     }
@@ -294,7 +413,7 @@ coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::s
 
     int totVert = 0;
     for(unsigned imesh=0;imesh<all_points.size();imesh++){
-        MC::mcMesh mesh = MoorhenMetaBalls::GenerateMeshFromPoints(all_points[imesh], isoLevel, gridSize);
+        moorhenMesh mesh = MoorhenMetaBalls::GenerateMeshFromPoints(all_points[imesh], isoLevel, gridSize);
 
         //FIXME - colours.
         glm::vec4 col = glm::vec4(0.6f, 0.6f, 0.2f, 1.0f);
@@ -309,6 +428,10 @@ coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::s
             for(unsigned iv=0;iv<mesh.vertices.size();iv++){
                 glm::vec3 v(mesh.vertices[iv].x,mesh.vertices[iv].y,mesh.vertices[iv].z);
                 glm::vec3 n(mesh.normals[iv].x,mesh.normals[iv].y,mesh.normals[iv].z);
+                col[0] = mesh.colors[iv][0];
+                col[1] = mesh.colors[iv][1];
+                col[2] = mesh.colors[iv][2];
+                col[3] = 1.0;
                 coot_mesh.vertices.push_back(coot::api::vnc_vertex(v, n, col));
             }
             totVert += mesh.vertices.size();
