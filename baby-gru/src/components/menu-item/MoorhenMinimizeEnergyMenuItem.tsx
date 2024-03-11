@@ -9,7 +9,6 @@ import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect";
 import { MoorhenSlider } from "../misc/MoorhenSlider";
 
-
 export const MoorhenMinimizeEnergyMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
