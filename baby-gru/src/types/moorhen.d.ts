@@ -925,6 +925,7 @@ export namespace moorhen {
             showMmrrccModal: boolean;
             showWaterValidationModal: boolean;
             showSceneSettingsModal: boolean;
+            showSliceNDiceModal: boolean;
             focusHierarchy: string[];
         };
         mapContourSettings: {
