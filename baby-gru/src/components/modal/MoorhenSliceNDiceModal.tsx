@@ -79,7 +79,8 @@ export const MoorhenSliceNDiceModal = (props: {
         let commandArgs: (string | number)[]
         switch (clusteringTypeSelectRef.current.value) {
             case "kmeans":
-                commandArgs = [ selectedMolecule.molNo, nClustersRef.current, "kmeans" ]
+            case "agglomerative":
+                commandArgs = [ selectedMolecule.molNo, nClustersRef.current, clusteringTypeSelectRef.current.value ]
                 break
             default:
                 console.warn(`Unkown clustering algorithm ${clusteringTypeSelectRef.current}`)
@@ -149,6 +150,7 @@ export const MoorhenSliceNDiceModal = (props: {
                     clusteringTypeSelectRef.current.value = evt.target.value
                 }}>
                     <option value={'kmeans'} key={'kmeans'}>K-Means</option>
+                    <option value={'agglomerative'} key={'agglomerative'}>Agglomerative</option>
                 </FormSelect>
             </Form.Group>
             <MoorhenMoleculeSelect {...props} molecules={molecules} allowAny={false} ref={moleculeSelectRef} onChange={(evt) => setSelectedMolNo(parseInt(evt.target.value))}/>
