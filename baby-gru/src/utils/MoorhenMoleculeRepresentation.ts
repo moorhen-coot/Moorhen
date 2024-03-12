@@ -67,7 +67,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             'gaussian', 'allHBonds', 'rotamer', 'rama', 'environment', 'ligand_environment', 'hover', 'CDs', 'restraints'
         ].includes(style)
         this.styleHasSymmetry = ![
-            'hover', 'residueSelection', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 
+            'residueSelection', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots',
             'chemical_features', 'VdWSurface', 'restraints', 'environment', 'ligand_environment', 'CDs', 'ligand_validation'
         ].includes(style)
         this.styleHasColourRules = ![
@@ -589,7 +589,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     drawSymmetry() {
         if (this.parentMolecule.symmetryMatrices && this.buffers && this.styleHasSymmetry) {
             this.buffers.forEach((displayObject: moorhen.DisplayObject) => {
-                console.log("Setting symmetry matrices",displayObject)
                 displayObject.symmetryMatrices = this.parentMolecule.symmetryMatrices
                 displayObject.updateSymmetryAtoms()
             })

@@ -1588,9 +1588,10 @@ class DisplayBuffer {
     display_class: string;
     transparent: boolean;
     alphaChanged: boolean;
-    atoms: {charge: number, tempFactor: number, x: number, y: number, z: number, symbol: string, label:string}[];
-    symmetryAtoms: {charge: number, tempFactor: number, x: number, y: number, z: number, symbol: string, label:string}[];
+    atoms: {chain_id: string, has_altloc: boolean, mol_name: string, serial: number, res_no:string, res_name:string, name: string, charge: number, tempFactor: number, x: number, y: number, z: number, element: string}[];
+    symmetryAtoms: {chain_id: string, has_altloc: boolean, mol_name: string, serial: number, res_no:string, res_name:string, name: string, charge: number, tempFactor: number, pos: vec3, element: string}[][];
     symmetryMatrices: number[];
+    changeColourWithSymmetry: boolean;
     triangleVertexRealNormalBuffer: MGWebGLBuffer[];
     triangleVertexNormalBuffer: MGWebGLBuffer[];
     triangleVertexPositionBuffer: MGWebGLBuffer[];
@@ -1636,6 +1637,8 @@ class DisplayBuffer {
         this.atoms = [];
         this.symmetryMatrices = [];
         this.clearBuffers();
+        this.symmetryAtoms = []
+        this.changeColourWithSymmetry = true;
     }
 
     setCustomColour(col) {
@@ -1643,10 +1646,41 @@ class DisplayBuffer {
     }
 
     updateSymmetryAtoms() {
-        console.log(this.symmetryMatrices)
-        console.log(this.atoms)
+        this.symmetryAtoms = []
+        this.symmetryMatrices.forEach(mat =>{
+                let symt = mat4.create();
+                mat4.set(symt,
+                        mat[0], mat[1], mat[2], mat[3],
+                        mat[4], mat[5], mat[6], mat[7],
+                        mat[8], mat[9], mat[10], mat[11],
+                        mat[12], mat[13], mat[14], mat[15]);
+                let theseSymmAtoms = []
+                for (let j = 0; j < this.atoms.length; j++) {
+                    let atx = this.atoms[j].x;
+                    let aty = this.atoms[j].y;
+                    let atz = this.atoms[j].z;
+                    let p = vec3Create([atx, aty, atz]);
+                    let atPosTrans = vec3Create([0, 0, 0]);
+                    vec3.transformMat4(atPosTrans, p, symt);
+                    let symmAt = {
+                        charge: this.atoms[j].charge,
+                        tempFactor: this.atoms[j].tempFactor,
+                        element: this.atoms[j].element,
+                        name:this.atoms[j].name,
+                        res_name:this.atoms[j].res_name,
+                        res_no:this.atoms[j].res_no,
+                        mol_name:this.atoms[j].mol_name,
+                        serial:this.atoms[j].serial,
+                        has_altloc:this.atoms[j].has_altloc,
+                        chain_id:this.atoms[j].chain_id,
+                        pos: atPosTrans
+                    }
+                    theseSymmAtoms.push(symmAt)
+                }
+                this.symmetryAtoms.push(theseSymmAtoms)
+        })
     }
-        
+
     clearBuffers() {
         this.triangleVertexRealNormalBuffer = []; // This is for lit lines.
         this.triangleVertexNormalBuffer = [];
@@ -8322,11 +8356,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             this.gl.uniformMatrix4fv(program.invSymMatrixUniform, false, invsymt);
                         }
                         if(this.displayBuffers[idx].symmetryMatrices.length>0){
-                            this.gl.disableVertexAttribArray(program.vertexColourAttribute);
-                            if(bright_y>0.5)
-                                this.gl.vertexAttrib4f(program.vertexColourAttribute, 0.3, 0.3, 0.3, 1.0);
-                            else
-                                this.gl.vertexAttrib4f(program.vertexColourAttribute, 0.5, 0.5, 0.5, 1.0);
+                            if(this.displayBuffers[idx].changeColourWithSymmetry){
+                                this.gl.disableVertexAttribArray(program.vertexColourAttribute);
+                                if(bright_y>0.5)
+                                    this.gl.vertexAttrib4f(program.vertexColourAttribute, 0.3, 0.3, 0.3, 1.0);
+                                else
+                                    this.gl.vertexAttrib4f(program.vertexColourAttribute, 0.5, 0.5, 0.5, 1.0);
+                            }
 
                             let tempMVMatrix = mat4.create();
                             let tempMVInvMatrix = mat4.create();
@@ -9298,7 +9334,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     doRightClick(event, self) {
         if (self.activeMolecule === null) {
 
-            const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
+            const [minidx,minj,mindist,minsym,minx,miny,minz] = self.getAtomFomMouseXY(event,self);
             let rightClick: moorhen.AtomRightClickEvent = new CustomEvent("rightClick", {
             "detail": {
                 atom: minidx > -1 ? self.displayBuffers[minidx].atoms[minj] : null,
@@ -9320,7 +9356,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if (!self.mouseMoved) {
             let updateLabels = false
             //console.log(npass+" "+npass0+" "+npass1+" "+ntest);
-            const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
+            const [minidx,minj,mindist,minsym,minx,miny,minz] = self.getAtomFomMouseXY(event,self);
             if (minidx > -1) {
                 let theAtom : clickAtom = {
                    ...self.displayBuffers[minidx].atoms[minj],
@@ -9528,9 +9564,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 viewportArray, modelPointArrayResultsBack);
 
         let mindist = 100000.;
+        let minx = 100000.;
+        let miny = 100000.;
+        let minz = 100000.;
         let minidx = -1;
         let minj = -1;
         //FIXME - This needs to depend on whether spheres, surface are drawn
+
+        let minsym = -1;
 
         for (let idx = 0; idx < self.displayBuffers.length; idx++) {
             let clickTol = 3.65 * this.zoom;
@@ -9565,20 +9606,43 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     mindist = dpl[0];
                 }
             }
-            /*
-            for (let isym = 0; isym < this.displayBuffers[idx].symmetryMatrices.length; isym++) {
-                //console.log(this.displayBuffers[idx].symmetryMatrices[isym]);
-            }
-            */
+            let isym = 0;
+            this.displayBuffers[idx].symmetryAtoms.forEach(symmats => {
+                let j = 0;
+                symmats.forEach(symmat => {
+                    const p = symmat.pos;
+                    const dpl = DistanceBetweenPointAndLine(modelPointArrayResultsFront, modelPointArrayResultsBack, p);
+                    let atPosTrans = vec3Create([0, 0, 0]);
+                    vec3.transformMat4(atPosTrans, p, this.mvMatrix);
+                    let azDot = this.gl_clipPlane0[3]-atPosTrans[2];
+                    let bzDot = this.gl_clipPlane1[3]+atPosTrans[2];
+                    if (
+                        dpl[0] < clickTol //* targetFactor //clickTol modified to reflect proximity to rptation origin
+                        && dpl[0] < mindist //closest click seen
+                        && azDot > 0 //Beyond near clipping plane
+                        && bzDot > 0 //In front of far clipping plan
+                    ) {
+                    minidx = idx;
+                    minj = j;
+                    mindist = dpl[0];
+                    minsym = isym;
+                    minx = p[0];
+                    miny = p[1];
+                    minz = p[2];
+                    }
+                    j++;
+                })
+                isym++;
+            })
         }
 
-        return [minidx,minj,mindist];
+        return [minidx,minj,mindist,minsym,minx,miny,minz];
 
     }
 
     doHover(event, self) {
         if (this.props.onAtomHovered) {
-            const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
+            const [minidx,minj,mindist,minsym,minx,miny,minz] = self.getAtomFomMouseXY(event,self);
             if (minidx > -1) {
                 this.props.onAtomHovered({ atom: self.displayBuffers[minidx].atoms[minj], buffer: self.displayBuffers[minidx] });
             }
@@ -11099,12 +11163,16 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if (self.keysDown['center_atom'] || event.which===2) {
             if(Math.abs(event_x-self.mouseDown_x)<5 && Math.abs(event_y-self.mouseDown_y)<5){
                 if(self.displayBuffers.length>0){
-                    const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
+                    const [minidx,minj,mindist,minsym,minx,miny,minz] = self.getAtomFomMouseXY(event,self);
                     if(self.displayBuffers[minidx] && self.displayBuffers[minidx].atoms) {
                         let atx = self.displayBuffers[minidx].atoms[minj].x;
                         let aty = self.displayBuffers[minidx].atoms[minj].y;
                         let atz = self.displayBuffers[minidx].atoms[minj].z;
-                        self.setOriginAnimated([-atx, -aty, -atz], true);
+                        if(minsym>-1){
+                            self.setOriginAnimated([-minx, -miny, -minz], true);
+                        } else {
+                            self.setOriginAnimated([-atx, -aty, -atz], true);
+                        }
                     }
                 }
             } else if (this.reContourMapOnlyOnMouseUp) {
