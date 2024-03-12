@@ -21,9 +21,13 @@ export const activeModalsSlice = createSlice({
     showMmrrccModal: false,
     showWaterValidationModal: false,
     showSceneSettingsModal: false,
+    showSliceNDiceModal: false,
     focusHierarchy: [],
   },
   reducers: {
+    setShowSliceNDiceModal: (state, action: { payload: boolean, type: string }) => {
+      return {...state, showSliceNDiceModal: action.payload }
+    },
     setShowSceneSettingsModal: (state, action: { payload: boolean, type: string }) => {
       return {...state, showSceneSettingsModal: action.payload }
     },
@@ -94,7 +98,7 @@ export const {
   setShowLigandValidationModal, setShowPepFlipsValidationModal, setShowMmrrccModal,
   setShowWaterValidationModal, setShowValidationPlotModal, setShowCarbohydrateValidationModal, 
   setShowUnmodelledBlobsModal, setShowDiffMapPeaksModal, setShowFillPartialResValidationModal, 
-  setShowSceneSettingsModal
+  setShowSceneSettingsModal, setShowSliceNDiceModal
 } = activeModalsSlice.actions
 
 export default activeModalsSlice.reducer

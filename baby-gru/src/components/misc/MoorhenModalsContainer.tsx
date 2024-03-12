@@ -15,13 +15,14 @@ import { MoorhenCarbohydrateValidationModal } from '../modal/MoorhenCarbohydrate
 import { MoorhenPepFlipsModal } from '../modal/MoorhenPepFlipsModal';
 import { MoorhenUnmodelledBlobsModal } from '../modal/MoorhenUnmodelledBlobsModal';
 import { MoorhenFillPartialResiduesModal } from '../modal/MoorhenFillPartialResiduesModal';
-import { MoorhenSceneSettingsModal } from '../modal/MoorhenSceneSettingsModal'
+import { MoorhenSceneSettingsModal } from '../modal/MoorhenSceneSettingsModal';
+import { MoorhenSliceNDiceModal } from '../modal/MoorhenSliceNDiceModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { moorhen } from '../../types/moorhen';
 import { 
     setShowControlsModal, setShowCreateAcedrgLinkModal, setShowDiffMapPeaksModal, setShowFillPartialResValidationModal, setShowFitLigandModal, setShowLigandValidationModal, setShowMapsModal, 
     setShowMmrrccModal, setShowModelsModal, setShowPepFlipsValidationModal, setShowQuerySequenceModal, setShowRamaPlotModal, setShowSceneSettingsModal, setShowScriptingModal, 
-    setShowUnmodelledBlobsModal, setShowValidationPlotModal, setShowWaterValidationModal, setShowCarbohydrateValidationModal
+    setShowUnmodelledBlobsModal, setShowValidationPlotModal, setShowWaterValidationModal, setShowCarbohydrateValidationModal, setShowSliceNDiceModal
 } from '../../store/activeModalsSlice';
 
 export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
@@ -43,6 +44,7 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
     const showPepFlipsValidationModal = useSelector((state: moorhen.State) => state.activeModals.showPepFlipsValidationModal)
     const showUnmodelledBlobsModal = useSelector((state: moorhen.State) => state.activeModals.showUnmodelledBlobsModal)
     const showCarbohydrateValidationModal = useSelector((state: moorhen.State) => state.activeModals.showCarbohydrateModal)
+    const showSliceNDiceModal = useSelector((state: moorhen.State) => state.activeModals.showSliceNDiceModal)
 
     const showSceneSettingsModal = useSelector((state: moorhen.State) => state.activeModals.showSceneSettingsModal)
 
@@ -171,6 +173,12 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
             setShow={(newVal: boolean) => dispatch(setShowSceneSettingsModal(newVal))}
             {...props} />
         }
-        
+
+        {showSliceNDiceModal &&
+            <MoorhenSliceNDiceModal
+            show={showSliceNDiceModal}
+            setShow={(newVal: boolean) => dispatch(setShowSliceNDiceModal(newVal))}
+            {...props} />
+        }
     </>
 }

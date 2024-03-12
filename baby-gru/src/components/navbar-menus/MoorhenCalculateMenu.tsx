@@ -13,7 +13,7 @@ import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MenuItem } from "@mui/material";
 import { libcootApi } from "../../types/libcoot";
 import { useDispatch } from "react-redux";
-import { setShowScriptingModal } from "../../store/activeModalsSlice";
+import { setShowScriptingModal, setShowSliceNDiceModal } from "../../store/activeModalsSlice";
 
 export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const dispatch = useDispatch()
@@ -45,6 +45,12 @@ export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterfa
                 commandCentre={props.commandCentre}
                 setPopoverIsShown={setPopoverIsShown}
             />
+            <MenuItem onClick={() => {
+                dispatch(setShowSliceNDiceModal(true))
+                document.body.click()
+            }}>
+                Slice-n-Dice...
+            </MenuItem>
             {props.allowScripting && 
             <>
                 <MoorhenLoadScriptMenuItem {...menuItemProps} />
