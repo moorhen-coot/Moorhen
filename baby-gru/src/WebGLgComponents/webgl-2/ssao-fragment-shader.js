@@ -14,8 +14,8 @@ in vec2 out_TexCoord0;
 // parameters (you'd probably want to use them as uniforms to more easily tweak the effect)
 int kernelSize = 16;
 
-uniform float radius;// = 2.5;
-uniform float bias;// = 0.025;
+uniform float radius;// = 0.4;
+uniform float bias;// = 1.0;
 
 // tile noise texture over screen based on screen dimensions divided by noise size
 const vec2 noiseScale = vec2(1024.0/4.0, 1024.0/4.0); 
@@ -68,6 +68,8 @@ void main() {
 
         }
         occlusion = pow(occlusion / float(kernelSize),1.5);
+        occlusion += (1.0 - bias);
+        if(occlusion>1.0) occlusion = 1.0;
     } else {
         occlusion = 1.0;
     }

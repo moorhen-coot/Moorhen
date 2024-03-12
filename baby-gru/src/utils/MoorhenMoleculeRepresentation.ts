@@ -589,7 +589,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     drawSymmetry() {
         if (this.parentMolecule.symmetryMatrices && this.buffers && this.styleHasSymmetry) {
             this.buffers.forEach((displayObject: moorhen.DisplayObject) => {
+                console.log("Setting symmetry matrices",displayObject)
                 displayObject.symmetryMatrices = this.parentMolecule.symmetryMatrices
+                displayObject.updateSymmetryAtoms()
             })
             this.glRef.current.drawScene()
         }

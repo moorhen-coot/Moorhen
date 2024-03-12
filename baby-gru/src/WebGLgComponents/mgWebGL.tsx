@@ -1589,6 +1589,7 @@ class DisplayBuffer {
     transparent: boolean;
     alphaChanged: boolean;
     atoms: {charge: number, tempFactor: number, x: number, y: number, z: number, symbol: string, label:string}[];
+    symmetryAtoms: {charge: number, tempFactor: number, x: number, y: number, z: number, symbol: string, label:string}[];
     symmetryMatrices: number[];
     triangleVertexRealNormalBuffer: MGWebGLBuffer[];
     triangleVertexNormalBuffer: MGWebGLBuffer[];
@@ -1641,6 +1642,11 @@ class DisplayBuffer {
         this.customColour = col;
     }
 
+    updateSymmetryAtoms() {
+        console.log(this.symmetryMatrices)
+        console.log(this.atoms)
+    }
+        
     clearBuffers() {
         this.triangleVertexRealNormalBuffer = []; // This is for lit lines.
         this.triangleVertexNormalBuffer = [];
@@ -2990,7 +2996,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.enable(this.gl.BLEND);
 
         this.ssaoRadius = 0.4;
-        this.ssaoBias = 0.025;
+        this.ssaoBias = 1.0;
         if(this.WEBGL2) this.initializeSSAOBuffers();
 
         self.buildBuffers();
@@ -6637,14 +6643,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.instanced_ext.drawElementsInstancedANGLE(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0, theBuffer.triangleInstanceOriginBuffer[j].numItems);
                 }
                 if(theBuffer.symmetryMatrices.length>0){
-                    /*this.gl.uniform4fv(theShader.light_colours_diffuse,
-                            new Float32Array([Math.max(this.light_colours_diffuse[0]-.4,0.2),
-                                Math.max(this.light_colours_diffuse[1]-.4,0.2),
-                                Math.max(this.light_colours_diffuse[2]-.4,0.2), 1.0]));
-                    this.gl.uniform4fv(theShader.light_colours_specular, new Float32Array([0.0,0.0,0.0,1.0]));
-                    //this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
-                    //this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 1.0, 0.0, 0.0, 1.0);
-                    */
+                    this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
+                    if(bright_y>0.5)
+                        this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.3, 0.3, 0.3, 1.0);
+                    else
+                        this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.5, 0.5, 0.5, 1.0);
+
                     let tempMVMatrix = mat4.create();
                     let tempMVInvMatrix = mat4.create();
                     for (let isym = 0; isym < theBuffer.symmetryMatrices.length; isym++) {
@@ -6660,7 +6664,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.setLightUniforms(theShader);
                     this.gl.uniformMatrix4fv(theShader.mvMatrixUniform, false, this.mvMatrix);// All else
                     this.gl.uniformMatrix4fv(theShader.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
-                    if(theShader.vertexColourAttribute>1) this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
+                    if(theShader.vertexColourAttribute>-1) this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
                 }
                 if(theShader.light_colours_diffuse) this.gl.uniform4fv(theShader.light_colours_diffuse, this.light_colours_diffuse);
                 if(theShader.light_colours_specular) this.gl.uniform4fv(theShader.light_colours_specular, this.light_colours_specular);
@@ -6681,6 +6685,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             } else {
                 const theShader = theShaderIn as MGWebGLShader;
                 if(theBuffer.symmetryMatrices.length>0){
+                    if(theShader.vertexColourAttribute>-1){
+                        this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
+                        if(bright_y>0.5)
+                            this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.3, 0.3, 0.3, 1.0);
+                        else
+                            this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.5, 0.5, 0.5, 1.0);
+                    }
                     let tempMVMatrix = mat4.create();
                     let tempMVInvMatrix = mat4.create();
                     for (let isym = 0; isym < theBuffer.symmetryMatrices.length; isym++) {
@@ -6696,7 +6707,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.setLightUniforms(theShader);
                     this.gl.uniformMatrix4fv(theShader.mvMatrixUniform, false, this.mvMatrix);// All else
                     this.gl.uniformMatrix4fv(theShader.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
-                    if(theShader.vertexColourAttribute>1) this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
+                    if(theShader.vertexColourAttribute>-1) this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
                 }
                 this.drawMaxElementsUInt(vertexType, drawBuffer.numItems);
             }
@@ -8311,6 +8322,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             this.gl.uniformMatrix4fv(program.invSymMatrixUniform, false, invsymt);
                         }
                         if(this.displayBuffers[idx].symmetryMatrices.length>0){
+                            this.gl.disableVertexAttribArray(program.vertexColourAttribute);
+                            if(bright_y>0.5)
+                                this.gl.vertexAttrib4f(program.vertexColourAttribute, 0.3, 0.3, 0.3, 1.0);
+                            else
+                                this.gl.vertexAttrib4f(program.vertexColourAttribute, 0.5, 0.5, 0.5, 1.0);
+
                             let tempMVMatrix = mat4.create();
                             let tempMVInvMatrix = mat4.create();
                             if (this.WEBGL2) {
@@ -8344,6 +8361,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             this.gl.uniformMatrix4fv(program.mvMatrixUniform, false, this.mvMatrix);// All else
                             this.gl.uniformMatrix4fv(program.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
 
+                            this.gl.enableVertexAttribArray(program.vertexColourAttribute);
                         }
                     }
                 }
@@ -9547,6 +9565,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     mindist = dpl[0];
                 }
             }
+            /*
+            for (let isym = 0; isym < this.displayBuffers[idx].symmetryMatrices.length; isym++) {
+                //console.log(this.displayBuffers[idx].symmetryMatrices[isym]);
+            }
+            */
         }
 
         return [minidx,minj,mindist];

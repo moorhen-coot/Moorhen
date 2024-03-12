@@ -69,6 +69,7 @@ export namespace moorhen {
     
     type DisplayObject = {
         symmetryMatrices: any;
+        updateSymmetryAtoms(): void;
         [attr: string]: any;
     }
     

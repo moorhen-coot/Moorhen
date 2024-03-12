@@ -7,7 +7,7 @@ import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
 import { Form, InputGroup, Stack } from "react-bootstrap";
 import { 
     setBackgroundColor, setClipCap, setDepthBlurDepth, setDepthBlurRadius, setDoSSAO, setResetClippingFogging,
-    setSsaoRadius, setUseOffScreenBuffers, setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, 
+    setSsaoRadius, setSsaoBias,setUseOffScreenBuffers, setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold,
     setEdgeDetectDepthScale, setEdgeDetectNormalScale
 } from "../../store/sceneSettingsSlice";
 import { HexColorInput, RgbColorPicker } from "react-colorful";
@@ -78,14 +78,9 @@ const OcclusionPanel = (props: {}) => {
     const dispatch = useDispatch()
     const doSSAO = useSelector((state: moorhen.State) => state.sceneSettings.doSSAO)
     const ssaoRadius = useSelector((state: moorhen.State) => state.sceneSettings.ssaoRadius)
+    const ssaoBias = useSelector((state: moorhen.State) => state.sceneSettings.ssaoBias)
     
     return <div className="scene-settings-panel-flex-between">
-        <MoorhenSlider minVal={0.0} maxVal={2.0} logScale={false}
-            isDisabled={!doSSAO}
-            sliderTitle="Occlusion radius"
-            initialValue={ssaoRadius}
-            externalValue={ssaoRadius}
-            setExternalValue={(val: number) => dispatch(setSsaoRadius(val))} />
         <InputGroup className='moorhen-input-group-check'>
             <Form.Check 
                 type="switch"
@@ -95,6 +90,18 @@ const OcclusionPanel = (props: {}) => {
                 )}}
                 label="Ambient occlusion"/>
         </InputGroup>
+        <MoorhenSlider minVal={0.0} maxVal={2.0} logScale={false}
+            isDisabled={!doSSAO}
+            sliderTitle="Occlusion radius"
+            initialValue={ssaoRadius}
+            externalValue={ssaoRadius}
+            setExternalValue={(val: number) => dispatch(setSsaoRadius(val))} />
+        <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
+            isDisabled={!doSSAO}
+            sliderTitle="Occlusion effect"
+            initialValue={ssaoBias}
+            externalValue={ssaoBias}
+            setExternalValue={(val: number) => dispatch(setSsaoBias(val))} />
     </div>
 }
 
