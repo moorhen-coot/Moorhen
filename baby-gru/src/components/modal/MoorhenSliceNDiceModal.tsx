@@ -2,11 +2,11 @@ import { useDispatch, useSelector } from "react-redux"
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen"
 import { convertRemToPx, convertViewtoPx } from "../../utils/MoorhenUtils"
-import { Button, ButtonGroup, Card, Col, Dropdown, Form, FormSelect, Row, Spinner, SplitButton, Stack } from "react-bootstrap"
+import { Button, Card, Col, Dropdown, Form, FormSelect, Row, Spinner, SplitButton, Stack } from "react-bootstrap"
 import { Backdrop, IconButton, Slider, Tooltip } from "@mui/material"
 import React, { useCallback, useEffect, useRef, useState } from "react"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
-import { hideMolecule, showMolecule } from "../../store/moleculesSlice"
+import { addMolecule, hideMolecule, showMolecule } from "../../store/moleculesSlice"
 import { CenterFocusWeakOutlined, DownloadOutlined } from "@mui/icons-material"
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 
@@ -33,7 +33,7 @@ export const MoorhenSliceNDiceModal = (props: {
     const [slicingResults, setSlicingResults] = useState<moorhen.Molecule[]>(null)
 
     const getSliceCards = useCallback((sliceId: string, fragmentMolecule: moorhen.Molecule) => {
-        return <Card key={sliceId} style={{marginTop: '0.5rem'}}>
+        return <Card key={sliceId} style={{marginTop: '0.5rem', borderColor: isDark ? 'white': ''}}>
             <Card.Body style={{padding:'0.5rem'}}>
                 <Row style={{display:'flex', justifyContent:'between'}}>
                     <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
@@ -113,15 +113,21 @@ export const MoorhenSliceNDiceModal = (props: {
         setBusy(false)
     }, [molecules, slicingResults])
 
-    const handleClose = useCallback(async () => {
+    const handleClose = useCallback(async (saveToMoorhen: boolean = false) => {
         if (slicingResults?.length > 0) {
-            await Promise.all(
-                slicingResults.sort((a, b) => { return  b.molNo - a.molNo }).map(sliceMolecule => sliceMolecule.delete(true))
-            )
-        }
-        const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
-        if (selectedMolecule) {
-            dispatch( showMolecule(selectedMolecule) )
+            if (saveToMoorhen) {
+                slicingResults.sort((a, b) => { return  b.molNo - a.molNo }).forEach(sliceMolecule => {
+                    dispatch( addMolecule(sliceMolecule) )
+                })
+            } else {
+                await Promise.all(
+                    slicingResults.sort((a, b) => { return  b.molNo - a.molNo }).map(sliceMolecule => sliceMolecule.delete(true))
+                )    
+                const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
+                if (selectedMolecule) {
+                    dispatch( showMolecule(selectedMolecule) )
+                }
+            }
         }
         props.setShow(false)
     }, [slicingResults, molecules])
@@ -134,7 +140,6 @@ export const MoorhenSliceNDiceModal = (props: {
                     commandArgs: [slicingResults.map(sliceMolecule => sliceMolecule.molNo).join(":")],
                     returnType: 'int'
                 }, false) as moorhen.WorkerResponse<number>
-                console.log(result)
                 if (result.data.result.result !== -1) {
                     const ensembleMolecule = new MoorhenMolecule(props.commandCentre, null, null)
                     ensembleMolecule.name = 'ensemble'
@@ -204,17 +209,22 @@ export const MoorhenSliceNDiceModal = (props: {
         </Row>
     </Stack>
 
-    const footerContent = <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
-        <SplitButton id='download-slice-n-dice' variant="primary" title="Download all" onClick={() => handleDownload()}>
-            <Dropdown.Item eventKey="1" onClick={() => handleDownload()}>As individual files</Dropdown.Item>
-            <Dropdown.Item eventKey="2" onClick={() => handleDownload(true)}>As an ensemble</Dropdown.Item>
-        </SplitButton>
-        <Button variant='primary' onClick={doSlice}>
-            Slice
-        </Button>
-        <Button variant='danger' onClick={handleClose}>
-            Close
-        </Button>
+    const footerContent = <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'space-between', alignContent: 'space-between', justifyContent: 'space-between', width: '100%' }}>
+        <Stack gap={2} direction='horizontal' style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
+            <SplitButton id='download-slice-n-dice' variant="primary" title="Download all" onClick={() => handleDownload()}>
+                <Dropdown.Item eventKey="1" onClick={() => handleDownload()}>As individual files</Dropdown.Item>
+                <Dropdown.Item eventKey="2" onClick={() => handleDownload(true)}>As an ensemble</Dropdown.Item>
+            </SplitButton>
+        </Stack>
+        <Stack gap={2} direction='horizontal' style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
+            <Button variant='primary' onClick={doSlice}>
+                Slice
+            </Button>
+            <SplitButton id='download-slice-n-dice' variant="info" title="Save & Exit" onClick={() => handleClose(true)}>
+            <Dropdown.Item eventKey="1" onClick={() => handleClose(true)}>Exit and save to Moorhen</Dropdown.Item>
+                <Dropdown.Item eventKey="2" onClick={() => handleClose()}>Exit without saving</Dropdown.Item>
+            </SplitButton>
+        </Stack>
     </Stack>
 
     const spinnerContent =  <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={busy}>
