@@ -25,6 +25,7 @@
 
 #include "kmeans.h"
 #include "agglomerative.h"
+#include "birch.h"
 #include "Eigen/Dense"
 
 #include <math.h>
@@ -248,6 +249,10 @@ class molecules_container_js : public molecules_container_t {
                     Agglomerative agglomerative(nclusters);
                     agglomerative.fit(atomic_matrix);
                     labels = agglomerative.labels_;
+                } else if (clustering_method == "birch") {
+                    Birch birch(nclusters);
+                    birch.fit(atomic_matrix);
+                    labels = birch.labels_;
                 } else {
                     std::cout << "Clustering method: " << clustering_method << " not yet implemented." << std::endl;
                 }

@@ -6,6 +6,7 @@ ${CMAKE_SOURCE_DIR}/checkout/slicendice_cpp/prog/extmath.cpp
 ${CMAKE_SOURCE_DIR}/checkout/slicendice_cpp/prog/dist_metrics.cpp
 ${CMAKE_SOURCE_DIR}/checkout/slicendice_cpp/prog/hierarchy.cpp
 ${CMAKE_SOURCE_DIR}/checkout/slicendice_cpp/prog/agglomerative.cpp
+${CMAKE_SOURCE_DIR}/checkout/slicendice_cpp/prog/birch.cpp
 ${CMAKE_SOURCE_DIR}/checkout/slicendice_cpp/prog/kmeans.cpp
 ${CMAKE_SOURCE_DIR}/checkout/slicendice_cpp/prog/kmeans_common.cpp
 ${CMAKE_SOURCE_DIR}/checkout/slicendice_cpp/prog/kmeans_elkan.cpp
@@ -19,6 +20,7 @@ ${CMAKE_SOURCE_DIR}/checkout/slicendice_cpp/prog/extmath.h
 ${CMAKE_SOURCE_DIR}/checkout/slicendice_cpp/prog/dist_metrics.h
 ${CMAKE_SOURCE_DIR}/checkout/slicendice_cpp/prog/hierarchy.h
 ${CMAKE_SOURCE_DIR}/checkout/slicendice_cpp/prog/agglomerative.h
+${CMAKE_SOURCE_DIR}/checkout/slicendice_cpp/prog/birch.h
 ${CMAKE_SOURCE_DIR}/checkout/slicendice_cpp/prog/kmeans.h
 ${CMAKE_SOURCE_DIR}/checkout/slicendice_cpp/prog/kmeans_common.h
 ${CMAKE_SOURCE_DIR}/checkout/slicendice_cpp/prog/kmeans_elkan.h
