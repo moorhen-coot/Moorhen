@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {Dispatch, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import { Button, Card, Stack } from "react-bootstrap";
 import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
 import { AddOutlined, CloseOutlined, RemoveOutlined, SquareFootOutlined } from "@mui/icons-material";
@@ -8,6 +8,186 @@ import { Resizable } from "re-resizable";
 import { setEnableAtomHovering } from "../../moorhen";
 import { focusOnModal, unFocusModal } from "../../store/activeModalsSlice";
 import { guid } from "../../utils/MoorhenUtils";
+import {AnyAction} from "@reduxjs/toolkit";
+import {createPortal} from "react-dom";
+
+function getContent(modalIdRef: React.MutableRefObject<string>, dispatch: (value: AnyAction) => void, focusHierarchy: string[], draggableNodeRef: React.MutableRefObject<HTMLDivElement | undefined>, props: {
+    headerTitle: string;
+    show: boolean;
+    setShow: React.Dispatch<React.SetStateAction<boolean>>;
+    body: JSX.Element | JSX.Element[];
+    modalId?: string;
+    enforceMaxBodyDimensions?: boolean;
+    resizeNodeRef?: React.RefObject<HTMLDivElement> | null;
+    defaultWidth?: number;
+    defaultHeight?: number;
+    maxWidth?: number;
+    maxHeight?: number;
+    minWidth?: number;
+    minHeight?: number;
+    top?: number;
+    left?: number;
+    additionalHeaderButtons?: JSX.Element[];
+    footer?: JSX.Element;
+    additionalChildren?: JSX.Element;
+    overflowY?: "visible" | "hidden" | "clip" | "scroll" | "auto";
+    overflowX?: "visible" | "hidden" | "clip" | "scroll" | "auto";
+    handleClassName?: string;
+    showCloseButton?: boolean;
+    lockAspectRatio?: boolean;
+    enableResize?: false | { [p: string]: boolean };
+    onResizeStop?: (evt: (MouseEvent | TouchEvent), direction: ("top" | "right" | "bottom" | "left" | "topRight" | "bottomRight" | "bottomLeft" | "topLeft"), ref: HTMLDivElement, delta: {
+        width: number;
+        height: number
+    }) => void
+}, opacity: number, currentZIndex: number, setOpacity: (value: (((prevState: number) => number) | number)) => void, transparentModalsOnMouseOut: boolean, setPopOut: (value: boolean) => void, popOut: boolean, setCollapse: (value: (((prevState: boolean) => boolean) | boolean)) => void, collapse: boolean, handleResizeStop: (evt: (MouseEvent | TouchEvent), direction: ("top" | "right" | "bottom" | "left" | "topRight" | "bottomRight" | "bottomLeft" | "topLeft"), ref: HTMLDivElement, delta: {
+    width: number;
+    height: number
+}) => void, handleStart: () => void, resizeNodeRef: React.MutableRefObject<HTMLDivElement | undefined>) {
+    return <Card
+        id={modalIdRef.current}
+        onClick={() => dispatch(focusOnModal(modalIdRef.current))}
+        className={`moorhen-draggable-card${focusHierarchy[0] === modalIdRef.current ? '-focused' : ''}`}
+        ref={draggableNodeRef}
+        style={{
+            display: props.show ? 'block' : 'none',
+            position: 'absolute',
+            opacity: opacity,
+            zIndex: currentZIndex
+        }}
+        onMouseOver={() => setOpacity(1.0)}
+        onMouseOut={() => {
+            if (transparentModalsOnMouseOut) setOpacity(0.5)
+        }}
+    >
+        <Card.Header className={props.handleClassName} style={{
+            minWidth: props.minWidth,
+            justifyContent: 'space-between',
+            display: 'flex',
+            cursor: 'move',
+            alignItems: 'center'
+        }}>
+            {props.headerTitle}
+            <Stack gap={2} direction="horizontal">
+                <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}}
+                        onClick={() => setPopOut(!popOut)}>
+                    pop
+                </Button>
+                {props.additionalHeaderButtons?.map(button => button)}
+                <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}}
+                        onClick={() => setCollapse(!collapse)}>
+                    {collapse ? <AddOutlined/> : <RemoveOutlined/>}
+                </Button>
+
+                {props.showCloseButton &&
+                    <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}}
+                            onClick={() => props.setShow(false)}>
+                        <CloseOutlined/>
+                    </Button>
+                }
+            </Stack>
+        </Card.Header>
+        <Card.Body style={{display: collapse ? 'none' : 'flex', justifyContent: 'center', flexDirection: 'column'}}>
+            <Resizable
+                maxWidth={props.maxWidth}
+                maxHeight={props.maxHeight}
+                minWidth={props.minWidth}
+                minHeight={props.minHeight}
+                bounds={'window'}
+                resizeRatio={1.3}
+                lockAspectRatio={props.lockAspectRatio}
+                enable={props.enableResize}
+                handleComponent={{
+                    bottomRight: props.enableResize ?
+                        <SquareFootOutlined style={{transform: 'rotate(270deg)'}}/> : <></>
+                }}
+                onResizeStop={handleResizeStop}
+                onResizeStart={handleStart}
+            >
+                <div ref={props.resizeNodeRef ? props.resizeNodeRef : resizeNodeRef}
+                     style={{
+                         overflowY: props.overflowY,
+                         overflowX: props.overflowX,
+                         height: '100%',
+                         width: '100%',
+                         display: 'block',
+                         alignItems: 'center',
+                         justifyContent: 'center'
+                     }}>
+                    {props.enforceMaxBodyDimensions ?
+                        <div style={props.enforceMaxBodyDimensions ? {
+                            maxHeight: props.maxHeight,
+                            maxWidth: props.maxWidth
+                        } : {}}>
+                            {props.body}
+                        </div>
+                        :
+                        props.body
+                    }
+                </div>
+            </Resizable>
+        </Card.Body>
+        {props.footer &&
+            <Card.Footer
+                style={{display: collapse ? 'none' : 'flex', alignItems: 'center', justifyContent: 'right'}}>
+                {props.footer}
+            </Card.Footer>
+        }
+        {props.additionalChildren}
+    </Card>;
+}
+
+function getDraggable(draggableNodeRef: React.MutableRefObject<HTMLDivElement | undefined>, props: {
+    headerTitle: string;
+    show: boolean;
+    setShow: React.Dispatch<React.SetStateAction<boolean>>;
+    body: JSX.Element | JSX.Element[];
+    modalId?: string;
+    enforceMaxBodyDimensions?: boolean;
+    resizeNodeRef?: React.RefObject<HTMLDivElement> | null;
+    defaultWidth?: number;
+    defaultHeight?: number;
+    maxWidth?: number;
+    maxHeight?: number;
+    minWidth?: number;
+    minHeight?: number;
+    top?: number;
+    left?: number;
+    additionalHeaderButtons?: JSX.Element[];
+    footer?: JSX.Element;
+    additionalChildren?: JSX.Element;
+    overflowY?: "visible" | "hidden" | "clip" | "scroll" | "auto";
+    overflowX?: "visible" | "hidden" | "clip" | "scroll" | "auto";
+    handleClassName?: string;
+    showCloseButton?: boolean;
+    lockAspectRatio?: boolean;
+    enableResize?: false | { [p: string]: boolean };
+    onResizeStop?: (evt: (MouseEvent | TouchEvent), direction: ("top" | "right" | "bottom" | "left" | "topRight" | "bottomRight" | "bottomLeft" | "topLeft"), ref: HTMLDivElement, delta: {
+        width: number;
+        height: number
+    }) => void
+}, position: {
+    x: number;
+    y: number
+}, handleDrag: (evt: DraggableEvent, data: DraggableData) => void, handleDragStop: () => void, handleStart: () => void, modalIdRef: React.MutableRefObject<string>, dispatch: Dispatch<AnyAction>, focusHierarchy: string[], opacity: number, currentZIndex: number, setOpacity: (value: (((prevState: number) => number) | number)) => void, transparentModalsOnMouseOut: boolean, setCollapse: (value: (((prevState: boolean) => boolean) | boolean)) => void, collapse: boolean, handleResizeStop: (evt: (MouseEvent | TouchEvent), direction: ("top" | "right" | "bottom" | "left" | "topRight" | "bottomRight" | "bottomLeft" | "topLeft"), ref: HTMLDivElement, delta: {
+    width: number;
+    height: number
+}
+) => void, popOut: boolean, setPopOut: Dispatch<boolean>, resizeNodeRef: React.MutableRefObject<HTMLDivElement | undefined>) {
+
+    return <Draggable
+        nodeRef={draggableNodeRef}
+        handle={`.${props.handleClassName}`}
+        position={position}
+        onDrag={handleDrag}
+        onStop={handleDragStop}
+        onStart={handleStart}
+    >
+        {getContent(modalIdRef, dispatch, focusHierarchy, draggableNodeRef, props, opacity, currentZIndex, setOpacity, transparentModalsOnMouseOut, setPopOut, popOut, setCollapse, collapse, handleResizeStop, handleStart, resizeNodeRef)}
+    </Draggable>;
+}
+
+
 
 /**
  * The base component used to create draggable modals.
@@ -62,6 +242,7 @@ import { guid } from "../../utils/MoorhenUtils";
  * }
  * 
  */
+
 export const MoorhenDraggableModalBase = (props: {
     headerTitle: string;
     show: boolean;
@@ -174,87 +355,93 @@ export const MoorhenDraggableModalBase = (props: {
         }
         props.onResizeStop(evt, direction, ref, delta)
     }
-        
-    return <Draggable
-                nodeRef={draggableNodeRef}
-                handle={`.${props.handleClassName}`}
-                position={position}
-                onDrag={handleDrag}
-                onStop={handleDragStop}
-                onStart={handleStart}
-                >
-            <Card
-                id={modalIdRef.current}
-                onClick={() => dispatch(focusOnModal(modalIdRef.current))}
-                className={`moorhen-draggable-card${focusHierarchy[0] === modalIdRef.current ? '-focused' : ''}`}
-                ref={draggableNodeRef}
-                style={{ display: props.show ? 'block' : 'none', position: 'absolute', opacity: opacity, zIndex: currentZIndex}}
-                onMouseOver={() => setOpacity(1.0)}
-                onMouseOut={() => {
-                    if(transparentModalsOnMouseOut) setOpacity(0.5)
-                }}
-            >
-                <Card.Header className={props.handleClassName} style={{ minWidth: props.minWidth, justifyContent: 'space-between', display: 'flex', cursor: 'move', alignItems:'center'}}>
-                    {props.headerTitle}
-                    <Stack gap={2} direction="horizontal">
-                        {props.additionalHeaderButtons?.map(button => button)}
-                        <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => setCollapse(!collapse)}>
-                            {collapse ? <AddOutlined/> : <RemoveOutlined/>}
-                        </Button>
-                        {props.showCloseButton &&
-                        <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => props.setShow(false)}>
-                            <CloseOutlined/>
-                        </Button>                    
-                        }
-                    </Stack>
-                </Card.Header>
-                <Card.Body style={{display: collapse ? 'none' : 'flex', justifyContent: 'center', flexDirection: 'column'}}>
-                    <Resizable
-                    maxWidth={props.maxWidth}
-                    maxHeight={props.maxHeight}
-                    minWidth={props.minWidth}
-                    minHeight={props.minHeight}
-                    bounds={'window'}
-                    resizeRatio={1.3}
-                    lockAspectRatio={props.lockAspectRatio}
-                    enable={props.enableResize}
-                    handleComponent={{bottomRight: props.enableResize ? <SquareFootOutlined style={{transform: 'rotate(270deg)'}}/> : <></>}}
-                    onResizeStop={handleResizeStop}
-                    onResizeStart={handleStart}
-                    >
-                    <div ref={props.resizeNodeRef ? props.resizeNodeRef : resizeNodeRef}
-                        style={{
-                            overflowY: props.overflowY,
-                            overflowX: props.overflowX,
-                            height: '100%',
-                            width: '100%',
-                            display: 'block',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                            }}>
-                        {props.enforceMaxBodyDimensions ? 
-                        <div style={props.enforceMaxBodyDimensions ? {maxHeight: props.maxHeight, maxWidth: props.maxWidth} : {}}>
-                            {props.body}
-                        </div>
-                        : 
-                        props.body
-                        }
-                    </div>
-                    </Resizable>
-                </Card.Body>
-                {props.footer && 
-                <Card.Footer style={{display: collapse ? 'none' : 'flex', alignItems: 'center', justifyContent: 'right'}}>
-                    {props.footer}
-                </Card.Footer>
-                }
-                {props.additionalChildren}
-            </Card>
-        </Draggable>
-}
 
-MoorhenDraggableModalBase.defaultProps = { 
-    showCloseButton: true, handleClassName: 'handle', additionalHeaderButtons:null, additionalChildren: null, 
-    enableResize: { top: false, right: true, bottom: true, left: false, topRight: false, bottomRight: true, bottomLeft: true, topLeft: false },
-    top: 500, left: 500, overflowY: 'auto', overflowX: 'hidden', lockAspectRatio: false, maxHeight: 100, maxWidth: 100, modalId: null,
-    minHeight: 100, minWidth: 100, deafultWidth: 100, defaultHeight: 100, onResizeStop: () => {}, resizeNodeRef: null, enforceMaxBodyDimensions: true,
+    const [popOut, setPopOut] = useState<boolean>(false)
+
+    const newWindow = useRef(null);
+    const [ready, setReady] = useState(false);
+    useEffect(() => {
+        if (popOut) {
+            // Create window
+            newWindow.current = window.open(
+                "",
+                "_target",
+                `width=800,height=200,left=220,top=220`
+            );
+            // Append container
+            const currentWindow = newWindow.current;
+
+            copyStyles(document, newWindow.current?.document)
+            currentWindow.onbeforeunload = () => {
+                setPopOut(false);
+            }
+
+            const curWindow = newWindow.current;
+            setReady(true)
+            return () => curWindow.close();
+        } else {
+            newWindow.current?.close()
+        }
+    }, [popOut]);
+
+    // Taken from https://david-gilbertson.medium.com/using-a-react-16-portal-to-do-something-cool-2a2d627b0202
+    function copyStyles(sourceDoc, targetDoc) {
+        Array.from(sourceDoc.styleSheets).forEach((styleSheet: CSSStyleSheet) => {
+            if (styleSheet.cssRules) { // for <style> elements
+                const newStyleEl = sourceDoc.createElement('style');
+
+                Array.from(styleSheet.cssRules).forEach(cssRule => {
+                    newStyleEl.appendChild(sourceDoc.createTextNode(cssRule.cssText));
+                });
+
+                targetDoc.head.appendChild(newStyleEl);
+            } else {
+                if (styleSheet.href) {
+                    const newLinkEl = sourceDoc.createElement('link');
+
+                    newLinkEl.rel = 'stylesheet';
+                    newLinkEl.href = styleSheet.href;
+                    targetDoc.head.appendChild(newLinkEl);
+                }
+            }
+        });
+    }
+    return <>
+        {ready && popOut ? createPortal(
+                getContent(modalIdRef, dispatch, focusHierarchy, draggableNodeRef, props, opacity, currentZIndex, setOpacity, transparentModalsOnMouseOut, setPopOut, popOut, setCollapse, collapse, handleResizeStop, handleStart, resizeNodeRef)
+                , newWindow.current?.document.body) :
+            getDraggable(draggableNodeRef, props, position, handleDrag, handleDragStop, handleStart, modalIdRef, dispatch, focusHierarchy, opacity, currentZIndex, setOpacity, transparentModalsOnMouseOut, setCollapse, collapse, handleResizeStop, popOut, setPopOut, resizeNodeRef)
+        } </>
+}
+MoorhenDraggableModalBase.defaultProps = {
+    showCloseButton: true,
+    handleClassName: 'handle',
+    additionalHeaderButtons: null,
+    additionalChildren: null,
+    enableResize: {
+        top: false,
+        right: true,
+        bottom: true,
+        left: false,
+        topRight: false,
+        bottomRight: true,
+        bottomLeft: true,
+        topLeft: false
+    },
+    top: 500,
+    left: 500,
+    overflowY: 'auto',
+    overflowX: 'hidden',
+    lockAspectRatio: false,
+    maxHeight: 100,
+    maxWidth: 100,
+    modalId: null,
+    minHeight: 100,
+    minWidth: 100,
+    deafultWidth: 100,
+    defaultHeight: 100,
+    onResizeStop: () => {
+    },
+    resizeNodeRef: null,
+    enforceMaxBodyDimensions: true,
 }
