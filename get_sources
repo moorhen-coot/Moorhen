@@ -129,7 +129,7 @@ cd checkout
 curl -L https://github.com/boostorg/boost/releases/download/boost-$boost_release/boost-$boost_release.tar.gz  -o boost_$boost_release.tar.gz
 tar xf boost_$boost_release.tar.gz
 cd ..
-ln -s checkout/boost_$boost_release boost
+ln -s checkout/boost-$boost_release boost
 echo
 patch -p0 < patches/boost-emscripten.patch
 patch -p0 < patches/boost-cxx-17.patch
