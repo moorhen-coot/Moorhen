@@ -152,30 +152,31 @@ ${coot_src}/MoleculesToTriangles/CXXClasses/VertexColorNormalPrimitive.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/lfit.c
 ${coot_src}/api/instancing.cc
 ${coot_src}/api/rigid-body-fit.cc
-${coot_src}/api/molecules_container_bucca_ml_growing.cc
-${coot_src}/api/molecules_container_mmrrcc.cc
-${coot_src}/api/molecules_container_superpose.cc
-${coot_src}/api/coot_molecule_validation.cc
-${coot_src}/api/molecules_container_modelling.cc
+${coot_src}/api/molecules-container-bucca-ml-growing.cc
+${coot_src}/api/molecules-container-mmrrcc.cc
+${coot_src}/api/molecules-container-superpose.cc
+${coot_src}/api/coot-molecule-validation.cc
+${coot_src}/api/molecules-container-modelling.cc
 ${coot_src}/api/add-terminal-residue.cc
 ${coot_src}/api/interfaces.cc
 ${coot_src}/api/colour-functions.cc
 ${coot_src}/api/coot-colour.cc
-${coot_src}/api/coot_molecule.cc
-${coot_src}/api/coot_molecule_backup.cc
-${coot_src}/api/coot_molecule_bonds.cc
-${coot_src}/api/coot_molecule_bonds_instanced.cc
-${coot_src}/api/coot_molecule_maps.cc
+${coot_src}/api/coot-molecule.cc
+${coot_src}/api/coot-molecule-backup.cc
+${coot_src}/api/coot-molecule-bonds.cc
+${coot_src}/api/coot-molecule-bonds-instanced.cc
+${coot_src}/api/coot-molecule-maps.cc
+${coot_src}/api/coot-molecule-moltris.cc
+${coot_src}/api/coot-molecule-merge-molecules.cc
+${coot_src}/api/coot-molecule-refine.cc
+${coot_src}/api/coot-molecule-replace-fragment.cc
 ${coot_src}/api/moorhen-h-bonds.cc
-${coot_src}/api/coot_molecule_moltris.cc
 ${coot_src}/api/phi-psi-prob.cc
-${coot_src}/api/molecules_container_ligand_fitting.cc
-${coot_src}/api/coot_molecule_merge_molecules.cc
-${coot_src}/api/coot_molecule_refine.cc
-${coot_src}/api/coot_molecule_replace_fragment.cc
 ${coot_src}/api/add-terminal-residue.cc
-${coot_src}/api/molecules_container.cc
+${coot_src}/api/molecules-container-ligand-fitting.cc
+${coot_src}/api/molecules-container.cc
 ${coot_src}/api/rama-plot-phi-psi.cc
+${coot_src}/api/coot-molecule-change-chain-id.cc
 ${coot_src}/analysis/daca.cc
 ${coot_src}/analysis/kolmogorov.cc
 ${coot_src}/analysis/stats.cc
@@ -518,12 +519,12 @@ FILE(COPY ${CMAKE_INSTALL_PREFIX}/share/RDKit/Data/BaseFeatures.fdef DESTINATION
 add_executable(moorhen moorhen-wrappers.cc gemmi-wrappers.cc smilestopdb.cc)
 target_link_options(moorhen PRIVATE -sDEMANGLE_SUPPORT=1 -sASSERTIONS=2 -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 target_link_directories(moorhen PUBLIC ../ssm ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../clipper/gemmi ../fftw ../rfftw ../ccp4 ../lib ../install/lib ../privateer)
-target_link_libraries(moorhen ssm mmdb2 clipper-minimol clipper-phs clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 clipper-gemmi fftw rfftw ccp4  coot gsl gslcblas RDKitMolDraw2D RDKitForceFieldHelpers RDKitDescriptors RDKitForceField RDKitSubstructMatch RDKitOptimizer RDKitDistGeomHelpers RDKitDistGeometry RDKitChemReactions RDKitAlignment RDKitEigenSolvers RDKitDepictor RDKitcoordgen RDKitMolChemicalFeatures RDKitPartialCharges RDKitFileParsers RDKitRDGeometryLib RDKitGraphMol RDKitShapeHelpers RDKitFingerprints RDKitMolAlign RDKitMolTransforms RDKitChemTransforms RDKitSmilesParse RDKitFilterCatalog RDKitCatalogs RDKitSubgraphs RDKitRDGeneral RDKitDataStructs RDKitGenericGroups boost_thread boost_serialization gemmi_cpp privateer freetype m z idbfs.js)
-target_include_directories(moorhen PRIVATE ${coot_src} ${coot_src}/ccp4mg-utils ${coot_src}/src ../checkout/boost_1_80_0 ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../include ../checkout/gemmi/include ../checkout/privateer-wasm/src/privateer/cpp ../checkout/privateer-wasm/src/privateer/cpp/pybind11 ../checkout/privateer-wasm/src/privateer/cpp/third-party/simdjson )
+target_link_libraries(moorhen ssm mmdb2 clipper-minimol clipper-phs clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 clipper-gemmi fftw rfftw ccp4  coot gsl gslcblas RDKitMolDraw2D RDKitForceFieldHelpers RDKitDescriptors RDKitForceField RDKitSubstructMatch RDKitOptimizer RDKitDistGeomHelpers RDKitDistGeometry RDKitChemReactions RDKitAlignment RDKitEigenSolvers RDKitDepictor RDKitcoordgen RDKitMolChemicalFeatures RDKitPartialCharges RDKitFileParsers RDKitRDGeometryLib RDKitGraphMol RDKitShapeHelpers RDKitFingerprints RDKitMolAlign RDKitMolTransforms RDKitChemTransforms RDKitSmilesParse RDKitFilterCatalog RDKitCatalogs RDKitSubgraphs RDKitRDGeneral RDKitDataStructs RDKitGenericGroups boost_thread boost_serialization gemmi_cpp privateer freetype slicendice_cpp m z idbfs.js)
+target_include_directories(moorhen PRIVATE ${coot_src} ${coot_src}/ccp4mg-utils ${coot_src}/src ../checkout/boost_1_80_0 ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../include ../checkout/gemmi/include ../checkout/privateer-wasm/src/privateer/cpp ../checkout/privateer-wasm/src/privateer/cpp/pybind11 ../checkout/privateer-wasm/src/privateer/cpp/third-party/simdjson ../checkout/slicendice_cpp/prog/ ../checkout/rdkit-Release_2023_09_1/External/Eigen/eigen/ )
 target_compile_options(moorhen PUBLIC -DGEMMI_WRITE_IMPLEMENTATION -Wno-deprecated-builtins -Wno-deprecated-declarations -fexceptions -sUSE_PTHREADS=1 -pthread -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
 
 #[[
-add_executable(test-molecules-container ${coot_src}/api/test_molecules_container.cc)
+add_executable(test-molecules-container ${coot_src}/api/test-molecules-container.cc)
 target_link_options(test-molecules-container PRIVATE -sEXIT_RUNTIME=1 -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
 target_link_directories(test-molecules-container PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
 target_link_libraries(test-molecules-container mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl gslcblas RDKitMolDraw2D RDKitForceFieldHelpers RDKitDescriptors RDKitForceField RDKitSubstructMatch RDKitOptimizer RDKitDistGeomHelpers RDKitDistGeometry RDKitChemReactions RDKitAlignment RDKitEigenSolvers RDKitDepictor RDKitcoordgen RDKitMolChemicalFeatures RDKitPartialCharges RDKitFileParsers RDKitRDGeometryLib RDKitGraphMol RDKitShapeHelpers RDKitFingerprints RDKitMolAlign RDKitMolTransforms RDKitChemTransforms RDKitSmilesParse RDKitFilterCatalog RDKitCatalogs RDKitSubgraphs RDKitRDGeneral RDKitDataStructs RDKitGenericGroups boost_thread boost_serialization gemmi_cpp freetype m z nodefs.js)

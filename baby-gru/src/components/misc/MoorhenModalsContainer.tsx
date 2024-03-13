@@ -19,10 +19,9 @@ import { MoorhenSceneSettingsModal } from '../modal/MoorhenSceneSettingsModal'
 import { useDispatch, useSelector } from 'react-redux';
 import { moorhen } from '../../types/moorhen';
 import { 
-    setShowCarbohydrateValidationModal,
     setShowControlsModal, setShowCreateAcedrgLinkModal, setShowDiffMapPeaksModal, setShowFillPartialResValidationModal, setShowFitLigandModal, setShowLigandValidationModal, setShowMapsModal, 
     setShowMmrrccModal, setShowModelsModal, setShowPepFlipsValidationModal, setShowQuerySequenceModal, setShowRamaPlotModal, setShowSceneSettingsModal, setShowScriptingModal, 
-    setShowUnmodelledBlobsModal, setShowValidationPlotModal, setShowWaterValidationModal 
+    setShowUnmodelledBlobsModal, setShowValidationPlotModal, setShowWaterValidationModal, setShowCarbohydrateValidationModal
 } from '../../store/activeModalsSlice';
 
 export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
@@ -143,7 +142,7 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
                 show={showCarbohydrateValidationModal}
                 setShow={(newVal: boolean) => dispatch(setShowCarbohydrateValidationModal(newVal))}
                 {...props} />
-            }
+        }
 
         {showPepFlipsValidationModal &&
             <MoorhenPepFlipsModal

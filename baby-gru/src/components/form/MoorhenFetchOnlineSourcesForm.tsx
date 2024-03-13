@@ -60,12 +60,18 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
         }
     }
 
-    const fetchMapFromEMDB = () => {
+    const fetchMapFromEMDB = async () => {
         const emdbCode = pdbCodeFetchInputRef.current.value.toLowerCase()
         if (emdbCode) {
             const mapUrl = `https://ftp.ebi.ac.uk/pub/databases/emdb/structures/EMD-${emdbCode}/map/emd_${emdbCode}.map.gz`
-            fetchMapFromURL(mapUrl, `${emdbCode}.map.gz`, false)
-                .then(newMap => newMap.centreOnMap())
+            const mapInfoResponse = await fetch(`https://www.ebi.ac.uk/emdb/api/entry/map/${emdbCode}`)
+            let level: number
+            if (mapInfoResponse.ok) {
+                const data = await mapInfoResponse.json()
+                level = data.map.contour_list.contour.find(item => item.primary)?.level as number
+            }
+            const newMap = await fetchMapFromURL(mapUrl, `${emdbCode}.map.gz`, false, level)
+            newMap.centreOnMap()
         } else {
             console.log('Error: no EMDB entry provided')
         }
@@ -153,11 +159,22 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
         }
     }
 
-    const fetchMapFromURL = async (url: RequestInfo | URL, mapName: string, isDiffMap: boolean = false): Promise<moorhen.Map> => {
+    const fetchMapFromURL = async (url: RequestInfo | URL, mapName: string, isDiffMap: boolean = false, contourLevel?: number): Promise<moorhen.Map> => {
         const newMap = new MoorhenMap(commandCentre, glRef)
         try {
-            await newMap.loadToCootFromMapURL(url, mapName, isDiffMap)
+            try {
+                await newMap.loadToCootFromMapURL(url, mapName, isDiffMap)
+            } catch (err) {
+                // Try again if this is a compressed file...
+                if (url.toString().includes('.gz')) {
+                    await newMap.loadToCootFromMapURL(url, mapName.replace('.gz', ''), isDiffMap, true)
+                } else {
+                    console.warn(err)
+                    throw new Error("Cannot read the fetched map...")
+                }
+            }
             if (newMap.molNo === -1) throw new Error("Cannot read the fetched map...")
+            if (contourLevel) newMap.suggestedContourLevel = contourLevel
             batch(() => {
                 dispatch(addMap(newMap))
                 dispatch(setActiveMap(newMap))
@@ -189,7 +206,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
     }
 
     return <Form.Group className='moorhen-form-group' controlId="fetch-pdbe-form">
-        <Form.Label>Fetch coords from online services</Form.Label>
+        <Form.Label>Fetch from online services</Form.Label>
         <InputGroup>
             <SplitButton title={remoteSource} id="fetch-coords-online-source-select">
                 {props.sources.map(source => {

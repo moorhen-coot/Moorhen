@@ -15,7 +15,7 @@ export const MoorhenGoToMenuItem = (props: {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const cidRef = useRef<null | HTMLInputElement>(null)
     const [cid, setCid] = useState<string>("")
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const panelContent = <>
         <MoorhenMoleculeSelect ref={moleculeSelectRef} molecules={molecules} width='20rem'/>

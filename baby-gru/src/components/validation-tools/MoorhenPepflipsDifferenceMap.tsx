@@ -5,7 +5,7 @@ import { MoorhenSlider } from '../misc/MoorhenSlider'
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
-import { triggerScoresUpdate } from "../../store/connectedMapsSlice";
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { MoorhenResidueSteps } from '../misc/MoorhenResidueSteps';
 import { setNotificationContent } from '../../store/generalStatesSlice';
 import { cidToSpec, sleep } from '../../utils/MoorhenUtils';
@@ -25,7 +25,7 @@ export const MoorhenPepflipsDifferenceMap = (props: Props) => {
     
     const dispatch = useDispatch()
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const filterMapFunction = (map: moorhen.Map) => map.isDifference
 
@@ -48,7 +48,7 @@ export const MoorhenPepflipsDifferenceMap = (props: Props) => {
 
         selectedMolecule.setAtomsDirty(true)
         await selectedMolecule.redraw()
-        dispatch( triggerScoresUpdate(selectedMolecule.molNo) )
+        dispatch( triggerUpdate(selectedMolecule.molNo) )
     }
 
     const handleFlip = (...args: [moorhen.Molecule, string, number, string]) => {

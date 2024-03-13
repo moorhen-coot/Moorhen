@@ -5,10 +5,10 @@ import { IconButton } from "@mui/material"
 import { useDispatch, useSelector } from "react-redux"
 import { moorhen } from "../../types/moorhen"
 import { useCallback, useEffect, useRef } from "react"
-import { cidToSpec } from '../../utils/MoorhenUtils';
+import { cidToSpec, getAtomInfoLabel } from '../../utils/MoorhenUtils';
 import { webGL } from "../../types/mgWebGL"
 import { setIsDraggingAtoms } from "../../store/generalStatesSlice"
-import { triggerScoresUpdate } from "../../store/connectedMapsSlice"
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
 
 export const MoorhenAcceptRejectDragAtoms = (props: {
     onExit: () => void;
@@ -37,9 +37,9 @@ export const MoorhenAcceptRejectDragAtoms = (props: {
             setTimeout(() => finishDragging(acceptTransform), 100)
             return
         }
-        props.moleculeRef.current.mergeFragmentFromRefinement(props.cidRef.current.join('||'), moltenFragmentRef.current, acceptTransform, false)
+        await props.moleculeRef.current.mergeFragmentFromRefinement(props.cidRef.current.join('||'), moltenFragmentRef.current, acceptTransform, false)
         if (acceptTransform) {
-            dispatch( triggerScoresUpdate(props.moleculeRef.current.molNo) )
+            dispatch( triggerUpdate(props.moleculeRef.current.molNo) )
         }
         dispatch( setIsDraggingAtoms(false) )
     }
@@ -48,7 +48,7 @@ export const MoorhenAcceptRejectDragAtoms = (props: {
         draggingDirty.current = true
         if (!busy.current) {
             moltenFragmentRef.current.clearBuffersOfStyle('hover')
-            await handleAtomDragged(evt.detail.atom.atom.label)
+            await handleAtomDragged(evt)
         }
     }, [moltenFragmentRef])
 
@@ -60,7 +60,8 @@ export const MoorhenAcceptRejectDragAtoms = (props: {
         moltenFragmentRef.current.displayObjectsTransformation.quat = null
     }, [moltenFragmentRef])
 
-    const handleAtomDragged = async (atomCid: string) => {
+    const handleAtomDragged = async (evt: moorhen.AtomDraggedEvent) => {
+        const atomCid = getAtomInfoLabel(evt.detail.atom)
         if (draggingDirty.current && atomCid) {
             busy.current = true
             refinementDirty.current = true
@@ -80,7 +81,7 @@ export const MoorhenAcceptRejectDragAtoms = (props: {
             }, false)
             await moltenFragmentRef.current.drawWithStyleFromMesh('CBs', [result.data.result.result])
             busy.current = false
-            handleAtomDragged(atomCid)
+            handleAtomDragged(evt)
         }
     }
 

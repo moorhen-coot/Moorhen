@@ -8,7 +8,7 @@ import { moorhen } from "../../types/moorhen"
 import iris_module from "iris-validation-backend"
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect"
 import { gemmi } from "../../types/gemmi";
-import { setHoveredAtom } from "../../moorhen"
+import { setHoveredAtom } from "../../store/hoveringStatesSlice"
 
 export const MoorhenIrisValidation = (props: {
     sideBarWidth: number;
@@ -24,7 +24,7 @@ export const MoorhenIrisValidation = (props: {
     const newCootCommandAlert = useSelector((state: moorhen.State) => state.generalStates.newCootCommandAlert)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const maps = useSelector((state: moorhen.State) => state.maps)
 
     const [plotDimensions, setPlotDimensions] = useState<number>(230)

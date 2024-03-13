@@ -17,7 +17,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
 }) => {
 
     const dispatch = useDispatch()
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
 
     const tlcRef = useRef<HTMLInputElement>()

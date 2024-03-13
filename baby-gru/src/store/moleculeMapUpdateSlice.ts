@@ -1,8 +1,8 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { moorhen } from '../types/moorhen'
 
-export const connectedMapsSlice = createSlice({
-  name: 'connectedMapsSlice',
+export const moleculeMapUpdateSlice = createSlice({
+  name: 'moleculeMapUpdateSlice',
   initialState: {
     updatingMapsIsEnabled: false,
     connectedMolecule: null,
@@ -12,15 +12,15 @@ export const connectedMapsSlice = createSlice({
     uniqueMaps: [],
     defaultUpdatingScores: null,
     showScoresToast: null,
-    scoresUpdate: { toggle: false, molNo: null },
+    moleculeUpdate: { switch: false, molNo: null },
   },
   reducers: {
-    triggerScoresUpdate: (state, action: {payload: number, type: string}) => {
+    triggerUpdate: (state, action: {payload: number, type: string}) => {
         return {
             ...state, 
-            scoresUpdate: {
+            moleculeUpdate: {
                 molNo: action.payload,
-                toggle: !state.scoresUpdate.toggle
+                switch: !state.moleculeUpdate.switch
             }
         }
     },  
@@ -102,7 +102,7 @@ export const {
     setConnectedMolecule, enableUpdatingMaps, disableUpdatingMaps, setReflectionMap,
     setFoFcMap, setTwoFoFcMap, setReflectionMapMolNo, overwriteMapUpdatingScores,
     setConnectedMoleculeMolNo, setFoFcMapMolNo, setTwoFoFcMapMolNo, removeMapUpdatingScore,
-    setShowScoresToast, addMapUpdatingScore, triggerScoresUpdate
-} = connectedMapsSlice.actions
+    setShowScoresToast, addMapUpdatingScore, triggerUpdate
+} = moleculeMapUpdateSlice.actions
 
-export default connectedMapsSlice.reducer
+export default moleculeMapUpdateSlice.reducer

@@ -50,7 +50,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         this.modificationCount = 0
         this.modificationCountBackupThreshold = 5
         this.maxBackupCount = 10
-        this.version = 'v18'
+        this.version = 'v20'
         this.disableBackups = false
         this.storageInstance = null
         this.onIsBusyChange = null
@@ -210,7 +210,8 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                     style: item.style,
                     isCustom: item.isCustom,
                     colourRules: item.useDefaultColourRules ? null : item.colourRules,
-                    bondOptions: item.useDefaultBondOptions ? null : item.bondOptions
+                    bondOptions: item.useDefaultBondOptions ? null : item.bondOptions,
+                    applyColoursToNonCarbonAtoms: item.applyColourToNonCarbonAtoms,
                 }}),
                 defaultColourRules: molecule.defaultColourRules,
                 defaultBondOptions: molecule.defaultBondOptions,
@@ -250,6 +251,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             diffuseLight: this.glRef.current.light_colours_diffuse,
             lightPosition: this.glRef.current.light_positions,
             specularLight: this.glRef.current.light_colours_specular,
+            specularPower: this.glRef.current.specularPower,
             fogStart: this.glRef.current.gl_fog_start,
             fogEnd: this.glRef.current.gl_fog_end,
             zoom: this.glRef.current.zoom,
@@ -257,6 +259,24 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             clipStart: (this.glRef.current.gl_clipPlane0[3] + this.glRef.current.fogClipOffset) * -1,
             clipEnd: this.glRef.current.gl_clipPlane1[3] - this.glRef.current.fogClipOffset,
             quat4: this.glRef.current.myQuat,
+            edgeDetection: {
+                enabled: this.glRef.current.doEdgeDetect,
+                depthScale: this.glRef.current.scaleDepth,
+                depthThreshold: this.glRef.current.depthThreshold,
+                normalScale: this.glRef.current.scaleNormal,
+                normalThreshold: this.glRef.current.normalThreshold
+            },
+            shadows: this.glRef.current.doShadow,
+            ssao: {
+                enabled: this.glRef.current.doSSAO,
+                radius: this.glRef.current.ssaoRadius,
+                bias: this.glRef.current.ssaoBias
+            },
+            blur: {
+                enabled: this.glRef.current.useOffScreenBuffers,
+                radius: this.glRef.current.blurSize,
+                depth: this.glRef.current.blurDepth
+            }
         }
 
         const session: moorhen.backupSession = {
@@ -264,7 +284,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             moleculeData: moleculeData,
             mapData: mapData,
             viewData: viewData,
-            activeMapIndex: this.mapsRef.current.findIndex(map => map.molNo === this.activeMapRef.current.molNo),
+            activeMapIndex: this.mapsRef.current.findIndex(map => map.molNo === this.activeMapRef.current?.molNo),
             version: this.version
         }
 

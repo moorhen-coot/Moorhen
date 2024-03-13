@@ -92,8 +92,9 @@ export const {
   setShowQuerySequenceModal, setShowScriptingModal, setShowControlsModal,
   focusOnModal, unFocusModal, setShowFitLigandModal, setShowRamaPlotModal, 
   setShowLigandValidationModal, setShowPepFlipsValidationModal, setShowMmrrccModal,
-  setShowWaterValidationModal, setShowValidationPlotModal, setShowCarbohydrateValidationModal, setShowUnmodelledBlobsModal,
-  setShowDiffMapPeaksModal, setShowFillPartialResValidationModal, setShowSceneSettingsModal
+  setShowWaterValidationModal, setShowValidationPlotModal, setShowCarbohydrateValidationModal, 
+  setShowUnmodelledBlobsModal, setShowDiffMapPeaksModal, setShowFillPartialResValidationModal, 
+  setShowSceneSettingsModal
 } = activeModalsSlice.actions
 
 export default activeModalsSlice.reducer

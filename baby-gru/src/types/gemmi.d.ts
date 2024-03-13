@@ -3,8 +3,8 @@ import { emscriptem } from "./emscriptem"
 export namespace gemmi {
     interface NeighborSearch extends emscriptem.instance<NeighborSearch> {
         populate: (arg0: boolean) => void;
-        find_atoms: (arg0: Position, arg1: string, arg2: number) => emscriptem.vector<Mark>;
-        find_neighbors: (arg0: Atom, arg1: number, ag2: number) =>  emscriptem.vector<Mark>;
+        //find_atoms: (arg0: Position, arg1: string, arg2: number) => emscriptem.vector<Mark>;
+        //find_neighbors: (arg0: Atom, arg1: number, ag2: number) =>  emscriptem.vector<Mark>;
     }
     interface Mark extends emscriptem.instance<Mark> {
         x: number;
@@ -106,9 +106,34 @@ export namespace gemmi {
         orthogonalize: (arg0: emscriptem.instance<Fractional>) => Position;
         set: (a: number, b: number, c: number, alpha: number, beta: number, gamma: number) => void
     }
+    interface Mat33 extends emscriptem.instance<Mat33> {
+        as_array: () => number[];
+    }
+    interface Vec3 extends emscriptem.instance<Vec3> {
+        x: number;
+        y: number;
+        z: number;
+    }
+    interface Transform extends emscriptem.instance<Transform> {
+        mat: Mat33;
+        vec: Vec3;
+    }
+    interface Operator extends emscriptem.instance<Operator> {
+        transform: Transform;
+    }
+    interface Gen extends emscriptem.instance<Gen> {
+        chains: emscriptem.vector<string>;
+        subchains: emscriptem.vector<string>;
+        operators: emscriptem.vector<Operator>;
+    }
+    interface Assembly extends emscriptem.instance<Assembly> {
+        name: string;
+        generators: emscriptem.vector<Gen>;
+    }
     interface Structure extends emscriptem.instance<Structure> {
         models: emscriptem.vector<Model>;
         cell: UnitCell;
+        assemblies: emscriptem.vector<Assembly>;
         first_model: () => Model;
         remove_empty_chains: () => void;
     }

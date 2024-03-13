@@ -16,7 +16,7 @@ interface MoorhenWebMGPropsInterface {
     viewOnly: boolean;
     urlPrefix: string;
     extraDraggableModals: JSX.Element[];
-    onAtomHovered: (identifier: { buffer: { id: string; }; atom: { label: string; }; }) => void;
+    onAtomHovered: (identifier: { buffer: { id: string; }; atom: moorhen.AtomInfo; }) => void;
     onKeyPress: (event: KeyboardEvent) =>  boolean | Promise<boolean>;
     videoRecorderRef: React.MutableRefObject<null | moorhen.ScreenRecorder>;
 }
@@ -43,7 +43,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const [showContextMenu, setShowContextMenu] = useState<false | moorhen.AtomRightClickEventInfo>(false)
     const [defaultActionButtonSettings, setDefaultActionButtonSettings] = useReducer(actionButtonSettingsReducer, intialDefaultActionButtonSettings)
 
-    const visibleMolecules = useSelector((state: moorhen.State) => state.moleculeRepresentations.visibleMolecules)
+    const visibleMolecules = useSelector((state: moorhen.State) => state.molecules.visibleMolecules)
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
     const isChangingRotamers = useSelector((state: moorhen.State) => state.generalStates.isChangingRotamers)
     const isDraggingAtoms = useSelector((state: moorhen.State) => state.generalStates.isDraggingAtoms)
@@ -57,6 +57,11 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const drawAxes = useSelector((state: moorhen.State) => state.sceneSettings.drawAxes)
     const drawInteractions = useSelector((state: moorhen.State) => state.sceneSettings.drawInteractions)
     const doSSAO = useSelector((state: moorhen.State) => state.sceneSettings.doSSAO)
+    const doEdgeDetect = useSelector((state: moorhen.State) => state.sceneSettings.doEdgeDetect)
+    const edgeDetectDepthThreshold = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectDepthThreshold)
+    const edgeDetectNormalThreshold = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectNormalThreshold)
+    const edgeDetectDepthScale = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectDepthScale)
+    const edgeDetectNormalScale = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectNormalScale)
     const ssaoRadius = useSelector((state: moorhen.State) => state.sceneSettings.ssaoRadius)
     const ssaoBias = useSelector((state: moorhen.State) => state.sceneSettings.ssaoBias)
     const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging)
@@ -65,7 +70,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers)
     const doShadowDepthDebug = useSelector((state: moorhen.State) => state.sceneSettings.doShadowDepthDebug)
     const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
-    const doSpinTest = useSelector((state: moorhen.State) => state.sceneSettings.doSpinTest)
+    const doSpin = useSelector((state: moorhen.State) => state.sceneSettings.doSpin)
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline)
     const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius)
     const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth)
@@ -79,7 +84,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
@@ -120,7 +125,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 return
             }
 
-            hoveredAtom.molecule.centreOn(`/*/${residueSpec.chain_id}/${residueSpec.res_no}-${residueSpec.res_no}/*`)
+            hoveredAtom.molecule.centreOn(`/*/${residueSpec.chain_id}/${residueSpec.res_no}-${residueSpec.res_no}/*`, true, false)
         }
     }, [hoveredAtom])
 
@@ -217,6 +222,41 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setEdgeDetectOn(doEdgeDetect)
+            glRef.current.drawScene()
+        }
+    }, [doEdgeDetect])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setEdgeDetectDepthThreshold(edgeDetectDepthThreshold)
+            glRef.current.drawScene()
+        }
+    }, [edgeDetectDepthThreshold])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setEdgeDetectNormalThreshold(edgeDetectNormalThreshold)
+            glRef.current.drawScene()
+        }
+    }, [edgeDetectNormalThreshold])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setEdgeDetectDepthScale(edgeDetectDepthScale)
+            glRef.current.drawScene()
+        }
+    }, [edgeDetectDepthScale])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setEdgeDetectNormalScale(edgeDetectNormalScale)
+            glRef.current.drawScene()
+        }
+    }, [edgeDetectNormalScale])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
             glRef.current.setShadowsOn(doShadow)
             glRef.current.drawScene()
         }
@@ -224,10 +264,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setSpinTestState(doSpinTest)
+            glRef.current.setSpinTestState(doSpin)
             glRef.current.drawScene()
         }
-    }, [doSpinTest])
+    }, [doSpin])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {

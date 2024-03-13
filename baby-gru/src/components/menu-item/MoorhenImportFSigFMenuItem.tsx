@@ -6,7 +6,7 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { batch, useDispatch, useSelector } from 'react-redux';
 import { setContourLevel } from "../../store/mapContourSettingsSlice"
-import { enableUpdatingMaps, setConnectedMoleculeMolNo, setFoFcMapMolNo, setReflectionMapMolNo, setTwoFoFcMapMolNo } from "../../store/connectedMapsSlice"
+import { enableUpdatingMaps, setConnectedMoleculeMolNo, setFoFcMapMolNo, setReflectionMapMolNo, setTwoFoFcMapMolNo } from "../../store/moleculeMapUpdateSlice"
 
 export const MoorhenImportFSigFMenuItem = (props:{
     selectedMolNo?: number;
@@ -20,9 +20,9 @@ export const MoorhenImportFSigFMenuItem = (props:{
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     
     const dispatch = useDispatch()
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const maps = useSelector((state: moorhen.State) => state.maps)
-    const connectedMoleculeMolNo = useSelector((state: moorhen.State) => state.connectedMaps.connectedMolecule)
+    const connectedMoleculeMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.connectedMolecule)
 
     const connectMap = async () => {
         const [molecule, reflectionMap, twoFoFcMap, foFcMap] = [

@@ -8,25 +8,44 @@ import { moorhen } from "../types/moorhen";
 import { gemmi } from "../types/gemmi";
 import { webGL } from "../types/mgWebGL";
 import { AnyAction, Dispatch } from "@reduxjs/toolkit";
-import { addMolecule, emptyMolecules } from "../store/moleculesSlice";
+import { addCustomRepresentation, addMolecule, emptyMolecules } from "../store/moleculesSlice";
 import { addMap, emptyMaps } from "../store/mapsSlice";
 import { batch } from "react-redux";
 import { setActiveMap } from "../store/generalStatesSlice";
 import { setContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle, setNegativeMapColours, setPositiveMapColours } from "../store/mapContourSettingsSlice";
-import { enableUpdatingMaps, setConnectedMoleculeMolNo, setFoFcMapMolNo, setReflectionMapMolNo, setTwoFoFcMapMolNo } from "../store/connectedMapsSlice";
+import { enableUpdatingMaps, setConnectedMoleculeMolNo, setFoFcMapMolNo, setReflectionMapMolNo, setTwoFoFcMapMolNo } from "../store/moleculeMapUpdateSlice";
 import { libcootApi } from "../types/libcoot";
+import { 
+    setBackgroundColor, setDepthBlurDepth, setDepthBlurRadius, setDoEdgeDetect, setDoSSAO, setDoShadow, 
+    setEdgeDetectDepthScale, setEdgeDetectDepthThreshold, setEdgeDetectNormalScale, setEdgeDetectNormalThreshold, setSsaoBias, setSsaoRadius, setUseOffScreenBuffers 
+} from "../store/sceneSettingsSlice";
+
+export const getAtomInfoLabel = (atomInfo: moorhen.AtomInfo) => {
+    return `/${atomInfo.mol_name}/${atomInfo.chain_id}/${atomInfo.res_no}(${atomInfo.res_name})/${atomInfo.name}${atomInfo.has_altloc ? `:${atomInfo.alt_loc}` : ""}`
+}
+
+export const getCentreAtom = async (molecules: moorhen.Molecule[], commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>): Promise<[moorhen.Molecule, string]> => {
+    const visibleMolecules: moorhen.Molecule[] = molecules.filter((molecule: moorhen.Molecule) => molecule.isVisible())
+    if (visibleMolecules.length === 0) {
+        return [null, null]
+    }
+    const response = await commandCentre.current.cootCommand({
+        returnType: "int_string_pair",
+        command: "get_active_atom",
+        commandArgs: [...glRef.current.origin.map(coord => coord * -1), visibleMolecules.map(molecule => molecule.molNo).join(':')]
+    }, false) as moorhen.WorkerResponse<libcootApi.PairType<number, string>>
+    const moleculeMolNo: number = response.data.result.result.first
+    const residueCid: string = response.data.result.result.second
+    const selectedMolecule = visibleMolecules.find((molecule: moorhen.Molecule) => molecule.molNo === moleculeMolNo)
+    return [selectedMolecule, residueCid]
+}
 
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-export const getLigandSVG = async (commandCentre: React.RefObject<moorhen.CommandCentre>, imol: number, compId: string, isDark: boolean): Promise<string> => {
-    const result = await commandCentre.current.cootCommand({
-        returnType: "string",
-        command: 'get_svg_for_residue_type',
-        commandArgs: [imol, compId, false, isDark],
-    }, false) as moorhen.WorkerResponse<string>
+export const formatLigandSVG = (svg: string): string => {
     
     const parser = new DOMParser()
-    let theText = result.data.result.result
+    let theText = svg
     let doc = parser.parseFromString(theText, "image/svg+xml")
     let xmin = 999
     let ymin = 999
@@ -263,7 +282,8 @@ export async function loadSessionData(
         molecule.defaultColourRules = storedMoleculeData.defaultColourRules
         molecule.defaultBondOptions = storedMoleculeData.defaultBondOptions
         for (const item of storedMoleculeData.representations) {
-            await molecule.addRepresentation(item.style, item.cid, item.isCustom, item.colourRules, item.bondOptions)
+            const representation = await molecule.addRepresentation(item.style, item.cid, item.isCustom, item.colourRules, item.bondOptions, item.applyColoursToNonCarbonAtoms)
+            dispatch( addCustomRepresentation(representation) )
         }
     }
     
@@ -330,9 +350,25 @@ export async function loadSessionData(
     glRef.current.set_fog_range(sessionData.viewData.fogStart, sessionData.viewData.fogEnd, false)
     glRef.current.set_clip_range(sessionData.viewData.clipStart, sessionData.viewData.clipEnd, false)
     glRef.current.doDrawClickedAtomLines = sessionData.viewData.doDrawClickedAtomLines
-    glRef.current.background_colour = sessionData.viewData.backgroundColor
     glRef.current.setOrigin(sessionData.viewData.origin, false)
     glRef.current.setQuat(sessionData.viewData.quat4)
+    glRef.current.specularPower = sessionData.viewData.specularPower
+    batch(() => {
+        dispatch(setBackgroundColor(sessionData.viewData.backgroundColor))
+        dispatch(setEdgeDetectDepthScale(sessionData.viewData.edgeDetection.depthScale))
+        dispatch(setEdgeDetectDepthThreshold(sessionData.viewData.edgeDetection.depthThreshold))
+        dispatch(setEdgeDetectNormalScale(sessionData.viewData.edgeDetection.normalScale))
+        dispatch(setEdgeDetectNormalThreshold(sessionData.viewData.edgeDetection.normalThreshold))
+        dispatch(setDoEdgeDetect(sessionData.viewData.edgeDetection.enabled))
+        dispatch(setDoShadow(sessionData.viewData.shadows))
+        dispatch(setDoSSAO(sessionData.viewData.ssao.enabled))
+        dispatch(setSsaoBias(sessionData.viewData.ssao.bias))
+        dispatch(setSsaoRadius(sessionData.viewData.ssao.radius))
+        dispatch(setUseOffScreenBuffers(sessionData.viewData.blur.enabled))
+        dispatch(setDepthBlurDepth(sessionData.viewData.blur.depth))
+        dispatch(setDepthBlurRadius(sessionData.viewData.blur.radius))
+        dispatch(setUseOffScreenBuffers(sessionData.viewData.blur.enabled))
+    })
 
     // Set connected maps and molecules if any
     const connectedMoleculeIndex = sessionData.moleculeData.findIndex(molecule => molecule.connectedToMaps !== null)
@@ -377,21 +413,22 @@ export function convertViewtoPx(input: number, height: number): number {
 }
 
 export const representationLabelMapping = {
-    rama: "Rama.",
-    rotamer: "Rota.",
+    rama: "Rama. Balls",
+    rotamer: "Rota. Dodec.",
     CBs: "Bonds",
-    CAs: "C-As",
+    CAs: "C-Alpha",
     CRs: "Ribbons",
     CDs: "Cont. dots",
-    MolecularSurface: "Surf.",
-    gaussian: "Gauss.",
+    MolecularSurface: "VdW Surf.",
+    gaussian: "Gauss. Surf.",
     ligands: "Ligands",
     DishyBases: "Bases",
     VdwSpheres: "Spheres",
     allHBonds: "H-Bonds",
-    glycoBlocks: "GlycoBlocks",
+    glycoBlocks: "Glyco-Blocks",
     restraints: "Restraints",
-    MetaBalls: "MetaBalls"
+    MetaBalls: "MetaBalls",
+    adaptativeBonds: "Adapt. Bonds",
 }
 
 export const residueCodesOneToThree = {
@@ -602,6 +639,22 @@ export const centreOnGemmiAtoms = (atoms: moorhen.AtomInfo[]): [number, number, 
     return [-xtot / atomCount, -ytot / atomCount, -ztot / atomCount]
 }
 
+export const atomInfoToResSpec = (atom: moorhen.AtomInfo) => {
+    return { 
+        mol_no: atom.mol_name,
+        chain_id: atom.chain_id,
+        res_no: parseInt(atom.res_no), 
+        res_name: atom.res_name,
+        atom_name: atom.name,
+        // FIXME: Atom info does not contain a ins_code field ?? Or is it atom.serial ?
+        ins_code: "",
+        alt_conf: atom.alt_loc,
+        cid: getAtomInfoLabel(atom),
+        // FIXME: Atom info does not contain a model name. This is probably not a problem...
+        mol_name: "",
+    }
+}
+
 export const cidToSpec = (cid: string): moorhen.ResidueSpec => {
     //molNo, chain_id, res_no, ins_code, alt_conf
     const ResNameRegExp = /\(([^)]+)\)/;
@@ -615,6 +668,27 @@ export const cidToSpec = (cid: string): moorhen.ResidueSpec => {
     const atom_name = cidTokens.length > 4 ? cidTokens[4].split(":")[0] : ""
     const alt_conf = atom_name && cidTokens[4].split(":").length > 1 ? cidTokens[4].split(":")[1] : ""
     return { mol_name, mol_no, chain_id, res_no, res_name, atom_name, ins_code, alt_conf, cid }
+}
+
+
+export const cidToAtomInfo = (cid: string): moorhen.AtomInfo => {
+    const resSpec = cidToSpec(cid)
+    return {
+        x: null,
+        y: null,
+        z: null,
+        charge: null,
+        element: null,
+        tempFactor: null,
+        serial: null,
+        name: resSpec.atom_name,
+        has_altloc: resSpec.alt_conf !== "",
+        alt_loc: resSpec.alt_conf,
+        mol_name: resSpec.mol_no,
+        chain_id: resSpec.chain_id,
+        res_no: resSpec.res_no.toString(),
+        res_name: resSpec.res_name,
+    }
 }
 
 type ResidueInfoType = {
@@ -898,7 +972,7 @@ export const getDashedCylinder = (nsteps: number, cylinder_accu: number): [numbe
 }
 
 export const gemmiAtomPairsToCylindersInfo = (
-    atoms: [{ pos: [number, number, number], serial: (number | string) }, { pos: [number, number, number], serial: (number | string) }][],
+    atoms: [{ x: number, y: number, z: number, serial: (number | string) }, { x: number, y: number, z: number, serial: (number | string) }][],
     size: number,
     colourScheme: { [x: string]: number[]; },
     labelled: boolean = false,
@@ -940,8 +1014,8 @@ export const gemmiAtomPairsToCylindersInfo = (
         let ab = vec3.create()
         let midpoint = vec3.create()
 
-        vec3.set(ab, at0.pos[0] - at1.pos[0], at0.pos[1] - at1.pos[1], at0.pos[2] - at1.pos[2])
-        vec3.set(midpoint, 0.5 * (at0.pos[0] + at1.pos[0]), 0.5 * (at0.pos[1] + at1.pos[1]), 0.5 * (at0.pos[2] + at1.pos[2]))
+        vec3.set(ab, at0.x - at1.x, at0.y - at1.y, at0.z - at1.z)
+        vec3.set(midpoint, 0.5 * (at0.x + at1.x), 0.5 * (at0.y + at1.y), 0.5 * (at0.z + at1.z))
         const l = vec3.length(ab)
 
         totTextLabels.push(l.toFixed(2))
@@ -955,13 +1029,17 @@ export const gemmiAtomPairsToCylindersInfo = (
             thisInstance_colours.push(colourScheme[`${at0.serial}`][ip])
             totTextPrimCol.push(colourScheme[`${at0.serial}`][ip])
         }
-        thisInstance_origins.push(...at0.pos)
+        thisInstance_origins.push(at0.x, at0.y, at0.z)
         thisInstance_sizes.push(...[size, size, l])
         let v = vec3.create()
         let au = vec3.create()
         let a = vec3.create()
         let b = vec3.create()
-        let aup = at0.pos.map((v, i) => v - at1.pos[i])
+        const aup = [
+            at0.x - at1.x,
+            at0.y - at1.y,
+            at0.z - at1.z
+        ]
         vec3.set(au, ...aup)
         vec3.normalize(a, au)
         vec3.set(b, 0.0, 0.0, -1.0)
@@ -1058,22 +1136,14 @@ export const gemmiAtomsToCirclesSpheresInfo = (atoms: moorhen.AtomInfo[], size: 
 
     for (let iat = 0; iat < atoms.length; iat++) {
         sphere_idx_tri.push(iat);
-        sphere_vert_tri.push(atoms[iat].pos[0]);
-        sphere_vert_tri.push(atoms[iat].pos[1]);
-        sphere_vert_tri.push(atoms[iat].pos[2]);
+        sphere_vert_tri.push(atoms[iat].x);
+        sphere_vert_tri.push(atoms[iat].y);
+        sphere_vert_tri.push(atoms[iat].z);
         for (let ip = 0; ip < colourScheme[`${atoms[iat].serial}`].length; ip++) {
             sphere_col_tri.push(colourScheme[`${atoms[iat].serial}`][ip])
         }
         sphere_sizes.push(size);
-        let atom = {};
-        atom["x"] = atoms[iat].pos[0];
-        atom["y"] = atoms[iat].pos[1];
-        atom["z"] = atoms[iat].pos[2];
-        atom["tempFactor"] = atoms[iat].tempFactor;
-        atom["charge"] = atoms[iat].charge;
-        atom["symbol"] = atoms[iat].element;
-        atom["label"] = ""
-        sphere_atoms.push(atom);
+        sphere_atoms.push(atoms[iat]);
         if (primType === "PERFECT_SPHERES") {
             totInstanceUseColours.push(true);
             totInstance_orientations.push(...[
@@ -1134,7 +1204,7 @@ export const findConsecutiveRanges = (numbers: number[]): [number, number][] => 
     return ranges;
 }
 
-export function getCubeLines(unitCell: gemmi.UnitCell): [{ pos: [number, number, number], serial: string }, { pos: [number, number, number], serial: string }][] {
+export function getCubeLines(unitCell: gemmi.UnitCell): [{ x: number, y: number, z: number, serial: string }, { x: number, y: number, z: number, serial: string }][] {
 
     const orthogonalize = (x: number, y: number, z: number) => {
         const fractPosition = new window.CCP4Module.Fractional(x, y, z)
@@ -1171,15 +1241,23 @@ export function getCubeLines(unitCell: gemmi.UnitCell): [{ pos: [number, number,
         [3, 7]
     ];
 
-    const lines: [{ pos: [number, number, number], serial: string }, { pos: [number, number, number], serial: string }][] = [];
+    const lines: [{ x: number, y: number, z: number, serial: string }, { x: number, y: number, z: number, serial: string }][] = [];
     edges.forEach(edge => {
         const [v1Index, v2Index] = edge
+        
+        const [v1_x, v1_y, v1_z] = orthogonalize(...vertices[v1Index])
         const v1 = {
-            pos: orthogonalize(...vertices[v1Index]),
+            x: v1_x,
+            y: v1_y,
+            z: v1_z,
             serial: 'unit_cell'
         };
+        
+        const [v2_x, v2_y, v2_z] = orthogonalize(...vertices[v2Index])
         const v2 = {
-            pos: orthogonalize(...vertices[v2Index]),
+            x: v2_x,
+            y: v2_y,
+            z: v2_z,
             serial: 'unit_cell'
         };
         lines.push([v1, v2]);
@@ -1202,3 +1280,105 @@ export const copyStructureSelection = (gemmiStructure: gemmi.Structure, cidSelec
     return newStruct
 }
 
+export const railSpecies = [
+    'African Swamphen',
+    'Allens Gallinule',
+    'American Coot',
+    'Andean Coot',
+    'Australasian Swamphen',
+    'Azure Gallinule',
+    'Baillons Crake',
+    'Band-bellied Crake',
+    'Black Crake',
+    'Black Rail',
+    'Black-backed Moorhen',
+    'Black-backed Swamphen',
+    'Black-tailed Nativehen',
+    'Black-tailed Waterhen',
+    'Blackish Crake',
+    'Blackish Rail',
+    'Brown Crake',
+    'Brown Swamphen',
+    'Caribbean Coot',
+    'Chatham Swamphen',
+    'Chestnut Gallinule',
+    'Chestnut-headed Crake',
+    'Chiriqui Crake',
+    'Common Gallinule',
+    'Common Moorhen',
+    'Common Waterhen',
+    'Congo Moorhen',
+    'Cuban Gallinule',
+    'Egret',
+    'Dusky Moorhen',
+    'Eared Rail',
+    'Eurasian Coot',
+    'Eurasian Moorhen',
+    'Fiji Rail',
+    'Forest Crake',
+    'Giant Coot',
+    'Gough Moorhen',
+    'Guam Rail',
+    'Gray-headed Swamphen',
+    'Great-crested Grebe',
+    'Green-backed Gallinule',
+    'Grey-headed Swamphen',
+    'Hawaiian Gallinule',
+    'Hawaiian Moorhen',
+    'Henderson Crake',
+    'Horned Coot',
+    'King Rail',
+    'Kosrae Crake',
+    'Laysan Rail',
+    'Least Moorhen',
+    'Lesser Moorhen',
+    'Little Crake',
+    'Lord Howe Swamphen',
+    'Makira Moorhen',
+    'Makira Woodhen',
+    'Maori Hen',
+    'Mauritian Moorhen',
+    'Micronesian Moorhen',
+    'Moluccan Swamphen',
+    'New Britain Swamphen',
+    'North Island Takahe',
+    'Pacific Swamphen',
+    'Paint-billed Crake',
+    'Palau Swamphen',
+    'Papuan Swamphen',
+    'Purple Gallinule',
+    'Purple Swamphen',
+    'Red Rail',
+    'Red-fronted Coot',
+    'Red-gartered Coot',
+    'Red-knobbed Coot',
+    'Red-legged Crake',
+    'Reunion Ibis',
+    'Roviana Rail',
+    'Samoa Swamphen',
+    'Samoan Moorhen',
+    'Samoan Woodhen',
+    'Slaty-breasted Rail',
+    'Slaty-legged crake',
+    'Sora',
+    'Speckled Gallinule',
+    'Spot-flanked gallinule',
+    'Spotless Crake',
+    'Tahiti Swamphen',
+    'Takahe',
+    'Talaud Rail',
+    'Tasmanian Nativehen',
+    'Tongan Moorhen',
+    'Tristan Moorhen',
+    'Triton Moorhen',
+    'Vanuatu Swamphen',
+    'Watercock',
+    'Weka',
+    'Western Swamphen',
+    'White Gallinule',
+    'White-breasted Waterhen',
+    'White-browed Crake',
+    'White-winged Coot',
+    'Yellow Rail',
+    'Yellow-breasted Crake'
+]

@@ -24,9 +24,23 @@ jobs:
       working-directory: /home/runner/work/Moorhen/       
       run: |    
         echo "export const version = 0.1" > /home/runner/work/Moorhen/Moorhen/baby-gru/src/version.js
-    - name: npm install
+    - name: Restore cache node16 modules
+      id: cache-node16-modules-load
+      uses: actions/cache@v4
+      with:
+        path: /home/runner/work/Moorhen/Moorhen/baby-gru/node_modules
+        key: node16-modules-cache
+    - name: Install npm modules
       working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
+      if: steps.cache-node16-modules-load.outputs.cache-hit != 'true'
       run: npm install
+    - name: Save node modules cache
+      id: cache-node16-modules-save
+      if: steps.cache-node16-modules-load.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with: 
+        path: /home/runner/work/Moorhen/Moorhen/baby-gru/node_modules
+        key: node16-modules-cache
     - name: tsc compile
       working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
       run: |             

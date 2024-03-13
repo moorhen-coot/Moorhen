@@ -4,6 +4,7 @@ import { MoorhenMapSelect } from '../select/MoorhenMapSelect'
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
+import { LinearProgress } from "@mui/material";
 
 export const MoorhenValidationListWidgetBase = (props: {
     filterMapFunction?: (arg0: moorhen.Map) => boolean;
@@ -25,10 +26,12 @@ export const MoorhenValidationListWidgetBase = (props: {
     const [selectedMap, setSelectedMap] = useState<null | number>(null)
     const [cardData, setCardData] = useState<any[]>([])
     const [cardList, setCardList] = useState<JSX.Element[]>([])
+    const [busy, setBusy] = useState<boolean>(false)
 
-    const newCootCommandAlert = useSelector((state: moorhen.State) => state.generalStates.newCootCommandAlert)
+    const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo)
+    const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const maps = useSelector((state: moorhen.State) => state.maps)
 
     const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
@@ -63,19 +66,26 @@ export const MoorhenValidationListWidgetBase = (props: {
 
     }, [maps.length])
 
-    useEffect(() => {
-        async function fetchData() {
-            if (selectedModel === null || (props.enableMapSelect && selectedMap === null)) {
-                setCardData(null)
-            } else {
-                let newData = await props.fetchData(selectedModel, selectedMap)
-                setCardData(newData)
-            }            
-        }        
-    
-        fetchData()   
+    async function fetchData() {
+        setBusy(true)
+        if (selectedModel === null || (props.enableMapSelect && selectedMap === null)) {
+            setCardData(null)
+        } else {
+            let newData = await props.fetchData(selectedModel, selectedMap)
+            setCardData(newData)
+        }
+        setBusy(false)      
+    }        
 
-    }, [selectedMap, selectedModel, newCootCommandAlert, props.extraControlFormValue])
+    useEffect(() => {
+        fetchData()
+    }, [selectedMap, selectedModel, props.extraControlFormValue])
+
+    useEffect(() => {
+        if (selectedModel !== null  && selectedModel === updateMolNo) {
+            fetchData()
+        }
+    }, [updateSwitch])
 
     useEffect(() => {
         if (selectedModel === null || (props.enableMapSelect && selectedMap === null) || cardData === null || props.dropdownId !== props.accordionDropdownId || !props.showSideBar) {
@@ -100,10 +110,14 @@ export const MoorhenValidationListWidgetBase = (props: {
                             }
                             {props.extraControlForm}
                         </Row>
-                    </Form.Group>
-                </Form>
+                    </Form.Group>                
+                </Form>                
+                {busy && 
+                <div style={{display: 'flex', justifyContent: 'center', padding: '0.5rem'}}>
+                    <LinearProgress style={{width: '95%'}} variant="indeterminate"/>    
+                </div>}
                 <div style={{overflowY: 'auto', height:'100%', paddingTop:'0.5rem', paddingLeft:'0.25rem', paddingRight:'0.25rem'}} >
-                    {cardList.length > 0 ? cardList : <b>Nothing to show here...</b>}
+                    {cardList.length > 0 ? cardList : busy ? null : <b>Nothing to show here...</b>}
                 </div>
             </Fragment>
 }

@@ -14,7 +14,7 @@ export const MoorhenAddRemoveHydrogenAtomsMenuItem = (props: {
 }) => {
     
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const handleClick = useCallback(async (cootCommand: string) => {
         if (moleculeSelectRef.current !== null && moleculeSelectRef.current.value) {
@@ -49,7 +49,7 @@ export const MoorhenAddRemoveHydrogenAtomsMenuItem = (props: {
         id='add-hydrogens-menu-item'
         popoverPlacement={props.popoverPlacement}
         popoverContent={panelContent}
-        menuItemText="Add/Remove hydrogen atoms"
+        menuItemText="Add/Remove hydrogen atoms..."
         setPopoverIsShown={props.setPopoverIsShown}
         showOkButton={false}
     />

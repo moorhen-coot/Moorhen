@@ -4,7 +4,8 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useSelector } from "react-redux";
 import { MoorhenCarbohydrateCard } from "../card/MoorhenCarbohydrateCard";
-import {privateer} from "../../types/privateer";
+import { privateer } from "../../types/privateer";
+import { LinearProgress } from "@mui/material";
 
 export const MoorhenCarbohydrateList = (props: {
     setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -14,37 +15,42 @@ export const MoorhenCarbohydrateList = (props: {
     height?: number | string;
 }) => {
 
-    const newCootCommandAlert = useSelector((state: moorhen.State) => state.generalStates.newCootCommandAlert)
+    const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo)
+    const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch)
+    const showModelsModal = useSelector((state: moorhen.State) => state.activeModals.showModelsModal)
+    
     const [carbohydrateList, setCarbohydrateList] = useState<privateer.ResultsEntry[] | null>(null)
 
     const validate = async () => {
-        if (props.molecule) {
-            props.setBusy(true)
-            const privateerResult = await props.commandCentre.current.cootCommand({
-                command: 'privateer_validate',
-                commandArgs: [props.molecule.molNo],
-                returnType: 'privateer_results'
-            }, false)
-
-            const privateerData: privateer.ResultsEntry[] = privateerResult.data.result.result;
-            setCarbohydrateList(privateerData)
-            props.setBusy(false)
-        }
+        props.setBusy(true)
+        const result = await props.molecule.getPrivateerValidation(true)
+        setCarbohydrateList(result)
+        props.setBusy(false)
     }
+   
+    useEffect(() => {
+        if (props.molecule?.molNo === updateMolNo && showModelsModal) {
+            validate()
+        }
+    }, [updateSwitch])
 
     useEffect(() => {
-        validate()
-    }, [newCootCommandAlert])
+        if (showModelsModal) {
+            validate()
+        } else {
+            setCarbohydrateList(null)
+        }
+    }, [showModelsModal])
 
     return <>
             {carbohydrateList === null ?
-            null
+                <LinearProgress variant="indeterminate"/>
             : carbohydrateList.length > 0 ?
                 <>
                     <Row style={{ maxHeight: props.height, overflowY: 'auto' }}>
                         <Col style={{paddingLeft: '0.5rem', paddingRight: '0.5rem'}}>
                             {carbohydrateList.map((carbohydrate, index) => {
-                                return <MoorhenCarbohydrateCard key={`${carbohydrate.id}`} carbohydrate={carbohydrate} molecule={props.molecule}/>
+                                return <MoorhenCarbohydrateCard key={carbohydrate.id} carbohydrate={carbohydrate} molecule={props.molecule}/>
                             })}
                         </Col>
                     </Row>

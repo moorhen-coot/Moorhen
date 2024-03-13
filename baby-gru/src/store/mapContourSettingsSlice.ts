@@ -42,6 +42,11 @@ export const mapContourSettingsSlice = createSlice({
       state = { ...state, mapStyles: [ ...state.mapStyles.filter(item => item.molNo !== action.payload.molNo), action.payload ] }
       return state
     },
+    changeContourLevel: (state, action: {payload: { molNo: number; factor: number }, type: string}) => {
+      const map = state.contourLevels.find(item => item.molNo === action.payload.molNo)
+      state = { ...state, contourLevels: [ ...state.contourLevels.filter(item => item.molNo !== action.payload.molNo), { molNo: action.payload.molNo, contourLevel: map.contourLevel + action.payload.factor } ] }
+      return state
+    },
     changeMapRadius: (state, action: {payload: { molNo: number; factor: number }, type: string}) => {
       const map = state.mapRadii.find(item => item.molNo === action.payload.molNo)
       state = { ...state, mapRadii: [ ...state.mapRadii.filter(item => item.molNo !== action.payload.molNo), { molNo: action.payload.molNo, radius: map.radius + action.payload.factor } ] }
@@ -77,7 +82,7 @@ export const mapContourSettingsSlice = createSlice({
 export const {
   showMap, hideMap, setContourLevel, setMapRadius, setMapAlpha, setMapStyle, changeMapRadius,
   setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, setDefaultMapSurface,
-  setMapColours, setNegativeMapColours, setPositiveMapColours
+  setMapColours, setNegativeMapColours, setPositiveMapColours, changeContourLevel
 } = mapContourSettingsSlice.actions
 
 export default mapContourSettingsSlice.reducer

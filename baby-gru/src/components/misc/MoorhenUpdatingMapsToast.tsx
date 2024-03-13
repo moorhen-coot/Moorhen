@@ -4,7 +4,7 @@ import { convertViewtoPx } from '../../utils/MoorhenUtils';
 import { useDispatch, useSelector } from 'react-redux';
 import { moorhen } from '../../types/moorhen';
 import { webGL } from '../../types/mgWebGL';
-import { disableUpdatingMaps, triggerScoresUpdate } from '../../store/connectedMapsSlice';
+import { disableUpdatingMaps, triggerUpdate } from '../../store/moleculeMapUpdateSlice';
 
 export const MoorhenUpdatingMapsToast = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -16,23 +16,23 @@ export const MoorhenUpdatingMapsToast = (props: {
     const [scoresToastContents, setScoreToastContents] = useState<null | JSX.Element>(null)
 
     const dispatch = useDispatch()
-    const scoresUpdateMolNo = useSelector((state: moorhen.State) => state.connectedMaps.scoresUpdate.molNo)
-    const toggleScoresUpdate = useSelector((state: moorhen.State) => state.connectedMaps.scoresUpdate.toggle)
-    const updatingMapsIsEnabled = useSelector((state: moorhen.State) => state.connectedMaps.updatingMapsIsEnabled)
-    const reflectionMap = useSelector((state: moorhen.State) => state.connectedMaps.reflectionMap)
-    const foFcMap = useSelector((state: moorhen.State) => state.connectedMaps.foFcMap)
-    const twoFoFcMap = useSelector((state: moorhen.State) => state.connectedMaps.twoFoFcMap)
-    const uniqueMaps = useSelector((state: moorhen.State) => state.connectedMaps.uniqueMaps)
-    const connectedMoleculeMolNo = useSelector((state: moorhen.State) => state.connectedMaps.connectedMolecule)
+    const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo)
+    const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch)
+    const updatingMapsIsEnabled = useSelector((state: moorhen.State) => state.moleculeMapUpdate.updatingMapsIsEnabled)
+    const reflectionMap = useSelector((state: moorhen.State) => state.moleculeMapUpdate.reflectionMap)
+    const foFcMap = useSelector((state: moorhen.State) => state.moleculeMapUpdate.foFcMap)
+    const twoFoFcMap = useSelector((state: moorhen.State) => state.moleculeMapUpdate.twoFoFcMap)
+    const uniqueMaps = useSelector((state: moorhen.State) => state.moleculeMapUpdate.uniqueMaps)
+    const connectedMoleculeMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.connectedMolecule)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
-    const defaultUpdatingScores = useSelector((state: moorhen.State) => state.connectedMaps.defaultUpdatingScores)
-    const showScoresToast = useSelector((state: moorhen.State) => state.connectedMaps.showScoresToast)
+    const defaultUpdatingScores = useSelector((state: moorhen.State) => state.moleculeMapUpdate.defaultUpdatingScores)
+    const showScoresToast = useSelector((state: moorhen.State) => state.moleculeMapUpdate.showScoresToast)
     const maps = useSelector((state: moorhen.State) => state.maps)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     useEffect(() => {
         const handleScoresUpdate = async () => {
-            if (scoresUpdateMolNo !== null && connectedMoleculeMolNo === scoresUpdateMolNo && props.glRef !== null && typeof props.glRef !== 'function') {
+            if (updateMolNo !== null && connectedMoleculeMolNo === updateMolNo && props.glRef !== null && typeof props.glRef !== 'function') {
                 
                 await Promise.all(
                     maps.filter(map => uniqueMaps.includes(map.molNo)).map(map => {
@@ -105,7 +105,7 @@ export const MoorhenUpdatingMapsToast = (props: {
             } 
         }
         handleScoresUpdate()
-    }, [toggleScoresUpdate])
+    }, [updateSwitch])
     
     useEffect(() => {
         const handleConnectMaps = async () => {

@@ -4,7 +4,7 @@ import { Button, FormLabel, FormSelect, Stack } from "react-bootstrap"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from "react-redux";
-import { triggerScoresUpdate } from "../../store/connectedMapsSlice";
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 
 const MoorhenPopoverOptions = (props: {
@@ -25,7 +25,7 @@ const MoorhenPopoverOptions = (props: {
     const selectRef = useRef<HTMLSelectElement | null>(null)
     const extraInputRef = useRef(null)
     
-    const handleRightClick = useCallback((e) => {
+    const handleRightClick = useCallback((e: moorhen.AtomRightClickEvent) => {
         if (props.showContextMenu) {
             props.setShowOverlay(false)
         }
@@ -100,7 +100,7 @@ export const MoorhenContextButtonBase = (props: {
 }) => {
     
     const dispatch = useDispatch()
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
@@ -119,7 +119,7 @@ export const MoorhenContextButtonBase = (props: {
         if (props.refineAfterMod && enableRefineAfterMod && activeMap) {
             try {
                 if (animateRefine) {
-                    props.selectedMolecule.refineResiduesUsingAtomCidAnimated(`//${props.chosenAtom.chain_id}/${props.chosenAtom.res_no}`, activeMap, 3, true, false)
+                    await props.selectedMolecule.refineResiduesUsingAtomCidAnimated(`//${props.chosenAtom.chain_id}/${props.chosenAtom.res_no}`, activeMap, 3, true, false)
                 } else {
                     await props.selectedMolecule.refineResiduesUsingAtomCid(`//${props.chosenAtom.chain_id}/${props.chosenAtom.res_no}`, 'TRIPLE', 4000, true)
                 }
@@ -132,7 +132,7 @@ export const MoorhenContextButtonBase = (props: {
             await props.selectedMolecule.redraw()
         }
         
-        dispatch( triggerScoresUpdate(props.selectedMolecule.molNo) )
+        dispatch( triggerUpdate(props.selectedMolecule.molNo) )
         props.selectedMolecule.clearBuffersOfStyle('hover')
       
         if(props.onExit) {

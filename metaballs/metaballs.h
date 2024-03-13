@@ -1,7 +1,12 @@
 #include <array>
 #include <vector>
-#include "MC.h"
+
+typedef struct moorhenMesh : public MC::mcMesh {
+	public:
+		std::vector<std::array<float,4>> colors;
+} moorhenMesh;
+
 
 namespace MoorhenMetaBalls {
-    MC::mcMesh GenerateMeshFromPoints(const std::vector<std::array<float,4>> &points, float isoLevel, float gridSize);
+    moorhenMesh GenerateMeshFromPoints(const std::vector<std::pair<std::array<float,4>,std::array<float,4>>> &points, float isoLevel, float gridSize);
 }

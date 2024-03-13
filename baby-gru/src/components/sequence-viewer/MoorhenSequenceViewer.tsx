@@ -8,7 +8,7 @@ import { webGL } from "../../types/mgWebGL";
 import { clickedResidueType } from '../card/MoorhenMoleculeCard';
 import { useSelector, useDispatch } from 'react-redux';
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
-import { cidToSpec } from "../../utils/MoorhenUtils";
+import { cidToAtomInfo, cidToSpec } from "../../utils/MoorhenUtils";
 
 !window.customElements.get('protvista-navigation') && window.customElements.define("protvista-navigation", ProtvistaNavigation);
 !window.customElements.get('protvista-sequence') && window.customElements.define("protvista-sequence", ProtvistaSequence);
@@ -74,6 +74,8 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
     });
     
     const dispatch = useDispatch()
+    const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo)
+    const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch)
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
 
@@ -220,7 +222,7 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                 } else if (shiftKey.current && props.useMainStateResidueSelections) {
                     let atomClicked: moorhen.AtomClickedEvent = new CustomEvent("atomClicked", {
                         "detail": {
-                            atom: {label: residue.cid},
+                            atom: cidToAtomInfo(residue.cid),
                             buffer: {id: props.molecule.representations[0]?.buffers[0]?.id},
                             isResidueSelection: true
                         }
@@ -309,7 +311,16 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
      * Hook used to update the displayed sequence after adding/removing/mutating a residue in the sequence
      */
     useEffect(()=> {
-        const [newRulerStart, newSeqLenght, newDisplaySequence, newStart, newEnd] = parseSequenceData(props.sequence.sequence)
+        if (props.molecule.molNo !== updateMolNo) {
+            return
+        }
+
+        const newSequence = props.molecule.sequences.find(sequence => sequence.name === props.sequence.name)?.sequence
+        if (!newSequence) {
+            return
+        }
+        
+        const [newRulerStart, newSeqLenght, newDisplaySequence, newStart, newEnd] = parseSequenceData(newSequence)
         
         if (newDisplaySequence !== displaySettings.displaySequence) {
             sequenceRef.current.sequence = newDisplaySequence
@@ -322,9 +333,9 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                 seqLenght: newSeqLenght,
                 displaySequence: newDisplaySequence     
             })
-        }
+        } 
 
-    }, [props.sequence.sequence])
+    }, [updateSwitch])
     
     /**
      * Hook used to clear the current selection if user selects residue from different chain

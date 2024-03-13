@@ -1,0 +1,159 @@
+name: Update install cache
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'get_sources'
+      - 'VERSIONS'
+
+jobs:
+  updateInstallCache:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+
+      # Checkout repository
+      - uses: actions/checkout@v1
+        name: Checkout Moorhen
+
+      # Install some general dependencies
+      - name: Install dependencies 
+        working-directory: /home/runner/work/Moorhen/       
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y bzr nodejs npm pkg-config libfreetype6-dev libxft-dev blt-dev build-essential zlib1g-dev autoconf autotools-dev libtool gcc cmake patch curl libeigen3-dev
+      
+      # Download and install emsdk cache
+      - name: Restore cache emsdk
+        id: cache-emsdk
+        uses: actions/cache@v4
+        with:
+          path: /home/runner/work/Moorhen/emsdk/
+          key: emsdk-cache
+
+      - name: Download and install emsdk
+        if: steps.cache-emsdk.outputs.cache-hit != 'true'
+        run: |
+          cd /home/runner/work/Moorhen/
+          git clone https://github.com/emscripten-core/emsdk.git
+          cd /home/runner/work/Moorhen/emsdk/
+          ./emsdk install latest
+
+      - name: Save emsdk cache
+        id: cache-emsdk-save
+        if: steps.cache-emsdk.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with: 
+          path: /home/runner/work/Moorhen/emsdk/
+          key: emsdk-cache
+
+      - name: Activate emsdk
+        run: |
+          cd /home/runner/work/Moorhen/emsdk/
+          ./emsdk activate latest
+
+      # Sources
+      - name: Restore cache Moorhen sources
+        id: cache-moorhen-sources
+        uses: actions/cache@v4
+        with:
+          path: |
+            /home/runner/work/Moorhen/Moorhen/checkout/*
+            /home/runner/work/Moorhen/Moorhen/patches/*
+            /home/runner/work/Moorhen/Moorhen/wasm_src_frontend/*
+            !/home/runner/work/Moorhen/Moorhen/checkout/coot-1.0
+          key: sources-cache
+
+      - name: Download and patch Moorhen sources
+        if: steps.cache-moorhen-sources.outputs.cache-hit != 'true'
+        working-directory: /home/runner/work/Moorhen/Moorhen
+        run: |
+          cd /home/runner/work/Moorhen/Moorhen         
+          source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
+          ./get_sources
+
+      - name: Save Moorhen sources cache
+        id: cache-moorhen-sources-save
+        if: steps.cache-moorhen-sources.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with: 
+          path: |
+            /home/runner/work/Moorhen/Moorhen/checkout/*
+            /home/runner/work/Moorhen/Moorhen/patches/*
+            /home/runner/work/Moorhen/Moorhen/wasm_src_frontend/*
+            !/home/runner/work/Moorhen/Moorhen/checkout/coot-1.0
+          key: sources-cache
+
+      # Download Coot sources (unless we downloaded the sources from fresh instead of the cache in which case its already there)
+      - name: Download coot source
+        if: steps.cache-moorhen-sources.outputs.cache-hit == 'true'
+        working-directory: /home/runner/work/Moorhen/Moorhen/checkout
+        run: |
+          cd /home/runner/work/Moorhen/Moorhen/checkout
+          source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
+          git clone --branch main https://github.com/pemsley/coot.git coot-1.0
+      
+      # Install npm modules
+      - name: Restore cache npm modules
+        id: cache-moorhen-npm
+        uses: actions/cache@v4
+        with:
+          path: /home/runner/work/Moorhen/Moorhen/baby-gru/node_modules
+          key: emdsk-node-modules-cache
+
+      - name: Install npm modules
+        if: steps.cache-moorhen-npm.outputs.cache-hit != 'true'
+        working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
+        run: |
+          cd /home/runner/work/Moorhen/Moorhen/baby-gru         
+          source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
+          npm install
+
+      - name: Save npm modules cache
+        id: cache-moorhen-npm-save
+        if: steps.cache-moorhen-npm.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with: 
+          path: /home/runner/work/Moorhen/Moorhen/baby-gru/node_modules
+          key: emdsk-node-modules-cache
+        
+      # Patching and symlinks
+      - name: Create symlinks
+        shell: bash
+        working-directory: /home/runner/work/Moorhen/Moorhen
+        run: |
+          cd /home/runner/work/Moorhen/Moorhen   
+          source ./VERSIONS
+          source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
+          echo "" > silly.c
+          emcc silly.c -s USE_ZLIB=1 -s USE_LIBPNG=1 -s USE_FREETYPE=1
+          rm -f silly.c
+          rm -f a.out.js
+          rm -f a.out.wasm
+          tar xf checkout/gsl-$gsl_release.tar.gz
+          ln -s checkout/rdkit-$rdkit_release rdkit      
+          ln -s checkout/boost_$boost_release boost
+          mkdir -p include
+          cd include
+          ln -s ../checkout/glm-$glm_release/glm glm
+      
+      # Install bindings
+      - name: Install bindings
+        working-directory: /home/runner/work/Moorhen/Moorhen
+        run: |
+          cd /home/runner/work/Moorhen/Moorhen
+          source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
+          ./initial_build.sh
+      
+      # Save cache
+      - name: Save install cache
+        id: cache-moorhen-install-save
+        uses: actions/cache/save@v4
+        with: 
+          path: |
+            /home/runner/work/Moorhen/Moorhen/install
+            /home/runner/work/Moorhen/Moorhen/CCP4_WASM_BUILD
+            /home/runner/work/Moorhen/Moorhen/baby-gru/public/baby-gru/wasm
+          key: moorhen-install-cache

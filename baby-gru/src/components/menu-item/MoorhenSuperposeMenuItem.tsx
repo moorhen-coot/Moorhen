@@ -25,7 +25,7 @@ export const MoorhenSuperposeMenuItem = (props: {
     const [selectedMovModel, setSelectedMovModel] = useState<null | number>(null)
     const [selectedMovChain, setSelectedMovChain] = useState<null | string>(null)
 
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>, isReferenceModel: boolean) => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(evt.target.value))

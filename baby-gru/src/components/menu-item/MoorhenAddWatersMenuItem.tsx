@@ -5,7 +5,7 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from 'react-redux';
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
-import { triggerScoresUpdate } from "../../store/connectedMapsSlice";
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 
 export const MoorhenAddWatersMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
@@ -17,7 +17,7 @@ export const MoorhenAddWatersMenuItem = (props: {
     const mapSelectRef = useRef<null | HTMLSelectElement>(null)
     
     const dispatch = useDispatch()
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const maps = useSelector((state: moorhen.State) => state.maps)
 
     const panelContent = <>
@@ -45,7 +45,7 @@ export const MoorhenAddWatersMenuItem = (props: {
         selectedMolecule.setAtomsDirty(true)
         await selectedMolecule.redraw()
         
-        dispatch( triggerScoresUpdate(moleculeMolNo) )
+        dispatch( triggerUpdate(moleculeMolNo) )
 
     }, [molecules, maps, props.glRef, props.commandCentre])
 

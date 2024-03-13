@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Row, Col } from "react-bootstrap";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useSelector } from "react-redux";
-import { getLigandSVG } from "../../utils/MoorhenUtils";
 import { MoorhenLigandCard } from "../card/MoorhenLigandCard";
+import { LinearProgress } from "@mui/material";
 
 export const MoorhenLigandList = (props: { 
     setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -14,45 +14,56 @@ export const MoorhenLigandList = (props: {
     height?: number | string;
 }) => {
 
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
+    const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo)
+    const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch)
+    const showModelsModal = useSelector((state: moorhen.State) => state.activeModals.showModelsModal)
 
     const [ligandList, setLigandList] = useState<moorhen.LigandInfo[]>(null)
 
-    useEffect(() => {
-        async function updateLigandList() {
-            props.setBusy(true)
-            if (props.molecule.gemmiStructure === null || props.molecule.atomsDirty || props.molecule.ligands === null) {
-                await props.molecule.updateAtoms()
-            }
-            if (props.molecule.gemmiStructure === null || props.molecule.ligands === null) {
-                return
-            }
-
-            let ligandList: moorhen.LigandInfo[] = []
-
-            for (const ligand of props.molecule.ligands) {
-                const [svg, chemCompInfo] = await Promise.all([
-                    getLigandSVG(props.commandCentre, props.molecule.molNo, ligand.resName, isDark),
-                    props.commandCentre.current.cootCommand({
-                        returnType: "string_string_pair_vector",
-                        command: 'get_gphl_chem_comp_info',
-                        commandArgs: [ligand.resName, props.molecule.molNo],
-                    }, false) as Promise<moorhen.WorkerResponse<{first: string; second: string}[]>>
-                ])
-                ligandList.push({ svg, chem_comp_info: chemCompInfo.data.result.result, ...ligand })
-            }
-
-            setLigandList(ligandList)
-            props.setBusy(false)
+    async function updateLigandList() {
+        props.setBusy(true)
+        if (props.molecule.gemmiStructure === null || props.molecule.atomsDirty || props.molecule.ligands === null) {
+            await props.molecule.updateAtoms()
+        }
+        if (props.molecule.gemmiStructure === null || props.molecule.ligands === null) {
+            return
         }
 
-        updateLigandList()
+        let ligandList: moorhen.LigandInfo[] = []
 
-    }, [props.molecule.ligands])
+        for (const ligand of props.molecule.ligands) {
+            const [svg, chemCompInfo] = await Promise.all([
+                props.molecule.getLigandSVG(ligand.resName, true),
+                props.commandCentre.current.cootCommand({
+                    returnType: "string_string_pair_vector",
+                    command: 'get_gphl_chem_comp_info',
+                    commandArgs: [ligand.resName, props.molecule.molNo],
+                }, false) as Promise<moorhen.WorkerResponse<{first: string; second: string}[]>>
+            ])
+            ligandList.push({ svg, chem_comp_info: chemCompInfo.data.result.result, ...ligand })
+        }
+
+        setLigandList(ligandList)
+        props.setBusy(false)
+    }
+    
+    useEffect(() => {
+        if (showModelsModal) {
+            updateLigandList()
+        } else {
+            setLigandList(null)
+        }
+    }, [showModelsModal])
+    
+    useEffect(() => {
+        if (props.molecule?.molNo === updateMolNo && showModelsModal) {
+            updateLigandList()
+        }
+    }, [updateSwitch])
 
     return <>
             {ligandList === null ?
-            null
+                <LinearProgress variant="indeterminate"/>
             : ligandList.length > 0 ? 
                 <>
                     <Row style={{ maxHeight: props.height, overflowY: 'auto' }}>

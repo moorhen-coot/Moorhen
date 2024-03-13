@@ -18,7 +18,7 @@ export const MoorhenSelfRestraintsMenuItem = (props: {
     popoverPlacement?: 'left' | 'right';
 }) => {
     
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     
     const modeTypeSelectRef = useRef<HTMLSelectElement | null>(null)
@@ -88,6 +88,7 @@ export const MoorhenSelfRestraintsMenuItem = (props: {
             ref={cidSelectRef}
             margin="0.5rem"
             onChange={(evt) => setCid(evt.target.value)}
+            allowUseCurrentSelection={true}
             placeholder={cidSelectRef.current ? "" : "Input custom selection e.g. //A,B"}/>}
         <MoorhenSlider
             ref={maxDistSliderRef}

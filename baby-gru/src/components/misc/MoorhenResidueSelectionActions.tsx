@@ -1,5 +1,5 @@
 import { IconButton, Popover, Tooltip } from "@mui/material"
-import { cidToSpec, guid } from "../../utils/MoorhenUtils"
+import { atomInfoToResSpec, cidToSpec, guid } from "../../utils/MoorhenUtils"
 import { MoorhenNotification } from "./MoorhenNotification"
 import { AdsClickOutlined, AllOutOutlined, CloseOutlined, CopyAllOutlined, CrisisAlertOutlined, DeleteOutlined, EditOutlined, FormatColorFillOutlined, Rotate90DegreesCw, SwapVertOutlined, SwipeRightAlt } from "@mui/icons-material"
 import { batch, useDispatch, useSelector } from "react-redux"
@@ -7,12 +7,13 @@ import { moorhen } from "../../types/moorhen"
 import { Button, Stack } from "react-bootstrap"
 import { clearResidueSelection, setIsDraggingAtoms, setIsRotatingAtoms, setNotificationContent, setResidueSelection, setShowResidueSelection } from '../../store/generalStatesSlice';
 import { useCallback, useEffect, useRef, useState } from "react"
-import { addMolecule, removeMolecule, setHoveredAtom } from "../../moorhen"
+import { addMolecule, removeMolecule } from "../../store/moleculesSlice"
+import { setHoveredAtom } from "../../store/hoveringStatesSlice"
 import { HexColorInput, HexColorPicker } from "react-colorful"
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm"
 import { MoorhenAcceptRejectRotateTranslate } from "./MoorhenAcceptRejectRotateTranslate"
 import { MoorhenAcceptRejectDragAtoms } from "./MoorhenAcceptRejectDragAtoms"
-import { triggerScoresUpdate } from "../../store/connectedMapsSlice"
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
 
 export const MoorhenResidueSelectionActions = (props) => {
 
@@ -31,7 +32,7 @@ export const MoorhenResidueSelectionActions = (props) => {
 
     const dispatch = useDispatch()
     const showResidueSelection = useSelector((state: moorhen.State) => state.generalStates.showResidueSelection)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const isChangingRotamers = useSelector((state: moorhen.State) => state.generalStates.isChangingRotamers)
     const isRotatingAtoms = useSelector((state: moorhen.State) => state.generalStates.isRotatingAtoms)
     const isDraggingAtoms = useSelector((state: moorhen.State) => state.generalStates.isDraggingAtoms)
@@ -40,15 +41,20 @@ export const MoorhenResidueSelectionActions = (props) => {
     const animateRefine = useSelector((state: moorhen.State) => state.miscAppSettings.animateRefine)
 
     const clearSelection = useCallback(() => {
-        dispatch( clearResidueSelection() )
-        dispatch( setNotificationContent(null) )
         dispatch( setShowResidueSelection(false) )
+        dispatch( setNotificationContent(null) )
         setCidFormValue(null)
         setShowCidEditForm(false)
         setShowColourPopover(false)
         setInvalidCid(false)
         molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
     }, [molecules])
+
+    useEffect(() => {
+        if (Object.keys(residueSelection).every(key => !residueSelection[key])) {
+            clearSelection()
+        }
+    }, [residueSelection, clearSelection])
 
     const handleAtomClicked = useCallback(async (evt: moorhen.AtomClickedEvent) => {
         if (!evt.detail.isResidueSelection || evt.detail.buffer.id == null || isDraggingAtoms || isRotatingAtoms || isChangingRotamers) {
@@ -57,17 +63,17 @@ export const MoorhenResidueSelectionActions = (props) => {
 
         const selectedMolecule = molecules.find(molecule => molecule.buffersInclude(evt.detail.buffer))
         if (!selectedMolecule) {
-            clearSelection()
+            dispatch( clearResidueSelection() )
             return
         }
         
         if (residueSelection.first === null || residueSelection.molecule === null || residueSelection.molecule.molNo !== selectedMolecule.molNo) {
-            const resSpec = cidToSpec(evt.detail.atom.label)
+            const resSpec = atomInfoToResSpec(evt.detail.atom)
             await selectedMolecule.drawResidueSelection(`/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*`)
             dispatch(
                 setResidueSelection({
                     molecule: selectedMolecule,
-                    first: evt.detail.atom.label,
+                    first: resSpec.cid,
                     second: null,
                     cid: null,
                     isMultiCid: false,
@@ -79,9 +85,9 @@ export const MoorhenResidueSelectionActions = (props) => {
         }
 
         const startResSpec = cidToSpec(residueSelection.first)
-        const stopResSpec = cidToSpec(evt.detail.atom.label)
+        const stopResSpec = atomInfoToResSpec(evt.detail.atom)
         if (startResSpec.chain_id !== stopResSpec.chain_id) {
-            clearSelection()
+            dispatch( clearResidueSelection() )
         } else {
             const sortedResNums = [startResSpec.res_no, stopResSpec.res_no].sort(function(a, b){return a - b})
             const cid = `/*/${startResSpec.chain_id}/${sortedResNums[0]}-${sortedResNums[1]}/*`
@@ -90,7 +96,7 @@ export const MoorhenResidueSelectionActions = (props) => {
                 setResidueSelection({
                     molecule: selectedMolecule,
                     first: residueSelection.first,
-                    second: evt.detail.atom.label,
+                    second: stopResSpec.cid,
                     cid: cid,
                     isMultiCid: false,
                     label: `/${startResSpec.mol_no}/${startResSpec.chain_id}/${sortedResNums[0]}-${sortedResNums[1]}`
@@ -98,7 +104,7 @@ export const MoorhenResidueSelectionActions = (props) => {
             )
             dispatch( setShowResidueSelection(true) )
         }
-    }, [clearSelection, residueSelection, isRotatingAtoms, isChangingRotamers, isDraggingAtoms])
+    }, [residueSelection, isRotatingAtoms, isChangingRotamers, isDraggingAtoms])
 
     useEffect(() => {
         document.addEventListener('atomClicked', handleAtomClicked)
@@ -136,7 +142,7 @@ export const MoorhenResidueSelectionActions = (props) => {
             setInvalidCid(true)
         }
 
-    }, [residueSelection, clearResidueSelection, cidFormValue])
+    }, [residueSelection, cidFormValue])
 
     const handleSelectionCopy = useCallback(async () => {
         let cid: string
@@ -155,8 +161,8 @@ export const MoorhenResidueSelectionActions = (props) => {
             dispatch( addMolecule(newMolecule) )
         }
         
-        clearSelection()
-    }, [residueSelection, clearSelection])
+        dispatch( clearResidueSelection() )
+    }, [residueSelection])
 
     const handleRefinement = useCallback(async () => {
         molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
@@ -183,9 +189,9 @@ export const MoorhenResidueSelectionActions = (props) => {
                 await residueSelection.molecule.refineResidueRange(startResSpec.chain_id, startResSpec.res_no, startResSpec.res_no, 5000, true)
             }
         }
-        dispatch( triggerScoresUpdate(residueSelection.molecule.molNo) )
-        clearSelection()
-    }, [clearSelection, residueSelection, animateRefine, activeMap])
+        dispatch( triggerUpdate(residueSelection.molecule.molNo) )
+        dispatch( clearResidueSelection() )
+    }, [residueSelection, animateRefine, activeMap])
 
     const handleDelete = useCallback(async () => {
         let cid: string
@@ -206,11 +212,11 @@ export const MoorhenResidueSelectionActions = (props) => {
                 await residueSelection.molecule.delete()
                 dispatch(removeMolecule(residueSelection.molecule))
             }
-            dispatch( triggerScoresUpdate(residueSelection.molecule.molNo) )
+            dispatch( triggerUpdate(residueSelection.molecule.molNo) )
         }
 
-        clearSelection()
-    }, [residueSelection, clearSelection])
+        dispatch( clearResidueSelection() )
+    }, [residueSelection])
 
     const handleExpandSelection = useCallback(async () => {
         let cid: string
@@ -245,7 +251,7 @@ export const MoorhenResidueSelectionActions = (props) => {
                 })
             )
         }
-    }, [residueSelection, clearSelection])
+    }, [residueSelection])
 
     const handleInvertSelection = useCallback(async () => {
         let cid: string
@@ -274,7 +280,7 @@ export const MoorhenResidueSelectionActions = (props) => {
                 })
             )
         }
-    }, [residueSelection, clearResidueSelection])
+    }, [residueSelection])
 
     const handleColourChange = useCallback(async () => {
         let newColourRules: moorhen.ColourRule[] = []
@@ -316,7 +322,7 @@ export const MoorhenResidueSelectionActions = (props) => {
 
         setShowColourPopover(false)
 
-    }, [residueSelection, clearSelection, selectedColour])
+    }, [residueSelection, selectedColour])
 
     const handleRigidBodyFit = useCallback(async () => {
         if (!activeMap) {
@@ -337,11 +343,11 @@ export const MoorhenResidueSelectionActions = (props) => {
 
         if (cid) {
             await residueSelection.molecule.rigidBodyFit(cid, activeMap.molNo, true)
-            dispatch( triggerScoresUpdate(residueSelection.molecule.molNo) )
+            dispatch( triggerUpdate(residueSelection.molecule.molNo) )
         }
 
-        clearSelection()
-    }, [activeMap, residueSelection, clearSelection])
+        dispatch( clearResidueSelection() )
+    }, [activeMap, residueSelection])
 
     const handleRotateTranslate = useCallback(async () => {
         let cid: string
@@ -358,11 +364,11 @@ export const MoorhenResidueSelectionActions = (props) => {
         if (cid) {
             const onExit = () => {
                 dispatch( setNotificationContent(null) )
-                clearSelection()
+                dispatch( clearResidueSelection() )
             }
             batch(() => {
                 molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
-                dispatch( setShowResidueSelection(false) )
+                dispatch( clearResidueSelection() )
                 dispatch( setHoveredAtom({ molecule: null, cid: null }) )
                 dispatch( setIsRotatingAtoms(true) )
                 dispatch( setNotificationContent(
@@ -375,7 +381,7 @@ export const MoorhenResidueSelectionActions = (props) => {
             })
         }
 
-    }, [residueSelection, clearSelection])
+    }, [residueSelection])
 
     const handleDragAtoms = useCallback(() => {
         let cid: string[]
@@ -392,11 +398,11 @@ export const MoorhenResidueSelectionActions = (props) => {
         if (cid) {
             const onExit = () => {
                 dispatch( setNotificationContent(null) )
-                clearSelection()
+                dispatch( clearResidueSelection() )
             }
             molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
             batch(() => {
-                dispatch( setShowResidueSelection(false) )
+                dispatch( clearResidueSelection() )
                 dispatch( setHoveredAtom({ molecule: null, cid: null }) )
                 dispatch( setIsDraggingAtoms(true) )
                 dispatch( setNotificationContent(
@@ -411,7 +417,7 @@ export const MoorhenResidueSelectionActions = (props) => {
             })
         }
 
-    }, [residueSelection, clearSelection])
+    }, [residueSelection])
 
     return showResidueSelection ?
         <MoorhenNotification key={notificationKeyRef.current} width={19}>
@@ -419,9 +425,9 @@ export const MoorhenResidueSelectionActions = (props) => {
             <Stack ref={notificationComponentRef} direction="vertical" gap={1}>
                 <Stack gap={0} direction="horizontal" style={{ width: '100%', display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{paddingLeft: '2.2rem', width: '100%', display: 'flex', justifyContent: 'center'}}>{
-                        `${residueSelection.label.length > 16 ? residueSelection.label.substring(0, 12) + '...' : residueSelection.label}`
+                        `${residueSelection.label?.length > 16 ? residueSelection.label.substring(0, 12) + '...' : residueSelection.label}`
                     }</span>
-                    <IconButton onClick={clearSelection} onMouseEnter={() => setTooltipContents('Clear selection')} style={{padding: 0}}>
+                    <IconButton onClick={() => dispatch( clearResidueSelection() )} onMouseEnter={() => setTooltipContents('Clear selection')} style={{padding: 0}}>
                         <CloseOutlined/>
                     </IconButton>
                 </Stack>

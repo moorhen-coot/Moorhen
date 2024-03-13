@@ -12,6 +12,11 @@ export const sceneSettingsSlice = createSlice({
     drawAxes: null,
     drawInteractions: null,
     doSSAO: null,
+    doEdgeDetect: null,
+    edgeDetectDepthThreshold: null,
+    edgeDetectNormalThreshold: null,
+    edgeDetectDepthScale: null,
+    edgeDetectNormalScale: null,
     ssaoRadius: null,
     ssaoBias: null,
     resetClippingFogging: null,
@@ -20,7 +25,7 @@ export const sceneSettingsSlice = createSlice({
     useOffScreenBuffers: null,
     doShadowDepthDebug: null,
     doShadow: null,
-    doSpinTest: null,
+    doSpin: null,
     doOutline: null,
     depthBlurRadius: null,
     depthBlurDepth: null,
@@ -57,6 +62,21 @@ export const sceneSettingsSlice = createSlice({
     setDoSSAO: (state, action: {payload: boolean, type: string}) => {
         return {...state, doSSAO: action.payload}
     },
+    setDoEdgeDetect: (state, action: {payload: boolean, type: string}) => {
+        return {...state, doEdgeDetect: action.payload}
+    },
+    setEdgeDetectDepthThreshold: (state, action: {payload: number, type: string}) => {
+        return {...state, edgeDetectDepthThreshold: action.payload}
+    },
+    setEdgeDetectNormalThreshold: (state, action: {payload: number, type: string}) => {
+        return {...state, edgeDetectNormalThreshold: action.payload}
+    },
+    setEdgeDetectDepthScale: (state, action: {payload: number, type: string}) => {
+        return {...state, edgeDetectDepthScale: action.payload}
+    },
+    setEdgeDetectNormalScale: (state, action: {payload: number, type: string}) => {
+        return {...state, edgeDetectNormalScale: action.payload}
+    },
     setSsaoRadius: (state, action: {payload: number, type: string}) => {
         return {...state, ssaoRadius: action.payload}
     },
@@ -81,8 +101,8 @@ export const sceneSettingsSlice = createSlice({
     setDoShadow: (state, action: {payload: boolean, type: string}) => {
         return {...state, doShadow: action.payload}
     },
-    setDoSpinTest: (state, action: {payload: boolean, type: string}) => {
-        return {...state, doSpinTest: action.payload}
+    setDoSpin: (state, action: {payload: boolean, type: string}) => {
+        return {...state, doSpin: action.payload}
     },
     setDoOutline: (state, action: {payload: boolean, type: string}) => {
         return {...state, doOutline: action.payload}
@@ -110,8 +130,9 @@ export const sceneSettingsSlice = createSlice({
 export const {
     setDefaultBackgroundColor, setDrawCrosshairs, setDrawScaleBar, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
     setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap,  
-    setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpinTest, setDoOutline, setDepthBlurRadius,
-    setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setBackgroundColor
+    setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius,
+    setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setBackgroundColor,
+    setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setEdgeDetectNormalScale
 } = sceneSettingsSlice.actions
 
 export default sceneSettingsSlice.reducer

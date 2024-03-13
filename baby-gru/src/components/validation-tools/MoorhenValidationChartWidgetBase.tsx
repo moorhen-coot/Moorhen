@@ -36,10 +36,11 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
     const [selectedMap, setSelectedMap] = useState<number | null>(null)
     const [selectedChain, setSelectedChain] = useState<string | null>(null)
 
-    const newCootCommandAlert = useSelector((state: moorhen.State) => state.generalStates.newCootCommandAlert)
+    const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo)
+    const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const maps = useSelector((state: moorhen.State) => state.maps)
 
     const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
@@ -79,14 +80,20 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
 
     }, [maps.length])
     
-    useEffect(() => {
-        const fetchData = async () => {
-            const newPlotData = await props.fetchData(selectedModel, selectedMap, props.enableChainSelect ? chainSelectRef.current.value : null)
-            setPlotData(newPlotData)
-        }
-        fetchData()
+    const fetchData = async () => {
+        const newPlotData = await props.fetchData(selectedModel, selectedMap, props.enableChainSelect ? chainSelectRef.current.value : null)
+        setPlotData(newPlotData)
+    }
 
-    }, [selectedChain, selectedMap, selectedModel, newCootCommandAlert, props.extraControlFormValue])
+    useEffect(() => {
+        fetchData()
+    }, [selectedChain, selectedMap, selectedModel, props.extraControlFormValue])
+
+    useEffect(() => {
+        if (selectedModel !== null  && selectedModel === updateMolNo) {
+            fetchData()
+        }
+    }, [updateSwitch])
 
     useEffect(() => {
         if (chartRef !== null && typeof chartRef !== 'function' && chartRef.current) {

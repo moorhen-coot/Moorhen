@@ -39,7 +39,7 @@ export const MoorhenMMRRCCPlot = (props: {
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const maps = useSelector((state: moorhen.State) => state.maps)
     const dispatch = useDispatch()
 

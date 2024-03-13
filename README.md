@@ -8,11 +8,6 @@
 Moorhen is a web browser molecular graphics program based on the Coot desktop program.
 It is developed by porting some [CCP4](https://www.ccp4.ac.uk/) libraries and programs, [Coot](https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/), [FFTW2](https://www.fftw.org/), [Privateer](https://github.com/glycojones/privateer) and the [Gnu Scientific Library](https://www.gnu.org/software/gsl/) to Web Assembly.
 
-Also contained are examples of using the generated JS/Web Assembly:
-
-* A command line example which offers some of the functionality of the CCP4 program `superpose`.
-* A command line example which does a structure factor calculation with `clipper`.
-
 The emscripten suite of tools is required to do the
 compilation.
 
@@ -21,10 +16,10 @@ the `get_sources` script, which is part of the build process of this project.
 
 The following libraries/programs are compiled to Web Assembly:
 * libccp4 (8.0.0)
-* clipper (2.1)
+* clipper (20240123)
 * ssm (1.4.0)
 * mmdb2 (2.0.22)
-* gemmi 0.5.8
+* gemmi 0.6.4
 * Coot 1.0 ('gtk3' git branch)
 * fftw 2.1.5
 * gsl 2.7.1

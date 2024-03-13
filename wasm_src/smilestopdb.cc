@@ -1,11 +1,13 @@
+#include <string>
+#include <vector>
+#include <utility>
 
 #include "rdkit/GraphMol/SmilesParse/SmilesParse.h"
 #include "rdkit/GraphMol/FileParsers/MolSupplier.h"
 #include "rdkit/GraphMol/FileParsers/MolWriters.h"
 #include "rdkit/GraphMol/FileParsers/FileParsers.h"
 #include "rdkit/GraphMol/DistGeomHelpers/Embedder.h"
-#include <string>
-#include <vector>
+#include "rdkit/RDGeneral/FileParseException.h"
 
 #include "rdkit/GraphMol/ROMol.h"
 #include "rdkit/GraphMol/RWMol.h"
@@ -21,6 +23,8 @@
 #include "rdkit/GraphMol/PeriodicTable.h"
 #include "rdkit/GraphMol/Substruct/SubstructMatch.h"
 #include "rdkit/GraphMol/Substruct/SubstructUtils.h"
+
+std::pair<std::string, std::string> MolToPDB(RDKit::RWMol *mol, const std::string &TLC, int nconf, int maxIters, bool keep_orig_coords);
 
 std::string writeCIF(RDKit::RWMol *mol, const std::string &resname="UNL",  int confId=0){
     RDKit::AtomMonomerInfo *info = mol->getAtomWithIdx(0)->getMonomerInfo();
@@ -713,7 +717,37 @@ int MolMinimize(RDKit::RWMol *mol, int nconf, int maxIters){
   return minCid;
 }
 
+std::pair<std::string, std::string> MolTextToPDB(const std::string &mol_text_cpp, const std::string &TLC, int nconf, int maxIters, bool keep_orig_coords){
+
+    std::pair<std::string, std::string> retval;
+
+    RDKit::RWMol *mol = 0;
+
+    std::cout << mol_text_cpp << std::endl;
+
+    RDKit::SDMolSupplier *ms = new RDKit::SDMolSupplier;
+    ms->setData(mol_text_cpp,false,false);
+    try {
+        RDKit::ROMol* romol = ms->next();
+        mol = new RDKit::RWMol(*romol);
+        /*
+        std::cout << "ROMol has " << romol->getNumAtoms() << " atoms" << std::endl;
+        std::cout << "RWMol has " << mol->getNumAtoms() << " atoms" << std::endl;
+        std::cout << "ROMol Conformer 0 has " << romol->getConformer(0).getNumAtoms() << " atoms" << std::endl;
+        std::cout << "RWMol Conformer 0 has " << mol->getConformer(0).getNumAtoms() << " atoms" << std::endl;
+        */
+        return MolToPDB(mol,TLC,nconf,maxIters,keep_orig_coords);
+    } catch (RDKit::FileParseException &e) {
+        std::cout << e.what() << std::endl;
+        return retval;
+    }
+
+    return retval;
+
+}
+
 std::pair<std::string, std::string> SmilesToPDB(const std::string &smile_cpp, const std::string &TLC, int nconf, int maxIters){
+
     std::pair<std::string, std::string> retval;
 
     const char* smile = smile_cpp.c_str();
@@ -724,6 +758,7 @@ std::pair<std::string, std::string> SmilesToPDB(const std::string &smile_cpp, co
     }
 
     RDKit::RWMol *mol = 0;
+
     try {
         mol =  RDKit::SmilesToMol(smile);
     } catch (RDKit::MolSanitizeException &e) {
@@ -733,28 +768,53 @@ std::pair<std::string, std::string> SmilesToPDB(const std::string &smile_cpp, co
         std::cout << "SMILES parse error?" << std::endl;
         return retval;
     }
+
     if(!mol){
         std::cout << "SMILES parse error?" << std::endl;
         return retval;
     }
+
+    return MolToPDB(mol,TLC,nconf,maxIters,false);
+}
+
+std::pair<std::string, std::string> MolToPDB(RDKit::RWMol *mol, const std::string &TLC, int nconf, int maxIters, bool keep_orig_coords){
+
+    std::pair<std::string, std::string> retval;
+
     try {
-        RDKit::MolOps::addHs(*mol);
-    } catch (...) {
-        std::cout << "Error adding hydrogens." << std::endl;
+        if(keep_orig_coords){
+           RDKit::MolOps::addHs(*mol,true,true);
+        } else {
+           RDKit::MolOps::addHs(*mol);
+        }
+    } catch (RDKit::MolSanitizeException &e) {
+        std::cout << e.what() << std::endl;
+        std::cout << "Error adding hydrogens to MOL in MolToPDB." << std::endl;
         return retval;
+    }
+
+    //But if the original file does *not* have hydrogens, then the H positions here will be undefined. 
+    RDKit::Conformer orig_conf;
+    if(keep_orig_coords){
+        orig_conf = mol->getConformer(0);
     }
 
     try {
         RDKit::DGeomHelpers::EmbedMolecule(*mol);
     } catch (...) {
-        std::cout << "Error embedding molecule." << std::endl;
+        std::cout << "Error embedding molecule in MolToPDB." << std::endl;
         return retval;
     }
 
     int minCid = MolMinimize(mol, nconf, maxIters);
     if(minCid==-1){
-        std::cout << "Minimize from SMILES error" << std::endl;
+        std::cout << "Minimize from MOL error in MolToPDB" << std::endl;
         return retval;
+    }
+
+    if(keep_orig_coords){
+        int newConfId = mol->addConformer(&orig_conf,true);
+        minCid = newConfId;
     }
 
     std::string cif = writeCIF(mol,TLC, minCid);

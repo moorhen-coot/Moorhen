@@ -35,6 +35,7 @@
 #include <gemmi/assembly.hpp>
 #include <gemmi/calculate.hpp>
 #include <gemmi/util.hpp>
+#include <gemmi/fstream.hpp>
 
 using namespace emscripten;
 
@@ -145,6 +146,38 @@ gemmi::Structure remove_selected_residues(const gemmi::Structure &Structure, con
     new_structure.remove_empty_chains();
 
     return new_structure;
+}
+
+std::string cifDocument_as_string_with_style(const gemmi::cif::Document &doc, const gemmi::cif::Style &style) {
+        std::ostringstream os;
+        write_cif_to_stream(os, doc, style);
+        return os.str();
+}
+
+std::string cifDocument_as_string_with_options(const gemmi::cif::Document &doc, const gemmi::cif::WriteOptions &opt) {
+        std::ostringstream os;
+        write_cif_to_stream(os, doc, opt);
+        return os.str();
+}
+
+std::string cifDocument_as_string(const gemmi::cif::Document &doc) {
+        gemmi::cif::WriteOptions opt;
+        return cifDocument_as_string_with_options(doc,opt);
+}
+
+void cifDocument_write_file_with_style(const gemmi::cif::Document &doc, const std::string &filename, const gemmi::cif::Style &style) {
+        gemmi::Ofstream os(filename);
+        write_cif_to_stream(os.ref(), doc, style);
+}
+
+void cifDocument_write_file_with_options(const gemmi::cif::Document &doc, const std::string &filename, const gemmi::cif::WriteOptions &opt) {
+        gemmi::Ofstream os(filename);
+        write_cif_to_stream(os.ref(), doc, opt);
+}
+
+void cifDocument_write_file(const gemmi::cif::Document &doc, const std::string &filename) {
+        gemmi::cif::WriteOptions opt;
+        cifDocument_write_file_with_options(doc,filename,opt);
 }
 
 gemmi::Structure remove_non_selected_atoms(const gemmi::Structure &Structure, const gemmi::Selection &Selection) {
@@ -312,7 +345,7 @@ std::vector<SequenceEntry> get_sequence_info(const gemmi::Structure &Structure, 
                 } else {
                     seq_entry.resCode = residueCodesThreeToOne[residue.name];
                 }
-                currentSequence.push_back(seq_entry);
+                currentSequence.push_back(std::move(seq_entry));
             }
             if (currentSequence.size() > 0) {
                 SequenceEntry seq_entry;
@@ -320,7 +353,7 @@ std::vector<SequenceEntry> get_sequence_info(const gemmi::Structure &Structure, 
                 seq_entry.chain = chain.name;
                 seq_entry.sequence = currentSequence;
                 seq_entry.type = int(polymerType);
-                sequences.push_back(seq_entry);
+                sequences.push_back(std::move(seq_entry));
             }
         }
     }
@@ -581,7 +614,7 @@ std::vector<AtomInfo> get_atom_info_for_selection(const gemmi::Structure &Struct
 
     std::vector<gemmi::Selection> selections_vec = parse_multi_cid_selections(cids);
     std::vector<gemmi::Selection> excluded_selections_vec = parse_multi_cid_selections(excluded_cids);
-    std::vector<AtomInfo> atom_info_vec;
+std::vector<AtomInfo> atom_info_vec;
 
     auto _structure = Structure;
     for (const auto& selection : excluded_selections_vec) {
@@ -600,7 +633,6 @@ std::vector<AtomInfo> get_atom_info_for_selection(const gemmi::Structure &Struct
                         atom_info.z = atom.pos.z;
                         atom_info.charge = atom.charge;
                         atom_info.element = get_element_name_as_string(atom.element);
-                        atom_info.symbol = get_element_name_as_string(atom.element);
                         atom_info.tempFactor = atom.b_iso;
                         atom_info.serial = atom.serial;
                         atom_info.name = atom.name;
@@ -609,15 +641,11 @@ std::vector<AtomInfo> get_atom_info_for_selection(const gemmi::Structure &Struct
                         atom_info.chain_id = chain.name;
                         atom_info.res_no = residue.seqid.str();
                         atom_info.res_name = residue.name;
-                        atom_info.label = "/" + model.name + "/" + chain.name + "/" + residue.seqid.str() +"(" + residue.name + ")/" + atom.name;
                         if (atom.has_altloc()) {
                             std::string altloc_str(1, atom.altloc);
-                            atom_info.label += ":" + altloc_str;
                             atom_info.alt_loc = altloc_str;
-                        } else {
-                            atom_info.alt_loc = "";
-                        }
-                        atom_info_vec.push_back(atom_info);
+                        } 
+                        atom_info_vec.push_back(std::move(atom_info)); 
                     }
                 }
             }
@@ -632,6 +660,20 @@ void GemmiSelectionRemoveSelectedResidue(gemmi::Selection &s, gemmi::Residue &r)
 
 void GemmiSelectionRemoveNotSelectedResidue(gemmi::Selection &s, gemmi::Residue &r){
     s.remove_not_selected(r);
+}
+
+std::array<double, 9> Mat33ToDoubleArray(const gemmi::Mat33 &mat){
+    std::array<double, 9> retval;
+    retval[0] = mat[0][0];
+    retval[1] = mat[0][1];
+    retval[2] = mat[0][2];
+    retval[3] = mat[1][0];
+    retval[4] = mat[1][1];
+    retval[5] = mat[1][2];
+    retval[6] = mat[2][0];
+    retval[7] = mat[2][1];
+    retval[8] = mat[2][2];
+    return retval;
 }
 
 EMSCRIPTEN_BINDINGS(gemmi_module) {
@@ -657,7 +699,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     //Gemmi from here
     register_vector<gemmi::Selection>("VectorGemmiSelection");
     register_vector<gemmi::GridOp>("VectorGemmiGridOp");
-    register_vector<gemmi::NeighborSearch::Mark*>("VectorGemmiNeighborSearchMark");
+    //register_vector<gemmi::NeighborSearch::Mark*>("VectorGemmiNeighborSearchMark");
     register_vector<gemmi::Mtz::Dataset>("VectorGemmiMtzDataset");
     register_vector<gemmi::Mtz::Column>("VectorGemmiMtzColumn");
     register_vector<gemmi::Mtz::Batch>("VectorGemmiMtzBatch");
@@ -702,6 +744,15 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     register_vector<gemmi::Residue>("VectorGemmiResidue");
     register_vector<gemmi::ResidueSpan>("VectorGemmiResidueSpan");
     register_vector<gemmi::ConstResidueSpan>("VectorGemmiConstResidueSpan");
+
+    enum_<gemmi::cif::Style>("CifStyle")
+        .value("Simple", gemmi::cif::Style::Simple)
+        .value("NoBlankLines", gemmi::cif::Style::NoBlankLines)
+        .value("PreferPairs", gemmi::cif::Style::PreferPairs)
+        .value("Pdbx", gemmi::cif::Style::Pdbx)
+        .value("Indent35", gemmi::cif::Style::Indent35)
+        .value("Aligned", gemmi::cif::Style::Aligned)
+    ;
 
     enum_<gemmi::GridSizeRounding>("GridSizeRounding")
         .value("Nearest", gemmi::GridSizeRounding::Nearest)
@@ -1312,6 +1363,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("inverse",&gemmi::Mat33::inverse)
     .function("is_identity",&gemmi::Mat33::is_identity)
     .function("column_dot",&gemmi::Mat33::column_dot)
+    .function("as_array",&Mat33ToDoubleArray)
     ;
 
     class_<GemmiSMat33double>("SMat33double")
@@ -1390,8 +1442,8 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("add_chain",&gemmi::NeighborSearch::add_chain)
     .function("dist",&gemmi::NeighborSearch::dist)
     .function("populate",&gemmi::NeighborSearch::populate)
-    .function("find_atoms",&gemmi::NeighborSearch::find_atoms)
-    .function("find_neighbors",&gemmi::NeighborSearch::find_neighbors)
+    //.function("find_atoms",&gemmi::NeighborSearch::find_atoms)
+    //.function("find_neighbors",&gemmi::NeighborSearch::find_neighbors)
     ;
 
     class_<gemmi::NeighborSearch::Mark>("Mark")
@@ -1577,6 +1629,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .property("type",&gemmi::Assembly::Operator::type)
     .property("transform",&gemmi::Assembly::Operator::transform)
     ;
+    register_vector<gemmi::Assembly::Operator>("VectorAssemblyOperator");
 
     class_<gemmi::Assembly::Gen>("AssemblyGen")
     .property("chains",&gemmi::Assembly::Gen::chains)
@@ -1884,6 +1937,15 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("find_loop",&gemmi::cif::Block::find_loop)
     ;
 
+    class_<gemmi::cif::WriteOptions>("WriteOptions")
+    .constructor<>()
+    .property("prefer_pairs", &gemmi::cif::WriteOptions::prefer_pairs)
+    .property("compact", &gemmi::cif::WriteOptions::compact)
+    .property("misuse_hash", &gemmi::cif::WriteOptions::misuse_hash)
+    .property("align_pairs", &gemmi::cif::WriteOptions::align_pairs)
+    .property("align_loops", &gemmi::cif::WriteOptions::align_loops)
+    ;
+
     class_<gemmi::cif::Document>("cifDocument")
     .constructor<>()
     .property("source",&gemmi::cif::Document::source)
@@ -1892,6 +1954,12 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("clear",&gemmi::cif::Document::clear)
     .function("sole_block",select_overload<gemmi::cif::Block&()>(&gemmi::cif::Document::sole_block))
     .function("sole_block_const",select_overload<const gemmi::cif::Block&()const>(&gemmi::cif::Document::sole_block))
+    .function("write_file",&cifDocument_write_file)
+    .function("write_file_with_options",&cifDocument_write_file_with_options)
+    .function("write_file_with_style",&cifDocument_write_file_with_style)
+    .function("as_string",&cifDocument_as_string)
+    .function("as_string_with_options",&cifDocument_as_string_with_options)
+    .function("as_string_with_style",&cifDocument_as_string_with_style)
     ;
 
     class_<gemmi::cif::Column>("cifColumn")
@@ -2584,7 +2652,6 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .field("z", &AtomInfo::z)
     .field("charge", &AtomInfo::charge)
     .field("element", &AtomInfo::element)
-    .field("symbol", &AtomInfo::symbol)
     .field("tempFactor", &AtomInfo::tempFactor)
     .field("serial", &AtomInfo::serial)
     .field("name", &AtomInfo::name)
@@ -2594,7 +2661,6 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .field("chain_id", &AtomInfo::chain_id)
     .field("res_no", &AtomInfo::res_no)
     .field("res_name", &AtomInfo::res_name)
-    .field("label", &AtomInfo::label)
     ;
 
     register_vector<AtomInfo>("VectorAtomInfo");
@@ -2760,4 +2826,17 @@ GlobWalk
     function("guess_coord_data_format", &guess_coord_data_format);
     function("parse_multi_cids", &parse_multi_cids);
     function("get_non_selected_cids", &get_non_selected_cids);
+
+    value_array<std::array<double, 9>>("array_native_double_9")
+        .element(emscripten::index<0>())
+        .element(emscripten::index<1>())
+        .element(emscripten::index<2>())
+        .element(emscripten::index<3>())
+        .element(emscripten::index<4>())
+        .element(emscripten::index<5>())
+        .element(emscripten::index<6>())
+        .element(emscripten::index<7>())
+        .element(emscripten::index<8>())
+    ;
+
 }

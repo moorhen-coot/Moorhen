@@ -32,7 +32,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
     }
 
     static defaultPreferencesValues: moorhen.PreferencesValues = {
-        version: 'v33',
+        version: 'v34',
         transparentModalsOnMouseOut: false,
         defaultBackgroundColor: [1, 1, 1, 1],
         atomLabelDepthMode: true,
@@ -56,10 +56,14 @@ export class MoorhenPreferences implements moorhen.Preferences {
         doShadowDepthDebug: false,
         doShadow: false,
         doSSAO: false,
+        doEdgeDetect: false,
+        edgeDetectDepthThreshold: 1.4,
+        edgeDetectNormalThreshold: 0.5,
+        edgeDetectDepthScale: 2.0,
+        edgeDetectNormalScale: 1.0,
         doOutline: false,
         GLLabelsFontFamily: "Arial",
         GLLabelsFontSize: 18,
-        doSpinTest: false,
         mouseSensitivity: 0.3,
         zoomWheelSensitivityFactor: 1.0,
         contourWheelSensitivityFactor: 0.05,
@@ -226,6 +230,12 @@ export class MoorhenPreferences implements moorhen.Preferences {
                 modifiers: ["shiftKey"],
                 keyPress: "m",
                 label: "Measure angles between atoms on click",
+                viewOnly: true
+            },
+            "dist_ang_2d": {
+                modifiers: [],
+                keyPress: "a",
+                label: "Measure arbitrary distances and angles",
                 viewOnly: true
             },
             "label_atom": {

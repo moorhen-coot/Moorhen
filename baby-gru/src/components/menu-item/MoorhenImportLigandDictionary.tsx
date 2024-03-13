@@ -10,7 +10,7 @@ import { webGL } from "../../types/mgWebGL";
 import { libcootApi } from "../../types/libcoot"
 import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice"
-import { triggerScoresUpdate } from "../../store/connectedMapsSlice"
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
 
 const MoorhenImportLigandDictionary = (props: { 
     id: string;
@@ -36,7 +36,7 @@ const MoorhenImportLigandDictionary = (props: {
     const dispatch = useDispatch()
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const {
         createInstance, setCreateInstance, addToMolecule, fetchLigandDict, panelContent,
@@ -100,7 +100,7 @@ const MoorhenImportLigandDictionary = (props: {
                         const otherMolecules = [newMolecule]
                         await toMolecule.mergeMolecules(otherMolecules, true)
                         await toMolecule.redraw()
-                        dispatch( triggerScoresUpdate(toMolecule.molNo) )
+                        dispatch( triggerUpdate(toMolecule.molNo) )
                     } else {
                         await newMolecule.redraw()
                     }

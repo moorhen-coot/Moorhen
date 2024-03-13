@@ -3,8 +3,9 @@ import { Col, Row, Form, Card, Button, Stack, InputGroup } from 'react-bootstrap
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase"
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 
 interface Props extends moorhen.CollectedProps {
     dropdownId: number;
@@ -33,7 +34,8 @@ export const MoorhenWaterValidation = (props: Props) => {
     const [ignorePartOcc, setIgnorePartOcc] = useState<boolean>(false)
     const [ignoreZeroOcc, setIgnoreZeroOcc] = useState<boolean>(false)
 
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const dispatch = useDispatch()
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const viewWater = useCallback(async (selectedModel: number, water: libcootApi.AtomSpecJS) => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel)
@@ -48,6 +50,7 @@ export const MoorhenWaterValidation = (props: Props) => {
         if (selectedMolecule) {
             const cid = `/${water.model_number}/${water.chain_id}/${water.res_no}`
             await selectedMolecule.deleteCid(cid)
+            dispatch( triggerUpdate(selectedModel) )
         }
     }, [molecules])
 
@@ -56,6 +59,7 @@ export const MoorhenWaterValidation = (props: Props) => {
         if (selectedMolecule) {
             const cid = `/${water.model_number}/${water.chain_id}/${water.res_no}`
             await selectedMolecule.refineResiduesUsingAtomCid(cid, 'SNGLE')
+            dispatch( triggerUpdate(selectedModel) )
         }
     }, [molecules])
 

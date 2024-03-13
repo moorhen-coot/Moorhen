@@ -2,6 +2,7 @@ import { moorhen as _moorhen } from "./moorhen"
 import { webGL } from "./mgWebGL";
 import { libcootApi } from "./libcoot";
 import { gemmi } from "./gemmi";
+import { privateer } from "./privateer";
 
 declare module 'moorhen' {
 
@@ -49,6 +50,7 @@ declare module 'moorhen' {
 
     class MoorhenMolecule implements _moorhen.Molecule {
         constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibrary: string)
+        splitMultiModels(draw?: boolean): Promise<_moorhen.Molecule[]>;
         exportAsGltf(representationId: string): Promise<ArrayBuffer>;
         getNonSelectedCids(cid: string): string[];
         getSecondaryStructInfo(modelNumber?: number): Promise<libcootApi.ResidueSpecJS[]>;
@@ -78,6 +80,7 @@ declare module 'moorhen' {
         addDict(fileContent: string): Promise<void>;
         addDictShim(fileContent: string): void;
         toggleSymmetry(): Promise<void>;
+        toggleBiomolecule(): void;
         getDict(newTlc: string): string;
         addLigandOfType(resType: string, fromMolNo?: number): Promise<_moorhen.WorkerResponse>;
         updateAtoms(): Promise<void>;
@@ -92,9 +95,11 @@ declare module 'moorhen' {
         show(style: string, cid?: string): void;
         setSymmetryRadius(radius: number): Promise<void>;
         drawSymmetry: (fetchSymMatrix?: boolean) => Promise<void>;
+        drawBiomolecule (fetchSymMatrix?: boolean) : void;
         getUnitCellParams():  { a: number; b: number; c: number; alpha: number; beta: number; gamma: number; };
-        replaceModelWithFile(fileUrl: string): Promise<void>
-        delete(): Promise<_moorhen.WorkerResponse> 
+        replaceModelWithFile(fileUrl: string): Promise<void>;
+        replaceModelWithCoordData(coordData: string): Promise<void>;
+        delete(popBackImol?: boolean): Promise<_moorhen.WorkerResponse>;
         fetchDefaultColourRules(): Promise<void>;
         fetchIfDirtyAndDraw(arg0: string): Promise<void>;
         drawEnvironment: (cid: string, labelled?: boolean) => Promise<void>;
@@ -115,7 +120,18 @@ declare module 'moorhen' {
         downloadAtoms(format?: 'mmcif' | 'pdb'): Promise<void>;
         mergeFragmentFromRefinement(cid: string, fragmentMolecule: _moorhen.Molecule, acceptTransform?: boolean, refineAfterMerge?: boolean): Promise<void>;
         copyFragmentForRefinement(cid: string[], refinementMap: _moorhen.Map, redraw?: boolean, readrawFragmentFirst?: boolean): Promise<_moorhen.Molecule>;
-        refineResiduesUsingAtomCidAnimated(cid: string, activeMap: moorhen.Map, dist?: number, redraw?: boolean, redrawFragmentFirst?: boolean): Promise<void>;
+        refineResiduesUsingAtomCidAnimated(cid: string, activeMap: _moorhen.Map, dist?: number, redraw?: boolean, redrawFragmentFirst?: boolean): Promise<void>;
+        getPrivateerValidation(useCache?: boolean): Promise<privateer.ResultsEntry[]>;
+        getLigandSVG(resName: string, useCache?: boolean): Promise<string>;
+        isValidSelection(cid: string): Promise<boolean>;
+        changeChainId(oldId: string, newId: string, redraw?: boolean, startResNo?: number, endResNo?: number): Promise<number>;
+        redrawAdaptativeBonds(selectionString?: string, maxDist?: number): Promise<void>;
+        setDrawAdaptativeBonds(newValue: boolean): Promise<void>;
+        getActiveAtom(): Promise<string>;
+        adaptativeBondsEnabled: boolean;
+        cachedLigandSVGs: {[key: string]: string};
+        cachedGemmiAtoms: _moorhen.AtomInfo[];
+        cachedPrivateerValidation: privateer.ResultsEntry[];
         isLigand: boolean;
         type: string;
         excludedCids: string[];
@@ -132,6 +148,7 @@ declare module 'moorhen' {
         connectedToMaps: number[];
         excludedSelections: string[];
         symmetryOn: boolean;
+        biomolOn: boolean;
         symmetryRadius : number;
         symmetryMatrices: number[][][];
         gaussianSurfaceSettings: {
@@ -149,6 +166,7 @@ declare module 'moorhen' {
         defaultColourRules: _moorhen.ColourRule[];
         restraints: {maxRadius: number, cid: string}[];
         monomerLibraryPath: string;
+        adaptativeBondsRepresentation: _moorhen.MoleculeRepresentation;
         hoverRepresentation: _moorhen.MoleculeRepresentation;
         unitCellRepresentation: _moorhen.MoleculeRepresentation;
         environmentRepresentation: _moorhen.MoleculeRepresentation;
@@ -156,6 +174,7 @@ declare module 'moorhen' {
         hasDNA: boolean;
         hasGlycans: boolean;
         coordsFormat: _moorhen.coorFormats;
+        moleculeDiameter: number;
     }
     module.exports.MoorhenMolecule = MoorhenMolecule
     
@@ -192,7 +211,7 @@ declare module 'moorhen' {
         fetchReflectionData(): Promise<_moorhen.WorkerResponse<Uint8Array>>;
         getMap(): Promise<_moorhen.WorkerResponse>;
         loadToCootFromMtzURL(url: RequestInfo | URL, name: string, selectedColumns: _moorhen.selectedMtzColumns, options?: RequestInit): Promise<_moorhen.Map>;
-        loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap?: boolean, options?: RequestInit): Promise<_moorhen.Map>;
+        loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap?: boolean, decompress?: boolean, options?: RequestInit): Promise<_moorhen.Map>;
         setActive(): Promise<void>;
         setupContourBuffers(objects: any[], keepCootColours?: boolean): void;
         setOtherMapForColouring(molNo: number, min?: number, max?: number): void;
@@ -291,6 +310,21 @@ declare module 'moorhen' {
     function setDoSSAO(arg0: boolean): any;
     module.exports = setDoSSAO;
     
+    function setDoEdgeDetect(arg0: boolean): any;
+    module.exports = setDoEdgeDetect;
+
+    function setEdgeDetectDepthThreshold(arg0: number): any;
+    module.exports = setEdgeDetectDepthThreshold;
+
+    function setEdgeDetectNormalThreshold(arg0: number): any;
+    module.exports = setEdgeDetectNormalThreshold;
+
+    function setEdgeDetectDepthScale(arg0: number): any;
+    module.exports = setEdgeDetectDepthScale;
+
+    function setEdgeDetectNormalScale(arg0: number): any;
+    module.exports = setEdgeDetectNormalScale;
+
     function setSsaoRadius(arg0: number): any;
     module.exports = setSsaoRadius;
     
@@ -312,8 +346,8 @@ declare module 'moorhen' {
     function setDoShadow(arg0: boolean): any;
     module.exports = setDoShadow;
     
-    function setDoSpinTest(arg0: boolean): any;
-    module.exports = setDoSpinTest;
+    function setDoSpin(arg0: boolean): any;
+    module.exports = setDoSpin;
     
     function setDoOutline(arg0: boolean): any;
     module.exports = setDoOutline;

@@ -14,7 +14,7 @@ export const MoorhenCreateSelectionMenuItem = (props: {
 }) => {
 
     const dispatch = useDispatch()
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const cidFormRef = useRef<null | HTMLInputElement>(null)

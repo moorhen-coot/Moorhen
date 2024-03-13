@@ -4,10 +4,15 @@ import { setDefaultMapLitLines, setDefaultMapSamplingRate, setDefaultMapSurface,
 import { useSelector, useDispatch } from "react-redux"
 import { setContourWheelSensitivityFactor, setMouseSensitivity, setZoomWheelSensitivityFactor } from "../../store/mouseSettings";
 import { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold } from "../../store/backupSettingsSlice";
-import { overwriteMapUpdatingScores, setShowScoresToast } from "../../store/connectedMapsSlice";
+import { overwriteMapUpdatingScores, setShowScoresToast } from "../../store/moleculeMapUpdateSlice";
 import { setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
 import { setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } from "../../store/labelSettingsSlice";
-import { setClipCap, setDefaultBackgroundColor, setDefaultBondSmoothness, setDepthBlurDepth, setDepthBlurRadius, setDoOutline, setDoPerspectiveProjection, setDoSSAO, setDoShadow, setDoShadowDepthDebug, setDoSpinTest, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawInteractions, setDrawMissingLoops, setResetClippingFogging, setSsaoBias, setSsaoRadius, setUseOffScreenBuffers, setDrawScaleBar } from "../../store/sceneSettingsSlice";
+import { 
+    setClipCap, setDefaultBackgroundColor, setDefaultBondSmoothness, setDepthBlurDepth, setDepthBlurRadius, setDoOutline,
+    setDoPerspectiveProjection, setDoSSAO, setDoShadow, setDoShadowDepthDebug, setDrawAxes, setDrawCrosshairs, setUseOffScreenBuffers,
+    setDrawFPS, setDrawInteractions, setDrawMissingLoops, setResetClippingFogging, setSsaoBias, setSsaoRadius, setEdgeDetectNormalScale,
+    setDrawScaleBar, setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale
+} from "../../store/sceneSettingsSlice";
 import { setAnimateRefine, setDefaultExpandDisplayCards, setEnableRefineAfterMod, setTransparentModalsOnMouseOut } from "../../store/miscAppSettingsSlice";
 import { setDevMode, setUserPreferencesMounted } from "../../store/generalStatesSlice";
 import { moorhen } from "../../types/moorhen"
@@ -40,8 +45,8 @@ export const MoorhenPreferencesContainer = (props: {
     const shortcutOnHoveredAtom = useSelector((state: moorhen.State) => state.shortcutSettings.shortcutOnHoveredAtom)
 
     // Updating scores
-    const showScoresToast = useSelector((state: moorhen.State) => state.connectedMaps.showScoresToast)
-    const defaultUpdatingScores = useSelector((state: moorhen.State) => state.connectedMaps.defaultUpdatingScores)
+    const showScoresToast = useSelector((state: moorhen.State) => state.moleculeMapUpdate.showScoresToast)
+    const defaultUpdatingScores = useSelector((state: moorhen.State) => state.moleculeMapUpdate.defaultUpdatingScores)
 
     // Label settings
     const atomLabelDepthMode = useSelector((state: moorhen.State) => state.labelSettings.atomLabelDepthMode)
@@ -63,6 +68,11 @@ export const MoorhenPreferencesContainer = (props: {
     const drawAxes = useSelector((state: moorhen.State) => state.sceneSettings.drawAxes)
     const drawInteractions = useSelector((state: moorhen.State) => state.sceneSettings.drawInteractions)
     const doSSAO = useSelector((state: moorhen.State) => state.sceneSettings.doSSAO)
+    const doEdgeDetect = useSelector((state: moorhen.State) => state.sceneSettings.doEdgeDetect)
+    const edgeDetectDepthThreshold = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectDepthThreshold)
+    const edgeDetectNormalThreshold = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectNormalThreshold)
+    const edgeDetectDepthScale = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectDepthScale)
+    const edgeDetectNormalScale = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectNormalScale)
     const ssaoRadius = useSelector((state: moorhen.State) => state.sceneSettings.ssaoRadius)
     const ssaoBias = useSelector((state: moorhen.State) => state.sceneSettings.ssaoBias)
     const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging)
@@ -71,7 +81,6 @@ export const MoorhenPreferencesContainer = (props: {
     const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers)
     const doShadowDepthDebug = useSelector((state: moorhen.State) => state.sceneSettings.doShadowDepthDebug)
     const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
-    const doSpinTest = useSelector((state: moorhen.State) => state.sceneSettings.doSpinTest)
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline)
     const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius)
     const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth)
@@ -118,17 +127,21 @@ export const MoorhenPreferencesContainer = (props: {
         32: { label: "doShadow", value: doShadow, valueSetter: setDoShadow},
         33: { label: "GLLabelsFontFamily", value: GLLabelsFontFamily, valueSetter: setGLLabelsFontFamily},
         34: { label: "GLLabelsFontSize", value: GLLabelsFontSize, valueSetter: setGLLabelsFontSize},
-        35: { label: "doSpinTest", value: doSpinTest, valueSetter: setDoSpinTest},
-        36: { label: "doOutline", value: doOutline, valueSetter: setDoOutline},
-        37: { label: "depthBlurRadius", value: depthBlurRadius, valueSetter: setDepthBlurRadius},
-        38: { label: "depthBlurDepth", value: depthBlurDepth, valueSetter: setDepthBlurDepth},
-        39: { label: "transparentModalsOnMouseOut", value: transparentModalsOnMouseOut, valueSetter: setTransparentModalsOnMouseOut},
-        40: { label: "defaultMapSamplingRate", value: defaultMapSamplingRate, valueSetter: setDefaultMapSamplingRate},
-        41: { label: "doSSAO", value: doSSAO, valueSetter: setDoSSAO},
-        42: { label: "ssaoRadius", value: ssaoRadius, valueSetter: setSsaoRadius},
-        43: { label: "ssaoBias", value: ssaoBias, valueSetter: setSsaoBias},
-        44: { label: "drawScaleBar", value: drawScaleBar, valueSetter: setDrawScaleBar},
-        45: { label: "animateRefine", value: animateRefine, valueSetter: setAnimateRefine},
+        35: { label: "doOutline", value: doOutline, valueSetter: setDoOutline},
+        36: { label: "depthBlurRadius", value: depthBlurRadius, valueSetter: setDepthBlurRadius},
+        37: { label: "depthBlurDepth", value: depthBlurDepth, valueSetter: setDepthBlurDepth},
+        38: { label: "transparentModalsOnMouseOut", value: transparentModalsOnMouseOut, valueSetter: setTransparentModalsOnMouseOut},
+        39: { label: "defaultMapSamplingRate", value: defaultMapSamplingRate, valueSetter: setDefaultMapSamplingRate},
+        40: { label: "doSSAO", value: doSSAO, valueSetter: setDoSSAO},
+        41: { label: "ssaoRadius", value: ssaoRadius, valueSetter: setSsaoRadius},
+        42: { label: "ssaoBias", value: ssaoBias, valueSetter: setSsaoBias},
+        43: { label: "drawScaleBar", value: drawScaleBar, valueSetter: setDrawScaleBar},
+        44: { label: "animateRefine", value: animateRefine, valueSetter: setAnimateRefine},
+        45: { label: "doEdgeDetect", value: doEdgeDetect, valueSetter: setDoEdgeDetect},
+        46: { label: "edgeDetectDepthThreshold", value: edgeDetectDepthThreshold, valueSetter: setEdgeDetectDepthThreshold},
+        47: { label: "edgeDetectNormalThreshold", value: edgeDetectNormalThreshold, valueSetter: setEdgeDetectNormalThreshold},
+        48: { label: "edgeDetectDepthScale", value: edgeDetectDepthScale, valueSetter: setEdgeDetectDepthScale},
+        49: { label: "edgeDetectNormalScale", value: edgeDetectNormalScale, valueSetter: setEdgeDetectNormalScale},
     }
 
     const restoreDefaults = (preferences: moorhen.Preferences, defaultValues: moorhen.PreferencesValues)=> {
@@ -460,6 +473,46 @@ export const MoorhenPreferencesContainer = (props: {
 
     useMemo(() => {
 
+        if (edgeDetectDepthThreshold === null) {
+            return
+        }
+
+        localForageInstanceRef.current?.localStorageInstance.setItem('edgeDetectDepthThreshold', edgeDetectDepthThreshold)
+        .then(_ => props.onUserPreferencesChange('edgeDetectDepthThreshold', edgeDetectDepthThreshold));
+    }, [edgeDetectDepthThreshold]);
+
+    useMemo(() => {
+
+        if (edgeDetectNormalThreshold === null) {
+            return
+        }
+
+        localForageInstanceRef.current?.localStorageInstance.setItem('edgeDetectNormalThreshold', edgeDetectNormalThreshold)
+        .then(_ => props.onUserPreferencesChange('edgeDetectNormalThreshold', edgeDetectNormalThreshold));
+    }, [edgeDetectNormalThreshold]);
+
+    useMemo(() => {
+
+        if (edgeDetectDepthScale === null) {
+            return
+        }
+
+        localForageInstanceRef.current?.localStorageInstance.setItem('edgeDetectDepthScale', edgeDetectDepthScale)
+        .then(_ => props.onUserPreferencesChange('edgeDetectDepthScale', edgeDetectDepthScale));
+    }, [edgeDetectDepthScale]);
+
+    useMemo(() => {
+
+        if (edgeDetectNormalScale === null) {
+            return
+        }
+
+        localForageInstanceRef.current?.localStorageInstance.setItem('edgeDetectNormalScale', edgeDetectNormalScale)
+        .then(_ => props.onUserPreferencesChange('edgeDetectNormalScale', edgeDetectNormalScale));
+    }, [edgeDetectNormalScale]);
+
+    useMemo(() => {
+
         if (ssaoBias === null) {
             return
         }
@@ -540,6 +593,16 @@ export const MoorhenPreferencesContainer = (props: {
 
     useMemo(() => {
 
+        if (doEdgeDetect === null) {
+            return
+        }
+
+        localForageInstanceRef.current?.localStorageInstance.setItem('doEdgeDetect', doEdgeDetect)
+        .then(_ => props.onUserPreferencesChange('doEdgeDetect', doEdgeDetect));
+    }, [doEdgeDetect]);
+
+    useMemo(() => {
+
         if (GLLabelsFontFamily === null) {
             return
         }
@@ -557,16 +620,6 @@ export const MoorhenPreferencesContainer = (props: {
         localForageInstanceRef.current?.localStorageInstance.setItem('GLLabelsFontSize', GLLabelsFontSize)
         .then(_ => props.onUserPreferencesChange('GLLabelsFontSize', GLLabelsFontSize));
     }, [GLLabelsFontSize]);
-
-    useMemo(() => {
-
-        if (doSpinTest === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('doSpinTest', doSpinTest)
-        .then(_ => props.onUserPreferencesChange('doSpinTest', doSpinTest));
-    }, [doSpinTest]);
 
     useMemo(() => {
 

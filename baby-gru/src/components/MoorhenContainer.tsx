@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useRef, useMemo } from 'react';
 import { Container, Col, Row, Spinner } from 'react-bootstrap';
 import { MoorhenWebMG } from './webMG/MoorhenWebMG';
-import { getTooltipShortcutLabel, createLocalStorageInstance } from '../utils/MoorhenUtils';
+import { getTooltipShortcutLabel, createLocalStorageInstance, getAtomInfoLabel } from '../utils/MoorhenUtils';
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre"
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
 import { Backdrop } from "@mui/material";
@@ -13,11 +13,13 @@ import { MoorhenModalsContainer } from './misc/MoorhenModalsContainer'
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
 import { MoorhenPreferencesContainer } from './misc/MoorhenPreferencesContainer'
+import { MoorhenLongJobNotification } from './misc/MoorhenLongJobNotification'
 import { MoorhenResidueSelectionActions } from './misc/MoorhenResidueSelectionActions'
 import { useSelector, useDispatch } from 'react-redux';
 import { setDefaultBackgroundColor, setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/sceneSettingsSlice';
-import { setCootInitialized, setNotificationContent, setTheme, toggleCootCommandAlert } from '../store/generalStatesSlice';
+import { setCootInitialized, setNotificationContent, setTheme, toggleCootCommandExit, toggleCootCommandStart } from '../store/generalStatesSlice';
 import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSlice';
+import { MoorhenSharedSessionManager } from './misc/MoorhenSharedSessionManager';
 
 /**
  * A container for the Moorhen app. Needs to be rendered within a MoorhenReduxprovider.
@@ -78,7 +80,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     
     const dispatch = useDispatch()
     const maps = useSelector((state: moorhen.State) => state.maps)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const cursorStyle = useSelector((state: moorhen.State) => state.hoveringStates.cursorStyle)
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const cootInitialized = useSelector((state: moorhen.State) => state.generalStates.cootInitialized)
@@ -285,9 +287,10 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 dispatch( setCootInitialized(true) )
             },
             onCommandExit: (kwargs) => {
-                if (kwargs.doJournal) {
-                    dispatch( toggleCootCommandAlert() )
-                }
+                dispatch( toggleCootCommandExit() )
+            },
+            onCommandStart: (kwargs) => {
+                dispatch( toggleCootCommandStart() )
             }
         })
         return () => {
@@ -308,7 +311,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         checkMoleculeSizes()
     }, [molecules])
 
-    const onAtomHovered = useCallback((identifier: { buffer: { id: string; }; atom: { label: string; }; }) => {
+    const onAtomHovered = useCallback((identifier: { buffer: { id: string; }; atom: moorhen.AtomInfo; }) => {
         if (identifier == null) {
             if (lastHoveredAtomRef.current !== null && lastHoveredAtomRef.current.molecule !== null) {
                 dispatch( setHoveredAtom({ molecule: null, cid: null }) )
@@ -317,8 +320,9 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         else {
             molecules.forEach(molecule => {
                 if (molecule.buffersInclude(identifier.buffer)) {
-                    if (molecule !== hoveredAtom.molecule || identifier.atom.label !== hoveredAtom.cid) {
-                        dispatch( setHoveredAtom({ molecule: molecule, cid: identifier.atom.label }) )
+                    const newCid = getAtomInfoLabel(identifier.atom)
+                    if (molecule !== hoveredAtom.molecule || newCid !== hoveredAtom.cid) {
+                        dispatch( setHoveredAtom({ molecule: molecule, cid: newCid }) )
                     }
                 }
             })
@@ -396,6 +400,15 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     <MoorhenResidueSelectionActions/>
 
+    <MoorhenSharedSessionManager
+        commandCentre={props.commandCentre}
+        glRef={props.glRef}
+        monomerLibrary={monomerLibraryPath}
+        moleculesRef={moleculesRef}
+        mapsRef={mapsRef}
+        activeMapRef={activeMapRef}
+    />
+
     <Container fluid className={`baby-gru ${theme}`}>
         <Row>
             <Col style={{ paddingLeft: '0', paddingRight: '0' }}>
@@ -425,6 +438,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             </Col>
         </Row>
         {notificationContent}
+        <MoorhenLongJobNotification commandCentre={props.commandCentre}/>
     </Container>
     </>
 }

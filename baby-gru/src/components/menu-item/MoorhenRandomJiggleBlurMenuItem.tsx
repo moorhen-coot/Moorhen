@@ -8,7 +8,8 @@ import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { clearResidueSelection } from "../../store/generalStatesSlice";
 
 export const MoorhenRandomJiggleBlurMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -17,8 +18,10 @@ export const MoorhenRandomJiggleBlurMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
     
+    const dispatch = useDispatch()
+    const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
     const maps = useSelector((state: moorhen.State) => state.maps)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
@@ -115,6 +118,7 @@ export const MoorhenRandomJiggleBlurMenuItem = (props: {
             ref={cidSelectRef}
             margin="0.5rem"
             onChange={(evt) => setCid(evt.target.value)}
+            allowUseCurrentSelection={true}
             placeholder={cidSelectRef.current ? "" : "Input custom selection e.g. //A,B"}/>
         <MoorhenSlider
             ref={bFactorSliderRef}
@@ -166,6 +170,10 @@ export const MoorhenRandomJiggleBlurMenuItem = (props: {
             return
         }
 
+        if (cidSelectRef.current.value === residueSelection?.cid) {
+            dispatch( clearResidueSelection() )
+        }
+        
         await props.commandCentre.current.cootCommand({
             command: "fit_to_map_by_random_jiggle_with_blur_using_cid",
             returnType: 'status',

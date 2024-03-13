@@ -4,7 +4,7 @@ import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MoorhenScenePresetMenuItem } from "../menu-item/MoorhenScenePresetMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch } from "react-redux";
-import { setDoPerspectiveProjection, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawInteractions, setDrawMissingLoops, setDrawScaleBar } from "../../store/sceneSettingsSlice";
+import { setDoPerspectiveProjection, setDoSpin, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawInteractions, setDrawMissingLoops, setDrawScaleBar } from "../../store/sceneSettingsSlice";
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { convertViewtoPx } from "../../utils/MoorhenUtils";
 import { MenuItem } from "@mui/material";
@@ -21,6 +21,7 @@ export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const drawInteractions = useSelector((state: moorhen.State) => state.sceneSettings.drawInteractions)
     const doPerspectiveProjection = useSelector((state: moorhen.State) => state.sceneSettings.doPerspectiveProjection)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const doSpin = useSelector((state: moorhen.State) => state.sceneSettings.doSpin)
     const dispatch = useDispatch()
 
     const menuItemProps = {setPopoverIsShown, ...props}
@@ -87,6 +88,13 @@ export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                         checked={doPerspectiveProjection}
                         onChange={() => {dispatch( setDoPerspectiveProjection(!doPerspectiveProjection) )}}
                         label="Perspective projection"/>
+                </InputGroup>
+                <InputGroup className='moorhen-input-group-check'>
+                    <Form.Check 
+                        type="switch"
+                        checked={doSpin}
+                        onChange={() => {dispatch( setDoSpin(!doSpin) )}}
+                        label="Spin view"/>
                 </InputGroup>
                 <hr></hr>
                 <MoorhenScenePresetMenuItem {...menuItemProps} />

@@ -7,6 +7,7 @@ uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D texNoise;
 uniform float zoom;
+uniform float depthBufferSize;
 
 in vec2 out_TexCoord0;
 
@@ -35,6 +36,7 @@ void main() {
     float occlusion;
 
     vec3 fragPos;
+    float diffMult = 0.5 * depthBufferSize;
     if(normal_all.a>0.9){
         vec3 normal = normalize(normal_all.rgb);
 
@@ -61,7 +63,7 @@ void main() {
             // get sample depth
             float sampleDepth = texture(gPosition, offset.xy).z; // get depth value of kernel sample
 
-            float   dz = max ( fragPos.z - sampleDepth, 0.0 ) * 30.0;
+            float   dz = max ( fragPos.z - sampleDepth, 0.0 ) * diffMult;
             occlusion += 1.0 / ( 1.0 + dz*dz );
 
         }

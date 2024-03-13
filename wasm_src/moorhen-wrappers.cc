@@ -20,6 +20,12 @@
 #include <cstdlib>
 #include <fstream>
 #include <utility>
+#include <cctype>
+#include <gemmi/mmdb.hpp>
+
+#include "kmeans.h"
+#include "agglomerative.h"
+#include "Eigen/Dense"
 
 #include <math.h>
 #ifndef M_PI
@@ -35,7 +41,7 @@
 #include "ligand/primitive-chi-angles.hh"
 #include "ligand/rotamer.hh"
 #include "api/interfaces.hh"
-#include "api/molecules_container.hh"
+#include "api/molecules-container.hh"
 #include "api/validation-information.hh"
 #include "coot-utils/g_triangle.hh"
 #include "coot-utils/vertex.hh"
@@ -182,6 +188,83 @@ class molecules_container_js : public molecules_container_t {
             
         }
 
+        std::vector<std::pair<std::string,int>> slicendice_slice(int imol, int nclusters, const std::string &clustering_method){
+
+            std::vector<std::pair<std::string,int>> cid_label_pair;
+            mmdb::Manager *mol = get_mol(imol);
+            gemmi::Structure st = gemmi::copy_from_mmdb(mol);
+            gemmi::setup_entities(st);
+            gemmi::remove_ligands_and_waters(st);
+            std::string molecule_type = "protein";
+
+            std::vector<std::pair<std::string,std::array<float,3>>> atoms;
+
+            for(const auto &model : st.models){
+                for(const auto &chain : model.chains){
+                    for(const auto &residue : chain.residues){
+                        //FIXME molecule_type should be changeable and mixed, nucleic should be allowed.
+                        bool doneThisRes = false;
+                        for (const gemmi::Atom& atom : residue.atoms){
+                            //std::cout << "--" << atom.name << "--" << std::endl;
+                            std::string s = atom.name;
+                            s.erase(std::remove_if(s.begin(), s.end(), ::isspace), s.end());
+                            if (molecule_type == "protein" && s == "CA" && !doneThisRes) {
+                                std::array<float,3> at;
+                                at[0] = atom.pos.x;
+                                at[1] = atom.pos.y;
+                                at[2] = atom.pos.z;
+                                std::stringstream cidbuffer;
+                                cidbuffer << "/" << model.name << "/" << chain.name << "/" << residue.seqid.num.value;
+                                if(residue.seqid.icode!=' ')
+                                    cidbuffer << "." << residue.seqid.icode;
+                                const std::string cid = cidbuffer.str();
+                                std::pair<std::string,std::array<float,3>> thePair;
+                                thePair.first = cid;
+                                thePair.second = at;
+                                atoms.push_back(thePair);
+                                doneThisRes = true;
+                            }
+                        }
+                    }
+                }
+            }
+            std::cout << "slicendice_slice atoms.size() " << atoms.size() << std::endl;
+
+            if(atoms.size()>0){
+                Eigen::VectorXi labels;
+                Eigen::MatrixXd atomic_matrix(atoms.size(), 3);
+
+                for (int i = 0; i < atoms.size(); i++) {
+                    atomic_matrix(i, 0) = atoms[i].second[0];
+                    atomic_matrix(i, 1) = atoms[i].second[1];
+                    atomic_matrix(i, 2) = atoms[i].second[2];
+                }
+
+                if (clustering_method == "kmeans") {
+                    KMeans kmeans(nclusters);
+                    kmeans.fit(atomic_matrix);
+                    labels = kmeans.labels_;
+                } else if (clustering_method == "agglomerative") {
+                    Agglomerative agglomerative(nclusters);
+                    agglomerative.fit(atomic_matrix);
+                    labels = agglomerative.labels_;
+                } else {
+                    std::cout << "Clustering method: " << clustering_method << " not yet implemented." << std::endl;
+                }
+
+                for (int i = 0; i < labels.size(); i++) {
+                    std::pair<std::string,int> thePair;
+                    thePair.first = atoms[i].first;
+                    thePair.second = labels[i];
+                    //std::cout << "Adding " << thePair.first << " " << thePair.second << std::endl;
+                    cid_label_pair.push_back(thePair);
+                }
+            }
+            std::cout << "slicendice_slice return vector of size:" << cid_label_pair.size() << std::endl;
+            return cid_label_pair;
+
+        }
+
         std::vector<coot::residue_spec_t> GetSecondaryStructure(int imol, int imodel=1) {
             mmdb::Manager *mol = get_mol(imol);
             return getSecondaryStructure(mol,imodel);
@@ -201,6 +284,10 @@ class molecules_container_js : public molecules_container_t {
         coot::simple_mesh_t DrawMoorhenMetaBalls(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel) {
             mmdb::Manager *mol = get_mol(imol);
             return GenerateMoorhenMetaBalls(mol,cid_str,gridSize,radius,isoLevel);
+        }
+
+        std::pair<std::string, std::string> mol_text_to_pdb(const std::string &mol_text_cpp, const std::string &TLC, int nconf, int maxIters, bool keep_orig_coords) {
+            return MolTextToPDB(mol_text_cpp, TLC, nconf, maxIters, keep_orig_coords);
         }
 
         std::pair<std::string, std::string> smiles_to_pdb(const std::string &smile_cpp, const std::string &TLC, int nconf, int maxIters) {
@@ -830,19 +917,19 @@ emscripten::val testFloat32Array(const emscripten::val &floatArrayObject){
 }
 
 EMSCRIPTEN_BINDINGS(my_module) {
-// PRIVATEER
- value_object<TorsionEntry>("TorsionEntry")
+    // PRIVATEER
+    value_object<TorsionEntry>("TorsionEntry")
       .field("sugar_1", &TorsionEntry::sugar_1)
       .field("sugar_2", &TorsionEntry::sugar_2)
       .field("atom_number_1", &TorsionEntry::atom_number_1)
       .field("atom_number_2", &TorsionEntry::atom_number_2)
       .field("phi", &TorsionEntry::phi)
-      .field("psi", &TorsionEntry::psi);
+      .field("psi", &TorsionEntry::psi)
+    ;
 
     register_vector<TorsionEntry>("vector<TorsionEntry>");
 
-
-  value_object<TableEntry>("TableEntry")
+    value_object<TableEntry>("TableEntry")
       .field("svg", &TableEntry::svg)
       .field("wurcs", &TableEntry::wurcs)
       .field("chain", &TableEntry::chain)
@@ -855,12 +942,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
       .field("puckering_err", &TableEntry::puckering_err)
       .field("chirality_err", &TableEntry::chirality_err)
       .field("torsions", &TableEntry::torsions)
-      ;
+    ;
 
- function("validate", &validate);
-  register_vector<TableEntry>("Table");
-// END PRIVATEER
-
+    function("validate", &validate);
+    register_vector<TableEntry>("Table");
+    // END PRIVATEER
 
     function("testFloat32Array", &testFloat32Array);
     function("getPositionsFromSimpleMesh2", &getPositionsFromSimpleMesh2);
@@ -1090,6 +1176,10 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("set_refinement_is_verbose", &molecules_container_t::set_refinement_is_verbose)
+    .function("split_multi_model_molecule", &molecules_container_t::split_multi_model_molecule)
+    .function("print_non_drawn_bonds", &molecules_container_t::print_non_drawn_bonds)
+    .function("pop_back", &molecules_container_t::pop_back)
     .function("get_use_gemmi", &molecules_container_t::get_use_gemmi)
     .function("set_use_gemmi", &molecules_container_t::set_use_gemmi)
     .function("generate_local_self_restraints", &molecules_container_t::generate_local_self_restraints)
@@ -1102,6 +1192,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("molecule_to_mmCIF_string", &molecules_container_t::molecule_to_mmCIF_string)
     .function("molecule_to_PDB_string", &molecules_container_t::molecule_to_PDB_string)
     .function("clear_refinement",&molecules_container_t::clear_refinement)
+    .function("fourier_shell_correlation",&molecules_container_t::fourier_shell_correlation)
     .function("get_suggested_initial_contour_level",&molecules_container_t::get_suggested_initial_contour_level)
     .function("clear_target_position_restraints",&molecules_container_t::clear_target_position_restraints)
     .function("add_target_position_restraint_and_refine",&molecules_container_t::add_target_position_restraint_and_refine)
@@ -1137,6 +1228,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("set_make_backups",&molecules_container_t::set_make_backups)
     .function("get_chains_in_model",&molecules_container_t::get_chains_in_model)
     .function("get_residue_names_with_no_dictionary",&molecules_container_t::get_residue_names_with_no_dictionary)
+    .function("get_residue_name", &molecules_container_t::get_residue_name)
+    .function("get_molecule_diameter", &molecules_container_t::get_molecule_diameter)
+    .function("multiply_residue_temperature_factors", &molecules_container_t::multiply_residue_temperature_factors)
+    .function("shift_field_b_factor_refinement", &molecules_container_t::shift_field_b_factor_refinement)
+    .function("change_chain_id", &molecules_container_t::change_chain_id)
     .function("write_map",&molecules_container_t::write_map)
     .function("delete_atom",&molecules_container_t::delete_atom)
     .function("delete_atom_using_cid",&molecules_container_t::delete_atom_using_cid)
@@ -1208,6 +1304,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("add_alternative_conformation",&molecules_container_t::add_alternative_conformation)
     .function("delete_using_cid",&molecules_container_t::delete_using_cid)
     .function("get_bonds_mesh",&molecules_container_t::get_bonds_mesh)
+    .function("get_goodsell_style_mesh_instanced", &molecules_container_t::get_goodsell_style_mesh_instanced)
+    .function("clear", &molecules_container_t::clear)
     .function("get_bonds_mesh_instanced",&molecules_container_t::get_bonds_mesh_instanced)
     .function("get_bonds_mesh_for_selection_instanced",&molecules_container_t::get_bonds_mesh_for_selection_instanced)
     .function("go_to_blob",&molecules_container_t::go_to_blob)
@@ -1281,17 +1379,17 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_neighbours_cid",&molecules_container_js::get_neighbours_cid)
     .function("make_exportable_environment_bond_box",&molecules_container_js::make_exportable_environment_bond_box)
     .function("DrawGlycoBlocks",&molecules_container_js::DrawGlycoBlocks)
-     .function("privateer_validate",&molecules_container_js::privateer_validate)
-
+    .function("privateer_validate",&molecules_container_js::privateer_validate)
     .function("GetSecondaryStructure",&molecules_container_js::GetSecondaryStructure)
     .function("DrawMoorhenMetaBalls",&molecules_container_js::DrawMoorhenMetaBalls)
     .function("model_has_glycans",&molecules_container_js::model_has_glycans)
     .function("get_molecule_atoms", &molecules_container_js::get_molecule_atoms)
     .function("read_pdb_string", &molecules_container_js::read_pdb_string)
     .function("smiles_to_pdb", &molecules_container_js::smiles_to_pdb)
+    .function("mol_text_to_pdb", &molecules_container_js::mol_text_to_pdb)
     .function("replace_molecule_by_model_from_string", &molecules_container_js::replace_molecule_by_model_from_string)
     .function("read_dictionary_string", &molecules_container_js::read_dictionary_string)
-    // .function("export_imol_as_gltf_string", &molecules_container_js::export_imol_as_gltf_string)
+    .function("slicendice_slice", &molecules_container_js::slicendice_slice)
     ;
     value_object<molecules_container_t::fit_ligand_info_t>("fit_ligand_info_t")
     .field("imol", &molecules_container_t::fit_ligand_info_t::imol)
@@ -1513,7 +1611,10 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>("Map_residue_spec_t_density_correlation_stats_info_t");
     register_vector<std::array<float, 16>>("VectorArrayFloat16");
     register_vector<std::pair<clipper::Coord_orth, float>>("VectorClipperCoordOrth_float_pair");
+    register_vector<std::pair<std::string, int>>("VectorStringInt_pair");
     register_vector<std::pair<int, int>>("VectorInt_pair");
+    register_vector<std::pair<float, float>>("VectorFloat_pair");
+    register_vector<std::pair<double, double>>("VectorDouble_pair");
     register_vector<std::pair<std::string, unsigned int> >("VectorStringUInt_pair");
     register_vector<std::pair<symm_trans_t, Cell_Translation>>("Vectorsym_trans_t_Cell_Translation_pair");
     register_vector<std::pair<std::string, std::string>>("Vectorstring_string_pair");
@@ -1583,6 +1684,10 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("first",&std::pair<std::string, std::string>::first)
         .field("second",&std::pair<std::string, std::string>::second)
     ;
+    value_object<std::pair<std::string,int>>("string_int_pair")
+        .field("first",&std::pair<std::string,int>::first)
+        .field("second",&std::pair<std::string,int>::second)
+    ;
     value_object<std::pair<int,std::string>>("int_string_pair")
         .field("first",&std::pair<int,std::string>::first)
         .field("second",&std::pair<int,std::string>::second)
@@ -1598,6 +1703,14 @@ EMSCRIPTEN_BINDINGS(my_module) {
     value_object<std::pair<int,int>>("int_int_pair")
         .field("first",&std::pair<int,int>::first)
         .field("second",&std::pair<int,int>::second)
+    ;
+    value_object<std::pair<float,float>>("float_float_pair")
+        .field("first",&std::pair<float,float>::first)
+        .field("second",&std::pair<float,float>::second)
+    ;
+    value_object<std::pair<double,double>>("double_double_pair")
+        .field("first",&std::pair<double,double>::first)
+        .field("second",&std::pair<double,double>::second)
     ;
     value_object<std::pair<std::string, unsigned int>>("string_uint_pair")
         .field("first",&std::pair<std::string, unsigned int>::first)

@@ -36,6 +36,7 @@ export namespace webGL {
         drawTextOverlays(invMat: number[]) : void;
         drawAxes(invMat: number[]) : void;
         drawScaleBar(invMat: number[]) : void;
+        drawLineMeasures(invMat: number[]) : void;
         drawCrosshairs(invMat: number[]) : void;
         drawMouseTrack() : void;
         reContourMaps() : void;
@@ -54,7 +55,12 @@ export namespace webGL {
         doMouseMove(event: Event, self: any) : void;
         doDoubleClick(event: Event, self: any) : void;
         doMouseUp(event: Event, self: any) : void;
+        doMouseUpMeasure(event: Event, self: any) : void;
+        doMouseDownMeasure(event: Event, self: any) : void;
+        doMouseMoveMeasure(event: Event, self: any) : void;
         getAtomFomMouseXY(event: Event, self: any) : number[];
+        getMouseXYGL(event: Event, self: any) : any;
+        canvasPointToGLPoint(point: any) : any;
         updateLabels(): void;
         doRightClick(event: Event, self: any): void;
         doClick(event: Event, self: any): void;
@@ -66,7 +72,7 @@ export namespace webGL {
         drawImagesAndText(invMat: mat4) : void;
         drawTransparent(theMatrix: mat4) : void;
         bindFramebufferDrawBuffers() : void;
-        GLrender(calculatingShadowMap: boolean) : mat4; 
+        GLrender(calculatingShadowMap: boolean) : mat4;
         drawTransformMatrixInteractivePMV(transformMatrix:number[], transformOrigin:number[], buffer:any, shader:any, vertexType:number, bufferIdx:number) : any;
         drawTransformMatrixPMV(transformMatrix:number[], buffer:any, shader:any, vertexType:number, bufferIdx:number) : any;
         setupModelViewTransformMatrixInteractive(transformMatrix:number[], transformOrigin:number[], buffer: any, shader: MGWebGLShader, vertexType: number, bufferIdx: number, specialDrawBuffer: any) : void;
@@ -85,7 +91,8 @@ export namespace webGL {
         initInstancedShadowShaders(vertexShaderShadow : string, fragmentShaderShadow : string)  : void;
         initShadowShaders(vertexShaderShadow : string, fragmentShaderShadow : string)  : void;
         initBlurXShader(vertexShaderBlurX : string, fragmentShaderBlurX : string)  : void;
-        initSSAOShader(vertexShaderBlurX : string, fragmentShaderBlurX : string)  : void;
+        initSSAOShader(vertexShaderBlurX : string, ssaoFragmentShader : string)  : void;
+        initEdgeDetectShader(vertexShaderBlurX : string, edgeDetectFragmentShader : string)  : void;
         initBlurYShader(vertexShaderBlurY : string, fragmentShaderBlurY : string)  : void;
         initSimpleBlurXShader(vertexShaderBlurX : string, fragmentShaderBlurX : string)  : void;
         initSimpleBlurYShader(vertexShaderBlurX : string, fragmentShaderBlurX : string)  : void;
@@ -148,6 +155,11 @@ export namespace webGL {
         setShadowDepthDebug(doShadowDepthDebug: boolean): void;
         setShadowsOn(doShadow: boolean): void;
         setSSAOOn(doSSAO: boolean): void;
+        setEdgeDetectOn(doEdgeDetect: boolean): void;
+        setEdgeDetectDepthThreshold(depthThreshold: number): void;
+        setEdgeDetectNormalThreshold(normalThreshold: number): void;
+        setEdgeDetectDepthScale(depthScale: number): void;
+        setEdgeDetectNormalScale(normalScale: number): void;
         setOccludeDiffuse(doOccludeDiffuse: boolean): void;
         setOutlinesOn(doOutline: boolean): void;
         setSpinTestState(doSpinTest: boolean): void;
@@ -172,6 +184,8 @@ export namespace webGL {
         clearTextPositionBuffers(): void;
         recreateSilhouetteBuffers() : void;
         createSSAOFramebufferBuffer() : void;
+        createGBuffers(width : number,height : number) : void;
+        createEdgeDetectFramebufferBuffer(width : number,height : number) : void;
         recreateOffScreeenBuffers(width: number,  height: number) : void;
         createSimpleBlurOffScreeenBuffers() : void;
         draggableMolecule: moorhen.Molecule
@@ -204,6 +218,8 @@ export namespace webGL {
         measuredAtoms: clickAtom[][];
         pixel_data: Uint8Array;
         screenshotBuffersReady: boolean;
+        edgeDetectFramebufferSize : number;
+        gBuffersFramebufferSize : number;
         save_pixel_data: boolean;
         renderToTexture: boolean;
         showShortCutHelp: string[];
@@ -211,7 +227,7 @@ export namespace webGL {
         doRedraw: boolean;
         circleCanvasInitialized: boolean;
         textCanvasInitialized: boolean;
-        currentlyDraggedAtom: null | {atom: {charge: number, tempFactor: number, x: number, y: number, z: number, symbol: string, label:string}, buffer: DisplayBuffer};
+        currentlyDraggedAtom: null | {atom: moorhen.AtomInfo; buffer: DisplayBuffer};
         gl_cursorPos: Float32Array;
         textCtx: CanvasRenderingContext2D;
         circleCtx: CanvasRenderingContext2D;
@@ -244,6 +260,11 @@ export namespace webGL {
         diskVertices: number[];
         doShadow: boolean;
         doSSAO: boolean;
+        doEdgeDetect: boolean;
+        depthThreshold: number;
+        normalThreshold: number;
+        scaleDepth: number;
+        scaleNormal: number;
         occludeDiffuse: boolean;
         doShadowDepthDebug: boolean;
         doSpin: boolean;
@@ -277,7 +298,12 @@ export namespace webGL {
         mapLineWidth: number;
         measureCylinderBuffers: DisplayBuffer[];
         measureTextCanvasTexture: TextCanvasTexture;
+        measureText2DCanvasTexture: TextCanvasTexture;
         mouseDown: boolean;
+        measurePointsArray: any[];
+        measureHit: any;
+        measureButton: number;
+        measureDownPos: any;
         mouseDown_x: number;
         mouseDown_y: number;
         mouseDownedAt: number;
@@ -297,6 +323,7 @@ export namespace webGL {
         nPrevFrames: number;
         offScreenDepthTexture: WebGLTexture;
         ssaoFramebuffer: MGWebGLFrameBuffer;
+        edgeDetectFramebuffer: MGWebGLFrameBuffer;
         gFramebuffer: MGWebGLFrameBuffer;
         gBufferRenderbufferNormal: WebGLRenderbuffer;
         gBufferRenderbufferPosition: WebGLRenderbuffer;
@@ -304,6 +331,7 @@ export namespace webGL {
         gBufferDepthTexture: WebGLTexture;
         gBufferNormalTexture: WebGLTexture;
         ssaoTexture: WebGLTexture;
+        edgeDetectTexture: WebGLTexture;
         ssaoRadius: number;
         ssaoBias: number;
         offScreenFramebuffer: MGWebGLFrameBuffer;
@@ -335,6 +363,7 @@ export namespace webGL {
         shaderProgramGBuffersPerfectSpheres: ShaderGBuffersPerfectSpheres;
         shaderProgramGBuffersThickLinesNormal: ShaderGBuffersThickLinesNormal;
         shaderProgramSSAO: ShaderSSAO;
+        shaderProgramEdgeDetect: ShaderEdgeDetect;
         shaderProgramBlurX: ShaderBlurX;
         shaderProgramBlurY: ShaderBlurY;
         shaderProgramSimpleBlurX: ShaderSimpleBlurX;

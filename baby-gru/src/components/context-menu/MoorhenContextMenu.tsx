@@ -1,7 +1,7 @@
 import styled, { css } from "styled-components";
 import { ClickAwayListener, FormGroup, List, Tooltip } from '@mui/material';
 import { MoorhenBackgroundColorMenuItem } from "../menu-item/MoorhenBackgroundColorMenuItem"
-import { cidToSpec, convertRemToPx } from "../../utils/MoorhenUtils";
+import { atomInfoToResSpec, convertRemToPx } from "../../utils/MoorhenUtils";
 import { useEffect, useRef, useState, useCallback, MutableRefObject, RefObject } from "react";
 import { Popover, Overlay, FormLabel, FormSelect, Button, Stack } from "react-bootstrap";
 import { MoorhenAddAltConfButton } from "../button/MoorhenAddAltConfButton"
@@ -115,7 +115,7 @@ export const MoorhenContextMenu = (props: {
   const [opacity, setOpacity] = useState<number>(1.0)
   const [toolTip, setToolTip] = useState<string>('')
   
-  const molecules = useSelector((state: moorhen.State) => state.molecules)
+  const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
   const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
   const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
@@ -141,7 +141,7 @@ export const MoorhenContextMenu = (props: {
     selectedMolecule = molecules.find(molecule => molecule.buffersInclude(props.showContextMenu ? props.showContextMenu.buffer : null))
   }
   if (props.showContextMenu && props.showContextMenu.atom) {
-    chosenAtom = cidToSpec(props.showContextMenu.atom.label)
+    chosenAtom = atomInfoToResSpec(props.showContextMenu.atom)
   }
 
   // Do not show context menu unless clicked on atom. We might to revert this in the future...

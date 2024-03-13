@@ -19,6 +19,7 @@ import { blur_y_simple_fragment_shader_source as blur_y_simple_fragment_shader_s
 import { blur_vertex_shader_source as blur_vertex_shader_source_webgl2 } from './webgl-2/blur-vertex-shader.js';
 import { overlay_fragment_shader_source as overlay_fragment_shader_source_webgl2 } from './webgl-2/overlay-fragment-shader.js';
 import { ssao_fragment_shader_source as ssao_fragment_shader_source_webgl2 } from './webgl-2/ssao-fragment-shader.js';
+import { edge_detect_fragment_shader_source as edge_detect_fragment_shader_source_webgl2 } from './webgl-2/edge-detect-fragment-shader.js';
 import { blur_x_fragment_shader_source as blur_x_fragment_shader_source_webgl2 } from './webgl-2/blur_x-fragment-shader.js';
 import { blur_y_fragment_shader_source as blur_y_fragment_shader_source_webgl2 } from './webgl-2/blur_y-fragment-shader.js';
 import { lines_fragment_shader_source as lines_fragment_shader_source_webgl2 } from './webgl-2/lines-fragment-shader.js';
@@ -58,6 +59,7 @@ import { thick_lines_normal_gbuffer_vertex_shader_source as thick_lines_normal_g
 import { blur_vertex_shader_source as blur_vertex_shader_source_webgl1 } from './webgl-1/blur-vertex-shader.js';
 import { overlay_fragment_shader_source as overlay_fragment_shader_source_webgl1 } from './webgl-1/overlay-fragment-shader.js';
 import { ssao_fragment_shader_source as ssao_fragment_shader_source_webgl1 } from './webgl-1/ssao-fragment-shader.js';
+import { edge_detect_fragment_shader_source as edge_detect_fragment_shader_source_webgl1 } from './webgl-1/edge-detect-fragment-shader.js';
 import { blur_x_fragment_shader_source as blur_x_fragment_shader_source_webgl1 } from './webgl-1/blur_x-fragment-shader.js';
 import { blur_y_fragment_shader_source as blur_y_fragment_shader_source_webgl1 } from './webgl-1/blur_y-fragment-shader.js';
 import { lines_fragment_shader_source as lines_fragment_shader_source_webgl1 } from './webgl-1/lines-fragment-shader.js';
@@ -96,7 +98,7 @@ import { thick_lines_normal_gbuffer_vertex_shader_source as thick_lines_normal_g
 import { DistanceBetweenPointAndLine, DihedralAngle } from './mgMaths.js';
 import { determineFontHeight } from './fontHeight.js';
 
-import { guid } from '../utils/MoorhenUtils';
+import { getAtomInfoLabel, guid } from '../utils/MoorhenUtils';
 
 import { quatToMat4, quat4Inverse } from './quatToMat4.js';
 
@@ -1288,7 +1290,7 @@ function initGL(canvas) {
         WEBGL2 = false;
     }
     if (!gl) {
-        alert("Could not initialise WebGL, sorry :-(");
+        alert("Could not initialise WebGL, sorry... Make sure harware acceleration is enabled in your browser settings.");
     }
     gl.viewportWidth = canvas.width;
     gl.viewportHeight = canvas.height;
@@ -1349,7 +1351,7 @@ function SortThing(proj, id1, id2, id3) {
 }
 
 class TextCanvasTexture {
-    gl: WebGLRenderingContext | WebGL2RenderingContext;
+    gl: WebGL2RenderingContext;
     ext: any;
     glRef: MGWebGL;
     nBigTextures: number;
@@ -1401,6 +1403,48 @@ class TextCanvasTexture {
         this.bigTextureTextPositionBuffer = this.gl.createBuffer();
         this.bigTextureTextIndexesBuffer = this.gl.createBuffer();
         this.textureCache = {};
+    }
+
+    draw() {
+        this.gl.activeTexture(this.gl.TEXTURE0);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.bigTextTex);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+
+        this.gl.enableVertexAttribArray(this.glRef.shaderProgramTextInstanced.vertexTextureAttribute);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.bigTextureTextTexCoordBuffer);
+        this.gl.vertexAttribPointer(this.glRef.shaderProgramTextInstanced.vertexTextureAttribute, 2, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.enableVertexAttribArray(this.glRef.shaderProgramTextInstanced.vertexPositionAttribute);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.bigTextureTextPositionBuffer);
+        this.gl.vertexAttribPointer(this.glRef.shaderProgramTextInstanced.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.enableVertexAttribArray(this.glRef.shaderProgramTextInstanced.offsetAttribute);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.bigTextureTextInstanceOriginBuffer);
+        this.gl.vertexAttribPointer(this.glRef.shaderProgramTextInstanced.offsetAttribute, 3, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.enableVertexAttribArray(this.glRef.shaderProgramTextInstanced.sizeAttribute);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.bigTextureTextInstanceSizeBuffer);
+        this.gl.vertexAttribPointer(this.glRef.shaderProgramTextInstanced.sizeAttribute, 3, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.enableVertexAttribArray(this.glRef.shaderProgramTextInstanced.textureOffsetAttribute);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.bigTextureTexOffsetsBuffer);
+        this.gl.vertexAttribPointer(this.glRef.shaderProgramTextInstanced.textureOffsetAttribute, 4, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.bigTextureTextIndexesBuffer);
+
+        this.gl.uniform1f(this.glRef.shaderProgramTextInstanced.pixelZoom,this.glRef.zoom*this.contextBig.canvas.height/this.glRef.canvas.height);
+
+        if (this.glRef.WEBGL2) {
+            this.gl.vertexAttribDivisor(this.glRef.shaderProgramTextInstanced.sizeAttribute, 1);
+            this.gl.vertexAttribDivisor(this.glRef.shaderProgramTextInstanced.offsetAttribute, 1);
+            this.gl.vertexAttribDivisor(this.glRef.shaderProgramTextInstanced.textureOffsetAttribute, 1);
+            this.gl.drawElementsInstanced(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0, this.nBigTextures);
+            this.gl.vertexAttribDivisor(this.glRef.shaderProgramTextInstanced.sizeAttribute, 0);
+            this.gl.vertexAttribDivisor(this.glRef.shaderProgramTextInstanced.offsetAttribute, 0);
+            this.gl.vertexAttribDivisor(this.glRef.shaderProgramTextInstanced.textureOffsetAttribute, 0);
+        }
     }
 
     recreateBigTextureBuffers() {
@@ -1743,8 +1787,10 @@ interface ShaderThickLines extends MGWebGLShader {
     scaleMatrix: WebGLUniformLocation;
     ShadowMap: WebGLUniformLocation;
     SSAOMap: WebGLUniformLocation;
+    edgeDetectMap: WebGLUniformLocation;
     doShadows: WebGLUniformLocation;
     doSSAO: WebGLUniformLocation;
+    doEdgeDetect: WebGLUniformLocation;
     xPixelOffset: WebGLUniformLocation;
     yPixelOffset: WebGLUniformLocation;
     shadowQuality: WebGLUniformLocation;
@@ -1810,10 +1856,12 @@ interface ShaderPerfectSpheres extends MGWebGLShader {
     ySSAOScaling: WebGLUniformLocation;
     ShadowMap: WebGLUniformLocation;
     SSAOMap: WebGLUniformLocation;
+    edgeDetectMap: WebGLUniformLocation;
     outlineSize: WebGLUniformLocation;
     shadowQuality: WebGLUniformLocation;
     doShadows: WebGLUniformLocation;
     doSSAO: WebGLUniformLocation;
+    doEdgeDetect: WebGLUniformLocation;
     occludeDiffuse: WebGLUniformLocation;
     clipCap: WebGLUniformLocation;
     specularPower: WebGLUniformLocation;
@@ -1827,9 +1875,11 @@ interface ShaderTriangles extends MGWebGLShader {
     defaultColour: WebGLUniformLocation;
     ShadowMap: WebGLUniformLocation;
     SSAOMap: WebGLUniformLocation;
+    edgeDetectMap: WebGLUniformLocation;
     shadowQuality: WebGLUniformLocation;
     doShadows: WebGLUniformLocation;
     doSSAO: WebGLUniformLocation;
+    doEdgeDetect: WebGLUniformLocation;
     cursorPos: WebGLUniformLocation;
     xPixelOffset: WebGLUniformLocation;
     yPixelOffset: WebGLUniformLocation;
@@ -1868,9 +1918,22 @@ interface ShaderSSAO extends MGWebGLShader {
     gNormalTexture: WebGLUniformLocation;
     texNoiseTexture: WebGLUniformLocation;
     zoom: WebGLUniformLocation | null;
+    depthBufferSize: WebGLUniformLocation | null;
     samples: WebGLUniformLocation | null;
     radius: WebGLUniformLocation | null;
     bias: WebGLUniformLocation | null;
+}
+
+interface ShaderEdgeDetect extends MGWebGLShader {
+    vertexTextureAttribute: GLint;
+    gPositionTexture: WebGLUniformLocation;
+    gNormalTexture: WebGLUniformLocation;
+    depthBufferSize: WebGLUniformLocation | null;
+    depthThreshold: WebGLUniformLocation | null;
+    normalThreshold: WebGLUniformLocation | null;
+    scaleDepth: WebGLUniformLocation | null;
+    scaleNormal: WebGLUniformLocation | null;
+    zoom: WebGLUniformLocation | null;
 }
 
 interface ShaderBlurY extends MGWebGLShader {
@@ -1930,7 +1993,7 @@ interface ShaderOverlay extends MGWebGLShader {
 }
 
 interface MGWebGLPropsInterface {
-                    onAtomHovered : (identifier: { buffer: { id: string; }; atom: { label: string; }; }) => void;
+                    onAtomHovered : (identifier: { buffer: { id: string; }; atom: moorhen.AtomInfo; }) => void;
                     onKeyPress : (event: KeyboardEvent) =>  boolean | Promise<boolean>;
                     messageChanged : ((d:Dictionary<string>) => void);
                     mouseSensitivityFactor :  number | null;
@@ -1975,6 +2038,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         measuredAtoms: clickAtom[][];
         pixel_data: Uint8Array;
         screenshotBuffersReady: boolean;
+        edgeDetectFramebufferSize : number;
+        gBuffersFramebufferSize : number;
         save_pixel_data: boolean;
         renderToTexture: boolean;
         showShortCutHelp: string[];
@@ -1982,7 +2047,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         doRedraw: boolean;
         circleCanvasInitialized: boolean;
         textCanvasInitialized: boolean;
-        currentlyDraggedAtom: null | {atom: {charge: number, tempFactor: number, x: number, y: number, z: number, symbol: string, label:string}, buffer: DisplayBuffer};
+        currentlyDraggedAtom: null | {atom: moorhen.AtomInfo; buffer: DisplayBuffer};
         gl_cursorPos: Float32Array;
         textCtx: CanvasRenderingContext2D;
         circleCtx: CanvasRenderingContext2D;
@@ -2015,6 +2080,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         diskVertices: number[];
         doShadow: boolean;
         doSSAO: boolean;
+        doEdgeDetect: boolean;
+        depthThreshold: number;
+        normalThreshold: number;
+        scaleDepth: number;
+        scaleNormal: number;
         occludeDiffuse: boolean;
         doShadowDepthDebug: boolean;
         doSpin: boolean;
@@ -2048,7 +2118,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         mapLineWidth: number;
         measureCylinderBuffers: DisplayBuffer[];
         measureTextCanvasTexture: TextCanvasTexture;
+        measureText2DCanvasTexture: TextCanvasTexture;
         mouseDown: boolean;
+        measurePointsArray: any[];
+        measureHit: any;
+        measureButton: number;
+        measureDownPos: any;
         mouseDown_x: number;
         mouseDown_y: number;
         mouseDownedAt: number;
@@ -2069,6 +2144,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         offScreenDepthTexture: WebGLTexture;
         offScreenFramebuffer: MGWebGLFrameBuffer;
         ssaoFramebuffer: MGWebGLFrameBuffer;
+        edgeDetectFramebuffer: MGWebGLFrameBuffer;
         gFramebuffer: MGWebGLFrameBuffer;
         gBufferRenderbufferNormal: WebGLRenderbuffer;
         gBufferRenderbufferPosition: WebGLRenderbuffer;
@@ -2076,6 +2152,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         gBufferDepthTexture: WebGLTexture;
         gBufferNormalTexture: WebGLTexture;
         ssaoTexture: WebGLTexture;
+        edgeDetectTexture: WebGLTexture;
         ssaoRadius: number;
         ssaoBias: number;
         offScreenFramebufferBlurX: MGWebGLFrameBuffer;
@@ -2106,6 +2183,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         shaderProgramGBuffersPerfectSpheres: ShaderGBuffersPerfectSpheres;
         shaderProgramGBuffersThickLinesNormal: ShaderGBuffersThickLinesNormal;
         shaderProgramSSAO: ShaderSSAO;
+        shaderProgramEdgeDetect: ShaderEdgeDetect;
         shaderProgramBlurX: ShaderBlurX;
         shaderProgramBlurY: ShaderBlurY;
         shaderProgramSimpleBlurX: ShaderSimpleBlurX;
@@ -2366,6 +2444,26 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.doSSAO = doSSAO;
     }
 
+    setEdgeDetectDepthThreshold(depthThreshold) {
+        this.depthThreshold = depthThreshold;
+    }
+
+    setEdgeDetectNormalThreshold(normalThreshold) {
+        this.normalThreshold = normalThreshold;
+    }
+
+    setEdgeDetectDepthScale(depthScale) {
+        this.scaleDepth = depthScale;
+    }
+
+    setEdgeDetectNormalScale(normalScale) {
+        this.scaleNormal = normalScale;
+    }
+
+    setEdgeDetectOn(doEdgeDetect) {
+        this.doEdgeDetect = doEdgeDetect;
+    }
+
     setOccludeDiffuse(doOccludeDiffuse) {
         this.occludeDiffuse = doOccludeDiffuse;
     }
@@ -2513,6 +2611,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.dy = null;
         this.myQuat = null;
         this.mouseDown = null;
+        this.measurePointsArray = [];
+        this.measureHit = null;
+        this.measureButton = -1;
+        this.measureDownPos = {x:-1,y:-1};
         this.mouseMoved = null;
         this.zoom = null;
         this.ext = null;
@@ -2555,7 +2657,31 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.doShadow = false;
         this.doSSAO = false;
+        this.doEdgeDetect = false;
         this.occludeDiffuse = false;
+
+        /*
+            Suitable(?) Edge detect settings:
+            Ribbons, Gaussian, VdW, Rama balls, Dodos, glycoblocks, H-Bonds:
+               Depth scale:         2
+               Normal scale:        1
+               Depth threshold:   1.4
+               Normal threshoold: 0.5
+            Bonds:
+               Depth scale:         2
+               Normal scale:        0
+               Depth threshold:   1.0
+               Normal threshoold: N/A
+            Spheres:
+               Depth scale:         2
+               Normal scale:        2 (or 0 depending on desired effect)
+               Depth threshold:   1.4
+               Normal threshoold: 0.5
+        */
+        this.depthThreshold = 1.4;
+        this.normalThreshold = 0.5;
+        this.scaleDepth = 2.0;
+        this.scaleNormal = 1.0;
 
         this.doSpin = false;
 
@@ -2569,6 +2695,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.offScreenFramebufferSimpleBlurX = null;
         this.offScreenFramebufferSimpleBlurY = null;
         this.ssaoFramebuffer = null;
+        this.edgeDetectFramebuffer = null;
         this.gFramebuffer = null;
         this.useOffScreenBuffers = false;
         this.blurSize = 3;
@@ -2576,6 +2703,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.offScreenReady = false;
         this.framebufferDrawBuffersReady = false;
         this.screenshotBuffersReady = false;
+
+        this.edgeDetectFramebufferSize = 1024;
+        this.gBuffersFramebufferSize = 1024;
 
         this.textCtx = document.createElement("canvas").getContext("2d", {willReadFrequently: true});
         this.circleCtx = document.createElement("canvas").getContext("2d");
@@ -2626,20 +2756,28 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.WEBGL2 = glc.WEBGL2;
 
         this.blurUBOBuffer = this.gl.createBuffer();
-        this.axesTexture = {};
+        this.axesTexture = {black:{},white:{}};
 
         const extensionArray = this.gl.getSupportedExtensions();
 
         if (this.doneEvents === undefined) {
             self.canvas.addEventListener("mousedown",
                 function (evt) {
-                    self.doMouseDown(evt, self);
+                    if (self.keysDown['dist_ang_2d']) {
+                        self.doMouseDownMeasure(evt, self);
+                    } else {
+                        self.doMouseDown(evt, self);
+                    }
                     evt.stopPropagation();
                 },
                 false);
                 self.canvas.addEventListener("mouseup",
                 function (evt) {
-                    self.doMouseUp(evt, self);
+                    if (self.keysDown['dist_ang_2d']) {
+                        self.doMouseUpMeasure(evt, self);
+                    } else {
+                        self.doMouseUp(evt, self);
+                    }
                 },
                 false);
             self.canvas.addEventListener("contextmenu",
@@ -2672,7 +2810,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             console.log("addEventListener");
             self.canvas.addEventListener("mousemove",
                 function (evt) {
-                    self.doMouseMove(evt, self);
+                    if (self.keysDown['dist_ang_2d']) {
+                        self.doMouseMoveMeasure(evt, self);
+                    } else {
+                        self.doMouseMove(evt, self);
+                    }
                     evt.stopPropagation();
                 },
                 false);
@@ -2701,8 +2843,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 false);
             self.canvas.addEventListener('touchstart',
                 function (e) {
-                    e.stopPropagation();
-                    e.preventDefault();
                     const touchobj = e.changedTouches[0];
                     let evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
                     //alert(e.changedTouches.length)
@@ -2714,15 +2854,20 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     }
                     self.doMouseDown(evt, self);
                     self.mouseDownedAt = (e.timeStamp)
-
+                    e.stopPropagation();
+                    e.preventDefault();
+                    // Create a timeout that will check if the user is holding down on the same spot to open the context menu
+                    setTimeout(() => {
+                        if (self.mouseDown && !self.mouseMoved) {
+                            self.doRightClick(evt, self);
+                        }
+                    }, 1000)
                 }, false)
 
             self.canvas.addEventListener('touchmove',
                 function (e) {
-                    e.stopPropagation();
-                    e.preventDefault();
                     const touchobj = e.touches[0]; // reference first touch point for this event
-                    let evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
+                    let evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, buttons: 1 };
                     if (e.touches.length === 1) {
                     }
                     else if (e.touches.length === 2) {
@@ -2730,13 +2875,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         evt.altKey = true;
                     }
                     self.doMouseMove(evt, self);
-
+                    e.stopPropagation();
+                    e.preventDefault();
                 }, false)
 
             self.canvas.addEventListener('touchend',
                 function (e) {
-                    e.stopPropagation();
-                    e.preventDefault();
                     var touchobj = e.changedTouches[0]; // reference first touch point for this event
                     var evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
                     if (e.changedTouches.length === 1) {
@@ -2748,9 +2892,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     var deltaTime = e.timeStamp - self.mouseDownedAt;
                     if (deltaTime < 300) {
                         self.doClick(evt, self);
-                        //alert("Doclicking");
                     }
                     self.doMouseUp(evt, self);
+                    e.stopPropagation();
+                    e.preventDefault();
                 }, false)
         }
         this.doneEvents = true;
@@ -2844,6 +2989,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         self.buildBuffers();
 
+        this.measureText2DCanvasTexture = new TextCanvasTexture(this,512,2048);
         this.measureTextCanvasTexture = new TextCanvasTexture(this,1024,2048);
         this.labelsTextCanvasTexture = new TextCanvasTexture(this,128,2048);
 
@@ -2874,6 +3020,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let gBufferPerfectSphereFragmentShader;
         let blurVertexShader;
         let ssaoFragmentShader;
+        let edgeDetectFragmentShader;
         let overlayFragmentShader;
         let blurXFragmentShader;
         let blurYFragmentShader;
@@ -2905,6 +3052,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.doRedraw = false;
 
         let ssao_fragment_shader_source = ssao_fragment_shader_source_webgl1;
+        let edge_detect_fragment_shader_source = edge_detect_fragment_shader_source_webgl1;
         let blur_vertex_shader_source = blur_vertex_shader_source_webgl1;
         let blur_x_fragment_shader_source = blur_x_fragment_shader_source_webgl1;
         //I'm giving up on WebGL1 now ...
@@ -2945,6 +3093,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         if(this.WEBGL2){
             ssao_fragment_shader_source = ssao_fragment_shader_source_webgl2;
+            edge_detect_fragment_shader_source = edge_detect_fragment_shader_source_webgl2;
             blur_vertex_shader_source = blur_vertex_shader_source_webgl2;
             blur_x_fragment_shader_source = blur_x_fragment_shader_source_webgl2;
             blur_x_simple_fragment_shader_source = blur_x_simple_fragment_shader_source_webgl2;
@@ -2997,6 +3146,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         thickLineVertexShader = getShader(this.gl, thick_lines_vertex_shader_source, "vertex");
         thickLineNormalVertexShader = getShader(this.gl, thick_lines_normal_vertex_shader_source, "vertex");
         blurVertexShader = getShader(this.gl, blur_vertex_shader_source, "vertex");
+        edgeDetectFragmentShader = getShader(this.gl, edge_detect_fragment_shader_source, "fragment");
         ssaoFragmentShader = getShader(this.gl, ssao_fragment_shader_source, "fragment");
         blurXFragmentShader = getShader(this.gl, blur_x_fragment_shader_source, "fragment");
         overlayFragmentShader = getShader(this.gl, overlay_fragment_shader_source, "fragment");
@@ -3031,6 +3181,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.initOverlayShader(blurVertexShader, overlayFragmentShader);
         this.initBlurXShader(blurVertexShader, blurXFragmentShader);
         this.initSSAOShader(blurVertexShader, ssaoFragmentShader);
+        this.initEdgeDetectShader(blurVertexShader, edgeDetectFragmentShader);
         this.initBlurYShader(blurVertexShader, blurYFragmentShader);
         this.initSimpleBlurXShader(blurVertexShader, simpleBlurXFragmentShader);
         this.initSimpleBlurYShader(blurVertexShader, simpleBlurYFragmentShader);
@@ -3514,7 +3665,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             requestAnimationFrame(this.drawOriginFrame.bind(this,oo,d,iframe+1))
         } else {
             const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
-            document.dispatchEvent(originUpdateEvent)    
+            document.dispatchEvent(originUpdateEvent)
         }
     }
 
@@ -3604,7 +3755,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     newZoom
                 }
             });
-            document.dispatchEvent(zoomChanged);    
+            document.dispatchEvent(zoomChanged);
         }
     }
 
@@ -3675,17 +3826,41 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
-    createSSAOFramebufferBuffer(){
-        if(!this.gFramebuffer){
-            this.ssaoFramebuffer = this.gl.createFramebuffer();
-            this.gFramebuffer = this.gl.createFramebuffer();
+    createEdgeDetectFramebufferBuffer(width : number,height : number){
 
-            this.ssaoTexture = this.gl.createTexture();
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.ssaoTexture);
+        if(!this.edgeDetectFramebuffer){
+            this.edgeDetectFramebuffer = this.gl.createFramebuffer();
+
+            this.edgeDetectTexture = this.gl.createTexture();
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.edgeDetectTexture);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
 
+            const edgeDetectRenderbuffer = this.gl.createRenderbuffer();
+            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.edgeDetectFramebuffer);
+            this.edgeDetectFramebuffer.width = width;
+            this.edgeDetectFramebuffer.height = height;
+
+            this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, edgeDetectRenderbuffer);
+
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.edgeDetectTexture);
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, width, height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.edgeDetectTexture, 0);
+
+            const status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
+            console.log("EdgeDetect framebuffer OK?",(status===this.gl.FRAMEBUFFER_COMPLETE));
+        }
+
+        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, null);
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+
+    }
+
+    createGBuffers(width : number,height : number){
+        if(!this.gFramebuffer){
+            this.gFramebuffer = this.gl.createFramebuffer();
             this.gBufferDepthTexture = this.gl.createTexture();
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.gBufferDepthTexture);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
@@ -3706,38 +3881,52 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-            
+
             //FIXME - Sizes?
             const gBufferRenderbuffer = this.gl.createRenderbuffer();
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.gFramebuffer);
-            this.gFramebuffer.width = 1024;
-            this.gFramebuffer.height = 1024;
+            this.gFramebuffer.width = width;
+            this.gFramebuffer.height = height;
 
             this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, gBufferRenderbuffer);
             this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, gBufferRenderbuffer);
             if (this.WEBGL2) {
-                this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT32F, 1024, 1024);
+                this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT32F, width, height);
             } else {
-                this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, 1024, 1024);
+                this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, width, height);
             }
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.gBufferDepthTexture);
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT32F, 1024, 1024, 0, this.gl.DEPTH_COMPONENT, this.gl.FLOAT, null);
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT32F, width, height, 0, this.gl.DEPTH_COMPONENT, this.gl.FLOAT, null);
             this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.TEXTURE_2D, this.gBufferDepthTexture, 0);
 
             this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.RENDERBUFFER, gBufferRenderbuffer);
-            this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.RGBA32F, 1024, 1024);
+            this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.RGBA32F, width, height);
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.gBufferPositionTexture);
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA32F, 1024, 1024, 0, this.gl.RGBA, this.gl.FLOAT, null);
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA32F, width, height, 0, this.gl.RGBA, this.gl.FLOAT, null);
             this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.gBufferPositionTexture, 0);
 
             this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT1, this.gl.RENDERBUFFER, gBufferRenderbuffer);
-            this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.RGBA32F, 1024, 1024);
+            this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.RGBA32F, width, height);
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.gBufferNormalTexture);
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA32F, 1024, 1024, 0, this.gl.RGBA, this.gl.FLOAT, null);
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA32F, width, height, 0, this.gl.RGBA, this.gl.FLOAT, null);
             this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT1, this.gl.TEXTURE_2D, this.gBufferNormalTexture, 0);
 
-            let status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
+            const status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
             console.log("G-buffer framebuffer OK?",(status===this.gl.FRAMEBUFFER_COMPLETE));
+
+        }
+    }
+
+    createSSAOFramebufferBuffer(){
+
+        if(!this.ssaoFramebuffer){
+            this.ssaoFramebuffer = this.gl.createFramebuffer();
+
+            this.ssaoTexture = this.gl.createTexture();
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.ssaoTexture);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
 
             //FIXME - Sizes?
             const ssaoRenderbuffer = this.gl.createRenderbuffer();
@@ -3751,7 +3940,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1024, 1024, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
             this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.ssaoTexture, 0);
 
-            status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
+            const status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
+            console.log("SSAO",typeof(status))
+            console.log("SSAO",typeof(this.gl.FRAMEBUFFER_COMPLETE))
             console.log("SSAO framebuffer OK?",(status===this.gl.FRAMEBUFFER_COMPLETE));
         }
 
@@ -4228,6 +4419,46 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
+    initEdgeDetectShader(vertexShaderEdgeDetect, fragmentShaderEdgeDetect) {
+        console.log("**************************************************")
+        console.log("**************************************************")
+        console.log("initEdgeDetectShader")
+        console.log("**************************************************")
+        console.log("**************************************************")
+        this.shaderProgramEdgeDetect = this.gl.createProgram();
+        this.gl.attachShader(this.shaderProgramEdgeDetect, vertexShaderEdgeDetect);
+        this.gl.attachShader(this.shaderProgramEdgeDetect, fragmentShaderEdgeDetect);
+        this.gl.bindAttribLocation(this.shaderProgramEdgeDetect, 0, "aVertexPosition");
+        this.gl.bindAttribLocation(this.shaderProgramEdgeDetect, 3, "aVertexTexture");
+        this.gl.linkProgram(this.shaderProgramEdgeDetect);
+        if (!this.gl.getProgramParameter(this.shaderProgramEdgeDetect, this.gl.LINK_STATUS)) {
+            alert("Could not initialise shaders (initEdgeDetectShader)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramEdgeDetect));
+        }
+
+        this.gl.useProgram(this.shaderProgramEdgeDetect);
+
+        this.shaderProgramEdgeDetect.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramEdgeDetect, "aVertexPosition");
+        this.gl.enableVertexAttribArray(this.shaderProgramEdgeDetect.vertexPositionAttribute);
+
+        this.shaderProgramEdgeDetect.vertexTextureAttribute = this.gl.getAttribLocation(this.shaderProgramEdgeDetect, "aVertexTexture");
+        this.gl.enableVertexAttribArray(this.shaderProgramEdgeDetect.vertexTextureAttribute);
+
+        this.shaderProgramEdgeDetect.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "uPMatrix");
+        this.shaderProgramEdgeDetect.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "uMVMatrix");
+
+        this.shaderProgramEdgeDetect.gPositionTexture = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "gPosition");
+        this.shaderProgramEdgeDetect.gNormalTexture = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "gNormal");
+
+        this.shaderProgramEdgeDetect.zoom = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "zoom");
+        this.shaderProgramEdgeDetect.depthBufferSize = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "depthBufferSize");
+
+        this.shaderProgramEdgeDetect.depthThreshold = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "depthThreshold");
+        this.shaderProgramEdgeDetect.normalThreshold = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "normalThreshold");
+        this.shaderProgramEdgeDetect.scaleDepth = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "scaleDepth");
+        this.shaderProgramEdgeDetect.scaleNormal = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "scaleNormal");
+    }
+
     initSSAOShader(vertexShaderSSAO, fragmentShaderSSAO) {
         console.log("**************************************************")
         console.log("**************************************************")
@@ -4267,6 +4498,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramSSAO.zoom = this.gl.getUniformLocation(this.shaderProgramSSAO, "zoom");
         this.shaderProgramSSAO.radius = this.gl.getUniformLocation(this.shaderProgramSSAO, "radius");
         this.shaderProgramSSAO.bias = this.gl.getUniformLocation(this.shaderProgramSSAO, "bias");
+        this.shaderProgramSSAO.depthBufferSize = this.gl.getUniformLocation(this.shaderProgramSSAO, "depthBufferSize");
     }
 
     initBlurXShader(vertexShaderBlurX, fragmentShaderBlurX) {
@@ -4851,12 +5083,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgram.fogColour = this.gl.getUniformLocation(this.shaderProgram, "fogColour");
         this.shaderProgram.ShadowMap = this.gl.getUniformLocation(this.shaderProgram, "ShadowMap");
         this.shaderProgram.SSAOMap = this.gl.getUniformLocation(this.shaderProgram, "SSAOMap");
+        this.shaderProgram.edgeDetectMap = this.gl.getUniformLocation(this.shaderProgram, "edgeDetectMap");
         this.shaderProgram.xPixelOffset = this.gl.getUniformLocation(this.shaderProgram, "xPixelOffset");
         this.shaderProgram.yPixelOffset = this.gl.getUniformLocation(this.shaderProgram, "yPixelOffset");
         this.shaderProgram.xSSAOScaling = this.gl.getUniformLocation(this.shaderProgram, "xSSAOScaling");
         this.shaderProgram.ySSAOScaling = this.gl.getUniformLocation(this.shaderProgram, "ySSAOScaling");
         this.shaderProgram.doShadows = this.gl.getUniformLocation(this.shaderProgram, "doShadows");
         this.shaderProgram.doSSAO = this.gl.getUniformLocation(this.shaderProgram, "doSSAO");
+        this.shaderProgram.doEdgeDetect = this.gl.getUniformLocation(this.shaderProgram, "doEdgeDetect");
         this.shaderProgram.occludeDiffuse = this.gl.getUniformLocation(this.shaderProgram, "occludeDiffuse");
         this.shaderProgram.shadowQuality = this.gl.getUniformLocation(this.shaderProgram, "shadowQuality");
 
@@ -4933,12 +5167,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramInstanced.fogColour = this.gl.getUniformLocation(this.shaderProgramInstanced, "fogColour");
         this.shaderProgramInstanced.ShadowMap = this.gl.getUniformLocation(this.shaderProgramInstanced, "ShadowMap");
         this.shaderProgramInstanced.SSAOMap = this.gl.getUniformLocation(this.shaderProgramInstanced, "SSAOMap");
+        this.shaderProgramInstanced.edgeDetectMap = this.gl.getUniformLocation(this.shaderProgramInstanced, "edgeDetectMap");
         this.shaderProgramInstanced.xPixelOffset = this.gl.getUniformLocation(this.shaderProgramInstanced, "xPixelOffset");
         this.shaderProgramInstanced.yPixelOffset = this.gl.getUniformLocation(this.shaderProgramInstanced, "yPixelOffset");
         this.shaderProgramInstanced.xSSAOScaling = this.gl.getUniformLocation(this.shaderProgramInstanced, "xSSAOScaling");
         this.shaderProgramInstanced.ySSAOScaling = this.gl.getUniformLocation(this.shaderProgramInstanced, "ySSAOScaling");
         this.shaderProgramInstanced.doShadows = this.gl.getUniformLocation(this.shaderProgramInstanced, "doShadows");
         this.shaderProgramInstanced.doSSAO = this.gl.getUniformLocation(this.shaderProgramInstanced, "doSSAO");
+        this.shaderProgramInstanced.doEdgeDetect = this.gl.getUniformLocation(this.shaderProgramInstanced, "doEdgeDetect");
         this.shaderProgramInstanced.occludeDiffuse = this.gl.getUniformLocation(this.shaderProgramInstanced, "occludeDiffuse");
         this.shaderProgramInstanced.shadowQuality = this.gl.getUniformLocation(this.shaderProgramInstanced, "shadowQuality");
 
@@ -5054,10 +5290,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramThickLinesNormal.fogColour = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "fogColour");
         this.shaderProgramThickLinesNormal.ShadowMap = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "ShadowMap");
         this.shaderProgramThickLinesNormal.SSAOMap = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "SSAOMap");
+        this.shaderProgramThickLinesNormal.edgeDetectMap = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "edgeDetectMap");
         this.shaderProgramThickLinesNormal.xPixelOffset = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "xPixelOffset");
         this.shaderProgramThickLinesNormal.yPixelOffset = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "yPixelOffset");
         this.shaderProgramThickLinesNormal.doShadows = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "doShadows");
         this.shaderProgramThickLinesNormal.doSSAO = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "doSSAO");
+        this.shaderProgramThickLinesNormal.doEdgeDetect = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "doEdgeDetect");
         this.shaderProgramThickLinesNormal.xSSAOScaling = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "xSSAOScaling");
         this.shaderProgramThickLinesNormal.ySSAOScaling = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "ySSAOScaling");
         this.shaderProgramThickLinesNormal.occludeDiffuse = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "occludeDiffuse");
@@ -5337,12 +5575,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramPerfectSpheres.fogColour = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "fogColour");
         this.shaderProgramPerfectSpheres.ShadowMap = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "ShadowMap");
         this.shaderProgramPerfectSpheres.SSAOMap = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "SSAOMap");
+        this.shaderProgramPerfectSpheres.edgeDetectMap = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "edgeDetectMap");
         this.shaderProgramPerfectSpheres.xPixelOffset = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "xPixelOffset");
         this.shaderProgramPerfectSpheres.yPixelOffset = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "yPixelOffset");
         this.shaderProgramPerfectSpheres.xSSAOScaling = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "xSSAOScaling");
         this.shaderProgramPerfectSpheres.ySSAOScaling = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "ySSAOScaling");
         this.shaderProgramPerfectSpheres.doShadows = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "doShadows");
         this.shaderProgramPerfectSpheres.doSSAO = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "doSSAO");
+        this.shaderProgramPerfectSpheres.doEdgeDetect = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "doEdgeDetect");
         this.shaderProgramPerfectSpheres.occludeDiffuse = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "occludeDiffuse");
         this.shaderProgramPerfectSpheres.shadowQuality = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "shadowQuality");
 
@@ -6414,7 +6654,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.setLightUniforms(theShader);
                     this.gl.uniformMatrix4fv(theShader.mvMatrixUniform, false, this.mvMatrix);// All else
                     this.gl.uniformMatrix4fv(theShader.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
-                    this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
+                    if(theShader.vertexColourAttribute>1) this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
                 }
                 if(theShader.light_colours_diffuse) this.gl.uniform4fv(theShader.light_colours_diffuse, this.light_colours_diffuse);
                 if(theShader.light_colours_specular) this.gl.uniform4fv(theShader.light_colours_specular, this.light_colours_specular);
@@ -6450,7 +6690,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.setLightUniforms(theShader);
                     this.gl.uniformMatrix4fv(theShader.mvMatrixUniform, false, this.mvMatrix);// All else
                     this.gl.uniformMatrix4fv(theShader.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
-                    this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
+                    if(theShader.vertexColourAttribute>1) this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
                 }
                 this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0);
             }
@@ -6788,6 +7028,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.cullFace(this.gl.BACK);
             //mat4.perspective(45, this.gl.viewportWidth / this.gl.viewportHeight, 0.1, 10000.0, this.pMatrix);
             if(this.renderToTexture){
+                //FIXME - drawingGBuffers stanza?
                 if(this.doPerspectiveProjection){
                     if(this.gl.viewportWidth > this.gl.viewportHeight){
                         mat4.perspective(this.pMatrix, 1.0*ratio, 1.0, 0.1, 100.0);
@@ -6817,6 +7058,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     } else {
                         //mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, -(this.gl_clipPlane0[3]+this.fogClipOffset), 1000.0);
                         const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
+                        //FIXME This can go -ve, causing reverse fog to be apparent with very large molecules. Boo.
                         mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, -(this.gl_clipPlane0[3]+this.fogClipOffset), b);
                     }
                 }
@@ -6951,17 +7193,23 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.myQuat = quat4.clone(oldQuat);
 
         return invMat;
-        
+
     }
 
     drawScene() : void {
 
         var oldMouseDown = this.mouseDown;
 
-        if (this.doSSAO&&this.WEBGL2) {
-            if(!this.gFramebuffer) this.createSSAOFramebufferBuffer();
-            if(!this.offScreenFramebufferSimpleBlurX) this.createSimpleBlurOffScreeenBuffers();
-
+        if ((this.doEdgeDetect||this.doSSAO)&&this.WEBGL2) {
+            if(this.renderToTexture) {
+                this.gBuffersFramebufferSize = 4096;
+                if(this.gFramebuffer){
+                    this.gl.deleteFramebuffer(this.gFramebuffer);
+                    this.gFramebuffer = null;
+                }
+                this.createGBuffers(this.gBuffersFramebufferSize,this.gBuffersFramebufferSize);
+            }
+            if(!this.gFramebuffer) this.createGBuffers(this.gBuffersFramebufferSize,this.gBuffersFramebufferSize);
             //console.log("Do G-buffer pass for gPosition and gNormal)")
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.gFramebuffer);
             this.gl.drawBuffers([this.gl.COLOR_ATTACHMENT0,this.gl.COLOR_ATTACHMENT1]);
@@ -6972,6 +7220,68 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.drawingGBuffers = false;
 
             this.gl.drawBuffers([this.gl.COLOR_ATTACHMENT0]);
+        }
+
+        const f = this.gl_clipPlane0[3]+this.fogClipOffset;
+        const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
+
+        if (this.doEdgeDetect&&this.WEBGL2) {
+
+            if(this.renderToTexture) {
+                this.edgeDetectFramebufferSize = 4096;
+                if(this.edgeDetectFramebuffer){
+                    this.gl.deleteFramebuffer(this.edgeDetectFramebuffer);
+                    this.edgeDetectFramebuffer = null;
+                }
+                this.createGBuffers(this.gBuffersFramebufferSize,this.gBuffersFramebufferSize);
+            }
+            if(!this.edgeDetectFramebuffer) this.createEdgeDetectFramebufferBuffer(this.edgeDetectFramebufferSize,this.edgeDetectFramebufferSize);
+
+            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.edgeDetectFramebuffer);
+
+            this.gl.useProgram(this.shaderProgramEdgeDetect);
+            this.gl.uniform1i(this.shaderProgramEdgeDetect.gPositionTexture,0);
+            this.gl.uniform1i(this.shaderProgramEdgeDetect.gNormalTexture,1);
+            this.gl.uniform1f(this.shaderProgramEdgeDetect.zoom,this.zoom);
+            this.gl.uniform1f(this.shaderProgramEdgeDetect.depthBufferSize,(f+b)*2.);
+
+            this.gl.uniform1f(this.shaderProgramEdgeDetect.depthThreshold,this.depthThreshold);
+            this.gl.uniform1f(this.shaderProgramEdgeDetect.normalThreshold,this.normalThreshold);
+            this.gl.uniform1f(this.shaderProgramEdgeDetect.scaleDepth,this.scaleDepth);
+            this.gl.uniform1f(this.shaderProgramEdgeDetect.scaleNormal,this.scaleNormal);
+
+            this.gl.activeTexture(this.gl.TEXTURE0);
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.gBufferPositionTexture);
+            this.gl.activeTexture(this.gl.TEXTURE1);
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.gBufferNormalTexture);
+
+            for(let i = 0; i<16; i++)
+                this.gl.disableVertexAttribArray(i);
+            this.gl.enableVertexAttribArray(this.shaderProgramEdgeDetect.vertexTextureAttribute);
+            this.gl.enableVertexAttribArray(this.shaderProgramEdgeDetect.vertexPositionAttribute);
+            //FIXME - Size
+            this.gl.viewport(0, 0, this.edgeDetectFramebufferSize, this.edgeDetectFramebufferSize);
+
+            let paintMvMatrix = mat4.create();
+            let paintPMatrix = mat4.create();
+            mat4.identity(paintMvMatrix);
+            mat4.ortho(paintPMatrix, -1 , 1 , -1, 1, 0.1, 1000.0);
+            this.gl.uniformMatrix4fv(this.shaderProgramEdgeDetect.pMatrixUniform, false, paintPMatrix);
+            this.gl.uniformMatrix4fv(this.shaderProgramEdgeDetect.mvMatrixUniform, false, paintMvMatrix);
+
+            this.gl.clearBufferfv(this.gl.COLOR, 0, [1.0, 0.0, 1.0, 1.0]);
+            this.bindFramebufferDrawBuffers();
+
+            if (this.ext) {
+                this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0);
+            } else {
+                this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
+            }
+        }
+
+        if (this.doSSAO&&this.WEBGL2) {
+            if(!this.ssaoFramebuffer) this.createSSAOFramebufferBuffer();
+            if(!this.offScreenFramebufferSimpleBlurX) this.createSimpleBlurOffScreeenBuffers();
 
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.ssaoFramebuffer);
             this.gl.useProgram(this.shaderProgramSSAO);
@@ -6979,6 +7289,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.uniform1i(this.shaderProgramSSAO.gPositionTexture,0);
             this.gl.uniform1i(this.shaderProgramSSAO.gNormalTexture,1);
             this.gl.uniform1i(this.shaderProgramSSAO.texNoiseTexture,2);
+
+            this.gl.uniform1f(this.shaderProgramSSAO.depthBufferSize,b+f);
+
             this.gl.uniform1f(this.shaderProgramSSAO.radius,this.ssaoRadius);
             this.gl.uniform1f(this.shaderProgramSSAO.bias,this.ssaoBias);
             this.gl.activeTexture(this.gl.TEXTURE0);
@@ -6987,7 +7300,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.gBufferNormalTexture);
             this.gl.activeTexture(this.gl.TEXTURE2);
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.ssaoNoiseTexture);
-            //TODO - set up all FB inputs(aVertexPosition,aVertexTexture) etc.
+
             for(let i = 0; i<16; i++)
                 this.gl.disableVertexAttribArray(i);
             this.gl.enableVertexAttribArray(this.shaderProgramSSAO.vertexTextureAttribute);
@@ -7012,7 +7325,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             } else {
                 this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
             }
-            
+
             // Now blur ....
 
             this.textureBlur(this.offScreenFramebufferSimpleBlurX.width,this.offScreenFramebufferSimpleBlurX.height,this.ssaoTexture);
@@ -7145,6 +7458,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.drawScaleBar(invMat);
         }
 
+        this.drawLineMeasures(invMat);
+
         this.drawTextOverlays(invMat);
 
         if(this.trackMouse&&!this.renderToTexture){
@@ -7243,6 +7558,18 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.prevTime = thisTime;
         }
 
+        if(this.renderToTexture) {
+            this.edgeDetectFramebufferSize = 1024;
+            this.gBuffersFramebufferSize = 1024;
+            if(this.edgeDetectFramebuffer){
+                this.gl.deleteFramebuffer(this.edgeDetectFramebuffer);
+                this.edgeDetectFramebuffer = null;
+            }
+            if(this.gFramebuffer){
+                this.gl.deleteFramebuffer(this.gFramebuffer);
+                this.gFramebuffer = null;
+            }
+        }
     }
 
     depthBlur() {
@@ -7565,7 +7892,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
         // And now our FB texture is blurred
     }
-    
 
     bindFramebufferDrawBuffers() {
         if(!this.framebufferDrawBuffersReady) {
@@ -7692,11 +8018,16 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.gl.uniform1i(theShader.shadowQuality, 1);
                 }
                 if(theShader.doSSAO!=null) this.gl.uniform1i(theShader.doSSAO, this.doSSAO);
+                if(theShader.doEdgeDetect!=null) this.gl.uniform1i(theShader.doEdgeDetect, this.doEdgeDetect);
                 if(theShader.occludeDiffuse!=null) this.gl.uniform1i(theShader.occludeDiffuse, this.occludeDiffuse);
                 if(this.WEBGL2&&theShader.doSSAO&&!this.drawingGBuffers){
+                    //SSAO after double blur
                     this.gl.uniform1i(theShader.SSAOMap, 1);
                     this.gl.activeTexture(this.gl.TEXTURE1);
                     this.gl.bindTexture(this.gl.TEXTURE_2D, this.simpleBlurYTexture);
+                    this.gl.uniform1i(theShader.edgeDetectMap, 2);
+                    this.gl.activeTexture(this.gl.TEXTURE2);
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.edgeDetectTexture);
                     this.gl.activeTexture(this.gl.TEXTURE0);
                     if(this.renderToTexture){
                         this.gl.uniform1f(theShader.xSSAOScaling, 1.0/this.rttFramebuffer.width );
@@ -7847,11 +8178,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.gl.uniform1i(program.shadowQuality, 1);
                 }
                 if(program.doSSAO!=null) this.gl.uniform1i(program.doSSAO, this.doSSAO);
+                if(program.doEdgeDetect!=null) this.gl.uniform1i(program.doEdgeDetect, this.doEdgeDetect);
                 if(program.occludeDiffuse!=null) this.gl.uniform1i(program.occludeDiffuse, this.occludeDiffuse);
                 if(this.WEBGL2&&program.doSSAO&&!this.drawingGBuffers){
                     this.gl.uniform1i(program.SSAOMap, 1);
                     this.gl.activeTexture(this.gl.TEXTURE1);
                     this.gl.bindTexture(this.gl.TEXTURE_2D, this.simpleBlurYTexture);
+                    this.gl.uniform1i(program.edgeDetectMap, 2);
+                    this.gl.activeTexture(this.gl.TEXTURE2);
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.edgeDetectTexture);
                     this.gl.activeTexture(this.gl.TEXTURE0);
                     if(this.renderToTexture){
                         this.gl.uniform1f(program.xSSAOScaling, 1.0/this.rttFramebuffer.width );
@@ -8034,6 +8369,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     if(shaderProgramThickLinesNormal.doSSAO!=null) this.gl.uniform1i(shaderProgramThickLinesNormal.doSSAO, this.doSSAO);
                     if(shaderProgramThickLinesNormal.occludeDiffuse!=null) this.gl.uniform1i(shaderProgramThickLinesNormal.occludeDiffuse, this.occludeDiffuse);
                 }
+                //Arguably this should be zero?
+                if(shaderProgramThickLinesNormal.doEdgeDetect!=null) this.gl.uniform1i(shaderProgramThickLinesNormal.doEdgeDetect, this.doEdgeDetect);
             }
 
             for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
@@ -8087,7 +8424,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             if (calculatingShadowMap)
                 continue; //Nothing else implemented
             //Cylinders here
-                
 
             //vertex attribute settings are likely wrong from here on... (REALLY - I HOPE NOT! SJM 26/10/2023)
 
@@ -8651,56 +8987,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.disableVertexAttribArray(i);
 
         [this.measureTextCanvasTexture,this.labelsTextCanvasTexture].forEach((canvasTexture) => {
-
-            //console.log(canvasTexture)
-
-            this.gl.activeTexture(this.gl.TEXTURE0);
-            this.gl.bindTexture(this.gl.TEXTURE_2D, canvasTexture.bigTextTex);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-
-            this.gl.enableVertexAttribArray(this.shaderProgramTextInstanced.vertexTextureAttribute);
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, canvasTexture.bigTextureTextTexCoordBuffer);
-            this.gl.vertexAttribPointer(this.shaderProgramTextInstanced.vertexTextureAttribute, 2, this.gl.FLOAT, false, 0, 0);
-
-            this.gl.enableVertexAttribArray(this.shaderProgramTextInstanced.vertexPositionAttribute);
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, canvasTexture.bigTextureTextPositionBuffer);
-            this.gl.vertexAttribPointer(this.shaderProgramTextInstanced.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-            this.gl.enableVertexAttribArray(this.shaderProgramTextInstanced.offsetAttribute);
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, canvasTexture.bigTextureTextInstanceOriginBuffer);
-            this.gl.vertexAttribPointer(this.shaderProgramTextInstanced.offsetAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-            this.gl.enableVertexAttribArray(this.shaderProgramTextInstanced.sizeAttribute);
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, canvasTexture.bigTextureTextInstanceSizeBuffer);
-            this.gl.vertexAttribPointer(this.shaderProgramTextInstanced.sizeAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-            this.gl.enableVertexAttribArray(this.shaderProgramTextInstanced.textureOffsetAttribute);
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, canvasTexture.bigTextureTexOffsetsBuffer);
-            this.gl.vertexAttribPointer(this.shaderProgramTextInstanced.textureOffsetAttribute, 4, this.gl.FLOAT, false, 0, 0);
-
-            this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, canvasTexture.bigTextureTextIndexesBuffer);
-
-            this.gl.uniform1f(this.shaderProgramTextInstanced.pixelZoom,this.zoom*canvasTexture.contextBig.canvas.height/this.canvas.height)
-
-            if (this.WEBGL2) {
-                this.gl.vertexAttribDivisor(this.shaderProgramTextInstanced.sizeAttribute, 1);
-                this.gl.vertexAttribDivisor(this.shaderProgramTextInstanced.offsetAttribute, 1);
-                this.gl.vertexAttribDivisor(this.shaderProgramTextInstanced.textureOffsetAttribute, 1);
-                this.gl.drawElementsInstanced(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0, canvasTexture.nBigTextures);
-                this.gl.vertexAttribDivisor(this.shaderProgramTextInstanced.sizeAttribute, 0);
-                this.gl.vertexAttribDivisor(this.shaderProgramTextInstanced.offsetAttribute, 0);
-                this.gl.vertexAttribDivisor(this.shaderProgramTextInstanced.textureOffsetAttribute, 0);
-            } else {
-                this.instanced_ext.vertexAttribDivisorANGLE(this.shaderProgramTextInstanced.sizeAttribute, 1);
-                this.instanced_ext.vertexAttribDivisorANGLE(this.shaderProgramTextInstanced.offsetAttribute, 1);
-                this.instanced_ext.vertexAttribDivisorANGLE(this.shaderProgramTextInstanced.textureOffsetAttribute, 1);
-                this.instanced_ext.drawElementsInstancedANGLE(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0, canvasTexture.nBigTextures);
-                this.instanced_ext.vertexAttribDivisorANGLE(this.shaderProgramTextInstanced.sizeAttribute, 0);
-                this.instanced_ext.vertexAttribDivisorANGLE(this.shaderProgramTextInstanced.offsetAttribute, 0);
-                this.instanced_ext.vertexAttribDivisorANGLE(this.shaderProgramTextInstanced.textureOffsetAttribute, 0);
-            }
+            canvasTexture.draw();
         })
 
         this.gl.depthFunc(this.gl.LESS);
@@ -8972,13 +9259,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if (self.activeMolecule === null) {
 
             const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
-            let rightClick = new CustomEvent("rightClick", {
+            let rightClick: moorhen.AtomRightClickEvent = new CustomEvent("rightClick", {
             "detail": {
                 atom: minidx > -1 ? self.displayBuffers[minidx].atoms[minj] : null,
                 buffer: minidx > -1 ? self.displayBuffers[minidx] : null,
                 coords: "",
                 pageX: event.pageX,
-                pageY: event.pageY
+                pageY: event.pageY,
             }
             });
             document.dispatchEvent(rightClick);
@@ -8996,24 +9283,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
             if (minidx > -1) {
                 let theAtom : clickAtom = {
-                   x: self.displayBuffers[minidx].atoms[minj].x,
-                   y: self.displayBuffers[minidx].atoms[minj].y,
-                   z: self.displayBuffers[minidx].atoms[minj].z,
-                   charge: self.displayBuffers[minidx].atoms[minj].charge,
-                   label: self.displayBuffers[minidx].atoms[minj].label,
-                   symbol: self.displayBuffers[minidx].atoms[minj].symbol,
+                   ...self.displayBuffers[minidx].atoms[minj],
+                   label: getAtomInfoLabel(self.displayBuffers[minidx].atoms[minj]),
                    displayBuffer: self.displayBuffers[minidx]
                 };
-                let atx = theAtom.x;
-                let aty = theAtom.y;
-                let atz = theAtom.z;
-                let label = theAtom.label;
-                let tempFactorLabel = "";
-                if (self.displayBuffers[minidx].atoms[minj].tempFactor) {
-                    tempFactorLabel = ", B: " + self.displayBuffers[minidx].atoms[minj].tempFactor;
-                }
-                this.props.messageChanged({ message: label + ", xyz:(" + atx + " " + aty + " " + atz + ")" + tempFactorLabel });
-
                 let atomClicked: moorhen.AtomClickedEvent = new CustomEvent("atomClicked", {
                     "detail": {
                         atom: self.displayBuffers[minidx].atoms[minj],
@@ -9041,7 +9314,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     } else {
                         self.measuredAtoms[self.measuredAtoms.length - 1].push(theAtom);
                     }
-                } 
+                }
             }
             if(updateLabels) self.updateLabels()
         }
@@ -9262,30 +9535,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if (this.props.onAtomHovered) {
             const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
             if (minidx > -1) {
-                let theAtom : clickAtom = {
-                   x: self.displayBuffers[minidx].atoms[minj].x,
-                   y: self.displayBuffers[minidx].atoms[minj].y,
-                   z: self.displayBuffers[minidx].atoms[minj].z,
-                   charge: self.displayBuffers[minidx].atoms[minj].charge,
-                   label: self.displayBuffers[minidx].atoms[minj].label,
-                   symbol: self.displayBuffers[minidx].atoms[minj].symbol,
-                   displayBuffer: self.displayBuffers[minidx]
-                };
-                let atx = theAtom.x;
-                let aty = theAtom.y;
-                let atz = theAtom.z;
-                let label = theAtom.label;
-                let tempFactorLabel = "";
-                if (self.displayBuffers[minidx].atoms[minj].tempFactor) {
-                    tempFactorLabel = ", B: " + self.displayBuffers[minidx].atoms[minj].tempFactor;
-                }
-                this.props.messageChanged({ message: label + ", xyz:(" + atx + " " + aty + " " + atz + ")" + tempFactorLabel });
                 this.props.onAtomHovered({ atom: self.displayBuffers[minidx].atoms[minj], buffer: self.displayBuffers[minidx] });
             }
             else {
                 this.props.onAtomHovered(null)
             }
-            self.drawScene();    
+            self.drawScene();
         }
     }
 
@@ -9379,7 +9634,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 axesColours_new[idx12 + 21] = g
                 axesColours_new[idx12 + 22] = b
                 axesColours_new[idx12 + 23] = a
-                
+
             }
         }
 
@@ -9648,6 +9903,148 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
+    drawLineMeasures(invMat) {
+        if(this.measurePointsArray.length<1) return;
+
+        this.gl.depthFunc(this.gl.ALWAYS);
+        //Begin copy/paste from crosshairs
+        let axesOffset = vec3.create();
+        vec3.set(axesOffset, 0, 0, 0);
+        const xyzOff = this.origin.map((coord, iCoord) => -coord + this.zoom * axesOffset[iCoord])
+
+        this.gl.useProgram(this.shaderProgramThickLines);
+        this.setMatrixUniforms(this.shaderProgramThickLines);
+        let pmvMatrix = mat4.create();
+        let pMatrix = mat4.create();
+        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+
+        let mat_width = 48;
+        let mat_height = 48;
+        if(this.renderToTexture){
+            if(this.gl.viewportWidth > this.gl.viewportHeight){
+                let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+                mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.0);
+            } else {
+                mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
+            }
+        } else {
+            mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24, 24, 0.1, 1000.0);
+        }
+
+        mat4.scale(pMatrix, pMatrix, [1. / this.zoom, 1. / this.zoom, 1.0]);
+        mat4.multiply(pmvMatrix, pMatrix, this.mvMatrix);
+
+        this.gl.uniformMatrix4fv(this.shaderProgramThickLines.pMatrixUniform, false, pmvMatrix);
+        this.gl.uniform3fv(this.shaderProgramThickLines.screenZ, this.screenZ);
+        this.gl.uniform1f(this.shaderProgramThickLines.pixelZoom, 0.04 * this.zoom);
+
+        if (typeof (this.axesPositionBuffer) === "undefined") {
+            this.axesPositionBuffer = this.gl.createBuffer();
+            this.axesColourBuffer = this.gl.createBuffer();
+            this.axesIndexBuffer = this.gl.createBuffer();
+            this.axesNormalBuffer = this.gl.createBuffer();
+            this.axesTextNormalBuffer = this.gl.createBuffer();
+            this.axesTextColourBuffer = this.gl.createBuffer();
+            this.axesTextPositionBuffer = this.gl.createBuffer();
+            this.axesTextTexCoordBuffer = this.gl.createBuffer();
+            this.axesTextIndexesBuffer = this.gl.createBuffer();
+        }
+        const renderArrays = {
+            axesVertices: [],
+            axesColours: [],
+            axesIdx: []
+        }
+        const addSegment = (renderArrays, point1, point2, colour1, colour2) => {
+            renderArrays.axesIdx.push(renderArrays.axesVertices.length)
+            renderArrays.axesVertices = renderArrays.axesVertices.concat(point1)
+            renderArrays.axesIdx.push(renderArrays.axesVertices.length)
+            renderArrays.axesVertices = renderArrays.axesVertices.concat(point2)
+            renderArrays.axesColours = renderArrays.axesColours.concat([...colour1, ...colour2])
+        }
+
+        let hairColour = [0., 0., 0., 1.];
+        let y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
+        if (y < 0.5) {
+            hairColour = [1., 1., 1., 1.];
+        }
+
+        let lineStart = vec3.create();
+        let lineEnd = vec3.create();
+
+        let lastPoint = null;
+
+        const addLine = (x1,y1,x2,y2) => {
+            vec3.set(lineStart, x1 * this.zoom * ratio, y1 * this.zoom, 0.0);
+            vec3.transformMat4(lineStart, lineStart, invMat);
+            vec3.set(lineEnd,   x2 * this.zoom * ratio, y2 * this.zoom, 0.0);
+            vec3.transformMat4(lineEnd, lineEnd, invMat);
+            addSegment(renderArrays,
+                xyzOff.map((coord, iCoord) => coord + lineStart[iCoord]),
+                xyzOff.map((coord, iCoord) => coord + lineEnd[iCoord]),
+                hairColour, hairColour
+            )
+        }
+
+        this.measurePointsArray.forEach(point => {
+
+            const x2 =  point.x;
+            const y2 = -point.y;
+
+            addLine(x2-.3/ratio,  y2-.3, x2+.3/ratio, y2-.3);
+            addLine(x2-.3/ratio,  y2+.3, x2+.3/ratio, y2+.3);
+            addLine(x2-.25/ratio, y2-.3, x2-.25/ratio, y2+.3);
+            addLine(x2+.25/ratio, y2-.3, x2+.25/ratio, y2+.3);
+
+            if(lastPoint){
+                const x1 =  lastPoint.x;
+                const y1 = -lastPoint.y;
+                addLine(x1,y1,x2,y2);
+            }
+            lastPoint = point;
+        })
+
+        let size = 1.5;
+        const thickLines = this.linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
+        let axesNormals = thickLines["normals"];
+        let axesVertices_new = thickLines["vertices"];
+        let axesColours_new = thickLines["colours"];
+        let axesIndexs_new = thickLines["indices"];
+
+        //console.log("thickLines",thickLines);
+        this.gl.depthFunc(this.gl.ALWAYS);
+
+        for(let i = 0; i<16; i++)
+            this.gl.disableVertexAttribArray(i);
+
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexNormalAttribute);
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexPositionAttribute);
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexColourAttribute);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesNormalBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesNormals), this.gl.DYNAMIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesPositionBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesVertices_new), this.gl.DYNAMIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesColourBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesColours_new), this.gl.DYNAMIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.axesIndexBuffer);
+        if (this.ext) {
+            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(axesIndexs_new), this.gl.DYNAMIC_DRAW);
+            this.gl.drawElements(this.gl.TRIANGLES, axesIndexs_new.length, this.gl.UNSIGNED_INT, 0);
+        } else {
+            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(axesIndexs_new), this.gl.DYNAMIC_DRAW);
+            this.gl.drawElements(this.gl.TRIANGLES, axesIndexs_new.length, this.gl.UNSIGNED_SHORT, 0);
+        }
+
+        this.gl.depthFunc(this.gl.LESS)
+
+    }
+
     drawScaleBar(invMat) {
         this.gl.depthFunc(this.gl.ALWAYS);
 
@@ -9715,7 +10112,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         const scale_fac = 10*this.zoom* this.gl.viewportWidth / this.gl.viewportHeight
         const scale_pow = Math.pow(10,Math.floor(Math.log(scale_fac)/Math.log(10)))
-        let scale_length_fac = scale_pow / scale_fac 
+        let scale_length_fac = scale_pow / scale_fac
 
         if(scale_length_fac<0.5) scale_length_fac *=2
         if(scale_length_fac<0.5) scale_length_fac *=2.5
@@ -10395,14 +10792,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         const drawStringAt = (string, colour, location, up, right) => {
 
-            if(!this.axesTexture[string]){
+            if(!this.axesTexture[colour][string]){
                 const [maxS,ctx] = this.makeTextCanvas(string, 64, 32, colour, "20px Arial");
                 const data = ctx.getImageData(0, 0, 64, 32);
-                this.axesTexture[string] = data;
+                this.axesTexture[colour][string] = data;
             }
 
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.axesTexture[string]);
-            this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.axesTexture[string]);
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.axesTexture[colour][string]);
+            this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.axesTexture[colour][string]);
             const tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
             const tSizeY = 2.0 * this.zoom;
 
@@ -10442,55 +10839,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawTextOverlays(invMat) {
-        this.gl.depthFunc(this.gl.ALWAYS);
+
         let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
-        if(this.renderToTexture) ratio = 1.0;
-        let right = vec3.create();
-        vec3.set(right, 1.0, 0.0, 0.0);
-        let up = vec3.create();
-        vec3.set(up, 0.0, 1.0, 0.0);
-        vec3.transformMat4(up, up, invMat);
-        vec3.transformMat4(right, right, invMat);
-
-        if (typeof (this.axesPositionBuffer) === "undefined") {
-            this.axesPositionBuffer = this.gl.createBuffer();
-            this.axesColourBuffer = this.gl.createBuffer();
-            this.axesIndexBuffer = this.gl.createBuffer();
-            this.axesNormalBuffer = this.gl.createBuffer();
-            this.axesTextNormalBuffer = this.gl.createBuffer();
-            this.axesTextColourBuffer = this.gl.createBuffer();
-            this.axesTextPositionBuffer = this.gl.createBuffer();
-            this.axesTextTexCoordBuffer = this.gl.createBuffer();
-            this.axesTextIndexesBuffer = this.gl.createBuffer();
-        }
-        this.gl.depthFunc(this.gl.ALWAYS);
-
-        this.gl.useProgram(this.shaderProgramTextBackground);
-        this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
-        this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
-        this.setMatrixUniforms(this.shaderProgramTextBackground);
-        this.gl.uniformMatrix4fv(this.shaderProgramTextBackground.pMatrixUniform, false, this.pmvMatrix);
-        this.gl.uniform3fv(this.shaderProgramTextBackground.screenZ, this.screenZ);
-        this.gl.uniform1f(this.shaderProgramTextBackground.pixelZoom, 0.04 * this.zoom);
-
-        this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexNormalAttribute);
-        this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexPositionAttribute);
-        this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexColourAttribute);
-
-        this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
-        this.setMatrixUniforms(this.shaderProgramTextBackground);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextNormalBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]), this.gl.STATIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextColourBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1]), this.gl.STATIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextTexCoordBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([0, 1, 1.0, 1, 1.0, 0, 0, 1, 1.0, 0, 0, 0]), this.gl.STATIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexTextureAttribute, 2, this.gl.FLOAT, false, 0, 0);
 
         let textColour = "black";
         const y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
@@ -10498,28 +10848,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             textColour = "white";
         }
 
-        const drawStringAt = (string, colour, location, up, right, font) => {
-            const [base_x, base_y, base_z] = location
-            const [maxS,ctx] = this.makeTextCanvas(string, 512, 32, colour, font);
-            const tSizeX = this.textHeightScaling/this.gl.viewportHeight * ctx.canvas.height/32 * 2.0 * ctx.canvas.width / ctx.canvas.height * this.zoom;
-            const tSizeY = this.textHeightScaling/this.gl.viewportHeight * ctx.canvas.height/32 * 2.0 * this.zoom;
-            const data = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
-            this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
-            let textPositions = [base_x, base_y, base_z, base_x + tSizeX * right[0], base_y + tSizeX * right[1], base_z + tSizeX * right[2], base_x + tSizeY * up[0] + tSizeX * right[0], base_y + tSizeY * up[1] + tSizeX * right[1], base_z + tSizeY * up[2] + tSizeX * right[2]];
-            textPositions = textPositions.concat([base_x, base_y, base_z, base_x + tSizeY * up[0] + tSizeX * right[0], base_y + tSizeY * up[1] + tSizeX * right[1], base_z + tSizeY * up[2] + tSizeX * right[2], base_x + tSizeY * up[0], base_y + tSizeY * up[1], base_z + tSizeY * up[2]]);
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextPositionBuffer);
-            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(textPositions), this.gl.DYNAMIC_DRAW);
-            this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
-            this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.axesTextIndexesBuffer);
-            if (this.ext) {
-                this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array([0, 1, 2, 3, 4, 5]), this.gl.STATIC_DRAW);
-                this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0);
-            } else {
-                this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 2, 3, 4, 5]), this.gl.STATIC_DRAW);
-                this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
-            }
-        }
+        this.measureText2DCanvasTexture.clearBigTexture()
 
         const drawString = (s, xpos, ypos, zpos, font, threeD) => {
             if(font) this.textCtx.font = font;
@@ -10532,50 +10861,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             let base_y = xyzOff[1];
             let base_z = xyzOff[2];
 
-            if(threeD){
-                base_x = xpos;
-                base_y = ypos;
-                base_z = zpos;
-            }
+            this.measureText2DCanvasTexture.addBigTextureTextImage({font:font,text:s,x:base_x,y:base_y,z:base_z})
 
-            const textMetric = this.textCtx.measureText(s);
-            if(textMetric.width >=512){
-                const drawMultiStringAt = (s, colour, up, right, xpos, ypos, zpos, font, threeD) => {
-                    let axesOffset2 = vec3.create();
-                    vec3.set(axesOffset2, xpos, ypos, 0);
-                    vec3.transformMat4(axesOffset2, axesOffset2, invMat);
-                    let xyzOff2 = this.origin.map((coord, iCoord) => -coord + this.zoom * axesOffset2[iCoord]);
-                    let base_x = xyzOff2[0];
-                    let base_y = xyzOff2[1];
-                    let base_z = xyzOff2[2];
-                    if(threeD){
-                        base_x = xpos;
-                        base_y = ypos;
-                        base_z = zpos;
-                    }
-                    const textMetric = this.textCtx.measureText(s);
-                    if(textMetric.width <512){
-                        drawStringAt(s, colour, [base_x, base_y, base_z], up, right, font)
-                            return;
-                    }
-                    for(let ichomp=0;ichomp<s.length;ichomp++){
-                        const s2 = s.substr(0,ichomp);
-                        let textMetricSub = this.textCtx.measureText(s2);
-                        if(textMetricSub.width >512){
-                            textMetricSub = this.textCtx.measureText(s2.substr(0,s2.length-1));
-                            drawStringAt(s2, colour, [base_x, base_y, base_z], up, right, font);
-                            //FIXME Why a 1.5 fudge factor ... ?
-                            xpos += this.textHeightScaling/this.gl.viewportHeight * 512 / 24. *1.5 ;//textMetricSub.width /24. *1.5;
-                            const snew = s.substr(ichomp);
-                            drawMultiStringAt(snew, colour, up, right, xpos, ypos, zpos, font, threeD);
-                            break;
-                        }
-                    }
-                }
-                drawMultiStringAt(s, textColour, up, right, xpos, ypos, zpos, font, threeD);
-            } else {
-                drawStringAt(s, textColour, [base_x, base_y, base_z], up, right, font)
-            }
         }
 
         this.textLegends.forEach(label => {
@@ -10587,28 +10874,56 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         const scale_fac = 10.0*this.zoom* this.gl.viewportWidth / this.gl.viewportHeight;
         let scale_pow = Math.pow(10,Math.floor(Math.log(scale_fac)/Math.log(10)))
-        let scale_length_fac = scale_pow / scale_fac
-        if(scale_length_fac<0.5) scale_pow *=2
-        if(scale_length_fac*2<0.5) scale_pow *=2.5
+        let scale_length_fac = scale_pow / scale_fac;
+        if(scale_length_fac<0.5) scale_pow *=2;
+        if(scale_length_fac*2<0.5) scale_pow *=2.5;
 
         let scale_bar_text_x = 18.5 * this.gl.viewportWidth / this.gl.viewportHeight;
         if(this.showScaleBar){
             if(scale_pow>1.1){
-                drawString(Math.floor(scale_pow)+"Å", scale_bar_text_x, -22.5, 0.0, "30px helvetica", false);
+                drawString(Math.floor(scale_pow)+"Å", scale_bar_text_x, -22.5, 0.0, "22px helvetica", false);
             } else {
-                drawString(scale_pow.toFixed(1)+"Å", scale_bar_text_x, -22.5, 0.0, "30px helvetica", false);
+                drawString(scale_pow.toFixed(1)+"Å", scale_bar_text_x, -22.5, 0.0, "22px helvetica", false);
             }
         }
 
+        let lastPoint = null;
+        let lastLastPoint = null;
+
+        this.measurePointsArray.forEach(point => {
+            if(lastPoint){
+                const dist = Math.sqrt(this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(point.x-lastPoint.x) * this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(point.x-lastPoint.x) + this.zoom*(point.y-lastPoint.y) * this.zoom*(point.y-lastPoint.y));
+                const mid_point = {x:(point.x+lastPoint.x)/2,y:(point.y+lastPoint.y)/2}
+                drawString(dist.toFixed(1)+"Å", mid_point.x*ratio, -mid_point.y, 0.0, "22px helvetica", false);
+                if(lastLastPoint){
+                    let l1 = {x:(point.x-lastPoint.x),y:(point.y-lastPoint.y)}
+                    l1.x /= dist / this.zoom;
+                    l1.y /= dist / this.zoom;
+                    const dist2 = Math.sqrt(this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(lastLastPoint.x-lastPoint.x) * this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(lastLastPoint.x-lastPoint.x) + this.zoom*(lastLastPoint.y-lastPoint.y) * this.zoom*(lastLastPoint.y-lastPoint.y));
+                    let l2 = {x:(lastLastPoint.x-lastPoint.x),y:(lastLastPoint.y-lastPoint.y)}
+                    l2.x /= dist2 / this.zoom;
+                    l2.y /= dist2 / this.zoom;
+                    const l1_dot_l2 = this.gl.viewportWidth / this.gl.viewportHeight*this.gl.viewportWidth / this.gl.viewportHeight*l1.x*l2.x + l1.y*l2.y;
+                    const angle = Math.acos(l1_dot_l2) / Math.PI * 180.;
+                    const angle_t = angle.toFixed(1)+"º";
+                    drawString(angle_t, lastPoint.x*ratio, -lastPoint.y, 0.0, "22px helvetica", false);
+                }
+                lastLastPoint = lastPoint;
+            }
+            lastPoint = point;
+        })
+
         if(this.showShortCutHelp) {
-            const fontSize = this.gl.viewportHeight * 0.02
-            const font = `${fontSize > 20 ? 20 : fontSize}px helvetica`
+            const fontSize = this.gl.viewportHeight * 0.018
+            const font = `${fontSize > 16 ? 16 : fontSize}px helvetica`
             this.showShortCutHelp.forEach((shortcut, index) => {
                 const xpos = -23.5 * ratio
                 const ypos = -21.5 + index
                 drawString(shortcut, xpos, ypos, 0.0, font, false)
             });
         }
+
+        //Do we ever have any newTextLabels?
         //Draw Hbond, etc. text.
         this.newTextLabels.forEach(tlabel => {
             tlabel.forEach(label => {
@@ -10616,8 +10931,119 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             })
         })
 
-        this.gl.disableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
+        this.measureText2DCanvasTexture.recreateBigTextureBuffers();
+
+        this.gl.useProgram(this.shaderProgramTextInstanced);
+        this.setMatrixUniforms(this.shaderProgramTextInstanced);
+
+        //If we want them to be on top
+        this.gl.depthFunc(this.gl.ALWAYS);
+        this.gl.uniform1f(this.shaderProgramTextInstanced.fog_start, 1000.0);
+        this.gl.uniform1f(this.shaderProgramTextInstanced.fog_end, 1000.0);
+
+        for(let i = 0; i<16; i++)
+            this.gl.disableVertexAttribArray(i);
+
+
+        this.measureText2DCanvasTexture.draw();
+
         this.gl.depthFunc(this.gl.LESS)
+    }
+
+    canvasPointToGLPoint(point) {
+        let mat_width = 48;
+        let mat_height = 48;
+        const x = ((point.x/this.gl.viewportWidth  * getDeviceScale())-0.5)*mat_width;
+        const y = ((point.y/this.gl.viewportHeight * getDeviceScale())-0.5)*mat_height;
+        return {x:x,y:y};
+    }
+
+    getMouseXYGL(evt,canvas){
+        let x;
+        let y;
+        let e = evt;
+        if (e.pageX || e.pageY) {
+            x = e.pageX;
+            y = e.pageY;
+        }
+        else {
+            x = e.clientX;
+            y = e.clientY;
+        }
+
+        let offset = getOffsetRect(canvas);
+
+        x -= offset.left;
+        y -= offset.top;
+
+        return this.canvasPointToGLPoint({x:x,y:y});
+    }
+
+    doMouseUpMeasure(evt, self) {
+
+        const measure_click_tol = 1.0;
+
+        const xy = self.getMouseXYGL(evt,self.canvas);
+        const dist_du_sq = (self.measureDownPos.x-xy.x) * (self.measureDownPos.x-xy.x) + (self.measureDownPos.y-xy.y) * (self.measureDownPos.y-xy.y)
+
+        if(dist_du_sq>2&&!self.measureHit)
+            return;
+
+        let i =0;
+        const is_close = self.measurePointsArray.some(point => {
+            const dist_sq = (point.x-xy.x) * (point.x-xy.x) + (point.y-xy.y) * (point.y-xy.y)
+            if(dist_sq<measure_click_tol){
+                self.measureHit = point;
+                return true;
+            }
+            i++;
+        })
+
+        if(!is_close&&!evt.altKey)
+            self.measurePointsArray.push(xy);
+
+        if(evt.altKey&&is_close){
+            const index = self.measurePointsArray.indexOf(self.measureHit);
+            if (index > -1) {
+                self.measurePointsArray.splice(index, 1);
+            }
+        }
+
+        self.measureHit = null;
+        self.measureButton = -1;
+        this.drawScene();
+
+    }
+
+    doMouseDownMeasure(evt, self) {
+
+        const measure_click_tol = 1.0;
+
+        const xy = self.getMouseXYGL(evt,self.canvas);
+        let i = 0;
+        self.measureHit = null;
+        const is_close = self.measurePointsArray.some(point => {
+            const dist_sq = (point.x-xy.x) * (point.x-xy.x) + (point.y-xy.y) * (point.y-xy.y);
+            if(dist_sq<measure_click_tol){
+                self.measureHit = point;
+                return true;
+            }
+            i++;
+        })
+
+        self.measureButton = evt.button;
+        self.measureDownPos.x = xy.x;
+        self.measureDownPos.y = xy.y;
+
+    }
+
+    doMouseMoveMeasure(evt, self) {
+        if(self.measureButton>-1&&self.measureHit){
+            const xy = self.getMouseXYGL(evt,self.canvas);
+            self.measureHit.x = xy.x;
+            self.measureHit.y = xy.y;
+            this.drawScene();
+        }
     }
 
     doMouseUp(event, self) {
@@ -10885,7 +11311,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
                 // ###############
 
-                const draggedAtomEvent = new CustomEvent("atomDragged", { detail: {atom: this.currentlyDraggedAtom} });
+                const draggedAtomEvent: moorhen.AtomDraggedEvent = new CustomEvent("atomDragged", { detail: this.currentlyDraggedAtom });
                 document.dispatchEvent(draggedAtomEvent);
                 return
 
@@ -10921,7 +11347,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 //Just consider one origin.
                 let diff = [0, 0, 0];
 
-                
                 const dispObjs: moorhen.DisplayObject[][]  = this.activeMolecule.representations.filter(item => item.style !== 'transformation').map(item => item.buffers)
                 for (const value of dispObjs) {
                     if (value.length > 0) {
@@ -10982,7 +11407,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 self.keysDown[key] = false
             }
         })
-        
+
         /**
          * No longer necessary but leaving it here in case we want to handle something
          * not taken care of upstairs
@@ -10994,7 +11419,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         if (!doContinue) return
-        
+
     }
 
     makeCircleCanvas(text, width, height, circleColour) {

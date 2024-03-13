@@ -20,7 +20,7 @@ export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
 
     const dispatch = useDispatch()
     const maps = useSelector((state: moorhen.State) => state.maps)
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const panelContent = <>
         <MoorhenMapSelect maps={maps} ref={mapSelectRef} />

@@ -3,14 +3,11 @@ A JavaScript molecular graphics program
 
 ### Todo
 - [ ] Highlight things other than balls.
-- [ ] Selections
-- [ ] Glycan viewer
-  - [ ] Glycan viewer to graphics interactivity
-- [ ] PDB-REDO integration
+- [ ] Electrostatics
+- [ ] Auto scaled shadow box
 - [ ] Lipid cartoons
 - [ ] Images/Legends
-- [ ] Scale bar
-- [ ] Prosmart (this is slightly complicated because of the subprocess model).
+- [ ] Prosmart (this is complicated because of the subprocess model).
 - [ ] Check that this successfully compiles on Windows (needs *get_sources.bat* or *MSYS*)
 - [ ] Generate Helices
 - [ ] Normal modes

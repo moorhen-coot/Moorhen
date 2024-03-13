@@ -8,7 +8,7 @@ export const MoorhenSideChain180Button = (props: moorhen.ContextButtonProps) => 
             message: 'coot_command',
             returnType: "status",
             command: 'side_chain_180',
-            commandArgs: [selectedMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`],
+            commandArgs: [selectedMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`],
             changesMolecules: [selectedMolecule.molNo]
         }
     }

@@ -2,7 +2,7 @@ import { OverlayTrigger, Tooltip } from "react-bootstrap"
 import { moorhen } from "../../types/moorhen";
 
 export const getNameLabel = (item: moorhen.Molecule | moorhen.Map) => {
-    if (item.name.length > 9) {
+    if (item.name.length > 16) {
         return <OverlayTrigger
                 key={item.molNo}
                 placement="top"
@@ -15,7 +15,7 @@ export const getNameLabel = (item: moorhen.Molecule | moorhen.Map) => {
                 }
                 >
                 <div>
-                    {`#${item.molNo} ${item.type === 'molecule' ? 'Mol.' : 'Map'} ${item.name.slice(0,5)}...`}
+                    {`#${item.molNo} ${item.type === 'molecule' ? 'Mol.' : 'Map'} ${item.name.slice(0,15)}...`}
                 </div>
                 </OverlayTrigger>
     }

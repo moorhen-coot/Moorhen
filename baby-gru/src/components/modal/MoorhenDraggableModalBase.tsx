@@ -5,7 +5,7 @@ import { AddOutlined, CloseOutlined, RemoveOutlined, SquareFootOutlined } from "
 import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
 import { Resizable } from "re-resizable";
-import { setEnableAtomHovering } from "../../moorhen";
+import { setEnableAtomHovering } from "../../store/hoveringStatesSlice";
 import { focusOnModal, unFocusModal } from "../../store/activeModalsSlice";
 import { guid } from "../../utils/MoorhenUtils";
 import {AnyAction} from "@reduxjs/toolkit";

@@ -5,7 +5,7 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from 'react-redux';
-import { triggerScoresUpdate } from "../../store/connectedMapsSlice";
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 
 export const MoorhenAddSimpleMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>
@@ -17,7 +17,7 @@ export const MoorhenAddSimpleMenuItem = (props: {
     const moleculeSelectRef = useRef<HTMLSelectElement | null>(null)
 
     const dispatch = useDispatch()
-    const molecules = useSelector((state: moorhen.State) => state.molecules)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const molTypes = ['HOH', 'SO4', 'PO4', 'GOL', 'CIT', 'EDO', 'IOD', 'NA', 'CA']
 
@@ -36,7 +36,7 @@ export const MoorhenAddSimpleMenuItem = (props: {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
         if (selectedMolecule) {
             await selectedMolecule.addLigandOfType(molTypeSelectRef.current.value)
-            dispatch( triggerScoresUpdate(selectedMolecule.molNo) )
+            dispatch( triggerUpdate(selectedMolecule.molNo) )
         }
     }, [props.glRef, molecules])
 

@@ -213,7 +213,8 @@ div.darkly text.end-label {fill:#FFF !important;}
   width: 14rem;
   min-height: 3rem;
   height: fit-content;
-  max-height: 10rem;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 0.5rem;
   display: flex;
   border-radius: 2rem;
@@ -325,12 +326,10 @@ img.moorhen-context-button__icon {
   border-width: 1px;
 }
 
-.moorhen-recording-icon {
+.moorhen-blinking-icon, .moorhen-recording-icon {
   box-shadow: 0 0px 6px;
-  color : red;
-  margin-right: 0.5rem;
-    animation: blink 3s steps(5, start) infinite;
-    -webkit-animation: blink 1s steps(5, start) infinite;
+  animation: blink 3s steps(5, start) infinite;
+  -webkit-animation: blink 1s steps(5, start) infinite;
   }
   @keyframes blink {
     to {
@@ -341,4 +340,10 @@ img.moorhen-context-button__icon {
     to {
       visibility: hidden;
     }
+}
+
+.moorhen-recording-icon {
+  box-shadow: 0 0px 6px;
+  color : red;
+  margin-right: 0.5rem;
 }
