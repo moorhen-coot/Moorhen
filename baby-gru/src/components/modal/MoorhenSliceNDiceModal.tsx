@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from "react-redux"
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen"
-import { convertRemToPx, convertViewtoPx } from "../../utils/MoorhenUtils"
+import { convertRemToPx, convertViewtoPx, hslToHex } from "../../utils/MoorhenUtils"
 import { Button, Card, Col, Dropdown, Form, FormSelect, Row, Spinner, SplitButton, Stack } from "react-bootstrap"
 import { Backdrop, IconButton, Slider, Tooltip } from "@mui/material"
 import React, { useCallback, useEffect, useRef, useState } from "react"
@@ -9,6 +9,7 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { addMolecule, hideMolecule, showMolecule } from "../../store/moleculesSlice"
 import { CenterFocusWeakOutlined, DownloadOutlined } from "@mui/icons-material"
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
+import { MoorhenColourRule } from "../../utils/MoorhenColourRule"
 
 export const MoorhenSliceNDiceModal = (props: {
     show: boolean;
@@ -101,17 +102,25 @@ export const MoorhenSliceNDiceModal = (props: {
         dispatch( hideMolecule(selectedMolecule) )
 
         const slices = [...new Set(result.data.result.result.filter(item => item.slice !== -1).map(item => item.slice))]
-        const newMolecules = await Promise.all(slices.map(async(slice: number) => {
+        const newMolecules = await Promise.all(slices.map(async(slice: number, index: number) => {
             const residueCids = result.data.result.result.filter(item => item.slice === slice).map(item => item.residue).join("||")
             const newMolecule = await selectedMolecule.copyFragmentUsingCid(residueCids, false)
             newMolecule.name = `Slice #${slice + 1}`
+            const colorHue = Math.floor((index * 40) + Math.floor(Math.random() * 6))
+            const selectedColour = isDark ? hslToHex(colorHue, 80, 70) : hslToHex(colorHue, 50, 50)
+            const newColourRule = new MoorhenColourRule(
+                'cid', "/*/*/*/*", selectedColour, props.commandCentre
+            )
+            newColourRule.setArgs(["/*/*/*/*", selectedColour])
+            newColourRule.setParentMolecule(newMolecule)
+            newMolecule.defaultColourRules = [ newColourRule ]
             newMolecule.setAtomsDirty(true)
             await newMolecule.fetchIfDirtyAndDraw('CRs')
             return newMolecule
         }))
         setSlicingResults(newMolecules.sort( (a, b) => {  return parseInt(a.name.replace('Slice #', '')) - parseInt(b.name.replace('Slice #', ''))  }))
         setBusy(false)
-    }, [molecules, slicingResults])
+    }, [molecules, slicingResults, isDark])
 
     const handleClose = useCallback(async (saveToMoorhen: boolean = false) => {
         if (slicingResults?.length > 0) {
