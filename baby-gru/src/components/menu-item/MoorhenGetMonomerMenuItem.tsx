@@ -26,7 +26,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
     const panelContent = <>
         <Form.Group className='moorhen-form-group' controlId="MoorhenGetMonomerMenuItem">
             <Form.Label>Monomer identifier</Form.Label>
-            <Form.Control ref={tlcRef} type="text" />
+            <Form.Control ref={tlcRef} type="text" style={{textTransform: 'uppercase'}}/>
         </Form.Group>
         <MoorhenMoleculeSelect molecules={molecules} allowAny={true} ref={selectRef} />
     </>

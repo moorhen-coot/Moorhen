@@ -217,7 +217,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
                             }}>{source}</Dropdown.Item>
                 })}
             </SplitButton>
-            <Form.Control type="text" style={{ borderColor: isValidPdbId ? '' : 'red' }} ref={pdbCodeFetchInputRef} onKeyDown={(e) => {
+            <Form.Control type="text" style={{ borderColor: isValidPdbId ? '' : 'red', textTransform: 'uppercase'}} ref={pdbCodeFetchInputRef} onKeyDown={(e) => {
                 setIsValidPdbId(true)
                 if (e.code === 'Enter') {
                     fetchFiles()
