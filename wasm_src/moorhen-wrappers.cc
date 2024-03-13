@@ -25,6 +25,7 @@
 
 #include "kmeans.h"
 #include "agglomerative.h"
+#include "birch.h"
 #include "Eigen/Dense"
 
 #include <math.h>
@@ -248,6 +249,10 @@ class molecules_container_js : public molecules_container_t {
                     Agglomerative agglomerative(nclusters);
                     agglomerative.fit(atomic_matrix);
                     labels = agglomerative.labels_;
+                } else if (clustering_method == "birch") {
+                    Birch birch(nclusters);
+                    birch.fit(atomic_matrix);
+                    labels = birch.labels_;
                 } else {
                     std::cout << "Clustering method: " << clustering_method << " not yet implemented." << std::endl;
                 }
@@ -1176,7 +1181,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
-    .function("set_use_rama_plot_restraints", &molecules_container_t::set_use_rama_plot_restraints)
+    .function("make_ensemble", &molecules_container_t::make_ensemble)
+    .function("match_ligand_torsions_and_position_using_cid", &molecules_container_t::match_ligand_torsions_and_position_using_cid)
     .function("set_rama_plot_restraints_weight", &molecules_container_t::set_rama_plot_restraints_weight)
     .function("get_rama_plot_restraints_weight", &molecules_container_t::get_rama_plot_restraints_weight)
     .function("set_use_torsion_restraints", &molecules_container_t::set_use_torsion_restraints)

@@ -94,7 +94,6 @@ tar xf glm-$glm_release.tar.gz
 echo
 
 patch -p0 < ../patches/ccp4-emscripten.patch 
-patch -p0 < ../patches/superpose-emscripten.patch
 cd ..
 echo
 
@@ -129,10 +128,9 @@ cd checkout
 curl -L https://github.com/boostorg/boost/releases/download/boost-$boost_release/boost-$boost_release.tar.gz  -o boost_$boost_release.tar.gz
 tar xf boost_$boost_release.tar.gz
 cd ..
-ln -s checkout/boost_$boost_release boost
+ln -s checkout/boost-$boost_release boost
 echo
 patch -p0 < patches/boost-emscripten.patch
-patch -p0 < patches/boost-cxx-17.patch
 
 ln -s checkout/rdkit-$rdkit_release rdkit
 
