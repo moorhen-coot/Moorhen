@@ -40,7 +40,7 @@
 
 using namespace emscripten;
 
-int superpose_main(const std::vector<std::string> &files, const std::vector<std::string> &selections);
+//int superpose_main(const std::vector<std::string> &files, const std::vector<std::string> &selections);
 //int gesamt_main(const std::vector<std::string> &_argv);
 
 /*
@@ -469,7 +469,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("printMapStats",&printMapStats);
     function("exportXMapToMapFile",&exportXMapToMapFile);
     function("clipperStringToString",&clipperStringToString);
-    function("superpose",&superpose_main);
+    //function("superpose",&superpose_main);
     //function("gesamt",&gesamt_main);
     //function("get_annotated_glycans",&get_annotated_glycans);
     //function("get_annotated_glycans_hierarchical",&get_annotated_glycans_hierarchical);

@@ -94,7 +94,6 @@ tar xf glm-$glm_release.tar.gz
 echo
 
 patch -p0 < ../patches/ccp4-emscripten.patch 
-patch -p0 < ../patches/superpose-emscripten.patch
 cd ..
 echo
 
@@ -132,7 +131,6 @@ cd ..
 ln -s checkout/boost-$boost_release boost
 echo
 patch -p0 < patches/boost-emscripten.patch
-#patch -p0 < patches/boost-cxx-17.patch
 
 ln -s checkout/rdkit-$rdkit_release rdkit
 
