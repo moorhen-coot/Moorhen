@@ -1,7 +1,14 @@
 import {Dispatch, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import { Button, Card, Stack } from "react-bootstrap";
 import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
-import { AddOutlined, CloseOutlined, RemoveOutlined, SquareFootOutlined } from "@mui/icons-material";
+import {
+    AddOutlined,
+    CloseOutlined,
+    OpenInNew,
+    OpenInNewOff,
+    RemoveOutlined,
+    SquareFootOutlined
+} from "@mui/icons-material";
 import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
 import { Resizable } from "re-resizable";
@@ -71,7 +78,7 @@ function getContent(modalIdRef: React.MutableRefObject<string>, dispatch: (value
             <Stack gap={2} direction="horizontal">
                 <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}}
                         onClick={() => setPopOut(!popOut)}>
-                    pop
+                    {popOut ? <OpenInNewOff/> : <OpenInNew/>}
                 </Button>
                 {props.additionalHeaderButtons?.map(button => button)}
                 <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}}
