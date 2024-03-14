@@ -1,5 +1,10 @@
 import { moorhen } from "../types/moorhen"
 import { webGL } from "../types/mgWebGL";
+import { MoorhenMolecule } from "./MoorhenMolecule";
+import { MoorhenMap } from "./MoorhenMap";
+import MoorhenReduxStore from "../store/MoorhenReduxStore";
+import { addMolecule } from "../store/moleculesSlice";
+import { addMap } from "../store/mapsSlice";
 
 interface MoorhenScriptApiInterface {
     molecules: moorhen.Molecule[];
@@ -95,6 +100,12 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
                 return obj
             }, {}),
             glRef: this.glRef,
+            commandCentre: this.commandCentre,
+            MoorhenMolecule: MoorhenMolecule,
+            MoorhenMap: MoorhenMap,
+            dispatch: (arg) => MoorhenReduxStore.dispatch( arg ),
+            addMolecule: addMolecule,
+            addMap: addMap, 
             run_command: this.runCommand,
             rigid_body_fit: this.doRigidBodyFit,
             generate_self_restraints: this.doGenerateSelfRestraints,
