@@ -2035,6 +2035,7 @@ interface ShaderOverlay extends MGWebGLShader {
 }
 
 interface MGWebGLPropsInterface {
+                    reContourMapOnlyOnMouseUp: boolean | null;
                     onAtomHovered : (identifier: { buffer: { id: string; }; atom: moorhen.AtomInfo; }) => void;
                     onKeyPress : (event: KeyboardEvent) =>  boolean | Promise<boolean>;
                     messageChanged : ((d:Dictionary<string>) => void);
@@ -2352,6 +2353,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.reContourMapOnlyOnMouseUp = true;
         this.mapLineWidth = 1.0
 
+        if (this.props.reContourMapOnlyOnMouseUp !== null) {
+            this.reContourMapOnlyOnMouseUp = this.props.reContourMapOnlyOnMouseUp
+        }
         if (this.props.showAxes !== null) {
             this.showAxes = this.props.showAxes
         }
@@ -2538,6 +2542,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.mapLineWidth = this.props.mapLineWidth
             this.setOrigin(this.origin, true)
             this.drawScene()
+        }
+        if (oldProps.reContourMapOnlyOnMouseUp !== this.props.reContourMapOnlyOnMouseUp) {
+            this.reContourMapOnlyOnMouseUp = this.props.reContourMapOnlyOnMouseUp
         }
     }
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import { MoorhenPreferences } from "../../utils/MoorhenPreferences";
-import { setDefaultMapLitLines, setDefaultMapSamplingRate, setDefaultMapSurface, setMapLineWidth } from "../../store/mapContourSettingsSlice";
+import { setDefaultMapLitLines, setDefaultMapSamplingRate, setDefaultMapSurface, setMapLineWidth, setReContourMapOnlyOnMouseUp } from "../../store/mapContourSettingsSlice";
 import { useSelector, useDispatch } from "react-redux"
 import { setContourWheelSensitivityFactor, setMouseSensitivity, setZoomWheelSensitivityFactor } from "../../store/mouseSettings";
 import { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold } from "../../store/backupSettingsSlice";
@@ -32,6 +32,7 @@ export const MoorhenPreferencesContainer = (props: {
     const defaultMapSamplingRate = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapSamplingRate)
     const mapLineWidth = useSelector((state: moorhen.State) => state.mapContourSettings.mapLineWidth)
     const defaultMapSurface = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapSurface)
+    const reContourMapOnlyOnMouseUp = useSelector((state: moorhen.State) => state.mapContourSettings.reContourMapOnlyOnMouseUp)
 
     // Backup settings
     const enableTimeCapsule = useSelector((state: moorhen.State) => state.backupSettings.enableTimeCapsule)
@@ -142,6 +143,7 @@ export const MoorhenPreferencesContainer = (props: {
         47: { label: "edgeDetectNormalThreshold", value: edgeDetectNormalThreshold, valueSetter: setEdgeDetectNormalThreshold},
         48: { label: "edgeDetectDepthScale", value: edgeDetectDepthScale, valueSetter: setEdgeDetectDepthScale},
         49: { label: "edgeDetectNormalScale", value: edgeDetectNormalScale, valueSetter: setEdgeDetectNormalScale},
+        50: { label: "reContourMapOnlyOnMouseUp", value: reContourMapOnlyOnMouseUp, valueSetter: setReContourMapOnlyOnMouseUp},
     }
 
     const restoreDefaults = (preferences: moorhen.Preferences, defaultValues: moorhen.PreferencesValues)=> {
@@ -199,6 +201,16 @@ export const MoorhenPreferencesContainer = (props: {
         fetchStoredContext();
 
     }, [])
+
+    useMemo(() => {
+
+        if (reContourMapOnlyOnMouseUp === null) {
+            return
+        }
+       
+        localForageInstanceRef.current?.localStorageInstance.setItem('reContourMapOnlyOnMouseUp', reContourMapOnlyOnMouseUp)
+        .then(_ => props.onUserPreferencesChange('reContourMapOnlyOnMouseUp', reContourMapOnlyOnMouseUp));
+    }, [reContourMapOnlyOnMouseUp]);
 
     useMemo(() => {
 

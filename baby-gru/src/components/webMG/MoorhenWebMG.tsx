@@ -43,6 +43,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const [showContextMenu, setShowContextMenu] = useState<false | moorhen.AtomRightClickEventInfo>(false)
     const [defaultActionButtonSettings, setDefaultActionButtonSettings] = useReducer(actionButtonSettingsReducer, intialDefaultActionButtonSettings)
 
+    const reContourMapOnlyOnMouseUp = useSelector((state: moorhen.State) => state.mapContourSettings.reContourMapOnlyOnMouseUp)
     const visibleMolecules = useSelector((state: moorhen.State) => state.molecules.visibleMolecules)
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
     const isChangingRotamers = useSelector((state: moorhen.State) => state.generalStates.isChangingRotamers)
@@ -439,6 +440,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     showFPS={drawFPS}
                     mapLineWidth={innerMapLineWidth}
                     drawMissingLoops={drawMissingLoops}
+                    reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp}
                     drawInteractions={drawInteractions} />
 
                 {showContextMenu &&
