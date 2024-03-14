@@ -89,7 +89,7 @@ export const MoorhenSliceNDiceModal = (props: {
 
         if (slicingResults?.length > 0) {
             await Promise.all(
-                slicingResults.sort((a, b) => { return  b.molNo - a.molNo }).map(sliceMolecule => sliceMolecule.delete(true))
+                slicingResults.map(sliceMolecule => sliceMolecule.delete())
             )
         }
 
@@ -130,7 +130,7 @@ export const MoorhenSliceNDiceModal = (props: {
                 })
             } else {
                 await Promise.all(
-                    slicingResults.sort((a, b) => { return  b.molNo - a.molNo }).map(sliceMolecule => sliceMolecule.delete(true))
+                    slicingResults.map(sliceMolecule => sliceMolecule.delete())
                 )    
                 const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
                 if (selectedMolecule) {
@@ -138,6 +138,11 @@ export const MoorhenSliceNDiceModal = (props: {
                 }
             }
         }
+        await props.commandCentre.current.cootCommand({
+            command: 'end_delete_closed_molecules',
+            commandArgs: [ ],
+            returnType: 'void'
+        }, false)
         props.setShow(false)
     }, [slicingResults, molecules])
 
