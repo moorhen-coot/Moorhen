@@ -1216,6 +1216,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if (typeof selectionString === 'string') {
             this.hoverRepresentation.cid = selectionString
             await this.hoverRepresentation.redraw()
+            this.hoverRepresentation.drawSymmetry()
+            this.hoverRepresentation.buffers[0].changeColourWithSymmetry = false
         }
     }
 

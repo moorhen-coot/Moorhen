@@ -70,6 +70,7 @@ export namespace moorhen {
     type DisplayObject = {
         symmetryMatrices: any;
         updateSymmetryAtoms(): void;
+        changeColourWithSymmetry: boolean;
         [attr: string]: any;
     }
     
