@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from "react-redux"
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen"
-import { convertRemToPx, convertViewtoPx, hslToHex } from "../../utils/MoorhenUtils"
+import { convertRemToPx, convertViewtoPx, findConsecutiveRanges, hslToHex } from "../../utils/MoorhenUtils"
 import { Button, Card, Col, Dropdown, Form, FormSelect, Row, Spinner, SplitButton, Stack } from "react-bootstrap"
 import { Backdrop, IconButton, Slider, Tooltip } from "@mui/material"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
@@ -29,27 +29,12 @@ const MoorhenSliceNDiceCard = (props: {
         let residueMap: {[chainID: string]: { size: number; cid: string; }[]} = {}
         props.fragmentMolecule.sequences.forEach(sequence => {
             const currentChainId = sequence.chain
-            let currentStart = sequence.sequence[0].resNum
-            let currentEnd = sequence.sequence[0].resNum
-            let size = 1
             residueMap[currentChainId] = []
-            sequence.sequence.forEach((residue, index) => {
-                if (index === 0) {
-                    // pass
-                } else if (residue.resNum === 1 + sequence.sequence[index - 1].resNum) {
-                    currentEnd = residue.resNum
-                    size += 1
-                    if (index === sequence.sequence.length - 1) {
-                        residueMap[currentChainId].push({
-                            size, cid: `//${currentChainId}/${currentStart}-${currentEnd}`
-                        })    
-                    }
-                } else {
-                    residueMap[currentChainId].push({
-                        size, cid: `//${currentChainId}/${currentStart}-${currentEnd}`
-                    })
-                    size = 1
-                    currentStart = residue.resNum
+            const residueRanges = findConsecutiveRanges(sequence.sequence.map(residue => residue.resNum))
+            residueMap[currentChainId] = residueRanges.map(range => {
+                return {
+                    size: range[1] - range[0] + 1,
+                    cid: `//${currentChainId}/${range[0]}-${range[1]}`    
                 }
             })
         })
@@ -187,16 +172,43 @@ export const MoorhenSliceNDiceModal = (props: {
         }
     }, [selectedMolNo])
 
+    useEffect(() => {
+        const handleBfactorChange = async () => {
+            if (slicingResults?.length > 0) {
+                await Promise.all( slicingResults.map(sliceMolecule => sliceMolecule.delete()) )
+                setSlicingResults(null)
+            }
+            if (typeof selectedMoleculeCopyRef.current === 'object') {
+                await selectedMoleculeCopyRef.current.unhideAll(false)
+                let cidsToHide = moleculeBfactors.filter(residue => residue.bFactor > bFactorThreshold).map(residue => residue.cid)
+                selectedMoleculeCopyRef.current.hideCid(cidsToHide.join('||'), true)
+                selectedMoleculeCopyRef.current.show('CRs', '/*/*/*/*')    
+            }
+        }
+        handleBfactorChange()
+    }, [bFactorThreshold])
+
     const doSlice = useCallback(async () => {
         if (!moleculeSelectRef.current.value) {
             return
         }
 
-        const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
+        let selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
         if (!selectedMolecule) {
             return
         }
-        
+
+        setBusy(true)
+
+        let deleteSelectedMoleculeOnExit = false
+        if (selectedMoleculeCopyRef.current?.excludedSelections?.length > 0) {
+            deleteSelectedMoleculeOnExit = true
+            selectedMolecule = await selectedMolecule.copyFragmentUsingCid('//', false)
+            selectedMolecule.excludedSelections = selectedMoleculeCopyRef.current.excludedSelections
+            selectedMolecule.excludedCids = selectedMoleculeCopyRef.current.excludedCids
+            deleteHiddenResidues(selectedMolecule)
+        }
+
         let commandArgs: (string | number)[]
         switch (clusteringTypeSelectRef.current.value) {
             case "kmeans":
@@ -210,10 +222,9 @@ export const MoorhenSliceNDiceModal = (props: {
         }
         
         if (!commandArgs) {
+            setBusy(false)
             return
         }
-
-        setBusy(true)
 
         if (slicingResults?.length > 0) {
             await Promise.all(
@@ -246,6 +257,11 @@ export const MoorhenSliceNDiceModal = (props: {
             await newMolecule.fetchIfDirtyAndDraw('CRs')
             return newMolecule
         }))
+
+        if (deleteSelectedMoleculeOnExit) {
+            await selectedMolecule.delete()
+        }
+
         setSlicingResults(newMolecules.sort( (a, b) => {  return parseInt(a.name.replace('Slice #', '')) - parseInt(b.name.replace('Slice #', ''))  }))
         setBusy(false)
     }, [molecules, slicingResults, isDark])
@@ -261,13 +277,19 @@ export const MoorhenSliceNDiceModal = (props: {
             } else {
                 await Promise.all(
                     slicingResults.map(sliceMolecule => sliceMolecule.delete())
-                )    
-                const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
-                if (selectedMolecule) {
-                    dispatch( showMolecule(selectedMolecule) )
-                }
+                )
             }
         }
+        
+        await selectedMoleculeCopyRef.current?.delete?.()
+        
+        if (!saveToMoorhen) {
+            const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
+            if (selectedMolecule) {
+                dispatch( showMolecule(selectedMolecule) )
+            }
+        }
+
         await props.commandCentre.current.cootCommand({
             command: 'end_delete_closed_molecules',
             commandArgs: [ ],
