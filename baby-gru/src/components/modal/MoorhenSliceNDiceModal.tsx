@@ -4,12 +4,117 @@ import { moorhen } from "../../types/moorhen"
 import { convertRemToPx, convertViewtoPx, hslToHex } from "../../utils/MoorhenUtils"
 import { Button, Card, Col, Dropdown, Form, FormSelect, Row, Spinner, SplitButton, Stack } from "react-bootstrap"
 import { Backdrop, IconButton, Slider, Tooltip } from "@mui/material"
-import React, { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useMemo, useRef, useState } from "react"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { addMolecule, hideMolecule, showMolecule } from "../../store/moleculesSlice"
 import { CenterFocusWeakOutlined, DownloadOutlined } from "@mui/icons-material"
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule"
+
+const deleteHiddenResidues = async (molecule: moorhen.Molecule) => {
+    if (molecule.excludedSelections.length > 0) {
+        await molecule.deleteCid(molecule.excludedSelections.join('||'), false)
+        await molecule.unhideAll(false)
+    }
+}
+
+const MoorhenSliceNDiceCard = (props: {
+    fragmentMolecule: moorhen.Molecule;
+    label: string;
+}) => {
+
+    const [minFragmentSize, setMinFragmentSize] = useState<number>(1)
+
+    const [residueMap, maxFragmentSize, themeColor] = useMemo(() => {
+        let residueMap: {[chainID: string]: { size: number; cid: string; }[]} = {}
+        props.fragmentMolecule.sequences.forEach(sequence => {
+            const currentChainId = sequence.chain
+            let currentStart = sequence.sequence[0].resNum
+            let currentEnd = sequence.sequence[0].resNum
+            let size = 1
+            residueMap[currentChainId] = []
+            sequence.sequence.forEach((residue, index) => {
+                if (index === 0) {
+                    // pass
+                } else if (residue.resNum === 1 + sequence.sequence[index - 1].resNum) {
+                    currentEnd = residue.resNum
+                    size += 1
+                    if (index === sequence.sequence.length - 1) {
+                        residueMap[currentChainId].push({
+                            size, cid: `//${currentChainId}/${currentStart}-${currentEnd}`
+                        })    
+                    }
+                } else {
+                    residueMap[currentChainId].push({
+                        size, cid: `//${currentChainId}/${currentStart}-${currentEnd}`
+                    })
+                    size = 1
+                    currentStart = residue.resNum
+                }
+            })
+        })
+        const maxFragmentSize = Math.max(...Object.keys(residueMap).map(chainId => {
+            return Math.max(...residueMap[chainId].map(fragment => fragment.size))
+        }))
+        const themeColor = props.fragmentMolecule.defaultColourRules[0]?.color
+        return [residueMap, maxFragmentSize, themeColor]
+    }, [props.fragmentMolecule])
+
+    const hideSmallFragments = useCallback(async (sizeThreshold: number) => {
+        await props.fragmentMolecule.unhideAll(false)
+        let toHideFragments = []
+        for (let chainId in residueMap) {
+            toHideFragments.push(...residueMap[chainId].filter(fragment => fragment.size < sizeThreshold))
+        }
+        if (toHideFragments.length > 0) {
+            await props.fragmentMolecule.hideCid(toHideFragments.map(fragment => fragment.cid).join('||'))
+        }
+    }, [residueMap])
+
+    const handleDownload = async () => {
+        await deleteHiddenResidues(props.fragmentMolecule)
+        await props.fragmentMolecule.downloadAtoms()
+    }
+
+    return <Card style={{marginTop: '0.5rem', borderColor: themeColor}}>
+        <Card.Body style={{padding:'0.5rem'}}>
+            <Row style={{display:'flex', justifyContent:'between'}}>
+                <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
+                    <span>
+                        {props.label}
+                    </span>
+                </Col>
+                <Col className='col-4' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex', alignItems: 'center'}}>
+                <Slider
+                    aria-label="Min. fragment size"
+                    getAriaValueText={(newVal: number) => `Min. size ${newVal} res.`}
+                    valueLabelFormat={(newVal: number) => `Min. size ${newVal} res.`}
+                    valueLabelDisplay="auto"
+                    value={minFragmentSize}
+                    onChange={(evt: any, newVal: number) => {
+                        setMinFragmentSize(newVal)
+                        hideSmallFragments(newVal)
+                    }}
+                    defaultValue={1}
+                    min={1}
+                    max={maxFragmentSize}
+                    style={{color: themeColor}}
+                />
+                <Tooltip title="View">
+                    <IconButton style={{marginRight:'0.5rem', color: themeColor}} onClick={() => props.fragmentMolecule.centreOn('/*/*/*/*', true, true)}>
+                        <CenterFocusWeakOutlined/>
+                    </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Download">
+                    <IconButton style={{marginRight:'0.5rem', color: themeColor}} onClick={handleDownload}>
+                        <DownloadOutlined/>
+                    </IconButton>
+                    </Tooltip>
+                </Col>
+            </Row>
+        </Card.Body>
+    </Card>
+}
 
 export const MoorhenSliceNDiceModal = (props: {
     show: boolean;
@@ -32,32 +137,6 @@ export const MoorhenSliceNDiceModal = (props: {
     const [clusteringType, setClusteringType] = useState<string>('birch')
     const [busy, setBusy] = useState<boolean>(false)
     const [slicingResults, setSlicingResults] = useState<moorhen.Molecule[]>(null)
-
-    const getSliceCards = useCallback((sliceId: string, fragmentMolecule: moorhen.Molecule) => {
-        return <Card key={sliceId} style={{marginTop: '0.5rem', borderColor: isDark ? 'white': ''}}>
-            <Card.Body style={{padding:'0.5rem'}}>
-                <Row style={{display:'flex', justifyContent:'between'}}>
-                    <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
-                        <span>
-                            {sliceId}
-                        </span>
-                    </Col>
-                    <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
-                    <Tooltip title="View">
-                        <IconButton style={{marginRight:'0.5rem', color: isDark ? 'white': ''}} onClick={() => fragmentMolecule.centreOn('/*/*/*/*', true, true)}>
-                            <CenterFocusWeakOutlined/>
-                        </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Download">
-                        <IconButton style={{marginRight:'0.5rem', color: isDark ? 'white': ''}} onClick={() => fragmentMolecule.downloadAtoms()}>
-                            <DownloadOutlined/>
-                        </IconButton>
-                        </Tooltip>
-                    </Col>
-                </Row>
-            </Card.Body>
-        </Card>
-    }, [isDark])
 
     const doSlice = useCallback(async () => {
         if (!moleculeSelectRef.current.value) {
@@ -125,9 +204,11 @@ export const MoorhenSliceNDiceModal = (props: {
     const handleClose = useCallback(async (saveToMoorhen: boolean = false) => {
         if (slicingResults?.length > 0) {
             if (saveToMoorhen) {
-                slicingResults.sort((a, b) => { return  b.molNo - a.molNo }).forEach(sliceMolecule => {
+                const sortedMolecules = slicingResults.sort((a, b) => { return  b.molNo - a.molNo })
+                for (let sliceMolecule of sortedMolecules) {
+                    await deleteHiddenResidues(sliceMolecule)
                     dispatch( addMolecule(sliceMolecule) )
-                })
+                }
             } else {
                 await Promise.all(
                     slicingResults.map(sliceMolecule => sliceMolecule.delete())
@@ -148,6 +229,9 @@ export const MoorhenSliceNDiceModal = (props: {
 
     const handleDownload = useCallback(async (doEnsemble: boolean = false) => {
         if (slicingResults?.length > 0) {
+            await Promise.all(slicingResults.map(fragmentMolecule => {
+                return deleteHiddenResidues(fragmentMolecule)
+            }))
             if (doEnsemble) {
                 const result = await props.commandCentre.current.cootCommand({
                     command: 'make_ensemble',
@@ -219,7 +303,12 @@ export const MoorhenSliceNDiceModal = (props: {
         <hr></hr>
         <Row>
             {slicingResults?.length > 0 ? <span>Found {slicingResults.length} possible slice(s)</span> : null}
-            {slicingResults?.length > 0 ? <div style={{height: '100px', width: '100%'}}>{slicingResults?.map(fragmentMolecule => getSliceCards(fragmentMolecule.name, fragmentMolecule))}</div> : <span>No results...</span>}
+            {slicingResults?.length > 0 ? <div style={{height: '100px', width: '100%'}}>{slicingResults?.map(fragmentMolecule => {
+                return <MoorhenSliceNDiceCard
+                            key={fragmentMolecule.molNo}
+                            fragmentMolecule={fragmentMolecule}
+                            label={fragmentMolecule.name}/>
+            })}</div> : <span>No results...</span>}
         </Row>
     </Stack>
 
