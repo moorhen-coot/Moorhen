@@ -17,41 +17,10 @@ install(TARGETS web_example DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../react-app
 install(TARGETS web_example DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/baby-gru/wasm)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/web_example.wasm  
               ${CMAKE_CURRENT_BINARY_DIR}/web_example.js
-              ${CMAKE_CURRENT_SOURCE_DIR}/crystallography_worker.js
-              ${CMAKE_CURRENT_SOURCE_DIR}/cif_pdb_worker.js
-              ${CMAKE_CURRENT_SOURCE_DIR}/mtz_worker.js
-              ${CMAKE_CURRENT_SOURCE_DIR}/mtz_arraybuffer_worker.js
-              ${CMAKE_CURRENT_SOURCE_DIR}/papaparse.min.js
-              ${CMAKE_CURRENT_SOURCE_DIR}/pdb_worker.js
-              ${CMAKE_CURRENT_SOURCE_DIR}/superpose_worker.js
-              ${CMAKE_CURRENT_SOURCE_DIR}/smiles_to_pdb_worker.js
-              ${CMAKE_CURRENT_SOURCE_DIR}/monid_to_pdb_worker.js
-              ${CMAKE_CURRENT_SOURCE_DIR}/nma_worker.js
-              ${CMAKE_CURRENT_SOURCE_DIR}/mini_rsr_worker.js
 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public/wasm)
 #MN added install for baby-gru
 install(TARGETS web_example DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/baby-gru/wasm)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/web_example.wasm  
               ${CMAKE_CURRENT_BINARY_DIR}/web_example.js
-              ${CMAKE_CURRENT_SOURCE_DIR}/crystallography_worker.js
-              ${CMAKE_CURRENT_SOURCE_DIR}/cif_pdb_worker.js
-              ${CMAKE_CURRENT_SOURCE_DIR}/mtz_worker.js
-              ${CMAKE_CURRENT_SOURCE_DIR}/mtz_arraybuffer_worker.js
-              ${CMAKE_CURRENT_SOURCE_DIR}/papaparse.min.js
-              ${CMAKE_CURRENT_SOURCE_DIR}/pdb_worker.js
-              ${CMAKE_CURRENT_SOURCE_DIR}/superpose_worker.js
-              ${CMAKE_CURRENT_SOURCE_DIR}/smiles_to_pdb_worker.js
-              ${CMAKE_CURRENT_SOURCE_DIR}/monid_to_pdb_worker.js
-              ${CMAKE_CURRENT_SOURCE_DIR}/nma_worker.js
-              ${CMAKE_CURRENT_SOURCE_DIR}/mini_rsr_worker.js
-              #${CMAKE_CURRENT_BINARY_DIR}/pthread_test.wasm
-              #${CMAKE_CURRENT_BINARY_DIR}/pthread_test.js
-              #${CMAKE_CURRENT_BINARY_DIR}/pthread_test.worker.js
 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/baby-gru/wasm)
 
-#add_executable(pthread_test pthread_test.cc)
-#target_compile_options(pthread_test PUBLIC -sUSE_PTHREADS=1 )
-#target_link_options(pthread_test PUBLIC -sUSE_PTHREADS=1 -sPTHREAD_POOL_SIZE=4 -sPTHREAD_POOL_SIZE_STRICT=4  -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createThreadExample)
-#target_include_directories(pthread_test PUBLIC ../boost/ )
-#target_link_directories(pthread_test PUBLIC ../boost/stage/lib )
-#target_link_libraries(pthread_test boost_thread )
