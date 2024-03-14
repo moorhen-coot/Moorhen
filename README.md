@@ -85,7 +85,7 @@ And then point a web browser at `http://localhost:5173/` .
     5. `cd CCP4_WASM_BUILD/moorhen_build`
     6. `make install` (or e.g. `make -j8 install` to build on 8 processors).
 
-![Moorhen](web_example/baby_gru.png)
+![Moorhen](wasm_src_frontend/baby_gru.png)
 *The Moorhen WebGL application*
 
 ## **What else can do with the compiled libraries?**
