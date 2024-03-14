@@ -95,7 +95,7 @@ import { twod_gbuffer_vertex_shader_source as twod_gbuffer_vertex_shader_source_
 import { perfect_sphere_gbuffer_fragment_shader_source as perfect_sphere_gbuffer_fragment_shader_source_webgl1 } from './webgl-1/perfect-sphere-gbuffer-fragment-shader.js';
 import { thick_lines_normal_gbuffer_vertex_shader_source as thick_lines_normal_gbuffer_vertex_shader_source_webgl1 } from './webgl-1/thick-lines-normal-gbuffer-vertex-shader.js';
 
-import { DistanceBetweenPointAndLine, DihedralAngle } from './mgMaths.js';
+import { DistanceBetweenPointAndLine, DihedralAngle, NormalizeVec3, vec3Cross, vec3Add, vec3Subtract, vec3Create  } from './mgMaths.js';
 import { determineFontHeight } from './fontHeight.js';
 
 import { getAtomInfoLabel, guid } from '../utils/MoorhenUtils';
@@ -435,29 +435,6 @@ const gaussianBlurs = {
 0.00005697236305223927,
 0.000020271844607764596,
 ]
-}
-
-function NormalizeVec3(v) {
-    let vin = vec3Create(v);
-    vec3.normalize(v, vin);
-}
-
-function vec3Cross(v1, v2, out) {
-    vec3.cross(out, v1, v2);
-}
-
-function vec3Add(v1, v2, out) {
-    vec3.add(out, v1, v2);
-}
-
-function vec3Subtract(v1, v2, out) {
-    vec3.subtract(out, v1, v2);
-}
-
-export function vec3Create(v) {
-    let theVec = vec3.create();
-    vec3.set(theVec, v[0], v[1], v[2], v[3]);
-    return theVec;
 }
 
 const X_1_0 = 0.525731112119;
