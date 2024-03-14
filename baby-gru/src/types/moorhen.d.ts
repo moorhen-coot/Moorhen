@@ -703,6 +703,7 @@ export namespace moorhen {
     
     interface PreferencesValues {
         version?: string;
+        reContourMapOnlyOnMouseUp: boolean;
         isMounted?: boolean;
         defaultMapSamplingRate: number;
         transparentModalsOnMouseOut: boolean;
@@ -944,6 +945,7 @@ export namespace moorhen {
             mapColours: { molNo: number; rgb: {r: number, g: number, b: number} }[];
             negativeMapColours: { molNo: number; rgb: {r: number, g: number, b: number} }[];
             positiveMapColours: { molNo: number; rgb: {r: number, g: number, b: number} }[];
+            reContourMapOnlyOnMouseUp: boolean;
         };
         moleculeMapUpdate: {
             updatingMapsIsEnabled: boolean;

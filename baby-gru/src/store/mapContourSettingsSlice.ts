@@ -16,8 +16,13 @@ export const mapContourSettingsSlice = createSlice({
     defaultMapLitLines: null,
     mapLineWidth: null,
     defaultMapSurface: null,
+    reContourMapOnlyOnMouseUp: null
   },
   reducers: {
+    setReContourMapOnlyOnMouseUp: (state, action: {payload: boolean, type: string}) => {
+      state = { ...state, reContourMapOnlyOnMouseUp: action.payload }
+      return state
+  },
     showMap: (state, action: {payload: moorhen.Map, type: string}) => {
         if (!state.visibleMaps.includes(action.payload.molNo)) state = { ...state, visibleMaps: [...state.visibleMaps, action.payload.molNo] }
         return state
@@ -82,7 +87,8 @@ export const mapContourSettingsSlice = createSlice({
 export const {
   showMap, hideMap, setContourLevel, setMapRadius, setMapAlpha, setMapStyle, changeMapRadius,
   setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, setDefaultMapSurface,
-  setMapColours, setNegativeMapColours, setPositiveMapColours, changeContourLevel
+  setMapColours, setNegativeMapColours, setPositiveMapColours, changeContourLevel,
+  setReContourMapOnlyOnMouseUp
 } = mapContourSettingsSlice.actions
 
 export default mapContourSettingsSlice.reducer
