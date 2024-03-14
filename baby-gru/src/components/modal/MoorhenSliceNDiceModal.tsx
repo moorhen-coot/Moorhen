@@ -4,7 +4,7 @@ import { moorhen } from "../../types/moorhen"
 import { convertRemToPx, convertViewtoPx, hslToHex } from "../../utils/MoorhenUtils"
 import { Button, Card, Col, Dropdown, Form, FormSelect, Row, Spinner, SplitButton, Stack } from "react-bootstrap"
 import { Backdrop, IconButton, Slider, Tooltip } from "@mui/material"
-import { useCallback, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { addMolecule, hideMolecule, showMolecule } from "../../store/moleculesSlice"
 import { CenterFocusWeakOutlined, DownloadOutlined } from "@mui/icons-material"
@@ -125,18 +125,33 @@ export const MoorhenSliceNDiceModal = (props: {
     const clusteringTypeSelectRef = useRef<null | HTMLSelectElement>(null)
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const nClustersRef = useRef<number>(2)
+    const bFactorThresholdRef = useRef<number>(5)
 
+    const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
-    const dispatch = useDispatch()
+    const [moleculeBfactors, setMoleculeBfactors] = useState<{ cid: string; bFactor: number; normalised_bFactor: number; }[]>(null)
+    const [moleculeMinBfactor, setMoleculeMinBfactor] = useState<number>(null)
+    const [moleculeMaxBfactor, setMoleculeMaxBfactor] = useState<number>(null)
+    const [bFactorThreshold, setBFactorThreshold] = useState<number>(5)
     const [nClusters, setNClusters] = useState<number>(2)
     const [selectedMolNo, setSelectedMolNo] = useState<number>(null)
     const [clusteringType, setClusteringType] = useState<string>('birch')
     const [busy, setBusy] = useState<boolean>(false)
     const [slicingResults, setSlicingResults] = useState<moorhen.Molecule[]>(null)
+
+    useEffect(() => {
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current?.value))
+        if (selectedMolecule) {
+            const bFactors = selectedMolecule.getResidueBFactors()
+            setMoleculeBfactors( bFactors )
+            setMoleculeMaxBfactor( parseFloat(Math.max(...bFactors.map(residue => residue.bFactor)).toFixed(2)) )
+            setMoleculeMinBfactor( parseFloat(Math.min(...bFactors.map(residue => residue.bFactor)).toFixed(2)) )
+        }
+    }, [selectedMolNo])
 
     const doSlice = useCallback(async () => {
         if (!moleculeSelectRef.current.value) {
@@ -256,7 +271,7 @@ export const MoorhenSliceNDiceModal = (props: {
 
     const bodyContent = <Stack direction="vertical" gap={1}>
         <Stack direction="horizontal" gap={1} style={{display: 'flex', width: '100%'}}>
-            <Form.Group style={{ margin: '0.5rem', width: '20rem' }}>
+            <Form.Group style={{ margin: '0.5rem', width: '100%' }}>
                 <Form.Label>Clustering algorithm...</Form.Label>
                 <FormSelect size="sm" ref={clusteringTypeSelectRef} defaultValue={'birch'} onChange={(evt) => {
                     setClusteringType(evt.target.value)
@@ -267,28 +282,58 @@ export const MoorhenSliceNDiceModal = (props: {
                     <option value={'agglomerative'} key={'agglomerative'}>Agglomerative</option>
                 </FormSelect>
             </Form.Group>
-            <MoorhenMoleculeSelect {...props} molecules={molecules} allowAny={false} ref={moleculeSelectRef} onChange={(evt) => setSelectedMolNo(parseInt(evt.target.value))}/>
+            <MoorhenMoleculeSelect {...props} width="100%" molecules={molecules} allowAny={false} ref={moleculeSelectRef} onChange={(evt) => setSelectedMolNo(parseInt(evt.target.value))}/>
         </Stack>
-        { ['kmeans', 'agglomerative', 'birch'].includes(clusteringType) && 
-        <div style={{ paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.1rem', paddingBottom: '0.1rem' }}>
-            <Slider
-                aria-label="No. of clusters"
-                getAriaValueText={(newVal: number) => `${newVal} slices`}
-                valueLabelFormat={(newVal: number) => `${newVal} slices`}
-                valueLabelDisplay="on"
-                value={nClusters}
-                onChange={(evt: any, newVal: number) => {
-                    nClustersRef.current = newVal
-                    setNClusters(newVal)
-                }}
-                marks={true}
-                defaultValue={5}
-                step={1}
-                min={2}
-                max={10}
-                sx={{
-                    marginTop: '1.7rem',
-                    marginBottom: '0.8rem',
+        <Stack direction="horizontal" gap={1} style={{display: 'flex', width: '100%'}}>
+            { ['kmeans', 'agglomerative', 'birch'].includes(clusteringType) && 
+            <div style={{ paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.1rem', paddingBottom: '0.1rem', width: '100%'}}>
+                <span>Number of slices</span>
+                <Slider
+                    aria-label="No. of clusters"
+                    getAriaValueText={(newVal: number) => `${newVal} slices`}
+                    valueLabelFormat={(newVal: number) => `${newVal} slices`}
+                    valueLabelDisplay="on"
+                    value={nClusters}
+                    onChange={(evt: any, newVal: number) => {
+                        nClustersRef.current = newVal
+                        setNClusters(newVal)
+                    }}
+                    marks={true}
+                    defaultValue={5}
+                    step={1}
+                    min={2}
+                    max={10}
+                    sx={{
+                        marginTop: '1.7rem',
+                        marginBottom: '0.8rem',
+                            '& .MuiSlider-valueLabel': {
+                                top: -1,
+                                fontSize: 14,
+                                fontWeight: 'bold',
+                                color: 'grey',
+                                backgroundColor: 'unset',
+                            },
+                    }}
+                />
+            </div>}
+            <div style={{ paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.1rem', paddingBottom: '0.1rem', width: '100%'}}>
+                <span>B-Factor trimming</span>
+                <Slider
+                    aria-label="B-Factor threshold"
+                    getAriaValueText={(newVal: number) => `${newVal} Å^2`}
+                    valueLabelFormat={(newVal: number) => <span>{newVal}Å<sup>2</sup></span>}
+                    valueLabelDisplay="on"
+                    value={bFactorThreshold}
+                    onChange={(evt: any, newVal: number) => {
+                        bFactorThresholdRef.current = newVal
+                        setBFactorThreshold(newVal)
+                    }}
+                    defaultValue={moleculeMinBfactor ? moleculeMinBfactor : 1}
+                    min={moleculeMinBfactor ? moleculeMinBfactor : 1}
+                    max={moleculeMaxBfactor ? moleculeMaxBfactor : 1}
+                    sx={{
+                        marginTop: '1.7rem',
+                        marginBottom: '0.8rem',
                         '& .MuiSlider-valueLabel': {
                             top: -1,
                             fontSize: 14,
@@ -296,10 +341,10 @@ export const MoorhenSliceNDiceModal = (props: {
                             color: 'grey',
                             backgroundColor: 'unset',
                         },
-                }}
-            />
-        </div>
-        }
+                    }}
+                />
+            </div>
+        </Stack>
         <hr></hr>
         <Row>
             {slicingResults?.length > 0 ? <span>Found {slicingResults.length} possible slice(s)</span> : null}
@@ -346,7 +391,7 @@ export const MoorhenSliceNDiceModal = (props: {
                 defaultWidth={convertViewtoPx(10, width)}
                 minHeight={convertViewtoPx(15, height)}
                 minWidth={convertRemToPx(30)}
-                maxHeight={convertViewtoPx(50, height)}
+                maxHeight={convertViewtoPx(65, height)}
                 maxWidth={convertViewtoPx(40, width)}
                 additionalChildren={spinnerContent}
                 headerTitle='Slice-n-Dice'
