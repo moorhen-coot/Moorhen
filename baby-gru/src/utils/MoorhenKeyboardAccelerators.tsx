@@ -3,7 +3,8 @@ import { cidToSpec, getCentreAtom, guid } from "./MoorhenUtils"
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4.js';
-import { getDeviceScale, vec3Create } from '../WebGLgComponents/mgWebGL';
+import { getDeviceScale } from '../WebGLgComponents/mgWebGL';
+import { vec3Create } from '../WebGLgComponents/mgMaths';
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { MoorhenNotification } from "../components/misc/MoorhenNotification";
