@@ -126,6 +126,8 @@ export const MoorhenSliceNDiceModal = (props: {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const nClustersRef = useRef<number>(2)
     const bFactorThresholdRef = useRef<number>(5)
+    const selectedMoleculeCopyRef = useRef<moorhen.Molecule>(null)
+    const prevSelectedMoleculeRef = useRef<moorhen.Molecule>(null)
 
     const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
@@ -144,12 +146,44 @@ export const MoorhenSliceNDiceModal = (props: {
     const [slicingResults, setSlicingResults] = useState<moorhen.Molecule[]>(null)
 
     useEffect(() => {
+        const copyMolecule = async (molecule: moorhen.Molecule) => {
+            prevSelectedMoleculeRef.current = molecule
+            selectedMoleculeCopyRef.current = await molecule.copyFragmentUsingCid('//', false)
+            selectedMoleculeCopyRef.current.defaultColourRules = molecule.defaultColourRules.map(rule => {
+                return MoorhenColourRule.initFromDataObject(rule.objectify(), props.commandCentre, selectedMoleculeCopyRef.current)
+            })
+            dispatch(hideMolecule(molecule))
+            selectedMoleculeCopyRef.current.setAtomsDirty(true)
+            await selectedMoleculeCopyRef.current.fetchIfDirtyAndDraw('CRs')
+            await selectedMoleculeCopyRef.current.centreOn('/*/*/*/*', true, true)
+        }
+
         const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current?.value))
         if (selectedMolecule) {
             const bFactors = selectedMolecule.getResidueBFactors()
             setMoleculeBfactors( bFactors )
             setMoleculeMaxBfactor( parseFloat(Math.max(...bFactors.map(residue => residue.bFactor)).toFixed(2)) )
             setMoleculeMinBfactor( parseFloat(Math.min(...bFactors.map(residue => residue.bFactor)).toFixed(2)) )
+            if (selectedMoleculeCopyRef.current === null) {
+                // This here is necessary because React mounts components twice in strict mode and served in dev server
+                // @ts-ignore
+                selectedMoleculeCopyRef.current = 1
+                copyMolecule(selectedMolecule)
+            } else if (typeof selectedMoleculeCopyRef.current === 'object') {
+                selectedMoleculeCopyRef.current.hide('CRs', '/*/*/*/*')
+                if (prevSelectedMoleculeRef.current) dispatch(showMolecule(prevSelectedMoleculeRef.current))
+                selectedMoleculeCopyRef.current.delete()
+                .then(_ => {
+                    if (slicingResults && slicingResults.length > 0) {
+                        return Promise.all(
+                            slicingResults.map(sliceMolecule => sliceMolecule.delete())
+                        )
+                    }
+                }).then(_ => {
+                    if (slicingResults && slicingResults.length > 0 ) setSlicingResults(null)
+                    copyMolecule(selectedMolecule)
+                }).catch((err) => console.error(err))
+            }
         }
     }, [selectedMolNo])
 
@@ -193,7 +227,7 @@ export const MoorhenSliceNDiceModal = (props: {
             returnType: 'vector_pair_string_int'
         }, false)
 
-        dispatch( hideMolecule(selectedMolecule) )
+        selectedMoleculeCopyRef.current?.hide?.('CRs', '/*/*/*/*')
 
         const slices = [...new Set(result.data.result.result.filter(item => item.slice !== -1).map(item => item.slice))]
         const newMolecules = await Promise.all(slices.map(async(slice: number, index: number) => {
