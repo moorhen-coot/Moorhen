@@ -1,15 +1,105 @@
 import { useDispatch, useSelector } from "react-redux"
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen"
-import { convertRemToPx, convertViewtoPx, hslToHex } from "../../utils/MoorhenUtils"
+import { convertRemToPx, convertViewtoPx, findConsecutiveRanges, hslToHex } from "../../utils/MoorhenUtils"
 import { Button, Card, Col, Dropdown, Form, FormSelect, Row, Spinner, SplitButton, Stack } from "react-bootstrap"
 import { Backdrop, IconButton, Slider, Tooltip } from "@mui/material"
-import React, { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { addMolecule, hideMolecule, showMolecule } from "../../store/moleculesSlice"
 import { CenterFocusWeakOutlined, DownloadOutlined } from "@mui/icons-material"
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule"
+
+const deleteHiddenResidues = async (molecule: moorhen.Molecule) => {
+    if (molecule.excludedSelections.length > 0) {
+        await molecule.deleteCid(molecule.excludedSelections.join('||'), false)
+        await molecule.unhideAll(false)
+    }
+}
+
+const MoorhenSliceNDiceCard = (props: {
+    fragmentMolecule: moorhen.Molecule;
+    label: string;
+}) => {
+
+    const [minFragmentSize, setMinFragmentSize] = useState<number>(1)
+
+    const [residueMap, maxFragmentSize, themeColor] = useMemo(() => {
+        let residueMap: {[chainID: string]: { size: number; cid: string; }[]} = {}
+        props.fragmentMolecule.sequences.forEach(sequence => {
+            const currentChainId = sequence.chain
+            residueMap[currentChainId] = []
+            const residueRanges = findConsecutiveRanges(sequence.sequence.map(residue => residue.resNum))
+            residueMap[currentChainId] = residueRanges.map(range => {
+                return {
+                    size: range[1] - range[0] + 1,
+                    cid: `//${currentChainId}/${range[0]}-${range[1]}`    
+                }
+            })
+        })
+        const maxFragmentSize = Math.max(...Object.keys(residueMap).map(chainId => {
+            return Math.max(...residueMap[chainId].map(fragment => fragment.size))
+        }))
+        const themeColor = props.fragmentMolecule.defaultColourRules[0]?.color
+        return [residueMap, maxFragmentSize, themeColor]
+    }, [props.fragmentMolecule])
+
+    const hideSmallFragments = useCallback(async (sizeThreshold: number) => {
+        await props.fragmentMolecule.unhideAll(false)
+        let toHideFragments = []
+        for (let chainId in residueMap) {
+            toHideFragments.push(...residueMap[chainId].filter(fragment => fragment.size < sizeThreshold))
+        }
+        if (toHideFragments.length > 0) {
+            await props.fragmentMolecule.hideCid(toHideFragments.map(fragment => fragment.cid).join('||'))
+        }
+    }, [residueMap])
+
+    const handleDownload = async () => {
+        await deleteHiddenResidues(props.fragmentMolecule)
+        await props.fragmentMolecule.downloadAtoms()
+    }
+
+    return <Card style={{marginTop: '0.5rem', borderColor: themeColor}}>
+        <Card.Body style={{padding:'0.5rem'}}>
+            <Row style={{display:'flex', justifyContent:'between'}}>
+                <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
+                    <span>
+                        {props.label}
+                    </span>
+                </Col>
+                <Col className='col-4' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex', alignItems: 'center'}}>
+                <Slider
+                    aria-label="Min. fragment size"
+                    getAriaValueText={(newVal: number) => `Min. size ${newVal} res.`}
+                    valueLabelFormat={(newVal: number) => `Min. size ${newVal} res.`}
+                    valueLabelDisplay="auto"
+                    value={minFragmentSize}
+                    onChange={(evt: any, newVal: number) => {
+                        setMinFragmentSize(newVal)
+                        hideSmallFragments(newVal)
+                    }}
+                    defaultValue={1}
+                    min={1}
+                    max={maxFragmentSize}
+                    style={{color: themeColor}}
+                />
+                <Tooltip title="View">
+                    <IconButton style={{marginRight:'0.5rem', color: themeColor}} onClick={() => props.fragmentMolecule.centreOn('/*/*/*/*', true, true)}>
+                        <CenterFocusWeakOutlined/>
+                    </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Download">
+                    <IconButton style={{marginRight:'0.5rem', color: themeColor}} onClick={handleDownload}>
+                        <DownloadOutlined/>
+                    </IconButton>
+                    </Tooltip>
+                </Col>
+            </Row>
+        </Card.Body>
+    </Card>
+}
 
 export const MoorhenSliceNDiceModal = (props: {
     show: boolean;
@@ -20,55 +110,105 @@ export const MoorhenSliceNDiceModal = (props: {
     const clusteringTypeSelectRef = useRef<null | HTMLSelectElement>(null)
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const nClustersRef = useRef<number>(2)
+    const bFactorThresholdRef = useRef<number>(5)
+    const selectedMoleculeCopyRef = useRef<moorhen.Molecule>(null)
+    const prevSelectedMoleculeRef = useRef<moorhen.Molecule>(null)
 
+    const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
-    const dispatch = useDispatch()
+    const [moleculeBfactors, setMoleculeBfactors] = useState<{ cid: string; bFactor: number; normalised_bFactor: number; }[]>(null)
+    const [moleculeMinBfactor, setMoleculeMinBfactor] = useState<number>(null)
+    const [moleculeMaxBfactor, setMoleculeMaxBfactor] = useState<number>(null)
+    const [bFactorThreshold, setBFactorThreshold] = useState<number>(5)
     const [nClusters, setNClusters] = useState<number>(2)
     const [selectedMolNo, setSelectedMolNo] = useState<number>(null)
     const [clusteringType, setClusteringType] = useState<string>('birch')
     const [busy, setBusy] = useState<boolean>(false)
     const [slicingResults, setSlicingResults] = useState<moorhen.Molecule[]>(null)
 
-    const getSliceCards = useCallback((sliceId: string, fragmentMolecule: moorhen.Molecule) => {
-        return <Card key={sliceId} style={{marginTop: '0.5rem', borderColor: isDark ? 'white': ''}}>
-            <Card.Body style={{padding:'0.5rem'}}>
-                <Row style={{display:'flex', justifyContent:'between'}}>
-                    <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
-                        <span>
-                            {sliceId}
-                        </span>
-                    </Col>
-                    <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
-                    <Tooltip title="View">
-                        <IconButton style={{marginRight:'0.5rem', color: isDark ? 'white': ''}} onClick={() => fragmentMolecule.centreOn('/*/*/*/*', true, true)}>
-                            <CenterFocusWeakOutlined/>
-                        </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Download">
-                        <IconButton style={{marginRight:'0.5rem', color: isDark ? 'white': ''}} onClick={() => fragmentMolecule.downloadAtoms()}>
-                            <DownloadOutlined/>
-                        </IconButton>
-                        </Tooltip>
-                    </Col>
-                </Row>
-            </Card.Body>
-        </Card>
-    }, [isDark])
+    useEffect(() => {
+        const copyMolecule = async (molecule: moorhen.Molecule) => {
+            prevSelectedMoleculeRef.current = molecule
+            selectedMoleculeCopyRef.current = await molecule.copyFragmentUsingCid('//', false)
+            selectedMoleculeCopyRef.current.defaultColourRules = molecule.defaultColourRules.map(rule => {
+                return MoorhenColourRule.initFromDataObject(rule.objectify(), props.commandCentre, selectedMoleculeCopyRef.current)
+            })
+            dispatch(hideMolecule(molecule))
+            selectedMoleculeCopyRef.current.setAtomsDirty(true)
+            await selectedMoleculeCopyRef.current.fetchIfDirtyAndDraw('CRs')
+            await selectedMoleculeCopyRef.current.centreOn('/*/*/*/*', true, true)
+        }
+
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current?.value))
+        if (selectedMolecule) {
+            const bFactors = selectedMolecule.getResidueBFactors()
+            setMoleculeBfactors( bFactors )
+            setMoleculeMaxBfactor( parseFloat(Math.max(...bFactors.map(residue => residue.bFactor)).toFixed(2)) )
+            setMoleculeMinBfactor( parseFloat(Math.min(...bFactors.map(residue => residue.bFactor)).toFixed(2)) )
+            if (selectedMoleculeCopyRef.current === null) {
+                // This here is necessary because React mounts components twice in strict mode and served in dev server
+                // @ts-ignore
+                selectedMoleculeCopyRef.current = 1
+                copyMolecule(selectedMolecule)
+            } else if (typeof selectedMoleculeCopyRef.current === 'object') {
+                selectedMoleculeCopyRef.current.hide('CRs', '/*/*/*/*')
+                if (prevSelectedMoleculeRef.current) dispatch(showMolecule(prevSelectedMoleculeRef.current))
+                selectedMoleculeCopyRef.current.delete()
+                .then(_ => {
+                    if (slicingResults && slicingResults.length > 0) {
+                        return Promise.all(
+                            slicingResults.map(sliceMolecule => sliceMolecule.delete())
+                        )
+                    }
+                }).then(_ => {
+                    if (slicingResults && slicingResults.length > 0 ) setSlicingResults(null)
+                    copyMolecule(selectedMolecule)
+                }).catch((err) => console.error(err))
+            }
+        }
+    }, [selectedMolNo])
+
+    useEffect(() => {
+        const handleBfactorChange = async () => {
+            if (slicingResults?.length > 0) {
+                await Promise.all( slicingResults.map(sliceMolecule => sliceMolecule.delete()) )
+                setSlicingResults(null)
+            }
+            if (typeof selectedMoleculeCopyRef.current === 'object') {
+                await selectedMoleculeCopyRef.current.unhideAll(false)
+                let cidsToHide = moleculeBfactors.filter(residue => residue.bFactor > bFactorThreshold).map(residue => residue.cid)
+                selectedMoleculeCopyRef.current.hideCid(cidsToHide.join('||'), true)
+                selectedMoleculeCopyRef.current.show('CRs', '/*/*/*/*')    
+            }
+        }
+        handleBfactorChange()
+    }, [bFactorThreshold])
 
     const doSlice = useCallback(async () => {
         if (!moleculeSelectRef.current.value) {
             return
         }
 
-        const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
+        let selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
         if (!selectedMolecule) {
             return
         }
-        
+
+        setBusy(true)
+
+        let deleteSelectedMoleculeOnExit = false
+        if (selectedMoleculeCopyRef.current?.excludedSelections?.length > 0) {
+            deleteSelectedMoleculeOnExit = true
+            selectedMolecule = await selectedMolecule.copyFragmentUsingCid('//', false)
+            selectedMolecule.excludedSelections = selectedMoleculeCopyRef.current.excludedSelections
+            selectedMolecule.excludedCids = selectedMoleculeCopyRef.current.excludedCids
+            deleteHiddenResidues(selectedMolecule)
+        }
+
         let commandArgs: (string | number)[]
         switch (clusteringTypeSelectRef.current.value) {
             case "kmeans":
@@ -82,14 +222,13 @@ export const MoorhenSliceNDiceModal = (props: {
         }
         
         if (!commandArgs) {
+            setBusy(false)
             return
         }
 
-        setBusy(true)
-
         if (slicingResults?.length > 0) {
             await Promise.all(
-                slicingResults.sort((a, b) => { return  b.molNo - a.molNo }).map(sliceMolecule => sliceMolecule.delete(true))
+                slicingResults.map(sliceMolecule => sliceMolecule.delete())
             )
         }
 
@@ -99,7 +238,7 @@ export const MoorhenSliceNDiceModal = (props: {
             returnType: 'vector_pair_string_int'
         }, false)
 
-        dispatch( hideMolecule(selectedMolecule) )
+        selectedMoleculeCopyRef.current?.hide?.('CRs', '/*/*/*/*')
 
         const slices = [...new Set(result.data.result.result.filter(item => item.slice !== -1).map(item => item.slice))]
         const newMolecules = await Promise.all(slices.map(async(slice: number, index: number) => {
@@ -118,6 +257,11 @@ export const MoorhenSliceNDiceModal = (props: {
             await newMolecule.fetchIfDirtyAndDraw('CRs')
             return newMolecule
         }))
+
+        if (deleteSelectedMoleculeOnExit) {
+            await selectedMolecule.delete()
+        }
+
         setSlicingResults(newMolecules.sort( (a, b) => {  return parseInt(a.name.replace('Slice #', '')) - parseInt(b.name.replace('Slice #', ''))  }))
         setBusy(false)
     }, [molecules, slicingResults, isDark])
@@ -125,24 +269,40 @@ export const MoorhenSliceNDiceModal = (props: {
     const handleClose = useCallback(async (saveToMoorhen: boolean = false) => {
         if (slicingResults?.length > 0) {
             if (saveToMoorhen) {
-                slicingResults.sort((a, b) => { return  b.molNo - a.molNo }).forEach(sliceMolecule => {
+                const sortedMolecules = slicingResults.sort((a, b) => { return  b.molNo - a.molNo })
+                for (let sliceMolecule of sortedMolecules) {
+                    await deleteHiddenResidues(sliceMolecule)
                     dispatch( addMolecule(sliceMolecule) )
-                })
+                }
             } else {
                 await Promise.all(
-                    slicingResults.sort((a, b) => { return  b.molNo - a.molNo }).map(sliceMolecule => sliceMolecule.delete(true))
-                )    
-                const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
-                if (selectedMolecule) {
-                    dispatch( showMolecule(selectedMolecule) )
-                }
+                    slicingResults.map(sliceMolecule => sliceMolecule.delete())
+                )
             }
         }
+        
+        await selectedMoleculeCopyRef.current?.delete?.()
+        
+        if (!saveToMoorhen) {
+            const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
+            if (selectedMolecule) {
+                dispatch( showMolecule(selectedMolecule) )
+            }
+        }
+
+        await props.commandCentre.current.cootCommand({
+            command: 'end_delete_closed_molecules',
+            commandArgs: [ ],
+            returnType: 'void'
+        }, false)
         props.setShow(false)
     }, [slicingResults, molecules])
 
     const handleDownload = useCallback(async (doEnsemble: boolean = false) => {
         if (slicingResults?.length > 0) {
+            await Promise.all(slicingResults.map(fragmentMolecule => {
+                return deleteHiddenResidues(fragmentMolecule)
+            }))
             if (doEnsemble) {
                 const result = await props.commandCentre.current.cootCommand({
                     command: 'make_ensemble',
@@ -167,7 +327,7 @@ export const MoorhenSliceNDiceModal = (props: {
 
     const bodyContent = <Stack direction="vertical" gap={1}>
         <Stack direction="horizontal" gap={1} style={{display: 'flex', width: '100%'}}>
-            <Form.Group style={{ margin: '0.5rem', width: '20rem' }}>
+            <Form.Group style={{ margin: '0.5rem', width: '100%' }}>
                 <Form.Label>Clustering algorithm...</Form.Label>
                 <FormSelect size="sm" ref={clusteringTypeSelectRef} defaultValue={'birch'} onChange={(evt) => {
                     setClusteringType(evt.target.value)
@@ -178,43 +338,78 @@ export const MoorhenSliceNDiceModal = (props: {
                     <option value={'agglomerative'} key={'agglomerative'}>Agglomerative</option>
                 </FormSelect>
             </Form.Group>
-            <MoorhenMoleculeSelect {...props} molecules={molecules} allowAny={false} ref={moleculeSelectRef} onChange={(evt) => setSelectedMolNo(parseInt(evt.target.value))}/>
+            <MoorhenMoleculeSelect {...props} width="100%" molecules={molecules} allowAny={false} ref={moleculeSelectRef} onChange={(evt) => setSelectedMolNo(parseInt(evt.target.value))}/>
         </Stack>
-        { ['kmeans', 'agglomerative', 'birch'].includes(clusteringType) && 
-        <div style={{ paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.1rem', paddingBottom: '0.1rem' }}>
-        <Slider
-            aria-label="Factor"
-            getAriaValueText={(newVal: number) => `${newVal} slices`}
-            valueLabelFormat={(newVal: number) => `${newVal} slices`}
-            valueLabelDisplay="on"
-            value={nClusters}
-            onChange={(evt: any, newVal: number) => {
-                nClustersRef.current = newVal
-                setNClusters(newVal)
-            }}
-            marks={true}
-            defaultValue={5}
-            step={1}
-            min={2}
-            max={10}
-            sx={{
-                marginTop: '1.7rem',
-                marginBottom: '0.8rem',
-                    '& .MuiSlider-valueLabel': {
-                        top: -1,
-                        fontSize: 14,
-                        fontWeight: 'bold',
-                        color: 'grey',
-                        backgroundColor: 'unset',
-                    },
-            }}
-        />
-        </div>
-        }
+        <Stack direction="horizontal" gap={1} style={{display: 'flex', width: '100%'}}>
+            { ['kmeans', 'agglomerative', 'birch'].includes(clusteringType) && 
+            <div style={{ paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.1rem', paddingBottom: '0.1rem', width: '100%'}}>
+                <span>Number of slices</span>
+                <Slider
+                    aria-label="No. of clusters"
+                    getAriaValueText={(newVal: number) => `${newVal} slices`}
+                    valueLabelFormat={(newVal: number) => `${newVal} slices`}
+                    valueLabelDisplay="on"
+                    value={nClusters}
+                    onChange={(evt: any, newVal: number) => {
+                        nClustersRef.current = newVal
+                        setNClusters(newVal)
+                    }}
+                    marks={true}
+                    defaultValue={5}
+                    step={1}
+                    min={2}
+                    max={10}
+                    sx={{
+                        marginTop: '1.7rem',
+                        marginBottom: '0.8rem',
+                            '& .MuiSlider-valueLabel': {
+                                top: -1,
+                                fontSize: 14,
+                                fontWeight: 'bold',
+                                color: 'grey',
+                                backgroundColor: 'unset',
+                            },
+                    }}
+                />
+            </div>}
+            <div style={{ paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.1rem', paddingBottom: '0.1rem', width: '100%'}}>
+                <span>B-Factor trimming</span>
+                <Slider
+                    aria-label="B-Factor threshold"
+                    getAriaValueText={(newVal: number) => `${newVal} Å^2`}
+                    valueLabelFormat={(newVal: number) => <span>{newVal}Å<sup>2</sup></span>}
+                    valueLabelDisplay="on"
+                    value={bFactorThreshold}
+                    onChange={(evt: any, newVal: number) => {
+                        bFactorThresholdRef.current = newVal
+                        setBFactorThreshold(newVal)
+                    }}
+                    defaultValue={moleculeMinBfactor ? moleculeMinBfactor : 1}
+                    min={moleculeMinBfactor ? moleculeMinBfactor : 1}
+                    max={moleculeMaxBfactor ? moleculeMaxBfactor : 1}
+                    sx={{
+                        marginTop: '1.7rem',
+                        marginBottom: '0.8rem',
+                        '& .MuiSlider-valueLabel': {
+                            top: -1,
+                            fontSize: 14,
+                            fontWeight: 'bold',
+                            color: 'grey',
+                            backgroundColor: 'unset',
+                        },
+                    }}
+                />
+            </div>
+        </Stack>
         <hr></hr>
         <Row>
             {slicingResults?.length > 0 ? <span>Found {slicingResults.length} possible slice(s)</span> : null}
-            {slicingResults?.length > 0 ? <div style={{height: '100px', width: '100%'}}>{slicingResults?.map(fragmentMolecule => getSliceCards(fragmentMolecule.name, fragmentMolecule))}</div> : <span>No results...</span>}
+            {slicingResults?.length > 0 ? <div style={{height: '100px', width: '100%'}}>{slicingResults?.map(fragmentMolecule => {
+                return <MoorhenSliceNDiceCard
+                            key={fragmentMolecule.molNo}
+                            fragmentMolecule={fragmentMolecule}
+                            label={fragmentMolecule.name}/>
+            })}</div> : <span>No results...</span>}
         </Row>
     </Stack>
 
@@ -252,7 +447,7 @@ export const MoorhenSliceNDiceModal = (props: {
                 defaultWidth={convertViewtoPx(10, width)}
                 minHeight={convertViewtoPx(15, height)}
                 minWidth={convertRemToPx(30)}
-                maxHeight={convertViewtoPx(50, height)}
+                maxHeight={convertViewtoPx(65, height)}
                 maxWidth={convertViewtoPx(40, width)}
                 additionalChildren={spinnerContent}
                 headerTitle='Slice-n-Dice'

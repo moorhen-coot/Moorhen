@@ -1026,7 +1026,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {any[]} meshObjects - The mesh obects that will be drawn
      * @param {string} [cid] - The new buffer CID selection
      */
-    async drawWithStyleFromMesh(style: moorhen.RepresentationStyles, meshObjects: any[], cid: string = "/*/*/*/*"): Promise<void> {
+    async drawWithStyleFromMesh(style: moorhen.RepresentationStyles, meshObjects: any[], cid: string = "/*/*/*/*", fetchAtomBuffers: boolean = false): Promise<void> {
         let representation = this.representations.find(item => item.style === style && item.cid === cid)
         if (!representation) {
             representation = new MoorhenMoleculeRepresentation(style, cid, this.commandCentre, this.glRef)
@@ -1036,9 +1036,11 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         representation.deleteBuffers()
         representation.buildBuffers(meshObjects)
-        let bufferAtoms = await this.gemmiAtomsForCid(cid)
-        if(bufferAtoms.length > 0) {
-            representation.setAtomBuffers(bufferAtoms)
+        if (fetchAtomBuffers) {
+            let bufferAtoms = await this.gemmiAtomsForCid(cid)
+            if(bufferAtoms.length > 0) {
+                representation.setAtomBuffers(bufferAtoms)
+            }    
         }
         representation.show()
     }
@@ -2278,5 +2280,32 @@ export class MoorhenMolecule implements moorhen.Molecule {
         else {
             console.warn(result.data.consoleMessage)
         }
+    }
+
+    async minimizeEnergyUsingCidAnimated(cid: string, ncyc: number, nIterations: number, useRamaRestraints: boolean, ramaWeight: number, useTorsionRestraints: boolean, torsionWeight: number) {
+        const commandArgs = [
+            this.molNo,
+            cid,
+            ncyc,
+            useRamaRestraints,
+            ramaWeight,
+            useTorsionRestraints,
+            torsionWeight,
+            true
+        ]
+        for (let i = 0; i < nIterations; i++) {
+            const result = await this.commandCentre.current.cootCommand({
+                command: 'minimize_energy',
+                commandArgs: commandArgs,
+                returnType: 'status_instanced_mesh_pair',
+            }, false)
+    
+            if (i === nIterations - 1) {
+                this.setAtomsDirty(true)
+            } else {
+                await this.drawWithStyleFromMesh('CBs', [result.data.result.result.mesh])
+            }
+        }
+        await this.redraw()
     }
 }

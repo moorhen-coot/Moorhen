@@ -84,32 +84,18 @@ export const MoorhenMinimizeEnergyMenuItem = (props: {
             return
         }
 
-        const commandArgs = [
-            molNo,
+        document.body.click()
+
+        await selectedMolecule.minimizeEnergyUsingCidAnimated(
             cid,
             ncycSliderRef.current,
+            nIterationsSliderRef.current,
             useRamaRestraintsCheckRef.current.checked,
             ramaWeightSliderRef.current,
             useTorsionRestraintsCheckRef.current.checked,
             torsionWeightSliderRef.current,
-            quiet
-        ]
+        )
 
-        document.body.click()
-
-        for (let i = 0; i < nIterationsSliderRef.current; i++) {
-            await props.commandCentre.current.cootCommand({
-                command: 'minimize_energy',
-                commandArgs: commandArgs,
-                returnType: "int"
-            }, false)
-    
-            if (i === nIterationsSliderRef.current - 1) {
-                selectedMolecule.setAtomsDirty(true)
-            }
-
-            await selectedMolecule.redraw()    
-        }
     }, [molecules])
 
     const panelContent = <>
