@@ -271,33 +271,33 @@ export const MoorhenSliceNDiceModal = (props: {
         </Stack>
         { ['kmeans', 'agglomerative', 'birch'].includes(clusteringType) && 
         <div style={{ paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.1rem', paddingBottom: '0.1rem' }}>
-        <Slider
-            aria-label="Factor"
-            getAriaValueText={(newVal: number) => `${newVal} slices`}
-            valueLabelFormat={(newVal: number) => `${newVal} slices`}
-            valueLabelDisplay="on"
-            value={nClusters}
-            onChange={(evt: any, newVal: number) => {
-                nClustersRef.current = newVal
-                setNClusters(newVal)
-            }}
-            marks={true}
-            defaultValue={5}
-            step={1}
-            min={2}
-            max={10}
-            sx={{
-                marginTop: '1.7rem',
-                marginBottom: '0.8rem',
-                    '& .MuiSlider-valueLabel': {
-                        top: -1,
-                        fontSize: 14,
-                        fontWeight: 'bold',
-                        color: 'grey',
-                        backgroundColor: 'unset',
-                    },
-            }}
-        />
+            <Slider
+                aria-label="No. of clusters"
+                getAriaValueText={(newVal: number) => `${newVal} slices`}
+                valueLabelFormat={(newVal: number) => `${newVal} slices`}
+                valueLabelDisplay="on"
+                value={nClusters}
+                onChange={(evt: any, newVal: number) => {
+                    nClustersRef.current = newVal
+                    setNClusters(newVal)
+                }}
+                marks={true}
+                defaultValue={5}
+                step={1}
+                min={2}
+                max={10}
+                sx={{
+                    marginTop: '1.7rem',
+                    marginBottom: '0.8rem',
+                        '& .MuiSlider-valueLabel': {
+                            top: -1,
+                            fontSize: 14,
+                            fontWeight: 'bold',
+                            color: 'grey',
+                            backgroundColor: 'unset',
+                        },
+                }}
+            />
         </div>
         }
         <hr></hr>
