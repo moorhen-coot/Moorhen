@@ -910,6 +910,15 @@ export namespace moorhen {
             hoveredAtom: HoveredAtom;
             cursorStyle: string;
         };
+        activePopUps: {
+            matchingLigandPopUp: {
+                show: boolean;
+                refMolNo: number;
+                movingMolNo: number;
+                refLigandCid: string;
+                movingLigandCid: string;
+              }
+        };
         activeModals: {
             showModelsModal: boolean;
             showMapsModal: boolean;
