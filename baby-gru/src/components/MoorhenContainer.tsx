@@ -2,19 +2,20 @@ import { useEffect, useCallback, useRef, useMemo } from 'react';
 import { Container, Col, Row, Spinner } from 'react-bootstrap';
 import { MoorhenWebMG } from './webMG/MoorhenWebMG';
 import { getTooltipShortcutLabel, createLocalStorageInstance, getAtomInfoLabel } from '../utils/MoorhenUtils';
-import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre"
+import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre";
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
 import { Backdrop } from "@mui/material";
 import { babyGruKeyPress } from '../utils/MoorhenKeyboardAccelerators';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
 import { MoorhenNotification } from './misc/MoorhenNotification';
-import { MoorhenModalsContainer } from './misc/MoorhenModalsContainer'
+import { MoorhenModalsContainer } from './misc/MoorhenModalsContainer';
+import { MoorhenPopUpContainer } from './misc/MoorhenPopUpContainer';
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
-import { MoorhenPreferencesContainer } from './misc/MoorhenPreferencesContainer'
-import { MoorhenLongJobNotification } from './misc/MoorhenLongJobNotification'
-import { MoorhenResidueSelectionActions } from './misc/MoorhenResidueSelectionActions'
+import { MoorhenPreferencesContainer } from './misc/MoorhenPreferencesContainer';
+import { MoorhenLongJobNotification } from './misc/MoorhenLongJobNotification';
+import { MoorhenResidueSelectionActions } from './misc/MoorhenResidueSelectionActions';
 import { useSelector, useDispatch } from 'react-redux';
 import { setDefaultBackgroundColor, setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/sceneSettingsSlice';
 import { setCootInitialized, setNotificationContent, setTheme, toggleCootCommandExit, toggleCootCommandStart } from '../store/generalStatesSlice';
@@ -395,6 +396,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     </div>
 
     <MoorhenModalsContainer {...collectedProps}/>
+
+    <MoorhenPopUpContainer {...collectedProps}/>
 
     <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange}/>
 
