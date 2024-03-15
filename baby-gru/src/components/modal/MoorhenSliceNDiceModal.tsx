@@ -71,7 +71,7 @@ const MoorhenSliceNDiceCard = (props: {
         await props.fragmentMolecule.downloadAtoms()
     }
 
-    return <Card style={{marginTop: '0.5rem', borderColor: themeColor}}>
+    return <Card style={{marginTop: '0.5rem'}}>
         <Card.Body style={{padding:'0.5rem'}}>
             <Row style={{display:'flex', justifyContent:'between'}}>
                 <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
