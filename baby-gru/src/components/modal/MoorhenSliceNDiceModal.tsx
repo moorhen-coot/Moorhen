@@ -25,6 +25,10 @@ const MoorhenSliceNDiceCard = (props: {
 
     const [minFragmentSize, setMinFragmentSize] = useState<number>(1)
 
+    const sizeThresholdRef = useRef<number>(1)
+    const isBusy = useRef<boolean>(false)
+    const isDirty = useRef<boolean>(false)
+
     const [residueMap, maxFragmentSize, themeColor] = useMemo(() => {
         let residueMap: {[chainID: string]: { size: number; cid: string; }[]} = {}
         props.fragmentMolecule.sequences.forEach(sequence => {
@@ -45,14 +49,20 @@ const MoorhenSliceNDiceCard = (props: {
         return [residueMap, maxFragmentSize, themeColor]
     }, [props.fragmentMolecule])
 
-    const hideSmallFragments = useCallback(async (sizeThreshold: number) => {
-        await props.fragmentMolecule.unhideAll(false)
-        let toHideFragments = []
-        for (let chainId in residueMap) {
-            toHideFragments.push(...residueMap[chainId].filter(fragment => fragment.size < sizeThreshold))
-        }
-        if (toHideFragments.length > 0) {
-            await props.fragmentMolecule.hideCid(toHideFragments.map(fragment => fragment.cid).join('||'))
+    const hideSmallFragments = useCallback(async () => {
+        if (isDirty.current) {
+            isBusy.current = true
+            isDirty.current = false
+            await props.fragmentMolecule.unhideAll(false)
+            let toHideFragments = []
+            for (let chainId in residueMap) {
+                toHideFragments.push(...residueMap[chainId].filter(fragment => fragment.size < sizeThresholdRef.current))
+            }
+            if (toHideFragments.length > 0) {
+                await props.fragmentMolecule.hideCid(toHideFragments.map(fragment => fragment.cid).join('||'))
+            }
+            isBusy.current = false
+            hideSmallFragments()
         }
     }, [residueMap])
 
@@ -78,7 +88,11 @@ const MoorhenSliceNDiceCard = (props: {
                     value={minFragmentSize}
                     onChange={(evt: any, newVal: number) => {
                         setMinFragmentSize(newVal)
-                        hideSmallFragments(newVal)
+                        sizeThresholdRef.current = newVal
+                        isDirty.current = true
+                        if (!isBusy.current) {
+                            hideSmallFragments()
+                        }
                     }}
                     defaultValue={1}
                     min={1}
@@ -113,6 +127,8 @@ export const MoorhenSliceNDiceModal = (props: {
     const bFactorThresholdRef = useRef<number>(5)
     const selectedMoleculeCopyRef = useRef<moorhen.Molecule>(null)
     const prevSelectedMoleculeRef = useRef<moorhen.Molecule>(null)
+    const isBusy = useRef<boolean>(false)
+    const isDirty = useRef<boolean>(false)
 
     const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
@@ -172,21 +188,24 @@ export const MoorhenSliceNDiceModal = (props: {
         }
     }, [selectedMolNo])
 
-    useEffect(() => {
-        const handleBfactorChange = async () => {
+    const trimBfactorThreshold = useCallback(async () => {
+        if (isDirty.current) {
+            isBusy.current = true
+            isDirty.current = false
             if (slicingResults?.length > 0) {
                 await Promise.all( slicingResults.map(sliceMolecule => sliceMolecule.delete()) )
                 setSlicingResults(null)
             }
             if (typeof selectedMoleculeCopyRef.current === 'object') {
                 await selectedMoleculeCopyRef.current.unhideAll(false)
-                let cidsToHide = moleculeBfactors.filter(residue => residue.bFactor > bFactorThreshold).map(residue => residue.cid)
-                selectedMoleculeCopyRef.current.hideCid(cidsToHide.join('||'), true)
+                let cidsToHide = moleculeBfactors.filter(residue => residue.bFactor > bFactorThresholdRef.current).map(residue => residue.cid)
+                await selectedMoleculeCopyRef.current.hideCid(cidsToHide.join('||'), true)
                 selectedMoleculeCopyRef.current.show('CRs', '/*/*/*/*')    
             }
+            isBusy.current = false
+            trimBfactorThreshold()
         }
-        handleBfactorChange()
-    }, [bFactorThreshold])
+    }, [slicingResults, moleculeBfactors])
 
     const doSlice = useCallback(async () => {
         if (!moleculeSelectRef.current.value) {
@@ -381,8 +400,12 @@ export const MoorhenSliceNDiceModal = (props: {
                     valueLabelDisplay="on"
                     value={bFactorThreshold}
                     onChange={(evt: any, newVal: number) => {
-                        bFactorThresholdRef.current = newVal
                         setBFactorThreshold(newVal)
+                        bFactorThresholdRef.current = newVal
+                        isDirty.current = true
+                        if (!isBusy.current) {
+                            trimBfactorThreshold()
+                        }
                     }}
                     defaultValue={moleculeMinBfactor ? moleculeMinBfactor : 1}
                     min={moleculeMinBfactor ? moleculeMinBfactor : 1}
