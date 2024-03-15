@@ -129,6 +129,7 @@ export const MoorhenSliceNDiceModal = (props: {
     const prevSelectedMoleculeRef = useRef<moorhen.Molecule>(null)
     const isBusy = useRef<boolean>(false)
     const isDirty = useRef<boolean>(false)
+    const thresholdTypeRef = useRef<string>('bfactor')
 
     const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
@@ -136,6 +137,7 @@ export const MoorhenSliceNDiceModal = (props: {
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
+    const [thresholdType, setThresholdType] = useState<string>('bfactor')
     const [moleculeBfactors, setMoleculeBfactors] = useState<{ cid: string; bFactor: number; normalised_bFactor: number; }[]>(null)
     const [moleculeMinBfactor, setMoleculeMinBfactor] = useState<number>(null)
     const [moleculeMaxBfactor, setMoleculeMaxBfactor] = useState<number>(null)
@@ -163,8 +165,12 @@ export const MoorhenSliceNDiceModal = (props: {
         if (selectedMolecule) {
             const bFactors = selectedMolecule.getResidueBFactors()
             setMoleculeBfactors( bFactors )
-            setMoleculeMaxBfactor( parseFloat(Math.max(...bFactors.map(residue => residue.bFactor)).toFixed(2)) )
-            setMoleculeMinBfactor( parseFloat(Math.min(...bFactors.map(residue => residue.bFactor)).toFixed(2)) )
+            const max = parseFloat(Math.max(...bFactors.map(residue => residue.bFactor)).toFixed(2))
+            const min = parseFloat(Math.min(...bFactors.map(residue => residue.bFactor)).toFixed(2))
+            setMoleculeMaxBfactor( max )
+            setMoleculeMinBfactor( min )
+            setBFactorThreshold( thresholdTypeRef.current === 'bfactor' ? max : min )
+            bFactorThresholdRef.current = thresholdTypeRef.current === 'bfactor' ? max : min
             if (selectedMoleculeCopyRef.current === null) {
                 // This here is necessary because React mounts components twice in strict mode and served in dev server
                 // @ts-ignore
@@ -197,10 +203,19 @@ export const MoorhenSliceNDiceModal = (props: {
                 setSlicingResults(null)
             }
             if (typeof selectedMoleculeCopyRef.current === 'object') {
-                await selectedMoleculeCopyRef.current.unhideAll(false)
-                let cidsToHide = moleculeBfactors.filter(residue => residue.bFactor > bFactorThresholdRef.current).map(residue => residue.cid)
-                await selectedMoleculeCopyRef.current.hideCid(cidsToHide.join('||'), true)
-                selectedMoleculeCopyRef.current.show('CRs', '/*/*/*/*')    
+                let cidsToHide: string[]
+                if (thresholdTypeRef.current === 'bfactor') {
+                    cidsToHide = moleculeBfactors.filter(residue => residue.bFactor > bFactorThresholdRef.current).map(residue => residue.cid)
+                } else {
+                    cidsToHide = moleculeBfactors.filter(residue => residue.bFactor < bFactorThresholdRef.current).map(residue => residue.cid)
+                }
+                if (cidsToHide?.length > 0) {
+                    await selectedMoleculeCopyRef.current.unhideAll(false)
+                    await selectedMoleculeCopyRef.current.hideCid(cidsToHide.join('||'), true)
+                    selectedMoleculeCopyRef.current.show('CRs', '/*/*/*/*')
+                } else {
+                    await selectedMoleculeCopyRef.current.unhideAll(true)
+                }
             }
             isBusy.current = false
             trimBfactorThreshold()
@@ -392,11 +407,42 @@ export const MoorhenSliceNDiceModal = (props: {
                 />
             </div>}
             <div style={{ paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.1rem', paddingBottom: '0.1rem', width: '100%'}}>
-                <span>B-Factor trimming</span>
+                <Stack direction="horizontal" gap={2} style={{display: 'flex', justifyContent: 'center'}}>
+                    <Form.Check
+                        style={{margin: 0}} 
+                        type="radio"
+                        checked={thresholdType === 'bfactor'}
+                        onChange={() => {
+                            setThresholdType('bfactor')
+                            thresholdTypeRef.current = 'bfactor'
+                            setBFactorThreshold(moleculeMaxBfactor)
+                            bFactorThresholdRef.current = moleculeMaxBfactor    
+                            isDirty.current = true
+                            if (!isBusy.current) {
+                                trimBfactorThreshold()
+                            }    
+                        }}
+                        label="B-Factor"/>
+                    <Form.Check
+                        style={{margin: 0}} 
+                        type="radio"
+                        checked={thresholdType === 'plddt'}
+                        onChange={() => { 
+                            setThresholdType('plddt')
+                            thresholdTypeRef.current = 'plddt'
+                            setBFactorThreshold(moleculeMinBfactor)
+                            bFactorThresholdRef.current = moleculeMinBfactor    
+                            isDirty.current = true
+                            if (!isBusy.current) {
+                                trimBfactorThreshold()
+                            }    
+                        }}
+                        label="PLDDT"/>
+                </Stack>
                 <Slider
                     aria-label="B-Factor threshold"
-                    getAriaValueText={(newVal: number) => `${newVal} Å^2`}
-                    valueLabelFormat={(newVal: number) => <span>{newVal}Å<sup>2</sup></span>}
+                    getAriaValueText={(newVal: number) => `${newVal} ${thresholdType === 'bfactor' ? "Å^2" : "PLDDT"}`}
+                    valueLabelFormat={(newVal: number) => thresholdType === 'bfactor' ? <span>{"≤ "}{newVal}</span> : <span>≥ {newVal}</span>}
                     valueLabelDisplay="on"
                     value={bFactorThreshold}
                     onChange={(evt: any, newVal: number) => {
@@ -469,7 +515,7 @@ export const MoorhenSliceNDiceModal = (props: {
                 defaultHeight={convertViewtoPx(10, height)}
                 defaultWidth={convertViewtoPx(10, width)}
                 minHeight={convertViewtoPx(15, height)}
-                minWidth={convertRemToPx(30)}
+                minWidth={convertRemToPx(35)}
                 maxHeight={convertViewtoPx(65, height)}
                 maxWidth={convertViewtoPx(40, width)}
                 additionalChildren={spinnerContent}
