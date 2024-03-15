@@ -2298,14 +2298,15 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 command: 'minimize_energy',
                 commandArgs: commandArgs,
                 returnType: 'status_instanced_mesh_pair',
-            }, false)
+            }, false) as moorhen.WorkerResponse<{status: number; mesh: libcootApi.InstancedMeshJS}>
     
-            if (i === nIterations - 1) {
-                this.setAtomsDirty(true)
+            if (result.data.result.result.status !== -2) {
+                break                
             } else {
                 await this.drawWithStyleFromMesh('CBs', [result.data.result.result.mesh])
             }
         }
+        this.setAtomsDirty(true)
         await this.redraw()
     }
 }
