@@ -1140,7 +1140,12 @@ const doCootCommand = (messageData: {
             default:
                 returnResult = cootResult
                 break;
-            //cootResult.delete()
+        }
+
+        try {
+            cootResult.delete()
+        } catch (err) {
+            // pass
         }
 
         return {
@@ -1201,6 +1206,17 @@ onmessage = function (e) {
                 console.log(e)
                 print(e);
             });
+    }
+
+    else if (e.data.message === 'close') {
+        molecules_container?.delete()
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            consoleMessage: `Closed molecules container`,
+            message: e.data.message,
+            result: {  }
+        })
     }
 
     else if (e.data.message === 'get_mtz_data') {

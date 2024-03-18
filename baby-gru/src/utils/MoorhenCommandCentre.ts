@@ -41,6 +41,7 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
     cootWorker: Worker;
     activeMessages: moorhen.WorkerMessage[];
     history: moorhen.History;
+    isClosed: boolean;
     onCootInitialized: null | ( () => void );
     onConsoleChanged: null | ( (msg: string) => void );
     onCommandStart : null | ( (kwargs: any) => void );
@@ -50,6 +51,7 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
     constructor(urlPrefix: string, glRef: React.RefObject<webGL.MGWebGL>, timeCapsule: React.RefObject<moorhen.TimeCapsule>, props: {[x: string]: any}) {
         this.activeMessages = []
         this.urlPrefix = urlPrefix
+        this.isClosed = false
         this.history = new MoorhenHistory(glRef, timeCapsule)
         this.history.setCommandCentre(this)
         
@@ -59,13 +61,29 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
         this.onActiveMessagesChanged = null
 
         Object.keys(props).forEach(key => this[key] = props[key])
-        
-        this.cootWorker = new Worker(`${this.urlPrefix}/baby-gru/CootWorker.js`)
-        this.cootWorker.onmessage = this.handleMessage.bind(this)
-        this.postMessage({ message: 'CootInitialize', data: {} })
-            .then(() => this.onCootInitialized && this.onCootInitialized() )
     }
     
+    async init() {
+        this.isClosed = false
+        this.cootWorker = new Worker(`${this.urlPrefix}/baby-gru/CootWorker.js`)
+        this.cootWorker.onmessage = this.handleMessage.bind(this)
+        await this.postMessage({ message: 'CootInitialize', data: {} })
+        if (this.onCootInitialized) {
+            this.onCootInitialized()
+        }
+    }
+    
+    async close() {
+        if (!this.isClosed) {
+            this.isClosed = true
+            await this.postMessage({ message: 'close', data: { } })
+            this.cootWorker.removeEventListener("message", this.handleMessage)
+            this.cootWorker.terminate()    
+        } else {
+            console.warn('Command centre already closed, doing nothing...')
+        }
+    }
+
     handleMessage(reply: moorhen.WorkerResponse) {
         this.activeMessages.filter(
             message => message.messageId && (message.messageId === reply.data.messageId)
@@ -84,11 +102,6 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
         return (reply) => {
             resolve(reply)
         }
-    }
-    
-    unhook() {
-        this.cootWorker.removeEventListener("message", this.handleMessage)
-        this.cootWorker.terminate()
     }
     
     async cootCommand(kwargs: moorhen.cootCommandKwargs, doJournal: boolean = true): Promise<moorhen.WorkerResponse> {

@@ -337,7 +337,9 @@ export namespace moorhen {
         cootWorker: Worker;
         history: History;
         activeMessages: WorkerMessage[];
-        unhook: () => void;
+        isClosed: boolean;
+        init: () => Promise<void>;
+        close: () => Promise<void>;
         onCootInitialized: null | ( () => void );
         onConsoleChanged: null | ( (msg: string) => void );
         onCommandStart : null | ( (kwargs: any) => void );
