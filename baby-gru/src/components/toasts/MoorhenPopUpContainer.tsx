@@ -18,6 +18,7 @@ export const MoorhenPopUpContainer = (props: moorhen.CollectedProps) => {
         }
         {showGoToResiduePopUp &&
             <MoorhenGoToResiduePopUp
+                glRef={props.glRef}
                 commandCentre={props.commandCentre}
                 show={showGoToResiduePopUp}
                 setShow={(newVal: boolean) => dispatch(setShowGoToResiduePopUp(newVal))}/>

@@ -117,5 +117,4 @@ export const MoorhenAcceptRejectRotateTranslate = (props: {
                     </div>
                 </Stack>
             </MoorhenNotification>
-
 }

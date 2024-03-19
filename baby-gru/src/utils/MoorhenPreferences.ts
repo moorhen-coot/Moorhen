@@ -32,7 +32,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
     }
 
     static defaultPreferencesValues: moorhen.PreferencesValues = {
-        version: 'v36',
+        version: 'v37',
         reContourMapOnlyOnMouseUp: false,
         transparentModalsOnMouseOut: false,
         defaultBackgroundColor: [1, 1, 1, 1],
@@ -106,6 +106,12 @@ export class MoorhenPreferences implements moorhen.Preferences {
                 keyPress: "4",
                 label: "Increase back clip",
                 viewOnly: true
+            },
+            "go_to_residue": {
+                modifiers: ["shiftKey"],
+                keyPress: "g",
+                label: "Go to residue",
+                viewOnly: false
             },
             "sphere_refine": {
                 modifiers: ["shiftKey"],
