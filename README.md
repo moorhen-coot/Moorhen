@@ -60,7 +60,7 @@ Binaries are available on the releases page. Please read the instructions there 
 `source ./emsdk_env.sh`
 
 3. Get the sources:  
-`git clone -b 64-bit https://github.com/moorhen-coot/Moorhen.git`  
+`git clone -b 64-bit git@github.com:stuartjamesmcnicholas/StuartMoorhenFork.git`  
 `cd Moorhen`  
 `./get_sources`
 
