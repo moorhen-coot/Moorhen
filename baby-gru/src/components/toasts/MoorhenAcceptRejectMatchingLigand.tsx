@@ -7,7 +7,7 @@ import { moorhen } from "../../types/moorhen"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
 import { hideAcceptMatchingLigandPopUp } from "../../store/activePopUpsSlice"
 import { useCallback, useEffect, useRef } from "react"
-import { setNotificationContent } from "../../moorhen"
+import { setNotificationContent } from "../../store/generalStatesSlice"
 import { guid } from "../../utils/MoorhenUtils"
 
 export const MoorhenAcceptRejectMatchingLigand = (props: {
