@@ -30,39 +30,23 @@ mkdir -p ${INSTALL_DIR}
 mkdir -p ${BUILD_DIR}/gsl_build
 cd ${BUILD_DIR}/gsl_build
 emconfigure ${SOURCE_DIR}/gsl-2.7.1/configure --prefix=${INSTALL_DIR}
-emmake make LDFLAGS=-all-static -j ${NUMPROCS}
+emmake make LDFLAGS=-all-static -j ${NUMPROCS} CXXFLAGS="-s USE_PTHREADS=1 -pthread -sMEMORY64=1" CFLAGS="-s USE_PTHREADS=1 -pthread -sMEMORY64=1"
 emmake make install
 cd ${BUILD_DIR}
 
-#Boost (has to be built in source tree as far as I am aware)
-cd ${SOURCE_DIR}/boost
-./bootstrap.sh --with-libraries=serialization,regex,chrono,date_time,filesystem,iostreams,program_options,thread,math,random,system
-./b2 toolset=emscripten link=static variant=release cxxflags="-pthread" linkflags="-pthread" threading=multi runtime-link=static thread system filesystem regex serialization chrono date_time program_options random -j ${NUMPROCS}
-./b2 toolset=emscripten link=static variant=release cxxflags="-pthread" linkflags="-pthread" threading=multi runtime-link=static install --prefix=${INSTALL_DIR}
+#boost with cmake
+mkdir -p ${BUILD_DIR}/boost
+cd ${BUILD_DIR}/boost
+emcmake cmake -DCMAKE_C_FLAGS="-sMEMORY64=1 -pthread" -DCMAKE_CXX_FLAGS="-sMEMORY64=1 -pthread" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/checkout/boost -DBOOST_EXCLUDE_LIBRARIES="context;fiber;fiber_numa;asio;log;coroutine;cobalt;nowide"
+emmake make -j ${NUMPROCS}
+emmake make install
 cd ${BUILD_DIR}
 
-emar q ${INSTALL_DIR}/lib/libboost_chrono.a ${INSTALL_DIR}/lib/libboost_chrono.bc
-emar q ${INSTALL_DIR}/lib/libboost_date_time.a ${INSTALL_DIR}/lib/libboost_date_time.bc
-emar q ${INSTALL_DIR}/lib/libboost_filesystem.a ${INSTALL_DIR}/lib/libboost_filesystem.bc
-emar q ${INSTALL_DIR}/lib/libboost_iostreams.a ${INSTALL_DIR}/lib/libboost_iostreams.bc
-emar q ${INSTALL_DIR}/lib/libboost_math_c99.a ${INSTALL_DIR}/lib/libboost_math_c99.bc
-emar q ${INSTALL_DIR}/lib/libboost_math_c99f.a ${INSTALL_DIR}/lib/libboost_math_c99f.bc
-emar q ${INSTALL_DIR}/lib/libboost_math_c99l.a ${INSTALL_DIR}/lib/libboost_math_c99l.bc
-emar q ${INSTALL_DIR}/lib/libboost_math_tr1.a ${INSTALL_DIR}/lib/libboost_math_tr1.bc
-emar q ${INSTALL_DIR}/lib/libboost_math_tr1f.a ${INSTALL_DIR}/lib/libboost_math_tr1f.bc
-emar q ${INSTALL_DIR}/lib/libboost_math_tr1l.a ${INSTALL_DIR}/lib/libboost_math_tr1l.bc
-emar q ${INSTALL_DIR}/lib/libboost_program_options.a ${INSTALL_DIR}/lib/libboost_program_options.bc
-emar q ${INSTALL_DIR}/lib/libboost_random.a ${INSTALL_DIR}/lib/libboost_random.bc
-emar q ${INSTALL_DIR}/lib/libboost_regex.a ${INSTALL_DIR}/lib/libboost_regex.bc
-emar q ${INSTALL_DIR}/lib/libboost_serialization.a ${INSTALL_DIR}/lib/libboost_serialization.bc
-emar q ${INSTALL_DIR}/lib/libboost_system.a ${INSTALL_DIR}/lib/libboost_system.bc
-emar q ${INSTALL_DIR}/lib/libboost_wserialization.a ${INSTALL_DIR}/lib/libboost_wserialization.bc
-emar q ${INSTALL_DIR}/lib/libboost_thread.a ${INSTALL_DIR}/lib/libboost_thread.bc
-
 #RDKit
+BOOST_CMAKE_STUFF=`for i in ${INSTALL_DIR}/lib/cmake/boost*; do j=${i%-1.83.0}; k=${j#/Users/stuart/Moorhen-64/install/lib/cmake/boost_}; echo -Dboost_${k}_DIR=$i; done`
 mkdir -p ${BUILD_DIR}/rdkit_build
 cd ${BUILD_DIR}/rdkit_build
-emcmake cmake -Dboost_iostreams_DIR=${INSTALL_DIR}/lib/cmake/boost_iostreams-1.83.0/ -Dboost_system_DIR=${INSTALL_DIR}/lib/cmake/boost_system-1.83.0/  -Dboost_headers_DIR=${INSTALL_DIR}/lib/cmake/boost_headers-1.83.0/ -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-1.83.0 -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="-s USE_PTHREADS=1 -pthread -Wno-enum-constexpr-conversion -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF
+emcmake cmake -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-1.83.0 ${BOOST_CMAKE_STUFF} -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="-s USE_PTHREADS=1 -sMEMORY64=1 -pthread -Wno-enum-constexpr-conversion -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -D CMAKE_C_FLAGS="-sMEMORY64=1 -pthread" -D CMAKE_CXX_FLAGS="-sMEMORY64=1 -pthread" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
 emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
@@ -70,7 +54,8 @@ cd ${BUILD_DIR}
 #gemmi
 mkdir -p ${BUILD_DIR}/gemmi_build
 cd ${BUILD_DIR}/gemmi_build
-emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/gemmi
+# -DMEMORY64=1 assumnes small patch to gemmi - need to know correct define created by 64 bit emscripten. //FIXME !!!!!!!!!!!
+emcmake cmake  -DCMAKE_EXE_LINKER_FLAGS="-s USE_PTHREADS=1 -pthread -sMEMORY64=1" -DCMAKE_C_FLAGS="-sMEMORY64=1 -pthread" -DCMAKE_CXX_FLAGS="-sMEMORY64=1 -pthread -DMEMORY64=1" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/gemmi
 emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
@@ -78,7 +63,7 @@ cd ${BUILD_DIR}
 #Moorhen
 mkdir -p ${BUILD_DIR}/moorhen_build
 cd ${BUILD_DIR}/moorhen_build
-emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}
+emcmake cmake -DCMAKE_EXE_LINKER_FLAGS="-s USE_PTHREADS=1 -pthread -sMEMORY64=1" -DCMAKE_C_FLAGS="-sMEMORY64=1 -pthread" -DCMAKE_CXX_FLAGS="-sMEMORY64=1 -pthread" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}
 emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
