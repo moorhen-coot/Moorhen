@@ -3,7 +3,7 @@ import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
 import { cidToSpec } from '../../utils/MoorhenUtils';
 import { MoorhenScreenRecorder } from "../../utils/MoorhenScreenRecorder"
-import { MoorhenUpdatingMapsToast } from "../misc/MoorhenUpdatingMapsToast"
+import { MoorhenUpdatingMapsToast } from "../toasts/MoorhenUpdatingMapsToast"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { libcootApi } from '../../types/libcoot';

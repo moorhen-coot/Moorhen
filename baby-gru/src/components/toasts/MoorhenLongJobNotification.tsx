@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { LinearProgress } from "@mui/material"
-import { MoorhenNotification } from "./MoorhenNotification"
+import { MoorhenNotification } from "../misc/MoorhenNotification"
 import { Stack } from "react-bootstrap"
 import { moorhen } from "../../types/moorhen"
 import { useSelector } from "react-redux"

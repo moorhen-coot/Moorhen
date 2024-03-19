@@ -10,17 +10,18 @@ import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
 import { MoorhenNotification } from './misc/MoorhenNotification';
 import { MoorhenModalsContainer } from './misc/MoorhenModalsContainer';
-import { MoorhenPopUpContainer } from './misc/MoorhenPopUpContainer';
+import { MoorhenPopUpContainer } from './toasts/MoorhenPopUpContainer';
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
 import { MoorhenPreferencesContainer } from './misc/MoorhenPreferencesContainer';
-import { MoorhenLongJobNotification } from './misc/MoorhenLongJobNotification';
+import { MoorhenLongJobNotification } from './toasts/MoorhenLongJobNotification';
 import { MoorhenResidueSelectionActions } from './misc/MoorhenResidueSelectionActions';
 import { useSelector, useDispatch } from 'react-redux';
 import { setDefaultBackgroundColor, setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/sceneSettingsSlice';
 import { setCootInitialized, setNotificationContent, setTheme, toggleCootCommandExit, toggleCootCommandStart } from '../store/generalStatesSlice';
 import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSlice';
-import { MoorhenSharedSessionManager } from './misc/MoorhenSharedSessionManager';
+
+// import { MoorhenSharedSessionManager } from './misc/MoorhenSharedSessionManager';
 
 /**
  * A container for the Moorhen app. Needs to be rendered within a MoorhenReduxprovider.
@@ -409,6 +410,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     <MoorhenResidueSelectionActions/>
 
+    {/**
     <MoorhenSharedSessionManager
         commandCentre={props.commandCentre}
         glRef={props.glRef}
@@ -417,6 +419,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         mapsRef={mapsRef}
         activeMapRef={activeMapRef}
     />
+    */}
 
     <Container fluid className={`baby-gru ${theme}`}>
         <Row>

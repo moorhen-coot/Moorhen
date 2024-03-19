@@ -913,6 +913,9 @@ export namespace moorhen {
             cursorStyle: string;
         };
         activePopUps: {
+            goToResiduePopUp: {
+                show: boolean;
+            };
             matchingLigandPopUp: {
                 show: boolean;
                 refMolNo: number;

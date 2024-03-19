@@ -14,6 +14,7 @@ import { setNotificationContent } from "../store/generalStatesSlice";
 import { setHoveredAtom } from "../store/hoveringStatesSlice";
 import { changeMapRadius } from "../store/mapContourSettingsSlice";
 import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
+import { showGoToResiduePopUp } from "../store/activePopUpsSlice";
 
 const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, dispatch: Dispatch<AnyAction>) => {
     molecule.setAtomsDirty(true)
@@ -256,6 +257,10 @@ export const babyGruKeyPress = (
             </MoorhenNotification>
         ))
         return doShortCut('eigen_flip_ligand', formatArgs)
+    }
+
+    else if (action === 'go_to_residue' && molecules.length > 0) {
+        dispatch(showGoToResiduePopUp())
     }
 
     else if (action === 'go_to_blob' && activeMap && !viewOnly) {
