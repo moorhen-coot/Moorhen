@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
-import { MoorhenAcceptRejectRotateTranslate } from '../misc/MoorhenAcceptRejectRotateTranslate';
+import { MoorhenAcceptRejectRotateTranslate } from '../toasts/MoorhenAcceptRejectRotateTranslate';
 import { useDispatch, batch } from 'react-redux';
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { setIsRotatingAtoms } from "../../store/generalStatesSlice";

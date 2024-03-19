@@ -6,7 +6,7 @@ import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
-import { MoorhenResidueSteps } from '../misc/MoorhenResidueSteps';
+import { MoorhenResidueSteps } from '../toasts/MoorhenResidueSteps';
 import { setNotificationContent } from '../../store/generalStatesSlice';
 import { cidToSpec, sleep } from '../../utils/MoorhenUtils';
 import { setShowPepFlipsValidationModal } from "../../store/activeModalsSlice";

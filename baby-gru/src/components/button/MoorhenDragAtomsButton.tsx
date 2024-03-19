@@ -4,7 +4,7 @@ import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 import { useDispatch, batch } from 'react-redux';
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { setIsDraggingAtoms } from "../../store/generalStatesSlice";
-import { MoorhenAcceptRejectDragAtoms } from "../misc/MoorhenAcceptRejectDragAtoms"
+import { MoorhenAcceptRejectDragAtoms } from "../toasts/MoorhenAcceptRejectDragAtoms"
 
 export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {       
     const chosenMolecule = useRef<null | moorhen.Molecule>(null)

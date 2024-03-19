@@ -1,5 +1,5 @@
 import { Stack } from "react-bootstrap"
-import { MoorhenNotification } from "./MoorhenNotification"
+import { MoorhenNotification } from "../misc/MoorhenNotification"
 import { CheckOutlined, CloseOutlined, WarningOutlined } from "@mui/icons-material"
 import { IconButton } from "@mui/material"
 import { useDispatch, useSelector } from "react-redux"

@@ -6,7 +6,7 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from 'react-redux';
 import { setNotificationContent } from '../../store/generalStatesSlice';
-import { MoorhenResidueSteps } from "../misc/MoorhenResidueSteps"
+import { MoorhenResidueSteps } from "../toasts/MoorhenResidueSteps"
 
 export const MoorhenStepRefinementMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;

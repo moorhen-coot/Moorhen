@@ -3,6 +3,9 @@ import { createSlice } from '@reduxjs/toolkit'
 export const activePopUpsSlice = createSlice({
   name: 'activePopUps',
   initialState: {
+    goToResiduePopUp: {
+      show: false
+    },
     matchingLigandPopUp: {
       show: false,
       refMolNo: null,
@@ -12,6 +15,15 @@ export const activePopUpsSlice = createSlice({
     }
   },
   reducers: {
+    setShowGoToResiduePopUp: (state, action: { payload: boolean, type: string }) => {
+      return {...state, goToResiduePopUp: {...state.goToResiduePopUp, show: action.payload} }
+    },
+    showGoToResiduePopUp: (state) => {
+      return {...state, goToResiduePopUp: { show: true } }
+    },
+    hideGoToResiduePopUp: (state) => {
+      return {...state, goToResiduePopUp: { show: false } }
+    },
     hideAcceptMatchingLigandPopUp: (state) => {
       return {...state, matchingLigandPopUp: {
         show: false,
@@ -31,7 +43,8 @@ export const activePopUpsSlice = createSlice({
 })
 
 export const {
-    setShowAcceptMatchingLigandPopUp, setMatchinLigandPopUpParams, hideAcceptMatchingLigandPopUp
+    setShowAcceptMatchingLigandPopUp, setMatchinLigandPopUpParams, hideAcceptMatchingLigandPopUp,
+    showGoToResiduePopUp, hideGoToResiduePopUp, setShowGoToResiduePopUp
 } = activePopUpsSlice.actions
 
 export default activePopUpsSlice.reducer

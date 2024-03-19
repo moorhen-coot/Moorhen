@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Stack } from "react-bootstrap";
 import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from 'react-redux';
-import { MoorhenNotification } from "./MoorhenNotification";
+import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { IconButton, LinearProgress } from "@mui/material";
 import { PauseCircleOutlined, PlayCircleOutlined, StopCircleOutlined } from "@mui/icons-material";
 import { setNotificationContent } from '../../store/generalStatesSlice';
