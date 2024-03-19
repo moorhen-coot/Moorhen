@@ -3,6 +3,8 @@ import { MoorhenApp } from './components/MoorhenApp';
 import { MoorhenContainer } from './components/MoorhenContainer';
 import { MoorhenDraggableModalBase } from "./components/modal/MoorhenDraggableModalBase";
 import { MoorhenQuerySequenceModal } from "./components/modal/MoorhenQuerySequenceModal";
+import { MoorhenColourRule } from './utils/MoorhenColourRule';
+import { MoorhenMoleculeRepresentation } from './utils/MoorhenMoleculeRepresentation';
 import { MoorhenMolecule } from './utils/MoorhenMolecule';
 import { MoorhenMap } from './utils/MoorhenMap';
 import { MoorhenCommandCentre } from './utils/MoorhenCommandCentre';
@@ -42,7 +44,7 @@ export {
     ErrorBoundary, MoorhenApp, MoorhenContainer, MoorhenTimeCapsule, MoorhenMoleculeSelect, MoorhenMolecule, MoorhenMap,
     MoorhenCommandCentre, loadSessionData, MoorhenMapSelect, MoorhenDraggableModalBase, MoorhenReduxProvider, 
     setDefaultBackgroundColor, setDrawCrosshairs, setDrawScaleBar, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
-    setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap,  
+    setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap, MoorhenColourRule,
     setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius,
     setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, 
     setModificationCountBackupThreshold, setHeight, setWidth, setIsDark, setBackgroundColor, setNotificationContent, 
@@ -54,7 +56,7 @@ export {
     setZoomWheelSensitivityFactor, setMouseSensitivity, setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts,
     setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores, MoorhenSlider,
     addMap, addMapList, removeMap, emptyMaps, setPositiveMapColours, setNegativeMapColours, setMapAlpha, setMapColours, 
-    setMapRadius, setMapStyle, showMap, hideMap, setContourLevel, showMolecule, hideMolecule, 
+    setMapRadius, setMapStyle, showMap, hideMap, setContourLevel, showMolecule, hideMolecule, MoorhenMoleculeRepresentation, 
     MoorhenQuerySequenceModal, MoorhenPreferences, setDoEdgeDetect, addCustomRepresentation, removeCustomRepresentation,
     setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setEdgeDetectNormalScale
 };

@@ -48,6 +48,75 @@ declare module 'moorhen' {
     }
     module.exports.MoorhenPreferences = MoorhenPreferences
 
+    class MoorhenColourRule implements _moorhen.ColourRule {
+        constructor(ruleType: string, cid: string, color: string, commandCentre: React.RefObject<_moorhen.CommandCentre>, isMultiColourRule?: boolean, applyColourToNonCarbonAtoms?: boolean)
+        ruleType: string;
+        cid: string;
+        color: string;
+        args: (string | number)[];
+        label: string;
+        isMultiColourRule: boolean;
+        commandCentre: React.RefObject<_moorhen.CommandCentre>;
+        parentMolecule: _moorhen.Molecule;
+        parentRepresentation: _moorhen.MoleculeRepresentation;
+        applyColourToNonCarbonAtoms: boolean;
+        uniqueId: string;
+        initFromDataObject(data: _moorhen.ColourRuleObject, commandCentre: React.RefObject<_moorhen.CommandCentre>, molecule: _moorhen.Molecule): _moorhen.ColourRule;
+        initFromString(stringData: string, commandCentre: React.RefObject<_moorhen.CommandCentre>, molecule: _moorhen.Molecule): _moorhen.ColourRule;
+        objectify(): _moorhen.ColourRuleObject;
+        stringify(): string;
+        setLabel(label: string): void;
+        setArgs(args: (string | number)[]): void;
+        setParentMolecule(molecule: _moorhen.Molecule): void;
+        setParentRepresentation(representation: _moorhen.MoleculeRepresentation): void;    
+        setApplyColourToNonCarbonAtoms(newVal: boolean): void;
+        getUserDefinedColours(): { cid: string; rgb: [number, number, number]; applyColourToNonCarbonAtoms: boolean }[];
+        apply(style: string, ruleIndex: number): Promise<void>;
+    }
+    module.exports.MoorhenColourRule = MoorhenColourRule
+
+    class MoorhenMoleculeRepresentation implements _moorhen.MoleculeRepresentation {
+        constructor(style: _moorhen.RepresentationStyles, cid: string, commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>)
+        addColourRule(ruleType: string, cid: string, color: string, args: (string | number)[], isMultiColourRule?: boolean, applyColourToNonCarbonAtoms?: boolean, label?: string): void;
+        getBufferObjects(): Promise<any>;
+        applyColourRules(): Promise<void>;
+        exportAsGltf(): Promise<ArrayBuffer>;
+        setBondOptions(bondOptions: _moorhen.cootBondOptions): void;
+        setStyle(style: string): void;
+        setUseDefaultColourRules(arg0: boolean): void;
+        setColourRules(ruleList: _moorhen.ColourRule[]): void;
+        buildBuffers(arg0: _moorhen.DisplayObject[]): Promise<void>;
+        setBuffers(meshObjects: _moorhen.DisplayObject[]): void;
+        drawSymmetry(): void
+        deleteBuffers(): void;
+        draw(): Promise<void>;
+        redraw(): Promise<void>;
+        setParentMolecule(arg0: _moorhen.Molecule): void;
+        show(): void;
+        hide(): void;
+        setAtomBuffers(arg0: _moorhen.AtomInfo[]): void;
+        bondOptions: _moorhen.cootBondOptions;
+        useDefaultColourRules: boolean;
+        useDefaultBondOptions: boolean;
+        uniqueId: string;
+        style: string;
+        cid: string;
+        visible: boolean;
+        buffers: _moorhen.DisplayObject[];
+        commandCentre: React.RefObject<_moorhen.CommandCentre>;
+        glRef: React.RefObject<webGL.MGWebGL>;
+        parentMolecule: _moorhen.Molecule;
+        colourRules: _moorhen.ColourRule[];
+        styleHasAtomBuffers: boolean;
+        styleHasSymmetry: boolean;
+        isCustom: boolean;
+        styleHasColourRules: boolean;
+        ligandsCid: string;
+        hoverColor: number[];
+        residueSelectionColor: number[];    
+    }
+    module.exports.MoorhenMoleculeRepresentation = MoorhenMoleculeRepresentation
+
     class MoorhenMolecule implements _moorhen.Molecule {
         constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibrary: string)
         minimizeEnergyUsingCidAnimated(cid: string, ncyc: number, nIterations: number, useRamaRestraints: boolean, ramaWeight: number, useTorsionRestraints: boolean, torsionWeight: number): Promise<void>;
