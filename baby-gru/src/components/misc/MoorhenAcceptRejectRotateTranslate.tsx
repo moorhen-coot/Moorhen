@@ -27,13 +27,13 @@ export const MoorhenAcceptRejectRotateTranslate = (props: {
 
     const stopRotateTranslate = useCallback(async (acceptTransform: boolean = false) => {
         props.glRef.current.setActiveMolecule(null)
+        await props.moleculeRef.current.unhideAll(false)
         if (acceptTransform) {
             const transformedAtoms = fragmentMoleculeRef.current.transformedCachedAtomsAsMovedAtoms()
             await props.moleculeRef.current.updateWithMovedAtoms(transformedAtoms)
             dispatch( triggerUpdate(props.moleculeRef.current.molNo) )
         }
         await fragmentMoleculeRef.current.delete(true)
-        await props.moleculeRef.current.unhideAll()
         dispatch( setIsRotatingAtoms(false) )
     }, [props, props.moleculeRef, fragmentMoleculeRef])
 
