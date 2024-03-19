@@ -1273,8 +1273,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("fit_to_map_by_random_jiggle_using_cid",&molecules_container_t::fit_to_map_by_random_jiggle_using_cid)
     .function("get_svg_for_residue_type",&molecules_container_t::get_svg_for_residue_type)
     .function("is_valid_model_molecule",&molecules_container_t::is_valid_model_molecule)
-    .function("is_valid_map_molecule",&molecules_container_t::is_valid_map_molecule) 
+    .function("is_valid_map_molecule",&molecules_container_t::is_valid_map_molecule)
     .function("read_pdb",&molecules_container_t::read_pdb)
+    .function("read_ccp4_map",&molecules_container_t::read_ccp4_map)
     .function("read_mtz",&molecules_container_t::read_mtz)
     .function("residue_cid_to_residue_spec",&molecules_container_t::residue_cid_to_residue_spec)
     //   int import_cif_dictionary(const std::string &cif_file_name, int imol_enc);
@@ -1282,8 +1283,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("density_fit_analysis",&molecules_container_t::density_fit_analysis)
     .function("get_number_of_atoms",&molecules_container_t::get_number_of_atoms)
     //Using allow_raw_pointers(). Perhaps suggests we need to do something different from exposing mmdb pointers to JS.
-    //.function("get_residue",&molecules_container_t::get_residue, allow_raw_pointers())
-    //.function("get_atom",&molecules_container_t::get_atom, allow_raw_pointers())
+    .function("get_residue",&molecules_container_t::get_residue, allow_raw_pointers())
+    .function("get_atom",&molecules_container_t::get_atom, allow_raw_pointers())
     .function("flipPeptide_cid",   select_overload<int(int, const std::string&,      const std::string&)>(&molecules_container_t::flip_peptide_using_cid))
     .function("flipPeptide",       select_overload<int(int, const coot::atom_spec_t&,const std::string&)>(&molecules_container_t::flip_peptide))
     .function("side_chain_180",    select_overload<int(int, const std::string&)>                         (&molecules_container_t::side_chain_180))
@@ -1339,8 +1340,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("associate_data_mtz_file_with_map",&molecules_container_t::associate_data_mtz_file_with_map)
     .function("connect_updating_maps",&molecules_container_t::connect_updating_maps)
     .function("get_diff_diff_map_peaks", &molecules_container_t::get_diff_diff_map_peaks)
-    //.function("export_model_molecule_as_gltf", &molecules_container_t::export_model_molecule_as_gltf)
-    //.function("export_map_molecule_as_gltf", &molecules_container_t::export_map_molecule_as_gltf)
+    .function("export_model_molecule_as_gltf", &molecules_container_t::export_model_molecule_as_gltf)
+    .function("export_map_molecule_as_gltf", &molecules_container_t::export_map_molecule_as_gltf)
     .function("residues_with_missing_atoms",&molecules_container_t::residues_with_missing_atoms)
     .function("ramachandran_validation",&molecules_container_t::ramachandran_validation)
     .function("merge_molecules", select_overload<std::pair<int, std::vector<merge_molecule_results_info_t> >(int,const std::string &)>(&molecules_container_t::merge_molecules))
@@ -1378,7 +1379,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("find_water_baddies",&molecules_container_t::find_water_baddies)
     .function("get_gphl_chem_comp_info",&molecules_container_t::get_gphl_chem_comp_info)
     .property("use_gemmi", &molecules_container_t::use_gemmi)
-    //.function("read_ccp4_map",&molecules_container_t::read_ccp4_map) //BAD!!! OH LORDY, WHY THIS ONE????!!!!!!! FIXME !!!!!!!!!!!!!!!!!!
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<bool>()
