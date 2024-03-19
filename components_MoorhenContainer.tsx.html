@@ -397,20 +397,26 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     }, [drawMissingLoops, cootInitialized])
 
     useEffect(() => {
-        setWindowDimensions()
-        commandCentre.current = new MoorhenCommandCentre(urlPrefix, glRef, timeCapsuleRef, {
-            onCootInitialized: () => {
-                dispatch( setCootInitialized(true) )
-            },
-            onCommandExit: (kwargs) => {
-                dispatch( toggleCootCommandExit() )
-            },
-            onCommandStart: (kwargs) => {
-                dispatch( toggleCootCommandStart() )
-            }
-        })
+        const initCommandCentre = async () => {
+            setWindowDimensions()
+            commandCentre.current = new MoorhenCommandCentre(urlPrefix, glRef, timeCapsuleRef, {
+                onCootInitialized: () => {
+                    dispatch( setCootInitialized(true) )
+                },
+                onCommandExit: (kwargs) => {
+                    dispatch( toggleCootCommandExit() )
+                },
+                onCommandStart: (kwargs) => {
+                    dispatch( toggleCootCommandStart() )
+                }
+            })
+            await commandCentre.current.init()    
+        }
+        
+        initCommandCentre()
+        
         return () => {
-            commandCentre.current.unhook()
+            commandCentre.current.close()
         }
     }, [])
 
