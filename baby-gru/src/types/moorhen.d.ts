@@ -100,9 +100,9 @@ export namespace moorhen {
         args: (string | number)[];
         label: string;
         isMultiColourRule: boolean;
-        commandCentre: React.RefObject<moorhen.CommandCentre>;
-        parentMolecule: moorhen.Molecule;
-        parentRepresentation: moorhen.MoleculeRepresentation;
+        commandCentre: React.RefObject<CommandCentre>;
+        parentMolecule: Molecule;
+        parentRepresentation: MoleculeRepresentation;
         applyColourToNonCarbonAtoms: boolean;
         uniqueId: string;
         static initFromDataObject(data: ColourRuleObject, commandCentre: React.RefObject<CommandCentre>, molecule: Molecule): ColourRule;
@@ -111,8 +111,8 @@ export namespace moorhen {
         stringify(): string;
         setLabel(label: string): void;
         setArgs(args: (string | number)[]): void;
-        setParentMolecule(molecule: moorhen.Molecule): void;
-        setParentRepresentation(representation: moorhen.MoleculeRepresentation): void;    
+        setParentMolecule(molecule: Molecule): void;
+        setParentRepresentation(representation: MoleculeRepresentation): void;    
         setApplyColourToNonCarbonAtoms(newVal: boolean): void;
         getUserDefinedColours(): { cid: string; rgb: [number, number, number]; applyColourToNonCarbonAtoms: boolean }[];
         apply(style: string, ruleIndex: number): Promise<void>;
@@ -239,7 +239,7 @@ export namespace moorhen {
         defaultColourRules: ColourRule[];
         restraints: {maxRadius: number, cid: string}[];
         monomerLibraryPath: string;
-        adaptativeBondsRepresentation: moorhen.MoleculeRepresentation;
+        adaptativeBondsRepresentation: MoleculeRepresentation;
         hoverRepresentation: MoleculeRepresentation;
         unitCellRepresentation: MoleculeRepresentation;
         environmentRepresentation: MoleculeRepresentation;
@@ -292,11 +292,11 @@ export namespace moorhen {
         styleHasColourRules: boolean;
         ligandsCid: string;
         hoverColor: number[];
-        residueSelectionColor: number[];    
+        residueSelectionColor: number[];
     }
 
     type ResidueSelection = {
-        molecule: null | moorhen.Molecule;
+        molecule: null | Molecule;
         first: null | string;
         second: null | string;
         cid: null | string | string[];
@@ -599,7 +599,7 @@ export namespace moorhen {
     }
 
     type AtomRightClickEventInfo = {
-        atom: moorhen.AtomInfo;
+        atom: AtomInfo;
         buffer: {id: string};
         coords: string,
         pageX: number;
@@ -609,7 +609,7 @@ export namespace moorhen {
     type AtomRightClickEvent = CustomEvent<AtomRightClickEventInfo>
     
     type AtomDraggedEvent = CustomEvent<{ 
-        atom: moorhen.AtomInfo
+        atom: AtomInfo
         buffer: any;
     }>
 
@@ -621,7 +621,7 @@ export namespace moorhen {
 
     type AtomClickedEvent = CustomEvent<{
         buffer: { id: string };
-        atom: moorhen.AtomInfo;
+        atom: AtomInfo;
         isResidueSelection: boolean;
     }>
 
