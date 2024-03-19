@@ -37,7 +37,7 @@ cd ${BUILD_DIR}
 #boost with cmake
 mkdir -p ${BUILD_DIR}/boost
 cd ${BUILD_DIR}/boost
-emcmake cmake -DCMAKE_C_FLAGS="-sMEMORY64=1 -pthread" -DCMAKE_CXX_FLAGS="-sMEMORY64=1 -pthread" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/checkout/boost -DBOOST_EXCLUDE_LIBRARIES="context;fiber;fiber_numa;asio;log;coroutine;cobalt;nowide"
+emcmake cmake -DCMAKE_C_FLAGS="-sMEMORY64=1 -pthread" -DCMAKE_CXX_FLAGS="-sMEMORY64=1 -pthread" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/checkout/boost-1.83.0 -DBOOST_EXCLUDE_LIBRARIES="context;fiber;fiber_numa;asio;log;coroutine;cobalt;nowide"
 emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
