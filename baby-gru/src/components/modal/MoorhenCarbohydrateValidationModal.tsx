@@ -1,6 +1,6 @@
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { Row } from "react-bootstrap";
 import { convertRemToPx, convertViewtoPx} from '../../utils/MoorhenUtils';
 import { useSelector } from "react-redux";
