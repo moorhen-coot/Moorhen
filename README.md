@@ -69,7 +69,6 @@ Binaries are available on the releases page. Please read the instructions there 
 <br/>After first checkout you should run the following script to build:  
 `./initial_build.sh`  
 This should build all dependencies and then `Moorhen`. 
-  
 It is also possible to build a 64-bit version of Moorhen which (currently) can address up to 8GB memory:  
 `./initial_build.sh --64bit`  
 Note that you need a 64-bit WASM capable web browser to use this. Most browsers are not 64-bit capable by default. Some have
