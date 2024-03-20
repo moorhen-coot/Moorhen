@@ -199,5 +199,22 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
 
         const maps = MoorhenStore.getState().maps
         expect(maps.map(item => item.molNo)).toEqual([1, 2])
+
+        expect(collectedProps.glRef.current.zoom).toBeCloseTo(1.29, 1)
+        expect(collectedProps.glRef.current.origin[0]).toBeCloseTo(-29.44, 1)
+        expect(collectedProps.glRef.current.origin[1]).toBeCloseTo(-5.04, 1)
+        expect(collectedProps.glRef.current.origin[2]).toBeCloseTo(-50.24, 1)
+
+        await user.click(file)
+        const deleteEverythingMenuItem = screen.getByRole('menuitem', { name: /delete everything/i })
+        await user.click(deleteEverythingMenuItem)
+
+        const deleteButton = screen.getByRole('button', { name: /i understand\, delete/i })
+        await user.click(deleteButton)
+
+        const molecules_empty = MoorhenStore.getState().molecules.moleculeList
+        const maps_empty = MoorhenStore.getState().maps
+        expect(molecules_empty).toHaveLength(0)
+        expect(maps_empty).toHaveLength(0)
     })
 })
