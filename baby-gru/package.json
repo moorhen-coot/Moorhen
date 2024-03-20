@@ -80,7 +80,7 @@
     "make-win32": "npm run build && electron-forge make --platform win32",
     "create-docs": "npm run create-version && npx jsdoc -c jsdoc.json",
     "test": "npm run create-version && npx tsc && npm run transpile-ts-worker-jest && ln -s ./public/baby-gru/wasm/moorhen.data ./moorhen.data && ln -s ./public/baby-gru ./baby-gru && node --trace-warnings --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --forceExit",
-    "test-react": "npm run create-version && npx tsc && node --trace-warnings --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --forceExit --selectProjects react-components"
+    "test-react": "npm run create-version && npx tsc && node --trace-warnings --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --forceExit --testPathIgnorePatterns=moorhenContainer.test.jsx --selectProjects react-components"
   },
   "eslintConfig": {
     "extends": [

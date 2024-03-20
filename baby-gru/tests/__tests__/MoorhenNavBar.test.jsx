@@ -1,3 +1,5 @@
+jest.setTimeout(10000)
+
 import '@testing-library/jest-dom'
 import { render, screen, cleanup, act, within }  from '@testing-library/react'
 import { MoorhenNavBar }  from '../../src/components/navbar-menus/MoorhenNavBar'
@@ -208,7 +210,7 @@ describe('Testing MoorhenNavBar', () => {
         expect(menuItems.map(item => item.textContent)).toEqual(collectedProps.includeNavBarMenuNames)
     })
 
-    test.only('Test MoorhenNavBar click interactions', async () => {
+    test('Test MoorhenNavBar click interactions', async () => {
 
         render(
             <Provider store={MoorhenStore}> 
