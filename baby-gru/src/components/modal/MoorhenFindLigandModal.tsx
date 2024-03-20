@@ -11,36 +11,36 @@ import { Backdrop, IconButton, Tooltip } from "@mui/material";
 import { CenterFocusWeakOutlined, CrisisAlertOutlined, MergeTypeOutlined } from "@mui/icons-material";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 
-export const MoorheFindLigandModal = (props: { show: boolean; setShow: React.Dispatch<React.SetStateAction<boolean>>; }) => {    
+const LigandHitCard = (props: {
+    selectedMolNo: number;
+    ligandMolecule: moorhen.Molecule;
+    ligandCardMolNoFocus: number;
+    setLigandCardMolNoFocus: React.Dispatch<React.SetStateAction<number>>;
+    ligandResults: moorhen.Molecule[];
+    setLigandResults: React.Dispatch<React.SetStateAction<moorhen.Molecule[]>>;
+}) => {
+
     const dispatch = useDispatch()
-    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-    const maps = useSelector((state: moorhen.State) => state.maps)
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const animateRefine = useSelector((state: moorhen.State) => state.miscAppSettings.animateRefine)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
-    const intoMoleculeRef = useRef<HTMLSelectElement | null>(null)
-    const ligandMoleculeRef = useRef<HTMLSelectElement | null>(null)
-    const mapSelectRef = useRef<HTMLSelectElement | null>(null)
-    const useConformersRef = useRef<boolean>(false)
-    const fitAnywhereRef = useRef<boolean>(false)
-    const conformerCountRef = useRef<string>(null)
-
-    const [useConformers, setUseConformers] = useState<boolean>(false)
-    const [fitAnywhere, setFitAnywhere] = useState<boolean>(false)
-    const [busy, setBusy] = useState<boolean>(false)
-    const [ligandResults, setLigandResults] = useState<moorhen.Molecule[]>(null)
-    const [ligandCards, setLigandCards] = useState<JSX.Element[]>(null)
+    const handleShow = useCallback(async () => {
+        if (props.ligandMolecule.representations.length > 0) {
+            props.ligandMolecule.show('ligands')
+        } else {
+            await props.ligandMolecule.fetchIfDirtyAndDraw('ligands')
+        }
+        await props.ligandMolecule.centreOn('/*/*/*/*', true, true)
+    }, [])
 
     useEffect(() => {
-        const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(intoMoleculeRef.current.value))
-        if (selectedMolecule && ligandResults?.length > 0) {
-            setLigandCards(ligandResults?.map(ligandMolecule => getLigandCard(selectedMolecule, ligandMolecule)))
+        if (props.ligandCardMolNoFocus !== props.ligandMolecule.molNo) {
+            props.ligandMolecule.hide('ligands')
         } else {
-            setLigandCards([])
+            handleShow()
         }
-    }, [ligandResults])
+    }, [props.ligandCardMolNoFocus])
 
     const handleRefinement = useCallback(async (ligandMolecule: moorhen.Molecule) => {
         if (animateRefine) {
@@ -50,40 +50,63 @@ export const MoorheFindLigandModal = (props: { show: boolean; setShow: React.Dis
         }
     }, [animateRefine, activeMap])
 
-    const getLigandCard = (molecule: moorhen.Molecule, newLigandMolecule: moorhen.Molecule) => {
-        return <Card key={newLigandMolecule.molNo} style={{marginTop: '0.5rem'}}>
-            <Card.Body style={{padding:'0.5rem'}}>
-                <Row style={{display:'flex', justifyContent:'between'}}>
-                    <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
-                        <span>
-                            {newLigandMolecule.name}
-                        </span>
-                    </Col>
-                    <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
-                        <Tooltip title="View">
-                        <IconButton style={{marginRight:'0.5rem'}} onClick={() => newLigandMolecule.centreOn('/*/*/*/*', true, true)}>
-                            <CenterFocusWeakOutlined/>
-                        </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Refine">
-                        <IconButton style={{marginRight:'0.5rem'}} onClick={() => handleRefinement(newLigandMolecule)}>
-                            <CrisisAlertOutlined/>
-                        </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Merge">
-                        <IconButton style={{marginRight:'0.5rem'}} onClick={() => {
-                            molecule.mergeMolecules([newLigandMolecule], true).then(_ => newLigandMolecule.delete())
-                            dispatch( triggerUpdate(molecule.molNo) )
-                            setLigandResults((prevLigands) => prevLigands.filter(ligand => ligand.molNo !== newLigandMolecule.molNo))
-                        }}>
-                            <MergeTypeOutlined/>
-                        </IconButton>
-                        </Tooltip>
-                    </Col>
-                </Row>
-            </Card.Body>
-        </Card>
-    }
+    const handleMerge = useCallback(async () => {
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === props.selectedMolNo)
+        if (selectedMolecule) {
+            selectedMolecule.mergeMolecules([props.ligandMolecule], true).then(_ => props.ligandMolecule.delete())
+            dispatch( triggerUpdate(selectedMolecule.molNo) )
+            props.setLigandResults((prevLigands) => prevLigands.filter(ligand => ligand.molNo !== props.ligandMolecule.molNo))
+        }
+    }, [molecules])
+
+    return <Card style={{marginTop: '0.5rem', borderStyle: 'solid', borderColor: props.ligandCardMolNoFocus === props.ligandMolecule.molNo ? 'black' : ''}}>
+        <Card.Body style={{padding:'0.5rem'}}>
+            <Row style={{display:'flex', justifyContent:'between'}}>
+                <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
+                    <span>
+                        {props.ligandMolecule.name}
+                    </span>
+                </Col>
+                <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
+                    <Tooltip title="View">
+                    <IconButton style={{marginRight:'0.5rem'}} onClick={() => props.setLigandCardMolNoFocus(props.ligandMolecule.molNo)}>
+                        <CenterFocusWeakOutlined/>
+                    </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Refine">
+                    <IconButton style={{marginRight:'0.5rem'}} onClick={() => handleRefinement(props.ligandMolecule)}>
+                        <CrisisAlertOutlined/>
+                    </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Merge">
+                    <IconButton style={{marginRight:'0.5rem'}} onClick={handleMerge}>
+                        <MergeTypeOutlined/>
+                    </IconButton>
+                    </Tooltip>
+                </Col>
+            </Row>
+        </Card.Body>
+    </Card>
+}
+
+export const MoorheFindLigandModal = (props: { show: boolean; setShow: React.Dispatch<React.SetStateAction<boolean>>; }) => {    
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
+    const maps = useSelector((state: moorhen.State) => state.maps)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+
+    const intoMoleculeRef = useRef<HTMLSelectElement | null>(null)
+    const ligandMoleculeRef = useRef<HTMLSelectElement | null>(null)
+    const mapSelectRef = useRef<HTMLSelectElement | null>(null)
+    const useConformersRef = useRef<boolean>(false)
+    const fitAnywhereRef = useRef<boolean>(false)
+    const conformerCountRef = useRef<string>(null)
+
+    const [ligandCardMolNoFocus, setLigandCardMolNoFocus] = useState<number>(null)
+    const [useConformers, setUseConformers] = useState<boolean>(false)
+    const [fitAnywhere, setFitAnywhere] = useState<boolean>(false)
+    const [busy, setBusy] = useState<boolean>(false)
+    const [ligandResults, setLigandResults] = useState<moorhen.Molecule[]>(null)
 
     const handleClose = () => {
         ligandResults?.forEach(ligandMolecule => ligandMolecule.delete())
@@ -109,7 +132,7 @@ export const MoorheFindLigandModal = (props: { show: boolean; setShow: React.Dis
                 parseInt(mapSelectRef.current.value),
                 parseInt(ligandMoleculeRef.current.value),
                 !fitAnywhereRef.current,
-                true,
+                false,
                 useConformersRef.current,
                 parseInt(conformerCountRef.current)
             )
@@ -118,16 +141,37 @@ export const MoorheFindLigandModal = (props: { show: boolean; setShow: React.Dis
         setBusy(false)
     }, [molecules, ligandResults])
 
+    const handleMoleculeSelectChange = useCallback(() => {
+        if (ligandResults?.length > 0) {
+            ligandResults.forEach(ligandMolecule => ligandMolecule.delete())
+            setLigandResults([])
+        } 
+    }, [ligandResults])
+
     const bodyContent = <>
         <Row style={{ padding: '0', margin: '0' }}>
             <Col>
                 <MoorhenMapSelect width="" maps={maps} label="Map" ref={mapSelectRef} />
             </Col>
             <Col>
-                <MoorhenMoleculeSelect width="" molecules={molecules} label="Protein molecule" allowAny={false} ref={intoMoleculeRef} filterFunction={(molecule: moorhen.Molecule) => !molecule.isLigand} />
+                <MoorhenMoleculeSelect
+                    width=""
+                    molecules={molecules}
+                    label="Protein molecule"
+                    allowAny={false}
+                    ref={intoMoleculeRef} 
+                    filterFunction={(molecule) => !molecule.isLigand}
+                    onChange={handleMoleculeSelectChange}/>
             </Col>
             <Col>
-                <MoorhenMoleculeSelect width="" molecules={molecules} label="Ligand molecule" allowAny={false} ref={ligandMoleculeRef} filterFunction={(molecule: moorhen.Molecule) => molecule.isLigand} />
+                <MoorhenMoleculeSelect
+                    width=""
+                    molecules={molecules}
+                    label="Ligand molecule"
+                    allowAny={false}
+                    ref={ligandMoleculeRef}
+                    filterFunction={(molecule) => molecule.isLigand}
+                    onChange={handleMoleculeSelectChange}/>
             </Col>
         </Row>
         <Row style={{ padding: '0', margin: '0' }}>
@@ -168,8 +212,19 @@ export const MoorheFindLigandModal = (props: { show: boolean; setShow: React.Dis
         </Row>
         <hr></hr>
         <Row>
-            {ligandCards?.length > 0 ? <span>Found {ligandCards.length} possible ligand location(s)</span> : null}
-            {ligandCards?.length > 0 ? <div style={{height: '100px', width: '100%'}}>{ligandCards}</div> : <span>No results...</span>}
+            {ligandResults?.length > 0 ? <span>Found {ligandResults.length} possible ligand location(s)</span> : null}
+            {ligandResults?.length > 0 ? <div style={{height: '100px', width: '100%'}}>{
+            ligandResults.map(ligandMolecule => {
+                return <LigandHitCard
+                            key={ligandMolecule.molNo}
+                            ligandMolecule={ligandMolecule}
+                            selectedMolNo={parseInt(intoMoleculeRef.current?.value)}
+                            ligandCardMolNoFocus={ligandCardMolNoFocus}
+                            setLigandCardMolNoFocus={setLigandCardMolNoFocus}
+                            ligandResults={ligandResults}
+                            setLigandResults={setLigandResults}/>
+            })
+            }</div> : <span>No results...</span>}
         </Row>
     </>
 
