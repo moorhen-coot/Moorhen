@@ -12,20 +12,22 @@ export const MoorhenMutateButton = (props: moorhen.ContextButtonProps) => {
     ]
 
     const autoFitRotamer = useCallback(async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
-        const formattedArgs = [
-            molecule.molNo,
-            chosenAtom.chain_id,
-            chosenAtom.res_no,
-            chosenAtom.ins_code,
-            chosenAtom.alt_conf,
-            activeMap.molNo
-        ]
-        await props.commandCentre.current.cootCommand({
-            returnType: "status",
-            command: "auto_fit_rotamer",
-            commandArgs: formattedArgs,
-            changesMolecules: [molecule.molNo]
-        }, true)
+        if (activeMap) {
+            const formattedArgs = [
+                molecule.molNo,
+                chosenAtom.chain_id,
+                chosenAtom.res_no,
+                chosenAtom.ins_code,
+                chosenAtom.alt_conf,
+                activeMap.molNo
+            ]
+            await props.commandCentre.current.cootCommand({
+                returnType: "status",
+                command: "auto_fit_rotamer",
+                commandArgs: formattedArgs,
+                changesMolecules: [molecule.molNo]
+            }, true)    
+        } 
     }, [activeMap, props.commandCentre])
 
     const getCootCommandInput = (selectedMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string) => {
@@ -44,7 +46,7 @@ export const MoorhenMutateButton = (props: moorhen.ContextButtonProps) => {
 
     return <MoorhenContextButtonBase
         icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/mutate.svg`} alt='Mutate' />}
-        needsMapData={true}
+        needsMapData={false}
         onCompleted={autoFitRotamer}
         toolTipLabel="Mutate residue"
         popoverSettings={{
