@@ -720,7 +720,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 command: 'replace_fragment',
                 commandArgs: [this.molNo, fragmentMolecule.molNo, cid],
                 changesMolecules: [this.molNo]
-            }, false)
+            }, !refineAfterMerge)
             if (refineAfterMerge) {
                 await this.refineResiduesUsingAtomCid(cid, 'LITERAL', 4000, false)
             }
