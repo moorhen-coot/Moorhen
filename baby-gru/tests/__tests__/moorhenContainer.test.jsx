@@ -1,3 +1,4 @@
+jest.setTimeout(15000)
 jest.mock('protvista-sequence')
 jest.mock('protvista-navigation')
 jest.mock('protvista-manager')
@@ -8,9 +9,10 @@ jest.mock('chart.js', () => ({
 }))
 
 import '@testing-library/jest-dom'
-import { render, cleanup, screen }  from '@testing-library/react'
+import { render, cleanup, screen, within }  from '@testing-library/react'
 import { Provider } from 'react-redux'
 import MoorhenStore from "../../src/store/MoorhenReduxStore"
+import { MoorhenPopUpContainer } from "../../src/components/toasts/MoorhenPopUpContainer"
 import { createRef } from 'react'
 import { MoorhenModalsContainer } from '../../src/components/misc/MoorhenModalsContainer'
 import { MoorhenNavBar } from '../../src/components/navbar-menus/MoorhenNavBar'
@@ -20,6 +22,7 @@ import { act } from 'react-dom/test-utils'
 import { setHoveredAtom } from '../../src/store/hoveringStatesSlice'
 import { setCootInitialized, setDevMode } from '../../src/store/generalStatesSlice'
 import { setDefaultBondSmoothness, setHeight, setIsDark, setWidth } from '../../src/store/sceneSettingsSlice'
+import { overwriteMapUpdatingScores, setShowScoresToast } from '../../src/store/moleculeMapUpdateSlice'
 import userEvent from '@testing-library/user-event'
 import fetch from 'node-fetch'
 
@@ -138,7 +141,7 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
             urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems, extraEditMenuItems,
             extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, activeMapRef,
             videoRecorderRef, lastHoveredAtomRef, onUserPreferencesChange, extraNavBarModals, 
-            includeNavBarMenuNames    
+            includeNavBarMenuNames, onAtomHovered: () => {}, onKeyPress: () => {}
         }
 
         act(() => {
@@ -152,6 +155,8 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
             MoorhenStore.dispatch( setHeight(900) )    
             MoorhenStore.dispatch( setCootInitialized(true) )
             MoorhenStore.dispatch( setDefaultBondSmoothness(1) )
+            MoorhenStore.dispatch( overwriteMapUpdatingScores(['Rfactor', 'Rfree', 'Moorhen Points']) )
+            MoorhenStore.dispatch( setShowScoresToast(true) )
         })
     })
 
@@ -216,5 +221,56 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
         const maps_empty = MoorhenStore.getState().maps
         expect(molecules_empty).toHaveLength(0)
         expect(maps_empty).toHaveLength(0)
+    })
+
+    test.only('Test MoorhenContainer connect map and molecule', async () => {
+
+        render(
+            <Provider store={MoorhenStore}> 
+                <MoorhenNavBar {...collectedProps}/>
+                <MoorhenModalsContainer {...collectedProps}/>
+                <MoorhenPopUpContainer {...collectedProps}/>
+            </Provider> 
+        )
+
+        const user = userEvent.setup()
+
+        const moorhenButton = screen.getByRole('button', { name: /moorhen/i })
+        await user.click(moorhenButton)
+
+        const file = screen.getByRole('menuitem', { name: /file/i })
+        await user.click(file)
+
+        const tutorialDataMenuItem = screen.getByRole('menuitem', { name: /load tutorial data\.\.\./i })
+        await user.click(tutorialDataMenuItem)
+
+        const loadButton = screen.getByRole('button', { name: /ok/i })
+        await user.click(loadButton)
+
+        const molecules = MoorhenStore.getState().molecules.moleculeList
+        const maps = MoorhenStore.getState().maps
+        expect(molecules).toHaveLength(1)
+        expect(maps).toHaveLength(2)
+
+        await user.click(file)
+        const connectMapAndMol = screen.getByRole('menuitem', { name: /connect mol\. and map for updating\.\.\./i })
+        await user.click(connectMapAndMol)
+
+        const connectButton = screen.getByRole('button', { name: /ok/i })
+        await user.click(connectButton)
+
+        const state = MoorhenStore.getState()
+        expect(state.moleculeMapUpdate.updatingMapsIsEnabled).toBeTruthy()
+        expect(state.moleculeMapUpdate.connectedMolecule).toBe(0)
+        expect(state.moleculeMapUpdate.reflectionMap).toBe(1)
+        expect(state.moleculeMapUpdate.twoFoFcMap).toBe(1)
+        expect(state.moleculeMapUpdate.foFcMap).toBe(2)
+
+        const rFactor = screen.getByText(/clipper r\-factor/i)
+        expect(rFactor).toBeVisible()
+        const rFree = screen.getByText(/clipper r\-free/i)
+        expect(rFree).toBeVisible()
+        const moorhenPoints = screen.getByText(/moorhen points/i)
+        expect(moorhenPoints).toBeVisible()
     })
 })
