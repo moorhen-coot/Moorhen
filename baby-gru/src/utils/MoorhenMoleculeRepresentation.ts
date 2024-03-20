@@ -114,7 +114,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     setAtomBuffers(atomBuffers: moorhen.AtomInfo[]) {
-        if (atomBuffers.length > 0 && this.buffers.length > 0) {
+        if (atomBuffers?.length > 0 && this.buffers?.length > 0) {
             this.buffers[0].atoms = atomBuffers
         }
     }

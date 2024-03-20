@@ -4,6 +4,9 @@ export class MockMoorhenCommandCentre {
     constructor(molecules_container, cootModule) {
         this.messageHistory = []
         this.commandHistory = []
+        this.activeMessages = []
+        this.isClosed = false
+        this.history = {}
         setModules(molecules_container, cootModule)
     }
     
