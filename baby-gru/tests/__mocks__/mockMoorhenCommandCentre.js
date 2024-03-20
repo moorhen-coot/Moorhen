@@ -1,4 +1,4 @@
-import { doCootCommand, setModules } from "../../public/baby-gru/CootWorker"
+import { doCootCommand, setModules } from "../../public/baby-gru/CootWorker.js"
 
 export class MockMoorhenCommandCentre {
     constructor(molecules_container, cootModule) {
