@@ -102,9 +102,9 @@ export const MoorhenContextButtonBase = (props: {
     const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
-    const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
+    const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
-    const animateRefine = useSelector((state: moorhen.State) => state.miscAppSettings.animateRefine)
+    const animateRefine = useSelector((state: moorhen.State) => state.refinementSettings.animateRefine)
 
     const doEdit = async (cootCommandInput: moorhen.cootCommandKwargs) => {
         dispatch( setHoveredAtom({molecule: null, cid: null}) )

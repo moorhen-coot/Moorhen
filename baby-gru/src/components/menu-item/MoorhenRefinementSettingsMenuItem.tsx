@@ -4,7 +4,7 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { Form, InputGroup } from "react-bootstrap"
 import { moorhen } from "../../types/moorhen"
 import { useDispatch, useSelector } from "react-redux"
-import { setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints } from "../../store/generalStatesSlice"
+import { setAnimateRefine, setEnableRefineAfterMod, setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints } from "../../store/refinementSettingsSlice"
 
 export const MoorhenRefinementSettingsMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
@@ -20,8 +20,10 @@ export const MoorhenRefinementSettingsMenuItem = (props: {
     const [torsionWeight, setTorsionWeight] = useState<number>(null)
 
     const dispatch = useDispatch()
-    const useRamaRestraints = useSelector((state: moorhen.State) => state.generalStates.useRamaRefinementRestraints)
-    const useTorsionRestraints = useSelector((state: moorhen.State) => state.generalStates.useTorsionRefinementRestraints)
+    const useRamaRestraints = useSelector((state: moorhen.State) => state.refinementSettings.useRamaRefinementRestraints)
+    const useTorsionRestraints = useSelector((state: moorhen.State) => state.refinementSettings.useTorsionRefinementRestraints)
+    const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod)
+    const animateRefine = useSelector((state: moorhen.State) => state.refinementSettings.animateRefine)
 
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -84,6 +86,20 @@ export const MoorhenRefinementSettingsMenuItem = (props: {
     <>
         <InputGroup className='moorhen-input-group-check'>
             <Form.Check 
+                type="switch"
+                checked={animateRefine}
+                onChange={() => {dispatch( setAnimateRefine(!animateRefine) )}}
+                label="Show animation during refinement"/>
+        </InputGroup>
+        <InputGroup className='moorhen-input-group-check'>
+            <Form.Check 
+                type="switch"
+                checked={enableRefineAfterMod}
+                onChange={() => {dispatch( setEnableRefineAfterMod(!enableRefineAfterMod) )}}
+                label="Automatic refinement post-modification"/>
+        </InputGroup>
+        <InputGroup className='moorhen-input-group-check'>
+            <Form.Check 
                 ref={useRamaRestraintsCheckRef}
                 type="switch"
                 checked={useRamaRestraints}
@@ -136,7 +152,7 @@ export const MoorhenRefinementSettingsMenuItem = (props: {
     return <MoorhenBaseMenuItem
         popoverContent={panelContent}
         showOkButton={false}
-        menuItemText={"Refinement restraints settings..."}
+        menuItemText={"Refinement settings..."}
         setPopoverIsShown={props.setPopoverIsShown}
         onCompleted={() => {}}
     />

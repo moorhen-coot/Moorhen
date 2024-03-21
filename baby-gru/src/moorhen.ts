@@ -34,7 +34,8 @@ import {
     showMap, hideMap, setPositiveMapColours, setNegativeMapColours, setMapAlpha, setMapColours, setMapRadius, 
     setMapStyle, setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, setDefaultMapSurface, setContourLevel
 } from './store/mapContourSettingsSlice';
-import { setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut, setEnableRefineAfterMod } from './store/miscAppSettingsSlice';
+import { setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut } from './store/miscAppSettingsSlice';
+import { setEnableRefineAfterMod, setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints, setAnimateRefine } from './store/refinementSettingsSlice';
 import { addMolecule, removeMolecule, emptyMolecules, addMoleculeList, showMolecule, hideMolecule, addCustomRepresentation, removeCustomRepresentation } from './store/moleculesSlice';
 import { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity } from './store/mouseSettings';
 import { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts } from './store/shortCutsSlice';
@@ -58,5 +59,6 @@ export {
     addMap, addMapList, removeMap, emptyMaps, setPositiveMapColours, setNegativeMapColours, setMapAlpha, setMapColours, 
     setMapRadius, setMapStyle, showMap, hideMap, setContourLevel, showMolecule, hideMolecule, MoorhenMoleculeRepresentation, 
     MoorhenQuerySequenceModal, MoorhenPreferences, setDoEdgeDetect, addCustomRepresentation, removeCustomRepresentation,
-    setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setEdgeDetectNormalScale
+    setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setEdgeDetectNormalScale,
+    setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints, setAnimateRefine
 };

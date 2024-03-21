@@ -10,7 +10,7 @@ export const MoorhenRefineResiduesButton = (props: moorhen.ContextButtonProps) =
     const dispatch = useDispatch()
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
-    const animateRefine = useSelector((state: moorhen.State) => state.miscAppSettings.animateRefine)
+    const animateRefine = useSelector((state: moorhen.State) => state.refinementSettings.animateRefine)
 
     const [toolTipLabel, setToolTipLabel] = useState<string>("Refine Residues")
     
