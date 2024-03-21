@@ -7,8 +7,12 @@ export const refinementSettings = createSlice({
     animateRefine: null,
     useRamaRefinementRestraints: false,
     useTorsionRefinementRestraints: false,
+    refinementSelection: 'TRIPLE',
   },
   reducers: {
+    setRefinementSelection: (state, action: {payload: 'SINGLE' | 'TRIPLE' | 'SPHERE', type: string}) => {
+      return {...state, refinementSelection: action.payload}
+    },
     setAnimateRefine: (state, action: {payload: boolean, type: string}) => {
       return {...state, animateRefine: action.payload}
     },
@@ -24,7 +28,8 @@ export const refinementSettings = createSlice({
 }})
 
 export const { 
-  setAnimateRefine, setEnableRefineAfterMod, setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints
+  setAnimateRefine, setEnableRefineAfterMod, setUseRamaRefinementRestraints, 
+  setuseTorsionRefinementRestraints, setRefinementSelection
 } = refinementSettings.actions
 
 export default refinementSettings.reducer

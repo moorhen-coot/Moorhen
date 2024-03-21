@@ -973,6 +973,7 @@ export namespace moorhen {
             useTorsionRefinementRestraints: boolean;        
             enableRefineAfterMod: boolean; 
             animateRefine: boolean;
+            refinementSelection: 'SINGLE' | 'TRIPLE' | 'SPHERE';
         };
     }
     
