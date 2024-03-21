@@ -13,7 +13,7 @@ ${CMAKE_SOURCE_DIR}/checkout/slicendice_cpp/prog/kmeans_elkan.cpp
 ${CMAKE_SOURCE_DIR}/checkout/slicendice_cpp/prog/kmeans_lloyd.cpp
 )
 
-target_include_directories(slicendice_cpp PRIVATE ../checkout/rdkit-Release_2023_09_1/External/Eigen/eigen/)
+target_include_directories(slicendice_cpp PRIVATE ${CMAKE_SOURCE_DIR}/checkout/rdkit-Release_2023_09_1/External/Eigen/eigen/)
 
 set(licendice_cpp_HEADERS
 ${CMAKE_SOURCE_DIR}/checkout/slicendice_cpp/prog/extmath.h

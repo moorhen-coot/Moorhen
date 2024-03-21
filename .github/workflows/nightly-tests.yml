@@ -1,9 +1,8 @@
 name: Nightly tests
 
 on:
-  push:
-    branches:
-      - dev
+  schedule:
+  - cron: "0 0 * * *"
 
 jobs:
   runTests:
@@ -121,7 +120,7 @@ jobs:
         shell: bash
         working-directory: /home/runner/work/Moorhen/Moorhen
         run: |
-          cd /home/runner/work/Moorhen/Moorhen
+          cd /home/runner/work/Moorhen/Moorhen   
           source ./VERSIONS
           source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
           echo "" > silly.c
@@ -134,6 +133,7 @@ jobs:
           ln -s checkout/boost_$boost_release boost
           mkdir -p include
           cd include
+          ln -s ../checkout/glm-$glm_release/glm glm
       
       # Install bindings
       - name: Restore install cache
@@ -170,9 +170,6 @@ jobs:
         if: steps.cache-moorhen-install.outputs.cache-hit == 'true'
         working-directory: /home/runner/work/Moorhen/Moorhen/CCP4_WASM_BUILD
         run: |
-          mkdir -p install/include
-          cd /home/runner/work/Moorhen/Moorhen
-          ln -s checkout/rdkit-$rdkit_release/External/Eigen install/include/
           cd /home/runner/work/Moorhen/Moorhen/CCP4_WASM_BUILD/moorhen_build/
           source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
           make install
@@ -180,7 +177,7 @@ jobs:
       # Run the tests
       - name: Run tests
         working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
-        run: |
+        run: |             
           cd /home/runner/work/Moorhen/Moorhen/baby-gru
           source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
           npm test
