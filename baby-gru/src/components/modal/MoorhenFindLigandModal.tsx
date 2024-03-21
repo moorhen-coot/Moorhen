@@ -20,6 +20,8 @@ const LigandHitCard = (props: {
     setLigandResults: React.Dispatch<React.SetStateAction<moorhen.Molecule[]>>;
 }) => {
 
+    const representationRef = useRef<moorhen.MoleculeRepresentation>(null)
+
     const dispatch = useDispatch()
     const animateRefine = useSelector((state: moorhen.State) => state.refinementSettings.animateRefine)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
@@ -27,16 +29,16 @@ const LigandHitCard = (props: {
 
     const handleShow = useCallback(async () => {
         if (props.ligandMolecule.representations.length > 0) {
-            props.ligandMolecule.show('ligands')
+            props.ligandMolecule.show('CBs')
         } else {
-            await props.ligandMolecule.fetchIfDirtyAndDraw('ligands')
+            await props.ligandMolecule.fetchIfDirtyAndDraw('CBs')
         }
         await props.ligandMolecule.centreOn('/*/*/*/*', true, true)
     }, [])
 
     useEffect(() => {
         if (props.ligandCardMolNoFocus !== props.ligandMolecule.molNo) {
-            props.ligandMolecule.hide('ligands')
+            props.ligandMolecule.hide('CBs')
         } else {
             handleShow()
         }
