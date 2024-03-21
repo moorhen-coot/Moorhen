@@ -1,8 +1,9 @@
 name: Nightly tests
 
 on:
-  schedule:
-  - cron: "0 0 * * *"
+  push:
+    branches:
+      - dev
 
 jobs:
   runTests:
@@ -133,7 +134,7 @@ jobs:
           ln -s checkout/boost_$boost_release boost
           mkdir -p include
           cd include
-          ln -s ../checkout/glm-$glm_release/glm glm
+          ln -s checkout/rdkit-$rdkit_release/External/Eigen install/include/
       
       # Install bindings
       - name: Restore install cache
