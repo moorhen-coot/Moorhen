@@ -24,12 +24,6 @@ export const generalStatesSlice = createSlice({
     useTorsionRefinementRestraints: false,
   },
   reducers: {
-    setUseRamaRefinementRestraints: (state, action: {payload: boolean, type: string}) => {
-      return {...state, useRamaRefinementRestraints: action.payload}
-    },
-    setuseTorsionRefinementRestraints: (state, action: {payload: boolean, type: string}) => {
-      return {...state, useTorsionRefinementRestraints: action.payload}
-    },
     setIsAnimatingTrajectory: (state, action: {payload: boolean, type: string}) => {
       return {...state, isAnimatingTrajectory: action.payload}
     },
@@ -106,7 +100,6 @@ export const {
   setMoleculeResidueSelection, setResidueSelection, setCidResidueSelection,
   setIsRotatingAtoms, setIsChangingRotamers, setShowResidueSelection,
   toggleCootCommandExit, toggleCootCommandStart, setIsAnimatingTrajectory,
-  setuseTorsionRefinementRestraints, setUseRamaRefinementRestraints
 } = generalStatesSlice.actions
 
 export default generalStatesSlice.reducer

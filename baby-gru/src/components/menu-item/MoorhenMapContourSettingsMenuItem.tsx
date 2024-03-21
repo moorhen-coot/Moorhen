@@ -5,8 +5,9 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from "react-redux";
 import { setDefaultMapSamplingRate, setMapLineWidth } from "../../store/mapContourSettingsSlice";
-import { Form } from "react-bootstrap";
+import { Form, InputGroup } from "react-bootstrap";
 import { MoorhenSlider } from "../misc/MoorhenSlider";
+import { setDefaultMapLitLines, setDefaultMapSurface, setReContourMapOnlyOnMouseUp } from "../../store/mapContourSettingsSlice";
 
 const convertPercentageToSamplingRate = (oldValue: number, reverse: boolean = false) => {
     let [oldMax, oldMin, newMax, newMin]: number[] = []
@@ -37,6 +38,9 @@ export const MapContourSettingsMenuItem = (props: {
     const defaultMapSamplingRate = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapSamplingRate)
     const mapLineWidth = useSelector((state: moorhen.State) => state.mapContourSettings.mapLineWidth)
     const visibleMaps = useSelector((state: moorhen.State) => state.mapContourSettings.visibleMaps)
+    const defaultMapLitLines = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapLitLines)
+    const defaultMapSurface = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapSurface)
+    const reContourMapOnlyOnMouseUp = useSelector((state: moorhen.State) => state.mapContourSettings.reContourMapOnlyOnMouseUp)
 
     const [mapSampling, setMapSampling] = useState<number>(convertPercentageToSamplingRate(defaultMapSamplingRate, true))
 
@@ -80,6 +84,38 @@ export const MapContourSettingsMenuItem = (props: {
      }, [mapSampling])
 
     const panelContent = <>
+        <InputGroup className='moorhen-input-group-check'>
+            <Form.Check 
+                type="switch"
+                checked={defaultMapLitLines}
+                onChange={() => {
+                    if(!defaultMapLitLines) {
+                        dispatch( setDefaultMapSurface(false) )
+                    }
+                    dispatch( setDefaultMapLitLines(!defaultMapLitLines) )
+                }}
+                label="Show maps as lit lines by default"/>
+        </InputGroup>
+        <InputGroup className='moorhen-input-group-check'>
+            <Form.Check 
+                type="switch"
+                checked={defaultMapSurface}
+                onChange={() => {
+                    if(!defaultMapSurface) {
+                        dispatch( setDefaultMapLitLines(false) )
+                    }
+                    dispatch( setDefaultMapSurface(!defaultMapSurface) )
+                }}
+                label="Show maps as surface by default"/>
+        </InputGroup>
+        <InputGroup className='moorhen-input-group-check'>
+            <Form.Check 
+                type="switch"
+                checked={reContourMapOnlyOnMouseUp}
+                onChange={() => {dispatch( setReContourMapOnlyOnMouseUp(!reContourMapOnlyOnMouseUp) )}}
+                label="Recontour maps only on mouse up"/>
+        </InputGroup>
+        <hr></hr>
         <Form.Group controlId="mapLineWidthSlider" style={{ paddingLeft: '0.5rem', paddingRight: '0.5rem' }}>
             <MoorhenSlider
             minVal={0.1}

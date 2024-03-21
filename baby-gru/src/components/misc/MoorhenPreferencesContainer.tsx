@@ -13,7 +13,8 @@ import {
     setDrawFPS, setDrawInteractions, setDrawMissingLoops, setResetClippingFogging, setSsaoBias, setSsaoRadius, setEdgeDetectNormalScale,
     setDrawScaleBar, setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale
 } from "../../store/sceneSettingsSlice";
-import { setAnimateRefine, setDefaultExpandDisplayCards, setEnableRefineAfterMod, setTransparentModalsOnMouseOut } from "../../store/miscAppSettingsSlice";
+import { setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut } from "../../store/miscAppSettingsSlice";
+import { setAnimateRefine, setEnableRefineAfterMod } from '../../store/refinementSettingsSlice';
 import { setDevMode, setUserPreferencesMounted } from "../../store/generalStatesSlice";
 import { moorhen } from "../../types/moorhen"
 
@@ -88,9 +89,9 @@ export const MoorhenPreferencesContainer = (props: {
 
     // Some misc. settings
     const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.miscAppSettings.defaultExpandDisplayCards)
-    const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
+    const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod)
     const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.miscAppSettings.transparentModalsOnMouseOut)
-    const animateRefine = useSelector((state: moorhen.State) => state.miscAppSettings.animateRefine)
+    const animateRefine = useSelector((state: moorhen.State) => state.refinementSettings.animateRefine)
 
     // Value setter here corresponds with whatever needs to be called with a new value to set the *initial* value loaded from the local storage
     const preferencesMap = {

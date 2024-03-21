@@ -39,7 +39,7 @@ export const MoorhenResidueSelectionActions = (props) => {
     const isDraggingAtoms = useSelector((state: moorhen.State) => state.generalStates.isDraggingAtoms)
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
-    const animateRefine = useSelector((state: moorhen.State) => state.miscAppSettings.animateRefine)
+    const animateRefine = useSelector((state: moorhen.State) => state.refinementSettings.animateRefine)
 
     const clearSelection = useCallback(() => {
         dispatch( setShowResidueSelection(false) )

@@ -1,18 +1,19 @@
-import { useRef } from "react";
+import { useCallback, useRef } from "react";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
-import { useDispatch, batch } from 'react-redux';
+import { useDispatch, batch, useSelector } from 'react-redux';
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { setIsDraggingAtoms } from "../../store/generalStatesSlice";
 import { MoorhenAcceptRejectDragAtoms } from "../toasts/MoorhenAcceptRejectDragAtoms"
 
-export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {       
+export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
     const chosenMolecule = useRef<null | moorhen.Molecule>(null)
     const fragmentCid = useRef<string[] | null>(null)
     
     const dispatch = useDispatch()
+    const refinementSelection = useSelector((state: moorhen.State) => state.refinementSettings.refinementSelection)
 
-    const nonCootCommand = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, dragMode: string = "SPHERE") => {
+    const nonCootCommand = useCallback(async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, dragMode?: string) => {
         chosenMolecule.current = molecule
         const selectedSequence = molecule.sequences.find(sequence => sequence.chain === chosenAtom.chain_id)
         let selectedResidueIndex: number = -1;
@@ -24,11 +25,16 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
             selectedResidueIndex = selectedSequence.sequence.findIndex(residue => residue.resNum === chosenAtom.res_no)
         }
 
-        if (selectedResidueIndex === -1) {
-            dragMode = 'SINGLE'
+        let selectionType: string
+        if (dragMode) {
+            selectionType = dragMode
+        } else if (selectedResidueIndex === -1) {
+            selectionType = 'SINGLE'
+        } else {
+            selectionType = refinementSelection
         }
 
-        switch (dragMode) {
+        switch (selectionType) {
             case 'SINGLE':
                 start = chosenAtom.res_no
                 stop = chosenAtom.res_no
@@ -57,7 +63,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
             return
         }
 
-        if (dragMode !== 'SPHERE') {
+        if (selectionType !== 'SPHERE') {
             fragmentCid.current = [`//${chosenAtom.chain_id}/${start}-${stop}/*`]
         } else {
             fragmentCid.current = sphereResidueCids
@@ -69,7 +75,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
             dispatch(setHoveredAtom({ molecule: null, cid: null }))
             dispatch(setIsDraggingAtoms(true))
         })
-    }
+    }, [refinementSelection])
 
     const onExit = () => {
         props.setOverrideMenuContents(false)
