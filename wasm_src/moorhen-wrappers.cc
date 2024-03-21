@@ -1186,6 +1186,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("match_ligand_torsions_and_position_using_cid", &molecules_container_t::match_ligand_torsions_and_position_using_cid)
     .function("set_rama_plot_restraints_weight", &molecules_container_t::set_rama_plot_restraints_weight)
     .function("get_rama_plot_restraints_weight", &molecules_container_t::get_rama_plot_restraints_weight)
+    .function("set_use_rama_plot_restraints", &molecules_container_t::set_use_rama_plot_restraints)
     .function("set_use_torsion_restraints", &molecules_container_t::set_use_torsion_restraints)
     .function("set_torsion_restraints_weight", &molecules_container_t::set_torsion_restraints_weight)
     .function("get_torsion_restraints_weight", &molecules_container_t::get_torsion_restraints_weight)
