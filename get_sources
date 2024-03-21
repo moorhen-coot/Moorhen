@@ -32,6 +32,14 @@ echo "Checking out monomers"
 git clone https://github.com/MonomerLibrary/monomers monomers
 echo
 
+echo "Checking out jsoncpp"
+git clone https://github.com/open-source-parsers/jsoncpp.git
+echo
+
+echo "Checking out igraph"
+git clone https://github.com/igraph/igraph.git
+echo
+
 echo "Checking out SliceNDice"
 git clone https://github.com/hlasimpk/slicendice_cpp.git
 echo
@@ -41,7 +49,7 @@ curl -L http://www.fftw.org/fftw-$fftw_release.tar.gz -o fftw-$fftw_release.tar.
 echo
 
 echo "Downloading gsl-$gsl_release"
-curl -L https://mirror.ibcp.fr/pub/gnu/gsl/gsl-$gsl_release.tar.gz -o gsl-$gsl_release.tar.gz
+curl -L https://ftp.gnu.org/gnu/gsl/gsl-$gsl_release.tar.gz -o gsl-$gsl_release.tar.gz
 echo
 
 echo "Downloading coot-1"

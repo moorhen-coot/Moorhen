@@ -75,6 +75,22 @@ emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
 
+#jsoncpp
+mkdir -p ${BUILD_DIR}/jsoncpp_build
+cd ${BUILD_DIR}/jsoncpp_build
+emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/checkout/jsoncpp -DJSONCPP_WITH_TESTS=OFF
+emmake make -j ${NUMPROCS}
+emmake make install
+cd ${BUILD_DIR}
+
+#igraph
+mkdir -p ${BUILD_DIR}/igraph_build
+cd ${BUILD_DIR}/igraph_build
+emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/checkout/igraph
+emmake make -j ${NUMPROCS}
+emmake make install
+cd ${BUILD_DIR}
+
 #Moorhen
 mkdir -p ${BUILD_DIR}/moorhen_build
 cd ${BUILD_DIR}/moorhen_build
