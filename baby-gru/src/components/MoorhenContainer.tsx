@@ -20,6 +20,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { setDefaultBackgroundColor, setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/sceneSettingsSlice';
 import { setCootInitialized, setNotificationContent, setTheme, toggleCootCommandExit, toggleCootCommandStart } from '../store/generalStatesSlice';
 import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSlice';
+import { setRefinementSelection } from '../store/refinementSettingsSlice';
 
 // import { MoorhenSharedSessionManager } from './misc/MoorhenSharedSessionManager';
 
@@ -388,6 +389,11 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     useEffect(() => {
         if (activeMap && commandCentre.current) {
             activeMap.setActive()
+            if (activeMap.isEM) {
+                dispatch(setRefinementSelection('SPHERE'))
+            } else {
+                dispatch(setRefinementSelection('TRIPLE'))
+            }
         }
     }, [activeMap])
 

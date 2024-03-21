@@ -244,11 +244,12 @@ export const MoorhenSliceNDiceModal = (props: {
         }
 
         let commandArgs: (string | number)[]
+        const pae_file = ""
         switch (clusteringTypeSelectRef.current.value) {
             case "kmeans":
             case "agglomerative":
             case "birch":
-                commandArgs = [ selectedMolecule.molNo, nClustersRef.current, clusteringTypeSelectRef.current.value ]
+                commandArgs = [ selectedMolecule.molNo, nClustersRef.current, clusteringTypeSelectRef.current.value, pae_file ]
                 break
             default:
                 console.warn(`Unkown clustering algorithm ${clusteringTypeSelectRef.current}`)

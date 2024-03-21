@@ -14,6 +14,7 @@ import activePopUpsReducer from './activePopUpsSlice'
 import mapContourSettingsReducer from './mapContourSettingsSlice'
 import moleculeMapUpdateReducer from './moleculeMapUpdateSlice'
 import sharedSessionReducer from './sharedSessionSlice'
+import refinementSettingsReducer from './refinementSettingsSlice'
 
 export default configureStore({
     reducer: {
@@ -32,6 +33,7 @@ export default configureStore({
         mapContourSettings: mapContourSettingsReducer,
         moleculeMapUpdate: moleculeMapUpdateReducer,
         sharedSession: sharedSessionReducer,
+        refinementSettings: refinementSettingsReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

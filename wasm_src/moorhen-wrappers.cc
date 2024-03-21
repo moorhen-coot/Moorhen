@@ -26,6 +26,7 @@
 #include "kmeans.h"
 #include "agglomerative.h"
 #include "birch.h"
+#include "pae_igraph.h"
 #include "Eigen/Dense"
 
 #include <math.h>
@@ -189,7 +190,7 @@ class molecules_container_js : public molecules_container_t {
             
         }
 
-        std::vector<std::pair<std::string,int>> slicendice_slice(int imol, int nclusters, const std::string &clustering_method){
+        std::vector<std::pair<std::string,int>> slicendice_slice(int imol, int nclusters, const std::string &clustering_method, const std::string &input_pae){
 
             std::vector<std::pair<std::string,int>> cid_label_pair;
             mmdb::Manager *mol = get_mol(imol);
@@ -253,6 +254,10 @@ class molecules_container_js : public molecules_container_t {
                     Birch birch(nclusters);
                     birch.fit(atomic_matrix);
                     labels = birch.labels_;
+                } else if (clustering_method == "pae") {
+                    PAE pae(nclusters, input_pae);
+                    pae.fit(atomic_matrix);
+                    labels = pae.labels_;
                 } else {
                     std::cout << "Clustering method: " << clustering_method << " not yet implemented." << std::endl;
                 }
@@ -1186,6 +1191,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("match_ligand_torsions_and_position_using_cid", &molecules_container_t::match_ligand_torsions_and_position_using_cid)
     .function("set_rama_plot_restraints_weight", &molecules_container_t::set_rama_plot_restraints_weight)
     .function("get_rama_plot_restraints_weight", &molecules_container_t::get_rama_plot_restraints_weight)
+    .function("set_use_rama_plot_restraints", &molecules_container_t::set_use_rama_plot_restraints)
     .function("set_use_torsion_restraints", &molecules_container_t::set_use_torsion_restraints)
     .function("set_torsion_restraints_weight", &molecules_container_t::set_torsion_restraints_weight)
     .function("get_torsion_restraints_weight", &molecules_container_t::get_torsion_restraints_weight)
