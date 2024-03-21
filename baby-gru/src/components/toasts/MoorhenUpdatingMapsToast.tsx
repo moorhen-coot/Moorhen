@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Toast, ToastContainer } from 'react-bootstrap';
 import { convertViewtoPx } from '../../utils/MoorhenUtils';
 import { useDispatch, useSelector } from 'react-redux';
 import { moorhen } from '../../types/moorhen';
 import { webGL } from '../../types/mgWebGL';
-import { disableUpdatingMaps, triggerUpdate } from '../../store/moleculeMapUpdateSlice';
+import { disableUpdatingMaps } from '../../store/moleculeMapUpdateSlice';
 
 export const MoorhenUpdatingMapsToast = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;

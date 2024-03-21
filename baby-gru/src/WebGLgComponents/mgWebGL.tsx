@@ -6661,7 +6661,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.instanced_ext.drawElementsInstancedANGLE(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0, theBuffer.triangleInstanceOriginBuffer[j].numItems);
                 }
                 if(theBuffer.symmetryMatrices.length>0){
-                    this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
+                    this.gl.disableVertexAttribArray(theShader.vertexColourAttribute&&theBuffer.changeColourWithSymmetry);
                     if(bright_y>0.5)
                         this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.3, 0.3, 0.3, 1.0);
                     else
@@ -6702,8 +6702,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 }
             } else {
                 const theShader = theShaderIn as MGWebGLShader;
+                this.drawMaxElementsUInt(vertexType, drawBuffer.numItems);
                 if(theBuffer.symmetryMatrices.length>0){
-                    if(theShader.vertexColourAttribute>-1){
+                    if(theShader.vertexColourAttribute>-1&&theBuffer.changeColourWithSymmetry){
                         this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
                         if(bright_y>0.5)
                             this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.3, 0.3, 0.3, 1.0);
@@ -6727,7 +6728,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.gl.uniformMatrix4fv(theShader.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
                     if(theShader.vertexColourAttribute>-1) this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
                 }
-                this.drawMaxElementsUInt(vertexType, drawBuffer.numItems);
             }
         } else {
             this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_SHORT, 0);

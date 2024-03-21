@@ -180,5 +180,7 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
             setShow={(newVal: boolean) => dispatch(setShowSliceNDiceModal(newVal))}
             {...props} />
         }
+
+        {props.extraDraggableModals && props.extraDraggableModals.map(modal => modal)}
     </>
 }
