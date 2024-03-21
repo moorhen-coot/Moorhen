@@ -20,8 +20,6 @@ const LigandHitCard = (props: {
     setLigandResults: React.Dispatch<React.SetStateAction<moorhen.Molecule[]>>;
 }) => {
 
-    const representationRef = useRef<moorhen.MoleculeRepresentation>(null)
-
     const dispatch = useDispatch()
     const animateRefine = useSelector((state: moorhen.State) => state.refinementSettings.animateRefine)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
