@@ -880,8 +880,6 @@ export namespace moorhen {
         miscAppSettings: {
             defaultExpandDisplayCards: boolean; 
             transparentModalsOnMouseOut: boolean; 
-            enableRefineAfterMod: boolean; 
-            animateRefine: boolean;
         };
         generalStates: {
             devMode: boolean; 
@@ -899,8 +897,6 @@ export namespace moorhen {
             newCootCommandExit: boolean;
             newCootCommandStart: boolean;        
             showResidueSelection: boolean;
-            useRamaRefinementRestraints: boolean;
-            useTorsionRefinementRestraints: boolean;        
         };
         sharedSession: {
             isInSharedSession: boolean;
@@ -971,6 +967,13 @@ export namespace moorhen {
             defaultUpdatingScores: string[];
             showScoresToast: boolean;
             moleculeUpdate: { switch: boolean, molNo: number };
+        };
+        refinementSettings: {
+            useRamaRefinementRestraints: boolean;
+            useTorsionRefinementRestraints: boolean;        
+            enableRefineAfterMod: boolean; 
+            animateRefine: boolean;
+            refinementSelection: 'SINGLE' | 'TRIPLE' | 'SPHERE';
         };
     }
     

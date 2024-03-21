@@ -21,7 +21,7 @@ const LigandHitCard = (props: {
 }) => {
 
     const dispatch = useDispatch()
-    const animateRefine = useSelector((state: moorhen.State) => state.miscAppSettings.animateRefine)
+    const animateRefine = useSelector((state: moorhen.State) => state.refinementSettings.animateRefine)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 

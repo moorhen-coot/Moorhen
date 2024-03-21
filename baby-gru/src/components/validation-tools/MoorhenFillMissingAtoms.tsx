@@ -20,7 +20,7 @@ interface Props extends moorhen.CollectedProps {
 
 export const MoorhenFillMissingAtoms = (props: Props) => {
     const dispatch = useDispatch()
-    const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
+    const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const fillPartialResidue = async (selectedMolecule: moorhen.Molecule, chainId: string, resNum: number, insCode: string) => {

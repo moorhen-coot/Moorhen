@@ -7,14 +7,13 @@ import { MoorhenGLFontMenuItem } from '../menu-item/MoorhenGLFontMenuItem'
 import { MoorhenScoresToastPreferencesMenuItem } from "../menu-item/MoorhenScoresToastPreferencesMenuItem"
 import { MoorhenBackupPreferencesMenuItem } from "../menu-item/MoorhenBackupPreferencesMenuItem"
 import { MoorhenDefaultBondSmoothnessPreferencesMenuItem } from "../menu-item/MoorhenDefaultBondSmoothnessPreferencesMenuItem"
-import { MapContourSettingsMenuItem } from "../menu-item/MapContourSettingsMenuItem"
+import { MapContourSettingsMenuItem } from "../menu-item/MoorhenMapContourSettingsMenuItem"
 import { MoorhenRefinementSettingsMenuItem } from "../menu-item/MoorhenRefinementSettingsMenuItem"
 import { MoorhenSlider } from '../misc/MoorhenSlider' 
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { useSelector, useDispatch } from "react-redux";
-import { setAnimateRefine, setDefaultExpandDisplayCards, setEnableRefineAfterMod, setTransparentModalsOnMouseOut } from "../../store/miscAppSettingsSlice";
+import { setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut } from "../../store/miscAppSettingsSlice";
 import { setAtomLabelDepthMode } from "../../store/labelSettingsSlice";
-import { setDefaultMapLitLines, setDefaultMapSurface, setReContourMapOnlyOnMouseUp } from "../../store/mapContourSettingsSlice";
 import { setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
 import { setMakeBackups } from "../../store/backupSettingsSlice";
 import { setDevMode } from "../../store/generalStatesSlice";
@@ -25,9 +24,6 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
 
     const dispatch = useDispatch()
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
-    const defaultMapLitLines = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapLitLines)
-    const defaultMapSurface = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapSurface)
-    const reContourMapOnlyOnMouseUp = useSelector((state: moorhen.State) => state.mapContourSettings.reContourMapOnlyOnMouseUp)
     const enableTimeCapsule = useSelector((state: moorhen.State) => state.backupSettings.enableTimeCapsule)
     const makeBackups = useSelector((state: moorhen.State) => state.backupSettings.makeBackups)
     const maxBackupCount = useSelector((state: moorhen.State) => state.backupSettings.maxBackupCount)
@@ -39,8 +35,6 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
     const zoomWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.zoomWheelSensitivityFactor)
     const contourWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.contourWheelSensitivityFactor)
     const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.miscAppSettings.defaultExpandDisplayCards)
-    const animateRefine = useSelector((state: moorhen.State) => state.miscAppSettings.animateRefine)
-    const enableRefineAfterMod = useSelector((state: moorhen.State) => state.miscAppSettings.enableRefineAfterMod)
     const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.miscAppSettings.transparentModalsOnMouseOut)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
@@ -78,41 +72,6 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
                             checked={atomLabelDepthMode}
                             onChange={() => {dispatch( setAtomLabelDepthMode(!atomLabelDepthMode) )}}
                             label="Depth cue atom labels"/>
-                    </InputGroup>
-                    <InputGroup className='moorhen-input-group-check'>
-                        <Form.Check 
-                            type="switch"
-                            checked={defaultMapLitLines}
-                            onChange={() => {dispatch( setDefaultMapLitLines(!defaultMapLitLines) )}}
-                            label="Activate map lit lines by default"/>
-                    </InputGroup>
-                    <InputGroup className='moorhen-input-group-check'>
-                        <Form.Check 
-                            type="switch"
-                            checked={defaultMapSurface}
-                            onChange={() => {dispatch( setDefaultMapSurface(!defaultMapSurface) )}}
-                            label="Show maps as surface by default"/>
-                    </InputGroup>
-                    <InputGroup className='moorhen-input-group-check'>
-                        <Form.Check 
-                            type="switch"
-                            checked={reContourMapOnlyOnMouseUp}
-                            onChange={() => {dispatch( setReContourMapOnlyOnMouseUp(!reContourMapOnlyOnMouseUp) )}}
-                            label="Recontour maps only on mouse up"/>
-                    </InputGroup>
-                    <InputGroup className='moorhen-input-group-check'>
-                        <Form.Check 
-                            type="switch"
-                            checked={enableRefineAfterMod}
-                            onChange={() => {dispatch( setEnableRefineAfterMod(!enableRefineAfterMod) )}}
-                            label="Automatic refinement post-modification"/>
-                    </InputGroup>
-                    <InputGroup className='moorhen-input-group-check'>
-                        <Form.Check 
-                            type="switch"
-                            checked={animateRefine}
-                            onChange={() => {dispatch( setAnimateRefine(!animateRefine) )}}
-                            label="Show animation during refinement"/>
                     </InputGroup>
                     <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
