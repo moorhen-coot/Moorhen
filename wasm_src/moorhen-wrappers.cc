@@ -190,7 +190,7 @@ class molecules_container_js : public molecules_container_t {
             
         }
 
-        std::vector<std::pair<std::string,int>> slicendice_slice(int imol, int nclusters, const std::string &clustering_method, const std::string &input_pae){
+        std::vector<std::pair<std::string,int>> slicendice_slice(int imol, int nclusters, const std::string &clustering_method, const std::string &pae_contents_string){
 
             std::vector<std::pair<std::string,int>> cid_label_pair;
             mmdb::Manager *mol = get_mol(imol);
@@ -255,7 +255,10 @@ class molecules_container_js : public molecules_container_t {
                     birch.fit(atomic_matrix);
                     labels = birch.labels_;
                 } else if (clustering_method == "pae") {
-                    PAE pae(nclusters, input_pae);
+                    std::string pae_file_name = generate_rand_str(32);
+                    pae_file_name += ".json";
+                    write_text_file(pae_file_name, pae_contents_string);
+                    PAE pae(nclusters, pae_file_name);
                     pae.fit(atomic_matrix);
                     labels = pae.labels_;
                 } else {
