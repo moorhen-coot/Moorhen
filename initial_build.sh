@@ -86,7 +86,7 @@ cd ${BUILD_DIR}
 #igraph
 mkdir -p ${BUILD_DIR}/igraph_build
 cd ${BUILD_DIR}/igraph_build
-emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/checkout/igraph
+emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/checkout/igraph -DCMAKE_CXX_FLAGS="-pthread" -DCMAKE_C_FLAGS="-pthread"
 emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
