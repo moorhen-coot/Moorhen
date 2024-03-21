@@ -6,6 +6,9 @@ import { privateer } from "./privateer";
 
 declare module 'moorhen' {
 
+    let MoorhenReduxStore: any;
+    module.exports = MoorhenReduxStore
+
     let MoorhenContainer: any;
     module.exports = MoorhenContainer;
 
