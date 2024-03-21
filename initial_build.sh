@@ -99,6 +99,9 @@ emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
 
+if test x"${MEMORY64}" = x"1"; then
+    echo "Cannot currently build igraph library with -sMEMORY64=${MEMORY64} -pthread. Skipping igraph ..."
+else
 #igraph
 mkdir -p ${BUILD_DIR}/igraph_build
 cd ${BUILD_DIR}/igraph_build
@@ -106,6 +109,7 @@ emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/checkout/igrap
 emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
+fi
 
 #Moorhen
 mkdir -p ${BUILD_DIR}/moorhen_build

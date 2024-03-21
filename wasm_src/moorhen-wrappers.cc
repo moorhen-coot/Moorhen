@@ -26,7 +26,9 @@
 #include "kmeans.h"
 #include "agglomerative.h"
 #include "birch.h"
+#if !((__POINTER_WIDTH__==64) && __EMSCRIPTEN__)
 #include "pae_igraph.h"
+#endif
 #include "Eigen/Dense"
 
 #include <math.h>
@@ -254,10 +256,12 @@ class molecules_container_js : public molecules_container_t {
                     Birch birch(nclusters);
                     birch.fit(atomic_matrix);
                     labels = birch.labels_;
+#if !((__POINTER_WIDTH__==64) && __EMSCRIPTEN__)
                 } else if (clustering_method == "pae") {
                     PAE pae(nclusters, input_pae);
                     pae.fit(atomic_matrix);
                     labels = pae.labels_;
+#endif
                 } else {
                     std::cout << "Clustering method: " << clustering_method << " not yet implemented." << std::endl;
                 }
