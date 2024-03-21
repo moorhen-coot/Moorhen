@@ -211,6 +211,12 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.biomolOn = !this.biomolOn;
         if (this.biomolOn) {
             this.symmetryOn = false;
+        } else {
+            this.representations.forEach(representation => {
+                representation.buffers.forEach(buffer => {
+                    buffer.changeColourWithSymmetry = true
+                })
+            })
         }
         return this.drawBiomolecule()
     }
@@ -308,6 +314,11 @@ export class MoorhenMolecule implements moorhen.Molecule {
             this.fetchBiomoleculeMatrix()
         }
         this.representations.forEach(representation => representation.drawSymmetry())
+        this.representations.forEach(representation => {
+            representation.buffers.forEach(buffer => {
+                buffer.changeColourWithSymmetry = false
+            })
+        })
         if (this.adaptativeBondsEnabled) {
             this.adaptativeBondsRepresentation.drawSymmetry()
         }

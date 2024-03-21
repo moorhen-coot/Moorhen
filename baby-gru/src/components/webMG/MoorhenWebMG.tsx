@@ -3,7 +3,6 @@ import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
 import { cidToSpec } from '../../utils/MoorhenUtils';
 import { MoorhenScreenRecorder } from "../../utils/MoorhenScreenRecorder"
-import { MoorhenUpdatingMapsToast } from "../toasts/MoorhenUpdatingMapsToast"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { libcootApi } from '../../types/libcoot';
@@ -15,7 +14,6 @@ interface MoorhenWebMGPropsInterface {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     viewOnly: boolean;
     urlPrefix: string;
-    extraDraggableModals: JSX.Element[];
     onAtomHovered: (identifier: { buffer: { id: string; }; atom: moorhen.AtomInfo; }) => void;
     onKeyPress: (event: KeyboardEvent) =>  boolean | Promise<boolean>;
     videoRecorderRef: React.MutableRefObject<null | moorhen.ScreenRecorder>;
@@ -424,8 +422,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [mapLineWidth])
 
     return  <>
-                <MoorhenUpdatingMapsToast glRef={glRef as React.RefObject<webGL.MGWebGL>} commandCentre={props.commandCentre}/>
-
                 <MGWebGL
                     ref={glRef}
                     onAtomHovered={(enableAtomHovering && !isRotatingAtoms && !isDraggingAtoms && !isChangingRotamers) ? props.onAtomHovered : null}
@@ -456,9 +452,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     defaultActionButtonSettings={defaultActionButtonSettings}
                     setDefaultActionButtonSettings={setDefaultActionButtonSettings}
                 />}
-                
-                {props.extraDraggableModals && props.extraDraggableModals.map(modal => modal)}
-
             </>
 });
 

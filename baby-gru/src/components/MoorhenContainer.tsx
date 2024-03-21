@@ -449,7 +449,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                         onKeyPress={onKeyPress}
                         urlPrefix={urlPrefix}
                         viewOnly={viewOnly}
-                        extraDraggableModals={extraDraggableModals}
                         videoRecorderRef={videoRecorderRef}
                     />
                 </div>

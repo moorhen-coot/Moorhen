@@ -3,6 +3,7 @@ import { MoorhenGoToResiduePopUp } from './MoorhenGoToResiduePopUp';
 import { useDispatch, useSelector } from 'react-redux';
 import { moorhen } from '../../types/moorhen';
 import { setShowAcceptMatchingLigandPopUp, setShowGoToResiduePopUp } from '../../store/activePopUpsSlice';
+import { MoorhenUpdatingMapsToast } from './MoorhenUpdatingMapsToast';
 
 export const MoorhenPopUpContainer = (props: moorhen.CollectedProps) => {
     const dispatch = useDispatch()
@@ -16,6 +17,7 @@ export const MoorhenPopUpContainer = (props: moorhen.CollectedProps) => {
                 show={showAcceptMatchingLigandPopUp}
                 setShow={(newVal: boolean) => dispatch(setShowAcceptMatchingLigandPopUp(newVal))}/>
         }
+        
         {showGoToResiduePopUp &&
             <MoorhenGoToResiduePopUp
                 glRef={props.glRef}
@@ -24,5 +26,6 @@ export const MoorhenPopUpContainer = (props: moorhen.CollectedProps) => {
                 setShow={(newVal: boolean) => dispatch(setShowGoToResiduePopUp(newVal))}/>
         }
 
+        <MoorhenUpdatingMapsToast glRef={props.glRef} commandCentre={props.commandCentre}/>
     </>
 }

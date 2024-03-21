@@ -9,6 +9,10 @@ export class MockMoorhenCommandCentre {
         this.history = {}
         setModules(molecules_container, cootModule)
     }
+
+    async postMessage() {
+        // pass
+    }
     
     async cootCommand(kwargs, doJournal = true) {
         this.commandHistory.push(kwargs)
