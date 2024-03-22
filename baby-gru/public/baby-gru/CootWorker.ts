@@ -768,7 +768,7 @@ const ramachandranDataToJSArray = (ramachandraData: emscriptem.vector<libcootApi
 const vectorPairStringIntToJSArray = (vectorData: emscriptem.vector<{first: string; second: number}>) => {
     let result: {residue: string; slice: number; }[] = []
     const vectorSize = vectorData.size()
-    for(let i = 0; i < vectorSize; i++) {
+    for (let i = 0; i < vectorSize; i++) {
         const pair = vectorData.get(i)
         const residue = pair.first
         const slice = pair.second
