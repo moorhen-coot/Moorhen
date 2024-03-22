@@ -32,7 +32,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
     }
 
     static defaultPreferencesValues: moorhen.PreferencesValues = {
-        version: 'v37',
+        version: 'v38',
         reContourMapOnlyOnMouseUp: false,
         transparentModalsOnMouseOut: false,
         defaultBackgroundColor: [1, 1, 1, 1],
@@ -85,13 +85,13 @@ export class MoorhenPreferences implements moorhen.Preferences {
         shortCuts: {
             "decrease_front_clip": {
                 modifiers: [],
-                keyPress: "1",
+                keyPress: "2",
                 label: "Decrease front clip",
                 viewOnly: true
             },
             "increase_front_clip": {
                 modifiers: [],
-                keyPress: "2",
+                keyPress: "1",
                 label: "Increase front clip",
                 viewOnly: true
             },
