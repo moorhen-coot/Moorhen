@@ -1,13 +1,13 @@
 import { useDispatch, useSelector } from "react-redux"
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen"
-import { convertRemToPx, convertViewtoPx, findConsecutiveRanges, hslToHex } from "../../utils/MoorhenUtils"
-import { Button, Card, Col, Dropdown, Form, FormSelect, Row, Spinner, SplitButton, Stack } from "react-bootstrap"
+import { convertRemToPx, convertViewtoPx, findConsecutiveRanges, hslToHex, readTextFile } from "../../utils/MoorhenUtils"
+import { Button, Card, Col, Dropdown, Form, FormSelect, OverlayTrigger, Row, Spinner, SplitButton, Stack } from "react-bootstrap"
 import { Backdrop, IconButton, Slider, Tooltip } from "@mui/material"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { addMolecule, hideMolecule, showMolecule } from "../../store/moleculesSlice"
-import { CenterFocusWeakOutlined, DownloadOutlined } from "@mui/icons-material"
+import { CenterFocusWeakOutlined, DownloadOutlined, InfoOutlined, WarningOutlined } from "@mui/icons-material"
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule"
 
@@ -103,12 +103,12 @@ const MoorhenSliceNDiceCard = (props: {
                     <IconButton style={{marginRight:'0.5rem', color: themeColor}} onClick={() => props.fragmentMolecule.centreOn('/*/*/*/*', true, true)}>
                         <CenterFocusWeakOutlined/>
                     </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Download">
+                </Tooltip>
+                <Tooltip title="Download">
                     <IconButton style={{marginRight:'0.5rem', color: themeColor}} onClick={handleDownload}>
                         <DownloadOutlined/>
                     </IconButton>
-                    </Tooltip>
+                </Tooltip>
                 </Col>
             </Row>
         </Card.Body>
@@ -121,6 +121,8 @@ export const MoorhenSliceNDiceModal = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {
     
+    const paeFileContents = useRef<null | string>(null)
+    const paeFileUploadFormRef = useRef<null | HTMLInputElement>(null)
     const clusteringTypeSelectRef = useRef<null | HTMLSelectElement>(null)
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const nClustersRef = useRef<number>(2)
@@ -137,6 +139,7 @@ export const MoorhenSliceNDiceModal = (props: {
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
+    const [paeFileIsUploaded, setPaeFileIsUploaded] = useState<boolean>(false)
     const [thresholdType, setThresholdType] = useState<string>('bfactor')
     const [moleculeBfactors, setMoleculeBfactors] = useState<{ cid: string; bFactor: number; normalised_bFactor: number; }[]>(null)
     const [moleculeMinBfactor, setMoleculeMinBfactor] = useState<number>(null)
@@ -146,6 +149,7 @@ export const MoorhenSliceNDiceModal = (props: {
     const [selectedMolNo, setSelectedMolNo] = useState<number>(null)
     const [clusteringType, setClusteringType] = useState<string>('birch')
     const [busy, setBusy] = useState<boolean>(false)
+    const [showError, setShowError] = useState<boolean>(false)
     const [slicingResults, setSlicingResults] = useState<moorhen.Molecule[]>(null)
 
     useEffect(() => {
@@ -223,7 +227,7 @@ export const MoorhenSliceNDiceModal = (props: {
     }, [slicingResults, moleculeBfactors])
 
     const doSlice = useCallback(async () => {
-        if (!moleculeSelectRef.current.value) {
+        if (!moleculeSelectRef.current.value || (clusteringTypeSelectRef.current.value === 'pae' && !paeFileContents.current)) {
             return
         }
 
@@ -235,30 +239,12 @@ export const MoorhenSliceNDiceModal = (props: {
         setBusy(true)
 
         let deleteSelectedMoleculeOnExit = false
-        if (selectedMoleculeCopyRef.current?.excludedSelections?.length > 0) {
+        if (selectedMoleculeCopyRef.current?.excludedSelections?.length > 0 && clusteringTypeSelectRef.current.value !== 'pae') {
             deleteSelectedMoleculeOnExit = true
             selectedMolecule = await selectedMolecule.copyFragmentUsingCid('//', false)
             selectedMolecule.excludedSelections = selectedMoleculeCopyRef.current.excludedSelections
             selectedMolecule.excludedCids = selectedMoleculeCopyRef.current.excludedCids
             deleteHiddenResidues(selectedMolecule)
-        }
-
-        let commandArgs: (string | number)[]
-        const pae_file = ""
-        switch (clusteringTypeSelectRef.current.value) {
-            case "kmeans":
-            case "agglomerative":
-            case "birch":
-                commandArgs = [ selectedMolecule.molNo, nClustersRef.current, clusteringTypeSelectRef.current.value, pae_file ]
-                break
-            default:
-                console.warn(`Unkown clustering algorithm ${clusteringTypeSelectRef.current}`)
-                break
-        }
-        
-        if (!commandArgs) {
-            setBusy(false)
-            return
         }
 
         if (slicingResults?.length > 0) {
@@ -267,11 +253,39 @@ export const MoorhenSliceNDiceModal = (props: {
             )
         }
 
+        let commandArgs: (string | number)[]
+        switch (clusteringTypeSelectRef.current.value) {
+            case "kmeans":
+            case "agglomerative":
+            case "birch":
+            case "pae":
+                commandArgs = [ selectedMolecule.molNo, nClustersRef.current, clusteringTypeSelectRef.current.value, paeFileContents.current ? paeFileContents.current : ""]
+                break
+            default:
+                console.warn(`Unkown clustering algorithm ${clusteringTypeSelectRef.current}`)
+                break
+        }
+        
+        if (!commandArgs) {
+            setBusy(false)
+            setSlicingResults(null)
+            return
+        }
+
         const result = await props.commandCentre.current.cootCommand({
             command: 'slicendice_slice',
             commandArgs: commandArgs,
             returnType: 'vector_pair_string_int'
         }, false)
+
+        if (result.data.result.status === 'Exception') {
+            console.warn(result.data.consoleMessage)
+            setBusy(false)
+            setSlicingResults(null)
+            setTimeout(() => setShowError(true), 500)
+            setTimeout(() => setShowError(false), 3000)
+            return
+        }
 
         selectedMoleculeCopyRef.current?.hide?.('CRs', '/*/*/*/*')
 
@@ -289,6 +303,24 @@ export const MoorhenSliceNDiceModal = (props: {
             newColourRule.setParentMolecule(newMolecule)
             newMolecule.defaultColourRules = [ newColourRule ]
             newMolecule.setAtomsDirty(true)
+            if (clusteringTypeSelectRef.current.value === 'pae') {
+                await newMolecule.updateAtoms()
+                const bFactors = newMolecule.getResidueBFactors()
+                let cidsToDelete: string[]
+                if (thresholdTypeRef.current === 'bfactor') {
+                    cidsToDelete = bFactors.filter(residue => residue.bFactor > bFactorThresholdRef.current).map(residue => residue.cid)
+                } else {
+                    cidsToDelete = bFactors.filter(residue => residue.bFactor < bFactorThresholdRef.current).map(residue => residue.cid)
+                }
+                if (cidsToDelete?.length > 0) {
+                    const result = await newMolecule.deleteCid(cidsToDelete.join('||'), false)
+                    if (result.second < 1) {
+                        await newMolecule.delete()
+                        return
+                    }
+                    newMolecule.setAtomsDirty(true)
+                } 
+            }
             await newMolecule.fetchIfDirtyAndDraw('CRs')
             return newMolecule
         }))
@@ -297,7 +329,7 @@ export const MoorhenSliceNDiceModal = (props: {
             await selectedMolecule.delete()
         }
 
-        setSlicingResults(newMolecules.sort( (a, b) => {  return parseInt(a.name.replace('Slice #', '')) - parseInt(b.name.replace('Slice #', ''))  }))
+        setSlicingResults(newMolecules.filter(molecule => molecule !== undefined).sort( (a, b) => {  return parseInt(a.name.replace('Slice #', '')) - parseInt(b.name.replace('Slice #', ''))  }))
         setBusy(false)
     }, [molecules, slicingResults, isDark])
 
@@ -360,23 +392,41 @@ export const MoorhenSliceNDiceModal = (props: {
         }
     }, [slicingResults])
 
+    const handlePaeFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files?.length > 0) {            
+            const fileContents = await readTextFile(e.target.files[0]) as string
+            if (fileContents.length > 0) {
+                paeFileContents.current = fileContents
+                setPaeFileIsUploaded(true)
+            } else {
+                paeFileContents.current = null
+                setPaeFileIsUploaded(false)
+            }
+        }
+    }
+
     const bodyContent = <Stack direction="vertical" gap={1}>
         <Stack direction="horizontal" gap={1} style={{display: 'flex', width: '100%'}}>
             <Form.Group style={{ margin: '0.5rem', width: '100%' }}>
                 <Form.Label>Clustering algorithm...</Form.Label>
                 <FormSelect size="sm" ref={clusteringTypeSelectRef} defaultValue={'birch'} onChange={(evt) => {
-                    setClusteringType(evt.target.value)
+                    if (evt.target.value === 'pae') {
+                        paeFileContents.current = null
+                        setPaeFileIsUploaded(false)
+                    }
                     clusteringTypeSelectRef.current.value = evt.target.value
+                    setClusteringType(evt.target.value)
                 }}>
                     <option value={'birch'} key={'birch'}>Birch</option>
                     <option value={'kmeans'} key={'kmeans'}>K-Means</option>
                     <option value={'agglomerative'} key={'agglomerative'}>Agglomerative</option>
+                    <option value={'pae'} key={'pae'}>PAE</option>
                 </FormSelect>
             </Form.Group>
             <MoorhenMoleculeSelect {...props} width="100%" molecules={molecules} allowAny={false} ref={moleculeSelectRef} onChange={(evt) => setSelectedMolNo(parseInt(evt.target.value))}/>
         </Stack>
         <Stack direction="horizontal" gap={1} style={{display: 'flex', width: '100%'}}>
-            { ['kmeans', 'agglomerative', 'birch'].includes(clusteringType) && 
+            { ['kmeans', 'agglomerative', 'birch', 'pae'].includes(clusteringType) && 
             <div style={{ paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.1rem', paddingBottom: '0.1rem', width: '100%'}}>
                 <span>Number of slices</span>
                 <Slider
@@ -471,6 +521,15 @@ export const MoorhenSliceNDiceModal = (props: {
                 />
             </div>
         </Stack>
+        {clusteringType === 'pae' && 
+            <Form.Group style={{ margin: '0.5rem', padding: '0rem' }} controlId="uploadPAE">
+                <Form.Label>Upload PAE file</Form.Label>
+                <Tooltip title='Predicted Aligned Error (PAE) .json file' placement="top">
+                    <InfoOutlined style={{marginLeft: '0.1rem', marginBottom: '0.2rem', width: '15px', height: '15px'}}/>
+                </Tooltip>
+                <Form.Control ref={paeFileUploadFormRef} type="file" multiple={false} accept=".json" onChange={(e: React.ChangeEvent<HTMLInputElement>) => {handlePaeFileUpload(e)}} />
+            </Form.Group>    
+        }
         <hr></hr>
         <Row>
             {slicingResults?.length > 0 ? <span>Found {slicingResults.length} possible slice(s)</span> : null}
@@ -491,7 +550,7 @@ export const MoorhenSliceNDiceModal = (props: {
             </SplitButton>
         </Stack>
         <Stack gap={2} direction='horizontal' style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
-            <Button variant='primary' onClick={doSlice}>
+            <Button variant='primary' onClick={doSlice} disabled={clusteringType === 'pae' && !paeFileIsUploaded}>
                 Slice
             </Button>
             <SplitButton id='download-slice-n-dice' variant="info" title="Save & Exit" onClick={() => handleClose(true)}>
@@ -501,9 +560,19 @@ export const MoorhenSliceNDiceModal = (props: {
         </Stack>
     </Stack>
 
-    const spinnerContent =  <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={busy}>
+    const spinnerContent =  <Backdrop sx={{ display: 'flex', flexDirection: busy ? 'row' : 'column', color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={busy || showError}>
+                            {busy ?
+                            <>
                                 <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
                                 <span>Slicing...</span>
+                            </>
+                            : showError ? 
+                            <>
+                                <WarningOutlined style={{width: '35px', height: '35px'}}/>
+                                <span>Something went wrong...</span>
+                            </>
+                            : null
+                            } 
                             </Backdrop>
 
 
