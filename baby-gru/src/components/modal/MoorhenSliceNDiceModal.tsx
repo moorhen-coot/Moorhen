@@ -96,7 +96,7 @@ const MoorhenSliceNDiceCard = (props: {
                     }}
                     defaultValue={1}
                     min={1}
-                    max={maxFragmentSize}
+                    max={20}
                     style={{color: themeColor}}
                 />
                 <Tooltip title="View">
