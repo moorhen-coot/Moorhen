@@ -80,7 +80,7 @@ export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                         type="switch"
                         checked={drawInteractions}
                         onChange={() => {dispatch( setDrawInteractions(!drawInteractions) )}}
-                        label="Show Environment Distances"/>
+                        label="Show environment distances"/>
                 </InputGroup>
                 <InputGroup className='moorhen-input-group-check'>
                     <Form.Check 
@@ -98,7 +98,7 @@ export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                 </InputGroup>
                 <hr></hr>
                 <MoorhenScenePresetMenuItem {...menuItemProps} />
-                <MenuItem onClick={() => dispatch(setShowSceneSettingsModal(true))}>Scene Settings...</MenuItem>
+                <MenuItem onClick={() => dispatch(setShowSceneSettingsModal(true))}>Scene settings...</MenuItem>
         </div>
     </>
 }
