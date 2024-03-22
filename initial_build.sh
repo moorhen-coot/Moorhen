@@ -46,6 +46,7 @@ if test x"${MEMORY64}" = x"1"; then
     echo "#######################################################"
     echo
     echo
+    MOORHEN_CMAKE_FLAGS="-sMEMORY64=1 -pthread"
 else
     echo "########################################"
     echo "########################################"
@@ -54,6 +55,7 @@ else
     echo "########################################"
     echo
     echo
+    MOORHEN_CMAKE_FLAGS="-pthread"
 fi
 
 mkdir -p ${INSTALL_DIR}
@@ -62,14 +64,14 @@ mkdir -p ${INSTALL_DIR}
 mkdir -p ${BUILD_DIR}/gsl_build
 cd ${BUILD_DIR}/gsl_build
 emconfigure ${SOURCE_DIR}/gsl-2.7.1/configure --prefix=${INSTALL_DIR}
-emmake make LDFLAGS=-all-static -j ${NUMPROCS} CXXFLAGS="-s USE_PTHREADS=1 -pthread -sMEMORY64=${MEMORY64}" CFLAGS="-s USE_PTHREADS=1 -pthread -sMEMORY64=${MEMORY64}"
+emmake make LDFLAGS=-all-static -j ${NUMPROCS} CXXFLAGS="${MOORHEN_CMAKE_FLAGS}" CFLAGS="${MOORHEN_CMAKE_FLAGS}"
 emmake make install
 cd ${BUILD_DIR}
 
 #boost with cmake
 mkdir -p ${BUILD_DIR}/boost
 cd ${BUILD_DIR}/boost
-emcmake cmake -DCMAKE_C_FLAGS="-sMEMORY64=${MEMORY64} -pthread" -DCMAKE_CXX_FLAGS="-sMEMORY64=${MEMORY64} -pthread" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/checkout/boost-1.83.0 -DBOOST_EXCLUDE_LIBRARIES="context;fiber;fiber_numa;asio;log;coroutine;cobalt;nowide"
+emcmake cmake -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/checkout/boost-1.83.0 -DBOOST_EXCLUDE_LIBRARIES="context;fiber;fiber_numa;asio;log;coroutine;cobalt;nowide"
 emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
@@ -78,7 +80,7 @@ cd ${BUILD_DIR}
 BOOST_CMAKE_STUFF=`for i in ${INSTALL_DIR}/lib/cmake/boost*; do j=${i%-1.83.0}; k=${j#${INSTALL_DIR}/lib/cmake/boost_}; echo -Dboost_${k}_DIR=$i; done`
 mkdir -p ${BUILD_DIR}/rdkit_build
 cd ${BUILD_DIR}/rdkit_build
-emcmake cmake -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-1.83.0 ${BOOST_CMAKE_STUFF} -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="-s USE_PTHREADS=1 -sMEMORY64=${MEMORY64} -pthread -Wno-enum-constexpr-conversion -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -D CMAKE_C_FLAGS="-sMEMORY64=${MEMORY64} -pthread" -D CMAKE_CXX_FLAGS="-sMEMORY64=${MEMORY64} -pthread" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
+emcmake cmake -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-1.83.0 ${BOOST_CMAKE_STUFF} -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -Wno-enum-constexpr-conversion -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
 emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
@@ -86,7 +88,7 @@ cd ${BUILD_DIR}
 #gemmi
 mkdir -p ${BUILD_DIR}/gemmi_build
 cd ${BUILD_DIR}/gemmi_build
-emcmake cmake  -DCMAKE_EXE_LINKER_FLAGS="-s USE_PTHREADS=1 -pthread -sMEMORY64=${MEMORY64}" -DCMAKE_C_FLAGS="-sMEMORY64=${MEMORY64} -pthread" -DCMAKE_CXX_FLAGS="-sMEMORY64=${MEMORY64} -pthread" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/gemmi
+emcmake cmake  -DCMAKE_EXE_LINKER_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/gemmi
 emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
@@ -94,18 +96,18 @@ cd ${BUILD_DIR}
 #jsoncpp
 mkdir -p ${BUILD_DIR}/jsoncpp_build
 cd ${BUILD_DIR}/jsoncpp_build
-emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/checkout/jsoncpp -DJSONCPP_WITH_TESTS=OFF -DCMAKE_C_FLAGS="-sMEMORY64=${MEMORY64} -pthread" -DCMAKE_CXX_FLAGS="-sMEMORY64=${MEMORY64} -pthread"
+emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/checkout/jsoncpp -DJSONCPP_WITH_TESTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}"
 emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
 
 if test x"${MEMORY64}" = x"1"; then
-    echo "Cannot currently build igraph library with -sMEMORY64=${MEMORY64} -pthread. Skipping igraph ..."
+    echo "Cannot currently build igraph library with -sMEMORY64=1 -pthread. Skipping igraph ..."
 else
 #igraph
 mkdir -p ${BUILD_DIR}/igraph_build
 cd ${BUILD_DIR}/igraph_build
-emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/checkout/igraph -DCMAKE_C_FLAGS="-pthread" -DCMAKE_CXX_FLAGS="-pthread"
+emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/checkout/igraph -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}"
 emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
@@ -114,7 +116,7 @@ fi
 #Moorhen
 mkdir -p ${BUILD_DIR}/moorhen_build
 cd ${BUILD_DIR}/moorhen_build
-emcmake cmake -DMEMORY64=${MEMORY64} -DCMAKE_EXE_LINKER_FLAGS="-s USE_PTHREADS=1 -pthread -sMEMORY64=${MEMORY64}" -DCMAKE_C_FLAGS="-sMEMORY64=${MEMORY64} -pthread" -DCMAKE_CXX_FLAGS="-sMEMORY64=${MEMORY64} -pthread" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}
+emcmake cmake -DMEMORY64=${MEMORY64} -DCMAKE_EXE_LINKER_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}
 emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
@@ -123,7 +125,5 @@ cd ${SOURCE_DIR}/baby-gru/
 npm install
 cd ${BUILD_DIR}
 
-#*This link must be removed before building electron app!*
-#Links cause confusion in Linux/Mac, and are followed on Windows making huge packages that take forever to build.
 cd ${SOURCE_DIR}/baby-gru/public/baby-gru
 ln -s ${SOURCE_DIR}/checkout/monomers
