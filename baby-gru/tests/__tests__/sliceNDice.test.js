@@ -50,11 +50,11 @@ describe('Testing slice-n-dice', () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(false)
         
-        const coordMol = molecules_container.read_pdb('./7rb4.pdb')
+        const coordMol = molecules_container.read_pdb('./AF-A5YKK6-F1-model_v4.pdb')
         expect(coordMol).toBe(0)
         
         const retVal = molecules_container.slicendice_slice(coordMol, 5, "kmeans", "")
-        expect(retVal.size()).toBe(603)
+        expect(retVal.size()).toBe(2376)
         
         const data = parseSliceNDiceResult(retVal)
         const slices = [...new Set(data.map(item => item.slice))].sort()
@@ -67,11 +67,11 @@ describe('Testing slice-n-dice', () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(false)
         
-        const coordMol = molecules_container.read_pdb('./7rb4.pdb')
+        const coordMol = molecules_container.read_pdb('./AF-A5YKK6-F1-model_v4.pdb')
         expect(coordMol).toBe(0)
         
         const retVal = molecules_container.slicendice_slice(coordMol, 5, "birch", "")
-        expect(retVal.size()).toBe(603)
+        expect(retVal.size()).toBe(2376)
         
         const data = parseSliceNDiceResult(retVal)
         const slices = [...new Set(data.map(item => item.slice))].sort()
@@ -84,11 +84,11 @@ describe('Testing slice-n-dice', () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(false)
         
-        const coordMol = molecules_container.read_pdb('./7rb4.pdb')
+        const coordMol = molecules_container.read_pdb('./AF-A5YKK6-F1-model_v4.pdb')
         expect(coordMol).toBe(0)
         
         const retVal = molecules_container.slicendice_slice(coordMol, 5, "agglomerative", "")
-        expect(retVal.size()).toBe(603)
+        expect(retVal.size()).toBe(2376)
         
         const data = parseSliceNDiceResult(retVal)
         const slices = [...new Set(data.map(item => item.slice))].sort()
@@ -101,15 +101,15 @@ describe('Testing slice-n-dice', () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(false)
         
-        const coordMol = molecules_container.read_pdb('./7rb4.pdb')
+        const coordMol = molecules_container.read_pdb('./AF-A5YKK6-F1-model_v4.pdb')
         expect(coordMol).toBe(0)
 
-        const paeFileName = path.join(__dirname, '..', 'test_data', 'PAE_test_file.json')
+        const paeFileName = path.join(__dirname, '..', 'test_data', 'AF-A5YKK6-F1-predicted_aligned_error_v4.json')
         const paeFileContents = fs.readFileSync(paeFileName, { encoding: 'utf8', flag: 'r' })
         expect(paeFileContents.length).toBeGreaterThan(0)
         
         const retVal = molecules_container.slicendice_slice(coordMol, 5, "pae", paeFileContents)
-        expect(retVal.size()).toBe(603)
+        expect(retVal.size()).toBe(2376)
         
         const data = parseSliceNDiceResult(retVal)
         const slices = [...new Set(data.map(item => item.slice))].sort()
@@ -119,7 +119,7 @@ describe('Testing slice-n-dice', () => {
     })
 })
 
-const testDataFiles = ['7rb4.pdb','PAE_test_file.json']
+const testDataFiles = ['AF-A5YKK6-F1-predicted_aligned_error_v4.json', 'AF-A5YKK6-F1-model_v4.pdb']
 
 const setupFunctions = {
     removeTestDataFromFauxFS: () => {
