@@ -27,16 +27,16 @@ const LigandHitCard = (props: {
 
     const handleShow = useCallback(async () => {
         if (props.ligandMolecule.representations.length > 0) {
-            props.ligandMolecule.show('ligands')
+            props.ligandMolecule.show('CBs')
         } else {
-            await props.ligandMolecule.fetchIfDirtyAndDraw('ligands')
+            await props.ligandMolecule.fetchIfDirtyAndDraw('CBs')
         }
         await props.ligandMolecule.centreOn('/*/*/*/*', true, true)
     }, [])
 
     useEffect(() => {
         if (props.ligandCardMolNoFocus !== props.ligandMolecule.molNo) {
-            props.ligandMolecule.hide('ligands')
+            props.ligandMolecule.hide('CBs')
         } else {
             handleShow()
         }

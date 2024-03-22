@@ -16,6 +16,7 @@ import { MoorhenSlider } from "./components/misc/MoorhenSlider";
 import { MoorhenFetchOnlineSourcesForm } from "./components/form/MoorhenFetchOnlineSourcesForm";
 import { loadSessionData } from "./utils/MoorhenUtils";
 import { MoorhenReduxProvider } from "./components/misc/MoorhenReduxProvider";
+import MoorhenReduxStore from "./store/MoorhenReduxStore";
 import { setDefaultBackgroundColor, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
     setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap,  
     setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius,
@@ -60,5 +61,5 @@ export {
     setMapRadius, setMapStyle, showMap, hideMap, setContourLevel, showMolecule, hideMolecule, MoorhenMoleculeRepresentation, 
     MoorhenQuerySequenceModal, MoorhenPreferences, setDoEdgeDetect, addCustomRepresentation, removeCustomRepresentation,
     setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setEdgeDetectNormalScale,
-    setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints, setAnimateRefine
+    setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints, setAnimateRefine, MoorhenReduxStore
 };

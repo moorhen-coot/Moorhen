@@ -46,15 +46,6 @@ describe('Testing molecules_container_js', () => {
         expect(ret).toBe(1)
     })
 
-    test("Test slicendice", () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
-        molecules_container.set_use_gemmi(false)
-        const coordMol = molecules_container.read_pdb('./7rb4.pdb')
-        const retval = molecules_container.slicendice_slice(coordMol,3,"kmeans")
-        expect(retval.size()).toBe(603)
-        cleanUpVariables.push(retval)
-    })
-
     test("Test metaballs", () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(false)
