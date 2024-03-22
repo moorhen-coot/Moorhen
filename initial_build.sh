@@ -101,17 +101,19 @@ emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
 
-if test x"${MEMORY64}" = x"1"; then
-    echo "Cannot currently build igraph library with -sMEMORY64=1 -pthread. Skipping igraph ..."
-else
 #igraph
 mkdir -p ${BUILD_DIR}/igraph_build
 cd ${BUILD_DIR}/igraph_build
-emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/checkout/igraph -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}"
-emmake make -j ${NUMPROCS}
+if test x"${MEMORY64}" = x"1"; then
+#There is some hoop-jumping to make igraph compile with "-sMEMORY64=1 -pthread"
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/checkout/igraph -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DIEEE754_DOUBLE_ENDIANNESS_MATCHES=ON -DF2C_EXTERNAL_ARITH_HEADER=${SOURCE_DIR}/include/igraph_f2c_arith_64.h
+    emmake make -j ${NUMPROCS} C_FLAGS="${MOORHEN_CMAKE_FLAGS} -Wno-error=experimental" CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -Wno-error=experimental"
+else
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/checkout/igraph -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}"
+    emmake make -j ${NUMPROCS}
+fi
 emmake make install
 cd ${BUILD_DIR}
-fi
 
 #Moorhen
 mkdir -p ${BUILD_DIR}/moorhen_build
