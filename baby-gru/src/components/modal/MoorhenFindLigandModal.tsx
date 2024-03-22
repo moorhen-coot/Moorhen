@@ -157,7 +157,7 @@ export const MoorheFindLigandModal = (props: { show: boolean; setShow: React.Dis
                 <MoorhenMoleculeSelect
                     width=""
                     molecules={molecules}
-                    label="Protein molecule"
+                    label="Molecule"
                     allowAny={false}
                     ref={intoMoleculeRef} 
                     filterFunction={(molecule) => !molecule.isLigand}
@@ -167,7 +167,7 @@ export const MoorheFindLigandModal = (props: { show: boolean; setShow: React.Dis
                 <MoorhenMoleculeSelect
                     width=""
                     molecules={molecules}
-                    label="Ligand molecule"
+                    label="Ligand"
                     allowAny={false}
                     ref={ligandMoleculeRef}
                     filterFunction={(molecule) => molecule.isLigand}
@@ -253,7 +253,7 @@ export const MoorheFindLigandModal = (props: { show: boolean; setShow: React.Dis
                 defaultHeight={convertViewtoPx(10, height)}
                 defaultWidth={convertViewtoPx(10, width)}
                 minHeight={convertViewtoPx(15, height)}
-                minWidth={convertRemToPx(40)}
+                minWidth={convertViewtoPx(25, width)}
                 maxHeight={convertViewtoPx(50, height)}
                 maxWidth={convertViewtoPx(50, width)}
                 additionalChildren={spinnerContent}
