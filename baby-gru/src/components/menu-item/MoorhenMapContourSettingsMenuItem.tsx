@@ -124,9 +124,10 @@ export const MapContourSettingsMenuItem = (props: {
             sliderTitle="Map lines thickness"
             initialValue={mapLineWidth}
             externalValue={mapLineWidth}
+            showMinMaxVal={false}
             setExternalValue={(val: number) => dispatch(setMapLineWidth(val))}/>
         </Form.Group>
-        <div style={{width: '17rem', padding: '1rem'}}>
+        <div style={{padding: '0.5rem'}}>
             <span>Map sampling rate</span>
             <Slider
                 aria-label="Map sampling rate"

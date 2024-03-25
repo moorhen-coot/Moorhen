@@ -178,6 +178,15 @@ const DepthBlurPanel = (props: {
     const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius)
     
     return <div className="scene-settings-panel-flex-between">
+            <InputGroup className='moorhen-input-group-check'>
+                <Form.Check 
+                    type="switch"
+                    checked={useOffScreenBuffers}
+                    onChange={() => { dispatch(
+                        setUseOffScreenBuffers(!useOffScreenBuffers)
+                    )}}
+                    label="Depth Blur"/>
+            </InputGroup>
             <MoorhenSlider
                 isDisabled={!useOffScreenBuffers}
                 minVal={0.0}
@@ -197,15 +206,6 @@ const DepthBlurPanel = (props: {
                 externalValue={depthBlurRadius}
                 allowFloats={false}
                 setExternalValue={(val: number) => dispatch(setDepthBlurRadius(val))}/>
-            <InputGroup className='moorhen-input-group-check'>
-                <Form.Check 
-                    type="switch"
-                    checked={useOffScreenBuffers}
-                    onChange={() => { dispatch(
-                        setUseOffScreenBuffers(!useOffScreenBuffers)
-                    )}}
-                    label="Do Depth Blur"/>
-            </InputGroup>
     </div>
 }
 
@@ -399,12 +399,12 @@ export const MoorhenSceneSettingsModal = (props: {
                         <Stack gap={2} direction="vertical">
                             <ClipFogPanel glRef={props.glRef}/>
                             <BackgroundColorPanel/>
+                            <EdgeDetectPanel/>
                         </Stack>
                         <Stack gap={1} direction="vertical">
                             <LightingPanel glRef={props.glRef}/>
                             {props.glRef.current.isWebGL2() && <DepthBlurPanel/>}
                             <OcclusionPanel/>
-                            <EdgeDetectPanel/>
                         </Stack>
                     </Stack>
                 }

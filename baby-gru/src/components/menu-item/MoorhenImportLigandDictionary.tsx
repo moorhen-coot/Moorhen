@@ -69,7 +69,6 @@ const MoorhenImportLigandDictionary = (props: {
                     return molecule.redraw()
                 })
             ])
-            
         }
                 
         if (createRef.current) {

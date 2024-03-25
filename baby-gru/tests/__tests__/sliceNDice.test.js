@@ -36,7 +36,18 @@ afterAll(() => {
     setupFunctions.removeTestDataFromFauxFS()
 })
 
+let molecules_container = null
+
 describe('Testing slice-n-dice', () => {
+
+    beforeEach(() => {
+        if (molecules_container !== null) {
+            molecules_container.delete?.()
+        }
+        molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+    })
+
     afterEach(() => {
         cleanUpVariables.forEach(item => {
             if (typeof item.delete === 'function' && !item.isDeleted()) {
@@ -47,9 +58,6 @@ describe('Testing slice-n-dice', () => {
     })
 
     test("Test kmeans", () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
-        molecules_container.set_use_gemmi(false)
-        
         const coordMol = molecules_container.read_pdb('./AF-A5YKK6-F1-model_v4.pdb')
         expect(coordMol).toBe(0)
         
@@ -64,9 +72,6 @@ describe('Testing slice-n-dice', () => {
     })
 
     test("Test birch", () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
-        molecules_container.set_use_gemmi(false)
-        
         const coordMol = molecules_container.read_pdb('./AF-A5YKK6-F1-model_v4.pdb')
         expect(coordMol).toBe(0)
         
@@ -81,9 +86,6 @@ describe('Testing slice-n-dice', () => {
     })
 
     test("Test agglomerative", () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
-        molecules_container.set_use_gemmi(false)
-        
         const coordMol = molecules_container.read_pdb('./AF-A5YKK6-F1-model_v4.pdb')
         expect(coordMol).toBe(0)
         
@@ -98,9 +100,6 @@ describe('Testing slice-n-dice', () => {
     })
 
     test("Test pae", () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
-        molecules_container.set_use_gemmi(false)
-        
         const coordMol = molecules_container.read_pdb('./AF-A5YKK6-F1-model_v4.pdb')
         expect(coordMol).toBe(0)
 
