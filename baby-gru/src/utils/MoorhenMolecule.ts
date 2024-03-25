@@ -1577,6 +1577,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
         console.log(`Cannot find ligand dict with comp_id ${comp_id}`)
     }
 
+    /**
+     * Internal function used to store a ligand dictionary in the cache for this molecule instance
+     * @param {string} fileContent - The dictionary contents
+     */
     addDictShim(fileContent: string): void {
         if (!fileContent) {
             console.warn('File contents for dictionary not found, doing nothing...')

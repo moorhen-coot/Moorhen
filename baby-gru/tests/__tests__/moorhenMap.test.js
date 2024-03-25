@@ -50,17 +50,29 @@ beforeAll(() => {
         return Promise.resolve()
     })
 })
+
+let molecules_container = null
+let commandCentre = null
+let glRef = null
+
 describe("Testing MoorhenMap", () => {
 
-    test("Test loadToCootFromMtzURL", async () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
-        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const glRef = {
+    beforeEach(() => {
+        if (molecules_container !== null) {
+            molecules_container.delete?.()
+        }
+        molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(false)
+        glRef = {
             current: new MockWebGL()
         }
-        const commandCentre = {
+        commandCentre = {
             current: new MockMoorhenCommandCentre(molecules_container, cootModule)
         }
+    })
+
+    test("Test loadToCootFromMtzURL", async () => {
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
         const map = new MoorhenMap(commandCentre, glRef)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         expect(map.molNo).toBe(0)
@@ -69,14 +81,7 @@ describe("Testing MoorhenMap", () => {
     })
 
     test("Test loadToCootFromMtzURL --isDifference", async () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const glRef = {
-            current: new MockWebGL()
-        }
-        const commandCentre = {
-            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
-        }
         const map = new MoorhenMap(commandCentre, glRef)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false, calcStructFact: false })
         expect(map.molNo).toBe(0)
@@ -86,14 +91,7 @@ describe("Testing MoorhenMap", () => {
     })
 
     test("Test loadToCootFromMapData", async () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const glRef = {
-            current: new MockWebGL()
-        }
-        const commandCentre = {
-            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
-        }
         const map_1 = new MoorhenMap(commandCentre, glRef)
         await map_1.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         expect(map_1.molNo).toBe(0)
@@ -109,14 +107,7 @@ describe("Testing MoorhenMap", () => {
     })
 
     test("Test delete", async () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const glRef = {
-            current: new MockWebGL()
-        }
-        const commandCentre = {
-            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
-        }
         const map = new MoorhenMap(commandCentre, glRef)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         expect(map.molNo).toBe(0)
@@ -126,14 +117,7 @@ describe("Testing MoorhenMap", () => {
     })
 
     test("Test fetchIsDifferenceMap 1", async () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const glRef = {
-            current: new MockWebGL()
-        }
-        const commandCentre = {
-            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
-        }
         const map = new MoorhenMap(commandCentre, glRef)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false, calcStructFact: false })
         expect(map.molNo).toBe(0)
@@ -142,14 +126,7 @@ describe("Testing MoorhenMap", () => {
     })
 
     test("Test fetchIsDifferenceMap 2", async () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const glRef = {
-            current: new MockWebGL()
-        }
-        const commandCentre = {
-            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
-        }
         const map = new MoorhenMap(commandCentre, glRef)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         expect(map.molNo).toBe(0)
@@ -158,14 +135,7 @@ describe("Testing MoorhenMap", () => {
     })
 
     test("Test getSuggestedSettings", async () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const glRef = {
-            current: new MockWebGL()
-        }
-        const commandCentre = {
-            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
-        }
         const map = new MoorhenMap(commandCentre, glRef)
 
         const f_1 = jest.spyOn(map, 'getSuggestedSettings')
@@ -197,14 +167,7 @@ describe("Testing MoorhenMap", () => {
     })
 
     test("Test setDefaultColour", async () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const glRef = {
-            current: new MockWebGL()
-        }
-        const commandCentre = {
-            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
-        }
         
         const map_1 = new MoorhenMap(commandCentre, glRef)
         await map_1.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
@@ -226,14 +189,7 @@ describe("Testing MoorhenMap", () => {
     })
 
     test("Test fetchMapRmsd", async () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const glRef = {
-            current: new MockWebGL()
-        }
-        const commandCentre = {
-            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
-        }
         const map = new MoorhenMap(commandCentre, glRef)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         const rmsd = await map.fetchMapRmsd()
@@ -241,14 +197,7 @@ describe("Testing MoorhenMap", () => {
     })
 
     test("Test getMapWeight", async () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const glRef = {
-            current: new MockWebGL()
-        }
-        const commandCentre = {
-            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
-        }
         const map = new MoorhenMap(commandCentre, glRef)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         const mapWeight = await map.getMapWeight()
@@ -256,14 +205,7 @@ describe("Testing MoorhenMap", () => {
     })
 
     test("Test setMapWeight", async () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const glRef = {
-            current: new MockWebGL()
-        }
-        const commandCentre = {
-            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
-        }
         const map = new MoorhenMap(commandCentre, glRef)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         const mapWeight_1 = map.suggestedMapWeight
@@ -273,14 +215,7 @@ describe("Testing MoorhenMap", () => {
     })
 
     test("Test setActive", async () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const glRef = {
-            current: new MockWebGL()
-        }
-        const commandCentre = {
-            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
-        }
         const map = new MoorhenMap(commandCentre, glRef)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         const f_1 = jest.spyOn(map, 'setMapWeight')
@@ -289,14 +224,7 @@ describe("Testing MoorhenMap", () => {
     })
 
     test("Test getHistogram", async () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const glRef = {
-            current: new MockWebGL()
-        }
-        const commandCentre = {
-            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
-        }
         const map = new MoorhenMap(commandCentre, glRef)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         const histogramData = await map.getHistogram()
@@ -306,14 +234,7 @@ describe("Testing MoorhenMap", () => {
     })
 
     test.skip("Test doCootContour", async () => {
-        const molecules_container = new cootModule.molecules_container_js(false)
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const glRef = {
-            current: new MockWebGL()
-        }
-        const commandCentre = {
-            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
-        }
         const map = new MoorhenMap(commandCentre, glRef)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
 
