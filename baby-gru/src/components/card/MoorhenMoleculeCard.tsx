@@ -671,7 +671,7 @@ const CustomRepresentationChip = (props: {
     return <Chip
         style={chipStyle}
         variant={"outlined"}
-        label={`${representationLabelMapping[representation.style]} ${representation.cid}`}
+        label={`${representationLabelMapping[representation.style]} ${representation.cid.length > 21 ? `${representation.cid.slice(0,20)} ...` : representation.cid}`}
         deleteIcon={
             <div>
                 <EditOutlined style={{color: isDark ? 'white' : '#696969'}} onClick={() => setShowEditRepresentation(true)}/>
