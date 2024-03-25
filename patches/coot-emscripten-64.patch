@@ -1,0 +1,29 @@
+diff --git a/coot-utils/slurp-map.cc b/coot-utils/slurp-map.cc
+index a432676fc..f1b60b823 100644
+--- a/coot-utils/slurp-map.cc
++++ b/coot-utils/slurp-map.cc
+@@ -110,12 +110,14 @@ coot::util::slurp_fill_xmap_from_map_file(const std::string &file_name,
+ 
+       bool is_gzip = false;
+       std::string ext = file_name_extension(file_name);
++#if !((__POINTER_WIDTH__==64) && __EMSCRIPTEN__)
+       if (ext == ".gz") is_gzip = true;
+ 
+       if (is_gzip) {
+          // this can fail (at the moment) if the axes are not in X,Y,Z order
+          status = slurp_fill_xmap_from_gz_map_file(file_name, xmap_p, check_only);
+       } else {
++#endif
+          // 20231006-PE as it used to be.
+          struct stat s;
+          int fstat = stat(file_name.c_str(), &s);
+@@ -139,7 +141,9 @@ coot::util::slurp_fill_xmap_from_map_file(const std::string &file_name,
+             }
+             delete [] space;
+          }
++#if !((__POINTER_WIDTH__==64) && __EMSCRIPTEN__)
+       }
++#endif
+    } else {
+       std::cout << "WARNING:: file does not exist " << file_name << std::endl;
+    }
