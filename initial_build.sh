@@ -24,45 +24,63 @@ echo "Sources are in ${SOURCE_DIR}"
 echo "Building in ${BUILD_DIR}"
 echo "Installing in ${INSTALL_DIR}"
 
+MEMORY64=0
+
+optspec=":-"
+while getopts ':-:' OPT; do
+  case $OPT in
+    -) #long option
+       case $OPTARG in
+         64bit) MEMORY64=1;;
+         *) echo unknown long option: $OPTARG;;
+       esac;;
+    *) echo unknown short option: $OPTARG;;
+  esac
+done
+
+if test x"${MEMORY64}" = x"1"; then
+    echo "#######################################################"
+    echo "#######################################################"
+    echo "Building ** 64-bit ** (large memory) version of Moorhen"
+    echo "#######################################################"
+    echo "#######################################################"
+    echo
+    echo
+    MOORHEN_CMAKE_FLAGS="-sMEMORY64=1 -pthread"
+else
+    echo "########################################"
+    echo "########################################"
+    echo "Building ** 32-bit ** version of Moorhen"
+    echo "########################################"
+    echo "########################################"
+    echo
+    echo
+    MOORHEN_CMAKE_FLAGS="-pthread"
+fi
+
 mkdir -p ${INSTALL_DIR}
 
 #gsl
 mkdir -p ${BUILD_DIR}/gsl_build
 cd ${BUILD_DIR}/gsl_build
 emconfigure ${SOURCE_DIR}/gsl-2.7.1/configure --prefix=${INSTALL_DIR}
-emmake make LDFLAGS=-all-static -j ${NUMPROCS}
+emmake make LDFLAGS=-all-static -j ${NUMPROCS} CXXFLAGS="${MOORHEN_CMAKE_FLAGS}" CFLAGS="${MOORHEN_CMAKE_FLAGS}"
 emmake make install
 cd ${BUILD_DIR}
 
-#Boost (has to be built in source tree as far as I am aware)
-cd ${SOURCE_DIR}/boost
-./bootstrap.sh --with-libraries=serialization,regex,chrono,date_time,filesystem,iostreams,program_options,thread,math,random,system
-./b2 toolset=emscripten link=static variant=release cxxflags="-pthread" linkflags="-pthread" threading=multi runtime-link=static thread system filesystem regex serialization chrono date_time program_options random -j ${NUMPROCS}
-./b2 toolset=emscripten link=static variant=release cxxflags="-pthread" linkflags="-pthread" threading=multi runtime-link=static install --prefix=${INSTALL_DIR}
+#boost with cmake
+mkdir -p ${BUILD_DIR}/boost
+cd ${BUILD_DIR}/boost
+emcmake cmake -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/checkout/boost-1.83.0 -DBOOST_EXCLUDE_LIBRARIES="context;fiber;fiber_numa;asio;log;coroutine;cobalt;nowide"
+emmake make -j ${NUMPROCS}
+emmake make install
 cd ${BUILD_DIR}
 
-emar q ${INSTALL_DIR}/lib/libboost_chrono.a ${INSTALL_DIR}/lib/libboost_chrono.bc
-emar q ${INSTALL_DIR}/lib/libboost_date_time.a ${INSTALL_DIR}/lib/libboost_date_time.bc
-emar q ${INSTALL_DIR}/lib/libboost_filesystem.a ${INSTALL_DIR}/lib/libboost_filesystem.bc
-emar q ${INSTALL_DIR}/lib/libboost_iostreams.a ${INSTALL_DIR}/lib/libboost_iostreams.bc
-emar q ${INSTALL_DIR}/lib/libboost_math_c99.a ${INSTALL_DIR}/lib/libboost_math_c99.bc
-emar q ${INSTALL_DIR}/lib/libboost_math_c99f.a ${INSTALL_DIR}/lib/libboost_math_c99f.bc
-emar q ${INSTALL_DIR}/lib/libboost_math_c99l.a ${INSTALL_DIR}/lib/libboost_math_c99l.bc
-emar q ${INSTALL_DIR}/lib/libboost_math_tr1.a ${INSTALL_DIR}/lib/libboost_math_tr1.bc
-emar q ${INSTALL_DIR}/lib/libboost_math_tr1f.a ${INSTALL_DIR}/lib/libboost_math_tr1f.bc
-emar q ${INSTALL_DIR}/lib/libboost_math_tr1l.a ${INSTALL_DIR}/lib/libboost_math_tr1l.bc
-emar q ${INSTALL_DIR}/lib/libboost_program_options.a ${INSTALL_DIR}/lib/libboost_program_options.bc
-emar q ${INSTALL_DIR}/lib/libboost_random.a ${INSTALL_DIR}/lib/libboost_random.bc
-emar q ${INSTALL_DIR}/lib/libboost_regex.a ${INSTALL_DIR}/lib/libboost_regex.bc
-emar q ${INSTALL_DIR}/lib/libboost_serialization.a ${INSTALL_DIR}/lib/libboost_serialization.bc
-emar q ${INSTALL_DIR}/lib/libboost_system.a ${INSTALL_DIR}/lib/libboost_system.bc
-emar q ${INSTALL_DIR}/lib/libboost_wserialization.a ${INSTALL_DIR}/lib/libboost_wserialization.bc
-emar q ${INSTALL_DIR}/lib/libboost_thread.a ${INSTALL_DIR}/lib/libboost_thread.bc
-
 #RDKit
+BOOST_CMAKE_STUFF=`for i in ${INSTALL_DIR}/lib/cmake/boost*; do j=${i%-1.83.0}; k=${j#${INSTALL_DIR}/lib/cmake/boost_}; echo -Dboost_${k}_DIR=$i; done`
 mkdir -p ${BUILD_DIR}/rdkit_build
 cd ${BUILD_DIR}/rdkit_build
-emcmake cmake -Dboost_iostreams_DIR=${INSTALL_DIR}/lib/cmake/boost_iostreams-1.83.0/ -Dboost_system_DIR=${INSTALL_DIR}/lib/cmake/boost_system-1.83.0/  -Dboost_headers_DIR=${INSTALL_DIR}/lib/cmake/boost_headers-1.83.0/ -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-1.83.0 -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="-s USE_PTHREADS=1 -pthread -Wno-enum-constexpr-conversion -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF
+emcmake cmake -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-1.83.0 ${BOOST_CMAKE_STUFF} -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -Wno-enum-constexpr-conversion -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
 emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
@@ -70,7 +88,7 @@ cd ${BUILD_DIR}
 #gemmi
 mkdir -p ${BUILD_DIR}/gemmi_build
 cd ${BUILD_DIR}/gemmi_build
-emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/gemmi
+emcmake cmake  -DCMAKE_EXE_LINKER_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/gemmi
 emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
@@ -78,7 +96,7 @@ cd ${BUILD_DIR}
 #jsoncpp
 mkdir -p ${BUILD_DIR}/jsoncpp_build
 cd ${BUILD_DIR}/jsoncpp_build
-emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/checkout/jsoncpp -DJSONCPP_WITH_TESTS=OFF
+emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/checkout/jsoncpp -DJSONCPP_WITH_TESTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}"
 emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
@@ -86,15 +104,21 @@ cd ${BUILD_DIR}
 #igraph
 mkdir -p ${BUILD_DIR}/igraph_build
 cd ${BUILD_DIR}/igraph_build
-emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/checkout/igraph -DCMAKE_CXX_FLAGS="-pthread" -DCMAKE_C_FLAGS="-pthread"
-emmake make -j ${NUMPROCS}
+if test x"${MEMORY64}" = x"1"; then
+#There is some hoop-jumping to make igraph compile with "-sMEMORY64=1 -pthread"
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/checkout/igraph -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DIEEE754_DOUBLE_ENDIANNESS_MATCHES=ON -DF2C_EXTERNAL_ARITH_HEADER=${SOURCE_DIR}/include/igraph_f2c_arith_64.h
+    emmake make -j ${NUMPROCS} C_FLAGS="${MOORHEN_CMAKE_FLAGS} -Wno-error=experimental" CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -Wno-error=experimental"
+else
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/checkout/igraph -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}"
+    emmake make -j ${NUMPROCS}
+fi
 emmake make install
 cd ${BUILD_DIR}
 
 #Moorhen
 mkdir -p ${BUILD_DIR}/moorhen_build
 cd ${BUILD_DIR}/moorhen_build
-emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}
+emcmake cmake -DMEMORY64=${MEMORY64} -DCMAKE_EXE_LINKER_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}
 emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
@@ -103,7 +127,5 @@ cd ${SOURCE_DIR}/baby-gru/
 npm install
 cd ${BUILD_DIR}
 
-#*This link must be removed before building electron app!*
-#Links cause confusion in Linux/Mac, and are followed on Windows making huge packages that take forever to build.
 cd ${SOURCE_DIR}/baby-gru/public/baby-gru
 ln -s ${SOURCE_DIR}/checkout/monomers

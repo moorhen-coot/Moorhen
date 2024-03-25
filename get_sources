@@ -113,7 +113,7 @@ echo
 echo "Attempting to get emsdk zlib/png ports"
 echo
 echo "" > silly.c
-emcc silly.c -s USE_ZLIB=1 -s USE_LIBPNG=1 -s USE_FREETYPE=1
+emcc silly.c -s USE_ZLIB=1 -s USE_LIBPNG=1 -s USE_FREETYPE=1 -s USE_PTHREADS=1 -pthread -sMEMORY64=1
 rm -f silly.c
 rm -f a.out.js
 rm -f a.out.wasm
@@ -135,3 +135,11 @@ mkdir -p include
 cd include
 ln -s ../checkout/glm-$glm_release/glm glm
 cd ..
+
+cd checkout/coot-1.0
+patch -p1 < ../../patches/coot-emscripten-64.patch
+cd ../..
+
+cd checkout/gemmi
+patch -p1 < ../../patches/gemmi-emscripten-64.patch
+cd ../..

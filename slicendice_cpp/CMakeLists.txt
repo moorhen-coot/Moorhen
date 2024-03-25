@@ -1,6 +1,5 @@
 project(slicendice)
 
-
 add_library(slicendice_cpp STATIC 
 ${CMAKE_SOURCE_DIR}/checkout/slicendice_cpp/prog/extmath.cpp
 ${CMAKE_SOURCE_DIR}/checkout/slicendice_cpp/prog/dist_metrics.cpp
