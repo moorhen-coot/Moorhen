@@ -122,6 +122,7 @@ declare module 'moorhen' {
 
     class MoorhenMolecule implements _moorhen.Molecule {
         constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibrary: string)
+        transferLigandDicts(toMolecule: _moorhen.Molecule, override?: boolean): Promise<void>;
         minimizeEnergyUsingCidAnimated(cid: string, ncyc: number, nIterations: number, useRamaRestraints: boolean, ramaWeight: number, useTorsionRestraints: boolean, torsionWeight: number): Promise<void>;
         addColourRule(ruleType: string, cid: string, color: string, args: (string | number)[], isMultiColourRule?: boolean, applyColourToNonCarbonAtoms?: boolean, label?: string): void;
         splitMultiModels(draw?: boolean): Promise<_moorhen.Molecule[]>;

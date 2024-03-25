@@ -478,6 +478,16 @@ export class MoorhenMolecule implements moorhen.Molecule {
         return response
     }
 
+    async transferLigandDicts(toMolecule: moorhen.Molecule, override: boolean = false) {
+        await Promise.all(Object.keys(this.ligandDicts).map(key => {
+            if (!override && Object.hasOwn(toMolecule.ligandDicts, key)) {
+                return
+            } else {
+                toMolecule.addDict(this.ligandDicts[key])
+            }
+        }))
+    }
+
     /**
      * Copy molecule into a new instance
      * @returns {moorhen.Molecule} New molecule instance
@@ -500,7 +510,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         newMolecule.hasGlycans = this.hasGlycans
         newMolecule.hasDNA = this.hasDNA
 
-        await Promise.all(Object.keys(this.ligandDicts).map(key => newMolecule.addDict(this.ligandDicts[key])))
+        await this.transferLigandDicts(newMolecule)
         await newMolecule.fetchDefaultColourRules()
         await newMolecule.fetchIfDirtyAndDraw('CBs')
 
@@ -526,7 +536,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         newMolecule.isDarkBackground = this.isDarkBackground
         newMolecule.defaultBondOptions = this.defaultBondOptions
         newMolecule.coordsFormat = this.coordsFormat
-        await Promise.all(Object.keys(this.ligandDicts).map(key => newMolecule.addDict(this.ligandDicts[key])))
+        await this.transferLigandDicts(newMolecule)
         await newMolecule.fetchDefaultColourRules()
         if (doRecentre) {
             newMolecule.setAtomsDirty(true)
@@ -1498,19 +1508,13 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 changesMolecules: [this.molNo]
             }, true)
 
-            let promises = []
-            otherMolecules.forEach(molecule => {
+            await Promise.all(otherMolecules.map(molecule => {
                 if (doHide) {
                     MoorhenReduxStore.dispatch(hideMolecule(molecule))
                 }
-                Object.keys(molecule.ligandDicts).forEach(key => {
-                    if (!Object.hasOwn(this.ligandDicts, key)) {
-                        promises.push(this.addDict(molecule.ligandDicts[key]))
-                    }
-                })
-            })
-            await Promise.all(promises)
-
+                return molecule.transferLigandDicts(this, false)
+            }))
+            
             await this.updateAtoms()
             const currentChains = this.getChainNames()
             const newChains = currentChains.filter(chainName => !prevChainNames.includes(chainName))
@@ -2279,7 +2283,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                     newMolecule.defaultBondOptions = this.defaultBondOptions
                     newMolecule.coordsFormat = this.coordsFormat        
                     newMolecule.setAtomsDirty(true)
-                    await Promise.all(Object.keys(this.ligandDicts).map(key => newMolecule.addDict(this.ligandDicts[key])))
+                    await this.transferLigandDicts(newMolecule)
                     await newMolecule.fetchDefaultColourRules()
                     if (draw) {
                         await newMolecule.fetchIfDirtyAndDraw('CBs')
