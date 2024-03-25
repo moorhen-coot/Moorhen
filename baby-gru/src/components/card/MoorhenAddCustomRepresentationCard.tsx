@@ -234,19 +234,6 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                         {sequenceRangeSelect}
                     </div>
                 }
-                {['CBs', 'VdwSpheres', 'ligands'].includes(representationStyle) && 
-                <InputGroup className='moorhen-input-group-check'>
-                    <Form.Check 
-                        ref={applyColourToNonCarbonAtomsSwitchRef}
-                        type="switch"
-                        label="Apply colour to non-carbon atoms also"
-                        checked={applyColourToNonCarbonAtoms}
-                        onChange={() => { 
-                            setApplyColourToNonCarbonAtoms((prev) => {return !prev})
-                        }}
-                    />
-                </InputGroup>
-                }
                 {['CBs', 'CAs', 'ligands'].includes(representationStyle) && 
                 <InputGroup className='moorhen-input-group-check'>
                     <Form.Check 
@@ -314,6 +301,19 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                          }}
                     />
                 </InputGroup>
+                {['CBs', 'VdwSpheres', 'ligands'].includes(representationStyle) && !useDefaultColours &&
+                <InputGroup className='moorhen-input-group-check'>
+                    <Form.Check 
+                        ref={applyColourToNonCarbonAtomsSwitchRef}
+                        type="switch"
+                        label="Apply colour to non-carbon atoms also"
+                        checked={applyColourToNonCarbonAtoms}
+                        onChange={() => { 
+                            setApplyColourToNonCarbonAtoms((prev) => {return !prev})
+                        }}
+                    />
+                </InputGroup>
+                }
                 {!useDefaultColours &&
                 <>
                 <Row style={{paddingLeft: '1rem'}}>
