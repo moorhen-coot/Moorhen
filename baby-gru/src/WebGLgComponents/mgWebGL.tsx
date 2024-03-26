@@ -1604,6 +1604,7 @@ class DisplayBuffer {
     clickLineIndexesBuffer: MGWebGLBuffer[] | null;
     textNormals: number[];
     textColours: number[];
+    isHoverBuffer: boolean;
 
     constructor() {
         this.visible = true;
@@ -1616,6 +1617,7 @@ class DisplayBuffer {
         this.clearBuffers();
         this.symmetryAtoms = []
         this.changeColourWithSymmetry = true;
+        this.isHoverBuffer = false;
     }
 
     setCustomColour(col) {
@@ -1952,6 +1954,8 @@ interface ShaderEdgeDetect extends MGWebGLShader {
     normalThreshold: WebGLUniformLocation | null;
     scaleDepth: WebGLUniformLocation | null;
     scaleNormal: WebGLUniformLocation | null;
+    xPixelOffset: WebGLUniformLocation | null;
+    yPixelOffset: WebGLUniformLocation | null;
     zoom: WebGLUniformLocation | null;
 }
 
@@ -2105,6 +2109,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         normalThreshold: number;
         scaleDepth: number;
         scaleNormal: number;
+        xPixelOffset: number;
+        yPixelOffset: number;
         occludeDiffuse: boolean;
         doShadowDepthDebug: boolean;
         doSpin: boolean;
@@ -2272,6 +2278,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         axesTexture: any;
         max_elements_indices: number;
 
+        hoverSize: number;
+
     resize(width: number, height: number) : void {
 
         let theWidth = width;
@@ -2287,6 +2295,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         if(this.useOffScreenBuffers&&this.WEBGL2){
             this.recreateOffScreeenBuffers(this.canvas.width,this.canvas.height);
+        }
+        if(this.edgeDetectFramebuffer){
+            this.gl.deleteFramebuffer(this.edgeDetectFramebuffer);
+            this.edgeDetectFramebuffer = null;
+
         }
 
         this.silhouetteBufferReady = false;
@@ -2308,6 +2321,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.mspfArray = [];
         this.pointsArray = [];
         this.mouseTrackPoints = [];
+        this.hoverSize = 0.27;
 
         setInterval(() => {
             if(!self.gl) return;
@@ -2709,6 +2723,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.normalThreshold = 0.5;
         this.scaleDepth = 2.0;
         this.scaleNormal = 1.0;
+        this.xPixelOffset = 1.0 / 1024.0;
+        this.yPixelOffset = 1.0 / 1024.0;
 
         this.doSpin = false;
 
@@ -2731,7 +2747,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.framebufferDrawBuffersReady = false;
         this.screenshotBuffersReady = false;
 
-        this.edgeDetectFramebufferSize = 1024;
+        this.edgeDetectFramebufferSize = 2048;
         this.gBuffersFramebufferSize = 1024;
 
         this.textCtx = document.createElement("canvas").getContext("2d", {willReadFrequently: true});
@@ -3523,6 +3539,42 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
 
         }
+
+        theseBuffers.forEach(buffer => {
+                for(let ibuf=0;ibuf<buffer.bufferTypes.length;ibuf++){
+                    if(buffer.bufferTypes[ibuf]==="PERFECT_SPHERES"&&!jsondata.clickTol){
+                        buffer.clickTol = 2.0 * buffer.triangleInstanceSizes[ibuf][0] + 0.45;
+                    }
+                }
+        })
+
+        if(jsondata.isHoverBuffer){
+            self.displayBuffers[self.currentBufferIdx].isHoverBuffer = jsondata.isHoverBuffer;
+            let maxSize = 0.27;
+            for (let idx = 0; idx < this.displayBuffers.length; idx++) {
+                if (this.displayBuffers[idx].atoms.length > 0) {
+                    for(let ibuf2=0;ibuf2<this.displayBuffers[idx].bufferTypes.length;ibuf2++){
+                        if(this.displayBuffers[idx].bufferTypes[ibuf2]==="PERFECT_SPHERES"){
+                            if(this.displayBuffers[idx].triangleInstanceSizes[ibuf2][0]>0.27&&!this.displayBuffers[idx].isHoverBuffer&&this.displayBuffers[idx].visible){
+                                let nhits = 0
+                                theseBuffers[0].atoms.forEach(bufatom => {
+                                    this.displayBuffers[idx].atoms.forEach(atom => {
+                                        if(Math.abs(bufatom.x-atom.x)<1e-4&&Math.abs(bufatom.y-atom.y)<1e-4&&Math.abs(bufatom.z-atom.z)<1e-4){
+                                            nhits++;
+                                        }
+                                    })
+                                })
+                                if(theseBuffers[0].atoms.length===nhits){
+                                    maxSize = Math.max(this.displayBuffers[idx].triangleInstanceSizes[ibuf2][0],maxSize);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            this.hoverSize = maxSize;
+        }
+
 
         if (typeof (skipRebuild) !== "undefined" && skipRebuild) {
             return theseBuffers;
@@ -4487,6 +4539,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramEdgeDetect.normalThreshold = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "normalThreshold");
         this.shaderProgramEdgeDetect.scaleDepth = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "scaleDepth");
         this.shaderProgramEdgeDetect.scaleNormal = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "scaleNormal");
+        this.shaderProgramEdgeDetect.xPixelOffset = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "xPixelOffset");
+        this.shaderProgramEdgeDetect.yPixelOffset = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "yPixelOffset");
     }
 
     initSSAOShader(vertexShaderSSAO, fragmentShaderSSAO) {
@@ -7278,6 +7332,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         if (this.doEdgeDetect&&this.WEBGL2) {
 
+            const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+
             if(this.renderToTexture) {
                 this.edgeDetectFramebufferSize = 4096;
                 if(this.edgeDetectFramebuffer){
@@ -7285,8 +7341,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.edgeDetectFramebuffer = null;
                 }
                 this.createGBuffers(this.gBuffersFramebufferSize,this.gBuffersFramebufferSize);
+                if(!this.edgeDetectFramebuffer) this.createEdgeDetectFramebufferBuffer(4096,4096);
+            } else {
+                if(!this.edgeDetectFramebuffer){
+                    if(ratio>1.0)
+                        this.createEdgeDetectFramebufferBuffer(this.edgeDetectFramebufferSize,this.edgeDetectFramebufferSize/ratio);
+                    else
+                        this.createEdgeDetectFramebufferBuffer(this.edgeDetectFramebufferSize*ratio,this.edgeDetectFramebufferSize);
+                }
             }
-            if(!this.edgeDetectFramebuffer) this.createEdgeDetectFramebufferBuffer(this.edgeDetectFramebufferSize,this.edgeDetectFramebufferSize);
 
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.edgeDetectFramebuffer);
 
@@ -7300,6 +7363,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.uniform1f(this.shaderProgramEdgeDetect.normalThreshold,this.normalThreshold);
             this.gl.uniform1f(this.shaderProgramEdgeDetect.scaleDepth,this.scaleDepth);
             this.gl.uniform1f(this.shaderProgramEdgeDetect.scaleNormal,this.scaleNormal);
+            this.gl.uniform1f(this.shaderProgramEdgeDetect.xPixelOffset, 1.0/this.edgeDetectFramebuffer.width/this.zoom);
+            this.gl.uniform1f(this.shaderProgramEdgeDetect.yPixelOffset, 1.0/this.edgeDetectFramebuffer.height/this.zoom);
+
+            const halfScaleFloorDepth = Math.floor(this.scaleDepth * 0.5);
+            const halfScaleCeilDepth = Math.ceil(this.scaleDepth * 0.5);
 
             this.gl.activeTexture(this.gl.TEXTURE0);
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.gBufferPositionTexture);
@@ -7311,7 +7379,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.enableVertexAttribArray(this.shaderProgramEdgeDetect.vertexTextureAttribute);
             this.gl.enableVertexAttribArray(this.shaderProgramEdgeDetect.vertexPositionAttribute);
             //FIXME - Size
-            this.gl.viewport(0, 0, this.edgeDetectFramebufferSize, this.edgeDetectFramebufferSize);
+            if(this.renderToTexture) {
+                this.gl.viewport(0, 0, this.edgeDetectFramebufferSize, this.edgeDetectFramebufferSize);
+            } else {
+                if(ratio>1.0)
+                    this.gl.viewport(0, 0, this.edgeDetectFramebufferSize, this.edgeDetectFramebufferSize/ratio);
+                else
+                    this.gl.viewport(0, 0, this.edgeDetectFramebufferSize*ratio, this.edgeDetectFramebufferSize);
+            }
 
             let paintMvMatrix = mat4.create();
             let paintPMatrix = mat4.create();
@@ -7610,7 +7685,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         if(this.renderToTexture) {
-            this.edgeDetectFramebufferSize = 1024;
+            this.edgeDetectFramebufferSize = 2048;
             this.gBuffersFramebufferSize = 1024;
             if(this.edgeDetectFramebuffer){
                 this.gl.deleteFramebuffer(this.edgeDetectFramebuffer);
@@ -8261,6 +8336,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
                 for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
                     if (bufferTypes[j] === "PERFECT_SPHERES") {
+
                         let buffer = this.imageBuffer;
 
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexTextureBuffer[0]);
@@ -8320,6 +8396,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             if(program.vertexColourAttribute!=null) this.gl.vertexAttribDivisor(program.vertexColourAttribute, 1);
                             this.gl.vertexAttribDivisor(program.sizeAttribute, 1);
                             this.gl.vertexAttribDivisor(program.offsetAttribute, 1);
+                            if(this.displayBuffers[idx].isHoverBuffer&&this.hoverSize>0.27){
+                                this.gl.disableVertexAttribArray(program.sizeAttribute);
+                                this.gl.vertexAttribDivisor(program.sizeAttribute, 0);
+                                const hoverSize = this.hoverSize + 0.4;
+                                this.gl.vertexAttrib3f(program.sizeAttribute, hoverSize, hoverSize, hoverSize, 1.0);
+                            }
                             this.gl.drawElementsInstanced(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
                             if(program.vertexColourAttribute!=null) this.gl.vertexAttribDivisor(program.vertexColourAttribute, 0);
                             this.gl.vertexAttribDivisor(program.sizeAttribute, 0);
@@ -8339,6 +8421,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             this.gl.uniformMatrix4fv(program.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
                             this.gl.uniformMatrix4fv(program.invSymMatrixUniform, false, invsymt);
                         }
+
                         if(this.displayBuffers[idx].symmetryMatrices.length>0){
                             if(this.displayBuffers[idx].changeColourWithSymmetry){
                                 this.gl.disableVertexAttribArray(program.vertexColourAttribute);

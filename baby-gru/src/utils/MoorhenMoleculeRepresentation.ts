@@ -617,17 +617,13 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         const atomColours = {}
         selectedGemmiAtoms.forEach(atom => { atomColours[`${atom.serial}`] = colour })
         let sphere_size = 0.3
-        let click_tol = 0.65
-        if (this.parentMolecule.representations.some(item => item.style === 'VdwSpheres' && item.visible)) {
-            sphere_size = 1.8
-            click_tol = 3.7
-        }
         let objects = [
             gemmiAtomsToCirclesSpheresInfo(selectedGemmiAtoms, sphere_size, "PERFECT_SPHERES", atomColours)
         ]
         objects.forEach(object => {
-            object["clickTol"] = click_tol
+            object["clickTol"] = 1e-6
             object["doStencil"] = true
+            object["isHoverBuffer"] = true
         })
         return objects
     }
