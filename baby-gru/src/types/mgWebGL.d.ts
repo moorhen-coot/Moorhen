@@ -267,6 +267,8 @@ export namespace webGL {
         normalThreshold: number;
         scaleDepth: number;
         scaleNormal: number;
+        xPixelOffset: number;
+        yPixelOffset: number;
         occludeDiffuse: boolean;
         doShadowDepthDebug: boolean;
         doSpin: boolean;
@@ -433,6 +435,8 @@ export namespace webGL {
         drawingGBuffers: boolean;
         initializeShaders() : void;
         axesTexture: any;
+
+        hoverSize: number;
 
     }
 }
