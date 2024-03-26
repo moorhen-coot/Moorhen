@@ -121,7 +121,7 @@ message Blur {
   float radius = 3;
 }
 
-message BackupSession {
+message Session {
   string version = 1;
   bool includesAdditionalMapData = 2;
   repeated MoleculeSessionData moleculeData = 3;

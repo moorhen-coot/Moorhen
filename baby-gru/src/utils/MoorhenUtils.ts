@@ -457,7 +457,7 @@ export async function loadSessionFromProtoMessage(
 ): Promise<number> {
 
     timeCapsuleRef.current.setBusy(true)
-    const sessionData = moorhensession.BackupSession.toObject(sessionProtoMessage) as moorhen.backupSession
+    const sessionData = moorhensession.Session.toObject(sessionProtoMessage) as moorhen.backupSession
     const status = await loadSessionData(sessionData, monomerLibraryPath, molecules, maps, commandCentre, timeCapsuleRef, glRef, dispatch)
     timeCapsuleRef.current.setBusy(false)
     return status
@@ -670,35 +670,29 @@ export const readDataFile = (source: File): Promise<ArrayBuffer> => {
     })
 }
 
-export const doDownload = (data: BlobPart[], targetName: string) => {
-    const file = new File(data, targetName, { type: 'application/octet-stream' });
+const downloadFile = (file: File, fileName: string) => {
     const url = window.URL.createObjectURL(file);
+    
     const link = document.createElement('a');
-    link.download = targetName;
+    link.download = fileName;
     link.href = url;
 
-    // Append to html link element page
     document.body.appendChild(link);
 
-    // Start download
     link.click();
 
-    // Clean up and remove the link
     link.parentNode.removeChild(link);
     window.URL.revokeObjectURL(url);
 }
 
-export const doDownloadText = (text: string, filename: string) => {
-    var element = document.createElement('a');
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-    element.setAttribute('download', filename);
+export const doDownload = (data: BlobPart[], fileName: string) => {
+    const file = new File(data, fileName, { type: 'application/octet-stream' });
+    downloadFile(file, fileName)
+}
 
-    element.style.display = 'none';
-    document.body.appendChild(element);
-
-    element.click();
-
-    document.body.removeChild(element);
+export const doDownloadText = (text: string, fileName: string) => {
+    const file = new File([text], fileName, { type: 'text/plain' });
+    downloadFile(file, fileName)
 }
 
 export const readGemmiStructure = (coordData: ArrayBuffer | string, molName: string): gemmi.Structure => {
