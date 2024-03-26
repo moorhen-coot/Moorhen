@@ -611,15 +611,11 @@ export const readDataFile = (source: File): Promise<ArrayBuffer> => {
 }
 
 export const doDownload = (data: BlobPart[], targetName: string) => {
-    const url = window.URL.createObjectURL(
-        new Blob(data),
-    );
+    const file = new File(data, targetName, { type: 'application/octet-stream' });
+    const url = window.URL.createObjectURL(file);
     const link = document.createElement('a');
+    link.download = targetName;
     link.href = url;
-    link.setAttribute(
-        'download',
-        targetName,
-    );
 
     // Append to html link element page
     document.body.appendChild(link);
@@ -629,6 +625,7 @@ export const doDownload = (data: BlobPart[], targetName: string) => {
 
     // Clean up and remove the link
     link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url);
 }
 
 export const doDownloadText = (text: string, filename: string) => {
