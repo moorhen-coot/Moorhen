@@ -12,7 +12,7 @@ import { MoorhenImportMapCoefficientsMenuItem } from "../menu-item/MoorhenImport
 import { MoorhenDeleteEverythingMenuItem } from "../menu-item/MoorhenDeleteEverythingMenuItem"
 import { IconButton, MenuItem } from "@mui/material";
 import { RadioButtonCheckedOutlined, StopCircleOutlined, WarningOutlined } from "@mui/icons-material";
-import { convertViewtoPx, doDownload, readTextFile, loadSessionData, guid } from "../../utils/MoorhenUtils";
+import { convertViewtoPx, doDownload, loadSessionFromProtoMessage, guid, readDataFile, loadSessionFromJsonString } from "../../utils/MoorhenUtils";
 import { getBackupLabel } from "../../utils/MoorhenTimeCapsule"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MoorhenNotification } from "../misc/MoorhenNotification";
@@ -22,6 +22,7 @@ import { setNotificationContent } from "../../store/generalStatesSlice";
 import { addMoleculeList } from "../../store/moleculesSlice";
 import { setShowQuerySequenceModal } from "../../store/activeModalsSlice";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { moorhensession } from "../../protobuf/MoorhenSession";
 
 export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     
@@ -105,28 +106,43 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
 
     const handleSessionUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         try {
-            const sessionData = await readTextFile(e.target.files[0]) as string
-            props.commandCentre.current.history.reset()
-            await loadSession(sessionData) 
+            const arrayBuffer = await readDataFile(e.target.files[0])
+            const bytes = new Uint8Array(arrayBuffer)
+            const sessionMessage = moorhensession.Session.decode(bytes)
+            await loadSession(sessionMessage) 
         } catch (err) {
             console.log(err)
             dispatch(setNotificationContent(getWarningToast("Error loading session")))
         }
     }
 
-    const loadSession = async (sessionData: string) => {
+    const loadSession = async (session: string | object) => {
         try {
             props.commandCentre.current.history.reset()
-            const status = await loadSessionData(
-                sessionData as string,
-                props.monomerLibraryPath,
-                molecules, 
-                maps,
-                props.commandCentre,
-                props.timeCapsuleRef,
-                props.glRef,
-                dispatch
-            )
+            let status = -1
+            if (typeof session === 'string') {
+                status = await loadSessionFromJsonString(
+                    session as string,
+                    props.monomerLibraryPath,
+                    molecules, 
+                    maps,
+                    props.commandCentre,
+                    props.timeCapsuleRef,
+                    props.glRef,
+                    dispatch
+                )
+            } else {
+                status = await loadSessionFromProtoMessage(
+                    session,
+                    props.monomerLibraryPath,
+                    molecules, 
+                    maps,
+                    props.commandCentre,
+                    props.timeCapsuleRef,
+                    props.glRef,
+                    dispatch
+                )
+            }
             if (status === -1) {
                 dispatch(setNotificationContent(getWarningToast(`Failed to read backup (deprecated format)`)))
             }
@@ -137,9 +153,10 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     }
 
     const getSession = async () => {        
-        const session = await props.timeCapsuleRef.current.fetchSession(true)
-        const sessionString = JSON.stringify(session)
-        doDownload([sessionString], `session.json`)
+        const sessionData = await props.timeCapsuleRef.current.fetchSession(true)
+        const sessionMessage = moorhensession.Session.fromObject(sessionData)
+        const sessionBytes = moorhensession.Session.encode(sessionMessage).finish()
+        doDownload([sessionBytes], 'moorhen_session.pb')
     }
 
     const createBackup = async () => {
@@ -206,7 +223,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     {!props.disableFileUploads && 
                     <Form.Group className='moorhen-form-group' controlId="upload-session-form">
                         <Form.Label>Load from stored session</Form.Label>
-                        <Form.Control type="file" accept=".json" multiple={false} onChange={handleSessionUpload}/>
+                        <Form.Control type="file" accept=".pb" multiple={false} onChange={handleSessionUpload}/>
                     </Form.Group>}
                     
                     <hr></hr>

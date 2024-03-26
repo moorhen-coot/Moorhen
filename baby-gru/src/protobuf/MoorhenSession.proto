@@ -1,0 +1,131 @@
+package moorhensession;
+syntax = "proto3";
+
+message CootBondOptions {
+  float smoothness = 1;
+  float width = 2;
+  float atomRadiusBondRatio = 3;
+}
+
+message ColourRuleObject {
+  string cid = 1;
+  string color = 2;
+  bool applyColourToNonCarbonAtoms = 3;
+  bool isMultiColourRule = 4;
+  string ruleType = 5;
+  repeated string args = 6;
+  string label = 7;
+  string uniqueId = 8;
+  int32 parentMoleculeMolNo = 9;
+  string parentRepresentationUniqueId = 10;
+}
+
+message SelectedMtzColumns {
+  string F = 1;
+  string PHI = 2;
+  optional string Fobs = 3;
+  optional string SigFobs = 4;
+  optional string FreeR = 5;
+  optional bool isDifference = 6;
+  optional bool useWeight = 7;
+  optional bool calcStructFact = 8;
+}
+
+message Representation {
+    string cid = 1;
+    string style = 2;
+    bool isCustom = 3;
+    repeated ColourRuleObject colourRules = 4;
+    CootBondOptions bondOptions = 5;
+}
+
+message MoleculeSessionData {
+  string name = 1;
+  int32 molNo = 2;
+  string coordString = 3;
+  repeated Representation representations = 4;
+  CootBondOptions defaultBondOptions = 5;
+  repeated ColourRuleObject defaultColourRules = 6;
+  repeated int32 connectedToMaps = 7;
+  map<string, string> ligandDicts = 8;
+}
+
+message MapDataSession {
+  string name = 1;
+  int32 molNo = 2;
+  string uniqueId = 3;
+  bytes mapData = 4;
+  bytes reflectionData = 5;
+  bool showOnLoad = 6;
+  float contourLevel = 7;
+  float radius = 8;
+  MapRgba rgba = 9;
+  string style = 10;
+  bool isDifference = 11;
+  SelectedMtzColumns selectedColumns = 12;
+  bool hasReflectionData = 13;
+  string associatedReflectionFileName = 14;
+}
+
+message MapRgba {
+  MapColour mapColour = 1;
+  MapColour positiveDiffColour = 2;
+  MapColour negativeDiffColour = 3;
+  float a = 4;
+}
+
+message MapColour {
+  int32 r = 1;
+  int32 g = 2;
+  int32 b = 3;
+}
+
+message ViewDataSession {
+  repeated float origin = 1;
+  repeated float backgroundColor = 2;
+  repeated float ambientLight = 3;
+  repeated float diffuseLight = 4;
+  repeated float lightPosition = 5;
+  repeated float specularLight = 6;
+  float specularPower = 7;
+  float fogStart = 8;
+  float fogEnd = 9;
+  float zoom = 10;
+  bool doDrawClickedAtomLines = 11;
+  float clipStart = 12;
+  float clipEnd = 13;
+  repeated float quat4 = 14;
+  bool shadows = 15;
+  Ssao ssao = 16;
+  EdgeDetection edgeDetection = 17;
+  Blur blur = 18;
+}
+
+message Ssao {
+  bool enabled = 1;
+  float radius = 2;
+  float bias = 3;
+}
+
+message EdgeDetection {
+  bool enabled = 1;
+  float depthScale = 2;
+  float normalScale = 3;
+  float depthThreshold = 4;
+  float normalThreshold = 5;
+}
+
+message Blur {
+  bool enabled = 1;
+  float depth = 2;
+  float radius = 3;
+}
+
+message Session {
+  string version = 1;
+  bool includesAdditionalMapData = 2;
+  repeated MoleculeSessionData moleculeData = 3;
+  repeated MapDataSession mapData = 4;
+  ViewDataSession viewData = 5;
+  int32 activeMapIndex = 6;
+}

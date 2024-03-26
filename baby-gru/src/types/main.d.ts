@@ -316,8 +316,33 @@ declare module 'moorhen' {
     }
     module.exports.MoorhenMap = MoorhenMap
 
-    function loadSessionData(
+    function loadSessionFromJsonString(
         sessionDataString: string,
+        monomerLibraryPath: string,
+        molecules: _moorhen.Molecule[],
+        maps: _moorhen.Map[],
+        commandCentre: React.RefObject<_moorhen.CommandCentre>,
+        timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule>,
+        glRef: React.RefObject<webGL.MGWebGL>,
+        dispatch: (reduxStoreAction: any) => void,
+    ): Promise<number>;
+    module.exports = loadSessionFromJsonString;
+
+    function loadSessionFromProtoMessage(
+        sessionProtoMessage: any,
+        monomerLibraryPath: string,
+        molecules: _moorhen.Molecule[],
+        maps: _moorhen.Map[],
+        commandCentre: React.RefObject<_moorhen.CommandCentre>,
+        timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule>,
+        glRef: React.RefObject<webGL.MGWebGL>,
+        dispatch: (reduxStoreAction: any) => void,
+    ): Promise<number>;
+    module.exports = loadSessionFromProtoMessage;
+
+
+    function loadSessionData(
+        sessionData: _moorhen.backupSession,
         monomerLibraryPath: string,
         molecules: _moorhen.Molecule[],
         maps: _moorhen.Map[],

@@ -101,7 +101,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
 
     /**
      * Update metadata files currently stored in the local storage. It might be required to call this function before
-     * using {@link MoorhenTimeCapsule.fetchSession}
+     * using MoorhenTimeCapsule.fetchSession
      * @returns {Promise<string[]>} Backup keys for the new metadata files that were created if any
      */
     async updateDataFiles(): Promise<(string | void)[]> {
@@ -246,10 +246,10 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         const viewData: moorhen.viewDataSession = {
             origin: this.glRef.current.origin,
             backgroundColor: this.glRef.current.background_colour,
-            ambientLight: this.glRef.current.light_colours_ambient,
-            diffuseLight: this.glRef.current.light_colours_diffuse,
-            lightPosition: this.glRef.current.light_positions,
-            specularLight: this.glRef.current.light_colours_specular,
+            ambientLight: Array.from(this.glRef.current.light_colours_ambient) as [number, number, number, number],
+            diffuseLight: Array.from(this.glRef.current.light_colours_diffuse) as [number, number, number, number],
+            lightPosition: Array.from(this.glRef.current.light_positions) as [number, number, number, number],
+            specularLight: Array.from(this.glRef.current.light_colours_specular) as [number, number, number, number],
             specularPower: this.glRef.current.specularPower,
             fogStart: this.glRef.current.gl_fog_start,
             fogEnd: this.glRef.current.gl_fog_end,
@@ -257,7 +257,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             doDrawClickedAtomLines: this.glRef.current.doDrawClickedAtomLines,
             clipStart: (this.glRef.current.gl_clipPlane0[3] + this.glRef.current.fogClipOffset) * -1,
             clipEnd: this.glRef.current.gl_clipPlane1[3] - this.glRef.current.fogClipOffset,
-            quat4: this.glRef.current.myQuat,
+            quat4: Array.from(this.glRef.current.myQuat),
             edgeDetection: {
                 enabled: this.glRef.current.doEdgeDetect,
                 depthScale: this.glRef.current.scaleDepth,
@@ -369,6 +369,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                 return key
             } catch (err) {
                 console.log(err)
+                console.log('Unable to create backup, something went wrong...')
             }   
         }
     }

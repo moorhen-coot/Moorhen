@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
-import { convertViewtoPx, guid, loadSessionData } from "../../utils/MoorhenUtils";
+import { convertViewtoPx, guid, loadSessionFromJsonString } from "../../utils/MoorhenUtils";
 import { Stepper, Step, StepButton, StepLabel } from "@mui/material";
 import { moorhen } from "../../types/moorhen";
 import { SaveOutlined, WarningOutlined } from "@mui/icons-material";
@@ -28,7 +28,7 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
 
     const loadSession = useCallback(async (sessionData: string) => {
         try {
-            const status = await loadSessionData(
+            const status = await loadSessionFromJsonString(
                 sessionData as string,
                 props.monomerLibraryPath,
                 molecules, 
