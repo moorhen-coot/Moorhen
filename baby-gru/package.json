@@ -64,12 +64,13 @@
   },
   "dependencies": {},
   "scripts": {
+    "transpile-protobuf": "npx pbjs -t static-module -w es6 -o ./src/protobuf/MoorhenSession.js ./src/protobuf/MoorhenSession.proto",
     "create-version": "npx genversion -e -p ./package.json -d -s ./src/version.js",
     "transpile-ts-worker": "npx tsc --module es2015 --lib webworker --skipLibCheck public/baby-gru/CootWorker.ts && sed -i.bak '/export {}/d' public/baby-gru/CootWorker.js && rm public/baby-gru/CootWorker.js.bak",
     "transpile-ts-worker-jest": "npx tsc --module es2015 --lib webworker --skipLibCheck public/baby-gru/CootWorker.ts && sed -i.bak 's/export {}/export { doCootCommand, setModules }/g' public/baby-gru/CootWorker.js && sed -i.bak '/importScripts.*;/d' public/baby-gru/CootWorker.js && sed -i.bak 's/onmessage/function setModules(arg0, arg1) { molecules_container = arg0; cootModule = arg1 }; let postMessage = () => {}; let onmessage/g' public/baby-gru/CootWorker.js && rm public/baby-gru/CootWorker.js.bak",
-    "prestart": "npm run create-version && npm run transpile-ts-worker",
+    "prestart": "npm run create-version && npm run transpile-ts-worker && npm run transpile-protobuf",
     "start": "vite",
-    "prebuild": "npm run create-version && npm run transpile-ts-worker",
+    "prebuild": "npm run create-version && npm run transpile-ts-worker && npm run transpile-protobuf",
     "build": "vite build",
     "build-release": "npm run prebuild && webpack --mode production --devtool inline-source-map",
     "dev": "concurrently -k \"BROWSER=none npm start\" \"npm:electron\"",
@@ -79,8 +80,8 @@
     "make-linux": "npm run build && electron-forge make --platform linux",
     "make-win32": "npm run build && electron-forge make --platform win32",
     "create-docs": "npm run create-version && npx jsdoc -c jsdoc.json",
-    "test": "npm run create-version && npx tsc && npm run transpile-ts-worker-jest && ln -s ./public/baby-gru/wasm/moorhen.data ./moorhen.data && ln -s ./public/baby-gru ./baby-gru && node --trace-warnings --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --forceExit",
-    "test-react": "npm run create-version && npx tsc && node --trace-warnings --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --forceExit --testPathIgnorePatterns=moorhenContainer.test.jsx --selectProjects react-components"
+    "test": "npm run create-version && npm run transpile-protobuf && npx tsc && npm run transpile-ts-worker-jest && ln -s ./public/baby-gru/wasm/moorhen.data ./moorhen.data && ln -s ./public/baby-gru ./baby-gru && node --trace-warnings --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --forceExit",
+    "test-react": "npm run create-version && npm run transpile-protobuf && npx tsc && node --trace-warnings --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --forceExit --testPathIgnorePatterns=moorhenContainer.test.jsx --selectProjects react-components"
   },
   "eslintConfig": {
     "extends": [
