@@ -6715,7 +6715,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.instanced_ext.drawElementsInstancedANGLE(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0, theBuffer.triangleInstanceOriginBuffer[j].numItems);
                 }
                 if(theBuffer.symmetryMatrices.length>0){
-                    this.gl.disableVertexAttribArray(theShader.vertexColourAttribute&&theBuffer.changeColourWithSymmetry);
+                    this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
                     if(bright_y>0.5)
                         this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.3, 0.3, 0.3, 1.0);
                     else
