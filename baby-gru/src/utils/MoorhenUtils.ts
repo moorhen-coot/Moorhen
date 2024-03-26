@@ -20,6 +20,7 @@ import {
     setBackgroundColor, setDepthBlurDepth, setDepthBlurRadius, setDoEdgeDetect, setDoSSAO, setDoShadow, 
     setEdgeDetectDepthScale, setEdgeDetectDepthThreshold, setEdgeDetectNormalScale, setEdgeDetectNormalThreshold, setSsaoBias, setSsaoRadius, setUseOffScreenBuffers 
 } from "../store/sceneSettingsSlice";
+import { moorhensession } from "../protobuf/MoorhenSession";
 
 export const getAtomInfoLabel = (atomInfo: moorhen.AtomInfo) => {
     return `/${atomInfo.mol_name}/${atomInfo.chain_id}/${atomInfo.res_no}(${atomInfo.res_name})/${atomInfo.name}${atomInfo.has_altloc ? `:${atomInfo.alt_loc}` : ""}`
@@ -209,9 +210,10 @@ export function sequenceIsValid(sequence: moorhen.ResidueInfo[]): boolean {
     }
     return true
 }
+
 /**
- * A function to load session data
- * @param {string} sessionDataString - A JSON string representation of the object containing session data
+ * A function to load session data 
+ * @param {moorhen.backupSession} sessionData - An object containing session data
  * @param {string} monomerLibraryPath - Path to the monomer library
  * @param {moorhen.Molecule[]} molecules - State containing current molecules loaded in the session
  * @param {moorhen.Map[]} maps - State containing current maps loaded in the session
@@ -222,7 +224,7 @@ export function sequenceIsValid(sequence: moorhen.ResidueInfo[]): boolean {
  * @returns {number} Returns -1 if there was an error loading the session otherwise 0
  */
 export async function loadSessionData(
-    sessionDataString: string,
+    sessionData: moorhen.backupSession,
     monomerLibraryPath: string,
     molecules: moorhen.Molecule[],
     maps: moorhen.Map[],
@@ -231,9 +233,6 @@ export async function loadSessionData(
     glRef: React.RefObject<webGL.MGWebGL>,
     dispatch: Dispatch<AnyAction>
 ): Promise<number> {
-
-    timeCapsuleRef.current.setBusy(true)
-    const sessionData: moorhen.backupSession = JSON.parse(sessionDataString)
 
     if (!sessionData) {
         return -1
@@ -296,7 +295,9 @@ export async function loadSessionData(
     for (let i = 0; i < newMolecules.length; i++) {
         const molecule = newMolecules[i]
         const storedMoleculeData = sessionData.moleculeData[i]
-        await Promise.all(Object.keys(storedMoleculeData.ligandDicts).map(compId => molecule.addDict(storedMoleculeData.ligandDicts[compId])))
+        if (storedMoleculeData.ligandDicts) {
+            await Promise.all(Object.keys(storedMoleculeData.ligandDicts).map(compId => molecule.addDict(storedMoleculeData.ligandDicts[compId])))
+        }
         molecule.defaultColourRules = storedMoleculeData.defaultColourRules.map(item => {
             const colourRule = MoorhenColourRule.initFromDataObject(item, commandCentre, molecule)
             return colourRule
@@ -400,7 +401,7 @@ export async function loadSessionData(
     })
 
     // Set connected maps and molecules if any
-    const connectedMoleculeIndex = sessionData.moleculeData.findIndex(molecule => molecule.connectedToMaps !== null)
+    const connectedMoleculeIndex = sessionData.moleculeData.findIndex(molecule => molecule.connectedToMaps?.length > 0)
     if (connectedMoleculeIndex !== -1) {
         const oldConnectedMolecule = sessionData.moleculeData[connectedMoleculeIndex]        
         const molecule = newMolecules[connectedMoleculeIndex].molNo
@@ -429,8 +430,67 @@ export async function loadSessionData(
         })
     }
     
-    timeCapsuleRef.current.setBusy(false)
     return 0
+}
+
+/**
+ * A function to load session data
+ * @param {string} sessionProtoMessage - A protobuf message for the object containing session data
+ * @param {string} monomerLibraryPath - Path to the monomer library
+ * @param {moorhen.Molecule[]} molecules - State containing current molecules loaded in the session
+ * @param {moorhen.Map[]} maps - State containing current maps loaded in the session
+ * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - React reference to the command centre
+ * @param {React.RefObject<moorhen.TimeCapsule>} timeCapsuleRef - React reference to the time capsule
+ * @param {React.RefObject<webGL.MGWebGL>} glRef - React reference to the webGL renderer
+ * @param {Dispatch<AnyAction>} dispatch - Dispatch method for the MoorhenReduxStore
+ * @returns {number} Returns -1 if there was an error loading the session otherwise 0
+ */
+export async function loadSessionFromProtoMessage(
+    sessionProtoMessage: any,
+    monomerLibraryPath: string,
+    molecules: moorhen.Molecule[],
+    maps: moorhen.Map[],
+    commandCentre: React.RefObject<moorhen.CommandCentre>,
+    timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
+    glRef: React.RefObject<webGL.MGWebGL>,
+    dispatch: Dispatch<AnyAction>
+): Promise<number> {
+
+    timeCapsuleRef.current.setBusy(true)
+    const sessionData = moorhensession.BackupSession.toObject(sessionProtoMessage) as moorhen.backupSession
+    const status = await loadSessionData(sessionData, monomerLibraryPath, molecules, maps, commandCentre, timeCapsuleRef, glRef, dispatch)
+    timeCapsuleRef.current.setBusy(false)
+    return status
+}
+
+/**
+ * A function to load session data from a JSON string representation
+ * @param {string} sessionDataString - A JSON string representation of the object containing session data
+ * @param {string} monomerLibraryPath - Path to the monomer library
+ * @param {moorhen.Molecule[]} molecules - State containing current molecules loaded in the session
+ * @param {moorhen.Map[]} maps - State containing current maps loaded in the session
+ * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - React reference to the command centre
+ * @param {React.RefObject<moorhen.TimeCapsule>} timeCapsuleRef - React reference to the time capsule
+ * @param {React.RefObject<webGL.MGWebGL>} glRef - React reference to the webGL renderer
+ * @param {Dispatch<AnyAction>} dispatch - Dispatch method for the MoorhenReduxStore
+ * @returns {number} Returns -1 if there was an error loading the session otherwise 0
+ */
+export async function loadSessionFromJsonString(
+    sessionDataString: string,
+    monomerLibraryPath: string,
+    molecules: moorhen.Molecule[],
+    maps: moorhen.Map[],
+    commandCentre: React.RefObject<moorhen.CommandCentre>,
+    timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
+    glRef: React.RefObject<webGL.MGWebGL>,
+    dispatch: Dispatch<AnyAction>
+): Promise<number> {
+
+    timeCapsuleRef.current.setBusy(true)
+    const sessionData: moorhen.backupSession = JSON.parse(sessionDataString)
+    const status = await loadSessionData(sessionData, monomerLibraryPath, molecules, maps, commandCentre, timeCapsuleRef, glRef, dispatch)
+    timeCapsuleRef.current.setBusy(false)
+    return status
 }
 
 export function convertRemToPx(rem: number): number {

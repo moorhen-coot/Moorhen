@@ -14,7 +14,7 @@ import { MoorhenMoleculeSelect } from "./components/select/MoorhenMoleculeSelect
 import { MoorhenMapSelect } from "./components/select/MoorhenMapSelect";
 import { MoorhenSlider } from "./components/misc/MoorhenSlider";
 import { MoorhenFetchOnlineSourcesForm } from "./components/form/MoorhenFetchOnlineSourcesForm";
-import { loadSessionData } from "./utils/MoorhenUtils";
+import { loadSessionFromJsonString, loadSessionData, loadSessionFromProtoMessage } from "./utils/MoorhenUtils";
 import { MoorhenReduxProvider } from "./components/misc/MoorhenReduxProvider";
 import MoorhenReduxStore from "./store/MoorhenReduxStore";
 import { setDefaultBackgroundColor, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
@@ -44,7 +44,7 @@ import { setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwr
 
 export {
     ErrorBoundary, MoorhenApp, MoorhenContainer, MoorhenTimeCapsule, MoorhenMoleculeSelect, MoorhenMolecule, MoorhenMap,
-    MoorhenCommandCentre, loadSessionData, MoorhenMapSelect, MoorhenDraggableModalBase, MoorhenReduxProvider, 
+    MoorhenCommandCentre, loadSessionFromJsonString, MoorhenMapSelect, MoorhenDraggableModalBase, MoorhenReduxProvider, 
     setDefaultBackgroundColor, setDrawCrosshairs, setDrawScaleBar, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
     setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap, MoorhenColourRule,
     setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius,
@@ -61,5 +61,6 @@ export {
     setMapRadius, setMapStyle, showMap, hideMap, setContourLevel, showMolecule, hideMolecule, MoorhenMoleculeRepresentation, 
     MoorhenQuerySequenceModal, MoorhenPreferences, setDoEdgeDetect, addCustomRepresentation, removeCustomRepresentation,
     setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setEdgeDetectNormalScale,
-    setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints, setAnimateRefine, MoorhenReduxStore
+    setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints, setAnimateRefine, MoorhenReduxStore, 
+    loadSessionData, loadSessionFromProtoMessage
 };

@@ -582,7 +582,7 @@ export namespace moorhen {
         removeBackup(key: string): Promise<void>;
         updateDataFiles(): Promise<(string | void)[]>;
         createBackup(keyString: string, sessionString: string): Promise<string>;
-        fetchSession(arg0: boolean): Promise<backupSession>;
+        fetchSession(includeAdditionalMapData: boolean): Promise<backupSession>;
         toggleDisableBackups(): void;
         moleculesRef: React.RefObject<Molecule[]>;
         mapsRef: React.RefObject<Map[]>;
