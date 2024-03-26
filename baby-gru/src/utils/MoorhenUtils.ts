@@ -266,7 +266,7 @@ export async function loadSessionData(
         const newMap = new MoorhenMap(commandCentre, glRef)
         if (sessionData.includesAdditionalMapData) {
             return newMap.loadToCootFromMapData(
-                Uint8Array.from(Object.values(storedMapData.mapData)).buffer, 
+                storedMapData.mapData, 
                 storedMapData.name, 
                 storedMapData.isDifference
                 )
@@ -324,7 +324,7 @@ export async function loadSessionData(
             if (sessionData.includesAdditionalMapData && storedMapData.reflectionData) {
                 return map.associateToReflectionData(
                     storedMapData.selectedColumns, 
-                    Uint8Array.from(Object.values(storedMapData.reflectionData))
+                    storedMapData.reflectionData
                 )
             } else if(storedMapData.associatedReflectionFileName && storedMapData.selectedColumns) {
                 return timeCapsuleRef.current.retrieveBackup(
@@ -335,7 +335,7 @@ export async function loadSessionData(
                     ).then(reflectionData => {
                         return map.associateToReflectionData(
                             storedMapData.selectedColumns, 
-                            Uint8Array.from(Object.values(reflectionData))
+                            reflectionData as ArrayBuffer
                         )
                     })
             }

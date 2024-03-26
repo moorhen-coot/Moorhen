@@ -369,6 +369,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                 return key
             } catch (err) {
                 console.log(err)
+                console.log('Unable to create backup, something went wrong...')
             }   
         }
     }
