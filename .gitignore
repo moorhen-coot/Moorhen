@@ -585,3 +585,4 @@ baby-gru/public/baby-gru/CootWorker.js
 baby-gru/docs/
 baby-gru/src/version.js
 react-app/public/wasm/web_example.js
+baby-gru/src/protobuf/MoorhenSession.js

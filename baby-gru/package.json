@@ -162,6 +162,8 @@
     "plotly.js": "^2.12.1",
     "prismjs": "^1.29.0",
     "prop-types": "^15.8.1",
+    "protobufjs": "^7.2.6",
+    "protobufjs-cli": "^1.1.2",
     "protvista-manager": "^3.4.0",
     "protvista-navigation": "^3.5.1",
     "protvista-sequence": "^3.5.1",
