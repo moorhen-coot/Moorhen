@@ -6,7 +6,7 @@ import { MoorhenFlipMapHandMenuItem } from "../menu-item/MoorhenFlipMapHandMenuI
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MoorhenColourMapByOtherMapMenuItem } from "../menu-item/MoorhenColourMapByOtherMapMenuItem"
 
-export const MoorhenCryoMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
+export const MoorhenMapToolsMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
     const menuItemProps = { setPopoverIsShown, ...props }
 
