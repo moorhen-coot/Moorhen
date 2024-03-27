@@ -3541,11 +3541,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         theseBuffers.forEach(buffer => {
+            if("bufferTypes" in buffer){
                 for(let ibuf=0;ibuf<buffer.bufferTypes.length;ibuf++){
                     if(buffer.bufferTypes[ibuf]==="PERFECT_SPHERES"&&!jsondata.clickTol){
                         buffer.clickTol = 2.0 * buffer.triangleInstanceSizes[ibuf][0] + 0.45;
                     }
                 }
+            }
         })
 
         if(jsondata.isHoverBuffer){
@@ -3582,7 +3584,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         self.buildBuffers();
         self.drawScene();
-        console.log(theseBuffers)
         return theseBuffers;
     }
 
@@ -6557,7 +6558,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.gl.bufferData(this.gl.ARRAY_BUFFER, triangleVertices, this.gl.STATIC_DRAW);
                     this.displayBuffers[idx].triangleVertexPositionBuffer[j].itemSize = 3;
                     if(doColour){
-                        console.log("DEBUG: buffering colours")
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
                         this.gl.bufferData(this.gl.ARRAY_BUFFER, triangleColours, this.gl.STATIC_DRAW);
                         this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
