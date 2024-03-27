@@ -8,15 +8,15 @@ import { MoorhenLigandMenu } from './MoorhenLigandMenu';
 import { MoorhenHistoryMenu } from './MoorhenHistoryMenu';
 import { MoorhenEditMenu } from './MoorhenEditMenu';
 import { MoorhenDevMenu } from './MoorhenDevMenu';
-import { MoorhenCryoMenu } from './MoorhenCryoMenu';
+import { MoorhenMapToolsMenu } from './MoorhenMapToolsMenu';
 import { MoorhenValidationMenu } from './MoorhenValidationMenu'
 import { MoorhenCalculateMenu } from './MoorhenCalculateMenu';
 import { ClickAwayListener, Fab, MenuItem, IconButton, MenuList, Popper, Grow } from "@mui/material";
 import { convertRemToPx, convertViewtoPx } from '../../utils/MoorhenUtils';
 import { 
-    AcUnitOutlined, CalculateOutlined, DescriptionOutlined, EditOutlined, VisibilityOutlined,
+    CalculateOutlined, DescriptionOutlined, EditOutlined, VisibilityOutlined,
     FactCheckOutlined, HelpOutlineOutlined, MenuOutlined, SaveOutlined, ScienceOutlined, 
-    SettingsSuggestOutlined, CloseOutlined, HistoryOutlined,
+    SettingsSuggestOutlined, CloseOutlined, HistoryOutlined, ConstructionOutlined,
  } from '@mui/icons-material';
 import { moorhen } from '../../types/moorhen';
 import { useDispatch, useSelector } from 'react-redux';
@@ -46,7 +46,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
     const historyDialRef = useRef()
     const viewDialActionRef = useRef()
     const preferencesDialActionRef = useRef()
-    const cryoDialActionRef = useRef()
+    const mapToolsDialActionRef = useRef()
     const helpDialActionRef = useRef()
     const devDialActionRef = useRef()
     
@@ -85,7 +85,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
         'View': { icon: <VisibilityOutlined/>, name: 'View', ref: viewDialActionRef},
         'Validation': { icon: <FactCheckOutlined />, name: 'Validation', ref: validationSpeedDialActionRef},
         'Ligand': { icon:  <img className='moorhen-navbar-menu-item-icon' src={`${props.urlPrefix}/baby-gru/pixmaps/moorhen-ligand.svg`} alt='Ligand'/>, name: 'Ligand', ref: ligandSpeedDialActionRef},
-        'Cryo': { icon: <AcUnitOutlined/>, name: 'Cryo', ref: cryoDialActionRef},
+        'Map Tools': { icon: <ConstructionOutlined/>, name: 'Map Tools', ref: mapToolsDialActionRef},
         'Models': { icon: <img className='moorhen-navbar-menu-item-icon' src={`${props.urlPrefix}/baby-gru/pixmaps/secondary-structure-grey.svg`} alt='Model' />, name: 'Models', ref: modelsSpeedDialActionRef},
         'Maps': { icon: <img className='moorhen-navbar-menu-item-icon' src={`${props.urlPrefix}/baby-gru/pixmaps/map-grey.svg`} alt='Map'/>, name: 'Maps', ref: mapsSpeedDialActionRef},
         'History': {icon: <HistoryOutlined/>, name: 'History', ref: historyDialRef},
@@ -219,7 +219,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
                         { navBarActiveMenu === 'View' && <MoorhenViewMenu dropdownId="View" {...collectedProps} /> }
                         { navBarActiveMenu === 'Preferences' && <MoorhenPreferencesMenu dropdownId="Preferences" {...collectedProps} /> }
                         { navBarActiveMenu === 'History' && <MoorhenHistoryMenu dropdownId="History" {...collectedProps} /> }
-                        { navBarActiveMenu === 'Cryo' && <MoorhenCryoMenu dropdownId="Cryo" {...collectedProps} /> }
+                        { navBarActiveMenu === 'Map Tools' && <MoorhenMapToolsMenu dropdownId="Map Tools" {...collectedProps} /> }
                         { navBarActiveMenu === 'Help' &&  <MoorhenHelpMenu dropdownId="Help" {...collectedProps} /> }
                         { navBarActiveMenu === 'Dev' &&  <MoorhenDevMenu dropdownId="Dev" {...collectedProps} /> }
                         { props.extraNavBarMenus && props.extraNavBarMenus.find(menu => navBarActiveMenu === menu.name)?.JSXElement }
