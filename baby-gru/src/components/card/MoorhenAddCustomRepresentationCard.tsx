@@ -4,7 +4,7 @@ import { getMultiColourRuleArgs, representationLabelMapping } from '../../utils/
 import { moorhen } from "../../types/moorhen";
 import { IconButton, Popover, Slider } from '@mui/material';
 import { MoorhenChainSelect } from '../select/MoorhenChainSelect';
-import { HexColorPicker } from "react-colorful";
+import { HexColorInput, HexColorPicker } from "react-colorful";
 import { MoorhenSequenceRangeSelect } from '../sequence-viewer/MoorhenSequenceRangeSelect';
 import { webGL } from '../../types/mgWebGL';
 import { MoorhenSlider } from '../misc/MoorhenSlider';
@@ -366,8 +366,15 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                         }
                     }}
                 >
-                    <HexColorPicker color={colour} onChange={(color) => setColour(color)} />
-
+                    <Stack direction='vertical' style={{display: 'flex', justifyContent: 'center'}} gap={2}>
+                        <div style={{padding: 0, margin: 0, justifyContent: 'center', display: 'flex'}}>
+                            <HexColorPicker color={colour} onChange={(color) => setColour(color)} />
+                        </div>
+                        <div style={{padding: 0, margin: 0, justifyContent: 'center', display: 'flex', marginBottom: '2px' }}>
+                            <div className="moorhen-hex-input-decorator">#</div>
+                            <HexColorInput className="moorhen-hex-input" color={colour} onChange={(color) => setColour(color)} />
+                        </div>
+                    </Stack>
                 </Popover>
                 </>
                 }
