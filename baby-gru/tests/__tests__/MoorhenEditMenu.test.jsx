@@ -162,7 +162,7 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
 
     afterEach(cleanup)
 
-    test("Test MoorhenContainer merge molecules" , async () => {
+    test("Test MoorhenEditMenu merge molecules" , async () => {
         render(
             <Provider store={MoorhenStore}> 
                 <MoorhenNavBar {...collectedProps}/>
