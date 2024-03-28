@@ -42,7 +42,7 @@ describe('Testing MoorhenBackupSelect', () => {
             </Provider> 
         )
 
-        const selectNode = screen.getByRole('combobox')        
+        const selectNode = screen.getByRole('combobox')
         const optionNode_1 = await screen.findByText('key-1')
         const optionNode_2 = await screen.findByText('key-2')
         const optionNode_3 = await screen.findByText('key-3')
