@@ -7,6 +7,8 @@ import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from 'react-redux';
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
 import { clearResidueSelection } from "../../store/generalStatesSlice";
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
+import { removeMolecule } from "../../store/moleculesSlice";
 
 export const MoorhenDeleteUsingCidMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
@@ -43,7 +45,14 @@ export const MoorhenDeleteUsingCidMenuItem = (props: {
 
         try {
             setInvalidCid(false)
-            molecule.deleteCid(selectedCid)
+            const result = await molecule.deleteCid(selectedCid)
+            if (result.second < 1) {
+                console.log('Empty molecule detected, deleting it now...')
+                molecule.delete()
+                dispatch( removeMolecule(molecule) )
+            } else {
+                dispatch( triggerUpdate(molecule.molNo) )
+            }
             props.setPopoverIsShown(false)
             document.body.click()
             if (selectedCid === residueSelection.cid) {

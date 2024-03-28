@@ -41,6 +41,22 @@ import { addMolecule, removeMolecule, emptyMolecules, addMoleculeList, showMolec
 import { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity } from './store/mouseSettings';
 import { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts } from './store/shortCutsSlice';
 import { setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores } from './store/moleculeMapUpdateSlice'
+import moleculesReducer from './store/moleculesSlice'
+import mapsReducer from './store/mapsSlice'
+import mouseSettingsReducer from './store/mouseSettings'
+import backupSettingsReducer from './store/backupSettingsSlice'
+import shortcutSettingsReducer from './store/shortCutsSlice'
+import labelSettingsReducer from './store/labelSettingsSlice'
+import sceneSettingsReducer from './store/sceneSettingsSlice'
+import miscAppSettingsReducer from './store/miscAppSettingsSlice'
+import generalStatesReducer from './store/generalStatesSlice'
+import hoveringStatesReducer from './store/hoveringStatesSlice'
+import activeModalsReducer from './store/activeModalsSlice'
+import activePopUpsReducer from './store/activePopUpsSlice'
+import mapContourSettingsReducer from './store/mapContourSettingsSlice'
+import moleculeMapUpdateReducer from './store/moleculeMapUpdateSlice'
+import sharedSessionReducer from './store/sharedSessionSlice'
+import refinementSettingsReducer from './store/refinementSettingsSlice'
 
 export {
     ErrorBoundary, MoorhenApp, MoorhenContainer, MoorhenTimeCapsule, MoorhenMoleculeSelect, MoorhenMolecule, MoorhenMap,
@@ -62,5 +78,8 @@ export {
     MoorhenQuerySequenceModal, MoorhenPreferences, setDoEdgeDetect, addCustomRepresentation, removeCustomRepresentation,
     setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setEdgeDetectNormalScale,
     setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints, setAnimateRefine, MoorhenReduxStore, 
-    loadSessionData, loadSessionFromProtoMessage
+    loadSessionData, loadSessionFromProtoMessage, moleculesReducer, mapsReducer, mouseSettingsReducer, backupSettingsReducer,
+    shortcutSettingsReducer, labelSettingsReducer, sceneSettingsReducer, miscAppSettingsReducer, generalStatesReducer,
+    activeModalsReducer, hoveringStatesReducer, activePopUpsReducer, mapContourSettingsReducer, moleculeMapUpdateReducer,
+    sharedSessionReducer, refinementSettingsReducer
 };

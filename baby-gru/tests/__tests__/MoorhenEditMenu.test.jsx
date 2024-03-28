@@ -162,8 +162,7 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
 
     afterEach(cleanup)
 
-    test('Test MoorhenContainer load tutorial data 1', async () => {
-
+    test("Test MoorhenEditMenu merge molecules" , async () => {
         render(
             <Provider store={MoorhenStore}> 
                 <MoorhenNavBar {...collectedProps}/>
@@ -175,109 +174,26 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
         const user = userEvent.setup()
 
         const moorhenButton = screen.getByRole('button', { name: /moorhen/i })
-        expect(moorhenButton).toBeVisible()
         await user.click(moorhenButton)
 
-        const file = screen.getByRole('menuitem', { name: /file/i })
-        expect(file).toBeVisible()
-        await user.click(file)
-
-        const tutorialDataMenuItem = screen.getByRole('menuitem', { name: /load tutorial data\.\.\./i })
-        expect(tutorialDataMenuItem).toBeVisible()
-        await user.click(tutorialDataMenuItem)
-
-        const loadButton = screen.getByRole('button', { name: /ok/i })
-        expect(loadButton).toBeVisible()
-        await user.click(loadButton)
-
-        const moleculeCard = screen.getByText(/#0 mol\. mol\-1/i)
-        expect(moleculeCard).not.toBeVisible()
-
-        const molecules = MoorhenStore.getState().molecules.moleculeList
-        expect(molecules).toHaveLength(1)
-        expect(molecules[0].molNo).toBe(0)
-
-        const mapCard = screen.getByText(/#1 map map\-1/i)
-        expect(mapCard).not.toBeVisible()
-
-        const diffMapCard = screen.getByText(/#2 map diff\-map\-1/i)
-        expect(diffMapCard).not.toBeVisible()
-
-        const maps = MoorhenStore.getState().maps
-        expect(maps.map(item => item.molNo)).toEqual([1, 2])
-
-        expect(collectedProps.glRef.current.zoom).toBeCloseTo(1.29, 1)
-        expect(collectedProps.glRef.current.origin[0]).toBeCloseTo(-29.44, 1)
-        expect(collectedProps.glRef.current.origin[1]).toBeCloseTo(-5.04, 1)
-        expect(collectedProps.glRef.current.origin[2]).toBeCloseTo(-50.24, 1)
-
-        await user.click(file)
-        const deleteEverythingMenuItem = screen.getByRole('menuitem', { name: /delete everything/i })
-        await user.click(deleteEverythingMenuItem)
-
-        const deleteButton = screen.getByRole('button', { name: /i understand\, delete/i })
-        await user.click(deleteButton)
-
-        const molecules_empty = MoorhenStore.getState().molecules.moleculeList
-        const maps_empty = MoorhenStore.getState().maps
-        expect(molecules_empty).toHaveLength(0)
-        expect(maps_empty).toHaveLength(0)
-    })
-
-    test('Test MoorhenContainer connect map and molecule', async () => {
-
-        render(
-            <Provider store={MoorhenStore}> 
-                <MoorhenNavBar {...collectedProps}/>
-                <MoorhenModalsContainer {...collectedProps}/>
-                <MoorhenPopUpContainer {...collectedProps}/>
-            </Provider> 
-        )
-
-        const user = userEvent.setup()
-
-        await user.click( screen.getByRole('button', { name: /moorhen/i }) )
         await user.click( screen.getByRole('menuitem', { name: /file/i }) )
         await user.click( screen.getByRole('menuitem', { name: /load tutorial data\.\.\./i }) )
         await user.click( screen.getByRole('button', { name: /ok/i }) )
 
-        const molecules = MoorhenStore.getState().molecules.moleculeList
-        const maps = MoorhenStore.getState().maps
-        expect(molecules).toHaveLength(1)
-        expect(maps).toHaveLength(2)
-
         await user.click( screen.getByRole('menuitem', { name: /file/i }) )
-        await user.click( screen.getByRole('menuitem', { name: /connect mol\. and map for updating\.\.\./i }) )
+        await user.click( screen.getByRole('menuitem', { name: /load tutorial data\.\.\./i }) )
+        await user.selectOptions( screen.getByRole('combobox'), ['Tutorial 2'] )
         await user.click( screen.getByRole('button', { name: /ok/i }) )
 
-        const state = MoorhenStore.getState()
-        expect(state.moleculeMapUpdate.updatingMapsIsEnabled).toBeTruthy()
-        expect(state.moleculeMapUpdate.connectedMolecule).toBe(0)
-        expect(state.moleculeMapUpdate.reflectionMap).toBe(1)
-        expect(state.moleculeMapUpdate.twoFoFcMap).toBe(1)
-        expect(state.moleculeMapUpdate.foFcMap).toBe(2)
-
-        const rFactor_1 = screen.getByText(/clipper r\-factor/i)
-        const rFree_1 = screen.getByText(/clipper r\-free/i)
-        const moorhenPoints_1 = screen.getByText(/moorhen points/i)
-        expect(rFactor_1).toBeVisible()
-        expect(rFree_1).toBeVisible()
-        expect(moorhenPoints_1).toBeVisible()
+        const visibleMolecules_1 = MoorhenStore.getState().molecules.visibleMolecules
+        expect(visibleMolecules_1).toEqual([0, 3])
 
         await user.click( screen.getByRole('menuitem', { name: /edit/i }) )
-        await user.click( screen.getByRole('menuitem', { name: /delete atom selection\.\.\./i }) )
-        await user.type( screen.getByRole('textbox'), '//A/1-10' )
+        await user.click( screen.getByRole('menuitem', { name: /merge molecules\.\.\./i }) )
+        await user.selectOptions( screen.getAllByRole('combobox')[0], ['3: mol-2'] )
         await user.click( screen.getByRole('button', { name: /ok/i }) )
 
-        const rFactor_2 = screen.getByText(/clipper r\-factor/i)
-        const rFree_2 = screen.getByText(/clipper r\-free/i)
-        const moorhenPoints_2 = screen.getByText(/moorhen points/i)
-
-        expect(rFactor_2).toBeVisible()
-        expect(rFactor_2).toHaveTextContent("Clipper R-Factor 0.284 +0.009")
-        expect(rFree_2).toBeVisible()
-        expect(rFree_2).toHaveTextContent("Clipper R-Free 0.323 +0.013")
-        expect(moorhenPoints_2).toBeVisible()
-        expect(moorhenPoints_2).toHaveTextContent("Moorhen Points 0 -609")
+        const visibleMolecules_2 = MoorhenStore.getState().molecules.visibleMolecules
+        expect(visibleMolecules_2).toEqual([0])
     })
 })
