@@ -5,6 +5,53 @@ import { gemmi } from "./gemmi";
 import { privateer } from "./privateer";
 
 declare module 'moorhen' {
+    let moleculesReducer: any;
+    module.exports = moleculesReducer
+
+    let mapsReducer: any;
+    module.exports = mapsReducer
+
+    let mouseSettingsReducer: any;
+    module.exports = mouseSettingsReducer
+
+    let backupSettingsReducer: any;
+    module.exports = backupSettingsReducer
+
+    let shortcutSettingsReducer: any;
+    module.exports = shortcutSettingsReducer
+
+    let labelSettingsReducer: any;
+    module.exports = labelSettingsReducer
+
+    let sceneSettingsReducer: any;
+    module.exports = sceneSettingsReducer
+
+    let miscAppSettingsReducer: any;
+    module.exports = miscAppSettingsReducer
+
+    let generalStatesReducer: any;
+    module.exports = generalStatesReducer
+
+    let hoveringStatesReducer: any;
+    module.exports = hoveringStatesReducer
+    
+    let activeModalsReducer: any;
+    module.exports = activeModalsReducer
+    
+    let activePopUpsReducer: any;
+    module.exports = activePopUpsReducer
+    
+    let mapContourSettingsReducer: any;
+    module.exports = mapContourSettingsReducer
+    
+    let moleculeMapUpdateReducer: any;
+    module.exports = moleculeMapUpdateReducer
+    
+    let sharedSessionReducer: any;
+    module.exports = sharedSessionReducer
+    
+    let refinementSettingsReducer: any;
+    module.exports = refinementSettingsReducer
 
     let MoorhenReduxStore: any;
     module.exports = MoorhenReduxStore
