@@ -7,7 +7,7 @@ uniform sampler2D gNormal;
 uniform float zoom;
 
 varying mediump mat4 pMatrix;
-in vec2 out_TexCoord0;
+varying vec2 out_TexCoord0;
 
 void main() {
     gl_FragColor = vec4(1.0,0.1,1.0,1.0);

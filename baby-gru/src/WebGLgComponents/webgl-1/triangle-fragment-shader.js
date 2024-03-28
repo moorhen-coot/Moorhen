@@ -40,6 +40,7 @@ var triangle_fragment_shader_source = `
     uniform vec4 light_colours_specular;
     uniform vec4 light_colours_diffuse;
     uniform float specularPower;
+    uniform vec3 screenZFrag;
 
     float lookup(vec2 offSet){
       //float xPixelOffset_old = 1.0/1024.0;
@@ -92,10 +93,11 @@ var triangle_fragment_shader_source = `
       vec4 Ispec=vec4(0.0,0.0,0.0,0.0);
       vec3 norm = normalize(vNormal);
 
-      E = (mvInvMatrix * vec4(normalize(-v),1.0)).xyz;
-      L = normalize((mvInvMatrix *light_positions).xyz);
+      E = screenZFrag;
+      L = light_positions.xyz;
       R = normalize(-reflect(L,norm));
       Iamb += light_colours_ambient;
+
       Idiff += light_colours_diffuse * max(dot(norm,L), 0.0);
       float y = max(max(light_colours_specular.r,light_colours_specular.g),light_colours_specular.b);
       Ispec += light_colours_specular * pow(max(dot(R,E),0.0),specularPower);

@@ -6756,7 +6756,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 }
             } else {
                 const theShader = theShaderIn as MGWebGLShader;
-                this.drawMaxElementsUInt(vertexType, drawBuffer.numItems);
+                if (this.WEBGL2) {
+                    this.drawMaxElementsUInt(vertexType, drawBuffer.numItems);
+                } else {
+                    this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0);
+                }
                 if(theBuffer.symmetryMatrices.length>0){
                     if(theShader.vertexColourAttribute>-1&&theBuffer.changeColourWithSymmetry){
                         this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
@@ -6773,7 +6777,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         if (this.WEBGL2) {
                             this.drawMaxElementsUInt(vertexType, drawBuffer.numItems);
                         } else {
-                            this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_SHORT, 0);
+                            this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0);
                         }
 
                     }
