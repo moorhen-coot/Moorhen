@@ -256,13 +256,13 @@ export async function loadSessionData(
     })
 
     // Load molecules stored in session from coords string
-    const newMoleculePromises = sessionData.moleculeData.map(storedMoleculeData => {
+    const newMoleculePromises = sessionData.moleculeData?.map(storedMoleculeData => {
         const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
         return newMolecule.loadToCootFromString(storedMoleculeData.coordString, storedMoleculeData.name)
-    })
+    }) || []
     
     // Load maps stored in session
-    const newMapPromises = sessionData.mapData.map(storedMapData => {
+    const newMapPromises = sessionData.mapData?.map(storedMapData => {
         const newMap = new MoorhenMap(commandCentre, glRef)
         if (sessionData.includesAdditionalMapData) {
             return newMap.loadToCootFromMapData(
@@ -285,7 +285,7 @@ export async function loadSessionData(
                         )
                     })    
         }
-    })
+    }) || []
     
     const loadPromises = await Promise.all([...newMoleculePromises, ...newMapPromises])
     const newMolecules = loadPromises.filter(item => item.type === 'molecule') as moorhen.Molecule[] 
@@ -326,7 +326,7 @@ export async function loadSessionData(
                     storedMapData.selectedColumns, 
                     storedMapData.reflectionData
                 )
-            } else if(storedMapData.associatedReflectionFileName && storedMapData.selectedColumns) {
+            } else if (storedMapData.associatedReflectionFileName && storedMapData.selectedColumns) {
                 return timeCapsuleRef.current.retrieveBackup(
                     JSON.stringify({
                         type: 'mtzData',
@@ -367,7 +367,7 @@ export async function loadSessionData(
     })
 
     // Set active map
-    if (sessionData.activeMapIndex !== -1){
+    if (sessionData.activeMapIndex !== undefined && sessionData.activeMapIndex !== -1){
         dispatch( setActiveMap(newMaps[sessionData.activeMapIndex]) )
     }
 
@@ -401,8 +401,8 @@ export async function loadSessionData(
     })
 
     // Set connected maps and molecules if any
-    const connectedMoleculeIndex = sessionData.moleculeData.findIndex(molecule => molecule.connectedToMaps?.length > 0)
-    if (connectedMoleculeIndex !== -1) {
+    const connectedMoleculeIndex = sessionData.moleculeData?.findIndex(molecule => molecule.connectedToMaps?.length > 0)
+    if (sessionData.mapData && sessionData.moleculeData && connectedMoleculeIndex !== -1) {
         const oldConnectedMolecule = sessionData.moleculeData[connectedMoleculeIndex]        
         const molecule = newMolecules[connectedMoleculeIndex].molNo
         const [reflectionMap, twoFoFcMap, foFcMap] = oldConnectedMolecule.connectedToMaps.map(item => newMaps[sessionData.mapData.findIndex(map => map.molNo === item)].molNo)
