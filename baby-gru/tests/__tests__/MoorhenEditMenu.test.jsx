@@ -57,7 +57,7 @@ let mockMonomerLibraryPath = null
 
 const describeIfWasmExists = fs.existsSync('./moorhen.data') ? describe : describe.skip
 
-describeIfWasmExists('Testing MoorhenContainer', () => {
+describeIfWasmExists('Testing MoorhenEditMenu', () => {
     
     beforeAll(() => {   
         const createCootModule = require('../../public/baby-gru/wasm/moorhen')
