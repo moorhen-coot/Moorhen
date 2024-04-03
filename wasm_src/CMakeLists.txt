@@ -227,7 +227,6 @@ ${coot_src}/ideal/phi-psi.cc
 ${coot_src}/ideal/lograma.cpp
 ${coot_src}/ideal/process-dfs-in-range.cc
 ${coot_src}/ideal/zo-rama.cc
-${coot_src}/tw/tw.cc
 ${coot_src}/utils/colour-holder.cc
 ${coot_src}/utils/radix.cc
 ${coot_src}/utils/coot-utils.cc
