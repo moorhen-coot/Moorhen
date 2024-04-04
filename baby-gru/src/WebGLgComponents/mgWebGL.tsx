@@ -2799,6 +2799,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.WEBGL2 = glc.WEBGL2;
         if(this.WEBGL2){
             this.max_elements_indices = this.gl.getParameter(this.gl.MAX_ELEMENTS_INDICES)
+        } else {
+            this.max_elements_indices = 65535;
         }
 
         this.blurUBOBuffer = this.gl.createBuffer();
