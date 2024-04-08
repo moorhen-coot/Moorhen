@@ -67,12 +67,12 @@ Binaries are available on the releases page. Please read the instructions there 
 5. Build gsl, Boost, RDKIt, Coot, the CCP4 libraries and examples:  
 <br>In this branch, it is intended that you do the build in the source directory. 
 <br/>After first checkout you should run the following script to build:  
-`./initial_build.sh`  
+`./moorhen_build.sh`  
 This should build all dependencies and then `Moorhen`. 
 \
 \
 It is also possible to build a 64-bit version of Moorhen which (currently) can address up to 8GB memory:  
-`./initial_build.sh --64bit`  
+`./moorhen_build.sh --64bit`  
 Note that you need a 64-bit WASM capable web browser to use this. Most browsers are not 64-bit capable by default. Some have
 64-bit capability available as an option or in development versions.  
 See the `MEMORY64` feature at [https://webassembly.org/features/](https://webassembly.org/features/)

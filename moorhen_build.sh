@@ -12,6 +12,12 @@ else
     MOORHEN_SOURCE_DIR=`dirname -- "$( readlink -f -- "$0"; )"`
 fi
 
+if [ x`uname -s` = x"Darwin" ]; then
+    NUMPROCS=`sysctl -n hw.ncpu`
+else
+    NUMPROCS=`nproc --all`
+fi
+
 echo ${MOORHEN_SOURCE_DIR}
 
 BUILD_DIR=${PWD}/CCP4_WASM_BUILD
