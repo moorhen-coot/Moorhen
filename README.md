@@ -75,7 +75,8 @@ It is also possible to build a 64-bit version of Moorhen which (currently) can a
 `./moorhen_build.sh --64bit`  
 Note that you need a 64-bit WASM capable web browser to use this. Most browsers are not 64-bit capable by default. Some have
 64-bit capability available as an option or in development versions.  
-See the `MEMORY64` feature at [https://webassembly.org/features/](https://webassembly.org/features/)
+See the `MEMORY64` feature at [https://webassembly.org/features/](https://webassembly.org/features/)  
+Moorhen developers have seen success with Firefox Nightly on MacOS and Linux and Chrome Canary on MacOS.
 
 6. To run the Moorhen molecular graphics application:  
 `cd baby-gru`  
