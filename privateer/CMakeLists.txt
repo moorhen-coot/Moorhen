@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.13)
 project(privateer C CXX)
 
 option(BUILD_SHARED_LIBS "Build as a shared library" ON)
