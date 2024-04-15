@@ -1,5 +1,5 @@
 diff --git a/coot-utils/slurp-map.cc b/coot-utils/slurp-map.cc
-index a432676fc..f1b60b823 100644
+index 2a322f38e..12f1d638a 100644
 --- a/coot-utils/slurp-map.cc
 +++ b/coot-utils/slurp-map.cc
 @@ -110,12 +110,14 @@ coot::util::slurp_fill_xmap_from_map_file(const std::string &file_name,
@@ -14,12 +14,12 @@ index a432676fc..f1b60b823 100644
           status = slurp_fill_xmap_from_gz_map_file(file_name, xmap_p, check_only);
        } else {
 +#endif
-          // 20231006-PE as it used to be.
           struct stat s;
           int fstat = stat(file_name.c_str(), &s);
-@@ -139,7 +141,9 @@ coot::util::slurp_fill_xmap_from_map_file(const std::string &file_name,
+          if (fstat == 0) {
+@@ -145,7 +147,9 @@ coot::util::slurp_fill_xmap_from_map_file(const std::string &file_name,
+                std::cout << "WARNING:: out-of-memory " << st_size+1 << " " << e.what() << std::endl;
              }
-             delete [] space;
           }
 +#if !((__POINTER_WIDTH__==64) && __EMSCRIPTEN__)
        }
