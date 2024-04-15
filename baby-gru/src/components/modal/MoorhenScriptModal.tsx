@@ -10,7 +10,7 @@ import Editor from 'react-simple-code-editor';
 import 'prismjs/themes/prism.css';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { convertRemToPx, convertViewtoPx } from "../../utils/MoorhenUtils";
 
 export const MoorhenScriptModal = (props: {
@@ -23,6 +23,7 @@ export const MoorhenScriptModal = (props: {
 
     const [code, setCode] = useState<string>("")
     
+    const dispatch = useDispatch()
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
@@ -32,7 +33,7 @@ export const MoorhenScriptModal = (props: {
     const handleScriptExe = useCallback(async () => {
         try {
             const scriptApi = new MoorhenScriptApi(props.commandCentre, props.glRef, molecules, maps)
-            scriptApi.exe(code)
+            scriptApi.exe(code, dispatch)
         }
         catch (err) {
             console.error(err)
