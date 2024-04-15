@@ -2,9 +2,9 @@ import { moorhen } from "../types/moorhen"
 import { webGL } from "../types/mgWebGL";
 import { MoorhenMolecule } from "./MoorhenMolecule";
 import { MoorhenMap } from "./MoorhenMap";
+import MoorhenReduxStore from "../store/MoorhenReduxStore";
 import { addMolecule } from "../store/moleculesSlice";
 import { addMap } from "../store/mapsSlice";
-import { Dispatch } from "@reduxjs/toolkit";
 
 interface MoorhenScriptApiInterface {
     molecules: moorhen.Molecule[];
@@ -88,7 +88,7 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
           }))
     }
 
-    exe(src: string, dispatch: Dispatch<any>) {
+    exe(src: string) {
         // This env defines the variables accesible within the user-defined code
         let env = {
             molecules: this.molecules.reduce((obj, molecule) => {
@@ -103,7 +103,7 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
             commandCentre: this.commandCentre,
             MoorhenMolecule: MoorhenMolecule,
             MoorhenMap: MoorhenMap,
-            dispatch: dispatch,
+            dispatch: (arg) => MoorhenReduxStore.dispatch( arg ),
             addMolecule: addMolecule,
             addMap: addMap, 
             run_command: this.runCommand,
