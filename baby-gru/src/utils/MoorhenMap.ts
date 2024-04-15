@@ -669,8 +669,6 @@ export class MoorhenMap implements moorhen.Map {
 
     /**
      * Set the colours for a non-difference map using values from redux store
-     * @param {boolean} [redraw=true] - Indicates whether the map needs to be redrawn after setting the new colours
-     * @returns {Promise<void>}
      */
     async fetchColourAndRedraw(): Promise<void> {
         if (this.isDifference) {
