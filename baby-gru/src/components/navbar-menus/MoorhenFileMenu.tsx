@@ -223,7 +223,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     {!props.disableFileUploads && 
                     <Form.Group className='moorhen-form-group' controlId="upload-session-form">
                         <Form.Label>Load from stored session</Form.Label>
-                        <Form.Control type="file" accept=".pb" multiple={false} onChange={handleSessionUpload}/>
+                        <Form.Control type="file" accept=".pb," multiple={false} onChange={handleSessionUpload}/>
                     </Form.Group>}
                     
                     <hr></hr>
