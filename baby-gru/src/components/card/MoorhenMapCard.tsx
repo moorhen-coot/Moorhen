@@ -49,7 +49,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             return props.initialRadius
         }
     })
-    const contourLevel = useSelector((state: moorhen.State) => {
+    const mapContourLevel = useSelector((state: moorhen.State) => {
         const map = state.mapContourSettings.contourLevels.find(item => item.molNo === props.map.molNo)
         if (map) {
             return map.contourLevel
@@ -65,7 +65,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             return state.mapContourSettings.defaultMapSurface ? "solid" : state.mapContourSettings.defaultMapLitLines ? "lit-lines" : "lines"
         }
     })
-    const mapAlpha = useSelector((state: moorhen.State) => {
+    const mapOpacity = useSelector((state: moorhen.State) => {
         const map = state.mapContourSettings.mapAlpha.find(item => item.molNo === props.map.molNo)
         if (map) {
             return map.alpha
@@ -94,7 +94,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         if (mapColourString) {
             return JSON.parse(mapColourString)
         } else {
-            return {r: props.map.contourParams.mapColour.r * 255., g: props.map.contourParams.mapColour.g * 255., b: props.map.contourParams.mapColour.b * 255.}
+            return {r: props.map.defaultMapColour.r * 255., g: props.map.defaultMapColour.g * 255., b: props.map.defaultMapColour.b * 255.}
         }
     }, [mapColourString])
     
@@ -103,7 +103,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             const rgb = JSON.parse(mapColourString)
             return rgbToHex(rgb.r, rgb.g, rgb.b)
         } else {
-            return rgbToHex(props.map.contourParams.mapColour.r, props.map.contourParams.mapColour.g, props.map.contourParams.mapColour.b)
+            return rgbToHex(props.map.defaultMapColour.r, props.map.defaultMapColour.g, props.map.defaultMapColour.b)
         }
     }, [mapColourString])
 
@@ -111,7 +111,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         if (negativeMapColourString) {
             return JSON.parse(negativeMapColourString)
         } else {
-            return {r: props.map.contourParams.negativeMapColour.r * 255., g: props.map.contourParams.negativeMapColour.g * 255., b: props.map.contourParams.negativeMapColour.b * 255.}
+            return {r: props.map.defaultNegativeMapColour.r * 255., g: props.map.defaultNegativeMapColour.g * 255., b: props.map.defaultNegativeMapColour.b * 255.}
         }
     }, [negativeMapColourString])
 
@@ -120,7 +120,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             const rgb = JSON.parse(negativeMapColourString)
             return rgbToHex(rgb.r, rgb.g, rgb.b)
         } else {
-            return rgbToHex(props.map.contourParams.negativeMapColour.r, props.map.contourParams.negativeMapColour.g, props.map.contourParams.negativeMapColour.b)
+            return rgbToHex(props.map.defaultNegativeMapColour.r, props.map.defaultNegativeMapColour.g, props.map.defaultNegativeMapColour.b)
         }
     }, [negativeMapColourString])
 
@@ -128,7 +128,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         if (positiveMapColourString) {
             return JSON.parse(positiveMapColourString)
         } else {
-            return {r: props.map.contourParams.positiveMapColour.r * 255., g: props.map.contourParams.positiveMapColour.g * 255., b: props.map.contourParams.positiveMapColour.b * 255.}
+            return {r: props.map.defaultPositiveMapColour.r * 255., g: props.map.defaultPositiveMapColour.g * 255., b: props.map.defaultPositiveMapColour.b * 255.}
         }
     }, [positiveMapColourString])
 
@@ -137,7 +137,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             const rgb = JSON.parse(positiveMapColourString)
             return rgbToHex(rgb.r, rgb.g, rgb.b)
         } else {
-            return rgbToHex(props.map.contourParams.positiveMapColour.r, props.map.contourParams.positiveMapColour.g, props.map.contourParams.positiveMapColour.b)
+            return rgbToHex(props.map.defaultPositiveMapColour.r, props.map.defaultPositiveMapColour.g, props.map.defaultPositiveMapColour.b)
         }
     }, [positiveMapColourString])
 
@@ -171,7 +171,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const handlePositiveMapColorChange = (color: { r: number; g: number; b: number; }) => {
         try {
             dispatch( setPositiveMapColours({ molNo: props.map.molNo, rgb: color}) )
-            props.map.setDiffMapColourAndRedraw('positiveDiffColour', {r: color.r / 255., g: color.g / 255., b: color.b / 255.})
+            props.map.fetchDiffMapColourAndRedraw('positiveDiffColour')
         }
         catch (err) {
             console.log('err', err)
@@ -181,7 +181,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const handleNegativeMapColorChange = (color: { r: number; g: number; b: number; }) => {
         try {
             dispatch( setNegativeMapColours({ molNo: props.map.molNo, rgb: color}) )
-            props.map.setDiffMapColourAndRedraw('negativeDiffColour', {r: color.r / 255., g: color.g / 255., b: color.b / 255.})
+            props.map.fetchDiffMapColourAndRedraw('negativeDiffColour')
         }
         catch (err) {
             console.log('err', err)
@@ -191,7 +191,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const handleColorChange = (color: { r: number; g: number; b: number; }) => {
         try {
             dispatch( setMapColours({ molNo: props.map.molNo, rgb: color}) )
-            props.map.setColourAndRedraw({r: color.r / 255., g: color.g / 255., b: color.b / 255.})
+            props.map.fetchColourAndRedraw()
         }
         catch (err) {
             console.log('err', err)
@@ -199,7 +199,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     }
 
     const mapSettingsProps = {
-        setPopoverIsShown, mapOpacity: mapAlpha, mapStyle, glRef: props.glRef, map: props.map
+        setPopoverIsShown, mapOpacity, mapStyle, glRef: props.glRef, map: props.map
     }
 
     const handleDownload = async () => {
@@ -324,23 +324,23 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                 doContourIfDirty()
             })
         }
-    }, [])
+    }, [mapRadius, mapContourLevel, mapIsVisible, mapStyle])
 
     const handleOriginUpdate = useCallback((evt: moorhen.OriginUpdateEvent) => {
         nextOrigin.current = [...evt.detail.origin.map((coord: number) => -coord)]
         isDirty.current = true
         if (mapIsVisible && !busyContouring.current) {
-            doContourIfDirty()
+                doContourIfDirty()
         }
-    }, [doContourIfDirty, mapIsVisible])
+    }, [doContourIfDirty])
 
     const handleWheelContourLevelCallback = useCallback((evt: moorhen.WheelContourLevelEvent) => {
         let newMapContourLevel: number
         if (mapIsVisible && props.map.molNo === activeMap.molNo) {
             if (evt.detail.factor > 1) {
-                newMapContourLevel = contourLevel + contourWheelSensitivityFactor
+                newMapContourLevel = mapContourLevel + contourWheelSensitivityFactor
             } else {
-                newMapContourLevel = contourLevel - contourWheelSensitivityFactor
+                newMapContourLevel = mapContourLevel - contourWheelSensitivityFactor
             }
             batch(() => {
                 dispatch( setContourLevel({ molNo: props.map.molNo, contourLevel: newMapContourLevel }) )
@@ -355,7 +355,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                 ))
             })
         }
-    }, [contourLevel, mapRadius, activeMap?.molNo, props.map.molNo, mapIsVisible])
+    }, [mapContourLevel, mapRadius, activeMap?.molNo, props.map.molNo, mapIsVisible])
 
     useMemo(() => {
         if (currentName === "") {
@@ -380,28 +380,18 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     }, [handleWheelContourLevelCallback])
 
     useEffect(() => {
-        props.map.setMapAlphaAndRedraw(mapAlpha)
-    }, [mapAlpha])
+        props.map.fetchMapAlphaAndRedraw()
+    }, [mapOpacity])
 
     useEffect(() => {
         // This looks stupid but it is important otherwise the map is first drawn with the default contour and radius. Probably there's a problem somewhere...
-        dispatch(setMapAlpha({molNo: props.map.molNo, alpha: mapAlpha}))
+        dispatch(setMapAlpha({molNo: props.map.molNo, alpha: mapOpacity}))
         dispatch(setMapStyle({molNo: props.map.molNo, style: mapStyle}))
         dispatch(setMapRadius({molNo: props.map.molNo, radius: mapRadius}))
-        dispatch(setContourLevel({molNo: props.map.molNo, contourLevel: contourLevel}))
+        dispatch(setContourLevel({molNo: props.map.molNo, contourLevel: mapContourLevel}))
         dispatch(setMapColours({molNo: props.map.molNo, rgb: mapColour}))
         dispatch(setNegativeMapColours({molNo: props.map.molNo, rgb: negativeMapColour}))
         dispatch(setPositiveMapColours({molNo: props.map.molNo, rgb: positiveMapColour}))
-        // Update attribute in MoorhenMap
-        props.map.contourParams = {
-            mapRadius, 
-            contourLevel, 
-            mapAlpha, 
-            mapStyle,
-            mapColour: {r: mapColour.r / 255., g: mapColour.g / 255., b: mapColour.b / 255.},
-            positiveMapColour: {r: positiveMapColour.r / 255., g: positiveMapColour.g / 255., b: positiveMapColour.b / 255.},
-            negativeMapColour: {r: negativeMapColour.r / 255., g: negativeMapColour.g / 255., b: negativeMapColour.b / 255.}
-        }
         // Show map only if specified
         if (props.map.showOnLoad) {
             dispatch(showMap(props.map))
@@ -411,9 +401,6 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     useEffect(() => {
         if (mapIsVisible) {
             nextOrigin.current = props.glRef.current.origin.map(coord => -coord)
-            props.map.contourParams.mapRadius = mapRadius
-            props.map.contourParams.contourLevel = contourLevel
-            props.map.contourParams.mapStyle = mapStyle    
             isDirty.current = true
             if (!busyContouring.current) {
                 doContourIfDirty()
@@ -422,7 +409,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             props.map.hideMapContour()
         }
 
-    }, [mapRadius, contourLevel, mapIsVisible, mapStyle, doContourIfDirty])
+    }, [doContourIfDirty])
 
     const increaseLevelButton = <IconButton 
         style={{padding: 0, color: isDark ? 'white' : 'black'}}
@@ -618,7 +605,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                 </ToggleButton>
                 <Col>
                     <Form.Group controlId="contouringLevel" className="mb-3">
-                        <span>{`Lvl: ${contourLevel.toFixed(2)} ${props.map.mapRmsd ? '(' + (contourLevel / props.map.mapRmsd).toFixed(2) + ' rmsd)' : ''}`}</span>
+                        <span>{`Lvl: ${mapContourLevel.toFixed(2)} ${props.map.mapRmsd ? '(' + (mapContourLevel / props.map.mapRmsd).toFixed(2) + ' rmsd)' : ''}`}</span>
                         <MoorhenSlider
                             minVal={0.001}
                             maxVal={props.map.isEM ? 15 : 5}
@@ -630,7 +617,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                             showSliderTitle={false}
                             isDisabled={!mapIsVisible}
                             initialValue={props.initialContour}
-                            externalValue={contourLevel}
+                            externalValue={mapContourLevel}
                             setExternalValue={(newVal) => dispatch( setContourLevel({molNo: props.map.molNo, contourLevel: newVal}) )}
                         />
                     </Form.Group>

@@ -42,7 +42,7 @@ export const MoorhenFlipMapHandMenuItem = (props: {
             newMap.name = `Flipped map ${mapNo}`
             await newMap.getSuggestedSettings()
             newMap.isDifference = selectedMap.isDifference
-            const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.contourParams
+            const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.getMapContourParams()
             batch(() => {
                 dispatch( setMapRadius({ molNo: newMap.molNo, radius: mapRadius }) )
                 dispatch( setContourLevel({ molNo: newMap.molNo, contourLevel: contourLevel }) )

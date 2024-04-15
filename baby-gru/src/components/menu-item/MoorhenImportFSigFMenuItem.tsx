@@ -76,7 +76,7 @@ export const MoorhenImportFSigFMenuItem = (props:{
                 uniqueMaps.map(async (imol, index) => {
                     const currentMap = maps.find(map => map.molNo === imol)
                     const postRmsd = await currentMap.fetchMapRmsd()
-                    const { contourLevel } = currentMap.contourParams
+                    const { contourLevel } = currentMap.getMapContourParams()
                     let newContourLevel = contourLevel * postRmsd / prevRmsd[index]
                     if (currentMap.isDifference) {
                         newContourLevel -= newContourLevel * 0.3

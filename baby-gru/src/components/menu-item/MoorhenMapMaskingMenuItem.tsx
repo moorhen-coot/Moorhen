@@ -128,7 +128,7 @@ export const MoorhenMapMaskingMenuItem = (props: {
             newMap.name = `Map ${mapNo} masked`
             await newMap.getSuggestedSettings()
             newMap.isDifference = selectedMap.isDifference
-            const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.contourParams
+            const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.getMapContourParams()
             batch(() => {
                 dispatch( setMapRadius({ molNo: newMap.molNo, radius: mapRadius }) )
                 dispatch( setContourLevel({ molNo: newMap.molNo, contourLevel: contourLevel }) )
