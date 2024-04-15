@@ -55,6 +55,9 @@ import { twod_gbuffer_vertex_shader_source as twod_gbuffer_vertex_shader_source_
 import { perfect_sphere_gbuffer_fragment_shader_source as perfect_sphere_gbuffer_fragment_shader_source_webgl2 } from './webgl-2/perfect-sphere-gbuffer-fragment-shader.js';
 import { thick_lines_normal_gbuffer_vertex_shader_source as thick_lines_normal_gbuffer_vertex_shader_source_webgl2 } from './webgl-2/thick-lines-normal-gbuffer-vertex-shader.js';
 
+import { triangle_texture_vertex_shader_source as triangle_texture_vertex_shader_source } from './webgl-2/triangle-texture-vertex-shader.js';
+import { triangle_texture_fragment_shader_source as triangle_texture_fragment_shader_source } from './webgl-2/triangle-texture-fragment-shader.js';
+
 //WebGL1 shaders
 import { blur_vertex_shader_source as blur_vertex_shader_source_webgl1 } from './webgl-1/blur-vertex-shader.js';
 import { overlay_fragment_shader_source as overlay_fragment_shader_source_webgl1 } from './webgl-1/overlay-fragment-shader.js';
@@ -1329,6 +1332,61 @@ function SortThing(proj, id1, id2, id3) {
     this.id3 = id3;
 }
 
+class TexturedShape {
+    width: number;
+    height: number;
+    x_size: number;
+    y_size: number;
+    z_position: number;
+    image_texture: WebGLTexture;
+    idxBuffer = WebGLBuffer;
+    vertexBuffer = WebGLBuffer;
+    texCoordBuffer = WebGLBuffer;
+    constructor(textureInfo,gl,uuid) {
+        this.width = textureInfo.width;
+        this.height = textureInfo.height;
+        this.x_size = textureInfo.x_size;
+        this.y_size = textureInfo.y_size;
+        this.z_position = textureInfo.z_position;
+        this.image_texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, this.image_texture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        //TODO - Populate the texture ...
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, this.width, this.height, 0, gl.RED, gl.FLOAT, new Float32Array(textureInfo.image_data));
+        gl.bindTexture(gl.TEXTURE_2D, null);
+
+        this.idxBuffer = gl.createBuffer();
+        this.vertexBuffer = gl.createBuffer();
+        this.texCoordBuffer = gl.createBuffer();
+        const vertices = new Float32Array([
+            0,                      0,this.z_position,
+            this.x_size,           0,this.z_position,
+            this.x_size,this.y_size,this.z_position,
+            0,                      0,this.z_position,
+            this.x_size,this.y_size,this.z_position,
+            0,           this.y_size,this.z_position,
+        ])
+        const texCoords = new Float32Array([
+            0,0,
+            1,0,
+            1,1,
+            0,0,
+            1,1,
+            0,1,
+        ])
+        const idxs = new Uint32Array([0, 1, 2, 3, 4, 5]);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.texCoordBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, texCoords, gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.idxBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idxs, gl.STATIC_DRAW);
+    }
+}
+
 class TextCanvasTexture {
     gl: WebGL2RenderingContext;
     ext: any;
@@ -1776,6 +1834,26 @@ interface MGWebGLBuffer {
     numItems: number;
 }
 
+interface MGWebGLTextureQuadShader extends WebGLProgram {
+    vertexPositionAttribute: GLint;
+    vertexTextureAttribute: GLint;
+    pMatrixUniform: WebGLUniformLocation;
+    mvMatrixUniform: WebGLUniformLocation;
+    mvInvMatrixUniform: WebGLUniformLocation;
+    fog_start: WebGLUniformLocation;
+    fog_end: WebGLUniformLocation;
+    fogColour: WebGLUniformLocation;
+    clipPlane0: WebGLUniformLocation;
+    clipPlane1: WebGLUniformLocation;
+    clipPlane2: WebGLUniformLocation;
+    clipPlane3: WebGLUniformLocation;
+    clipPlane4: WebGLUniformLocation;
+    clipPlane5: WebGLUniformLocation;
+    clipPlane6: WebGLUniformLocation;
+    clipPlane7: WebGLUniformLocation;
+    nClipPlanes: WebGLUniformLocation;
+}
+
 interface MGWebGLShader extends WebGLProgram {
     vertexPositionAttribute: GLint;
     vertexNormalAttribute: GLint;
@@ -2079,6 +2157,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         rttFramebuffer: MGWebGLFrameBuffer;
         doPerspectiveProjection: boolean;
         labelsTextCanvasTexture: TextCanvasTexture;
+        texturedShapes: any[];
         currentBufferIdx: number;
         atom_span: number;
         axesColourBuffer: WebGLBuffer;
@@ -2203,6 +2282,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         rttDepthTexture: WebGLTexture;
         rttTextureDepth: WebGLTexture;
         screenZ: number;
+        shaderProgramTextured: MGWebGLTextureQuadShader;
         shaderProgram: ShaderTriangles;
         shaderProgramGBuffers: ShaderGBuffersTriangles;
         shaderProgramGBuffersInstanced: ShaderGBuffersTrianglesInstanced;
@@ -3040,6 +3120,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.measureText2DCanvasTexture = new TextCanvasTexture(this,512,2048);
         this.measureTextCanvasTexture = new TextCanvasTexture(this,1024,2048);
         this.labelsTextCanvasTexture = new TextCanvasTexture(this,128,2048);
+        this.texturedShapes = [];
 
         self.gl.clearColor(self.background_colour[0], self.background_colour[1], self.background_colour[2], self.background_colour[3]);
         self.gl.enable(self.gl.DEPTH_TEST);
@@ -3256,6 +3337,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.initGBufferShadersInstanced(gBufferInstancedVertexShader, gBufferFragmentShader);
         this.initGBufferShadersPerfectSphere(gBufferTwodVertexShader, gBufferPerfectSphereFragmentShader);
         this.initGBufferThickLineNormalShaders(gBufferThickLineNormalVertexShader, gBufferFragmentShader);
+        if(this.WEBGL2){
+            const vertexShaderTextured = getShader(this.gl, triangle_texture_vertex_shader_source, "vertex");
+            const fragmentShaderTextured = getShader(this.gl, triangle_texture_fragment_shader_source, "fragment");
+            this.initShadersTextured(vertexShaderTextured, fragmentShaderTextured);
+        }
     }
 
     setActiveMolecule(molecule: moorhen.Molecule) : void {
@@ -3282,6 +3368,21 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         var theseBuffers = [];
 
+        if(jsondata.image_data){
+            if(jsondata.width && jsondata.height && jsondata.x_size && jsondata.y_size){
+                const uuid =  guid();
+                const texturedShape = new TexturedShape(jsondata,this.gl,uuid);
+                this.texturedShapes.push(texturedShape)
+                theseBuffers.push({texturedShapes:texturedShape,uuid:uuid});
+            }
+            console.log("Probably textureAsFloatsJS, ignore for now!");
+            if (typeof (skipRebuild) !== "undefined" && skipRebuild) {
+                return theseBuffers;
+            }
+            self.buildBuffers();
+            self.drawScene();
+            return theseBuffers;
+        }
         for (let idat = 0; idat < jsondata.norm_tri.length; idat++) {
             if(jsondata.prim_types){
                 if(jsondata.prim_types[idat].length>0){
@@ -5129,6 +5230,49 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramGBuffers.clipPlane6 = this.gl.getUniformLocation(this.shaderProgramGBuffers, "clipPlane6");
         this.shaderProgramGBuffers.clipPlane7 = this.gl.getUniformLocation(this.shaderProgramGBuffers, "clipPlane7");
         this.shaderProgramGBuffers.nClipPlanes = this.gl.getUniformLocation(this.shaderProgramGBuffers, "nClipPlanes");
+
+    }
+
+    initShadersTextured(vertexShader, fragmentShader) {
+
+        this.shaderProgramTextured = this.gl.createProgram();
+
+        this.gl.attachShader(this.shaderProgramTextured, vertexShader);
+        this.gl.attachShader(this.shaderProgramTextured, fragmentShader);
+        this.gl.bindAttribLocation(this.shaderProgramTextured, 0, "aVertexPosition");
+        this.gl.bindAttribLocation(this.shaderProgramTextured, 3, "aVertexTexture");
+        this.gl.linkProgram(this.shaderProgramTextured);
+
+        if (!this.gl.getProgramParameter(this.shaderProgramTextured, this.gl.LINK_STATUS)) {
+            alert("Could not initialise shaders (initShadersTextured)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramTextured));
+        }
+
+        this.gl.useProgram(this.shaderProgramTextured);
+
+        this.shaderProgramTextured.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramTextured, "aVertexPosition");
+        this.gl.enableVertexAttribArray(this.shaderProgramTextured.vertexPositionAttribute);
+
+        this.shaderProgramTextured.vertexTextureAttribute = this.gl.getAttribLocation(this.shaderProgramTextured, "aVertexTexture");
+        this.gl.enableVertexAttribArray(this.shaderProgramTextured.vertexTextureAttribute);
+
+        this.shaderProgramTextured.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramTextured, "uPMatrix");
+        this.shaderProgramTextured.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramTextured, "uMVMatrix");
+        this.shaderProgramTextured.mvInvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramTextured, "uMVINVMatrix");
+
+        this.shaderProgramTextured.fog_start = this.gl.getUniformLocation(this.shaderProgramTextured, "fog_start");
+        this.shaderProgramTextured.fog_end = this.gl.getUniformLocation(this.shaderProgramTextured, "fog_end");
+        this.shaderProgramTextured.fogColour = this.gl.getUniformLocation(this.shaderProgramTextured, "fogColour");
+
+        this.shaderProgramTextured.clipPlane0 = this.gl.getUniformLocation(this.shaderProgramTextured, "clipPlane0");
+        this.shaderProgramTextured.clipPlane1 = this.gl.getUniformLocation(this.shaderProgramTextured, "clipPlane1");
+        this.shaderProgramTextured.clipPlane2 = this.gl.getUniformLocation(this.shaderProgramTextured, "clipPlane2");
+        this.shaderProgramTextured.clipPlane3 = this.gl.getUniformLocation(this.shaderProgramTextured, "clipPlane3");
+        this.shaderProgramTextured.clipPlane4 = this.gl.getUniformLocation(this.shaderProgramTextured, "clipPlane4");
+        this.shaderProgramTextured.clipPlane5 = this.gl.getUniformLocation(this.shaderProgramTextured, "clipPlane5");
+        this.shaderProgramTextured.clipPlane6 = this.gl.getUniformLocation(this.shaderProgramTextured, "clipPlane6");
+        this.shaderProgramTextured.clipPlane7 = this.gl.getUniformLocation(this.shaderProgramTextured, "clipPlane7");
+        this.shaderProgramTextured.nClipPlanes = this.gl.getUniformLocation(this.shaderProgramTextured, "nClipPlanes");
 
     }
 
@@ -7298,6 +7442,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.drawTransparent(theMatrix);
             this.drawDistancesAndLabels(up, right);
             this.drawTextLabels(up, right);
+            this.drawTexturedShapes(theMatrix);
             //this.drawCircles(up, right);
         }
 
@@ -9096,6 +9241,32 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     clearTextPositionBuffers() {
         if(this.displayBuffers && this.displayBuffers[0])
             delete this.displayBuffers[0].textPositionBuffer;
+    }
+
+    drawTexturedShapes(invMat) {
+        const theShader = this.shaderProgramTextured;
+        this.gl.useProgram(theShader);
+        this.setMatrixUniforms(theShader);
+
+        for(let i = 0; i<16; i++)
+            this.gl.disableVertexAttribArray(i);
+
+        this.gl.enableVertexAttribArray(theShader.vertexPositionAttribute);
+        this.gl.enableVertexAttribArray(theShader.vertexTextureAttribute);
+
+        //this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 1.0, 0.3, 0.4, 1.0);
+        //this.gl.vertexAttrib3f(theShader.vertexNormalAttribute, 0.0, 0.0, 1.0);
+
+        this.gl.activeTexture(this.gl.TEXTURE0);
+        this.texturedShapes.forEach(shape => {
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, shape.vertexBuffer);
+            this.gl.vertexAttribPointer(theShader.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, shape.texCoordBuffer);
+            this.gl.vertexAttribPointer(theShader.vertexTextureAttribute, 2, this.gl.FLOAT, false, 0, 0);
+            this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, shape.idxBuffer);
+            this.gl.bindTexture(this.gl.TEXTURE_2D, shape.image_texture);
+            this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0);
+        })
     }
 
     drawTextLabels(up, right) {

@@ -70,6 +70,7 @@ export namespace webGL {
         drawTextLabels(up: vec3, right: vec3) : void;
         drawTriangles(calculatingShadowMap: boolean, invMat: mat4) : void;
         drawImagesAndText(invMat: mat4) : void;
+        drawTexturedShapes(theMatrix: mat4) : void;
         drawTransparent(theMatrix: mat4) : void;
         bindFramebufferDrawBuffers() : void;
         GLrender(calculatingShadowMap: boolean) : mat4;
@@ -104,6 +105,7 @@ export namespace webGL {
         initTextBackgroundShaders(vertexShaderTextBackground : string, fragmentShaderTextBackground : string)  : void;
         initOutlineShaders(vertexShader : string, fragmentShader : string)  : void;
         initShaders(vertexShader : string, fragmentShader : string)  : void;
+        initShadersTextured(vertexShader : string, fragmentShader : string)  : void;
         initGBufferShaders(vertexShader : string, fragmentShader : string)  : void;
         initGBufferShadersInstanced(vertexShader : string, fragmentShader : string)  : void;
         initGBufferShadersPerfectSphere(vertexShader : string, fragmentShader : string)  : void;
@@ -237,6 +239,7 @@ export namespace webGL {
         rttFramebuffer: MGWebGLFrameBuffer;
         doPerspectiveProjection: boolean;
         labelsTextCanvasTexture: TextCanvasTexture;
+        texturedShapes: TexturedShape[];
         currentBufferIdx: number;
         atom_span: number;
         axesColourBuffer: WebGLBuffer;
@@ -361,6 +364,7 @@ export namespace webGL {
         rttTextureDepth: WebGLTexture;
         rttDepthTexture: WebGLTexture;
         screenZ: number;
+        shaderProgramTextured: MGWebGLTextureQuadShader;
         shaderProgram: ShaderTriangles;
         shaderProgramGBuffers: ShaderGBuffersTriangles;
         shaderProgramGBuffersInstanced: ShaderGBuffersTrianglesInstanced;
