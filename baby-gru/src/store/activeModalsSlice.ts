@@ -1,30 +1,35 @@
 import { createSlice } from '@reduxjs/toolkit'
 
+const initialState = {
+  showModelsModal: false,
+  showMapsModal: false,
+  showCreateAcedrgLinkModal: false,
+  showQuerySequenceModal: false,
+  showScriptingModal: false,
+  showControlsModal: false,
+  showFitLigandModal: false,
+  showRamaPlotModal: false,
+  showDiffMapPeaksModal: false,
+  showValidationPlotModal: false,
+  showLigandValidationModal: false,
+  showCarbohydrateModal: false,
+  showPepFlipsValidationModal: false,
+  showFillPartialResValidationModal: false,
+  showUnmodelledBlobsModal: false,
+  showMmrrccModal: false,
+  showWaterValidationModal: false,
+  showSceneSettingsModal: false,
+  showSliceNDiceModal: false,
+  focusHierarchy: [],
+}
+
 export const activeModalsSlice = createSlice({
   name: 'activeModals',
-  initialState: {
-    showModelsModal: false,
-    showMapsModal: false,
-    showCreateAcedrgLinkModal: false,
-    showQuerySequenceModal: false,
-    showScriptingModal: false,
-    showControlsModal: false,
-    showFitLigandModal: false,
-    showRamaPlotModal: false,
-    showDiffMapPeaksModal: false,
-    showValidationPlotModal: false,
-    showLigandValidationModal: false,
-    showCarbohydrateModal: false,
-    showPepFlipsValidationModal: false,
-    showFillPartialResValidationModal: false,
-    showUnmodelledBlobsModal: false,
-    showMmrrccModal: false,
-    showWaterValidationModal: false,
-    showSceneSettingsModal: false,
-    showSliceNDiceModal: false,
-    focusHierarchy: [],
-  },
+  initialState: initialState,
   reducers: {
+    resetActiveModals: (state) => {
+      return initialState
+    },
     setShowSliceNDiceModal: (state, action: { payload: boolean, type: string }) => {
       return {...state, showSliceNDiceModal: action.payload }
     },
@@ -98,7 +103,7 @@ export const {
   setShowLigandValidationModal, setShowPepFlipsValidationModal, setShowMmrrccModal,
   setShowWaterValidationModal, setShowValidationPlotModal, setShowCarbohydrateValidationModal, 
   setShowUnmodelledBlobsModal, setShowDiffMapPeaksModal, setShowFillPartialResValidationModal, 
-  setShowSceneSettingsModal, setShowSliceNDiceModal
+  setShowSceneSettingsModal, setShowSliceNDiceModal, resetActiveModals
 } = activeModalsSlice.actions
 
 export default activeModalsSlice.reducer

@@ -654,4 +654,52 @@ declare module 'moorhen' {
 
     function addMapList(arg0: _moorhen.Map[]): any;
     module.exports = addMapList;
+
+    function resetSceneSettings(): any;
+    module.exports = resetSceneSettings;
+
+    function resetBackupSettings(): any;
+    module.exports = resetBackupSettings;
+    
+    function resetDefaultMouseSettings(): any;
+    module.exports = resetDefaultMouseSettings;
+    
+    function resetGeneralStates(): any;
+    module.exports = resetGeneralStates;
+    
+    function resetHoveringStates(): any;
+    module.exports = resetHoveringStates;
+    
+    function resetLabelSettings(): any;
+    module.exports = resetLabelSettings;
+    
+    function resetMapContourSettings(): any;
+    module.exports = resetMapContourSettings;
+    
+    function resetMiscAppSettings(): any;
+    module.exports = resetMiscAppSettings;
+    
+    function resetMoleculeMapUpdates(): any;
+    module.exports = resetMoleculeMapUpdates;
+    
+    function resetRefinementSettings(): any;
+    module.exports = resetRefinementSettings;
+    
+    function resetShortcutSettings(): any;
+    module.exports = resetShortcutSettings;
+    
+    function resetActiveModals(): any;
+    module.exports = resetActiveModals;
+    
+    function focusOnModal(): any;
+    module.exports = focusOnModal;
+    
+    function unFocusModal(): any;
+    module.exports = unFocusModal;
+    
+    function resetActivePopUps(): any;
+    module.exports = resetActivePopUps;
+    
+    function resetSharedSession(): any;
+    module.exports = resetSharedSession;
 }

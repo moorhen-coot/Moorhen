@@ -1,15 +1,20 @@
 import { createSlice } from '@reduxjs/toolkit'
 
+const initialState = {
+  enableRefineAfterMod: null,
+  animateRefine: null,
+  useRamaRefinementRestraints: false,
+  useTorsionRefinementRestraints: false,
+  refinementSelection: 'TRIPLE',
+}
+
 export const refinementSettings = createSlice({
   name: 'refinementSettings',
-  initialState: {
-    enableRefineAfterMod: null,
-    animateRefine: null,
-    useRamaRefinementRestraints: false,
-    useTorsionRefinementRestraints: false,
-    refinementSelection: 'TRIPLE',
-  },
+  initialState: initialState,
   reducers: {
+    resetRefinementSettings: (state) => {
+      return initialState
+    },
     setRefinementSelection: (state, action: {payload: 'SINGLE' | 'TRIPLE' | 'SPHERE', type: string}) => {
       return {...state, refinementSelection: action.payload}
     },
@@ -29,7 +34,7 @@ export const refinementSettings = createSlice({
 
 export const { 
   setAnimateRefine, setEnableRefineAfterMod, setUseRamaRefinementRestraints, 
-  setuseTorsionRefinementRestraints, setRefinementSelection
+  setuseTorsionRefinementRestraints, setRefinementSelection, resetRefinementSettings
 } = refinementSettings.actions
 
 export default refinementSettings.reducer

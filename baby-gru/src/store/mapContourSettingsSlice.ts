@@ -1,24 +1,29 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { moorhen } from "../types/moorhen"
 
+const initialState = {
+  visibleMaps: [],
+  contourLevels: [],
+  mapRadii: [],
+  mapStyles: [],
+  mapAlpha: [],
+  mapColours: [],
+  negativeMapColours: [],
+  positiveMapColours: [],
+  defaultMapSamplingRate: null,
+  defaultMapLitLines: null,
+  mapLineWidth: null,
+  defaultMapSurface: null,
+  reContourMapOnlyOnMouseUp: null
+}
+
 export const mapContourSettingsSlice = createSlice({
   name: 'mapContourSettings',
-  initialState: {
-    visibleMaps: [],
-    contourLevels: [],
-    mapRadii: [],
-    mapStyles: [],
-    mapAlpha: [],
-    mapColours: [],
-    negativeMapColours: [],
-    positiveMapColours: [],
-    defaultMapSamplingRate: null,
-    defaultMapLitLines: null,
-    mapLineWidth: null,
-    defaultMapSurface: null,
-    reContourMapOnlyOnMouseUp: null
-  },
+  initialState: initialState,
   reducers: {
+    resetMapContourSettings: (state) => {
+      return initialState
+    },
     setReContourMapOnlyOnMouseUp: (state, action: {payload: boolean, type: string}) => {
       state = { ...state, reContourMapOnlyOnMouseUp: action.payload }
       return state
@@ -88,7 +93,7 @@ export const {
   showMap, hideMap, setContourLevel, setMapRadius, setMapAlpha, setMapStyle, changeMapRadius,
   setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, setDefaultMapSurface,
   setMapColours, setNegativeMapColours, setPositiveMapColours, changeContourLevel,
-  setReContourMapOnlyOnMouseUp
+  setReContourMapOnlyOnMouseUp, resetMapContourSettings
 } = mapContourSettingsSlice.actions
 
 export default mapContourSettingsSlice.reducer
