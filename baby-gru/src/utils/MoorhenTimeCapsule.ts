@@ -1,7 +1,6 @@
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { guid } from "./MoorhenUtils";
-import MoorhenReduxStore from "../store/MoorhenReduxStore";
 
 export const getBackupLabel = (key: moorhen.backupKey): string => {
     const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' } as const
@@ -144,7 +143,6 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         const keyStrings = await this.storageInstance.keys()
         const mtzFileNames = keyStrings.map((keyString: string) => JSON.parse(keyString)).filter((key: moorhen.backupKey) => key.type === 'mtzData').map((key: moorhen.backupKey) => key.name)
         const mapNames = keyStrings.map((keyString: string) => JSON.parse(keyString)).filter((key: moorhen.backupKey) => key.type === 'mapData').map((key: moorhen.backupKey) => key.name)
-        const state = MoorhenReduxStore.getState()
 
         const promises = await Promise.all([
             ...this.moleculesRef.current.map(molecule => {
@@ -226,16 +224,16 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                 uniqueId: map.uniqueId,
                 mapData: mapDataPromises[index],
                 reflectionData: reflectionDataPromises[index],
-                showOnLoad: state.mapContourSettings.visibleMaps.includes(map.molNo),
-                contourLevel: state.mapContourSettings.contourLevels.find(item => item.molNo === map.molNo)?.contourLevel,
-                radius: state.mapContourSettings.mapRadii.find(item => item.molNo === map.molNo)?.radius,
+                showOnLoad: map.contourParams.isVisible,
+                contourLevel: map.contourParams.contourLevel,
+                radius: map.contourParams.mapRadius,
                 rgba: {
-                    a: state.mapContourSettings.mapAlpha.find(item => item.molNo === map.molNo)?.alpha,
-                    mapColour: state.mapContourSettings.mapColours.find(item => item.molNo === map.molNo)?.rgb,
-                    positiveDiffColour: state.mapContourSettings.positiveMapColours.find(item => item.molNo === map.molNo)?.rgb,
-                    negativeDiffColour: state.mapContourSettings.negativeMapColours.find(item => item.molNo === map.molNo)?.rgb
+                    a: map.contourParams.mapAlpha,
+                    mapColour: {r: map.contourParams.mapColour.r * 255., g: map.contourParams.mapColour.g * 255., b: map.contourParams.mapColour.b * 255.},
+                    positiveDiffColour: {r: map.contourParams.positiveMapColour.r * 255., g: map.contourParams.positiveMapColour.g * 255., b: map.contourParams.positiveMapColour.b * 255.},
+                    negativeDiffColour: {r: map.contourParams.negativeMapColour.r * 255., g: map.contourParams.negativeMapColour.g * 255., b: map.contourParams.negativeMapColour.b * 255.}
                 },
-                style: state.mapContourSettings.mapStyles.find(item => item.molNo === map.molNo)?.style,
+                style: map.contourParams.mapStyle,
                 isDifference: map.isDifference,
                 selectedColumns: map.selectedColumns,
                 hasReflectionData: map.hasReflectionData,

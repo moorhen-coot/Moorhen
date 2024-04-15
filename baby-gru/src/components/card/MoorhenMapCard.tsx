@@ -145,7 +145,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const contourWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.contourWheelSensitivityFactor)
     const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.miscAppSettings.defaultExpandDisplayCards)
-    const mapIsVisible = useSelector((state: moorhen.State) => state.mapContourSettings.visibleMaps.includes(props.map.molNo))
+    const isVisible = useSelector((state: moorhen.State) => state.mapContourSettings.visibleMaps.includes(props.map.molNo))
     const dispatch = useDispatch()
 
     const [isCollapsed, setIsCollapsed] = useState<boolean>(!defaultExpandDisplayCards);
@@ -209,9 +209,10 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     }
 
     const handleVisibility = useCallback(() => {
-        dispatch( mapIsVisible ? hideMap(props.map) : showMap(props.map) )
+        dispatch( isVisible ? hideMap(props.map) : showMap(props.map) )
+        props.map.contourParams.isVisible = !isVisible
         props.setCurrentDropdownMolNo(-1)
-    }, [mapIsVisible])
+    }, [isVisible])
 
     const handleCopyMap = async () => {
         const newMap = await props.map.copyMap()
@@ -220,11 +221,11 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
 
     const actionButtons: { [key: number] : ActionButtonType } = {
         1: {
-            label: mapIsVisible ? "Hide map" : "Show map",
-            compressed: () => { return (<MenuItem key='hide-show-map' onClick={handleVisibility}>{mapIsVisible ? "Hide map" : "Show map"}</MenuItem>) },
+            label: isVisible ? "Hide map" : "Show map",
+            compressed: () => { return (<MenuItem key='hide-show-map' onClick={handleVisibility}>{isVisible ? "Hide map" : "Show map"}</MenuItem>) },
             expanded: () => {
                 return (<Button key='hide-show-map' size="sm" variant="outlined" onClick={handleVisibility}>
-                    {mapIsVisible ? <VisibilityOutlined /> : <VisibilityOffOutlined />}
+                    {isVisible ? <VisibilityOutlined /> : <VisibilityOffOutlined />}
                 </Button>)
             },
         },
@@ -244,7 +245,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         },
         4: {
             label: "Map draw settings",
-            compressed: () => { return (<MoorhenMapSettingsMenuItem key='map-draw-settings' disabled={!mapIsVisible} {...mapSettingsProps} />) },
+            compressed: () => { return (<MoorhenMapSettingsMenuItem key='map-draw-settings' disabled={!isVisible} {...mapSettingsProps} />) },
             expanded: null
         },
         5: {
@@ -263,7 +264,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         },
         7: {
             label: "Set map weight...",
-            compressed: () => { return (<MoorhenSetMapWeight key='set-map-weight' disabled={!mapIsVisible} map={props.map} setPopoverIsShown={setPopoverIsShown} />) },
+            compressed: () => { return (<MoorhenSetMapWeight key='set-map-weight' disabled={!isVisible} map={props.map} setPopoverIsShown={setPopoverIsShown} />) },
             expanded: null
         },
     }
@@ -329,14 +330,14 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const handleOriginUpdate = useCallback((evt: moorhen.OriginUpdateEvent) => {
         nextOrigin.current = [...evt.detail.origin.map((coord: number) => -coord)]
         isDirty.current = true
-        if (mapIsVisible && !busyContouring.current) {
+        if (isVisible && !busyContouring.current) {
             doContourIfDirty()
         }
-    }, [doContourIfDirty, mapIsVisible])
+    }, [doContourIfDirty, isVisible])
 
     const handleWheelContourLevelCallback = useCallback((evt: moorhen.WheelContourLevelEvent) => {
         let newMapContourLevel: number
-        if (mapIsVisible && props.map.molNo === activeMap.molNo) {
+        if (isVisible && props.map.molNo === activeMap.molNo) {
             if (evt.detail.factor > 1) {
                 newMapContourLevel = contourLevel + contourWheelSensitivityFactor
             } else {
@@ -355,7 +356,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                 ))
             })
         }
-    }, [contourLevel, mapRadius, activeMap?.molNo, props.map.molNo, mapIsVisible])
+    }, [contourLevel, mapRadius, activeMap?.molNo, props.map.molNo, isVisible])
 
     useMemo(() => {
         if (currentName === "") {
@@ -395,6 +396,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         // Update attribute in MoorhenMap
         props.map.contourParams = {
             mapRadius, 
+            isVisible,
             contourLevel, 
             mapAlpha, 
             mapStyle,
@@ -409,7 +411,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     }, [])
 
     useEffect(() => {
-        if (mapIsVisible) {
+        if (isVisible) {
             nextOrigin.current = props.glRef.current.origin.map(coord => -coord)
             props.map.contourParams.mapRadius = mapRadius
             props.map.contourParams.contourLevel = contourLevel
@@ -422,7 +424,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             props.map.hideMapContour()
         }
 
-    }, [mapRadius, contourLevel, mapIsVisible, mapStyle, doContourIfDirty])
+    }, [mapRadius, contourLevel, isVisible, mapStyle, doContourIfDirty])
 
     const increaseLevelButton = <IconButton 
         style={{padding: 0, color: isDark ? 'white' : 'black'}}
@@ -628,7 +630,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                             allowExternalFeedback={true}
                             logScale={true}
                             showSliderTitle={false}
-                            isDisabled={!mapIsVisible}
+                            isDisabled={!isVisible}
                             initialValue={props.initialContour}
                             externalValue={contourLevel}
                             setExternalValue={(newVal) => dispatch( setContourLevel({molNo: props.map.molNo, contourLevel: newVal}) )}
@@ -645,7 +647,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                             logScale={false} 
                             sliderTitle="Radius" 
                             decimalPlaces={2} 
-                            isDisabled={!mapIsVisible} 
+                            isDisabled={!isVisible} 
                             initialValue={props.initialRadius} 
                             externalValue={mapRadius} 
                             setExternalValue={(newVal) => dispatch( setMapRadius({molNo: props.map.molNo, radius: newVal}) )}

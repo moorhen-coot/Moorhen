@@ -475,6 +475,7 @@ export namespace moorhen {
         mapRmsd: number;
         suggestedMapWeight: number;
         contourParams: { 
+            isVisible: boolean;
             mapRadius: number; 
             contourLevel: number; 
             mapAlpha: number; 

@@ -66,6 +66,7 @@ export class MoorhenMap implements moorhen.Map {
     otherMapForColouring: {molNo: number, min: number, max: number};
     diffMapColourBuffers: { positiveDiffColour: number[], negativeDiffColour: number[] }
     contourParams: { 
+        isVisible: boolean;
         mapRadius: number; 
         contourLevel: number; 
         mapAlpha: number; 
@@ -98,6 +99,7 @@ export class MoorhenMap implements moorhen.Map {
         this.otherMapForColouring = null
         this.diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] }
         this.contourParams = {
+            isVisible: true,
             mapRadius: _DEFAULT_RADIUS, 
             contourLevel: _DEFAULT_CONTOUR_LEVEL,
             mapAlpha: _DEFAULT_ALPHA,
