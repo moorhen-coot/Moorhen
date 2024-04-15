@@ -1387,6 +1387,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("sharpen_blur_map_with_resample",&molecules_container_t::sharpen_blur_map_with_resample)
     .function("find_water_baddies",&molecules_container_t::find_water_baddies)
     .function("get_gphl_chem_comp_info",&molecules_container_t::get_gphl_chem_comp_info)
+    .function("get_map_section_texture", &molecules_container_t::get_map_section_texture)
     .property("use_gemmi", &molecules_container_t::use_gemmi)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
@@ -1413,6 +1414,14 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("replace_molecule_by_model_from_string", &molecules_container_js::replace_molecule_by_model_from_string)
     .function("read_dictionary_string", &molecules_container_js::read_dictionary_string)
     .function("slicendice_slice", &molecules_container_js::slicendice_slice)
+    ;
+    value_object<texture_as_floats_t>("texture_as_floats_t")
+    .field("width", &texture_as_floats_t::width)
+    .field("height", &texture_as_floats_t::height)
+    .field("x_size", &texture_as_floats_t::x_size)
+    .field("y_size", &texture_as_floats_t::y_size)
+    .field("z_position", &texture_as_floats_t::z_position)
+    .field("image_data", &texture_as_floats_t::image_data)
     ;
     value_object<molecules_container_t::fit_ligand_info_t>("fit_ligand_info_t")
     .field("imol", &molecules_container_t::fit_ligand_info_t::imol)
