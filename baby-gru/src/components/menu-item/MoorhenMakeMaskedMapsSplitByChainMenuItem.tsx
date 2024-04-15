@@ -52,7 +52,7 @@ export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
                     newMap.name = `Chain ${listIndex} of ${selectedMap.name}`
                     newMap.isDifference = selectedMap.isDifference
                     await newMap.getSuggestedSettings()
-                    const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.getMapContourParams()
+                    const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.contourParams
                     batch(() => {
                         dispatch( setMapRadius({ molNo: newMap.molNo, radius: mapRadius }) )
                         dispatch( setContourLevel({ molNo: newMap.molNo, contourLevel: contourLevel }) )

@@ -431,23 +431,14 @@ export namespace moorhen {
         getHistogram(nBins?: number, zoomFactor?: number): Promise<libcootApi.HistogramInfoJS>;
         setMapWeight(weight?: number): Promise<WorkerResponse>;
         estimateMapWeight(): Promise<void>;
-        fetchMapAlphaAndRedraw(): Promise<void>;
+        setMapAlphaAndRedraw(alpha: number): void;
         centreOnMap(): Promise<void>;
         getSuggestedSettings(): Promise<void>;
         copyMap(): Promise<Map>;
-        getMapContourParams(): { 
-            mapRadius: number; 
-            contourLevel: number; 
-            mapAlpha: number; 
-            mapStyle: "lines" | "solid" | "lit-lines"; 
-            mapColour: {r: number; g: number; b: number}; 
-            positiveMapColour: {r: number; g: number; b: number}; 
-            negativeMapColour: {r: number; g: number; b: number}
-        };
         hideMapContour(): void;
         drawMapContour(): Promise<void>;
-        fetchColourAndRedraw(): Promise<void> ;
-        fetchDiffMapColourAndRedraw(type: 'positiveDiffColour' | 'negativeDiffColour'): Promise<void> ;
+        setColourAndRedraw(mapColour: {r: number, g: number, b: number}): void;
+        setDiffMapColourAndRedraw(type: 'positiveDiffColour' | 'negativeDiffColour', mapColour: {r: number, g: number, b: number}): void;
         fetchMapRmsd(): Promise<number>;
         fetchSuggestedLevel(): Promise<number>;
         fetchMapCentre(): Promise<[number, number, number]>;
@@ -483,9 +474,15 @@ export namespace moorhen {
         otherMapForColouring: {molNo: number, min: number, max: number};
         mapRmsd: number;
         suggestedMapWeight: number;
-        defaultMapColour: {r: number, g: number, b: number};
-        defaultPositiveMapColour: {r: number, g: number, b: number};
-        defaultNegativeMapColour: {r: number, g: number, b: number};
+        contourParams: { 
+            mapRadius: number; 
+            contourLevel: number; 
+            mapAlpha: number; 
+            mapStyle: "lines" | "solid" | "lit-lines"; 
+            mapColour: {r: number; g: number; b: number}; 
+            positiveMapColour: {r: number; g: number; b: number}; 
+            negativeMapColour: {r: number; g: number; b: number}
+        };    
     }
     
     interface backupKey {

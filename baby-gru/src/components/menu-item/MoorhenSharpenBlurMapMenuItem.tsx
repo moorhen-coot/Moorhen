@@ -76,7 +76,7 @@ export const MoorhenSharpenBlurMapMenuItem = (props: {
             newMap.name = `Map ${mapNo} ${bFactor < 0 ? "sharpened" : "blurred"} by ${bFactor}`
             await newMap.getSuggestedSettings()
             newMap.isDifference = selectedMap.isDifference
-            const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.getMapContourParams()
+            const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.contourParams
             batch(() => {
                 dispatch( setMapRadius({ molNo: newMap.molNo, radius: mapRadius }) )
                 dispatch( setContourLevel({ molNo: newMap.molNo, contourLevel: contourLevel }) )

@@ -3,7 +3,6 @@ import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { libcootApi } from "../types/libcoot";
 import pako from "pako"
-import MoorhenReduxStore from "../store/MoorhenReduxStore";
 
 const _DEFAULT_CONTOUR_LEVEL = 0.8
 const _DEFAULT_RADIUS = 13
@@ -66,9 +65,15 @@ export class MoorhenMap implements moorhen.Map {
     suggestedMapWeight: number
     otherMapForColouring: {molNo: number, min: number, max: number};
     diffMapColourBuffers: { positiveDiffColour: number[], negativeDiffColour: number[] }
-    defaultMapColour: {r: number, g: number, b: number};
-    defaultPositiveMapColour: {r: number, g: number, b: number};
-    defaultNegativeMapColour: {r: number, g: number, b: number};
+    contourParams: { 
+        mapRadius: number; 
+        contourLevel: number; 
+        mapAlpha: number; 
+        mapStyle: "lines" | "solid" | "lit-lines"; 
+        mapColour: {r: number; g: number; b: number}; 
+        positiveMapColour: {r: number; g: number; b: number}; 
+        negativeMapColour: {r: number; g: number; b: number}
+    }
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>) {
         this.type = 'map'
@@ -92,9 +97,15 @@ export class MoorhenMap implements moorhen.Map {
         this.mapCentre = null
         this.otherMapForColouring = null
         this.diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] }
-        this.defaultMapColour = _DEFAULT_MAP_COLOUR
-        this.defaultPositiveMapColour = _DEFAULT_POSITIVE_MAP_COLOUR
-        this.defaultNegativeMapColour = _DEFAULT_NEGATIVE_MAP_COLOUR
+        this.contourParams = {
+            mapRadius: _DEFAULT_RADIUS, 
+            contourLevel: _DEFAULT_CONTOUR_LEVEL,
+            mapAlpha: _DEFAULT_ALPHA,
+            mapStyle: _DEFAULT_STYLE,
+            mapColour: _DEFAULT_MAP_COLOUR,
+            negativeMapColour: _DEFAULT_NEGATIVE_MAP_COLOUR,
+            positiveMapColour:   _DEFAULT_POSITIVE_MAP_COLOUR,
+        }
     }
 
     /**
@@ -378,42 +389,10 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     /**
-     * Get map contour parameters from the redux store
-     * @returns {object} A description of map contour parameters as described in the redux store
-     */
-    getMapContourParams(): { 
-        mapRadius: number; 
-        contourLevel: number; 
-        mapAlpha: number; 
-        mapStyle: "lines" | "solid" | "lit-lines"; 
-        mapColour: {r: number; g: number; b: number}; 
-        positiveMapColour: {r: number; g: number; b: number}; 
-        negativeMapColour: {r: number; g: number; b: number}
-    } {
-        const state = MoorhenReduxStore.getState()
-        const radius = state.mapContourSettings.mapRadii.find(item => item.molNo === this.molNo)?.radius
-        const level = state.mapContourSettings.contourLevels.find(item => item.molNo === this.molNo)?.contourLevel
-        const alpha = state.mapContourSettings.mapAlpha.find(item => item.molNo === this.molNo)?.alpha
-        const style = state.mapContourSettings.mapStyles.find(item => item.molNo === this.molNo)?.style
-        const mapColour = state.mapContourSettings.mapColours.find(item => item.molNo === this.molNo)?.rgb
-        const negativeMapColour = state.mapContourSettings.negativeMapColours.find(item => item.molNo === this.molNo)?.rgb
-        const positiveMapColour = state.mapContourSettings.positiveMapColours.find(item => item.molNo === this.molNo)?.rgb
-        return {
-            mapRadius: radius ? radius : _DEFAULT_RADIUS, 
-            contourLevel: level ? level : _DEFAULT_CONTOUR_LEVEL,
-            mapAlpha: alpha ? alpha : _DEFAULT_ALPHA,
-            mapStyle: style ? style : _DEFAULT_STYLE,
-            mapColour: mapColour ? {r: mapColour.r / 255., g: mapColour.g / 255., b: mapColour.b / 255.} : this.defaultMapColour,
-            negativeMapColour: negativeMapColour ? {r: negativeMapColour.r / 255., g: negativeMapColour.g / 255., b: negativeMapColour.b / 255.} : this.defaultNegativeMapColour,
-            positiveMapColour: positiveMapColour ? {r: positiveMapColour.r / 255., g: positiveMapColour.g / 255., b: positiveMapColour.b / 255.} : this.defaultPositiveMapColour  
-        }
-    }
-
-    /**
      * Contour the map with parameters from the redux store
      */
     drawMapContour(): Promise<void> {
-        const { mapRadius, contourLevel, mapStyle } = this.getMapContourParams()
+        const { mapRadius, contourLevel, mapStyle } = this.contourParams
         return this.doCootContour(...this.glRef.current.origin.map(coord => -coord) as [number, number, number], mapRadius, contourLevel, mapStyle)
     }
 
@@ -440,7 +419,7 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     setupContourBuffers(objects: any[], keepCootColours: boolean = false) {
-        const { mapAlpha, mapColour, positiveMapColour, negativeMapColour } = this.getMapContourParams()
+        const { mapAlpha, mapColour, positiveMapColour, negativeMapColour } = this.contourParams
         const print_timing = false;
         const t1 = performance.now();
         try {
@@ -623,16 +602,21 @@ export class MoorhenMap implements moorhen.Map {
     /**
      * Fetch the colours for a difference map using values from redux store and redraw the map
      * @param {'positiveDiffColour' | 'negativeDiffColour'} type - Indicates whether the negative or positive colours will be set
-     * @returns {Promise<void>}
+     * @param {object} mapColour - The new colour for the difference map
      */
-    async fetchDiffMapColourAndRedraw(type: 'positiveDiffColour' | 'negativeDiffColour'): Promise<void> {
+    setDiffMapColourAndRedraw(type: 'positiveDiffColour' | 'negativeDiffColour', mapColour: {r: number, g: number, b: number}): void {
         if (!this.isDifference) {
-            console.error('Cannot use moorhen.Map.fetchDiffMapColourAndRedraw to change non-diff map colour. Use moorhen.Map.fetchColourAndRedraw instead...')
+            console.error('Cannot use moorhen.Map.setDiffMapColourAndRedraw to change non-diff map colour. Use moorhen.Map.setColourAndRedraw instead...')
             return
         }
         
-        const { mapAlpha, positiveMapColour, negativeMapColour } = this.getMapContourParams()
-        const mapColour = type === 'positiveDiffColour' ? positiveMapColour : negativeMapColour
+        if (type === 'positiveDiffColour') {
+            this.contourParams.positiveMapColour = mapColour
+        } else {
+            this.contourParams.negativeMapColour = mapColour
+        }
+
+        const { mapAlpha } = this.contourParams
        
         if (mapAlpha < 0.99) {
             this.displayObjects['Coot'].forEach((buffer, bufferIdx) => {
@@ -669,18 +653,21 @@ export class MoorhenMap implements moorhen.Map {
 
     /**
      * Set the colours for a non-difference map using values from redux store
+     * @param {object} mapColour - The new colour for the difference map
      */
-    async fetchColourAndRedraw(): Promise<void> {
+    setColourAndRedraw(mapColour: {r: number, g: number, b: number}): void {
         if (this.isDifference) {
-            console.error('Cannot use moorhen.Map.fetchColourAndRedraw to change difference map colour. Use moorhen.Map.fetchDiffMapColourAndRedraw instead...')
+            console.error('Cannot use moorhen.Map.setColourAndRedraw to change difference map colour. Use moorhen.Map.setDiffMapColourAndRedraw instead...')
             return
         }
+
+        this.contourParams.mapColour = mapColour
 
         if (this.otherMapForColouring !== null) {
             this.otherMapForColouring = null
         }
         
-        const { mapAlpha, mapColour } = this.getMapContourParams()
+        const { mapAlpha } = this.contourParams
         
         this.displayObjects['Coot'].forEach(buffer => {
             if (mapAlpha < 0.99) {
@@ -696,7 +683,7 @@ export class MoorhenMap implements moorhen.Map {
                 buffer.isDirty = true;
                 buffer.alphaChanged = true;
             } else {
-                buffer.setCustomColour([mapColour.r,mapColour.g,mapColour.b,1.0])
+                buffer.setCustomColour([mapColour.r, mapColour.g, mapColour.b, 1.0])
                 buffer.transparent = false
             }
         })
@@ -710,9 +697,11 @@ export class MoorhenMap implements moorhen.Map {
 
     /**
      * Fetch the map alpha (transparency) for this map using values from redux store and redraw the map
+     * @param {number} mapAlpha - The new map alpha
      */
-    async fetchMapAlphaAndRedraw(): Promise<void> {
-        const { mapAlpha, mapColour } = this.getMapContourParams()
+    setMapAlphaAndRedraw(mapAlpha: number): void {
+        this.contourParams.mapAlpha = mapAlpha
+        const { mapColour } = this.contourParams
         this.displayObjects['Coot'].forEach(buffer => {
             buffer.triangleColours.forEach(colbuffer => {
                 if (this.isDifference) {
@@ -809,7 +798,7 @@ export class MoorhenMap implements moorhen.Map {
         const reply = await this.getMap()
         const newMap = new MoorhenMap(this.commandCentre, this.glRef)
         await newMap.loadToCootFromMapData(reply.data.result.mapData, `Copy of ${this.name}`, this.isDifference)
-        const { mapRadius, contourLevel } = this.getMapContourParams()
+        const { mapRadius, contourLevel } = this.contourParams
         newMap.suggestedContourLevel = contourLevel
         newMap.suggestedRadius = mapRadius
         return newMap
@@ -997,7 +986,7 @@ export class MoorhenMap implements moorhen.Map {
             h -= 360
         }
         const [r, g, b] = hsvToRgb(h, s, v)
-        this.defaultMapColour = { r, g, b }
+        this.contourParams.mapColour = { r, g, b }
     }
 
     /**
@@ -1005,7 +994,7 @@ export class MoorhenMap implements moorhen.Map {
      * @returns {ArrayBuffer} - The contents of the gltf file (binary format)
      */
     async exportAsGltf(): Promise<ArrayBuffer> {
-        const { mapRadius, contourLevel } = this.getMapContourParams()
+        const { mapRadius, contourLevel } = this.contourParams
         const result = await this.commandCentre.current.cootCommand({
             returnType: "arrayBuffer",
             command: 'shim_export_map_as_gltf',
