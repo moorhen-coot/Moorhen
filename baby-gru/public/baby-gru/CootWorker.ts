@@ -379,6 +379,29 @@ const mapMoleculeCentreInfoToJSObject = (mapMoleculeCentreInfo: libcootApi.MapMo
     return returnResult;
 }
 
+const textureAsFloatsToJSTextureAsFloats = (data:libcootApi.textureAsFloats): libcootApi.textureAsFloatsJS => {
+
+    let image_data = []
+
+    const imageDataVecSize = data.image_data.size()
+    console.log(imageDataVecSize);
+    for (let i = 0; i < imageDataVecSize; i++) {
+        const texVal = data.image_data.get(i)
+        image_data.push(texVal)
+    }
+
+    data.image_data.delete()
+
+    return {
+        width:data.width,
+        height:data.height,
+        x_size:data.x_size,
+        y_size:data.y_size,
+        z_position:data.z_position,
+        image_data:image_data,
+    };
+}
+
 const fitLigandInfoArrayToJSArray = (fitLigandInfoVec: emscriptem.vector<libcootApi.fitLigandInfo>): libcootApi.fitLigandInfo[] => {
     const result: libcootApi.fitLigandInfo[] = []
 
@@ -1040,6 +1063,9 @@ const doCootCommand = (messageData: {
 
         let returnResult;
         switch (returnType) {
+            case 'texture_as_floats_t':
+                returnResult = textureAsFloatsToJSTextureAsFloats(cootResult)
+                break;
             case 'fit_ligand_info_array':
                 returnResult = fitLigandInfoArrayToJSArray(cootResult)
                 break;

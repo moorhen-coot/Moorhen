@@ -429,6 +429,22 @@ export namespace libcootApi {
         psi: number;
         is_pre_pro: boolean;
     }
+    type textureAsFloats = {
+        width: number;
+        height: number;
+        x_size: number;
+        y_size: number;
+        z_position: number;
+        image_data: emscriptem.vector<number>;
+    }
+    type textureAsFloatsJS = {
+        width: number;
+        height: number;
+        x_size: number;
+        y_size: number;
+        z_position: number;
+        image_data: number[];
+    }
     type fitLigandInfo = {
         imol: number;
         cluster_idx: number;
