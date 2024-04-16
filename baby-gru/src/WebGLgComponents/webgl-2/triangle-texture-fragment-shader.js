@@ -4,6 +4,7 @@ var triangle_texture_fragment_shader_source = `#version 300 es\n
     in lowp vec4 eyePos;
 
     uniform sampler2D valueMap;
+    uniform sampler2D colorMap;
 
     uniform vec4 fogColour;
 
@@ -36,8 +37,8 @@ var triangle_texture_fragment_shader_source = `#version 300 es\n
       fogFactor = 1.0 - clamp(fogFactor,0.0,1.0);
 
       float edge = texture(valueMap, vTexture).x;
-      vec4 color = vec4(edge,edge,edge,1.0);
-      //vec4 color = vec4(vTexture.x,vTexture.y,1.0,1.0);
+      vec4 color = texture(colorMap,vec2(edge, 0.5) );
+      //vec4 color = vec4(edge,edge,edge,1.0);
 
       fragColor = mix(color, fogColour, fogFactor );
     }
