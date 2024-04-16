@@ -83,7 +83,7 @@ const MoorhenImportLigandDictionary = (props: {
                     ...glRef.current.origin.map(coord => -coord)]
             }, true) as moorhen.WorkerResponse<number> 
             if (result.data.result.status === "Completed") {
-                newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath, store)
+                newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)
                 newMolecule.molNo = result.data.result.result
                 newMolecule.name = instanceName
                 newMolecule.setBackgroundColour(backgroundColor)

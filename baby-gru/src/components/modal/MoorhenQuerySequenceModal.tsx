@@ -51,7 +51,7 @@ export const MoorhenQuerySequenceModal = (props: {
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
 
     const fetchMoleculeFromURL = async (url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath, props.store)
+        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
         newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         try {

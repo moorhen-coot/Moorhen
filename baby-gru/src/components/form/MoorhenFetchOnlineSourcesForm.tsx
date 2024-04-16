@@ -132,7 +132,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
     }
 
     const fetchMoleculeFromURL = async (url: RequestInfo | URL, molName: string, isAF2?: boolean): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath, store)
+        const newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)
         newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         try {

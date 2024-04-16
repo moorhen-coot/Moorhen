@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import { useRef } from "react";
 import { Form } from "react-bootstrap";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
@@ -49,7 +49,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
             return
         }
         const tutorialNumber = tutorialNumberSelectorRef.current.value
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath, props.store)
+        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
         newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         const newMap = new MoorhenMap(props.commandCentre, props.glRef, props.store)

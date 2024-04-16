@@ -259,7 +259,7 @@ export async function loadSessionData(
 
     // Load molecules stored in session from coords string
     const newMoleculePromises = sessionData.moleculeData?.map(storedMoleculeData => {
-        const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath, store)
+        const newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)
         return newMolecule.loadToCootFromString(storedMoleculeData.coordString, storedMoleculeData.name)
     }) || []
     

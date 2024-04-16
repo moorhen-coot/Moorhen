@@ -104,7 +104,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     adaptativeBondsEnabled: boolean;
     store: ToolkitStore;
 
-    constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibraryPath = "./baby-gru/monomers", store: ToolkitStore = MoorhenReduxStore) {
+    constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore = MoorhenReduxStore, monomerLibraryPath = "./baby-gru/monomers") {
         this.type = 'molecule'
         this.commandCentre = commandCentre
         this.glRef = glRef
@@ -497,7 +497,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      */
     async copyMolecule(): Promise<moorhen.Molecule> {
         let coordString = await this.getAtoms()
-        let newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.monomerLibraryPath, this.store)
+        let newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
         newMolecule.name = `${this.name}-placeholder`
         newMolecule.defaultBondOptions = this.defaultBondOptions
         newMolecule.coordsFormat = this.coordsFormat
@@ -533,7 +533,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             command: "copy_fragment_using_cid",
             commandArgs: [this.molNo, cid],
         }, true) as moorhen.WorkerResponse<number>
-        const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.monomerLibraryPath, this.store)
+        const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
         newMolecule.name = `${this.name} fragment`
         newMolecule.molNo = response.data.result.result
         newMolecule.isDarkBackground = this.isDarkBackground
@@ -558,7 +558,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {moorhen.Molecule} A new molecule instance that can be used for refinement
      */
     async copyFragmentForRefinement(cid: string[], refinementMap: moorhen.Map, redraw: boolean = true, redrawFragmentFirst: boolean = true): Promise<moorhen.Molecule> {
-        const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.monomerLibraryPath, this.store)
+        const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
         const copyResult = await this.commandCentre.current.cootCommand({
             returnType: 'int',
             command: 'copy_fragment_for_refinement_using_cid',
@@ -1556,7 +1556,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             result = await getMonomer()
         }
         if (result.data.result.status === "Completed" && result.data.result.result !== -1) {
-            const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.monomerLibraryPath, this.store)
+            const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
             newMolecule.setAtomsDirty(true)
             newMolecule.molNo = result.data.result.result
             newMolecule.name = resType.toUpperCase()
@@ -2017,7 +2017,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if (result.data.result.status === "Completed") {
             newMolecules = await Promise.all(
                 result.data.result.result.map(async (fitLigandResult: (number | libcootApi.fitLigandInfo), idx: number) => {
-                    const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.monomerLibraryPath, this.store)
+                    const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
                     newMolecule.molNo = fitRightHere ? fitLigandResult as number : (fitLigandResult as libcootApi.fitLigandInfo).imol 
                     newMolecule.name = `Fit. lig. #${idx + 1}`
                     newMolecule.isDarkBackground = this.isDarkBackground
@@ -2283,7 +2283,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             }
             return await Promise.all(
                 result.data.result.result.map(async (molNo, index) => {
-                    const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.monomerLibraryPath, this.store)
+                    const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
                     newMolecule.name = `${this.name}-${index+1}`
                     newMolecule.molNo = molNo
                     newMolecule.isDarkBackground = this.isDarkBackground
