@@ -36,7 +36,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
-    const { commandCentre, glRef, monomerLibraryPath, setBusy } = props;
+    const { commandCentre, glRef, monomerLibraryPath, setBusy, store } = props;
 
     const getWarningToast = (message: string) => <MoorhenNotification key={guid()} hideDelay={3000} width={20}>
             <><WarningOutlined style={{margin: 0}}/>
@@ -76,7 +76,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     }
 
     const readPdbFile = async (file: File): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
+        const newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)
         newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         await newMolecule.loadToCootFromFile(file)        
@@ -129,6 +129,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     props.commandCentre,
                     props.timeCapsuleRef,
                     props.glRef,
+                    store,
                     dispatch
                 )
             } else {
@@ -140,6 +141,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     props.commandCentre,
                     props.timeCapsuleRef,
                     props.glRef,
+                    store,
                     dispatch
                 )
             }
@@ -218,12 +220,12 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                         <Form.Control type="file" accept=".pdb, .mmcif, .cif, .ent" multiple={true} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { loadPdbFiles(e.target.files) }}/>
                     </Form.Group>}
                     
-                    <MoorhenFetchOnlineSourcesForm commandCentre={commandCentre} glRef={glRef} setBusy={setBusy} monomerLibraryPath={monomerLibraryPath} />
+                    <MoorhenFetchOnlineSourcesForm commandCentre={commandCentre} glRef={glRef} setBusy={setBusy} monomerLibraryPath={monomerLibraryPath} store={store} />
                     
                     {!props.disableFileUploads && 
                     <Form.Group className='moorhen-form-group' controlId="upload-session-form">
                         <Form.Label>Load from stored session</Form.Label>
-                        <Form.Control type="file" accept=".pb" multiple={false} onChange={handleSessionUpload}/>
+                        <Form.Control type="file" accept=".pb," multiple={false} onChange={handleSessionUpload}/>
                     </Form.Group>}
                     
                     <hr></hr>

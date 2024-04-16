@@ -8,10 +8,12 @@ import { webGL } from "../../types/mgWebGL"
 import { batch, useDispatch, useSelector } from 'react-redux';
 import { setActiveMap, setNotificationContent } from "../../store/generalStatesSlice"
 import { addMap } from "../../store/mapsSlice"
+import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore"
 
 export const MoorhenImportMapCoefficientsMenuItem = (props: {
     commandCentre: RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
+    store: ToolkitStore;
     setPopoverIsShown: Dispatch<SetStateAction<boolean>>;
     getWarningToast: (arg0: string) => JSX.Element;
 }) => {
@@ -54,7 +56,7 @@ export const MoorhenImportMapCoefficientsMenuItem = (props: {
                 Fobs: fobsSelectRef.current.value, SigFobs: sigFobsSelectRef.current.value,
                 FreeR: freeRSelectRef.current.value, calcStructFact: calcStructFactRef.current.checked
             }
-            const newMap = new MoorhenMap(props.commandCentre, props.glRef)
+            const newMap = new MoorhenMap(props.commandCentre, props.glRef, props.store)
             try {
                 await newMap.loadToCootFromMtzFile(file, selectedColumns)
                 if (newMap.molNo === -1) {

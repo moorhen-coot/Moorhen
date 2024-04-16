@@ -1,20 +1,25 @@
 import { createSlice } from '@reduxjs/toolkit'
 
+const initialState = {
+  goToResiduePopUp: {
+    show: false
+  },
+  matchingLigandPopUp: {
+    show: false,
+    refMolNo: null,
+    movingMolNo: null,
+    refLigandCid: null,
+    movingLigandCid: null
+  }
+}
+
 export const activePopUpsSlice = createSlice({
   name: 'activePopUps',
-  initialState: {
-    goToResiduePopUp: {
-      show: false
-    },
-    matchingLigandPopUp: {
-      show: false,
-      refMolNo: null,
-      movingMolNo: null,
-      refLigandCid: null,
-      movingLigandCid: null
-    }
-  },
+  initialState: initialState,
   reducers: {
+    resetActivePopUps: (state) => {
+      return initialState
+    },
     setShowGoToResiduePopUp: (state, action: { payload: boolean, type: string }) => {
       return {...state, goToResiduePopUp: {...state.goToResiduePopUp, show: action.payload} }
     },
@@ -44,7 +49,7 @@ export const activePopUpsSlice = createSlice({
 
 export const {
     setShowAcceptMatchingLigandPopUp, setMatchinLigandPopUpParams, hideAcceptMatchingLigandPopUp,
-    showGoToResiduePopUp, hideGoToResiduePopUp, setShowGoToResiduePopUp
+    showGoToResiduePopUp, hideGoToResiduePopUp, setShowGoToResiduePopUp, resetActivePopUps
 } = activePopUpsSlice.actions
 
 export default activePopUpsSlice.reducer

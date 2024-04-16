@@ -4,6 +4,7 @@ import { webGL } from "../types/mgWebGL";
 import { libcootApi } from "../types/libcoot";
 import pako from "pako"
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
+import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 
 const _DEFAULT_CONTOUR_LEVEL = 0.8
 const _DEFAULT_RADIUS = 13
@@ -49,6 +50,7 @@ export class MoorhenMap implements moorhen.Map {
     name: string
     isEM: boolean
     molNo: number
+    store: ToolkitStore
     commandCentre: React.RefObject<moorhen.CommandCentre>
     glRef: React.RefObject<webGL.MGWebGL>
     mapCentre: [number, number, number]
@@ -70,13 +72,14 @@ export class MoorhenMap implements moorhen.Map {
     defaultPositiveMapColour: {r: number, g: number, b: number};
     defaultNegativeMapColour: {r: number, g: number, b: number};
 
-    constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>) {
+    constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore = MoorhenReduxStore) {
         this.type = 'map'
         this.name = "unnamed"
         this.isEM = false
         this.molNo = null
         this.commandCentre = commandCentre
         this.glRef = glRef
+        this.store = store
         this.webMGContour = false
         this.showOnLoad = true
         this.displayObjects = { Coot: [] }
@@ -390,7 +393,7 @@ export class MoorhenMap implements moorhen.Map {
         positiveMapColour: {r: number; g: number; b: number}; 
         negativeMapColour: {r: number; g: number; b: number}
     } {
-        const state = MoorhenReduxStore.getState()
+        const state = this.store.getState()
         const radius = state.mapContourSettings.mapRadii.find(item => item.molNo === this.molNo)?.radius
         const level = state.mapContourSettings.contourLevels.find(item => item.molNo === this.molNo)?.contourLevel
         const alpha = state.mapContourSettings.mapAlpha.find(item => item.molNo === this.molNo)?.alpha
@@ -669,8 +672,6 @@ export class MoorhenMap implements moorhen.Map {
 
     /**
      * Set the colours for a non-difference map using values from redux store
-     * @param {boolean} [redraw=true] - Indicates whether the map needs to be redrawn after setting the new colours
-     * @returns {Promise<void>}
      */
     async fetchColourAndRedraw(): Promise<void> {
         if (this.isDifference) {
@@ -809,7 +810,7 @@ export class MoorhenMap implements moorhen.Map {
      */
     async copyMap(): Promise<moorhen.Map> {
         const reply = await this.getMap()
-        const newMap = new MoorhenMap(this.commandCentre, this.glRef)
+        const newMap = new MoorhenMap(this.commandCentre, this.glRef, this.store)
         await newMap.loadToCootFromMapData(reply.data.result.mapData, `Copy of ${this.name}`, this.isDifference)
         const { mapRadius, contourLevel } = this.getMapContourParams()
         newMap.suggestedContourLevel = contourLevel

@@ -1,8 +1,9 @@
 import { useRef } from 'react';
 import { MoorhenContainer } from "./MoorhenContainer";
-import { MoorhenReduxProvider } from './misc/MoorhenReduxProvider'
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
+import { Provider } from 'react-redux';
+import store from '../store/MoorhenReduxStore';
 
 export const MoorhenApp = (props) => {
     const glRef = useRef<null | webGL.MGWebGL>(null)
@@ -15,11 +16,11 @@ export const MoorhenApp = (props) => {
     const prevActiveMoleculeRef = useRef<null | moorhen.Molecule>(null)
 
     const collectedProps = {
-        glRef, timeCapsuleRef, commandCentre, moleculesRef, 
-        mapsRef, activeMapRef, lastHoveredAtom, prevActiveMoleculeRef,
+        glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef,
+        lastHoveredAtom, prevActiveMoleculeRef
     }
 
-    return  <MoorhenReduxProvider>
+    return  <Provider store={store}> 
                 <MoorhenContainer {...collectedProps}/>
-            </MoorhenReduxProvider>
+            </Provider>
 }

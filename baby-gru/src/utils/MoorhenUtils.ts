@@ -21,6 +21,7 @@ import {
     setEdgeDetectDepthScale, setEdgeDetectDepthThreshold, setEdgeDetectNormalScale, setEdgeDetectNormalThreshold, setSsaoBias, setSsaoRadius, setUseOffScreenBuffers 
 } from "../store/sceneSettingsSlice";
 import { moorhensession } from "../protobuf/MoorhenSession";
+import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 
 export const getAtomInfoLabel = (atomInfo: moorhen.AtomInfo) => {
     return `/${atomInfo.mol_name}/${atomInfo.chain_id}/${atomInfo.res_no}(${atomInfo.res_name})/${atomInfo.name}${atomInfo.has_altloc ? `:${atomInfo.alt_loc}` : ""}`
@@ -231,6 +232,7 @@ export async function loadSessionData(
     commandCentre: React.RefObject<moorhen.CommandCentre>,
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
     glRef: React.RefObject<webGL.MGWebGL>,
+    store: ToolkitStore,
     dispatch: Dispatch<AnyAction>
 ): Promise<number> {
 
@@ -257,13 +259,13 @@ export async function loadSessionData(
 
     // Load molecules stored in session from coords string
     const newMoleculePromises = sessionData.moleculeData?.map(storedMoleculeData => {
-        const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
+        const newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)
         return newMolecule.loadToCootFromString(storedMoleculeData.coordString, storedMoleculeData.name)
     }) || []
     
     // Load maps stored in session
     const newMapPromises = sessionData.mapData?.map(storedMapData => {
-        const newMap = new MoorhenMap(commandCentre, glRef)
+        const newMap = new MoorhenMap(commandCentre, glRef, store)
         if (sessionData.includesAdditionalMapData) {
             return newMap.loadToCootFromMapData(
                 storedMapData.mapData, 
@@ -453,12 +455,13 @@ export async function loadSessionFromProtoMessage(
     commandCentre: React.RefObject<moorhen.CommandCentre>,
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
     glRef: React.RefObject<webGL.MGWebGL>,
+    store: ToolkitStore,
     dispatch: Dispatch<AnyAction>
 ): Promise<number> {
 
     timeCapsuleRef.current.setBusy(true)
     const sessionData = moorhensession.Session.toObject(sessionProtoMessage) as moorhen.backupSession
-    const status = await loadSessionData(sessionData, monomerLibraryPath, molecules, maps, commandCentre, timeCapsuleRef, glRef, dispatch)
+    const status = await loadSessionData(sessionData, monomerLibraryPath, molecules, maps, commandCentre, timeCapsuleRef, glRef, store, dispatch)
     timeCapsuleRef.current.setBusy(false)
     return status
 }
@@ -483,12 +486,13 @@ export async function loadSessionFromJsonString(
     commandCentre: React.RefObject<moorhen.CommandCentre>,
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
     glRef: React.RefObject<webGL.MGWebGL>,
+    store: ToolkitStore,
     dispatch: Dispatch<AnyAction>
 ): Promise<number> {
 
     timeCapsuleRef.current.setBusy(true)
     const sessionData: moorhen.backupSession = JSON.parse(sessionDataString)
-    const status = await loadSessionData(sessionData, monomerLibraryPath, molecules, maps, commandCentre, timeCapsuleRef, glRef, dispatch)
+    const status = await loadSessionData(sessionData, monomerLibraryPath, molecules, maps, commandCentre, timeCapsuleRef, glRef, store, dispatch)
     timeCapsuleRef.current.setBusy(false)
     return status
 }

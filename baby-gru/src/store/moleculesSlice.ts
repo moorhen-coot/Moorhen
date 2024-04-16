@@ -1,13 +1,15 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { moorhen } from "../types/moorhen"
 
+const initialState = {
+  visibleMolecules: [],
+  customRepresentations: [],
+  moleculeList: [],
+}
+
 export const moleculesSlice = createSlice({
   name: 'molecules',
-  initialState: {
-    visibleMolecules: [],
-    customRepresentations: [],
-    moleculeList: [],
-  },
+  initialState: initialState,
   reducers: {
     addMolecule: (state, action: {payload: moorhen.Molecule, type: string}) => {
       state = { ...state, moleculeList: [...state.moleculeList, action.payload] }
@@ -23,12 +25,7 @@ export const moleculesSlice = createSlice({
       return state
     },
     emptyMolecules: (state) => {
-      state = {
-        visibleMolecules: [],
-        customRepresentations: [],
-        moleculeList: [],
-      }
-      return state
+      return initialState
     },
     addMoleculeList: (state, action: {payload: moorhen.Molecule[], type: string}) => {
       state = { ...state, moleculeList: [...state.moleculeList, ...action.payload] }

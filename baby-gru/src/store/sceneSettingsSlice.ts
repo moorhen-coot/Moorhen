@@ -1,8 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
 
-export const sceneSettingsSlice = createSlice({
-  name: 'sceneSettings',
-  initialState: {
+const initialState = {
     defaultBackgroundColor: null,
     drawScaleBar: null,
     drawCrosshairs: null,
@@ -33,8 +31,15 @@ export const sceneSettingsSlice = createSlice({
     width: 0,
     isDark: false,
     backgroundColor: [1, 1, 1, 1],
-  },
+}
+
+export const sceneSettingsSlice = createSlice({
+  name: 'sceneSettings',
+  initialState: initialState,
   reducers: {
+    resetSceneSettings: (state) => {
+        return initialState
+    },
     setDefaultBackgroundColor: (state, action: {payload: [number, number, number, number], type: string}) => {
         return {...state, defaultBackgroundColor: action.payload}
     },
@@ -132,7 +137,8 @@ export const {
     setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap,  
     setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius,
     setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setBackgroundColor,
-    setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setEdgeDetectNormalScale
+    setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setEdgeDetectNormalScale,
+    resetSceneSettings
 } = sceneSettingsSlice.actions
 
 export default sceneSettingsSlice.reducer

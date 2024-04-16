@@ -1,12 +1,17 @@
 import { createSlice } from '@reduxjs/toolkit'
 
-export const miscAppSettings = createSlice({
+const initialState = {
+  defaultExpandDisplayCards: null,
+  transparentModalsOnMouseOut: null,
+}
+
+export const miscAppSettingsSlice = createSlice({
   name: 'miscAppSettings',
-  initialState: {
-    defaultExpandDisplayCards: null,
-    transparentModalsOnMouseOut: null,
-  },
+  initialState: initialState,
   reducers: {
+    resetMiscAppSettings: (state) => {
+      return initialState
+    },
     setDefaultExpandDisplayCards: (state, action: {payload: boolean, type: string}) => {
       return {...state, defaultExpandDisplayCards: action.payload}
     },
@@ -16,7 +21,7 @@ export const miscAppSettings = createSlice({
 }})
 
 export const { 
-  setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut, 
-} = miscAppSettings.actions
+  setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut, resetMiscAppSettings
+} = miscAppSettingsSlice.actions
 
-export default miscAppSettings.reducer
+export default miscAppSettingsSlice.reducer

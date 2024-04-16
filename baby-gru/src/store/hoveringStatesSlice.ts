@@ -1,14 +1,19 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { moorhen } from '../types/moorhen'
 
+const initialState = {
+  enableAtomHovering: true,
+  hoveredAtom: { molecule: null, cid: null } as moorhen.HoveredAtom,
+  cursorStyle: 'default'
+}
+
 export const hoveringStatesSlice = createSlice({
   name: 'hoveringStates',
-  initialState: {
-    enableAtomHovering: true,
-    hoveredAtom: { molecule: null, cid: null } as moorhen.HoveredAtom,
-    cursorStyle: 'default'
-  },
+  initialState: initialState,
   reducers: {
+    resetHoveringStates: (state) => {
+      return initialState
+    },
     setHoveredAtom: (state, action: {payload: moorhen.HoveredAtom, type: string}) => {
         return {...state, hoveredAtom: action.payload}
     },
@@ -20,6 +25,6 @@ export const hoveringStatesSlice = createSlice({
     },
 }})
 
-export const { setCursorStyle, setEnableAtomHovering, setHoveredAtom } = hoveringStatesSlice.actions
+export const { setCursorStyle, setEnableAtomHovering, setHoveredAtom, resetHoveringStates } = hoveringStatesSlice.actions
 
 export default hoveringStatesSlice.reducer

@@ -1,14 +1,19 @@
 import { createSlice } from '@reduxjs/toolkit'
 
+const initialState = {
+  atomLabelDepthMode: null,
+  GLLabelsFontFamily: null,
+  GLLabelsFontSize: null,
+  availableFonts: []
+}
+
 export const labelSettingsSlice = createSlice({
   name: 'labelSettings',
-  initialState: {
-    atomLabelDepthMode: null,
-    GLLabelsFontFamily: null,
-    GLLabelsFontSize: null,
-    availableFonts: []
-  },
+  initialState: initialState,
   reducers: {
+    resetLabelSettings: (state) => {
+      return initialState
+    },
     addAvailableFont: (state, action: {payload: string, type: string}) => {
       return {...state, availableFonts: [...state.availableFonts, action.payload]}
     },
@@ -33,6 +38,6 @@ export const labelSettingsSlice = createSlice({
   }
 })
 
-export const { addAvailableFontList, setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } = labelSettingsSlice.actions
+export const { addAvailableFontList, setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize, resetLabelSettings } = labelSettingsSlice.actions
 
 export default labelSettingsSlice.reducer

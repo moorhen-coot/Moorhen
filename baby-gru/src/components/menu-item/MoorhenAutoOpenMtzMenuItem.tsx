@@ -9,8 +9,10 @@ import { libcootApi } from "../../types/libcoot"
 import { useDispatch } from 'react-redux';
 import { setActiveMap, setNotificationContent } from "../../store/generalStatesSlice"
 import { addMap } from "../../store/mapsSlice"
+import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore"
 
 export const MoorhenAutoOpenMtzMenuItem = (props: {
+    store: ToolkitStore;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
@@ -63,7 +65,7 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
 
         await Promise.all(
             response.data.result.result.filter(item => item.idx !== -1).map(async (autoReadInfo, index) => {
-                const newMap = new MoorhenMap(props.commandCentre, props.glRef)
+                const newMap = new MoorhenMap(props.commandCentre, props.glRef, props.store)
                 newMap.molNo = autoReadInfo.idx
                 newMap.name = `${file.name.replace('mtz', '')}-map-${index}`
                 newMap.isDifference = isDiffMapResponses[index].data.result.result

@@ -21,6 +21,7 @@ import { setDefaultBackgroundColor, setBackgroundColor, setHeight, setIsDark, se
 import { setCootInitialized, setNotificationContent, setTheme, toggleCootCommandExit, toggleCootCommandStart } from '../store/generalStatesSlice';
 import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSlice';
 import { setRefinementSelection } from '../store/refinementSettingsSlice';
+import MoorhenReduxStore from '../store/MoorhenReduxStore';
 
 // import { MoorhenSharedSessionManager } from './misc/MoorhenSharedSessionManager';
 
@@ -120,7 +121,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     })
 
     const { 
-        glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef, videoRecorderRef, lastHoveredAtomRef, 
+        glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef, videoRecorderRef, lastHoveredAtomRef
     } = refs
 
     activeMapRef.current = activeMap
@@ -131,14 +132,14 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         disableFileUploads, urlPrefix, extraNavBarMenus, viewOnly, extraDraggableModals, 
         monomerLibraryPath, extraFileMenuItems, allowScripting, backupStorageInstance,
         extraEditMenuItems, aceDRGInstance, extraCalculateMenuItems, setMoorhenDimensions,
-        onUserPreferencesChange, extraNavBarModals, includeNavBarMenuNames
+        onUserPreferencesChange, extraNavBarModals, includeNavBarMenuNames, store
     } = props
 
     const collectedProps: moorhen.CollectedProps = {
         glRef, commandCentre, timeCapsuleRef, disableFileUploads, extraDraggableModals, aceDRGInstance, 
         urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems, extraEditMenuItems,
         extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, activeMapRef,
-        videoRecorderRef, lastHoveredAtomRef, onUserPreferencesChange, extraNavBarModals, 
+        videoRecorderRef, lastHoveredAtomRef, onUserPreferencesChange, extraNavBarModals, store,
         includeNavBarMenuNames
     }
     
@@ -175,7 +176,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     useEffect(() => {
         const initTimeCapsule = async () => {
             if (userPreferencesMounted) {
-                timeCapsuleRef.current = new MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef)
+                timeCapsuleRef.current = new MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef, store)
                 timeCapsuleRef.current.storageInstance = backupStorageInstance
                 timeCapsuleRef.current.maxBackupCount = maxBackupCount
                 timeCapsuleRef.current.modificationCountBackupThreshold = modificationCountBackupThreshold
@@ -476,5 +477,6 @@ MoorhenContainer.defaultProps = {
     viewOnly: false,
     allowScripting: true,
     backupStorageInstance: createLocalStorageInstance('Moorhen-TimeCapsule'),
-    aceDRGInstance: null
+    aceDRGInstance: null,
+    store: MoorhenReduxStore
 }

@@ -1,14 +1,19 @@
 import { createSlice } from '@reduxjs/toolkit'
 
+const initialState = {
+  enableTimeCapsule: null,
+  makeBackups: null,
+  maxBackupCount: null,
+  modificationCountBackupThreshold: null
+}
+
 export const backupSettingsSlice = createSlice({
   name: 'backupSettings',
-  initialState: {
-    enableTimeCapsule: null,
-    makeBackups: null,
-    maxBackupCount: null,
-    modificationCountBackupThreshold: null
-  },
+  initialState: initialState,
   reducers: {
+    resetBackupSettings: (state) => {
+      return initialState
+    },
     setEnableTimeCapsule: (state, action: {payload: boolean, type: string}) => {
       return {...state, enableTimeCapsule: action.payload}
     },
@@ -23,6 +28,8 @@ export const backupSettingsSlice = createSlice({
     }
 }})
 
-export const { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold } = backupSettingsSlice.actions
+export const { 
+  setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold, resetBackupSettings
+ } = backupSettingsSlice.actions
 
 export default backupSettingsSlice.reducer

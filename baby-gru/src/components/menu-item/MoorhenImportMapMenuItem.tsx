@@ -7,10 +7,12 @@ import { webGL } from "../../types/mgWebGL";
 import { setActiveMap, setNotificationContent } from "../../store/generalStatesSlice";
 import { batch, useDispatch, useSelector } from 'react-redux';
 import { addMap } from "../../store/mapsSlice";
+import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 
 export const MoorhenImportMapMenuItem = (props: { 
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
+    store: ToolkitStore;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     getWarningToast: (arg0: string) => JSX.Element;
 }) => {
@@ -25,7 +27,7 @@ export const MoorhenImportMapMenuItem = (props: {
     const readMap = useCallback(async () => {
         if (filesRef.current.files.length > 0) {
             const file = filesRef.current.files[0]
-            const newMap = new MoorhenMap(props.commandCentre, props.glRef)
+            const newMap = new MoorhenMap(props.commandCentre, props.glRef, props.store)
             try {
                 try {
                     await newMap.loadToCootFromMapFile(file, isDiffRef.current.checked)

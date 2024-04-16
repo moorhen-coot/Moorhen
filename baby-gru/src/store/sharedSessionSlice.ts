@@ -1,13 +1,18 @@
 import { createSlice } from '@reduxjs/toolkit'
 
+const initialState = {
+  isInSharedSession: false,
+  sharedSessionToken: null,
+  showSharedSessionManager: false,
+}
+
 export const sharedSessionSlice = createSlice({
   name: 'sharedSession',
-  initialState: {
-    isInSharedSession: false,
-    sharedSessionToken: null,
-    showSharedSessionManager: false,
-  },
+  initialState: initialState,
   reducers: {
+    resetSharedSession: (state) => {
+      return initialState
+    },
     setIsInSharedSession: (state, action: { payload: boolean, type: string }) => {
         return {...state, isInSharedSession: action.payload }
     },
@@ -21,7 +26,7 @@ export const sharedSessionSlice = createSlice({
 })
 
 export const {
-  setIsInSharedSession, setSharedSessionToken, setShowSharedSessionManager
+  setIsInSharedSession, setSharedSessionToken, setShowSharedSessionManager, resetSharedSession
 } = sharedSessionSlice.actions
 
 export default sharedSessionSlice.reducer

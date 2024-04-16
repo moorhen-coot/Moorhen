@@ -1,29 +1,34 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { moorhen } from '../types/moorhen'
 
+const initialState = {
+  devMode: null,
+  userPreferencesMounted: false,
+  appTitle: 'Moorhen',
+  cootInitialized: false,
+  notificationContent: null,
+  activeMap: null,
+  theme: 'flatly',
+  viewOnly: false,
+  residueSelection: { molecule: null, first: null, second: null, cid: null, isMultiCid: false, label: null } as moorhen.ResidueSelection,
+  showResidueSelection: false,
+  isAnimatingTrajectory: false,
+  isChangingRotamers: false,
+  isDraggingAtoms: false,
+  isRotatingAtoms: false,
+  newCootCommandExit: false,
+  newCootCommandStart: false,
+  useRamaRefinementRestraints: false,
+  useTorsionRefinementRestraints: false,
+}
+
 export const generalStatesSlice = createSlice({
   name: 'generalStates',
-  initialState: {
-    devMode: null,
-    userPreferencesMounted: false,
-    appTitle: 'Moorhen',
-    cootInitialized: false,
-    notificationContent: null,
-    activeMap: null,
-    theme: 'flatly',
-    viewOnly: false,
-    residueSelection: { molecule: null, first: null, second: null, cid: null, isMultiCid: false, label: null } as moorhen.ResidueSelection,
-    showResidueSelection: false,
-    isAnimatingTrajectory: false,
-    isChangingRotamers: false,
-    isDraggingAtoms: false,
-    isRotatingAtoms: false,
-    newCootCommandExit: false,
-    newCootCommandStart: false,
-    useRamaRefinementRestraints: false,
-    useTorsionRefinementRestraints: false,
-  },
+  initialState: initialState,
   reducers: {
+    resetGeneralStates: (state) => {
+      return initialState
+    },
     setIsAnimatingTrajectory: (state, action: {payload: boolean, type: string}) => {
       return {...state, isAnimatingTrajectory: action.payload}
     },
@@ -100,6 +105,7 @@ export const {
   setMoleculeResidueSelection, setResidueSelection, setCidResidueSelection,
   setIsRotatingAtoms, setIsChangingRotamers, setShowResidueSelection,
   toggleCootCommandExit, toggleCootCommandStart, setIsAnimatingTrajectory,
+  resetGeneralStates
 } = generalStatesSlice.actions
 
 export default generalStatesSlice.reducer

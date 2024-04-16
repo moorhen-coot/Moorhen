@@ -9,11 +9,13 @@ import { webGL } from "../../types/mgWebGL";
 import { batch, useDispatch, useSelector } from "react-redux";
 import { addMap } from "../../store/mapsSlice";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
+import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 
 export const MoorhenSharpenBlurMapMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
+    store: ToolkitStore;
 }) => {
 
     const dispatch = useDispatch()
@@ -48,7 +50,7 @@ export const MoorhenSharpenBlurMapMenuItem = (props: {
         
         const mapNo = parseInt(selectRef.current.value)
         const bFactor = parseFloat(factorRef.current)
-        const newMap = new MoorhenMap(props.commandCentre, props.glRef)
+        const newMap = new MoorhenMap(props.commandCentre, props.glRef, props.store)
         const selectedMap = maps.find(map => map.molNo === mapNo)
 
         if (!selectedMap) {

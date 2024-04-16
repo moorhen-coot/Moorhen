@@ -1,7 +1,7 @@
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { guid } from "./MoorhenUtils";
-import MoorhenReduxStore from "../store/MoorhenReduxStore";
+import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 
 export const getBackupLabel = (key: moorhen.backupKey): string => {
     const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' } as const
@@ -39,9 +39,11 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
     version: string;
     disableBackups: boolean;
     storageInstance: moorhen.LocalStorageInstance;
+    store: ToolkitStore;
     onIsBusyChange: (arg0: boolean) => void;
     
-    constructor(moleculesRef: React.RefObject<moorhen.Molecule[]>, mapsRef: React.RefObject<moorhen.Map[]>, activeMapRef: React.RefObject<moorhen.Map>, glRef: React.RefObject<webGL.MGWebGL>) {
+    constructor(moleculesRef: React.RefObject<moorhen.Molecule[]>, mapsRef: React.RefObject<moorhen.Map[]>, activeMapRef: React.RefObject<moorhen.Map>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore) {
+        this.store = store
         this.moleculesRef = moleculesRef
         this.mapsRef = mapsRef
         this.glRef = glRef
@@ -144,7 +146,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         const keyStrings = await this.storageInstance.keys()
         const mtzFileNames = keyStrings.map((keyString: string) => JSON.parse(keyString)).filter((key: moorhen.backupKey) => key.type === 'mtzData').map((key: moorhen.backupKey) => key.name)
         const mapNames = keyStrings.map((keyString: string) => JSON.parse(keyString)).filter((key: moorhen.backupKey) => key.type === 'mapData').map((key: moorhen.backupKey) => key.name)
-        const state = MoorhenReduxStore.getState()
+        const state = this.store.getState()
 
         const promises = await Promise.all([
             ...this.moleculesRef.current.map(molecule => {

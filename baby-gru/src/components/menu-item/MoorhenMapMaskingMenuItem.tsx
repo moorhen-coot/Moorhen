@@ -13,11 +13,13 @@ import { batch, useDispatch, useSelector } from 'react-redux';
 import { addMap } from "../../store/mapsSlice";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
+import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 
 export const MoorhenMapMaskingMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
+    store: ToolkitStore;
 }) => {
 
     const dispatch = useDispatch()
@@ -38,7 +40,7 @@ export const MoorhenMapMaskingMenuItem = (props: {
     const ligandSelectRef = useRef<null | HTMLSelectElement>(null)
     const cidInputRef = useRef<null | HTMLInputElement>(null)
 
-    const { commandCentre, glRef } = props
+    const { commandCentre, glRef, store } = props
 
     const panelContent = <>
         <Form.Group style={{ margin: '0.5rem', width: '20rem' }}>
@@ -123,7 +125,7 @@ export const MoorhenMapMaskingMenuItem = (props: {
         }, false) as moorhen.WorkerResponse<number>
         
         if (result.data.result.result !== -1) {
-            const newMap = new MoorhenMap(commandCentre, glRef)
+            const newMap = new MoorhenMap(commandCentre, glRef, store)
             newMap.molNo = result.data.result.result
             newMap.name = `Map ${mapNo} masked`
             await newMap.getSuggestedSettings()
