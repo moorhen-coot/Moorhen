@@ -1343,6 +1343,7 @@ class TexturedShape {
     idxBuffer = WebGLBuffer;
     vertexBuffer = WebGLBuffer;
     texCoordBuffer = WebGLBuffer;
+    gl: WebGL2RenderingContext;
     constructor(textureInfo,gl,uuid) {
         this.width = textureInfo.width;
         this.height = textureInfo.height;
