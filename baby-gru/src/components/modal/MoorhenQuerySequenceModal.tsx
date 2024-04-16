@@ -15,6 +15,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice";
 import { setNotificationContent } from "../../store/generalStatesSlice";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
+import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 
 export const MoorhenQuerySequenceModal = (props: {
     show: boolean;
@@ -22,6 +23,7 @@ export const MoorhenQuerySequenceModal = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     monomerLibraryPath: string;
+    store: ToolkitStore;
 }) => {
 
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
@@ -49,7 +51,7 @@ export const MoorhenQuerySequenceModal = (props: {
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
 
     const fetchMoleculeFromURL = async (url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath)
+        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath, props.store)
         newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         try {

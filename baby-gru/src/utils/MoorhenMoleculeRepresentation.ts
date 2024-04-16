@@ -2,7 +2,6 @@ import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
 import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, countResiduesInSelection, copyStructureSelection } from './MoorhenUtils';
 import { libcootApi } from '../types/libcoot';
-import MoorhenReduxStore from "../store/MoorhenReduxStore";
 import { MoorhenColourRule } from './MoorhenColourRule';
 
 // TODO: It might be better to do this.glRef.current.drawScene() in the molecule... 
@@ -319,7 +318,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             console.warn(`Cannot find neighboring residues for ${cid}, defaulting to active atom ${currentActiveAtom}`)
         }
 
-        const drawMissingLoops = MoorhenReduxStore.getState().sceneSettings.drawMissingLoops
+        const drawMissingLoops = this.parentMolecule.store.getState().sceneSettings.drawMissingLoops
         
         if (drawMissingLoops) {
             await this.commandCentre.current.cootCommand({
@@ -881,7 +880,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         
         await this.applyColourRules()
         const bondSettings = this.getBondSettings(this.style)
-        const state = MoorhenReduxStore.getState()
+        const state = this.parentMolecule.store.getState()
         const drawMissingLoops = state.sceneSettings.drawMissingLoops
         const drawHydrogens = false
 

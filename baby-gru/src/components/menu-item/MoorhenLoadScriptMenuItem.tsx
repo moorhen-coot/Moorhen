@@ -5,10 +5,12 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { MoorhenScriptModal } from "../modal/MoorhenScriptModal";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
+import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 
 export const MoorhenLoadScriptMenuItem = (props: {
      setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
      glRef: React.RefObject<webGL.MGWebGL>;
+     store: ToolkitStore;
      commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {
     

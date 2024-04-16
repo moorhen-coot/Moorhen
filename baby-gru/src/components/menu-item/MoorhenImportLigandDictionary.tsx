@@ -11,6 +11,7 @@ import { libcootApi } from "../../types/libcoot"
 import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
+import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore"
 
 const MoorhenImportLigandDictionary = (props: { 
     id: string;
@@ -20,6 +21,7 @@ const MoorhenImportLigandDictionary = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     monomerLibraryPath: string;
+    store: ToolkitStore;
     panelContent: JSX.Element;
     fetchLigandDict: () => Promise<string>;
     addToMoleculeValueRef: React.MutableRefObject<number>;
@@ -42,7 +44,7 @@ const MoorhenImportLigandDictionary = (props: {
         createInstance, setCreateInstance, addToMolecule, fetchLigandDict, panelContent,
         setAddToMolecule, tlcValueRef, createRef, moleculeSelectRef, addToRef,moleculeSelectValueRef,
         addToMoleculeValueRef, setPopoverIsShown, glRef, commandCentre, menuItemText,
-        monomerLibraryPath, id
+        monomerLibraryPath, id, store
     } = props
 
     const handleFileContent = useCallback(async (fileContent: string) => {
@@ -81,7 +83,7 @@ const MoorhenImportLigandDictionary = (props: {
                     ...glRef.current.origin.map(coord => -coord)]
             }, true) as moorhen.WorkerResponse<number> 
             if (result.data.result.status === "Completed") {
-                newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
+                newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath, store)
                 newMolecule.molNo = result.data.result.result
                 newMolecule.name = instanceName
                 newMolecule.setBackgroundColour(backgroundColor)
@@ -167,6 +169,7 @@ export const MoorhenSMILESToLigandMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     monomerLibraryPath: string;
+    store: ToolkitStore;
 }) => {
 
     const [smile, setSmile] = useState<string>('')
@@ -283,6 +286,7 @@ export const MoorhenImportDictionaryMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     monomerLibraryPath: string;
+    store: ToolkitStore;
  }) => {
     
     const fileOrLibraryRef = useRef<string>("Library")

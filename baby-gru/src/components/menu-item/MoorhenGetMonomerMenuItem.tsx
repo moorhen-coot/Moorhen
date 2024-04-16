@@ -7,12 +7,14 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice";
+import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 
 export const MoorhenGetMonomerMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>
     popoverPlacement?: 'left' | 'right'
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     monomerLibraryPath: string;
+    store: ToolkitStore;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 
@@ -35,7 +37,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
     const onCompleted = async () => {
         const fromMolNo = parseInt(selectRef.current.value)
         const newTlc = tlcRef.current.value.toUpperCase()
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath)
+        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath, props.store)
 
         if (!newTlc || !selectRef.current.value) {
             return

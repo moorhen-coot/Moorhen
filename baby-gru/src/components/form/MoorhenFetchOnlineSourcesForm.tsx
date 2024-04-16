@@ -12,9 +12,11 @@ import { addMolecule } from "../../store/moleculesSlice";
 import { addMap } from "../../store/mapsSlice";
 import { webGL } from "../../types/mgWebGL";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
+import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 
 export const MoorhenFetchOnlineSourcesForm = (props: {
     monomerLibraryPath: string;
+    store: ToolkitStore;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
@@ -33,7 +35,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
 
-    const { commandCentre, glRef, monomerLibraryPath } = props;
+    const { commandCentre, glRef, monomerLibraryPath, store } = props;
 
     const getWarningToast = (message: string) => <MoorhenNotification key={guid()} hideDelay={3000} width={20}>
         <><WarningOutlined style={{ margin: 0 }} />
@@ -130,7 +132,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
     }
 
     const fetchMoleculeFromURL = async (url: RequestInfo | URL, molName: string, isAF2?: boolean): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
+        const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath, store)
         newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         try {
@@ -161,7 +163,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
     }
 
     const fetchMapFromURL = async (url: RequestInfo | URL, mapName: string, isDiffMap: boolean = false, contourLevel?: number): Promise<moorhen.Map> => {
-        const newMap = new MoorhenMap(commandCentre, glRef)
+        const newMap = new MoorhenMap(commandCentre, glRef, store)
         try {
             try {
                 await newMap.loadToCootFromMapURL(url, mapName, isDiffMap)
@@ -190,7 +192,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
     }
 
     const fetchMtzFromURL = async (url: RequestInfo | URL, mapName: string, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> => {
-        const newMap = new MoorhenMap(commandCentre, glRef)
+        const newMap = new MoorhenMap(commandCentre, glRef, store)
         try {
             await newMap.loadToCootFromMtzURL(url, mapName, selectedColumns)
             if (newMap.molNo === -1) throw new Error("Cannot read the fetched mtz...")

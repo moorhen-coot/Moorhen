@@ -36,6 +36,7 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
                 props.commandCentre,
                 props.timeCapsuleRef,
                 props.glRef,
+                props.store,
                 dispatch
             )
             if (status === -1) {

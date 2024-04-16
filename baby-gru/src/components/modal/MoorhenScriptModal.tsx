@@ -12,10 +12,12 @@ import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
 import { useSelector } from "react-redux";
 import { convertRemToPx, convertViewtoPx } from "../../utils/MoorhenUtils";
+import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 
 export const MoorhenScriptModal = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
+    store: ToolkitStore;
     show: boolean;
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
     code?: string;
@@ -31,7 +33,7 @@ export const MoorhenScriptModal = (props: {
 
     const handleScriptExe = useCallback(async () => {
         try {
-            const scriptApi = new MoorhenScriptApi(props.commandCentre, props.glRef, molecules, maps)
+            const scriptApi = new MoorhenScriptApi(props.commandCentre, props.glRef, props.store, molecules, maps)
             scriptApi.exe(code)
         }
         catch (err) {

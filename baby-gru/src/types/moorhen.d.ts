@@ -3,6 +3,7 @@ import { emscriptem } from "./emscriptem";
 import { gemmi } from "./gemmi";
 import { webGL } from "./mgWebGL";
 import { MoorhenMolecule } from "../moorhen";
+import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 
 export namespace moorhen {
 
@@ -212,6 +213,7 @@ export namespace moorhen {
         excludedCids: string[];
         commandCentre: React.RefObject<CommandCentre>;
         glRef: React.RefObject<webGL.MGWebGL>;
+        store: ToolkitStore;
         atomsDirty: boolean;
         name: string;
         molNo: number;
@@ -463,6 +465,7 @@ export namespace moorhen {
         setupContourBuffers(objects: any[], keepCootColours?: boolean): void;
         setOtherMapForColouring(molNo: number, min?: number, max?: number): void;
         exportAsGltf(): Promise<ArrayBuffer>;
+        store: ToolkitStore;
         isEM: boolean;
         suggestedContourLevel: number;
         suggestedRadius: number;
@@ -584,6 +587,7 @@ export namespace moorhen {
         createBackup(keyString: string, sessionString: string): Promise<string>;
         fetchSession(includeAdditionalMapData: boolean): Promise<backupSession>;
         toggleDisableBackups(): void;
+        store: ToolkitStore;
         moleculesRef: React.RefObject<Molecule[]>;
         mapsRef: React.RefObject<Map[]>;
         glRef: React.RefObject<webGL.MGWebGL>;
@@ -811,7 +815,8 @@ export namespace moorhen {
         extraEditMenuItems: JSX.Element[];
         extraCalculateMenuItems: JSX.Element[];
         aceDRGInstance: AceDRGInstance | null; 
-        includeNavBarMenuNames: string[]
+        includeNavBarMenuNames: string[];
+        store: ToolkitStore;
     }
     
     interface ContainerProps extends Partial<ContainerRefs>, Partial<ContainerOptionalProps> { }

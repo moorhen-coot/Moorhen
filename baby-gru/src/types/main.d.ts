@@ -168,7 +168,7 @@ declare module 'moorhen' {
     module.exports.MoorhenMoleculeRepresentation = MoorhenMoleculeRepresentation
 
     class MoorhenMolecule implements _moorhen.Molecule {
-        constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibrary: string)
+        constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibrary?: string, store?: any)
         transferLigandDicts(toMolecule: _moorhen.Molecule, override?: boolean): Promise<void>;
         minimizeEnergyUsingCidAnimated(cid: string, ncyc: number, nIterations: number, useRamaRestraints: boolean, ramaWeight: number, useTorsionRestraints: boolean, torsionWeight: number): Promise<void>;
         addColourRule(ruleType: string, cid: string, color: string, args: (string | number)[], isMultiColourRule?: boolean, applyColourToNonCarbonAtoms?: boolean, label?: string): void;
@@ -259,6 +259,7 @@ declare module 'moorhen' {
         excludedCids: string[];
         commandCentre: React.RefObject<_moorhen.CommandCentre>;
         glRef: React.RefObject<webGL.MGWebGL>;
+        store: any;
         atomsDirty: boolean;
         name: string;
         molNo: number;
@@ -301,7 +302,7 @@ declare module 'moorhen' {
     module.exports.MoorhenMolecule = MoorhenMolecule
     
     class MoorhenMap implements _moorhen.Map {
-        constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>)
+        constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store?: any)
         exportAsGltf(): Promise<ArrayBuffer>;
         getHistogram(nBins?: number, zoomFactor?: number): Promise<libcootApi.HistogramInfoJS>;
         setMapWeight(weight?: number): Promise<_moorhen.WorkerResponse>;
@@ -337,6 +338,7 @@ declare module 'moorhen' {
         setActive(): Promise<void>;
         setupContourBuffers(objects: any[], keepCootColours?: boolean): void;
         setOtherMapForColouring(molNo: number, min?: number, max?: number): void;
+        store: any;
         isEM: boolean;
         suggestedContourLevel: number;
         suggestedRadius: number;
@@ -371,6 +373,7 @@ declare module 'moorhen' {
         commandCentre: React.RefObject<_moorhen.CommandCentre>,
         timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule>,
         glRef: React.RefObject<webGL.MGWebGL>,
+        store: any,
         dispatch: (reduxStoreAction: any) => void,
     ): Promise<number>;
     module.exports = loadSessionFromJsonString;
@@ -383,6 +386,7 @@ declare module 'moorhen' {
         commandCentre: React.RefObject<_moorhen.CommandCentre>,
         timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule>,
         glRef: React.RefObject<webGL.MGWebGL>,
+        store: any,
         dispatch: (reduxStoreAction: any) => void,
     ): Promise<number>;
     module.exports = loadSessionFromProtoMessage;
@@ -396,6 +400,7 @@ declare module 'moorhen' {
         commandCentre: React.RefObject<_moorhen.CommandCentre>,
         timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule>,
         glRef: React.RefObject<webGL.MGWebGL>,
+        store: any,
         dispatch: (reduxStoreAction: any) => void,
     ): Promise<number>;
     module.exports = loadSessionData;
