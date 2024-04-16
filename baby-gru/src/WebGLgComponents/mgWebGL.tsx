@@ -1412,9 +1412,28 @@ class TexturedShape {
     getOrigin() {
         return [-this.x_size/2,-this.y_size/2,-this.z_position];
     }
-    setColourRamp(colour_ramp_values) {
+    setColourRamp(colour_ramp_values,interp=false) {
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.color_ramp_texture);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA32F, colour_ramp_values.length/4, 1, 0, this.gl.RGBA, this.gl.FLOAT, new Float32Array(colour_ramp_values));
+        let colour_ramp_values_interp;
+        if(interp){
+            colour_ramp_values_interp = [];
+            const nsteps = 256/(colour_ramp_values.length-1);
+            for(let icol=0;icol<colour_ramp_values.length-1;icol++){
+                for(let istep=0;istep<nsteps;istep++){
+                    const frac = istep/nsteps
+                        const frac2 = 1.0 - frac
+                        const r = frac*colour_ramp_values[icol+1][0] + frac2*colour_ramp_values[icol][0]
+                        const g = frac*colour_ramp_values[icol+1][1] + frac2*colour_ramp_values[icol][1]
+                        const b = frac*colour_ramp_values[icol+1][2] + frac2*colour_ramp_values[icol][2]
+                        const a = frac*colour_ramp_values[icol+1][3] + frac2*colour_ramp_values[icol][3]
+                        const col = [r,g,b,a]
+                        colour_ramp_values_interp.push(...col)
+                }
+            }
+        } else {
+            colour_ramp_values_interp = colour_ramp_values.flat();
+        }
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA32F, colour_ramp_values_interp.length/4, 1, 0, this.gl.RGBA, this.gl.FLOAT, new Float32Array(colour_ramp_values_interp));
         this.gl.bindTexture(this.gl.TEXTURE_2D, null);
     }
 }
