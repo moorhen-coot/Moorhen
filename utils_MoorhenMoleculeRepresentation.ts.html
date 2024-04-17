@@ -879,7 +879,8 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             returnType: "mesh",
             command: "get_gaussian_surface",
             commandArgs: [
-                this.parentMolecule.molNo, this.parentMolecule.gaussianSurfaceSettings.sigma,
+                this.parentMolecule.molNo, 
+                this.parentMolecule.gaussianSurfaceSettings.sigma,
                 this.parentMolecule.gaussianSurfaceSettings.countourLevel,
                 this.parentMolecule.gaussianSurfaceSettings.boxRadius,
                 this.parentMolecule.gaussianSurfaceSettings.gridScale,
