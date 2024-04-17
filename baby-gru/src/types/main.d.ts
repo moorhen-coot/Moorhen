@@ -5,6 +5,9 @@ import { gemmi } from "./gemmi";
 import { privateer } from "./privateer";
 
 declare module 'moorhen' {
+    let MoorhenStore: any;
+    module.exports = MoorhenStore
+
     let moleculesReducer: any;
     module.exports = moleculesReducer
 
@@ -82,10 +85,6 @@ declare module 'moorhen' {
 
     let MoorhenFetchOnlineSourcesForm: any;
     module.exports = MoorhenFetchOnlineSourcesForm;
-
-
-    let MoorhenReduxProvider: any;
-    module.exports = MoorhenReduxProvider;
 
     class MoorhenPreferences implements _moorhen.Preferences {
         name: string;
