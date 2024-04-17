@@ -572,6 +572,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 command: 'init_refinement_of_molecule_as_fragment_based_on_reference',
                 commandArgs: [newMolecule.molNo, this.molNo, refinementMap.molNo]
             }, false)
+            await this.transferLigandDicts(newMolecule)
             newMolecule.setAtomsDirty(true)
             if (redraw) {
                 const drawMissingLoops = this.store.getState().sceneSettings.drawMissingLoops
