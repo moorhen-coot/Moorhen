@@ -7497,7 +7497,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.drawTransparent(theMatrix);
             this.drawDistancesAndLabels(up, right);
             this.drawTextLabels(up, right);
-            this.drawTexturedShapes(theMatrix);
+            if(this.WEBGL2){
+                this.drawTexturedShapes(theMatrix);
+            }
             //this.drawCircles(up, right);
         }
 
