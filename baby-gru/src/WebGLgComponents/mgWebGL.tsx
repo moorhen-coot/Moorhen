@@ -8032,7 +8032,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.uniform1iv(theShader.colorPeelSamplers, [depthPeelSampler0+4, depthPeelSampler0+5, depthPeelSampler0+6, depthPeelSampler0+7]);
                 this.gl.enable(this.gl.BLEND);
                 this.gl.disable(this.gl.DEPTH_TEST);
-                this.gl.clearColor(1.0,1.0,1.0,1.0);
+                this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], this.background_colour[3]);
                 this.gl.clear(this.gl.DEPTH_BUFFER_BIT|this.gl.COLOR_BUFFER_BIT)
                 for(let itex=0;itex<4;itex++){
                     this.gl.activeTexture(this.gl.TEXTURE0+depthPeelSampler0+itex);
