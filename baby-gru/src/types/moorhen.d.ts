@@ -919,13 +919,18 @@ export namespace moorhen {
             goToResiduePopUp: {
                 show: boolean;
             };
+            modelTrajectoryPopUp: {
+                show: boolean;
+                representationStyle: string;
+                moleculeMolNo: number;
+            };
             matchingLigandPopUp: {
                 show: boolean;
                 refMolNo: number;
                 movingMolNo: number;
                 refLigandCid: string;
                 movingLigandCid: string;
-              }
+            };
         };
         activeModals: {
             showModelsModal: boolean;

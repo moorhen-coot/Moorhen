@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MoorhenNotification } from '../misc/MoorhenNotification';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { MoorhenMoleculeRepresentation } from "../../utils/MoorhenMoleculeRepresentation";
 import { sleep } from "../../utils/MoorhenUtils";
 import { hideMolecule, showMolecule } from "../../store/moleculesSlice";
@@ -9,16 +9,19 @@ import { webGL } from '../../types/mgWebGL';
 import { IconButton, LinearProgress, Slider } from "@mui/material";
 import { Stack } from "react-bootstrap";
 import { PauseCircleOutline, PlayCircleOutline, ReplayCircleFilledOutlined, StopCircleOutlined } from "@mui/icons-material";
-import { setNotificationContent, setIsAnimatingTrajectory } from "../../store/generalStatesSlice";
+import { setIsAnimatingTrajectory } from "../../store/generalStatesSlice";
+import { setModelTrajectoryPopUpParams, setShowModelTrajectoryPopUp } from "../../store/activePopUpsSlice";
 
 export const MoorhenModelTrajectoryManager = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
-    molecule: moorhen.Molecule;
-    representationStyle: moorhen.RepresentationStyles;
 }) => {
 
     const dispatch = useDispatch()
+
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
+    const moleculeMolNo = useSelector((state: moorhen.State) => state.activePopUps.modelTrajectoryPopUp.moleculeMolNo)
+    const representationStyle = useSelector((state: moorhen.State) => state.activePopUps.modelTrajectoryPopUp.representationStyle) as moorhen.RepresentationStyles
 
     const isPlayingAnimationRef = useRef<boolean>(false)
     const representationRef = useRef<null | moorhen.MoleculeRepresentation>(null)
@@ -30,6 +33,8 @@ export const MoorhenModelTrajectoryManager = (props: {
     const [progress, setProgress] = useState<number>(0)
     const [currentFrameIndex, setCurrentFrameIndex] = useState<number>(0)
     const [isPlayingAnimation, setIsPlayingAnimation] = useState<boolean>(false)
+
+    const selectedMolecule = useMemo(() => molecules.find(molecule => molecule.molNo === moleculeMolNo), [moleculeMolNo])
 
     const computeFrames = async (molecule: moorhen.Molecule, representation: moorhen.MoleculeRepresentation) => {
         
@@ -83,17 +88,17 @@ export const MoorhenModelTrajectoryManager = (props: {
             }
         }
 
-    }, [isPlayingAnimation, props.molecule])
+    }, [isPlayingAnimation, selectedMolecule])
 
     useEffect(() => {
         const loadFrames = async () => {
             dispatch(setIsAnimatingTrajectory(true))
-            representationRef.current = new MoorhenMoleculeRepresentation(props.representationStyle, '/*/*/*/*', props.commandCentre, props.glRef)
+            representationRef.current = new MoorhenMoleculeRepresentation(representationStyle, '/*/*/*/*', props.commandCentre, props.glRef)
             setBusyComputingFrames(true)
-            framesRef.current = await computeFrames(props.molecule, representationRef.current)
+            framesRef.current = await computeFrames(selectedMolecule, representationRef.current)
             setNFrames(framesRef.current.length)
             setBusyComputingFrames(false)
-            dispatch(hideMolecule(props.molecule))
+            dispatch(hideMolecule(selectedMolecule))
             await representationRef.current.buildBuffers(framesRef.current[0])    
         }
         loadFrames()
@@ -115,9 +120,13 @@ export const MoorhenModelTrajectoryManager = (props: {
                 isPlayingAnimationRef.current = false
                 setIsPlayingAnimation(false)
                 representationRef.current?.deleteBuffers()
-                dispatch(showMolecule(props.molecule))
+                dispatch(showMolecule(selectedMolecule))
                 dispatch(setIsAnimatingTrajectory(false))
-                dispatch(setNotificationContent(null))
+                dispatch( setModelTrajectoryPopUpParams({
+                    representationStyle: null,
+                    moleculeMolNo: null,
+                    show: true
+                }))
             }}>
                 <StopCircleOutlined/>
             </IconButton>

@@ -4,10 +4,9 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from 'react-redux';
-import { MoorhenModelTrajectoryManager } from "../toasts/MoorhenModelTrajectoryManager"
-import { setNotificationContent } from "../../store/generalStatesSlice"
 import { Form, FormSelect } from "react-bootstrap";
 import { representationLabelMapping } from "../../utils/MoorhenUtils";
+import { setModelTrajectoryPopUpParams } from "../../store/activePopUpsSlice";
 
 const animationRepresentations = [ 'CBs', 'CAs', 'CRs', 'gaussian', 'MolecularSurface', 'VdwSpheres' ]
 
@@ -44,13 +43,11 @@ export const MoorhenCalculateTrajectoryMenuItem = (props: {
         }
         const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
         if (selectedMolecule) {
-            dispatch( setNotificationContent(
-                <MoorhenModelTrajectoryManager
-                    representationStyle={styleSelectRef.current.value as moorhen.RepresentationStyles}
-                    molecule={selectedMolecule}
-                    commandCentre={props.commandCentre}
-                    glRef={props.glRef}/>
-            ))
+            dispatch( setModelTrajectoryPopUpParams({
+                representationStyle: styleSelectRef.current.value,
+                moleculeMolNo: selectedMolecule.molNo,
+                show: true
+            }))
         } else {
             console.warn(`Cannot fin molecule with imol ${moleculeSelectRef.current.value}`)
         }
