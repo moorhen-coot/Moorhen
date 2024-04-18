@@ -1189,6 +1189,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("get_number_of_map_sections", &molecules_container_t::get_number_of_map_sections)
+    .function("copy_dictionary", &molecules_container_t::copy_dictionary)
     .function("end_delete_closed_molecules", &molecules_container_t::end_delete_closed_molecules)
     .function("make_ensemble", &molecules_container_t::make_ensemble)
     .function("match_ligand_torsions_and_position_using_cid", &molecules_container_t::match_ligand_torsions_and_position_using_cid)
