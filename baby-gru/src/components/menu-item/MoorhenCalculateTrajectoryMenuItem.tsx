@@ -4,7 +4,7 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from 'react-redux';
-import { MoorhenModelTrajectoryManager } from "../misc/MoorhenModelTrajectoryManager"
+import { MoorhenModelTrajectoryManager } from "../toasts/MoorhenModelTrajectoryManager"
 import { setNotificationContent } from "../../store/generalStatesSlice"
 import { Form, FormSelect } from "react-bootstrap";
 import { representationLabelMapping } from "../../utils/MoorhenUtils";

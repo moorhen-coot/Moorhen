@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MoorhenNotification } from './MoorhenNotification';
+import { MoorhenNotification } from '../misc/MoorhenNotification';
 import { useDispatch } from 'react-redux';
 import { MoorhenMoleculeRepresentation } from "../../utils/MoorhenMoleculeRepresentation";
 import { sleep } from "../../utils/MoorhenUtils";
