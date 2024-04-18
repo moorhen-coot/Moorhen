@@ -9,6 +9,10 @@ const initialState = {
     representationStyle: null,
     moleculeMolNo: null
   },
+  tomogramPopUp: {
+    show: false,
+    mapMolNo: null
+  },
   matchingLigandPopUp: {
     show: false,
     refMolNo: null,
@@ -24,6 +28,12 @@ export const activePopUpsSlice = createSlice({
   reducers: {
     resetActivePopUps: (state) => {
       return initialState
+    },
+    setShowTomogramPopUp: (state, action: { payload: boolean, type: string }) => {
+      return {...state, tomogramPopUp: {...state.tomogramPopUp, show: action.payload} }
+    },
+    setTomogramPopUpParams: (state, action: { payload: {show?: boolean; mapMolNo?: number;}, type: string }) => {
+      return {...state, tomogramPopUp: {...state.tomogramPopUp, ...action.payload} }
     },
     setShowModelTrajectoryPopUp: (state, action: { payload: boolean, type: string }) => {
       return {...state, modelTrajectoryPopUp: {...state.modelTrajectoryPopUp, show: action.payload} }
@@ -61,7 +71,8 @@ export const activePopUpsSlice = createSlice({
 export const {
     setShowAcceptMatchingLigandPopUp, setMatchinLigandPopUpParams, hideAcceptMatchingLigandPopUp,
     showGoToResiduePopUp, hideGoToResiduePopUp, setShowGoToResiduePopUp, resetActivePopUps,
-    setShowModelTrajectoryPopUp, setModelTrajectoryPopUpParams
+    setShowModelTrajectoryPopUp, setModelTrajectoryPopUpParams, setShowTomogramPopUp,
+    setTomogramPopUpParams
 } = activePopUpsSlice.actions
 
 export default activePopUpsSlice.reducer

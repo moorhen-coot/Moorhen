@@ -10,7 +10,7 @@ import { IconButton, LinearProgress, Slider } from "@mui/material";
 import { Stack } from "react-bootstrap";
 import { PauseCircleOutline, PlayCircleOutline, ReplayCircleFilledOutlined, StopCircleOutlined } from "@mui/icons-material";
 import { setIsAnimatingTrajectory } from "../../store/generalStatesSlice";
-import { setModelTrajectoryPopUpParams, setShowModelTrajectoryPopUp } from "../../store/activePopUpsSlice";
+import { setModelTrajectoryPopUpParams } from "../../store/activePopUpsSlice";
 
 export const MoorhenModelTrajectoryManager = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;

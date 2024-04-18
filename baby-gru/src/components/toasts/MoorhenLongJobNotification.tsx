@@ -13,6 +13,7 @@ export const MoorhenLongJobNotification = (props: { commandCentre: React.RefObje
     const newCommandStart = useSelector((state: moorhen.State) => state.generalStates.newCootCommandStart)
     const newCommandExit = useSelector((state: moorhen.State) => state.generalStates.newCootCommandExit)
     const isAnimatingTrajectory = useSelector((state: moorhen.State) => state.generalStates.isAnimatingTrajectory)
+    const isShowingTomograms = useSelector((state: moorhen.State) => state.generalStates.isShowingTomograms)
 
     const checkJobInQueueTooLong = useCallback((messages: string[]) => {
         if (
@@ -68,7 +69,7 @@ export const MoorhenLongJobNotification = (props: { commandCentre: React.RefObje
         }
     }, [newCommandExit])
 
-    return  busy && !isAnimatingTrajectory && <MoorhenNotification placeOnTop={false} width={25}>
+    return  busy && !isAnimatingTrajectory && !isShowingTomograms && <MoorhenNotification placeOnTop={false} width={25}>
                 <Stack gap={1} direction='vertical'>
                     <span>Please wait...</span>
                     <LinearProgress/>

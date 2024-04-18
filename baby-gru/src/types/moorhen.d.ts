@@ -897,6 +897,7 @@ export namespace moorhen {
             activeMap: Map;
             theme: string;
             residueSelection: ResidueSelection;
+            isShowingTomograms: boolean;
             isAnimatingTrajectory: boolean;
             isChangingRotamers: boolean;
             isDraggingAtoms: boolean;
@@ -923,6 +924,10 @@ export namespace moorhen {
                 show: boolean;
                 representationStyle: string;
                 moleculeMolNo: number;
+            };
+            tomogramPopUp: {
+                show: boolean;
+                mapMolNo: number;
             };
             matchingLigandPopUp: {
                 show: boolean;

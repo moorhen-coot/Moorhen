@@ -5,12 +5,14 @@ import { moorhen } from '../../types/moorhen';
 import { setShowAcceptMatchingLigandPopUp, setShowGoToResiduePopUp } from '../../store/activePopUpsSlice';
 import { MoorhenUpdatingMapsToast } from './MoorhenUpdatingMapsToast';
 import { MoorhenModelTrajectoryManager } from './MoorhenModelTrajectoryManager';
+import { MoorhenTomogramManager } from './MoorhenTomogramManager';
 
 export const MoorhenPopUpContainer = (props: moorhen.CollectedProps) => {
     const dispatch = useDispatch()
     const showAcceptMatchingLigandPopUp = useSelector((state: moorhen.State) => state.activePopUps.matchingLigandPopUp.show)
     const showGoToResiduePopUp = useSelector((state: moorhen.State) => state.activePopUps.goToResiduePopUp.show)
     const showModelTrajectoryPopUp = useSelector((state: moorhen.State) => state.activePopUps.modelTrajectoryPopUp.show)
+    const showTomogramPopUp = useSelector((state: moorhen.State) => state.activePopUps.tomogramPopUp.show)
 
     return <>
         {showAcceptMatchingLigandPopUp && 
@@ -30,6 +32,12 @@ export const MoorhenPopUpContainer = (props: moorhen.CollectedProps) => {
 
         {showModelTrajectoryPopUp &&
             <MoorhenModelTrajectoryManager
+                commandCentre={props.commandCentre}
+                glRef={props.glRef}/>
+        }
+
+        {showTomogramPopUp &&
+            <MoorhenTomogramManager
                 commandCentre={props.commandCentre}
                 glRef={props.glRef}/>
         }
