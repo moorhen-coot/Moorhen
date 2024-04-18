@@ -14,6 +14,9 @@ import { base64decode } from './mgBase64.js';
 import  { unProject } from './GLU.js';
 
 //WebGL2 shaders
+import { depth_peel_accum_vertex_shader_source as depth_peel_accum_vertex_shader_source_webgl2 } from './webgl-2/depth-peel-accum-vertex-shader.js';
+import { depth_peel_accum_fragment_shader_source as depth_peel_accum_fragment_shader_source_webgl2 } from './webgl-2/depth-peel-accum-fragment-shader.js';
+
 import { blur_x_simple_fragment_shader_source as blur_x_simple_fragment_shader_source_webgl2 } from './webgl-2/blur_x_simple-fragment-shader.js';
 import { blur_y_simple_fragment_shader_source as blur_y_simple_fragment_shader_source_webgl2 } from './webgl-2/blur_y_simple-fragment-shader.js';
 import { blur_vertex_shader_source as blur_vertex_shader_source_webgl2 } from './webgl-2/blur-vertex-shader.js';
@@ -59,6 +62,8 @@ import { triangle_texture_vertex_shader_source as triangle_texture_vertex_shader
 import { triangle_texture_fragment_shader_source as triangle_texture_fragment_shader_source } from './webgl-2/triangle-texture-fragment-shader.js';
 
 //WebGL1 shaders
+import { depth_peel_accum_vertex_shader_source as depth_peel_accum_vertex_shader_source_webgl1 } from './webgl-1/depth-peel-accum-vertex-shader.js';
+import { depth_peel_accum_fragment_shader_source as depth_peel_accum_fragment_shader_source_webgl1 } from './webgl-1/depth-peel-accum-fragment-shader.js';
 import { blur_vertex_shader_source as blur_vertex_shader_source_webgl1 } from './webgl-1/blur-vertex-shader.js';
 import { overlay_fragment_shader_source as overlay_fragment_shader_source_webgl1 } from './webgl-1/overlay-fragment-shader.js';
 import { ssao_fragment_shader_source as ssao_fragment_shader_source_webgl1 } from './webgl-1/ssao-fragment-shader.js';
@@ -1885,6 +1890,15 @@ interface MGWebGLBuffer {
     numItems: number;
 }
 
+interface MGWebGLShaderDepthPeelAccum extends WebGLProgram {
+    vertexPositionAttribute: GLint;
+    vertexTextureAttribute: GLint;
+    pMatrixUniform: WebGLUniformLocation;
+    peelNumber: WebGLUniformLocation;
+    depthPeelSamplers: WebGLUniformLocation;
+    colorPeelSamplers: WebGLUniformLocation;
+}
+
 interface MGWebGLTextureQuadShader extends WebGLProgram {
     vertexPositionAttribute: GLint;
     vertexTextureAttribute: GLint;
@@ -1930,6 +1944,8 @@ interface MGWebGLShader extends WebGLProgram {
     light_colours_ambient: WebGLUniformLocation;
     light_colours_specular: WebGLUniformLocation;
     light_colours_diffuse: WebGLUniformLocation;
+    peelNumber: WebGLUniformLocation;
+    depthPeelSamplers: WebGLUniformLocation;
 }
 
 interface ShaderThickLines extends MGWebGLShader {
@@ -2197,6 +2213,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         gBuffersFramebufferSize : number;
         save_pixel_data: boolean;
         renderToTexture: boolean;
+        doDepthPeelPass: boolean;
         showShortCutHelp: string[];
         WEBGL2: boolean;
         doRedraw: boolean;
@@ -2244,6 +2261,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         xPixelOffset: number;
         yPixelOffset: number;
         occludeDiffuse: boolean;
+        doOrderIndependentTransparency: boolean;
         doShadowDepthDebug: boolean;
         doSpin: boolean;
         doStenciling: boolean;
@@ -2301,6 +2319,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         nPrevFrames: number;
         offScreenDepthTexture: WebGLTexture;
         offScreenFramebuffer: MGWebGLFrameBuffer;
+        depthPeelFramebuffers: MGWebGLFrameBuffer[];
+        depthPeelColorTextures: WebGLTexture[];
+        depthPeelDepthTextures: WebGLTexture[];
         ssaoFramebuffer: MGWebGLFrameBuffer;
         edgeDetectFramebuffer: MGWebGLFrameBuffer;
         gFramebuffer: MGWebGLFrameBuffer;
@@ -2321,6 +2342,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         offScreenReady: boolean;
         offScreenRenderbufferColor: WebGLRenderbuffer;
         offScreenRenderbufferDepth: WebGLRenderbuffer;
+        depthPeelRenderbufferColor: WebGLRenderbuffer[];
+        depthPeelRenderbufferDepth: WebGLRenderbuffer[];
         offScreenTexture: WebGLTexture;
         pMatrix: Float32Array;
         pmvMatrix: Float32Array;
@@ -2336,6 +2359,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         rttTextureDepth: WebGLTexture;
         screenZ: number;
         shaderProgramTextured: MGWebGLTextureQuadShader;
+        shaderProgramDepthPeelAccum: MGWebGLShaderDepthPeelAccum;
         shaderProgram: ShaderTriangles;
         shaderProgramGBuffers: ShaderGBuffersTriangles;
         shaderProgramGBuffersInstanced: ShaderGBuffersTrianglesInstanced;
@@ -2455,6 +2479,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.pointsArray = [];
         this.mouseTrackPoints = [];
         this.hoverSize = 0.27;
+        this.depthPeelFramebuffers = [];
+        this.depthPeelColorTextures = [];
+        this.depthPeelDepthTextures = [];
+        this.depthPeelRenderbufferDepth = [];
+        this.depthPeelRenderbufferColor = [];
 
         setInterval(() => {
             if(!self.gl) return;
@@ -2601,6 +2630,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         } else {
             this.stopSpinTest();
         }
+    }
+
+    setDoOrderIndependentTransparency(doOrderIndependentTransparency) {
+        this.doOrderIndependentTransparency = doOrderIndependentTransparency;
     }
 
     setOutlinesOn(doOutline) {
@@ -2826,6 +2859,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.save_pixel_data = false;
         this.renderToTexture = false;
+        this.doDepthPeelPass = false;
 
         this.doStenciling = false;
 
@@ -2860,6 +2894,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.yPixelOffset = 1.0 / 1024.0;
 
         this.doSpin = false;
+
+        this.doOrderIndependentTransparency = false;
 
         //Debugging only
         this.doShadowDepthDebug = false;
@@ -3272,6 +3308,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let perfect_sphere_gbuffer_fragment_shader_source = perfect_sphere_gbuffer_fragment_shader_source_webgl1;
         let twod_gbuffer_vertex_shader_source = twod_gbuffer_vertex_shader_source_webgl1;
         let thick_lines_normal_gbuffer_vertex_shader_source = thick_lines_normal_gbuffer_vertex_shader_source_webgl1;
+        let depth_peel_accum_vertex_shader_source = depth_peel_accum_vertex_shader_source_webgl1;
+        let depth_peel_accum_fragment_shader_source = depth_peel_accum_fragment_shader_source_webgl1;
 
         if(this.WEBGL2){
             ssao_fragment_shader_source = ssao_fragment_shader_source_webgl2;
@@ -3312,6 +3350,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             perfect_sphere_gbuffer_fragment_shader_source = perfect_sphere_gbuffer_fragment_shader_source_webgl2;
             twod_gbuffer_vertex_shader_source = twod_gbuffer_vertex_shader_source_webgl2;
             thick_lines_normal_gbuffer_vertex_shader_source = thick_lines_normal_gbuffer_vertex_shader_source_webgl2;
+            depth_peel_accum_vertex_shader_source = depth_peel_accum_vertex_shader_source_webgl2;
+            depth_peel_accum_fragment_shader_source = depth_peel_accum_fragment_shader_source_webgl2;
         }
 
         vertexShader = getShader(this.gl, triangle_vertex_shader_source, "vertex");
@@ -3395,6 +3435,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             const fragmentShaderTextured = getShader(this.gl, triangle_texture_fragment_shader_source, "fragment");
             this.initShadersTextured(vertexShaderTextured, fragmentShaderTextured);
         }
+        const vertexShaderDepthPeelAccum = getShader(this.gl, depth_peel_accum_vertex_shader_source, "vertex");
+        const fragmentShaderDepthPeelAccum = getShader(this.gl, depth_peel_accum_fragment_shader_source, "fragment");
+        this.initShadersDepthPeelAccum(vertexShaderDepthPeelAccum, fragmentShaderDepthPeelAccum);
     }
 
     setActiveMolecule(molecule: moorhen.Molecule) : void {
@@ -4231,6 +4274,88 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
         this.gl.bindTexture(this.gl.TEXTURE_2D, null);
 
+    }
+
+    recreateDepthPeelBuffers(width,height){
+        //Defines 4 off-screeen multisampled framebuffers and corresponding textures.
+        //Requires depth_texture
+        //FIXME - Should be called after resize event
+        if(this.depth_texture){
+            if(this.depthPeelFramebuffers.length===0&&width>0&&height>0){
+                console.log("Make depth peel buffers of size",width,height)
+                for(let i=0;i<4;i++){
+                    this.depthPeelFramebuffers[i] = this.gl.createFramebuffer();
+                    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.depthPeelFramebuffers[i]);
+
+                    this.depthPeelColorTextures[i] = this.gl.createTexture();
+                    this.depthPeelDepthTextures[i] = this.gl.createTexture();
+                    this.depthPeelRenderbufferDepth[i] = this.gl.createRenderbuffer();
+                    this.depthPeelRenderbufferColor[i] = this.gl.createRenderbuffer();
+
+                    this.depthPeelFramebuffers[i].width = width;
+                    this.depthPeelFramebuffers[i].height = height;
+
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthPeelColorTextures[i]);
+                    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+                    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+                    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+                    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+
+                    this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.depthPeelRenderbufferColor[i]);
+                    this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.RENDERBUFFER, this.depthPeelRenderbufferColor[i]);
+                    if (this.WEBGL2) {
+                        this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.RGBA32F, width, height);
+                        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA32F, width, height, 0, this.gl.RGBA, this.gl.FLOAT, null);
+                    } else {
+                        this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.RGBA4, width, height);
+                        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, width, height, 0, this.gl.RGBA, this.gl.UNSIGNED_INT, null);
+                    }
+                    this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.depthPeelColorTextures[i], 0);
+
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthPeelDepthTextures[i]);
+                    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+                    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+                    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+                    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+
+                    this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.depthPeelRenderbufferDepth[i]);
+                    this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, this.depthPeelRenderbufferDepth[i]);
+                    if (this.WEBGL2) {
+                        this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT32F, width, height);
+                        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT32F, width, height, 0, this.gl.DEPTH_COMPONENT, this.gl.FLOAT, null);
+                    } else {
+                        this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT, width, height);
+                        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT, width, height, 0, this.gl.DEPTH_COMPONENT, this.gl.UNSIGNED_INT, null);
+                    }
+                    this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.TEXTURE_2D, this.depthPeelDepthTextures[i], 0);
+
+                    let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
+                    console.log("Depth-peel buffer",i,"completeness",canRead);
+                    if(!canRead){
+                        if(this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT){
+                            console.log("FRAMEBUFFER_INCOMPLETE_ATTACHMENT");
+                        }
+                        if(this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT){
+                            console.log("FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT");
+                        }
+                        if(this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS){
+                            console.log("FRAMEBUFFER_INCOMPLETE_DIMENSIONS");
+                        }
+                        if(this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_UNSUPPORTED){
+                            console.log("FRAMEBUFFER_UNSUPPORTED");
+                        }
+                        if(this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_INCOMPLETE_MULTISAMPLE){
+                            console.log("FRAMEBUFFER_INCOMPLETE_MULTISAMPLE");
+                        }
+                    }
+
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+                    this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, null);
+                    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+
+                }
+            }
+        }
     }
 
     recreateOffScreeenBuffers(width,height){
@@ -5286,6 +5411,36 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
+    initShadersDepthPeelAccum(vertexShader, fragmentShader) {
+
+        this.shaderProgramDepthPeelAccum = this.gl.createProgram();
+
+        this.gl.attachShader(this.shaderProgramDepthPeelAccum, vertexShader);
+        this.gl.attachShader(this.shaderProgramDepthPeelAccum, fragmentShader);
+        this.gl.bindAttribLocation(this.shaderProgramDepthPeelAccum, 0, "aVertexPosition");
+        this.gl.bindAttribLocation(this.shaderProgramDepthPeelAccum, 3, "aVertexTexture");
+        this.gl.linkProgram(this.shaderProgramDepthPeelAccum);
+
+        if (!this.gl.getProgramParameter(this.shaderProgramDepthPeelAccum, this.gl.LINK_STATUS)) {
+            alert("Could not initialise shaders (initShadersDepthPeelAccum)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramDepthPeelAccum));
+        }
+
+        this.gl.useProgram(this.shaderProgramDepthPeelAccum);
+
+        this.shaderProgramDepthPeelAccum.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramDepthPeelAccum, "aVertexPosition");
+        this.gl.enableVertexAttribArray(this.shaderProgramDepthPeelAccum.vertexPositionAttribute);
+
+        this.shaderProgramDepthPeelAccum.vertexTextureAttribute = this.gl.getAttribLocation(this.shaderProgramDepthPeelAccum, "aVertexTexture");
+        this.gl.enableVertexAttribArray(this.shaderProgramDepthPeelAccum.vertexTextureAttribute);
+
+        this.shaderProgramDepthPeelAccum.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramDepthPeelAccum, "uPMatrix");
+        this.shaderProgramDepthPeelAccum.peelNumber = this.gl.getUniformLocation(this.shaderProgramDepthPeelAccum, "peelNumber");
+        this.shaderProgramDepthPeelAccum.depthPeelSamplers = this.gl.getUniformLocation(this.shaderProgramDepthPeelAccum, "depthPeelSamplers");
+        this.shaderProgramDepthPeelAccum.colorPeelSamplers = this.gl.getUniformLocation(this.shaderProgramDepthPeelAccum, "colorPeelSamplers");
+
+    }
+
     initShadersTextured(vertexShader, fragmentShader) {
 
         this.shaderProgramTextured = this.gl.createProgram();
@@ -5403,6 +5558,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.shaderProgram.specularPower = this.gl.getUniformLocation(this.shaderProgram, "specularPower");
         this.shaderProgram.screenZ = this.gl.getUniformLocation(this.shaderProgram, "screenZFrag");
+
+        this.shaderProgram.peelNumber = this.gl.getUniformLocation(this.shaderProgram, "peelNumber");
+        this.shaderProgram.depthPeelSamplers = this.gl.getUniformLocation(this.shaderProgram, "depthPeelSamplers");
     }
 
     initShadersInstanced(vertexShader, fragmentShader) {
@@ -5487,6 +5645,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.shaderProgramInstanced.specularPower = this.gl.getUniformLocation(this.shaderProgramInstanced, "specularPower");
         this.shaderProgramInstanced.screenZ = this.gl.getUniformLocation(this.shaderProgramInstanced, "screenZFrag");
+
+        this.shaderProgramInstanced.peelNumber = this.gl.getUniformLocation(this.shaderProgramInstanced, "peelNumber");
+        this.shaderProgramInstanced.depthPeelSamplers = this.gl.getUniformLocation(this.shaderProgramInstanced, "depthPeelSamplers");
     }
 
     initGBufferThickLineNormalShaders(vertexShader, fragmentShader) {
@@ -5605,6 +5766,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.shaderProgramThickLinesNormal.specularPower = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "specularPower");
 
+        this.shaderProgramThickLinesNormal.peelNumber = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "peelNumber");
+        this.shaderProgramThickLinesNormal.depthPeelSamplers = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "depthPeelSamplers");
+
     }
 
     initThickLineShaders(vertexShader, fragmentShader) {
@@ -5651,6 +5815,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramThickLines.nClipPlanes = this.gl.getUniformLocation(this.shaderProgramThickLines, "nClipPlanes");
 
         this.shaderProgramThickLines.pixelZoom = this.gl.getUniformLocation(this.shaderProgramThickLines, "pixelZoom");
+
+        this.shaderProgramThickLines.peelNumber = this.gl.getUniformLocation(this.shaderProgramThickLines, "peelNumber");
+        this.shaderProgramThickLines.depthPeelSamplers = this.gl.getUniformLocation(this.shaderProgramThickLines, "depthPeelSamplers");
     }
 
     initLineShaders(vertexShader, fragmentShader) {
@@ -5695,6 +5862,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramLines.clipPlane6 = this.gl.getUniformLocation(this.shaderProgramLines, "clipPlane6");
         this.shaderProgramLines.clipPlane7 = this.gl.getUniformLocation(this.shaderProgramLines, "clipPlane7");
         this.shaderProgramLines.nClipPlanes = this.gl.getUniformLocation(this.shaderProgramLines, "nClipPlanes");
+
+        this.shaderProgramLines.peelNumber = this.gl.getUniformLocation(this.shaderProgramLines, "peelNumber");
+        this.shaderProgramLines.depthPeelSamplers = this.gl.getUniformLocation(this.shaderProgramLines, "depthPeelSamplers");
 
     }
 
@@ -5891,6 +6061,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramPerfectSpheres.clipPlane7 = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "clipPlane7");
         this.shaderProgramPerfectSpheres.nClipPlanes = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "nClipPlanes");
         this.shaderProgramPerfectSpheres.clipCap = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "clipCap");
+
+        this.shaderProgramPerfectSpheres.peelNumber = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "peelNumber");
+        this.shaderProgramPerfectSpheres.depthPeelSamplers = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "depthPeelSamplers");
     }
 
     initImageShaders(vertexShader, fragmentShader) {
@@ -7247,6 +7420,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.silhouetteFramebuffer);
             let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
             this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
+        } else if(this.doDepthPeelPass) {
+            this.gl.viewport(0, 0, this.depthPeelFramebuffers[0].width, this.depthPeelFramebuffers[0].height);
         } else if(this.renderToTexture) {
             if(!this.screenshotBuffersReady)
                 this.initTextureFramebuffer();
@@ -7384,10 +7559,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         mat4.identity(this.mvInvMatrix);
 
-        var invQuat = quat4.create();
+        const invQuat = quat4.create();
         quat4Inverse(this.myQuat, invQuat);
 
-        var invMat = quatToMat4(invQuat);
+        const invMat = quatToMat4(invQuat);
         this.mvInvMatrix = invMat;
 
         var right = vec3.create();
@@ -7494,7 +7669,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         if(!calculatingShadowMap){
             this.drawImagesAndText(invMat);
-            this.drawTransparent(theMatrix);
+            if(!this.doOrderIndependentTransparency)
+                this.drawTransparent(theMatrix);
             this.drawDistancesAndLabels(up, right);
             this.drawTextLabels(up, right);
             if(this.WEBGL2){
@@ -7510,6 +7686,22 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawScene() : void {
+
+        const theShaders = [
+            this.shaderProgram,
+            this.shaderProgramInstanced,
+            this.shaderProgramThickLinesNormal,
+            /*
+            this.shaderProgramThickLines,
+            this.shaderProgramLines,
+            */
+            this.shaderProgramPerfectSpheres
+        ];
+
+        theShaders.forEach(shader => {
+            this.gl.useProgram(shader);
+            this.gl.uniform1i(shader.peelNumber,-1);
+        })
 
         var oldMouseDown = this.mouseDown;
 
@@ -7767,7 +7959,97 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.stencilMask(0x00);
             this.gl.disable(this.gl.STENCIL_TEST);
             this.gl.enable(this.gl.DEPTH_TEST);
-            invMat = this.GLrender(false);
+            if(!this.doOrderIndependentTransparency)
+                invMat = this.GLrender(false);
+        }
+
+        if(this.doOrderIndependentTransparency){//Do depth peel
+            this.recreateDepthPeelBuffers(2048,2048);
+
+            this.gl.clear(this.gl.DEPTH_BUFFER_BIT|this.gl.COLOR_BUFFER_BIT);
+            /*
+            if(this.canvas.width>0&&this.canvas.height>0 && (this.depthPeelFramebuffers.length===0||(this.depthPeelFramebuffers[0].width != this.canvas.width))){
+                this.depthPeelFramebuffers = [];
+                this.recreateDepthPeelBuffers(this.canvas.width,this.canvas.height);
+            }
+            */
+            const ratio = 1.0 //* this.gl.viewportWidth / this.gl.viewportHeight;
+
+            if(this.depthPeelFramebuffers.length>0&&this.depthPeelFramebuffers[0].width>0&&this.depthPeelFramebuffers[0].height>0){
+
+                this.gl.enable(this.gl.DEPTH_TEST);
+                const depthPeelSampler0 = 3;
+
+                theShaders.forEach(shader => {
+                        this.gl.useProgram(shader);
+                        this.gl.uniform1f(shader.xSSAOScaling, 1.0/this.depthPeelFramebuffers[0].width );
+                        this.gl.uniform1f(shader.ySSAOScaling, 1.0/this.depthPeelFramebuffers[0].height );
+                        this.gl.uniform1iv(shader.depthPeelSamplers, [depthPeelSampler0, depthPeelSampler0+1, depthPeelSampler0+2, depthPeelSampler0+3]);
+                        })
+                this.doDepthPeelPass = true;
+                this.gl.disable(this.gl.BLEND);
+                this.gl.enable(this.gl.DEPTH_TEST);
+                for(let ipeel=0;ipeel<4;ipeel++){
+                    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.depthPeelFramebuffers[ipeel]);
+                    for(let itex=0;itex<4;itex++){
+                        this.gl.activeTexture(this.gl.TEXTURE0+depthPeelSampler0+itex);
+                        if(ipeel!=itex){
+                            this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthPeelDepthTextures[itex]);
+                        } else {
+                            this.gl.bindTexture(this.gl.TEXTURE_2D, null)
+                        }
+                    }
+                    theShaders.forEach(shader => {
+                            this.gl.useProgram(shader);
+                            this.gl.uniform1i(shader.peelNumber,ipeel);
+                            })
+                    invMat = this.GLrender(false);
+                    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+                }
+                this.doDepthPeelPass = false;
+                theShaders.forEach(shader => {
+                        this.gl.useProgram(shader);
+                        this.gl.uniform1i(shader.peelNumber,-1);
+                        })
+
+                // And now accumulate onto one fullscreen quad somehow ...
+                // See /Users/stuart/ccp4mg-ccp4-pyside2-opengl33/vulkan/shaders/shader_dummy2.frag
+
+                const theShader = this.shaderProgramDepthPeelAccum
+                    this.gl.useProgram(theShader);
+                for(let i = 0; i<16; i++)
+                    this.gl.disableVertexAttribArray(i);
+                this.gl.enableVertexAttribArray(theShader.vertexPositionAttribute);
+                this.gl.enableVertexAttribArray(theShader.vertexTextureAttribute);
+                this.bindFramebufferDrawBuffers();
+
+                let paintPMatrix = mat4.create();
+                this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
+                mat4.ortho(paintPMatrix, -1.0/ratio , 1.0/ratio , -1.0, 1.0, 0.1, 1000.0);
+                this.gl.uniformMatrix4fv(theShader.pMatrixUniform, false, paintPMatrix);
+
+                this.gl.uniform1iv(theShader.depthPeelSamplers, [depthPeelSampler0, depthPeelSampler0+1, depthPeelSampler0+2, depthPeelSampler0+3]);
+                this.gl.uniform1iv(theShader.colorPeelSamplers, [depthPeelSampler0+4, depthPeelSampler0+5, depthPeelSampler0+6, depthPeelSampler0+7]);
+                this.gl.enable(this.gl.BLEND);
+                this.gl.disable(this.gl.DEPTH_TEST);
+                this.gl.clearColor(1.0,1.0,1.0,1.0);
+                this.gl.clear(this.gl.DEPTH_BUFFER_BIT|this.gl.COLOR_BUFFER_BIT)
+                for(let itex=0;itex<4;itex++){
+                    this.gl.activeTexture(this.gl.TEXTURE0+depthPeelSampler0+itex);
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthPeelDepthTextures[itex]);
+                    this.gl.activeTexture(this.gl.TEXTURE0+depthPeelSampler0+itex+4);
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthPeelColorTextures[itex]);
+                }
+                for(let ipeel=3;ipeel>=0;ipeel--){
+                    this.gl.uniform1i(theShader.peelNumber,ipeel);
+                    if (this.ext) {
+                        this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0);
+                    } else {
+                        this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
+                    }
+                }
+            }
+            this.gl.activeTexture(this.gl.TEXTURE0);
         }
 
         //console.log(this.mvMatrix);
@@ -7919,8 +8201,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let paintMvMatrix = mat4.create();
         let paintPMatrix = mat4.create();
         mat4.identity(paintMvMatrix);
-        const f = this.gl_clipPlane0[3]+this.fogClipOffset;
-        const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
         mat4.ortho(paintPMatrix, -1 , 1 , -1, 1, 0.1, 1000.0);
 
         let srcWidth;
@@ -8004,7 +8284,17 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.uniformMatrix4fv(this.shaderProgramBlurX.pMatrixUniform, false, paintPMatrix);
         this.gl.uniformMatrix4fv(this.shaderProgramBlurX.mvMatrixUniform, false, paintMvMatrix);
 
-        this.gl.uniform1f(this.shaderProgramBlurX.blurDepth,this.blurDepth);
+        const f = -(this.gl_clipPlane0[3]+this.fogClipOffset);
+        const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
+        console.log("In blur",f,b,this.fogClipOffset)
+        const absDepth = this.blurDepth * (1000. - -1000.) - 1000.;
+        console.log(absDepth)
+        let fracDepth = (absDepth-f)/(b - f);
+        console.log(this.blurDepth,fracDepth);
+        if(fracDepth > 1.0) fracDepth = 1.0;
+        if(fracDepth < 0.0) fracDepth = 0.0;
+
+        this.gl.uniform1f(this.shaderProgramBlurX.blurDepth,fracDepth);
         this.gl.uniform1f(this.shaderProgramBlurX.blurSize,blurSizeX);
 
         this.gl.clearBufferfv(this.gl.COLOR, 0, [1.0, 0.5, 1.0, 1.0]);
@@ -8047,7 +8337,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.uniformMatrix4fv(this.shaderProgramBlurY.pMatrixUniform, false, paintPMatrix);
         this.gl.uniformMatrix4fv(this.shaderProgramBlurY.mvMatrixUniform, false, paintMvMatrix);
 
-        this.gl.uniform1f(this.shaderProgramBlurY.blurDepth,this.blurDepth);
+        this.gl.uniform1f(this.shaderProgramBlurY.blurDepth,fracDepth);
         this.gl.uniform1f(this.shaderProgramBlurY.blurSize,blurSizeY);
 
         this.gl.clearBufferfv(this.gl.COLOR, 0, [0.5, 0.5, 1.0, 1.0]);
@@ -8068,7 +8358,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.blurYTexture);
         this.gl.useProgram(this.shaderProgramRenderFrameBuffer);
-        this.gl.uniform1f(this.shaderProgramRenderFrameBuffer.blurDepth,this.blurDepth);
+        this.gl.uniform1f(this.shaderProgramRenderFrameBuffer.blurDepth,fracDepth);
 
         this.gl.uniform1i(this.shaderProgramRenderFrameBuffer.focussedTexture,0);
         this.gl.uniform1i(this.shaderProgramRenderFrameBuffer.blurredTexture,1);
@@ -8307,7 +8597,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
                 if (this.displayBuffers[idx].transparent&&!this.drawingGBuffers) {
                     //console.log("Not doing normal drawing way ....");
-                    continue;
+                    if(!this.doOrderIndependentTransparency)
+                        continue;
                 }
                 let theShader;
                 let scaleZ = false;
@@ -8363,12 +8654,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.gl.activeTexture(this.gl.TEXTURE2);
                     this.gl.bindTexture(this.gl.TEXTURE_2D, this.edgeDetectTexture);
                     this.gl.activeTexture(this.gl.TEXTURE0);
-                    if(this.renderToTexture){
-                        this.gl.uniform1f(theShader.xSSAOScaling, 1.0/this.rttFramebuffer.width );
-                        this.gl.uniform1f(theShader.ySSAOScaling, 1.0/this.rttFramebuffer.height );
-                    } else {
-                        this.gl.uniform1f(theShader.xSSAOScaling, 1.0/this.gl.viewportWidth );
-                        this.gl.uniform1f(theShader.ySSAOScaling, 1.0/this.gl.viewportHeight );
+                    if(!this.doDepthPeelPass){
+                        if(this.renderToTexture){
+                            this.gl.uniform1f(theShader.xSSAOScaling, 1.0/this.rttFramebuffer.width );
+                            this.gl.uniform1f(theShader.ySSAOScaling, 1.0/this.rttFramebuffer.height );
+                        } else {
+                            this.gl.uniform1f(theShader.xSSAOScaling, 1.0/this.gl.viewportWidth );
+                            this.gl.uniform1f(theShader.ySSAOScaling, 1.0/this.gl.viewportHeight );
+                        }
                     }
                 }
 
@@ -8459,6 +8752,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     }
                 }
             }
+
             //shaderProgramPerfectSpheres
             //FIXME - broken with gbuffers
             for(let i = 0; i<16; i++)
@@ -8522,12 +8816,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.gl.activeTexture(this.gl.TEXTURE2);
                     this.gl.bindTexture(this.gl.TEXTURE_2D, this.edgeDetectTexture);
                     this.gl.activeTexture(this.gl.TEXTURE0);
-                    if(this.renderToTexture){
-                        this.gl.uniform1f(program.xSSAOScaling, 1.0/this.rttFramebuffer.width );
-                        this.gl.uniform1f(program.ySSAOScaling, 1.0/this.rttFramebuffer.height );
-                    } else {
-                        this.gl.uniform1f(program.xSSAOScaling, 1.0/this.gl.viewportWidth );
-                        this.gl.uniform1f(program.ySSAOScaling, 1.0/this.gl.viewportHeight );
+                    if(!this.doDepthPeelPass){
+                        if(this.renderToTexture){
+                            this.gl.uniform1f(program.xSSAOScaling, 1.0/this.rttFramebuffer.width );
+                            this.gl.uniform1f(program.ySSAOScaling, 1.0/this.rttFramebuffer.height );
+                        } else {
+                            this.gl.uniform1f(program.xSSAOScaling, 1.0/this.gl.viewportWidth );
+                            this.gl.uniform1f(program.ySSAOScaling, 1.0/this.gl.viewportHeight );
+                        }
                     }
                 }
 
@@ -8709,12 +9005,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.activeTexture(this.gl.TEXTURE1);
                 this.gl.bindTexture(this.gl.TEXTURE_2D, this.simpleBlurYTexture);
                 this.gl.activeTexture(this.gl.TEXTURE0);
-                if(this.renderToTexture){
-                    this.gl.uniform1f(shaderProgramThickLinesNormal.xSSAOScaling, 1.0/this.rttFramebuffer.width );
-                    this.gl.uniform1f(shaderProgramThickLinesNormal.ySSAOScaling, 1.0/this.rttFramebuffer.height );
-                } else {
-                    this.gl.uniform1f(shaderProgramThickLinesNormal.xSSAOScaling, 1.0/this.gl.viewportWidth );
-                    this.gl.uniform1f(shaderProgramThickLinesNormal.ySSAOScaling, 1.0/this.gl.viewportHeight );
+                if(!this.doDepthPeelPass){
+                    if(this.renderToTexture){
+                        this.gl.uniform1f(shaderProgramThickLinesNormal.xSSAOScaling, 1.0/this.rttFramebuffer.width );
+                        this.gl.uniform1f(shaderProgramThickLinesNormal.ySSAOScaling, 1.0/this.rttFramebuffer.height );
+                    } else {
+                        this.gl.uniform1f(shaderProgramThickLinesNormal.xSSAOScaling, 1.0/this.gl.viewportWidth );
+                        this.gl.uniform1f(shaderProgramThickLinesNormal.ySSAOScaling, 1.0/this.gl.viewportHeight );
+                    }
                 }
                 if(shaderProgramThickLinesNormal.doSSAO!=null){
                     if(shaderProgramThickLinesNormal.doSSAO!=null) this.gl.uniform1i(shaderProgramThickLinesNormal.doSSAO, this.doSSAO);
@@ -9111,12 +9409,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.gl.activeTexture(this.gl.TEXTURE1);
                         this.gl.bindTexture(this.gl.TEXTURE_2D, this.simpleBlurYTexture);
                         this.gl.activeTexture(this.gl.TEXTURE0);
-                        if(this.renderToTexture){
-                            this.gl.uniform1f(this.shaderProgram.xSSAOScaling, 1.0/this.rttFramebuffer.width );
-                            this.gl.uniform1f(this.shaderProgram.ySSAOScaling, 1.0/this.rttFramebuffer.height );
-                        } else {
-                            this.gl.uniform1f(this.shaderProgram.xSSAOScaling, 1.0/this.gl.viewportWidth );
-                            this.gl.uniform1f(this.shaderProgram.ySSAOScaling, 1.0/this.gl.viewportHeight );
+                        if(!this.doDepthPeelPass){
+                            if(this.renderToTexture){
+                                this.gl.uniform1f(this.shaderProgram.xSSAOScaling, 1.0/this.rttFramebuffer.width );
+                                this.gl.uniform1f(this.shaderProgram.ySSAOScaling, 1.0/this.rttFramebuffer.height );
+                            } else {
+                                this.gl.uniform1f(this.shaderProgram.xSSAOScaling, 1.0/this.gl.viewportWidth );
+                                this.gl.uniform1f(this.shaderProgram.ySSAOScaling, 1.0/this.gl.viewportHeight );
+                            }
                         }
                     }
 

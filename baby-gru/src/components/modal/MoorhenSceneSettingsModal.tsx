@@ -189,8 +189,8 @@ const DepthBlurPanel = (props: {
             </InputGroup>
             <MoorhenSlider
                 isDisabled={!useOffScreenBuffers}
-                minVal={0.0}
-                maxVal={1.0}
+                minVal={0.4}
+                maxVal={0.6}
                 logScale={false}
                 sliderTitle="Blur depth"
                 initialValue={depthBlurDepth}

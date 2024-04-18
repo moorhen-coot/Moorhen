@@ -19,13 +19,13 @@ var render_framebuffer_fragment_shader_source = `#version 300 es\n
 
         float blur = smoothstep ( minDistance , maxDistance , min(position.x*0.75,1.0));
 
-        if(blur>blurDepth)// ? why 0.2
-            //fragColor = vec4(0.0, 0.0, 0.0, 1.0);
-            fragColor = blurColor;
-        else
+        if(blur>blurDepth){
+            float frac = (blur-blurDepth)/(1.0 - blurDepth);
+            frac = frac/(.01+frac);
+            fragColor = frac*blurColor+(1.0-frac)*focusColor;
+        } else {
             fragColor = focusColor;
-        
-        //fragColor = texture(inFocus, out_TexCoord0);
+        }
     }
 `;
 
