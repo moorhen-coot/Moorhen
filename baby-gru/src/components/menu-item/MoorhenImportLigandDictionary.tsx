@@ -55,22 +55,21 @@ const MoorhenImportLigandDictionary = (props: {
             selectedMoleculeIndex = parseInt(moleculeSelectValueRef.current)
             const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedMoleculeIndex)
             if (typeof selectedMolecule !== 'undefined') {
-                selectedMolecule.addDict(fileContent)
+                await selectedMolecule.addDict(fileContent)
+                await selectedMolecule.redraw()
             }
         } else {
             selectedMoleculeIndex = -999999
-            await Promise.all([
-                commandCentre.current.cootCommand({
-                    returnType: "status",
-                    command: 'read_dictionary_string',
-                    commandArgs: [fileContent, selectedMoleculeIndex],
-                    changesMolecules: []
-                }, false),
-                ...molecules.map(molecule => {
-                    molecule.addDictShim(fileContent)
-                    return molecule.redraw()
-                })
-            ])
+            await commandCentre.current.cootCommand({
+                returnType: "status",
+                command: 'read_dictionary_string',
+                commandArgs: [fileContent, selectedMoleculeIndex],
+                changesMolecules: []
+            }, false),
+            await Promise.all(molecules.map(molecule => {
+                molecule.cacheLigandDict(fileContent)
+                return molecule.redraw()
+            }))
         }
                 
         if (createRef.current) {
