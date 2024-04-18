@@ -34,6 +34,8 @@ void main() {
 
     vec4 sum = vec4(0.0);
 
+    vec2 tcn = out_TexCoord0;
+
     for (int i = 0; i < N && i < 4; i++) {
         vec2 tc = out_TexCoord0 + u_direction * float(i - M);
         vec4 position = texture(depth, tc);
@@ -41,7 +43,6 @@ void main() {
         if(blur>blurDepth){
             sum += row0[i] * texture(shader0, tc);
         } else {
-            vec2 tcn = out_TexCoord0;
             sum += row0[i] * texture(shader0, tcn);
         }
     }
@@ -52,7 +53,6 @@ void main() {
         if(blur>blurDepth){
             sum += row1[i-4] * texture(shader0, tc);
         } else {
-            vec2 tcn = out_TexCoord0;
             sum += row1[i-4] * texture(shader0, tcn);
         }
     }
@@ -63,7 +63,6 @@ void main() {
         if(blur>blurDepth){
             sum += row2[i-8] * texture(shader0, tc);
         } else {
-            vec2 tcn = out_TexCoord0;
             sum += row2[i-8] * texture(shader0, tcn);
         }
     }
@@ -74,7 +73,6 @@ void main() {
         if(blur>blurDepth){
             sum += row3[i-12] * texture(shader0, tc);
         } else {
-            vec2 tcn = out_TexCoord0;
             sum += row3[i-12] * texture(shader0, tcn);
         }
     }
@@ -85,7 +83,6 @@ void main() {
         if(blur>blurDepth){
             sum += row4[i-16] * texture(shader0, tc);
         } else {
-            vec2 tcn = out_TexCoord0;
             sum += row4[i-16] * texture(shader0, tcn);
         }
     }
@@ -96,7 +93,6 @@ void main() {
         if(blur>blurDepth){
             sum += row5[i-20] * texture(shader0, tc);
         } else {
-            vec2 tcn = out_TexCoord0;
             sum += row5[i-20] * texture(shader0, tcn);
         }
     }
@@ -107,7 +103,6 @@ void main() {
         if(blur>blurDepth){
             sum += row6[i-24] * texture(shader0, tc);
         } else {
-            vec2 tcn = out_TexCoord0;
             sum += row6[i-24] * texture(shader0, tcn);
         }
     }
@@ -118,7 +113,6 @@ void main() {
         if(blur>blurDepth){
             sum += row7[i-28] * texture(shader0, tc);
         } else {
-            vec2 tcn = out_TexCoord0;
             sum += row7[i-28] * texture(shader0, tcn);
         }
     }
@@ -129,7 +123,6 @@ void main() {
         if(blur>blurDepth){
             sum += row8[i-32] * texture(shader0, tc);
         } else {
-            vec2 tcn = out_TexCoord0;
             sum += row8[i-32] * texture(shader0, tcn);
         }
     }

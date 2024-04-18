@@ -9,8 +9,6 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
     uniform float fog_end;
     uniform float fog_start;
 
-    uniform sampler2D uSampler;
-
     uniform vec4 clipPlane0;
     uniform vec4 clipPlane1;
     uniform vec4 clipPlane2;
@@ -46,6 +44,9 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
 
     uniform bool clipCap;
 
+    uniform int peelNumber;
+    uniform sampler2D depthPeelSamplers[4];
+
     out vec4 fragColor;
 
     float lookup(vec2 offSet){
@@ -63,6 +64,7 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
     }
 
     void main(void) {
+
       float silly_scale = 0.7071067811865475;
       float x = 2.0*(vTexture.x-.5);
       float y = -2.0*(vTexture.y-.5);
@@ -74,6 +76,31 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
 
       if(dot(eyePos, clipPlane1)<0.0){
            discard;
+      }
+
+      if(peelNumber>0) {
+          vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling);
+          float max_depth;
+          switch(peelNumber){
+              case 1:
+                  max_depth = texture(depthPeelSamplers[0],tex_coord).r;
+                  if(gl_FragCoord.z <= max_depth) {
+                      discard;
+                  }
+              case 2:
+                  max_depth = texture(depthPeelSamplers[1],tex_coord).r;
+                  if(gl_FragCoord.z <= max_depth) {
+                      discard;
+                  }
+                  break;
+              case 3:
+                  max_depth = texture(depthPeelSamplers[2],tex_coord).r;
+                  if(gl_FragCoord.z <= max_depth) {
+                      discard;
+                  }
+                  break;
+          }
+
       }
 
       vec4 pos = eyePos;
