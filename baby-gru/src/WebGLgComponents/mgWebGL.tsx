@@ -4304,11 +4304,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.depthPeelRenderbufferColor[i]);
                     this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.RENDERBUFFER, this.depthPeelRenderbufferColor[i]);
                     if (this.WEBGL2) {
-                        this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.RGBA32F, width, height);
+                        //FIXME - maybe only multisample for screenshot?
+                        //FIXME - multismapling isn't actually working
+                        this.gl.renderbufferStorageMultisample(this.gl.RENDERBUFFER, this.gl.getParameter(this.gl.MAX_SAMPLES), this.gl.RGBA32F, width, height);
+                        //this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.RGBA32F, width, height);
                         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA32F, width, height, 0, this.gl.RGBA, this.gl.FLOAT, null);
                     } else {
                         this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.RGBA4, width, height);
-                        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, width, height, 0, this.gl.RGBA, this.gl.UNSIGNED_INT, null);
+                        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, width, height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
                     }
                     this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.depthPeelColorTextures[i], 0);
 
@@ -4324,7 +4327,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT32F, width, height);
                         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT32F, width, height, 0, this.gl.DEPTH_COMPONENT, this.gl.FLOAT, null);
                     } else {
-                        this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT, width, height);
+                        this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, width, height);
                         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT, width, height, 0, this.gl.DEPTH_COMPONENT, this.gl.UNSIGNED_INT, null);
                     }
                     this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.TEXTURE_2D, this.depthPeelDepthTextures[i], 0);
@@ -7964,7 +7967,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         if(this.doOrderIndependentTransparency){//Do depth peel
-            this.recreateDepthPeelBuffers(2048,2048);
+            if(this.renderToTexture) {
+                this.depthPeelFramebuffers = [];
+                this.recreateDepthPeelBuffers(4096,4096);
+            } else {
+                this.recreateDepthPeelBuffers(2048,2048);
+            }
 
             this.gl.clear(this.gl.DEPTH_BUFFER_BIT|this.gl.COLOR_BUFFER_BIT);
             /*
@@ -8006,6 +8014,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     invMat = this.GLrender(false);
                     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
                 }
+
                 this.doDepthPeelPass = false;
                 theShaders.forEach(shader => {
                         this.gl.useProgram(shader);
@@ -8024,7 +8033,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.bindFramebufferDrawBuffers();
 
                 let paintPMatrix = mat4.create();
-                this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
+                if(this.renderToTexture) {
+                    console.log("Binding rttFramebuffer in depth peel accumulate");
+                    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer);
+                    this.gl.viewport(0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height);
+                } else {
+                    this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
+                }
                 mat4.ortho(paintPMatrix, -1.0/ratio , 1.0/ratio , -1.0, 1.0, 0.1, 1000.0);
                 this.gl.uniformMatrix4fv(theShader.pMatrixUniform, false, paintPMatrix);
 
@@ -8032,7 +8047,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.uniform1iv(theShader.colorPeelSamplers, [depthPeelSampler0+4, depthPeelSampler0+5, depthPeelSampler0+6, depthPeelSampler0+7]);
                 this.gl.enable(this.gl.BLEND);
                 this.gl.disable(this.gl.DEPTH_TEST);
-                this.gl.clearColor(1.0,1.0,1.0,1.0);
+                this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], this.background_colour[3]);
                 this.gl.clear(this.gl.DEPTH_BUFFER_BIT|this.gl.COLOR_BUFFER_BIT)
                 for(let itex=0;itex<4;itex++){
                     this.gl.activeTexture(this.gl.TEXTURE0+depthPeelSampler0+itex);
@@ -8050,6 +8065,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 }
             }
             this.gl.activeTexture(this.gl.TEXTURE0);
+            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+            if(this.renderToTexture) {
+                this.depthPeelFramebuffers = [];
+            }
         }
 
         //console.log(this.mvMatrix);
