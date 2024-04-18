@@ -802,7 +802,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                         return this.loadMissingMonomer(newTlc, -999999)
                     })
                 )
-                ligandDicts.forEach(ligandDict => this.addDictShim(ligandDict))
+                ligandDicts.forEach(ligandDict => this.cacheLigandDict(ligandDict))
             } catch (err) {
                 console.log(err)
                 console.warn('Error in loadMissingMonomers...')
@@ -1585,7 +1585,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * Internal function used to store a ligand dictionary in the cache for this molecule instance
      * @param {string} fileContent - The dictionary contents
      */
-    addDictShim(fileContent: string): void {
+    cacheLigandDict(fileContent: string): void {
         if (!fileContent) {
             console.warn('File contents for dictionary not found, doing nothing...')
             return
@@ -1633,7 +1633,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             commandArgs: [fileContent, this.molNo]
         }, false)
 
-        this.addDictShim(fileContent)
+        this.cacheLigandDict(fileContent)
     }
 
     /**

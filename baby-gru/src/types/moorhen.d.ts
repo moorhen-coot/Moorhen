@@ -165,7 +165,7 @@ export namespace moorhen {
         mergeMolecules(otherMolecules: Molecule[], doHide?: boolean): Promise<void>;
         setBackgroundColour(backgroundColour: [number, number, number, number]): void;
         addDict(fileContent: string): Promise<void>;
-        addDictShim(fileContent: string): void;
+        cacheLigandDict(fileContent: string): void;
         toggleSymmetry(): Promise<void>;
         toggleBiomolecule(): void;
         getDict(newTlc: string): string;
