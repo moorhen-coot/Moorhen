@@ -49,7 +49,7 @@ var triangle_fragment_shader_source = `#version 300 es\n
     uniform vec3 screenZFrag;
 
     uniform int peelNumber;
-    uniform sampler2D depthPeelSamplers[4];
+    uniform sampler2D depthPeelSamplers;
 
     out vec4 fragColor;
 
@@ -81,25 +81,9 @@ var triangle_fragment_shader_source = `#version 300 es\n
       if(peelNumber>0) {
           vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*xSSAOScaling);
           float max_depth;
-          switch(peelNumber){
-              case 1:
-                  max_depth = texture(depthPeelSamplers[0],tex_coord).r;
-                  if(gl_FragCoord.z <= max_depth || abs(gl_FragCoord.z - max_depth)<1e-6 ) {
-                      discard;
-                  }
-                  break;
-              case 2:
-                  max_depth = texture(depthPeelSamplers[1],tex_coord).r;
-                  if(gl_FragCoord.z < max_depth || abs(gl_FragCoord.z - max_depth)<1e-6 ) {
-                      discard;
-                  }
-                  break;
-              case 3:
-                  max_depth = texture(depthPeelSamplers[2],tex_coord).r;
-                  if(gl_FragCoord.z < max_depth || abs(gl_FragCoord.z - max_depth)<1e-6 ) {
-                      discard;
-                  }
-                  break;
+          max_depth = texture(depthPeelSamplers,tex_coord).r;
+          if(gl_FragCoord.z <= max_depth || abs(gl_FragCoord.z - max_depth)<1e-6 ) {
+              discard;
           }
       }
 

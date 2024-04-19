@@ -4304,8 +4304,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.depthPeelRenderbufferColor[i]);
                     this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.RENDERBUFFER, this.depthPeelRenderbufferColor[i]);
                     if (this.WEBGL2) {
-                        //FIXME - maybe only multisample for screenshot?
-                        //FIXME - multismapling isn't actually working
+                        //FIXME - multismapling isn't actually working - need to blit to another buffer ...
                         this.gl.renderbufferStorageMultisample(this.gl.RENDERBUFFER, this.gl.getParameter(this.gl.MAX_SAMPLES), this.gl.RGBA32F, width, height);
                         //this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.RGBA32F, width, height);
                         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA32F, width, height, 0, this.gl.RGBA, this.gl.FLOAT, null);
@@ -7992,20 +7991,18 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.gl.useProgram(shader);
                         this.gl.uniform1f(shader.xSSAOScaling, 1.0/this.depthPeelFramebuffers[0].width );
                         this.gl.uniform1f(shader.ySSAOScaling, 1.0/this.depthPeelFramebuffers[0].height );
-                        this.gl.uniform1iv(shader.depthPeelSamplers, [depthPeelSampler0, depthPeelSampler0+1, depthPeelSampler0+2, depthPeelSampler0+3]);
+                        this.gl.uniform1i(shader.depthPeelSamplers, depthPeelSampler0);
                         })
                 this.doDepthPeelPass = true;
                 this.gl.disable(this.gl.BLEND);
                 this.gl.enable(this.gl.DEPTH_TEST);
                 for(let ipeel=0;ipeel<4;ipeel++){
                     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.depthPeelFramebuffers[ipeel]);
-                    for(let itex=0;itex<4;itex++){
-                        this.gl.activeTexture(this.gl.TEXTURE0+depthPeelSampler0+itex);
-                        if(ipeel!=itex){
-                            this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthPeelDepthTextures[itex]);
-                        } else {
-                            this.gl.bindTexture(this.gl.TEXTURE_2D, null)
-                        }
+                    this.gl.activeTexture(this.gl.TEXTURE0+depthPeelSampler0);
+                    if(ipeel>0){
+                        this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthPeelDepthTextures[ipeel-1]);
+                    } else {
+                        this.gl.bindTexture(this.gl.TEXTURE_2D, null)
                     }
                     theShaders.forEach(shader => {
                             this.gl.useProgram(shader);
@@ -8043,19 +8040,17 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 mat4.ortho(paintPMatrix, -1.0/ratio , 1.0/ratio , -1.0, 1.0, 0.1, 1000.0);
                 this.gl.uniformMatrix4fv(theShader.pMatrixUniform, false, paintPMatrix);
 
-                this.gl.uniform1iv(theShader.depthPeelSamplers, [depthPeelSampler0, depthPeelSampler0+1, depthPeelSampler0+2, depthPeelSampler0+3]);
-                this.gl.uniform1iv(theShader.colorPeelSamplers, [depthPeelSampler0+4, depthPeelSampler0+5, depthPeelSampler0+6, depthPeelSampler0+7]);
                 this.gl.enable(this.gl.BLEND);
                 this.gl.disable(this.gl.DEPTH_TEST);
                 this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], this.background_colour[3]);
                 this.gl.clear(this.gl.DEPTH_BUFFER_BIT|this.gl.COLOR_BUFFER_BIT)
-                for(let itex=0;itex<4;itex++){
-                    this.gl.activeTexture(this.gl.TEXTURE0+depthPeelSampler0+itex);
-                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthPeelDepthTextures[itex]);
-                    this.gl.activeTexture(this.gl.TEXTURE0+depthPeelSampler0+itex+4);
-                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthPeelColorTextures[itex]);
-                }
+                this.gl.uniform1i(theShader.depthPeelSamplers, 0);
+                this.gl.uniform1i(theShader.colorPeelSamplers, 1);
                 for(let ipeel=3;ipeel>=0;ipeel--){
+                    this.gl.activeTexture(this.gl.TEXTURE0);
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthPeelDepthTextures[ipeel]);
+                    this.gl.activeTexture(this.gl.TEXTURE1);
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthPeelColorTextures[ipeel]);
                     this.gl.uniform1i(theShader.peelNumber,ipeel);
                     if (this.ext) {
                         this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0);
