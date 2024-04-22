@@ -664,6 +664,24 @@ void setUint32ArrayFromVector(const std::vector<unsigned> &uintArray, const emsc
     v.call<void>("set", view);
 }
 
+void getTextureArray(const texture_as_floats_t &m, const emscripten::val &v){
+    const auto &image_data = m.image_data;
+    const auto &width = m.width;
+    const auto &height = m.height;
+
+    std::vector<float> floatArray;
+    floatArray.reserve(width*height);
+
+    auto s = width*height;
+
+    for(int i=0;i<s;i++){
+        floatArray.push_back(image_data[i]);
+    }
+
+    setFloat32ArrayFromVector(floatArray,v);
+
+}
+
 void getPositionsFromSimpleMesh2(const coot::simple_mesh_t &m, const emscripten::val &v){
     const auto &vertices = m.vertices;
 
@@ -976,6 +994,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("getLineIndicesFromSimpleMesh2", &getLineIndicesFromSimpleMesh2);
     function("getPermutedTriangleIndicesFromSimpleMesh2", &getPermutedTriangleIndicesFromSimpleMesh2);
     function("getTriangleIndicesFromSimpleMesh2", &getTriangleIndicesFromSimpleMesh2);
+    function("getTextureArray", &getTextureArray);
     class_<clipper::Coord_orth>("Coord_orth")
     .constructor<const clipper::ftype&, const clipper::ftype&, const clipper::ftype&>()
     .function("x", &clipper::Coord_orth::x)
@@ -1423,7 +1442,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .field("x_size", &texture_as_floats_t::x_size)
     .field("y_size", &texture_as_floats_t::y_size)
     .field("z_position", &texture_as_floats_t::z_position)
-    .field("image_data", &texture_as_floats_t::image_data)
+    //.field("image_data", &texture_as_floats_t::image_data)
     ;
     value_object<molecules_container_t::fit_ligand_info_t>("fit_ligand_info_t")
     .field("imol", &molecules_container_t::fit_ligand_info_t::imol)

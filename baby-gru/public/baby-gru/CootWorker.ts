@@ -381,16 +381,14 @@ const mapMoleculeCentreInfoToJSObject = (mapMoleculeCentreInfo: libcootApi.MapMo
 
 const textureAsFloatsToJSTextureAsFloats = (data:libcootApi.textureAsFloats): libcootApi.textureAsFloatsJS => {
 
-    let image_data = []
+    const imageDataVecSize = data.width * data.height
 
-    const imageDataVecSize = data.image_data.size()
-    console.log(imageDataVecSize);
-    for (let i = 0; i < imageDataVecSize; i++) {
-        const texVal = data.image_data.get(i)
-        image_data.push(texVal)
-    }
+    let image_data = new Float32Array(imageDataVecSize)
 
-    data.image_data.delete()
+    const t1 = performance.now()
+    cootModule.getTextureArray(data,image_data)
+    const t2 = performance.now()
+    console.log("Time to convert texture array to JS",t2-t1)
 
     return {
         width:data.width,
@@ -1057,7 +1055,10 @@ const doCootCommand = (messageData: {
                 cootResult = export_molecule_as_gltf(...commandArgs as [number, string, string, boolean, number, number, number, boolean, boolean])
                 break
             default:
+                const t1 = performance.now()
                 cootResult = molecules_container[command](...commandArgs)
+                const t2 = performance.now()
+                console.log("Time to do Coot command",t2-t1)
                 break
         }
 

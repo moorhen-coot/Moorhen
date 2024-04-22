@@ -6,6 +6,7 @@ import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch } from "react-redux";
 import { setDoOutline, setDoShadow } from "../../store/sceneSettingsSlice";
 import { doDownload } from "../../utils/MoorhenUtils";
+import { setTomogramPopUpParams } from "../../store/activePopUpsSlice";
 
 export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
@@ -15,6 +16,13 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline)
 
     const menuItemProps = {setPopoverIsShown, customCid, ...props}
+
+    const tomogramTest = () => {
+        dispatch(setTomogramPopUpParams({
+            show: true,
+            mapMolNo: 0
+        }))
+    }
 
     const doTest = async () => {
         props.moleculesRef.current[0].representations.forEach(async (representation) => {
@@ -42,5 +50,9 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                             onChange={() => {dispatch( setDoOutline(!doOutline) )}}
                             label="Outlines"/>
                     </InputGroup>
+<MenuItem onClick={tomogramTest}>
+                        Tomogram...
+                    </MenuItem>
+
         </>
     }

@@ -1362,7 +1362,7 @@ class TexturedShape {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, this.width, this.height, 0, gl.RED, gl.FLOAT, new Float32Array(textureInfo.image_data));
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, this.width, this.height, 0, gl.RED, gl.FLOAT, textureInfo.image_data);
         //TODO - Populate the color ramp texture with a default black to white.
         this.color_ramp_texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, this.color_ramp_texture);
@@ -1736,6 +1736,10 @@ class DisplayBuffer {
 
     setCustomColour(col) {
         this.customColour = col;
+        if(col[3]<0.99)
+            this.transparent = true
+        else
+            this.transparent = false
     }
 
     updateSymmetryAtoms() {
@@ -2262,6 +2266,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         yPixelOffset: number;
         occludeDiffuse: boolean;
         doOrderIndependentTransparency: boolean;
+        doPeel: boolean;
         doShadowDepthDebug: boolean;
         doSpin: boolean;
         doStenciling: boolean;
@@ -2895,7 +2900,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.doSpin = false;
 
-        this.doOrderIndependentTransparency = false;
+        this.doOrderIndependentTransparency = true;//Request OIT user/state setting
+        this.doPeel = false;//Requested and required - above set and there are transparent objects.
 
         //Debugging only
         this.doShadowDepthDebug = false;
@@ -7671,7 +7677,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         if(!calculatingShadowMap){
             this.drawImagesAndText(invMat);
-            if(!this.doOrderIndependentTransparency)
+            if(!this.doPeel)
                 this.drawTransparent(theMatrix);
             this.drawDistancesAndLabels(up, right);
             this.drawTextLabels(up, right);
@@ -7889,6 +7895,18 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.renderSilhouettesToTexture = false;
 
+        this.doPeel = false;
+        if(this.doOrderIndependentTransparency){
+            for (let idx = 0; idx < this.displayBuffers.length && !this.doPeel; idx++) {
+                let triangleVertexIndexBuffer = this.displayBuffers[idx].triangleVertexIndexBuffer;
+                for (let j = 0; j < triangleVertexIndexBuffer.length&& !this.doPeel; j++) {
+                    if (this.displayBuffers[idx].transparent&&!this.displayBuffers[idx].isHoverBuffer) {
+                        this.doPeel = true;
+                    }
+                }
+            }
+        }
+
         if(this.doStenciling){
             //Framebuffer way
             this.renderSilhouettesToTexture = true;
@@ -7961,11 +7979,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.stencilMask(0x00);
             this.gl.disable(this.gl.STENCIL_TEST);
             this.gl.enable(this.gl.DEPTH_TEST);
-            if(!this.doOrderIndependentTransparency)
+            if(!this.doPeel)
                 invMat = this.GLrender(false);
         }
 
-        if(this.doOrderIndependentTransparency){//Do depth peel
+        if(this.doPeel){//Do depth peel
             if(this.renderToTexture) {
                 this.depthPeelFramebuffers = [];
                 this.recreateDepthPeelBuffers(4096,4096);
@@ -8611,7 +8629,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
                 if (this.displayBuffers[idx].transparent&&!this.drawingGBuffers) {
                     //console.log("Not doing normal drawing way ....");
-                    if(!this.doOrderIndependentTransparency)
+                    if(!this.doPeel)
                         continue;
                 }
                 let theShader;

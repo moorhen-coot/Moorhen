@@ -278,6 +278,7 @@ export namespace webGL {
         yPixelOffset: number;
         occludeDiffuse: boolean;
         doOrderIndependentTransparency: boolean;
+        doPeel: boolean;
         doShadowDepthDebug: boolean;
         doSpin: boolean;
         doStenciling: boolean;

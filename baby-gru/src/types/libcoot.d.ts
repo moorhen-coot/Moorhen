@@ -435,7 +435,6 @@ export namespace libcootApi {
         x_size: number;
         y_size: number;
         z_position: number;
-        image_data: emscriptem.vector<number>;
     }
     type textureAsFloatsJS = {
         width: number;
@@ -443,7 +442,7 @@ export namespace libcootApi {
         x_size: number;
         y_size: number;
         z_position: number;
-        image_data: number[];
+        image_data: Float32Array;
     }
     type fitLigandInfo = {
         imol: number;
@@ -463,6 +462,7 @@ export namespace libcootApi {
         getNormalsFromSimpleMesh( arg0: any ): Float32Array;
         getReversedNormalsFromSimpleMesh( arg0: any ): Float32Array;
         getColoursFromSimpleMesh( arg0: any ): Float32Array;
+        getTextureArray( arg0: any, arg1: any ): void;
         getPositionsFromSimpleMesh2( arg0: any, arg1: any ): void;
         getNormalsFromSimpleMesh2( arg0: any, arg1: any ): void;
         getReversedNormalsFromSimpleMesh2( arg0: any, arg1: any ): void;
