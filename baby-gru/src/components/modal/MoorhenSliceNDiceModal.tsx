@@ -442,7 +442,7 @@ export const MoorhenSliceNDiceModal = (props: {
                     marks={true}
                     defaultValue={5}
                     step={1}
-                    min={2}
+                    min={1}
                     max={10}
                     sx={{
                         marginTop: '1.7rem',
