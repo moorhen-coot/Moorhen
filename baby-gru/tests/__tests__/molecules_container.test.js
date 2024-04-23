@@ -512,6 +512,73 @@ describe('Testing molecules_container_js', () => {
         expect(simpleMesh.triangles.size()).toBeGreaterThan(100)
     })
 
+    test.skip("Test import ligands with same name and animated refinement", () => {
+        const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
+        const coordMolNo_2 = molecules_container.read_pdb('./5fjj.pdb')
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
+
+        molecules_container.import_cif_dictionary('./benzene.cif', coordMolNo_1)
+        molecules_container.import_cif_dictionary('./nitrobenzene.cif', coordMolNo_2)
+
+        const coords = [0, 0, 0]
+        const tlc = 'LIG'
+        
+        const ligandMolNo_1 = molecules_container.get_monomer_and_position_at(tlc, coordMolNo_1, ...coords)
+        const merge_info_1 = molecules_container.merge_molecules(coordMolNo_1, ligandMolNo_1.toString())
+        expect(merge_info_1.second.size()).toBe(1)
+
+        const ligandMolNo_2 = molecules_container.get_monomer_and_position_at(tlc, coordMolNo_2, ...coords)
+        const merge_info_2 = molecules_container.merge_molecules(coordMolNo_2, ligandMolNo_2.toString())
+        expect(merge_info_2.second.size()).toBe(1)
+
+        const copyMolNo_1 = molecules_container.copy_fragment_for_refinement_using_cid(coordMolNo_1, '/1/C/1/*')
+        molecules_container.init_refinement_of_molecule_as_fragment_based_on_reference(copyMolNo_1, coordMolNo_1, mapMolNo)
+        molecules_container.copy_dictionary('LIG', coordMolNo_1, copyMolNo_1)
+        let result_1 = []
+        const refine_result_1 = molecules_container.refine(copyMolNo_1, 5000)
+        const instanced_mesh_1 = refine_result_1.second
+        const geom_vec_1 = instanced_mesh_1.geom
+        const geom_vec_1_size = geom_vec_1.size()
+        for (let i = 0; i < geom_vec_1_size; i++) {
+            const geom = geom_vec_1.get(i)
+            const inst_data_B_vec = geom.instancing_data_B
+            const inst_data_B_vec_size = inst_data_B_vec.size()
+            for (let j = 0; j < inst_data_B_vec_size; j++) {
+                const inst_data_B = inst_data_B_vec.get(j)
+                result_1.push(inst_data_B.size)
+            }
+            cleanUpVariables.push(geom, inst_data_B_vec)
+        }
+        molecules_container.clear_refinement(coordMolNo_1)
+
+        const copyMolNo_2 = molecules_container.copy_fragment_for_refinement_using_cid(coordMolNo_2, '/1/j/1/*')
+        molecules_container.init_refinement_of_molecule_as_fragment_based_on_reference(copyMolNo_2, coordMolNo_2, mapMolNo)
+        molecules_container.copy_dictionary('LIG', coordMolNo_2, copyMolNo_2)
+        let result_2 = []
+        const refine_result_2 = molecules_container.refine(copyMolNo_2, 5000)
+        const instanced_mesh_2 = refine_result_2.second
+        const geom_vec_2 = instanced_mesh_2.geom
+        const geom_vec_2_size = geom_vec_2.size()
+        for (let i = 0; i < geom_vec_2_size; i++) {
+            const geom = geom_vec_2.get(i)
+            const inst_data_B_vec = geom.instancing_data_B
+            const inst_data_B_vec_size = inst_data_B_vec.size()
+            for (let j = 0; j < inst_data_B_vec_size; j++) {
+                const inst_data_B = inst_data_B_vec.get(j)
+                result_2.push(inst_data_B.size)
+            }
+            cleanUpVariables.push(geom, inst_data_B_vec)
+        }
+        molecules_container.clear_refinement(coordMolNo_2)
+
+        expect(result_1).toHaveLength(15)
+        expect(result_2).toHaveLength(22)
+        expect(result_1.every(size => size <= 2.25)).toBeTruthy()
+        expect(result_2.every(size => size <= 2.25)).toBeTruthy()
+
+        cleanUpVariables.push(instanced_mesh_1, instanced_mesh_2, geom_vec_1, geom_vec_2)
+    })
+
     test("Test smiles_to_pdb", () => {
         const result_1 = molecules_container.smiles_to_pdb('c1ccccc1', 'LIG', 10, 100)
         const fileContents_1 = fs.readFileSync(path.join(__dirname, '..', 'test_data', 'benzene.cif'), { encoding: 'utf8', flag: 'r' })
