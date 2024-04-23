@@ -1,14 +1,12 @@
 diff --git a/coot-utils/slurp-map.cc b/coot-utils/slurp-map.cc
-index 2a322f38e..12f1d638a 100644
+index b57e1c037..f1dd0cd2c 100644
 --- a/coot-utils/slurp-map.cc
 +++ b/coot-utils/slurp-map.cc
-@@ -110,12 +110,14 @@ coot::util::slurp_fill_xmap_from_map_file(const std::string &file_name,
- 
-       bool is_gzip = false;
+@@ -112,10 +112,12 @@ coot::util::slurp_fill_xmap_from_map_file(const std::string &file_name,
        std::string ext = file_name_extension(file_name);
-+#if !((__POINTER_WIDTH__==64) && __EMSCRIPTEN__)
        if (ext == ".gz") is_gzip = true;
  
++#if !((__POINTER_WIDTH__==64) && __EMSCRIPTEN__)
        if (is_gzip) {
           // this can fail (at the moment) if the axes are not in X,Y,Z order
           status = slurp_fill_xmap_from_gz_map_file(file_name, xmap_p, check_only);
