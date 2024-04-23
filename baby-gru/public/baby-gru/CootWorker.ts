@@ -1055,10 +1055,7 @@ const doCootCommand = (messageData: {
                 cootResult = export_molecule_as_gltf(...commandArgs as [number, string, string, boolean, number, number, number, boolean, boolean])
                 break
             default:
-                const t1 = performance.now()
                 cootResult = molecules_container[command](...commandArgs)
-                const t2 = performance.now()
-                console.log("Time to do Coot command",t2-t1)
                 break
         }
 

@@ -35,6 +35,9 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                     <MenuItem onClick={() => doTest()}>
                         Do a test...
                     </MenuItem>
+                    <MenuItem onClick={tomogramTest}>
+                        Tomogram...
+                    </MenuItem>
                     <hr></hr>
                     <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
@@ -50,9 +53,5 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                             onChange={() => {dispatch( setDoOutline(!doOutline) )}}
                             label="Outlines"/>
                     </InputGroup>
-<MenuItem onClick={tomogramTest}>
-                        Tomogram...
-                    </MenuItem>
-
         </>
     }
