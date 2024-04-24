@@ -55,15 +55,12 @@ export const MoorhenTomogramManager = (props: {
             const singleStepPercent = 1 / stepPercent
             for (let i = 0; i < nFrames.data.result.result; i++) {
                 if (!framesRef.current[i]) {
-                    const t1 = performance.now()
                     const frame = await props.commandCentre.current.cootCommand({
                         returnType: "texture_as_floats_t",
                         command: "get_map_section_texture",
                         commandArgs: [mapMolNo, i, 2],
                     }, false) as moorhen.WorkerResponse<any>
                     framesRef.current[i] = frame.data.result.result
-                    const t2 = performance.now()
-                    console.log("Time to get section",t2-t1)
                 }
                 
                 if (i < initNFrames) {
