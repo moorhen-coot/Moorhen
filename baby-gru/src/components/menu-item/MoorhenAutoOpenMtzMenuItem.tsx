@@ -46,8 +46,9 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
             commandArgs: [mtzWrapper.reflectionData]
         }, true) as moorhen.WorkerResponse<libcootApi.AutoReadMtzInfoJS[]>
 
-        if (response.data.result.result.length === 0) {
+        if (response.data.result.status === "Exception" || response.data.result.result.length === 0) {
             dispatch(setNotificationContent(props.getWarningToast('Error reading mtz file')))
+            return
         }
 
         const isDiffMapResponses = await Promise.all(response.data.result.result.map(autoReadInfo => {
@@ -58,7 +59,7 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
             }, false) as Promise<moorhen.WorkerResponse<boolean>>
         }))
 
-        if (response.data.result.result.length === 0 || response.data.result.result.every(item => item.idx === -1)) {
+        if (response.data.result.status === "Exception" || response.data.result.result.length === 0 || response.data.result.result.every(item => item.idx === -1)) {
             dispatch(setNotificationContent(props.getWarningToast('Error reading mtz file')))
             return
         }
