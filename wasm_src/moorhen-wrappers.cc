@@ -1370,6 +1370,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("associate_data_mtz_file_with_map",&molecules_container_t::associate_data_mtz_file_with_map)
     .function("connect_updating_maps",&molecules_container_t::connect_updating_maps)
     .function("get_diff_diff_map_peaks", &molecules_container_t::get_diff_diff_map_peaks)
+    .function("export_molecular_represenation_as_gltf", &molecules_container_t::export_molecular_represenation_as_gltf)
     .function("export_model_molecule_as_gltf", &molecules_container_t::export_model_molecule_as_gltf)
     .function("export_map_molecule_as_gltf", &molecules_container_t::export_map_molecule_as_gltf)
     .function("residues_with_missing_atoms",&molecules_container_t::residues_with_missing_atoms)
