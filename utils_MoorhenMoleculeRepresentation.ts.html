@@ -578,7 +578,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         return originNeighboursBump.concat(originNeighboursHBond)
     }
 
-    async getCootRepresentationBuffers(style: string, cidSelection?: string): Promise&lt;libcootApi.InstancedMeshJS[]> {
+    getM2tParams(style: string, cidSelection: string) {
         let m2tStyle: string
         let m2tSelection: string
 
@@ -633,6 +633,15 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         if (this.parentMolecule.excludedSelections.length > 0) {
             m2tSelection = `{${m2tSelection} &amp; !{${this.parentMolecule.excludedSelections.join(' | ')}}}`
         }
+
+        return {
+            m2tStyle,
+            m2tSelection
+        }
+    }
+
+    async getCootRepresentationBuffers(style: string, cidSelection?: string): Promise&lt;libcootApi.InstancedMeshJS[]> {
+        const { m2tStyle, m2tSelection } = this.getM2tParams(style, cidSelection)
 
         const response = await this.commandCentre.current.cootCommand({
             returnType: "mesh",
@@ -989,24 +998,32 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
      * @returns {ArrayBuffer} - The contents of the gltf binary file
      */
     async exportAsGltf(): Promise&lt;ArrayBuffer> {
-        if (!['ligands', 'CBs', 'VdwSpheres', 'CAs'].includes(this.style)) {
-            console.warn(`Unable to export molecule representation of style ${this.style} as gltf`)
-            return
-        }
-        
         await this.applyColourRules()
-        const bondSettings = this.getBondSettings(this.style)
-        const state = this.parentMolecule.store.getState()
-        const drawMissingLoops = state.sceneSettings.drawMissingLoops
-        const drawHydrogens = false
 
-        const result = await this.commandCentre.current.cootCommand({
-            returnType: 'string',
-            command: 'shim_export_molecule_as_gltf',
-            commandArgs: [ this.parentMolecule.molNo, this.cid, ...bondSettings, drawHydrogens, drawMissingLoops ],
-        }, false) as moorhen.WorkerResponse&lt;ArrayBuffer>
-        
-        return result.data.result.result
+        let gltfData: ArrayBuffer
+        if (['ligands', 'CBs', 'VdwSpheres', 'CAs'].includes(this.style)) {
+            const bondSettings = this.getBondSettings(this.style)
+            const state = this.parentMolecule.store.getState()
+            const drawMissingLoops = state.sceneSettings.drawMissingLoops
+            const drawHydrogens = false
+            const result = await this.commandCentre.current.cootCommand({
+                returnType: 'string',
+                command: 'shim_export_molecule_as_gltf',
+                commandArgs: [ this.parentMolecule.molNo, this.cid, ...bondSettings, drawHydrogens, drawMissingLoops ],
+            }, false) as moorhen.WorkerResponse&lt;ArrayBuffer>
+            gltfData = result.data.result.result
+        } else if (['CRs', 'MolecularSurface', 'DishyBases', 'VdWSurface', 'Calpha'].includes(this.style)) {
+            const { m2tStyle, m2tSelection } = this.getM2tParams(this.style, this.cid)
+            const result = await this.commandCentre.current.cootCommand({
+                returnType: 'string',
+                command: 'shim_export_molecular_represenation_as_gltf',
+                commandArgs: [ this.parentMolecule.molNo, m2tSelection, "colorRampChainsScheme", m2tStyle ],
+            }, false) as moorhen.WorkerResponse&lt;ArrayBuffer>
+            gltfData = result.data.result.result
+        } else {
+            console.warn(`Unable to export molecule representation of style ${this.style} as gltf`)
+        }
+        return gltfData
     }
 }
 </code></pre>
