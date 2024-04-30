@@ -8,14 +8,6 @@ import { setIsShowingTomograms } from "../../store/generalStatesSlice"
 import { useDispatch, useSelector } from "react-redux"
 import { webGL } from "../../types/mgWebGL"
 
-const greyScaleColourRamp = [
-    [0.0, 0.0, 1.0, 1.0],
-    [1.0, 0.0, 0.0, 1.0],
-    [0.0, 1.0, 0.0, 1.0],
-    [1.0, 1.0, 0.0, 1.0],
-    [1.0, 1.0, 1.0, 1.0]
-]
-
 export const MoorhenTomogramManager = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -105,7 +97,6 @@ export const MoorhenTomogramManager = (props: {
         frameDataRef.current = frameData
         const obj = props.glRef.current.appendOtherData(frameData, true)
         const shape = obj[0].texturedShapes
-        shape.setColourRamp(greyScaleColourRamp, true)
         
         props.glRef.current.setOrigin(shape.getOrigin())
         props.glRef.current.setZoom(300, true)
