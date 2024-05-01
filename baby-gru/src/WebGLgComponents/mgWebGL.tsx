@@ -3138,15 +3138,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.depth_texture = true;
             const color_buffer_float_ext = this.gl.getExtension("EXT_color_buffer_float");
             if(!color_buffer_float_ext){
-                alert("No EXT_color_buffer_float!!!");
+                alert("No WebGL extension EXT_color_buffer_float! Some or all rendering may not work properly");
             } else {
                 console.log("color_buffer_float_ext?",color_buffer_float_ext)
-            }
-            const float_blend_ext = this.gl.getExtension("EXT_float_blend");
-            if(!float_blend_ext){
-                alert("No float_blend_ext!!!");
-            } else {
-                console.log("float_blend_ext?",float_blend_ext)
             }
         } else {
             this.ext = this.gl.getExtension("OES_element_index_uint");
@@ -3156,6 +3150,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             console.log("##################################################");
             console.log("Got extension");
             console.log(this.ext);
+            const color_buffer_float_ext = this.gl.getExtension("WEBGL_color_buffer_float");
+            if(!color_buffer_float_ext){
+                console.log("No WEBGL_color_buffer_float! Some or all rendering may not work properly");
+            } else {
+                console.log("color_buffer_float_ext?",color_buffer_float_ext)
+            }
             this.frag_depth_ext = this.gl.getExtension("EXT_frag_depth");
             this.depth_texture = this.gl.getExtension("WEBGL_depth_texture");
             this.instanced_ext = this.gl.getExtension("ANGLE_instanced_arrays");
