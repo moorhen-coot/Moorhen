@@ -196,7 +196,8 @@ declare module 'moorhen' {
         unhideAll(redraw?: boolean): Promise<void>;
         drawUnitCell(): void;
         gemmiAtomsForCid: (cid: string, omitExcludedCids?: boolean) => Promise<_moorhen.AtomInfo[]>;
-        mergeMolecules(otherMolecules: _moorhen.Molecule[], doHide?: boolean): Promise<void>;
+        mergeMolecules(otherMolecules: _moorhen.Molecule[], doHide?: boolean, doRedraw?: boolean): Promise<void>;
+        copyMolecule(doRedraw?: boolean): Promise<_moorhen.Molecule>;
         setBackgroundColour(backgroundColour: [number, number, number, number]): void;
         addDict(fileContent: string): Promise<void>;
         cacheLigandDict(fileContent: string): void;
