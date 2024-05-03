@@ -49,7 +49,7 @@ export const MoorhenCalculateTrajectoryMenuItem = (props: {
                 show: true
             }))
         } else {
-            console.warn(`Cannot fin molecule with imol ${moleculeSelectRef.current.value}`)
+            console.warn(`Cannot find molecule with imol ${moleculeSelectRef.current.value}`)
         }
     }, [molecules])
 

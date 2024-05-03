@@ -7,7 +7,7 @@ import { SaveOutlined, WarningOutlined } from "@mui/icons-material";
 import { Stack } from "react-bootstrap";
 import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { useSelector, useDispatch } from 'react-redux';
-import { setNotificationContent } from "../../store/generalStatesSlice";
+import { useSnackbar } from "notistack";
 
 export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
 
@@ -17,6 +17,8 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const maps = useSelector((state: moorhen.State) => state.maps)
+
+    const { enqueueSnackbar } = useSnackbar()
 
     const getWarningToast = (message: string) => <MoorhenNotification key={guid()} hideDelay={3000} width={20}>
             <><WarningOutlined style={{margin: 0}}/>
@@ -40,11 +42,11 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
                 dispatch
             )
             if (status === -1) {
-                dispatch(setNotificationContent(getWarningToast(`Failed to read backup (deprecated format)`)))
+                enqueueSnackbar('Failed to read backup (deprecated format)', {variant: 'warning'})
             }
         } catch (err) {
             console.log(err)
-            dispatch(setNotificationContent(getWarningToast("Error loading session")))
+            enqueueSnackbar("Error loading session", {variant: 'warning'})
         }
     }, [props])
 

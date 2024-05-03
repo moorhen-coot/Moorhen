@@ -1,14 +1,13 @@
 import { Stack } from "react-bootstrap"
 import { MoorhenNotification } from "../misc/MoorhenNotification"
-import { CheckOutlined, CloseOutlined, WarningOutlined } from "@mui/icons-material"
+import { CheckOutlined, CloseOutlined } from "@mui/icons-material"
 import { IconButton } from "@mui/material"
 import { useDispatch, useSelector } from "react-redux"
 import { moorhen } from "../../types/moorhen"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
 import { hideAcceptMatchingLigandPopUp } from "../../store/activePopUpsSlice"
 import { useCallback, useEffect, useRef } from "react"
-import { setNotificationContent } from "../../store/generalStatesSlice"
-import { guid } from "../../utils/MoorhenUtils"
+import { useSnackbar } from "notistack"
 
 export const MoorhenAcceptRejectMatchingLigand = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -19,6 +18,7 @@ export const MoorhenAcceptRejectMatchingLigand = (props: {
     const copyMovingMoleculeRef = useRef<moorhen.Molecule | null>(null)
 
     const dispatch = useDispatch()
+
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const refMolNo = useSelector((state: moorhen.State) => state.activePopUps.matchingLigandPopUp.refMolNo)
@@ -26,13 +26,7 @@ export const MoorhenAcceptRejectMatchingLigand = (props: {
     const refLigandCid = useSelector((state: moorhen.State) => state.activePopUps.matchingLigandPopUp.refLigandCid)
     const movingLigandCid = useSelector((state: moorhen.State) => state.activePopUps.matchingLigandPopUp.movingLigandCid)
 
-    const getWarningToast = (message: string) => <MoorhenNotification key={guid()} hideDelay={3000} width={20}>
-        <><WarningOutlined style={{margin: 0}}/>
-            <h4 className="moorhen-warning-toast">
-                {message}
-            </h4>
-        <WarningOutlined style={{margin: 0}}/></>
-    </MoorhenNotification>
+    const { enqueueSnackbar } = useSnackbar()
 
     const matchLigands = useCallback(async () => {
 
@@ -58,7 +52,7 @@ export const MoorhenAcceptRejectMatchingLigand = (props: {
         } else {
             await copyMovingMoleculeRef.current.delete(true)
             dispatch(hideAcceptMatchingLigandPopUp())
-            dispatch(setNotificationContent(getWarningToast(`Failed to match ligands`)))
+            enqueueSnackbar(`Failed to match ligands`, { variant: 'warning' })
         }
     }, [molecules, refMolNo, movingMolNo, refLigandCid, movingLigandCid])
 

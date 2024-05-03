@@ -7,12 +7,13 @@ import { getMultiColourRuleArgs, guid } from "../../utils/MoorhenUtils";
 import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch, batch } from 'react-redux';
-import { setActiveMap, setNotificationContent } from "../../store/generalStatesSlice";
+import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMolecule } from "../../store/moleculesSlice";
 import { addMap } from "../../store/mapsSlice";
 import { webGL } from "../../types/mgWebGL";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { useSnackbar } from "notistack";
 
 export const MoorhenFetchOnlineSourcesForm = (props: {
     monomerLibraryPath: string;
@@ -32,8 +33,11 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
     const [isValidPdbId, setIsValidPdbId] = useState<boolean>(true)
 
     const dispatch = useDispatch()
+
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
+
+    const { enqueueSnackbar } = useSnackbar()
 
     const { commandCentre, glRef, monomerLibraryPath, store } = props;
 
@@ -155,7 +159,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
             props.onMoleculeLoad(newMolecule)
             return newMolecule
         } catch (err) {
-            dispatch(setNotificationContent(getWarningToast(`Failed to read molecule`)))
+            enqueueSnackbar('Failed to read molecule', {variant: 'warning'})
             console.log(`Cannot fetch molecule from ${url}`)
             setIsValidPdbId(false)
             props.setBusy(false)
@@ -184,7 +188,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
             })
         } catch (err) {
             console.warn(err)
-            dispatch(setNotificationContent(getWarningToast(`Failed to read map`)))
+            enqueueSnackbar('Failed to read map', {variant: "warning"})
             console.log(`Cannot fetch map from ${url}`)
             props.setBusy(false)
         }
@@ -201,7 +205,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
                 dispatch(setActiveMap(newMap))
             })
         } catch {
-            dispatch(setNotificationContent(getWarningToast(`Failed to read mtz`)))
+            enqueueSnackbar('Failed to read mtz', {variant: 'warning'})
             console.log(`Cannot fetch mtz from ${url}`)
             props.setBusy(false)
         }

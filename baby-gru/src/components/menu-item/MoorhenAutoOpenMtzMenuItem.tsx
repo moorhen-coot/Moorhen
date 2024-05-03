@@ -7,19 +7,22 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL"
 import { libcootApi } from "../../types/libcoot"
 import { useDispatch } from 'react-redux';
-import { setActiveMap, setNotificationContent } from "../../store/generalStatesSlice"
+import { setActiveMap } from "../../store/generalStatesSlice"
 import { addMap } from "../../store/mapsSlice"
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore"
+import { useSnackbar } from "notistack"
 
 export const MoorhenAutoOpenMtzMenuItem = (props: {
     store: ToolkitStore;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    getWarningToast: (arg0: string) => JSX.Element;
 }) => {
 
     const filesRef = useRef<null | HTMLInputElement>(null)
+
+    const { enqueueSnackbar } = useSnackbar()
+
     const dispatch = useDispatch()
 
     const panelContent = <>
@@ -47,7 +50,7 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
         }, true) as moorhen.WorkerResponse<libcootApi.AutoReadMtzInfoJS[]>
 
         if (response.data.result.status === "Exception" || response.data.result.result.length === 0) {
-            dispatch(setNotificationContent(props.getWarningToast('Error reading mtz file')))
+            enqueueSnackbar('Error reading mtz file', {variant: 'warning'})
             return
         }
 
@@ -60,7 +63,7 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
         }))
 
         if (response.data.result.status === "Exception" || response.data.result.result.length === 0 || response.data.result.result.every(item => item.idx === -1)) {
-            dispatch(setNotificationContent(props.getWarningToast('Error reading mtz file')))
+            enqueueSnackbar('Error reading mtz file', {variant: 'warning'})
             return
         }
 

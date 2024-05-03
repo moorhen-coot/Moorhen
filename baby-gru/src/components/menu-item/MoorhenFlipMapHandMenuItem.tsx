@@ -17,7 +17,9 @@ export const MoorhenFlipMapHandMenuItem = (props: {
 }) => {
 
     const dispatch = useDispatch()
+
     const maps = useSelector((state: moorhen.State) => state.maps)
+    
     const selectRef = useRef<HTMLSelectElement>(null)
 
     const onCompleted = async () => {

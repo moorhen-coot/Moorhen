@@ -7,6 +7,7 @@ import { Button, Form, Stack } from "react-bootstrap";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { IconButton, Slider } from "@mui/material";
 import { AddCircleOutline, RemoveCircleOutline, RemoveCircleOutlined } from "@mui/icons-material";
+import { useSnackbar } from "notistack";
 
 export const MoorhenChangeChainIdMenuItem = (props) => {
 
@@ -24,6 +25,8 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
 
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
+
+    const { enqueueSnackbar } = useSnackbar()
 
     const handleModelChange = useCallback((evt: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedModel(parseInt(evt.target.value))
@@ -80,16 +83,19 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
 
     const changeChainId = useCallback(async () => {
         if (!moleculeSelectRef.current.value || !chainSelectRef.current.value || !newChainIdFormRef.current.value) {
+            enqueueSnackbar("Missing input", {variant: 'warning'})
             return
         }
 
         const molecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
         if (!molecule) {
+            enqueueSnackbar("Something went wrong", {variant: 'warning'})
             return
         }
 
         const sequence = molecule.sequences.find(sequence => sequence.chain === chainSelectRef.current.value)
         if (!sequence) {
+            enqueueSnackbar("Something went wrong", {variant: 'warning'})
             return
         }
         
@@ -108,9 +114,11 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
                 document.body.click()    
             } else {
                 setInvalidNewId(true)
+                enqueueSnackbar("Not a valid new chain ID", {variant: 'warning'})
             }
         } catch (err) {
             setInvalidNewId(true)
+            enqueueSnackbar("Something went wrong", {variant: 'warning'})
             console.warn(err)
         }
     }, [molecules])

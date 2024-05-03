@@ -6,16 +6,21 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { useSelector } from 'react-redux';
+import { useSnackbar } from "notistack";
 
 export const MoorhenGoToMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 
-    const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const cidRef = useRef<null | HTMLInputElement>(null)
+    const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
+    
     const [cid, setCid] = useState<string>("")
+    
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
+    
+    const { enqueueSnackbar } = useSnackbar()
 
     const panelContent = <>
         <MoorhenMoleculeSelect ref={moleculeSelectRef} molecules={molecules} width='20rem'/>
@@ -32,23 +37,26 @@ export const MoorhenGoToMenuItem = (props: {
         if (!selectedCid || !moleculeSelectRef.current.value) {
             return
         }
+
+        const molecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
+        if (!molecule) {
+            enqueueSnackbar("Not a valid molecule", {variant: "warning"})
+            return
+        }
         
         let residueSpec: moorhen.ResidueSpec
         try {
             residueSpec = cidToSpec(selectedCid)
+            if (!residueSpec.chain_id || !residueSpec.res_no) {
+                enqueueSnackbar("Unable to parse CID", {variant: "warning"})
+            } else {
+                molecule.centreOn(`/${residueSpec.mol_no ? residueSpec.mol_no : '*'}/${residueSpec.chain_id}/${residueSpec.res_no}-${residueSpec.res_no}/*`, true, true)
+            }
         } catch (err) {
             console.log(err)
-            console.log('Unable to parse CID')
+            enqueueSnackbar("Unable to parse CID", {variant: "warning"})
             return
         }
-
-        const molecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
-        
-        if (!residueSpec.chain_id || !residueSpec.res_no || !molecule) {
-            return
-        }
-
-        molecule.centreOn(`/${residueSpec.mol_no ? residueSpec.mol_no : '*'}/${residueSpec.chain_id}/${residueSpec.res_no}-${residueSpec.res_no}/*`, true, true)
     }
 
     return <MoorhenBaseMenuItem

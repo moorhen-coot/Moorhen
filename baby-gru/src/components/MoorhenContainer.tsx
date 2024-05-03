@@ -1,14 +1,13 @@
 import { useEffect, useCallback, useRef, useMemo } from 'react';
 import { Container, Col, Row, Spinner } from 'react-bootstrap';
 import { MoorhenWebMG } from './webMG/MoorhenWebMG';
-import { getTooltipShortcutLabel, createLocalStorageInstance, getAtomInfoLabel } from '../utils/MoorhenUtils';
+import { createLocalStorageInstance, getAtomInfoLabel } from '../utils/MoorhenUtils';
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre";
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
 import { Backdrop } from "@mui/material";
 import { babyGruKeyPress } from '../utils/MoorhenKeyboardAccelerators';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
-import { MoorhenNotification } from './misc/MoorhenNotification';
 import { MoorhenModalsContainer } from './misc/MoorhenModalsContainer';
 import { MoorhenPopUpContainer } from './toasts/MoorhenPopUpContainer';
 import { moorhen } from '../types/moorhen';
@@ -18,10 +17,12 @@ import { MoorhenLongJobNotification } from './toasts/MoorhenLongJobNotification'
 import { MoorhenResidueSelectionActions } from './misc/MoorhenResidueSelectionActions';
 import { useSelector, useDispatch } from 'react-redux';
 import { setDefaultBackgroundColor, setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/sceneSettingsSlice';
-import { setCootInitialized, setNotificationContent, setTheme, toggleCootCommandExit, toggleCootCommandStart } from '../store/generalStatesSlice';
+import { setCootInitialized, setTheme, toggleCootCommandExit, toggleCootCommandStart } from '../store/generalStatesSlice';
 import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSlice';
 import { setRefinementSelection } from '../store/refinementSettingsSlice';
+import { MoorhenSnackBar } from '../components/snack-bar/MoorhenSnackBar';
 import MoorhenReduxStore from '../store/MoorhenReduxStore';
+import { SnackbarProvider } from 'notistack';
 
 // import { MoorhenSharedSessionManager } from './misc/MoorhenSharedSessionManager';
 
@@ -193,19 +194,9 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                     command: 'set_map_sampling_rate',
                     commandArgs: [defaultMapSamplingRate],
                     returnType: 'status'
-                }, false)
-    
-                const shortCut = JSON.parse(shortCuts as string).show_shortcuts
-                dispatch(setNotificationContent(
-                    <MoorhenNotification key={'initial-notification'} hideDelay={5000} width={20}>
-                        <h4 style={{margin: 0}}>
-                            {`Press ${getTooltipShortcutLabel(shortCut)} to show help`}
-                        </h4>
-                    </MoorhenNotification>
-                ))
+                }, false)    
             }
         }
-        
         onCootInitialized()
 
     }, [cootInitialized, userPreferencesMounted])
@@ -398,7 +389,13 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         }
     }, [activeMap])
 
-    return <> 
+    return <SnackbarProvider 
+        hideIconVariant={false}
+        autoHideDuration={5000}
+        maxSnack={5}
+        anchorOrigin={{horizontal: 'right', vertical: 'bottom'}}
+        transitionDuration={ { enter: 500, exit: 300 }}
+        preventDuplicate={false}>
     <div>
         <Backdrop sx={{ color: '#fff', zIndex: (_theme) => _theme.zIndex.drawer + 1 }} open={!cootInitialized}>
             <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
@@ -416,6 +413,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange}/>
 
     <MoorhenResidueSelectionActions/>
+
+    <MoorhenSnackBar/>
 
     {/**
     <MoorhenSharedSessionManager
@@ -458,7 +457,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         {notificationContent}
         <MoorhenLongJobNotification commandCentre={props.commandCentre}/>
     </Container>
-    </>
+    </SnackbarProvider>
 }
 
 MoorhenContainer.defaultProps = {
