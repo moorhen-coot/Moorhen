@@ -1,12 +1,11 @@
 import { IconButton, Popover, Tooltip } from "@mui/material"
-import { atomInfoToResSpec, cidToSpec, guid } from "../../utils/MoorhenUtils"
-import { MoorhenNotification } from "./MoorhenNotification"
+import { cidToSpec } from "../../utils/MoorhenUtils"
 import { AdsClickOutlined, AllOutOutlined, CloseOutlined, CopyAllOutlined, CrisisAlertOutlined, DeleteOutlined, EditOutlined, FormatColorFillOutlined, Rotate90DegreesCw, SwapVertOutlined, SwipeRightAlt } from "@mui/icons-material"
 import { batch, useDispatch, useSelector } from "react-redux"
 import { moorhen } from "../../types/moorhen"
 import { Button, Stack } from "react-bootstrap"
-import { clearResidueSelection, setIsDraggingAtoms, setIsRotatingAtoms, setNotificationContent, setResidueSelection, setShowResidueSelection } from '../../store/generalStatesSlice';
-import { useCallback, useEffect, useRef, useState } from "react"
+import { clearResidueSelection, setIsDraggingAtoms, setIsRotatingAtoms, setNotificationContent, setResidueSelection } from '../../store/generalStatesSlice';
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react"
 import { addMolecule, removeMolecule } from "../../store/moleculesSlice"
 import { setHoveredAtom } from "../../store/hoveringStatesSlice"
 import { HexColorInput, HexColorPicker } from "react-colorful"
@@ -15,10 +14,10 @@ import { MoorhenAcceptRejectRotateTranslate } from "../toasts/MoorhenAcceptRejec
 import { MoorhenAcceptRejectDragAtoms } from "../toasts/MoorhenAcceptRejectDragAtoms"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule"
+import { SnackbarContent, useSnackbar } from "notistack"
 
-export const MoorhenResidueSelectionActions = (props) => {
+export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, {id: string}>((props, ref) => {
 
-    const notificationKeyRef = useRef<string>(guid())
     const notificationComponentRef = useRef()
     const changeColourAnchorRef = useRef()
     const cidAnchorRef = useRef()
@@ -32,23 +31,22 @@ export const MoorhenResidueSelectionActions = (props) => {
     const [selectedColour, setSelectedColour] = useState<string>('#808080')
 
     const dispatch = useDispatch()
-    const showResidueSelection = useSelector((state: moorhen.State) => state.generalStates.showResidueSelection)
+
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-    const isChangingRotamers = useSelector((state: moorhen.State) => state.generalStates.isChangingRotamers)
-    const isRotatingAtoms = useSelector((state: moorhen.State) => state.generalStates.isRotatingAtoms)
-    const isDraggingAtoms = useSelector((state: moorhen.State) => state.generalStates.isDraggingAtoms)
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
     const animateRefine = useSelector((state: moorhen.State) => state.refinementSettings.animateRefine)
 
+    const { closeSnackbar } = useSnackbar()
+
     const clearSelection = useCallback(() => {
-        dispatch( setShowResidueSelection(false) )
-        dispatch( setNotificationContent(null) )
         setCidFormValue(null)
         setShowCidEditForm(false)
         setShowColourPopover(false)
         setInvalidCid(false)
         molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
+        closeSnackbar(props.id)
     }, [molecules])
 
     useEffect(() => {
@@ -56,63 +54,6 @@ export const MoorhenResidueSelectionActions = (props) => {
             clearSelection()
         }
     }, [residueSelection, clearSelection])
-
-    const handleAtomClicked = useCallback(async (evt: moorhen.AtomClickedEvent) => {
-        if (!evt.detail.isResidueSelection || evt.detail.buffer.id == null || isDraggingAtoms || isRotatingAtoms || isChangingRotamers) {
-            return
-        } 
-
-        const selectedMolecule = molecules.find(molecule => molecule.buffersInclude(evt.detail.buffer))
-        if (!selectedMolecule) {
-            dispatch( clearResidueSelection() )
-            return
-        }
-        
-        if (residueSelection.first === null || residueSelection.molecule === null || residueSelection.molecule.molNo !== selectedMolecule.molNo) {
-            const resSpec = atomInfoToResSpec(evt.detail.atom)
-            await selectedMolecule.drawResidueSelection(`/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*`)
-            dispatch(
-                setResidueSelection({
-                    molecule: selectedMolecule,
-                    first: resSpec.cid,
-                    second: null,
-                    cid: null,
-                    isMultiCid: false,
-                    label: `/${resSpec.mol_no}/${resSpec.chain_id}/${resSpec.res_no}`
-                })
-            )
-            dispatch( setShowResidueSelection(true) )
-            return
-        }
-
-        const startResSpec = cidToSpec(residueSelection.first)
-        const stopResSpec = atomInfoToResSpec(evt.detail.atom)
-        if (startResSpec.chain_id !== stopResSpec.chain_id) {
-            dispatch( clearResidueSelection() )
-        } else {
-            const sortedResNums = [startResSpec.res_no, stopResSpec.res_no].sort(function(a, b){return a - b})
-            const cid = `/*/${startResSpec.chain_id}/${sortedResNums[0]}-${sortedResNums[1]}/*`
-            await selectedMolecule.drawResidueSelection(cid)
-            dispatch(
-                setResidueSelection({
-                    molecule: selectedMolecule,
-                    first: residueSelection.first,
-                    second: stopResSpec.cid,
-                    cid: cid,
-                    isMultiCid: false,
-                    label: `/${startResSpec.mol_no}/${startResSpec.chain_id}/${sortedResNums[0]}-${sortedResNums[1]}`
-                })
-            )
-            dispatch( setShowResidueSelection(true) )
-        }
-    }, [residueSelection, isRotatingAtoms, isChangingRotamers, isDraggingAtoms])
-
-    useEffect(() => {
-        document.addEventListener('atomClicked', handleAtomClicked)
-        return () => {
-            document.removeEventListener('atomClicked', handleAtomClicked)
-        }
-    }, [handleAtomClicked])
 
     const handleResidueCidChange =  useCallback(async () => {
         if(!cidFormValue) {
@@ -136,7 +77,6 @@ export const MoorhenResidueSelectionActions = (props) => {
             setCidFormValue(null)
             setShowCidEditForm(false)
             setInvalidCid(false)
-            dispatch( setShowResidueSelection(true) )
         } catch (err) {
             console.warn(err)
             console.warn('Error parsing the cid...')
@@ -418,8 +358,7 @@ export const MoorhenResidueSelectionActions = (props) => {
 
     }, [residueSelection])
 
-    return showResidueSelection ?
-        <MoorhenNotification key={notificationKeyRef.current} width={19}>
+    return <SnackbarContent ref={ref} className="moorhen-notification-div" style={{ backgroundColor: isDark ? 'grey' : 'white', color: isDark ? 'white' : 'grey', }}>
             <Tooltip className="moorhen-tooltip" title={tooltipContents} style={{zIndex: 99}}>
             <Stack ref={notificationComponentRef} direction="vertical" gap={1}>
                 <Stack gap={0} direction="horizontal" style={{ width: '100%', display: 'flex', justifyContent: 'space-between' }}>
@@ -486,7 +425,7 @@ export const MoorhenResidueSelectionActions = (props) => {
                 onClose={() => setShowColourPopover(false)}
                 sx={{
                     '& .MuiPaper-root': {
-                        overflowY: 'hidden', borderRadius: '8px'
+                        overflowY: 'hidden', borderRadius: '8px', marginTop: '1rem'
                     }
                 }}>
                 <Stack gap={3} direction='horizontal'>
@@ -512,7 +451,7 @@ export const MoorhenResidueSelectionActions = (props) => {
                 }}
                 sx={{
                     '& .MuiPaper-root': {
-                        overflowY: 'hidden', borderRadius: '8px'
+                        overflowY: 'hidden', borderRadius: '8px', marginTop: '1rem'
                     }
                 }}>
                 <Stack gap={3} direction='horizontal'>
@@ -524,6 +463,5 @@ export const MoorhenResidueSelectionActions = (props) => {
             </Popover>
             </Stack>
             </Tooltip>
-        </MoorhenNotification>
-    : null
-}
+        </SnackbarContent>
+})

@@ -5,6 +5,8 @@ import { MoorhenMap } from "./MoorhenMap";
 import { addMolecule } from "../store/moleculesSlice";
 import { addMap } from "../store/mapsSlice";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { MoorhenColourRule } from "./MoorhenColourRule";
+import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation";
 
 interface MoorhenScriptApiInterface {
     molecules: moorhen.Molecule[];
@@ -106,6 +108,8 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
             commandCentre: this.commandCentre,
             MoorhenMolecule: MoorhenMolecule,
             MoorhenMap: MoorhenMap,
+            MoorhenColourRule: MoorhenColourRule,
+            MoorhenMoleculeRepresentation: MoorhenMoleculeRepresentation,
             dispatch: (arg) => this.store.dispatch( arg ),
             addMolecule: addMolecule,
             addMap: addMap, 

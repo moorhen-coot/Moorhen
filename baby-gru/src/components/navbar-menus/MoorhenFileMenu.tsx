@@ -1,4 +1,4 @@
-import { Form, Stack } from "react-bootstrap";
+import { Form } from "react-bootstrap";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { useState, useCallback } from "react";
 import { MoorhenFetchOnlineSourcesForm } from "../form/MoorhenFetchOnlineSourcesForm"
@@ -10,15 +10,12 @@ import { MoorhenImportFSigFMenuItem } from "../menu-item/MoorhenImportFSigFMenuI
 import { MoorhenBackupsMenuItem } from "../menu-item/MoorhenBackupsMenuItem"
 import { MoorhenImportMapCoefficientsMenuItem } from "../menu-item/MoorhenImportMapCoefficientsMenuItem"
 import { MoorhenDeleteEverythingMenuItem } from "../menu-item/MoorhenDeleteEverythingMenuItem"
-import { IconButton, MenuItem } from "@mui/material";
-import { RadioButtonCheckedOutlined, StopCircleOutlined } from "@mui/icons-material";
+import { MenuItem } from "@mui/material";
 import { convertViewtoPx, doDownload, loadSessionFromProtoMessage, guid, readDataFile, loadSessionFromJsonString } from "../../utils/MoorhenUtils";
 import { getBackupLabel } from "../../utils/MoorhenTimeCapsule"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
-import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch } from 'react-redux';
-import { setNotificationContent } from "../../store/generalStatesSlice";
 import { addMoleculeList } from "../../store/moleculesSlice";
 import { setShowQuerySequenceModal } from "../../store/activeModalsSlice";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
@@ -186,24 +183,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         } else {
             document.body.click()
             props.videoRecorderRef.current.startRecording()
-            dispatch(
-                setNotificationContent(
-                    <MoorhenNotification key={guid()} width={13}>
-                        <Stack gap={2} direction='horizontal' style={{width: '100%', display:'flex', justifyContent: 'space-between'}}>
-                            <div style={{alignItems: 'center', display: 'flex', justifyContent: 'center'}}>
-                                <RadioButtonCheckedOutlined style={{color: 'red', borderRadius: '30px', borderWidth: 0, borderStyle: 'hidden'}} className="moorhen-recording-icon"/>
-                                <span>Recording</span>
-                            </div>
-                            <IconButton onClick={() => {
-                                props.videoRecorderRef.current.stopRecording()
-                                dispatch( setNotificationContent(null) )
-                            }}>
-                                <StopCircleOutlined/>
-                            </IconButton>
-                        </Stack>
-                    </MoorhenNotification>   
-                )
-            )
+            enqueueSnackbar("screen-recoder", {variant: "screenRecorder", videoRecorderRef: props.videoRecorderRef, persist: true})
         }
     }, [props.videoRecorderRef])
 

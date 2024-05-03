@@ -1,20 +1,21 @@
 import { List, ListItem } from "@mui/material"
-import { cidToSpec, getCentreAtom, guid } from "./MoorhenUtils"
+import { cidToSpec, getCentreAtom, guid } from "./MoorhenUtils.js"
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4.js';
-import { getDeviceScale } from '../WebGLgComponents/mgWebGL';
-import { vec3Create } from '../WebGLgComponents/mgMaths';
-import { moorhen } from "../types/moorhen";
-import { webGL } from "../types/mgWebGL";
-import { MoorhenNotification } from "../components/misc/MoorhenNotification";
+import { getDeviceScale } from '../WebGLgComponents/mgWebGL.js';
+import { vec3Create } from '../WebGLgComponents/mgMaths.js';
+import { moorhen } from "../types/moorhen.js";
+import { webGL } from "../types/mgWebGL.js";
+import { MoorhenNotification } from "../components/misc/MoorhenNotification.js";
 import { Dispatch } from "react";
 import { AnyAction } from "@reduxjs/toolkit";
-import { setNotificationContent } from "../store/generalStatesSlice";
-import { setHoveredAtom } from "../store/hoveringStatesSlice";
-import { changeMapRadius } from "../store/mapContourSettingsSlice";
-import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
-import { showGoToResiduePopUp } from "../store/activePopUpsSlice";
+import { setNotificationContent } from "../store/generalStatesSlice.js";
+import { setHoveredAtom } from "../store/hoveringStatesSlice.js";
+import { changeMapRadius } from "../store/mapContourSettingsSlice.js";
+import { triggerUpdate } from "../store/moleculeMapUpdateSlice.js";
+import { showGoToResiduePopUp } from "../store/activePopUpsSlice.js";
+import { EnqueueSnackbar } from "notistack";
 
 const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, dispatch: Dispatch<AnyAction>) => {
     molecule.setAtomsDirty(true)
@@ -23,19 +24,17 @@ const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWe
     dispatch( triggerUpdate(molecule.molNo) )
 }
 
-export const babyGruKeyPress = (
+export const moorhenKeyPress = (
     event: KeyboardEvent, 
     collectedProps: {
-        isDark: boolean;
-        dispatch: Dispatch<AnyAction>
+        dispatch: Dispatch<AnyAction>;
+        enqueueSnackbar: EnqueueSnackbar;
         hoveredAtom: moorhen.HoveredAtom;
         commandCentre: React.RefObject<moorhen.CommandCentre>;
         activeMap: moorhen.Map;
         molecules: moorhen.Molecule[];
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
         glRef: React.RefObject<webGL.MGWebGL>;
         viewOnly: boolean;
-        windowWidth: number;
         videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;
     }, 
     shortCuts: {[key: string]: moorhen.Shortcut}, 
@@ -44,8 +43,8 @@ export const babyGruKeyPress = (
 ): boolean | Promise<boolean> => {
     
     const { 
-        hoveredAtom, commandCentre, activeMap, glRef, molecules, dispatch,
-        timeCapsuleRef, viewOnly, videoRecorderRef, isDark, windowWidth
+        hoveredAtom, commandCentre, activeMap, glRef, molecules, 
+        viewOnly, videoRecorderRef, enqueueSnackbar, dispatch
     } = collectedProps;
 
     const doShortCut = async (cootCommand: string, formatArgs: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec) => any[]): Promise<boolean> => {
@@ -260,7 +259,12 @@ export const babyGruKeyPress = (
     }
 
     else if (action === 'go_to_residue' && molecules.length > 0) {
-        dispatch(showGoToResiduePopUp())
+        enqueueSnackbar("go-to-residue", {
+            variant: "goToResidue",
+            persist: true,
+            glRef: glRef,
+            commandCentre: commandCentre,
+        })
     }
 
     else if (action === 'go_to_blob' && activeMap && !viewOnly) {

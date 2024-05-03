@@ -5,7 +5,6 @@ import { createLocalStorageInstance, getAtomInfoLabel } from '../utils/MoorhenUt
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre";
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
 import { Backdrop } from "@mui/material";
-import { babyGruKeyPress } from '../utils/MoorhenKeyboardAccelerators';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
 import { MoorhenModalsContainer } from './misc/MoorhenModalsContainer';
@@ -14,16 +13,32 @@ import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
 import { MoorhenPreferencesContainer } from './misc/MoorhenPreferencesContainer';
 import { MoorhenLongJobNotification } from './toasts/MoorhenLongJobNotification';
-import { MoorhenResidueSelectionActions } from './misc/MoorhenResidueSelectionActions';
 import { useSelector, useDispatch } from 'react-redux';
 import { setDefaultBackgroundColor, setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/sceneSettingsSlice';
 import { setCootInitialized, setTheme, toggleCootCommandExit, toggleCootCommandStart } from '../store/generalStatesSlice';
 import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSlice';
 import { setRefinementSelection } from '../store/refinementSettingsSlice';
-import { MoorhenSnackBar } from '../components/snack-bar/MoorhenSnackBar';
+import { MoorhenSnackBarManager } from '../components/snack-bar/MoorhenSnackBarManager';
 import MoorhenReduxStore from '../store/MoorhenReduxStore';
 import { SnackbarProvider } from 'notistack';
+import { MoorhenGoToResidueSnackbar } from './snack-bar/MoorhenGoToResidueSnackbar';
+import { MoorhenRecordingSnackBar } from './snack-bar/MoorhenRecordingSnackBar'
+import { MoorhenResidueSelectionSnackBar } from './snack-bar/MoorhenResidueSelectionSnackBar';
 
+declare module "notistack" {
+    interface VariantOverrides {
+        goToResidue: {
+            glRef: React.RefObject<webGL.MGWebGL>;
+            commandCentre: React.RefObject<moorhen.CommandCentre>;
+
+        };
+        screenRecorder: {
+            videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;
+        };
+        residueSelection: true;
+    }
+}
+  
 // import { MoorhenSharedSessionManager } from './misc/MoorhenSharedSessionManager';
 
 /**
@@ -97,18 +112,12 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const notificationContent = useSelector((state: moorhen.State) => state.generalStates.notificationContent)
     const userPreferencesMounted = useSelector((state: moorhen.State) => state.generalStates.userPreferencesMounted)
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops)
-    const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
-    const shortcutOnHoveredAtom = useSelector((state: moorhen.State) => state.shortcutSettings.shortcutOnHoveredAtom)
-    const showShortcutToast = useSelector((state: moorhen.State) => state.shortcutSettings.showShortcutToast)
     const defaultMapSamplingRate = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapSamplingRate)
     const defaultBackgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.defaultBackgroundColor)
     const makeBackups = useSelector((state: moorhen.State) => state.backupSettings.makeBackups)
     const maxBackupCount = useSelector((state: moorhen.State) => state.backupSettings.maxBackupCount)
     const modificationCountBackupThreshold = useSelector((state: moorhen.State) => state.backupSettings.modificationCountBackupThreshold)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
-    const isChangingRotamers = useSelector((state: moorhen.State) => state.generalStates.isChangingRotamers)
-    const isRotatingAtoms = useSelector((state: moorhen.State) => state.generalStates.isRotatingAtoms)
-    const isDraggingAtoms = useSelector((state: moorhen.State) => state.generalStates.isDraggingAtoms)
 
     const innerStatesMap: moorhen.ContainerRefs = {
         glRef: innerGlRef, timeCapsuleRef: innerTimeCapsuleRef, commandCentre: innnerCommandCentre,
@@ -194,7 +203,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                     command: 'set_map_sampling_rate',
                     commandArgs: [defaultMapSamplingRate],
                     returnType: 'status'
-                }, false)    
+                }, false)
             }
         }
         onCootInitialized()
@@ -330,28 +339,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         }
     }, [molecules])
 
-    //Make this so that the keyPress returns true or false, depending on whether mgWebGL is to continue processing event
-    const onKeyPress = useCallback((event: KeyboardEvent) => {
-        if (isChangingRotamers || isRotatingAtoms || isDraggingAtoms) {
-            return false
-        }
-        return babyGruKeyPress(
-            event,
-            {
-                ...collectedProps,
-                molecules,
-                isDark,
-                windowWidth: width,
-                activeMap,
-                hoveredAtom,
-                dispatch
-            },
-            JSON.parse(shortCuts as string),
-            showShortcutToast,
-            shortcutOnHoveredAtom
-        )
-    }, [molecules, activeMap, hoveredAtom, viewOnly, shortCuts, showShortcutToast, shortcutOnHoveredAtom, width, isDark, isChangingRotamers, isRotatingAtoms, isDraggingAtoms])
-
     useEffect(() => {
         if (hoveredAtom && hoveredAtom.molecule && hoveredAtom.cid) {
             if (lastHoveredAtomRef.current == null ||
@@ -393,9 +380,14 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         hideIconVariant={false}
         autoHideDuration={5000}
         maxSnack={5}
-        anchorOrigin={{horizontal: 'right', vertical: 'bottom'}}
+        anchorOrigin={{horizontal: 'center', vertical: 'top'}}
         transitionDuration={ { enter: 500, exit: 300 }}
-        preventDuplicate={false}>
+        Components={{
+            goToResidue: MoorhenGoToResidueSnackbar,
+            screenRecorder: MoorhenRecordingSnackBar,
+            residueSelection: MoorhenResidueSelectionSnackBar
+        }}
+        preventDuplicate={true}>
     <div>
         <Backdrop sx={{ color: '#fff', zIndex: (_theme) => _theme.zIndex.drawer + 1 }} open={!cootInitialized}>
             <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
@@ -412,9 +404,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange}/>
 
-    <MoorhenResidueSelectionActions/>
-
-    <MoorhenSnackBar/>
+    <MoorhenSnackBarManager {...collectedProps}/>
 
     {/**
     <MoorhenSharedSessionManager
@@ -446,7 +436,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                         timeCapsuleRef={timeCapsuleRef}
                         commandCentre={commandCentre}
                         onAtomHovered={onAtomHovered}
-                        onKeyPress={onKeyPress}
                         urlPrefix={urlPrefix}
                         viewOnly={viewOnly}
                         videoRecorderRef={videoRecorderRef}

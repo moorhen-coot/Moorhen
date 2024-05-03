@@ -6,7 +6,9 @@ import { MoorhenScreenRecorder } from "../../utils/MoorhenScreenRecorder"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { libcootApi } from '../../types/libcoot';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
+import { useSnackbar } from 'notistack';
 
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
@@ -15,7 +17,6 @@ interface MoorhenWebMGPropsInterface {
     viewOnly: boolean;
     urlPrefix: string;
     onAtomHovered: (identifier: { buffer: { id: string; }; atom: moorhen.AtomInfo; }) => void;
-    onKeyPress: (event: KeyboardEvent) =>  boolean | Promise<boolean>;
     videoRecorderRef: React.MutableRefObject<null | moorhen.ScreenRecorder>;
 }
 
@@ -34,6 +35,10 @@ const actionButtonSettingsReducer = (defaultSettings: moorhen.actionButtonSettin
 }
 
 export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface>((props, glRef) => {
+    const dispatch = useDispatch()
+
+    const { enqueueSnackbar } = useSnackbar()
+
     const hBondsDirty = useRef<boolean>(false)
     const busyDrawingHBonds = useRef<boolean>(false)
 
@@ -79,11 +84,14 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const mouseSensitivity = useSelector((state: moorhen.State) => state.mouseSettings.mouseSensitivity)
     const zoomWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.zoomWheelSensitivityFactor)
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
+    const shortcutOnHoveredAtom = useSelector((state: moorhen.State) => state.shortcutSettings.shortcutOnHoveredAtom)
+    const showShortcutToast = useSelector((state: moorhen.State) => state.shortcutSettings.showShortcutToast)
     const mapLineWidth = useSelector((state: moorhen.State) => state.mapContourSettings.mapLineWidth)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
+    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
@@ -421,11 +429,35 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }
     }, [mapLineWidth])
 
+
+    //Make this so that the keyPress returns true or false, depending on whether mgWebGL is to continue processing event
+    const onKeyPress = useCallback((event: KeyboardEvent) => {
+        if (isChangingRotamers || isRotatingAtoms || isDraggingAtoms) {
+            return false
+        }
+        return moorhenKeyPress(
+            event,
+            {
+                molecules,
+                activeMap,
+                hoveredAtom,
+                dispatch,
+                enqueueSnackbar,
+                glRef: glRef as React.RefObject<webGL.MGWebGL>,
+                ...props
+            },
+            JSON.parse(shortCuts as string),
+            showShortcutToast,
+            shortcutOnHoveredAtom
+        )
+    }, [molecules, activeMap, hoveredAtom, props.viewOnly, shortCuts, showShortcutToast, shortcutOnHoveredAtom, isChangingRotamers, isRotatingAtoms, isDraggingAtoms])
+
+
     return  <>
                 <MGWebGL
                     ref={glRef}
                     onAtomHovered={(enableAtomHovering && !isRotatingAtoms && !isDraggingAtoms && !isChangingRotamers) ? props.onAtomHovered : null}
-                    onKeyPress={props.onKeyPress}
+                    onKeyPress={onKeyPress}
                     messageChanged={(d) => { }}
                     mouseSensitivityFactor={mouseSensitivity}
                     zoomWheelSensitivityFactor={zoomWheelSensitivityFactor}
