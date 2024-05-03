@@ -250,7 +250,6 @@ declare module 'moorhen' {
         redrawAdaptativeBonds(selectionString?: string, maxDist?: number): Promise<void>;
         setDrawAdaptativeBonds(newValue: boolean): Promise<void>;
         getActiveAtom(): Promise<string>;
-        autoReadMtz: (source: File, commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: any) => Promise<_moorhen.Map[]>;
         adaptativeBondsEnabled: boolean;
         cachedLigandSVGs: {[key: string]: string};
         cachedGemmiAtoms: _moorhen.AtomInfo[];
@@ -339,6 +338,7 @@ declare module 'moorhen' {
         setActive(): Promise<void>;
         setupContourBuffers(objects: any[], keepCootColours?: boolean): void;
         setOtherMapForColouring(molNo: number, min?: number, max?: number): void;
+        autoReadMtz: (source: File, commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: any) => Promise<_moorhen.Map[]>;
         store: any;
         isEM: boolean;
         suggestedContourLevel: number;
