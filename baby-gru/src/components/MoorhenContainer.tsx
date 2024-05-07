@@ -12,7 +12,6 @@ import { MoorhenPopUpContainer } from './toasts/MoorhenPopUpContainer';
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
 import { MoorhenPreferencesContainer } from './misc/MoorhenPreferencesContainer';
-import { MoorhenLongJobNotification } from './toasts/MoorhenLongJobNotification';
 import { useSelector, useDispatch } from 'react-redux';
 import { setDefaultBackgroundColor, setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/sceneSettingsSlice';
 import { setCootInitialized, setTheme, toggleCootCommandExit, toggleCootCommandStart } from '../store/generalStatesSlice';
@@ -27,6 +26,7 @@ import { MoorhenResidueSelectionSnackBar } from './snack-bar/MoorhenResidueSelec
 import { MoorhenAcceptRejectDragAtomsSnackBar } from './snack-bar/MoorhenAcceptRejectDragAtomsSnackBar';
 import { MoorhenAcceptRejectRotateTranslateSnackBar } from './snack-bar/MoorhenAcceptRejectRotateTranslateSnackBar';
 import { MoorhenAcceptRejectMatchingLigandSnackBar } from './snack-bar/MoorhenAcceptRejectMatchingLigandSnackBar';
+import { MoorhenLongJobSnackBar } from './snack-bar/MoorhenLongJobSnackBar';
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -57,7 +57,8 @@ declare module "notistack" {
             refLigandCid: string;
             movingLigandCid: string;
             commandCentre: React.RefObject<moorhen.CommandCentre>;
-        }
+        };
+        longJobNotification: true;
     }
 }
   
@@ -411,6 +412,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             acceptRejectDraggingAtoms: MoorhenAcceptRejectDragAtomsSnackBar,
             acceptRejectRotateTranslateAtoms: MoorhenAcceptRejectRotateTranslateSnackBar,
             acceptRejectMatchingLigand: MoorhenAcceptRejectMatchingLigandSnackBar,
+            longJobNotification: MoorhenLongJobSnackBar,
         }}
         preventDuplicate={true}>
     <div>
@@ -469,7 +471,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             </Col>
         </Row>
         {notificationContent}
-        <MoorhenLongJobNotification commandCentre={props.commandCentre}/>
     </Container>
     </SnackbarProvider>
 }

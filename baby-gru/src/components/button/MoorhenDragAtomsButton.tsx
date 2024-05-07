@@ -75,7 +75,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
         props.setShowOverlay(false)
         props.setOpacity(1)
         props.setShowContextMenu(false)
-        enqueueSnackbar("", {
+        enqueueSnackbar("accept-reject-drag-atoms", {
             variant: "acceptRejectDraggingAtoms",
             persist: true,
             monomerLibraryPath: props.monomerLibraryPath,

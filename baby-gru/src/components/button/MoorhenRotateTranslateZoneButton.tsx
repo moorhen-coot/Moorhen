@@ -55,7 +55,7 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.ContextButtonPro
             dispatch(setHoveredAtom({ molecule: null, cid: null }))
             dispatch(setIsRotatingAtoms(true))
         })
-        enqueueSnackbar("", {
+        enqueueSnackbar("accept-reject-translate", {
             variant: "acceptRejectRotateTranslateAtoms",
             persist: true,
             cidRef: fragmentCid,

@@ -55,14 +55,14 @@ export const MoorhenMatchLigandsMenuItem = (props: {
 
         document.body.click()
         
-        enqueueSnackbar("", {
+        enqueueSnackbar("accept-reject-matching-ligand", {
             variant: "acceptRejectMatchingLigand",
             persist: true,
             movingLigandCid: movingLigandSelectRef.current.value,
             refLigandCid: refLigandSelectRef.current.value,
             movingMolNo: movingMolecule.molNo,
             refMolNo: referenceMolecule.molNo,
-            commandCentre: props.commandCentre
+            commandCentre: props.commandCentre,
         })
 
     }, [molecules])
