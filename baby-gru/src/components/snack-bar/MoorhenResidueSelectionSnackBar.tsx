@@ -10,7 +10,6 @@ import { addMolecule, removeMolecule } from "../../store/moleculesSlice"
 import { setHoveredAtom } from "../../store/hoveringStatesSlice"
 import { HexColorInput, HexColorPicker } from "react-colorful"
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm"
-import { MoorhenAcceptRejectRotateTranslate } from "../toasts/MoorhenAcceptRejectRotateTranslate"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule"
 import { SnackbarContent, enqueueSnackbar, useSnackbar } from "notistack"
@@ -307,22 +306,18 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, {id: s
         }
 
         if (cid) {
-            const onExit = () => {
-                dispatch( setNotificationContent(null) )
-                dispatch( clearResidueSelection() )
-            }
             batch(() => {
                 molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
-                dispatch( clearResidueSelection() )
                 dispatch( setHoveredAtom({ molecule: null, cid: null }) )
                 dispatch( setIsRotatingAtoms(true) )
-                dispatch( setNotificationContent(
-                    <MoorhenAcceptRejectRotateTranslate
-                        onExit={onExit}
-                        cidRef={{current: cid}}
-                        glRef={residueSelection.molecule.glRef}
-                        moleculeRef={{current: residueSelection.molecule}}/>)
-                )
+                enqueueSnackbar("", {
+                    variant: 'acceptRejectRotateTranslateAtoms',
+                    persist: true,
+                    cidRef: {current: cid},
+                    glRef: residueSelection.molecule.glRef,
+                    moleculeRef: {current: residueSelection.molecule},
+                    onClose: () => residueSelection.molecule.drawResidueSelection(cid),
+                })
             })
         }
 
@@ -347,7 +342,7 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, {id: s
                 dispatch( setIsDraggingAtoms(true) )
                 enqueueSnackbar("", {
                     onClose: () => residueSelection.molecule.drawResidueSelection(cid.join('||')),
-                    variant: "acceptRejectAtoms",
+                    variant: "acceptRejectDraggingAtoms",
                     persist: true,
                     commandCentre: residueSelection.molecule.commandCentre,
                     monomerLibraryPath: residueSelection.molecule.monomerLibraryPath,

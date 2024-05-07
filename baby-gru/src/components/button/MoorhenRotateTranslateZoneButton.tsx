@@ -1,10 +1,10 @@
 import { useRef } from "react";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
-import { MoorhenAcceptRejectRotateTranslate } from '../toasts/MoorhenAcceptRejectRotateTranslate';
 import { useDispatch, batch } from 'react-redux';
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { setIsRotatingAtoms } from "../../store/generalStatesSlice";
+import { useSnackbar } from "notistack";
 
 export const MoorhenRotateTranslateZoneButton = (props: moorhen.ContextButtonProps) => {
 
@@ -14,15 +14,9 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.ContextButtonPro
 
     const dispatch = useDispatch()
 
+    const { enqueueSnackbar } = useSnackbar()
+
     const rotateTranslateModes = ['ATOM', 'RESIDUE', 'CHAIN', 'MOLECULE']
-
-    const onExit = () => {
-        props.setOverrideMenuContents(false)
-        props.setOpacity(1)
-        props.setShowContextMenu(false)
-    }
-
-    const contextMenuOverride = <MoorhenAcceptRejectRotateTranslate onExit={onExit} cidRef={fragmentCid} glRef={props.glRef} moleculeRef={chosenMolecule}/>
 
     const nonCootCommand = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string) => {
         chosenMolecule.current = molecule
@@ -54,10 +48,19 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.ContextButtonPro
             return
         }
         props.setShowOverlay(false)
-        props.setOverrideMenuContents(contextMenuOverride)
+        props.setOverrideMenuContents(false)
+        props.setOpacity(1)
+        props.setShowContextMenu(false)
         batch(() => {
             dispatch(setHoveredAtom({ molecule: null, cid: null }))
             dispatch(setIsRotatingAtoms(true))
+        })
+        enqueueSnackbar("", {
+            variant: "acceptRejectRotateTranslateAtoms",
+            persist: true,
+            cidRef: fragmentCid,
+            glRef: props.glRef,
+            moleculeRef: chosenMolecule
         })
     }
 

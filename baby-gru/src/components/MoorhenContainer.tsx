@@ -25,6 +25,7 @@ import { MoorhenGoToResidueSnackbar } from './snack-bar/MoorhenGoToResidueSnackb
 import { MoorhenRecordingSnackBar } from './snack-bar/MoorhenRecordingSnackBar'
 import { MoorhenResidueSelectionSnackBar } from './snack-bar/MoorhenResidueSelectionSnackBar';
 import { MoorhenAcceptRejectDragAtomsSnackBar } from './snack-bar/MoorhenAcceptRejectDragAtomsSnackBar';
+import { MoorhenAcceptRejectRotateTranslateSnackBar } from './snack-bar/MoorhenAcceptRejectRotateTranslateSnackBar';
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -37,12 +38,17 @@ declare module "notistack" {
             videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;
         };
         residueSelection: true;
-        acceptRejectAtoms: {
+        acceptRejectDraggingAtoms: {
             commandCentre: React.RefObject<moorhen.CommandCentre>;
             moleculeRef: React.RefObject<moorhen.Molecule>;
             cidRef: React.RefObject<string[]>;
             glRef: React.RefObject<webGL.MGWebGL>;
             monomerLibraryPath: string;
+        },
+        acceptRejectRotateTranslateAtoms: {
+            moleculeRef: React.RefObject<moorhen.Molecule>;
+            cidRef: React.RefObject<string>;
+            glRef: React.RefObject<webGL.MGWebGL>;    
         }
     }
 }
@@ -394,7 +400,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             goToResidue: MoorhenGoToResidueSnackbar,
             screenRecorder: MoorhenRecordingSnackBar,
             residueSelection: MoorhenResidueSelectionSnackBar,
-            acceptRejectAtoms: MoorhenAcceptRejectDragAtomsSnackBar,
+            acceptRejectDraggingAtoms: MoorhenAcceptRejectDragAtomsSnackBar,
+            acceptRejectRotateTranslateAtoms: MoorhenAcceptRejectRotateTranslateSnackBar,
         }}
         preventDuplicate={true}>
     <div>
