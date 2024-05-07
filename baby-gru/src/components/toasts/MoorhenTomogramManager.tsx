@@ -8,14 +8,6 @@ import { setIsShowingTomograms } from "../../store/generalStatesSlice"
 import { useDispatch, useSelector } from "react-redux"
 import { webGL } from "../../types/mgWebGL"
 
-const greyScaleColourRamp = [
-    [0.0, 0.0, 1.0, 1.0],
-    [1.0, 0.0, 0.0, 1.0],
-    [0.0, 1.0, 0.0, 1.0],
-    [1.0, 1.0, 0.0, 1.0],
-    [1.0, 1.0, 1.0, 1.0]
-]
-
 export const MoorhenTomogramManager = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -44,7 +36,7 @@ export const MoorhenTomogramManager = (props: {
             const nFrames = await props.commandCentre.current.cootCommand({
                 returnType: "number",
                 command: 'get_number_of_map_sections',
-                commandArgs: [mapMolNo, 0],
+                commandArgs: [mapMolNo, 2],
             }, false) as moorhen.WorkerResponse<number>
             
             framesRef.current = Array(nFrames.data.result.result)
@@ -58,7 +50,7 @@ export const MoorhenTomogramManager = (props: {
                     const frame = await props.commandCentre.current.cootCommand({
                         returnType: "texture_as_floats_t",
                         command: "get_map_section_texture",
-                        commandArgs: [mapMolNo, i, 2],
+                        commandArgs: [mapMolNo, i, 2, 0, 1],
                     }, false) as moorhen.WorkerResponse<any>
                     framesRef.current[i] = frame.data.result.result
                 }
@@ -105,7 +97,6 @@ export const MoorhenTomogramManager = (props: {
         frameDataRef.current = frameData
         const obj = props.glRef.current.appendOtherData(frameData, true)
         const shape = obj[0].texturedShapes
-        shape.setColourRamp(greyScaleColourRamp, true)
         
         props.glRef.current.setOrigin(shape.getOrigin())
         props.glRef.current.setZoom(300, true)
