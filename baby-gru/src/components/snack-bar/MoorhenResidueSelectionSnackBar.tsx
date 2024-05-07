@@ -4,7 +4,7 @@ import { AdsClickOutlined, AllOutOutlined, CloseOutlined, CopyAllOutlined, Crisi
 import { batch, useDispatch, useSelector } from "react-redux"
 import { moorhen } from "../../types/moorhen"
 import { Button, Stack } from "react-bootstrap"
-import { clearResidueSelection, setIsDraggingAtoms, setIsRotatingAtoms, setNotificationContent, setResidueSelection } from '../../store/generalStatesSlice';
+import { clearResidueSelection, setIsDraggingAtoms, setIsRotatingAtoms, setNotificationContent, setResidueSelection, setShowResidueSelection } from '../../store/generalStatesSlice';
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react"
 import { addMolecule, removeMolecule } from "../../store/moleculesSlice"
 import { setHoveredAtom } from "../../store/hoveringStatesSlice"
@@ -39,6 +39,13 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, {id: s
     const animateRefine = useSelector((state: moorhen.State) => state.refinementSettings.animateRefine)
 
     const { closeSnackbar } = useSnackbar()
+
+    useEffect(() => {
+        dispatch(setShowResidueSelection(true))
+        return () => {
+            dispatch(setShowResidueSelection(false))
+        }
+    }, [])
 
     const clearSelection = useCallback(() => {
         setCidFormValue(null)
