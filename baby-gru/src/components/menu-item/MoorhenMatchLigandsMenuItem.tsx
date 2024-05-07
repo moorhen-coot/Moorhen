@@ -1,18 +1,17 @@
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { Button } from "react-bootstrap";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect";
-import { setMatchinLigandPopUpParams } from "../../store/activePopUpsSlice";
+import { useSnackbar } from "notistack";
 
 export const MoorhenMatchLigandsMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {
 
-    const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const [selectedRefMolNo, setSelectedRefMolNo] = useState<number>(null)
@@ -22,6 +21,8 @@ export const MoorhenMatchLigandsMenuItem = (props: {
     const movingMoleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const refLigandSelectRef = useRef<null | HTMLSelectElement>(null)
     const movingLigandSelectRef = useRef<null | HTMLSelectElement>(null)
+
+    const { enqueueSnackbar } = useSnackbar()
 
     useEffect(() => {
         if (molecules.length === 0) {
@@ -54,13 +55,15 @@ export const MoorhenMatchLigandsMenuItem = (props: {
 
         document.body.click()
         
-        dispatch(setMatchinLigandPopUpParams({
-            show: true,
+        enqueueSnackbar("", {
+            variant: "acceptRejectMatchingLigand",
+            persist: true,
             movingLigandCid: movingLigandSelectRef.current.value,
             refLigandCid: refLigandSelectRef.current.value,
             movingMolNo: movingMolecule.molNo,
-            refMolNo: referenceMolecule.molNo
-        }))
+            refMolNo: referenceMolecule.molNo,
+            commandCentre: props.commandCentre
+        })
 
     }, [molecules])
 

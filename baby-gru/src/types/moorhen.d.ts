@@ -929,13 +929,6 @@ export namespace moorhen {
                 show: boolean;
                 mapMolNo: number;
             };
-            matchingLigandPopUp: {
-                show: boolean;
-                refMolNo: number;
-                movingMolNo: number;
-                refLigandCid: string;
-                movingLigandCid: string;
-            };
         };
         activeModals: {
             showModelsModal: boolean;

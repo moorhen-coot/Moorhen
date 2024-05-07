@@ -26,6 +26,7 @@ import { MoorhenRecordingSnackBar } from './snack-bar/MoorhenRecordingSnackBar'
 import { MoorhenResidueSelectionSnackBar } from './snack-bar/MoorhenResidueSelectionSnackBar';
 import { MoorhenAcceptRejectDragAtomsSnackBar } from './snack-bar/MoorhenAcceptRejectDragAtomsSnackBar';
 import { MoorhenAcceptRejectRotateTranslateSnackBar } from './snack-bar/MoorhenAcceptRejectRotateTranslateSnackBar';
+import { MoorhenAcceptRejectMatchingLigandSnackBar } from './snack-bar/MoorhenAcceptRejectMatchingLigandSnackBar';
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -49,6 +50,13 @@ declare module "notistack" {
             moleculeRef: React.RefObject<moorhen.Molecule>;
             cidRef: React.RefObject<string>;
             glRef: React.RefObject<webGL.MGWebGL>;    
+        }
+        acceptRejectMatchingLigand: {
+            refMolNo: number;
+            movingMolNo: number;
+            refLigandCid: string;
+            movingLigandCid: string;
+            commandCentre: React.RefObject<moorhen.CommandCentre>;
         }
     }
 }
@@ -402,6 +410,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             residueSelection: MoorhenResidueSelectionSnackBar,
             acceptRejectDraggingAtoms: MoorhenAcceptRejectDragAtomsSnackBar,
             acceptRejectRotateTranslateAtoms: MoorhenAcceptRejectRotateTranslateSnackBar,
+            acceptRejectMatchingLigand: MoorhenAcceptRejectMatchingLigandSnackBar,
         }}
         preventDuplicate={true}>
     <div>

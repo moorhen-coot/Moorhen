@@ -13,13 +13,6 @@ const initialState = {
     show: false,
     mapMolNo: null
   },
-  matchingLigandPopUp: {
-    show: false,
-    refMolNo: null,
-    movingMolNo: null,
-    refLigandCid: null,
-    movingLigandCid: null
-  }
 }
 
 export const activePopUpsSlice = createSlice({
@@ -50,26 +43,10 @@ export const activePopUpsSlice = createSlice({
     hideGoToResiduePopUp: (state) => {
       return {...state, goToResiduePopUp: { show: false } }
     },
-    hideAcceptMatchingLigandPopUp: (state) => {
-      return {...state, matchingLigandPopUp: {
-        show: false,
-        refMolNo: null,
-        movingMolNo: null,
-        refLigandCid: null,
-        movingLigandCid: null
-      }}
-    },
-    setMatchinLigandPopUpParams: (state, action: { payload: {show?: boolean; refMolNo?: number; movingMolNo?: number; refLigandCid?: string; movingLigandCid?: string;}, type: string }) => {
-      return {...state, matchingLigandPopUp: {...state.matchingLigandPopUp, ...action.payload} }
-    },
-    setShowAcceptMatchingLigandPopUp: (state, action: { payload: boolean, type: string }) => {
-      return {...state, matchingLigandPopUp: {...state.matchingLigandPopUp, show: action.payload} }
-    },
   }
 })
 
 export const {
-    setShowAcceptMatchingLigandPopUp, setMatchinLigandPopUpParams, hideAcceptMatchingLigandPopUp,
     showGoToResiduePopUp, hideGoToResiduePopUp, setShowGoToResiduePopUp, resetActivePopUps,
     setShowModelTrajectoryPopUp, setModelTrajectoryPopUpParams, setShowTomogramPopUp,
     setTomogramPopUpParams

@@ -34,7 +34,7 @@ export const MoorhenRecordingSnackBar = forwardRef<HTMLDivElement, {videoRecorde
         increaseTimeCounter()
     }, [])
 
-    return <SnackbarContent ref={ref} className="moorhen-notification-div" style={{ backgroundColor: isDark ? 'grey' : 'white', color: isDark ? 'white' : 'grey', }}>
+    return <SnackbarContent ref={ref} className="moorhen-notification-div" style={{ backgroundColor: isDark ? 'grey' : 'white', color: isDark ? 'white' : 'grey' }}>
             <Stack gap={2} direction='horizontal' style={{width: '100%', display:'flex', justifyContent: 'space-between'}}>
                 <div style={{alignItems: 'center', display: 'flex', justifyContent: 'center'}}>
                     <RadioButtonCheckedOutlined style={{color: 'red', borderRadius: '30px', borderWidth: 0, borderStyle: 'hidden'}} className="moorhen-recording-icon"/>
