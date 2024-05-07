@@ -11,10 +11,9 @@ import { setHoveredAtom } from "../../store/hoveringStatesSlice"
 import { HexColorInput, HexColorPicker } from "react-colorful"
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm"
 import { MoorhenAcceptRejectRotateTranslate } from "../toasts/MoorhenAcceptRejectRotateTranslate"
-import { MoorhenAcceptRejectDragAtoms } from "../toasts/MoorhenAcceptRejectDragAtoms"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule"
-import { SnackbarContent, useSnackbar } from "notistack"
+import { SnackbarContent, enqueueSnackbar, useSnackbar } from "notistack"
 
 export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, {id: string}>((props, ref) => {
 
@@ -342,30 +341,25 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, {id: s
         }
 
         if (cid) {
-            const onExit = () => {
-                dispatch( setNotificationContent(null) )
-                dispatch( clearResidueSelection() )
-            }
             molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
             batch(() => {
-                dispatch( clearResidueSelection() )
                 dispatch( setHoveredAtom({ molecule: null, cid: null }) )
                 dispatch( setIsDraggingAtoms(true) )
-                dispatch( setNotificationContent(
-                    <MoorhenAcceptRejectDragAtoms
-                        onExit={onExit}
-                        commandCentre={residueSelection.molecule.commandCentre}
-                        monomerLibraryPath={residueSelection.molecule.monomerLibraryPath}
-                        cidRef={{current: cid}}
-                        glRef={residueSelection.molecule.glRef}
-                        moleculeRef={{current: residueSelection.molecule}}/>)
-                )
+                enqueueSnackbar("", {
+                    onClose: () => residueSelection.molecule.drawResidueSelection(cid.join('||')),
+                    variant: "acceptRejectAtoms",
+                    persist: true,
+                    commandCentre: residueSelection.molecule.commandCentre,
+                    monomerLibraryPath: residueSelection.molecule.monomerLibraryPath,
+                    glRef: residueSelection.molecule.glRef,
+                    cidRef: { current: cid },
+                    moleculeRef: { current: residueSelection.molecule }
+                })
             })
         }
-
     }, [residueSelection])
 
-    return <SnackbarContent ref={ref} className="moorhen-notification-div" style={{ backgroundColor: isDark ? 'grey' : 'white', color: isDark ? 'white' : 'grey', }}>
+    return <SnackbarContent ref={ref} className="moorhen-notification-div" style={{ backgroundColor: isDark ? 'grey' : 'white', color: isDark ? 'white' : 'grey' }}>
             <Tooltip className="moorhen-tooltip" title={tooltipContents} style={{zIndex: 99}}>
             <Stack ref={notificationComponentRef} direction="vertical" gap={1}>
                 <Stack gap={0} direction="horizontal" style={{ width: '100%', display: 'flex', justifyContent: 'space-between' }}>
