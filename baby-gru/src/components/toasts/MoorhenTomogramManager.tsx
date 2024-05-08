@@ -7,6 +7,7 @@ import { moorhen } from '../../types/moorhen'
 import { setIsShowingTomograms } from "../../store/generalStatesSlice"
 import { useDispatch, useSelector } from "react-redux"
 import { webGL } from "../../types/mgWebGL"
+import { useSnackbar } from "notistack"
 
 export const MoorhenTomogramManager = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -15,6 +16,7 @@ export const MoorhenTomogramManager = (props: {
 
     const dispatch = useDispatch()
     
+    const maps = useSelector((state: moorhen.State) => state.maps)
     const mapMolNo = useSelector((state: moorhen.State) => state.activePopUps.tomogramPopUp.mapMolNo)
 
     const frameDataRef = useRef(null)
@@ -27,6 +29,8 @@ export const MoorhenTomogramManager = (props: {
     const [progress, setProgress] = useState<number>(0)
     const [currentFrameIndex, setCurrentFrameIndex] = useState<number>(0)
 
+    const { enqueueSnackbar } = useSnackbar()
+
 
     useEffect(() => {
         const loadNFrames = async () => {
@@ -38,7 +42,16 @@ export const MoorhenTomogramManager = (props: {
                 command: 'get_number_of_map_sections',
                 commandArgs: [mapMolNo, 2],
             }, false) as moorhen.WorkerResponse<number>
-            
+
+            const selectedMap = maps.find(map => map.molNo === mapMolNo)
+            if (!selectedMap || !selectedMap.mapRmsd || !selectedMap.mapMean) {
+                enqueueSnackbar("Unable to load tomogram frames", { variant: "warning" })
+                return
+            }
+
+            const topValue = selectedMap.mapMean + 2.5 * selectedMap.mapRmsd
+            const bottomValue = selectedMap.mapMean - 1.5 * selectedMap.mapRmsd
+
             framesRef.current = Array(nFrames.data.result.result)
             setNFrames(nFrames.data.result.result)
 
@@ -50,7 +63,7 @@ export const MoorhenTomogramManager = (props: {
                     const frame = await props.commandCentre.current.cootCommand({
                         returnType: "texture_as_floats_t",
                         command: "get_map_section_texture",
-                        commandArgs: [mapMolNo, i, 2, 0, 1],
+                        commandArgs: [mapMolNo, i, 2, bottomValue, topValue],
                     }, false) as moorhen.WorkerResponse<any>
                     framesRef.current[i] = frame.data.result.result
                 }
