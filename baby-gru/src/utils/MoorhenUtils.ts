@@ -435,6 +435,25 @@ export async function loadSessionData(
     return 0
 }
 
+export async function loadSessionFromArrayBuffer(
+    sessionArrayBuffer: ArrayBuffer,
+    monomerLibraryPath: string,
+    molecules: moorhen.Molecule[],
+    maps: moorhen.Map[],
+    commandCentre: React.RefObject<moorhen.CommandCentre>,
+    timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
+    glRef: React.RefObject<webGL.MGWebGL>,
+    store: ToolkitStore,
+    dispatch: Dispatch<AnyAction>
+) {
+    timeCapsuleRef.current.setBusy(true)
+    const bytes = new Uint8Array(sessionArrayBuffer)
+    const sessionMessage = moorhensession.Session.decode(bytes)
+    const status = await loadSessionFromProtoMessage(sessionMessage, monomerLibraryPath, molecules, maps, commandCentre, timeCapsuleRef, glRef, store,  dispatch) 
+    timeCapsuleRef.current.setBusy(false)
+    return status
+}
+
 /**
  * A function to load session data
  * @param {string} sessionProtoMessage - A protobuf message for the object containing session data

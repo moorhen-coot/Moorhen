@@ -14,7 +14,7 @@ import { MoorhenMoleculeSelect } from "./components/select/MoorhenMoleculeSelect
 import { MoorhenMapSelect } from "./components/select/MoorhenMapSelect";
 import { MoorhenSlider } from "./components/misc/MoorhenSlider";
 import { MoorhenFetchOnlineSourcesForm } from "./components/form/MoorhenFetchOnlineSourcesForm";
-import { loadSessionFromJsonString, loadSessionData, loadSessionFromProtoMessage } from "./utils/MoorhenUtils";
+import { loadSessionFromJsonString, loadSessionData, loadSessionFromProtoMessage, loadSessionFromArrayBuffer } from "./utils/MoorhenUtils";
 import MoorhenReduxStore from "./store/MoorhenReduxStore";
 import { setDefaultBackgroundColor, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
     setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap,  
@@ -87,5 +87,5 @@ export {
     sharedSessionReducer, refinementSettingsReducer, resetSceneSettings, resetBackupSettings, resetDefaultMouseSettings, 
     resetGeneralStates, resetHoveringStates, resetLabelSettings, resetMapContourSettings, resetMiscAppSettings, resetMoleculeMapUpdates,
     resetRefinementSettings, resetShortcutSettings, resetActiveModals, focusOnModal, unFocusModal, resetActivePopUps,
-    resetSharedSession
+    resetSharedSession, loadSessionFromArrayBuffer
 };

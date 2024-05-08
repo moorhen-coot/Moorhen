@@ -392,6 +392,18 @@ declare module 'moorhen' {
     ): Promise<number>;
     module.exports = loadSessionFromProtoMessage;
 
+    function loadSessionFromArrayBuffer(
+        sessionArrayBuffer: ArrayBuffer,
+        monomerLibraryPath: string,
+        molecules: _moorhen.Molecule[],
+        maps: _moorhen.Map[],
+        commandCentre: React.RefObject<_moorhen.CommandCentre>,
+        timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule>,
+        glRef: React.RefObject<webGL.MGWebGL>,
+        store: any,
+        dispatch: (reduxStoreAction: any) => void,
+    ): Promise<number>;
+    module.exports = loadSessionFromArrayBuffer;
 
     function loadSessionData(
         sessionData: _moorhen.backupSession,
