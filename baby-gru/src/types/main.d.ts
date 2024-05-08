@@ -337,6 +337,7 @@ declare module 'moorhen' {
         setActive(): Promise<void>;
         setupContourBuffers(objects: any[], keepCootColours?: boolean): void;
         setOtherMapForColouring(molNo: number, min?: number, max?: number): void;
+        fetchMapMean(): Promise<number>;
         store: any;
         isEM: boolean;
         suggestedContourLevel: number;
@@ -357,6 +358,7 @@ declare module 'moorhen' {
         uniqueId: string;
         otherMapForColouring: {molNo: number, min: number, max: number};
         mapRmsd: number;
+        mapMean: number;
         suggestedMapWeight: number;
         defaultMapColour: {r: number, g: number, b: number};
         defaultPositiveMapColour: {r: number, g: number, b: number};

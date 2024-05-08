@@ -451,6 +451,7 @@ export namespace moorhen {
         fetchColourAndRedraw(): Promise<void> ;
         fetchDiffMapColourAndRedraw(type: 'positiveDiffColour' | 'negativeDiffColour'): Promise<void> ;
         fetchMapRmsd(): Promise<number>;
+        fetchMapMean(): Promise<number>;
         fetchSuggestedLevel(): Promise<number>;
         fetchMapCentre(): Promise<[number, number, number]>;
         replaceMapWithMtzFile(fileUrl: RequestInfo | URL, selectedColumns: selectedMtzColumns): Promise<void>;
@@ -485,6 +486,7 @@ export namespace moorhen {
         uniqueId: string;
         otherMapForColouring: {molNo: number, min: number, max: number};
         mapRmsd: number;
+        mapMean: number;
         suggestedMapWeight: number;
         defaultMapColour: {r: number, g: number, b: number};
         defaultPositiveMapColour: {r: number, g: number, b: number};

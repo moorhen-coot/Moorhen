@@ -65,6 +65,7 @@ export class MoorhenMap implements moorhen.Map {
     associatedReflectionFileName: string
     uniqueId: string
     mapRmsd: number
+    mapMean: number
     suggestedMapWeight: number
     otherMapForColouring: {molNo: number, min: number, max: number};
     diffMapColourBuffers: { positiveDiffColour: number[], negativeDiffColour: number[] }
@@ -89,6 +90,7 @@ export class MoorhenMap implements moorhen.Map {
         this.associatedReflectionFileName = null
         this.uniqueId = guid()
         this.mapRmsd = null
+        this.mapMean = null
         this.suggestedMapWeight = null
         this.suggestedContourLevel = null
         this.suggestedRadius = null
@@ -918,8 +920,24 @@ export class MoorhenMap implements moorhen.Map {
             this.fetchMapRmsd().then(_ => this.estimateMapWeight()),
             this.fetchMapCentre(),
             this.setDefaultColour(),
+            this.fetchMapMean(),
             !this.isEM && this.fetchSuggestedLevel()
         ])
+    }
+
+    async fetchMapMean() {
+        const result = await this.commandCentre.current.cootCommand({
+            command: 'get_map_mean',
+            commandArgs: [this.molNo],
+            returnType: "float"
+        }, false)
+        
+        if (result.data.result.status !== "Exception") {
+            this.mapMean = result.data.result.result
+        } else {
+            console.warn(`Unable to fetch map meap for imol ${this.molNo}`)
+        }
+        return result.data.result?.result
     }
 
     /**
