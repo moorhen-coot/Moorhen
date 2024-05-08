@@ -4,9 +4,8 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { useDispatch, useSelector } from 'react-redux';
-import { setNotificationContent } from '../../store/generalStatesSlice';
-import { MoorhenResidueSteps } from "../toasts/MoorhenResidueSteps"
+import { useSelector } from 'react-redux';
+import { useSnackbar } from "notistack";
 
 export const MoorhenStepRefinementMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -15,10 +14,11 @@ export const MoorhenStepRefinementMenuItem = (props: {
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
 }) => {
     
-    const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const moleculeSelectRef = useRef<HTMLSelectElement | null>(null)
+
+    const { enqueueSnackbar } = useSnackbar()
 
     const panelContent = <>
         <Form.Group key="stepped-refinement-model-select" style={{ width: '20rem', margin: '0.5rem' }} controlId="modelSelect" className="mb-3">
@@ -37,19 +37,19 @@ export const MoorhenStepRefinementMenuItem = (props: {
 
             const residueList = selectedMolecule.sequences.map(item => item.sequence).map(sequence => sequence.map(residue => residue)).flat()
         
-            dispatch( setNotificationContent(
-                <MoorhenResidueSteps 
-                    timeCapsuleRef={props.timeCapsuleRef}
-                    residueList={residueList}
-                    onStep={handleStepRefine}
-                    onStart={async () => {
-                        await selectedMolecule.fetchIfDirtyAndDraw('rama')
-                    }}
-                    onStop={() => {
-                        selectedMolecule.clearBuffersOfStyle('rama')
-                    }}
-                />
-            ))
+            enqueueSnackbar("stepped-refine", {
+                variant: "residueSteps",
+                persist: true,
+                timeCapsuleRef: props.timeCapsuleRef,
+                residueList: residueList,
+                onStep: handleStepRefine,
+                onStart: async () => {
+                    await selectedMolecule.fetchIfDirtyAndDraw('rama')
+                },
+                onStop: () => {
+                    selectedMolecule.clearBuffersOfStyle('rama')
+                }
+            })
         } else {
             console.warn(`Unable to find molecule with molNo ${moleculeSelectRef.current.value} for stepped refinement...`)
         }

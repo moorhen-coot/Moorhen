@@ -1,28 +1,35 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Stack } from "react-bootstrap";
-import { moorhen } from "../../types/moorhen";
-import { useDispatch, useSelector } from 'react-redux';
-import { MoorhenNotification } from "../misc/MoorhenNotification";
-import { IconButton, LinearProgress } from "@mui/material";
 import { PauseCircleOutlined, PlayCircleOutlined, StopCircleOutlined } from "@mui/icons-material";
-import { setNotificationContent } from '../../store/generalStatesSlice';
-import { setHoveredAtom } from '../../store/hoveringStatesSlice';
+import { IconButton, LinearProgress } from "@mui/material";
+import { SnackbarContent, useSnackbar } from "notistack";
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
+import { Stack } from "react-bootstrap";
+import { useDispatch, useSelector } from "react-redux";
+import { moorhen } from "../../types/moorhen";
+import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { sleep } from "../../utils/MoorhenUtils";
 
-export const MoorhenResidueSteps = (props: { 
-    timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
-    residueList: { cid: string }[];
-    onStep: (stepInput: any) => Promise<void>;
-    onStart?: () => Promise<void>;
-    onStop?: () => void;
-    onPause?: () => void;
-    onResume?: () => void;
-    onProgress?: (progress: number) => void;
-    disableTimeCapsule?: boolean
-    sleepTime?: number;
- }) => {
+
+export const MoorhenResidueStepsSnackBar = forwardRef<
+    HTMLDivElement,
+    {
+        id: string;
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
+        residueList: { cid: string }[];
+        onStep: (stepInput: any) => Promise<void>;
+        onStart?: () => Promise<void> | void;
+        onStop?: () => void;
+        onPause?: () => void;
+        onResume?: () => void;
+        onProgress?: (progress: number) => void;
+        disableTimeCapsule?: boolean
+        sleepTime?: number;
+    }
+>((props, ref) => {
+
     const dispatch = useDispatch()
+
     const timeCapsuleIsEnabled = useSelector((state: moorhen.State) => state.backupSettings.enableTimeCapsule)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
     const [isRunning, setIsRunning] = useState<boolean>(false)
     const [progress, setProgress] = useState<number>(0)
@@ -32,11 +39,13 @@ export const MoorhenResidueSteps = (props: {
     const isClosedRef = useRef<boolean>(false)
     const isRunningRef = useRef<boolean>(false)
 
+    const { closeSnackbar } = useSnackbar()
+
     const exit = useCallback(async () => {
         props.onStop()
         if (props.disableTimeCapsule) props.timeCapsuleRef.current.disableBackups = !timeCapsuleIsEnabled
         await props.timeCapsuleRef.current.addModification()
-        dispatch( setNotificationContent(null) )
+        closeSnackbar(props.id)
     }, [timeCapsuleIsEnabled])
 
     const init = async () => {
@@ -80,7 +89,7 @@ export const MoorhenResidueSteps = (props: {
         }
     }, [])
 
-    return <MoorhenNotification key={'stepped-refinement-controller'} width={15}>
+    return <SnackbarContent ref={ref} className="moorhen-notification-div" style={{ backgroundColor: isDark ? 'grey' : 'white', color: isDark ? 'white' : 'grey' }}>
                 <Stack gap={2} direction='horizontal' style={{width: '100%', display:'flex', justifyContent: 'space-between'}}>
                     <Stack gap={2} direction='vertical' style={{width: '100%'}}>
                         <span>{cid}</span>
@@ -105,10 +114,10 @@ export const MoorhenResidueSteps = (props: {
                         </IconButton>
                     </div>
                 </Stack>
-    </MoorhenNotification>   
-}
+    </SnackbarContent>
+})
 
-MoorhenResidueSteps.defaultProps = {
+MoorhenResidueStepsSnackBar.defaultProps = {
     disableTimeCapsule: true, sleepTime: 600, onStart: () => {}, onStop: () => {}, 
     onPause: () => {}, onResume: () => {}, onProgress: () => {}
 }

@@ -27,6 +27,7 @@ import { MoorhenAcceptRejectDragAtomsSnackBar } from './snack-bar/MoorhenAcceptR
 import { MoorhenAcceptRejectRotateTranslateSnackBar } from './snack-bar/MoorhenAcceptRejectRotateTranslateSnackBar';
 import { MoorhenAcceptRejectMatchingLigandSnackBar } from './snack-bar/MoorhenAcceptRejectMatchingLigandSnackBar';
 import { MoorhenLongJobSnackBar } from './snack-bar/MoorhenLongJobSnackBar';
+import { MoorhenResidueStepsSnackBar } from './snack-bar/MoorhenResidueStepsSnackBar';
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -59,6 +60,18 @@ declare module "notistack" {
             commandCentre: React.RefObject<moorhen.CommandCentre>;
         };
         longJobNotification: true;
+        residueSteps: {
+            timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
+            residueList: { cid: string }[];
+            onStep: (stepInput: any) => Promise<void>;
+            onStart?: () => Promise<void> | void;
+            onStop?: () => void;
+            onPause?: () => void;
+            onResume?: () => void;
+            onProgress?: (progress: number) => void;
+            disableTimeCapsule?: boolean
+            sleepTime?: number;    
+        }
     }
 }
   
@@ -413,6 +426,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             acceptRejectRotateTranslateAtoms: MoorhenAcceptRejectRotateTranslateSnackBar,
             acceptRejectMatchingLigand: MoorhenAcceptRejectMatchingLigandSnackBar,
             longJobNotification: MoorhenLongJobSnackBar,
+            residueSteps: MoorhenResidueStepsSnackBar,
         }}
         preventDuplicate={true}>
     <div>
