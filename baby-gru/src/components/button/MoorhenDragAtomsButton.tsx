@@ -4,15 +4,18 @@ import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 import { useDispatch, batch, useSelector } from 'react-redux';
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { setIsDraggingAtoms } from "../../store/generalStatesSlice";
-import { MoorhenAcceptRejectDragAtoms } from "../toasts/MoorhenAcceptRejectDragAtoms"
+import { useSnackbar } from "notistack";
 
 export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
     const chosenMolecule = useRef<null | moorhen.Molecule>(null)
     const fragmentCid = useRef<string[] | null>(null)
     
     const dispatch = useDispatch()
+    
     const refinementSelection = useSelector((state: moorhen.State) => state.refinementSettings.refinementSelection)
 
+    const { enqueueSnackbar } = useSnackbar()
+    
     const nonCootCommand = useCallback(async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, dragMode?: string) => {
         chosenMolecule.current = molecule
         const selectedSequence = molecule.sequences.find(sequence => sequence.chain === chosenAtom.chain_id)
@@ -70,26 +73,22 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
         }
 
         props.setShowOverlay(false)
-        props.setOverrideMenuContents(contextMenuOverride)
+        props.setOpacity(1)
+        props.setShowContextMenu(false)
+        enqueueSnackbar("accept-reject-drag-atoms", {
+            variant: "acceptRejectDraggingAtoms",
+            persist: true,
+            monomerLibraryPath: props.monomerLibraryPath,
+            commandCentre: props.commandCentre,
+            cidRef: fragmentCid,
+            glRef: props.glRef,
+            moleculeRef: chosenMolecule
+        })
         batch(() => {
             dispatch(setHoveredAtom({ molecule: null, cid: null }))
             dispatch(setIsDraggingAtoms(true))
         })
     }, [refinementSelection])
-
-    const onExit = () => {
-        props.setOverrideMenuContents(false)
-        props.setOpacity(1)
-        props.setShowContextMenu(false)
-    }
-
-    const contextMenuOverride = <MoorhenAcceptRejectDragAtoms
-        monomerLibraryPath={props.monomerLibraryPath}
-        commandCentre={props.commandCentre}
-        onExit={onExit}
-        cidRef={fragmentCid}
-        glRef={props.glRef}
-        moleculeRef={chosenMolecule}/>
 
     return <MoorhenContextButtonBase
         icon={<img alt="drag atoms" className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/drag.svg`} />}

@@ -1,20 +1,18 @@
 import { List, ListItem } from "@mui/material"
-import { cidToSpec, getCentreAtom, guid } from "./MoorhenUtils"
+import { cidToSpec, getCentreAtom, guid } from "./MoorhenUtils.js"
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4.js';
-import { getDeviceScale } from '../WebGLgComponents/mgWebGL';
-import { vec3Create } from '../WebGLgComponents/mgMaths';
-import { moorhen } from "../types/moorhen";
-import { webGL } from "../types/mgWebGL";
-import { MoorhenNotification } from "../components/misc/MoorhenNotification";
+import { getDeviceScale } from '../WebGLgComponents/mgWebGL.js';
+import { vec3Create } from '../WebGLgComponents/mgMaths.js';
+import { moorhen } from "../types/moorhen.js";
+import { webGL } from "../types/mgWebGL.js";
 import { Dispatch } from "react";
 import { AnyAction } from "@reduxjs/toolkit";
-import { setNotificationContent } from "../store/generalStatesSlice";
-import { setHoveredAtom } from "../store/hoveringStatesSlice";
-import { changeMapRadius } from "../store/mapContourSettingsSlice";
-import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
-import { showGoToResiduePopUp } from "../store/activePopUpsSlice";
+import { setHoveredAtom } from "../store/hoveringStatesSlice.js";
+import { changeMapRadius } from "../store/mapContourSettingsSlice.js";
+import { triggerUpdate } from "../store/moleculeMapUpdateSlice.js";
+import { EnqueueSnackbar } from "notistack";
 
 const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, dispatch: Dispatch<AnyAction>) => {
     molecule.setAtomsDirty(true)
@@ -23,19 +21,17 @@ const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWe
     dispatch( triggerUpdate(molecule.molNo) )
 }
 
-export const babyGruKeyPress = (
+export const moorhenKeyPress = (
     event: KeyboardEvent, 
     collectedProps: {
-        isDark: boolean;
-        dispatch: Dispatch<AnyAction>
+        dispatch: Dispatch<AnyAction>;
+        enqueueSnackbar: EnqueueSnackbar;
         hoveredAtom: moorhen.HoveredAtom;
         commandCentre: React.RefObject<moorhen.CommandCentre>;
         activeMap: moorhen.Map;
         molecules: moorhen.Molecule[];
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
         glRef: React.RefObject<webGL.MGWebGL>;
         viewOnly: boolean;
-        windowWidth: number;
         videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;
     }, 
     shortCuts: {[key: string]: moorhen.Shortcut}, 
@@ -44,8 +40,8 @@ export const babyGruKeyPress = (
 ): boolean | Promise<boolean> => {
     
     const { 
-        hoveredAtom, commandCentre, activeMap, glRef, molecules, dispatch,
-        timeCapsuleRef, viewOnly, videoRecorderRef, isDark, windowWidth
+        hoveredAtom, commandCentre, activeMap, glRef, molecules, 
+        viewOnly, videoRecorderRef, enqueueSnackbar, dispatch
     } = collectedProps;
 
     const doShortCut = async (cootCommand: string, formatArgs: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec) => any[]): Promise<boolean> => {
@@ -93,14 +89,6 @@ export const babyGruKeyPress = (
     if (event.altKey) modifiers.push("<Alt>") && eventModifiersCodes.push('altKey')
     if (event.key === " ") modifiers.push("<Space>")
 
-    if (showShortcutToast && !viewOnly) {
-        dispatch( setNotificationContent(
-            <MoorhenNotification key={guid()} hideDelay={5000}>
-                <h5 style={{margin: 0}}>{`${modifiers.join("-")} ${event.key} pressed`}</h5>
-            </MoorhenNotification>
-        ))
-    }
-    
     let action: null | string = null;
 
     for (const key of Object.keys(shortCuts)) {
@@ -118,16 +106,7 @@ export const babyGruKeyPress = (
         const formatArgs = (chosenMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, "SPHERE", 4000]
         }
-        showShortcutToast && dispatch( setNotificationContent(
-            <MoorhenNotification key={guid()} hideDelay={5000}>
-            <h5 style={{margin: 0}}>
-                <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
-                    <ListItem style={{justifyContent: 'center'}}>Sphere refine</ListItem>
-                </List>
-            </h5>
-            </MoorhenNotification>
-        ))
+        showShortcutToast && enqueueSnackbar("Sphere refine", { variant: "info"})
         return doShortCut('refine_residues_using_atom_cid', formatArgs)
     }
 
@@ -152,16 +131,7 @@ export const babyGruKeyPress = (
         const formatArgs = (chosenMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
         }
-        showShortcutToast && dispatch( setNotificationContent(
-            <MoorhenNotification key={guid()} hideDelay={5000}>
-            <h5 style={{margin: 0}}>
-                <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
-                    <ListItem style={{justifyContent: 'center'}}>Flip peptide</ListItem>
-                </List>
-            </h5>
-            </MoorhenNotification>
-        ))
+        showShortcutToast && enqueueSnackbar("Flip peptide", { variant: "info"})
         return doShortCut('flipPeptide_cid', formatArgs)
     }
 
@@ -169,16 +139,7 @@ export const babyGruKeyPress = (
         const formatArgs = (chosenMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, "TRIPLE", 4000]
         }
-        showShortcutToast && dispatch( setNotificationContent(
-            <MoorhenNotification key={guid()} hideDelay={5000}>
-            <h5 style={{margin: 0}}>
-                <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
-                    <ListItem style={{justifyContent: 'center'}}>Triple refine</ListItem>
-                </List>
-            </h5>
-            </MoorhenNotification>
-        ))
+        showShortcutToast && enqueueSnackbar("Triple refine", { variant: "info"})
         return doShortCut('refine_residues_using_atom_cid', formatArgs)
     }
 
@@ -193,16 +154,7 @@ export const babyGruKeyPress = (
                 activeMap.molNo
             ]
         }
-        showShortcutToast && dispatch( setNotificationContent(
-            <MoorhenNotification key={guid()} hideDelay={5000}>
-            <h5 style={{margin: 0}}>
-                <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
-                    <ListItem style={{justifyContent: 'center'}}>Auto fit rotamer</ListItem>
-                </List>
-            </h5>
-            </MoorhenNotification>
-        ))
+        showShortcutToast && enqueueSnackbar("Auto fit rotamer", { variant: "info"})
         return doShortCut('auto_fit_rotamer', formatArgs)
     }
 
@@ -210,14 +162,7 @@ export const babyGruKeyPress = (
         const formatArgs = (chosenMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
             return [chosenMolecule.molNo,  `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }
-        showShortcutToast && dispatch( setNotificationContent(
-            <h5 style={{margin: 0}}>
-                <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
-                    <ListItem style={{justifyContent: 'center'}}>Add residue</ListItem>
-                </List>
-            </h5>
-        ))
+        showShortcutToast && enqueueSnackbar("Add residue", { variant: "info"})
         return doShortCut('add_terminal_residue_directly_using_cid', formatArgs)
     }
 
@@ -229,16 +174,7 @@ export const babyGruKeyPress = (
                 'LITERAL'
             ]
         }
-        showShortcutToast && dispatch( setNotificationContent(
-            <MoorhenNotification key={guid()} hideDelay={5000}>
-            <h5 style={{margin: 0}}>
-                <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
-                    <ListItem style={{justifyContent: 'center'}}>Delete residue</ListItem>
-                </List>
-            </h5>
-            </MoorhenNotification>
-        ))
+        showShortcutToast && enqueueSnackbar("Delete residue", { variant: "info"})
         return doShortCut('delete_using_cid', formatArgs)
     }
 
@@ -246,34 +182,21 @@ export const babyGruKeyPress = (
         const formatArgs = (chosenMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }
-        showShortcutToast && dispatch( setNotificationContent(
-            <MoorhenNotification key={guid()} hideDelay={5000}>
-            <h5 style={{margin: 0}}>
-                <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
-                    <ListItem style={{justifyContent: 'center'}}>Eigen flip</ListItem>
-                </List>
-            </h5>
-            </MoorhenNotification>
-        ))
+        showShortcutToast && enqueueSnackbar("Eigen flip", { variant: "info"})
         return doShortCut('eigen_flip_ligand', formatArgs)
     }
 
     else if (action === 'go_to_residue' && molecules.length > 0) {
-        dispatch(showGoToResiduePopUp())
+        enqueueSnackbar("go-to-residue", {
+            variant: "goToResidue",
+            persist: true,
+            glRef: glRef,
+            commandCentre: commandCentre,
+        })
     }
 
     else if (action === 'go_to_blob' && activeMap && !viewOnly) {
-        showShortcutToast && dispatch( setNotificationContent(
-            <MoorhenNotification key={guid()} hideDelay={5000}>
-            <h5 style={{margin: 0}}>
-                <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
-                    <ListItem style={{justifyContent: 'center'}}>Go to blob</ListItem>
-                </List>
-            </h5>
-            </MoorhenNotification>
-        ))
+        showShortcutToast && enqueueSnackbar("Go to blob", { variant: "info"})
         const frontAndBack: [number[], number[], number, number] = glRef.current.getFrontAndBackPos(event);
         const goToBlobEvent = {
             back: [frontAndBack[0][0], frontAndBack[0][1], frontAndBack[0][2]],
@@ -302,16 +225,7 @@ export const babyGruKeyPress = (
         glRef.current.clearMeasureCylinderBuffers()
         glRef.current.drawScene()
         molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
-        showShortcutToast && dispatch( setNotificationContent(
-            <MoorhenNotification key={guid()} hideDelay={5000}>
-            <h5 style={{margin: 0}}>
-                <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
-                    <ListItem style={{justifyContent: 'center'}}>Clear labels</ListItem>
-                </List>
-            </h5>
-            </MoorhenNotification>
-        ))
+        showShortcutToast && enqueueSnackbar("Clear labels", { variant: "info"})
     }
 
     else if (action === 'move_up') {
@@ -404,16 +318,7 @@ export const babyGruKeyPress = (
             glRef.current.showShortCutHelp = null
             glRef.current.drawScene()
         }
-        showShortcutToast && dispatch( setNotificationContent(
-            <MoorhenNotification key={guid()} hideDelay={5000}>
-            <h5 style={{margin: 0}}>
-                <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
-                    <ListItem style={{justifyContent: 'center'}}>{glRef.current.showShortCutHelp ? 'Show help' : 'Hide help'}</ListItem>
-                </List>
-            </h5>
-            </MoorhenNotification>
-        ))
+        showShortcutToast && enqueueSnackbar(glRef.current.showShortCutHelp ? 'Show help' : 'Hide help', { variant: "info"})
         return false
     }
 
@@ -454,64 +359,28 @@ export const babyGruKeyPress = (
     else if (action === 'decrease_front_clip') {
         glRef.current.gl_clipPlane0[3] = glRef.current.gl_clipPlane0[3] - 0.5
         glRef.current.drawScene()
-        showShortcutToast && dispatch( setNotificationContent(
-            <MoorhenNotification key={guid()} hideDelay={5000}>
-            <h5 style={{margin: 0}}>
-                <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
-                    <ListItem style={{justifyContent: 'center'}}>Front Clip -</ListItem>
-                </List>
-            </h5>
-            </MoorhenNotification>
-        ))
+        showShortcutToast && enqueueSnackbar("Front clip down", { variant: "info"})
         return false
     }
 
     else if (action === 'increase_front_clip') {
         glRef.current.gl_clipPlane0[3] = glRef.current.gl_clipPlane0[3] + 0.5
         glRef.current.drawScene()
-        showShortcutToast && dispatch( setNotificationContent(
-            <MoorhenNotification key={guid()} hideDelay={5000}>
-            <h5 style={{margin: 0}}>
-                <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
-                    <ListItem style={{justifyContent: 'center'}}>Front Clip +</ListItem>
-                </List>
-            </h5>
-            </MoorhenNotification>
-        ))
+        showShortcutToast && enqueueSnackbar("Front clip up", { variant: "info"})
         return false
     }
 
     else if (action === 'decrease_back_clip') {
         glRef.current.gl_clipPlane1[3] = glRef.current.gl_clipPlane1[3] - 0.5
         glRef.current.drawScene()
-        showShortcutToast && dispatch( setNotificationContent(
-            <MoorhenNotification key={guid()} hideDelay={5000}>
-            <h5 style={{margin: 0}}>
-                <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
-                    <ListItem style={{justifyContent: 'center'}}>Back Clip -</ListItem>
-                </List>
-            </h5>
-            </MoorhenNotification>
-        ))
+        showShortcutToast && enqueueSnackbar("Back clip down", { variant: "info"})
         return false
     }
 
     else if (action === 'increase_back_clip') {
         glRef.current.gl_clipPlane1[3] = glRef.current.gl_clipPlane1[3] + 0.5
         glRef.current.drawScene()
-        showShortcutToast && dispatch( setNotificationContent(
-            <MoorhenNotification key={guid()} hideDelay={5000}>
-            <h5 style={{margin: 0}}>
-                <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
-                    <ListItem style={{justifyContent: 'center'}}>Back Clip +</ListItem>
-                </List>
-            </h5>
-            </MoorhenNotification>
-        ))
+        showShortcutToast && enqueueSnackbar("Back clip up", { variant: "info"})
         return false
     }
 

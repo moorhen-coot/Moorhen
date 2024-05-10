@@ -157,6 +157,7 @@
     "nightingale-linegraph-track": "^3.8.10",
     "node-fetch": "^2.7.0",
     "nodemon": "^2.0.22",
+    "notistack": "^3.0.1",
     "pako": "^2.1.0",
     "parcel-bundler": "^1.12.5",
     "pca-js": "^1.0.2",

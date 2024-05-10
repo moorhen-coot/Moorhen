@@ -196,6 +196,14 @@ describe("Testing MoorhenMap", () => {
         expect(rmsd).toBeCloseTo(0.35, 1)
     })
 
+    test("Test fetchMapMean", async () => {
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
+        const map = new MoorhenMap(commandCentre, glRef)
+        await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
+        const mean = await map.fetchMapMean()
+        expect(mean).toBeCloseTo(2.18e-10, 10)
+    })
+
     test("Test getMapWeight", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
         const map = new MoorhenMap(commandCentre, glRef)

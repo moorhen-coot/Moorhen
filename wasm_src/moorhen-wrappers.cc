@@ -1267,6 +1267,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("set_show_timings",&molecules_container_t::set_show_timings)
     .function("get_molecule_name",&molecules_container_t::get_molecule_name)
     .function("non_standard_residue_types_in_model",&molecules_container_t::non_standard_residue_types_in_model)
+    .function("get_map_mean",&molecules_container_t::get_map_mean)
     .function("get_map_rmsd_approx",&molecules_container_t::get_map_rmsd_approx)
     .function("set_draw_missing_residue_loops",&molecules_container_t::set_draw_missing_residue_loops)
     .function("set_make_backups",&molecules_container_t::set_make_backups)

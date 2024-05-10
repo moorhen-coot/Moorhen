@@ -1,21 +1,26 @@
-import { KeyboardArrowLeftOutlined, KeyboardArrowRightOutlined, KeyboardDoubleArrowLeftOutlined, KeyboardDoubleArrowRightOutlined } from "@mui/icons-material"
-import { IconButton, LinearProgress, Slider } from "@mui/material"
-import { useCallback, useEffect, useRef, useState } from "react"
-import { Stack } from "react-bootstrap"
-import { MoorhenNotification } from "../misc/MoorhenNotification"
-import { moorhen } from '../../types/moorhen'
-import { setIsShowingTomograms } from "../../store/generalStatesSlice"
-import { useDispatch, useSelector } from "react-redux"
-import { webGL } from "../../types/mgWebGL"
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
+import { useDispatch, useSelector } from "react-redux";
+import { SnackbarContent, useSnackbar } from "notistack";
+import { Stack } from "react-bootstrap";
+import { IconButton, LinearProgress, Slider } from "@mui/material";
+import { KeyboardArrowLeftOutlined, KeyboardArrowRightOutlined, KeyboardDoubleArrowLeftOutlined, KeyboardDoubleArrowRightOutlined } from "@mui/icons-material";
+import { setIsShowingTomograms } from "../../store/generalStatesSlice";
 
-export const MoorhenTomogramManager = (props: {
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
-}) => {
+export const MoorhenTomogramSnackBar = forwardRef<
+    HTMLDivElement,
+    {
+        commandCentre: React.RefObject<moorhen.CommandCentre>;
+        glRef: React.RefObject<webGL.MGWebGL>;
+        mapMolNo: number
+    }
+>((props, ref) => {
 
     const dispatch = useDispatch()
     
-    const mapMolNo = useSelector((state: moorhen.State) => state.activePopUps.tomogramPopUp.mapMolNo)
+    const maps = useSelector((state: moorhen.State) => state.maps)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
     const frameDataRef = useRef(null)
     const framesRef = useRef([])
@@ -27,6 +32,7 @@ export const MoorhenTomogramManager = (props: {
     const [progress, setProgress] = useState<number>(0)
     const [currentFrameIndex, setCurrentFrameIndex] = useState<number>(0)
 
+    const { enqueueSnackbar, closeSnackbar } = useSnackbar()
 
     useEffect(() => {
         const loadNFrames = async () => {
@@ -36,9 +42,18 @@ export const MoorhenTomogramManager = (props: {
             const nFrames = await props.commandCentre.current.cootCommand({
                 returnType: "number",
                 command: 'get_number_of_map_sections',
-                commandArgs: [mapMolNo, 0],
+                commandArgs: [props.mapMolNo, 2],
             }, false) as moorhen.WorkerResponse<number>
-            
+
+            const selectedMap = maps.find(map => map.molNo === props.mapMolNo)
+            if (!selectedMap || !selectedMap.mapRmsd || !selectedMap.mapMean) {
+                enqueueSnackbar("Unable to load tomogram frames", { variant: "warning" })
+                return
+            }
+
+            const topValue = selectedMap.mapMean + 2.5 * selectedMap.mapRmsd
+            const bottomValue = selectedMap.mapMean - 1.5 * selectedMap.mapRmsd
+
             framesRef.current = Array(nFrames.data.result.result)
             setNFrames(nFrames.data.result.result)
 
@@ -50,7 +65,7 @@ export const MoorhenTomogramManager = (props: {
                     const frame = await props.commandCentre.current.cootCommand({
                         returnType: "texture_as_floats_t",
                         command: "get_map_section_texture",
-                        commandArgs: [mapMolNo, i, 2],
+                        commandArgs: [props.mapMolNo, i, 2, bottomValue, topValue],
                     }, false) as moorhen.WorkerResponse<any>
                     framesRef.current[i] = frame.data.result.result
                 }
@@ -88,7 +103,7 @@ export const MoorhenTomogramManager = (props: {
             const frame = await props.commandCentre.current.cootCommand({
                 returnType: "texture_as_floats_t",
                 command: "get_map_section_texture",
-                commandArgs: [mapMolNo, iFrameRef.current, 0],
+                commandArgs: [props.mapMolNo, iFrameRef.current, 0],
             }, false) as moorhen.WorkerResponse<any>
             frameData = frame.data.result.result
             framesRef.current[iFrameRef.current] = frameData
@@ -100,9 +115,9 @@ export const MoorhenTomogramManager = (props: {
         
         props.glRef.current.setOrigin(shape.getOrigin())
         props.glRef.current.setZoom(300, true)
-    }, [mapMolNo])
+    }, [props.mapMolNo])
 
-    return <MoorhenNotification width={18} placeOnTop={false}>
+    return <SnackbarContent ref={ref} className="moorhen-notification-div" style={{ backgroundColor: isDark ? 'grey' : 'white', color: isDark ? 'white' : 'grey' }}>
         {busyComputingFrames ?
             <Stack gap={1} direction='vertical'>
             <span>Please wait...</span>
@@ -159,5 +174,5 @@ export const MoorhenTomogramManager = (props: {
         :
         <span>Something went wrong...</span>
         }
-    </MoorhenNotification>
-}
+    </SnackbarContent>
+})

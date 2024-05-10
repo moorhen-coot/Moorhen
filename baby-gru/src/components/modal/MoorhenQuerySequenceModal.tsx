@@ -10,12 +10,11 @@ import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import { MoorhenDraggableModalBase } from "../modal/MoorhenDraggableModalBase"
 import { MoorhenSlider } from "../misc/MoorhenSlider";
 import { webGL } from "../../types/mgWebGL";
-import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice";
-import { setNotificationContent } from "../../store/generalStatesSlice";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { enqueueSnackbar } from "notistack";
 
 export const MoorhenQuerySequenceModal = (props: {
     show: boolean;
@@ -59,15 +58,7 @@ export const MoorhenQuerySequenceModal = (props: {
             if (newMolecule.molNo === -1) throw new Error("Cannot read the fetched molecule...")
             return newMolecule
         } catch (err) {
-            dispatch(setNotificationContent(
-                <MoorhenNotification key={guid()} hideDelay={5000}>
-                    <><WarningOutlined style={{margin: 0}}/>
-                        <h4 className="moorhen-warning-toast">
-                            Failed to read molecule
-                        </h4>
-                    <WarningOutlined style={{margin: 0}}/></>
-                </MoorhenNotification>
-            ))
+            enqueueSnackbar("Failed to read molecule", {variant: 'warning'})
             console.log(`Cannot fetch molecule from ${url}`)
         }
     }

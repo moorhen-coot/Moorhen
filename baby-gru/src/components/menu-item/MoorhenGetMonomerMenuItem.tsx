@@ -8,6 +8,7 @@ import { webGL } from "../../types/mgWebGL";
 import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { useSnackbar } from "notistack";
 
 export const MoorhenGetMonomerMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>
@@ -19,11 +20,14 @@ export const MoorhenGetMonomerMenuItem = (props: {
 }) => {
 
     const dispatch = useDispatch()
+
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
 
     const tlcRef = useRef<HTMLInputElement>()
     const selectRef = useRef<HTMLSelectElement | null>(null)
+
+    const { enqueueSnackbar } = useSnackbar()
 
     const panelContent = <>
         <Form.Group className='moorhen-form-group' controlId="MoorhenGetMonomerMenuItem">
@@ -76,7 +80,8 @@ export const MoorhenGetMonomerMenuItem = (props: {
             await newMolecule.fetchIfDirtyAndDraw('CBs')
             dispatch( addMolecule(newMolecule) )
         } else {
-            console.log('Error getting monomer... Missing dictionary?')
+            enqueueSnackbar("Error getting monomer. Missing dictionary?", {variant: 'warning'})
+            console.log('Error getting monomer. Missing dictionary?')
         }
     }
 

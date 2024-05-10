@@ -1,30 +1,25 @@
 import { useCallback, useState } from "react";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
-import { convertViewtoPx, guid, loadSessionFromJsonString } from "../../utils/MoorhenUtils";
+import { convertViewtoPx, loadSessionFromJsonString } from "../../utils/MoorhenUtils";
 import { Stepper, Step, StepButton, StepLabel } from "@mui/material";
 import { moorhen } from "../../types/moorhen";
-import { SaveOutlined, WarningOutlined } from "@mui/icons-material";
+import { SaveOutlined } from "@mui/icons-material";
 import { Stack } from "react-bootstrap";
-import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { useSelector, useDispatch } from 'react-redux';
-import { setNotificationContent } from "../../store/generalStatesSlice";
+import { useSnackbar } from "notistack";
 
 export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
 
     const [historyHead, setHistoryHead] = useState(0)
 
     const dispatch = useDispatch()
+
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const maps = useSelector((state: moorhen.State) => state.maps)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
-    const getWarningToast = (message: string) => <MoorhenNotification key={guid()} hideDelay={3000} width={20}>
-            <><WarningOutlined style={{margin: 0}}/>
-                <h4 className="moorhen-warning-toast">
-                    {message}
-                </h4>
-            <WarningOutlined style={{margin: 0}}/></>
-        </MoorhenNotification>
+    const { enqueueSnackbar } = useSnackbar()
 
     const loadSession = useCallback(async (sessionData: string) => {
         try {
@@ -40,11 +35,11 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
                 dispatch
             )
             if (status === -1) {
-                dispatch(setNotificationContent(getWarningToast(`Failed to read backup (deprecated format)`)))
+                enqueueSnackbar('Failed to read backup (deprecated format)', {variant: 'warning'})
             }
         } catch (err) {
             console.log(err)
-            dispatch(setNotificationContent(getWarningToast("Error loading session")))
+            enqueueSnackbar("Error loading session", {variant: 'warning'})
         }
     }, [props])
 
@@ -76,7 +71,7 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
         return <Step key={index} completed={false}>
             <StepButton color="inherit" onClick={handleClick}>
                 <StepLabel>
-                    <Stack gap={3} direction="horizontal">
+                    <Stack gap={3} direction="horizontal" style={{ color: isDark ? 'white' : 'black' }}>
                         {historyEntry.label ? historyEntry.label : historyEntry.command}
                         {historyEntry.associatedBackupKey &&
                             <div key={index} style={{
@@ -84,7 +79,7 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
                                 borderColor: 'grey',
                                 borderWidth: '1px',
                                 borderRadius: '1.5rem',
-                                padding: '0.5rem',
+                                padding: '0.5rem'
                             }}>
                                 <SaveOutlined/>
                             </div>}

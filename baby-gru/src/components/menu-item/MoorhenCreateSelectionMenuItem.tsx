@@ -5,8 +5,9 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { useDispatch, useSelector } from 'react-redux';
-import { setResidueSelection, setShowResidueSelection } from "../../store/generalStatesSlice";
+import { setResidueSelection } from "../../store/generalStatesSlice";
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
+import { useSnackbar } from "notistack";
 
 export const MoorhenCreateSelectionMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -14,6 +15,7 @@ export const MoorhenCreateSelectionMenuItem = (props: {
 }) => {
 
     const dispatch = useDispatch()
+
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
@@ -21,6 +23,8 @@ export const MoorhenCreateSelectionMenuItem = (props: {
     
     const [cid, setCid] = useState<string>("")
     const [invalidCid, setInvalidCid] = useState<boolean>(false)
+
+    const { enqueueSnackbar } = useSnackbar()
 
     const createSelection = async () => {
         const selectedCid = cidFormRef.current.value
@@ -39,18 +43,20 @@ export const MoorhenCreateSelectionMenuItem = (props: {
         } catch (err) {
             console.log(err)
             setInvalidCid(true)
+            enqueueSnackbar("Unable to parse CID", {variant: 'warning'})
             return
         }
 
         if (!newSelection) {
             setInvalidCid(true)
+            enqueueSnackbar("Unable to parse CID", {variant: 'warning'})
             return
         }   
 
         setInvalidCid(false)
         await molecule.drawResidueSelection(selectedCid)
         dispatch( setResidueSelection(newSelection) )
-        dispatch( setShowResidueSelection(true) )
+        enqueueSnackbar("residue-selection", {variant: "residueSelection", persist: true})
         document.body.click()
     }
 

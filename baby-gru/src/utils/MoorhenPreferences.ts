@@ -32,7 +32,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
     }
 
     static defaultPreferencesValues: moorhen.PreferencesValues = {
-        version: 'v38',
+        version: 'v39',
         reContourMapOnlyOnMouseUp: false,
         transparentModalsOnMouseOut: false,
         defaultBackgroundColor: [1, 1, 1, 1],
@@ -70,7 +70,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
         contourWheelSensitivityFactor: 0.05,
         mapLineWidth: 0.75,
         makeBackups: true,
-        showShortcutToast: false,
+        showShortcutToast: true,
         defaultMapSurface: false,
         defaultBondSmoothness: 1,
         showScoresToast: true,

@@ -3,6 +3,7 @@ import { Button, Row, Stack } from "react-bootstrap"
 import { MoorhenBackupSelect } from "../select/MoorhenBackupSelect"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen"
+import { useSnackbar } from "notistack"
 
 export const MoorhenBackupsMenuItem = (props: {
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
@@ -13,6 +14,8 @@ export const MoorhenBackupsMenuItem = (props: {
 }) => {
     
     const backupSelectRef = useRef<null | HTMLSelectElement>(null)
+    
+    const { enqueueSnackbar } = useSnackbar()
 
     const retrieveSession = useCallback(async () => {
         if (backupSelectRef.current.value) {
@@ -22,6 +25,7 @@ export const MoorhenBackupsMenuItem = (props: {
                 props.commandCentre.current.history.reset()
                 props.loadSession(backupData)
             } catch (err) {
+                enqueueSnackbar("Error loading the session", {variant: 'warning'})
                 console.log(err)
             }
         }

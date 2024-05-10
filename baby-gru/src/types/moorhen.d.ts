@@ -452,6 +452,7 @@ export namespace moorhen {
         fetchColourAndRedraw(): Promise<void> ;
         fetchDiffMapColourAndRedraw(type: 'positiveDiffColour' | 'negativeDiffColour'): Promise<void> ;
         fetchMapRmsd(): Promise<number>;
+        fetchMapMean(): Promise<number>;
         fetchSuggestedLevel(): Promise<number>;
         fetchMapCentre(): Promise<[number, number, number]>;
         replaceMapWithMtzFile(fileUrl: RequestInfo | URL, selectedColumns: selectedMtzColumns): Promise<void>;
@@ -487,6 +488,7 @@ export namespace moorhen {
         uniqueId: string;
         otherMapForColouring: {molNo: number, min: number, max: number};
         mapRmsd: number;
+        mapMean: number;
         suggestedMapWeight: number;
         defaultMapColour: {r: number, g: number, b: number};
         defaultPositiveMapColour: {r: number, g: number, b: number};
@@ -895,7 +897,6 @@ export namespace moorhen {
             userPreferencesMounted: boolean;
             appTitle: string;
             cootInitialized: boolean;
-            notificationContent: JSX.Element;
             activeMap: Map;
             theme: string;
             residueSelection: ResidueSelection;
@@ -917,27 +918,6 @@ export namespace moorhen {
             enableAtomHovering: boolean;
             hoveredAtom: HoveredAtom;
             cursorStyle: string;
-        };
-        activePopUps: {
-            goToResiduePopUp: {
-                show: boolean;
-            };
-            modelTrajectoryPopUp: {
-                show: boolean;
-                representationStyle: string;
-                moleculeMolNo: number;
-            };
-            tomogramPopUp: {
-                show: boolean;
-                mapMolNo: number;
-            };
-            matchingLigandPopUp: {
-                show: boolean;
-                refMolNo: number;
-                movingMolNo: number;
-                refLigandCid: string;
-                movingLigandCid: string;
-            };
         };
         activeModals: {
             showModelsModal: boolean;
@@ -986,6 +966,8 @@ export namespace moorhen {
             defaultUpdatingScores: string[];
             showScoresToast: boolean;
             moleculeUpdate: { switch: boolean, molNo: number };
+            currentScores: { rFactor: number; rFree: number; moorhenPoints: number; };
+            currentScoreDiffs: { rFactor: number; rFree: number; moorhenPoints: number; };
         };
         refinementSettings: {
             useRamaRefinementRestraints: boolean;

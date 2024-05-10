@@ -40,10 +40,7 @@ declare module 'moorhen' {
     
     let activeModalsReducer: any;
     module.exports = activeModalsReducer
-    
-    let activePopUpsReducer: any;
-    module.exports = activePopUpsReducer
-    
+
     let mapContourSettingsReducer: any;
     module.exports = mapContourSettingsReducer
     
@@ -338,6 +335,7 @@ declare module 'moorhen' {
         setActive(): Promise<void>;
         setupContourBuffers(objects: any[], keepCootColours?: boolean): void;
         setOtherMapForColouring(molNo: number, min?: number, max?: number): void;
+        fetchMapMean(): Promise<number>;
         autoReadMtz: (source: File, commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: any) => Promise<_moorhen.Map[]>;
         store: any;
         isEM: boolean;
@@ -359,6 +357,7 @@ declare module 'moorhen' {
         uniqueId: string;
         otherMapForColouring: {molNo: number, min: number, max: number};
         mapRmsd: number;
+        mapMean: number;
         suggestedMapWeight: number;
         defaultMapColour: {r: number, g: number, b: number};
         defaultPositiveMapColour: {r: number, g: number, b: number};
@@ -392,6 +391,18 @@ declare module 'moorhen' {
     ): Promise<number>;
     module.exports = loadSessionFromProtoMessage;
 
+    function loadSessionFromArrayBuffer(
+        sessionArrayBuffer: ArrayBuffer,
+        monomerLibraryPath: string,
+        molecules: _moorhen.Molecule[],
+        maps: _moorhen.Map[],
+        commandCentre: React.RefObject<_moorhen.CommandCentre>,
+        timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule>,
+        glRef: React.RefObject<webGL.MGWebGL>,
+        store: any,
+        dispatch: (reduxStoreAction: any) => void,
+    ): Promise<number>;
+    module.exports = loadSessionFromArrayBuffer;
 
     function loadSessionData(
         sessionData: _moorhen.backupSession,
@@ -540,9 +551,6 @@ declare module 'moorhen' {
 
     function setBackgroundColor(arg0: [number, number, number, number]): any;
     module.exports = setBackgroundColor;
-
-    function setNotificationContent(arg0: JSX.Element): any;
-    module.exports = setNotificationContent;
 
     function setActiveMap(arg0: _moorhen.Map): any;
     module.exports = setActiveMap;
@@ -702,9 +710,6 @@ declare module 'moorhen' {
     
     function unFocusModal(): any;
     module.exports = unFocusModal;
-    
-    function resetActivePopUps(): any;
-    module.exports = resetActivePopUps;
     
     function resetSharedSession(): any;
     module.exports = resetSharedSession;

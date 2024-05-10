@@ -7,6 +7,7 @@ import { moorhen } from "../../types/moorhen";
 import { batch, useDispatch, useSelector } from 'react-redux';
 import { setContourLevel } from "../../store/mapContourSettingsSlice"
 import { enableUpdatingMaps, setConnectedMoleculeMolNo, setFoFcMapMolNo, setReflectionMapMolNo, setTwoFoFcMapMolNo } from "../../store/moleculeMapUpdateSlice"
+import { useSnackbar } from "notistack"
 
 export const MoorhenImportFSigFMenuItem = (props:{
     selectedMolNo?: number;
@@ -19,10 +20,13 @@ export const MoorhenImportFSigFMenuItem = (props:{
     const foFcSelectRef = useRef<null | HTMLSelectElement>(null)
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     
-    const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const maps = useSelector((state: moorhen.State) => state.maps)
     const connectedMoleculeMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.connectedMolecule)
+
+    const dispatch = useDispatch()
+
+    const { enqueueSnackbar } = useSnackbar()
 
     const connectMap = async () => {
         const [molecule, reflectionMap, twoFoFcMap, foFcMap] = [
@@ -84,6 +88,8 @@ export const MoorhenImportFSigFMenuItem = (props:{
                     dispatch( setContourLevel({ molNo: currentMap.molNo, contourLevel: newContourLevel }) )
                 })
             )
+        } else {
+            enqueueSnackbar("Missing input data", { variant: "warning" })
         }
     }
 

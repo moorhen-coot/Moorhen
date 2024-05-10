@@ -2,7 +2,7 @@ import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, Card, Col, Form, Row, Spinner, Stack } from "react-bootstrap";
-import { convertRemToPx, convertViewtoPx} from '../../utils/MoorhenUtils';
+import { convertViewtoPx } from '../../utils/MoorhenUtils';
 import { useDispatch, useSelector } from "react-redux";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
@@ -21,9 +21,11 @@ const LigandHitCard = (props: {
 }) => {
 
     const dispatch = useDispatch()
+
     const animateRefine = useSelector((state: moorhen.State) => state.refinementSettings.animateRefine)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
     const handleShow = useCallback(async () => {
         if (props.ligandMolecule.representations.length > 0) {
@@ -59,7 +61,7 @@ const LigandHitCard = (props: {
         }
     }, [molecules])
 
-    return <Card style={{marginTop: '0.5rem', borderStyle: 'solid', borderColor: props.ligandCardMolNoFocus === props.ligandMolecule.molNo ? 'black' : ''}}>
+    return <Card style={{marginTop: '0.5rem', borderStyle: 'solid', borderColor: isDark ? 'white' : 'grey', borderWidth: props.ligandCardMolNoFocus === props.ligandMolecule.molNo ? '3px' : '1px'}}>
         <Card.Body style={{padding:'0.5rem'}}>
             <Row style={{display:'flex', justifyContent:'between'}}>
                 <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
@@ -69,17 +71,17 @@ const LigandHitCard = (props: {
                 </Col>
                 <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
                     <Tooltip title="View">
-                    <IconButton style={{marginRight:'0.5rem'}} onClick={() => props.setLigandCardMolNoFocus(props.ligandMolecule.molNo)}>
+                    <IconButton style={{ marginRight:'0.5rem', color: isDark ? 'white' : 'grey' }} onClick={() => props.setLigandCardMolNoFocus(props.ligandMolecule.molNo)}>
                         <CenterFocusWeakOutlined/>
                     </IconButton>
                     </Tooltip>
                     <Tooltip title="Refine">
-                    <IconButton style={{marginRight:'0.5rem'}} onClick={() => handleRefinement(props.ligandMolecule)}>
+                    <IconButton style={{ marginRight:'0.5rem', color: isDark ? 'white' : 'grey' }} onClick={() => handleRefinement(props.ligandMolecule)}>
                         <CrisisAlertOutlined/>
                     </IconButton>
                     </Tooltip>
                     <Tooltip title="Merge">
-                    <IconButton style={{marginRight:'0.5rem'}} onClick={handleMerge}>
+                    <IconButton style={{ marginRight:'0.5rem', color: isDark ? 'white' : 'grey' }} onClick={handleMerge}>
                         <MergeTypeOutlined/>
                     </IconButton>
                     </Tooltip>

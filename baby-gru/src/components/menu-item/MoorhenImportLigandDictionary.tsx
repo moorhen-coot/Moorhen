@@ -12,6 +12,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore"
+import { enqueueSnackbar } from "notistack"
 
 const MoorhenImportLigandDictionary = (props: { 
     id: string;

@@ -5,10 +5,9 @@ import { libcootApi } from '../../types/libcoot';
 import { useDispatch, useSelector } from 'react-redux';
 import { triggerUpdate } from '../../store/moleculeMapUpdateSlice';
 import { useCallback } from 'react';
-import { MoorhenResidueSteps } from '../toasts/MoorhenResidueSteps';
-import { setNotificationContent } from '../../store/generalStatesSlice';
 import { cidToSpec, sleep } from '../../utils/MoorhenUtils';
 import { setShowFillPartialResValidationModal } from '../../store/activeModalsSlice';
+import { useSnackbar } from 'notistack';
 
 interface Props extends moorhen.CollectedProps {
     dropdownId: number;
@@ -20,8 +19,11 @@ interface Props extends moorhen.CollectedProps {
 
 export const MoorhenFillMissingAtoms = (props: Props) => {
     const dispatch = useDispatch()
+
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
+
+    const { enqueueSnackbar } = useSnackbar()
 
     const fillPartialResidue = async (selectedMolecule: moorhen.Molecule, chainId: string, resNum: number, insCode: string) => {
         await props.commandCentre.current.cootCommand({
@@ -79,20 +81,20 @@ export const MoorhenFillMissingAtoms = (props: Props) => {
                 }
             })
         
-            dispatch( setNotificationContent(
-                <MoorhenResidueSteps 
-                    timeCapsuleRef={props.timeCapsuleRef}
-                    residueList={residueList}
-                    sleepTime={1500}
-                    onStep={handleStepFillAtoms}
-                    onStart={async () => {
-                        await selectedMolecule.fetchIfDirtyAndDraw('rotamer')
-                    }}
-                    onStop={() => {
-                        selectedMolecule.clearBuffersOfStyle('rotamer')
-                    }}
-                />
-            ))
+            enqueueSnackbar("fill-all-atoms", {
+                variant: "residueSteps",
+                persist: true,
+                timeCapsuleRef: props.timeCapsuleRef,
+                residueList: residueList,
+                sleepTime: 1500,
+                onStep: handleStepFillAtoms,
+                onStart: async () => {
+                    await selectedMolecule.fetchIfDirtyAndDraw('rotamer')
+                },
+                onStop: () => {
+                    selectedMolecule.clearBuffersOfStyle('rotamer')
+                },
+            })
         }
     }, [molecules])
 

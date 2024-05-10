@@ -21,6 +21,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
 }) => {
 
     const dispatch = useDispatch()
+    
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
 

@@ -1,23 +1,27 @@
 import { OverlayTrigger, Stack, Tooltip } from "react-bootstrap"
-import { MoorhenNotification } from "../misc/MoorhenNotification"
 import { CheckOutlined, CloseOutlined, InfoOutlined } from "@mui/icons-material"
 import { IconButton } from "@mui/material"
 import { useDispatch, useSelector } from "react-redux"
 import { moorhen } from "../../types/moorhen"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react"
 import { getTooltipShortcutLabel } from '../../utils/MoorhenUtils';
 import { setIsRotatingAtoms } from "../../store/generalStatesSlice"
 import { webGL } from "../../types/mgWebGL"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
+import { SnackbarContent, useSnackbar } from "notistack"
 
-export const MoorhenAcceptRejectRotateTranslate = (props: {
-    onExit: () => void;
-    moleculeRef: React.RefObject<moorhen.Molecule>;
-    cidRef: React.RefObject<string>;
-    glRef: React.RefObject<webGL.MGWebGL>;
-}) => {
+export const MoorhenAcceptRejectRotateTranslateSnackBar = forwardRef<
+    HTMLDivElement,
+    {
+        moleculeRef: React.RefObject<moorhen.Molecule>;
+        cidRef: React.RefObject<string>;
+        glRef: React.RefObject<webGL.MGWebGL>;
+        id: string;
+    }
+>((props, ref) => {
 
     const dispatch = useDispatch()
+
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
 
@@ -25,9 +29,11 @@ export const MoorhenAcceptRejectRotateTranslate = (props: {
 
     const fragmentMoleculeRef = useRef<null | moorhen.Molecule>(null)
 
+    const { closeSnackbar } = useSnackbar()
+
     const stopRotateTranslate = useCallback(async (acceptTransform: boolean = false) => {
         props.glRef.current.setActiveMolecule(null)
-        await props.moleculeRef.current.unhideAll(false)
+        await props.moleculeRef.current.unhideAll(!acceptTransform)
         if (acceptTransform) {
             const transformedAtoms = fragmentMoleculeRef.current.transformedCachedAtomsAsMovedAtoms()
             await props.moleculeRef.current.updateWithMovedAtoms(transformedAtoms)
@@ -35,6 +41,7 @@ export const MoorhenAcceptRejectRotateTranslate = (props: {
         }
         await fragmentMoleculeRef.current.delete(true)
         dispatch( setIsRotatingAtoms(false) )
+        closeSnackbar(props.id)
     }, [props, props.moleculeRef, fragmentMoleculeRef])
 
     useEffect(() => {
@@ -83,38 +90,36 @@ export const MoorhenAcceptRejectRotateTranslate = (props: {
         startRotateTranslate()
     }, [])
 
-    return  <MoorhenNotification>
-                <Stack gap={2} direction='horizontal' style={{ width: '100%', display: 'flex', justifyContent: 'space-between' }}>
-                    <OverlayTrigger
-                        placement="bottom"
-                        overlay={
-                            <Tooltip id="tip-tooltip" className="moorhen-tooltip">
-                                <div>
-                                    <em>{"Hold <Shift><Alt> to translate"}</em>
-                                    <br></br>
-                                    <em>{shortCuts ? `Hold ${getTooltipShortcutLabel(JSON.parse(shortCuts as string).residue_camera_wiggle)} to move view` : null}</em>
-                                </div>
-                            </Tooltip>
-                        }>
-                        <InfoOutlined />
-                    </OverlayTrigger>
-                    <div>
-                        <span>Accept changes?</span>
-                    </div>
-                    <div>
-                        <IconButton style={{ padding: 0, color: isDark ? 'white' : 'grey', }} onClick={async () => {
-                            await stopRotateTranslate(true)
-                            props.onExit()
-                        }}>
-                            <CheckOutlined />
-                        </IconButton>
-                        <IconButton style={{ padding: 0, color: isDark ? 'white' : 'grey' }} onClick={async () => {
-                            await stopRotateTranslate()
-                            props.onExit()
-                        }}>
-                            <CloseOutlined />
-                        </IconButton>
-                    </div>
-                </Stack>
-            </MoorhenNotification>
-}
+    return  <SnackbarContent ref={ref} className="moorhen-notification-div" style={{ backgroundColor: isDark ? 'grey' : 'white', color: isDark ? 'white' : 'grey' }}>
+        <Stack gap={2} direction='horizontal' style={{ width: '100%', display: 'flex', justifyContent: 'space-between' }}>
+            <OverlayTrigger
+                placement="bottom"
+                overlay={
+                    <Tooltip id="tip-tooltip" className="moorhen-tooltip">
+                        <div>
+                            <em>{"Hold <Shift><Alt> to translate"}</em>
+                            <br></br>
+                            <em>{shortCuts ? `Hold ${getTooltipShortcutLabel(JSON.parse(shortCuts as string).residue_camera_wiggle)} to move view` : null}</em>
+                        </div>
+                    </Tooltip>
+                }>
+                <InfoOutlined />
+            </OverlayTrigger>
+            <div>
+                <span>Accept changes?</span>
+            </div>
+            <div>
+                <IconButton style={{ padding: 0, color: isDark ? 'white' : 'grey', }} onClick={async () => {
+                    await stopRotateTranslate(true)
+                }}>
+                    <CheckOutlined />
+                </IconButton>
+                <IconButton style={{ padding: 0, color: isDark ? 'white' : 'grey' }} onClick={async () => {
+                    await stopRotateTranslate()
+                }}>
+                    <CloseOutlined />
+                </IconButton>
+            </div>
+        </Stack>
+    </SnackbarContent>
+})
