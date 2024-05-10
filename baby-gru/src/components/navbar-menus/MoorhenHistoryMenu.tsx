@@ -13,9 +13,11 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
     const [historyHead, setHistoryHead] = useState(0)
 
     const dispatch = useDispatch()
+
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const maps = useSelector((state: moorhen.State) => state.maps)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
     const { enqueueSnackbar } = useSnackbar()
 
@@ -69,7 +71,7 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
         return <Step key={index} completed={false}>
             <StepButton color="inherit" onClick={handleClick}>
                 <StepLabel>
-                    <Stack gap={3} direction="horizontal">
+                    <Stack gap={3} direction="horizontal" style={{ color: isDark ? 'white' : 'black' }}>
                         {historyEntry.label ? historyEntry.label : historyEntry.command}
                         {historyEntry.associatedBackupKey &&
                             <div key={index} style={{
@@ -77,7 +79,7 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
                                 borderColor: 'grey',
                                 borderWidth: '1px',
                                 borderRadius: '1.5rem',
-                                padding: '0.5rem',
+                                padding: '0.5rem'
                             }}>
                                 <SaveOutlined/>
                             </div>}
