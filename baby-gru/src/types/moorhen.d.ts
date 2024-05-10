@@ -918,20 +918,6 @@ export namespace moorhen {
             hoveredAtom: HoveredAtom;
             cursorStyle: string;
         };
-        activePopUps: {
-            goToResiduePopUp: {
-                show: boolean;
-            };
-            modelTrajectoryPopUp: {
-                show: boolean;
-                representationStyle: string;
-                moleculeMolNo: number;
-            };
-            tomogramPopUp: {
-                show: boolean;
-                mapMolNo: number;
-            };
-        };
         activeModals: {
             showModelsModal: boolean;
             showMapsModal: boolean;

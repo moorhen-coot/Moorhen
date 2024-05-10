@@ -41,7 +41,6 @@ import { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMou
 import { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts, resetShortcutSettings } from './store/shortCutsSlice';
 import { setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores, resetMoleculeMapUpdates } from './store/moleculeMapUpdateSlice';
 import { resetActiveModals, focusOnModal, unFocusModal } from './store/activeModalsSlice';
-import { resetActivePopUps } from './store/activePopUpsSlice';
 import { resetSharedSession } from './store/sharedSessionSlice';
 import moleculesReducer from './store/moleculesSlice';
 import mapsReducer from './store/mapsSlice';
@@ -54,7 +53,6 @@ import miscAppSettingsReducer from './store/miscAppSettingsSlice';
 import generalStatesReducer from './store/generalStatesSlice';
 import hoveringStatesReducer from './store/hoveringStatesSlice';
 import activeModalsReducer from './store/activeModalsSlice';
-import activePopUpsReducer from './store/activePopUpsSlice';
 import mapContourSettingsReducer from './store/mapContourSettingsSlice';
 import moleculeMapUpdateReducer from './store/moleculeMapUpdateSlice';
 import sharedSessionReducer from './store/sharedSessionSlice';
@@ -83,9 +81,8 @@ export {
     setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints, setAnimateRefine, MoorhenReduxStore, 
     loadSessionData, loadSessionFromProtoMessage, moleculesReducer, mapsReducer, mouseSettingsReducer, backupSettingsReducer,
     shortcutSettingsReducer, labelSettingsReducer, sceneSettingsReducer, miscAppSettingsReducer, generalStatesReducer,
-    activeModalsReducer, hoveringStatesReducer, activePopUpsReducer, mapContourSettingsReducer, moleculeMapUpdateReducer,
+    activeModalsReducer, hoveringStatesReducer, mapContourSettingsReducer, moleculeMapUpdateReducer,
     sharedSessionReducer, refinementSettingsReducer, resetSceneSettings, resetBackupSettings, resetDefaultMouseSettings, 
     resetGeneralStates, resetHoveringStates, resetLabelSettings, resetMapContourSettings, resetMiscAppSettings, resetMoleculeMapUpdates,
-    resetRefinementSettings, resetShortcutSettings, resetActiveModals, focusOnModal, unFocusModal, resetActivePopUps,
-    resetSharedSession, loadSessionFromArrayBuffer
+    resetRefinementSettings, resetShortcutSettings, resetActiveModals, focusOnModal, unFocusModal, resetSharedSession, loadSessionFromArrayBuffer
 };

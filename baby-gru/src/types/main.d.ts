@@ -40,10 +40,7 @@ declare module 'moorhen' {
     
     let activeModalsReducer: any;
     module.exports = activeModalsReducer
-    
-    let activePopUpsReducer: any;
-    module.exports = activePopUpsReducer
-    
+
     let mapContourSettingsReducer: any;
     module.exports = mapContourSettingsReducer
     
@@ -714,9 +711,6 @@ declare module 'moorhen' {
     
     function unFocusModal(): any;
     module.exports = unFocusModal;
-    
-    function resetActivePopUps(): any;
-    module.exports = resetActivePopUps;
     
     function resetSharedSession(): any;
     module.exports = resetSharedSession;

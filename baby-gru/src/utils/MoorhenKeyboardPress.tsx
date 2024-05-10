@@ -14,7 +14,6 @@ import { setNotificationContent } from "../store/generalStatesSlice.js";
 import { setHoveredAtom } from "../store/hoveringStatesSlice.js";
 import { changeMapRadius } from "../store/mapContourSettingsSlice.js";
 import { triggerUpdate } from "../store/moleculeMapUpdateSlice.js";
-import { showGoToResiduePopUp } from "../store/activePopUpsSlice.js";
 import { EnqueueSnackbar } from "notistack";
 
 const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, dispatch: Dispatch<AnyAction>) => {

@@ -8,7 +8,6 @@ import { Backdrop } from "@mui/material";
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
 import { MoorhenModalsContainer } from './misc/MoorhenModalsContainer';
-import { MoorhenPopUpContainer } from './toasts/MoorhenPopUpContainer';
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
 import { MoorhenPreferencesContainer } from './misc/MoorhenPreferencesContainer';
@@ -29,6 +28,8 @@ import { MoorhenAcceptRejectMatchingLigandSnackBar } from './snack-bar/MoorhenAc
 import { MoorhenLongJobSnackBar } from './snack-bar/MoorhenLongJobSnackBar';
 import { MoorhenResidueStepsSnackBar } from './snack-bar/MoorhenResidueStepsSnackBar';
 import { MoorhenUpdatingMapsManager, MoorhenUpdatingMapsSnackBar } from './snack-bar/MoorhenUpdatingMapsSnackBar';
+import { MoorhenModelTrajectorySnackBar } from './snack-bar/MoorhenModelTrajectorySnackBar';
+import { MoorhenTomogramSnackBar } from './snack-bar/MoorhenTomogramSnackBar';
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -77,6 +78,17 @@ declare module "notistack" {
             glRef: React.RefObject<webGL.MGWebGL>;
             commandCentre: React.RefObject<moorhen.CommandCentre>;    
         };
+        modelTrajectory: {
+            commandCentre: React.RefObject<moorhen.CommandCentre>;
+            glRef: React.RefObject<webGL.MGWebGL>;
+            moleculeMolNo: number;
+            representationStyle: string;
+        };
+        tomogram: {
+            commandCentre: React.RefObject<moorhen.CommandCentre>;
+            glRef: React.RefObject<webGL.MGWebGL>;
+            mapMolNo: number;
+        }
     }
 }
   
@@ -432,7 +444,9 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             acceptRejectMatchingLigand: MoorhenAcceptRejectMatchingLigandSnackBar,
             longJobNotification: MoorhenLongJobSnackBar,
             residueSteps: MoorhenResidueStepsSnackBar,
-            updatingMaps: MoorhenUpdatingMapsSnackBar
+            updatingMaps: MoorhenUpdatingMapsSnackBar,
+            modelTrajectory: MoorhenModelTrajectorySnackBar,
+            tomogram: MoorhenTomogramSnackBar
         }}
         preventDuplicate={true}>
     <div>
@@ -446,8 +460,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     </div>
 
     <MoorhenModalsContainer {...collectedProps}/>
-
-    <MoorhenPopUpContainer {...collectedProps}/>
 
     <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange}/>
 

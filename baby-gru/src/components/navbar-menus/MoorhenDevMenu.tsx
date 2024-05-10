@@ -6,22 +6,31 @@ import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch } from "react-redux";
 import { setDoOutline, setDoShadow } from "../../store/sceneSettingsSlice";
 import { doDownload } from "../../utils/MoorhenUtils";
-import { setTomogramPopUpParams } from "../../store/activePopUpsSlice";
+import { useSnackbar } from "notistack";
 
 export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
+    
     const customCid = useRef<string>('')
+    
     const dispatch = useDispatch()
+    
     const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline)
 
     const menuItemProps = {setPopoverIsShown, customCid, ...props}
 
+    const { enqueueSnackbar } = useSnackbar()
+
     const tomogramTest = () => {
-        dispatch(setTomogramPopUpParams({
-            show: true,
-            mapMolNo: 0
-        }))
+        enqueueSnackbar("tomogram", {
+            variant: "tomogram",
+            persist: true,
+            commandCentre: props.commandCentre, 
+            glRef: props.glRef,
+            mapMolNo: 0,
+            anchorOrigin: { vertical: "bottom", horizontal: "center" }
+        })
     }
 
     const doTest = async () => {

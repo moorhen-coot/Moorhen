@@ -25,6 +25,8 @@ export const MoorhenSnackBarManager = (props: {
     const isRotatingAtoms = useSelector((state: moorhen.State) => state.generalStates.isRotatingAtoms)
     const isDraggingAtoms = useSelector((state: moorhen.State) => state.generalStates.isDraggingAtoms)
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
+    const isAnimatingTrajectory = useSelector((state: moorhen.State) => state.generalStates.isAnimatingTrajectory)
+    const isShowingTomograms = useSelector((state: moorhen.State) => state.generalStates.isShowingTomograms)
     
     const longJobSnackRef = useRef<SnackbarKey | null>(null)
 
@@ -34,6 +36,8 @@ export const MoorhenSnackBarManager = (props: {
             && props.commandCentre.current.activeMessages.length > 0 
             && props.commandCentre.current.activeMessages.some(item => messages.includes(item?.messageId))
             && longJobSnackRef.current === null
+            && !isAnimatingTrajectory
+            && !isShowingTomograms
         ) {
             longJobSnackRef.current = enqueueSnackbar("long-job-notification", {
                 variant: "longJobNotification",
@@ -49,7 +53,7 @@ export const MoorhenSnackBarManager = (props: {
             if (props.commandCentre.current?.activeMessages.length === 0) {
                 break
             }
-            if (i === 29 && longJobSnackRef.current === null) {
+            if (i === 29 && longJobSnackRef.current === null && !isAnimatingTrajectory && !isShowingTomograms) {
                 longJobSnackRef.current = enqueueSnackbar("long-job-notification", { 
                     variant: "longJobNotification",
                     persist: true,
@@ -57,7 +61,7 @@ export const MoorhenSnackBarManager = (props: {
                 })
             }
         }
-    }, [])
+    }, [isAnimatingTrajectory, isShowingTomograms])
 
     const debouncedClearBusy = useCallback(() => {
         if (props.commandCentre.current?.activeMessages.length === 0 && longJobSnackRef.current !== null) {

@@ -3,10 +3,10 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { Form, FormSelect } from "react-bootstrap";
 import { representationLabelMapping } from "../../utils/MoorhenUtils";
-import { setModelTrajectoryPopUpParams } from "../../store/activePopUpsSlice";
+import { useSnackbar } from "notistack";
 
 const animationRepresentations = [ 'CBs', 'CAs', 'CRs', 'gaussian', 'MolecularSurface', 'VdwSpheres' ]
 
@@ -17,13 +17,14 @@ export const MoorhenCalculateTrajectoryMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
-    const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const styleSelectRef = useRef<null | HTMLSelectElement>(null)
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
 
     const [representationStyle, setRepresentationStyle] = useState<string>("CBs")
+
+    const { enqueueSnackbar } = useSnackbar()
 
     const panelContent = <>
         <Form.Group style={{ margin: '0.5rem', width: '20rem' }}>
@@ -43,11 +44,15 @@ export const MoorhenCalculateTrajectoryMenuItem = (props: {
         }
         const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
         if (selectedMolecule) {
-            dispatch( setModelTrajectoryPopUpParams({
-                representationStyle: styleSelectRef.current.value,
+            enqueueSnackbar("model-trajectory", {
+                variant: "modelTrajectory",
+                persist: true,
+                glRef: props.glRef,
+                commandCentre: props.commandCentre,
                 moleculeMolNo: selectedMolecule.molNo,
-                show: true
-            }))
+                representationStyle: styleSelectRef.current.value,
+                anchorOrigin: { vertical: "bottom", horizontal: "center" }
+            })
         } else {
             console.warn(`Cannot find molecule with imol ${moleculeSelectRef.current.value}`)
         }
