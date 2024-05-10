@@ -162,7 +162,8 @@ export namespace moorhen {
         unhideAll(redraw?: boolean): Promise<void>;
         drawUnitCell(): void;
         gemmiAtomsForCid: (cid: string, omitExcludedCids?: boolean) => Promise<AtomInfo[]>;
-        mergeMolecules(otherMolecules: Molecule[], doHide?: boolean): Promise<void>;
+        mergeMolecules(otherMolecules: Molecule[], doHide?: boolean, doRedraw?: boolean): Promise<void>;
+        copyMolecule(doRedraw?: boolean): Promise<Molecule>;
         setBackgroundColour(backgroundColour: [number, number, number, number]): void;
         addDict(fileContent: string): Promise<void>;
         cacheLigandDict(fileContent: string): void;
@@ -466,6 +467,7 @@ export namespace moorhen {
         setupContourBuffers(objects: any[], keepCootColours?: boolean): void;
         setOtherMapForColouring(molNo: number, min?: number, max?: number): void;
         exportAsGltf(): Promise<ArrayBuffer>;
+        static autoReadMtz(source: File, commandCentre: React.RefObject<CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore): Promise<Map[]>;
         store: ToolkitStore;
         isEM: boolean;
         suggestedContourLevel: number;

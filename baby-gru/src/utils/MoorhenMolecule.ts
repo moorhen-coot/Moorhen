@@ -495,7 +495,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * Copy molecule into a new instance
      * @returns {moorhen.Molecule} New molecule instance
      */
-    async copyMolecule(): Promise<moorhen.Molecule> {
+    async copyMolecule(doRedraw: boolean = true): Promise<moorhen.Molecule> {
         let coordString = await this.getAtoms()
         let newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
         newMolecule.name = `${this.name}-placeholder`
@@ -515,8 +515,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         await this.transferLigandDicts(newMolecule)
         await newMolecule.fetchDefaultColourRules()
-        await newMolecule.fetchIfDirtyAndDraw('CBs')
-
+        if (doRedraw) {
+            await newMolecule.fetchIfDirtyAndDraw('CBs')
+        }
         return newMolecule
     }
 
@@ -1502,7 +1503,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {moorhen.Molecule} otherMolecules - A list of other molecules to merge into this instance
      * @param {boolean} [doHide=false] - Indicates whether the source molecules should be hidden when finish
      */
-    async mergeMolecules(otherMolecules: moorhen.Molecule[], doHide: boolean = false): Promise<void> {
+    async mergeMolecules(otherMolecules: moorhen.Molecule[], doHide: boolean = false, doRedraw: boolean = true): Promise<void> {
         try {
             const prevChainNames = this.getChainNames()
             await this.commandCentre.current.cootCommand({
@@ -1527,8 +1528,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 this.addColourRule('chain', `//${chainName}`, selectedColour, [`//${chainName}`, selectedColour])
             })
 
-            await this.redraw()
-
+            if (doRedraw) {
+                await this.redraw()
+            }
         } catch (err) {
             console.log(err)
         }

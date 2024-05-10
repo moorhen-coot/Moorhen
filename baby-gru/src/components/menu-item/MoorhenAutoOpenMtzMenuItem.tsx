@@ -8,7 +8,7 @@ import { webGL } from "../../types/mgWebGL"
 import { libcootApi } from "../../types/libcoot"
 import { useDispatch } from 'react-redux';
 import { setActiveMap } from "../../store/generalStatesSlice"
-import { addMap } from "../../store/mapsSlice"
+import { addMap, addMapList } from "../../store/mapsSlice"
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore"
 import { useSnackbar } from "notistack"
 
@@ -90,6 +90,14 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
             })
         )
 
+        const newMaps = await MoorhenMap.autoReadMtz(file, props.commandCentre, props.glRef, props.store)
+        
+        if (newMaps.length === 0) {
+            enqueueSnackbar('Error reading mtz file', {variant: 'warning'})
+        } else {
+            dispatch( addMapList(newMaps) )
+            dispatch( setActiveMap(newMaps[0]) )    
+        }
     }, [filesRef.current, props.commandCentre, props.glRef])
 
     return <MoorhenBaseMenuItem

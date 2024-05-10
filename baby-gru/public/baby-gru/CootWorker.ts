@@ -869,7 +869,7 @@ const simpleMeshToLineMeshData = (simpleMesh: libcootApi.SimpleMeshT, normalLigh
 
 }
 
-const auto_open_mtz = (mtzData: ArrayBufferLike) => {
+const auto_read_mtz = (mtzData: ArrayBufferLike) => {
     const theGuid = guid()
     const asUint8Array = new Uint8Array(mtzData)
     cootModule.FS_createDataFile(".", `${theGuid}.mtz`, asUint8Array, true, true);
@@ -1041,8 +1041,8 @@ const doCootCommand = (messageData: {
             case 'shim_read_mtz':
                 cootResult = read_mtz(...commandArgs as [ArrayBufferLike, string, { F: string; PHI: string; isDifference: boolean; }])
                 break
-            case 'shim_auto_open_mtz':
-                cootResult = auto_open_mtz(...commandArgs as [ArrayBuffer])
+            case 'shim_auto_read_mtz':
+                cootResult = auto_read_mtz(...commandArgs as [ArrayBuffer])
                 break
             case 'shim_read_ccp4_map':
                 cootResult = read_ccp4_map(...commandArgs as [ArrayBuffer, string, boolean])

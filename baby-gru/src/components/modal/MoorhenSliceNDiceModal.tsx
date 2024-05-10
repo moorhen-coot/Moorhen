@@ -365,25 +365,21 @@ export const MoorhenSliceNDiceModal = (props: {
         props.setShow(false)
     }, [slicingResults, molecules])
 
-    const handleDownload = useCallback(async (doEnsemble: boolean = false) => {
+    const handleDownload = useCallback(async (mergeSlices: boolean = false) => {
         if (slicingResults?.length > 0) {
             await Promise.all(slicingResults.map(fragmentMolecule => {
                 return deleteHiddenResidues(fragmentMolecule)
             }))
-            if (doEnsemble) {
-                const result = await props.commandCentre.current.cootCommand({
-                    command: 'make_ensemble',
-                    commandArgs: [slicingResults.map(sliceMolecule => sliceMolecule.molNo).join(":")],
-                    returnType: 'int'
-                }, false) as moorhen.WorkerResponse<number>
-                if (result.data.result.result !== -1) {
-                    const ensembleMolecule = new MoorhenMolecule(props.commandCentre, null, null)
-                    ensembleMolecule.name = 'ensemble'
-                    ensembleMolecule.molNo = result.data.result.result
-                    await ensembleMolecule.downloadAtoms()    
-                } else {
-                    console.warn('Something went wrong creating the ensemble...')
-                }
+            if (mergeSlices) {
+                const moleculeCopy = await slicingResults[0].copyMolecule(false)
+                await props.commandCentre.current.cootCommand({
+                    command: 'merge_molecules',
+                    commandArgs: [moleculeCopy.molNo, slicingResults.map(sliceMolecule => sliceMolecule.molNo).slice(1).join(':')],
+                    returnType: "merge_molecules_return",    
+                })
+                moleculeCopy.name = 'slices'
+                await moleculeCopy.downloadAtoms()
+                await moleculeCopy.delete(true)
             } else {
                 await Promise.all(
                     slicingResults.map(sliceMolecule => sliceMolecule.downloadAtoms())
@@ -546,7 +542,7 @@ export const MoorhenSliceNDiceModal = (props: {
         <Stack gap={2} direction='horizontal' style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
             <SplitButton id='download-slice-n-dice' variant="primary" title="Download all" onClick={() => handleDownload()}>
                 <Dropdown.Item eventKey="1" onClick={() => handleDownload()}>As individual files</Dropdown.Item>
-                <Dropdown.Item eventKey="2" onClick={() => handleDownload(true)}>As an ensemble</Dropdown.Item>
+                <Dropdown.Item eventKey="2" onClick={() => handleDownload(true)}>As a single file</Dropdown.Item>
             </SplitButton>
         </Stack>
         <Stack gap={2} direction='horizontal' style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
