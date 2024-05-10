@@ -31,6 +31,7 @@ import { MoorhenUpdatingMapsManager, MoorhenUpdatingMapsSnackBar } from './snack
 import { MoorhenModelTrajectorySnackBar } from './snack-bar/MoorhenModelTrajectorySnackBar';
 import { MoorhenTomogramSnackBar } from './snack-bar/MoorhenTomogramSnackBar';
 import { MoorhenMapContourLevelSnackBar } from './snack-bar/MoorhenMapContourLevelSnackBar';
+import { MoorhenRotamerChangeSnackBar } from './snack-bar/MoorhenRotamerChangeSnackbar';
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -93,6 +94,12 @@ declare module "notistack" {
         mapContourLevel: {
             mapMolNo: number;
         };
+        rotamerChange: {
+            moleculeMolNo: number;
+            chosenAtom: moorhen.ResidueSpec;
+            commandCentre: React.RefObject<moorhen.CommandCentre>;
+            glRef: React.RefObject<webGL.MGWebGL>;
+        }
     }
 }
   
@@ -451,6 +458,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             modelTrajectory: MoorhenModelTrajectorySnackBar,
             tomogram: MoorhenTomogramSnackBar,
             mapContourLevel: MoorhenMapContourLevelSnackBar,
+            rotamerChange: MoorhenRotamerChangeSnackBar
         }}
         preventDuplicate={true}>
     <div>
