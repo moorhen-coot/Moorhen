@@ -28,6 +28,7 @@ import { MoorhenAcceptRejectRotateTranslateSnackBar } from './snack-bar/MoorhenA
 import { MoorhenAcceptRejectMatchingLigandSnackBar } from './snack-bar/MoorhenAcceptRejectMatchingLigandSnackBar';
 import { MoorhenLongJobSnackBar } from './snack-bar/MoorhenLongJobSnackBar';
 import { MoorhenResidueStepsSnackBar } from './snack-bar/MoorhenResidueStepsSnackBar';
+import { MoorhenUpdatingMapsManager, MoorhenUpdatingMapsSnackBar } from './snack-bar/MoorhenUpdatingMapsSnackBar';
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -51,7 +52,7 @@ declare module "notistack" {
             moleculeRef: React.RefObject<moorhen.Molecule>;
             cidRef: React.RefObject<string>;
             glRef: React.RefObject<webGL.MGWebGL>;    
-        }
+        };
         acceptRejectMatchingLigand: {
             refMolNo: number;
             movingMolNo: number;
@@ -71,7 +72,11 @@ declare module "notistack" {
             onProgress?: (progress: number) => void;
             disableTimeCapsule?: boolean
             sleepTime?: number;    
-        }
+        };
+        updatingMaps: {
+            glRef: React.RefObject<webGL.MGWebGL>;
+            commandCentre: React.RefObject<moorhen.CommandCentre>;    
+        };
     }
 }
   
@@ -414,8 +419,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     return <SnackbarProvider 
         hideIconVariant={false}
-        autoHideDuration={5000}
-        maxSnack={5}
+        autoHideDuration={4000}
+        maxSnack={10}
         anchorOrigin={{horizontal: 'center', vertical: 'top'}}
         transitionDuration={ { enter: 500, exit: 300 }}
         Components={{
@@ -427,6 +432,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             acceptRejectMatchingLigand: MoorhenAcceptRejectMatchingLigandSnackBar,
             longJobNotification: MoorhenLongJobSnackBar,
             residueSteps: MoorhenResidueStepsSnackBar,
+            updatingMaps: MoorhenUpdatingMapsSnackBar
         }}
         preventDuplicate={true}>
     <div>
@@ -446,6 +452,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange}/>
 
     <MoorhenSnackBarManager {...collectedProps}/>
+
+    <MoorhenUpdatingMapsManager commandCentre={props.commandCentre} glRef={props.glRef}/>
 
     {/**
     <MoorhenSharedSessionManager

@@ -979,6 +979,8 @@ export namespace moorhen {
             defaultUpdatingScores: string[];
             showScoresToast: boolean;
             moleculeUpdate: { switch: boolean, molNo: number };
+            currentScores: { rFactor: number; rFree: number; moorhenPoints: number; };
+            currentScoreDiffs: { rFactor: number; rFree: number; moorhenPoints: number; };
         };
         refinementSettings: {
             useRamaRefinementRestraints: boolean;

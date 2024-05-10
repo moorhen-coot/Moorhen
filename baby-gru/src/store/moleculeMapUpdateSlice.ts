@@ -11,12 +11,27 @@ const initialState = {
     defaultUpdatingScores: null,
     showScoresToast: null,
     moleculeUpdate: { switch: false, molNo: null },
+    currentScores: { rFactor: null, rFree: null, moorhenPoints: null },
+    currentScoreDiffs: { rFactor: null, rFree: null, moorhenPoints: null }
 }
 
 export const moleculeMapUpdateSlice = createSlice({
   name: 'moleculeMapUpdateSlice',
   initialState: initialState,
   reducers: {
+    setCurrentScores: (state, action: {payload: { rFactor: number; rFree: number; moorhenPoints: number; }, type: string}) => {
+        return { 
+            ...state,
+            currentScores: { 
+                ...action.payload
+            },
+            currentScoreDiffs: {
+                rFactor: state.currentScores.rFactor === null ? action.payload.rFactor : action.payload.rFactor - state.currentScores.rFactor,
+                rFree: state.currentScores.rFree === null ? action.payload.rFree : action.payload.rFree - state.currentScores.rFree,
+                moorhenPoints: state.currentScores.moorhenPoints === null ? action.payload.moorhenPoints : action.payload.moorhenPoints - state.currentScores.moorhenPoints,
+            }
+         }
+    },
     resetMoleculeMapUpdates: (state) => {
         return initialState
     },
@@ -105,7 +120,7 @@ export const moleculeMapUpdateSlice = createSlice({
 
 export const {
     setConnectedMolecule, enableUpdatingMaps, disableUpdatingMaps, setReflectionMap,
-    setFoFcMap, setTwoFoFcMap, setReflectionMapMolNo, overwriteMapUpdatingScores,
+    setFoFcMap, setTwoFoFcMap, setReflectionMapMolNo, overwriteMapUpdatingScores, setCurrentScores,
     setConnectedMoleculeMolNo, setFoFcMapMolNo, setTwoFoFcMapMolNo, removeMapUpdatingScore,
     setShowScoresToast, addMapUpdatingScore, triggerUpdate, resetMoleculeMapUpdates
 } = moleculeMapUpdateSlice.actions
