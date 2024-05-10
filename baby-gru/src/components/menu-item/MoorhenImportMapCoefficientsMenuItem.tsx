@@ -6,7 +6,7 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL"
 import { batch, useDispatch, useSelector } from 'react-redux';
-import { setActiveMap, setNotificationContent } from "../../store/generalStatesSlice"
+import { setActiveMap } from "../../store/generalStatesSlice"
 import { addMap } from "../../store/mapsSlice"
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore"
 import { useSnackbar } from "notistack"

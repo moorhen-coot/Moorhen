@@ -12,9 +12,8 @@ import { MoorhenSlider } from "../misc/MoorhenSlider";
 import { Accordion, AccordionDetails, AccordionSummary, IconButton, MenuItem, Popover, Tooltip, hexToRgb } from "@mui/material"
 import { HexColorInput, RgbColorPicker } from "react-colorful"
 import { moorhen } from "../../types/moorhen"
-import { MoorhenNotification } from "../misc/MoorhenNotification"
 import { useSelector, useDispatch, batch } from 'react-redux';
-import { setActiveMap, setNotificationContent } from "../../store/generalStatesSlice";
+import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMap } from "../../store/mapsSlice";
 import { hideMap, setContourLevel, changeContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle, setNegativeMapColours, setPositiveMapColours, showMap, changeMapRadius } from "../../store/mapContourSettingsSlice";
 

@@ -6,7 +6,6 @@ const initialState = {
   userPreferencesMounted: false,
   appTitle: 'Moorhen',
   cootInitialized: false,
-  notificationContent: null,
   activeMap: null,
   theme: 'flatly',
   viewOnly: false,
@@ -57,9 +56,6 @@ export const generalStatesSlice = createSlice({
     setTheme: (state, action: {payload: string, type: string}) => {
       return {...state, theme: action.payload}
     },
-    setNotificationContent: (state, action: {payload: JSX.Element, type: string}) => {
-      return {...state, notificationContent: action.payload}
-    },
     setViewOnly: (state, action: {payload: boolean, type: string}) => {
       return {...state, viewOnly: action.payload}
     },
@@ -103,7 +99,7 @@ export const generalStatesSlice = createSlice({
 }})
 
 export const {
-  setNotificationContent, setActiveMap, setViewOnly, setTheme, setIsDraggingAtoms,
+  setActiveMap, setViewOnly, setTheme, setIsDraggingAtoms,
   setAppTittle, setUserPreferencesMounted, setDevMode, setCootInitialized, 
   setStopResidueSelection, setStartResidueSelection, clearResidueSelection,
   setMoleculeResidueSelection, setResidueSelection, setCidResidueSelection,

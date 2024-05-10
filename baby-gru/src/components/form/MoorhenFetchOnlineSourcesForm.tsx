@@ -2,9 +2,7 @@ import { Form, Button, InputGroup, SplitButton, Dropdown } from "react-bootstrap
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { useState, useRef } from "react";
-import { WarningOutlined } from "@mui/icons-material";
 import { getMultiColourRuleArgs, guid } from "../../utils/MoorhenUtils";
-import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch, batch } from 'react-redux';
 import { setActiveMap } from "../../store/generalStatesSlice";
@@ -40,14 +38,6 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
     const { enqueueSnackbar } = useSnackbar()
 
     const { commandCentre, glRef, monomerLibraryPath, store } = props;
-
-    const getWarningToast = (message: string) => <MoorhenNotification key={guid()} hideDelay={3000} width={20}>
-        <><WarningOutlined style={{ margin: 0 }} />
-            <h4 className="moorhen-warning-toast">
-                {message}
-            </h4>
-            <WarningOutlined style={{ margin: 0 }} /></>
-    </MoorhenNotification>
 
     const fetchFiles = (): void => {
         if (pdbCodeFetchInputRef.current.value === "") {

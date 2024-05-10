@@ -552,9 +552,6 @@ declare module 'moorhen' {
     function setBackgroundColor(arg0: [number, number, number, number]): any;
     module.exports = setBackgroundColor;
 
-    function setNotificationContent(arg0: JSX.Element): any;
-    module.exports = setNotificationContent;
-
     function setActiveMap(arg0: _moorhen.Map): any;
     module.exports = setActiveMap;
 

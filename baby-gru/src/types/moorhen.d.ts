@@ -897,7 +897,6 @@ export namespace moorhen {
             userPreferencesMounted: boolean;
             appTitle: string;
             cootInitialized: boolean;
-            notificationContent: JSX.Element;
             activeMap: Map;
             theme: string;
             residueSelection: ResidueSelection;

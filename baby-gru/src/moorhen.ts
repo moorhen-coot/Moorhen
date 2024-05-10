@@ -24,7 +24,7 @@ import { setDefaultBackgroundColor, setDrawCrosshairs, setDrawFPS, setDrawMissin
 } from './store/sceneSettingsSlice';
 import { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold, resetBackupSettings } from './store/backupSettingsSlice';
 import { 
-    setNotificationContent, setActiveMap, setCootInitialized, setAppTittle, 
+    setActiveMap, setCootInitialized, setAppTittle, 
     setUserPreferencesMounted, setDevMode, setTheme, setViewOnly, resetGeneralStates
  } from './store/generalStatesSlice';
 import { addMap, addMapList, removeMap, emptyMaps } from "./store/mapsSlice";
@@ -66,7 +66,7 @@ export {
     setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap, MoorhenColourRule,
     setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius,
     setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, 
-    setModificationCountBackupThreshold, setHeight, setWidth, setIsDark, setBackgroundColor, setNotificationContent, 
+    setModificationCountBackupThreshold, setHeight, setWidth, setIsDark, setBackgroundColor, 
     setActiveMap, setCootInitialized, setAppTittle, setUserPreferencesMounted, setDevMode, setTheme, setViewOnly,
     setCursorStyle, setEnableAtomHovering, setHoveredAtom, addAvailableFontList, setAtomLabelDepthMode, 
     setGLLabelsFontFamily, setGLLabelsFontSize, setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, 

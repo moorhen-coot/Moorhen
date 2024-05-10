@@ -162,7 +162,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
-    const notificationContent = useSelector((state: moorhen.State) => state.generalStates.notificationContent)
     const userPreferencesMounted = useSelector((state: moorhen.State) => state.generalStates.userPreferencesMounted)
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops)
     const defaultMapSamplingRate = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapSamplingRate)
@@ -504,7 +503,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 </div>
             </Col>
         </Row>
-        {notificationContent}
     </Container>
     </SnackbarProvider>
 }
