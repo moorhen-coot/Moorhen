@@ -16,6 +16,7 @@ import { useSelector, useDispatch, batch } from 'react-redux';
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMap } from "../../store/mapsSlice";
 import { hideMap, setContourLevel, changeContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle, setNegativeMapColours, setPositiveMapColours, showMap, changeMapRadius } from "../../store/mapContourSettingsSlice";
+import { useSnackbar } from "notistack";
 
 type ActionButtonType = {
     label: string;
@@ -145,7 +146,6 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const contourWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.contourWheelSensitivityFactor)
     const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.miscAppSettings.defaultExpandDisplayCards)
     const mapIsVisible = useSelector((state: moorhen.State) => state.mapContourSettings.visibleMaps.includes(props.map.molNo))
-    const dispatch = useDispatch()
 
     const [isCollapsed, setIsCollapsed] = useState<boolean>(!defaultExpandDisplayCards);
     const [currentName, setCurrentName] = useState<string>(props.map.name);
@@ -159,6 +159,10 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const isDirty = useRef<boolean>(false)
     const histogramRef = useRef(null)
     const intervalRef = useRef(null)
+
+    const dispatch = useDispatch()
+
+    const { enqueueSnackbar } = useSnackbar()
 
     useImperativeHandle(cardRef, () => ({
         forceIsCollapsed: (value: boolean) => { 
@@ -343,15 +347,11 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             }
             batch(() => {
                 dispatch( setContourLevel({ molNo: props.map.molNo, contourLevel: newMapContourLevel }) )
-                dispatch(setNotificationContent(
-                    <MoorhenNotification key={guid()} hideDelay={5000}>
-                    <h5 style={{margin: 0}}>
-                        <span>
-                            {`Level: ${newMapContourLevel.toFixed(2)} ${props.map.mapRmsd ? '(' + (newMapContourLevel / props.map.mapRmsd).toFixed(2) + ' rmsd)' : ''}`}
-                        </span>
-                    </h5>
-                    </MoorhenNotification>
-                ))
+                enqueueSnackbar(`map-${props.map.molNo}-contour-lvl-change`, {
+                    variant: "mapContourLevel",
+                    persist: true,
+                    mapMolNo: props.map.molNo
+                })
             })
         }
     }, [mapContourLevel, mapRadius, activeMap?.molNo, props.map.molNo, mapIsVisible])
