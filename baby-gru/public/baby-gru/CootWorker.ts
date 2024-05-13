@@ -3,9 +3,9 @@ import { emscriptem } from "../../src/types/emscriptem"
 import { privateer } from "../../src/types/privateer";
 
 // @ts-ignore
-importScripts('./wasm/moorhen.js')
+importScripts('./moorhen.js')
 // @ts-ignore
-importScripts('./wasm/web_example.js')
+importScripts('./web_example.js')
 
 let cootModule: libcootApi.CootModule;
 let molecules_container: libcootApi.MoleculesContainerJS;
@@ -1203,7 +1203,6 @@ const doCootCommand = (messageData: {
 onmessage = function (e) {
     if (e.data.message === 'CootInitialize') {
         createRSRModule({
-            locateFile: (file) => `./wasm/${file}`,
             onRuntimeInitialized: () => { },
             mainScriptUrlOrBlob: "moorhen.js",
             print: print,
@@ -1228,7 +1227,6 @@ onmessage = function (e) {
             });
         
         createCCP4Module({
-            locateFile: (file) => `./wasm/${file}`,
             onRuntimeInitialized: () => { },
             mainScriptUrlOrBlob: "web_example.js",
             print: print,
