@@ -586,3 +586,8 @@ baby-gru/docs/
 baby-gru/src/version.js
 react-app/public/wasm/web_example.js
 baby-gru/src/protobuf/MoorhenSession.js
+baby-gru/public/baby-gru/coot_env_web.js
+baby-gru/public/baby-gru/moorhen.data
+baby-gru/public/baby-gru/moorhen.worker.js
+baby-gru/public/baby-gru/web_example.js
+baby-gru/public/baby-gru/moorhen.js
