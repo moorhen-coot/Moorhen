@@ -1,8 +1,9 @@
 import { MoorhenMolecule } from "../../tsDist/src/utils/MoorhenMolecule"
 import { MockMoorhenCommandCentre } from "../__mocks__/mockMoorhenCommandCentre"
+import { MoorhenReduxStore } from "../../tsDist/src/store/MoorhenReduxStore"
 import { MockWebGL } from "../__mocks__/mockWebGL"
-import { getAtomInfoLabel } from "../../tsDist/src/utils/MoorhenUtils";
-import fetch from 'node-fetch';
+import { getAtomInfoLabel } from "../../tsDist/src/utils/MoorhenUtils"
+import fetch from 'node-fetch'
 
 jest.setTimeout(60000)
 
@@ -78,14 +79,14 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test loadToCootFromURL", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
         expect(molecule.molNo).toBe(0)
     })
 
     test("Test guessCoordFormat pdb", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         expect(molecule.coordsFormat).toBe(null)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
         expect(molecule.coordsFormat).toBe('pdb')
@@ -93,7 +94,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test guessCoordFormat mmcif", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.mmcif')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         expect(molecule.coordsFormat).toBe(null)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
         expect(molecule.coordsFormat).toBe('mmcif')
@@ -101,7 +102,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test guessCoordFormat ligandCif", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', 'LZA.cif')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         expect(molecule.coordsFormat).toBe(null)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
         expect(molecule.coordsFormat).toBe('mmcif')
@@ -109,7 +110,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test delete", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
         await molecule.delete()
         const isValid = molecules_container.is_valid_model_molecule(molecule.molNo)
@@ -118,7 +119,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test get_atoms pdb", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
         const coordData = await molecule.getAtoms()
         expect(coordData).toHaveLength(258718)
@@ -126,7 +127,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test get_atoms mmcif", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.mmcif')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
         const coordData = await molecule.getAtoms()
         expect(coordData).toHaveLength(278727)
@@ -134,13 +135,13 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test get_number_of_atoms", async () => {
         // pdb
-        const molecule_pdb = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule_pdb = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule_pdb.loadToCootFromURL(path.join(__dirname, '..', 'test_data', '5a3h.pdb'), 'mol-test')
         expect(molecule_pdb.atomCount).toBe(2765)
         const atomCount_pdb = await molecule_pdb.getNumberOfAtoms()
         expect(atomCount_pdb).toBe(2765)
         // mmcif
-        const molecule_mmcif = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule_mmcif = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule_mmcif.loadToCootFromURL(path.join(__dirname, '..', 'test_data', '5a3h.mmcif'), 'mol-test')
         expect(molecule_mmcif.atomCount).toBe(atomCount_pdb)
         const atomCount_mmcif = await molecule_mmcif.getNumberOfAtoms()
@@ -151,12 +152,12 @@ describe("Testing MoorhenMolecule", () => {
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
         const fileUrl_2 = path.join(__dirname, '..', 'test_data', '5fjj.pdb')
 
-        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule_1.loadToCootFromURL(fileUrl_1, 'mol-test')
         await molecule_1.replaceModelWithFile(fileUrl_2, 'mol-test')
         const coordData_1 = await molecule_1.getAtoms()
 
-        const molecule_2 = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule_2 = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule_2.loadToCootFromURL(fileUrl_2, 'mol-test')
         const coordData_2 = await molecule_2.getAtoms()
 
@@ -165,7 +166,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test copyMolecule", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule_1.loadToCootFromURL(fileUrl, 'mol-test')
         const coordData_1 = await molecule_1.getAtoms()
 
@@ -178,7 +179,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test copyFragmentUsingCid", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule_1.loadToCootFromURL(fileUrl, 'mol-test')
         const molecule_2 = await molecule_1.copyFragmentUsingCid("//A/32-33/*", false)
         const atomCount = molecules_container.get_number_of_atoms(molecule_2.molNo)
@@ -189,7 +190,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test mergeMolecules", async () => {
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
-        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule_1.loadToCootFromURL(fileUrl_1, 'mol-test')
         const atom_count_1 = molecules_container.get_number_of_atoms(molecule_1.molNo)
 
@@ -208,7 +209,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test addLigandOfType", async () => {
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
         const atom_count_1 = molecules_container.get_number_of_atoms(molecule.molNo)
 
@@ -230,7 +231,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test loadMissingMonomers", async () => {
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         const f_1 = jest.spyOn(molecule, 'loadMissingMonomers')
         const f_2 = jest.spyOn(molecule, 'loadMissingMonomer')
         await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
@@ -241,7 +242,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test gemmiAtomsForCid 1 -pdb", async () => {
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         const f = jest.spyOn(molecule, 'updateAtoms')
         await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
         molecule.setAtomsDirty(true)
@@ -254,7 +255,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test gemmiAtomsForCid 1 -mmcif", async () => {
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.mmcif')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         const f = jest.spyOn(molecule, 'updateAtoms')
         await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
         molecule.setAtomsDirty(true)
@@ -267,7 +268,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test gemmiAtomsForCid 2 -pdb", async () => {
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         const f = jest.spyOn(molecule, 'updateAtoms')
         await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
         molecule.setAtomsDirty(true)
@@ -294,7 +295,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test gemmiAtomsForCid 2 -mmcif", async () => {
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.mmcif')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         const f = jest.spyOn(molecule, 'updateAtoms')
         await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
         molecule.setAtomsDirty(true)
@@ -321,7 +322,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test gemmiAtomsForCid 3", async () => {
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         const f = jest.spyOn(molecule, 'updateAtoms')
         await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
         molecule.setAtomsDirty(true)
@@ -334,7 +335,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test gemmiAtomsForCid 4", async () => {
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         const f = jest.spyOn(molecule, 'updateAtoms')
         await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
         molecule.setAtomsDirty(true)
@@ -381,7 +382,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test gemmiAtomsForCid 5", async () => {
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         const f = jest.spyOn(molecule, 'updateAtoms')
         await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
         molecule.setAtomsDirty(true)
@@ -419,7 +420,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test getNonSelectedCids 1", async () => {
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
         molecule.setAtomsDirty(true)
         await molecule.updateAtoms()
@@ -429,7 +430,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test getNonSelectedCids 2", async () => {
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
         molecule.setAtomsDirty(true)
         await molecule.updateAtoms()
@@ -440,7 +441,7 @@ describe("Testing MoorhenMolecule", () => {
     test("Test getNonSelectedCids 3", async () => {
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
 
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
         molecule.setAtomsDirty(true)
         await molecule.updateAtoms()
@@ -451,7 +452,7 @@ describe("Testing MoorhenMolecule", () => {
     test("Test getNonSelectedCids 4", async () => {
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
 
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
         molecule.setAtomsDirty(true)
         await molecule.updateAtoms()
@@ -462,7 +463,7 @@ describe("Testing MoorhenMolecule", () => {
     test("Test getNonSelectedCids 5", async () => {
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
 
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl_1, 'mol-test')
         molecule.setAtomsDirty(true)
         await molecule.updateAtoms()
@@ -473,7 +474,7 @@ describe("Testing MoorhenMolecule", () => {
     test("Test parseSequences pdb", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
 
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
         expect(molecule.sequences).toHaveLength(1)
         
@@ -497,7 +498,7 @@ describe("Testing MoorhenMolecule", () => {
     test("Test parseSequences mmcif", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.mmcif')
 
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
         expect(molecule.sequences).toHaveLength(1)
         
@@ -521,7 +522,7 @@ describe("Testing MoorhenMolecule", () => {
     test("Test updateAtoms pdb", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
 
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
         
         const sequence_1 = molecule.sequences.find(seq => seq.chain === 'A')
@@ -539,7 +540,7 @@ describe("Testing MoorhenMolecule", () => {
     test("Test updateAtoms mmcif", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.mmcif')
 
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
         
         const sequence_1 = molecule.sequences.find(seq => seq.chain === 'A')
@@ -557,7 +558,7 @@ describe("Testing MoorhenMolecule", () => {
     test("Test getNeighborResiduesCids 1", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
 
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
         
         const result = await molecule.getNeighborResiduesCids('//A/33/CA', 3)
@@ -567,7 +568,7 @@ describe("Testing MoorhenMolecule", () => {
     test("Test getNeighborResiduesCids 2", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
 
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
         
         const result = await molecule.getNeighborResiduesCids('//A/188/CA', 7)
@@ -594,7 +595,7 @@ describe("Testing MoorhenMolecule", () => {
     test("Test getNeighborResiduesCids 3", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
 
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
         
         const result = await molecule.getNeighborResiduesCids('//A/30-33/CA', 5)
@@ -609,7 +610,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test getResidueBFactors", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
 
         const bFactors = molecule.getResidueBFactors()
@@ -625,7 +626,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test checkIsLigand pdb", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
         expect(molecule.isLigand).toBeFalsy()
 
@@ -641,7 +642,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test checkIsLigand mmcif", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.mmcif')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test')
         expect(molecule.isLigand).toBeFalsy()
 
@@ -725,7 +726,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test hideCid 1", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule_1.loadToCootFromURL(fileUrl, 'mol-test-1')
         expect(molecule_1.molNo).toBe(0)
         await molecule_1.hideCid("A/32/*")
@@ -735,7 +736,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test hideCid 2", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule_1.loadToCootFromURL(fileUrl, 'mol-test-1')
         expect(molecule_1.molNo).toBe(0)
         await molecule_1.hideCid("A/32-33/*")
@@ -745,7 +746,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test hideCid 3", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule_1.loadToCootFromURL(fileUrl, 'mol-test-1')
         expect(molecule_1.molNo).toBe(0)
         await molecule_1.hideCid("A/32-33/*||//A/1-2")
@@ -755,7 +756,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test hideCid 4", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule_1.loadToCootFromURL(fileUrl, 'mol-test-1')
         expect(molecule_1.molNo).toBe(0)
         await molecule_1.hideCid("A/32-33/*")
@@ -766,7 +767,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test.skip("Test hideCid 5", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule_1.loadToCootFromURL(fileUrl, 'mol-test-1')
         expect(molecule_1.molNo).toBe(0)
         await molecule_1.hideCid("A/32-33/*")
@@ -799,7 +800,7 @@ describe("Testing MoorhenMolecule", () => {
         expect(instancedMesh_1.data.result.result.instance_orientations).toEqual(instancedMesh_2.data.result.result.instance_orientations)
         expect(instancedMesh_1.data.result.result.instance_sizes).toEqual(instancedMesh_2.data.result.result.instance_sizes)
 
-        const molecule_2 = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule_2 = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule_2.loadToCootFromURL(fileUrl, 'mol-test-2')
         expect(molecule_2.molNo).toBe(1)
         const result_cid = molecules_container.delete_using_cid(molecule_2.molNo, "A/32-33/*", "LITERAL")
@@ -843,7 +844,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test hasDNA pdb", async () => {
         const fileUrl = path.join('https://files.rcsb.org/download/3L1P.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
         expect(molecule.molNo).toBe(0)
         expect(molecule.hasDNA).toBeTruthy()
@@ -851,7 +852,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test hasDNA mmcif", async () => {
         const fileUrl = path.join('https://files.rcsb.org/download/3L1P.cif')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
         expect(molecule.molNo).toBe(0)
         expect(molecule.hasDNA).toBeTruthy()
@@ -859,7 +860,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test hasGlycans", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
         expect(molecule.hasGlycans).toBeFalsy()
         await molecule.addLigandOfType('NAG')
@@ -868,7 +869,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test parseCidIntoSelection", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
         const newSelection = await molecule.parseCidIntoSelection("//A/1-10")
         expect(newSelection.label).toBe('//A/1-10')
@@ -880,7 +881,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test parseCidIntoSelection --multiCid", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
         const newSelection = await molecule.parseCidIntoSelection("//A/1-10||//A/15-20")
         expect(newSelection.label).toBe('//A/1-10||//A/15-20')
@@ -892,7 +893,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test isValidSelection", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
         const isValid = await molecule.isValidSelection("//A/15-20")
         expect(isValid).toBeTruthy()
@@ -900,7 +901,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test isValidSelection --falsy", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
         const isValid = await molecule.isValidSelection("//X/1-10")
         expect(isValid).toBeFalsy()
@@ -908,7 +909,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test isValidSelection --multiCid", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
         const isValid = await molecule.isValidSelection("//A/1-10||//A/15-20")
         expect(isValid).toBeTruthy()
@@ -916,7 +917,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test changeChainId", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
 
         const status = await molecule.changeChainId('A', 'X', false)
@@ -932,7 +933,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test getPrivateerValidation --cache", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5fjj.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
         expect(molecule.cachedPrivateerValidation).toBe(null)
 
@@ -946,7 +947,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test getLigandSVG --cache", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
         expect(molecule.cachedLigandSVGs).toBe(null)
 
@@ -958,7 +959,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test addDict", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
-        const molecule = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
 
         const fileName = path.join(__dirname, '..', 'test_data', 'benzene.cif')
@@ -971,7 +972,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test transferLigandDicts", async () => {
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule_1.loadToCootFromURL(fileUrl_1, 'mol-test-1')
 
         const ligandFileName_1 = path.join(__dirname, '..', 'test_data', 'benzene.cif')
@@ -979,7 +980,7 @@ describe("Testing MoorhenMolecule", () => {
         await molecule_1.addDict(ligandFileContents_1)
 
         const fileUrl_2 = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
-        const molecule_2 = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule_2 = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule_2.loadToCootFromURL(fileUrl_2, 'mol-test-1')
 
         const ligandFileName_2 = path.join(__dirname, '..', 'test_data', 'benzene.cif')
@@ -995,7 +996,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("Test transferLigandDicts --override", async () => {
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h.pdb')
-        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule_1.loadToCootFromURL(fileUrl_1, 'mol-test-1')
 
         const ligandFileName_1 = path.join(__dirname, '..', 'test_data', 'benzene.cif')
@@ -1003,7 +1004,7 @@ describe("Testing MoorhenMolecule", () => {
         await molecule_1.addDict(ligandFileContents_1)
 
         const fileUrl_2 = path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb')
-        const molecule_2 = new MoorhenMolecule(commandCentre, glRef, mockMonomerLibraryPath)
+        const molecule_2 = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule_2.loadToCootFromURL(fileUrl_2, 'mol-test-1')
 
         const ligandFileName_2 = path.join(__dirname, '..', 'test_data', 'benzene.cif')
