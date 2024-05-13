@@ -1,17 +1,16 @@
-import { List, ListItem } from "@mui/material"
-import { cidToSpec, getCentreAtom, guid } from "./MoorhenUtils.js"
+import { cidToSpec, getCentreAtom } from "./MoorhenUtils"
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
-import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4.js';
-import { getDeviceScale } from '../WebGLgComponents/mgWebGL.js';
-import { vec3Create } from '../WebGLgComponents/mgMaths.js';
-import { moorhen } from "../types/moorhen.js";
-import { webGL } from "../types/mgWebGL.js";
+import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4';
+import { getDeviceScale } from '../WebGLgComponents/mgWebGL';
+import { vec3Create } from '../WebGLgComponents/mgMaths';
+import { moorhen } from "../types/moorhen";
+import { webGL } from "../types/mgWebGL";
 import { Dispatch } from "react";
 import { AnyAction } from "@reduxjs/toolkit";
-import { setHoveredAtom } from "../store/hoveringStatesSlice.js";
-import { changeMapRadius } from "../store/mapContourSettingsSlice.js";
-import { triggerUpdate } from "../store/moleculeMapUpdateSlice.js";
+import { setHoveredAtom } from "../store/hoveringStatesSlice";
+import { changeMapRadius } from "../store/mapContourSettingsSlice";
+import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
 import { EnqueueSnackbar } from "notistack";
 
 const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, dispatch: Dispatch<AnyAction>) => {
