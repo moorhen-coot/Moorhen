@@ -3,7 +3,7 @@ jest.setTimeout(40000)
 
 const fs = require('fs')
 const path = require('path')
-const createCootModule = require('../../public/baby-gru/wasm/moorhen')
+const createCootModule = require('../../public/baby-gru/moorhen')
 
 let cootModule;
 let cleanUpVariables = []
@@ -334,7 +334,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(codes)
     })
 
-    test.skip('Test Auto-fit rotamer', () => {
+    test.skip('Test auto_fit_rotamer', () => {
         molecules_container.geometry_init_standard()
         const imol = molecules_container.read_pdb('./tm-A.pdb')
         const imol_map = molecules_container.read_mtz("./rnasa-1.8-all_refmac1.mtz", "FWT", "PHWT", "W", false, false)
@@ -350,6 +350,30 @@ describe('Testing molecules_container_js', () => {
         const d = Math.sqrt(dd)
         expect(d).toBeCloseTo(7.28975, 5)
         cleanUpVariables.push(res, resSpec)
+    })
+
+    test.skip("Test change rotamer", () => {
+        molecules_container.geometry_init_standard()
+        const imol_molecule = molecules_container.read_pdb('./5a3h.pdb')
+        
+        // Create a fragment and change rotamer
+        const imol_fragment = molecules_container.copy_fragment_using_cid(imol_molecule, '//A/179')
+        molecules_container.change_to_next_rotamer(imol_fragment, '//A/179', '')
+        
+        // Get the OG atom for that new rotamer (still in the fragment)
+        const resSpec = new cootModule.residue_spec_t("A", 179, "");
+        const res_fragment = molecules_container.get_residue(imol_fragment, resSpec)
+        const atom_fragment = res_fragment.GetAtom(5)
+
+        // Replace fragment back into the molecule and get new OG atom
+        molecules_container.replace_fragment(imol_molecule, imol_fragment, '//A/179')
+        const res_new = molecules_container.get_residue(imol_molecule, resSpec)
+        const atom_new = res_new.GetAtom(5)
+
+        // This fails...
+        expect(atom_new.x).toBe(atom_fragment.x)
+        expect(atom_new.y).toBe(atom_fragment.y)
+        expect(atom_new.z).toBe(atom_fragment.z)
     })
 
     test('Test Rama mesh', () => {
