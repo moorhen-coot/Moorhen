@@ -3,7 +3,8 @@ jest.setTimeout(40000)
 
 const fs = require('fs')
 const path = require('path')
-const createCootModule = require('../../public/baby-gru/wasm/moorhen')
+const fetch = require('node-fetch')
+const createCootModule = require('../../public/baby-gru/moorhen')
 
 let cootModule;
 let cleanUpVariables = []
@@ -32,6 +33,15 @@ describe("Testing gemmi", () => {
             }
         })
         cleanUpVariables = []
+    })
+
+    test("Test parse_mon_lib_list_cif", async () => {
+        const response = await fetch("https://raw.githubusercontent.com/MonomerLibrary/monomers/master/list/mon_lib_list.cif")
+        expect(response.ok).toBeTruthy()
+        const fileContents = await response.text()
+        const table = cootModule.parse_mon_lib_list_cif(fileContents)
+        expect(table.size()).toBeGreaterThan(35000)
+        cleanUpVariables.push(table)
     })
 
     test("Test assembly 3j2w.pdb", () => {
