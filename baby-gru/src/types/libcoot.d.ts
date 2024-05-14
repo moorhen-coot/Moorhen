@@ -449,6 +449,10 @@ export namespace libcootApi {
         cluster_idx: number;
         ligand_idx: number;
     }
+    type compoundInfo = {
+        name: string;
+        three_letter_code: string;
+    }
     type CootModule = {
         SmilesToPDB(arg0: string, arg1: string, arg2: number, arg3: number): PairType<string, string>;
         FS: {
@@ -474,7 +478,8 @@ export namespace libcootApi {
         getPermutedTriangleIndicesFromSimpleMesh2( arg0: any, arg1: any ): void;
         getTriangleIndicesFromSimpleMesh2( arg0: any, arg1: any ): void;
         getRamachandranData(arg0: string, arg1: string): emscriptem.vector<RamaData>;
-        validate(arg0: string, arg1: string): emscriptem.vector<PrivateerResultsEntry>
+        validate(arg0: string, arg1: string): emscriptem.vector<PrivateerResultsEntry>;
+        parse_mon_lib_list_cif(arg0: string): emscriptem.vector<compoundInfo>;
         molecules_container_js: { new(verbose: boolean): MoleculesContainerJS };
         Vectormoved_residue_t: { new(): emscriptem.vector<MovedResidueT>};
         moved_residue_t: { new(arg0: string, arg1: number, arg2: string): MovedResidueT};
