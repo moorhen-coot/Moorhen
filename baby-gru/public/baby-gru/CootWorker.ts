@@ -1264,7 +1264,6 @@ onmessage = function (e) {
 
     else if (e.data.message === 'close') {
         molecules_container?.delete()
-        //mon_lib_list_table?.delete()
         postMessage({
             messageId: e.data.messageId,
             myTimeStamp: e.data.myTimeStamp,
