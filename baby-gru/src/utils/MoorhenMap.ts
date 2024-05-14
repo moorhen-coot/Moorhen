@@ -27,6 +27,7 @@ const _DEFAULT_NEGATIVE_MAP_COLOUR = {r: 0.800000011920929, g: 0.400000005960464
  * @constructor
  * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
  * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance
+ * @param {ToolkitStore} [store=undefined] - A Redux store. By default Moorhen Redux store will be used
  * @example
  * import { MoorhenMap } from "moorhen";
  * 
@@ -340,6 +341,14 @@ export class MoorhenMap implements moorhen.Map {
         return this.loadToCootFromMapData(mapData, mapName, isDiffMap)
     }
 
+    /**
+     * Static method used to automatically read multiple maps from a single mtz file
+     * @param {File} source - The mtz file
+     * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance 
+     * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance 
+     * @param {ToolkitStore} store - The redux store
+     * @returns {moorhen.Map[]} A list of maps resulting from reading the mtz file
+     */
     static async autoReadMtz(source: File, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore): Promise<moorhen.Map[]> {
         const mtzWrapper = new MoorhenMtzWrapper()
         await mtzWrapper.loadHeaderFromFile(source)
