@@ -27,6 +27,24 @@ let print = (stuff) => {
     postMessage({ consoleMessage: JSON.stringify(stuff) })
 }
 
+const parseMonLibListCif = (fileContents: string): libcootApi.compoundInfo[] => {
+    const table = cootModule.parse_mon_lib_list_cif(fileContents)
+    const tableSize = table.size()
+
+    let result: libcootApi.compoundInfo[] = []
+    for (let i = 0; i < tableSize; i++) {
+        const compound = table.get(i)
+        result.push({
+            three_letter_code: compound.three_letter_code,
+            // @ts-ignore
+            name: compound.name.replaceAll("'", "").toLowerCase()
+        })
+    }
+
+    table.delete()
+    return result
+}
+
 const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: boolean, toSpheres: boolean = false, maxZSize: number = 10000.): libcootApi.InstancedMeshJS => {
     //maxZSize is arguably a hack to deal with overlong bonds. It is set to 5 incall to this function.
 
@@ -1065,6 +1083,9 @@ const doCootCommand = (messageData: {
             case 'shim_export_molecular_represenation_as_gltf':
                 cootResult = export_molecular_represenation_as_gltf(...commandArgs as [number, string, string, string])
                 break
+            case "parse_mon_lib_list_cif":
+                cootResult =  parseMonLibListCif(...commandArgs as [string])
+                break
             default:
                 cootResult = molecules_container[command](...commandArgs)
                 break
@@ -1243,6 +1264,7 @@ onmessage = function (e) {
 
     else if (e.data.message === 'close') {
         molecules_container?.delete()
+        //mon_lib_list_table?.delete()
         postMessage({
             messageId: e.data.messageId,
             myTimeStamp: e.data.myTimeStamp,

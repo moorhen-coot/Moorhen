@@ -1,5 +1,5 @@
-import { useRef } from "react";
-import { Form } from "react-bootstrap";
+import { useMemo, useRef, useState } from "react";
+import { Form, FormSelect } from "react-bootstrap";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
@@ -9,6 +9,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 import { useSnackbar } from "notistack";
+import { Autocomplete, CircularProgress, createFilterOptions, TextField } from "@mui/material";
+import { libcootApi } from "../../types/libcoot";
 
 export const MoorhenGetMonomerMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>
@@ -23,27 +25,120 @@ export const MoorhenGetMonomerMenuItem = (props: {
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
     const tlcRef = useRef<HTMLInputElement>()
-    const selectRef = useRef<HTMLSelectElement | null>(null)
+    const moleculeSelectRef = useRef<HTMLSelectElement | null>(null)
+    const searchModeSelectRef = useRef<HTMLSelectElement | null>(null)
+    const monLibListRef = useRef<libcootApi.compoundInfo[]>([])
+    const autoCompleteRef = useRef<string | null>(null)
+
+    const [searchMode, setSearchMode] = useState<string>("tlc")
+    const [busy, setBusy] = useState<boolean>(false)
 
     const { enqueueSnackbar } = useSnackbar()
 
+    const filterOptions = useMemo(() => createFilterOptions({
+        ignoreCase: true,
+        matchFrom: "start",
+        limit: 10
+    }), [])
+
+    const handleSearchModeChange = async (evt) => {
+        setSearchMode(evt.target.value)
+        if (evt.target.value === "name" && monLibListRef.current.length === 0) {
+            setBusy(true)
+            const response = await fetch("https://raw.githubusercontent.com/MonomerLibrary/monomers/master/list/mon_lib_list.cif")
+            if (response.ok) {
+                const fileContents = await response.text()
+                const table = await props.commandCentre.current.cootCommand({
+                    command: 'parse_mon_lib_list_cif',
+                    commandArgs: [ fileContents ],
+                    returnType: 'status'
+                }, false) as moorhen.WorkerResponse<libcootApi.compoundInfo[]>
+                monLibListRef.current = table.data.result.result
+            } else {
+                enqueueSnackbar("Unable to fetch ligand names", { variant: "warning" })
+                setSearchMode("tlc")
+            }
+            setBusy(false)
+        }
+    }
+
     const panelContent = <>
+        <MoorhenMoleculeSelect molecules={molecules} allowAny={true} ref={moleculeSelectRef} />
+        <Form.Group className='moorhen-form-group'>
+            <Form.Label>Search by...</Form.Label>
+            <FormSelect ref={searchModeSelectRef} size="sm" value={searchMode} onChange={handleSearchModeChange}>
+                <option value={"tlc"}>Three letter code</option>
+                <option value={"name"}>Compound name</option>
+            </FormSelect>
+        </Form.Group>
+        {searchMode === "tlc" ?
         <Form.Group className='moorhen-form-group' controlId="MoorhenGetMonomerMenuItem">
             <Form.Label>Monomer identifier</Form.Label>
-            <Form.Control ref={tlcRef} type="text" style={{textTransform: 'uppercase'}}/>
+            <Form.Control ref={tlcRef} type="text" size="sm"  style={{textTransform: 'uppercase'}}/>
         </Form.Group>
-        <MoorhenMoleculeSelect molecules={molecules} allowAny={true} ref={selectRef} />
+        : 
+        <Form.Group className='moorhen-form-group' controlId="MoorhenGetMonomerMenuItem">
+            <Form.Label>Compound Name</Form.Label>
+            <Autocomplete
+                disablePortal
+                selectOnFocus
+                clearOnBlur
+                handleHomeEndKeys
+                freeSolo
+                includeInputInList
+                filterSelectedOptions
+                size='small'
+                loading={busy}
+                renderInput={(params) => <TextField {...params} label="Search" InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {busy ? <CircularProgress color="inherit" size={20} /> : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                }}/>}
+                options={monLibListRef.current.map(item => item.name)}
+                filterOptions={filterOptions}
+                onChange={(evt, newSelection: string) => {
+                    autoCompleteRef.current = newSelection
+                }}
+                sx={{
+                    '& .MuiInputBase-root': {
+                        backgroundColor:  isDark ? '#222' : 'white',
+                        color: isDark ? 'white' : '#222',
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: isDark ? 'white' : 'grey',
+                    },
+                    '& .MuiButtonBase-root': {
+                        color: isDark ? 'white' : 'grey',
+                    },
+                    '& .MuiFormLabel-root': {
+                        color: isDark ? 'white' : '#222',
+                    },
+                }}
+            />
+        </Form.Group>
+        }
     </>
 
-
     const onCompleted = async () => {
-        const fromMolNo = parseInt(selectRef.current.value)
-        const newTlc = tlcRef.current.value.toUpperCase()
+        const fromMolNo = parseInt(moleculeSelectRef.current.value)
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
 
-        if (!newTlc || !selectRef.current.value) {
+        let newTlc: string
+        if (searchModeSelectRef.current.value === "tlc") {
+            newTlc = tlcRef.current.value.toUpperCase()
+        } else {
+            newTlc = monLibListRef.current.find(item => item.name === autoCompleteRef.current)?.three_letter_code
+        }
+
+        if (!newTlc || !moleculeSelectRef.current.value) {
+            enqueueSnackbar("Something went wrong", { variant: "warning" })
             return
         }
 
