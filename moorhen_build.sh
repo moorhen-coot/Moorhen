@@ -81,7 +81,7 @@ fi
 echo "Attempting to get emsdk zlib/png ports"
 echo
 echo "" > silly.c
-emcc silly.c -s USE_ZLIB=1 -s USE_LIBPNG=1 -s USE_FREETYPE=1 -pthread -sMEMORY64=1
+emcc silly.c -s USE_ZLIB=1 -s USE_LIBPNG=1 -s USE_FREETYPE=1 -pthread -sMEMORY64=1 -Wno-experimental
 emcc silly.c -s USE_ZLIB=1 -s USE_LIBPNG=1 -s USE_FREETYPE=1 -pthread
 rm -f silly.c
 rm -f a.out.js
