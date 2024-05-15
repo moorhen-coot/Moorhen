@@ -107,6 +107,7 @@ declare module 'moorhen' {
     interface MoorhenMap extends _moorhen.Map { }
     class MoorhenMap implements MoorhenMap {
         constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store?: any)
+        static autoReadMtz(source: File, commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: any): Promise<_moorhen.Map[]>;
     }
     module.exports.MoorhenMap = MoorhenMap
 
