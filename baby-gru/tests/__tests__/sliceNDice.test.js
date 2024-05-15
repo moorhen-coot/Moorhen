@@ -3,7 +3,7 @@ jest.setTimeout(40000)
 
 const fs = require('fs')
 const path = require('path')
-const createCootModule = require('../../public/baby-gru/wasm/moorhen')
+const createCootModule = require('../../public/baby-gru/moorhen')
 
 let cootModule;
 let cleanUpVariables = []
