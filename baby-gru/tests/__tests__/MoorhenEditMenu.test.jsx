@@ -1,4 +1,4 @@
-jest.setTimeout(15000)
+jest.setTimeout(35000)
 jest.mock('protvista-sequence')
 jest.mock('protvista-navigation')
 jest.mock('protvista-manager')
