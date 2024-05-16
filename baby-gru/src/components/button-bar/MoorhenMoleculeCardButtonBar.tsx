@@ -58,7 +58,7 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
             compressed: () => { return (<MenuItem key={1} onClick={handleVisibility}>{isVisible ? "Hide molecule" : "Show molecule"}</MenuItem>) },
             expanded: () => {
                 return (<Button key={1} size="sm" variant="outlined" onClick={handleVisibility}>
-                    {isVisible ? <VisibilityOffOutlined /> : <VisibilityOutlined />}
+                    {isVisible ? <VisibilityOutlined /> : <VisibilityOffOutlined />}
                 </Button>)
             }
         },
