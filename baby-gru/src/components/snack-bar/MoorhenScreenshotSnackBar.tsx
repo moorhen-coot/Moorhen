@@ -3,7 +3,7 @@ import { forwardRef, useCallback, useRef, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { moorhen } from "../../types/moorhen"
 import { IconButton, Tooltip } from "@mui/material"
-import { CameraAltOutlined, CloseOutlined, Photo, PhotoOutlined } from "@mui/icons-material"
+import { CameraAlt, CloseOutlined, Photo, PhotoOutlined } from "@mui/icons-material"
 import { setHoveredAtom } from "../../store/hoveringStatesSlice"
 import { webGL } from "../../types/mgWebGL"
 
@@ -36,8 +36,8 @@ export const MoorhenScreenshotSnackBar = forwardRef<
 
     return <SnackbarContent ref={ref} className="moorhen-notification-div" style={{ justifyContent: 'space-between', backgroundColor: isDark ? 'grey' : 'white', color: isDark ? 'white' : 'grey' }}>
             <Tooltip title={'Take screenshot'}>
-                <IconButton onClick={handleScreenShot}>
-                    <CameraAltOutlined/>
+                <IconButton onClick={handleScreenShot} style={{ borderStyle: 'solid', borderWidth: '1px', borderColor: isDark ? 'black' : 'black' }}>
+                    <CameraAlt style={{ color: isDark ? 'black' : 'black', paddingTop: 0, paddingBottom: 0}}/>
                 </IconButton>
             </Tooltip>
             <Tooltip title={doTransparentBackground ? 'Use opaque background' : 'Use transparent background'}>
