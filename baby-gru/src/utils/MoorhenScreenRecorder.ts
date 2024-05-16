@@ -63,7 +63,8 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
         link.click();
     }
 
-    takeScreenShot = (filename: string) => {
+    takeScreenShot = (filename: string, doTransparentBackground: boolean = false) => {
+        this.glRef.current.setDoTransparentScreenshotBackground(doTransparentBackground)
         const oldOrigin = [this.glRef.current.origin[0], this.glRef.current.origin[1], this.glRef.current.origin[2]];
 
         // Getting up and right for doing tiling (in future?)

@@ -427,7 +427,7 @@ export namespace moorhen {
         startRecording: () => void;
         isRecording: () => boolean;
         downloadVideo: (blob: Blob) => Promise<void>;
-        takeScreenShot: (fileName: string) => void;
+        takeScreenShot: (fileName: string, doTransparentBackground?: boolean) => void;
     }
 
     interface Map {

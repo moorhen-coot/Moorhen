@@ -293,9 +293,12 @@ export const moorhenKeyPress = (
     }
 
     else if (action === 'take_screenshot') {
-        dispatch(setHoveredAtom({ molecule: null, cid: null }))
-        molecules.forEach(molecule => molecule.clearBuffersOfStyle('hover'))
-        videoRecorderRef.current?.takeScreenShot("moorhen.png")
+        enqueueSnackbar("screenshot", {
+            variant: "screenshot",
+            persist: true,
+            glRef: glRef,
+            videoRecorderRef: videoRecorderRef 
+        })
     }
 
     else if (action === 'show_shortcuts') {

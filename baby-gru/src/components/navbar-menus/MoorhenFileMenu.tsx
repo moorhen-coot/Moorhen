@@ -236,10 +236,14 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     <MoorhenBackupsMenuItem {...menuItemProps} disabled={!enableTimeCapsule} loadSession={loadSession} />
 
                     <MenuItem id='screenshot-menu-item' onClick={() =>  {
-                        dispatch(setHoveredAtom({ molecule: null, cid: null }))
-                        molecules.forEach(molecule => molecule.clearBuffersOfStyle('hover'))
-                        props.videoRecorderRef.current?.takeScreenShot("moorhen.png")}
-                        }>
+                        enqueueSnackbar("screenshot", {
+                            variant: "screenshot",
+                            persist: true,
+                            glRef: props.glRef,
+                            videoRecorderRef: props.videoRecorderRef 
+                        })
+                        document.body.click()
+                    }}>
                         Screenshot
                     </MenuItem>
 
