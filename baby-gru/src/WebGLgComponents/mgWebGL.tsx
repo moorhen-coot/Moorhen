@@ -2217,6 +2217,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         gBuffersFramebufferSize : number;
         save_pixel_data: boolean;
         renderToTexture: boolean;
+        transparentScreenshotBackground: boolean;
         doDepthPeelPass: boolean;
         showShortCutHelp: string[];
         WEBGL2: boolean;
@@ -2637,6 +2638,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
     }
 
+    setDoTransparentScreenshotBackground(transparentScreenshotBackground) {
+        this.transparentScreenshotBackground = transparentScreenshotBackground;
+    }
+
     setDoOrderIndependentTransparency(doOrderIndependentTransparency) {
         this.doOrderIndependentTransparency = doOrderIndependentTransparency;
     }
@@ -2865,6 +2870,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.save_pixel_data = false;
         this.renderToTexture = false;
         this.doDepthPeelPass = false;
+
+        this.transparentScreenshotBackground = false;
 
         this.doStenciling = false;
 
@@ -7449,7 +7456,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
         }
 
-        if(this.renderSilhouettesToTexture||this.drawingGBuffers) {
+        if(this.renderSilhouettesToTexture||this.drawingGBuffers||(this.renderToTexture&&this.transparentScreenshotBackground)) {
             this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], 0.0);
         } else {
             this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], this.background_colour[3]);
@@ -8060,7 +8067,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
                 this.gl.enable(this.gl.BLEND);
                 this.gl.disable(this.gl.DEPTH_TEST);
-                this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], this.background_colour[3]);
+                if(this.renderToTexture&&this.transparentScreenshotBackground) {
+                    this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], 0.0);
+                } else{
+                    this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], this.background_colour[3]);
+                }
                 this.gl.clear(this.gl.DEPTH_BUFFER_BIT|this.gl.COLOR_BUFFER_BIT)
                 this.gl.uniform1i(theShader.depthPeelSamplers, 0);
                 this.gl.uniform1i(theShader.colorPeelSamplers, 1);

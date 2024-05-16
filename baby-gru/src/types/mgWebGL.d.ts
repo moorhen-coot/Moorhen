@@ -166,7 +166,8 @@ export namespace webGL {
         setEdgeDetectNormalScale(normalScale: number): void;
         setOccludeDiffuse(doOccludeDiffuse: boolean): void;
         setOutlinesOn(doOutline: boolean): void;
-        setDoOrderIndependentTransparency(doOutline: boolean): void;
+        setDoOrderIndependentTransparency(doOrderIndependentTransparency: boolean): void;
+        setDoTransparentScreenshotBackground(transparentScreenshotBackground: boolean): void;
         setSpinTestState(doSpinTest: boolean): void;
         setBlurSize(blurSize: number): void;
         setSSAORadius(radius: number): void;
@@ -229,6 +230,7 @@ export namespace webGL {
         gBuffersFramebufferSize : number;
         save_pixel_data: boolean;
         renderToTexture: boolean;
+        transparentScreenshotBackground: boolean;
         doDepthPeelPass: boolean;
         showShortCutHelp: string[];
         WEBGL2: boolean;
