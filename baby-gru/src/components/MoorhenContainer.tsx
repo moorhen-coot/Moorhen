@@ -32,6 +32,7 @@ import { MoorhenModelTrajectorySnackBar } from './snack-bar/MoorhenModelTrajecto
 import { MoorhenTomogramSnackBar } from './snack-bar/MoorhenTomogramSnackBar';
 import { MoorhenMapContourLevelSnackBar } from './snack-bar/MoorhenMapContourLevelSnackBar';
 import { MoorhenRotamerChangeSnackBar } from './snack-bar/MoorhenRotamerChangeSnackbar';
+import { MoorhenScreenshotSnackBar } from './snack-bar/MoorhenScreenshotSnackBar';
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -100,6 +101,10 @@ declare module "notistack" {
             commandCentre: React.RefObject<moorhen.CommandCentre>;
             glRef: React.RefObject<webGL.MGWebGL>;
         }
+        screenshot: {
+            videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;
+            glRef: React.RefObject<webGL.MGWebGL>;    
+        };
     }
 }
   
@@ -458,7 +463,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             modelTrajectory: MoorhenModelTrajectorySnackBar,
             tomogram: MoorhenTomogramSnackBar,
             mapContourLevel: MoorhenMapContourLevelSnackBar,
-            rotamerChange: MoorhenRotamerChangeSnackBar
+            rotamerChange: MoorhenRotamerChangeSnackBar,
+            screenshot: MoorhenScreenshotSnackBar
         }}
         preventDuplicate={true}>
     <div>
