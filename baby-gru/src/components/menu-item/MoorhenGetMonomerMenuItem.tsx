@@ -9,7 +9,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 import { useSnackbar } from "notistack";
-import { Autocomplete, CircularProgress, createFilterOptions, MenuItem, selectClasses, Skeleton, TextField } from "@mui/material";
+import { Autocomplete, CircularProgress, createFilterOptions, MenuItem, Skeleton, TextField } from "@mui/material";
 import { libcootApi } from "../../types/libcoot";
 import parse from 'html-react-parser';
 
