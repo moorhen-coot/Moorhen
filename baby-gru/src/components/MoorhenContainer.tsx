@@ -33,6 +33,7 @@ import { MoorhenTomogramSnackBar } from './snack-bar/MoorhenTomogramSnackBar';
 import { MoorhenMapContourLevelSnackBar } from './snack-bar/MoorhenMapContourLevelSnackBar';
 import { MoorhenRotamerChangeSnackBar } from './snack-bar/MoorhenRotamerChangeSnackbar';
 import { MoorhenScreenshotSnackBar } from './snack-bar/MoorhenScreenshotSnackBar';
+import { MoorhenSideBar } from './snack-bar/MoorhenSideBar';
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -105,6 +106,10 @@ declare module "notistack" {
             videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;
             glRef: React.RefObject<webGL.MGWebGL>;    
         };
+        sideBar: {
+            children: JSX.Element;
+            title: string;
+        }
     }
 }
   
@@ -464,7 +469,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             tomogram: MoorhenTomogramSnackBar,
             mapContourLevel: MoorhenMapContourLevelSnackBar,
             rotamerChange: MoorhenRotamerChangeSnackBar,
-            screenshot: MoorhenScreenshotSnackBar
+            screenshot: MoorhenScreenshotSnackBar,
+            sideBar: MoorhenSideBar
         }}
         preventDuplicate={true}>
     <div>

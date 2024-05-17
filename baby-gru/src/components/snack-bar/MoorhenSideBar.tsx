@@ -6,7 +6,7 @@ import { Stack } from "react-bootstrap";
 import { IconButton } from "@mui/material";
 import { CloseOutlined } from "@mui/icons-material";
 
-export const MoorhenSideBar = forwardRef<HTMLDivElement, { children: any, id: string, title: string}>((props, ref) => {
+export const MoorhenSideBar = forwardRef<HTMLDivElement, { children: JSX.Element, id: string, title: string}>((props, ref) => {
 
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
