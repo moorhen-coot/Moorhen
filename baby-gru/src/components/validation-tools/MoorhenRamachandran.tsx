@@ -15,7 +15,7 @@ interface Props extends moorhen.CollectedProps {
     sideBarWidth: number;
     showSideBar: boolean;
     resizeTrigger: boolean;
-    resizeNodeRef: React.RefObject<HTMLDivElement>;
+    resizeNodeRef?: React.RefObject<HTMLDivElement>;
 }
 
 export const MoorhenRamachandran = (props: Props) => {
@@ -409,8 +409,8 @@ export const MoorhenRamachandran = (props: Props) => {
 
     useEffect(() => {
         setTimeout(() => {
-            let plotHeigth = (props.resizeNodeRef.current.clientHeight) - convertRemToPx(7)
-            let plotWidth = (props.resizeNodeRef.current.clientWidth) - convertRemToPx(3)
+            let plotHeigth = (props.resizeNodeRef?.current.clientHeight) - convertRemToPx(7)
+            let plotWidth = (props.resizeNodeRef?.current.clientWidth) - convertRemToPx(3)
             if (plotHeigth > 0 && plotWidth > 0) {
                 plotHeigth > plotWidth ? setRamaPlotDimensions(plotWidth) : setRamaPlotDimensions(plotHeigth)
             }

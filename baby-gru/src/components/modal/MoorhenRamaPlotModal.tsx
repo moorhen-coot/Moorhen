@@ -66,7 +66,7 @@ export const MoorhenRamaPlotModal = (props: MoorhenValidationModalProps) => {
                                 title: "Rama. Plot",
                                 children: <div style={{height: '100%'}} >
                                 <Row className={"rama-validation-tool-container-row"}>
-                                    <MoorhenRamachandran resizeNodeRef={resizeNodeRef} resizeTrigger={draggableResizeTrigger} {...collectedProps}/>
+                                    <MoorhenRamachandran resizeTrigger={draggableResizeTrigger} {...collectedProps}/>
                                 </Row>
                             </div>
                             })
