@@ -223,6 +223,21 @@ div.darkly text.end-label {fill:#FFF !important;}
   justify-content: center;
 }
 
+.moorhen-sidebar-div {
+  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.2),0px 6px 10px 0px rgba(0,0,0,0.14),0px 1px 18px 0px rgba(0,0,0,0.12);
+  width: 14rem;
+  min-height: 3rem;
+  height: fit-content;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.5rem;
+  display: flex;
+  border-radius: 0.5rem;
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+}
+
 .moorhen-tooltip {
   display: flex;
   z-index: 9999;

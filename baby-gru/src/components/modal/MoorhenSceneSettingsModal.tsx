@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 import { useDispatch, useSelector } from "react-redux";
 import { convertRemToPx, convertViewtoPx, rgbToHex } from "../../utils/MoorhenUtils";
 import { MoorhenSlider } from "../misc/MoorhenSlider";
 import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
-import { Form, InputGroup, Stack } from "react-bootstrap";
+import { Button, Form, InputGroup, Stack } from "react-bootstrap";
 import { 
     setBackgroundColor, setClipCap, setDepthBlurDepth, setDepthBlurRadius, setDoSSAO, setResetClippingFogging,
     setSsaoRadius, setSsaoBias,setUseOffScreenBuffers, setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold,
@@ -14,7 +14,9 @@ import { HexColorInput, RgbColorPicker } from "react-colorful";
 import { CirclePicker } from "react-color"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { hexToRgb } from "@mui/material";
+import { IconButton, hexToRgb } from "@mui/material";
+import { useSnackbar } from "notistack";
+import { LastPageOutlined } from "@mui/icons-material";
 
 const EdgeDetectPanel = (props: {}) => {
     const dispatch = useDispatch()
@@ -373,6 +375,22 @@ const LightingPanel = (props: {
     </div>
 }
 
+const MoorhenSeceneSettings = (props: { glRef: React.RefObject<webGL.MGWebGL>; stackDirection: "horizontal" | "vertical"; height: string;}) => {
+
+    return <Stack gap={2} direction={props.stackDirection} style={{display: 'flex', alignItems: 'start', width: '100%', height: props.height}}>
+        <Stack gap={2} direction="vertical">
+            <ClipFogPanel glRef={props.glRef}/>
+            <BackgroundColorPanel/>
+            <EdgeDetectPanel/>
+        </Stack>
+        <Stack gap={1} direction="vertical">
+            <LightingPanel glRef={props.glRef}/>
+            {props.glRef.current.isWebGL2() && <DepthBlurPanel/>}
+            <OcclusionPanel/>
+        </Stack>
+    </Stack>
+}
+
 export const MoorhenSceneSettingsModal = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
     show: boolean;
@@ -381,6 +399,8 @@ export const MoorhenSceneSettingsModal = (props: {
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+
+    const { enqueueSnackbar } = useSnackbar()
 
     return <MoorhenDraggableModalBase
                 modalId="scene-settings-modal"
@@ -395,20 +415,23 @@ export const MoorhenSceneSettingsModal = (props: {
                 maxWidth={convertRemToPx(60)}
                 enforceMaxBodyDimensions={true}
                 body={
-                    <Stack gap={2} direction="horizontal" style={{display: 'flex', alignItems: 'start', width: '100%', height:'100%'}}>
-                        <Stack gap={2} direction="vertical">
-                            <ClipFogPanel glRef={props.glRef}/>
-                            <BackgroundColorPanel/>
-                            <EdgeDetectPanel/>
-                        </Stack>
-                        <Stack gap={1} direction="vertical">
-                            <LightingPanel glRef={props.glRef}/>
-                            {props.glRef.current.isWebGL2() && <DepthBlurPanel/>}
-                            <OcclusionPanel/>
-                        </Stack>
-                    </Stack>
+                    <MoorhenSeceneSettings glRef={props.glRef} stackDirection="horizontal" height="100%"/>
                 }
                 footer={null}
+                additionalHeaderButtons={[
+                    <IconButton key={1} onClick={() => {
+                        props.setShow(false)
+                        enqueueSnackbar("scene-settings", {
+                            variant: "sideBar",
+                            persist: true,
+                            anchorOrigin: {horizontal: "right", vertical: "bottom"},
+                            title: "Scene settings",
+                            children: <MoorhenSeceneSettings glRef={props.glRef} stackDirection="vertical" height="50vh"/>
+                        })                
+                    }}>
+                        <LastPageOutlined/>
+                    </IconButton>
+                ]}
                 {...props}
                 />
 }
