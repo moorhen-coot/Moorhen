@@ -1,10 +1,13 @@
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen";
 import { useRef } from "react";
-import { Row } from "react-bootstrap";
+import { Button, Row } from "react-bootstrap";
 import { MoorhenUnmodelledBlobs } from "../validation-tools/MoorhenUnmodelledBlobs"
 import { convertRemToPx, convertViewtoPx} from '../../utils/MoorhenUtils';
 import { useSelector } from "react-redux";
+import { Tooltip } from "@mui/material";
+import { LastPageOutlined } from "@mui/icons-material";
+import { useSnackbar } from "notistack";
 
 interface MoorhenValidationModalProps extends moorhen.CollectedProps {
     show: boolean;
@@ -16,6 +19,8 @@ export const MoorhenUnmodelledBlobsModal = (props: MoorhenValidationModalProps) 
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    
+    const { enqueueSnackbar } = useSnackbar()
 
     const collectedProps = {
         sideBarWidth: convertViewtoPx(35, width), dropdownId: 1, busy: false, 
@@ -47,6 +52,27 @@ export const MoorhenUnmodelledBlobsModal = (props: MoorhenValidationModalProps) 
                         </Row>
                     </div>
                 }
+                additionalHeaderButtons={[
+                    <Tooltip title={"Move to side panel"}  key={1}>
+                        <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => {
+                            props.setShow(false)
+                            enqueueSnackbar("unmodelled-blobs", {
+                                variant: "sideBar",
+                                persist: true,
+                                anchorOrigin: {horizontal: "right", vertical: "bottom"},
+                                title: "Unmodelled blobs",
+                                children: <div style={{maxHeight: '30vh', overflowY: 'scroll', overflowX: "hidden"}} >
+                                            <Row className={"big-validation-tool-container-row"}>
+                                                <MoorhenUnmodelledBlobs {...collectedProps}/>
+                                            </Row>
+                                        </div>
+                            })
+                        }}>
+                            <LastPageOutlined/>
+                        </Button>
+                    </Tooltip>
+                ]}
+
             />
 }
 

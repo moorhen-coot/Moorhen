@@ -20,7 +20,10 @@ export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     return <>
         <div style={{maxHeight: convertViewtoPx(65, height), overflow: 'auto'}}>
                 <MoorhenScenePresetMenuItem {...menuItemProps} />
-                <MenuItem onClick={() => dispatch(setShowSceneSettingsModal(true))}>Scene settings...</MenuItem>
+                <MenuItem onClick={() => {
+                    dispatch(setShowSceneSettingsModal(true))
+                    document.body.click()
+                }}>Scene settings...</MenuItem>
                 <MoorhenOtherSceneSettings {...menuItemProps} />
         </div>
     </>

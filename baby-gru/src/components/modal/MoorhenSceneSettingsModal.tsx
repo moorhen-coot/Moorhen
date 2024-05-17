@@ -14,7 +14,7 @@ import { HexColorInput, RgbColorPicker } from "react-colorful";
 import { CirclePicker } from "react-color"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { IconButton, hexToRgb } from "@mui/material";
+import { Tooltip, hexToRgb } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { LastPageOutlined } from "@mui/icons-material";
 
@@ -375,9 +375,9 @@ const LightingPanel = (props: {
     </div>
 }
 
-const MoorhenSeceneSettings = (props: { glRef: React.RefObject<webGL.MGWebGL>; stackDirection: "horizontal" | "vertical"; height: string;}) => {
+const MoorhenSeceneSettings = (props: { glRef: React.RefObject<webGL.MGWebGL>; stackDirection: "horizontal" | "vertical";}) => {
 
-    return <Stack gap={2} direction={props.stackDirection} style={{display: 'flex', alignItems: 'start', width: '100%', height: props.height}}>
+    return <Stack gap={2} direction={props.stackDirection} style={{display: 'flex', alignItems: 'start', width: '100%', height: "100%"}}>
         <Stack gap={2} direction="vertical">
             <ClipFogPanel glRef={props.glRef}/>
             <BackgroundColorPanel/>
@@ -415,22 +415,26 @@ export const MoorhenSceneSettingsModal = (props: {
                 maxWidth={convertRemToPx(60)}
                 enforceMaxBodyDimensions={true}
                 body={
-                    <MoorhenSeceneSettings glRef={props.glRef} stackDirection="horizontal" height="100%"/>
+                    <MoorhenSeceneSettings glRef={props.glRef} stackDirection="horizontal" />
                 }
                 footer={null}
                 additionalHeaderButtons={[
-                    <IconButton key={1} onClick={() => {
-                        props.setShow(false)
-                        enqueueSnackbar("scene-settings", {
-                            variant: "sideBar",
-                            persist: true,
-                            anchorOrigin: {horizontal: "right", vertical: "bottom"},
-                            title: "Scene settings",
-                            children: <MoorhenSeceneSettings glRef={props.glRef} stackDirection="vertical" height="50vh"/>
-                        })                
-                    }}>
-                        <LastPageOutlined/>
-                    </IconButton>
+                    <Tooltip title={"Move to side panel"}  key={1}>
+                        <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => {
+                            props.setShow(false)
+                            enqueueSnackbar("scene-settings", {
+                                variant: "sideBar",
+                                persist: true,
+                                anchorOrigin: {horizontal: "right", vertical: "bottom"},
+                                title: "Scene settings",
+                                children: <div style={{ overflowY: 'scroll', overflowX: "hidden", maxHeight: '50vh' }}>
+                                    <MoorhenSeceneSettings glRef={props.glRef} stackDirection="vertical" />
+                                </div>
+                            })                
+                        }}>
+                            <LastPageOutlined/>
+                        </Button>
+                    </Tooltip>
                 ]}
                 {...props}
                 />

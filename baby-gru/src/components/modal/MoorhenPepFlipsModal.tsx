@@ -1,11 +1,11 @@
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen";
 import { useRef } from "react";
-import { Row } from "react-bootstrap";
+import { Button, Row } from "react-bootstrap";
 import { convertRemToPx, convertViewtoPx} from '../../utils/MoorhenUtils';
 import { useSelector } from "react-redux";
 import { MoorhenPepflipsDifferenceMap } from "../validation-tools/MoorhenPepflipsDifferenceMap";
-import { IconButton } from "@mui/material";
+import { Tooltip } from "@mui/material";
 import { LastPageOutlined } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 
@@ -53,18 +53,25 @@ export const MoorhenPepFlipsModal = (props: MoorhenValidationModalProps) => {
                     </div>
                 }
                 additionalHeaderButtons={[
-                    <IconButton key={1} onClick={() => {
-                        props.setShow(false)
-                        enqueueSnackbar("peptide-flips", {
-                            variant: "sideBar",
-                            persist: true,
-                            anchorOrigin: {horizontal: "right", vertical: "bottom"},
-                            title: "Peptide flips",
-                            children: <MoorhenPepflipsDifferenceMap {...collectedProps}/>
-                        })                
-                    }}>
-                        <LastPageOutlined/>
-                    </IconButton>
+                    <Tooltip title={"Move to side panel"}  key={1}>
+                        <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => {
+                            props.setShow(false)
+                            enqueueSnackbar("peptide-flips", {
+                                variant: "sideBar",
+                                persist: true,
+                                anchorOrigin: {horizontal: "right", vertical: "bottom"},
+                                title: "Peptide flips",
+                                children: <div style={{maxHeight: '30vh', overflowY: 'scroll', overflowX: "hidden"}} >
+                                <Row className={"big-validation-tool-container-row"}>
+                                    <MoorhenPepflipsDifferenceMap {...collectedProps}/>
+                                </Row>
+                            </div>
+        
+                            })
+                        }}>
+                            <LastPageOutlined/>
+                        </Button>
+                    </Tooltip>
                 ]}
             />
 }
