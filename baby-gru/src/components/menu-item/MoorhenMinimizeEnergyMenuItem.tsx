@@ -114,7 +114,7 @@ export const MoorhenMinimizeEnergyMenuItem = (props: {
         {selectionType === 'cid' && <MoorhenCidInputForm {...props} width='20rem' margin='0.5rem' ref={cidInputRef} allowUseCurrentSelection={true}/>}
         {selectionType === 'chain' && <MoorhenChainSelect {...props} molecules={molecules} selectedCoordMolNo={selectedMolNo} ref={chainSelectRef} />}
         {selectionType === 'ligand' && <MoorhenLigandSelect {...props} molecules={molecules} selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)} ref={ligandSelectRef} />}
-        <InputGroup className='moorhen-input-group-check'>
+        <InputGroup className='moorhen-input-group-check' style={{ width: '20rem' }}>
             <Form.Check 
                 ref={useRamaRestraintsCheckRef}
                 type="switch"
@@ -122,7 +122,7 @@ export const MoorhenMinimizeEnergyMenuItem = (props: {
                 onChange={() => {setUseRamaRestraints((prev) => !prev)}}
                 label="Use ramachandran restraints"/>
         </InputGroup>
-        <InputGroup className='moorhen-input-group-check'>
+        <InputGroup className='moorhen-input-group-check' style={{ width: '20rem' }}>
             <Form.Check 
                 ref={useTorsionRestraintsCheckRef}
                 type="switch"
