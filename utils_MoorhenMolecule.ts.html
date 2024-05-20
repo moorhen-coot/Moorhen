@@ -218,6 +218,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     moleculeDiameter: number;
     adaptativeBondsEnabled: boolean;
     store: ToolkitStore;
+    headerInfo: libcootApi.headerInfoJS;
 
     constructor(commandCentre: React.RefObject&lt;moorhen.CommandCentre>, glRef: React.RefObject&lt;webGL.MGWebGL>, store: ToolkitStore = MoorhenReduxStore, monomerLibraryPath = "./baby-gru/monomers") {
         this.type = 'molecule'
@@ -230,6 +231,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.coordsFormat = null
         this.gemmiStructure = null
         this.sequences = []
+        this.headerInfo = null
         this.cachedGemmiAtoms = null
         this.cachedLigandSVGs = null
         this.cachedPrivateerValidation = null
@@ -2448,6 +2450,29 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
         this.setAtomsDirty(true)
         await this.redraw()
+    }
+
+    /**
+     * Fetch header information for this molecule instance
+     * @param {boolean} useCache - Whether to use the cached results or not
+     * @returns {Promise&lt;libcootApi.headerInfoJS>} Object containing header information
+     */
+    async fetchHeaderInfo(useCache: boolean = true): Promise&lt;libcootApi.headerInfoJS> {
+        if (useCache &amp;&amp; this.headerInfo !== null) {
+            return this.headerInfo
+        }
+
+        const headerInfo = await this.commandCentre.current.cootCommand({
+            command: 'get_header_info',
+            commandArgs: [ this.molNo ],
+            returnType: 'header_info_t',
+        }, false) as moorhen.WorkerResponse&lt;libcootApi.headerInfoJS>
+
+        if (useCache) {
+            this.headerInfo = headerInfo.data.result.result
+        }
+
+        return headerInfo.data.result.result
     }
 }
 </code></pre>
