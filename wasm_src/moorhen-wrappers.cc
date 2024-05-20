@@ -1629,6 +1629,13 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .element(emscripten::index<3>())
     ;
 
+    value_object<moorhen::header_info_t>("moorhen_header_info_t")
+        .field("title", &moorhen::header_info_t::title)
+        .field("journal_lines", &moorhen::header_info_t::journal_lines)
+        .field("author_lines", &moorhen::header_info_t::author_lines)
+        .field("compound_lines", &moorhen::header_info_t::compound_lines)
+    ;
+
     value_object<coot::molecule_t::histogram_info_t>("histogram_info_t")
         .field("base", &coot::molecule_t::histogram_info_t::base)
         .field("bin_width", &coot::molecule_t::histogram_info_t::bin_width)
