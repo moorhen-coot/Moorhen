@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { MoorhenLoadScriptMenuItem } from "../menu-item/MoorhenLoadScriptMenuItem";
-import { MoorhenSuperposeMenuItem } from "../menu-item/MoorhenSuperposeMenuItem";
 import { MoorhenSelfRestraintsMenuItem } from "../menu-item/MoorhenSelfRestraintsMenuItem";
 import { MoorhenClearSelfRestraintsMenuItem } from "../menu-item/MoorhenClearSelfRestraintsMenuItem";
 import { MoorhenRandomJiggleBlurMenuItem } from "../menu-item/MoorhenRandomJiggleBlurMenuItem";
@@ -11,21 +10,22 @@ import { MoorhenMultiplyBfactorMenuItem } from "../menu-item/MoorhenMultiplyBfac
 import { MoorhenCalculateTrajectoryMenuItem } from "../menu-item/MoorhenCalculateTrajectoryMenuItem"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MenuItem } from "@mui/material";
-import { libcootApi } from "../../types/libcoot";
 import { useDispatch } from "react-redux";
-import { setShowScriptingModal, setShowSliceNDiceModal } from "../../store/activeModalsSlice";
+import { setShowScriptingModal, setShowSliceNDiceModal, setShowSuperposeModal } from "../../store/activeModalsSlice";
 
 export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const dispatch = useDispatch()
     
     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
-    const [superposeResults, setSuperposeResults] = useState<false | libcootApi.SuperposeResultsJS>(false)
     
     const menuItemProps = { setPopoverIsShown, ...props }
 
     return <>
             <MoorhenAddWatersMenuItem {...menuItemProps} />
-            <MoorhenSuperposeMenuItem key="superpose_structures" setSuperposeResults={setSuperposeResults} {...menuItemProps} />
+            <MenuItem onClick={() => {
+                dispatch(setShowSuperposeModal(true))
+                document.body.click()
+            }}>Superpose structures...</MenuItem>
             <MoorhenStepRefinementMenuItem key="step-refinement" {...menuItemProps}/>
             <MoorhenMultiplyBfactorMenuItem key="bfactor-multiply" {...menuItemProps}/>
             <MoorhenShiftFieldBFactorRefinement key="bfactor-refinement" {...menuItemProps}/>
