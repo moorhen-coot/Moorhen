@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useEffect, useState, useRef, useCallback, useMemo, Fragment } from "react"
 import { Card, Form, Button, Col, DropdownButton, Stack, OverlayTrigger, ToggleButton, Spinner } from "react-bootstrap"
-import { doDownload, guid, rgbToHex } from '../../utils/MoorhenUtils'
+import { doDownload, rgbToHex } from '../../utils/MoorhenUtils'
 import { getNameLabel } from "./cardUtils"
 import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings, FileCopyOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined, AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
 import { MoorhenMapSettingsMenuItem } from "../menu-item/MoorhenMapSettingsMenuItem";
@@ -17,6 +17,7 @@ import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMap } from "../../store/mapsSlice";
 import { hideMap, setContourLevel, changeContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle, setNegativeMapColours, setPositiveMapColours, showMap, changeMapRadius } from "../../store/mapContourSettingsSlice";
 import { useSnackbar } from "notistack";
+import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 
 type ActionButtonType = {
     label: string;
@@ -497,7 +498,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                         <div style={{width: '100%', display: 'flex', justifyContent: 'center'}}>
                             <div className="moorhen-hex-input-decorator">#</div>
                             <HexColorInput className="moorhen-hex-input" color={positiveMapColourHex} onChange={(hex) => {
-                                const [r, g, b] = hexToRgb(hex).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+                                const [r, g, b] = MoorhenColourRule.parseHexToRgba(hex)
                                 handlePositiveMapColorChange({r, g, b})
                             }}/>
                         </div>
@@ -508,7 +509,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                         <div style={{width: '100%', display: 'flex', justifyContent: 'center'}}>
                             <div className="moorhen-hex-input-decorator">#</div>
                             <HexColorInput className="moorhen-hex-input" color={negativeMapColourHex} onChange={(hex) => {
-                                const [r, g, b] = hexToRgb(hex).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+                                const [r, g, b] = MoorhenColourRule.parseHexToRgba(hex)
                                 handleNegativeMapColorChange({r, g, b})
                             }}/>
                         </div>
@@ -546,7 +547,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                         <div style={{width: '100%', display: 'flex', justifyContent: 'center', marginBottom: '0.1rem'}}>
                             <div className="moorhen-hex-input-decorator">#</div>
                             <HexColorInput className="moorhen-hex-input" color={mapColourHex} onChange={(hex) => {
-                                const [r, g, b] = hexToRgb(hex).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+                                const [r, g, b, a] = MoorhenColourRule.parseHexToRgba(hex)
                                 handleColorChange({r, g, b})
                             }}/>
                         </div>

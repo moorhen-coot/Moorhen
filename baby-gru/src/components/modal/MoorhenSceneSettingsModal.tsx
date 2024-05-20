@@ -14,9 +14,10 @@ import { HexColorInput, RgbColorPicker } from "react-colorful";
 import { CirclePicker } from "react-color"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { Tooltip, hexToRgb } from "@mui/material";
+import { Tooltip } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { LastPageOutlined } from "@mui/icons-material";
+import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 
 const EdgeDetectPanel = (props: {}) => {
     const dispatch = useDispatch()
@@ -163,7 +164,7 @@ const BackgroundColorPanel = (props: {}) => {
             <HexColorInput className='moorhen-hex-input'
                 color={rgbToHex(innerBackgroundColor.r, innerBackgroundColor.g, innerBackgroundColor.b)}
                 onChange={(hex) => {
-                    const [r, g, b] = hexToRgb(hex).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+                    const [r, g, b, a] = MoorhenColourRule.parseHexToRgba(hex)
                     handleColorChange({r, g, b})
             }}/>
         </div>

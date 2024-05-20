@@ -17,6 +17,7 @@ export class MoorhenColourRule implements moorhen.ColourRule {
     uniqueId: string;
     initFromString: (stringifiedObject: string, commandCentre: React.RefObject<moorhen.CommandCentre>, molecule: moorhen.Molecule) => moorhen.ColourRule;
     initFromDataObject: (data: moorhen.ColourRuleObject, commandCentre: React.RefObject<moorhen.CommandCentre>, molecule: moorhen.Molecule) => moorhen.ColourRule;
+    parseHexToRgba: (hex: string) => [number, number, number, number];
 
     constructor(ruleType: string, cid: string, color: string, commandCentre: React.RefObject<moorhen.CommandCentre>, isMultiColourRule: boolean = false, applyColourToNonCarbonAtoms: boolean = false) {
         this.cid = cid
@@ -41,6 +42,18 @@ export class MoorhenColourRule implements moorhen.ColourRule {
         colourRule.setLabel(data.label)
         colourRule.setParentMolecule(molecule)
         return colourRule
+    }
+
+    static parseHexToRgba(hex: string): [number, number, number, number] {
+        let [r, g, b, a]: number[] = []
+        if (hex.length > 7) {
+            a = ((parseInt(hex.slice(7, 9), 16)/255)*1000)/1000;
+            [r, g, b] = hexToRgb(hex.slice(0, 7)).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+        } else {
+            [r, g, b] = hexToRgb(hex).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+            a = 1.0
+        }
+        return [r, g, b, a]
     }
 
     objectify() {
@@ -83,17 +96,17 @@ export class MoorhenColourRule implements moorhen.ColourRule {
         this.applyColourToNonCarbonAtoms = newVal
     }
 
-    getUserDefinedColours(): { cid: string; rgb: [number, number, number]; applyColourToNonCarbonAtoms: boolean }[] {
+    getUserDefinedColours(): { cid: string; rgba: [number, number, number, number]; applyColourToNonCarbonAtoms: boolean }[] {
         if(this.isMultiColourRule) {
             const allColours = this.args[0] as string
             return allColours.split('|').map(colour => {
                 const [cid, hex] = colour.split('^')
-                const [r, g, b] = hexToRgb(hex).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
-                return { cid: cid, rgb: [r / 255, g / 255, b / 255], applyColourToNonCarbonAtoms: this.applyColourToNonCarbonAtoms }
+                const [r, g, b, a] = MoorhenColourRule.parseHexToRgba(hex)
+                return { cid: cid, rgba: [r / 255, g / 255, b / 255, a], applyColourToNonCarbonAtoms: this.applyColourToNonCarbonAtoms }
             })
         } else {
-            const [r, g, b] = hexToRgb(this.color).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
-            return [{ cid: this.label, rgb: [r / 255, g / 255, b / 255], applyColourToNonCarbonAtoms: this.applyColourToNonCarbonAtoms}]
+            const [r, g, b, a] = MoorhenColourRule.parseHexToRgba(this.color)
+            return [{ cid: this.label, rgba: [r / 255, g / 255, b / 255, a], applyColourToNonCarbonAtoms: this.applyColourToNonCarbonAtoms}]
         }
     }
 

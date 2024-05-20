@@ -6,7 +6,7 @@ import { isDarkBackground } from '../../WebGLgComponents/mgWebGL'
 import { MoorhenSequenceList } from "../list/MoorhenSequenceList";
 import { MoorhenMoleculeCardButtonBar } from "../button-bar/MoorhenMoleculeCardButtonBar"
 import { MoorhenLigandList } from "../list/MoorhenLigandList"
-import { Chip, FormGroup, hexToRgb } from "@mui/material";
+import { Chip, FormGroup } from "@mui/material";
 import { getNameLabel } from "./cardUtils"
 import { AddOutlined, DeleteOutlined, FormatColorFillOutlined, SettingsOutlined, EditOutlined, ExpandMoreOutlined } from '@mui/icons-material';
 import { MoorhenAddCustomRepresentationCard } from "./MoorhenAddCustomRepresentationCard"
@@ -19,6 +19,7 @@ import { addMolecule, removeCustomRepresentation, showMolecule } from '../../sto
 import { triggerUpdate } from '../../store/moleculeMapUpdateSlice';
 import { MoorhenHeaderInfoCard } from './MoorhenHeaderInfoCard';
 import { MoorhenCarbohydrateList } from "../list/MoorhenCarbohydrateList";
+import { MoorhenColourRule } from '../../utils/MoorhenColourRule';
 
 const allRepresentations = [ 'CBs', 'adaptativeBonds', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks', 'restraints' ]
 
@@ -563,13 +564,13 @@ const getChipStyle = (colourRules: moorhen.ColourRule[], repIsVisible: boolean, 
         chipStyle['color'] = 'white'
     }
 
-    let [r, g, b]: number[] = [214, 214, 214]
+    let [r, g, b, _a]: number[] = [214, 214, 214, 1]
     if (colourRules?.length > 0) {
         if (colourRules[0].isMultiColourRule) {
             const alphaHex = repIsVisible ? '99' : '33'
             chipStyle['background'] = `linear-gradient( to right, #264CFF${alphaHex}, #3FA0FF${alphaHex}, #72D8FF${alphaHex}, #AAF7FF${alphaHex}, #E0FFFF${alphaHex}, #FFFFBF${alphaHex}, #FFE099${alphaHex}, #FFAD72${alphaHex}, #F76D5E${alphaHex}, #D82632${alphaHex}, #A50021${alphaHex} )`
         } else {
-            [r, g, b] = hexToRgb(colourRules[0].color).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+            [r, g, b, _a] = MoorhenColourRule.parseHexToRgba(colourRules[0].color)
             chipStyle['backgroundColor'] = `rgba(${r}, ${g}, ${b}, ${repIsVisible ? 0.5 : 0.1})`
         }        
     } else {
