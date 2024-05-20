@@ -5215,7 +5215,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexPositionAttribute);
 
         this.shaderProgramTextBackground.vertexColourAttribute = this.gl.getAttribLocation(this.shaderProgramTextBackground, "aVertexColour");
-        this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexColourAttribute);
+        //this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexColourAttribute);
 
         this.shaderProgramTextBackground.vertexTextureAttribute = this.gl.getAttribLocation(this.shaderProgramTextBackground, "aVertexTexture");
         this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
@@ -9507,7 +9507,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.setMatrixUniforms(this.shaderProgramImages);
 
             this.gl.enableVertexAttribArray(this.shaderProgramImages.vertexTextureAttribute);
-            this.gl.disableVertexAttribArray(this.shaderProgramImages.vertexColourAttribute);
+            //this.gl.disableVertexAttribArray(this.shaderProgramImages.vertexColourAttribute);
             this.gl.vertexAttrib4f(this.shaderProgramImages.vertexColourAttribute, 1.0, 1.0, 0.0, 1.0);
 
             for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
@@ -9632,7 +9632,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
 
             this.gl.disableVertexAttribArray(this.shaderProgramImages.vertexTextureAttribute);
-            this.gl.enableVertexAttribArray(this.shaderProgramImages.vertexColourAttribute);
+            //this.gl.enableVertexAttribArray(this.shaderProgramImages.vertexColourAttribute);
             this.gl.depthFunc(this.gl.LESS);
 
         }
