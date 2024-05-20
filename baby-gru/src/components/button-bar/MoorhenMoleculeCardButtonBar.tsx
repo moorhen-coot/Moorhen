@@ -2,7 +2,7 @@ import { useState, useMemo, Fragment, useRef, useCallback } from "react";
 import { Button, DropdownButton } from "react-bootstrap";
 import { convertViewtoPx } from '../../utils/MoorhenUtils';
 import { MenuItem } from "@mui/material";
-import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings } from '@mui/icons-material';
+import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings, InfoOutlined } from '@mui/icons-material';
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
 import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem"
 import { clickedResidueType } from "../card/MoorhenMoleculeCard";
@@ -17,6 +17,7 @@ type MoorhenMoleculeCardButtonBarPropsType = {
     handleDownload: () => Promise<void>;
     handleRedo: () => Promise<void>;
     handleUndo: () => Promise<void>;
+    handleShowInfo: () => void;
     molecule: moorhen.Molecule;
     glRef: React.RefObject<webGL.MGWebGL>;
     sideBarWidth: number;
@@ -99,13 +100,25 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
             }
         },
         6: {
+            label: "Header Info",
+            compressed: () => { return (<MenuItem key={6} onClick={() => {
+                document.body.click()
+                props.handleShowInfo()
+            }}>Header Info</MenuItem>) },
+            expanded: () => {
+                return (<Button key={6} size="sm" variant="outlined" onClick={props.handleShowInfo}>
+                    <InfoOutlined />
+                </Button>)
+            }
+        },
+        7: {
             label: 'Rename molecule',
-            compressed: () => { return (<MoorhenRenameDisplayObjectMenuItem key={6} setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />) },
+            compressed: () => { return (<MoorhenRenameDisplayObjectMenuItem key={7} setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />) },
             expanded: null
         },
     }
 
-    const maximumAllowedWidth = props.sideBarWidth * 0.55
+    const maximumAllowedWidth = props.sideBarWidth * 0.65
     let currentlyUsedWidth = 0
     let expandedButtons: JSX.Element[] = []
     let compressedButtons: JSX.Element[] = []
