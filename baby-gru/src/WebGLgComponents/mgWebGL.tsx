@@ -1293,6 +1293,7 @@ function initGL(canvas) {
         console.log("Max combined texture image units:",gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS))
         console.log("MAX_ELEMENTS_INDICES:",gl.getParameter(gl.MAX_ELEMENTS_INDICES))
         console.log("MAX_ELEMENT_INDEX:",gl.getParameter(gl.MAX_ELEMENT_INDEX))
+        console.log("MAX_VERTEX_ATTRIBS:",gl.getParameter(gl.MAX_VERTEX_ATTRIBS))
     }
     return {gl:gl,WEBGL2:WEBGL2};
 }
@@ -7669,8 +7670,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.useProgram(this.shaderProgramOutline);
         this.gl.enableVertexAttribArray(this.shaderProgramOutline.vertexNormalAttribute);
 
-        this.gl.useProgram(this.shaderProgramInstancedOutline);
-        this.gl.enableVertexAttribArray(this.shaderProgramInstancedOutline.vertexNormalAttribute);
+        //this.gl.useProgram(this.shaderProgramInstancedOutline);
+        //this.gl.enableVertexAttribArray(this.shaderProgramInstancedOutline.vertexNormalAttribute);
 
         this.gl.useProgram(this.shaderProgramInstanced);
         this.gl.enableVertexAttribArray(this.shaderProgramInstanced.vertexNormalAttribute);
@@ -8828,7 +8829,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 if (!calculatingShadowMap) {
                     this.setLightUniforms(program,false);
                     if(program.clipCap!=null) this.gl.uniform1i(program.clipCap,this.clipCapPerfectSpheres);
-                    if(program.vertexNormalAttribute!=null) this.gl.enableVertexAttribArray(program.vertexNormalAttribute);
+                    if(program.vertexNormalAttribute!=null&&program.vertexNormalAttribute>-1) this.gl.enableVertexAttribArray(program.vertexNormalAttribute);
                 }
                 if(program.vertexTextureAttribute!=null) this.gl.enableVertexAttribArray(program.vertexTextureAttribute);
                 if(program.vertexColourAttribute!=null) this.gl.enableVertexAttribArray(program.vertexColourAttribute);
@@ -8889,7 +8890,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexTextureBuffer[0]);
                         this.gl.vertexAttribPointer(program.vertexTextureAttribute, buffer.triangleVertexTextureBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
 
-                        if(program.vertexNormalAttribute!=null){
+                        if(program.vertexNormalAttribute!=null&&program.vertexNormalAttribute>-1){
                             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexNormalBuffer[0]);
                             this.gl.vertexAttribPointer(program.vertexNormalAttribute, buffer.triangleVertexNormalBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
                         }
@@ -8927,7 +8928,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.gl.enableVertexAttribArray(program.sizeAttribute);
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceSizeBuffer[j]);
                         this.gl.vertexAttribPointer(program.sizeAttribute, this.displayBuffers[idx].triangleInstanceSizeBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
-                        if(program.vertexColourAttribute!=null){
+                        if(program.vertexColourAttribute!=null&&program.vertexColourAttribute>-1){
                             this.gl.enableVertexAttribArray(program.vertexColourAttribute);
                             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
                             this.gl.vertexAttribPointer(program.vertexColourAttribute, this.displayBuffers[idx].triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
@@ -9508,7 +9509,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
             this.gl.enableVertexAttribArray(this.shaderProgramImages.vertexTextureAttribute);
             //this.gl.disableVertexAttribArray(this.shaderProgramImages.vertexColourAttribute);
-            this.gl.vertexAttrib4f(this.shaderProgramImages.vertexColourAttribute, 1.0, 1.0, 0.0, 1.0);
+            //this.gl.vertexAttrib4f(this.shaderProgramImages.vertexColourAttribute, 1.0, 1.0, 0.0, 1.0);
 
             for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
                 if (bufferTypes[j] === "IMAGES") {
