@@ -1208,7 +1208,12 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
-    .function("get_number_of_map_sections", &molecules_container_t::get_number_of_map_sections)
+    .function("clear_lsq_matches", &molecules_container_t::clear_lsq_matches)
+    .function("add_lsq_superpose_match", &molecules_container_t::add_lsq_superpose_match)
+    .function("lsq_superpose", &molecules_container_t::lsq_superpose)
+    .function("new_molecule", &molecules_container_t::new_molecule)
+    .function("new_molecule", &molecules_container_t::new_molecule)
+    .function("get_header_info", &molecules_container_t::get_header_info)
     .function("copy_dictionary", &molecules_container_t::copy_dictionary)
     .function("end_delete_closed_molecules", &molecules_container_t::end_delete_closed_molecules)
     .function("make_ensemble", &molecules_container_t::make_ensemble)
@@ -1617,6 +1622,13 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .element(emscripten::index<2>())
     ;
 
+    value_array<std::array<float, 4>>("array_native_float_4")
+        .element(emscripten::index<0>())
+        .element(emscripten::index<1>())
+        .element(emscripten::index<2>())
+        .element(emscripten::index<3>())
+    ;
+
     value_object<coot::molecule_t::histogram_info_t>("histogram_info_t")
         .field("base", &coot::molecule_t::histogram_info_t::base)
         .field("bin_width", &coot::molecule_t::histogram_info_t::bin_width)
@@ -1663,6 +1675,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<coot::Cartesian>("VectorCootCartesian");
     register_vector<std::vector<coot::Cartesian>>("VectorVectorCootCartesian");
     register_map<unsigned int, std::array<float, 3>>("MapIntFloat3");
+    register_map<unsigned int, std::array<float, 4>>("MapIntFloat4");
     register_map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>("Map_residue_spec_t_density_correlation_stats_info_t");
     register_vector<std::array<float, 16>>("VectorArrayFloat16");
     register_vector<std::pair<clipper::Coord_orth, float>>("VectorClipperCoordOrth_float_pair");
