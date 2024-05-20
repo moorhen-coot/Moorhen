@@ -22,11 +22,15 @@ export const MoorheSuperposeStructuresModal = (props: { show: boolean; setShow: 
     const movChainSelectRef = useRef<null | HTMLSelectElement>(null)
     const movMoleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const makeCopyOfMovStructCheckRef = useRef<null | HTMLInputElement>(null)
+    const algorithmSelectRef = useRef<null | HTMLSelectElement>(null)
+    const lsqkbModeRef = useRef<string>("all-atoms")
 
     const [selectedRefModel, setSelectedRefModel] = useState<null | number>(null)
     const [selectedRefChain, setSelectedRefChain] = useState<null | string>(null)
     const [selectedMovModel, setSelectedMovModel] = useState<null | number>(null)
     const [selectedMovChain, setSelectedMovChain] = useState<null | string>(null)
+    const [algortihm, setAlgorithm] = useState<null | string>("ssm")
+    const [lsqkbMode, setLsqkbMode] = useState<string>("all-atoms")
     const [busy, setBusy] = useState<boolean>(false)
 
     const dispatch = useDispatch()
@@ -126,7 +130,7 @@ export const MoorheSuperposeStructuresModal = (props: { show: boolean; setShow: 
     const bodyContent = <Stack direction="vertical" gap={1} style={{ display: 'flex' }}>
         <Form.Group style={{  margin: '0.5rem' }}>
             <Form.Label>Algorithm</Form.Label>
-            <FormSelect>
+            <FormSelect ref={algorithmSelectRef} value={algortihm} onChange={(evt) => setAlgorithm(evt.target.value)}>
                 <option value={"ssm"}>SSM</option>
                 <option value={"lsqkb"}>LSQKB</option>
             </FormSelect>
@@ -148,6 +152,42 @@ export const MoorheSuperposeStructuresModal = (props: { show: boolean; setShow: 
                 <MoorhenChainSelect width="100%" molecules={molecules} onChange={(evt) => handleChainChange(evt, false)} selectedCoordMolNo={selectedMovModel} allowedTypes={[1, 2]} ref={movChainSelectRef} />
             </Form.Group>
         </Stack>
+        {algortihm === "lsqkb" && <>
+        <hr></hr>
+        <Form.Label style={{ margin: '0.5rem' }}>
+            Match atoms
+        </Form.Label>
+        <Form.Group style={{ margin: '0.5rem', display: "flex", width: '100%', flexDirection: 'row', justifyContent: 'space-around' }} controlId="lsqkb-settings" className="mb-3">
+            <Form.Check
+                style={{ margin: "0.5rem", justifyContent: "inherit", display: "flex", gap: "0.5rem"}} 
+                type="radio"
+                checked={lsqkbMode === 'all-atoms'}
+                onChange={() => { 
+                    lsqkbModeRef.current = "all-atoms"
+                    setLsqkbMode("all-atoms")
+                }}
+                label="All Atoms"/>
+            <Form.Check
+                style={{ margin: "0.5rem", justifyContent: "inherit", display: "flex", gap: "0.5rem"}} 
+                type="radio"
+                checked={lsqkbMode === 'mainchain'}
+                onChange={() => { 
+                    lsqkbModeRef.current = "mainchain"
+                    setLsqkbMode("mainchain")
+                }}
+                label="Mainchain"/>
+            <Form.Check
+                style={{ margin: "0.5rem", justifyContent: "inherit", display: "flex", gap: "0.5rem"}} 
+                type="radio"
+                checked={lsqkbMode === 'c-alphas'}
+                onChange={() => { 
+                    lsqkbModeRef.current = "c-alphas"
+                    setLsqkbMode("c-alphas")
+                }}
+                label="C-Alphas"/>
+        </Form.Group>
+        <hr></hr>
+        </>}
         <Form.Check
             style={{ margin: "0.5rem", justifyContent: "inherit", display: "flex", gap: "0.5rem"}} 
             type="switch"
@@ -181,7 +221,7 @@ export const MoorheSuperposeStructuresModal = (props: { show: boolean; setShow: 
                 defaultWidth={convertViewtoPx(10, width)}
                 minHeight={convertViewtoPx(15, height)}
                 minWidth={convertViewtoPx(25, width)}
-                maxHeight={convertViewtoPx(30, height)}
+                maxHeight={convertViewtoPx(50, height)}
                 maxWidth={convertViewtoPx(50, width)}
                 headerTitle='Superpose structures'
                 footer={footerContent}
