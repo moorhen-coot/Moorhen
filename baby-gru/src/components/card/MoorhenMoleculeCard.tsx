@@ -74,6 +74,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const [busyLoadingSequences, setBusyLoadingSequences] = useState<boolean>(false)
     const [busyLoadingLigands, setBusyLoadingLigands] = useState<boolean>(false)
     const [busyLoadingCarbohydrates, setBusyLoadingCarbohydrates] = useState<boolean>(false)
+    const [showHeaderInfo, setShowHeaderInfo] = useState<boolean>(false)
     const [showColourRulesModal, setShowColourRulesModal] = useState<boolean>(false)
     const [showCreateCustomRepresentation, setShowCreateCustomRepresentation] = useState<boolean>(false)
     const [showCreateRepresentationSettingsModal, setShowCreateRepresentationSettingsModal] = useState<boolean>(false)
