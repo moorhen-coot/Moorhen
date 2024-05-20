@@ -205,6 +205,7 @@ export namespace moorhen {
         getPrivateerValidation(useCache?: boolean): Promise<privateer.ResultsEntry[]>;
         getLigandSVG(resName: string, useCache?: boolean): Promise<string>;
         isValidSelection(cid: string): Promise<boolean>;
+        fetchHeaderInfo(useCache?: boolean): Promise<libcootApi.headerInfoJS>;
         type: string;
         adaptativeBondsEnabled: boolean;
         cachedLigandSVGs: {[key: string]: string};
@@ -253,6 +254,7 @@ export namespace moorhen {
         hasGlycans: boolean;
         coordsFormat: coorFormats;
         moleculeDiameter: number;
+        headerInfo: libcootApi.headerInfoJS;
     }
 
     type RepresentationStyles = 'VdwSpheres' | 'ligands' | 'CAs' | 'CBs' | 'CDs' | 'gaussian' | 'allHBonds' | 'rama' | 
