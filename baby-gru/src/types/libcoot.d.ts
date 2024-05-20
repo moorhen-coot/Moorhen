@@ -50,6 +50,18 @@ export namespace libcootApi {
         Fractional: { new(x: number, y: number, z: number): gemmi.Fractional };
         cifDocument: { new(): gemmi.cifDocument };
     }
+    type headerInfo = {
+        title: string;
+        journal_lines: emscriptem.vector<string>;
+        author_lines: emscriptem.vector<string>;
+        compound_lines: emscriptem.vector<string>;
+    }
+    type headerInfoJS = {
+        title: string;
+        journal_lines: string[];
+        author_lines: string[];
+        compound_lines: string[];
+    }
     type SequenceResInfo = {
         resNum: number;
         resCode: string;

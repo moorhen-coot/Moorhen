@@ -17,12 +17,13 @@ import { MoorhenUnmodelledBlobsModal } from '../modal/MoorhenUnmodelledBlobsModa
 import { MoorhenFillPartialResiduesModal } from '../modal/MoorhenFillPartialResiduesModal';
 import { MoorhenSceneSettingsModal } from '../modal/MoorhenSceneSettingsModal';
 import { MoorhenSliceNDiceModal } from '../modal/MoorhenSliceNDiceModal';
+import { MoorheSuperposeStructuresModal } from '../modal/MoorhenSuperposeStructuresModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { moorhen } from '../../types/moorhen';
 import { 
     setShowControlsModal, setShowCreateAcedrgLinkModal, setShowDiffMapPeaksModal, setShowFillPartialResValidationModal, setShowFitLigandModal, setShowLigandValidationModal, setShowMapsModal, 
     setShowMmrrccModal, setShowModelsModal, setShowPepFlipsValidationModal, setShowQuerySequenceModal, setShowRamaPlotModal, setShowSceneSettingsModal, setShowScriptingModal, 
-    setShowUnmodelledBlobsModal, setShowValidationPlotModal, setShowWaterValidationModal, setShowCarbohydrateValidationModal, setShowSliceNDiceModal
+    setShowUnmodelledBlobsModal, setShowValidationPlotModal, setShowWaterValidationModal, setShowCarbohydrateValidationModal, setShowSliceNDiceModal, setShowSuperposeModal
 } from '../../store/activeModalsSlice';
 
 export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
@@ -45,6 +46,7 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
     const showUnmodelledBlobsModal = useSelector((state: moorhen.State) => state.activeModals.showUnmodelledBlobsModal)
     const showCarbohydrateValidationModal = useSelector((state: moorhen.State) => state.activeModals.showCarbohydrateModal)
     const showSliceNDiceModal = useSelector((state: moorhen.State) => state.activeModals.showSliceNDiceModal)
+    const showSuperposeModal = useSelector((state: moorhen.State) => state.activeModals.showSuperposeModal)
 
     const showSceneSettingsModal = useSelector((state: moorhen.State) => state.activeModals.showSceneSettingsModal)
 
@@ -178,6 +180,13 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
             <MoorhenSliceNDiceModal
             show={showSliceNDiceModal}
             setShow={(newVal: boolean) => dispatch(setShowSliceNDiceModal(newVal))}
+            {...props} />
+        }
+
+        {showSuperposeModal &&
+            <MoorheSuperposeStructuresModal
+            show={showSuperposeModal}
+            setShow={(newVal: boolean) => dispatch(setShowSuperposeModal(newVal))}
             {...props} />
         }
 

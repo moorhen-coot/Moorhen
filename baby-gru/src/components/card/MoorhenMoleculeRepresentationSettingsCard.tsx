@@ -9,7 +9,8 @@ import { useSelector } from "react-redux";
 
 export const MoorhenMoleculeRepresentationSettingsCard = (props: {
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
-    show: boolean; anchorEl: React.RefObject<HTMLDivElement>;
+    show: boolean;
+    anchorEl: React.RefObject<HTMLDivElement>;
     molecule: moorhen.Molecule;
     urlPrefix: string;
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -246,5 +247,4 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
                 </div>
             </Stack>
         </Popover>
- 
 }
