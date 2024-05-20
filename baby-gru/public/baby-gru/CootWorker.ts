@@ -974,12 +974,12 @@ const read_ccp4_map = (mapData: ArrayBufferLike, name: string, isDiffMap: boolea
     return molNo
 }
 
-const setUserDefinedBondColours = (imol: number, colours: { cid: string; rgb: [number, number, number] }[], applyColourToNonCarbonAtoms: boolean = false) => {
-    let colourMap = new cootModule.MapIntFloat3()
+const setUserDefinedBondColours = (imol: number, colours: { cid: string; rgba: [number, number, number, number] }[], applyColourToNonCarbonAtoms: boolean = false) => {
+    let colourMap = new cootModule.MapIntFloat4()
     let indexedResiduesVec = new cootModule.VectorStringUInt_pair()
     
     colours.forEach((colour, index) => {
-        colourMap.set(index + 51, colour.rgb)
+        colourMap.set(index + 51, colour.rgba)
         const i = { first: colour.cid, second: index + 51 }
         indexedResiduesVec.push_back(i)
     })
@@ -1090,7 +1090,7 @@ const doCootCommand = (messageData: {
                 cootResult = replace_map_by_mtz_from_file(...commandArgs as [number, ArrayBufferLike, { F: string; PHI: string; }])
                 break
             case 'shim_set_bond_colours':
-                cootResult = setUserDefinedBondColours(...commandArgs as [number, { cid: string; rgb: [number, number, number] }[], boolean])
+                cootResult = setUserDefinedBondColours(...commandArgs as [number, { cid: string; rgba: [number, number, number, number] }[], boolean])
                 break
             case 'shim_export_map_as_gltf':
                 cootResult = export_map_as_gltf(...commandArgs as [number, number, number, number, number, number])

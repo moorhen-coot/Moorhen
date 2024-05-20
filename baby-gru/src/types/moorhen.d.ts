@@ -109,6 +109,7 @@ export namespace moorhen {
         uniqueId: string;
         static initFromDataObject(data: ColourRuleObject, commandCentre: React.RefObject<CommandCentre>, molecule: Molecule): ColourRule;
         static initFromString(stringData: string, commandCentre: React.RefObject<CommandCentre>, molecule: Molecule): ColourRule;
+        static parseHexToRgba(hex: string): [number, number, number, number];
         objectify(): ColourRuleObject;
         stringify(): string;
         setLabel(label: string): void;
@@ -116,7 +117,7 @@ export namespace moorhen {
         setParentMolecule(molecule: Molecule): void;
         setParentRepresentation(representation: MoleculeRepresentation): void;    
         setApplyColourToNonCarbonAtoms(newVal: boolean): void;
-        getUserDefinedColours(): { cid: string; rgb: [number, number, number]; applyColourToNonCarbonAtoms: boolean }[];
+        getUserDefinedColours(): { cid: string; rgba: [number, number, number, number]; applyColourToNonCarbonAtoms: boolean }[];
         apply(style: string, ruleIndex: number): Promise<void>;
     }
 
