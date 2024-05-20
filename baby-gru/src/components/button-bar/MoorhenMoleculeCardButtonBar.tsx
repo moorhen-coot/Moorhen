@@ -104,7 +104,7 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
             compressed: () => { return (<MenuItem key={6} onClick={() => {
                 document.body.click()
                 props.handleShowInfo()
-            }}>Header Info</MenuItem>) },
+            }}>Header info</MenuItem>) },
             expanded: () => {
                 return (<Button key={6} size="sm" variant="outlined" onClick={props.handleShowInfo}>
                     <InfoOutlined />
