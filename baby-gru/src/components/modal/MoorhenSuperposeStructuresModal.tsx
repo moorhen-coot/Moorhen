@@ -1,14 +1,15 @@
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Button, Card, Form, FormSelect, Spinner, Stack } from "react-bootstrap";
+import { Button, Form, FormSelect, Spinner, Stack } from "react-bootstrap";
 import { convertViewtoPx } from '../../utils/MoorhenUtils';
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { libcootApi } from "../../types/libcoot";
 import { Backdrop } from "@mui/material";
 import { useSnackbar } from "notistack";
+import { addMolecule } from "../../moorhen";
 
 
 export const MoorheSuperposeStructuresModal = (props: { show: boolean; setShow: React.Dispatch<React.SetStateAction<boolean>>; commandCentre: React.RefObject<moorhen.CommandCentre> }) => {    
@@ -20,6 +21,7 @@ export const MoorheSuperposeStructuresModal = (props: { show: boolean; setShow: 
     const refMoleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const movChainSelectRef = useRef<null | HTMLSelectElement>(null)
     const movMoleculeSelectRef = useRef<null | HTMLSelectElement>(null)
+    const makeCopyOfMovStructCheckRef = useRef<null | HTMLInputElement>(null)
 
     const [selectedRefModel, setSelectedRefModel] = useState<null | number>(null)
     const [selectedRefChain, setSelectedRefChain] = useState<null | string>(null)
@@ -27,9 +29,11 @@ export const MoorheSuperposeStructuresModal = (props: { show: boolean; setShow: 
     const [selectedMovChain, setSelectedMovChain] = useState<null | string>(null)
     const [busy, setBusy] = useState<boolean>(false)
 
-    const handleClose = () => props.setShow(false)
-
+    const dispatch = useDispatch()
+    
     const { enqueueSnackbar } = useSnackbar()
+
+    const handleClose = () => props.setShow(false)
 
     const handleSuperpose = useCallback(async () => {
         if (!refMoleculeSelectRef || !movMoleculeSelectRef) {
@@ -37,7 +41,15 @@ export const MoorheSuperposeStructuresModal = (props: { show: boolean; setShow: 
         }
 
         const refMolecule = molecules.find(molecule => molecule.molNo === parseInt(refMoleculeSelectRef.current.value))
-        const movMolecule = molecules.find(molecule => molecule.molNo === parseInt(movMoleculeSelectRef.current.value))
+
+        let movMolecule: moorhen.Molecule
+        if (makeCopyOfMovStructCheckRef.current.checked) {
+            const selectedMovMolecule = molecules.find(molecule => molecule.molNo === parseInt(movMoleculeSelectRef.current.value))
+            movMolecule = await selectedMovMolecule.copyMolecule()
+        } else {
+            movMolecule = molecules.find(molecule => molecule.molNo === parseInt(movMoleculeSelectRef.current.value))
+        }
+
 
         if (!refMolecule || !movMolecule) {
             return
@@ -64,6 +76,10 @@ export const MoorheSuperposeStructuresModal = (props: { show: boolean; setShow: 
         movMolecule.setAtomsDirty(true)
         await movMolecule.redraw()
         movMolecule.centreOn('/*/*/*/*', true)
+
+        if (makeCopyOfMovStructCheckRef.current.checked) {
+            dispatch( addMolecule(movMolecule) )
+        }
 
         setBusy(false)
         props.setShow(false)
@@ -132,6 +148,11 @@ export const MoorheSuperposeStructuresModal = (props: { show: boolean; setShow: 
                 <MoorhenChainSelect width="100%" molecules={molecules} onChange={(evt) => handleChainChange(evt, false)} selectedCoordMolNo={selectedMovModel} allowedTypes={[1, 2]} ref={movChainSelectRef} />
             </Form.Group>
         </Stack>
+        <Form.Check
+            style={{ margin: "0.5rem", justifyContent: "inherit", display: "flex", gap: "0.5rem"}} 
+            type="switch"
+            ref={makeCopyOfMovStructCheckRef}
+            label="Move a copy of moving structure"/>
     </Stack>
 
     const footerContent = <>
