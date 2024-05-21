@@ -144,7 +144,8 @@ export namespace moorhen {
         getNcsRelatedChains(): Promise<string[][]>;
         animateRefine(n_cyc: number, n_iteration: number, final_n_cyc?: number): Promise<void>;
         refineResidueRange(chainId: string, start: number, stop: number, ncyc?: number, redraw?: boolean): Promise<void>;
-        SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string): Promise<WorkerResponse>;
+        SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string, redraw?: boolean): Promise<void>;
+        lsqkbSuperpose(refMolNo: number, residueMatches: moorhen.lskqbResidueRangeMatch[], matchType?: number, redraw?: boolean): Promise<void>;
         refineResiduesUsingAtomCid(cid: string, mode: string, ncyc?: number, redraw?: boolean): Promise<void>;
         deleteCid(cid: string, redraw?: boolean): Promise<{first: number, second: number}>;
         getNumberOfAtoms(): Promise<number>;
@@ -256,6 +257,13 @@ export namespace moorhen {
         coordsFormat: coorFormats;
         moleculeDiameter: number;
         headerInfo: libcootApi.headerInfoJS;
+    }
+
+    type lskqbResidueRangeMatch = {
+        refChainId: string;
+        movChainId: string;
+        refResidueRange: [number, number];
+        movResidueRange: [number, number];
     }
 
     type RepresentationStyles = 'VdwSpheres' | 'ligands' | 'CAs' | 'CBs' | 'CDs' | 'gaussian' | 'allHBonds' | 'rama' | 

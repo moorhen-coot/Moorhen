@@ -6,6 +6,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { removeMap } from "../../store/mapsSlice";
 import { removeMolecule } from "../../store/moleculesSlice";
+import { useCallback } from "react";
 
 export const MoorhenDeleteDisplayObjectMenuItem = (props: {
     item: moorhen.Map | moorhen.Molecule;
@@ -14,6 +15,8 @@ export const MoorhenDeleteDisplayObjectMenuItem = (props: {
 }) => {
 
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
+    const maps = useSelector((state: moorhen.State) => state.maps)
+
     const dispatch = useDispatch()
 
     const panelContent = <>
@@ -22,20 +25,25 @@ export const MoorhenDeleteDisplayObjectMenuItem = (props: {
         </Form.Group>
     </>
 
-    const onCompleted = () => {
+    const onCompleted = useCallback(() => {
         props.item.delete()
         props.setPopoverIsShown(false)
         if (props.item.type === "map") {
-            dispatch( removeMap(props.item as moorhen.Map) )
             if (activeMap?.molNo === props.item.molNo) {
-                dispatch( setActiveMap(null) )
+                if (maps.length > 1) {
+                    const newActiveMap = maps.find(map => map.molNo !== props.item.molNo)
+                    dispatch( setActiveMap(newActiveMap) )
+                } else {
+                    dispatch( setActiveMap(null) )
+                }
             }
+            dispatch( removeMap(props.item as moorhen.Map) )
         } else if(props.item.type === "molecule") {
             dispatch( removeMolecule(props.item as moorhen.Molecule) )
         } else {
             console.warn('Attempted to delete item of unknown type ', props.item.type)
         }
-    }
+    }, [activeMap, maps])
 
     return <MoorhenBaseMenuItem
         textClassName="text-danger"
