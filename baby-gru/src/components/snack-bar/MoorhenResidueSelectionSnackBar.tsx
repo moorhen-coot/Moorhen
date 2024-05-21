@@ -368,10 +368,10 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, {id: s
                 <hr style={{margin: 0, padding: 0}}></hr>
                 <Stack gap={2} direction="vertical" style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
                     <Stack gap={2} direction='horizontal' style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-                        <IconButton onClick={handleRefinement} onMouseEnter={() => setTooltipContents('Refine')}>
+                        <IconButton disabled={activeMap === null} onClick={handleRefinement} onMouseEnter={() => setTooltipContents('Refine')}>
                             <CrisisAlertOutlined/>
                         </IconButton>
-                        <IconButton onClick={handleDragAtoms} onMouseEnter={() => setTooltipContents('Drag atoms')}>
+                        <IconButton disabled={activeMap === null} onClick={handleDragAtoms} onMouseEnter={() => setTooltipContents('Drag atoms')}>
                             <AdsClickOutlined/>
                         </IconButton>
                         <IconButton onClick={handleSelectionCopy} onMouseEnter={() => setTooltipContents('Copy fragment')}>
