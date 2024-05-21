@@ -326,3 +326,32 @@ if [ $BUILD_MOORHEN = true ]; then
     cd ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru
     ln -s ${MOORHEN_SOURCE_DIR}/checkout/monomers
 fi
+
+# Graphene
+if [ $BUILD_GRAPHENE = true ]; then
+    pushd ${MOORHEN_SOURCE_DIR}/checkout/graphene-$graphene_release/
+    CFLAGS="-s USE_PTHREADS $MOORHEN_CMAKE_FLAGS" LDFLAGS=" -lpthread $MOORHEN_CMAKE_FLAGS" meson setup ${BUILD_DIR}/graphene_build \
+        --prefix=${INSTALL_DIR} \
+        --cross-file=$MESON_CROSS \
+        --default-library=static \
+        --buildtype=release \
+        -Dtests=false && \
+        meson install -C ${BUILD_DIR}/graphene_build
+        popd
+fi
+
+# Libsigc++
+if [ $BUILD_LIBSIGCPP = true ]; then
+    pushd ${MOORHEN_SOURCE_DIR}/checkout/libsigcplusplus-$libsigcpp_release/
+    meson setup ${BUILD_DIR}/libsigcplusplus_build \
+        --prefix=${INSTALL_DIR} \
+        --libdir=lib \
+        --cross-file=$MESON_CROSS \
+        --default-library=static \
+        -Dc_link_args="-pthread $MOORHEN_CMAKE_FLAGS" \
+        -Dcpp_args="-s USE_PTHREADS=1 $MOORHEN_CMAKE_FLAGS" \
+        --buildtype=release && \
+        meson install -C ${BUILD_DIR}/libsigcplusplus_build
+        popd
+    
+fi
