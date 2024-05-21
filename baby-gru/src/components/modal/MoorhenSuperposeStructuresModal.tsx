@@ -175,7 +175,7 @@ export const MoorheSuperposeStructuresModal = (props: { show: boolean; setShow: 
                     lsqkbModeRef.current = "mainchain"
                     setLsqkbMode("mainchain")
                 }}
-                label="Mainchain"/>
+                label="Main Chain"/>
             <Form.Check
                 style={{ margin: "0.5rem", justifyContent: "inherit", display: "flex", gap: "0.5rem"}} 
                 type="radio"
