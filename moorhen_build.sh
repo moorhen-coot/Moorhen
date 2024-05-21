@@ -111,6 +111,8 @@ BUILD_IGRAPH=false
 BUILD_GEMMI=false
 BUILD_JSONCPP=false
 BUILD_RDKIT=false
+BUILD_GRAPHENE=false
+BUILD_LIBSIGCPP=false
 BUILD_MOORHEN=false
 
 if test -d ${INSTALL_DIR}/include/gsl; then
@@ -153,6 +155,18 @@ if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/wasm/moorhen.wasm; the
     true
 else
     BUILD_MOORHEN=true
+fi
+
+if test -d ${INSTALL_DIR}/include/graphene-1.0; then
+    true
+else
+    BUILD_GRAPHENE=true
+fi
+
+if test -d ${INSTALL_DIR}/include/sigc++-3.0; then
+    true
+else
+    BUILD_LIBSIGCPP=true
 fi
 
 for mod in $MODULES; do
