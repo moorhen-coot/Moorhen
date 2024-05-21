@@ -116,56 +116,65 @@ BUILD_LIBSIGCPP=false
 BUILD_MOORHEN=false
 
 if test -d ${INSTALL_DIR}/include/gsl; then
-    true
+    echo "GSL will be skipped."
 else
+    echo "GSL will be built."
     BUILD_GSL=true
 fi
 
 if test -d ${INSTALL_DIR}/include/boost; then
-    true
+    echo "Boost will be skipped."
 else
+    echo "Boost will be built."
     BUILD_BOOST=true
 fi
 
 if test -d ${INSTALL_DIR}/include/gemmi; then
-    true
+    echo "Gemmi will be skipped."
 else
+    echo "Gemmi will be built."
     BUILD_GEMMI=true
 fi
 
 if test -d ${INSTALL_DIR}/include/rdkit; then
-    true
+    echo "RDKit will be skipped."
 else
+    echo "RDKit will be built."
     BUILD_RDKIT=true
 fi
 
 if test -d ${INSTALL_DIR}/include/igraph; then
-    true
+    echo "igraph will be skipped."
 else
+    echo "igraph will be built."
     BUILD_IGRAPH=true
 fi
 
 if test -d ${INSTALL_DIR}/include/json; then
-    true
+    echo "jsoncpp will be skipped."
 else
+    echo "jsoncpp will be built."
     BUILD_JSONCPP=true
 fi
 
 if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/wasm/moorhen.wasm; then
-    true
+    echo "Moorhen (wasm) will be skipped."
 else
+    echo "Moorhen (wasm) will be built."
     BUILD_MOORHEN=true
 fi
 
 if test -d ${INSTALL_DIR}/include/graphene-1.0; then
-    true
+    echo "Graphene will be skipped."
 else
+    echo "Graphene will be built."
     BUILD_GRAPHENE=true
 fi
 
 if test -d ${INSTALL_DIR}/include/sigc++-3.0; then
-    true
+    echo "libsigc++ will be skipped."
 else
+    echo "libsigc++ will be built."
     BUILD_LIBSIGCPP=true
 fi
 
