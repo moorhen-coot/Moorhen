@@ -139,6 +139,18 @@ else
     BUILD_RDKIT=true
 fi
 
+if test -d ${INSTALL_DIR}/include/graphene-1.0; then
+    true
+else
+    BUILD_GRAPHENE=true
+fi
+
+if test -d ${INSTALL_DIR}/include/sigc++-3.0; then
+    true
+else
+    BUILD_LIBSIGCPP=true
+fi
+
 if test -d ${INSTALL_DIR}/include/igraph; then
     true
 else
@@ -157,17 +169,6 @@ else
     BUILD_MOORHEN=true
 fi
 
-if test -d ${INSTALL_DIR}/include/graphene-1.0; then
-    true
-else
-    BUILD_GRAPHENE=true
-fi
-
-if test -d ${INSTALL_DIR}/include/sigc++-3.0; then
-    true
-else
-    BUILD_LIBSIGCPP=true
-fi
 
 for mod in $MODULES; do
     case $mod in
