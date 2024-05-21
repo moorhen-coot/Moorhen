@@ -64,6 +64,14 @@ echo "Downloading RDKit source"
 curl -L https://github.com/rdkit/rdkit/archive/refs/tags/$rdkit_release.tar.gz -o "$rdkit_release.tar.gz"
 echo
 
+echo "Downloading graphene source"
+curl -L https://github.com/ebassi/graphene/archive/refs/tags/$graphene_release.tar.gz -o graphene_$graphene_release.tar.gz
+echo
+
+echo "Downloading libsigc++ source"
+curl -L https://github.com/libsigcplusplus/libsigcplusplus/archive/refs/tags/$libsigcpp_release.tar.gz -o libsigcplusplus_$libsigcpp_release.tar.gz
+echo
+
 echo "Downloading and Unpacking Privateer"
 curl -L https://github.com/glycojones/privateer/archive/refs/tags/WASM-0.3.4.tar.gz -o privateer-wasm.tar.gz
 tar xf privateer-wasm.tar.gz
@@ -99,6 +107,14 @@ echo
 
 echo "Unpacking glm-$glm_release"
 tar xf glm-$glm_release.tar.gz
+echo
+
+echo "Unpacking libsigc++ source"
+tar xf "libsigcplusplus_$libsigcpp_release.tar.gz"
+echo
+
+echo "Unpacking graphene source"
+tar xf "graphene_$graphene_release.tar.gz"
 echo
 
 patch -p0 < ../patches/ccp4-emscripten.patch 
