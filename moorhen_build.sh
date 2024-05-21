@@ -349,8 +349,10 @@ if [ $BUILD_LIBSIGCPP = true ]; then
         --cross-file=$MESON_CROSS \
         --default-library=static \
         -Dc_link_args="-pthread $MOORHEN_CMAKE_FLAGS" \
+        -Dcpp_link_args="-pthread $MOORHEN_CMAKE_FLAGS" \
         -Dcpp_args="-s USE_PTHREADS=1 $MOORHEN_CMAKE_FLAGS" \
-        --buildtype=release && \
+        --buildtype=release \
+        -Dbuild-tests=false && \
         meson install -C ${BUILD_DIR}/libsigcplusplus_build
         popd
     
