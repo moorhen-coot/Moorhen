@@ -2093,14 +2093,56 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} movChainId - Chain ID for the moving structure
      * @param {string} refMolNo - Molecule number for the reference structure
      * @param {string} refChainId - Chain ID for the reference structure
+     * @param {boolean} [redraw=true] - Indicates if the molecule should be redrawn
      */
-    SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string): Promise&lt;moorhen.WorkerResponse> {
-        return this.commandCentre.current.cootCommand({
+    async SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string, redraw: boolean = true): Promise&lt;void> {
+        this.commandCentre.current.cootCommand({
             command: "SSM_superpose",
             returnType: 'superpose_results',
             commandArgs: [refMolNo, refChainId, this.molNo, movChainId],
             changesMolecules: [this.molNo]
         }, true)
+        
+        this.setAtomsDirty(true)
+        if (redraw) {
+            await this.redraw()
+            await this.centreOn('/*/*/*/*', true)
+        }
+    }
+
+    /**
+     * Use LSQKB to superpose this molecule (as the moving structure) with another molecule isntance
+     * @param {string} refMolNo - Molecule number for the reference structure
+     * @param {moorhen.lskqbResidueRangeMatch[]} residueMatches - A list of objects describing the residue matches for LSQKB
+     * @param {number} [matchType=1] - The match type for LSQKB: 0 - all | 1 - main | 2 - CAs 
+     * @param {boolean} [redraw=true] - Indicates if the molecule should be redrawn
+     */
+    async lsqkbSuperpose(refMolNo: number, residueMatches: moorhen.lskqbResidueRangeMatch[], matchType: number = 1, redraw: boolean = true): Promise&lt;void> {
+        await this.commandCentre.current.cootCommand({
+            command: 'clear_lsq_matches',
+            commandArgs: [ ],
+            returnType: 'status'
+        }, false)
+        
+        await Promise.all(residueMatches.map(item => {
+            return this.commandCentre.current.cootCommand({
+                command: 'add_lsq_superpose_match',
+                commandArgs: [item.refChainId, ...item.refResidueRange, item.movChainId, ...item.movResidueRange, matchType],
+                returnType: 'status'
+            }, false)
+        }))
+        
+        await this.commandCentre.current.cootCommand({
+            command: 'lsq_superpose',
+            commandArgs: [refMolNo, this.molNo],
+            returnType: 'status'
+        }, false)
+        
+        this.setAtomsDirty(true)
+        if (redraw) {
+            await this.redraw()
+            await this.centreOn('/*/*/*/*', true)
+        }
     }
 
     /**
