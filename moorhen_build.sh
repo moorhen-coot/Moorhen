@@ -12,7 +12,7 @@ else
     MOORHEN_SOURCE_DIR=`dirname -- "$( readlink -f -- "$0"; )"`
 fi
 
-source VERSIONS
+source ./VERSIONS
 
 
 if [ x`uname -s` = x"Darwin" ]; then
