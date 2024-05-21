@@ -13,7 +13,7 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
     const chainSelectRef = useRef<null | HTMLSelectElement>(null)
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const newChainIdFormRef = useRef<null |HTMLInputElement>(null)
-    const minMaxValueRef = useRef<[number, number]>([1, 100])
+    const residueRangeRef = useRef<[number, number]>([1, 100])
 
     const [invalidNewId, setInvalidNewId] = useState<boolean>(false)
     const [selectedChain, setSelectedChain] = useState<string>(null)
@@ -74,8 +74,8 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
             return
         }
         
-        const startResNum = sequence.sequence[minMaxValueRef.current[0] - 1]?.resNum
-        const endResNum = sequence.sequence[minMaxValueRef.current[1] - 1]?.resNum
+        const startResNum = sequence.sequence[residueRangeRef.current[0] - 1]?.resNum
+        const endResNum = sequence.sequence[residueRangeRef.current[1] - 1]?.resNum
 
         try {
             setInvalidNewId(false)
@@ -109,7 +109,7 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
             selectedCoordMolNo={selectedModel} 
             onChange={handleChainChange}
             ref={chainSelectRef}/>
-        <MoorhenSequenceRangeSlider ref={minMaxValueRef} selectedChainId={selectedChain} selectedMolNo={selectedModel} />
+        <MoorhenSequenceRangeSlider ref={residueRangeRef} selectedChainId={selectedChain} selectedMolNo={selectedModel} />
         <Form.Group style={{ width: "95%", margin: "0.5rem", height: "4rem" }}>
             <Form.Label>New chain ID</Form.Label>
             <Form.Control
