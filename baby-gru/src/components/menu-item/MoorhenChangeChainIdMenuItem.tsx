@@ -3,11 +3,10 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { useSelector } from 'react-redux';
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
-import { Button, Form, Stack } from "react-bootstrap";
+import { Button, Form } from "react-bootstrap";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
-import { IconButton, Slider } from "@mui/material";
-import { AddCircleOutline, RemoveCircleOutline, RemoveCircleOutlined } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
+import { MoorhenSequenceRangeSlider } from "../misc/MoorhenSequenceRangeSlider"
 
 export const MoorhenChangeChainIdMenuItem = (props) => {
 
@@ -15,31 +14,27 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const newChainIdFormRef = useRef<null |HTMLInputElement>(null)
     const minMaxValueRef = useRef<[number, number]>([1, 100])
-    const intervalRef = useRef(null)
 
     const [sequenceLength, setSequenceLength] = useState<null | number>(null)
-    const [minMaxValue, setMinMaxValue]  = useState<[number, number]>([1, 100])
     const [invalidNewId, setInvalidNewId] = useState<boolean>(false)
     const [selectedChain, setSelectedChain] = useState<string>(null)
     const [selectedModel, setSelectedModel] = useState<number | null>(null)
 
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const { enqueueSnackbar } = useSnackbar()
 
     const handleModelChange = useCallback((evt: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedModel(parseInt(evt.target.value))
-        setSelectedChain(chainSelectRef.current.value)
 
         const molecule = molecules.find(molecule => molecule.molNo === parseInt(evt.target.value))
         if (molecule) {
-            const sequence = molecule.sequences.find(sequence => sequence.chain === chainSelectRef.current?.value)
-            if (sequence) {
-                setSequenceLength(sequence.sequence.length)
-                setMinMaxValue([1, sequence.sequence.length])
-                minMaxValueRef.current = [1, sequence.sequence.length]
+            let sequence = molecule.sequences.find(sequence => sequence.chain === chainSelectRef.current?.value)
+            if (!sequence) {
+                sequence = molecule.sequences[0]
             }
+            setSequenceLength(sequence.sequence.length)
+            setSelectedChain(sequence.chain)
         }
     }, [molecules])
 
@@ -50,8 +45,6 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
             const sequence = molecule.sequences.find(sequence => sequence.chain === evt.target.value)
             if (sequence) {
                 setSequenceLength(sequence.sequence.length)
-                setMinMaxValue([1, sequence.sequence.length])
-                minMaxValueRef.current = [1, sequence.sequence.length]
             }
         }
     }, [molecules])
@@ -75,8 +68,6 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
             const sequence = selectedMolecule.sequences[0]
             if (sequence) {
                 setSequenceLength(sequence.sequence.length)
-                setMinMaxValue([1, sequence.sequence.length])
-                minMaxValueRef.current = [1, sequence.sequence.length]
             }
         }
     }, [molecules])
@@ -123,32 +114,6 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
         }
     }, [molecules])
 
-    const convertValue = useCallback((value: number) => {
-        if (!chainSelectRef.current?.value || selectedModel === null) {
-            return ''
-        }
-    
-        const molecule = molecules.find(molecule => molecule.molNo === selectedModel)
-        if (!molecule) {
-            return ''
-        }
-        
-        const sequence = molecule.sequences.find(sequence => sequence.chain === chainSelectRef.current.value)
-        if (!sequence) {
-            return ''
-        }
-        
-        const resNum = Math.floor(value)
-        
-        return sequence.sequence[resNum - 1]?.cid
-    
-    }, [molecules, selectedModel, selectedChain])
-
-    const handleMinMaxChange = (_event: any, newValue: [number, number]) => {
-        setMinMaxValue(newValue)
-        minMaxValueRef.current = newValue
-    }
-
     const panelContent = <>
         <MoorhenMoleculeSelect
             onChange={handleModelChange}
@@ -160,101 +125,7 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
             selectedCoordMolNo={selectedModel} 
             onChange={handleChainChange}
             ref={chainSelectRef}/>
-        <span style={{margin: '0.5rem'}}>Residue range</span>
-        <Stack direction='horizontal' gap={1} style={{ }}>
-            <Stack direction='vertical' gap={0} style={{justifyContent: 'center'}}>
-                <IconButton onMouseDown={() => {
-                    intervalRef.current = setInterval(() => {
-                        const newValue = [minMaxValueRef.current[0] + 1, minMaxValueRef.current[1]] as [number, number]
-                        handleMinMaxChange(null, newValue)                    
-                    }, 100)
-                }} onMouseUp={() => {
-                    clearInterval(intervalRef.current)                   
-                }} onClick={() => {
-                    const newValue = [minMaxValueRef.current[0] + 1, minMaxValueRef.current[1]] as [number, number]
-                    handleMinMaxChange(null, newValue)
-                }} style={{padding: 0, color: isDark ? 'white' : 'grey'}}>
-                    <AddCircleOutline/>
-                </IconButton>
-                <IconButton onMouseDown={() => {
-                    intervalRef.current = setInterval(() => {
-                        const newValue = [minMaxValueRef.current[0] - 1, minMaxValueRef.current[1]] as [number, number]
-                        handleMinMaxChange(null, newValue)                    
-                    }, 100)
-                }} onMouseUp={() => {
-                    clearInterval(intervalRef.current)                   
-                }} onClick={() => {
-                    const newValue = [minMaxValueRef.current[0] - 1, minMaxValueRef.current[1]] as [number, number]
-                    handleMinMaxChange(null, newValue)
-                }} style={{padding: 0, color: isDark ? 'white' : 'grey'}}>
-                    <RemoveCircleOutline/>
-                </IconButton>
-            </Stack>
-            <div style={{ width: '80%', paddingLeft: '1rem', paddingRight: '1rem', paddingTop: '0.1rem', paddingBottom: '0.1rem' }}>
-            <Slider
-                getAriaLabel={() => 'Residue range'}
-                value={minMaxValue}
-                onChange={handleMinMaxChange}
-                getAriaValueText={convertValue}
-                valueLabelFormat={convertValue}
-                valueLabelDisplay="on"
-                min={1}
-                max={sequenceLength ? sequenceLength : 100}
-                step={1}
-                marks={true}
-                sx={{
-                    marginTop: '1.7rem',
-                    marginBottom: '0.8rem',
-                    '& .MuiSlider-thumb[data-index="1"]': {
-                        '& .MuiSlider-valueLabel': {
-                            top: '-0.7rem',
-                            fontSize: 14,
-                            fontWeight: 'bold',
-                            color: 'grey',
-                            backgroundColor: 'unset',
-                        },
-                    },
-                    '& .MuiSlider-thumb[data-index="0"]': {
-                        '& .MuiSlider-valueLabel': {
-                            top:'3.5rem',
-                            fontSize: 14,
-                            fontWeight: 'bold',
-                            color: 'grey',
-                            backgroundColor: 'unset',
-                        },
-                    }
-                }}
-            />
-            </div>
-            <Stack direction='vertical' gap={0} style={{display: 'flex', verticalAlign: 'center', justifyContent: 'center'}}>
-                <IconButton onMouseDown={() => {
-                    intervalRef.current = setInterval(() => {
-                        const newValue = [minMaxValueRef.current[0], minMaxValueRef.current[1] + 1] as [number, number]
-                        handleMinMaxChange(null, newValue)                    
-                    }, 100)
-                }} onMouseUp={() => {
-                    clearInterval(intervalRef.current)                   
-                }} onClick={() => {
-                    const newValue = [minMaxValueRef.current[0], minMaxValueRef.current[1] + 1] as [number, number]
-                    handleMinMaxChange(null, newValue)                    
-                }} style={{padding: 0, color: isDark ? 'white' : 'grey'}}>
-                    <AddCircleOutline/>
-                </IconButton>
-                <IconButton onMouseDown={() => {
-                    intervalRef.current = setInterval(() => {
-                        const newValue = [minMaxValueRef.current[0], minMaxValueRef.current[1] - 1] as [number, number]
-                        handleMinMaxChange(null, newValue)                    
-                    }, 100)
-                }} onMouseUp={() => {
-                    clearInterval(intervalRef.current)                   
-                }} onClick={() => {
-                    const newValue = [minMaxValueRef.current[0], minMaxValueRef.current[1] - 1] as [number, number]
-                    handleMinMaxChange(null, newValue)                    
-                }} style={{padding: 0, color: isDark ? 'white' : 'grey'}}>
-                    <RemoveCircleOutline/>
-                </IconButton>
-            </Stack>
-        </Stack>
+        <MoorhenSequenceRangeSlider ref={minMaxValueRef} sequenceLength={sequenceLength} selectedChainId={selectedChain} selectedMolNo={selectedModel} />
         <Form.Group style={{ width: "95%", margin: "0.5rem", height: "4rem" }}>
             <Form.Label>New chain ID</Form.Label>
             <Form.Control
