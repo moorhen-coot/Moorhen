@@ -18,10 +18,13 @@ else
     NUMPROCS=`nproc --all`
 fi
 
-echo ${MOORHEN_SOURCE_DIR}
 
 BUILD_DIR=${PWD}/CCP4_WASM_BUILD
 INSTALL_DIR=${PWD}/install
+
+echo "Sources are in ${MOORHEN_SOURCE_DIR}"
+echo "Building in ${BUILD_DIR}"
+echo "Installing in ${INSTALL_DIR}"
 
 mkdir -p ${BUILD_DIR}
 mkdir -p ${INSTALL_DIR}
