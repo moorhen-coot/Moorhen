@@ -15,7 +15,6 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
     const newChainIdFormRef = useRef<null |HTMLInputElement>(null)
     const minMaxValueRef = useRef<[number, number]>([1, 100])
 
-    const [sequenceLength, setSequenceLength] = useState<null | number>(null)
     const [invalidNewId, setInvalidNewId] = useState<boolean>(false)
     const [selectedChain, setSelectedChain] = useState<string>(null)
     const [selectedModel, setSelectedModel] = useState<number | null>(null)
@@ -33,21 +32,13 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
             if (!sequence) {
                 sequence = molecule.sequences[0]
             }
-            setSequenceLength(sequence.sequence.length)
             setSelectedChain(sequence.chain)
         }
     }, [molecules])
 
     const handleChainChange = useCallback((evt) => {
         setSelectedChain(evt.target.value)
-        const molecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current?.value))
-        if (molecule) {
-            const sequence = molecule.sequences.find(sequence => sequence.chain === evt.target.value)
-            if (sequence) {
-                setSequenceLength(sequence.sequence.length)
-            }
-        }
-    }, [molecules])
+    }, [ ])
 
     useEffect(() => {
         let selectedMolecule: moorhen.Molecule
@@ -62,14 +53,7 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
             setSelectedModel(molecules[0].molNo)
             setSelectedChain(molecules[0].sequences[0]?.chain)
             selectedMolecule = molecules[0]
-        }
-        
-        if (selectedMolecule) {
-            const sequence = selectedMolecule.sequences[0]
-            if (sequence) {
-                setSequenceLength(sequence.sequence.length)
-            }
-        }
+        }        
     }, [molecules])
 
     const changeChainId = useCallback(async () => {
@@ -125,7 +109,7 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
             selectedCoordMolNo={selectedModel} 
             onChange={handleChainChange}
             ref={chainSelectRef}/>
-        <MoorhenSequenceRangeSlider ref={minMaxValueRef} sequenceLength={sequenceLength} selectedChainId={selectedChain} selectedMolNo={selectedModel} />
+        <MoorhenSequenceRangeSlider ref={minMaxValueRef} selectedChainId={selectedChain} selectedMolNo={selectedModel} />
         <Form.Group style={{ width: "95%", margin: "0.5rem", height: "4rem" }}>
             <Form.Label>New chain ID</Form.Label>
             <Form.Control

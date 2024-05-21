@@ -6,11 +6,10 @@ import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 
 export const MoorhenSequenceRangeSlider = forwardRef<
-    any,
+    [number, number],
     {
         selectedMolNo: number;
         selectedChainId: string;
-        sequenceLength: number;
     }
 >((props, ref) => {
 
@@ -20,10 +19,20 @@ export const MoorhenSequenceRangeSlider = forwardRef<
     const intervalRef = useRef(null)
 
     const [minMaxValue, setMinMaxValue]  = useState<[number, number]>([1, 100])
+    const [sequenceLength, setSequenceLength]  = useState<number | null>(null)
 
     useEffect(() => {
-        setMinMaxValue([1, props.sequenceLength])
-    }, [props.sequenceLength])
+        const molecule = molecules.find(molecule => molecule.molNo === props.selectedMolNo)
+        if (molecule) {
+            let sequence = molecule.sequences.find(sequence => sequence.chain === props.selectedChainId)
+            if (!sequence) {
+                sequence = molecule.sequences[0]
+            }
+            setSequenceLength(sequence.sequence.length)
+            setMinMaxValue([1, sequence.sequence.length])
+            if (ref !== null && typeof ref !== 'function') ref.current = [1, sequence.sequence.length]
+        }
+    }, [props.selectedMolNo, props.selectedChainId])
 
     const convertValue = useCallback((value: number) => {
         if (!props.selectedChainId || props.selectedMolNo === null) {
@@ -99,7 +108,7 @@ export const MoorhenSequenceRangeSlider = forwardRef<
                 valueLabelFormat={convertValue}
                 valueLabelDisplay="on"
                 min={1}
-                max={props.sequenceLength ? props.sequenceLength : 100}
+                max={sequenceLength ? sequenceLength : 100}
                 step={1}
                 marks={true}
                 sx={{
