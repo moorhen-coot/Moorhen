@@ -650,6 +650,10 @@ target_include_directories(moorhen PRIVATE
     ../checkout/privateer-wasm/src/privateer/cpp/third-party/simdjson
     ../checkout/slicendice_cpp/prog/
     ../install/include/eigen3
+    ../install/include/graphene-1.0 
+    ../install/include/sigc++-3.0
+    ../install/lib/graphene-1.0/include
+    ../install/lib/sigc++-3.0/include
 )
 
 target_compile_options(moorhen PUBLIC -DGEMMI_WRITE_IMPLEMENTATION -Wno-deprecated-builtins -Wno-deprecated-declarations -fexceptions -pthread -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
