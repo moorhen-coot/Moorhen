@@ -62,6 +62,14 @@ ${coot_src}/src/c-interface-image.cc
 ]]
 
 set(coot_exception_srcs
+${coot_src}/layla/ligand_editor_canvas.cpp
+${coot_src}/layla/ligand_editor_canvas/core.cpp
+${coot_src}/layla/ligand_editor_canvas/model.cpp
+${coot_src}/layla/ligand_editor_canvas/tools.cpp
+${coot_src}/layla/ligand_editor_canvas/render.cpp
+${coot_src}/layla/utils.cpp
+${coot_src}/lhasa/lhasa.cpp
+${coot_src}/lhasa/glog_replacement.cpp
 ${coot_src}/lidia-core/svg-molecule.cc
 ${coot_src}/lidia-core/cod-types.cc
 ${coot_src}/lidia-core/cod-atom-types.cc
@@ -518,7 +526,7 @@ FILE(COPY ${coot_src}/data/metal/metal-S-distance.table DESTINATION data/coot/da
 FILE(COPY ${CMAKE_INSTALL_PREFIX}/share/RDKit/Data/BaseFeatures.fdef DESTINATION data/RDKit/Data )
 
 #-sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=512MB -sMAXIMUM_MEMORY=4092MB -sTOTAL_MEMORY=4092MB
-add_executable(moorhen moorhen-wrappers.cc gemmi-wrappers.cc smilestopdb.cc)
+add_executable(moorhen moorhen-wrappers.cc gemmi-wrappers.cc smilestopdb.cc ${coot_src}/embind.cpp)
 if(${MEMORY64} MATCHES "1")
 target_link_options(moorhen PRIVATE -sASSERTIONS=2 -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 else()
