@@ -461,7 +461,7 @@ target_include_directories(coot PRIVATE
     ../checkout/gemmi/include 
     ../install/include/graphene-1.0 
     ../install/include/sigc++-3.0
-    ../install/lib/graphene-1.0 /include
+    ../install/lib/graphene-1.0/include
     ../install/lib/sigc++-3.0/include
 )
 
