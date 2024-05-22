@@ -586,6 +586,8 @@ target_link_libraries(moorhen
     coot
     gsl
     gslcblas
+    sigc-3.0
+    graphene-1.0
     RDKitMolDraw2D
     RDKitForceFieldHelpers
     RDKitDescriptors
