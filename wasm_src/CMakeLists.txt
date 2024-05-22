@@ -444,7 +444,26 @@ ${coot_exception_srcs}
 ${coot_src}/ideal/write-png.cc
 )
 
-target_include_directories(coot PRIVATE ${coot_src} ${coot_src}/coords ${coot_src}/ccp4mg-utils ${coot_src}/utils ${coot_src}/src ../include ../checkout/ssm ../checkout/mmdb2 ../checkout/clipper ../checkout/fftw-2.1.5/fftw ../checkout/fftw-2.1.5/rfftw ../checkout/libccp4/ccp4 ../boost  ../checkout/gemmi/include )
+target_include_directories(coot PRIVATE 
+    ${coot_src} 
+    ${coot_src}/coords 
+    ${coot_src}/ccp4mg-utils 
+    ${coot_src}/utils 
+    ${coot_src}/src 
+    ../include 
+    ../checkout/ssm 
+    ../checkout/mmdb2 
+    ../checkout/clipper 
+    ../checkout/fftw-2.1.5/fftw 
+    ../checkout/fftw-2.1.5/rfftw 
+    ../checkout/libccp4/ccp4 
+    ../boost  
+    ../checkout/gemmi/include 
+    ../install/include/graphene-1.0 
+    ../install/include/sigc++-3.0
+    ../install/lib/graphene-1.0 /include
+    ../install/lib/sigc++-3.0/include
+)
 
 set_target_properties(coot PROPERTIES COMPILE_FLAGS "-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -Wno-deprecated-declarations -Wno-deprecated-builtins -pthread -DHAVE_CXX11=1 -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1" LINK_FLAGS "-fexceptions -pthread -s USE_LIBPNG=1 -s USE_ZLIB=1 -sASSERTIONS=2")
 
@@ -526,7 +545,7 @@ FILE(COPY ${coot_src}/data/metal/metal-S-distance.table DESTINATION data/coot/da
 FILE(COPY ${CMAKE_INSTALL_PREFIX}/share/RDKit/Data/BaseFeatures.fdef DESTINATION data/RDKit/Data )
 
 #-sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=512MB -sMAXIMUM_MEMORY=4092MB -sTOTAL_MEMORY=4092MB
-add_executable(moorhen moorhen-wrappers.cc gemmi-wrappers.cc smilestopdb.cc ${coot_src}/embind.cpp)
+add_executable(moorhen moorhen-wrappers.cc gemmi-wrappers.cc smilestopdb.cc ${coot_src}/lhasa/embind.cpp)
 if(${MEMORY64} MATCHES "1")
 target_link_options(moorhen PRIVATE -sASSERTIONS=2 -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 else()
