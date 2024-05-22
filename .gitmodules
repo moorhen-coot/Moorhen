@@ -1,0 +1,3 @@
+[submodule "baby-gru/src/LhasaReact"]
+	path = baby-gru/src/LhasaReact
+	url = git@github.com:moorhen-coot/LhasaReact.git
