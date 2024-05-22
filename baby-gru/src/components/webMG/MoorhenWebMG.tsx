@@ -10,6 +10,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
 import { useSnackbar } from 'notistack';
 
+// FIXME: This is here for testing only
+import '../../utils/LhasaGlue'
+
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
