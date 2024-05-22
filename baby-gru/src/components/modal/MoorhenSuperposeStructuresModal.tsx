@@ -6,7 +6,6 @@ import { convertViewtoPx } from '../../utils/MoorhenUtils';
 import { useDispatch, useSelector } from "react-redux";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
-import { libcootApi } from "../../types/libcoot";
 import { Backdrop, IconButton, Tooltip } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { addMolecule } from "../../moorhen";
@@ -195,7 +194,6 @@ export const MoorheSuperposeStructuresModal = (props: { show: boolean; setShow: 
         } else {
             setSelectedMovChain(evt.target.value)
         }
-        setLsqkbResidueRanges({ action: "empty" })
     }
 
     const handleAddLsqkbMatch = useCallback(() => {
