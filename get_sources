@@ -117,6 +117,11 @@ echo "Unpacking graphene source"
 tar xf "graphene_$graphene_release.tar.gz"
 echo
 
+# Libeigen
+echo "Checking out LibEigen"
+curl -L https://gitlab.com/libeigen/eigen/-/archive/$libeigen_release/eigen-$libeigen_release.tar.gz -o eigen-$libeigen_release.tar.gz
+tar xf eigen-$libeigen_release.tar.gz
+
 patch -p0 < ../patches/ccp4-emscripten.patch 
 cd ..
 echo

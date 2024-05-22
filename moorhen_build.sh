@@ -74,6 +74,10 @@ else
                rm -rf ${BUILD_DIR}/rdkit_build
                rm -rf ${INSTALL_DIR}/include/rdkit
                ;;
+           eigen) echo "Clear eigen"
+               rm -rf ${BUILD_DIR}/eigen_build
+               rm -rf ${INSTALL_DIR}/include/eigen3
+               ;;
            moorhen) echo "Clear moorhen"
                rm -rf ${BUILD_DIR}/moorhen_build
                rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/wasm
@@ -116,6 +120,7 @@ BUILD_JSONCPP=false
 BUILD_RDKIT=false
 BUILD_GRAPHENE=false
 BUILD_LIBSIGCPP=false
+BUILD_LIBEIGEN=false
 BUILD_MOORHEN=false
 
 if test -d ${INSTALL_DIR}/include/gsl; then
@@ -166,6 +171,12 @@ else
     BUILD_JSONCPP=true
 fi
 
+if test -r ${INSTALL_DIR}/include/eigen3; then
+    true
+else
+    BUILD_LIBEIGEN=true
+fi
+
 if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/wasm/moorhen.wasm; then
     true
 else
@@ -193,6 +204,9 @@ for mod in $MODULES; do
        rdkit) echo "Force build rdkit"
        BUILD_RDKIT=true
        ;;
+       eigen) echo "Force build eigen"
+       BUILD_LIBEIGEN=true
+       ;;
        moorhen) echo "Force build moorhen"
        BUILD_MOORHEN=true
        ;;
@@ -207,7 +221,16 @@ echo "BUILD_JSONCPP   " $BUILD_JSONCPP
 echo "BUILD_RDKIT     " $BUILD_RDKIT
 echo "BUILD_GRAPHENE  " $BUILD_GRAPHENE
 echo "BUILD_LIBSIGCPP " $BUILD_LIBSIGCPP
+echo "BUILD_LIBEIGEN  " $BUILD_LIBEIGEN
 echo "BUILD_MOORHEN   " $BUILD_MOORHEN
+
+#eigen
+if [ $BUILD_LIBEIGEN = true ]; then
+    mkdir -p ${BUILD_DIR}/eigen_build
+    cd ${BUILD_DIR}/eigen_build
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/eigen-$libeigen_release
+    make install
+fi
 
 #gsl
 if [ $BUILD_GSL = true ]; then
@@ -232,7 +255,7 @@ if [ $BUILD_RDKIT = true ]; then
     BOOST_CMAKE_STUFF=`for i in ${INSTALL_DIR}/lib/cmake/boost*; do j=${i%-$boost_release}; k=${j#${INSTALL_DIR}/lib/cmake/boost_}; echo -Dboost_${k}_DIR=$i; done`
     mkdir -p ${BUILD_DIR}/rdkit_build
     cd ${BUILD_DIR}/rdkit_build
-    emcmake cmake -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -Wno-enum-constexpr-conversion -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
+    emcmake cmake -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_STACKTRACE=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -Wno-enum-constexpr-conversion -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
     emmake make -j ${NUMPROCS}
     emmake make install
 fi
