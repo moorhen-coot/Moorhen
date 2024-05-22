@@ -12,16 +12,22 @@ else
     MOORHEN_SOURCE_DIR=`dirname -- "$( readlink -f -- "$0"; )"`
 fi
 
+source ./VERSIONS
+
+
 if [ x`uname -s` = x"Darwin" ]; then
     NUMPROCS=`sysctl -n hw.ncpu`
 else
     NUMPROCS=`nproc --all`
 fi
 
-echo ${MOORHEN_SOURCE_DIR}
 
 BUILD_DIR=${PWD}/CCP4_WASM_BUILD
 INSTALL_DIR=${PWD}/install
+
+echo "Sources are in ${MOORHEN_SOURCE_DIR}"
+echo "Building in ${BUILD_DIR}"
+echo "Installing in ${INSTALL_DIR}"
 
 mkdir -p ${BUILD_DIR}
 mkdir -p ${INSTALL_DIR}
@@ -68,6 +74,10 @@ else
                rm -rf ${BUILD_DIR}/rdkit_build
                rm -rf ${INSTALL_DIR}/include/rdkit
                ;;
+           eigen) echo "Clear eigen"
+               rm -rf ${BUILD_DIR}/eigen_build
+               rm -rf ${INSTALL_DIR}/include/eigen3
+               ;;
            moorhen) echo "Clear moorhen"
                rm -rf ${BUILD_DIR}/moorhen_build
                rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/wasm
@@ -108,6 +118,9 @@ BUILD_IGRAPH=false
 BUILD_GEMMI=false
 BUILD_JSONCPP=false
 BUILD_RDKIT=false
+BUILD_GRAPHENE=false
+BUILD_LIBSIGCPP=false
+BUILD_LIBEIGEN=false
 BUILD_MOORHEN=false
 
 if test -d ${INSTALL_DIR}/include/gsl; then
@@ -134,6 +147,18 @@ else
     BUILD_RDKIT=true
 fi
 
+if test -d ${INSTALL_DIR}/include/graphene-1.0; then
+    true
+else
+    BUILD_GRAPHENE=true
+fi
+
+if test -d ${INSTALL_DIR}/include/sigc++-3.0; then
+    true
+else
+    BUILD_LIBSIGCPP=true
+fi
+
 if test -d ${INSTALL_DIR}/include/igraph; then
     true
 else
@@ -146,11 +171,18 @@ else
     BUILD_JSONCPP=true
 fi
 
+if test -r ${INSTALL_DIR}/include/eigen3; then
+    true
+else
+    BUILD_LIBEIGEN=true
+fi
+
 if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/wasm/moorhen.wasm; then
     true
 else
     BUILD_MOORHEN=true
 fi
+
 
 for mod in $MODULES; do
     case $mod in
@@ -172,19 +204,33 @@ for mod in $MODULES; do
        rdkit) echo "Force build rdkit"
        BUILD_RDKIT=true
        ;;
+       eigen) echo "Force build eigen"
+       BUILD_LIBEIGEN=true
+       ;;
        moorhen) echo "Force build moorhen"
        BUILD_MOORHEN=true
        ;;
     esac
 done
 
-echo "BUILD_GSL     " $BUILD_GSL
-echo "BUILD_BOOST   " $BUILD_BOOST
-echo "BUILD_IGRAPH  " $BUILD_IGRAPH
-echo "BUILD_GEMMI   " $BUILD_GEMMI
-echo "BUILD_JSONCPP " $BUILD_JSONCPP
-echo "BUILD_RDKIT   " $BUILD_RDKIT
-echo "BUILD_MOORHEN " $BUILD_MOORHEN
+echo "BUILD_GSL       " $BUILD_GSL
+echo "BUILD_BOOST     " $BUILD_BOOST
+echo "BUILD_IGRAPH    " $BUILD_IGRAPH
+echo "BUILD_GEMMI     " $BUILD_GEMMI
+echo "BUILD_JSONCPP   " $BUILD_JSONCPP
+echo "BUILD_RDKIT     " $BUILD_RDKIT
+echo "BUILD_GRAPHENE  " $BUILD_GRAPHENE
+echo "BUILD_LIBSIGCPP " $BUILD_LIBSIGCPP
+echo "BUILD_LIBEIGEN  " $BUILD_LIBEIGEN
+echo "BUILD_MOORHEN   " $BUILD_MOORHEN
+
+#eigen
+if [ $BUILD_LIBEIGEN = true ]; then
+    mkdir -p ${BUILD_DIR}/eigen_build
+    cd ${BUILD_DIR}/eigen_build
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/eigen-$libeigen_release
+    make install
+fi
 
 #gsl
 if [ $BUILD_GSL = true ]; then
@@ -199,17 +245,17 @@ fi
 if [ $BUILD_BOOST = true ]; then
     mkdir -p ${BUILD_DIR}/boost
     cd ${BUILD_DIR}/boost
-    emcmake cmake -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/boost-1.83.0 -DBOOST_EXCLUDE_LIBRARIES="context;fiber;fiber_numa;asio;log;coroutine;cobalt;nowide"
+    emcmake cmake -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/boost-$boost_release -DBOOST_EXCLUDE_LIBRARIES="context;fiber;fiber_numa;asio;log;coroutine;cobalt;nowide"
     emmake make -j ${NUMPROCS}
     emmake make install
 fi
 
 #RDKit
 if [ $BUILD_RDKIT = true ]; then
-    BOOST_CMAKE_STUFF=`for i in ${INSTALL_DIR}/lib/cmake/boost*; do j=${i%-1.83.0}; k=${j#${INSTALL_DIR}/lib/cmake/boost_}; echo -Dboost_${k}_DIR=$i; done`
+    BOOST_CMAKE_STUFF=`for i in ${INSTALL_DIR}/lib/cmake/boost*; do j=${i%-$boost_release}; k=${j#${INSTALL_DIR}/lib/cmake/boost_}; echo -Dboost_${k}_DIR=$i; done`
     mkdir -p ${BUILD_DIR}/rdkit_build
     cd ${BUILD_DIR}/rdkit_build
-    emcmake cmake -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-1.83.0 ${BOOST_CMAKE_STUFF} -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -Wno-enum-constexpr-conversion -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
+    emcmake cmake -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_STACKTRACE=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -Wno-enum-constexpr-conversion -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
     emmake make -j ${NUMPROCS}
     emmake make install
 fi
@@ -247,6 +293,50 @@ if [ $BUILD_IGRAPH = true ]; then
     emmake make install
 fi
 
+# Setup for meson
+if [ $BUILD_LIBSIGCPP = true ] || [ $BUILD_GRAPHENE = true ]; then
+    cd ${BUILD_DIR}
+
+
+    export CHOST="wasm32-unknown-linux"
+    export ax_cv_c_float_words_bigendian=no
+
+    export MESON_CROSS="${BUILD_DIR}/emscripten-crossfile.meson"
+
+    cat > "${BUILD_DIR}/emscripten-crossfile.meson" <<END
+[binaries]
+c = 'emcc'
+cpp = 'em++'
+ld = 'wasm-ld'
+ar = 'emar'
+ranlib = 'emranlib'
+pkgconfig = ['emconfigure', 'pkg-config']
+
+# https://docs.gtk.org/glib/cross-compiling.html#cross-properties
+[properties]
+growing_stack = true
+have_c99_vsnprintf = true
+have_c99_snprintf = true
+have_unix98_printf = true
+
+# Ensure that '-s PTHREAD_POOL_SIZE=*' is not injected into .pc files
+[built-in options]
+c_thread_count = 0
+cpp_thread_count = 0
+
+[host_machine]
+system = 'emscripten'
+cpu_family = 'wasm32'
+cpu = 'wasm32'
+endian = 'little'
+END
+
+    export EM_PKG_CONFIG_PATH=${INSTALL_DIR}/lib/pkgconfig/
+    export PKG_CONFIG_PATH=${INSTALL_DIR}/lib/pkgconfig/
+    export EM_PKG_CONFIG_LIBDIR=${INSTALL_DIR}/lib/
+    export PKG_CONFIG_LIBDIR=${INSTALL_DIR}/lib/
+fi
+
 #Moorhen
 if [ $BUILD_MOORHEN = true ]; then
     mkdir -p ${BUILD_DIR}/moorhen_build
@@ -258,4 +348,35 @@ if [ $BUILD_MOORHEN = true ]; then
     npm install
     cd ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru
     ln -s ${MOORHEN_SOURCE_DIR}/checkout/monomers
+fi
+
+# Graphene
+if [ $BUILD_GRAPHENE = true ]; then
+    pushd ${MOORHEN_SOURCE_DIR}/checkout/graphene-$graphene_release/
+    CFLAGS="-s USE_PTHREADS $MOORHEN_CMAKE_FLAGS" LDFLAGS=" -lpthread $MOORHEN_CMAKE_FLAGS" meson setup ${BUILD_DIR}/graphene_build \
+        --prefix=${INSTALL_DIR} \
+        --cross-file=$MESON_CROSS \
+        --default-library=static \
+        --buildtype=release \
+        -Dtests=false && \
+        meson install -C ${BUILD_DIR}/graphene_build
+        popd
+fi
+
+# Libsigc++
+if [ $BUILD_LIBSIGCPP = true ]; then
+    pushd ${MOORHEN_SOURCE_DIR}/checkout/libsigcplusplus-$libsigcpp_release/
+    meson setup ${BUILD_DIR}/libsigcplusplus_build \
+        --prefix=${INSTALL_DIR} \
+        --libdir=lib \
+        --cross-file=$MESON_CROSS \
+        --default-library=static \
+        -Dc_link_args="-pthread $MOORHEN_CMAKE_FLAGS" \
+        -Dcpp_link_args="-pthread $MOORHEN_CMAKE_FLAGS" \
+        -Dcpp_args="-s USE_PTHREADS=1 $MOORHEN_CMAKE_FLAGS" \
+        --buildtype=release \
+        -Dbuild-tests=false && \
+        meson install -C ${BUILD_DIR}/libsigcplusplus_build
+        popd
+    
 fi
