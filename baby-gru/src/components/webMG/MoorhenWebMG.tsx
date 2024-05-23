@@ -11,7 +11,7 @@ import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
 import { useSnackbar } from 'notistack';
 
 // FIXME: This is here for testing only
-import '../../utils/LhasaGlue'
+import { LhasaWrapper } from '../../utils/LhasaGlue';
 
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
@@ -457,6 +457,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
 
     return  <>
+                <div>
+                    <LhasaWrapper />
+                </div>
                 <MGWebGL
                     ref={glRef}
                     onAtomHovered={(enableAtomHovering && !isRotatingAtoms && !isDraggingAtoms && !isChangingRotamers) ? props.onAtomHovered : null}

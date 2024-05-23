@@ -1,12 +1,17 @@
 // Import auto-generated type-definitions
 import '../LhasaReact/src/lhasa.d.ts';
-import '../LhasaReact/src/Lhasa';
+import { LhasaComponent } from '../LhasaReact/src/Lhasa';
+//import Module from '/baby-gru/moorhen.js?url';
 
-// try {
-
-//     const module = await import('../LhasaReact/src/Lhasa');
-// } catch(e) {
+function LhasaWrapper() {
+    // This is 'undefined'    
+    let lh_module = window.CCP4Module;
     
-// }
+    return (
+    <>
+            {/* <LhasaComponent Lhasa={lh_module} /> */}
+    </>
+    );
+}
 
-// export { LhasaComponent }
+export { LhasaWrapper }
