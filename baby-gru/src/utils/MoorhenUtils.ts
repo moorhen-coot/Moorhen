@@ -305,17 +305,19 @@ export async function loadSessionData(
             return colourRule
         })
         molecule.defaultBondOptions = storedMoleculeData.defaultBondOptions
-        for (const item of storedMoleculeData.representations) {
-            const colourRules = !item.colourRules ? null : item.colourRules.map(item => {
-                const colourRule = MoorhenColourRule.initFromDataObject(item, commandCentre, molecule)
-                return colourRule
-            })
-            const representation = await molecule.addRepresentation(
-                item.style, item.cid, item.isCustom, colourRules, item.bondOptions
-            )
-            if (item.isCustom) {
-                dispatch( addCustomRepresentation(representation) )
-            }
+        if (storedMoleculeData.representations) {
+            for (const item of storedMoleculeData.representations) {
+                const colourRules = !item.colourRules ? null : item.colourRules.map(item => {
+                    const colourRule = MoorhenColourRule.initFromDataObject(item, commandCentre, molecule)
+                    return colourRule
+                })
+                const representation = await molecule.addRepresentation(
+                    item.style, item.cid, item.isCustom, colourRules, item.bondOptions
+                )
+                if (item.isCustom) {
+                    dispatch( addCustomRepresentation(representation) )
+                }
+            }    
         }
     }
     

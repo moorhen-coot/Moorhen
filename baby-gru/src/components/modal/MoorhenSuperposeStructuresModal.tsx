@@ -6,7 +6,6 @@ import { convertViewtoPx } from '../../utils/MoorhenUtils';
 import { useDispatch, useSelector } from "react-redux";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
-import { libcootApi } from "../../types/libcoot";
 import { Backdrop, IconButton, Tooltip } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { addMolecule } from "../../moorhen";
@@ -117,7 +116,7 @@ export const MoorheSuperposeStructuresModal = (props: { show: boolean; setShow: 
     const movMoleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const makeCopyOfMovStructCheckRef = useRef<null | HTMLInputElement>(null)
     const algorithmSelectRef = useRef<null | HTMLSelectElement>(null)
-    const lsqkbModeRef = useRef<string>("all-atoms")
+    const lsqkbModeRef = useRef<number>(0)
     const movResidueRangeRef = useRef<[number, number]>([1, 100])
     const refResidueRangeRef = useRef<[number, number]>([1, 100])
 
@@ -164,7 +163,7 @@ export const MoorheSuperposeStructuresModal = (props: { show: boolean; setShow: 
         if (algorithmSelectRef.current.value === "ssm") {
             await movMolecule.SSMSuperpose(movChainSelectRef.current.value, refMolecule.molNo, refChainSelectRef.current.value)
         } else {
-            await movMolecule.lsqkbSuperpose(refMolecule.molNo, lsqkbResidueRanges, parseInt(lsqkbModeRef.current))
+            await movMolecule.lsqkbSuperpose(refMolecule.molNo, lsqkbResidueRanges, lsqkbModeRef.current)
         }
 
         if (makeCopyOfMovStructCheckRef.current.checked) {
@@ -195,7 +194,6 @@ export const MoorheSuperposeStructuresModal = (props: { show: boolean; setShow: 
         } else {
             setSelectedMovChain(evt.target.value)
         }
-        setLsqkbResidueRanges({ action: "empty" })
     }
 
     const handleAddLsqkbMatch = useCallback(() => {
@@ -298,7 +296,7 @@ export const MoorheSuperposeStructuresModal = (props: { show: boolean; setShow: 
                 type="radio"
                 checked={lsqkbMode === 'all-atoms'}
                 onChange={() => { 
-                    lsqkbModeRef.current = "all-atoms"
+                    lsqkbModeRef.current = 0
                     setLsqkbMode("all-atoms")
                 }}
                 label="All Atoms"/>
@@ -307,7 +305,7 @@ export const MoorheSuperposeStructuresModal = (props: { show: boolean; setShow: 
                 type="radio"
                 checked={lsqkbMode === 'mainchain'}
                 onChange={() => { 
-                    lsqkbModeRef.current = "mainchain"
+                    lsqkbModeRef.current = 1
                     setLsqkbMode("mainchain")
                 }}
                 label="Main Chain"/>
@@ -316,7 +314,7 @@ export const MoorheSuperposeStructuresModal = (props: { show: boolean; setShow: 
                 type="radio"
                 checked={lsqkbMode === 'c-alphas'}
                 onChange={() => { 
-                    lsqkbModeRef.current = "c-alphas"
+                    lsqkbModeRef.current = 2
                     setLsqkbMode("c-alphas")
                 }}
                 label="C-Alphas"/>

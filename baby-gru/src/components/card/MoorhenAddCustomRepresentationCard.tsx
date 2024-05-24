@@ -4,7 +4,7 @@ import { getMultiColourRuleArgs, representationLabelMapping } from '../../utils/
 import { moorhen } from "../../types/moorhen";
 import { IconButton, Popover, Slider } from '@mui/material';
 import { MoorhenChainSelect } from '../select/MoorhenChainSelect';
-import { HexColorInput, HexColorPicker } from "react-colorful";
+import { HexAlphaColorPicker, HexColorInput } from "react-colorful";
 import { MoorhenSequenceRangeSelect } from '../sequence-viewer/MoorhenSequenceRangeSelect';
 import { webGL } from '../../types/mgWebGL';
 import { MoorhenSlider } from '../misc/MoorhenSlider';
@@ -13,6 +13,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { MoorhenCidInputForm } from '../form/MoorhenCidInputForm';
 import { addCustomRepresentation } from '../../store/moleculesSlice';
 import { MoorhenColourRule } from '../../utils/MoorhenColourRule';
+import { NcsColourSwatch } from './MoorhenColourRuleCard';
 
 const customRepresentations = [ 'CBs', 'CAs', 'CRs', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'MetaBalls' ]
 
@@ -46,6 +47,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const colourModeSelectRef = useRef<HTMLSelectElement | null>(null)
     const colourSwatchRef = useRef<HTMLDivElement | null>(null)
     const residueRangeSelectRef = useRef<any>()
+    const ncsColourRuleRef = useRef<null | moorhen.ColourRule>(null)
     
     const [representationStyle, setRepresentationStyle] = useState<string>(props.initialRepresentationStyleValue)
     const [colourMode, setColourMode] = useState<string>(props.initialColourMode)
@@ -120,6 +122,12 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                     colourRule.setArgs([ cidSelection, colour ])
                     colourRule.setParentMolecule(props.molecule)
                     break
+                case 'mol-symm':
+                    if (ncsColourRuleRef.current) {
+                        colourRule =  ncsColourRuleRef.current
+                        colourRule.setApplyColourToNonCarbonAtoms(applyColourToNonCarbonAtomsSwitchRef.current?.checked)
+                        break
+                    }
                 case 'secondary-structure':
                 case 'jones-rainbow':
                 case 'mol-symm':
@@ -193,6 +201,18 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const decreaseRatioButton = <IconButton onClick={() => setAtomRadiusBondRatio(atomRadiusBondRatio - 0.1)} style={{padding: 0, color: isDark ? 'white' : 'grey'}}>
                                     <RemoveCircleOutline/>
                                 </IconButton>
+
+    const handleColourModeChange = useCallback((evt) => {
+        if (evt.target.value === "mol-symm" && !ncsColourRuleRef.current && props.mode === "edit") {
+            const representation = props.molecule.representations.find(item => item.uniqueId === props.representationId)
+            if (representation?.colourRules?.length > 0) ncsColourRuleRef.current = representation.colourRules[0]
+        }
+        setColourMode(evt.target.value)
+    }, [props.molecule, props.mode, props.representationId])
+
+    const applyNcsColourChange = useCallback(async () => {
+        await props.molecule.redraw()
+    }, [props.molecule])
 
     return <Popover
                 onClose={() => props.setShow(false)}
@@ -317,13 +337,14 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 {!useDefaultColours &&
                 <>
                 <Row style={{paddingLeft: '1rem'}}>
-                    <FormSelect style={{ width: '50%', marginRight: '0.5rem' }} size="sm" ref={colourModeSelectRef} defaultValue={colourMode} onChange={(val) => { setColourMode(val.target.value) }}>
+                    <FormSelect style={{ width: '50%', marginRight: '0.5rem' }} size="sm" ref={colourModeSelectRef} defaultValue={colourMode} onChange={handleColourModeChange}>
                         <option value={'custom'} key={'custom'}>User defined colour</option>
                         <option value={'secondary-structure'} key={'secondary-structure'}>Secondary structure</option>
                         <option value={'jones-rainbow'} key={'jones-rainbow'}>Jones' rainbow</option>
                         <option value={'b-factor'} key={'b-factor'}>B-Factor</option>
                         <option value={'b-factor-norm'} key={'b-factor-norm'}>B-Factor (normalised)</option>
                         <option value={'af2-plddt'} key={'af2-plddt'}>AF2 PLDDT</option>
+                        <option value={'mol-symm'} key={'mol-symm'}>Mol. Symmetry</option>
                     </FormSelect>
                     {(colourMode === 'b-factor' || colourMode === 'b-factor-norm') ?
                         <img className="colour-rule-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/temperature.svg`} alt='b-factor' style={{ width: '36px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}}/>
@@ -337,7 +358,10 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                         <div style={{borderColor: 'rgb(0, 0, 255)', borderWidth:'5px', backgroundColor: 'rgb(0, 0, 255)', height:'20px', width:'5px', marginTop: '0.2rem', padding: '0rem'}}/>
                     </>
                     : colourMode === "mol-symm" ?
-                        <GrainOutlined style={{height:'30px', width:'36px', marginLeft: '0.5rem', marginRight: '0.5rem', borderStyle: 'solid', borderColor: '#ced4da', borderWidth: '3px', borderRadius: '8px'}}/>            
+                    props.mode === "edit" ?
+                    <NcsColourSwatch style={{cursor: "pointer", height:'30px', width:'36px', padding: "0px", borderStyle: 'solid', borderColor: '#ced4da', borderWidth: '3px', borderRadius: '8px'}} rule={ncsColourRuleRef?.current} applyColourChange={applyNcsColourChange} />
+                    :
+                    <GrainOutlined style={{height:'30px', width:'36px', padding:0, borderStyle: 'solid', borderColor: '#ced4da', borderWidth: '3px', borderRadius: '8px'}}/>
                     :
                     colourMode === 'custom' ?
                     <div 
@@ -368,7 +392,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 >
                     <Stack direction='vertical' style={{display: 'flex', justifyContent: 'center'}} gap={2}>
                         <div style={{padding: 0, margin: 0, justifyContent: 'center', display: 'flex'}}>
-                            <HexColorPicker color={colour} onChange={(color) => setColour(color)} />
+                            <HexAlphaColorPicker color={colour} onChange={(color) => setColour(color)} />
                         </div>
                         <div style={{padding: 0, margin: 0, justifyContent: 'center', display: 'flex', marginBottom: '2px' }}>
                             <div className="moorhen-hex-input-decorator">#</div>
