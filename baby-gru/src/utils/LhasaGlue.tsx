@@ -7,15 +7,14 @@ import { moorhen } from '../types/moorhen.js';
 
 function LhasaWrapper() {
     const cootInitialized = useSelector((state: moorhen.State) => state.generalStates.cootInitialized)
-    let lh_module = null;
-    if(cootInitialized) {
-        lh_module = window.CCP4Module;
-    } 
     
+    if(cootInitialized) {
+        console.log("Blob is: ", window.CCP4Module);
+    }
     return (
     <>
             {cootInitialized &&
-                <LhasaComponent Lhasa={lh_module} />
+                <LhasaComponent Lhasa={window.CCP4Module} />
             }
     </>
     );
