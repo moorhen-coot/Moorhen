@@ -50,6 +50,24 @@ if [ x"$CLEAR_MODULES" = x"" ]; then
 else
     for mod in $CLEAR_MODULES; do
         case $mod in
+           all) echo "Clear all"
+               rm -rf ${BUILD_DIR}/boost
+               rm -rf ${INSTALL_DIR}/include/boost
+               rm -rf ${BUILD_DIR}/gemmi_build
+               rm -rf ${INSTALL_DIR}/include/gemmi
+               rm -rf ${BUILD_DIR}/gsl_build
+               rm -rf ${INSTALL_DIR}/include/gsl
+               rm -rf ${BUILD_DIR}/igraph_build
+               rm -rf ${INSTALL_DIR}/include/igraph
+               rm -rf ${BUILD_DIR}/jsoncpp_build
+               rm -rf ${INSTALL_DIR}/include/json
+               rm -rf ${BUILD_DIR}/rdkit_build
+               rm -rf ${INSTALL_DIR}/include/rdkit
+               rm -rf ${BUILD_DIR}/eigen_build
+               rm -rf ${INSTALL_DIR}/include/eigen3
+               rm -rf ${BUILD_DIR}/moorhen_build
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/wasm
+               ;;
            boost) echo "Clear boost"
                rm -rf ${BUILD_DIR}/boost
                rm -rf ${INSTALL_DIR}/include/boost
