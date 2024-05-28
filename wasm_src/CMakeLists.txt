@@ -465,9 +465,9 @@ target_include_directories(coot PRIVATE
     ../install/lib/sigc++-3.0/include
 )
 
-set_target_properties(coot PROPERTIES COMPILE_FLAGS "-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -Wno-deprecated-declarations -Wno-deprecated-builtins -pthread -DHAVE_CXX11=1 -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1" LINK_FLAGS "-fexceptions -pthread -s USE_LIBPNG=1 -s USE_ZLIB=1 -sASSERTIONS=2")
+set_target_properties(coot PROPERTIES COMPILE_FLAGS "-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -Wno-deprecated-declarations -Wno-deprecated-builtins -pthread -DHAVE_CXX11=1 -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1" LINK_FLAGS "-fwasm-exceptions -pthread -s USE_LIBPNG=1 -s USE_ZLIB=1 -sASSERTIONS")
 
-set_source_files_properties(${coot_exception_srcs} PROPERTIES COMPILE_FLAGS "-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -fexceptions -pthread -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1" )
+set_source_files_properties(${coot_exception_srcs} PROPERTIES COMPILE_FLAGS "-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -fwasm-exceptions -pthread -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1" )
 
 FILE(WRITE ${CMAKE_BINARY_DIR}/coot/coot_env.js
 Module.preRun = [function() {ENV.COOT_DATA_DIR="${coot_src}"}, function() {ENV.COOT_REFMAC_LIB_DIR="${CMAKE_BINARY_DIR}/ccp4_lib"}, function() {ENV.CCP4_LIB="${CMAKE_BINARY_DIR}/ccp4_lib"}]
@@ -547,9 +547,9 @@ FILE(COPY ${CMAKE_INSTALL_PREFIX}/share/RDKit/Data/BaseFeatures.fdef DESTINATION
 #-sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=512MB -sMAXIMUM_MEMORY=4092MB -sTOTAL_MEMORY=4092MB
 add_executable(moorhen moorhen-wrappers.cc gemmi-wrappers.cc smilestopdb.cc ${coot_src}/lhasa/embind.cpp)
 if(${MEMORY64} MATCHES "1")
-target_link_options(moorhen PRIVATE -sASSERTIONS=2 -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
+target_link_options(moorhen PRIVATE -s ENVIRONMENT=web,worker -sASSERTIONS -fwasm-exceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB -lembind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 else()
-target_link_options(moorhen PRIVATE -sASSERTIONS=2 -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
+target_link_options(moorhen PRIVATE -s ENVIRONMENT=web,worker -sASSERTIONS -fwasm-exceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 -lembind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 endif()
 
 target_link_directories(moorhen PUBLIC 
@@ -656,7 +656,7 @@ target_include_directories(moorhen PRIVATE
     ../install/lib/sigc++-3.0/include
 )
 
-target_compile_options(moorhen PUBLIC -DGEMMI_WRITE_IMPLEMENTATION -Wno-deprecated-builtins -Wno-deprecated-declarations -fexceptions -pthread -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
+target_compile_options(moorhen PUBLIC -DGEMMI_WRITE_IMPLEMENTATION -Wno-deprecated-builtins -Wno-deprecated-declarations -fwasm-exceptions -pthread -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
 
 #[[
 add_executable(test-molecules-container ${coot_src}/api/test-molecules-container.cc)
