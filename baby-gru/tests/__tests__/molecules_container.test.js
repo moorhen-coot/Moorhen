@@ -1284,14 +1284,14 @@ describe('Testing molecules_container_js', () => {
             As.delete()
         }
 
-        let colourMap = new cootModule.MapIntFloat3()
+        let colourMap = new cootModule.MapIntFloat4()
         let indexedResiduesVec = new cootModule.VectorStringUInt_pair()
         
         const colours = [
-            { cid: "//A/12-15", rgb: [1, 0, 0] }
+            { cid: "//A/12-15", rgba: [1, 0, 0, 1] }
         ]
         colours.forEach((colour, index) => {
-            colourMap.set(index + 51, colour.rgb)
+            colourMap.set(index + 51, colour.rgba)
             const i = { first: colour.cid, second: index + 51 }
             indexedResiduesVec.push_back(i)
         })
@@ -1354,14 +1354,14 @@ describe('Testing molecules_container_js', () => {
             As.delete()
         }
 
-        let colourMap = new cootModule.MapIntFloat3()
+        let colourMap = new cootModule.MapIntFloat4()
         let indexedResiduesVec = new cootModule.VectorStringUInt_pair()
         
         const colours = [
-            { cid: "//A/12-15", rgb: [1, 0, 0] }
+            { cid: "//A/12-15", rgba: [1, 0, 0, 1] }
         ]
         colours.forEach((colour, index) => {
-            colourMap.set(index + 51, colour.rgb)
+            colourMap.set(index + 51, colour.rgba)
             const i = { first: colour.cid, second: index + 51 }
             indexedResiduesVec.push_back(i)
         })
@@ -1423,14 +1423,14 @@ describe('Testing molecules_container_js', () => {
             As.delete()
         }
 
-        let colourMap = new cootModule.MapIntFloat3()
+        let colourMap = new cootModule.MapIntFloat4()
         let indexedResiduesVec = new cootModule.VectorStringUInt_pair()
         
         const colours = [
-            { cid: "//A/26-29", rgb: [1, 0, 0] }
+            { cid: "//A/26-29", rgba: [1, 0, 0, 1] }
         ]
         colours.forEach((colour, index) => {
-            colourMap.set(index + 51, colour.rgb)
+            colourMap.set(index + 51, colour.rgba)
             const i = { first: colour.cid, second: index + 51 }
             indexedResiduesVec.push_back(i)
         })
@@ -1492,14 +1492,14 @@ describe('Testing molecules_container_js', () => {
             As.delete()
         }
 
-        let colourMap = new cootModule.MapIntFloat3()
+        let colourMap = new cootModule.MapIntFloat4()
         let indexedResiduesVec = new cootModule.VectorStringUInt_pair()
         
         const colours = [
-            { cid: "//A", rgb: [1, 0, 0] }
+            { cid: "//A", rgba: [1, 0, 0, 1] }
         ]
         colours.forEach((colour, index) => {
-            colourMap.set(index + 51, colour.rgb)
+            colourMap.set(index + 51, colour.rgba)
             const i = { first: colour.cid, second: index + 51 }
             indexedResiduesVec.push_back(i)
         })
@@ -1684,15 +1684,15 @@ describe('Testing molecules_container_js', () => {
 
         molecules_container.delete_colour_rules(coordMolNo)
 
-        let colourMap = new cootModule.MapIntFloat3()
+        let colourMap = new cootModule.MapIntFloat4()
         let indexedResiduesVec = new cootModule.VectorStringUInt_pair()
 
         const colours = [
-            { cid: "//A", rgb: [1, 0, 0] },
-            { cid: "//B", rgb: [0, 0, 1] }            
+            { cid: "//A", rgba: [1, 0, 0, 1] },
+            { cid: "//B", rgba: [0, 0, 1, 1] }
         ]
         colours.forEach((colour, index) => {
-            colourMap.set(index + 51, colour.rgb)
+            colourMap.set(index + 51, colour.rgba)
             const i = { first: colour.cid, second: index + 51 }
             indexedResiduesVec.push_back(i)
         })
@@ -1731,16 +1731,16 @@ describe('Testing molecules_container_js', () => {
         
         molecules_container.delete_colour_rules(coordMolNo)
 
-        let colourMap_2 = new cootModule.MapIntFloat3()
+        let colourMap_2 = new cootModule.MapIntFloat4()
         let indexedResiduesVec_2 = new cootModule.VectorStringUInt_pair()
 
         const colours_2 = [
-            { cid: "//A", rgb: [1, 0, 0] },
-            { cid: "//B", rgb: [0, 0, 1] },          
-            { cid: "//X", rgb: [0, 1, 0] }
+            { cid: "//A", rgba: [1, 0, 0, 1] },
+            { cid: "//B", rgba: [0, 0, 1, 1] },
+            { cid: "//X", rgba: [0, 1, 0, 1] }
         ]
         colours_2.forEach((colour, index) => {
-            colourMap_2.set(index + 51, colour.rgb)
+            colourMap_2.set(index + 51, colour.rgba)
             const i = { first: colour.cid, second: index + 51 }
             indexedResiduesVec_2.push_back(i)
         })
