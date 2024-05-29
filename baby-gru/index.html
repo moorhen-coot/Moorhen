@@ -34,8 +34,8 @@
         console.log(e);
       });
       createRSRModule({
-          // print: print,
-          // printErr: print,
+        print(t) { console.log(["output", t]) },
+        printErr(t) { console.log(["output", t]); }
       })
       .then((returnedModule) => {
           window.cootModule = returnedModule;
