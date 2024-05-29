@@ -35,6 +35,9 @@ import { MoorhenRotamerChangeSnackBar } from './snack-bar/MoorhenRotamerChangeSn
 import { MoorhenScreenshotSnackBar } from './snack-bar/MoorhenScreenshotSnackBar';
 import { MoorhenSideBar } from './snack-bar/MoorhenSideBar';
 
+// FIXME: This is here for testing only
+import { LhasaWrapper } from '../utils/LhasaGlue';
+
 declare module "notistack" {
     interface VariantOverrides {
         goToResidue: {
@@ -525,6 +528,11 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                         viewOnly={viewOnly}
                         videoRecorderRef={videoRecorderRef}
                     />
+                </div>
+            </Col>
+            <Col>
+                <div>
+                    <LhasaWrapper />
                 </div>
             </Col>
         </Row>
