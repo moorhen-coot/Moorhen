@@ -62,6 +62,14 @@ ${coot_src}/src/c-interface-image.cc
 ]]
 
 set(coot_exception_srcs
+${coot_src}/layla/ligand_editor_canvas.cpp
+${coot_src}/layla/ligand_editor_canvas/core.cpp
+${coot_src}/layla/ligand_editor_canvas/model.cpp
+${coot_src}/layla/ligand_editor_canvas/tools.cpp
+${coot_src}/layla/ligand_editor_canvas/render.cpp
+${coot_src}/layla/utils.cpp
+${coot_src}/lhasa/lhasa.cpp
+${coot_src}/lhasa/glog_replacement.cpp
 ${coot_src}/lidia-core/svg-molecule.cc
 ${coot_src}/lidia-core/cod-types.cc
 ${coot_src}/lidia-core/cod-atom-types.cc
@@ -436,7 +444,26 @@ ${coot_exception_srcs}
 ${coot_src}/ideal/write-png.cc
 )
 
-target_include_directories(coot PRIVATE ${coot_src} ${coot_src}/coords ${coot_src}/ccp4mg-utils ${coot_src}/utils ${coot_src}/src ../include ../checkout/ssm ../checkout/mmdb2 ../checkout/clipper ../checkout/fftw-2.1.5/fftw ../checkout/fftw-2.1.5/rfftw ../checkout/libccp4/ccp4 ../boost  ../checkout/gemmi/include )
+target_include_directories(coot PRIVATE 
+    ${coot_src} 
+    ${coot_src}/coords 
+    ${coot_src}/ccp4mg-utils 
+    ${coot_src}/utils 
+    ${coot_src}/src 
+    ../include 
+    ../checkout/ssm 
+    ../checkout/mmdb2 
+    ../checkout/clipper 
+    ../checkout/fftw-2.1.5/fftw 
+    ../checkout/fftw-2.1.5/rfftw 
+    ../checkout/libccp4/ccp4 
+    ../boost  
+    ../checkout/gemmi/include 
+    ../install/include/graphene-1.0 
+    ../install/include/sigc++-3.0
+    ../install/lib/graphene-1.0/include
+    ../install/lib/sigc++-3.0/include
+)
 
 set_target_properties(coot PROPERTIES COMPILE_FLAGS "-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -Wno-deprecated-declarations -Wno-deprecated-builtins -pthread -DHAVE_CXX11=1 -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1" LINK_FLAGS "-fexceptions -pthread -s USE_LIBPNG=1 -s USE_ZLIB=1 -sASSERTIONS=2")
 
@@ -518,15 +545,117 @@ FILE(COPY ${coot_src}/data/metal/metal-S-distance.table DESTINATION data/coot/da
 FILE(COPY ${CMAKE_INSTALL_PREFIX}/share/RDKit/Data/BaseFeatures.fdef DESTINATION data/RDKit/Data )
 
 #-sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=512MB -sMAXIMUM_MEMORY=4092MB -sTOTAL_MEMORY=4092MB
-add_executable(moorhen moorhen-wrappers.cc gemmi-wrappers.cc smilestopdb.cc)
+add_executable(moorhen moorhen-wrappers.cc gemmi-wrappers.cc smilestopdb.cc ${coot_src}/lhasa/embind.cpp)
 if(${MEMORY64} MATCHES "1")
 target_link_options(moorhen PRIVATE -sASSERTIONS=2 -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 else()
 target_link_options(moorhen PRIVATE -sASSERTIONS=2 -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 endif()
-target_link_directories(moorhen PUBLIC ../ssm ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../clipper/gemmi ../fftw ../rfftw ../ccp4 ../lib ../install/lib ../privateer)
-target_link_libraries(moorhen ssm mmdb2 clipper-minimol clipper-phs clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 clipper-gemmi fftw rfftw ccp4  coot gsl gslcblas RDKitMolDraw2D RDKitForceFieldHelpers RDKitDescriptors RDKitForceField RDKitSubstructMatch RDKitOptimizer RDKitDistGeomHelpers RDKitDistGeometry RDKitChemReactions RDKitAlignment RDKitEigenSolvers RDKitDepictor RDKitcoordgen RDKitMolChemicalFeatures RDKitPartialCharges RDKitFileParsers RDKitRDGeometryLib RDKitGraphMol RDKitShapeHelpers RDKitFingerprints RDKitMolAlign RDKitMolTransforms RDKitChemTransforms RDKitSmilesParse RDKitFilterCatalog RDKitCatalogs RDKitSubgraphs RDKitRDGeneral RDKitDataStructs RDKitGenericGroups boost_thread boost_serialization gemmi_cpp privateer freetype slicendice_cpp jsoncpp igraph m z idbfs.js)
-target_include_directories(moorhen PRIVATE ${coot_src} ${coot_src}/ccp4mg-utils ${coot_src}/src ../boost ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../include ../checkout/gemmi/include ../checkout/privateer-wasm/src/privateer/cpp ../checkout/privateer-wasm/src/privateer/cpp/pybind11 ../checkout/privateer-wasm/src/privateer/cpp/third-party/simdjson ../checkout/slicendice_cpp/prog/ ../install/include/eigen3 )
+
+target_link_directories(moorhen PUBLIC 
+    ../ssm
+    ../mmdb2
+    ../clipper/cif
+    ../clipper/mmdb
+    ../clipper/core
+    ../clipper/contrib
+    ../clipper/ccp4
+    ../clipper/gemmi
+    ../fftw
+    ../rfftw
+    ../ccp4
+    ../lib
+    ../install/lib
+    ../privateer
+)
+
+target_link_libraries(moorhen 
+    ssm
+    mmdb2
+    clipper-minimol
+    clipper-phs
+    clipper-mmdb
+    clipper-cif
+    clipper-core
+    clipper-contrib
+    clipper-ccp4
+    clipper-gemmi
+    fftw
+    rfftw
+    ccp4
+    coot
+    gsl
+    gslcblas
+    sigc-3.0
+    graphene-1.0
+    RDKitMolDraw2D
+    RDKitForceFieldHelpers
+    RDKitDescriptors
+    RDKitForceField
+    RDKitSubstructMatch
+    RDKitOptimizer
+    RDKitDistGeomHelpers
+    RDKitDistGeometry
+    RDKitChemReactions
+    RDKitAlignment
+    RDKitEigenSolvers
+    RDKitDepictor
+    RDKitcoordgen
+    RDKitMolChemicalFeatures
+    RDKitPartialCharges
+    RDKitFileParsers
+    RDKitRDGeometryLib
+    RDKitGraphMol
+    RDKitShapeHelpers
+    RDKitFingerprints
+    RDKitMolAlign
+    RDKitMolTransforms
+    RDKitChemTransforms
+    RDKitSmilesParse
+    RDKitFilterCatalog
+    RDKitCatalogs
+    RDKitSubgraphs
+    RDKitRDGeneral
+    RDKitDataStructs
+    RDKitGenericGroups
+    boost_thread
+    boost_serialization
+    gemmi_cpp
+    privateer
+    freetype
+    slicendice_cpp
+    jsoncpp
+    igraph
+    m
+    z
+    idbfs.js
+)
+
+target_include_directories(moorhen PRIVATE 
+    ${coot_src}
+    ${coot_src}/ccp4mg-utils
+    ${coot_src}/src
+    ../boost
+    ../checkout/clipper/
+    ../checkout/mmdb2
+    ../checkout/mmdb2/mmdb2
+    ../checkout/ssm
+    ../checkout/libccp4/ccp4
+    ../fftw
+    ../rfftw
+    ../include
+    ../checkout/gemmi/include
+    ../checkout/privateer-wasm/src/privateer/cpp
+    ../checkout/privateer-wasm/src/privateer/cpp/pybind11
+    ../checkout/privateer-wasm/src/privateer/cpp/third-party/simdjson
+    ../checkout/slicendice_cpp/prog/
+    ../install/include/eigen3
+    ../install/include/graphene-1.0 
+    ../install/include/sigc++-3.0
+    ../install/lib/graphene-1.0/include
+    ../install/lib/sigc++-3.0/include
+)
+
 target_compile_options(moorhen PUBLIC -DGEMMI_WRITE_IMPLEMENTATION -Wno-deprecated-builtins -Wno-deprecated-declarations -fexceptions -pthread -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
 
 #[[
