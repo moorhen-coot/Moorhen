@@ -672,7 +672,7 @@ ${CMAKE_CURRENT_BINARY_DIR}/moorhen.worker.js
 ${CMAKE_CURRENT_BINARY_DIR}/moorhen.js
 ${CMAKE_CURRENT_BINARY_DIR}/moorhen.data
 ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js
-DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/baby-gru)
+DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/moorhen.wasm
 ${CMAKE_CURRENT_BINARY_DIR}/moorhen.worker.js
