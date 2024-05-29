@@ -53,7 +53,7 @@ curl -L https://ftp.gnu.org/gnu/gsl/gsl-$gsl_release.tar.gz -o gsl-$gsl_release.
 echo
 
 echo "Downloading coot-1"
-git clone --branch main https://github.com/hgonomeg/coot.git coot-1.0
+git clone --branch main https://github.com/pemsley/coot.git coot-1.0
 echo
 
 echo "Downloading glm"
