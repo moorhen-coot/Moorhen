@@ -1,22 +1,31 @@
 // Import auto-generated type-definitions
 import '../LhasaReact/src/lhasa.d.ts';
 import { LhasaComponent } from '../LhasaReact/src/Lhasa';
-import { useSelector } from 'react-redux';
-import { moorhen } from '../types/moorhen.js';
-//import Module from '/baby-gru/moorhen.js?url';
+import { useEffect, useState } from 'react';
 
 function LhasaWrapper() {
-    const cootInitialized = useSelector((state: moorhen.State) => state.generalStates.cootInitialized)
+    const [isCootAttached, setCootAttached] = useState(false);
     
-    if(cootInitialized) {
-        console.log("Blob is: ", window.CCP4Module);
+    let handler = () => {
+        setCootAttached(true);
+    };
+
+    useEffect(() => {
+        window.addEventListener('cootModuleAttached', handler);
+        return () => {
+            window.removeEventListener('cootModuleAttached', handler);
+        };
+    },[]);
+
+    if(isCootAttached) {
+        console.log("Blob is: ", window.cootModule);
     }
     return (
-    <>
-            {cootInitialized &&
-                <LhasaComponent Lhasa={window.CCP4Module} />
-            }
-    </>
+        <>
+                {isCootAttached &&
+                    <LhasaComponent Lhasa={window.cootModule} />
+                }
+        </>
     );
 }
 
