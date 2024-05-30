@@ -20,10 +20,11 @@ import { MoorhenSliceNDiceModal } from '../modal/MoorhenSliceNDiceModal';
 import { MoorheSuperposeStructuresModal } from '../modal/MoorhenSuperposeStructuresModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { moorhen } from '../../types/moorhen';
+import { MoorhenLhasaModal } from '../modal/MoorhenLhasaModal';
 import { 
     setShowControlsModal, setShowCreateAcedrgLinkModal, setShowDiffMapPeaksModal, setShowFillPartialResValidationModal, setShowFitLigandModal, setShowLigandValidationModal, setShowMapsModal, 
     setShowMmrrccModal, setShowModelsModal, setShowPepFlipsValidationModal, setShowQuerySequenceModal, setShowRamaPlotModal, setShowSceneSettingsModal, setShowScriptingModal, 
-    setShowUnmodelledBlobsModal, setShowValidationPlotModal, setShowWaterValidationModal, setShowCarbohydrateValidationModal, setShowSliceNDiceModal, setShowSuperposeModal
+    setShowUnmodelledBlobsModal, setShowValidationPlotModal, setShowWaterValidationModal, setShowCarbohydrateValidationModal, setShowSliceNDiceModal, setShowSuperposeModal, setShowLhasaModal
 } from '../../store/activeModalsSlice';
 
 export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
@@ -47,6 +48,7 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
     const showCarbohydrateValidationModal = useSelector((state: moorhen.State) => state.activeModals.showCarbohydrateModal)
     const showSliceNDiceModal = useSelector((state: moorhen.State) => state.activeModals.showSliceNDiceModal)
     const showSuperposeModal = useSelector((state: moorhen.State) => state.activeModals.showSuperposeModal)
+    const showLhasaModal = useSelector((state: moorhen.State) => state.activeModals.showLhasaModal)
 
     const showSceneSettingsModal = useSelector((state: moorhen.State) => state.activeModals.showSceneSettingsModal)
 
@@ -188,6 +190,14 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
             show={showSuperposeModal}
             setShow={(newVal: boolean) => dispatch(setShowSuperposeModal(newVal))}
             {...props} />
+        }
+
+        {showLhasaModal &&
+            <MoorhenLhasaModal
+            show={showLhasaModal}
+            setShow={(newVal: boolean) => dispatch(setShowLhasaModal(newVal))}
+            {...props}
+            />
         }
 
         {props.extraDraggableModals && props.extraDraggableModals.map(modal => modal)}

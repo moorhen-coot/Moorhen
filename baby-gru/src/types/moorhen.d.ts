@@ -951,6 +951,7 @@ export namespace moorhen {
             showSceneSettingsModal: boolean;
             showSliceNDiceModal: boolean;
             showSuperposeModal: boolean;
+            showLhasaModal: boolean;
             focusHierarchy: string[];
         };
         mapContourSettings: {

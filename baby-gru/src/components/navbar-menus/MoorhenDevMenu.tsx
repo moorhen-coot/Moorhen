@@ -5,8 +5,8 @@ import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch } from "react-redux";
 import { setDoOutline, setDoShadow } from "../../store/sceneSettingsSlice";
-import { doDownload } from "../../utils/MoorhenUtils";
 import { useSnackbar } from "notistack";
+import { setShowLhasaModal } from "../../store/activeModalsSlice";
 
 export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
@@ -33,16 +33,13 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
         })
     }
 
-    const doTest = async () => {
-        props.moleculesRef.current[0].representations.forEach(async (representation) => {
-            const result = await props.moleculesRef.current[0].exportAsGltf(representation.uniqueId)
-            doDownload([result], `${props.moleculesRef.current[0].name}.glb`)    
-        })
+    const openLhasa = () => {
+        dispatch(setShowLhasaModal(true))
     }
        
     return <>
-                    <MenuItem onClick={() => doTest()}>
-                        Do a test...
+                    <MenuItem onClick={() => openLhasa()}>
+                        Open Lhasa...
                     </MenuItem>
                     <MenuItem onClick={tomogramTest}>
                         Tomogram...

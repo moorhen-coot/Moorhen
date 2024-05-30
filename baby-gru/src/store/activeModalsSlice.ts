@@ -21,6 +21,7 @@ const initialState = {
   showSceneSettingsModal: false,
   showSliceNDiceModal: false,
   showSuperposeModal: false,
+  showLhasaModal: false,
   focusHierarchy: [],
 }
 
@@ -30,6 +31,9 @@ export const activeModalsSlice = createSlice({
   reducers: {
     resetActiveModals: (state) => {
       return initialState
+    },
+    setShowLhasaModal: (state, action: { payload: boolean, type: string }) => {
+      return {...state, showLhasaModal: action.payload }
     },
     setShowSuperposeModal: (state, action: { payload: boolean, type: string }) => {
       return {...state, showSuperposeModal: action.payload }
@@ -103,7 +107,7 @@ export const activeModalsSlice = createSlice({
 export const {
   setShowModelsModal, setShowMapsModal, setShowCreateAcedrgLinkModal, 
   setShowQuerySequenceModal, setShowScriptingModal, setShowControlsModal,
-  focusOnModal, unFocusModal, setShowFitLigandModal, setShowRamaPlotModal, 
+  focusOnModal, unFocusModal, setShowFitLigandModal, setShowRamaPlotModal, setShowLhasaModal,
   setShowLigandValidationModal, setShowPepFlipsValidationModal, setShowMmrrccModal,
   setShowWaterValidationModal, setShowValidationPlotModal, setShowCarbohydrateValidationModal, 
   setShowUnmodelledBlobsModal, setShowDiffMapPeaksModal, setShowFillPartialResValidationModal, 

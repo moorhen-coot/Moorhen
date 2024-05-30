@@ -4,7 +4,9 @@ import { LhasaComponent } from '../LhasaReact/src/Lhasa';
 import { useEffect, useState } from 'react';
 
 function LhasaWrapper() {
-    const [isCootAttached, setCootAttached] = useState(false);
+    const [isCootAttached, setCootAttached] = useState(() => { 
+        return window.cootModule !== undefined;
+    });
     
     let handler = () => {
         setCootAttached(true);
@@ -17,9 +19,6 @@ function LhasaWrapper() {
         };
     },[]);
 
-    if(isCootAttached) {
-        console.log("Blob is: ", window.cootModule);
-    }
     return (
         <>
                 {isCootAttached &&
