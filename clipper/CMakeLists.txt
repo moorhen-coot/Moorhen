@@ -1,0 +1,20 @@
+cmake_minimum_required(VERSION 3.13)
+project(clipper)
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
+set(CMAKE_CXX_FLAGS_RELEASE "-O2 -Wno-enum-constexpr-conversion -I${CMAKE_INSTALL_PREFIX}/include -pthread")
+set(CMAKE_C_FLAGS_RELEASE "-O2")
+set(CMAKE_CXX_STANDARD 17)
+
+add_subdirectory(minimol)
+add_subdirectory(core)
+add_subdirectory(ccp4)
+add_subdirectory(contrib)
+add_subdirectory(cns)
+add_subdirectory(mmdb)
+add_subdirectory(cif)
+add_subdirectory(phs)
+add_subdirectory(gemmi)

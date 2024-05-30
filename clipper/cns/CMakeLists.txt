@@ -5,12 +5,10 @@ add_library(clipper-cns STATIC
 ../../checkout/clipper/clipper/cns/cns_map_io.cpp
 )
 
-target_include_directories(clipper-cns PRIVATE ../.. ../../checkout/clipper ../../fftw ../../rfftw)
-
 set(clipper-cns_HEADERS
-${CMAKE_SOURCE_DIR}/checkout/clipper//clipper/cns/cns_map_io.h
-${CMAKE_SOURCE_DIR}/checkout/clipper//clipper/cns/cns_hkl_io.h
-${CMAKE_SOURCE_DIR}/checkout/clipper//clipper/clipper-cns.h
+${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/cns/cns_map_io.h
+${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/cns/cns_hkl_io.h
+${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/clipper-cns.h
 )
 
 target_compile_options(clipper-cns PUBLIC "-DFFTW_ENABLE_FLOAT")

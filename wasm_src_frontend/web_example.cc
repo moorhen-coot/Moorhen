@@ -17,7 +17,7 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
-#include "mmdb_manager.h"
+#include "mmdb2/mmdb_manager.h"
 
 #include "clipper/clipper.h"
 #include "clipper/core/cell.h"

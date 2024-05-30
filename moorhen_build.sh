@@ -66,7 +66,27 @@ else
                rm -rf ${BUILD_DIR}/eigen_build
                rm -rf ${INSTALL_DIR}/include/eigen3
                rm -rf ${BUILD_DIR}/moorhen_build
-               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/wasm
+               rm -rf ${BUILD_DIR}/ccp4_build
+               rm -rf ${INSTALL_DIR}/include/ccp4
+               rm -rf ${BUILD_DIR}/fftw_build
+               rm -rf ${INSTALL_DIR}/include/fftw
+               rm -rf ${INSTALL_DIR}/include/rfftw
+               rm -rf ${BUILD_DIR}/mmdb2_build
+               rm -rf ${INSTALL_DIR}/include/mmdb2
+               rm -rf ${BUILD_DIR}/clipper_build
+               rm -rf ${INSTALL_DIR}/include/clipper
+               rm -rf ${BUILD_DIR}/privateer_build
+               rm -rf ${INSTALL_DIR}/include/privateer
+               rm -rf ${BUILD_DIR}/ssm_build
+               rm -rf ${INSTALL_DIR}/include/ssm
+               rm -rf ${BUILD_DIR}/slicendice_cpp_build
+               rm -rf ${INSTALL_DIR}/include/slicendice_cpp
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.js
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.wasm
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.data
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.worker.js
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/web_example.js
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/web_example.wasm
                ;;
            boost) echo "Clear boost"
                rm -rf ${BUILD_DIR}/boost
@@ -96,9 +116,43 @@ else
                rm -rf ${BUILD_DIR}/eigen_build
                rm -rf ${INSTALL_DIR}/include/eigen3
                ;;
+           libccp4) echo "clear libccp4"
+               rm -rf ${BUILD_DIR}/ccp4_build
+               rm -rf ${INSTALL_DIR}/include/ccp4
+               ;;
+           fftw) echo "clear fftw"
+               rm -rf ${BUILD_DIR}/fftw_build
+               rm -rf ${INSTALL_DIR}/include/fftw
+               rm -rf ${INSTALL_DIR}/include/rfftw
+               ;;
+           mmdb2) echo "clear mmdb2"
+               rm -rf ${BUILD_DIR}/mmdb2_build
+               rm -rf ${INSTALL_DIR}/include/mmdb2
+               ;;
+           clipper) echo "clear clipper"
+               rm -rf ${BUILD_DIR}/clipper_build
+               rm -rf ${INSTALL_DIR}/include/clipper
+               ;;
+           privateer) echo "clear privateer"
+               rm -rf ${BUILD_DIR}/privateer_build
+               rm -rf ${INSTALL_DIR}/include/privateer
+               ;;
+           ssm) echo "clear ssm"
+               rm -rf ${BUILD_DIR}/ssm_build
+               rm -rf ${INSTALL_DIR}/include/ssm
+               ;;
+           slicendice) echo "clear slicendice"
+               rm -rf ${BUILD_DIR}/slicendice_cpp_build
+               rm -rf ${INSTALL_DIR}/include/slicendice_cpp
+               ;;
            moorhen) echo "Clear moorhen"
                rm -rf ${BUILD_DIR}/moorhen_build
-               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/wasm
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.js
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.wasm
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.data
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.worker.js
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/web_example.js
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/web_example.wasm
                ;;
         esac
         done
@@ -140,6 +194,55 @@ BUILD_GRAPHENE=false
 BUILD_LIBSIGCPP=false
 BUILD_LIBEIGEN=false
 BUILD_MOORHEN=false
+BUILD_LIBCCP4=false
+BUILD_FFTW=false
+BUILD_MMDB2=false
+BUILD_CLIPPER=false
+BUILD_PRIVATEER=false
+BUILD_SSM=false
+BUILD_SLICENDICE=false
+
+if test -d ${INSTALL_DIR}/include/slicendice_cpp; then
+    true
+else
+    BUILD_SLICENDICE=true
+fi
+
+if test -d ${INSTALL_DIR}/include/ssm; then
+    true
+else
+    BUILD_SSM=true
+fi
+
+if test -d ${INSTALL_DIR}/include/privateer; then
+    true
+else
+    BUILD_PRIVATEER=true
+fi
+
+if test -d ${INSTALL_DIR}/include/clipper; then
+    true
+else
+    BUILD_CLIPPER=true
+fi
+
+if test -d ${INSTALL_DIR}/include/mmdb2; then
+    true
+else
+    BUILD_MMDB2=true
+fi
+
+if test -d ${INSTALL_DIR}/include/rfftw; then
+    true
+else
+    BUILD_FFTW=true
+fi
+
+if test -d ${INSTALL_DIR}/include/ccp4; then
+    true
+else
+    BUILD_LIBCCP4=true
+fi
 
 if test -d ${INSTALL_DIR}/include/gsl; then
     true
@@ -195,12 +298,11 @@ else
     BUILD_LIBEIGEN=true
 fi
 
-if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/wasm/moorhen.wasm; then
+if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.wasm; then
     true
 else
     BUILD_MOORHEN=true
 fi
-
 
 for mod in $MODULES; do
     case $mod in
@@ -225,22 +327,50 @@ for mod in $MODULES; do
        eigen) echo "Force build eigen"
        BUILD_LIBEIGEN=true
        ;;
+       libccp4) echo "Force build libccp4"
+       BUILD_LIBCCP4=true
+       ;;
+       fftw) echo "Force build fftw"
+       BUILD_FFTW=true
+       ;;
+       mmdb2) echo "Force build mmdb2"
+       BUILD_MMDB2=true
+       ;;
+       clipper) echo "Force build clipper"
+       BUILD_CLIPPER=true
+       ;;
+       privateer) echo "Force build privateer"
+       BUILD_PRIVATEER=true
+       ;;
+       ssm) echo "Force build ssm"
+       BUILD_SSM=true
+       ;;
+       slicendice) echo "Force build slicendice"
+       BUILD_SLICENDICE=true
+       ;;
        moorhen) echo "Force build moorhen"
        BUILD_MOORHEN=true
        ;;
     esac
 done
 
-echo "BUILD_GSL       " $BUILD_GSL
-echo "BUILD_BOOST     " $BUILD_BOOST
-echo "BUILD_IGRAPH    " $BUILD_IGRAPH
-echo "BUILD_GEMMI     " $BUILD_GEMMI
-echo "BUILD_JSONCPP   " $BUILD_JSONCPP
-echo "BUILD_RDKIT     " $BUILD_RDKIT
-echo "BUILD_GRAPHENE  " $BUILD_GRAPHENE
-echo "BUILD_LIBSIGCPP " $BUILD_LIBSIGCPP
-echo "BUILD_LIBEIGEN  " $BUILD_LIBEIGEN
-echo "BUILD_MOORHEN   " $BUILD_MOORHEN
+echo "BUILD_GSL        " $BUILD_GSL
+echo "BUILD_BOOST      " $BUILD_BOOST
+echo "BUILD_IGRAPH     " $BUILD_IGRAPH
+echo "BUILD_GEMMI      " $BUILD_GEMMI
+echo "BUILD_JSONCPP    " $BUILD_JSONCPP
+echo "BUILD_RDKIT      " $BUILD_RDKIT
+echo "BUILD_GRAPHENE   " $BUILD_GRAPHENE
+echo "BUILD_LIBSIGCPP  " $BUILD_LIBSIGCPP
+echo "BUILD_LIBEIGEN   " $BUILD_LIBEIGEN
+echo "BUILD_LIBCCP4    " $BUILD_LIBCCP4
+echo "BUILD_FFTW       " $BUILD_FFTW
+echo "BUILD_MMDB2      " $BUILD_MMDB2
+echo "BUILD_CLIPPER    " $BUILD_CLIPPER
+echo "BUILD_PRIVATEER  " $BUILD_PRIVATEER
+echo "BUILD_SSM        " $BUILD_SSM
+echo "BUILD_SLICENDICE " $BUILD_SLICENDICE
+echo "BUILD_MOORHEN    " $BUILD_MOORHEN
 
 #eigen
 if [ $BUILD_LIBEIGEN = true ]; then
@@ -355,19 +485,6 @@ END
     export PKG_CONFIG_LIBDIR=${INSTALL_DIR}/lib/
 fi
 
-#Moorhen
-if [ $BUILD_MOORHEN = true ]; then
-    mkdir -p ${BUILD_DIR}/moorhen_build
-    cd ${BUILD_DIR}/moorhen_build
-    emcmake cmake -DMEMORY64=${MEMORY64} -DCMAKE_EXE_LINKER_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}
-    emmake make -j ${NUMPROCS}
-    emmake make install
-    cd ${MOORHEN_SOURCE_DIR}/baby-gru/
-    npm install
-    cd ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru
-    ln -s ${MOORHEN_SOURCE_DIR}/checkout/monomers
-fi
-
 # Graphene
 if [ $BUILD_GRAPHENE = true ]; then
     pushd ${MOORHEN_SOURCE_DIR}/checkout/graphene-$graphene_release/
@@ -397,4 +514,80 @@ if [ $BUILD_LIBSIGCPP = true ]; then
         meson install -C ${BUILD_DIR}/libsigcplusplus_build
         popd
     
+fi
+
+#ccp4
+if [ $BUILD_LIBCCP4 = true ]; then
+    mkdir -p ${BUILD_DIR}/ccp4_build
+    cd ${BUILD_DIR}/ccp4_build
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/ccp4 -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include"
+    emmake make -j ${NUMPROCS}
+    emmake make install
+fi
+
+#fftw
+if [ $BUILD_FFTW = true ]; then
+    mkdir -p ${BUILD_DIR}/fftw_build
+    cd ${BUILD_DIR}/fftw_build
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/fftw  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include"
+    emmake make -j ${NUMPROCS}
+    emmake make install
+fi
+
+#mmdb2
+if [ $BUILD_MMDB2 = true ]; then
+    mkdir -p ${BUILD_DIR}/mmdb2_build
+    cd ${BUILD_DIR}/mmdb2_build
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/mmdb2  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include"
+    emmake make -j ${NUMPROCS}
+    emmake make install
+fi
+
+#clipper
+if [ $BUILD_CLIPPER = true ]; then
+    mkdir -p ${BUILD_DIR}/clipper_build
+    cd ${BUILD_DIR}/clipper_build
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/clipper  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw"
+    emmake make -j ${NUMPROCS}
+    emmake make install
+fi
+
+#privateer
+if [ $BUILD_PRIVATEER = true ]; then
+    mkdir -p ${BUILD_DIR}/privateer_build
+    cd ${BUILD_DIR}/privateer_build
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/privateer  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw"
+    emmake make -j ${NUMPROCS}
+    emmake make install
+fi
+
+#ssm
+if [ $BUILD_SSM = true ]; then
+    mkdir -p ${BUILD_DIR}/ssm_build
+    cd ${BUILD_DIR}/ssm_build
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/ssm  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw"
+    emmake make -j ${NUMPROCS}
+    emmake make install
+fi
+
+#slicendice_cpp
+if [ $BUILD_SLICENDICE = true ]; then
+    mkdir -p ${BUILD_DIR}/slicendice_cpp_build
+    cd ${BUILD_DIR}/slicendice_cpp_build
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/slicendice_cpp  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw -I${INSTALL_DIR}/include/eigen3" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw -I${INSTALL_DIR}/include/eigen3"
+    emmake make -j ${NUMPROCS}
+    emmake make install
+fi
+
+#Moorhen
+if [ $BUILD_MOORHEN = true ]; then
+    mkdir -p ${BUILD_DIR}/moorhen_build
+    cd ${BUILD_DIR}/moorhen_build
+    emcmake cmake -DMEMORY64=${MEMORY64} -DCMAKE_EXE_LINKER_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw -I${INSTALL_DIR}/include/eigen3 -I${INSTALL_DIR}/include/ssm -I${MOORHEN_SOURCE_DIR}/checkout/glm-0.9.9.8 -I${INSTALL_DIR}/include/privateer -I${INSTALL_DIR}/include/privateer/pybind11" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw -I${INSTALL_DIR}/include/eigen3 -I${INSTALL_DIR}/include/ssm -I${MOORHEN_SOURCE_DIR}/checkout/glm-0.9.9.8 -I${INSTALL_DIR}/include/privateer -I${INSTALL_DIR}/include/privateer/pybind11" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}
+    emmake make -j ${NUMPROCS}
+    emmake make install
+    cd ${MOORHEN_SOURCE_DIR}/baby-gru/
+    npm install
+    cd ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru
+    ln -s ${MOORHEN_SOURCE_DIR}/checkout/monomers
 fi

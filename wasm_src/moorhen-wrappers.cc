@@ -23,10 +23,10 @@
 #include <cctype>
 #include <gemmi/mmdb.hpp>
 
-#include "kmeans.h"
-#include "agglomerative.h"
-#include "birch.h"
-#include "pae_igraph.h"
+#include "slicendice_cpp/kmeans.h"
+#include "slicendice_cpp/agglomerative.h"
+#include "slicendice_cpp/birch.h"
+#include "slicendice_cpp/pae_igraph.h"
 #include "Eigen/Dense"
 
 #include <math.h>
@@ -49,7 +49,7 @@
 #include "coot-utils/vertex.hh"
 #include "coot-utils/coot-map-utils.hh"
 
-#include "mmdb_manager.h"
+#include "mmdb2/mmdb_manager.h"
 #include "clipper/core/ramachandran.h"
 #include "clipper/clipper-ccp4.h"
 

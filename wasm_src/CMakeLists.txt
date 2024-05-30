@@ -451,14 +451,6 @@ target_include_directories(coot PRIVATE
     ${coot_src}/utils 
     ${coot_src}/src 
     ../include 
-    ../checkout/ssm 
-    ../checkout/mmdb2 
-    ../checkout/clipper 
-    ../checkout/fftw-2.1.5/fftw 
-    ../checkout/fftw-2.1.5/rfftw 
-    ../checkout/libccp4/ccp4 
-    ../boost  
-    ../checkout/gemmi/include 
     ../install/include/graphene-1.0 
     ../install/include/sigc++-3.0
     ../install/lib/graphene-1.0/include
@@ -553,20 +545,7 @@ target_link_options(moorhen PRIVATE -sASSERTIONS=2 -fexceptions -pthread -sPTHRE
 endif()
 
 target_link_directories(moorhen PUBLIC 
-    ../ssm
-    ../mmdb2
-    ../clipper/cif
-    ../clipper/mmdb
-    ../clipper/core
-    ../clipper/contrib
-    ../clipper/ccp4
-    ../clipper/gemmi
-    ../fftw
-    ../rfftw
-    ../ccp4
-    ../lib
     ../install/lib
-    ../privateer
 )
 
 target_link_libraries(moorhen 
@@ -635,21 +614,6 @@ target_include_directories(moorhen PRIVATE
     ${coot_src}
     ${coot_src}/ccp4mg-utils
     ${coot_src}/src
-    ../boost
-    ../checkout/clipper/
-    ../checkout/mmdb2
-    ../checkout/mmdb2/mmdb2
-    ../checkout/ssm
-    ../checkout/libccp4/ccp4
-    ../fftw
-    ../rfftw
-    ../include
-    ../checkout/gemmi/include
-    ../checkout/privateer-wasm/src/privateer/cpp
-    ../checkout/privateer-wasm/src/privateer/cpp/pybind11
-    ../checkout/privateer-wasm/src/privateer/cpp/third-party/simdjson
-    ../checkout/slicendice_cpp/prog/
-    ../install/include/eigen3
     ../install/include/graphene-1.0 
     ../install/include/sigc++-3.0
     ../install/lib/graphene-1.0/include
@@ -663,7 +627,7 @@ add_executable(test-molecules-container ${coot_src}/api/test-molecules-container
 target_link_options(test-molecules-container PRIVATE -sEXIT_RUNTIME=1 -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -pthread -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
 target_link_directories(test-molecules-container PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
 target_link_libraries(test-molecules-container mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl gslcblas RDKitMolDraw2D RDKitForceFieldHelpers RDKitDescriptors RDKitForceField RDKitSubstructMatch RDKitOptimizer RDKitDistGeomHelpers RDKitDistGeometry RDKitChemReactions RDKitAlignment RDKitEigenSolvers RDKitDepictor RDKitcoordgen RDKitMolChemicalFeatures RDKitPartialCharges RDKitFileParsers RDKitRDGeometryLib RDKitGraphMol RDKitShapeHelpers RDKitFingerprints RDKitMolAlign RDKitMolTransforms RDKitChemTransforms RDKitSmilesParse RDKitFilterCatalog RDKitCatalogs RDKitSubgraphs RDKitRDGeneral RDKitDataStructs RDKitGenericGroups boost_thread boost_serialization gemmi_cpp freetype m z nodefs.js)
-target_include_directories(test-molecules-container PRIVATE ${coot_src} ${coot_src}/src ../include ../checkout/boost_1_80_0 ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ${dependency_install_dir}/include ../checkout/glm-0.9.9.8  ../checkout/gemmi/include)
+target_include_directories(test-molecules-container PRIVATE ${coot_src} ${coot_src}/src ../include  ${dependency_install_dir}/include)
 target_compile_options(test-molecules-container PUBLIC -Wno-deprecated-declarations -Wno-deprecated-builtins -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
 ]]
 
