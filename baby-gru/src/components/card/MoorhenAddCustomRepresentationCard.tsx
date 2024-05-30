@@ -15,7 +15,7 @@ import { addCustomRepresentation } from '../../store/moleculesSlice';
 import { MoorhenColourRule } from '../../utils/MoorhenColourRule';
 import { NcsColourSwatch } from './MoorhenColourRuleCard';
 
-const customRepresentations = [ 'CBs', 'CAs', 'CRs', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'MetaBalls' ]
+const customRepresentations = [ 'CBs', 'CAs', 'CRs', 'gaussian', 'MolecularSurface', 'VdwSpheres', 'MetaBalls' ]
 
 export const MoorhenAddCustomRepresentationCard = (props: {
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
@@ -43,6 +43,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const ruleSelectRef = useRef<HTMLSelectElement | null>(null)
     const cidFormRef = useRef<HTMLInputElement | null>(null)
     const styleSelectRef = useRef<HTMLSelectElement | null>(null)
+    const nucleotideStyleSelectRef = useRef<HTMLSelectElement | null>(null)
     const chainSelectRef = useRef<HTMLSelectElement | null>(null)
     const colourModeSelectRef = useRef<HTMLSelectElement | null>(null)
     const colourSwatchRef = useRef<HTMLDivElement | null>(null)
@@ -171,7 +172,8 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 cidSelection, 
                 true,
                 colourRule ? [ colourRule ] : null,
-                bondOptions
+                bondOptions,
+                nucleotideStyleSelectRef.current?.value as ("DishyBases" | "StickBases")
             )
             dispatch( addCustomRepresentation(representation) )
         } else if (props.mode === 'edit' && props.representationId) {
@@ -182,6 +184,9 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 representation.setUseDefaultColourRules(!colourRule)
                 representation.setColourRules(colourRule ? [ colourRule ] : null)
                 representation.setBondOptions(bondOptions)
+                if (styleSelectRef.current.value === 'CRs') {
+                    representation.setNucleotideStyle(nucleotideStyleSelectRef.current.value as ("DishyBases" | "StickBases"))
+                }
                 representation.redraw()
             }
         }
@@ -232,6 +237,15 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                         })}
                     </FormSelect>
                 </Form.Group>
+                {representationStyle === 'CRs' && 
+                <Form.Group style={{ margin: '0px', width: '100%' }}>
+                    <Form.Label>Nucleotide ribbon style</Form.Label>
+                    <FormSelect ref={nucleotideStyleSelectRef} size="sm">
+                        <option value={'StickBases'}>Sticks</option>
+                        <option value={'DishyBases'}>Dishes</option>
+                    </FormSelect>
+                </Form.Group>            
+                }
                 <Form.Group style={{ width: '100%', margin: 0 }}>
                     <Form.Label>Residue selection</Form.Label>
                     <FormSelect size="sm" ref={ruleSelectRef} defaultValue={ruleType} onChange={(val) => setRuleType(val.target.value)}>

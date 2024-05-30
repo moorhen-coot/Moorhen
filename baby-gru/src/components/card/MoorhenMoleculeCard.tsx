@@ -21,7 +21,7 @@ import { MoorhenHeaderInfoCard } from './MoorhenHeaderInfoCard';
 import { MoorhenCarbohydrateList } from "../list/MoorhenCarbohydrateList";
 import { MoorhenColourRule } from '../../utils/MoorhenColourRule';
 
-const allRepresentations = [ 'CBs', 'adaptativeBonds', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks', 'restraints' ]
+const allRepresentations = [ 'CBs', 'adaptativeBonds', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks', 'restraints' ]
 
 interface MoorhenMoleculeCardPropsInterface extends moorhen.CollectedProps {
     dropdownId: number;
@@ -594,11 +594,10 @@ const RepresentationCheckbox = (props: {
     const [repState, setRepState] = useState<boolean>(false)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
-    const chipStyle = getChipStyle(props.molecule.defaultColourRules, repState, isDark, `${convertRemToPx(9)}px`)
+    const chipStyle = getChipStyle(props.molecule.defaultColourRules, repState, isDark, `${convertRemToPx(6.5)}px`)
     const disabled: boolean = (
         !props.isVisible 
         || (props.repKey === 'ligands' && props.molecule.ligands.length === 0) 
-        || (props.repKey === 'DishyBases' && !props.molecule.hasDNA) 
         || (props.repKey === 'glycoBlocks' && !props.molecule.hasGlycans)
         || (props.repKey === 'restraints' && props.molecule.restraints.length === 0)
         || (['rama', 'rotamer'].includes(props.repKey) && props.molecule.sequences.every(sequence => [3, 4, 5].includes(sequence.type)))

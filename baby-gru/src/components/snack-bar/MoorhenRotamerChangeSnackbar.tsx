@@ -72,7 +72,7 @@ export const MoorhenRotamerChangeSnackBar =  forwardRef<
             setTimeout(async () => {
                 chosenMolecule.current.hideCid(selectedFragmentRef.current.cid)
                 await Promise.all(selectedMolecule.representations
-                    .filter(item => { return ['CRs', 'CBs', 'CAs', 'ligands', 'gaussian', 'MolecularSurface', 'VdWSurface', 'DishyBases', 'VdwSpheres', 'allHBonds', 'glycoBlocks', 'MetaBalls'].includes(item.style) })
+                    .filter(item => { return ['CRs', 'CBs', 'CAs', 'ligands', 'gaussian', 'MolecularSurface', 'VdWSurface', 'VdwSpheres', 'allHBonds', 'glycoBlocks', 'MetaBalls'].includes(item.style) })
                     .map(representation => {
                         if (representation.buffers.length > 0 && representation.buffers[0].visible) {
                             return newMolecule.addRepresentation(representation.style, representation.cid)

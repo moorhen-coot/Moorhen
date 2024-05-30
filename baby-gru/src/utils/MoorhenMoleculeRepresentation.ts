@@ -26,6 +26,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     ligandsCid: string;
     hoverColor: number[];
     residueSelectionColor: number[];
+    nucleotideStyle: 'DishyBases' | 'StickBases';
 
     constructor(style: moorhen.RepresentationStyles, cid: string, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>) {
         this.uniqueId = guid()
@@ -48,6 +49,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.ligandsCid = "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O,G,C,U,A,T)"
         this.hoverColor = [1.0, 0.5, 0.0, 0.35]
         this.residueSelectionColor = [0.25, 1.0, 0.25, 0.35]
+        this.nucleotideStyle = 'StickBases'
     }
 
     setBondOptions(bondOptions: moorhen.cootBondOptions) {
@@ -80,6 +82,10 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
 
     setUseDefaultColourRules(newVal: boolean) {
         this.useDefaultColourRules = newVal
+    }
+
+    setNucleotideStyle(newVal: 'DishyBases' | 'StickBases') {
+        this.nucleotideStyle = newVal
     }
 
     addColourRule(ruleType: string, cid: string, color: string, args: (string | number)[], isMultiColourRule: boolean = false, applyColourToNonCarbonAtoms: boolean = false, label?: string) {
@@ -525,6 +531,52 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         }
     }
 
+    async getNucleotideRepresentationBuffers(style: "StickBases" | "DishyBases", cidSelection: string): Promise<libcootApi.InstancedMeshJS[]> {
+        await Promise.all([
+            this.commandCentre.current.cootCommand({
+                returnType: "status",
+                command: "M2T_updateFloatParameter",
+                commandArgs: [
+                    this.parentMolecule.molNo, 'cylindersStyleCylinderRadius', style === "StickBases" ? 0.35 : 0.2
+                ]
+            }, false),
+            this.commandCentre.current.cootCommand({
+                returnType: "status",
+                command: "M2T_updateFloatParameter",
+                commandArgs: [
+                    this.parentMolecule.molNo, 'cylindersStyleBallRadius', style === "StickBases" ? 0.5 : 0.2
+                ]
+            }, false)    
+        ])
+
+        const result = await this.commandCentre.current.cootCommand({
+            returnType: "mesh",
+            command: "get_molecular_representation_mesh",
+            commandArgs: [
+                this.parentMolecule.molNo, cidSelection, "colorRampChainsScheme", style
+            ]
+        }, false) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
+
+        await Promise.all([
+            this.commandCentre.current.cootCommand({
+                returnType: "status",
+                command: "M2T_updateFloatParameter",
+                commandArgs: [
+                    this.parentMolecule.molNo, 'cylindersStyleCylinderRadius', 0.2
+                ]
+            }, false),
+            this.commandCentre.current.cootCommand({
+                returnType: "status",
+                command: "M2T_updateFloatParameter",
+                commandArgs: [
+                    this.parentMolecule.molNo, 'cylindersStyleBallRadius', 0.2
+                ]
+            }, false)    
+        ])
+        
+        return [result.data.result.result]
+    }
+
     async getCootRepresentationBuffers(style: string, cidSelection?: string): Promise<libcootApi.InstancedMeshJS[]> {
         const { m2tStyle, m2tSelection } = this.getM2tParams(style, cidSelection)
 
@@ -536,7 +588,26 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             ]
         }, false) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
 
-        return [response.data.result.result]
+        let resultBufferObjects = []
+        let ribbonBufferObjects = [response.data.result.result]
+        if (m2tStyle === 'Ribbon' && this.parentMolecule.hasDNA) {
+            const nucleotideBufferObjects = await this.getNucleotideRepresentationBuffers(this.nucleotideStyle, m2tSelection)
+            for (let i=0; i < nucleotideBufferObjects.length; i++) {
+                let iObjects = {}
+                for (let key in nucleotideBufferObjects[i]) {
+                    if (!(key in ribbonBufferObjects[i])) {
+                        console.warn(`Attr. ${key} not found in CRs buffer object with index ${i}, skipping...`)
+                    } else {
+                        iObjects[key] = nucleotideBufferObjects[i][key].concat(ribbonBufferObjects[i][key])
+                    }
+                }
+                resultBufferObjects.push(iObjects)
+            }    
+        } else {
+            resultBufferObjects = ribbonBufferObjects
+        }
+
+        return resultBufferObjects
     }
 
     getBondSettings(name: string): [string, boolean, number, number, number] {
@@ -897,7 +968,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 commandArgs: [ this.parentMolecule.molNo, this.cid, ...bondSettings, drawHydrogens, drawMissingLoops ],
             }, false) as moorhen.WorkerResponse<ArrayBuffer>
             gltfData = result.data.result.result
-        } else if (['CRs', 'MolecularSurface', 'DishyBases', 'VdWSurface', 'Calpha'].includes(this.style)) {
+        } else if (['CRs', 'MolecularSurface', 'VdWSurface', 'Calpha'].includes(this.style)) {
             const { m2tStyle, m2tSelection } = this.getM2tParams(this.style, this.cid)
             const result = await this.commandCentre.current.cootCommand({
                 returnType: 'string',
