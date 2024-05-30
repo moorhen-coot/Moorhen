@@ -404,17 +404,40 @@ class molecules_container_js : public molecules_container_t {
             return "";
         }
 
-        int read_pdb_string(const std::string &pdb_string, const std::string &molecule_name) {
-            std::string file_name = generate_rand_str(32);
-            if (pdb_string.find("data_") == 0) {
-                file_name += ".mmcif";
-            } else {
-                file_name += ".pdb";
+        std::string guess_coord_format(const std::string &file_contents) {
+            char *c_data = (char *)file_contents.c_str();
+            size_t size = file_contents.length();
+            const char* end = c_data + size;
+            
+            int coor_format = int(gemmi::coor_format_from_content(c_data, end));
+
+            std::string result;
+            if (coor_format == 0) {
+                result = "unk";
+            } else if (coor_format == 1) {
+                result = "unk";
+            } else if (coor_format == 2) {
+                result = "pdb";
+            } else if (coor_format == 3) {
+                result = "mmcif";
+            } else if (coor_format == 4) {
+                result = "mmjson";
+            } else if (coor_format == 5) {
+                result = "xml";
             }
+
+            return result;
+        }
+
+        std::pair<int, std::string> read_coords_string(const std::string &pdb_string, const std::string &molecule_name) {
+            std::string file_name = generate_rand_str(32);
+            std::string coordFormat = guess_coord_format(pdb_string);
+            file_name += "." + coordFormat;
             write_text_file(file_name, pdb_string);
             const int imol = molecules_container_t::read_pdb(file_name);
             remove_file(file_name);
-            return imol;
+            std::pair<int, std::string> result(imol, coordFormat);
+            return result;
         }
 
         int read_dictionary_string (const std::string &dictionary_string, const int &associated_imol) {
@@ -1436,7 +1459,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("DrawMoorhenMetaBalls",&molecules_container_js::DrawMoorhenMetaBalls)
     .function("model_has_glycans",&molecules_container_js::model_has_glycans)
     .function("get_molecule_atoms", &molecules_container_js::get_molecule_atoms)
-    .function("read_pdb_string", &molecules_container_js::read_pdb_string)
+    .function("read_coords_string", &molecules_container_js::read_coords_string)
     .function("smiles_to_pdb", &molecules_container_js::smiles_to_pdb)
     .function("mol_text_to_pdb", &molecules_container_js::mol_text_to_pdb)
     .function("replace_molecule_by_model_from_string", &molecules_container_js::replace_molecule_by_model_from_string)

@@ -121,8 +121,7 @@ export namespace moorhen {
         apply(style: string, ruleIndex: number): Promise<void>;
     }
 
-    type coorFormats = 'pdb' | 'mmcif';
-    
+    type coorFormats = 'pdb' | 'mmcif' | 'unk' | 'mmjson' | 'xml';
     interface Molecule {
         transferLigandDicts(toMolecule: Molecule, override?: boolean): Promise<void>;
         minimizeEnergyUsingCidAnimated(cid: string, ncyc: number, nIterations: number, useRamaRestraints: boolean, ramaWeight: number, useTorsionRestraints: boolean, torsionWeight: number): Promise<void>;
@@ -139,7 +138,7 @@ export namespace moorhen {
         getSecondaryStructInfo(modelNumber?: number): Promise<libcootApi.ResidueSpecJS[]>;
         getNonSelectedCids(cid: string): string[];
         parseCidIntoSelection(selectedCid: string): Promise<ResidueSelection>;
-        downloadAtoms(format?: 'mmcif' | 'pdb'): Promise<void>;
+        downloadAtoms(format?: coorFormats): Promise<void>;
         getResidueBFactors(): { cid: string; bFactor: number; normalised_bFactor: number }[];
         getNcsRelatedChains(): Promise<string[][]>;
         animateRefine(n_cyc: number, n_iteration: number, final_n_cyc?: number): Promise<void>;
@@ -196,7 +195,7 @@ export namespace moorhen {
         clearBuffersOfStyle: (style: string) => void;
         loadToCootFromURL: (inputFile: string, molName: string, options?: RequestInit) => Promise<Molecule>;
         applyTransform: () => Promise<void>;
-        getAtoms(format?: string): Promise<string>;
+        getAtoms(format?: coorFormats): Promise<string>;
         hide: (style: string, cid?: string) => void;
         redraw: () => Promise<void>;
         setAtomsDirty: (newVal: boolean) => void;
@@ -521,6 +520,7 @@ export namespace moorhen {
         name: string;
         molNo: number;
         coordString: string;
+        coordFormat: coorFormats;
         representations: { 
             cid: string;
             style: strin;

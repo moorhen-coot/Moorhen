@@ -502,15 +502,15 @@ export class MoorhenMolecule implements moorhen.Molecule {
         let newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
         newMolecule.name = `${this.name}-placeholder`
         newMolecule.defaultBondOptions = this.defaultBondOptions
-        newMolecule.coordsFormat = this.coordsFormat
 
         let response = await this.commandCentre.current.cootCommand({
             returnType: "status",
-            command: 'read_pdb_string',
+            command: 'read_coords_string',
             commandArgs: [coordString, newMolecule.name]
-        }, true) as moorhen.WorkerResponse<number>
+        }, true) as moorhen.WorkerResponse<libcootApi.PairType<number, moorhen.coorFormats>>
 
-        newMolecule.molNo = response.data.result.result
+        newMolecule.molNo = response.data.result.result.first
+        newMolecule.coordsFormat = response.data.result.result.second
         newMolecule.isLigand = this.isLigand
         newMolecule.hasGlycans = this.hasGlycans
         newMolecule.hasDNA = this.hasDNA
@@ -701,7 +701,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 // result = 'mmjson'
             } else if (format === 5) {
                 // result = 'chemComp'
-            }    
+            }
         } catch (err) {
             console.warn(err)
             console.log('Unable to guess format of coords using gemmi... Defaulting to PDB format')
@@ -725,7 +725,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
             this.gemmiStructure.delete()
         }
 
-        this.coordsFormat = MoorhenMolecule.guessCoordFormat(coordData as string)
         this.name = name.replace(pdbRegex, "").replace(entRegex, "").replace(cifRegex, "").replace(mmcifRegex, "");
 
         try {
@@ -733,10 +732,11 @@ export class MoorhenMolecule implements moorhen.Molecule {
             this.atomsDirty = false
             const response = await this.commandCentre.current.cootCommand({
                 returnType: "status",
-                command: 'read_pdb_string',
+                command: 'read_coords_string',
                 commandArgs: [coordData, this.name],
-            }, true)
-            this.molNo = response.data.result.result
+            }, true) as moorhen.WorkerResponse<libcootApi.PairType<number, moorhen.coorFormats>>
+            this.molNo = response.data.result.result.first
+            this.coordsFormat = response.data.result.result.second
             await Promise.all([
                 this.getNumberOfAtoms(),
                 this.loadMissingMonomers(),
@@ -829,7 +829,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} [format='pdb'] - File format will match the one of the original file unless specified here
      * @returns {string}  A string representation file contents
      */
-    async getAtoms(format?: 'mmcif' | 'pdb'): Promise<string> {
+    async getAtoms(format?: moorhen.coorFormats): Promise<string> {
         let cootCommand = 'molecule_to_PDB_string'
         if (format) {
             cootCommand = format === 'mmcif' ? 'molecule_to_mmCIF_string' : 'molecule_to_PDB_string'
@@ -848,7 +848,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * Download the PDB file contents of the molecule in its current state
      * @param {string} [format='pdb'] - File format will match the one of the original file unless specified here
      */
-    async downloadAtoms(format?: 'mmcif' | 'pdb') {
+    async downloadAtoms(format?: moorhen.coorFormats) {
         const coordsString = await this.getAtoms(format)
         doDownload([coordsString], `${this.name}.${format ? format : this.coordsFormat ? this.coordsFormat : 'pdb'}`)
     }

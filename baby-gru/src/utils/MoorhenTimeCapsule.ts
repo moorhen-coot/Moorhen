@@ -206,6 +206,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             return {
                 name: molecule.name,
                 molNo: molecule.molNo,
+                coordFormat: molecule.coordsFormat,
                 coordString: moleculeDataPromises[index],
                 representations: molecule.representations.filter(item => item.visible).map(item => { return {
                     cid: item.cid,

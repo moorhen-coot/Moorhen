@@ -631,22 +631,24 @@ describe('Testing molecules_container_js', () => {
         expect(pdbString).toHaveLength(297616)
     })
 
-    test("Test read_pdb_string pdb-format", () => {
+    test("Test read_coords_string pdb-format", () => {
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
         const pdbString_1  = molecules_container.get_molecule_atoms(coordMolNo_1, "pdb")
         expect(pdbString_1).toHaveLength(258719)
-        const coordMolNo_2 = molecules_container.read_pdb_string(pdbString_1, "mol-name")
-        expect(coordMolNo_2).toBe(1)
+        const coordMolNo_2 = molecules_container.read_coords_string(pdbString_1, "mol-name")
+        expect(coordMolNo_2.first).toBe(1)
+        expect(coordMolNo_2.second).toBe("pdb")
         const pdbString_2  = molecules_container.get_molecule_atoms(coordMolNo_2, "pdb")
         expect(pdbString_2).toBe(pdbString_1)
     })
 
-    test("Test read_pdb_string mmcif-format", () => {
+    test("Test read_coords_string mmcif-format", () => {
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
         const pdbString_1  = molecules_container.get_molecule_atoms(coordMolNo_1, "mmcif")
         expect(pdbString_1).toHaveLength(297616)
-        const coordMolNo_2 = molecules_container.read_pdb_string(pdbString_1, "mol-name")
-        expect(coordMolNo_2).toBe(1)
+        const coordMolNo_2 = molecules_container.read_coords_string(pdbString_1, "mol-name")
+        expect(coordMolNo_2.first).toBe(1)
+        expect(coordMolNo_2.second).toBe("mmcif")
         // For some reason this fails, probably a coot thing
         // const pdbString_2  = molecules_container.get_molecule_atoms(coordMolNo_2, "mmcif")
         // expect(pdbString_2).toBe(pdbString_1)
