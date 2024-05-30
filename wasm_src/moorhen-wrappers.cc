@@ -1231,6 +1231,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("M2T_updateIntParameter", &molecules_container_t::M2T_updateIntParameter)
+    .function("M2T_updateFloatParameter", &molecules_container_t::M2T_updateFloatParameter)
     .function("clear_lsq_matches", &molecules_container_t::clear_lsq_matches)
     .function("add_lsq_superpose_match", &molecules_container_t::add_lsq_superpose_match)
     .function("lsq_superpose", &molecules_container_t::lsq_superpose)
