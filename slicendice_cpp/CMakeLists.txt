@@ -10,7 +10,7 @@ find_path(EIGEN_INCLUDE_DIRS REQUIRED NAMES "Eigen/Dense" PATHS ${CMAKE_PREFIX_P
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 message(STATUS "Eigen header directory - ${EIGEN_INCLUDE_DIRS}")
 
-set(CMAKE_CXX_FLAGS_RELEASE "-O2 -Wno-enum-constexpr-conversion -I${EIGEN_INCLUDE_DIRS}/.. -I${CMAKE_PREFIX_PATH}/include -pthread")
+set(CMAKE_CXX_FLAGS_RELEASE "-O2 -Wno-enum-constexpr-conversion -I${EIGEN_INCLUDE_DIRS} -I${CMAKE_PREFIX_PATH}/include -pthread")
 set(CMAKE_C_FLAGS_RELEASE "-O2")
 set(CMAKE_CXX_STANDARD 17)
 
