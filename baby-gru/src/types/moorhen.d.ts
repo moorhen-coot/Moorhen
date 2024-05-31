@@ -81,6 +81,28 @@ export namespace moorhen {
         width: number;
         atomRadiusBondRatio: number;
     }
+
+    type gaussianSurfSettings = {
+        sigma: number;
+        countourLevel: number;
+        boxRadius: number;
+        gridScale: number;
+        bFactor: number;
+    }
+
+    type m2tParameters = {
+        ribbonStyleCoilThickness: number;
+        ribbonStyleHelixWidth: number;
+        ribbonStyleStrandWidth: number;
+        ribbonStyleArrowWidth: number;
+        ribbonStyleDNARNAWidth: number;
+        ribbonStyleAxialSampling: number;
+        cylindersStyleAngularSampling: number;
+        cylindersStyleCylinderRadius: number;
+        cylindersStyleBallRadius: number;
+        surfaceStyleProbeRadius: number;
+        ballsStyleRadiusMultiplier: number;
+    }
     
     type ColourRuleObject = {
         cid: string;
@@ -231,13 +253,8 @@ export namespace moorhen {
         biomolOn: boolean;
         symmetryRadius : number;
         symmetryMatrices: number[][][];
-        gaussianSurfaceSettings: {
-            sigma: number;
-            countourLevel: number;
-            boxRadius: number;
-            gridScale: number;
-            bFactor: number;
-        };
+        gaussianSurfaceSettings: gaussianSurfSettings;
+        defaultM2tParams: m2tParameters;
         isDarkBackground: boolean;
         representations: MoleculeRepresentation[];
         defaultBondOptions: cootBondOptions;

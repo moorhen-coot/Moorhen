@@ -74,15 +74,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
     biomolOn: boolean;
     symmetryRadius: number;
     symmetryMatrices: number[][][];
-    gaussianSurfaceSettings: {
-        sigma: number;
-        countourLevel: number;
-        boxRadius: number;
-        gridScale: number;
-        bFactor: number;
-    };
+    gaussianSurfaceSettings: moorhen.gaussianSurfSettings;
     isDarkBackground: boolean;
     defaultBondOptions: moorhen.cootBondOptions;
+    defaultM2tParams: moorhen.m2tParameters;
     displayObjectsTransformation: { origin: [number, number, number], quat: any, centre: [number, number, number] }
     uniqueId: string;
     monomerLibraryPath: string;
@@ -143,6 +138,19 @@ export class MoorhenMolecule implements moorhen.Molecule {
             smoothness: 1,
             width: 0.1,
             atomRadiusBondRatio: 1
+        }
+        this.defaultM2tParams = {
+            ribbonStyleCoilThickness: 0.3,
+            ribbonStyleHelixWidth: 1.2,
+            ribbonStyleStrandWidth: 1.2,
+            ribbonStyleArrowWidth: 1.5,
+            ribbonStyleDNARNAWidth: 1.5,
+            ribbonStyleAxialSampling: 6,
+            cylindersStyleAngularSampling: 6,
+            cylindersStyleCylinderRadius: 0.2,
+            cylindersStyleBallRadius: 0.2,
+            surfaceStyleProbeRadius: 1.4,
+            ballsStyleRadiusMultiplier: 1
         }
         this.restraints = []
         this.adaptativeBondsEnabled = false
@@ -484,6 +492,24 @@ export class MoorhenMolecule implements moorhen.Molecule {
     }
 
     /**
+     * Transfer metadata stored in this molecule instance to other molecule
+     * @param {morhen.Molecule} otherMolecule - The molecule where the metadata will be transferred
+     * @param {boolean} [transferDicts=true] - Indicates whether ligand dictionaries should also be transferred
+     */
+    async transferMetaData(otherMolecule: moorhen.Molecule, transferDicts: boolean = true) {
+        otherMolecule.defaultBondOptions = this.defaultBondOptions
+        otherMolecule.defaultM2tParams = this.defaultM2tParams
+        otherMolecule.coordsFormat = this.coordsFormat
+        otherMolecule.isLigand = this.isLigand
+        otherMolecule.hasGlycans = this.hasGlycans
+        otherMolecule.hasDNA = this.hasDNA
+        otherMolecule.isDarkBackground = this.isDarkBackground
+        if (transferDicts) {
+            await this.transferLigandDicts(otherMolecule)
+        }
+    }
+
+    /**
      * Transfer ligand dictionaries stored in this molecule instance to other molecule
      * @param {morhen.Molecule} toMolecule - The molecule where the metadata will be transferred
      * @param {boolean} [override=false] - Override ligand dictionaries already stored under the same ligand name in the other molecule instance 
@@ -506,7 +532,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
         let coordString = await this.getAtoms()
         let newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
         newMolecule.name = `${this.name}-placeholder`
-        newMolecule.defaultBondOptions = this.defaultBondOptions
 
         let response = await this.commandCentre.current.cootCommand({
             returnType: "status",
@@ -515,12 +540,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }, true) as moorhen.WorkerResponse<libcootApi.PairType<number, moorhen.coorFormats>>
 
         newMolecule.molNo = response.data.result.result.first
-        newMolecule.coordsFormat = response.data.result.result.second
-        newMolecule.isLigand = this.isLigand
-        newMolecule.hasGlycans = this.hasGlycans
-        newMolecule.hasDNA = this.hasDNA
 
-        await this.transferLigandDicts(newMolecule)
+        await this.transferMetaData(newMolecule)
         await newMolecule.fetchDefaultColourRules()
         if (doRedraw) {
             await newMolecule.fetchIfDirtyAndDraw('CBs')
@@ -544,10 +565,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
         newMolecule.name = `${this.name} fragment`
         newMolecule.molNo = response.data.result.result
-        newMolecule.isDarkBackground = this.isDarkBackground
-        newMolecule.defaultBondOptions = this.defaultBondOptions
-        newMolecule.coordsFormat = this.coordsFormat
-        await this.transferLigandDicts(newMolecule)
+        await this.transferMetaData(newMolecule)
         await newMolecule.fetchDefaultColourRules()
         if (doRecentre) {
             newMolecule.setAtomsDirty(true)
@@ -1574,6 +1592,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             newMolecule.molNo = result.data.result.result
             newMolecule.name = resType.toUpperCase()
             newMolecule.defaultBondOptions = this.defaultBondOptions
+            newMolecule.defaultM2tParams = this.defaultM2tParams
             await this.mergeMolecules([newMolecule], true)
             return newMolecule.delete()
         } else {
@@ -2341,11 +2360,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
                     const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
                     newMolecule.name = `${this.name}-${index+1}`
                     newMolecule.molNo = molNo
-                    newMolecule.isDarkBackground = this.isDarkBackground
-                    newMolecule.defaultBondOptions = this.defaultBondOptions
-                    newMolecule.coordsFormat = this.coordsFormat        
+                    await this.transferMetaData(newMolecule)
                     newMolecule.setAtomsDirty(true)
-                    await this.transferLigandDicts(newMolecule)
                     await newMolecule.fetchDefaultColourRules()
                     if (draw) {
                         await newMolecule.fetchIfDirtyAndDraw('CBs')
