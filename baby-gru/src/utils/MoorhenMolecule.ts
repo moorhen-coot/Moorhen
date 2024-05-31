@@ -483,6 +483,11 @@ export class MoorhenMolecule implements moorhen.Molecule {
         return response
     }
 
+    /**
+     * Transfer ligand dictionaries stored in this molecule instance to other molecule
+     * @param {morhen.Molecule} toMolecule - The molecule where the metadata will be transferred
+     * @param {boolean} [override=false] - Override ligand dictionaries already stored under the same ligand name in the other molecule instance 
+     */
     async transferLigandDicts(toMolecule: moorhen.Molecule, override: boolean = false) {
         await Promise.all(Object.keys(this.ligandDicts).map(key => {
             if (!override && Object.hasOwn(toMolecule.ligandDicts, key)) {
@@ -2354,6 +2359,16 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
     }
 
+    /**
+     * Minimize the energy of a given set of residues (usually a ligand)
+     * @param cid - The CID for the input residues
+     * @param ncyc - The number of cycles 
+     * @param nIterations - The number of iterations
+     * @param useRamaRestraints - Indicates whether ramachandran restraints should be used
+     * @param ramaWeight - Indicates the weight assigned to ramachandran restraints
+     * @param useTorsionRestraints - Indicates whether torsion restraints should be used
+     * @param torsionWeight - Indicates the weight assigned to torsion restraints
+     */
     async minimizeEnergyUsingCidAnimated(cid: string, ncyc: number, nIterations: number, useRamaRestraints: boolean, ramaWeight: number, useTorsionRestraints: boolean, torsionWeight: number) {
         const commandArgs = [
             this.molNo,
