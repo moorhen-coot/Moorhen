@@ -444,17 +444,28 @@ ${coot_exception_srcs}
 ${coot_src}/ideal/write-png.cc
 )
 
+set(ENV{EM_PKG_CONFIG_PATH} ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig/)
+set(ENV{PKG_CONFIG_PATH} ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig/)
+set(ENV{EM_PKG_CONFIG_LIBDIR} ${CMAKE_INSTALL_PREFIX}/lib/)
+set(ENV{PKG_CONFIG_LIBDIR} ${CMAKE_INSTALL_PREFIX}/lib/)
+
+include(FindPkgConfig)
+pkg_check_modules(DEPS REQUIRED sigc++-3.0 graphene-1.0 jsoncpp igraph)
+
+find_package(RDKit REQUIRED)
+find_package(Boost COMPONENTS iostreams thread serialization system REQUIRED)
+pkg_check_modules(GSL REQUIRED gsl)
+
 target_include_directories(coot PRIVATE 
     ${coot_src} 
     ${coot_src}/coords 
     ${coot_src}/ccp4mg-utils 
     ${coot_src}/utils 
     ${coot_src}/src 
-    ../include 
-    ../install/include/graphene-1.0 
-    ../install/include/sigc++-3.0
-    ../install/lib/graphene-1.0/include
-    ../install/lib/sigc++-3.0/include
+    ${CMAKE_INSTALL_PREFIX}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include 
+    ${GSL_INCLUDE_DIRS}
+    ${DEPS_INCLUDE_DIRS}
 )
 
 set_target_properties(coot PROPERTIES COMPILE_FLAGS "-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -Wno-deprecated-declarations -Wno-deprecated-builtins -pthread -DHAVE_CXX11=1 -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1" LINK_FLAGS "-fexceptions -pthread -s USE_LIBPNG=1 -s USE_ZLIB=1 -sASSERTIONS=2")
@@ -545,7 +556,7 @@ target_link_options(moorhen PRIVATE -sASSERTIONS=2 -fexceptions -pthread -sPTHRE
 endif()
 
 target_link_directories(moorhen PUBLIC 
-    ../install/lib
+    ${CMAKE_INSTALL_PREFIX}/install/lib
 )
 
 target_link_libraries(moorhen 
@@ -559,52 +570,48 @@ target_link_libraries(moorhen
     clipper-contrib
     clipper-ccp4
     clipper-gemmi
-    fftw
-    rfftw
     ccp4
-    coot
-    gsl
-    gslcblas
-    sigc-3.0
-    graphene-1.0
-    RDKitMolDraw2D
-    RDKitForceFieldHelpers
-    RDKitDescriptors
-    RDKitForceField
-    RDKitSubstructMatch
-    RDKitOptimizer
-    RDKitDistGeomHelpers
-    RDKitDistGeometry
-    RDKitChemReactions
-    RDKitAlignment
-    RDKitEigenSolvers
-    RDKitDepictor
-    RDKitcoordgen
-    RDKitMolChemicalFeatures
-    RDKitPartialCharges
-    RDKitFileParsers
-    RDKitRDGeometryLib
-    RDKitGraphMol
-    RDKitShapeHelpers
-    RDKitFingerprints
-    RDKitMolAlign
-    RDKitMolTransforms
-    RDKitChemTransforms
-    RDKitSmilesParse
-    RDKitFilterCatalog
-    RDKitCatalogs
-    RDKitSubgraphs
-    RDKitRDGeneral
-    RDKitDataStructs
-    RDKitGenericGroups
-    boost_thread
-    boost_serialization
     gemmi_cpp
     privateer
-    freetype
     slicendice_cpp
-    jsoncpp
-    igraph
+    fftw
+    rfftw
+    coot
+    ${GSL_LIBRARIES}
+    ${DEPS_LIBRARIES}
+    RDKit::MolDraw2D
+    RDKit::ForceFieldHelpers
+    RDKit::Descriptors
+    RDKit::ForceField
+    RDKit::SubstructMatch
+    RDKit::Optimizer
+    RDKit::DistGeomHelpers
+    RDKit::DistGeometry
+    RDKit::ChemReactions
+    RDKit::Alignment
+    RDKit::EigenSolvers
+    RDKit::Depictor
+    RDKit::coordgen
+    RDKit::MolChemicalFeatures
+    RDKit::PartialCharges
+    RDKit::FileParsers
+    RDKit::RDGeometryLib
+    RDKit::GraphMol
+    RDKit::ShapeHelpers
+    RDKit::Fingerprints
+    RDKit::MolAlign
+    RDKit::MolTransforms
+    RDKit::ChemTransforms
+    RDKit::SmilesParse
+    RDKit::FilterCatalog
+    RDKit::Catalogs
+    RDKit::Subgraphs
+    RDKit::RDGeneral
+    RDKit::DataStructs
+    RDKit::GenericGroups
+    Boost::thread
+    Boost::serialization
+    freetype
     m
     z
     idbfs.js
@@ -614,10 +621,9 @@ target_include_directories(moorhen PRIVATE
     ${coot_src}
     ${coot_src}/ccp4mg-utils
     ${coot_src}/src
-    ../install/include/graphene-1.0 
-    ../install/include/sigc++-3.0
-    ../install/lib/graphene-1.0/include
-    ../install/lib/sigc++-3.0/include
+    ${CMAKE_INSTALL_PREFIX}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include 
+    ${DEPS_INCLUDE_DIRS}
 )
 
 target_compile_options(moorhen PUBLIC -DGEMMI_WRITE_IMPLEMENTATION -Wno-deprecated-builtins -Wno-deprecated-declarations -fexceptions -pthread -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
