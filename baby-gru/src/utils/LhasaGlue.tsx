@@ -26,6 +26,7 @@ function LhasaWrapper() {
                     Lhasa={window.cootModule}
                     show_footer={false}
                     show_top_panel={false}
+                    icons_path_prefix='/baby-gru/pixmaps/lhasa_icons'
                 />
             }
         </>
