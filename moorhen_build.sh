@@ -244,9 +244,15 @@ echo "BUILD_MOORHEN   " $BUILD_MOORHEN
 
 #eigen
 if [ $BUILD_LIBEIGEN = true ]; then
+    eigen_version=3.3.9
+    if [ -e eigen-$eigen_version.tar.gz ] ; then
+        :
+    else
+        wget https://gitlab.com/libeigen/eigen/-/archive/$eigen_version/eigen-$eigen_version.tar.gz
+    fi
     mkdir -p ${BUILD_DIR}/eigen_build
     cd ${BUILD_DIR}/eigen_build
-    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/eigen-$libeigen_release
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/eigen-$eigen_version
     make install
 fi
 
