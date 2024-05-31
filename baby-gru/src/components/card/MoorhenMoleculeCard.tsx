@@ -195,62 +195,34 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     }, [backgroundColor, showState]);
 
     useEffect(() => {
-        if (bondSmoothness === null) {
+        if ([bondSmoothness, bondWidth, atomRadiusBondRatio].some(item => item === null)) {
             return
         }
 
         const representations = props.molecule.representations.filter(representation => representation.useDefaultBondOptions && representation.visible && ['CBs', 'CAs', 'ligands'].includes(representation.style))
 
-        if (isVisible && representations.length > 0 && props.molecule.defaultBondOptions.smoothness !== bondSmoothness) {
-            props.molecule.defaultBondOptions.smoothness = bondSmoothness === 1 ? 1 : bondSmoothness === 50 ? 2 : 3
+        const needsRedraw = (
+            props.molecule.defaultBondOptions.width !== bondWidth
+            || props.molecule.defaultBondOptions.atomRadiusBondRatio !== atomRadiusBondRatio
+            || props.molecule.defaultBondOptions.smoothness !== bondSmoothness
+        )
+
+        if (needsRedraw) {
+            props.molecule.defaultBondOptions = {
+                width: bondWidth,
+                atomRadiusBondRatio: atomRadiusBondRatio,
+                smoothness: bondSmoothness === 1 ? 1 : bondSmoothness === 50 ? 2 : 3
+            }
+        }
+
+        if (isVisible && representations.length > 0 && needsRedraw) {
             isDirty.current = true
             if (!busyRedrawing.current) {
                 redrawMolIfDirty(representations.map(representation => representation.uniqueId))
             }
-        } else {
-            props.molecule.defaultBondOptions.smoothness = bondSmoothness === 1 ? 1 : bondSmoothness === 50 ? 2 : 3
-        }
+        } 
 
-    }, [bondSmoothness]);
-
-    useEffect(() => {
-        if (bondWidth === null) {
-            return
-        }
-
-        const representations = props.molecule.representations.filter(representation => representation.useDefaultBondOptions && representation.visible && ['CBs', 'CAs', 'ligands'].includes(representation.style))
-
-        if (isVisible && representations.length > 0 && props.molecule.defaultBondOptions.width !== bondWidth) {
-            props.molecule.defaultBondOptions.width = bondWidth
-            isDirty.current = true
-            if (!busyRedrawing.current) {
-                redrawMolIfDirty(representations.map(representation => representation.uniqueId))
-            }
-        } else {
-            props.molecule.defaultBondOptions.width = bondWidth
-        }
-
-    }, [bondWidth]);
-
-    useEffect(() => {
-        if (atomRadiusBondRatio === null) {
-            return
-        }
-
-        const representations = props.molecule.representations.filter(representation => representation.useDefaultBondOptions && representation.visible && ['CBs', 'CAs', 'ligands'].includes(representation.style))
-
-        if (isVisible && representations.length > 0 && props.molecule.defaultBondOptions.atomRadiusBondRatio !== atomRadiusBondRatio) {
-            props.molecule.defaultBondOptions.atomRadiusBondRatio = atomRadiusBondRatio
-            isDirty.current = true
-            if (!busyRedrawing.current) {
-                redrawMolIfDirty(representations.map(representation => representation.uniqueId))
-            }
-        } else {
-            props.molecule.defaultBondOptions.atomRadiusBondRatio = atomRadiusBondRatio
-        }
-
-    }, [atomRadiusBondRatio]);
-
+    }, [bondSmoothness, bondWidth, atomRadiusBondRatio]);
 
     useEffect(() => {
         if (symmetryRadius === null) {
@@ -260,99 +232,38 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     }, [symmetryRadius]);
 
     useEffect(() => {
-        if (surfaceSigma === null) {
+        if ([surfaceSigma, surfaceLevel, surfaceRadius, surfaceGridScale, surfaceBFactor].some(item => item === null)) {
             return
         }
 
         const representations = props.molecule.representations.filter(representation => representation.visible && representation.style === 'gaussian')
 
-        if (isVisible && representations.length > 0 && props.molecule.gaussianSurfaceSettings.sigma !== surfaceSigma) {
-            props.molecule.gaussianSurfaceSettings.sigma = surfaceSigma
+        const needsRedraw = (
+            props.molecule.gaussianSurfaceSettings.sigma !== surfaceSigma
+            || props.molecule.gaussianSurfaceSettings.countourLevel !== surfaceLevel
+            || props.molecule.gaussianSurfaceSettings.boxRadius !== surfaceRadius
+            || props.molecule.gaussianSurfaceSettings.gridScale !== surfaceGridScale
+            || props.molecule.gaussianSurfaceSettings.bFactor !== surfaceBFactor
+        )
+
+        if (needsRedraw) {
+            props.molecule.gaussianSurfaceSettings = {
+                sigma: surfaceSigma,
+                countourLevel: surfaceLevel,
+                boxRadius: surfaceRadius,
+                gridScale: surfaceGridScale,
+                bFactor: surfaceBFactor,
+            }
+        }
+
+        if (isVisible && representations.length > 0 && needsRedraw) {
             isDirty.current = true
             if (!busyRedrawing.current) {
                 redrawMolIfDirty(representations.map(representation => representation.uniqueId))
             }
-        } else {
-            props.molecule.gaussianSurfaceSettings.sigma = surfaceSigma
-        }
+        } 
 
-    }, [surfaceSigma]);
-
-    useEffect(() => {
-        if (surfaceLevel === null) {
-            return
-        }
-
-        const representations = props.molecule.representations.filter(representation => representation.visible && representation.style === 'gaussian')
-
-        if (isVisible && representations.length > 0 && props.molecule.gaussianSurfaceSettings.countourLevel !== surfaceLevel) {
-            props.molecule.gaussianSurfaceSettings.countourLevel = surfaceLevel
-            isDirty.current = true
-            if (!busyRedrawing.current) {
-                redrawMolIfDirty(representations.map(representation => representation.uniqueId))
-            }
-        } else {
-            props.molecule.gaussianSurfaceSettings.countourLevel = surfaceLevel
-        }
-
-    }, [surfaceLevel]);
-
-    useEffect(() => {
-        if (surfaceRadius === null) {
-            return
-        }
-
-        const representations = props.molecule.representations.filter(representation => representation.visible && representation.style === 'gaussian')
-
-        if (isVisible && representations.length > 0 && props.molecule.gaussianSurfaceSettings.boxRadius !== surfaceRadius) {
-            props.molecule.gaussianSurfaceSettings.boxRadius = surfaceRadius
-            isDirty.current = true
-            if (!busyRedrawing.current) {
-                redrawMolIfDirty(representations.map(representation => representation.uniqueId))
-            }
-        } else {
-            props.molecule.gaussianSurfaceSettings.boxRadius = surfaceRadius
-        }
-
-    }, [surfaceRadius]);
-
-    useEffect(() => {
-        if (surfaceGridScale === null) {
-            return
-        }
-
-        const representations = props.molecule.representations.filter(representation => representation.visible && representation.style === 'gaussian')
-
-        if (isVisible && representations.length > 0 && props.molecule.gaussianSurfaceSettings.gridScale !== surfaceGridScale) {
-            props.molecule.gaussianSurfaceSettings.gridScale = surfaceGridScale
-            isDirty.current = true
-            if (!busyRedrawing.current) {
-                redrawMolIfDirty(representations.map(representation => representation.uniqueId))
-            }
-        } else {
-            props.molecule.gaussianSurfaceSettings.gridScale = surfaceGridScale
-        }
-
-    }, [surfaceGridScale]);
-
-    useEffect(() => {
-        if (surfaceBFactor === null) {
-            return
-        }
-
-        const representations = props.molecule.representations.filter(representation => representation.visible && representation.style === 'gaussian')
-
-        if (isVisible && representations.length > 0 && props.molecule.gaussianSurfaceSettings.bFactor !== surfaceBFactor) {
-            props.molecule.gaussianSurfaceSettings.bFactor = surfaceBFactor
-            isDirty.current = true
-            if (!busyRedrawing.current) {
-                redrawMolIfDirty(representations.map(representation => representation.uniqueId))
-            }
-        } else {
-            props.molecule.gaussianSurfaceSettings.bFactor = surfaceBFactor
-        }
-
-    }, [surfaceBFactor]);
+    }, [surfaceSigma, surfaceLevel, surfaceRadius, surfaceGridScale, surfaceBFactor]);
 
     useEffect(() => {
         dispatch( showMolecule(props.molecule) )
