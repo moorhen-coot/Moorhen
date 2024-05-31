@@ -218,7 +218,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
     moleculeDiameter: number;
     adaptativeBondsEnabled: boolean;
     store: ToolkitStore;
-    headerInfo: libcootApi.headerInfoJS;
 
     constructor(commandCentre: React.RefObject&lt;moorhen.CommandCentre>, glRef: React.RefObject&lt;webGL.MGWebGL>, store: ToolkitStore = MoorhenReduxStore, monomerLibraryPath = "./baby-gru/monomers") {
         this.type = 'molecule'
@@ -231,7 +230,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.coordsFormat = null
         this.gemmiStructure = null
         this.sequences = []
-        this.headerInfo = null
         this.cachedGemmiAtoms = null
         this.cachedLigandSVGs = null
         this.cachedPrivateerValidation = null
@@ -598,11 +596,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
         return response
     }
 
-    /**
-     * Transfer ligand dictionaries stored in this molecule instance to other molecule
-     * @param {morhen.Molecule} toMolecule - The molecule where the metadata will be transferred
-     * @param {boolean} [override=false] - Override ligand dictionaries already stored under the same ligand name in the other molecule instance 
-     */
     async transferLigandDicts(toMolecule: moorhen.Molecule, override: boolean = false) {
         await Promise.all(Object.keys(this.ligandDicts).map(key => {
             if (!override &amp;&amp; Object.hasOwn(toMolecule.ligandDicts, key)) {
@@ -622,15 +615,15 @@ export class MoorhenMolecule implements moorhen.Molecule {
         let newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
         newMolecule.name = `${this.name}-placeholder`
         newMolecule.defaultBondOptions = this.defaultBondOptions
+        newMolecule.coordsFormat = this.coordsFormat
 
         let response = await this.commandCentre.current.cootCommand({
             returnType: "status",
-            command: 'read_coords_string',
+            command: 'read_pdb_string',
             commandArgs: [coordString, newMolecule.name]
-        }, true) as moorhen.WorkerResponse&lt;libcootApi.PairType&lt;number, moorhen.coorFormats>>
+        }, true) as moorhen.WorkerResponse&lt;number>
 
-        newMolecule.molNo = response.data.result.result.first
-        newMolecule.coordsFormat = response.data.result.result.second
+        newMolecule.molNo = response.data.result.result
         newMolecule.isLigand = this.isLigand
         newMolecule.hasGlycans = this.hasGlycans
         newMolecule.hasDNA = this.hasDNA
@@ -821,7 +814,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 // result = 'mmjson'
             } else if (format === 5) {
                 // result = 'chemComp'
-            }
+            }    
         } catch (err) {
             console.warn(err)
             console.log('Unable to guess format of coords using gemmi... Defaulting to PDB format')
@@ -845,6 +838,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             this.gemmiStructure.delete()
         }
 
+        this.coordsFormat = MoorhenMolecule.guessCoordFormat(coordData as string)
         this.name = name.replace(pdbRegex, "").replace(entRegex, "").replace(cifRegex, "").replace(mmcifRegex, "");
 
         try {
@@ -852,11 +846,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
             this.atomsDirty = false
             const response = await this.commandCentre.current.cootCommand({
                 returnType: "status",
-                command: 'read_coords_string',
+                command: 'read_pdb_string',
                 commandArgs: [coordData, this.name],
-            }, true) as moorhen.WorkerResponse&lt;libcootApi.PairType&lt;number, moorhen.coorFormats>>
-            this.molNo = response.data.result.result.first
-            this.coordsFormat = response.data.result.result.second
+            }, true)
+            this.molNo = response.data.result.result
             await Promise.all([
                 this.getNumberOfAtoms(),
                 this.loadMissingMonomers(),
@@ -949,7 +942,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} [format='pdb'] - File format will match the one of the original file unless specified here
      * @returns {string}  A string representation file contents
      */
-    async getAtoms(format?: moorhen.coorFormats): Promise&lt;string> {
+    async getAtoms(format?: 'mmcif' | 'pdb'): Promise&lt;string> {
         let cootCommand = 'molecule_to_PDB_string'
         if (format) {
             cootCommand = format === 'mmcif' ? 'molecule_to_mmCIF_string' : 'molecule_to_PDB_string'
@@ -968,7 +961,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * Download the PDB file contents of the molecule in its current state
      * @param {string} [format='pdb'] - File format will match the one of the original file unless specified here
      */
-    async downloadAtoms(format?: moorhen.coorFormats) {
+    async downloadAtoms(format?: 'mmcif' | 'pdb') {
         const coordsString = await this.getAtoms(format)
         doDownload([coordsString], `${this.name}.${format ? format : this.coordsFormat ? this.coordsFormat : 'pdb'}`)
     }
@@ -1210,9 +1203,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {boolean} [isCustom=false] - Indicates if the representation is considered "custom"
      * @param {moorhen.ColourRule[]} [colourRules=undefined] - A list of colour rules that will be applied to the new representation
      * @param {moorhen.cootBondOptions} [bondOptions=undefined] - An object that describes bond width, atom/bond ratio and other bond settings.
-     * @param {string} [nucleotideStyle=undefined] - Set the style for the nucleotides when using ribbon representations.
+     * @param {boolean} [applyColourToNonCarbonAtoms=undefined] - If true then colours are applied to non-carbon atoms also.
      */
-    async addRepresentation(style: moorhen.RepresentationStyles, cid: string = '/*/*/*/*', isCustom: boolean = false, colourRules?: moorhen.ColourRule[], bondOptions?: moorhen.cootBondOptions, nucleotideStyle?: "DishyBases" | "StickBases") {
+    async addRepresentation(style: moorhen.RepresentationStyles, cid: string = '/*/*/*/*', isCustom: boolean = false, colourRules?: moorhen.ColourRule[], bondOptions?: moorhen.cootBondOptions) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules()
         }
@@ -1221,9 +1214,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
         representation.setParentMolecule(this)
         representation.setColourRules(colourRules)
         representation.setBondOptions(bondOptions)
-        if (style === "CRs" &amp;&amp; nucleotideStyle) {
-            representation.setNucleotideStyle(nucleotideStyle)
-        }
         await representation.draw()
         this.representations.push(representation)
         await this.drawSymmetry(false)
@@ -2101,56 +2091,14 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} movChainId - Chain ID for the moving structure
      * @param {string} refMolNo - Molecule number for the reference structure
      * @param {string} refChainId - Chain ID for the reference structure
-     * @param {boolean} [redraw=true] - Indicates if the molecule should be redrawn
      */
-    async SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string, redraw: boolean = true): Promise&lt;void> {
-        this.commandCentre.current.cootCommand({
+    SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string): Promise&lt;moorhen.WorkerResponse> {
+        return this.commandCentre.current.cootCommand({
             command: "SSM_superpose",
             returnType: 'superpose_results',
             commandArgs: [refMolNo, refChainId, this.molNo, movChainId],
             changesMolecules: [this.molNo]
         }, true)
-        
-        this.setAtomsDirty(true)
-        if (redraw) {
-            await this.redraw()
-            await this.centreOn('/*/*/*/*', true)
-        }
-    }
-
-    /**
-     * Use LSQKB to superpose this molecule (as the moving structure) with another molecule isntance
-     * @param {string} refMolNo - Molecule number for the reference structure
-     * @param {moorhen.lskqbResidueRangeMatch[]} residueMatches - A list of objects describing the residue matches for LSQKB
-     * @param {number} [matchType=1] - The match type for LSQKB: 0 - all | 1 - main | 2 - CAs 
-     * @param {boolean} [redraw=true] - Indicates if the molecule should be redrawn
-     */
-    async lsqkbSuperpose(refMolNo: number, residueMatches: moorhen.lskqbResidueRangeMatch[], matchType: number = 1, redraw: boolean = true): Promise&lt;void> {
-        await this.commandCentre.current.cootCommand({
-            command: 'clear_lsq_matches',
-            commandArgs: [ ],
-            returnType: 'status'
-        }, false)
-        
-        await Promise.all(residueMatches.map(item => {
-            return this.commandCentre.current.cootCommand({
-                command: 'add_lsq_superpose_match',
-                commandArgs: [item.refChainId, ...item.refResidueRange, item.movChainId, ...item.movResidueRange, matchType],
-                returnType: 'status'
-            }, false)
-        }))
-        
-        await this.commandCentre.current.cootCommand({
-            command: 'lsq_superpose',
-            commandArgs: [refMolNo, this.molNo],
-            returnType: 'status'
-        }, false)
-        
-        this.setAtomsDirty(true)
-        if (redraw) {
-            await this.redraw()
-            await this.centreOn('/*/*/*/*', true)
-        }
     }
 
     /**
@@ -2474,16 +2422,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
     }
 
-    /**
-     * Minimize the energy of a given set of residues (usually a ligand)
-     * @param cid - The CID for the input residues
-     * @param ncyc - The number of cycles 
-     * @param nIterations - The number of iterations
-     * @param useRamaRestraints - Indicates whether ramachandran restraints should be used
-     * @param ramaWeight - Indicates the weight assigned to ramachandran restraints
-     * @param useTorsionRestraints - Indicates whether torsion restraints should be used
-     * @param torsionWeight - Indicates the weight assigned to torsion restraints
-     */
     async minimizeEnergyUsingCidAnimated(cid: string, ncyc: number, nIterations: number, useRamaRestraints: boolean, ramaWeight: number, useTorsionRestraints: boolean, torsionWeight: number) {
         const commandArgs = [
             this.molNo,
@@ -2510,29 +2448,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
         this.setAtomsDirty(true)
         await this.redraw()
-    }
-
-    /**
-     * Fetch header information for this molecule instance
-     * @param {boolean} useCache - Whether to use the cached results or not
-     * @returns {Promise&lt;libcootApi.headerInfoJS>} Object containing header information
-     */
-    async fetchHeaderInfo(useCache: boolean = true): Promise&lt;libcootApi.headerInfoJS> {
-        if (useCache &amp;&amp; this.headerInfo !== null) {
-            return this.headerInfo
-        }
-
-        const headerInfo = await this.commandCentre.current.cootCommand({
-            command: 'get_header_info',
-            commandArgs: [ this.molNo ],
-            returnType: 'header_info_t',
-        }, false) as moorhen.WorkerResponse&lt;libcootApi.headerInfoJS>
-
-        if (useCache) {
-            this.headerInfo = headerInfo.data.result.result
-        }
-
-        return headerInfo.data.result.result
     }
 }
 </code></pre>
