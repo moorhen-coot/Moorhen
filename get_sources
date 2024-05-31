@@ -77,6 +77,9 @@ curl -L https://github.com/glycojones/privateer/archive/refs/tags/WASM-0.3.4.tar
 tar xf privateer-wasm.tar.gz
 mv privateer-WASM-* privateer-wasm
 
+echo "Getting updated simdjson.h"
+curl -L https://raw.githubusercontent.com/simdjson/simdjson/master/singleheader/simdjson.h -o privateer-wasm/src/privateer/cpp/third-party/simdjson/simdjson.h
+
 echo "Unpacking libccp4 source"
 tar xf libccp4-$libccp4_release.tar.gz
 ln -s libccp4-$libccp4_release libccp4
@@ -141,6 +144,11 @@ echo
 patch -p0 < patches/boost-emscripten.patch
 
 ln -s checkout/rdkit-$rdkit_release rdkit
+
+echo "Getting git version of rapidjson for RDKit"
+cd checkout/rdkit-$rdkit_release/External
+git clone https://github.com/Tencent/rapidjson.git rapidjson-1.1.0
+cd ../../..
 
 echo "Linking glm headers"
 mkdir -p include
