@@ -8,7 +8,7 @@ import { MoorhenMoleculeCardButtonBar } from "../button-bar/MoorhenMoleculeCardB
 import { MoorhenLigandList } from "../list/MoorhenLigandList"
 import { Chip, FormGroup } from "@mui/material";
 import { getNameLabel } from "./cardUtils"
-import { AddOutlined, DeleteOutlined, FormatColorFillOutlined, SettingsOutlined, EditOutlined, ExpandMoreOutlined } from '@mui/icons-material';
+import { AddOutlined, DeleteOutlined, FormatColorFillOutlined, EditOutlined, ExpandMoreOutlined, TuneOutlined } from '@mui/icons-material';
 import { MoorhenAddCustomRepresentationCard } from "./MoorhenAddCustomRepresentationCard"
 import { MoorhenMoleculeRepresentationSettingsCard } from "./MoorhenMoleculeRepresentationSettingsCard"
 import { MoorhenModifyColourRulesCard } from './MoorhenModifyColourRulesCard';
@@ -80,9 +80,20 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const [showCreateCustomRepresentation, setShowCreateCustomRepresentation] = useState<boolean>(false)
     const [showCreateRepresentationSettingsModal, setShowCreateRepresentationSettingsModal] = useState<boolean>(false)
     const [showState, changeShowState] = useReducer(showStateReducer, initialShowState)
-    const [selectedResidues, setSelectedResidues] = useState<[number, number] | null>(null);
-    const [clickedResidue, setClickedResidue] = useState<clickedResidueType | null>(null);
-    const [isCollapsed, setIsCollapsed] = useState<boolean>(!defaultExpandDisplayCards);
+    const [selectedResidues, setSelectedResidues] = useState<[number, number] | null>(null)
+    const [clickedResidue, setClickedResidue] = useState<clickedResidueType | null>(null)
+    const [isCollapsed, setIsCollapsed] = useState<boolean>(!defaultExpandDisplayCards)
+    const [cylindersStyleAngularSampling, setCylindersStyleAngularSampling] = useState<number>(props.molecule.defaultM2tParams.cylindersStyleAngularSampling)
+    const [cylindersStyleCylinderRadius, setCylindersStyleCylinderRadius] = useState<number>(props.molecule.defaultM2tParams.cylindersStyleCylinderRadius)
+    const [cylindersStyleBallRadius, setCylindersStyleBallRadius] = useState<number>(props.molecule.defaultM2tParams.cylindersStyleBallRadius)
+    const [surfaceStyleProbeRadius, setSurfaceStyleProbeRadius] = useState<number>(props.molecule.defaultM2tParams.surfaceStyleProbeRadius)
+    const [ballsStyleRadiusMultiplier, setBallsStyleRadiusMultiplier] = useState<number>(props.molecule.defaultM2tParams.ballsStyleRadiusMultiplier)
+    const [ribbonCoilThickness, setRibbonCoilThickness] = useState<number>(props.molecule.defaultM2tParams.ribbonStyleCoilThickness)
+    const [ribbonHelixWidth, setRibbonHelixWidth] = useState<number>(props.molecule.defaultM2tParams.ribbonStyleHelixWidth)
+    const [ribbonStrandWidth, setRibbonStrandWidth] = useState<number>(props.molecule.defaultM2tParams.ribbonStyleStrandWidth)
+    const [ribbonArrowWidth, setRibbonArrowWidth] = useState<number>(props.molecule.defaultM2tParams.ribbonStyleArrowWidth)
+    const [ribbonDNARNAWidth, setRibbonDNARNAWidth] = useState<number>(props.molecule.defaultM2tParams.ribbonStyleDNARNAWidth)
+    const [ribbonAxialSampling, setRibbonAxialSampling] = useState<number>(props.molecule.defaultM2tParams.ribbonStyleAxialSampling)
     const [bondWidth, setBondWidth] = useState<number>(props.molecule.defaultBondOptions.width)
     const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState<number>(props.molecule.defaultBondOptions.atomRadiusBondRatio)
     const [bondSmoothness, setBondSmoothness] = useState<number>(props.molecule.defaultBondOptions.smoothness === 1 ? 1 : props.molecule.defaultBondOptions.smoothness === 2 ? 50 : 100)
@@ -109,6 +120,23 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const bondSettingsProps = {
         bondWidth, setBondWidth, atomRadiusBondRatio,
         setAtomRadiusBondRatio, bondSmoothness, setBondSmoothness
+    }
+
+    const ribbonSettingsProps = {
+        ribbonCoilThickness, setRibbonCoilThickness, ribbonHelixWidth, 
+        setRibbonHelixWidth, ribbonStrandWidth, setRibbonStrandWidth, 
+        ribbonArrowWidth, setRibbonArrowWidth, ribbonDNARNAWidth, 
+        setRibbonDNARNAWidth, ribbonAxialSampling, setRibbonAxialSampling
+    }
+
+    const molSurfSettingsProps = {
+        surfaceStyleProbeRadius, setSurfaceStyleProbeRadius, 
+        ballsStyleRadiusMultiplier, setBallsStyleRadiusMultiplier
+    }
+
+    const cylinderSettingsProps = {
+        cylindersStyleAngularSampling, setCylindersStyleAngularSampling, cylindersStyleBallRadius,
+        setCylindersStyleBallRadius, cylindersStyleCylinderRadius, setCylindersStyleCylinderRadius
     }
 
     const symmetrySettingsProps = {
@@ -193,6 +221,100 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
         }
 
     }, [backgroundColor, showState]);
+
+    useEffect(() => {
+        if ([cylindersStyleAngularSampling, cylindersStyleBallRadius, cylindersStyleCylinderRadius].some(item => item === null)) {
+            return
+        }
+
+        const representations = props.molecule.representations.filter(representation => representation.useDefaultM2tParams && representation.visible && representation.style === 'CRs')
+
+        const needsRedraw = (
+            props.molecule.defaultM2tParams.cylindersStyleAngularSampling !== cylindersStyleAngularSampling
+            || props.molecule.defaultM2tParams.cylindersStyleBallRadius !== cylindersStyleBallRadius
+            || props.molecule.defaultM2tParams.cylindersStyleCylinderRadius !== cylindersStyleCylinderRadius
+        )
+
+        if (needsRedraw) {
+            props.molecule.defaultM2tParams = {
+                ...props.molecule.defaultM2tParams,
+                cylindersStyleAngularSampling: cylindersStyleAngularSampling,
+                cylindersStyleBallRadius: cylindersStyleBallRadius,
+                cylindersStyleCylinderRadius: cylindersStyleCylinderRadius
+            }
+        }
+
+        if (isVisible && representations.length > 0 && needsRedraw) {
+            isDirty.current = true
+            if (!busyRedrawing.current) {
+                redrawMolIfDirty(representations.map(representation => representation.uniqueId))
+            }
+        }
+    }, [cylindersStyleAngularSampling, cylindersStyleBallRadius, cylindersStyleCylinderRadius]);
+
+    useEffect(() => {
+        if ([ballsStyleRadiusMultiplier, surfaceStyleProbeRadius].some(item => item === null)) {
+            return
+        }
+
+        const representations = props.molecule.representations.filter(representation => representation.useDefaultM2tParams && representation.visible && representation.style === 'MolecularSurface')
+
+        const needsRedraw = (
+            props.molecule.defaultM2tParams.ballsStyleRadiusMultiplier !== ballsStyleRadiusMultiplier
+            || props.molecule.defaultM2tParams.surfaceStyleProbeRadius !== surfaceStyleProbeRadius
+        )
+
+        if (needsRedraw) {
+            props.molecule.defaultM2tParams = {
+                ...props.molecule.defaultM2tParams,
+                ballsStyleRadiusMultiplier: ballsStyleRadiusMultiplier,
+                surfaceStyleProbeRadius: surfaceStyleProbeRadius
+            }
+        }
+
+        if (isVisible && representations.length > 0 && needsRedraw) {
+            isDirty.current = true
+            if (!busyRedrawing.current) {
+                redrawMolIfDirty(representations.map(representation => representation.uniqueId))
+            }
+        }
+    }, [ballsStyleRadiusMultiplier, surfaceStyleProbeRadius]);
+
+    useEffect(() => {
+        if ([ribbonArrowWidth, ribbonAxialSampling, ribbonCoilThickness, ribbonDNARNAWidth, ribbonHelixWidth, ribbonStrandWidth].some(item => item === null)) {
+            return
+        }
+
+        const representations = props.molecule.representations.filter(representation => representation.useDefaultM2tParams && representation.visible && representation.style === 'CRs')
+
+        const needsRedraw = (
+            props.molecule.defaultM2tParams.ribbonStyleArrowWidth !== ribbonArrowWidth
+            || props.molecule.defaultM2tParams.ribbonStyleAxialSampling !== ribbonAxialSampling
+            || props.molecule.defaultM2tParams.ribbonStyleCoilThickness !== ribbonCoilThickness
+            || props.molecule.defaultM2tParams.ribbonStyleDNARNAWidth !== ribbonDNARNAWidth
+            || props.molecule.defaultM2tParams.ribbonStyleHelixWidth !== ribbonHelixWidth
+            || props.molecule.defaultM2tParams.ribbonStyleStrandWidth !== ribbonStrandWidth
+        )
+
+        if (needsRedraw) {
+            props.molecule.defaultM2tParams = {
+                ...props.molecule.defaultM2tParams,
+                ribbonStyleArrowWidth: ribbonArrowWidth,
+                ribbonStyleAxialSampling: ribbonAxialSampling,
+                ribbonStyleCoilThickness: ribbonCoilThickness,
+                ribbonStyleDNARNAWidth: ribbonDNARNAWidth,
+                ribbonStyleHelixWidth: ribbonHelixWidth,
+                ribbonStyleStrandWidth: ribbonStrandWidth,
+            }
+        }
+
+        if (isVisible && representations.length > 0 && needsRedraw) {
+            isDirty.current = true
+            if (!busyRedrawing.current) {
+                redrawMolIfDirty(representations.map(representation => representation.uniqueId))
+            }
+        }
+    }, [ribbonArrowWidth, ribbonAxialSampling, ribbonCoilThickness, ribbonDNARNAWidth, ribbonHelixWidth, ribbonStrandWidth]);
 
     useEffect(() => {
         if ([bondSmoothness, bondWidth, atomRadiusBondRatio].some(item => item === null)) {
@@ -407,7 +529,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                             <FormatColorFillOutlined/>
                         </Button>
                         <Button style={{height: '100%'}} variant='light' onClick={() => setShowCreateRepresentationSettingsModal((prev) => { return !prev })}>
-                            <SettingsOutlined/>
+                            <TuneOutlined/>
                         </Button>
                         <Button style={{ height: '100%' }} variant='light' onClick={() => setShowCreateCustomRepresentation((prev) => {return !prev})}>
                             <AddOutlined/>
@@ -415,7 +537,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                         </Stack>
                     </Col>
                     <MoorhenHeaderInfoCard anchorEl={addColourRulesAnchorDivRef} molecule={props.molecule} show={showHeaderInfo} setShow={setShowHeaderInfo}/>
-                    <MoorhenMoleculeRepresentationSettingsCard symmetrySettingsProps={symmetrySettingsProps} gaussianSettingsProps={gaussianSettingsProps} bondSettingsProps={bondSettingsProps} glRef={props.glRef} urlPrefix={props.urlPrefix} molecule={props.molecule} anchorEl={addColourRulesAnchorDivRef} show={showCreateRepresentationSettingsModal} setShow={setShowCreateRepresentationSettingsModal}/>
+                    <MoorhenMoleculeRepresentationSettingsCard cylinderSettingsProps={cylinderSettingsProps} molSurfSettingsProps={molSurfSettingsProps} ribbonSettingsProps={ribbonSettingsProps} symmetrySettingsProps={symmetrySettingsProps} gaussianSettingsProps={gaussianSettingsProps} bondSettingsProps={bondSettingsProps} glRef={props.glRef} urlPrefix={props.urlPrefix} molecule={props.molecule} anchorEl={addColourRulesAnchorDivRef} show={showCreateRepresentationSettingsModal} setShow={setShowCreateRepresentationSettingsModal}/>
                     <MoorhenModifyColourRulesCard anchorEl={addColourRulesAnchorDivRef} urlPrefix={props.urlPrefix} glRef={props.glRef} commandCentre={props.commandCentre} molecule={props.molecule} showColourRulesToast={showColourRulesModal} setShowColourRulesToast={setShowColourRulesModal}/>
                     <MoorhenAddCustomRepresentationCard glRef={props.glRef} urlPrefix={props.urlPrefix} molecule={props.molecule} anchorEl={addColourRulesAnchorDivRef} show={showCreateCustomRepresentation} setShow={setShowCreateCustomRepresentation}/>
                 </Row>

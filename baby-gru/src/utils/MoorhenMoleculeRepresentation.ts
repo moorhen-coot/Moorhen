@@ -591,14 +591,14 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 returnType: "status",
                 command: "M2T_updateFloatParameter",
                 commandArgs: [
-                    this.parentMolecule.molNo, 'cylindersStyleCylinderRadius', 0.2
+                    this.parentMolecule.molNo, 'cylindersStyleCylinderRadius', this.useDefaultM2tParams ? this.parentMolecule.defaultM2tParams.cylindersStyleCylinderRadius : this.m2tParams.cylindersStyleCylinderRadius
                 ]
             }, false),
             this.commandCentre.current.cootCommand({
                 returnType: "status",
                 command: "M2T_updateFloatParameter",
                 commandArgs: [
-                    this.parentMolecule.molNo, 'cylindersStyleBallRadius', 0.2
+                    this.parentMolecule.molNo, 'cylindersStyleBallRadius', this.useDefaultM2tParams ? this.parentMolecule.defaultM2tParams.cylindersStyleBallRadius : this.m2tParams.cylindersStyleBallRadius
                 ]
             }, false)    
         ])

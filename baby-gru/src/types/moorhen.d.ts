@@ -308,6 +308,8 @@ export namespace moorhen {
         setAtomBuffers(arg0: AtomInfo[]): void;
         setNucleotideStyle(newVal: 'DishyBases' | 'StickBases'): void;
         bondOptions: cootBondOptions;
+        m2tParams: moorhen.m2tParameters;
+        useDefaultM2tParams: boolean;
         useDefaultColourRules: boolean;
         useDefaultBondOptions: boolean;
         uniqueId: string;
