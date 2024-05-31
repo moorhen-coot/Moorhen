@@ -21,9 +21,13 @@ function LhasaWrapper() {
 
     return (
         <>
-                {isCootAttached &&
-                    <LhasaComponent Lhasa={window.cootModule} />
-                }
+            {isCootAttached &&
+                <LhasaComponent 
+                    Lhasa={window.cootModule}
+                    show_footer={false}
+                    show_top_panel={false}
+                />
+            }
         </>
     );
 }
