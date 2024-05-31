@@ -1,5 +1,6 @@
 name: Dev docs
 
+# Only build dev docs based on the branch for the latest release...
 on:
   push:
     branches:
