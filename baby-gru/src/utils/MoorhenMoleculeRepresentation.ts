@@ -22,7 +22,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     isCustom: boolean;
     useDefaultBondOptions: boolean;
     useDefaultColourRules: boolean;
+    useDefaultM2tParams: boolean;
     bondOptions: moorhen.cootBondOptions;
+    m2tParams: moorhen.m2tParameters;
     ligandsCid: string;
     hoverColor: number[];
     residueSelectionColor: number[];
@@ -41,10 +43,24 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.isCustom = false
         this.useDefaultColourRules = true
         this.useDefaultBondOptions = true
+        this.useDefaultM2tParams = true
         this.bondOptions = {
             smoothness: 1,
             width: 0.1,
             atomRadiusBondRatio: 1
+        }
+        this.m2tParams = {
+            ribbonStyleCoilThickness: 0.3,
+            ribbonStyleHelixWidth: 1.2,
+            ribbonStyleStrandWidth: 1.2,
+            ribbonStyleArrowWidth: 1.5,
+            ribbonStyleDNARNAWidth: 1.5,
+            ribbonStyleAxialSampling: 6,
+            cylindersStyleAngularSampling: 6,
+            cylindersStyleCylinderRadius: 0.2,
+            cylindersStyleBallRadius: 0.2,
+            surfaceStyleProbeRadius: 1.4,
+            ballsStyleRadiusMultiplier: 1
         }
         this.ligandsCid = "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O,G,C,U,A,T)"
         this.hoverColor = [1.0, 0.5, 0.0, 0.35]
@@ -128,6 +144,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.parentMolecule = molecule
         this.colourRules = this.parentMolecule.defaultColourRules
         this.bondOptions = this.parentMolecule.defaultBondOptions
+        this.m2tParams = this.parentMolecule.defaultM2tParams
         if (this.style === "ligands") {
             this.cid = this.parentMolecule?.ligands?.length > 0 ? this.parentMolecule.ligands.map(ligand => ligand.cid).join('||') : this.ligandsCid
         }
@@ -531,6 +548,18 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         }
     }
 
+    async applyM2tParams() {
+        await Promise.all(Object.keys(this.m2tParams).map(param => {
+            return this.commandCentre.current.cootCommand({
+                returnType: "status",
+                command: [ "ribbonStyleAxialSampling", "cylindersStyleAngularSampling" ].includes(param) ? "M2T_updateIntParameter" : "M2T_updateFloatParameter",
+                commandArgs: [
+                    this.parentMolecule.molNo, param, this.useDefaultM2tParams ? this.parentMolecule.defaultM2tParams[param] : this.m2tParams[param]
+                ]
+            }, false)
+        }))
+    }
+
     async getNucleotideRepresentationBuffers(style: "StickBases" | "DishyBases", cidSelection: string): Promise<libcootApi.InstancedMeshJS[]> {
         await Promise.all([
             this.commandCentre.current.cootCommand({
@@ -546,7 +575,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 commandArgs: [
                     this.parentMolecule.molNo, 'cylindersStyleBallRadius', style === "StickBases" ? 0.5 : 0.2
                 ]
-            }, false)    
+            }, false)
         ])
 
         const result = await this.commandCentre.current.cootCommand({
@@ -579,6 +608,8 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
 
     async getCootRepresentationBuffers(style: string, cidSelection?: string): Promise<libcootApi.InstancedMeshJS[]> {
         const { m2tStyle, m2tSelection } = this.getM2tParams(style, cidSelection)
+
+        await this.applyM2tParams()
 
         const response = await this.commandCentre.current.cootCommand({
             returnType: "mesh",
