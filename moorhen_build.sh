@@ -91,6 +91,7 @@ else
                rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.worker.js
                rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/web_example.js
                rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/web_example.wasm
+               rm -rf ${INSTALL_DIR}/lib/libboost*.a
                rm -rf ${INSTALL_DIR}/lib/cmake/boost*
                rm -rf ${INSTALL_DIR}/lib/cmake/Boost*
                rm -rf ${INSTALL_DIR}/lib/libRDKit*.a
@@ -118,6 +119,11 @@ else
                rm -rf ${INSTALL_DIR}/lib/libccp4.a
                rm -rf ${INSTALL_DIR}/lib/libslicendice_cpp.a
                rm -rf ${INSTALL_DIR}/lib/libssm.a
+               rm -rf ${INSTALL_DIR}/lib/libfftw.a
+               rm -rf ${INSTALL_DIR}/lib/librfftw.a
+               rm -rf ${INSTALL_DIR}/bin/gsl-config
+               rm -rf ${INSTALL_DIR}/bin/gsl-histogram
+               rm -rf ${INSTALL_DIR}/bin/gsl-randist
                ;;
            boost) echo "Clear boost"
                rm -rf ${BUILD_DIR}/boost
@@ -125,8 +131,6 @@ else
                rm -rf ${INSTALL_DIR}/lib/libboost*.a
                rm -rf ${INSTALL_DIR}/lib/cmake/boost*
                rm -rf ${INSTALL_DIR}/lib/cmake/Boost*
-               rm -rf ${INSTALL_DIR}/lib/libfftw.a
-               rm -rf ${INSTALL_DIR}/lib/librfftw.a
                ;;
            gemmi) echo "Clear gemmi"
                rm -rf ${BUILD_DIR}/gemmi_build
@@ -139,6 +143,9 @@ else
                rm -rf ${INSTALL_DIR}/lib/libgsl*.a
                rm -rf ${INSTALL_DIR}/lib/libgsl*.la
                rm -rf ${INSTALL_DIR}/lib/pkgconfig/gsl.pc
+               rm -rf ${INSTALL_DIR}/bin/gsl-config
+               rm -rf ${INSTALL_DIR}/bin/gsl-histogram
+               rm -rf ${INSTALL_DIR}/bin/gsl-randist
                ;;
            igraph) echo "Clear igraph"
                rm -rf ${BUILD_DIR}/igraph_build
