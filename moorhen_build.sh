@@ -565,7 +565,7 @@ fi
 
 # Graphene
 if [ $BUILD_GRAPHENE = true ]; then
-    pushd ${MOORHEN_SOURCE_DIR}/checkout/graphene-$graphene_release/
+    cd ${MOORHEN_SOURCE_DIR}/checkout/graphene-$graphene_release/
     CFLAGS="-s USE_PTHREADS $MOORHEN_CMAKE_FLAGS" LDFLAGS=" -lpthread $MOORHEN_CMAKE_FLAGS" meson setup ${BUILD_DIR}/graphene_build \
         --prefix=${INSTALL_DIR} \
         --cross-file=$MESON_CROSS \
@@ -573,12 +573,12 @@ if [ $BUILD_GRAPHENE = true ]; then
         --buildtype=release \
         -Dtests=false && \
         meson install -C ${BUILD_DIR}/graphene_build
-        popd
+    cd ${BUILD_DIR}
 fi
 
 # Libsigc++
 if [ $BUILD_LIBSIGCPP = true ]; then
-    pushd ${MOORHEN_SOURCE_DIR}/checkout/libsigcplusplus-$libsigcpp_release/
+    cd ${MOORHEN_SOURCE_DIR}/checkout/libsigcplusplus-$libsigcpp_release/
     meson setup ${BUILD_DIR}/libsigcplusplus_build \
         --prefix=${INSTALL_DIR} \
         --libdir=lib \
@@ -590,8 +590,7 @@ if [ $BUILD_LIBSIGCPP = true ]; then
         --buildtype=release \
         -Dbuild-tests=false && \
         meson install -C ${BUILD_DIR}/libsigcplusplus_build
-        popd
-    
+    cd ${BUILD_DIR}
 fi
 
 #ccp4
