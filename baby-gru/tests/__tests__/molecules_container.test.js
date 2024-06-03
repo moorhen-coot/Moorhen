@@ -91,7 +91,13 @@ describe('Testing molecules_container_js', () => {
 
     test('Test glycoblocks', async () => {
         const coordMolNo = molecules_container.read_pdb('./5fjj.pdb')
-        const glyco_mesh = molecules_container.DrawGlycoBlocks(coordMolNo,"/")
+        const glycoMeshData = molecules_container.DrawGlycoBlocks(coordMolNo, "//")
+        const geom = glycoMeshData.geom
+        const meshData = geom.get(0)
+        const triangles = meshData.triangles
+        
+        expect(triangles.size()).toBeGreaterThan(10)
+        cleanUpVariables.push(triangles, meshData, geom)
     })
 
     test('Test copy fragment', () => {
