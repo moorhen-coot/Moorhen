@@ -102,7 +102,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const [surfaceRadius, setSurfaceRadius] = useState<number>(5.0)
     const [surfaceGridScale, setSurfaceGridScale] = useState<number>(0.7)
     const [surfaceBFactor, setSurfaceBFactor] = useState<number>(100)
-    const [symmetryRadius, setSymmetryRadius] = useState<number>(25.0)
+    const [symmetryRadius, setSymmetryRadius] = useState<number>(props.molecule.symmetryRadius)
 
     const customRepresentationList: moorhen.MoleculeRepresentation[] = useMemo(() => {
         return JSON.parse(customRepresentationsString).map(representationId => {

@@ -214,11 +214,16 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                     isCustom: item.isCustom,
                     colourRules: item.useDefaultColourRules ? null : item.colourRules.map(item => item.objectify()),
                     bondOptions: item.useDefaultBondOptions ? null : item.bondOptions,
+                    m2tParams: item.useDefaultM2tParams ? null : item.m2tParams,
                 }}),
                 defaultColourRules: molecule.defaultColourRules.map(item => item.objectify()),
                 defaultBondOptions: molecule.defaultBondOptions,
+                defaultM2tParams: molecule.defaultM2tParams,
                 connectedToMaps: molecule.connectedToMaps,
-                ligandDicts: molecule.ligandDicts
+                ligandDicts: molecule.ligandDicts,
+                symmetryOn: molecule.symmetryOn,
+                biomolOn: molecule.biomolOn,
+                symmetryRadius: molecule.symmetryRadius
             }
         })
 
