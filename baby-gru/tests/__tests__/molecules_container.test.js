@@ -108,6 +108,19 @@ describe('Testing molecules_container_js', () => {
         expect(atomCount).toBe(14)
     })
 
+    test("Test get_svg_for_residue_type", () => {
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        
+        const svg_1 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, false)
+        expect(svg_1).toBe("No dictionary for LZA")
+
+        const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', -999999)
+        expect(result_import_dict).toBe(1)
+        
+        const svg_2 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, false)
+        expect(svg_2).not.toBe("No dictionary for LZA")
+    })
+
     test('Test fit_ligand_right_here 1', () => {
         
         const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', -999999)
