@@ -166,6 +166,11 @@ export const MoorhenAddCustomRepresentationCard = (props: {
             }
         }
 
+        // TODO: Other parameters need to be set by user just like with bonds
+        let m2tParams = {
+            ...props.molecule.defaultM2tParams, nucleotideRibbonStyle: nucleotideStyleSelectRef.current?.value as ("DishyBases" | "StickBases")
+        }
+
         if (props.mode === 'add') {
             const representation = await props.molecule.addRepresentation(
                 styleSelectRef.current.value,
@@ -173,7 +178,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 true,
                 colourRule ? [ colourRule ] : null,
                 bondOptions,
-                nucleotideStyleSelectRef.current?.value as ("DishyBases" | "StickBases")
+                m2tParams
             )
             dispatch( addCustomRepresentation(representation) )
         } else if (props.mode === 'edit' && props.representationId) {

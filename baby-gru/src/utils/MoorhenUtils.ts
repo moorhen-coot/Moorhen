@@ -304,7 +304,12 @@ export async function loadSessionData(
             const colourRule = MoorhenColourRule.initFromDataObject(item, commandCentre, molecule)
             return colourRule
         })
-        molecule.defaultBondOptions = storedMoleculeData.defaultBondOptions
+        if (storedMoleculeData.defaultBondOptions){
+            molecule.defaultBondOptions = storedMoleculeData.defaultBondOptions
+        }
+        if (storedMoleculeData.defaultM2tParams) {
+            molecule.defaultM2tParams = storedMoleculeData.defaultM2tParams
+        }
         if (storedMoleculeData.representations) {
             for (const item of storedMoleculeData.representations) {
                 const colourRules = !item.colourRules ? null : item.colourRules.map(item => {
@@ -312,12 +317,18 @@ export async function loadSessionData(
                     return colourRule
                 })
                 const representation = await molecule.addRepresentation(
-                    item.style, item.cid, item.isCustom, colourRules, item.bondOptions
+                    item.style, item.cid, item.isCustom, colourRules, item.bondOptions, item.m2tParams
                 )
                 if (item.isCustom) {
                     dispatch( addCustomRepresentation(representation) )
                 }
             }    
+        }
+        if (storedMoleculeData.symmetryOn) {
+            molecule.setSymmetryRadius(storedMoleculeData.symmetryRadius)
+            await molecule.toggleSymmetry()
+        } else if (storedMoleculeData.biomolOn) {
+            molecule.toggleBiomolecule()
         }
     }
     

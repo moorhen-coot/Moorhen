@@ -150,7 +150,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
             cylindersStyleCylinderRadius: 0.2,
             cylindersStyleBallRadius: 0.2,
             surfaceStyleProbeRadius: 1.4,
-            ballsStyleRadiusMultiplier: 1
+            ballsStyleRadiusMultiplier: 1,
+            nucleotideRibbonStyle: 'StickBases'
         }
         this.restraints = []
         this.adaptativeBondsEnabled = false
@@ -1113,9 +1114,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {boolean} [isCustom=false] - Indicates if the representation is considered "custom"
      * @param {moorhen.ColourRule[]} [colourRules=undefined] - A list of colour rules that will be applied to the new representation
      * @param {moorhen.cootBondOptions} [bondOptions=undefined] - An object that describes bond width, atom/bond ratio and other bond settings.
-     * @param {string} [nucleotideStyle=undefined] - Set the style for the nucleotides when using ribbon representations.
+     * @param {moorhen.m2tParameters} [m2tParams=undefined] - An object that describes ribbon width, nucleotide style and other ribbon settings.
      */
-    async addRepresentation(style: moorhen.RepresentationStyles, cid: string = '/*/*/*/*', isCustom: boolean = false, colourRules?: moorhen.ColourRule[], bondOptions?: moorhen.cootBondOptions, nucleotideStyle?: "DishyBases" | "StickBases") {
+    async addRepresentation(style: moorhen.RepresentationStyles, cid: string = '/*/*/*/*', isCustom: boolean = false, colourRules?: moorhen.ColourRule[], bondOptions?: moorhen.cootBondOptions, m2tParams?: moorhen.m2tParameters) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules()
         }
@@ -1124,9 +1125,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         representation.setParentMolecule(this)
         representation.setColourRules(colourRules)
         representation.setBondOptions(bondOptions)
-        if (style === "CRs" && nucleotideStyle) {
-            representation.setNucleotideStyle(nucleotideStyle)
-        }
+        representation.setM2tParams(m2tParams)
         await representation.draw()
         this.representations.push(representation)
         await this.drawSymmetry(false)

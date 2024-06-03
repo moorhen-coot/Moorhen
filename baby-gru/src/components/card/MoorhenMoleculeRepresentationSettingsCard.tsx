@@ -178,9 +178,9 @@ const SymmetrySettingsPanel = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
-    const [symmetryOn, setSymmetryOn] = useState<boolean>(false)
-    const [biomolOn, setBiomolOn] = useState<boolean>(false)
-    const [showUnitCell, setShowUnitCell] = useState<boolean>(false)
+    const [symmetryOn, setSymmetryOn] = useState<boolean>(props.molecule.symmetryOn)
+    const [biomolOn, setBiomolOn] = useState<boolean>(props.molecule.biomolOn)
+    const [showUnitCell, setShowUnitCell] = useState<boolean>(props.molecule.unitCellRepresentation?.visible)
 
     const {
         symmetryRadius, setSymmetryRadius

@@ -102,6 +102,7 @@ export namespace moorhen {
         cylindersStyleBallRadius: number;
         surfaceStyleProbeRadius: number;
         ballsStyleRadiusMultiplier: number;
+        nucleotideRibbonStyle: "StickBases" | "DishyBases";
     }
     
     type ColourRuleObject = {
@@ -175,7 +176,7 @@ export namespace moorhen {
         fitLigand(mapMolNo: number, ligandMolNo: number, fitRightHere?: boolean, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<Molecule[]>;
         checkIsLigand(): boolean;
         removeRepresentation(representationId: string): void;
-        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: ColourRule[], bondOptions?: cootBondOptions, nucleotideStyle?: "DishyBases" | "StickBases"): Promise<MoleculeRepresentation>;
+        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: ColourRule[], bondOptions?: cootBondOptions, m2tParams?: moorhen.m2tParameters): Promise<MoleculeRepresentation>;
         getNeighborResiduesCids(selectionCid: string, maxDist: number): Promise<string[]>;
         drawWithStyleFromMesh(style: string, meshObjects: any[], cid?: string, fetchAtomBuffers?: boolean): Promise<void>;
         updateWithMovedAtoms(movedResidues: AtomInfo[][]): Promise<void>;
@@ -328,7 +329,6 @@ export namespace moorhen {
         ligandsCid: string;
         hoverColor: number[];
         residueSelectionColor: number[];
-        nucleotideStyle: 'DishyBases' | 'StickBases';
     }
 
     type ResidueSelection = {
@@ -548,11 +548,16 @@ export namespace moorhen {
             isCustom: boolean;
             colourRules: ColourRuleObject[];
             bondOptions: cootBondOptions;
+            m2tParams: moorhen.m2tParameters;
          }[];
         defaultBondOptions: cootBondOptions;
+        defaultM2tParams: m2tParameters;
         defaultColourRules: ColourRuleObject[];
         connectedToMaps: number[];
         ligandDicts: {[comp_id: string]: string};
+        symmetryOn: boolean;
+        biomolOn: boolean;
+        symmetryRadius: number;
     }
     
     type mapDataSession = {
