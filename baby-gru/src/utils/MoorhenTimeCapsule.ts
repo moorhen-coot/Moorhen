@@ -266,6 +266,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             clipStart: (this.glRef.current.gl_clipPlane0[3] + this.glRef.current.fogClipOffset) * -1,
             clipEnd: this.glRef.current.gl_clipPlane1[3] - this.glRef.current.fogClipOffset,
             quat4: Array.from(this.glRef.current.myQuat),
+            doPerspectiveProjection: this.glRef.current.doPerspectiveProjection,
             edgeDetection: {
                 enabled: this.glRef.current.doEdgeDetect,
                 depthScale: this.glRef.current.scaleDepth,

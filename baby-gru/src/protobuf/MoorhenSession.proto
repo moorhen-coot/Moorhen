@@ -119,6 +119,7 @@ message ViewDataSession {
   Ssao ssao = 16;
   EdgeDetection edgeDetection = 17;
   Blur blur = 18;
+  bool doPerspectiveProjection = 19;
 }
 
 message Ssao {
