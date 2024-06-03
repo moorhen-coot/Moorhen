@@ -1,17 +1,6 @@
-// TypeScript bindings for emscripten-generated code.  Automatically generated at compile time.
-interface WasmModule {
-  _pthread_self(): number;
-  __ZN5boost13serialization16singleton_module8get_lockEv(_0: number): number;
-  __ZNK5boost7archive6detail11oserializerINS0_13text_oarchiveEN5RDKit9MolBundleEE16save_object_dataERNS1_14basic_oarchiveEPKv(_0: number, _1: number, _2: number): void;
-  __ZNK5boost7archive6detail11oserializerINS0_13text_oarchiveENSt3__26vectorINS4_12basic_stringIcNS4_11char_traitsIcEENS4_9allocatorIcEEEENS9_ISB_EEEEE16save_object_dataERNS1_14basic_oarchiveEPKv(_0: number, _1: number, _2: number): void;
-  __ZNK5boost7archive6detail11iserializerINS0_13text_iarchiveEN5RDKit9MolBundleEE16load_object_dataERNS1_14basic_iarchiveEPvj(_0: number, _1: number, _2: number, _3: number): void;
-  __ZNK5boost7archive6detail11iserializerINS0_13text_iarchiveENSt3__26vectorINS4_12basic_stringIcNS4_11char_traitsIcEENS4_9allocatorIcEEEENS9_ISB_EEEEE16load_object_dataERNS1_14basic_iarchiveEPvj(_0: number, _1: number, _2: number, _3: number): void;
-  __emscripten_tls_init(): number;
-  __embind_initialize_bindings(): void;
-  __emscripten_thread_init(_0: number, _1: number, _2: number, _3: number, _4: number, _5: number): void;
-  __emscripten_thread_crashed(): void;
-  __emscripten_thread_exit(_0: number): void;
-}
+import { libcootApi } from './libcoot';
+
+// Adapted from auto-generated embind code
 
 export interface DisplayModeValue<T extends number> {
   value: T;
@@ -248,7 +237,7 @@ export type Arc = {
   angle_two: number
 };
 
-interface EmbindModule {
+export interface Lhasa extends libcootApi.CootModule {
   DisplayMode: {Standard: DisplayModeValue<0>, AtomIndices: DisplayModeValue<1>, AtomNames: DisplayModeValue<2>};
   DrawingCommandVector: {new(): DrawingCommandVector};
   PathElementVector: {new(): PathElementVector};
@@ -285,4 +274,3 @@ interface EmbindModule {
   element_insertion_from_symbol(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): ElementInsertion;
   make_active_tool(_0: any): ActiveTool;
 }
-export type MainModule = WasmModule & EmbindModule;
