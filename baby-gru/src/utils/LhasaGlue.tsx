@@ -1,10 +1,11 @@
-// Import auto-generated type-definitions
+// Is this import needed here?
 import '../LhasaReact/src/lhasa.d.ts';
 import { LhasaComponent } from '../LhasaReact/src/Lhasa';
 import { useEffect, useState } from 'react';
 
 function LhasaWrapper() {
     const [isCootAttached, setCootAttached] = useState(() => { 
+        // @ts-ignore
         return window.cootModule !== undefined;
     });
     
@@ -23,6 +24,7 @@ function LhasaWrapper() {
         <>
             {isCootAttached &&
                 <LhasaComponent 
+                    // @ts-ignore
                     Lhasa={window.cootModule}
                     show_footer={false}
                     show_top_panel={false}
