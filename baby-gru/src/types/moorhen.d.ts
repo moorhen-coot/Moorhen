@@ -606,6 +606,7 @@ export namespace moorhen {
             depthThreshold: number;
             normalThreshold: number;
         };
+        doPerspectiveProjection: boolean;
         blur: {enabled: boolean; depth: number; radius: number};
     }
     
