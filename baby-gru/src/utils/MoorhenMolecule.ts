@@ -2301,7 +2301,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         const ligandSVG = formatLigandSVG(result.data.result.result)
 
-        if (useCache) {
+        if (useCache && ligandSVG !== `No dictionary for ${resName}`) {
             this.cachedLigandSVGs = { ...this.cachedLigandSVGs, [resName]: ligandSVG }
         }
 
