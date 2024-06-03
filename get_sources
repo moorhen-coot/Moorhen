@@ -1,166 +1,29 @@
-#!/bin/bash
+#!/bin/sh
 
-source ./VERSIONS
+if command -v greadlink > /dev/null 2>&1; then
+    MOORHEN_SOURCE_DIR=`dirname -- "$( greadlink -f -- "$0"; )"`
+else
+    MOORHEN_SOURCE_DIR=`dirname -- "$( readlink -f -- "$0"; )"`
+fi
 
-mkdir -p checkout
-cd checkout
+. ${MOORHEN_SOURCE_DIR}/get_sources_funs
 
-echo "Checking out libccp4"
-curl -L http://ftp.ccp4.ac.uk/opensource/libccp4-$libccp4_release.tar.gz -o libccp4-$libccp4_release.tar.gz
-echo
-
-echo "Checking out clipper"
-curl -L http://www.ysbl.york.ac.uk/jsd523/clipper-gemmi-wrapper-$clipper_release.tar.gz -o clipper-gemmi-wrapper.tar.gz
-echo
-
-echo "Checking out ssm"
-curl http://ftp.ccp4.ac.uk/opensource/ssm-$ssm_release.tar.gz -o ssm-$ssm_release.tar.gz
-echo
-
-echo "Checking out mmdb2"
-curl -L http://ftp.ccp4.ac.uk/opensource/mmdb2-$mmdb_release.tar.gz -o mmdb2-$mmdb_release.tar.gz
-echo
-
-echo "Checking out gemmi"
-git clone https://github.com/project-gemmi/gemmi.git gemmi
-cd gemmi
-git checkout $gemmi_release
-cd ..
-echo
-
-echo "Checking out monomers"
-git clone https://github.com/MonomerLibrary/monomers monomers
-echo
-
-echo "Checking out jsoncpp"
-git clone https://github.com/open-source-parsers/jsoncpp.git
-echo
-
-echo "Checking out igraph"
-git clone https://github.com/igraph/igraph.git
-echo
-
-echo "Checking out SliceNDice"
-git clone https://github.com/hlasimpk/slicendice_cpp.git
-echo
-
-echo "Downloading out fftw-$fftw_release"
-curl -L http://www.fftw.org/fftw-$fftw_release.tar.gz -o fftw-$fftw_release.tar.gz
-echo
-
-echo "Downloading gsl-$gsl_release"
-curl -L https://ftp.gnu.org/gnu/gsl/gsl-$gsl_release.tar.gz -o gsl-$gsl_release.tar.gz
-echo
-
-echo "Downloading coot-1"
-git clone --branch main https://github.com/pemsley/coot.git coot-1.0
-echo
-
-echo "Downloading glm"
-curl -L https://github.com/g-truc/glm/archive/refs/tags/$glm_release.tar.gz -o glm-$glm_release.tar.gz
-echo
-
-echo "Downloading RDKit source"
-curl -L https://github.com/rdkit/rdkit/archive/refs/tags/$rdkit_release.tar.gz -o "$rdkit_release.tar.gz"
-echo
-
-echo "Downloading graphene source"
-curl -L https://github.com/ebassi/graphene/archive/refs/tags/$graphene_release.tar.gz -o graphene_$graphene_release.tar.gz
-echo
-
-echo "Downloading libsigc++ source"
-curl -L https://github.com/libsigcplusplus/libsigcplusplus/archive/refs/tags/$libsigcpp_release.tar.gz -o libsigcplusplus_$libsigcpp_release.tar.gz
-echo
-
-echo "Downloading and Unpacking Privateer"
-curl -L https://github.com/glycojones/privateer/archive/refs/tags/WASM-0.3.4.tar.gz -o privateer-wasm.tar.gz
-tar xf privateer-wasm.tar.gz
-mv privateer-WASM-* privateer-wasm
-
-echo "Getting updated simdjson.h"
-curl -L https://raw.githubusercontent.com/simdjson/simdjson/master/singleheader/simdjson.h -o privateer-wasm/src/privateer/cpp/third-party/simdjson/simdjson.h
-
-echo "Unpacking libccp4 source"
-tar xf libccp4-$libccp4_release.tar.gz
-ln -s libccp4-$libccp4_release libccp4
-echo
-
-echo "Unpacking clipper source"
-tar xf clipper-gemmi-wrapper.tar.gz
-mv clipper-gemmi-wrapper clipper
-echo
-
-echo "Unpacking ssm source"
-tar xf ssm-$ssm_release.tar.gz
-ln -s ssm-$ssm_release ssm
-echo
-
-echo "Unpacking mmdb2 source"
-tar xf mmdb2-$mmdb_release.tar.gz
-ln -s mmdb2-$mmdb_release mmdb2
-echo
-
-echo "Unpacking RDKit source"
-tar xf "$rdkit_release.tar.gz"
-echo
-
-echo "Unpacking fftw-$fftw_release"
-tar xf fftw-$fftw_release.tar.gz
-echo
-
-echo "Unpacking glm-$glm_release"
-tar xf glm-$glm_release.tar.gz
-echo
-
-echo "Unpacking libsigc++ source"
-tar xf "libsigcplusplus_$libsigcpp_release.tar.gz"
-echo
-
-echo "Unpacking graphene source"
-tar xf "graphene_$graphene_release.tar.gz"
-echo
-
-# Libeigen
-echo "Checking out LibEigen"
-libeigen_release=3.3.9
-curl -L https://gitlab.com/libeigen/eigen/-/archive/$libeigen_release/eigen-$libeigen_release.tar.gz -o eigen-$libeigen_release.tar.gz
-tar xf eigen-$libeigen_release.tar.gz
-
-patch -p0 < ../patches/ccp4-emscripten.patch 
-cd ..
-echo
-
-echo "Unpacking gsl-$gsl_release"
-tar xf checkout/gsl-$gsl_release.tar.gz
-echo
-
-# Boost
-echo "Checking out boost"
-cd checkout
-curl -L https://github.com/boostorg/boost/releases/download/boost-$boost_release/boost-$boost_release.tar.gz  -o boost_$boost_release.tar.gz
-tar xf boost_$boost_release.tar.gz
-cd ..
-ln -s checkout/boost-$boost_release boost
-echo
-patch -p0 < patches/boost-emscripten.patch
-
-ln -s checkout/rdkit-$rdkit_release rdkit
-
-echo "Getting git version of rapidjson for RDKit"
-cd checkout/rdkit-$rdkit_release/External
-git clone https://github.com/Tencent/rapidjson.git rapidjson-1.1.0
-cd ../../..
-
-echo "Linking glm headers"
-mkdir -p include
-cd include
-ln -s ../checkout/glm-$glm_release/glm glm
-cd ..
-
-cd checkout/coot-1.0
-patch -p1 < ../../patches/coot-emscripten-64.patch
-cd ../..
-
-cd checkout/gemmi
-patch -p1 < ../../patches/gemmi-emscripten-64.patch
-cd ../..
+geteigen
+getlibccp4
+getclipper
+getssm
+getmmdb2
+getgemmi
+getmonomers
+getjsoncpp
+getigraph
+getslicendice
+getfftw
+getgsl
+getcoot
+getglm
+getrdkit
+getgraphene
+getsigcpp
+getprivateer
+getboost
