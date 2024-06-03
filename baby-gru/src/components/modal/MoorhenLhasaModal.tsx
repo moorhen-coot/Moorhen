@@ -11,6 +11,8 @@ export const MoorhenLhasaModal = (props) => {
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
+    let your_rdkit_mol_pickle: Uint8Array | undefined = undefined;
+
     return <MoorhenDraggableModalBase
                 modalId="lhasa-modal"
                 left={width / 6}
@@ -31,7 +33,7 @@ export const MoorhenLhasaModal = (props) => {
                 resizeNodeRef={resizeNodeRef}
                 body={
                     
-                    <LhasaWrapper/>
+                    <LhasaWrapper rdkit_molecule_pickle={your_rdkit_mol_pickle} />
                 }
             />
 }
