@@ -4,10 +4,8 @@ add_library(clipper-mmdb STATIC
 ../../checkout/clipper/clipper/mmdb/clipper_mmdb.cpp
 )
 
-target_include_directories(clipper-mmdb PRIVATE ../../checkout/mmdb2/ ../../checkout/clipper ../../fftw ../../rfftw)
-
 set(clipper-mmdb_HEADERS
-${CMAKE_SOURCE_DIR}/checkout/clipper//clipper/mmdb/clipper_mmdb.h
+${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/mmdb/clipper_mmdb.h
 )
 
 target_compile_options(clipper-mmdb PUBLIC "-DFFTW_ENABLE_FLOAT")
