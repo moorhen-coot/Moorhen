@@ -12,7 +12,7 @@ else
     MOORHEN_SOURCE_DIR=`dirname -- "$( readlink -f -- "$0"; )"`
 fi
 
-source ./VERSIONS
+. ./VERSIONS
 
 
 if [ x`uname -s` = x"Darwin" ]; then
@@ -24,10 +24,6 @@ fi
 
 BUILD_DIR=${PWD}/CCP4_WASM_BUILD
 INSTALL_DIR=${PWD}/install
-
-echo "Sources are in ${MOORHEN_SOURCE_DIR}"
-echo "Building in ${BUILD_DIR}"
-echo "Installing in ${INSTALL_DIR}"
 
 mkdir -p ${BUILD_DIR}
 mkdir -p ${INSTALL_DIR}
@@ -45,197 +41,220 @@ else
    MODULES=$*
 fi
 
+clearboost() {
+    echo "Clear boost"
+    rm -rf ${BUILD_DIR}/boost
+    rm -rf ${INSTALL_DIR}/include/boost
+    rm -rf ${INSTALL_DIR}/lib/libboost*.a
+    rm -rf ${INSTALL_DIR}/lib/libboost*.bc
+    rm -rf ${INSTALL_DIR}/lib/cmake/boost*
+    rm -rf ${INSTALL_DIR}/lib/cmake/Boost*
+}
+
+cleargemmi() {
+    echo "Clear gemmi"
+    rm -rf ${BUILD_DIR}/gemmi_build
+    rm -rf ${INSTALL_DIR}/include/gemmi
+    rm -rf ${INSTALL_DIR}/lib/libgemmi_cpp.a
+}
+
+cleargsl() {
+    echo "Clear gsl"
+    rm -rf ${BUILD_DIR}/gsl_build
+    rm -rf ${INSTALL_DIR}/include/gsl
+    rm -rf ${INSTALL_DIR}/lib/libgsl*.a
+    rm -rf ${INSTALL_DIR}/lib/libgsl*.la
+    rm -rf ${INSTALL_DIR}/lib/pkgconfig/gsl.pc
+    rm -rf ${INSTALL_DIR}/bin/gsl-config
+    rm -rf ${INSTALL_DIR}/bin/gsl-histogram
+    rm -rf ${INSTALL_DIR}/bin/gsl-randist
+}
+
+clearigraph() {
+    echo "Clear igraph"
+    rm -rf ${BUILD_DIR}/igraph_build
+    rm -rf ${INSTALL_DIR}/include/igraph
+    rm -rf ${INSTALL_DIR}/lib/libigraph.a
+    rm -rf ${INSTALL_DIR}/lib/cmake/igraph
+    rm -rf ${INSTALL_DIR}/lib/pkgconfig/igraph.pc
+}
+
+clearjsoncpp() {
+    echo "Clear jsoncpp"
+    rm -rf ${BUILD_DIR}/jsoncpp_build
+    rm -rf ${INSTALL_DIR}/include/json
+    rm -rf ${INSTALL_DIR}/lib/libjsoncpp.a
+    rm -rf ${INSTALL_DIR}/lib/cmake/jsoncpp
+    rm -rf ${INSTALL_DIR}/lib/objects-Release/jsoncpp_object/
+    rm -rf ${INSTALL_DIR}/lib/pkgconfig/jsoncpp.pc
+}
+
+clearrdkit() {
+    echo "Clear rdkit"
+    rm -rf ${BUILD_DIR}/rdkit_build
+    rm -rf ${INSTALL_DIR}/include/rdkit
+    rm -rf ${INSTALL_DIR}/lib/libRDKit*.a
+    rm -rf ${INSTALL_DIR}/lib/cmake/rdkit
+}
+
+cleareigen() {
+    echo "Clear eigen"
+    rm -rf ${BUILD_DIR}/eigen_build
+    rm -rf ${INSTALL_DIR}/include/eigen3
+}
+
+clearccp4() {
+    echo "Clear libccp4"
+    rm -rf ${BUILD_DIR}/ccp4_build
+    rm -rf ${INSTALL_DIR}/include/ccp4
+    rm -rf ${INSTALL_DIR}/lib/libccp4.a
+}
+
+clearfftw() {
+    echo "Clear fftw"
+    rm -rf ${BUILD_DIR}/fftw_build
+    rm -rf ${INSTALL_DIR}/include/fftw
+    rm -rf ${INSTALL_DIR}/include/rfftw
+    rm -rf ${INSTALL_DIR}/lib/libfftw.a
+    rm -rf ${INSTALL_DIR}/lib/librfftw.a
+}
+
+clearmmdb2() {
+    echo "Clear mmdb2"
+    rm -rf ${BUILD_DIR}/mmdb2_build
+    rm -rf ${INSTALL_DIR}/include/mmdb2
+    rm -rf ${INSTALL_DIR}/lib/libmmdb2.a
+}
+
+clearclipper() {
+    echo "Clear clipper"
+    rm -rf ${BUILD_DIR}/clipper_build
+    rm -rf ${INSTALL_DIR}/include/clipper
+    rm -rf ${INSTALL_DIR}/lib/libclipper*.a
+}
+
+clearprivateer() {
+    echo "Clear privateer"
+    rm -rf ${BUILD_DIR}/privateer_build
+    rm -rf ${INSTALL_DIR}/include/privateer
+    rm -rf ${INSTALL_DIR}/lib/libprivateer.a
+}
+
+clearssm() {
+    echo "Clear ssm"
+    rm -rf ${BUILD_DIR}/ssm_build
+    rm -rf ${INSTALL_DIR}/include/ssm
+    rm -rf ${INSTALL_DIR}/lib/libssm.a
+}
+
+clearslicendice() {
+    echo "Clear slicendice"
+    rm -rf ${BUILD_DIR}/slicendice_cpp_build
+    rm -rf ${INSTALL_DIR}/include/slicendice_cpp
+    rm -rf ${INSTALL_DIR}/lib/libslicendice_cpp.a
+}
+
+clearsigcpp() {
+    echo "Clear sigc++"
+    rm -rf ${BUILD_DIR}/libsigcplusplus_build
+    rm -rf ${INSTALL_DIR}/include/sigc++-3.0
+    rm -rf ${INSTALL_DIR}/lib/libsigc-3.0.a
+    rm -rf ${INSTALL_DIR}/lib/sigc++-3.0
+    rm -rf ${INSTALL_DIR}/lib/pkgconfig/sigc++-3.0.pc
+}
+
+cleargraphene() {
+    echo "Clear graphene"
+    rm -rf ${BUILD_DIR}/graphene_build
+    rm -rf ${INSTALL_DIR}/include/graphene-1.0
+    rm -rf ${INSTALL_DIR}/lib/libgraphene-1.0.a
+    rm -rf ${INSTALL_DIR}/lib/graphene-1.0
+    rm -rf ${INSTALL_DIR}/lib/pkgconfig/graphene-1.0.pc
+}
+
+clearmoorhen() {
+    echo "Clear moorhen"
+    rm -rf ${BUILD_DIR}/moorhen_build
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.wasm
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.data
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.worker.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/web_example.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/web_example.wasm
+}
+
+clearall() {
+    echo "Clear all"
+    clearboost
+    cleargemmi
+    cleargsl
+    clearigraph
+    clearjsoncpp
+    clearrdkit
+    cleareigen
+    clearccp4
+    clearfftw
+    clearmmdb2
+    clearclipper
+    clearprivateer
+    clearssm
+    clearslicendice
+    clearsigcpp
+    cleargraphene
+    clearmoorhen
+}
+
 if [ x"$CLEAR_MODULES" = x"" ]; then
     :
 else
     for mod in $CLEAR_MODULES; do
         case $mod in
-           all) echo "Clear all"
-               rm -rf ${BUILD_DIR}/boost
-               rm -rf ${INSTALL_DIR}/include/boost
-               rm -rf ${BUILD_DIR}/gemmi_build
-               rm -rf ${INSTALL_DIR}/include/gemmi
-               rm -rf ${BUILD_DIR}/gsl_build
-               rm -rf ${INSTALL_DIR}/include/gsl
-               rm -rf ${BUILD_DIR}/igraph_build
-               rm -rf ${INSTALL_DIR}/include/igraph
-               rm -rf ${BUILD_DIR}/jsoncpp_build
-               rm -rf ${INSTALL_DIR}/include/json
-               rm -rf ${BUILD_DIR}/rdkit_build
-               rm -rf ${INSTALL_DIR}/include/rdkit
-               rm -rf ${BUILD_DIR}/eigen_build
-               rm -rf ${INSTALL_DIR}/include/eigen3
-               rm -rf ${BUILD_DIR}/moorhen_build
-               rm -rf ${BUILD_DIR}/ccp4_build
-               rm -rf ${INSTALL_DIR}/include/ccp4
-               rm -rf ${BUILD_DIR}/fftw_build
-               rm -rf ${INSTALL_DIR}/include/fftw
-               rm -rf ${INSTALL_DIR}/include/rfftw
-               rm -rf ${BUILD_DIR}/mmdb2_build
-               rm -rf ${INSTALL_DIR}/include/mmdb2
-               rm -rf ${BUILD_DIR}/clipper_build
-               rm -rf ${INSTALL_DIR}/include/clipper
-               rm -rf ${BUILD_DIR}/privateer_build
-               rm -rf ${INSTALL_DIR}/include/privateer
-               rm -rf ${BUILD_DIR}/ssm_build
-               rm -rf ${INSTALL_DIR}/include/ssm
-               rm -rf ${BUILD_DIR}/slicendice_cpp_build
-               rm -rf ${INSTALL_DIR}/include/slicendice_cpp
-               rm -rf ${BUILD_DIR}/libsigcplusplus_build
-               rm -rf ${INSTALL_DIR}/include/sigc++-3.0
-               rm -rf ${BUILD_DIR}/graphene_build
-               rm -rf ${INSTALL_DIR}/include/graphene-1.0
-               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.js
-               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.wasm
-               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.data
-               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.worker.js
-               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/web_example.js
-               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/web_example.wasm
-               rm -rf ${INSTALL_DIR}/lib/libboost*.a
-               rm -rf ${INSTALL_DIR}/lib/cmake/boost*
-               rm -rf ${INSTALL_DIR}/lib/cmake/Boost*
-               rm -rf ${INSTALL_DIR}/lib/libRDKit*.a
-               rm -rf ${INSTALL_DIR}/lib/cmake/rdkit
-               rm -rf ${INSTALL_DIR}/lib/libclipper*.a
-               rm -rf ${INSTALL_DIR}/lib/libgsl*.a
-               rm -rf ${INSTALL_DIR}/lib/libgsl*.la
-               rm -rf ${INSTALL_DIR}/lib/pkgconfig/gsl.pc
-               rm -rf ${INSTALL_DIR}/lib/libigraph.a
-               rm -rf ${INSTALL_DIR}/lib/cmake/igraph
-               rm -rf ${INSTALL_DIR}/lib/pkgconfig/igraph.pc
-               rm -rf ${INSTALL_DIR}/lib/libjsoncpp.a
-               rm -rf ${INSTALL_DIR}/lib/cmake/jsoncpp
-               rm -rf ${INSTALL_DIR}/lib/objects-Release/jsoncpp_object/
-               rm -rf ${INSTALL_DIR}/lib/pkgconfig/jsoncpp.pc
-               rm -rf ${INSTALL_DIR}/lib/libgemmi_cpp.a
-               rm -rf ${INSTALL_DIR}/lib/libmmdb2.a
-               rm -rf ${INSTALL_DIR}/lib/libprivateer.a
-               rm -rf ${INSTALL_DIR}/lib/libgraphene-1.0.a
-               rm -rf ${INSTALL_DIR}/lib/graphene-1.0
-               rm -rf ${INSTALL_DIR}/lib/pkgconfig/graphene-1.0.pc
-               rm -rf ${INSTALL_DIR}/lib/libsigc-3.0.a
-               rm -rf ${INSTALL_DIR}/lib/sigc++-3.0
-               rm -rf ${INSTALL_DIR}/lib/pkgconfig/sigc++-3.0.pc
-               rm -rf ${INSTALL_DIR}/lib/libccp4.a
-               rm -rf ${INSTALL_DIR}/lib/libslicendice_cpp.a
-               rm -rf ${INSTALL_DIR}/lib/libssm.a
-               rm -rf ${INSTALL_DIR}/lib/libfftw.a
-               rm -rf ${INSTALL_DIR}/lib/librfftw.a
-               rm -rf ${INSTALL_DIR}/bin/gsl-config
-               rm -rf ${INSTALL_DIR}/bin/gsl-histogram
-               rm -rf ${INSTALL_DIR}/bin/gsl-randist
+           all) clearall
                ;;
-           boost) echo "Clear boost"
-               rm -rf ${BUILD_DIR}/boost
-               rm -rf ${INSTALL_DIR}/include/boost
-               rm -rf ${INSTALL_DIR}/lib/libboost*.a
-               rm -rf ${INSTALL_DIR}/lib/cmake/boost*
-               rm -rf ${INSTALL_DIR}/lib/cmake/Boost*
+           boost) clearboost
                ;;
-           gemmi) echo "Clear gemmi"
-               rm -rf ${BUILD_DIR}/gemmi_build
-               rm -rf ${INSTALL_DIR}/include/gemmi
-               rm -rf ${INSTALL_DIR}/lib/libgemmi_cpp.a
+           gemmi) cleargemmi
                ;;
-           gsl) echo "Clear gsl"
-               rm -rf ${BUILD_DIR}/gsl_build
-               rm -rf ${INSTALL_DIR}/include/gsl
-               rm -rf ${INSTALL_DIR}/lib/libgsl*.a
-               rm -rf ${INSTALL_DIR}/lib/libgsl*.la
-               rm -rf ${INSTALL_DIR}/lib/pkgconfig/gsl.pc
-               rm -rf ${INSTALL_DIR}/bin/gsl-config
-               rm -rf ${INSTALL_DIR}/bin/gsl-histogram
-               rm -rf ${INSTALL_DIR}/bin/gsl-randist
+           gsl) cleargsl
                ;;
-           igraph) echo "Clear igraph"
-               rm -rf ${BUILD_DIR}/igraph_build
-               rm -rf ${INSTALL_DIR}/include/igraph
-               rm -rf ${INSTALL_DIR}/lib/libigraph.a
-               rm -rf ${INSTALL_DIR}/lib/cmake/igraph
-               rm -rf ${INSTALL_DIR}/lib/pkgconfig/igraph.pc
+           igraph) clearigraph
                ;;
-           jsoncpp) echo "Clear jsoncpp"
-               rm -rf ${BUILD_DIR}/jsoncpp_build
-               rm -rf ${INSTALL_DIR}/include/json
-               rm -rf ${INSTALL_DIR}/lib/libjsoncpp.a
-               rm -rf ${INSTALL_DIR}/lib/cmake/jsoncpp
-               rm -rf ${INSTALL_DIR}/lib/objects-Release/jsoncpp_object/
-               rm -rf ${INSTALL_DIR}/lib/pkgconfig/jsoncpp.pc
+           jsoncpp) clearjsoncpp
                ;;
-           rdkit) echo "Clear rdkit"
-               rm -rf ${BUILD_DIR}/rdkit_build
-               rm -rf ${INSTALL_DIR}/include/rdkit
-               rm -rf ${INSTALL_DIR}/lib/libRDKit*.a
-               rm -rf ${INSTALL_DIR}/lib/cmake/rdkit
+           rdkit) clearrdkit
                ;;
-           eigen) echo "Clear eigen"
-               rm -rf ${BUILD_DIR}/eigen_build
-               rm -rf ${INSTALL_DIR}/include/eigen3
+           eigen) cleareigen
                ;;
-           libccp4) echo "clear libccp4"
-               rm -rf ${BUILD_DIR}/ccp4_build
-               rm -rf ${INSTALL_DIR}/include/ccp4
-               rm -rf ${INSTALL_DIR}/lib/libccp4.a
+           libccp4) clearccp4
                ;;
-           fftw) echo "clear fftw"
-               rm -rf ${BUILD_DIR}/fftw_build
-               rm -rf ${INSTALL_DIR}/include/fftw
-               rm -rf ${INSTALL_DIR}/include/rfftw
-               rm -rf ${INSTALL_DIR}/lib/libfftw.a
-               rm -rf ${INSTALL_DIR}/lib/librfftw.a
+           fftw) clearfftw
                ;;
-           mmdb2) echo "clear mmdb2"
-               rm -rf ${BUILD_DIR}/mmdb2_build
-               rm -rf ${INSTALL_DIR}/include/mmdb2
-               rm -rf ${INSTALL_DIR}/lib/libmmdb2.a
+           mmdb2) clearmmdb2
                ;;
-           clipper) echo "clear clipper"
-               rm -rf ${BUILD_DIR}/clipper_build
-               rm -rf ${INSTALL_DIR}/include/clipper
-               rm -rf ${INSTALL_DIR}/lib/libclipper*.a
+           clipper) clearclipper
                ;;
-           privateer) echo "clear privateer"
-               rm -rf ${BUILD_DIR}/privateer_build
-               rm -rf ${INSTALL_DIR}/include/privateer
-               rm -rf ${INSTALL_DIR}/lib/libprivateer.a
+           privateer) clearprivateer
                ;;
-           ssm) echo "clear ssm"
-               rm -rf ${BUILD_DIR}/ssm_build
-               rm -rf ${INSTALL_DIR}/include/ssm
-               rm -rf ${INSTALL_DIR}/lib/libssm.a
+           ssm) clearssm
                ;;
-           slicendice) echo "clear slicendice"
-               rm -rf ${BUILD_DIR}/slicendice_cpp_build
-               rm -rf ${INSTALL_DIR}/include/slicendice_cpp
-               rm -rf ${INSTALL_DIR}/lib/libslicendice_cpp.a
+           slicendice) clearslicendice
                ;;
-           sigcpp) echo "clear sigc++"
-               rm -rf ${BUILD_DIR}/libsigcplusplus_build
-               rm -rf ${INSTALL_DIR}/include/sigc++-3.0
-               rm -rf ${INSTALL_DIR}/lib/libsigc-3.0.a
-               rm -rf ${INSTALL_DIR}/lib/sigc++-3.0
-               rm -rf ${INSTALL_DIR}/lib/pkgconfig/sigc++-3.0.pc
+           sigcpp) clearsigcpp
                ;;
-           graphene) echo "clear graphene"
-               rm -rf ${BUILD_DIR}/graphene_build
-               rm -rf ${INSTALL_DIR}/include/graphene-1.0
-               rm -rf ${INSTALL_DIR}/lib/libgraphene-1.0.a
-               rm -rf ${INSTALL_DIR}/lib/graphene-1.0
-               rm -rf ${INSTALL_DIR}/lib/pkgconfig/graphene-1.0.pc
+           graphene) cleargraphene
                ;;
-           moorhen) echo "Clear moorhen"
-               rm -rf ${BUILD_DIR}/moorhen_build
-               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.js
-               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.wasm
-               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.data
-               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.worker.js
-               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/web_example.js
-               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/web_example.wasm
+           moorhen) clearmoorhen
+               ;;
+           *) echo "Unknown module requested for clearing"
                ;;
         esac
         done
     exit
 fi
+
+echo "Sources are in ${MOORHEN_SOURCE_DIR}"
+echo "Building in ${BUILD_DIR}"
+echo "Installing in ${INSTALL_DIR}"
 
 # Create an empty file silly.c and then compile it with USE_ZLIB and USE_LIBPNG to force emsdk to get zlib/png.
 echo "Attempting to get emsdk zlib/png ports"
