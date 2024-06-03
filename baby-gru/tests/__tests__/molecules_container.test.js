@@ -91,7 +91,13 @@ describe('Testing molecules_container_js', () => {
 
     test('Test glycoblocks', async () => {
         const coordMolNo = molecules_container.read_pdb('./5fjj.pdb')
-        const glyco_mesh = molecules_container.DrawGlycoBlocks(coordMolNo,"/")
+        const glycoMeshData = molecules_container.DrawGlycoBlocks(coordMolNo, "//")
+        const geom = glycoMeshData.geom
+        const meshData = geom.get(0)
+        const triangles = meshData.triangles
+        
+        expect(triangles.size()).toBeGreaterThan(10)
+        cleanUpVariables.push(triangles, meshData, geom)
     })
 
     test('Test copy fragment', () => {
@@ -100,6 +106,32 @@ describe('Testing molecules_container_js', () => {
         const atomCount = molecules_container.get_number_of_atoms(coordMolNo_2)
         expect(coordMolNo_2).not.toBe(-1)
         expect(atomCount).toBe(14)
+    })
+
+    test("Test get_svg_for_residue_type", () => {
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        
+        const svg_1 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, false)
+        expect(svg_1).toBe("No dictionary for LZA")
+
+        const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', coordMolNo)
+        expect(result_import_dict).toBe(1)
+        
+        const svg_2 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, false)
+        expect(svg_2).not.toBe("No dictionary for LZA")
+    })
+
+    test("Test get_svg_for_residue_type -- any molecule", () => {
+        const coordMolNo = molecules_container.read_pdb('./5a3h.mmcif')
+        
+        const svg_1 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, false)
+        expect(svg_1).toBe("No dictionary for LZA")
+
+        const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', -999999)
+        expect(result_import_dict).toBe(1)
+        
+        const svg_2 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, false)
+        expect(svg_2).not.toBe("No dictionary for LZA")
     })
 
     test('Test fit_ligand_right_here 1', () => {

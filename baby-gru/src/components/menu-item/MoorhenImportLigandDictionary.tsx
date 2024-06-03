@@ -12,7 +12,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore"
-import { enqueueSnackbar } from "notistack"
 
 const MoorhenImportLigandDictionary = (props: { 
     id: string;
@@ -51,6 +50,7 @@ const MoorhenImportLigandDictionary = (props: {
     const handleFileContent = useCallback(async (fileContent: string) => {
         let newMolecule: moorhen.Molecule
         let selectedMoleculeIndex: number
+        let molNosToUpdate: number[] = []
         
         if (moleculeSelectValueRef.current) {
             selectedMoleculeIndex = parseInt(moleculeSelectValueRef.current)
@@ -58,6 +58,7 @@ const MoorhenImportLigandDictionary = (props: {
             if (typeof selectedMolecule !== 'undefined') {
                 await selectedMolecule.addDict(fileContent)
                 await selectedMolecule.redraw()
+                molNosToUpdate.push(selectedMolecule.molNo)
             }
         } else {
             selectedMoleculeIndex = -999999
@@ -69,6 +70,7 @@ const MoorhenImportLigandDictionary = (props: {
             }, false),
             await Promise.all(molecules.map(molecule => {
                 molecule.cacheLigandDict(fileContent)
+                molNosToUpdate.push(molecule.molNo)
                 return molecule.redraw()
             }))
         }
@@ -98,10 +100,10 @@ const MoorhenImportLigandDictionary = (props: {
                 if (addToMoleculeValueRef.current !== -1) {
                     const toMolecule = molecules.find(molecule => molecule.molNo === addToMoleculeValueRef.current)
                     if (typeof toMolecule !== 'undefined') {
+                        molNosToUpdate.push(toMolecule.molNo)
                         const otherMolecules = [newMolecule]
                         await toMolecule.mergeMolecules(otherMolecules, true)
                         await toMolecule.redraw()
-                        dispatch( triggerUpdate(toMolecule.molNo) )
                     } else {
                         await newMolecule.redraw()
                     }
@@ -109,6 +111,7 @@ const MoorhenImportLigandDictionary = (props: {
             }
         }
 
+        [...new Set(molNosToUpdate)].map(molNo => dispatch(triggerUpdate(molNo)))
         setPopoverIsShown(false)
 
     }, [moleculeSelectValueRef, createRef, setPopoverIsShown, molecules, commandCentre, glRef, tlcValueRef, monomerLibraryPath, backgroundColor, defaultBondSmoothness, addToMoleculeValueRef])
