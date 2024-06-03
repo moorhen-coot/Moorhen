@@ -66,39 +66,171 @@ else
                rm -rf ${BUILD_DIR}/eigen_build
                rm -rf ${INSTALL_DIR}/include/eigen3
                rm -rf ${BUILD_DIR}/moorhen_build
-               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/wasm
+               rm -rf ${BUILD_DIR}/ccp4_build
+               rm -rf ${INSTALL_DIR}/include/ccp4
+               rm -rf ${BUILD_DIR}/fftw_build
+               rm -rf ${INSTALL_DIR}/include/fftw
+               rm -rf ${INSTALL_DIR}/include/rfftw
+               rm -rf ${BUILD_DIR}/mmdb2_build
+               rm -rf ${INSTALL_DIR}/include/mmdb2
+               rm -rf ${BUILD_DIR}/clipper_build
+               rm -rf ${INSTALL_DIR}/include/clipper
+               rm -rf ${BUILD_DIR}/privateer_build
+               rm -rf ${INSTALL_DIR}/include/privateer
+               rm -rf ${BUILD_DIR}/ssm_build
+               rm -rf ${INSTALL_DIR}/include/ssm
+               rm -rf ${BUILD_DIR}/slicendice_cpp_build
+               rm -rf ${INSTALL_DIR}/include/slicendice_cpp
+               rm -rf ${BUILD_DIR}/libsigcplusplus_build
+               rm -rf ${INSTALL_DIR}/include/sigc++-3.0
+               rm -rf ${BUILD_DIR}/graphene_build
+               rm -rf ${INSTALL_DIR}/include/graphene-1.0
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.js
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.wasm
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.data
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.worker.js
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/web_example.js
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/web_example.wasm
+               rm -rf ${INSTALL_DIR}/lib/libboost*.a
+               rm -rf ${INSTALL_DIR}/lib/cmake/boost*
+               rm -rf ${INSTALL_DIR}/lib/cmake/Boost*
+               rm -rf ${INSTALL_DIR}/lib/libRDKit*.a
+               rm -rf ${INSTALL_DIR}/lib/cmake/rdkit
+               rm -rf ${INSTALL_DIR}/lib/libclipper*.a
+               rm -rf ${INSTALL_DIR}/lib/libgsl*.a
+               rm -rf ${INSTALL_DIR}/lib/libgsl*.la
+               rm -rf ${INSTALL_DIR}/lib/pkgconfig/gsl.pc
+               rm -rf ${INSTALL_DIR}/lib/libigraph.a
+               rm -rf ${INSTALL_DIR}/lib/cmake/igraph
+               rm -rf ${INSTALL_DIR}/lib/pkgconfig/igraph.pc
+               rm -rf ${INSTALL_DIR}/lib/libjsoncpp.a
+               rm -rf ${INSTALL_DIR}/lib/cmake/jsoncpp
+               rm -rf ${INSTALL_DIR}/lib/objects-Release/jsoncpp_object/
+               rm -rf ${INSTALL_DIR}/lib/pkgconfig/jsoncpp.pc
+               rm -rf ${INSTALL_DIR}/lib/libgemmi_cpp.a
+               rm -rf ${INSTALL_DIR}/lib/libmmdb2.a
+               rm -rf ${INSTALL_DIR}/lib/libprivateer.a
+               rm -rf ${INSTALL_DIR}/lib/libgraphene-1.0.a
+               rm -rf ${INSTALL_DIR}/lib/graphene-1.0
+               rm -rf ${INSTALL_DIR}/lib/pkgconfig/graphene-1.0.pc
+               rm -rf ${INSTALL_DIR}/lib/libsigc-3.0.a
+               rm -rf ${INSTALL_DIR}/lib/sigc++-3.0
+               rm -rf ${INSTALL_DIR}/lib/pkgconfig/sigc++-3.0.pc
+               rm -rf ${INSTALL_DIR}/lib/libccp4.a
+               rm -rf ${INSTALL_DIR}/lib/libslicendice_cpp.a
+               rm -rf ${INSTALL_DIR}/lib/libssm.a
+               rm -rf ${INSTALL_DIR}/lib/libfftw.a
+               rm -rf ${INSTALL_DIR}/lib/librfftw.a
+               rm -rf ${INSTALL_DIR}/bin/gsl-config
+               rm -rf ${INSTALL_DIR}/bin/gsl-histogram
+               rm -rf ${INSTALL_DIR}/bin/gsl-randist
                ;;
            boost) echo "Clear boost"
                rm -rf ${BUILD_DIR}/boost
                rm -rf ${INSTALL_DIR}/include/boost
+               rm -rf ${INSTALL_DIR}/lib/libboost*.a
+               rm -rf ${INSTALL_DIR}/lib/cmake/boost*
+               rm -rf ${INSTALL_DIR}/lib/cmake/Boost*
                ;;
            gemmi) echo "Clear gemmi"
                rm -rf ${BUILD_DIR}/gemmi_build
                rm -rf ${INSTALL_DIR}/include/gemmi
+               rm -rf ${INSTALL_DIR}/lib/libgemmi_cpp.a
                ;;
            gsl) echo "Clear gsl"
                rm -rf ${BUILD_DIR}/gsl_build
                rm -rf ${INSTALL_DIR}/include/gsl
+               rm -rf ${INSTALL_DIR}/lib/libgsl*.a
+               rm -rf ${INSTALL_DIR}/lib/libgsl*.la
+               rm -rf ${INSTALL_DIR}/lib/pkgconfig/gsl.pc
+               rm -rf ${INSTALL_DIR}/bin/gsl-config
+               rm -rf ${INSTALL_DIR}/bin/gsl-histogram
+               rm -rf ${INSTALL_DIR}/bin/gsl-randist
                ;;
            igraph) echo "Clear igraph"
                rm -rf ${BUILD_DIR}/igraph_build
                rm -rf ${INSTALL_DIR}/include/igraph
+               rm -rf ${INSTALL_DIR}/lib/libigraph.a
+               rm -rf ${INSTALL_DIR}/lib/cmake/igraph
+               rm -rf ${INSTALL_DIR}/lib/pkgconfig/igraph.pc
                ;;
            jsoncpp) echo "Clear jsoncpp"
                rm -rf ${BUILD_DIR}/jsoncpp_build
                rm -rf ${INSTALL_DIR}/include/json
+               rm -rf ${INSTALL_DIR}/lib/libjsoncpp.a
+               rm -rf ${INSTALL_DIR}/lib/cmake/jsoncpp
+               rm -rf ${INSTALL_DIR}/lib/objects-Release/jsoncpp_object/
+               rm -rf ${INSTALL_DIR}/lib/pkgconfig/jsoncpp.pc
                ;;
            rdkit) echo "Clear rdkit"
                rm -rf ${BUILD_DIR}/rdkit_build
                rm -rf ${INSTALL_DIR}/include/rdkit
+               rm -rf ${INSTALL_DIR}/lib/libRDKit*.a
+               rm -rf ${INSTALL_DIR}/lib/cmake/rdkit
                ;;
            eigen) echo "Clear eigen"
                rm -rf ${BUILD_DIR}/eigen_build
                rm -rf ${INSTALL_DIR}/include/eigen3
                ;;
+           libccp4) echo "clear libccp4"
+               rm -rf ${BUILD_DIR}/ccp4_build
+               rm -rf ${INSTALL_DIR}/include/ccp4
+               rm -rf ${INSTALL_DIR}/lib/libccp4.a
+               ;;
+           fftw) echo "clear fftw"
+               rm -rf ${BUILD_DIR}/fftw_build
+               rm -rf ${INSTALL_DIR}/include/fftw
+               rm -rf ${INSTALL_DIR}/include/rfftw
+               rm -rf ${INSTALL_DIR}/lib/libfftw.a
+               rm -rf ${INSTALL_DIR}/lib/librfftw.a
+               ;;
+           mmdb2) echo "clear mmdb2"
+               rm -rf ${BUILD_DIR}/mmdb2_build
+               rm -rf ${INSTALL_DIR}/include/mmdb2
+               rm -rf ${INSTALL_DIR}/lib/libmmdb2.a
+               ;;
+           clipper) echo "clear clipper"
+               rm -rf ${BUILD_DIR}/clipper_build
+               rm -rf ${INSTALL_DIR}/include/clipper
+               rm -rf ${INSTALL_DIR}/lib/libclipper*.a
+               ;;
+           privateer) echo "clear privateer"
+               rm -rf ${BUILD_DIR}/privateer_build
+               rm -rf ${INSTALL_DIR}/include/privateer
+               rm -rf ${INSTALL_DIR}/lib/libprivateer.a
+               ;;
+           ssm) echo "clear ssm"
+               rm -rf ${BUILD_DIR}/ssm_build
+               rm -rf ${INSTALL_DIR}/include/ssm
+               rm -rf ${INSTALL_DIR}/lib/libssm.a
+               ;;
+           slicendice) echo "clear slicendice"
+               rm -rf ${BUILD_DIR}/slicendice_cpp_build
+               rm -rf ${INSTALL_DIR}/include/slicendice_cpp
+               rm -rf ${INSTALL_DIR}/lib/libslicendice_cpp.a
+               ;;
+           sigcpp) echo "clear sigc++"
+               rm -rf ${BUILD_DIR}/libsigcplusplus_build
+               rm -rf ${INSTALL_DIR}/include/sigc++-3.0
+               rm -rf ${INSTALL_DIR}/lib/libsigc-3.0.a
+               rm -rf ${INSTALL_DIR}/lib/sigc++-3.0
+               rm -rf ${INSTALL_DIR}/lib/pkgconfig/sigc++-3.0.pc
+               ;;
+           graphene) echo "clear graphene"
+               rm -rf ${BUILD_DIR}/graphene_build
+               rm -rf ${INSTALL_DIR}/include/graphene-1.0
+               rm -rf ${INSTALL_DIR}/lib/libgraphene-1.0.a
+               rm -rf ${INSTALL_DIR}/lib/graphene-1.0
+               rm -rf ${INSTALL_DIR}/lib/pkgconfig/graphene-1.0.pc
+               ;;
            moorhen) echo "Clear moorhen"
                rm -rf ${BUILD_DIR}/moorhen_build
-               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/wasm
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.js
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.wasm
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.data
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.worker.js
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/web_example.js
+               rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/web_example.wasm
                ;;
         esac
         done
@@ -140,6 +272,55 @@ BUILD_GRAPHENE=false
 BUILD_LIBSIGCPP=false
 BUILD_LIBEIGEN=false
 BUILD_MOORHEN=false
+BUILD_LIBCCP4=false
+BUILD_FFTW=false
+BUILD_MMDB2=false
+BUILD_CLIPPER=false
+BUILD_PRIVATEER=false
+BUILD_SSM=false
+BUILD_SLICENDICE=false
+
+if test -d ${INSTALL_DIR}/include/slicendice_cpp; then
+    true
+else
+    BUILD_SLICENDICE=true
+fi
+
+if test -d ${INSTALL_DIR}/include/ssm; then
+    true
+else
+    BUILD_SSM=true
+fi
+
+if test -d ${INSTALL_DIR}/include/privateer; then
+    true
+else
+    BUILD_PRIVATEER=true
+fi
+
+if test -d ${INSTALL_DIR}/include/clipper; then
+    true
+else
+    BUILD_CLIPPER=true
+fi
+
+if test -d ${INSTALL_DIR}/include/mmdb2; then
+    true
+else
+    BUILD_MMDB2=true
+fi
+
+if test -d ${INSTALL_DIR}/include/rfftw; then
+    true
+else
+    BUILD_FFTW=true
+fi
+
+if test -d ${INSTALL_DIR}/include/ccp4; then
+    true
+else
+    BUILD_LIBCCP4=true
+fi
 
 if test -d ${INSTALL_DIR}/include/gsl; then
     true
@@ -195,12 +376,11 @@ else
     BUILD_LIBEIGEN=true
 fi
 
-if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/wasm/moorhen.wasm; then
+if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.wasm; then
     true
 else
     BUILD_MOORHEN=true
 fi
-
 
 for mod in $MODULES; do
     case $mod in
@@ -225,28 +405,62 @@ for mod in $MODULES; do
        eigen) echo "Force build eigen"
        BUILD_LIBEIGEN=true
        ;;
+       libccp4) echo "Force build libccp4"
+       BUILD_LIBCCP4=true
+       ;;
+       fftw) echo "Force build fftw"
+       BUILD_FFTW=true
+       ;;
+       mmdb2) echo "Force build mmdb2"
+       BUILD_MMDB2=true
+       ;;
+       clipper) echo "Force build clipper"
+       BUILD_CLIPPER=true
+       ;;
+       privateer) echo "Force build privateer"
+       BUILD_PRIVATEER=true
+       ;;
+       ssm) echo "Force build ssm"
+       BUILD_SSM=true
+       ;;
+       slicendice) echo "Force build slicendice"
+       BUILD_SLICENDICE=true
+       ;;
        moorhen) echo "Force build moorhen"
        BUILD_MOORHEN=true
        ;;
     esac
 done
 
-echo "BUILD_GSL       " $BUILD_GSL
-echo "BUILD_BOOST     " $BUILD_BOOST
-echo "BUILD_IGRAPH    " $BUILD_IGRAPH
-echo "BUILD_GEMMI     " $BUILD_GEMMI
-echo "BUILD_JSONCPP   " $BUILD_JSONCPP
-echo "BUILD_RDKIT     " $BUILD_RDKIT
-echo "BUILD_GRAPHENE  " $BUILD_GRAPHENE
-echo "BUILD_LIBSIGCPP " $BUILD_LIBSIGCPP
-echo "BUILD_LIBEIGEN  " $BUILD_LIBEIGEN
-echo "BUILD_MOORHEN   " $BUILD_MOORHEN
+echo "BUILD_GSL        " $BUILD_GSL
+echo "BUILD_BOOST      " $BUILD_BOOST
+echo "BUILD_IGRAPH     " $BUILD_IGRAPH
+echo "BUILD_GEMMI      " $BUILD_GEMMI
+echo "BUILD_JSONCPP    " $BUILD_JSONCPP
+echo "BUILD_RDKIT      " $BUILD_RDKIT
+echo "BUILD_GRAPHENE   " $BUILD_GRAPHENE
+echo "BUILD_LIBSIGCPP  " $BUILD_LIBSIGCPP
+echo "BUILD_LIBEIGEN   " $BUILD_LIBEIGEN
+echo "BUILD_LIBCCP4    " $BUILD_LIBCCP4
+echo "BUILD_FFTW       " $BUILD_FFTW
+echo "BUILD_MMDB2      " $BUILD_MMDB2
+echo "BUILD_CLIPPER    " $BUILD_CLIPPER
+echo "BUILD_PRIVATEER  " $BUILD_PRIVATEER
+echo "BUILD_SSM        " $BUILD_SSM
+echo "BUILD_SLICENDICE " $BUILD_SLICENDICE
+echo "BUILD_MOORHEN    " $BUILD_MOORHEN
 
 #eigen
 if [ $BUILD_LIBEIGEN = true ]; then
+    eigen_version=3.3.9
+    if [ -e eigen-$eigen_version.tar.gz ] ; then
+        :
+    else
+        wget https://gitlab.com/libeigen/eigen/-/archive/$eigen_version/eigen-$eigen_version.tar.gz
+    fi
     mkdir -p ${BUILD_DIR}/eigen_build
     cd ${BUILD_DIR}/eigen_build
-    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/eigen-$libeigen_release
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/eigen-$eigen_version
     make install
 fi
 
@@ -355,22 +569,9 @@ END
     export PKG_CONFIG_LIBDIR=${INSTALL_DIR}/lib/
 fi
 
-#Moorhen
-if [ $BUILD_MOORHEN = true ]; then
-    mkdir -p ${BUILD_DIR}/moorhen_build
-    cd ${BUILD_DIR}/moorhen_build
-    emcmake cmake -DMEMORY64=${MEMORY64} -DCMAKE_EXE_LINKER_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}
-    emmake make -j ${NUMPROCS}
-    emmake make install
-    cd ${MOORHEN_SOURCE_DIR}/baby-gru/
-    npm install
-    cd ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru
-    ln -s ${MOORHEN_SOURCE_DIR}/checkout/monomers
-fi
-
 # Graphene
 if [ $BUILD_GRAPHENE = true ]; then
-    pushd ${MOORHEN_SOURCE_DIR}/checkout/graphene-$graphene_release/
+    cd ${MOORHEN_SOURCE_DIR}/checkout/graphene-$graphene_release/
     CFLAGS="-s USE_PTHREADS $MOORHEN_CMAKE_FLAGS" LDFLAGS=" -lpthread $MOORHEN_CMAKE_FLAGS" meson setup ${BUILD_DIR}/graphene_build \
         --prefix=${INSTALL_DIR} \
         --cross-file=$MESON_CROSS \
@@ -378,12 +579,12 @@ if [ $BUILD_GRAPHENE = true ]; then
         --buildtype=release \
         -Dtests=false && \
         meson install -C ${BUILD_DIR}/graphene_build
-        popd
+    cd ${BUILD_DIR}
 fi
 
 # Libsigc++
 if [ $BUILD_LIBSIGCPP = true ]; then
-    pushd ${MOORHEN_SOURCE_DIR}/checkout/libsigcplusplus-$libsigcpp_release/
+    cd ${MOORHEN_SOURCE_DIR}/checkout/libsigcplusplus-$libsigcpp_release/
     meson setup ${BUILD_DIR}/libsigcplusplus_build \
         --prefix=${INSTALL_DIR} \
         --libdir=lib \
@@ -395,6 +596,82 @@ if [ $BUILD_LIBSIGCPP = true ]; then
         --buildtype=release \
         -Dbuild-tests=false && \
         meson install -C ${BUILD_DIR}/libsigcplusplus_build
-        popd
-    
+    cd ${BUILD_DIR}
+fi
+
+#ccp4
+if [ $BUILD_LIBCCP4 = true ]; then
+    mkdir -p ${BUILD_DIR}/ccp4_build
+    cd ${BUILD_DIR}/ccp4_build
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/ccp4 -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}"
+    emmake make -j ${NUMPROCS}
+    emmake make install
+fi
+
+#fftw
+if [ $BUILD_FFTW = true ]; then
+    mkdir -p ${BUILD_DIR}/fftw_build
+    cd ${BUILD_DIR}/fftw_build
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/fftw  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}"
+    emmake make -j ${NUMPROCS}
+    emmake make install
+fi
+
+#mmdb2
+if [ $BUILD_MMDB2 = true ]; then
+    mkdir -p ${BUILD_DIR}/mmdb2_build
+    cd ${BUILD_DIR}/mmdb2_build
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/mmdb2  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}"
+    emmake make -j ${NUMPROCS}
+    emmake make install
+fi
+
+#clipper
+if [ $BUILD_CLIPPER = true ]; then
+    mkdir -p ${BUILD_DIR}/clipper_build
+    cd ${BUILD_DIR}/clipper_build
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/clipper -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
+    emmake make -j ${NUMPROCS}
+    emmake make install
+fi
+
+#privateer
+if [ $BUILD_PRIVATEER = true ]; then
+    mkdir -p ${BUILD_DIR}/privateer_build
+    cd ${BUILD_DIR}/privateer_build
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/privateer  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
+    emmake make -j ${NUMPROCS}
+    emmake make install
+fi
+
+#ssm
+if [ $BUILD_SSM = true ]; then
+    mkdir -p ${BUILD_DIR}/ssm_build
+    cd ${BUILD_DIR}/ssm_build
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/ssm  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
+    emmake make -j ${NUMPROCS}
+    emmake make install
+fi
+
+#slicendice_cpp
+if [ $BUILD_SLICENDICE = true ]; then
+    mkdir -p ${BUILD_DIR}/slicendice_cpp_build
+    cd ${BUILD_DIR}/slicendice_cpp_build
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/slicendice_cpp  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
+    emmake make -j ${NUMPROCS}
+    emmake make install
+fi
+
+#Moorhen
+if [ $BUILD_MOORHEN = true ]; then
+    BOOST_CMAKE_STUFF=`for i in ${INSTALL_DIR}/lib/cmake/boost*; do j=${i%-$boost_release}; k=${j#${INSTALL_DIR}/lib/cmake/boost_}; echo -Dboost_${k}_DIR=$i; done`
+    mkdir -p ${BUILD_DIR}/moorhen_build
+    cd ${BUILD_DIR}/moorhen_build
+    emcmake cmake -DMEMORY64=${MEMORY64} -DCMAKE_EXE_LINKER_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw -I${INSTALL_DIR}/include/eigen3 -I${INSTALL_DIR}/include/ssm -I${MOORHEN_SOURCE_DIR}/checkout/glm-0.9.9.8 -I${INSTALL_DIR}/include/privateer -I${INSTALL_DIR}/include/privateer/pybind11" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw -I${INSTALL_DIR}/include/eigen3 -I${INSTALL_DIR}/include/ssm -I${MOORHEN_SOURCE_DIR}/checkout/glm-0.9.9.8 -I${INSTALL_DIR}/include/privateer -I${INSTALL_DIR}/include/privateer/pybind11" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR} -DCMAKE_PREFIX_PATH=${INSTALL_DIR} -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake -DRDKit_DIR=${INSTALL_DIR}/lib/cmake/rdkit -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include/boost -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DEigen3_DIR=${INSTALL_DIR}/share/eigen3/cmake/
+    emmake make -j ${NUMPROCS}
+    emmake make install
+    cd ${MOORHEN_SOURCE_DIR}/baby-gru/
+    npm install
+    cd ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru
+    ln -s ${MOORHEN_SOURCE_DIR}/checkout/monomers
 fi
