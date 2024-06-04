@@ -59,11 +59,11 @@ getclipper() {
 }
 
 getssm() {
+    cdcheckout
     if [ -r ssm-$ssm_release ]; then
         echo "Using existing ssm"
     else
         echo "Checking out ssm"
-        cdcheckout
         curl http://ftp.ccp4.ac.uk/opensource/ssm-$ssm_release.tar.gz -o ssm-$ssm_release.tar.gz
         echo
         echo "Unpacking ssm source"
