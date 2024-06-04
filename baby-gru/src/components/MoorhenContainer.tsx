@@ -452,7 +452,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     return <SnackbarProvider 
         hideIconVariant={false}
         autoHideDuration={4000}
-        maxSnack={10}
+        maxSnack={20}
         anchorOrigin={{horizontal: 'center', vertical: 'top'}}
         transitionDuration={ { enter: 500, exit: 300 }}
         Components={{
