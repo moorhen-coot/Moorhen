@@ -12,8 +12,8 @@ void main(void) {
     float depth;
     depth = texture2D(depthPeelSamplers,vTexture).r;
     if(depth<1.0) {
-        vec4 color = texture(colorPeelSamplers, vTexture);
-        fragColor = color;
+        vec4 color = texture2D(colorPeelSamplers, vTexture);
+        gl_FragColor = color;
     } else {
         discard;
     }
