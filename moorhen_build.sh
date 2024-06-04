@@ -348,7 +348,7 @@ else
     BUILD_GSL=true
 fi
 
-if test -d ${INSTALL_DIR}/include/boost; then
+if test -d ${INSTALL_DIR}/lib/cmake/Boost-${boost_release}; then
     true
 else
     BUILD_BOOST=true
