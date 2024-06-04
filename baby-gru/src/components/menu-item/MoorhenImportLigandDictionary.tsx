@@ -336,6 +336,7 @@ export const MoorhenImportDictionaryMenuItem = (props: {
                 <option key="File" value="File">From local file</option>
                 <option key="Library" value="Library">From monomer library</option>
                 <option key="MRC" value="MRC">Fetch from MRC-LMB</option>
+                <option key="PDBe" value="PDBe">Fetch from PDBe</option>
             </Form.Select>
         </Form.Group>
         {fileOrLibrary === 'File' ? <>
@@ -402,6 +403,9 @@ export const MoorhenImportDictionaryMenuItem = (props: {
             return fetchLigandDictFromUrl(url)
         } else if (fileOrLibraryRef.current === "MRC" && tlcValueRef.current) {
             const url = `https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/${tlcValueRef.current.toLowerCase()[0]}/${tlcValueRef.current.toUpperCase()}.cif`
+            return fetchLigandDictFromUrl(url)
+        } else if (fileOrLibraryRef.current === "PDBe" && tlcValueRef.current) {
+            const url = `https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/${tlcValueRef.current.toUpperCase()}.cif`
             return fetchLigandDictFromUrl(url)
         } else {
             console.log(`Unkown ligand source or invalid input`)
