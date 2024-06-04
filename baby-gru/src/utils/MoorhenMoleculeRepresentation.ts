@@ -571,7 +571,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         }))
     }
 
-    async getNucleotideRepresentationBuffers(style: "StickBases" | "DishyBases", cidSelection: string): Promise<libcootApi.InstancedMeshJS[]> {
+    async getNucleotideRepresentationBuffers(cidSelection: string): Promise<libcootApi.InstancedMeshJS[]> {
+        const style = this.useDefaultM2tParams ? this.parentMolecule.defaultM2tParams.nucleotideRibbonStyle : this.m2tParams.nucleotideRibbonStyle
+        
         await Promise.all([
             this.commandCentre.current.cootCommand({
                 returnType: "status",
@@ -633,7 +635,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         let resultBufferObjects = []
         let ribbonBufferObjects = [response.data.result.result]
         if (m2tStyle === 'Ribbon' && this.parentMolecule.hasDNA) {
-            const nucleotideBufferObjects = await this.getNucleotideRepresentationBuffers(this.m2tParams.nucleotideRibbonStyle, m2tSelection)
+            const nucleotideBufferObjects = await this.getNucleotideRepresentationBuffers(m2tSelection)
             for (let i=0; i < nucleotideBufferObjects.length; i++) {
                 let iObjects = {}
                 for (let key in nucleotideBufferObjects[i]) {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Form, Stack } from "react-bootstrap";
+import { Form, FormSelect, Stack } from "react-bootstrap";
 import { IconButton, Popover, Slider } from '@mui/material';
 import { MoorhenSlider } from '../misc/MoorhenSlider';
 import { AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
@@ -257,13 +257,16 @@ const RibbonSettingsPanel = (props: {
     setRibbonDNARNAWidth: React.Dispatch<React.SetStateAction<number>>;
     ribbonAxialSampling: number;
     setRibbonAxialSampling: React.Dispatch<React.SetStateAction<number>>;
+    nucleotideRibbonStyle: "DishyBases" | "StickBases";
+    setNucleotideRibbonStyle: React.Dispatch<React.SetStateAction<"DishyBases" | "StickBases">>;
 }) => {
 
     const {
         ribbonCoilThickness, setRibbonCoilThickness, ribbonHelixWidth, 
         setRibbonHelixWidth, ribbonStrandWidth, setRibbonStrandWidth, 
         ribbonArrowWidth, setRibbonArrowWidth, ribbonDNARNAWidth, 
-        setRibbonDNARNAWidth, ribbonAxialSampling, setRibbonAxialSampling
+        setRibbonDNARNAWidth, ribbonAxialSampling, setRibbonAxialSampling,
+        nucleotideRibbonStyle, setNucleotideRibbonStyle
     } = props
 
     return <div style={{paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', borderStyle: 'solid', borderWidth: '1px', borderColor: 'grey', borderRadius: '1.5rem'}}>
@@ -334,6 +337,13 @@ const RibbonSettingsPanel = (props: {
             maxVal={15}
             allowFloats={false}
             logScale={false}/>
+        <Form.Group style={{ margin: '0px', width: '100%' }}>
+            <Form.Label>Nucleotide ribbon style</Form.Label>
+            <FormSelect size="sm" value={nucleotideRibbonStyle} onChange={(evt) => setNucleotideRibbonStyle(evt.target.value as "DishyBases" | "StickBases")}>
+                <option value={'StickBases'}>Sticks</option>
+                <option value={'DishyBases'}>Dishes</option>
+            </FormSelect>
+        </Form.Group>
     </div>
 }
 
@@ -471,6 +481,8 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
         setRibbonDNARNAWidth: React.Dispatch<React.SetStateAction<number>>;
         ribbonAxialSampling: number;
         setRibbonAxialSampling: React.Dispatch<React.SetStateAction<number>>;
+        nucleotideRibbonStyle: "DishyBases" | "StickBases";
+        setNucleotideRibbonStyle: React.Dispatch<React.SetStateAction<"DishyBases" | "StickBases">>;    
     };
     molSurfSettingsProps: {
         surfaceStyleProbeRadius: number;

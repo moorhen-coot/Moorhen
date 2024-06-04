@@ -249,7 +249,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                         <option value={'StickBases'}>Sticks</option>
                         <option value={'DishyBases'}>Dishes</option>
                     </FormSelect>
-                </Form.Group>            
+                </Form.Group>
                 }
                 <Form.Group style={{ width: '100%', margin: 0 }}>
                     <Form.Label>Residue selection</Form.Label>
