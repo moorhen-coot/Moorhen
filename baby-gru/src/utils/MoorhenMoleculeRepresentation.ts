@@ -590,7 +590,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         ])
 
         const result = await this.commandCentre.current.cootCommand({
-            returnType: "mesh",
+            returnType: "mesh_perm3",
             command: "get_molecular_representation_mesh",
             commandArgs: [
                 this.parentMolecule.molNo, cidSelection, "colorRampChainsScheme", style

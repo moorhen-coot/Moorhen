@@ -737,6 +737,23 @@ void getReversedNormalsFromSimpleMesh2(const coot::simple_mesh_t &m, const emscr
 
 }
 
+void getReversedNormalsFromSimpleMesh3(const coot::simple_mesh_t &m, const emscripten::val &v){
+
+    const auto &vertices = m.vertices;
+
+    std::vector<float> floatArray;
+    floatArray.reserve(vertices.size()*3);
+
+    for(const auto &v : vertices){
+        floatArray.push_back(v.normal[0]);
+        floatArray.push_back(v.normal[1]);
+        floatArray.push_back(v.normal[2]);
+    }
+
+    setFloat32ArrayFromVector(floatArray,v);
+
+}
+
 void getNormalsFromSimpleMesh2(const coot::simple_mesh_t &m, const emscripten::val &v){
 
     const auto &vertices = m.vertices;
@@ -1005,6 +1022,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("testFloat32Array", &testFloat32Array);
     function("getPositionsFromSimpleMesh2", &getPositionsFromSimpleMesh2);
     function("getReversedNormalsFromSimpleMesh2", &getReversedNormalsFromSimpleMesh2);
+    function("getReversedNormalsFromSimpleMesh3", &getReversedNormalsFromSimpleMesh3);
     function("getNormalsFromSimpleMesh2", &getNormalsFromSimpleMesh2);
     function("getColoursFromSimpleMesh2", &getColoursFromSimpleMesh2);
     function("getPositionsFromSimpleMesh", &getPositionsFromSimpleMesh);
