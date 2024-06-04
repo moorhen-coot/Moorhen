@@ -244,7 +244,7 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
     }
 }
 
-const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean = false): libcootApi.SimpleMeshJS => {
+const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean = false, keepNorm: boolean = false): libcootApi.SimpleMeshJS => {
 
     const print_timing = false
     const ts = performance.now()
@@ -264,7 +264,11 @@ const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean 
     cootModule.getColoursFromSimpleMesh2(simpleMesh,totCol_C)
 
     if (perm){
-        cootModule.getReversedNormalsFromSimpleMesh2(simpleMesh,totNorm_C)
+        if(keepNorm){
+            cootModule.getReversedNormalsFromSimpleMesh3(simpleMesh,totNorm_C)
+        } else {
+            cootModule.getReversedNormalsFromSimpleMesh2(simpleMesh,totNorm_C)
+        }
         cootModule.getPermutedTriangleIndicesFromSimpleMesh2(simpleMesh,totIdxs_C)
     } else {
         cootModule.getNormalsFromSimpleMesh2(simpleMesh,totNorm_C)
@@ -1143,6 +1147,9 @@ const doCootCommand = (messageData: {
                 break;
             case 'instanced_mesh':
                 returnResult = instancedMeshToMeshData(cootResult, false, false, 5)
+                break;
+            case 'mesh_perm3':
+                returnResult = simpleMeshToMeshData(cootResult, true, true)
                 break;
             case 'mesh_perm':
                 returnResult = simpleMeshToMeshData(cootResult, true)

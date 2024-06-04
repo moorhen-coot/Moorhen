@@ -482,6 +482,7 @@ export namespace libcootApi {
         getPositionsFromSimpleMesh2( arg0: any, arg1: any ): void;
         getNormalsFromSimpleMesh2( arg0: any, arg1: any ): void;
         getReversedNormalsFromSimpleMesh2( arg0: any, arg1: any ): void;
+        getReversedNormalsFromSimpleMesh3( arg0: any, arg1: any ): void;
         getColoursFromSimpleMesh2( arg0: any, arg1: any ): void;
         getLineIndicesFromSimpleMesh( arg0: any ): Uint32Array;
         getPermutedTriangleIndicesFromSimpleMesh( arg0: any ): Uint32Array;
