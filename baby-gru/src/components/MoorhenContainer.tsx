@@ -454,7 +454,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         autoHideDuration={4000}
         maxSnack={20}
         anchorOrigin={{horizontal: 'center', vertical: 'top'}}
-        transitionDuration={ { enter: 500, exit: 300 }}
+        transitionDuration={{ enter: 500, exit: 300 }}
         Components={{
             goToResidue: MoorhenGoToResidueSnackbar,
             screenRecorder: MoorhenRecordingSnackBar,

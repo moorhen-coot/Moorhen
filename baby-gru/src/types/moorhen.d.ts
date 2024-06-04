@@ -925,6 +925,11 @@ export namespace moorhen {
             height: number;
             width: number;
             isDark: boolean;
+            envDistancesSettings: {
+                labelled: boolean;
+                showHBonds: boolean;
+                showContacts: boolean;
+            };
         };
         miscAppSettings: {
             defaultExpandDisplayCards: boolean; 

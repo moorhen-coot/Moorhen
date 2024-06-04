@@ -431,8 +431,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         }    
     }
 
-    async getEnvironmentBuffers(cid: string, labelled: boolean = true) {
+    async getEnvironmentBuffers(cid: string) {
         const resSpec = cidToSpec(cid)
+        
         const response = await this.commandCentre.current.cootCommand({
             returnType: "generic_3d_lines_bonds_box",
             command: "make_exportable_environment_bond_box",
@@ -440,8 +441,10 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         }, false)
         const envDistances = response.data.result.result
 
-        const bumps = envDistances[0];
-        const hbonds = envDistances[1];
+        const envDistancesSettings = this.parentMolecule.store.getState().sceneSettings.envDistancesSettings
+        
+        const bumps = envDistancesSettings.showContacts ? envDistances[0] : []
+        const hbonds = envDistancesSettings.showHBonds ? envDistances[1] : []
 
         const bumpAtomsPairs = bumps.map(bump => {
             const start = bump.start
@@ -465,7 +468,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             return pair
         })
 
-        let originNeighboursBump = this.getGemmiAtomPairsBuffers(bumpAtomsPairs, [0.7, 0.4, 0.25, 1.0], labelled)
+        let originNeighboursBump = this.getGemmiAtomPairsBuffers(bumpAtomsPairs, [0.7, 0.4, 0.25, 1.0], envDistancesSettings.labelled)
 
         const hbondAtomsPairs = hbonds.map(hbond => {
             const start = hbond.start
@@ -489,7 +492,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             return pair
         })
         
-        let originNeighboursHBond = this.getGemmiAtomPairsBuffers(hbondAtomsPairs, [0.7, 0.2, 0.7, 1.0], labelled)
+        let originNeighboursHBond = this.getGemmiAtomPairsBuffers(hbondAtomsPairs, [0.7, 0.2, 0.7, 1.0], envDistancesSettings.labelled)
         
         return originNeighboursBump.concat(originNeighboursHBond)
     }

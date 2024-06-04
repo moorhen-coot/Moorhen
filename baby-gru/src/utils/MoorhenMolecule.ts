@@ -1337,10 +1337,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     /**
      * Draw enviroment distances for a given residue
-     * @param {string} selectionCid - The CID
-     * @param {boolean} [labelled=false] - Indicates whether the distances should be labelled
+     * @param {string} selectionCid - The CID selection to draw the environment
      */
-    async drawEnvironment(selectionCid: string, labelled: boolean = false): Promise<void> {
+    async drawEnvironment(selectionCid: string): Promise<void> {
         if (typeof selectionCid === 'string') {
             this.environmentRepresentation.cid = selectionCid
             await this.environmentRepresentation.redraw()
