@@ -12,8 +12,9 @@ else
     MOORHEN_SOURCE_DIR=`dirname -- "$( readlink -f -- "$0"; )"`
 fi
 
-. ./VERSIONS
-
+. ${MOORHEN_SOURCE_DIR}/VERSIONS
+#This defines geteigen, getgsl, getclipper, etc.
+. ${MOORHEN_SOURCE_DIR}/get_sources_funs
 
 if [ x`uname -s` = x"Darwin" ]; then
     NUMPROCS=`sysctl -n hw.ncpu`
@@ -471,20 +472,16 @@ echo "BUILD_MOORHEN    " $BUILD_MOORHEN
 
 #eigen
 if [ $BUILD_LIBEIGEN = true ]; then
-    eigen_version=3.3.9
-    if [ -e eigen-$eigen_version.tar.gz ] ; then
-        :
-    else
-        wget https://gitlab.com/libeigen/eigen/-/archive/$eigen_version/eigen-$eigen_version.tar.gz
-    fi
+    geteigen
     mkdir -p ${BUILD_DIR}/eigen_build
     cd ${BUILD_DIR}/eigen_build
-    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/eigen-$eigen_version
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/eigen-$libeigen_release
     make install
 fi
 
 #gsl
 if [ $BUILD_GSL = true ]; then
+    getgsl
     mkdir -p ${BUILD_DIR}/gsl_build
     cd ${BUILD_DIR}/gsl_build
     emconfigure ${MOORHEN_SOURCE_DIR}/gsl-2.7.1/configure --prefix=${INSTALL_DIR}
@@ -494,6 +491,7 @@ fi
 
 #boost with cmake
 if [ $BUILD_BOOST = true ]; then
+    getboost
     mkdir -p ${BUILD_DIR}/boost
     cd ${BUILD_DIR}/boost
     emcmake cmake -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/boost-$boost_release -DBOOST_EXCLUDE_LIBRARIES="context;fiber;fiber_numa;asio;log;coroutine;cobalt;nowide"
@@ -503,6 +501,7 @@ fi
 
 #RDKit
 if [ $BUILD_RDKIT = true ]; then
+    getrdkit
     BOOST_CMAKE_STUFF=`for i in ${INSTALL_DIR}/lib/cmake/boost*; do j=${i%-$boost_release}; k=${j#${INSTALL_DIR}/lib/cmake/boost_}; echo -Dboost_${k}_DIR=$i; done`
     mkdir -p ${BUILD_DIR}/rdkit_build
     cd ${BUILD_DIR}/rdkit_build
@@ -513,6 +512,7 @@ fi
 
 #gemmi
 if [ $BUILD_GEMMI = true ]; then
+    getgemmi
     mkdir -p ${BUILD_DIR}/gemmi_build
     cd ${BUILD_DIR}/gemmi_build
     emcmake cmake  -DCMAKE_EXE_LINKER_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/gemmi
@@ -522,6 +522,7 @@ fi
 
 #jsoncpp
 if [ $BUILD_JSONCPP = true ]; then
+    getjsoncpp
     mkdir -p ${BUILD_DIR}/jsoncpp_build
     cd ${BUILD_DIR}/jsoncpp_build
     emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/jsoncpp -DJSONCPP_WITH_TESTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}"
@@ -531,6 +532,7 @@ fi
 
 #igraph
 if [ $BUILD_IGRAPH = true ]; then
+    getigraph
     mkdir -p ${BUILD_DIR}/igraph_build
     cd ${BUILD_DIR}/igraph_build
     if test x"${MEMORY64}" = x"1"; then
@@ -547,7 +549,6 @@ fi
 # Setup for meson
 if [ $BUILD_LIBSIGCPP = true ] || [ $BUILD_GRAPHENE = true ]; then
     cd ${BUILD_DIR}
-
 
     export CHOST="wasm32-unknown-linux"
     export ax_cv_c_float_words_bigendian=no
@@ -590,6 +591,7 @@ fi
 
 # Graphene
 if [ $BUILD_GRAPHENE = true ]; then
+    getgraphene
     cd ${MOORHEN_SOURCE_DIR}/checkout/graphene-$graphene_release/
     CFLAGS="-s USE_PTHREADS $MOORHEN_CMAKE_FLAGS" LDFLAGS=" -lpthread $MOORHEN_CMAKE_FLAGS" meson setup ${BUILD_DIR}/graphene_build \
         --prefix=${INSTALL_DIR} \
@@ -603,6 +605,7 @@ fi
 
 # Libsigc++
 if [ $BUILD_LIBSIGCPP = true ]; then
+    getsigcpp
     cd ${MOORHEN_SOURCE_DIR}/checkout/libsigcplusplus-$libsigcpp_release/
     meson setup ${BUILD_DIR}/libsigcplusplus_build \
         --prefix=${INSTALL_DIR} \
@@ -620,6 +623,7 @@ fi
 
 #ccp4
 if [ $BUILD_LIBCCP4 = true ]; then
+    getlibccp4
     mkdir -p ${BUILD_DIR}/ccp4_build
     cd ${BUILD_DIR}/ccp4_build
     emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/ccp4 -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}"
@@ -629,6 +633,7 @@ fi
 
 #fftw
 if [ $BUILD_FFTW = true ]; then
+    getfftw
     mkdir -p ${BUILD_DIR}/fftw_build
     cd ${BUILD_DIR}/fftw_build
     emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/fftw  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}"
@@ -638,6 +643,7 @@ fi
 
 #mmdb2
 if [ $BUILD_MMDB2 = true ]; then
+    getmmdb2
     mkdir -p ${BUILD_DIR}/mmdb2_build
     cd ${BUILD_DIR}/mmdb2_build
     emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/mmdb2  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}"
@@ -647,6 +653,7 @@ fi
 
 #clipper
 if [ $BUILD_CLIPPER = true ]; then
+    getclipper
     mkdir -p ${BUILD_DIR}/clipper_build
     cd ${BUILD_DIR}/clipper_build
     emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/clipper -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
@@ -656,6 +663,7 @@ fi
 
 #privateer
 if [ $BUILD_PRIVATEER = true ]; then
+    getprivateer
     mkdir -p ${BUILD_DIR}/privateer_build
     cd ${BUILD_DIR}/privateer_build
     emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/privateer  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
@@ -665,6 +673,7 @@ fi
 
 #ssm
 if [ $BUILD_SSM = true ]; then
+    getssm
     mkdir -p ${BUILD_DIR}/ssm_build
     cd ${BUILD_DIR}/ssm_build
     emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/ssm  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
@@ -674,6 +683,7 @@ fi
 
 #slicendice_cpp
 if [ $BUILD_SLICENDICE = true ]; then
+    getslicendice
     mkdir -p ${BUILD_DIR}/slicendice_cpp_build
     cd ${BUILD_DIR}/slicendice_cpp_build
     emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/slicendice_cpp  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
@@ -684,6 +694,9 @@ fi
 #Moorhen
 if [ $BUILD_MOORHEN = true ]; then
     BOOST_CMAKE_STUFF=`for i in ${INSTALL_DIR}/lib/cmake/boost*; do j=${i%-$boost_release}; k=${j#${INSTALL_DIR}/lib/cmake/boost_}; echo -Dboost_${k}_DIR=$i; done`
+    getglm
+    getcoot
+    getmonomers
     mkdir -p ${BUILD_DIR}/moorhen_build
     cd ${BUILD_DIR}/moorhen_build
     emcmake cmake -DMEMORY64=${MEMORY64} -DCMAKE_EXE_LINKER_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw -I${INSTALL_DIR}/include/eigen3 -I${INSTALL_DIR}/include/ssm -I${MOORHEN_SOURCE_DIR}/checkout/glm-0.9.9.8 -I${INSTALL_DIR}/include/privateer -I${INSTALL_DIR}/include/privateer/pybind11" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw -I${INSTALL_DIR}/include/eigen3 -I${INSTALL_DIR}/include/ssm -I${MOORHEN_SOURCE_DIR}/checkout/glm-0.9.9.8 -I${INSTALL_DIR}/include/privateer -I${INSTALL_DIR}/include/privateer/pybind11" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR} -DCMAKE_PREFIX_PATH=${INSTALL_DIR} -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake -DRDKit_DIR=${INSTALL_DIR}/lib/cmake/rdkit -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include/boost -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DEigen3_DIR=${INSTALL_DIR}/share/eigen3/cmake/
@@ -692,5 +705,5 @@ if [ $BUILD_MOORHEN = true ]; then
     cd ${MOORHEN_SOURCE_DIR}/baby-gru/
     npm install
     cd ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru
-    ln -s ${MOORHEN_SOURCE_DIR}/checkout/monomers
+    ln -sf ${MOORHEN_SOURCE_DIR}/checkout/monomers
 fi
