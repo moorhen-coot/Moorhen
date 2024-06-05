@@ -5,10 +5,10 @@ import { useEffect, useState } from 'react';
 
 
 class LhasaWrapperProps {
-    rdkit_molecule_pickle?: Uint8Array;
+    rdkit_molecule_pickle_map?: Map<string,Uint8Array>;
 }
 
-function LhasaWrapper({rdkit_molecule_pickle}: LhasaWrapperProps) {
+function LhasaWrapper({rdkit_molecule_pickle_map}: LhasaWrapperProps) {
     const [isCootAttached, setCootAttached] = useState(() => { 
         // @ts-ignore
         return window.cootModule !== undefined;
@@ -33,7 +33,7 @@ function LhasaWrapper({rdkit_molecule_pickle}: LhasaWrapperProps) {
                     Lhasa={window.cootModule}
                     show_footer={false}
                     show_top_panel={false}
-                    rdkit_molecule_pickle={rdkit_molecule_pickle}
+                    rdkit_molecule_pickle_map={rdkit_molecule_pickle_map}
                     icons_path_prefix='/baby-gru/pixmaps/lhasa_icons'
                 />
             }
