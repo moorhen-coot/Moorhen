@@ -78,19 +78,19 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
            discard;
       }
 
-      if(peelNumber>0) {
-          vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*xSSAOScaling);
-          float max_depth;
-          max_depth = texture(depthPeelSamplers,tex_coord).r;
-          if(gl_FragCoord.z <= max_depth || abs(gl_FragCoord.z - max_depth)<1e-6 ) {
-              discard;
-          }
-      }
-
       vec4 pos = eyePos;
       pos.z += silly_scale*z*size_v;
       pos = projMatrix * pos;
       gl_FragDepth = (pos.z / pos.w + 1.0) / 2.0;
+
+      if(peelNumber>0) {
+          vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*xSSAOScaling);
+          float max_depth;
+          max_depth = texture(depthPeelSamplers,tex_coord).r;
+          if(gl_FragDepth <= max_depth || abs(gl_FragDepth - max_depth)<1e-6 ) {
+              discard;
+          }
+      }
 
       float clipd;
       float clipd_back;
