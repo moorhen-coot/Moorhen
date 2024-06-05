@@ -42,6 +42,11 @@ else
    MODULES=$*
 fi
 
+fail() {
+    echo $1
+    exit 1
+}
+
 clearboost() {
     echo "Clear boost"
     rm -rf ${BUILD_DIR}/boost
@@ -476,7 +481,7 @@ if [ $BUILD_LIBEIGEN = true ]; then
     mkdir -p ${BUILD_DIR}/eigen_build
     cd ${BUILD_DIR}/eigen_build
     emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/eigen-$libeigen_release
-    make install
+    make install || fail "Error installing eigen, giving up."
 fi
 
 #gsl
@@ -486,7 +491,7 @@ if [ $BUILD_GSL = true ]; then
     cd ${BUILD_DIR}/gsl_build
     emconfigure ${MOORHEN_SOURCE_DIR}/gsl-2.7.1/configure --prefix=${INSTALL_DIR}
     emmake make LDFLAGS=-all-static -j ${NUMPROCS} CXXFLAGS="${MOORHEN_CMAKE_FLAGS}" CFLAGS="${MOORHEN_CMAKE_FLAGS}"
-    emmake make install
+    emmake make install || fail "Error installing gsl, giving up."
 fi
 
 #boost with cmake
@@ -496,7 +501,7 @@ if [ $BUILD_BOOST = true ]; then
     cd ${BUILD_DIR}/boost
     emcmake cmake -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/boost-$boost_release -DBOOST_EXCLUDE_LIBRARIES="context;fiber;fiber_numa;asio;log;coroutine;cobalt;nowide"
     emmake make -j ${NUMPROCS}
-    emmake make install
+    emmake make install || fail "Error installing boost, giving up."
 fi
 
 #RDKit
@@ -507,7 +512,7 @@ if [ $BUILD_RDKIT = true ]; then
     cd ${BUILD_DIR}/rdkit_build
     emcmake cmake -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_STACKTRACE=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -Wno-enum-constexpr-conversion -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
     emmake make -j ${NUMPROCS}
-    emmake make install
+    emmake make install || fail "Error installing RDKit, giving up."
 fi
 
 #gemmi
@@ -517,7 +522,7 @@ if [ $BUILD_GEMMI = true ]; then
     cd ${BUILD_DIR}/gemmi_build
     emcmake cmake  -DCMAKE_EXE_LINKER_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/gemmi
     emmake make -j ${NUMPROCS}
-    emmake make install
+    emmake make install || fail "Error installing gemmi, giving up."
 fi
 
 #jsoncpp
@@ -527,7 +532,7 @@ if [ $BUILD_JSONCPP = true ]; then
     cd ${BUILD_DIR}/jsoncpp_build
     emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/jsoncpp -DJSONCPP_WITH_TESTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}"
     emmake make -j ${NUMPROCS}
-    emmake make install
+    emmake make install || fail "Error installing jsoncpp, giving up."
 fi
 
 #igraph
@@ -543,7 +548,7 @@ if [ $BUILD_IGRAPH = true ]; then
         emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/igraph -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}"
         emmake make -j ${NUMPROCS}
     fi
-    emmake make install
+    emmake make install || fail "Error installing igraph, giving up."
 fi
 
 # Setup for meson
@@ -599,7 +604,7 @@ if [ $BUILD_GRAPHENE = true ]; then
         --default-library=static \
         --buildtype=release \
         -Dtests=false && \
-        meson install -C ${BUILD_DIR}/graphene_build
+        meson install -C ${BUILD_DIR}/graphene_build || fail "Error installing graphene, giving up."
     cd ${BUILD_DIR}
 fi
 
@@ -617,7 +622,7 @@ if [ $BUILD_LIBSIGCPP = true ]; then
         -Dcpp_args="-s USE_PTHREADS=1 $MOORHEN_CMAKE_FLAGS" \
         --buildtype=release \
         -Dbuild-tests=false && \
-        meson install -C ${BUILD_DIR}/libsigcplusplus_build
+        meson install -C ${BUILD_DIR}/libsigcplusplus_build || fail "Error installing sigc++, giving up."
     cd ${BUILD_DIR}
 fi
 
@@ -628,7 +633,7 @@ if [ $BUILD_LIBCCP4 = true ]; then
     cd ${BUILD_DIR}/ccp4_build
     emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/ccp4 -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}"
     emmake make -j ${NUMPROCS}
-    emmake make install
+    emmake make install || fail "Error installing ccp4, giving up."
 fi
 
 #fftw
@@ -638,7 +643,7 @@ if [ $BUILD_FFTW = true ]; then
     cd ${BUILD_DIR}/fftw_build
     emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/fftw  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}"
     emmake make -j ${NUMPROCS}
-    emmake make install
+    emmake make install || fail "Error installing fftw, giving up."
 fi
 
 #mmdb2
@@ -648,7 +653,7 @@ if [ $BUILD_MMDB2 = true ]; then
     cd ${BUILD_DIR}/mmdb2_build
     emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/mmdb2  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}"
     emmake make -j ${NUMPROCS}
-    emmake make install
+    emmake make install || fail "Error installing mmdb2, giving up."
 fi
 
 #clipper
@@ -658,7 +663,7 @@ if [ $BUILD_CLIPPER = true ]; then
     cd ${BUILD_DIR}/clipper_build
     emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/clipper -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
     emmake make -j ${NUMPROCS}
-    emmake make install
+    emmake make install || fail "Error installing clipper, giving up."
 fi
 
 #privateer
@@ -668,7 +673,7 @@ if [ $BUILD_PRIVATEER = true ]; then
     cd ${BUILD_DIR}/privateer_build
     emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/privateer  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
     emmake make -j ${NUMPROCS}
-    emmake make install
+    emmake make install || fail "Error installing privateer, giving up."
 fi
 
 #ssm
@@ -678,7 +683,7 @@ if [ $BUILD_SSM = true ]; then
     cd ${BUILD_DIR}/ssm_build
     emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/ssm  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
     emmake make -j ${NUMPROCS}
-    emmake make install
+    emmake make install || fail "Error installing ssm, giving up."
 fi
 
 #slicendice_cpp
@@ -688,7 +693,7 @@ if [ $BUILD_SLICENDICE = true ]; then
     cd ${BUILD_DIR}/slicendice_cpp_build
     emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/slicendice_cpp  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
     emmake make -j ${NUMPROCS}
-    emmake make install
+    emmake make install || fail "Error installing SliceNDice, giving up."
 fi
 
 #Moorhen
@@ -701,7 +706,7 @@ if [ $BUILD_MOORHEN = true ]; then
     cd ${BUILD_DIR}/moorhen_build
     emcmake cmake -DMEMORY64=${MEMORY64} -DCMAKE_EXE_LINKER_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw -I${INSTALL_DIR}/include/eigen3 -I${INSTALL_DIR}/include/ssm -I${MOORHEN_SOURCE_DIR}/checkout/glm-0.9.9.8 -I${INSTALL_DIR}/include/privateer -I${INSTALL_DIR}/include/privateer/pybind11" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw -I${INSTALL_DIR}/include/eigen3 -I${INSTALL_DIR}/include/ssm -I${MOORHEN_SOURCE_DIR}/checkout/glm-0.9.9.8 -I${INSTALL_DIR}/include/privateer -I${INSTALL_DIR}/include/privateer/pybind11" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR} -DCMAKE_PREFIX_PATH=${INSTALL_DIR} -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake -DRDKit_DIR=${INSTALL_DIR}/lib/cmake/rdkit -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include/boost -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DEigen3_DIR=${INSTALL_DIR}/share/eigen3/cmake/
     emmake make -j ${NUMPROCS}
-    emmake make install
+    emmake make install || fail "Error installing moorhen, giving up."
     cd ${MOORHEN_SOURCE_DIR}/baby-gru/
     npm install
     cd ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru
