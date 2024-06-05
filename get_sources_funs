@@ -267,9 +267,9 @@ getprivateer() {
         echo "Using existing privateer"
     else
         echo "Downloading and Unpacking Privateer"
-        curl -L https://github.com/glycojones/privateer/archive/refs/tags/WASM-0.3.4.tar.gz -o privateer-wasm.tar.gz
+        curl -L https://github.com/glycojones/privateer/archive/refs/tags/moorhen-build-0.3.5.tar.gz -o privateer-wasm.tar.gz
         tar xf privateer-wasm.tar.gz
-        mv privateer-WASM-* privateer-wasm
+        mv privateer-moorhen-build-0.3.5 privateer-wasm
         echo "Getting updated simdjson.h"
         curl -L https://raw.githubusercontent.com/simdjson/simdjson/master/singleheader/simdjson.h -o privateer-wasm/src/privateer/cpp/third-party/simdjson/simdjson.h
     fi
