@@ -108,10 +108,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.useDefaultColourRules = newVal
     }
 
-    setNucleotideStyle(newVal: 'DishyBases' | 'StickBases') {
-        this.m2tParams.nucleotideRibbonStyle = newVal
-    }
-
     addColourRule(ruleType: string, cid: string, color: string, args: (string | number)[], isMultiColourRule: boolean = false, applyColourToNonCarbonAtoms: boolean = false, label?: string) {
         const newColourRule = new MoorhenColourRule(ruleType, cid, color, this.commandCentre, isMultiColourRule, applyColourToNonCarbonAtoms)
         newColourRule.setParentRepresentation(this)

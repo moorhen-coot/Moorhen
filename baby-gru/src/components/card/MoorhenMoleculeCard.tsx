@@ -723,20 +723,11 @@ const CustomRepresentationChip = (props: {
                 <DeleteOutlined style={{color: isDark ? 'white' : '#696969'}} onClick={handleDelete}/>
                 <MoorhenAddCustomRepresentationCard
                     mode='edit'
-                    representationId={props.representation.uniqueId}
                     glRef={props.glRef}
                     urlPrefix={props.urlPrefix}
                     molecule={props.molecule}
                     anchorEl={props.addColourRulesAnchorDivRef}
-                    initialRepresentationStyleValue={props.representation.style}
-                    initialRuleType='cid'
-                    initialApplyColourToNonCarbonAtoms={(!props.representation.useDefaultColourRules && props.representation.colourRules?.length !== 0) ? props.representation.colourRules[0].applyColourToNonCarbonAtoms : false}
-                    initialColour={(!props.representation.useDefaultColourRules && !props.representation.colourRules[0]?.isMultiColourRule) ? props.representation.colourRules[0].color : '#47d65f'}
-                    initialAtomRadiusBondRatio={props.representation.bondOptions?.atomRadiusBondRatio}
-                    initialBondWidth={props.representation.bondOptions?.width}
-                    initialUseDefaultBondSettings={props.representation.useDefaultBondOptions}
-                    initialUseDefaultColoursValue={props.representation.useDefaultColourRules}
-                    initialCid={props.representation.cid}
+                    representation={props.representation}
                     show={showEditRepresentation}
                     setShow={setShowEditRepresentation}/>
             </div>

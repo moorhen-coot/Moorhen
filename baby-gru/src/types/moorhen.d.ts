@@ -307,7 +307,7 @@ export namespace moorhen {
         show(): void;
         hide(): void;
         setAtomBuffers(arg0: AtomInfo[]): void;
-        setNucleotideStyle(newVal: 'DishyBases' | 'StickBases'): void;
+        setM2tParams(arg0: moorhen.m2tParameters): void;
         bondOptions: cootBondOptions;
         m2tParams: moorhen.m2tParameters;
         useDefaultM2tParams: boolean;

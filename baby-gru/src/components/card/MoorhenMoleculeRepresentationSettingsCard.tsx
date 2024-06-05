@@ -21,7 +21,7 @@ const SliderButton = (props: {
             </IconButton>
 }
 
-const BondSettingsPanel = (props: {
+export const BondSettingsPanel = (props: {
     bondWidth: number;
     setBondWidth: React.Dispatch<React.SetStateAction<number>>;
     atomRadiusBondRatio: number;
@@ -244,7 +244,7 @@ const SymmetrySettingsPanel = (props: {
     </div>
 }
 
-const RibbonSettingsPanel = (props: {
+export const RibbonSettingsPanel = (props: {
     ribbonCoilThickness: number;
     setRibbonCoilThickness: React.Dispatch<React.SetStateAction<number>>;
     ribbonHelixWidth: number;
