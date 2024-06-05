@@ -43,11 +43,15 @@ Binaries are available on the releases page. Please read the instructions there 
 * git
 * curl
 * patch
-* emsdk (Steps 1 and 2 below)
+* ninja
+* meson
 * cmake
 * A *native* C++ compiler. (This is required for part of the `boost` build system).
 * `autoconf`,`autotools`
 * `libtool`
+* emsdk (Steps 1 and 2 below)
+
+Most of these can be installed by somelike like `sudo apt install list git cmake curl patch meson ninja-build autoconf autotools libtool g++` on a Debian like system.
 
 1. Install emscripten (following  [https://emscripten.org/docs/getting_started/downloads.html](https://emscripten.org/docs/getting_started/downloads.html)):  
 `git clone https://github.com/emscripten-core/emsdk.git`  
