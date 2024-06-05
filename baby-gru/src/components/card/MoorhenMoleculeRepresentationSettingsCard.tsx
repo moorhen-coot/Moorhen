@@ -347,7 +347,7 @@ export const RibbonSettingsPanel = (props: {
     </div>
 }
 
-const MolSurfSettingsPanel = (props: {
+export const MolSurfSettingsPanel = (props: {
     surfaceStyleProbeRadius: number;
     setSurfaceStyleProbeRadius: React.Dispatch<React.SetStateAction<number>>;
     ballsStyleRadiusMultiplier: number;
