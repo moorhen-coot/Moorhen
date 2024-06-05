@@ -9,6 +9,7 @@ import { MoorhenBackupPreferencesMenuItem } from "../menu-item/MoorhenBackupPref
 import { MoorhenDefaultBondSmoothnessPreferencesMenuItem } from "../menu-item/MoorhenDefaultBondSmoothnessPreferencesMenuItem"
 import { MapContourSettingsMenuItem } from "../menu-item/MoorhenMapContourSettingsMenuItem"
 import { MoorhenRefinementSettingsMenuItem } from "../menu-item/MoorhenRefinementSettingsMenuItem"
+import { MoorhenEnvDistancesSettingsMenuItem } from "../menu-item/MoorhenEnvDistancesSettingsMenuItem"
 import { MoorhenSlider } from '../misc/MoorhenSlider' 
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { useSelector, useDispatch } from "react-redux";
@@ -126,6 +127,7 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
                         commandCentre={props.commandCentre}
                         setPopoverIsShown={setPopoverIsShown}
                     />
+                    <MoorhenEnvDistancesSettingsMenuItem setPopoverIsShown={setPopoverIsShown}/>
                     <MoorhenRefinementSettingsMenuItem commandCentre={props.commandCentre} setPopoverIsShown={setPopoverIsShown}/>
                     <MenuItem id="configure-shortcuts-menu-item" onClick={() => setShowModal(true)} style={{marginTop:'0rem'}}>
                         Configure shortcuts...

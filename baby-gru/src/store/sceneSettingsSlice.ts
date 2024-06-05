@@ -31,6 +31,11 @@ const initialState = {
     width: 0,
     isDark: false,
     backgroundColor: [1, 1, 1, 1],
+    envDistancesSettings: {
+        labelled: true,
+        showHBonds: true,
+        showContacts: true,
+    }
 }
 
 export const sceneSettingsSlice = createSlice({
@@ -39,6 +44,15 @@ export const sceneSettingsSlice = createSlice({
   reducers: {
     resetSceneSettings: (state) => {
         return initialState
+    },
+    setShowHBonds: (state, action: {payload: boolean, type: string}) => {
+        return {...state, envDistancesSettings: { ...state.envDistancesSettings, showHBonds: action.payload }}
+    },
+    setShowContacts: (state, action: {payload: boolean, type: string}) => {
+        return {...state, envDistancesSettings: { ...state.envDistancesSettings, showContacts: action.payload }}
+    },
+    setEnvDistancesLabelled: (state, action: {payload: boolean, type: string}) => {
+        return {...state, envDistancesSettings: { ...state.envDistancesSettings, labelled: action.payload }}
     },
     setDefaultBackgroundColor: (state, action: {payload: [number, number, number, number], type: string}) => {
         return {...state, defaultBackgroundColor: action.payload}
@@ -138,7 +152,7 @@ export const {
     setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius,
     setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setBackgroundColor,
     setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setEdgeDetectNormalScale,
-    resetSceneSettings
+    resetSceneSettings, setEnvDistancesLabelled, setShowHBonds, setShowContacts
 } = sceneSettingsSlice.actions
 
 export default sceneSettingsSlice.reducer

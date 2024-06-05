@@ -1,0 +1,293 @@
+#!/bin/sh
+
+if command -v greadlink > /dev/null 2>&1; then
+    MOORHEN_SOURCE_DIR=`dirname -- "$( greadlink -f -- "$0"; )"`
+else
+    MOORHEN_SOURCE_DIR=`dirname -- "$( readlink -f -- "$0"; )"`
+fi
+
+. ${MOORHEN_SOURCE_DIR}/VERSIONS
+
+cdcheckout() {
+    mkdir -p ${MOORHEN_SOURCE_DIR}/checkout
+    cd ${MOORHEN_SOURCE_DIR}/checkout
+}
+
+geteigen() {
+    cdcheckout
+    if [ -r eigen-$libeigen_release ]; then
+        echo "Using existing LibEigen"
+    else
+        echo "Checking out LibEigen"
+        curl -L https://gitlab.com/libeigen/eigen/-/archive/$libeigen_release/eigen-$libeigen_release.tar.gz -o eigen-$libeigen_release.tar.gz
+        tar xf eigen-$libeigen_release.tar.gz
+    fi
+    echo
+}
+
+getlibccp4() {
+    cdcheckout
+    if [ -r libccp4-$libccp4_release ]; then
+        echo "Using existing libccp4"
+    else
+        echo "Checking out libccp4"
+        curl -L http://ftp.ccp4.ac.uk/opensource/libccp4-$libccp4_release.tar.gz -o libccp4-$libccp4_release.tar.gz
+        echo
+        echo "Unpacking libccp4 source"
+        tar xf libccp4-$libccp4_release.tar.gz
+        ln -s libccp4-$libccp4_release libccp4
+        echo
+        patch -p0 < ../patches/ccp4-emscripten.patch 
+        cd ..
+    fi
+    echo
+}
+
+getclipper() {
+    cdcheckout
+    if [ -r clipper ]; then
+        echo "Using existing clipper"
+    else
+        echo "Checking out clipper"
+        curl -L http://www.ysbl.york.ac.uk/jsd523/clipper-gemmi-wrapper-$clipper_release.tar.gz -o clipper-gemmi-wrapper.tar.gz
+        echo
+        echo "Unpacking clipper source"
+        tar xf clipper-gemmi-wrapper.tar.gz
+        mv clipper-gemmi-wrapper clipper
+    fi
+    echo
+}
+
+getssm() {
+    cdcheckout
+    if [ -r ssm-$ssm_release ]; then
+        echo "Using existing ssm"
+    else
+        echo "Checking out ssm"
+        curl http://ftp.ccp4.ac.uk/opensource/ssm-$ssm_release.tar.gz -o ssm-$ssm_release.tar.gz
+        echo
+        echo "Unpacking ssm source"
+        tar xf ssm-$ssm_release.tar.gz
+        rm -f ssm
+        ln -s ssm-$ssm_release ssm
+    fi
+    echo
+}
+
+getmmdb2() {
+    cdcheckout
+    if [ -r mmdb2-$mmdb_release ]; then
+        echo "Using existing mmdb2"
+    else
+        echo "Checking out mmdb2"
+        curl -L http://ftp.ccp4.ac.uk/opensource/mmdb2-$mmdb_release.tar.gz -o mmdb2-$mmdb_release.tar.gz
+        echo
+        echo "Unpacking mmdb2 source"
+        tar xf mmdb2-$mmdb_release.tar.gz
+        rm -f mmdb2
+        ln -s mmdb2-$mmdb_release mmdb2
+    fi
+    echo
+}
+
+getgemmi() {
+    cdcheckout
+    if [ -r gemmi ]; then
+        echo "Using existing gemmi"
+    else
+        echo "Checking out gemmi"
+        git clone https://github.com/project-gemmi/gemmi.git gemmi
+        cd gemmi
+        git checkout $gemmi_release
+        patch -p1 < ../../patches/gemmi-emscripten-64.patch
+    fi
+    echo
+}
+
+getmonomers() {
+    cdcheckout
+    if [ -r monomers ]; then
+        echo "Using existing monomers"
+    else
+        echo "Checking out monomers"
+        git clone https://github.com/MonomerLibrary/monomers monomers
+    fi
+    echo
+}
+
+getjsoncpp() {
+    cdcheckout
+    if [ -r jsoncpp ]; then
+        echo "Using existing jsoncpp"
+    else
+        echo "Checking out jsoncpp"
+        git clone https://github.com/open-source-parsers/jsoncpp.git
+    fi
+    echo
+}
+
+getigraph() {
+    cdcheckout
+    if [ -r igraph ]; then
+        echo "Using existing igraph"
+    else
+        echo "Checking out igraph"
+        git clone https://github.com/igraph/igraph.git
+    fi
+    echo
+}
+
+getslicendice() {
+    cdcheckout
+    if [ -r slicendice_cpp ]; then
+        echo "Using existing slicendice_cpp"
+    else
+        echo "Checking out SliceNDice"
+        git clone https://github.com/hlasimpk/slicendice_cpp.git
+    fi
+    echo
+}
+
+getfftw() {
+    cdcheckout
+    if [ -r fftw-$fftw_release ]; then
+        echo "Using existing fftw"
+    else
+        echo "Downloading out fftw-$fftw_release"
+        curl -L http://www.fftw.org/fftw-$fftw_release.tar.gz -o fftw-$fftw_release.tar.gz
+        echo
+        echo "Unpacking fftw-$fftw_release"
+        tar xf fftw-$fftw_release.tar.gz
+    fi
+    echo
+}
+
+getgsl() {
+#FIXME This is mysteriously in top level!!!
+    cd ${MOORHEN_SOURCE_DIR}
+    if [ -r gsl-$gsl_release ]; then
+        echo "Using existing gsl"
+    else
+        cdcheckout
+        echo "Downloading gsl-$gsl_release"
+        curl -L https://ftp.gnu.org/gnu/gsl/gsl-$gsl_release.tar.gz -o gsl-$gsl_release.tar.gz
+        echo
+        cd ${MOORHEN_SOURCE_DIR}
+        echo "Unpacking gsl-$gsl_release"
+        tar xf checkout/gsl-$gsl_release.tar.gz
+    fi
+    echo
+}
+
+getcoot() {
+    cdcheckout
+    if [ -r coot-1.0 ]; then
+        echo "Using existing coot"
+    else
+        echo "Downloading coot-1"
+        git clone --branch main https://github.com/pemsley/coot.git coot-1.0
+        cd coot-1.0
+        patch -p1 < ../../patches/coot-emscripten-64.patch
+    fi
+    echo
+}
+
+getglm() {
+    cdcheckout
+    if [ -r glm-$glm_release ]; then
+        echo "Using existing glm"
+    else
+        echo "Downloading glm"
+        curl -L https://github.com/g-truc/glm/archive/refs/tags/$glm_release.tar.gz -o glm-$glm_release.tar.gz
+        echo
+        echo "Unpacking glm-$glm_release"
+        tar xf glm-$glm_release.tar.gz
+        cd ${MOORHEN_SOURCE_DIR}
+        echo "Linking glm headers"
+        mkdir -p include
+        cd include
+        rm -f glm
+        ln -s ../checkout/glm-$glm_release/glm glm
+    fi
+    echo
+}
+
+getrdkit() {
+    cdcheckout
+    if [ -r rdkit-$rdkit_release ]; then
+        echo "Using existing rdkit"
+    else
+        echo "Downloading RDKit source"
+        curl -L https://github.com/rdkit/rdkit/archive/refs/tags/$rdkit_release.tar.gz -o "$rdkit_release.tar.gz"
+        echo
+        echo "Unpacking RDKit source"
+        tar xf "$rdkit_release.tar.gz"
+        echo
+        cd ${MOORHEN_SOURCE_DIR}
+        rm -f rdkit
+        ln -s checkout/rdkit-$rdkit_release rdkit
+        echo "Getting git version of rapidjson for RDKit"
+        cd ${MOORHEN_SOURCE_DIR}/checkout/rdkit-$rdkit_release/External
+        git clone https://github.com/Tencent/rapidjson.git rapidjson-1.1.0
+    fi
+    echo
+}
+
+getgraphene() {
+    cdcheckout
+    if [ -r graphene-$graphene_release ]; then
+        echo "Using existing graphene"
+    else
+        echo "Downloading graphene source"
+        curl -L https://github.com/ebassi/graphene/archive/refs/tags/$graphene_release.tar.gz -o graphene_$graphene_release.tar.gz
+        echo
+        echo "Unpacking graphene source"
+        tar xf "graphene_$graphene_release.tar.gz"
+    fi
+    echo
+}
+
+getsigcpp() {
+    cdcheckout
+    if [ -r libsigcplusplus-$libsigcpp_release ]; then
+        echo "Using existing libsigcplusplus"
+    else
+        echo "Downloading libsigc++ source"
+        curl -L https://github.com/libsigcplusplus/libsigcplusplus/archive/refs/tags/$libsigcpp_release.tar.gz -o libsigcplusplus_$libsigcpp_release.tar.gz
+        echo
+        echo "Unpacking libsigc++ source"
+        tar xf "libsigcplusplus_$libsigcpp_release.tar.gz"
+    fi
+    echo
+}
+
+getprivateer() {
+    cdcheckout
+    if [ -r privateer-wasm ]; then
+        echo "Using existing privateer"
+    else
+        echo "Downloading and Unpacking Privateer"
+        curl -L https://github.com/glycojones/privateer/archive/refs/tags/moorhen-build-0.3.5.tar.gz -o privateer-wasm.tar.gz
+        tar xf privateer-wasm.tar.gz
+        mv privateer-moorhen-build-0.3.5 privateer-wasm
+        echo "Getting updated simdjson.h"
+        curl -L https://raw.githubusercontent.com/simdjson/simdjson/master/singleheader/simdjson.h -o privateer-wasm/src/privateer/cpp/third-party/simdjson/simdjson.h
+    fi
+    echo
+}
+
+getboost() {
+    cdcheckout
+    if [ -r boost-$boost_release ]; then
+        echo "Using existing boost"
+    else
+        echo "Checking out boost"
+        curl -L https://github.com/boostorg/boost/releases/download/boost-$boost_release/boost-$boost_release.tar.gz  -o boost_$boost_release.tar.gz
+        tar xf boost_$boost_release.tar.gz
+        cd ${MOORHEN_SOURCE_DIR}
+        rm -f boost
+        ln -s checkout/boost-$boost_release boost
+        patch -p0 < patches/boost-emscripten.patch
+    fi
+    echo
+}

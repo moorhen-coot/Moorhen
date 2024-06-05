@@ -91,7 +91,13 @@ describe('Testing molecules_container_js', () => {
 
     test('Test glycoblocks', async () => {
         const coordMolNo = molecules_container.read_pdb('./5fjj.pdb')
-        const glyco_mesh = molecules_container.DrawGlycoBlocks(coordMolNo,"/")
+        const glycoMeshData = molecules_container.DrawGlycoBlocks(coordMolNo, "//")
+        const geom = glycoMeshData.geom
+        const meshData = geom.get(0)
+        const triangles = meshData.triangles
+        
+        expect(triangles.size()).toBeGreaterThan(10)
+        cleanUpVariables.push(triangles, meshData, geom)
     })
 
     test('Test copy fragment', () => {
@@ -100,6 +106,32 @@ describe('Testing molecules_container_js', () => {
         const atomCount = molecules_container.get_number_of_atoms(coordMolNo_2)
         expect(coordMolNo_2).not.toBe(-1)
         expect(atomCount).toBe(14)
+    })
+
+    test("Test get_svg_for_residue_type", () => {
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        
+        const svg_1 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, false)
+        expect(svg_1).toBe("No dictionary for LZA")
+
+        const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', coordMolNo)
+        expect(result_import_dict).toBe(1)
+        
+        const svg_2 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, false)
+        expect(svg_2).not.toBe("No dictionary for LZA")
+    })
+
+    test("Test get_svg_for_residue_type -- any molecule", () => {
+        const coordMolNo = molecules_container.read_pdb('./5a3h.mmcif')
+        
+        const svg_1 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, false)
+        expect(svg_1).toBe("No dictionary for LZA")
+
+        const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', -999999)
+        expect(result_import_dict).toBe(1)
+        
+        const svg_2 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, false)
+        expect(svg_2).not.toBe("No dictionary for LZA")
     })
 
     test('Test fit_ligand_right_here 1', () => {
@@ -631,22 +663,24 @@ describe('Testing molecules_container_js', () => {
         expect(pdbString).toHaveLength(297616)
     })
 
-    test("Test read_pdb_string pdb-format", () => {
+    test("Test read_coords_string pdb-format", () => {
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
         const pdbString_1  = molecules_container.get_molecule_atoms(coordMolNo_1, "pdb")
         expect(pdbString_1).toHaveLength(258719)
-        const coordMolNo_2 = molecules_container.read_pdb_string(pdbString_1, "mol-name")
-        expect(coordMolNo_2).toBe(1)
+        const coordMolNo_2 = molecules_container.read_coords_string(pdbString_1, "mol-name")
+        expect(coordMolNo_2.first).toBe(1)
+        expect(coordMolNo_2.second).toBe("pdb")
         const pdbString_2  = molecules_container.get_molecule_atoms(coordMolNo_2, "pdb")
         expect(pdbString_2).toBe(pdbString_1)
     })
 
-    test("Test read_pdb_string mmcif-format", () => {
+    test("Test read_coords_string mmcif-format", () => {
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
         const pdbString_1  = molecules_container.get_molecule_atoms(coordMolNo_1, "mmcif")
         expect(pdbString_1).toHaveLength(297616)
-        const coordMolNo_2 = molecules_container.read_pdb_string(pdbString_1, "mol-name")
-        expect(coordMolNo_2).toBe(1)
+        const coordMolNo_2 = molecules_container.read_coords_string(pdbString_1, "mol-name")
+        expect(coordMolNo_2.first).toBe(1)
+        expect(coordMolNo_2.second).toBe("mmcif")
         // For some reason this fails, probably a coot thing
         // const pdbString_2  = molecules_container.get_molecule_atoms(coordMolNo_2, "mmcif")
         // expect(pdbString_2).toBe(pdbString_1)

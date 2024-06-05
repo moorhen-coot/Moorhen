@@ -12,7 +12,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore"
-import { enqueueSnackbar } from "notistack"
 
 const MoorhenImportLigandDictionary = (props: { 
     id: string;
@@ -51,6 +50,7 @@ const MoorhenImportLigandDictionary = (props: {
     const handleFileContent = useCallback(async (fileContent: string) => {
         let newMolecule: moorhen.Molecule
         let selectedMoleculeIndex: number
+        let molNosToUpdate: number[] = []
         
         if (moleculeSelectValueRef.current) {
             selectedMoleculeIndex = parseInt(moleculeSelectValueRef.current)
@@ -58,6 +58,7 @@ const MoorhenImportLigandDictionary = (props: {
             if (typeof selectedMolecule !== 'undefined') {
                 await selectedMolecule.addDict(fileContent)
                 await selectedMolecule.redraw()
+                molNosToUpdate.push(selectedMolecule.molNo)
             }
         } else {
             selectedMoleculeIndex = -999999
@@ -69,6 +70,7 @@ const MoorhenImportLigandDictionary = (props: {
             }, false),
             await Promise.all(molecules.map(molecule => {
                 molecule.cacheLigandDict(fileContent)
+                molNosToUpdate.push(molecule.molNo)
                 return molecule.redraw()
             }))
         }
@@ -98,10 +100,10 @@ const MoorhenImportLigandDictionary = (props: {
                 if (addToMoleculeValueRef.current !== -1) {
                     const toMolecule = molecules.find(molecule => molecule.molNo === addToMoleculeValueRef.current)
                     if (typeof toMolecule !== 'undefined') {
+                        molNosToUpdate.push(toMolecule.molNo)
                         const otherMolecules = [newMolecule]
                         await toMolecule.mergeMolecules(otherMolecules, true)
                         await toMolecule.redraw()
-                        dispatch( triggerUpdate(toMolecule.molNo) )
                     } else {
                         await newMolecule.redraw()
                     }
@@ -109,6 +111,7 @@ const MoorhenImportLigandDictionary = (props: {
             }
         }
 
+        [...new Set(molNosToUpdate)].map(molNo => dispatch(triggerUpdate(molNo)))
         setPopoverIsShown(false)
 
     }, [moleculeSelectValueRef, createRef, setPopoverIsShown, molecules, commandCentre, glRef, tlcValueRef, monomerLibraryPath, backgroundColor, defaultBondSmoothness, addToMoleculeValueRef])
@@ -333,6 +336,7 @@ export const MoorhenImportDictionaryMenuItem = (props: {
                 <option key="File" value="File">From local file</option>
                 <option key="Library" value="Library">From monomer library</option>
                 <option key="MRC" value="MRC">Fetch from MRC-LMB</option>
+                <option key="PDBe" value="PDBe">Fetch from PDBe</option>
             </Form.Select>
         </Form.Group>
         {fileOrLibrary === 'File' ? <>
@@ -399,6 +403,9 @@ export const MoorhenImportDictionaryMenuItem = (props: {
             return fetchLigandDictFromUrl(url)
         } else if (fileOrLibraryRef.current === "MRC" && tlcValueRef.current) {
             const url = `https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/${tlcValueRef.current.toLowerCase()[0]}/${tlcValueRef.current.toUpperCase()}.cif`
+            return fetchLigandDictFromUrl(url)
+        } else if (fileOrLibraryRef.current === "PDBe" && tlcValueRef.current) {
+            const url = `https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/${tlcValueRef.current.toUpperCase()}.cif`
             return fetchLigandDictFromUrl(url)
         } else {
             console.log(`Unkown ligand source or invalid input`)

@@ -17,7 +17,7 @@ import { setContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle,
 import { enableUpdatingMaps, setConnectedMoleculeMolNo, setFoFcMapMolNo, setReflectionMapMolNo, setTwoFoFcMapMolNo } from "../store/moleculeMapUpdateSlice";
 import { libcootApi } from "../types/libcoot";
 import { 
-    setBackgroundColor, setDepthBlurDepth, setDepthBlurRadius, setDoEdgeDetect, setDoSSAO, setDoShadow, 
+    setBackgroundColor, setDepthBlurDepth, setDepthBlurRadius, setDoEdgeDetect, setDoPerspectiveProjection, setDoSSAO, setDoShadow, 
     setEdgeDetectDepthScale, setEdgeDetectDepthThreshold, setEdgeDetectNormalScale, setEdgeDetectNormalThreshold, setSsaoBias, setSsaoRadius, setUseOffScreenBuffers 
 } from "../store/sceneSettingsSlice";
 import { moorhensession } from "../protobuf/MoorhenSession";
@@ -304,7 +304,12 @@ export async function loadSessionData(
             const colourRule = MoorhenColourRule.initFromDataObject(item, commandCentre, molecule)
             return colourRule
         })
-        molecule.defaultBondOptions = storedMoleculeData.defaultBondOptions
+        if (storedMoleculeData.defaultBondOptions){
+            molecule.defaultBondOptions = storedMoleculeData.defaultBondOptions
+        }
+        if (storedMoleculeData.defaultM2tParams) {
+            molecule.defaultM2tParams = storedMoleculeData.defaultM2tParams
+        }
         if (storedMoleculeData.representations) {
             for (const item of storedMoleculeData.representations) {
                 const colourRules = !item.colourRules ? null : item.colourRules.map(item => {
@@ -312,12 +317,18 @@ export async function loadSessionData(
                     return colourRule
                 })
                 const representation = await molecule.addRepresentation(
-                    item.style, item.cid, item.isCustom, colourRules, item.bondOptions
+                    item.style, item.cid, item.isCustom, colourRules, item.bondOptions, item.m2tParams
                 )
                 if (item.isCustom) {
                     dispatch( addCustomRepresentation(representation) )
                 }
             }    
+        }
+        if (storedMoleculeData.symmetryOn) {
+            molecule.setSymmetryRadius(storedMoleculeData.symmetryRadius)
+            await molecule.toggleSymmetry()
+        } else if (storedMoleculeData.biomolOn) {
+            molecule.toggleBiomolecule()
         }
     }
     
@@ -402,6 +413,7 @@ export async function loadSessionData(
         dispatch(setDepthBlurDepth(sessionData.viewData.blur.depth))
         dispatch(setDepthBlurRadius(sessionData.viewData.blur.radius))
         dispatch(setUseOffScreenBuffers(sessionData.viewData.blur.enabled))
+        dispatch(setDoPerspectiveProjection(sessionData.viewData.doPerspectiveProjection ?? false))
     })
 
     // Set connected maps and molecules if any

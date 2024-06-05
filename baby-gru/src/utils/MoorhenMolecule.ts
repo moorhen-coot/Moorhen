@@ -74,15 +74,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
     biomolOn: boolean;
     symmetryRadius: number;
     symmetryMatrices: number[][][];
-    gaussianSurfaceSettings: {
-        sigma: number;
-        countourLevel: number;
-        boxRadius: number;
-        gridScale: number;
-        bFactor: number;
-    };
+    gaussianSurfaceSettings: moorhen.gaussianSurfSettings;
     isDarkBackground: boolean;
     defaultBondOptions: moorhen.cootBondOptions;
+    defaultM2tParams: moorhen.m2tParameters;
     displayObjectsTransformation: { origin: [number, number, number], quat: any, centre: [number, number, number] }
     uniqueId: string;
     monomerLibraryPath: string;
@@ -143,6 +138,20 @@ export class MoorhenMolecule implements moorhen.Molecule {
             smoothness: 1,
             width: 0.1,
             atomRadiusBondRatio: 1
+        }
+        this.defaultM2tParams = {
+            ribbonStyleCoilThickness: 0.3,
+            ribbonStyleHelixWidth: 1.2,
+            ribbonStyleStrandWidth: 1.2,
+            ribbonStyleArrowWidth: 1.5,
+            ribbonStyleDNARNAWidth: 1.5,
+            ribbonStyleAxialSampling: 6,
+            cylindersStyleAngularSampling: 6,
+            cylindersStyleCylinderRadius: 0.2,
+            cylindersStyleBallRadius: 0.2,
+            surfaceStyleProbeRadius: 1.4,
+            ballsStyleRadiusMultiplier: 1,
+            nucleotideRibbonStyle: 'StickBases'
         }
         this.restraints = []
         this.adaptativeBondsEnabled = false
@@ -483,6 +492,29 @@ export class MoorhenMolecule implements moorhen.Molecule {
         return response
     }
 
+    /**
+     * Transfer metadata stored in this molecule instance to other molecule
+     * @param {morhen.Molecule} otherMolecule - The molecule where the metadata will be transferred
+     * @param {boolean} [transferDicts=true] - Indicates whether ligand dictionaries should also be transferred
+     */
+    async transferMetaData(otherMolecule: moorhen.Molecule, transferDicts: boolean = true) {
+        otherMolecule.defaultBondOptions = this.defaultBondOptions
+        otherMolecule.defaultM2tParams = this.defaultM2tParams
+        otherMolecule.coordsFormat = this.coordsFormat
+        otherMolecule.isLigand = this.isLigand
+        otherMolecule.hasGlycans = this.hasGlycans
+        otherMolecule.hasDNA = this.hasDNA
+        otherMolecule.isDarkBackground = this.isDarkBackground
+        if (transferDicts) {
+            await this.transferLigandDicts(otherMolecule)
+        }
+    }
+
+    /**
+     * Transfer ligand dictionaries stored in this molecule instance to other molecule
+     * @param {morhen.Molecule} toMolecule - The molecule where the metadata will be transferred
+     * @param {boolean} [override=false] - Override ligand dictionaries already stored under the same ligand name in the other molecule instance 
+     */
     async transferLigandDicts(toMolecule: moorhen.Molecule, override: boolean = false) {
         await Promise.all(Object.keys(this.ligandDicts).map(key => {
             if (!override && Object.hasOwn(toMolecule.ligandDicts, key)) {
@@ -501,21 +533,16 @@ export class MoorhenMolecule implements moorhen.Molecule {
         let coordString = await this.getAtoms()
         let newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
         newMolecule.name = `${this.name}-placeholder`
-        newMolecule.defaultBondOptions = this.defaultBondOptions
-        newMolecule.coordsFormat = this.coordsFormat
 
         let response = await this.commandCentre.current.cootCommand({
             returnType: "status",
-            command: 'read_pdb_string',
+            command: 'read_coords_string',
             commandArgs: [coordString, newMolecule.name]
-        }, true) as moorhen.WorkerResponse<number>
+        }, true) as moorhen.WorkerResponse<libcootApi.PairType<number, moorhen.coorFormats>>
 
-        newMolecule.molNo = response.data.result.result
-        newMolecule.isLigand = this.isLigand
-        newMolecule.hasGlycans = this.hasGlycans
-        newMolecule.hasDNA = this.hasDNA
+        newMolecule.molNo = response.data.result.result.first
 
-        await this.transferLigandDicts(newMolecule)
+        await this.transferMetaData(newMolecule)
         await newMolecule.fetchDefaultColourRules()
         if (doRedraw) {
             await newMolecule.fetchIfDirtyAndDraw('CBs')
@@ -539,10 +566,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
         newMolecule.name = `${this.name} fragment`
         newMolecule.molNo = response.data.result.result
-        newMolecule.isDarkBackground = this.isDarkBackground
-        newMolecule.defaultBondOptions = this.defaultBondOptions
-        newMolecule.coordsFormat = this.coordsFormat
-        await this.transferLigandDicts(newMolecule)
+        await this.transferMetaData(newMolecule)
         await newMolecule.fetchDefaultColourRules()
         if (doRecentre) {
             newMolecule.setAtomsDirty(true)
@@ -701,7 +725,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 // result = 'mmjson'
             } else if (format === 5) {
                 // result = 'chemComp'
-            }    
+            }
         } catch (err) {
             console.warn(err)
             console.log('Unable to guess format of coords using gemmi... Defaulting to PDB format')
@@ -725,7 +749,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
             this.gemmiStructure.delete()
         }
 
-        this.coordsFormat = MoorhenMolecule.guessCoordFormat(coordData as string)
         this.name = name.replace(pdbRegex, "").replace(entRegex, "").replace(cifRegex, "").replace(mmcifRegex, "");
 
         try {
@@ -733,10 +756,11 @@ export class MoorhenMolecule implements moorhen.Molecule {
             this.atomsDirty = false
             const response = await this.commandCentre.current.cootCommand({
                 returnType: "status",
-                command: 'read_pdb_string',
+                command: 'read_coords_string',
                 commandArgs: [coordData, this.name],
-            }, true)
-            this.molNo = response.data.result.result
+            }, true) as moorhen.WorkerResponse<libcootApi.PairType<number, moorhen.coorFormats>>
+            this.molNo = response.data.result.result.first
+            this.coordsFormat = response.data.result.result.second
             await Promise.all([
                 this.getNumberOfAtoms(),
                 this.loadMissingMonomers(),
@@ -829,7 +853,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} [format='pdb'] - File format will match the one of the original file unless specified here
      * @returns {string}  A string representation file contents
      */
-    async getAtoms(format?: 'mmcif' | 'pdb'): Promise<string> {
+    async getAtoms(format?: moorhen.coorFormats): Promise<string> {
         let cootCommand = 'molecule_to_PDB_string'
         if (format) {
             cootCommand = format === 'mmcif' ? 'molecule_to_mmCIF_string' : 'molecule_to_PDB_string'
@@ -848,7 +872,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * Download the PDB file contents of the molecule in its current state
      * @param {string} [format='pdb'] - File format will match the one of the original file unless specified here
      */
-    async downloadAtoms(format?: 'mmcif' | 'pdb') {
+    async downloadAtoms(format?: moorhen.coorFormats) {
         const coordsString = await this.getAtoms(format)
         doDownload([coordsString], `${this.name}.${format ? format : this.coordsFormat ? this.coordsFormat : 'pdb'}`)
     }
@@ -1090,9 +1114,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {boolean} [isCustom=false] - Indicates if the representation is considered "custom"
      * @param {moorhen.ColourRule[]} [colourRules=undefined] - A list of colour rules that will be applied to the new representation
      * @param {moorhen.cootBondOptions} [bondOptions=undefined] - An object that describes bond width, atom/bond ratio and other bond settings.
-     * @param {boolean} [applyColourToNonCarbonAtoms=undefined] - If true then colours are applied to non-carbon atoms also.
+     * @param {moorhen.m2tParameters} [m2tParams=undefined] - An object that describes ribbon width, nucleotide style and other ribbon settings.
      */
-    async addRepresentation(style: moorhen.RepresentationStyles, cid: string = '/*/*/*/*', isCustom: boolean = false, colourRules?: moorhen.ColourRule[], bondOptions?: moorhen.cootBondOptions) {
+    async addRepresentation(style: moorhen.RepresentationStyles, cid: string = '/*/*/*/*', isCustom: boolean = false, colourRules?: moorhen.ColourRule[], bondOptions?: moorhen.cootBondOptions, m2tParams?: moorhen.m2tParameters) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules()
         }
@@ -1101,6 +1125,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         representation.setParentMolecule(this)
         representation.setColourRules(colourRules)
         representation.setBondOptions(bondOptions)
+        representation.setM2tParams(m2tParams)
         await representation.draw()
         this.representations.push(representation)
         await this.drawSymmetry(false)
@@ -1312,10 +1337,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     /**
      * Draw enviroment distances for a given residue
-     * @param {string} selectionCid - The CID
-     * @param {boolean} [labelled=false] - Indicates whether the distances should be labelled
+     * @param {string} selectionCid - The CID selection to draw the environment
      */
-    async drawEnvironment(selectionCid: string, labelled: boolean = false): Promise<void> {
+    async drawEnvironment(selectionCid: string): Promise<void> {
         if (typeof selectionCid === 'string') {
             this.environmentRepresentation.cid = selectionCid
             await this.environmentRepresentation.redraw()
@@ -1566,6 +1590,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             newMolecule.molNo = result.data.result.result
             newMolecule.name = resType.toUpperCase()
             newMolecule.defaultBondOptions = this.defaultBondOptions
+            newMolecule.defaultM2tParams = this.defaultM2tParams
             await this.mergeMolecules([newMolecule], true)
             return newMolecule.delete()
         } else {
@@ -2275,7 +2300,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         const ligandSVG = formatLigandSVG(result.data.result.result)
 
-        if (useCache) {
+        if (useCache && ligandSVG !== `No dictionary for ${resName}`) {
             this.cachedLigandSVGs = { ...this.cachedLigandSVGs, [resName]: ligandSVG }
         }
 
@@ -2333,11 +2358,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
                     const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
                     newMolecule.name = `${this.name}-${index+1}`
                     newMolecule.molNo = molNo
-                    newMolecule.isDarkBackground = this.isDarkBackground
-                    newMolecule.defaultBondOptions = this.defaultBondOptions
-                    newMolecule.coordsFormat = this.coordsFormat        
+                    await this.transferMetaData(newMolecule)
                     newMolecule.setAtomsDirty(true)
-                    await this.transferLigandDicts(newMolecule)
                     await newMolecule.fetchDefaultColourRules()
                     if (draw) {
                         await newMolecule.fetchIfDirtyAndDraw('CBs')
@@ -2351,6 +2373,16 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
     }
 
+    /**
+     * Minimize the energy of a given set of residues (usually a ligand)
+     * @param cid - The CID for the input residues
+     * @param ncyc - The number of cycles 
+     * @param nIterations - The number of iterations
+     * @param useRamaRestraints - Indicates whether ramachandran restraints should be used
+     * @param ramaWeight - Indicates the weight assigned to ramachandran restraints
+     * @param useTorsionRestraints - Indicates whether torsion restraints should be used
+     * @param torsionWeight - Indicates the weight assigned to torsion restraints
+     */
     async minimizeEnergyUsingCidAnimated(cid: string, ncyc: number, nIterations: number, useRamaRestraints: boolean, ramaWeight: number, useTorsionRestraints: boolean, torsionWeight: number) {
         const commandArgs = [
             this.molNo,

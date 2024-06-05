@@ -7,6 +7,21 @@ message CootBondOptions {
   float atomRadiusBondRatio = 3;
 }
 
+message M2tParameters {
+  float ribbonStyleCoilThickness = 1;
+  float ribbonStyleHelixWidth = 2;
+  float ribbonStyleStrandWidth = 3;
+  float ribbonStyleArrowWidth = 4;
+  float ribbonStyleDNARNAWidth = 5;
+  int32 ribbonStyleAxialSampling = 6;
+  int32 cylindersStyleAngularSampling = 7;
+  float cylindersStyleCylinderRadius = 8;
+  float cylindersStyleBallRadius = 9;
+  float surfaceStyleProbeRadius = 10;
+  float ballsStyleRadiusMultiplier = 11;
+  string nucleotideRibbonStyle = 12;
+}
+
 message ColourRuleObject {
   string cid = 1;
   string color = 2;
@@ -37,6 +52,7 @@ message Representation {
     bool isCustom = 3;
     repeated ColourRuleObject colourRules = 4;
     CootBondOptions bondOptions = 5;
+    M2tParameters m2tParams = 6;
 }
 
 message MoleculeSessionData {
@@ -48,6 +64,10 @@ message MoleculeSessionData {
   repeated ColourRuleObject defaultColourRules = 6;
   repeated int32 connectedToMaps = 7;
   map<string, string> ligandDicts = 8;
+  M2tParameters defaultM2tParams = 9;
+  bool symmetryOn = 10;
+  bool biomolOn = 11;
+  float symmetryRadius = 12;
 }
 
 message MapDataSession {
@@ -99,6 +119,7 @@ message ViewDataSession {
   Ssao ssao = 16;
   EdgeDetection edgeDetection = 17;
   Blur blur = 18;
+  bool doPerspectiveProjection = 19;
 }
 
 message Ssao {

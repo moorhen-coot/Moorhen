@@ -91,6 +91,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
+    const envDistancesLabelled = useSelector((state: moorhen.State) => state.sceneSettings.envDistancesSettings.labelled)
+    const showHBonds = useSelector((state: moorhen.State) => state.sceneSettings.envDistancesSettings.showHBonds)
+    const showContacts = useSelector((state: moorhen.State) => state.sceneSettings.envDistancesSettings.showContacts)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
@@ -158,7 +161,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     
             const mol: moorhen.Molecule = molecules.find(molecule => molecule.molNo === moleculeMolNo)
             if(typeof mol !== 'undefined') {
-                await mol.drawEnvironment(residueCid, true)
+                await mol.drawEnvironment(residueCid)
             }
             
             busyDrawingHBonds.current = false
@@ -189,7 +192,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [])
 
     useEffect(() => {
-        if(drawInteractions){
+        if (drawInteractions) {
             hBondsDirty.current = true
             if (!busyDrawingHBonds.current) {
                 drawHBonds()
@@ -197,7 +200,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         } else {
             clearHBonds()
         }
-    }, [drawInteractions, molecules, backgroundColor])
+    }, [drawInteractions, molecules, backgroundColor, envDistancesLabelled, showHBonds, showContacts])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {

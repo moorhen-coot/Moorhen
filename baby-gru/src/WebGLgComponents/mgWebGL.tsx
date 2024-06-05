@@ -7906,10 +7906,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.doPeel = false;
         if(this.doOrderIndependentTransparency){
             for (let idx = 0; idx < this.displayBuffers.length && !this.doPeel; idx++) {
-                let triangleVertexIndexBuffer = this.displayBuffers[idx].triangleVertexIndexBuffer;
-                for (let j = 0; j < triangleVertexIndexBuffer.length&& !this.doPeel; j++) {
-                    if (this.displayBuffers[idx].transparent&&!this.displayBuffers[idx].isHoverBuffer) {
-                        this.doPeel = true;
+                if (this.displayBuffers[idx].visible) {
+                    let triangleVertexIndexBuffer = this.displayBuffers[idx].triangleVertexIndexBuffer;
+                    for (let j = 0; j < triangleVertexIndexBuffer.length&& !this.doPeel; j++) {
+                        if (this.displayBuffers[idx].transparent&&!this.displayBuffers[idx].isHoverBuffer) {
+                            this.doPeel = true;
+                        }
                     }
                 }
             }

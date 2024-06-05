@@ -4,10 +4,8 @@ add_library(clipper-phs STATIC
 ../../checkout/clipper/clipper/phs/phs_io.cpp
 )
 
-target_include_directories(clipper-phs PRIVATE ../.. ../../checkout/clipper ../../fftw ../../rfftw)
-
 set(clipper-phs_HEADERS
-${CMAKE_SOURCE_DIR}/checkout/clipper//clipper/phs/phs_io.h
+${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/phs/phs_io.h
 )
 
 target_compile_options(clipper-phs PUBLIC "-DFFTW_ENABLE_FLOAT")

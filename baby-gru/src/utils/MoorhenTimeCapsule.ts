@@ -206,6 +206,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             return {
                 name: molecule.name,
                 molNo: molecule.molNo,
+                coordFormat: molecule.coordsFormat,
                 coordString: moleculeDataPromises[index],
                 representations: molecule.representations.filter(item => item.visible).map(item => { return {
                     cid: item.cid,
@@ -213,11 +214,16 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                     isCustom: item.isCustom,
                     colourRules: item.useDefaultColourRules ? null : item.colourRules.map(item => item.objectify()),
                     bondOptions: item.useDefaultBondOptions ? null : item.bondOptions,
+                    m2tParams: item.useDefaultM2tParams ? null : item.m2tParams,
                 }}),
                 defaultColourRules: molecule.defaultColourRules.map(item => item.objectify()),
                 defaultBondOptions: molecule.defaultBondOptions,
+                defaultM2tParams: molecule.defaultM2tParams,
                 connectedToMaps: molecule.connectedToMaps,
-                ligandDicts: molecule.ligandDicts
+                ligandDicts: molecule.ligandDicts,
+                symmetryOn: molecule.symmetryOn,
+                biomolOn: molecule.biomolOn,
+                symmetryRadius: molecule.symmetryRadius
             }
         })
 
@@ -260,6 +266,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             clipStart: (this.glRef.current.gl_clipPlane0[3] + this.glRef.current.fogClipOffset) * -1,
             clipEnd: this.glRef.current.gl_clipPlane1[3] - this.glRef.current.fogClipOffset,
             quat4: Array.from(this.glRef.current.myQuat),
+            doPerspectiveProjection: this.glRef.current.doPerspectiveProjection,
             edgeDetection: {
                 enabled: this.glRef.current.doEdgeDetect,
                 depthScale: this.glRef.current.scaleDepth,

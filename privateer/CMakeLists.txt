@@ -20,19 +20,14 @@ if(OPENMP_FOUND)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
-set(privateer_src ${CMAKE_SOURCE_DIR}/checkout/privateer-wasm/src/privateer/cpp/ )
+set(privateer_src ${CMAKE_CURRENT_SOURCE_DIR}/../checkout/privateer-wasm/src/privateer/cpp/ )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}
  ..
  ${privateer_src}
  ${privateer_src}/pybind11
   ${privateer_src}/third-party/simdjson/
- ../checkout/mmdb2
- ../checkout/ssm/ssm
- ../checkout/libccp4/ccp4
- ../checkout/clipper
- ../checkout/ccp4srs
- ../checkout/gemmi/include)
+ )
 
 
 add_library(privateer STATIC
@@ -87,4 +82,13 @@ ${privateer_src}/third-party/sajson.h
 install(FILES 
 ${privateer_third_party-headers_HEADERS}
 DESTINATION include/privateer/third-party
+)
+
+set(privateer_pybind11-headers_HEADERS
+${privateer_src}/pybind11/privateer-restraints.h
+)
+
+install(FILES 
+${privateer_pybind11-headers_HEADERS}
+DESTINATION include/privateer/pybind11
 )

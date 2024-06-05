@@ -81,6 +81,29 @@ export namespace moorhen {
         width: number;
         atomRadiusBondRatio: number;
     }
+
+    type gaussianSurfSettings = {
+        sigma: number;
+        countourLevel: number;
+        boxRadius: number;
+        gridScale: number;
+        bFactor: number;
+    }
+
+    type m2tParameters = {
+        ribbonStyleCoilThickness: number;
+        ribbonStyleHelixWidth: number;
+        ribbonStyleStrandWidth: number;
+        ribbonStyleArrowWidth: number;
+        ribbonStyleDNARNAWidth: number;
+        ribbonStyleAxialSampling: number;
+        cylindersStyleAngularSampling: number;
+        cylindersStyleCylinderRadius: number;
+        cylindersStyleBallRadius: number;
+        surfaceStyleProbeRadius: number;
+        ballsStyleRadiusMultiplier: number;
+        nucleotideRibbonStyle: "StickBases" | "DishyBases";
+    }
     
     type ColourRuleObject = {
         cid: string;
@@ -121,8 +144,7 @@ export namespace moorhen {
         apply(style: string, ruleIndex: number): Promise<void>;
     }
 
-    type coorFormats = 'pdb' | 'mmcif';
-    
+    type coorFormats = 'pdb' | 'mmcif' | 'unk' | 'mmjson' | 'xml';
     interface Molecule {
         transferLigandDicts(toMolecule: Molecule, override?: boolean): Promise<void>;
         minimizeEnergyUsingCidAnimated(cid: string, ncyc: number, nIterations: number, useRamaRestraints: boolean, ramaWeight: number, useTorsionRestraints: boolean, torsionWeight: number): Promise<void>;
@@ -139,7 +161,7 @@ export namespace moorhen {
         getSecondaryStructInfo(modelNumber?: number): Promise<libcootApi.ResidueSpecJS[]>;
         getNonSelectedCids(cid: string): string[];
         parseCidIntoSelection(selectedCid: string): Promise<ResidueSelection>;
-        downloadAtoms(format?: 'mmcif' | 'pdb'): Promise<void>;
+        downloadAtoms(format?: coorFormats): Promise<void>;
         getResidueBFactors(): { cid: string; bFactor: number; normalised_bFactor: number }[];
         getNcsRelatedChains(): Promise<string[][]>;
         animateRefine(n_cyc: number, n_iteration: number, final_n_cyc?: number): Promise<void>;
@@ -154,7 +176,7 @@ export namespace moorhen {
         fitLigand(mapMolNo: number, ligandMolNo: number, fitRightHere?: boolean, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<Molecule[]>;
         checkIsLigand(): boolean;
         removeRepresentation(representationId: string): void;
-        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: ColourRule[], bondOptions?: cootBondOptions): Promise<MoleculeRepresentation>;
+        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: ColourRule[], bondOptions?: cootBondOptions, m2tParams?: moorhen.m2tParameters): Promise<MoleculeRepresentation>;
         getNeighborResiduesCids(selectionCid: string, maxDist: number): Promise<string[]>;
         drawWithStyleFromMesh(style: string, meshObjects: any[], cid?: string, fetchAtomBuffers?: boolean): Promise<void>;
         updateWithMovedAtoms(movedResidues: AtomInfo[][]): Promise<void>;
@@ -196,7 +218,7 @@ export namespace moorhen {
         clearBuffersOfStyle: (style: string) => void;
         loadToCootFromURL: (inputFile: string, molName: string, options?: RequestInit) => Promise<Molecule>;
         applyTransform: () => Promise<void>;
-        getAtoms(format?: string): Promise<string>;
+        getAtoms(format?: coorFormats): Promise<string>;
         hide: (style: string, cid?: string) => void;
         redraw: () => Promise<void>;
         setAtomsDirty: (newVal: boolean) => void;
@@ -232,13 +254,8 @@ export namespace moorhen {
         biomolOn: boolean;
         symmetryRadius : number;
         symmetryMatrices: number[][][];
-        gaussianSurfaceSettings: {
-            sigma: number;
-            countourLevel: number;
-            boxRadius: number;
-            gridScale: number;
-            bFactor: number;
-        };
+        gaussianSurfaceSettings: gaussianSurfSettings;
+        defaultM2tParams: m2tParameters;
         isDarkBackground: boolean;
         representations: MoleculeRepresentation[];
         defaultBondOptions: cootBondOptions;
@@ -269,7 +286,7 @@ export namespace moorhen {
     type RepresentationStyles = 'VdwSpheres' | 'ligands' | 'CAs' | 'CBs' | 'CDs' | 'gaussian' | 'allHBonds' | 'rama' | 
     'rotamer' | 'CRs' | 'MolecularSurface' | 'DishyBases' | 'VdWSurface' | 'Calpha' | 'unitCell' | 'hover' | 'environment' | 
     'ligand_environment' | 'contact_dots' | 'chemical_features' | 'ligand_validation' | 'glycoBlocks' | 'restraints' | 
-    'residueSelection' | 'MetaBalls' | 'adaptativeBonds'
+    'residueSelection' | 'MetaBalls' | 'adaptativeBonds' | 'StickBases'
 
     interface MoleculeRepresentation {
         addColourRule(ruleType: string, cid: string, color: string, args: (string | number)[], isMultiColourRule?: boolean, applyColourToNonCarbonAtoms?: boolean, label?: string): void;
@@ -290,7 +307,10 @@ export namespace moorhen {
         show(): void;
         hide(): void;
         setAtomBuffers(arg0: AtomInfo[]): void;
+        setM2tParams(arg0: moorhen.m2tParameters): void;
         bondOptions: cootBondOptions;
+        m2tParams: moorhen.m2tParameters;
+        useDefaultM2tParams: boolean;
         useDefaultColourRules: boolean;
         useDefaultBondOptions: boolean;
         uniqueId: string;
@@ -521,17 +541,23 @@ export namespace moorhen {
         name: string;
         molNo: number;
         coordString: string;
+        coordFormat: coorFormats;
         representations: { 
             cid: string;
             style: strin;
             isCustom: boolean;
             colourRules: ColourRuleObject[];
             bondOptions: cootBondOptions;
+            m2tParams: moorhen.m2tParameters;
          }[];
         defaultBondOptions: cootBondOptions;
+        defaultM2tParams: m2tParameters;
         defaultColourRules: ColourRuleObject[];
         connectedToMaps: number[];
         ligandDicts: {[comp_id: string]: string};
+        symmetryOn: boolean;
+        biomolOn: boolean;
+        symmetryRadius: number;
     }
     
     type mapDataSession = {
@@ -580,6 +606,7 @@ export namespace moorhen {
             depthThreshold: number;
             normalThreshold: number;
         };
+        doPerspectiveProjection: boolean;
         blur: {enabled: boolean; depth: number; radius: number};
     }
     
@@ -898,6 +925,11 @@ export namespace moorhen {
             height: number;
             width: number;
             isDark: boolean;
+            envDistancesSettings: {
+                labelled: boolean;
+                showHBonds: boolean;
+                showContacts: boolean;
+            };
         };
         miscAppSettings: {
             defaultExpandDisplayCards: boolean; 

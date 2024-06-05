@@ -15,22 +15,20 @@ add_library(clipper-contrib STATIC
 ../../checkout/clipper/clipper/contrib/test_contrib.cpp
 )
 
-target_include_directories(clipper-contrib PRIVATE ../.. ../../checkout/clipper ../../fftw ../../rfftw)
-
 set(clipper-contrib_HEADERS
-${CMAKE_SOURCE_DIR}/checkout/clipper//clipper/contrib/originmatch.h
-${CMAKE_SOURCE_DIR}/checkout/clipper//clipper/contrib/fffear.h
-${CMAKE_SOURCE_DIR}/checkout/clipper//clipper/contrib/function_object_bases.h
-${CMAKE_SOURCE_DIR}/checkout/clipper//clipper/contrib/test_contrib.h
-${CMAKE_SOURCE_DIR}/checkout/clipper//clipper/contrib/sfscale.h
-${CMAKE_SOURCE_DIR}/checkout/clipper//clipper/contrib/skeleton.h
-${CMAKE_SOURCE_DIR}/checkout/clipper//clipper/contrib/sfcalc_obs.h
-${CMAKE_SOURCE_DIR}/checkout/clipper//clipper/contrib/edcalc.h
-${CMAKE_SOURCE_DIR}/checkout/clipper//clipper/contrib/sfweight.h
-${CMAKE_SOURCE_DIR}/checkout/clipper//clipper/contrib/convolution_search.h
-${CMAKE_SOURCE_DIR}/checkout/clipper//clipper/contrib/mapfilter.h
-${CMAKE_SOURCE_DIR}/checkout/clipper//clipper/contrib/sfcalc.h
-${CMAKE_SOURCE_DIR}/checkout/clipper//clipper/clipper-contrib.h
+${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/contrib/originmatch.h
+${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/contrib/fffear.h
+${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/contrib/function_object_bases.h
+${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/contrib/test_contrib.h
+${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/contrib/sfscale.h
+${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/contrib/skeleton.h
+${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/contrib/sfcalc_obs.h
+${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/contrib/edcalc.h
+${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/contrib/sfweight.h
+${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/contrib/convolution_search.h
+${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/contrib/mapfilter.h
+${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/contrib/sfcalc.h
+${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/clipper-contrib.h
 )
 
 target_compile_options(clipper-contrib PUBLIC "-DFFTW_ENABLE_FLOAT")

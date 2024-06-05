@@ -198,7 +198,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
                     style={{
                         backgroundColor: isDark ? (navBarActiveMenu === menu.name ? '#a8a8a8' : 'grey') : (navBarActiveMenu === menu.name ? '#d4d4d4' : 'white') ,
                     }}>
-                        <Stack gap={2} direction='horizontal' style={{display: 'flex', verticalAlign: 'middle'}}>
+                        <Stack gap={2} direction='horizontal' style={{display: 'flex', verticalAlign: 'middle', paddingRight: '0.5rem'}}>
                             {menu.name}
                             <IconButton>
                                 {menu.icon}
