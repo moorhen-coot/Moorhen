@@ -8,7 +8,7 @@ set(CMAKE_EXECUTABLE_SUFFIX ".js")
 set(coot_src ${CMAKE_CURRENT_SOURCE_DIR}/../checkout/coot-1.0)
 
 # XDATADIR should be "${install_top_dir}/share/data"
-add_definitions(-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -DUSE_GEMMI -DCLIPPER_HAS_TOP8000 -DMAKE_ENHANCED_LIGAND_TOOLS -DANALYSE_REFINEMENT_TIMING -DVERSION="1.0" -DPACKAGE_VERSION="1.0" -DHAVE_CXX_THREAD -DHAVE_BOOST -DHAVE_GSL -DPKGDATADIR="${coot_src}/pixmaps" -DDATADIR="${coot_src}/data" -DXDATADIR="${coot_src}/share/data")
+add_definitions(-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -DUSE_GEMMI -DCLIPPER_HAS_TOP8000 -DMAKE_ENHANCED_LIGAND_TOOLS -DANALYSE_REFINEMENT_TIMING  -DPACKAGE_VERSION="1.0" -DHAVE_CXX_THREAD -DHAVE_BOOST -DHAVE_GSL -DPKGDATADIR="${coot_src}/pixmaps" -DDATADIR="${coot_src}/data" -DXDATADIR="${coot_src}/share/data")
 
 set(coot_rotamer_data
 ${coot_src}/rama-data/rota500-pro.data
