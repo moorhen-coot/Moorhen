@@ -8,7 +8,7 @@ set(CMAKE_EXECUTABLE_SUFFIX ".js")
 set(coot_src ${CMAKE_CURRENT_SOURCE_DIR}/../checkout/coot-1.0)
 
 # XDATADIR should be "${install_top_dir}/share/data"
-add_definitions(-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -DUSE_GEMMI -DCLIPPER_HAS_TOP8000 -DMAKE_ENHANCED_LIGAND_TOOLS -DANALYSE_REFINEMENT_TIMING -DVERSION="1.0" -DPACKAGE_VERSION="1.0" -DHAVE_CXX_THREAD -DHAVE_BOOST -DHAVE_GSL -DPKGDATADIR="${coot_src}/pixmaps" -DDATADIR="${coot_src}/data" -DXDATADIR="${coot_src}/share/data")
+add_definitions(-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -DUSE_GEMMI -DCLIPPER_HAS_TOP8000 -DMAKE_ENHANCED_LIGAND_TOOLS -DANALYSE_REFINEMENT_TIMING -DPACKAGE_VERSION="1.0" -DHAVE_CXX_THREAD -DHAVE_BOOST -DHAVE_GSL -DPKGDATADIR="${coot_src}/pixmaps" -DDATADIR="${coot_src}/data" -DXDATADIR="${coot_src}/share/data")
 
 set(coot_rotamer_data
 ${coot_src}/rama-data/rota500-pro.data
@@ -550,9 +550,9 @@ FILE(COPY ${CMAKE_INSTALL_PREFIX}/share/RDKit/Data/BaseFeatures.fdef DESTINATION
 #-sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=512MB -sMAXIMUM_MEMORY=4092MB -sTOTAL_MEMORY=4092MB
 add_executable(moorhen moorhen-wrappers.cc gemmi-wrappers.cc smilestopdb.cc ${coot_src}/lhasa/embind.cpp)
 if(${MEMORY64} MATCHES "1")
-target_link_options(moorhen PRIVATE -sASSERTIONS=2 -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
+target_link_options(moorhen PRIVATE -sASSERTIONS=2 -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 else()
-target_link_options(moorhen PRIVATE -sASSERTIONS=2 -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
+target_link_options(moorhen PRIVATE -sASSERTIONS=2 -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 endif()
 
 target_link_directories(moorhen PUBLIC 
