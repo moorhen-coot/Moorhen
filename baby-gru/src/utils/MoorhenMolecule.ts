@@ -785,29 +785,38 @@ export class MoorhenMolecule implements moorhen.Molecule {
         let dictContent: string
 
         if (!fileContent.includes('data_')) {
+            console.log(`Unable to fetch ligand dictionary ${newTlc} from local monomer library...`)
             try {
                 const url = `https://raw.githubusercontent.com/MonomerLibrary/monomers/master/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`
-                response = await fetch(url);
+                response = await fetch(url)
                 if (response.ok) {
-                    dictContent = await response.text();
+                    dictContent = await response.text()
                 } else {
-                    console.log(`Unable to fetch ligand dictionary ${newTlc}`)
-                    return
+                    console.log(`Unable to fetch ligand dictionary ${newTlc} from remote monomer library...`)
+                    const url = `https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/${newTlc.toUpperCase()}.cif`
+                    response = await fetch(url)
+                    if (response.ok) {
+                        dictContent = await response.text()
+                    } else {
+                        console.log(`Unable to fetch ligand dictionary ${newTlc} from PDBe chem...`)
+                    }
                 }
-            } catch {
+            } catch (err) {
+                console.log(err)
                 console.log(`Unable to fetch ligand dictionary ${newTlc}`)
-                return
             }
         } else {
             dictContent = fileContent
         }
 
-        await this.commandCentre.current.cootCommand({
-            returnType: "status",
-            command: 'read_dictionary_string',
-            commandArgs: [dictContent, attachToMolecule],
-        }, false)
-        
+        if (dictContent) {
+            await this.commandCentre.current.cootCommand({
+                returnType: "status",
+                command: 'read_dictionary_string',
+                commandArgs: [dictContent, attachToMolecule],
+            }, false)
+        }
+
         return dictContent
     }
 
