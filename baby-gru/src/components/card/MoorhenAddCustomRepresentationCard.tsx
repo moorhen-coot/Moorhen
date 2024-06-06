@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Stack, Button, FormSelect, Form, InputGroup, Row } from "react-bootstrap";
-import { getMultiColourRuleArgs, representationLabelMapping } from '../../utils/MoorhenUtils';
+import { getMultiColourRuleArgs } from '../../utils/utils';
+import { representationLabelMapping } from '../../utils/enums';
 import { moorhen } from "../../types/moorhen";
 import { Popover } from '@mui/material';
 import { MoorhenChainSelect } from '../select/MoorhenChainSelect';

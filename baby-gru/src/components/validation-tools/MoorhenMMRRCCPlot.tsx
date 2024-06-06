@@ -5,7 +5,8 @@ import annotationPlugin from 'chartjs-plugin-annotation'
 import { MoorhenChainSelect } from '../select/MoorhenChainSelect'
 import { MoorhenMapSelect } from '../select/MoorhenMapSelect'
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
-import { residueCodesOneToThree, getResidueInfo, convertViewtoPx } from '../../utils/MoorhenUtils'
+import { getResidueInfo, convertViewtoPx } from '../../utils/utils'
+import { residueCodesOneToThree } from "../../utils/enums"
 import { useDispatch, useSelector } from "react-redux"
 import { setHoveredAtom } from "../../store/hoveringStatesSlice"
 import { moorhen } from "../../types/moorhen"

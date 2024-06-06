@@ -2,7 +2,7 @@ import { moorhen } from "../../types/moorhen";
 import { useSelector } from 'react-redux';
 import { Card, Col, Row } from "react-bootstrap";
 import { useCallback } from "react";
-import { guid } from "../../utils/MoorhenUtils";
+import { guid } from "../../utils/utils";
 import { privateer } from "../../types/privateer";
 
 export const MoorhenCarbohydrateCard = (props: {

@@ -6,6 +6,7 @@ import { useSelector } from "react-redux";
 import { MoorhenCarbohydrateCard } from "../card/MoorhenCarbohydrateCard";
 import { privateer } from "../../types/privateer";
 import { LinearProgress } from "@mui/material";
+import { modalKeys } from "../../utils/enums";
 
 export const MoorhenCarbohydrateList = (props: {
     setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -17,7 +18,7 @@ export const MoorhenCarbohydrateList = (props: {
 
     const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo)
     const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch)
-    const showModelsModal = useSelector((state: moorhen.State) => state.activeModals.showModelsModal)
+    const showModelsModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.MODELS))
     
     const [carbohydrateList, setCarbohydrateList] = useState<privateer.ResultsEntry[] | null>(null)
 

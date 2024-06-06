@@ -1,6 +1,6 @@
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
-import { guid } from "./MoorhenUtils";
+import { guid } from "./utils";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 
 export const getBackupLabel = (key: moorhen.backupKey): string => {

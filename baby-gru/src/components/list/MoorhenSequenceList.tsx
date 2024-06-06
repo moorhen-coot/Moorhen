@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Row, Col } from "react-bootstrap";
 import { MoorhenSequenceViewer } from "../sequence-viewer/MoorhenSequenceViewer";
-import { convertViewtoPx, sequenceIsValid } from '../../utils/MoorhenUtils';
+import { convertViewtoPx, sequenceIsValid } from '../../utils/utils';
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useSelector } from "react-redux";

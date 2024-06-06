@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Form, InputGroup } from "react-bootstrap";
 import { MoorhenShortcutConfigModal } from "../modal/MoorhenShortcutConfigModal"
 import { MenuItem } from "@mui/material";
-import { convertViewtoPx } from "../../utils/MoorhenUtils";
+import { convertViewtoPx } from "../../utils/utils";
 import { MoorhenGLFontMenuItem } from '../menu-item/MoorhenGLFontMenuItem'
 import { MoorhenScoresToastPreferencesMenuItem } from "../menu-item/MoorhenScoresToastPreferencesMenuItem"
 import { MoorhenBackupPreferencesMenuItem } from "../menu-item/MoorhenBackupPreferencesMenuItem"

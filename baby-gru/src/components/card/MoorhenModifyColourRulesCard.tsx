@@ -4,7 +4,7 @@ import { CirclePicker } from "react-color";
 import { HexColorInput, HexAlphaColorPicker } from "react-colorful";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenColourRuleCard } from "./MoorhenColourRuleCard"
-import { convertRemToPx, convertViewtoPx, getMultiColourRuleArgs } from "../../utils/MoorhenUtils";
+import { convertRemToPx, convertViewtoPx, getMultiColourRuleArgs } from "../../utils/utils";
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
 import { MoorhenSequenceRangeSelect } from "../sequence-viewer/MoorhenSequenceRangeSelect";
 import { moorhen } from "../../types/moorhen";

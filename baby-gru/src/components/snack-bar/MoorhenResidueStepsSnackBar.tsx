@@ -6,7 +6,7 @@ import { Stack } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
-import { sleep } from "../../utils/MoorhenUtils";
+import { sleep } from "../../utils/utils";
 
 
 export const MoorhenResidueStepsSnackBar = forwardRef<

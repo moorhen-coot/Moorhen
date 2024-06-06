@@ -4,7 +4,8 @@ import { MoorhenContactMenuItem } from "../menu-item/MoorhenContactMenuItem";
 import { MenuItem } from "@mui/material";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { useDispatch } from "react-redux";
-import { setShowControlsModal } from "../../store/activeModalsSlice";
+import { showModal } from "../../store/modalsSlice";
+import { modalKeys } from "../../utils/enums";
 
 export const MoorhenHelpMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const dispatch = useDispatch()
@@ -16,7 +17,7 @@ export const MoorhenHelpMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     return <>
         <MenuItem onClick={() => window.open('https://moorhen-coot.github.io/wiki/')}>Go to Moorhen wiki...</MenuItem>
         <MenuItem onClick={() => {
-            dispatch(setShowControlsModal(true))
+            dispatch(showModal(modalKeys.SHOW_CONTROLS))
             document.body.click()
         }}>Show controls...</MenuItem>
         <MoorhenContactMenuItem {...menuItemProps} />

@@ -1,4 +1,4 @@
-import { readDataFile, guid, rgbToHsv, hsvToRgb } from "./MoorhenUtils"
+import { readDataFile, guid, rgbToHsv, hsvToRgb } from "./utils"
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { libcootApi } from "../types/libcoot";

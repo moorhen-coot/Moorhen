@@ -3,15 +3,11 @@ import { moorhen } from "../../types/moorhen";
 import { useRef } from "react";
 import { Row } from "react-bootstrap";
 import { MoorhenWaterValidation } from "../validation-tools/MoorhenWaterValidation"
-import { convertRemToPx, convertViewtoPx} from '../../utils/MoorhenUtils';
+import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
 import { useSelector } from "react-redux";
+import { modalKeys } from "../../utils/enums";
 
-interface MoorhenValidationModalProps extends moorhen.CollectedProps {
-    show: boolean;
-    setShow: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-export const MoorhenWaterValidationModal = (props: MoorhenValidationModalProps) => {        
+export const MoorhenWaterValidationModal = (props: moorhen.CollectedProps) => {        
     const resizeNodeRef = useRef<HTMLDivElement>();
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
@@ -23,11 +19,9 @@ export const MoorhenWaterValidationModal = (props: MoorhenValidationModalProps) 
     }
 
     return <MoorhenDraggableModalBase
-                modalId="water-validation-modal"
+                modalId={modalKeys.WATER_VALIDATION}
                 left={width / 6}
                 top={height / 3}
-                show={props.show}
-                setShow={props.setShow}
                 defaultHeight={convertViewtoPx(70, height)}
                 defaultWidth={convertViewtoPx(37, width)}
                 minHeight={convertViewtoPx(30, height)}

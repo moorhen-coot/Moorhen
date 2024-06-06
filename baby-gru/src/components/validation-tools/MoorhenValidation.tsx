@@ -1,6 +1,7 @@
 import { useRef } from "react"
 import { Chart, ChartEvent, ChartType, TooltipItem, registerables } from 'chart.js';
-import { residueCodesOneToThree, getResidueInfo, convertViewtoPx } from '../../utils/MoorhenUtils'
+import { getResidueInfo, convertViewtoPx } from '../../utils/utils'
+import { residueCodesOneToThree } from '../../utils/enums'
 import { MoorhenValidationChartWidgetBase } from "./MoorhenValidationChartWidgetBase"
 import annotationPlugin from 'chartjs-plugin-annotation'
 import { libcootApi } from "../../types/libcoot";

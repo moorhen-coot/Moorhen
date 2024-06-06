@@ -5,6 +5,7 @@ import { webGL } from "../../types/mgWebGL";
 import { useSelector } from "react-redux";
 import { MoorhenLigandCard } from "../card/MoorhenLigandCard";
 import { LinearProgress } from "@mui/material";
+import { modalKeys } from "../../utils/enums";
 
 export const MoorhenLigandList = (props: { 
     setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -16,7 +17,7 @@ export const MoorhenLigandList = (props: {
 
     const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo)
     const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch)
-    const showModelsModal = useSelector((state: moorhen.State) => state.activeModals.showModelsModal)
+    const showModelsModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.MODELS))
 
     const [ligandList, setLigandList] = useState<moorhen.LigandInfo[]>(null)
 

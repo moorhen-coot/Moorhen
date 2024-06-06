@@ -2,7 +2,7 @@ import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { Button, Card, Col, Form, FormSelect, Row, Spinner, Stack } from "react-bootstrap";
-import { convertViewtoPx } from '../../utils/MoorhenUtils';
+import { convertViewtoPx } from '../../utils/utils';
 import { useDispatch, useSelector } from "react-redux";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
@@ -11,6 +11,8 @@ import { useSnackbar } from "notistack";
 import { addMolecule } from "../../moorhen";
 import { MoorhenSequenceRangeSlider } from "../misc/MoorhenSequenceRangeSlider";
 import { DeleteOutlined, WarningAmberOutlined } from "@mui/icons-material";
+import { hideModal } from "../../store/modalsSlice";
+import { modalKeys } from "../../utils/enums";
 
 const lsqkbResidueRangesReducer = (oldList: moorhen.lskqbResidueRangeMatch[], change: {action: string; item?: moorhen.lskqbResidueRangeMatch}) => {
     let newState: moorhen.lskqbResidueRangeMatch[]
@@ -104,7 +106,7 @@ const LskqbResidueRangeMatchCard = (props: {
     </Card>
 }
 
-export const MoorheSuperposeStructuresModal = (props: { show: boolean; setShow: React.Dispatch<React.SetStateAction<boolean>>; commandCentre: React.RefObject<moorhen.CommandCentre> }) => {    
+export const MoorheSuperposeStructuresModal = (props: { commandCentre: React.RefObject<moorhen.CommandCentre> }) => {    
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
@@ -132,8 +134,6 @@ export const MoorheSuperposeStructuresModal = (props: { show: boolean; setShow: 
     const dispatch = useDispatch()
     
     const { enqueueSnackbar } = useSnackbar()
-
-    const handleClose = () => props.setShow(false)
 
     const handleSuperpose = useCallback(async () => {
         if (!refMoleculeSelectRef || !movMoleculeSelectRef) {
@@ -171,8 +171,8 @@ export const MoorheSuperposeStructuresModal = (props: { show: boolean; setShow: 
         }
 
         setBusy(false)
-        props.setShow(false)
-
+        dispatch( hideModal(modalKeys.SUPERPOSE_MODELS) )
+        
     }, [molecules, props.commandCentre, lsqkbResidueRanges])
 
 
@@ -333,7 +333,7 @@ export const MoorheSuperposeStructuresModal = (props: { show: boolean; setShow: 
         <Button variant='primary' onClick={handleSuperpose}>
                 Superpose
             </Button>
-            <Button variant='danger' onClick={handleClose}>
+            <Button variant='danger' onClick={() => dispatch( hideModal(modalKeys.SUPERPOSE_MODELS) )}>
                 Close
             </Button>
         </Stack>
@@ -345,11 +345,9 @@ export const MoorheSuperposeStructuresModal = (props: { show: boolean; setShow: 
                             </Backdrop>
 
     return <MoorhenDraggableModalBase
-                modalId="superpose-structures-modal"
+                modalId={modalKeys.SUPERPOSE_MODELS}
                 left={width / 6}
                 top={height / 6}
-                show={props.show}
-                setShow={handleClose}
                 defaultHeight={convertViewtoPx(10, height)}
                 defaultWidth={convertViewtoPx(10, width)}
                 minHeight={convertViewtoPx(15, height)}

@@ -1,18 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { MoorhenMoleculeCard } from "../card/MoorhenMoleculeCard";
-import { convertRemToPx, convertViewtoPx } from "../../utils/MoorhenUtils";
+import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
 import { Button } from "react-bootstrap";
 import { UnfoldLessOutlined } from "@mui/icons-material";
 import { useSelector } from "react-redux";
+import { modalKeys } from "../../utils/enums";
 
-interface MoorhenModelsModalProps extends moorhen.CollectedProps {
-    show: boolean;
-    setShow: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-export const MoorhenModelsModal = (props: MoorhenModelsModalProps) => {
+export const MoorhenModelsModal = (props: moorhen.CollectedProps) => {
     const cardListRef = useRef([])
     
     const [currentDropdownMolNo, setCurrentDropdownMolNo] = useState<number>(-1)
@@ -50,11 +46,9 @@ export const MoorhenModelsModal = (props: MoorhenModelsModalProps) => {
     displayData.sort((a, b) => (a.props.index > b.props.index) ? 1 : ((b.props.index > a.props.index) ? -1 : 0))
 
     return <MoorhenDraggableModalBase
-                modalId="models-modal"
+                modalId={modalKeys.MODELS}
                 left={width - (convertRemToPx(55) + 100)}
                 top={height / 4}
-                show={props.show}
-                setShow={props.setShow}
                 defaultHeight={convertViewtoPx(10, height)}
                 defaultWidth={convertViewtoPx(10, width)}
                 minHeight={convertViewtoPx(10, height)}

@@ -962,28 +962,10 @@ export namespace moorhen {
             hoveredAtom: HoveredAtom;
             cursorStyle: string;
         };
-        activeModals: {
-            showModelsModal: boolean;
-            showMapsModal: boolean;
-            showCreateAcedrgLinkModal: boolean;
-            showQuerySequenceModal: boolean;
-            showScriptingModal: boolean;
-            showControlsModal: boolean;
-            showFitLigandModal: boolean;
-            showRamaPlotModal: boolean;
-            showDiffMapPeaksModal: boolean;
-            showValidationPlotModal: boolean;
-            showLigandValidationModal: boolean;
-            showCarbohydrateModal: boolean;
-            showPepFlipsValidationModal: boolean;
-            showFillPartialResValidationModal: boolean;
-            showUnmodelledBlobsModal: boolean;
-            showMmrrccModal: boolean;
-            showWaterValidationModal: boolean;
-            showSceneSettingsModal: boolean;
-            showSliceNDiceModal: boolean;
-            showSuperposeModal: boolean;
+        modals: {
+            activeModals: string[];
             focusHierarchy: string[];
+            modalsAttachedToSideBar: { key: string; isCollapsed: boolean }[];
         };
         mapContourSettings: {
             visibleMaps: number[];

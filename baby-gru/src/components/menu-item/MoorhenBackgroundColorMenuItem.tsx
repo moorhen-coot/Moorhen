@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { RgbColorPicker } from "react-colorful";
 import { CirclePicker } from "react-color"
-import { convertRemToPx } from "../../utils/MoorhenUtils";
+import { convertRemToPx } from "../../utils/utils";
 import { useDispatch, useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { setBackgroundColor } from "../../store/sceneSettingsSlice";

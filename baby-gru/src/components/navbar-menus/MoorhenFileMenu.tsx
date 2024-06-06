@@ -11,16 +11,16 @@ import { MoorhenBackupsMenuItem } from "../menu-item/MoorhenBackupsMenuItem"
 import { MoorhenImportMapCoefficientsMenuItem } from "../menu-item/MoorhenImportMapCoefficientsMenuItem"
 import { MoorhenDeleteEverythingMenuItem } from "../menu-item/MoorhenDeleteEverythingMenuItem"
 import { MenuItem } from "@mui/material";
-import { convertViewtoPx, doDownload, loadSessionFromProtoMessage, guid, readDataFile, loadSessionFromJsonString } from "../../utils/MoorhenUtils";
+import { convertViewtoPx, doDownload, loadSessionFromProtoMessage, guid, readDataFile, loadSessionFromJsonString } from "../../utils/utils";
 import { getBackupLabel } from "../../utils/MoorhenTimeCapsule"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch } from 'react-redux';
 import { addMoleculeList } from "../../store/moleculesSlice";
-import { setShowQuerySequenceModal } from "../../store/activeModalsSlice";
-import { setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { showModal } from "../../store/modalsSlice";
 import { moorhensession } from "../../protobuf/MoorhenSession";
 import { useSnackbar } from "notistack";
+import { modalKeys } from "../../utils/enums";
 
 export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
 
@@ -207,7 +207,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     <hr></hr>
 
                     <MenuItem id='query-online-services-sequence' onClick={() => {
-                        dispatch(setShowQuerySequenceModal(true))
+                        dispatch(showModal(modalKeys.SEQ_QUERY))
                         document.body.click()
                     }}>
                         Query online services with a sequence...

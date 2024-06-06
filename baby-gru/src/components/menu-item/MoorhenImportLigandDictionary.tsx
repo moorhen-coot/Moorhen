@@ -4,7 +4,7 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { Dropdown, Form, InputGroup, SplitButton } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { TextField } from "@mui/material"
-import { readTextFile } from "../../utils/MoorhenUtils"
+import { readTextFile } from "../../utils/utils"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { libcootApi } from "../../types/libcoot"

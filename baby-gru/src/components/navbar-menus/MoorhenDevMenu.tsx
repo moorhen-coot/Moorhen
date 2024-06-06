@@ -5,7 +5,7 @@ import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch } from "react-redux";
 import { setDoOutline, setDoShadow } from "../../store/sceneSettingsSlice";
-import { doDownload } from "../../utils/MoorhenUtils";
+import { doDownload } from "../../utils/utils";
 import { useSnackbar } from "notistack";
 
 export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) => {

@@ -1,7 +1,7 @@
 import { useEffect, useCallback, forwardRef, useState, useRef, useReducer } from 'react';
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
-import { cidToSpec } from '../../utils/MoorhenUtils';
+import { cidToSpec } from '../../utils/utils';
 import { MoorhenScreenRecorder } from "../../utils/MoorhenScreenRecorder"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";

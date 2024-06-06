@@ -2,7 +2,7 @@ import 'pako';
 import { 
     guid, readTextFile, readGemmiStructure, centreOnGemmiAtoms, 
     getRandomMoleculeColour, doDownload, formatLigandSVG, getCentreAtom, getAtomInfoLabel
- } from './MoorhenUtils'
+ } from './utils'
 import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation"
 import { MoorhenColourRule } from "./MoorhenColourRule"
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';

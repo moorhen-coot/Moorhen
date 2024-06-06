@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useRef, useMemo } from 'react';
 import { Container, Col, Row, Spinner } from 'react-bootstrap';
 import { MoorhenWebMG } from './webMG/MoorhenWebMG';
-import { createLocalStorageInstance, getAtomInfoLabel } from '../utils/MoorhenUtils';
+import { createLocalStorageInstance, getAtomInfoLabel } from '../utils/utils';
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre";
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
 import { Backdrop } from "@mui/material";
@@ -108,12 +108,11 @@ declare module "notistack" {
         };
         sideBar: {
             children: JSX.Element;
+            modalId: string;
             title: string;
         }
     }
 }
-  
-// import { MoorhenSharedSessionManager } from './misc/MoorhenSharedSessionManager';
 
 /**
  * A container for the Moorhen app. Needs to be rendered within a MoorhenReduxprovider.

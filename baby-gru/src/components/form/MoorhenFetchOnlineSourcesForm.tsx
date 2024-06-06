@@ -2,7 +2,7 @@ import { Form, Button, InputGroup, SplitButton, Dropdown } from "react-bootstrap
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { useState, useRef } from "react";
-import { getMultiColourRuleArgs, guid } from "../../utils/MoorhenUtils";
+import { getMultiColourRuleArgs, guid } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch, batch } from 'react-redux';
 import { setActiveMap } from "../../store/generalStatesSlice";

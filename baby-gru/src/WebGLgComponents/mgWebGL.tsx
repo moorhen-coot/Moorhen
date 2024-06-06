@@ -106,11 +106,11 @@ import { thick_lines_normal_gbuffer_vertex_shader_source as thick_lines_normal_g
 import { DistanceBetweenPointAndLine, DihedralAngle, NormalizeVec3, vec3Cross, vec3Add, vec3Subtract, vec3Create  } from './mgMaths.js';
 import { determineFontHeight } from './fontHeight.js';
 
-import { getAtomInfoLabel, guid } from '../utils/MoorhenUtils';
+import { getAtomInfoLabel, guid } from '../utils/utils';
 
 import { quatToMat4, quat4Inverse } from './quatToMat4.js';
 
-import { gemmiAtomPairsToCylindersInfo } from '../utils/MoorhenUtils'
+import { gemmiAtomPairsToCylindersInfo } from '../utils/utils'
 
 const gaussianBlurs = {
 

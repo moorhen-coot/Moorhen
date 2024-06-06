@@ -3,24 +3,23 @@ import { moorhen } from "../../types/moorhen";
 import { useRef, useState } from "react";
 import { Button, Row } from "react-bootstrap";
 import { MoorhenRamachandran } from "../validation-tools/MoorhenRamachandran"
-import { convertRemToPx, convertViewtoPx} from '../../utils/MoorhenUtils';
-import { useSelector } from "react-redux";
+import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
+import { useDispatch, useSelector } from "react-redux";
 import { LastPageOutlined } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import { Tooltip } from "@mui/material";
+import { modalKeys } from "../../utils/enums";
+import { hideModal } from "../../store/modalsSlice";
 
-interface MoorhenValidationModalProps extends moorhen.CollectedProps {
-    show: boolean;
-    setShow: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-export const MoorhenRamaPlotModal = (props: MoorhenValidationModalProps) => {        
+export const MoorhenRamaPlotModal = (props: moorhen.CollectedProps) => {        
     const resizeNodeRef = useRef<HTMLDivElement>();
     
     const [draggableResizeTrigger, setDraggableResizeTrigger] = useState<boolean>(true)
     
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+
+    const dispatch = useDispatch()
 
     const { enqueueSnackbar } = useSnackbar()
 
@@ -30,11 +29,9 @@ export const MoorhenRamaPlotModal = (props: MoorhenValidationModalProps) => {
     }
 
     return <MoorhenDraggableModalBase
-                modalId="rama-plot-modal"
+                modalId={modalKeys.RAMA_PLOT}
                 left={width / 6}
                 top={height / 3}
-                show={props.show}
-                setShow={props.setShow}
                 defaultHeight={convertViewtoPx(70, height)}
                 defaultWidth={convertViewtoPx(37, width)}
                 minHeight={convertViewtoPx(30, height)}
@@ -58,11 +55,12 @@ export const MoorhenRamaPlotModal = (props: MoorhenValidationModalProps) => {
                 additionalHeaderButtons={[
                     <Tooltip title={"Move to side panel"}  key={1}>
                         <Button variant="white" onClick={() => {
-                            props.setShow(false)
-                            enqueueSnackbar("rama-plot", {
+                            dispatch( hideModal(modalKeys.RAMA_PLOT) )
+                            enqueueSnackbar(modalKeys.RAMA_PLOT, {
                                 variant: "sideBar",
                                 persist: true,
                                 anchorOrigin: {horizontal: "right", vertical: "bottom"},
+                                modalId: modalKeys.RAMA_PLOT,
                                 title: "Rama. Plot",
                                 children: <div style={{height: '100%'}} >
                                 <Row className={"rama-validation-tool-container-row"}>

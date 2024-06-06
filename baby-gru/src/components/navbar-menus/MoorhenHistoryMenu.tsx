@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
-import { convertViewtoPx, loadSessionFromJsonString } from "../../utils/MoorhenUtils";
+import { convertViewtoPx, loadSessionFromJsonString } from "../../utils/utils";
 import { Stepper, Step, StepButton, StepLabel } from "@mui/material";
 import { moorhen } from "../../types/moorhen";
 import { SaveOutlined } from "@mui/icons-material";

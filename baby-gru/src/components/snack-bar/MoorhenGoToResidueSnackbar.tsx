@@ -6,7 +6,7 @@ import { useSelector } from "react-redux";
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
 import { forwardRef, useCallback, useRef, useState } from "react";
-import { getCentreAtom } from "../../utils/MoorhenUtils";
+import { getCentreAtom } from "../../utils/utils";
 import { webGL } from "../../types/mgWebGL";
 
 export const MoorhenGoToResidueSnackbar = forwardRef<

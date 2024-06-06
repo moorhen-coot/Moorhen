@@ -13,7 +13,8 @@ import { MoorhenSplitModelsMenuItem } from "../menu-item/MoorhenSplitModelsMenuI
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
-import { setShowCreateAcedrgLinkModal } from "../../store/activeModalsSlice";
+import { showModal } from "../../store/modalsSlice";
+import { modalKeys } from "../../utils/enums";
 
 export const MoorhenEditMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const dispatch = useDispatch()
@@ -36,7 +37,7 @@ export const MoorhenEditMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             <MoorhenGoToMenuItem key="go_to_cid" {...menuItemProps} />
             {devMode &&
                 <MenuItem onClick={() => {
-                    dispatch(setShowCreateAcedrgLinkModal(true))
+                    dispatch(showModal(modalKeys.ACEDRG))
                     document.body.click()
                 }}>
                     Create covalent link between two atoms...

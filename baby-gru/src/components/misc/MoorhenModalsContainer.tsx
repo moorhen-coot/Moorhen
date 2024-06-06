@@ -18,176 +18,105 @@ import { MoorhenFillPartialResiduesModal } from '../modal/MoorhenFillPartialResi
 import { MoorhenSceneSettingsModal } from '../modal/MoorhenSceneSettingsModal';
 import { MoorhenSliceNDiceModal } from '../modal/MoorhenSliceNDiceModal';
 import { MoorheSuperposeStructuresModal } from '../modal/MoorhenSuperposeStructuresModal';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { moorhen } from '../../types/moorhen';
-import { 
-    setShowControlsModal, setShowCreateAcedrgLinkModal, setShowDiffMapPeaksModal, setShowFillPartialResValidationModal, setShowFitLigandModal, setShowLigandValidationModal, setShowMapsModal, 
-    setShowMmrrccModal, setShowModelsModal, setShowPepFlipsValidationModal, setShowQuerySequenceModal, setShowRamaPlotModal, setShowSceneSettingsModal, setShowScriptingModal, 
-    setShowUnmodelledBlobsModal, setShowValidationPlotModal, setShowWaterValidationModal, setShowCarbohydrateValidationModal, setShowSliceNDiceModal, setShowSuperposeModal
-} from '../../store/activeModalsSlice';
+import { modalKeys } from "../../utils/enums";
 
 export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
-    const dispatch = useDispatch()
-    const showModelsModal = useSelector((state: moorhen.State) => state.activeModals.showModelsModal)
-    const showMapsModal = useSelector((state: moorhen.State) => state.activeModals.showMapsModal)
-    const showCreateAcedrgLinkModal = useSelector((state: moorhen.State) => state.activeModals.showCreateAcedrgLinkModal)
-    const showQuerySequenceModal = useSelector((state: moorhen.State) => state.activeModals.showQuerySequenceModal)
-    const showScriptingModal = useSelector((state: moorhen.State) => state.activeModals.showScriptingModal)
-    const showControlsModal = useSelector((state: moorhen.State) => state.activeModals.showControlsModal)
-    const showFitLigandModal = useSelector((state: moorhen.State) => state.activeModals.showFitLigandModal)
-    const showRamaPlotModal = useSelector((state: moorhen.State) => state.activeModals.showRamaPlotModal)
-    const showDiffMapPeaksModal = useSelector((state: moorhen.State) => state.activeModals.showDiffMapPeaksModal)
-    const showValidationPlotModal = useSelector((state: moorhen.State) => state.activeModals.showValidationPlotModal)
-    const showMmrrccModal = useSelector((state: moorhen.State) => state.activeModals.showMmrrccModal)
-    const showWaterValidationModal = useSelector((state: moorhen.State) => state.activeModals.showWaterValidationModal)
-    const showLigandValidationModal = useSelector((state: moorhen.State) => state.activeModals.showLigandValidationModal)
-    const showFillPartialResValidationModal = useSelector((state: moorhen.State) => state.activeModals.showFillPartialResValidationModal)
-    const showPepFlipsValidationModal = useSelector((state: moorhen.State) => state.activeModals.showPepFlipsValidationModal)
-    const showUnmodelledBlobsModal = useSelector((state: moorhen.State) => state.activeModals.showUnmodelledBlobsModal)
-    const showCarbohydrateValidationModal = useSelector((state: moorhen.State) => state.activeModals.showCarbohydrateModal)
-    const showSliceNDiceModal = useSelector((state: moorhen.State) => state.activeModals.showSliceNDiceModal)
-    const showSuperposeModal = useSelector((state: moorhen.State) => state.activeModals.showSuperposeModal)
-
-    const showSceneSettingsModal = useSelector((state: moorhen.State) => state.activeModals.showSceneSettingsModal)
+    const showCreateAcedrgLinkModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.ACEDRG))
+    const showQuerySequenceModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.SEQ_QUERY))
+    const showScriptingModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.SCRIPTING))
+    const showControlsModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.SHOW_CONTROLS))
+    const showFitLigandModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.FIT_LIGAND))
+    const showRamaPlotModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.RAMA_PLOT))
+    const showDiffMapPeaksModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.DIFF_MAP_PEAKS))
+    const showValidationPlotModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.VALIDATION_PLOT))
+    const showMmrrccModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.MMRRCC))
+    const showWaterValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.WATER_VALIDATION))
+    const showLigandValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.LIGAND_VALIDATION))
+    const showFillPartialResValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.FILL_PART_RES))
+    const showPepFlipsValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.PEPTIDE_FLIPS))
+    const showUnmodelledBlobsModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.UNMODELLED_BLOBS))
+    const showCarbohydrateValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.CARB_VALIDATION))
+    const showSliceNDiceModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.SLICE_N_DICE))
+    const showSuperposeModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.SUPERPOSE_MODELS))
+    const showSceneSettingsModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.SCENE_SETTINGS))
 
     return <>
-        <MoorhenModelsModal
-            show={showModelsModal}
-            setShow={(newVal: boolean) => dispatch(setShowModelsModal(newVal))}
-            {...props}
-        />
+        <MoorhenModelsModal {...props}/>
 
-        <MoorhenMapsModal
-            show={showMapsModal}
-            setShow={(newVal: boolean) => dispatch(setShowMapsModal(newVal))}
-            {...props}
-        />
+        <MoorhenMapsModal {...props}/>
             
         {showCreateAcedrgLinkModal && 
-            <MoorhenCreateAcedrgLinkModal
-                width={45}
-                show={showCreateAcedrgLinkModal}
-                setShow={(newVal: boolean) => dispatch(setShowCreateAcedrgLinkModal(newVal))}
-                {...props} />
+            <MoorhenCreateAcedrgLinkModal width={45} {...props} />
         }
 
         {showQuerySequenceModal &&
-            <MoorhenQuerySequenceModal
-                show={showQuerySequenceModal}
-                setShow={(newVal: boolean) => dispatch(setShowQuerySequenceModal(newVal))}
-                {...props} />
+            <MoorhenQuerySequenceModal {...props} />
         }
 
         {showScriptingModal &&
-            <MoorhenScriptModal
-                show={showScriptingModal}
-                setShow={(newVal: boolean) => dispatch(setShowScriptingModal(newVal))}
-                {...props} />
+            <MoorhenScriptModal {...props} />
         }
 
         {showControlsModal &&
-            <MoorhenControlsModal
-                show={showControlsModal}
-                setShow={(newVal: boolean) => dispatch(setShowControlsModal(newVal))}
-                {...props} />
+            <MoorhenControlsModal {...props} />
         }
 
         {showFitLigandModal &&
-            <MoorheFindLigandModal
-            show={showFitLigandModal}
-            setShow={(newVal: boolean) => dispatch(setShowFitLigandModal(newVal))}
-            {...props} />
+            <MoorheFindLigandModal />
         }
 
         {showRamaPlotModal &&
-            <MoorhenRamaPlotModal
-            show={showRamaPlotModal}
-            setShow={(newVal: boolean) => dispatch(setShowRamaPlotModal(newVal))}
-            {...props} />
+            <MoorhenRamaPlotModal {...props} />
         }
 
         {showDiffMapPeaksModal &&
-            <MoorhenDiffMapPeaksModal
-            show={showDiffMapPeaksModal}
-            setShow={(newVal: boolean) => dispatch(setShowDiffMapPeaksModal(newVal))}
-            {...props} />
+            <MoorhenDiffMapPeaksModal {...props} />
         }
 
         {showValidationPlotModal &&
-            <MoorhenValidationPlotModal
-            show={showValidationPlotModal}
-            setShow={(newVal: boolean) => dispatch(setShowValidationPlotModal(newVal))}
-            {...props} />
+            <MoorhenValidationPlotModal {...props} />
         }
 
         {showMmrrccModal &&
-            <MoorhenMmrrccModal
-            show={showMmrrccModal}
-            setShow={(newVal: boolean) => dispatch(setShowMmrrccModal(newVal))}
-            {...props} />
+            <MoorhenMmrrccModal {...props} />
         }
 
         {showWaterValidationModal &&
-            <MoorhenWaterValidationModal
-            show={showWaterValidationModal}
-            setShow={(newVal: boolean) => dispatch(setShowWaterValidationModal(newVal))}
-            {...props} />
+            <MoorhenWaterValidationModal {...props} />
         }
 
         {showLigandValidationModal &&
-            <MoorhenLigandValidationModal
-            show={showLigandValidationModal}
-            setShow={(newVal: boolean) => dispatch(setShowLigandValidationModal(newVal))}
-            {...props} />
+            <MoorhenLigandValidationModal {...props} />
         }
 
         {showCarbohydrateValidationModal &&
-                <MoorhenCarbohydrateValidationModal
-                show={showCarbohydrateValidationModal}
-                setShow={(newVal: boolean) => dispatch(setShowCarbohydrateValidationModal(newVal))}
-                {...props} />
+            <MoorhenCarbohydrateValidationModal {...props} />
         }
 
         {showPepFlipsValidationModal &&
-            <MoorhenPepFlipsModal
-            show={showPepFlipsValidationModal}
-            setShow={(newVal: boolean) => dispatch(setShowPepFlipsValidationModal(newVal))}
-            {...props} />
+            <MoorhenPepFlipsModal {...props} />
         }
 
         {showUnmodelledBlobsModal &&
-            <MoorhenUnmodelledBlobsModal
-            show={showUnmodelledBlobsModal}
-            setShow={(newVal: boolean) => dispatch(setShowUnmodelledBlobsModal(newVal))}
-            {...props} />
+            <MoorhenUnmodelledBlobsModal {...props} />
         }
 
         {showFillPartialResValidationModal &&
-            <MoorhenFillPartialResiduesModal
-            show={showFillPartialResValidationModal}
-            setShow={(newVal: boolean) => dispatch(setShowFillPartialResValidationModal(newVal))}
-            {...props} />
+            <MoorhenFillPartialResiduesModal {...props} />
         }
 
         {showSceneSettingsModal &&
-            <MoorhenSceneSettingsModal
-            show={showSceneSettingsModal}
-            setShow={(newVal: boolean) => dispatch(setShowSceneSettingsModal(newVal))}
-            {...props} />
+            <MoorhenSceneSettingsModal {...props} />
         }
 
         {showSliceNDiceModal &&
-            <MoorhenSliceNDiceModal
-            show={showSliceNDiceModal}
-            setShow={(newVal: boolean) => dispatch(setShowSliceNDiceModal(newVal))}
-            {...props} />
+            <MoorhenSliceNDiceModal {...props} />
         }
 
         {showSuperposeModal &&
-            <MoorheSuperposeStructuresModal
-            show={showSuperposeModal}
-            setShow={(newVal: boolean) => dispatch(setShowSuperposeModal(newVal))}
-            {...props} />
+            <MoorheSuperposeStructuresModal {...props} />
         }
 
         {props.extraDraggableModals && props.extraDraggableModals.map(modal => modal)}

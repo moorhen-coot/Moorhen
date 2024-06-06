@@ -4,7 +4,7 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { ChevronRightOutlined, ExpandMoreOutlined } from "@mui/icons-material";
 import { TreeView, TreeItem } from '@mui/x-tree-view';
 import { useSelector } from 'react-redux';
-import { convertViewtoPx } from "../../utils/MoorhenUtils";
+import { convertViewtoPx } from "../../utils/utils";
 
 export const MoorhenCentreOnLigandMenuItem = (props: { 
     glRef: React.RefObject<webGL.MGWebGL>;

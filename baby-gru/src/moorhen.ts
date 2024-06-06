@@ -14,7 +14,7 @@ import { MoorhenMoleculeSelect } from "./components/select/MoorhenMoleculeSelect
 import { MoorhenMapSelect } from "./components/select/MoorhenMapSelect";
 import { MoorhenSlider } from "./components/misc/MoorhenSlider";
 import { MoorhenFetchOnlineSourcesForm } from "./components/form/MoorhenFetchOnlineSourcesForm";
-import { loadSessionFromJsonString, loadSessionData, loadSessionFromProtoMessage, loadSessionFromArrayBuffer } from "./utils/MoorhenUtils";
+import { loadSessionFromJsonString, loadSessionData, loadSessionFromProtoMessage, loadSessionFromArrayBuffer } from "./utils/utils";
 import MoorhenReduxStore from "./store/MoorhenReduxStore";
 import { setDefaultBackgroundColor, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
     setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap,  
@@ -40,7 +40,7 @@ import { addMolecule, removeMolecule, emptyMolecules, addMoleculeList, showMolec
 import { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity, resetDefaultMouseSettings } from './store/mouseSettings';
 import { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts, resetShortcutSettings } from './store/shortCutsSlice';
 import { setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores, resetMoleculeMapUpdates } from './store/moleculeMapUpdateSlice';
-import { resetActiveModals, focusOnModal, unFocusModal } from './store/activeModalsSlice';
+import { resetActiveModals, focusOnModal, unFocusModal } from './store/modalsSlice';
 import { resetSharedSession } from './store/sharedSessionSlice';
 import moleculesReducer from './store/moleculesSlice';
 import mapsReducer from './store/mapsSlice';
@@ -52,7 +52,7 @@ import sceneSettingsReducer from './store/sceneSettingsSlice';
 import miscAppSettingsReducer from './store/miscAppSettingsSlice';
 import generalStatesReducer from './store/generalStatesSlice';
 import hoveringStatesReducer from './store/hoveringStatesSlice';
-import activeModalsReducer from './store/activeModalsSlice';
+import modalsReducer from './store/modalsSlice';
 import mapContourSettingsReducer from './store/mapContourSettingsSlice';
 import moleculeMapUpdateReducer from './store/moleculeMapUpdateSlice';
 import sharedSessionReducer from './store/sharedSessionSlice';
@@ -81,7 +81,7 @@ export {
     setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints, setAnimateRefine, MoorhenReduxStore, 
     loadSessionData, loadSessionFromProtoMessage, moleculesReducer, mapsReducer, mouseSettingsReducer, backupSettingsReducer,
     shortcutSettingsReducer, labelSettingsReducer, sceneSettingsReducer, miscAppSettingsReducer, generalStatesReducer,
-    activeModalsReducer, hoveringStatesReducer, mapContourSettingsReducer, moleculeMapUpdateReducer,
+    modalsReducer, hoveringStatesReducer, mapContourSettingsReducer, moleculeMapUpdateReducer,
     sharedSessionReducer, refinementSettingsReducer, resetSceneSettings, resetBackupSettings, resetDefaultMouseSettings, 
     resetGeneralStates, resetHoveringStates, resetLabelSettings, resetMapContourSettings, resetMiscAppSettings, resetMoleculeMapUpdates,
     resetRefinementSettings, resetShortcutSettings, resetActiveModals, focusOnModal, unFocusModal, resetSharedSession, loadSessionFromArrayBuffer

@@ -5,9 +5,10 @@ import { libcootApi } from '../../types/libcoot';
 import { useDispatch, useSelector } from 'react-redux';
 import { triggerUpdate } from '../../store/moleculeMapUpdateSlice';
 import { useCallback } from 'react';
-import { cidToSpec, sleep } from '../../utils/MoorhenUtils';
-import { setShowFillPartialResValidationModal } from '../../store/activeModalsSlice';
+import { cidToSpec, sleep } from '../../utils/utils';
+import { hideModal } from '../../store/modalsSlice';
 import { useSnackbar } from 'notistack';
+import { modalKeys } from '../../utils/enums';
 
 interface Props extends moorhen.CollectedProps {
     dropdownId: number;
@@ -66,7 +67,7 @@ export const MoorhenFillMissingAtoms = (props: Props) => {
     }
 
     const handleFillAll = useCallback((selectedMolecule: moorhen.Molecule, residues: libcootApi.ResidueSpecJS[]) => {
-        dispatch( setShowFillPartialResValidationModal(false) )
+        dispatch( hideModal(modalKeys.FILL_PART_RES) )
         if (selectedMolecule) {
             const handleStepFillAtoms = async (cid: string) => {
                 const resSpec = cidToSpec(cid)

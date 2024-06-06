@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
-import { cidToSpec, convertRemToPx, convertViewtoPx, getAtomInfoLabel } from "../../utils/MoorhenUtils";
+import { cidToSpec, convertRemToPx, convertViewtoPx, getAtomInfoLabel } from "../../utils/utils";
 import { Button, Card, Dropdown, Form, InputGroup, Row, Spinner, SplitButton, Stack } from "react-bootstrap";
 import { Backdrop, TextField } from "@mui/material";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { modalKeys } from '../../utils/enums';
+import { hideModal } from '../../store/modalsSlice';
 
 type AceDRGtomPickerProps = {
     monomerLibraryPath: string;
@@ -239,21 +241,21 @@ export const MoorhenCreateAcedrgLinkModal = (props: {
     aceDRGInstance: moorhen.AceDRGInstance;
     monomerLibraryPath: string;   
     width: number;
-    show: boolean;
-    setShow: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
     
+    const atomPickerOneRef = useRef(null)
+    const atomPickerTwoRef = useRef(null)
+
     const [awaitAtomClick, setAwaitAtomClick] = useState<number>(-1)
     const [errorMessage, setErrorMessage] = useState<string>('')
     
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
-    
-    const atomPickerOneRef = useRef(null)
-    const atomPickerTwoRef = useRef(null)
+
+    const dispatch = useDispatch()
 
     const handleCancel = () => {
-        props.setShow(false)
+        dispatch( hideModal(modalKeys.ACEDRG) )
     }
 
     const handleSubmitToAcedrg = async () => {
@@ -265,7 +267,7 @@ export const MoorhenCreateAcedrgLinkModal = (props: {
         if (props.aceDRGInstance) {
             try {
                 await props.aceDRGInstance.createCovalentLink(atomOneFormData, atomTwoFormData)
-                props.setShow(false)
+                dispatch( hideModal(modalKeys.ACEDRG) )
             } catch (err) {
                 console.log('Something went wrong while trying to run aceDRG...')
                 console.log(err)
@@ -275,12 +277,10 @@ export const MoorhenCreateAcedrgLinkModal = (props: {
     }
 
     return <MoorhenDraggableModalBase 
-                modalId="create-acedrg-link-modal"
+                modalId={modalKeys.ACEDRG}
                 headerTitle="Create covalent link"
                 left={width / 2}
                 top={height / 3}
-                show={props.show}
-                setShow={props.setShow}
                 defaultHeight={convertViewtoPx(10, height)}
                 defaultWidth={convertViewtoPx(10, width)}
                 minHeight={convertViewtoPx(10, height)}

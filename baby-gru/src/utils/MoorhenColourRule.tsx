@@ -1,6 +1,6 @@
 import { moorhen } from '../types/moorhen';
 import { hexToRgb } from '@mui/material';
-import { guid } from './MoorhenUtils';
+import { guid } from './utils';
 
 export class MoorhenColourRule implements moorhen.ColourRule {
     

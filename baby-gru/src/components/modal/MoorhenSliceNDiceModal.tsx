@@ -1,15 +1,16 @@
 import { useDispatch, useSelector } from "react-redux"
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen"
-import { convertRemToPx, convertViewtoPx, findConsecutiveRanges, hslToHex, readTextFile } from "../../utils/MoorhenUtils"
-import { Button, Card, Col, Dropdown, Form, FormSelect, OverlayTrigger, Row, Spinner, SplitButton, Stack } from "react-bootstrap"
+import { convertViewtoPx, findConsecutiveRanges, hslToHex, readTextFile } from "../../utils/utils"
+import { Button, Card, Col, Dropdown, Form, FormSelect, Row, Spinner, SplitButton, Stack } from "react-bootstrap"
 import { Backdrop, IconButton, Slider, Tooltip } from "@mui/material"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { addMolecule, hideMolecule, showMolecule } from "../../store/moleculesSlice"
 import { CenterFocusWeakOutlined, DownloadOutlined, InfoOutlined, WarningOutlined } from "@mui/icons-material"
-import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule"
+import { hideModal } from "../../store/modalsSlice"
+import { modalKeys } from "../../utils/enums"
 
 const deleteHiddenResidues = async (molecule: moorhen.Molecule) => {
     if (molecule.excludedSelections.length > 0) {
@@ -116,8 +117,6 @@ const MoorhenSliceNDiceCard = (props: {
 }
 
 export const MoorhenSliceNDiceModal = (props: {
-    show: boolean;
-    setShow: React.Dispatch<React.SetStateAction<boolean>>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {
     
@@ -133,12 +132,6 @@ export const MoorhenSliceNDiceModal = (props: {
     const isDirty = useRef<boolean>(false)
     const thresholdTypeRef = useRef<string>('bfactor')
 
-    const dispatch = useDispatch()
-    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-
     const [paeFileIsUploaded, setPaeFileIsUploaded] = useState<boolean>(false)
     const [thresholdType, setThresholdType] = useState<string>('bfactor')
     const [moleculeBfactors, setMoleculeBfactors] = useState<{ cid: string; bFactor: number; normalised_bFactor: number; }[]>(null)
@@ -151,6 +144,13 @@ export const MoorhenSliceNDiceModal = (props: {
     const [busy, setBusy] = useState<boolean>(false)
     const [showError, setShowError] = useState<boolean>(false)
     const [slicingResults, setSlicingResults] = useState<moorhen.Molecule[]>(null)
+
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    
+    const dispatch = useDispatch()
 
     useEffect(() => {
         const copyMolecule = async (molecule: moorhen.Molecule) => {
@@ -362,7 +362,7 @@ export const MoorhenSliceNDiceModal = (props: {
             commandArgs: [ ],
             returnType: 'void'
         }, false)
-        props.setShow(false)
+        dispatch( hideModal(modalKeys.SLICE_N_DICE) )
     }, [slicingResults, molecules])
 
     const handleDownload = useCallback(async (mergeSlices: boolean = false) => {
@@ -573,11 +573,9 @@ export const MoorhenSliceNDiceModal = (props: {
 
 
     return <MoorhenDraggableModalBase
-                modalId="slice-n-dice-modal"
+                modalId={modalKeys.SLICE_N_DICE}
                 left={width / 6}
                 top={height / 6}
-                show={props.show}
-                setShow={handleClose}
                 defaultHeight={convertViewtoPx(10, height)}
                 defaultWidth={convertViewtoPx(10, width)}
                 minHeight={convertViewtoPx(15, height)}

@@ -35,8 +35,8 @@ declare module 'moorhen' {
     let hoveringStatesReducer: any;
     module.exports = hoveringStatesReducer
     
-    let activeModalsReducer: any;
-    module.exports = activeModalsReducer
+    let modalsReducer: any;
+    module.exports = modalsReducer
 
     let mapContourSettingsReducer: any;
     module.exports = mapContourSettingsReducer

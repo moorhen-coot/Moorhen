@@ -7,7 +7,8 @@ import { MoorhenMatchLigandsMenuItem } from "../menu-item/MoorhenMatchLigandsMen
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MenuItem } from "@mui/material";
 import { useDispatch } from "react-redux";
-import { setShowFitLigandModal } from "../../store/activeModalsSlice";
+import { showModal } from "../../store/modalsSlice";
+import { modalKeys } from "../../utils/enums";
 
 export const MoorhenLigandMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const dispatch = useDispatch()
@@ -24,7 +25,7 @@ export const MoorhenLigandMenu = (props: MoorhenNavBarExtendedControlsInterface)
             <MoorhenMinimizeEnergyMenuItem {...menuItemProps} />
             <MoorhenMatchLigandsMenuItem {...menuItemProps} />
             <MenuItem onClick={() => {
-                dispatch(setShowFitLigandModal(true))
+                dispatch(showModal(modalKeys.FIT_LIGAND))
                 document.body.click()
             }}>Find ligand...</MenuItem>
     </>

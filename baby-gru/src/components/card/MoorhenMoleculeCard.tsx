@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef, useReducer, useCallback, useImperativeHandle, forwardRef, useMemo } from 'react';
 import { Card, Row, Col, Stack, Button, Spinner } from "react-bootstrap";
 import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
-import { convertRemToPx, convertViewtoPx, getCentreAtom, representationLabelMapping } from '../../utils/MoorhenUtils';
-import { isDarkBackground } from '../../WebGLgComponents/mgWebGL'
+import { convertRemToPx, convertViewtoPx, getCentreAtom } from '../../utils/utils';
+import { representationLabelMapping } from '../../utils/enums';
+import { isDarkBackground } from '../../WebGLgComponents/mgWebGL';
 import { MoorhenSequenceList } from "../list/MoorhenSequenceList";
-import { MoorhenMoleculeCardButtonBar } from "../button-bar/MoorhenMoleculeCardButtonBar"
-import { MoorhenLigandList } from "../list/MoorhenLigandList"
+import { MoorhenMoleculeCardButtonBar } from "../button-bar/MoorhenMoleculeCardButtonBar";
+import { MoorhenLigandList } from "../list/MoorhenLigandList";
 import { Chip, FormGroup } from "@mui/material";
 import { getNameLabel } from "./cardUtils"
 import { AddOutlined, DeleteOutlined, FormatColorFillOutlined, EditOutlined, ExpandMoreOutlined, TuneOutlined } from '@mui/icons-material';

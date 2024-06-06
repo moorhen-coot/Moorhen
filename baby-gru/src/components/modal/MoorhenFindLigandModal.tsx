@@ -2,7 +2,7 @@ import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, Card, Col, Form, Row, Spinner, Stack } from "react-bootstrap";
-import { convertViewtoPx } from '../../utils/MoorhenUtils';
+import { convertViewtoPx } from '../../utils/utils';
 import { useDispatch, useSelector } from "react-redux";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
@@ -10,6 +10,8 @@ import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 import { Backdrop, IconButton, Tooltip } from "@mui/material";
 import { CenterFocusWeakOutlined, CrisisAlertOutlined, MergeTypeOutlined } from "@mui/icons-material";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
+import { hideModal } from "../../store/modalsSlice";
+import { modalKeys } from "../../utils/enums";
 
 const LigandHitCard = (props: {
     selectedMolNo: number;
@@ -91,7 +93,7 @@ const LigandHitCard = (props: {
     </Card>
 }
 
-export const MoorheFindLigandModal = (props: { show: boolean; setShow: React.Dispatch<React.SetStateAction<boolean>>; }) => {    
+export const MoorheFindLigandModal = (props: { }) => {    
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const maps = useSelector((state: moorhen.State) => state.maps)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
@@ -110,9 +112,11 @@ export const MoorheFindLigandModal = (props: { show: boolean; setShow: React.Dis
     const [busy, setBusy] = useState<boolean>(false)
     const [ligandResults, setLigandResults] = useState<moorhen.Molecule[]>(null)
 
+    const dispatch = useDispatch()
+
     const handleClose = () => {
         ligandResults?.forEach(ligandMolecule => ligandMolecule.delete())
-        props.setShow(false)
+        dispatch( hideModal(modalKeys.FIT_LIGAND) )
     }
 
     const findLigand = useCallback(async () => {
@@ -247,11 +251,9 @@ export const MoorheFindLigandModal = (props: { show: boolean; setShow: React.Dis
                             </Backdrop>
 
     return <MoorhenDraggableModalBase
-                modalId="find-ligand-modal"
+                modalId={modalKeys.FIT_LIGAND}
                 left={width / 6}
                 top={height / 6}
-                show={props.show}
-                setShow={handleClose}
                 defaultHeight={convertViewtoPx(10, height)}
                 defaultWidth={convertViewtoPx(10, width)}
                 minHeight={convertViewtoPx(15, height)}

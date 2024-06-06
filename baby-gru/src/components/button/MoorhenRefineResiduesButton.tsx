@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
-import { getTooltipShortcutLabel } from "../../utils/MoorhenUtils"
+import { getTooltipShortcutLabel } from "../../utils/utils"
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 import { useDispatch, useSelector } from "react-redux";

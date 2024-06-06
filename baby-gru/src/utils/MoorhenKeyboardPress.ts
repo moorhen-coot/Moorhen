@@ -1,4 +1,4 @@
-import { cidToSpec, getCentreAtom } from "./MoorhenUtils"
+import { cidToSpec, getCentreAtom } from "./utils"
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4';

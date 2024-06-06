@@ -5,7 +5,7 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useSelector } from 'react-redux';
 import { Form, FormSelect } from "react-bootstrap";
-import { representationLabelMapping } from "../../utils/MoorhenUtils";
+import { representationLabelMapping } from "../../utils/enums";
 import { useSnackbar } from "notistack";
 
 const animationRepresentations = [ 'CBs', 'CAs', 'CRs', 'gaussian', 'MolecularSurface', 'VdwSpheres' ]

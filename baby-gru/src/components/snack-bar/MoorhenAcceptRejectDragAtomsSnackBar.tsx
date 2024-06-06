@@ -3,7 +3,7 @@ import { forwardRef, useCallback, useEffect, useRef } from "react";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from "react-redux";
-import { cidToSpec, getAtomInfoLabel } from "../../utils/MoorhenUtils";
+import { cidToSpec, getAtomInfoLabel } from "../../utils/utils";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { setIsDraggingAtoms } from "../../store/generalStatesSlice";
 import { Stack } from "react-bootstrap";

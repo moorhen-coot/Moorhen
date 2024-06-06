@@ -2,16 +2,12 @@ import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen";
 import { useRef } from "react";
 import { Row } from "react-bootstrap";
-import { convertRemToPx, convertViewtoPx} from '../../utils/MoorhenUtils';
+import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
 import { useSelector } from "react-redux";
 import { MoorhenLigandValidation } from "../validation-tools/MoorhenLigandValidation";
+import { modalKeys } from "../../utils/enums";
 
-interface MoorhenValidationModalProps extends moorhen.CollectedProps {
-    show: boolean;
-    setShow: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-export const MoorhenLigandValidationModal = (props: MoorhenValidationModalProps) => {        
+export const MoorhenLigandValidationModal = (props: moorhen.CollectedProps) => {        
     const resizeNodeRef = useRef<HTMLDivElement>();
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
@@ -23,11 +19,9 @@ export const MoorhenLigandValidationModal = (props: MoorhenValidationModalProps)
     }
 
     return <MoorhenDraggableModalBase
-                modalId="ligand-validation-modal"
+                modalId={modalKeys.LIGAND_VALIDATION}
                 left={width / 6}
                 top={height / 3}
-                show={props.show}
-                setShow={props.setShow}
                 defaultHeight={convertViewtoPx(70, height)}
                 defaultWidth={convertViewtoPx(37, width)}
                 minHeight={convertViewtoPx(30, height)}

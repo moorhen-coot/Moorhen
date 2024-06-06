@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { PlayArrowOutlined } from "@mui/icons-material";
 import { Button } from "react-bootstrap";
 import { highlight, languages } from 'prismjs/components/prism-core';
@@ -11,16 +11,14 @@ import 'prismjs/themes/prism.css';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
 import { useSelector } from "react-redux";
-import { convertRemToPx, convertViewtoPx } from "../../utils/MoorhenUtils";
+import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { modalKeys } from "../../utils/enums";
 
 export const MoorhenScriptModal = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     store: ToolkitStore;
-    show: boolean;
-    setShow: React.Dispatch<React.SetStateAction<boolean>>;
-    code?: string;
 }) => {
 
     const [code, setCode] = useState<string>("")
@@ -41,14 +39,8 @@ export const MoorhenScriptModal = (props: {
         }
     }, [code, props.glRef, maps, molecules])
     
-    useEffect(() => {
-        if (props.code) {
-            setCode(props.code)
-        }
-    }, [])
-
     return <MoorhenDraggableModalBase
-                modalId="script-modal"
+                modalId={modalKeys.SCRIPTING}
                 left={width / 5}
                 top={height / 6}
                 headerTitle="Interactive scripting"
