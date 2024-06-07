@@ -1,49 +1,56 @@
-name: Test react components
+name: Run tests
 
 on:
   push:
   pull_request:
 
 jobs:
-  install_node_modules:
+  run_tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
+
     - name: Checkout repository
       uses: actions/checkout@v1
+
     - name: Install node.js v16
       uses: actions/setup-node@v3
       with:
         node-version: 16
+
     - name: Install dependencies 
       working-directory: /home/runner/work/Moorhen/
       run: | 
         sudo apt-get update -y   
         sudo apt-get install -y npm
+
     - name: Restore cache node16 modules
       id: cache-node16-modules-load
       uses: actions/cache@v4
       with:
         path: /home/runner/work/Moorhen/Moorhen/baby-gru/node_modules
         key: node16-modules-cache
+
     - name: Install npm modules
       working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
       if: steps.cache-node16-modules-load.outputs.cache-hit != 'true'
       run: npm install
+
     - name: Save node modules cache
       id: cache-node16-modules-save
       if: steps.cache-node16-modules-load.outputs.cache-hit != 'true'
       uses: actions/cache/save@v4
       with: 
         path: /home/runner/work/Moorhen/Moorhen/baby-gru/node_modules
-        key: node16-modules-cache
-  
-  run_tests:
-    runs-on: ubuntu-latest
-    needs: install_node_modules
-    timeout-minutes: 5
-    steps:
-    - name: Run tests
+        key: node16-modules-cache 
+
+    - name: Test typescript transpilation
+      working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
       run: |             
-        cd /home/runner/work/Moorhen/Moorhen/baby-gru/
-        npm run test-react
+        npm run create-version
+        npm run transpile-protobuf 
+        npx tsc
+        
+    - name: Run react tests
+      working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
+      run: npm run test-react
