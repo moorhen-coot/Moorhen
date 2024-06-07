@@ -5,9 +5,9 @@ on:
   pull_request:
 
 jobs:
-  reactTests:
-    name: reactTests
+  install_node_modules:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
     - name: Checkout repository
       uses: actions/checkout@v1
@@ -37,8 +37,13 @@ jobs:
       with: 
         path: /home/runner/work/Moorhen/Moorhen/baby-gru/node_modules
         key: node16-modules-cache
+  
+  run_tests:
+    runs-on: ubuntu-latest
+    needs: install_node_modules
+    timeout-minutes: 5
+    steps:
     - name: Run tests
-      working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
       run: |             
         cd /home/runner/work/Moorhen/Moorhen/baby-gru/
         npm run test-react
