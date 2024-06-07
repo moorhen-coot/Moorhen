@@ -1,8 +1,6 @@
 name: Update node modules
 
-on:
-  schedule:
-  - cron: "0 4 * * 0"
+on: workflow_dispatch
 
 jobs:
   updateNodeModulesCache:

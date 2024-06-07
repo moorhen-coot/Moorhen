@@ -1,11 +1,6 @@
 name: Update node16 modules
 
-on:
-  schedule:
-  - cron: "0 5 * * 0"
-  push:
-    paths:
-    - 'baby-gru/package.json'
+on: workflow_dispatch
 
 jobs:
   updateNode16ModulesCache:
