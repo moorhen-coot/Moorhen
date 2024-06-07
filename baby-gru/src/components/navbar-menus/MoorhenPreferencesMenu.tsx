@@ -10,7 +10,7 @@ import { MoorhenDefaultBondSmoothnessPreferencesMenuItem } from "../menu-item/Mo
 import { MapContourSettingsMenuItem } from "../menu-item/MoorhenMapContourSettingsMenuItem"
 import { MoorhenRefinementSettingsMenuItem } from "../menu-item/MoorhenRefinementSettingsMenuItem"
 import { MoorhenEnvDistancesSettingsMenuItem } from "../menu-item/MoorhenEnvDistancesSettingsMenuItem"
-import { MoorhenSlider } from '../misc/MoorhenSlider' 
+import { MoorhenMouseSensitivitySettingsMenuItem } from "../menu-item/MoorhenMouseSensitivitySettingsMenuItem"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { useSelector, useDispatch } from "react-redux";
 import { setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut } from "../../store/miscAppSettingsSlice";
@@ -18,7 +18,6 @@ import { setAtomLabelDepthMode } from "../../store/labelSettingsSlice";
 import { setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
 import { setMakeBackups } from "../../store/backupSettingsSlice";
 import { setDevMode } from "../../store/generalStatesSlice";
-import { setContourWheelSensitivityFactor, setMouseSensitivity, setZoomWheelSensitivityFactor } from "../../store/mouseSettings";
 import { moorhen } from "../../types/moorhen";
 
 export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
@@ -32,9 +31,6 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
     const showShortcutToast = useSelector((state: moorhen.State) => state.shortcutSettings.showShortcutToast)
     const shortcutOnHoveredAtom = useSelector((state: moorhen.State) => state.shortcutSettings.shortcutOnHoveredAtom)
     const atomLabelDepthMode = useSelector((state: moorhen.State) => state.labelSettings.atomLabelDepthMode)
-    const mouseSensitivity = useSelector((state: moorhen.State) => state.mouseSettings.mouseSensitivity)
-    const zoomWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.zoomWheelSensitivityFactor)
-    const contourWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.contourWheelSensitivityFactor)
     const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.miscAppSettings.defaultExpandDisplayCards)
     const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.miscAppSettings.transparentModalsOnMouseOut)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
@@ -103,16 +99,9 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
                             label="Developer mode"/>
                     </InputGroup>
                     <hr></hr>
-                    <Form.Group controlId="mouseSensitivitySlider" style={{paddingTop:'0rem', paddingBottom:'0.5rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
-                        <MoorhenSlider minVal={0.01} maxVal={1.0} logScale={false} sliderTitle="Mouse sensitivity" initialValue={mouseSensitivity} externalValue={mouseSensitivity} setExternalValue={(val: number) => dispatch(setMouseSensitivity(val))}/>
-                    </Form.Group>
-                    <Form.Group controlId="zoomWheelSensitivitySlider" style={{paddingTop:'0.5rem', paddingBottom:'0rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
-                        <MoorhenSlider minVal={0.1} maxVal={9.9} logScale={false} sliderTitle="Mouse wheel zoom sensitivity" initialValue={zoomWheelSensitivityFactor} externalValue={zoomWheelSensitivityFactor} setExternalValue={(val: number) => dispatch(setZoomWheelSensitivityFactor(val))}/>
-                    </Form.Group>
-                    <Form.Group controlId="mapWheelSensitivitySlider" style={{paddingTop:'0.5rem', paddingBottom:'0rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
-                        <MoorhenSlider minVal={0.01} maxVal={0.1} logScale={false} sliderTitle="Mouse wheel map contour sensitivity" initialValue={contourWheelSensitivityFactor} externalValue={contourWheelSensitivityFactor} setExternalValue={(val: number) => dispatch(setContourWheelSensitivityFactor(val))}/>
-                    </Form.Group>
-                    <hr></hr>
+                    <MoorhenMouseSensitivitySettingsMenuItem
+                        setPopoverIsShown={setPopoverIsShown}
+                    />
                     <MoorhenBackupPreferencesMenuItem 
                         setPopoverIsShown={setPopoverIsShown}
                     />
