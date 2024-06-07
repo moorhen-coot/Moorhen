@@ -1,6 +1,6 @@
-import { libcootApi } from "../../src/types/libcoot"
-import { emscriptem } from "../../src/types/emscriptem"
-import { privateer } from "../../src/types/privateer";
+import { libcootApi } from "../src/types/libcoot"
+import { emscriptem } from "../src/types/emscriptem"
+import { privateer } from "../src/types/privateer";
 
 // @ts-ignore
 importScripts('./moorhen.js')

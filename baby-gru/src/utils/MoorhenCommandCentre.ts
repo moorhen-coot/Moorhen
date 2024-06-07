@@ -8,7 +8,7 @@ import { webGL } from '../types/mgWebGL';
  * headless libcoot API
  * @property {Worker} cootWorker - A web worker holding a headless libcoot instance
  * @constructor
- * @param {string} urlPrefix - The root url used to find the baby-gru/CootWorker.js worker file
+ * @param {string} urlPrefix - The root url used to find the /CootWorker.js worker file
  * @param {function} onConsoleChanged - Callback executed whenever the worker prints a message to the console
  * @param {function} onCommandStart - Callback executed whenever a new command is issued to the web worker
  * @param {function} onCommandExit - Callback executed whenever a new command is completed by the web worker
@@ -65,7 +65,7 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
     
     async init() {
         this.isClosed = false
-        this.cootWorker = new Worker(`${this.urlPrefix}/baby-gru/CootWorker.js`)
+        this.cootWorker = new Worker(`${this.urlPrefix}/CootWorker.js`)
         this.cootWorker.onmessage = this.handleMessage.bind(this)
         await this.postMessage({ message: 'CootInitialize', data: {} })
         if (this.onCootInitialized) {
