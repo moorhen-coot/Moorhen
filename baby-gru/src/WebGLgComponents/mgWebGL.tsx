@@ -1930,6 +1930,7 @@ interface MGWebGLShader extends WebGLProgram {
     vertexPositionAttribute: GLint;
     vertexNormalAttribute: GLint;
     vertexColourAttribute: GLint;
+    vertexTextureAttribute: GLint;
     pMatrixUniform: WebGLUniformLocation;
     mvMatrixUniform: WebGLUniformLocation;
     mvInvMatrixUniform: WebGLUniformLocation;
@@ -4145,7 +4146,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.edgeDetectTexture, 0);
 
             const status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
-            console.log("EdgeDetect framebuffer OK?",(status===this.gl.FRAMEBUFFER_COMPLETE));
+            //console.log("EdgeDetect framebuffer OK?",(status===this.gl.FRAMEBUFFER_COMPLETE));
         }
 
         this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, null);
@@ -5256,7 +5257,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.linkProgram(this.shaderProgramOutline);
 
         if (!this.gl.getProgramParameter(this.shaderProgramOutline, this.gl.LINK_STATUS)) {
-            alert("Could not initialise shaders (initShaders)");
+            alert("Could not initialise shaders (initOutlineShaders)");
             console.log(this.gl.getProgramInfoLog(this.shaderProgramOutline));
         }
 
@@ -5530,6 +5531,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgram.vertexColourAttribute = this.gl.getAttribLocation(this.shaderProgram, "aVertexColour");
         this.gl.enableVertexAttribArray(this.shaderProgram.vertexColourAttribute);
 
+        this.shaderProgram.vertexTextureAttribute = this.gl.getAttribLocation(this.shaderProgram, "aVertexTexture");
+        if(this.shaderProgram.vertexTextureAttribute>1) this.gl.enableVertexAttribArray(this.shaderProgram.vertexTextureAttribute);
+
         this.shaderProgram.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgram, "uPMatrix");
         this.shaderProgram.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgram, "uMVMatrix");
         this.shaderProgram.mvInvMatrixUniform = this.gl.getUniformLocation(this.shaderProgram, "uMVINVMatrix");
@@ -5609,6 +5613,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.shaderProgramInstanced.vertexColourAttribute = this.gl.getAttribLocation(this.shaderProgramInstanced, "aVertexColour");
         this.gl.enableVertexAttribArray(this.shaderProgramInstanced.vertexColourAttribute);
+
+        this.shaderProgramInstanced.vertexTextureAttribute = this.gl.getAttribLocation(this.shaderProgram, "aVertexTexture");
+        if(this.shaderProgramInstanced.vertexTextureAttribute>1) this.gl.enableVertexAttribArray(this.shaderProgramInstanced.vertexTextureAttribute);
 
         this.shaderProgramInstanced.vertexInstanceOriginAttribute = this.gl.getAttribLocation(this.shaderProgramInstanced, "instancePosition");
         this.shaderProgramInstanced.vertexInstanceSizeAttribute = this.gl.getAttribLocation(this.shaderProgramInstanced, "instanceSize");
@@ -11013,10 +11020,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             renderArrays.axesColours = renderArrays.axesColours.concat([...colour1, ...colour2])
         }
 
-        let hairColour = [0., 0., 0., 1.];
+        let hairColour = [0., 0., 0., 0.5];
         let y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
         if (y < 0.5) {
-            hairColour = [1., 1., 1., 1.];
+            hairColour = [1., 1., 1., 0.5];
         }
 
         // Actual axes
