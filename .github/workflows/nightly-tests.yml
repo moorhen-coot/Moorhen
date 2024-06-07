@@ -5,22 +5,18 @@ on:
   - cron: "0 0 * * *"
 
 jobs:
-  runTests:
+  
+  install_moorhen:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
-
-      # Checkout repository
       - uses: actions/checkout@v1
         name: Checkout Moorhen
-
-      # Install some general dependencies
       - name: Install dependencies 
         working-directory: /home/runner/work/Moorhen/       
         run: |
           sudo apt-get update -y
           sudo apt-get install -y bzr nodejs npm pkg-config libfreetype6-dev libxft-dev blt-dev build-essential zlib1g-dev autoconf autotools-dev libtool gcc cmake patch curl libeigen3-dev meson
-
       - name: Download and install emsdk
         run: |
           cd /home/runner/work/Moorhen/
@@ -28,26 +24,24 @@ jobs:
           cd /home/runner/work/Moorhen/emsdk/
           ./emsdk install latest
           ./emsdk activate latest
-
-      - name: Download and patch Moorhen sources
+      - name: Download Moorhen sources
         working-directory: /home/runner/work/Moorhen/Moorhen
         run: |
-          cd /home/runner/work/Moorhen/Moorhen         
           source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
           ./get_sources
-      
-      # Install bindings
       - name: Install bindings
         working-directory: /home/runner/work/Moorhen/Moorhen
         run: |
-          cd /home/runner/work/Moorhen/Moorhen
           source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
           ./initial_build.sh
 
-      # Run the tests
+  test_moorhen:
+    needs: install_moorhen
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
       - name: Run tests
         working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
         run: |             
-          cd /home/runner/work/Moorhen/Moorhen/baby-gru
           source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
           npm test

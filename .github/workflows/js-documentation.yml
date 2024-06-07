@@ -1,16 +1,15 @@
 name: Dev docs
 
-# Only build dev docs based on the branch for the latest release...
 on:
   push:
+    # Only build dev docs based on the branch for the latest release...
     branches:
       - v0.9
 
 jobs:
-  build:
+
+  install_moorhen:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v1
@@ -32,12 +31,23 @@ jobs:
       - name: npm install
         working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
         run: npm install
+  
+  compile_docs:
+    runs-on: ubuntu-latest
+    needs: install_moorhen
+    steps:
       - name: compile jsDocs
         working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
         run: |
-          cd /home/runner/work/Moorhen/Moorhen/baby-gru/
           npm install --force better-docs
           npx jsdoc -c jsdoc.json
+
+  publish_docs:
+    runs-on: ubuntu-latest
+    needs: compile_docs
+    permissions:
+      contents: write
+    steps:
       - name: Publishing on Github Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
