@@ -160,6 +160,6 @@ export const MoorhenSnackBarManager = (props: {
         }
     }, [handleAtomClicked])
 
-    return <></>
+    return null
 
 }

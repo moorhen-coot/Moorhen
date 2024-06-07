@@ -704,5 +704,5 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('defaultMapLitLines', defaultMapLitLines));
     }, [defaultMapLitLines]);
 
-    return  <></>
+    return  null
 }
