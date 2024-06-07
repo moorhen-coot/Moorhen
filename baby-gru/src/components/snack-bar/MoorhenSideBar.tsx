@@ -1,11 +1,11 @@
 import { SnackbarContent, useSnackbar } from "notistack";
-import { forwardRef, useEffect } from "react";
+import { forwardRef, useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { Stack } from "react-bootstrap";
 import { IconButton } from "@mui/material";
-import { CloseOutlined,  UnfoldLessOutlined, UnfoldMoreOutlined } from "@mui/icons-material";
-import { attachModalToSideBar, collapseSideBarModal, detachModalFromSideBar, expandSideBarModal } from "../../store/modalsSlice";
+import { CloseOutlined,  OpenInNewOutlined,  UnfoldLessOutlined, UnfoldMoreOutlined } from "@mui/icons-material";
+import { attachModalToSideBar, collapseSideBarModal, detachModalFromSideBar, expandSideBarModal, showModal } from "../../store/modalsSlice";
 
 export const MoorhenSideBar = forwardRef<HTMLDivElement, { children: JSX.Element, id: string, title: string, modalId: string}>((props, ref) => {
 
@@ -26,6 +26,15 @@ export const MoorhenSideBar = forwardRef<HTMLDivElement, { children: JSX.Element
         }
     }, [])
 
+    const handleClose = useCallback(() => {
+        closeSnackbar(props.id)
+    }, [props.id])
+
+    const handleDetach = useCallback(() => {
+        closeSnackbar(props.id)
+        dispatch( showModal(props.modalId) )
+    }, [props.id, props.modalId])
+
     return <SnackbarContent ref={ref} className="moorhen-sidebar-div" style={{ backgroundColor: isDark ? 'grey' : 'white' }}>
         <Stack direction="horizontal" gap={1} style={{ justifyContent: 'space-between', width: '90%' }}>
             <span>{props.title}</span>
@@ -33,7 +42,10 @@ export const MoorhenSideBar = forwardRef<HTMLDivElement, { children: JSX.Element
                 <IconButton onClick={() => dispatch( isCollapsed ? expandSideBarModal(props.modalId) : collapseSideBarModal(props.modalId) )}>
                     {isCollapsed ? <UnfoldMoreOutlined/> : <UnfoldLessOutlined/>}
                 </IconButton>
-                <IconButton onClick={() => closeSnackbar(props.id)}>
+                <IconButton onClick={handleDetach}>
+                    <OpenInNewOutlined/>
+                </IconButton>
+                <IconButton onClick={handleClose}>
                     <CloseOutlined/>
                 </IconButton>
             </Stack>
