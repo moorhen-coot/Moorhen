@@ -104,6 +104,15 @@ export namespace moorhen {
         ballsStyleRadiusMultiplier: number;
         nucleotideRibbonStyle: "StickBases" | "DishyBases";
     }
+
+    type residueEnvironmentOptions = {
+        maxDist: number;
+        backgroundRepresentation: RepresentationStyles;
+        focusRepresentation: RepresentationStyles;
+        labelled: boolean;
+        showHBonds: boolean;
+        showContacts: boolean;
+    }
     
     type ColourRuleObject = {
         cid: string;
@@ -152,7 +161,7 @@ export namespace moorhen {
         splitMultiModels(draw?: boolean): Promise<Molecule[]>;
         getActiveAtom(): Promise<string>;
         setDrawAdaptativeBonds(newValue: boolean): Promise<void>;
-        redrawAdaptativeBonds(selectionString?: string, maxDist?: number): Promise<void>;
+        redrawAdaptativeBonds(selectionString?: string): Promise<void>;
         changeChainId(oldId: string, newId: string, redraw?: boolean, startResNo?: number, endResNo?: number): Promise<number>;
         refineResiduesUsingAtomCidAnimated(cid: string, activeMap: Map, dist?: number, redraw?: boolean, redrawFragmentFirst?: boolean): Promise<void>;
         mergeFragmentFromRefinement(cid: string, fragmentMolecule: Molecule, acceptTransform?: boolean, refineAfterMerge?: boolean): Promise<void>;
@@ -167,7 +176,7 @@ export namespace moorhen {
         animateRefine(n_cyc: number, n_iteration: number, final_n_cyc?: number): Promise<void>;
         refineResidueRange(chainId: string, start: number, stop: number, ncyc?: number, redraw?: boolean): Promise<void>;
         SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string, redraw?: boolean): Promise<void>;
-        lsqkbSuperpose(refMolNo: number, residueMatches: moorhen.lskqbResidueRangeMatch[], matchType?: number, redraw?: boolean): Promise<void>;
+        lsqkbSuperpose(refMolNo: number, residueMatches: lskqbResidueRangeMatch[], matchType?: number, redraw?: boolean): Promise<void>;
         refineResiduesUsingAtomCid(cid: string, mode: string, ncyc?: number, redraw?: boolean): Promise<void>;
         deleteCid(cid: string, redraw?: boolean): Promise<{first: number, second: number}>;
         getNumberOfAtoms(): Promise<number>;
@@ -176,7 +185,7 @@ export namespace moorhen {
         fitLigand(mapMolNo: number, ligandMolNo: number, fitRightHere?: boolean, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<Molecule[]>;
         checkIsLigand(): boolean;
         removeRepresentation(representationId: string): void;
-        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: ColourRule[], bondOptions?: cootBondOptions, m2tParams?: moorhen.m2tParameters): Promise<MoleculeRepresentation>;
+        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: ColourRule[], bondOptions?: cootBondOptions, m2tParams?: m2tParameters): Promise<MoleculeRepresentation>;
         getNeighborResiduesCids(selectionCid: string, maxDist: number): Promise<string[]>;
         drawWithStyleFromMesh(style: string, meshObjects: any[], cid?: string, fetchAtomBuffers?: boolean): Promise<void>;
         updateWithMovedAtoms(movedResidues: AtomInfo[][]): Promise<void>;
@@ -211,7 +220,7 @@ export namespace moorhen {
         delete(popBackImol?: boolean): Promise<WorkerResponse>;
         fetchDefaultColourRules(): Promise<void>;
         fetchIfDirtyAndDraw(arg0: string): Promise<void>;
-        drawEnvironment: (cid: string, labelled?: boolean) => Promise<void>;
+        drawEnvironment: (cid: string) => Promise<void>;
         centreOn: (selectionCid?: string, animate?: boolean, setZoom?: boolean) => Promise<void>;
         drawHover: (cid: string) => Promise<void>;
         drawResidueSelection: (cid: string) => Promise<void>;
@@ -256,6 +265,7 @@ export namespace moorhen {
         symmetryMatrices: number[][][];
         gaussianSurfaceSettings: gaussianSurfSettings;
         defaultM2tParams: m2tParameters;
+        defaultResidueEnvironmentOptions: residueEnvironmentOptions
         isDarkBackground: boolean;
         representations: MoleculeRepresentation[];
         defaultBondOptions: cootBondOptions;
@@ -307,11 +317,13 @@ export namespace moorhen {
         show(): void;
         hide(): void;
         setAtomBuffers(arg0: AtomInfo[]): void;
-        setM2tParams(arg0: moorhen.m2tParameters): void;
+        setM2tParams(arg0: m2tParameters): void;
         static mergeBufferObjects(bufferObj1: libcootApi.InstancedMeshJS[], bufferObj2: libcootApi.InstancedMeshJS[]): libcootApi.InstancedMeshJS[];
         bondOptions: cootBondOptions;
-        m2tParams: moorhen.m2tParameters;
+        m2tParams: m2tParameters;
+        residueEnvironmentOptions: moorhen.residueEnvironmentOptions;
         useDefaultM2tParams: boolean;
+        useDefaultResidueEnvironmentOptions: boolean;
         useDefaultColourRules: boolean;
         useDefaultBondOptions: boolean;
         uniqueId: string;
@@ -549,7 +561,7 @@ export namespace moorhen {
             isCustom: boolean;
             colourRules: ColourRuleObject[];
             bondOptions: cootBondOptions;
-            m2tParams: moorhen.m2tParameters;
+            m2tParams: m2tParameters;
          }[];
         defaultBondOptions: cootBondOptions;
         defaultM2tParams: m2tParameters;
@@ -926,11 +938,6 @@ export namespace moorhen {
             height: number;
             width: number;
             isDark: boolean;
-            envDistancesSettings: {
-                labelled: boolean;
-                showHBonds: boolean;
-                showContacts: boolean;
-            };
         };
         miscAppSettings: {
             defaultExpandDisplayCards: boolean; 
