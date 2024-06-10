@@ -1,5 +1,4 @@
 
-
 export const modalKeys = Object.freeze({
     MODELS: "models",
     MAPS: "maps",
