@@ -18,7 +18,7 @@ uniform float radius;// = 0.4;
 uniform float bias;// = 1.0;
 
 // tile noise texture over screen based on screen dimensions divided by noise size
-const vec2 noiseScale = vec2(1024.0/4.0, 1024.0/4.0); 
+const vec2 noiseScale = vec2(4096.0/4.0, 4096.0/4.0);
 
 in mediump mat4 pMatrix;
 
