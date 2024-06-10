@@ -7,11 +7,14 @@ import { LhasaWrapper } from "../../utils/LhasaGlue";
 
 const item_reducer = (old_map: Map<string,Uint8Array>, action: any) => {
     if(action.type === 'add') {
-        console.log(action);
-        old_map[action.id] = action.value;
+        old_map.set(action.id, action.value);
     }
-    //cp
-    return new  Map<string,Uint8Array>(old_map);
+    let ret = new Map<string,Uint8Array>();
+    // JS can't copy a damn map
+    old_map.forEach((value,key) => {
+        ret.set(key, value);
+    })
+    return ret;
 };
 
 const initial_value = new Map<string,Uint8Array>();
@@ -33,7 +36,7 @@ export const MoorhenLhasaModal = (props) => {
             ]
         },false).then((response) => {
             const pickle = response.data.result.result;
-            console.log("Got pickle: ", pickle);
+            // console.log("Got pickle: ", pickle);
             setMyMap({
                 type: "add",
                 id: "LZA"+(-999999),
