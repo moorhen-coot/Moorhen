@@ -5,11 +5,11 @@ import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 import { moorhen } from "../../types/moorhen";
 import { LhasaWrapper } from "../../utils/LhasaGlue";
 
-const item_reducer = (old_map: Map<string,Uint8Array>, action: any) => {
+const item_reducer = (old_map: Map<string, string>, action: any) => {
     if(action.type === 'add') {
         old_map.set(action.id, action.value);
     }
-    let ret = new Map<string,Uint8Array>();
+    let ret = new Map<string, string>();
     // JS can't copy a damn map
     old_map.forEach((value,key) => {
         ret.set(key, value);
@@ -17,7 +17,7 @@ const item_reducer = (old_map: Map<string,Uint8Array>, action: any) => {
     return ret;
 };
 
-const initial_value = new Map<string,Uint8Array>();
+const initial_value = new Map<string, string>();
 
 export const MoorhenLhasaModal = (props) => {
     const resizeNodeRef = useRef<HTMLDivElement>();
@@ -28,7 +28,7 @@ export const MoorhenLhasaModal = (props) => {
     const [my_map,setMyMap] = useReducer(item_reducer, initial_value);
     useEffect(() => {
         props.commandCentre.current.cootCommand({
-            returnType: 'Uint8Array',
+            returnType: 'string',
             command: "get_rdkit_mol_pickle_base64",
             commandArgs: [
                 "LZA",
