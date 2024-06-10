@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 
 
 class LhasaWrapperProps {
-    rdkit_molecule_pickle_map?: Map<string,Uint8Array>;
+    rdkit_molecule_pickle_map?: Map<string, string>;
 }
 
 function LhasaWrapper({rdkit_molecule_pickle_map}: LhasaWrapperProps) {
