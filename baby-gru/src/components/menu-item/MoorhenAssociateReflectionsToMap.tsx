@@ -32,7 +32,7 @@ export const MoorhenAssociateReflectionsToMap = (props: {
             setColumns(allColumnNames)
             reflectionDataRef.current = babyGruMtzWrapper.reflectionData   
         } catch (err) {
-            enqueueSnackbar("Error reading mtz file", {variant: 'warning'})
+            enqueueSnackbar("Error reading mtz file", {variant: "error"})
             document.body.click()
         }
     }

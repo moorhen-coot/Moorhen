@@ -58,7 +58,7 @@ export const MoorhenQuerySequenceModal = (props: {
             if (newMolecule.molNo === -1) throw new Error("Cannot read the fetched molecule...")
             return newMolecule
         } catch (err) {
-            enqueueSnackbar("Failed to read molecule", {variant: 'warning'})
+            enqueueSnackbar("Failed to read molecule", {variant: "error"})
             console.log(`Cannot fetch molecule from ${url}`)
         }
     }

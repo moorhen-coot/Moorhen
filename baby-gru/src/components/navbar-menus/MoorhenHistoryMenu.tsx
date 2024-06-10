@@ -39,7 +39,7 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
             }
         } catch (err) {
             console.log(err)
-            enqueueSnackbar("Error loading session", {variant: 'warning'})
+            enqueueSnackbar("Error loading session", {variant: "error"})
         }
     }, [props])
 
