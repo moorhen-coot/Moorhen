@@ -24,7 +24,7 @@ export const MoorhenLhasaModal = (props) => {
     useEffect(() => {
         props.commandCentre.current.cootCommand({
             returnType: 'Uint8Array',
-            command: "get_rdkit_mol_pickle",
+            command: "get_rdkit_mol_pickle_base64",
             commandArgs: [
                 "LZA",
                 -999999
