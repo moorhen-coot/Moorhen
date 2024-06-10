@@ -28,6 +28,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     ligandsCid: string;
     hoverColor: number[];
     residueSelectionColor: number[];
+    mergeBufferObjects: (bufferObj1: libcootApi.InstancedMeshJS[], bufferObj2: libcootApi.InstancedMeshJS[]) => libcootApi.InstancedMeshJS[]
 
     constructor(style: moorhen.RepresentationStyles, cid: string, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>) {
         this.uniqueId = guid()
@@ -320,6 +321,24 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         return objects
     }
 
+    static mergeBufferObjects(bufferObj1: libcootApi.InstancedMeshJS[], bufferObj2: libcootApi.InstancedMeshJS[]): libcootApi.InstancedMeshJS[] {
+        let resultBufferObjects: libcootApi.InstancedMeshJS[] = []
+
+        for (let i=0; i < bufferObj1.length; i++) {
+            let iObjects = {}
+            for (let key in bufferObj1[i]) {
+                if (!(key in bufferObj2[i])) {
+                    console.warn(`Failed to merge: attr. ${key} with index ${i} not found in buffer object no. 2, skipping...`)
+                } else {
+                    iObjects[key] = bufferObj1[i][key].concat(bufferObj2[i][key])
+                }
+            }
+            resultBufferObjects.push(iObjects as libcootApi.InstancedMeshJS)
+        }
+        
+        return resultBufferObjects
+    }
+
     async getAdaptativeBondBuffers(cid: string, maxDist: number = 8) {
         if (!cid) {
             console.warn('No selection string provided when drawing origin bonds')
@@ -397,20 +416,8 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             return []
         }
 
-        let objects = []
-        for (let i=0; i < bondObjects.length; i++) {
-            let iObjects = {}
-            for (let key in bondObjects[i]) {
-                if (!(key in alphaObjects[i])) {
-                    console.warn(`Attr. ${key} not found in CAs buffer object with index ${i}, skipping...`)
-                } else {
-                    iObjects[key] = bondObjects[i][key].concat(alphaObjects[i][key])
-                }
-            }
-            objects.push(iObjects)
-        }
-
-        return objects
+        const resultBufferObjects = MoorhenMoleculeRepresentation.mergeBufferObjects(bondObjects, alphaObjects)
+        return resultBufferObjects
     }
 
     async getRestraintsMeshBuffers() {
@@ -628,21 +635,12 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             ]
         }, false) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
 
-        let resultBufferObjects = []
-        let ribbonBufferObjects = [response.data.result.result]
+        const ribbonBufferObjects = [response.data.result.result]
+
+        let resultBufferObjects: libcootApi.InstancedMeshJS[]
         if (m2tStyle === 'Ribbon' && this.parentMolecule.hasDNA) {
             const nucleotideBufferObjects = await this.getNucleotideRepresentationBuffers(m2tSelection)
-            for (let i=0; i < nucleotideBufferObjects.length; i++) {
-                let iObjects = {}
-                for (let key in nucleotideBufferObjects[i]) {
-                    if (!(key in ribbonBufferObjects[i])) {
-                        console.warn(`Attr. ${key} not found in CRs buffer object with index ${i}, skipping...`)
-                    } else {
-                        iObjects[key] = nucleotideBufferObjects[i][key].concat(ribbonBufferObjects[i][key])
-                    }
-                }
-                resultBufferObjects.push(iObjects)
-            }    
+            resultBufferObjects = MoorhenMoleculeRepresentation.mergeBufferObjects(nucleotideBufferObjects, ribbonBufferObjects)
         } else {
             resultBufferObjects = ribbonBufferObjects
         }

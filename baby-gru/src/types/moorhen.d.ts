@@ -308,6 +308,7 @@ export namespace moorhen {
         hide(): void;
         setAtomBuffers(arg0: AtomInfo[]): void;
         setM2tParams(arg0: moorhen.m2tParameters): void;
+        static mergeBufferObjects(bufferObj1: libcootApi.InstancedMeshJS[], bufferObj2: libcootApi.InstancedMeshJS[]): libcootApi.InstancedMeshJS[];
         bondOptions: cootBondOptions;
         m2tParams: moorhen.m2tParameters;
         useDefaultM2tParams: boolean;
