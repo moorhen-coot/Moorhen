@@ -105,7 +105,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             await loadSession(sessionMessage) 
         } catch (err) {
             console.log(err)
-            enqueueSnackbar("Error loading the session", {variant: 'warning'})
+            enqueueSnackbar("Error loading the session", {variant: "error"})
         }
     }
 

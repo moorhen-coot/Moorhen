@@ -149,7 +149,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
             props.onMoleculeLoad(newMolecule)
             return newMolecule
         } catch (err) {
-            enqueueSnackbar('Failed to read molecule', {variant: 'warning'})
+            enqueueSnackbar('Failed to read molecule', {variant: "error"})
             console.log(`Cannot fetch molecule from ${url}`)
             setIsValidPdbId(false)
             props.setBusy(false)
@@ -195,7 +195,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
                 dispatch(setActiveMap(newMap))
             })
         } catch {
-            enqueueSnackbar('Failed to read mtz', {variant: 'warning'})
+            enqueueSnackbar('Failed to read mtz', {variant: "error"})
             console.log(`Cannot fetch mtz from ${url}`)
             props.setBusy(false)
         }

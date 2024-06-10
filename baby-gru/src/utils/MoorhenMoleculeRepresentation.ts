@@ -22,12 +22,15 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     isCustom: boolean;
     useDefaultBondOptions: boolean;
     useDefaultColourRules: boolean;
+    useDefaultResidueEnvironmentOptions: boolean;
     useDefaultM2tParams: boolean;
     bondOptions: moorhen.cootBondOptions;
     m2tParams: moorhen.m2tParameters;
+    residueEnvironmentOptions: moorhen.residueEnvironmentOptions;
     ligandsCid: string;
     hoverColor: number[];
     residueSelectionColor: number[];
+    mergeBufferObjects: (bufferObj1: libcootApi.InstancedMeshJS[], bufferObj2: libcootApi.InstancedMeshJS[]) => libcootApi.InstancedMeshJS[]
 
     constructor(style: moorhen.RepresentationStyles, cid: string, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>) {
         this.uniqueId = guid()
@@ -43,6 +46,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.useDefaultColourRules = true
         this.useDefaultBondOptions = true
         this.useDefaultM2tParams = true
+        this.useDefaultResidueEnvironmentOptions = true
         this.bondOptions = {
             smoothness: 1,
             width: 0.1,
@@ -61,6 +65,14 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             surfaceStyleProbeRadius: 1.4,
             ballsStyleRadiusMultiplier: 1,
             nucleotideRibbonStyle: 'StickBases'
+        }
+        this.residueEnvironmentOptions = {
+            maxDist: 8,
+            backgroundRepresentation: "CAs",
+            focusRepresentation: "CBs",
+            labelled: true,
+            showHBonds: true,
+            showContacts: true
         }
         this.ligandsCid = "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O,G,C,U,A,T)"
         this.hoverColor = [1.0, 0.5, 0.0, 0.35]
@@ -84,6 +96,15 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             this.useDefaultBondOptions = true
         }
     }
+    
+    setResidueEnvOptions(newOptions: moorhen.residueEnvironmentOptions) {
+        if (newOptions) {
+            this.useDefaultResidueEnvironmentOptions = false
+            this.residueEnvironmentOptions = newOptions
+        } else {
+            this.useDefaultResidueEnvironmentOptions = true
+        }
+    }
 
     setStyle(style: moorhen.RepresentationStyles) {
         this.style = style
@@ -92,7 +113,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             'gaussian', 'allHBonds', 'rotamer', 'rama', 'environment', 'ligand_environment', 'hover', 'CDs', 'restraints'
         ].includes(style)
         this.styleHasSymmetry = ![
-            'residueSelection', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots',
+            'residueSelection', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'residue_environment',
             'chemical_features', 'VdWSurface', 'restraints', 'environment', 'ligand_environment', 'CDs', 'ligand_validation'
         ].includes(style)
         this.styleHasColourRules = ![
@@ -149,6 +170,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.colourRules = this.parentMolecule.defaultColourRules
         this.bondOptions = this.parentMolecule.defaultBondOptions
         this.m2tParams = this.parentMolecule.defaultM2tParams
+        this.residueEnvironmentOptions = this.parentMolecule.defaultResidueEnvironmentOptions
         if (this.style === "ligands") {
             this.cid = this.parentMolecule?.ligands?.length > 0 ? this.parentMolecule.ligands.map(ligand => ligand.cid).join('||') : this.ligandsCid
         }
@@ -295,6 +317,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             case 'ligand_environment':
                 objects = this.getEnvironmentBuffers(this.cid)
                 break
+            case 'residue_environment':
+                objects = this.getResidueEnvironment(this.cid)
+                break
             case 'contact_dots':
                 objects = await this.getCootContactDotsCidBuffers(this.style, this.cid)
                 break
@@ -320,12 +345,37 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         return objects
     }
 
-    async getAdaptativeBondBuffers(cid: string, maxDist: number = 8) {
+    static mergeBufferObjects(bufferObj1: libcootApi.InstancedMeshJS[], bufferObj2: libcootApi.InstancedMeshJS[]): libcootApi.InstancedMeshJS[] {
+        let resultBufferObjects: libcootApi.InstancedMeshJS[] = []
+
+        for (let i=0; i < bufferObj1.length; i++) {
+            let iObjects = {}
+            for (let key in bufferObj1[i]) {
+                if (!(key in bufferObj2[i])) {
+                    console.warn(`Failed to merge: attr. ${key} with index ${i} not found in buffer object no. 2, skipping...`)
+                } else {
+                    iObjects[key] = bufferObj1[i][key].concat(bufferObj2[i][key])
+                }
+            }
+            resultBufferObjects.push(iObjects as libcootApi.InstancedMeshJS)
+        }
+        
+        return resultBufferObjects
+    }
+
+    async getResidueEnvironment(cid: string) {
+        const adaptativeBondsBuffers = await this.getAdaptativeBondBuffers(cid)
+        const envBuffers = await this.getEnvironmentBuffers(cid)
+        return [...adaptativeBondsBuffers, ...envBuffers]
+    }
+
+    async getAdaptativeBondBuffers(cid: string) {
         if (!cid) {
             console.warn('No selection string provided when drawing origin bonds')
             return []
         }
 
+        const maxDist = this.useDefaultResidueEnvironmentOptions ? this.parentMolecule.defaultResidueEnvironmentOptions.maxDist : this.residueEnvironmentOptions.maxDist
         let neighBoringResidues = await this.parentMolecule.getNeighborResiduesCids(cid, maxDist)
         let bondCids = neighBoringResidues.join('||')
 
@@ -397,20 +447,8 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             return []
         }
 
-        let objects = []
-        for (let i=0; i < bondObjects.length; i++) {
-            let iObjects = {}
-            for (let key in bondObjects[i]) {
-                if (!(key in alphaObjects[i])) {
-                    console.warn(`Attr. ${key} not found in CAs buffer object with index ${i}, skipping...`)
-                } else {
-                    iObjects[key] = bondObjects[i][key].concat(alphaObjects[i][key])
-                }
-            }
-            objects.push(iObjects)
-        }
-
-        return objects
+        const resultBufferObjects = MoorhenMoleculeRepresentation.mergeBufferObjects(bondObjects, alphaObjects)
+        return resultBufferObjects
     }
 
     async getRestraintsMeshBuffers() {
@@ -437,10 +475,12 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         }, false)
         const envDistances = response.data.result.result
 
-        const envDistancesSettings = this.parentMolecule.store.getState().sceneSettings.envDistancesSettings
+        const labelled = this.useDefaultResidueEnvironmentOptions ? this.parentMolecule.defaultResidueEnvironmentOptions.labelled : this.residueEnvironmentOptions.labelled
+        const showContacts = this.useDefaultResidueEnvironmentOptions ? this.parentMolecule.defaultResidueEnvironmentOptions.showContacts : this.residueEnvironmentOptions.showContacts
+        const showHBonds = this.useDefaultResidueEnvironmentOptions ? this.parentMolecule.defaultResidueEnvironmentOptions.showHBonds : this.residueEnvironmentOptions.showHBonds
         
-        const bumps = envDistancesSettings.showContacts ? envDistances[0] : []
-        const hbonds = envDistancesSettings.showHBonds ? envDistances[1] : []
+        const bumps = showContacts ? envDistances[0] : []
+        const hbonds = showHBonds ? envDistances[1] : []
 
         const bumpAtomsPairs = bumps.map(bump => {
             const start = bump.start
@@ -464,7 +504,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             return pair
         })
 
-        let originNeighboursBump = this.getGemmiAtomPairsBuffers(bumpAtomsPairs, [0.7, 0.4, 0.25, 1.0], envDistancesSettings.labelled)
+        let originNeighboursBump = this.getGemmiAtomPairsBuffers(bumpAtomsPairs, [0.7, 0.4, 0.25, 1.0], labelled)
 
         const hbondAtomsPairs = hbonds.map(hbond => {
             const start = hbond.start
@@ -488,7 +528,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             return pair
         })
         
-        let originNeighboursHBond = this.getGemmiAtomPairsBuffers(hbondAtomsPairs, [0.7, 0.2, 0.7, 1.0], envDistancesSettings.labelled)
+        let originNeighboursHBond = this.getGemmiAtomPairsBuffers(hbondAtomsPairs, [0.7, 0.2, 0.7, 1.0], labelled)
         
         return originNeighboursBump.concat(originNeighboursHBond)
     }
@@ -628,21 +668,12 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             ]
         }, false) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
 
-        let resultBufferObjects = []
-        let ribbonBufferObjects = [response.data.result.result]
+        const ribbonBufferObjects = [response.data.result.result]
+
+        let resultBufferObjects: libcootApi.InstancedMeshJS[]
         if (m2tStyle === 'Ribbon' && this.parentMolecule.hasDNA) {
             const nucleotideBufferObjects = await this.getNucleotideRepresentationBuffers(m2tSelection)
-            for (let i=0; i < nucleotideBufferObjects.length; i++) {
-                let iObjects = {}
-                for (let key in nucleotideBufferObjects[i]) {
-                    if (!(key in ribbonBufferObjects[i])) {
-                        console.warn(`Attr. ${key} not found in CRs buffer object with index ${i}, skipping...`)
-                    } else {
-                        iObjects[key] = nucleotideBufferObjects[i][key].concat(ribbonBufferObjects[i][key])
-                    }
-                }
-                resultBufferObjects.push(iObjects)
-            }    
+            resultBufferObjects = MoorhenMoleculeRepresentation.mergeBufferObjects(nucleotideBufferObjects, ribbonBufferObjects)
         } else {
             resultBufferObjects = ribbonBufferObjects
         }

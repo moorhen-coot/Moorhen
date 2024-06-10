@@ -55,7 +55,7 @@ export const MoorhenImportMapMenuItem = (props: {
                 })
             } catch (err) {
                 console.warn(err)
-                enqueueSnackbar('Error reading map file', {variant: 'warning'})
+                enqueueSnackbar('Error reading map file', {variant: "error"})
                 console.log(`Cannot read file`)
             } finally {
                 props.setPopoverIsShown(false)

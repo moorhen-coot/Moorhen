@@ -64,13 +64,13 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
 
         const molecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
         if (!molecule) {
-            enqueueSnackbar("Something went wrong", {variant: 'warning'})
+            enqueueSnackbar("Something went wrong", {variant: "error"})
             return
         }
 
         const sequence = molecule.sequences.find(sequence => sequence.chain === chainSelectRef.current.value)
         if (!sequence) {
-            enqueueSnackbar("Something went wrong", {variant: 'warning'})
+            enqueueSnackbar("Something went wrong", {variant: "error"})
             return
         }
         
@@ -93,7 +93,7 @@ export const MoorhenChangeChainIdMenuItem = (props) => {
             }
         } catch (err) {
             setInvalidNewId(true)
-            enqueueSnackbar("Something went wrong", {variant: 'warning'})
+            enqueueSnackbar("Something went wrong", {variant: "error"})
             console.warn(err)
         }
     }, [molecules])

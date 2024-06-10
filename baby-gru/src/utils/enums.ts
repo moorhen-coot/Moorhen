@@ -39,6 +39,7 @@ export const representationLabelMapping = Object.freeze({
     restraints: "Restraints",
     MetaBalls: "MetaBalls",
     adaptativeBonds: "Adapt. Bonds",
+    residue_environment: "Res. Environment"
 })
 
 export const residueCodesOneToThree = Object.freeze({

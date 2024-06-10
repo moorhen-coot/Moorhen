@@ -45,7 +45,7 @@ export const MoorhenImportMapCoefficientsMenuItem = (props: {
             let allColumnNames = await babyGruMtzWrapper.loadHeaderFromFile(e.target.files[0])
             setColumns(allColumnNames)
         } catch (err) {
-            enqueueSnackbar('Error reading mtz file', {variant: 'warning'})
+            enqueueSnackbar('Error reading mtz file', {variant: "error"})
             document.body.click()
         }
     }

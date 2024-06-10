@@ -78,6 +78,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     isDarkBackground: boolean;
     defaultBondOptions: moorhen.cootBondOptions;
     defaultM2tParams: moorhen.m2tParameters;
+    defaultResidueEnvironmentOptions: moorhen.residueEnvironmentOptions;
     displayObjectsTransformation: { origin: [number, number, number], quat: any, centre: [number, number, number] }
     uniqueId: string;
     monomerLibraryPath: string;
@@ -152,6 +153,14 @@ export class MoorhenMolecule implements moorhen.Molecule {
             surfaceStyleProbeRadius: 1.4,
             ballsStyleRadiusMultiplier: 1,
             nucleotideRibbonStyle: 'StickBases'
+        }
+        this.defaultResidueEnvironmentOptions = {
+            maxDist: 8,
+            backgroundRepresentation: "CAs",
+            focusRepresentation: "CBs",
+            labelled: true,
+            showHBonds: true,
+            showContacts: true
         }
         this.restraints = []
         this.adaptativeBondsEnabled = false
@@ -500,6 +509,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     async transferMetaData(otherMolecule: moorhen.Molecule, transferDicts: boolean = true) {
         otherMolecule.defaultBondOptions = this.defaultBondOptions
         otherMolecule.defaultM2tParams = this.defaultM2tParams
+        otherMolecule.environmentRepresentation = this.environmentRepresentation
         otherMolecule.coordsFormat = this.coordsFormat
         otherMolecule.isLigand = this.isLigand
         otherMolecule.hasGlycans = this.hasGlycans
@@ -1325,9 +1335,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
     /**
      * Draw bonds for a given glRef origin
      * @param {string} selectionString - The CID selection for the residues that will be highlighted
-     * @param {number} maxDist - The maximum distance from the central residue to draw bonds
      */
-    async redrawAdaptativeBonds(selectionCid?: string, maxDist: number = 8): Promise<void> {
+    async redrawAdaptativeBonds(selectionCid?: string): Promise<void> {
         if (!this.adaptativeBondsEnabled) {
             this.adaptativeBondsRepresentation?.deleteBuffers()
             this.adaptativeBondsEnabled = false
@@ -1600,6 +1609,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             newMolecule.name = resType.toUpperCase()
             newMolecule.defaultBondOptions = this.defaultBondOptions
             newMolecule.defaultM2tParams = this.defaultM2tParams
+            newMolecule.defaultResidueEnvironmentOptions = this.defaultResidueEnvironmentOptions
             await this.mergeMolecules([newMolecule], true)
             return newMolecule.delete()
         } else {

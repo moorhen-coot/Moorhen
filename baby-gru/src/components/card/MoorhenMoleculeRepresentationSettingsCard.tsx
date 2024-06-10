@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Form, FormSelect, Stack } from "react-bootstrap";
+import { Form, FormSelect, InputGroup, Stack } from "react-bootstrap";
 import { IconButton, Popover, Slider } from '@mui/material';
 import { MoorhenSlider } from '../misc/MoorhenSlider';
 import { AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
@@ -437,6 +437,49 @@ const CylinderSettingsPanel = (props: {
     </div>
 }
 
+const ResidueEnvironmentSettingsPanel = (props: {
+    maxDist: number;
+    setMaxDist: React.Dispatch<React.SetStateAction<number>>;
+    labelled: boolean;
+    setLabelled: React.Dispatch<React.SetStateAction<boolean>>;
+    showHBonds: boolean;
+    setShowHBonds: React.Dispatch<React.SetStateAction<boolean>>;
+    showContacts: boolean;
+    setShowContacts: React.Dispatch<React.SetStateAction<boolean>>;
+}) => {
+
+    const { maxDist, setMaxDist, showContacts, setShowContacts, showHBonds, setShowHBonds, labelled, setLabelled } = props
+
+    return <div style={{paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', borderStyle: 'solid', borderWidth: '1px', borderColor: 'grey', borderRadius: '1.5rem'}}>
+                <Form.Check 
+                    type="switch"
+                    checked={labelled}
+                    onChange={() => setLabelled((prev) => !prev)}
+                    label="Show labels"/>
+                <Form.Check 
+                    type="switch"
+                    checked={showHBonds}
+                    onChange={() => setShowHBonds((prev) => !prev)}
+                    label="Show H bonds"/>
+                <Form.Check 
+                    type="switch"
+                    checked={showContacts}
+                    onChange={() => setShowContacts((prev) => !prev)}
+                    label="Show contacts"/>
+                <MoorhenSlider
+                    sliderTitle="Neighbouring Res. Dist."
+                    initialValue={maxDist}
+                    externalValue={maxDist}
+                    setExternalValue={setMaxDist}
+                    showMinMaxVal={false}
+                    decrementButton={<SliderButton stateSetter={setMaxDist} step={-0.5}/>}
+                    incrementButton={<SliderButton stateSetter={setMaxDist} step={0.5}/>}
+                    minVal={1}
+                    maxVal={15}
+                    logScale={false}/>
+            </div> 
+}
+
 export const MoorhenMoleculeRepresentationSettingsCard = (props: {
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
     show: boolean;
@@ -497,7 +540,17 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
         setCylindersStyleCylinderRadius: React.Dispatch<React.SetStateAction<number>>;
         cylindersStyleBallRadius: number;
         setCylindersStyleBallRadius: React.Dispatch<React.SetStateAction<number>>;
-    }
+    };
+    residueEnvironmentSettingsProps: {
+        maxDist: number;
+        setMaxDist: React.Dispatch<React.SetStateAction<number>>;
+        labelled: boolean;
+        setLabelled: React.Dispatch<React.SetStateAction<boolean>>;
+        showHBonds: boolean;
+        setShowHBonds: React.Dispatch<React.SetStateAction<boolean>>;
+        showContacts: boolean;
+        setShowContacts: React.Dispatch<React.SetStateAction<boolean>>;    
+    };
 }) => {
     
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
@@ -515,6 +568,7 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
                     <BondSettingsPanel {...props.bondSettingsProps}/>
                     <SurfaceSettingsPanel {...props.gaussianSettingsProps}/>
                     <SymmetrySettingsPanel {...props.symmetrySettingsProps} molecule={props.molecule} glRef={props.glRef}/>
+                    <ResidueEnvironmentSettingsPanel {...props.residueEnvironmentSettingsProps}/>
                 </Stack>
                 <Stack gap={1} direction='vertical' style={{width: '23rem', margin: '0.5rem', display: "flex", flexDirection: "column", justifyContent: "center"}}>
                     <RibbonSettingsPanel {...props.ribbonSettingsProps}/>
