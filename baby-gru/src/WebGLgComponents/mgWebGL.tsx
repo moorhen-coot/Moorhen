@@ -47,6 +47,7 @@ import { circles_vertex_shader_source as circles_vertex_shader_source_webgl2 } f
 import { thick_lines_vertex_shader_source as thick_lines_vertex_shader_source_webgl2 } from './webgl-2/thick-lines-vertex-shader.js';
 import { thick_lines_normal_vertex_shader_source as thick_lines_normal_vertex_shader_source_webgl2 } from './webgl-2/thick-lines-normal-vertex-shader.js';
 import { triangle_fragment_shader_source as triangle_fragment_shader_source_webgl2 } from './webgl-2/triangle-fragment-shader.js';
+import { fxaa_shader_source as fxaa_shader_source_webgl2 } from './webgl-2/fxaa.js';
 import { triangle_vertex_shader_source as triangle_vertex_shader_source_webgl2 } from './webgl-2/triangle-vertex-shader.js';
 import { twod_fragment_shader_source as twod_fragment_shader_source_webgl2 } from './webgl-2/twodshapes-fragment-shader.js';
 import { twod_vertex_shader_source as twod_vertex_shader_source_webgl2 } from './webgl-2/twodshapes-vertex-shader.js';
@@ -1902,6 +1903,8 @@ interface MGWebGLShaderDepthPeelAccum extends WebGLProgram {
     peelNumber: WebGLUniformLocation;
     depthPeelSamplers: WebGLUniformLocation;
     colorPeelSamplers: WebGLUniformLocation;
+    xSSAOScaling: WebGLUniformLocation;
+    ySSAOScaling: WebGLUniformLocation;
 }
 
 interface MGWebGLTextureQuadShader extends WebGLProgram {
@@ -3354,7 +3357,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             circles_vertex_shader_source = circles_vertex_shader_source_webgl2;
             thick_lines_vertex_shader_source = thick_lines_vertex_shader_source_webgl2;
             thick_lines_normal_vertex_shader_source = thick_lines_normal_vertex_shader_source_webgl2;
-            triangle_fragment_shader_source = triangle_fragment_shader_source_webgl2;
+            triangle_fragment_shader_source = triangle_fragment_shader_source_webgl2+fxaa_shader_source_webgl2;
             triangle_vertex_shader_source = triangle_vertex_shader_source_webgl2;
             twod_fragment_shader_source = twod_fragment_shader_source_webgl2;
             twod_vertex_shader_source = twod_vertex_shader_source_webgl2;
@@ -3366,7 +3369,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             twod_gbuffer_vertex_shader_source = twod_gbuffer_vertex_shader_source_webgl2;
             thick_lines_normal_gbuffer_vertex_shader_source = thick_lines_normal_gbuffer_vertex_shader_source_webgl2;
             depth_peel_accum_vertex_shader_source = depth_peel_accum_vertex_shader_source_webgl2;
-            depth_peel_accum_fragment_shader_source = depth_peel_accum_fragment_shader_source_webgl2;
+            depth_peel_accum_fragment_shader_source = depth_peel_accum_fragment_shader_source_webgl2+fxaa_shader_source_webgl2;
         }
 
         vertexShader = getShader(this.gl, triangle_vertex_shader_source, "vertex");
@@ -5454,6 +5457,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramDepthPeelAccum.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramDepthPeelAccum, "uPMatrix");
         this.shaderProgramDepthPeelAccum.peelNumber = this.gl.getUniformLocation(this.shaderProgramDepthPeelAccum, "peelNumber");
         this.shaderProgramDepthPeelAccum.depthPeelSamplers = this.gl.getUniformLocation(this.shaderProgramDepthPeelAccum, "depthPeelSamplers");
+        this.shaderProgramDepthPeelAccum.xSSAOScaling = this.gl.getUniformLocation(this.shaderProgramDepthPeelAccum, "xSSAOScaling");
+        this.shaderProgramDepthPeelAccum.ySSAOScaling = this.gl.getUniformLocation(this.shaderProgramDepthPeelAccum, "ySSAOScaling");
         this.shaderProgramDepthPeelAccum.colorPeelSamplers = this.gl.getUniformLocation(this.shaderProgramDepthPeelAccum, "colorPeelSamplers");
 
     }
@@ -8056,8 +8061,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 // And now accumulate onto one fullscreen quad somehow ...
                 // See /Users/stuart/ccp4mg-ccp4-pyside2-opengl33/vulkan/shaders/shader_dummy2.frag
 
-                const theShader = this.shaderProgramDepthPeelAccum
-                    this.gl.useProgram(theShader);
+                const theShader = this.shaderProgramDepthPeelAccum;
+                this.gl.useProgram(theShader);
                 for(let i = 0; i<16; i++)
                     this.gl.disableVertexAttribArray(i);
                 this.gl.enableVertexAttribArray(theShader.vertexPositionAttribute);
@@ -8069,8 +8074,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     console.log("Binding rttFramebuffer in depth peel accumulate");
                     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer);
                     this.gl.viewport(0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height);
+                    this.gl.uniform1f(theShader.xSSAOScaling, 1.0/this.rttFramebuffer.width );
+                    this.gl.uniform1f(theShader.ySSAOScaling, 1.0/this.rttFramebuffer.height );
                 } else {
+                    console.log("Setting depth peel shader paint resolution to",this.gl.viewportWidth,this.gl.viewportHeight);
                     this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
+                    this.gl.uniform1f(theShader.xSSAOScaling, 1.0/this.gl.viewportWidth );
+                    this.gl.uniform1f(theShader.ySSAOScaling, 1.0/this.gl.viewportHeight );
                 }
                 mat4.ortho(paintPMatrix, -1.0/ratio , 1.0/ratio , -1.0, 1.0, 0.1, 1000.0);
                 this.gl.uniformMatrix4fv(theShader.pMatrixUniform, false, paintPMatrix);
