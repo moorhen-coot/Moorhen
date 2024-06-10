@@ -93,7 +93,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             'gaussian', 'allHBonds', 'rotamer', 'rama', 'environment', 'ligand_environment', 'hover', 'CDs', 'restraints'
         ].includes(style)
         this.styleHasSymmetry = ![
-            'residueSelection', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots',
+            'residueSelection', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'residue_environment',
             'chemical_features', 'VdWSurface', 'restraints', 'environment', 'ligand_environment', 'CDs', 'ligand_validation'
         ].includes(style)
         this.styleHasColourRules = ![
@@ -296,6 +296,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             case 'ligand_environment':
                 objects = this.getEnvironmentBuffers(this.cid)
                 break
+            case 'residue_environment':
+                objects = this.getResidueEnvironment(this.cid)
+                break
             case 'contact_dots':
                 objects = await this.getCootContactDotsCidBuffers(this.style, this.cid)
                 break
@@ -312,7 +315,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 objects = await this.getMetaBallBuffers()
                 break
             case 'adaptativeBonds':
-                objects = await this.getAdaptativeBondBuffers(this.cid)
+                objects = await this.getResidueEnvironment(this.cid)
                 break
             default:
                 console.log(`Unrecognised style ${this.style}...`)
@@ -337,6 +340,12 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         }
         
         return resultBufferObjects
+    }
+
+    async getResidueEnvironment(cid: string, maxDist: number = 8) {
+        const adaptativeBondsBuffers = await this.getAdaptativeBondBuffers(cid, maxDist)
+        const envBuffers = await this.getEnvironmentBuffers(cid)
+        return [...adaptativeBondsBuffers, ...envBuffers]
     }
 
     async getAdaptativeBondBuffers(cid: string, maxDist: number = 8) {
