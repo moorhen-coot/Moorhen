@@ -64,7 +64,8 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             cylindersStyleBallRadius: 0.2,
             surfaceStyleProbeRadius: 1.4,
             ballsStyleRadiusMultiplier: 1,
-            nucleotideRibbonStyle: 'StickBases'
+            nucleotideRibbonStyle: 'StickBases',
+            dishStyleAngularSampling: 32
         }
         this.residueEnvironmentOptions = {
             maxDist: 8,
@@ -599,7 +600,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         await Promise.all(Object.keys(this.m2tParams).filter(param => param !== "nucleotideRibbonStyle").map(param => {
             return this.commandCentre.current.cootCommand({
                 returnType: "status",
-                command: [ "ribbonStyleAxialSampling", "cylindersStyleAngularSampling" ].includes(param) ? "M2T_updateIntParameter" : "M2T_updateFloatParameter",
+                command: [ "ribbonStyleAxialSampling", "cylindersStyleAngularSampling", "dishStyleAngularSampling" ].includes(param) ? "M2T_updateIntParameter" : "M2T_updateFloatParameter",
                 commandArgs: [
                     this.parentMolecule.molNo, param, this.useDefaultM2tParams ? this.parentMolecule.defaultM2tParams[param] : this.m2tParams[param]
                 ]
