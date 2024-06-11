@@ -69,7 +69,7 @@ const MoorhenSliceNDiceCard = (props: {
 
     const handleDownload = async () => {
         await deleteHiddenResidues(props.fragmentMolecule)
-        await props.fragmentMolecule.downloadAtoms()
+        await props.fragmentMolecule.downloadAtoms(props.fragmentMolecule.coordsFormat, props.fragmentMolecule.name.replace(" #", "_"))
     }
 
     return <Card style={{marginTop: '0.5rem'}}>
@@ -382,7 +382,7 @@ export const MoorhenSliceNDiceModal = (props: {
                 await moleculeCopy.delete(true)
             } else {
                 await Promise.all(
-                    slicingResults.map(sliceMolecule => sliceMolecule.downloadAtoms())
+                    slicingResults.map(sliceMolecule => sliceMolecule.downloadAtoms(sliceMolecule.coordsFormat, sliceMolecule.name.replace(" #", "_")))
                 )
             }
         }
@@ -403,6 +403,7 @@ export const MoorhenSliceNDiceModal = (props: {
 
     const bodyContent = <Stack direction="vertical" gap={1}>
         <Stack direction="horizontal" gap={1} style={{display: 'flex', width: '100%'}}>
+            <MoorhenMoleculeSelect {...props} width="100%" molecules={molecules} allowAny={false} ref={moleculeSelectRef} onChange={(evt) => setSelectedMolNo(parseInt(evt.target.value))}/>
             <Form.Group style={{ margin: '0.5rem', width: '100%' }}>
                 <Form.Label>Clustering algorithm...</Form.Label>
                 <FormSelect size="sm" ref={clusteringTypeSelectRef} defaultValue={'birch'} onChange={(evt) => {
@@ -419,41 +420,9 @@ export const MoorhenSliceNDiceModal = (props: {
                     <option value={'pae'} key={'pae'}>PAE</option>
                 </FormSelect>
             </Form.Group>
-            <MoorhenMoleculeSelect {...props} width="100%" molecules={molecules} allowAny={false} ref={moleculeSelectRef} onChange={(evt) => setSelectedMolNo(parseInt(evt.target.value))}/>
         </Stack>
         <Stack direction="horizontal" gap={1} style={{display: 'flex', width: '100%'}}>
-            { ['kmeans', 'agglomerative', 'birch', 'pae'].includes(clusteringType) && 
-            <div style={{ paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.1rem', paddingBottom: '0.1rem', width: '100%'}}>
-                <span>Number of slices</span>
-                <Slider
-                    aria-label="No. of clusters"
-                    getAriaValueText={(newVal: number) => `${newVal} slices`}
-                    valueLabelFormat={(newVal: number) => `${newVal} slices`}
-                    valueLabelDisplay="on"
-                    value={nClusters}
-                    onChange={(evt: any, newVal: number) => {
-                        nClustersRef.current = newVal
-                        setNClusters(newVal)
-                    }}
-                    marks={true}
-                    defaultValue={5}
-                    step={1}
-                    min={1}
-                    max={10}
-                    sx={{
-                        marginTop: '1.7rem',
-                        marginBottom: '0.8rem',
-                            '& .MuiSlider-valueLabel': {
-                                top: -1,
-                                fontSize: 14,
-                                fontWeight: 'bold',
-                                color: 'grey',
-                                backgroundColor: 'unset',
-                            },
-                    }}
-                />
-            </div>}
-            <div style={{ paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.1rem', paddingBottom: '0.1rem', width: '100%'}}>
+        <div style={{ paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.1rem', paddingBottom: '0.1rem', width: '100%'}}>
                 <Stack direction="horizontal" gap={2} style={{display: 'flex', justifyContent: 'center'}}>
                     <Form.Check
                         style={{margin: 0}} 
@@ -516,6 +485,37 @@ export const MoorhenSliceNDiceModal = (props: {
                     }}
                 />
             </div>
+            { ['kmeans', 'agglomerative', 'birch', 'pae'].includes(clusteringType) && 
+            <div style={{ paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.1rem', paddingBottom: '0.1rem', width: '100%'}}>
+                <span>Number of slices</span>
+                <Slider
+                    aria-label="No. of clusters"
+                    getAriaValueText={(newVal: number) => `${newVal} slices`}
+                    valueLabelFormat={(newVal: number) => `${newVal} slices`}
+                    valueLabelDisplay="on"
+                    value={nClusters}
+                    onChange={(evt: any, newVal: number) => {
+                        nClustersRef.current = newVal
+                        setNClusters(newVal)
+                    }}
+                    marks={true}
+                    defaultValue={5}
+                    step={1}
+                    min={1}
+                    max={10}
+                    sx={{
+                        marginTop: '1.7rem',
+                        marginBottom: '0.8rem',
+                            '& .MuiSlider-valueLabel': {
+                                top: -1,
+                                fontSize: 14,
+                                fontWeight: 'bold',
+                                color: 'grey',
+                                backgroundColor: 'unset',
+                            },
+                    }}
+                />
+            </div>}
         </Stack>
         {clusteringType === 'pae' && 
             <Form.Group style={{ margin: '0.5rem', padding: '0rem' }} controlId="uploadPAE">

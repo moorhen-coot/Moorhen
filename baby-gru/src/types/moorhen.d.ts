@@ -171,7 +171,7 @@ export namespace moorhen {
         getSecondaryStructInfo(modelNumber?: number): Promise<libcootApi.ResidueSpecJS[]>;
         getNonSelectedCids(cid: string): string[];
         parseCidIntoSelection(selectedCid: string): Promise<ResidueSelection>;
-        downloadAtoms(format?: coorFormats): Promise<void>;
+        downloadAtoms(format?: coorFormats, fileName?: string): Promise<void>;
         getResidueBFactors(): { cid: string; bFactor: number; normalised_bFactor: number }[];
         getNcsRelatedChains(): Promise<string[][]>;
         animateRefine(n_cyc: number, n_iteration: number, final_n_cyc?: number): Promise<void>;

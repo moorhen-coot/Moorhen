@@ -892,9 +892,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * Download the PDB file contents of the molecule in its current state
      * @param {string} [format='pdb'] - File format will match the one of the original file unless specified here
      */
-    async downloadAtoms(format?: moorhen.coorFormats) {
+    async downloadAtoms(format?: moorhen.coorFormats, fileName?: string) {
         const coordsString = await this.getAtoms(format)
-        doDownload([coordsString], `${this.name}.${format ? format : this.coordsFormat ? this.coordsFormat : 'pdb'}`)
+        doDownload([coordsString], `${fileName ?? this.name}.${format ? format : this.coordsFormat ? this.coordsFormat : 'pdb'}`)
     }
 
     /**
