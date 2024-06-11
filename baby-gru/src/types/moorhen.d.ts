@@ -186,7 +186,7 @@ export namespace moorhen {
         fitLigand(mapMolNo: number, ligandMolNo: number, fitRightHere?: boolean, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<Molecule[]>;
         checkIsLigand(): boolean;
         removeRepresentation(representationId: string): void;
-        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: ColourRule[], bondOptions?: cootBondOptions, m2tParams?: m2tParameters): Promise<MoleculeRepresentation>;
+        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: ColourRule[], bondOptions?: cootBondOptions, m2tParams?: m2tParameters, residueEnvOptions?: residueEnvironmentOptions): Promise<MoleculeRepresentation>;
         getNeighborResiduesCids(selectionCid: string, maxDist: number): Promise<string[]>;
         drawWithStyleFromMesh(style: string, meshObjects: any[], cid?: string, fetchAtomBuffers?: boolean): Promise<void>;
         updateWithMovedAtoms(movedResidues: AtomInfo[][]): Promise<void>;
@@ -305,6 +305,7 @@ export namespace moorhen {
         applyColourRules(): Promise<void>;
         exportAsGltf(): Promise<ArrayBuffer>;
         setBondOptions(bondOptions: cootBondOptions): void;
+        setResidueEnvOptions(newOptions: residueEnvironmentOptions): void;
         setStyle(style: string): void;
         setUseDefaultColourRules(arg0: boolean): void;
         setColourRules(ruleList: ColourRule[]): void;

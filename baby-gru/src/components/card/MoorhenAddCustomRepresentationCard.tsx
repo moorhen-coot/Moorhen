@@ -14,7 +14,7 @@ import { MoorhenCidInputForm } from '../form/MoorhenCidInputForm';
 import { addCustomRepresentation } from '../../store/moleculesSlice';
 import { MoorhenColourRule } from '../../utils/MoorhenColourRule';
 import { NcsColourSwatch } from './MoorhenColourRuleCard';
-import { BondSettingsPanel, MolSurfSettingsPanel, RibbonSettingsPanel } from './MoorhenMoleculeRepresentationSettingsCard';
+import { BondSettingsPanel, MolSurfSettingsPanel, ResidueEnvironmentSettingsPanel, RibbonSettingsPanel } from './MoorhenMoleculeRepresentationSettingsCard';
 import { useSnackbar } from 'notistack';
 
 const customRepresentations = [ 'CBs', 'CAs', 'CRs', 'gaussian', 'MolecularSurface', 'VdwSpheres', 'MetaBalls', 'residue_environment' ]
@@ -50,6 +50,8 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                     return props.representation.useDefaultM2tParams
                 } else if (['CBs', 'CAs', 'ligands'].includes(props.representation.style)) {
                     return props.representation.useDefaultBondOptions
+                } else if (props.representation.style === "residue_environment") {
+                    return props.representation.useDefaultResidueEnvironmentOptions
                 }
             } else {
                 return true
@@ -82,6 +84,11 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const [surfaceStyleProbeRadius, setSurfaceStyleProbeRadius] = useState<number>(props.representation?.m2tParams.surfaceStyleProbeRadius ?? props.molecule.defaultM2tParams.surfaceStyleProbeRadius)
     const [ballsStyleRadiusMultiplier, setBallsStyleRadiusMultiplier] = useState<number>(props.representation?.m2tParams.ballsStyleRadiusMultiplier ?? props.molecule.defaultM2tParams.ballsStyleRadiusMultiplier)
 
+    const [maxEnvDist, setMaxEnvDist] = useState<number>(props.representation?.residueEnvironmentOptions?.maxDist ?? props.molecule.defaultResidueEnvironmentOptions.maxDist)
+    const [labelledEnv, setLabelledEnv] = useState<boolean>(props.representation?.residueEnvironmentOptions?.labelled ?? props.molecule.defaultResidueEnvironmentOptions.labelled)
+    const [showEnvHBonds, setShowEnvHBonds] = useState<boolean>(props.representation?.residueEnvironmentOptions?.showHBonds ?? props.molecule.defaultResidueEnvironmentOptions.showHBonds)
+    const [showEnvContacts, setShowEnvContacts] = useState<boolean>(props.representation?.residueEnvironmentOptions?.showContacts ?? props.molecule.defaultResidueEnvironmentOptions.showContacts)
+
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
@@ -104,6 +111,12 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const molSurfSettingsProps = {
         surfaceStyleProbeRadius, setSurfaceStyleProbeRadius, 
         ballsStyleRadiusMultiplier, setBallsStyleRadiusMultiplier
+    }
+
+    const residueEnvironmentSettingsProps = {
+        maxDist: maxEnvDist, setMaxDist: setMaxEnvDist, labelled: labelledEnv, setLabelled: setLabelledEnv,
+        showHBonds: showEnvHBonds, setShowHBonds: setShowEnvHBonds, showContacts: showEnvContacts,
+        setShowContacts: setShowEnvContacts
     }
 
     useEffect(() => {
@@ -216,6 +229,17 @@ export const MoorhenAddCustomRepresentationCard = (props: {
             }
         }
 
+        let residueEnvSettings: moorhen.residueEnvironmentOptions
+        if (!useDefaultRepresentationSettingsSwitchRef.current?.checked && representationStyle === "residue_environment") {
+            residueEnvSettings = {
+                ...props.molecule.defaultResidueEnvironmentOptions,
+                maxDist: maxEnvDist,
+                labelled: labelledEnv,
+                showContacts: showEnvContacts,
+                showHBonds: showEnvHBonds
+            }
+        }
+
         if (props.mode === 'add') {
             const representation = await props.molecule.addRepresentation(
                 styleSelectRef.current.value,
@@ -223,7 +247,8 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 true,
                 colourRule ? [ colourRule ] : null,
                 bondOptions,
-                m2tParams
+                m2tParams,
+                residueEnvSettings
             )
             dispatch( addCustomRepresentation(representation) )
         } else if (props.mode === 'edit' && props.representation.uniqueId) {
@@ -235,6 +260,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 representation.setColourRules(colourRule ? [ colourRule ] : null)
                 representation.setBondOptions(bondOptions)
                 representation.setM2tParams(m2tParams)
+                representation.setResidueEnvOptions(residueEnvSettings)
                 await representation.redraw()
             }
         }
@@ -243,7 +269,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     }, [
         colour, props.molecule, props.representation, props.mode, bondWidth, atomRadiusBondRatio, bondSmoothness,
         nucleotideRibbonStyle, ribbonArrowWidth, ribbonAxialSampling, ribbonCoilThickness, ribbonDNARNAWidth,
-        ribbonHelixWidth, ribbonStrandWidth
+        ribbonHelixWidth, ribbonStrandWidth, maxEnvDist, labelledEnv, showEnvContacts, showEnvHBonds
     ])
 
     const handleCreateRepresentation = useCallback(async () => {
@@ -337,6 +363,9 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 }
                 {!useDefaultRepresentationSettings && ['CBs', 'CAs', 'ligands', 'residue_environment'].includes(representationStyle) && 
                 <BondSettingsPanel {...bondSettingsProps}/>
+                }
+                {!useDefaultRepresentationSettings && representationStyle === "residue_environment" &&
+                <ResidueEnvironmentSettingsPanel {...residueEnvironmentSettingsProps}/>
                 }
                 <InputGroup className='moorhen-input-group-check'>
                     <Form.Check 
