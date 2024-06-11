@@ -20,10 +20,6 @@ void main(void) {
     float depth;
     depth = texture(depthPeelSamplers,vTexture).r;
     if(depth<1.0) {
-        /*
-        vec4 color = texture(colorPeelSamplers, vTexture);
-        */
-
         vec2 resolution;
         resolution.x = 1.0/xSSAOScaling;
         resolution.y = 1.0/ySSAOScaling;
