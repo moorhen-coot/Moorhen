@@ -2927,7 +2927,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.ssaoFramebuffer = null;
         this.edgeDetectFramebuffer = null;
         this.gFramebuffer = null;
-        this.useOffScreenBuffers = false;
+        this.useOffScreenBuffers = false; //This means "doDepthBlur" and is historically named.
         this.blurSize = 3;
         this.blurDepth = 0.2;
         this.offScreenReady = false;
@@ -8079,7 +8079,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.gl.uniform1f(theShader.xSSAOScaling, 1.0/this.rttFramebuffer.width );
                     this.gl.uniform1f(theShader.ySSAOScaling, 1.0/this.rttFramebuffer.height );
                 } else {
-                    console.log("Setting depth peel shader paint resolution to",this.gl.viewportWidth,this.gl.viewportHeight);
+                    if(this.useOffScreenBuffers&&this.WEBGL2){
+                        if(!this.offScreenReady)
+                            this.recreateOffScreeenBuffers(this.canvas.width,this.canvas.height);
+                        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebuffer);
+                        let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
+                    }
                     this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
                     this.gl.uniform1f(theShader.xSSAOScaling, 1.0/this.gl.viewportWidth );
                     this.gl.uniform1f(theShader.ySSAOScaling, 1.0/this.gl.viewportHeight );
@@ -8335,7 +8340,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenTexture);
         }
         this.gl.activeTexture(this.gl.TEXTURE1);
-        if(this.renderToTexture) {
+        if(this.doPeel){
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthPeelDepthTextures[0]);
+        } else if(this.renderToTexture) {
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttDepthTexture);
         } else {
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenDepthTexture);
@@ -8351,11 +8358,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         const f = -(this.gl_clipPlane0[3]+this.fogClipOffset);
         const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
-        console.log("In blur",f,b,this.fogClipOffset)
+        //console.log("In blur",f,b,this.fogClipOffset)
         const absDepth = this.blurDepth * (1000. - -1000.) - 1000.;
-        console.log(absDepth)
         let fracDepth = (absDepth-f)/(b - f);
-        console.log(this.blurDepth,fracDepth);
+        //console.log(this.blurDepth,fracDepth);
         if(fracDepth > 1.0) fracDepth = 1.0;
         if(fracDepth < 0.0) fracDepth = 0.0;
 
@@ -8388,7 +8394,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.activeTexture(this.gl.TEXTURE0);
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.blurXTexture);
         this.gl.activeTexture(this.gl.TEXTURE1);
-        if(this.renderToTexture) {
+        if(this.doPeel){
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthPeelDepthTextures[0]);
+        } else if(this.renderToTexture) {
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttDepthTexture);
         } else {
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenDepthTexture);
@@ -8444,7 +8452,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         this.gl.activeTexture(this.gl.TEXTURE2);
-        if(this.renderToTexture) {
+        if(this.doPeel){
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthPeelDepthTextures[0]);
+        } else if(this.renderToTexture) {
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttDepthTexture);
         } else {
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenDepthTexture);
