@@ -147,7 +147,8 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
                     iFrameRef.current = Math.floor((newVal as number) * framesRef.current.length / 100)
                     representationRef.current.deleteBuffers()
                     if (iFrameRef.current < framesRef.current.length) {
-                        representationRef.current.buildBuffers(framesRef.current[iFrameRef.current]).then(_ => setCurrentFrameIndex(newVal as number))
+                        representationRef.current.buildBuffers(framesRef.current[iFrameRef.current])
+                        setCurrentFrameIndex(newVal as number)
                     }
                 }}
             />

@@ -309,7 +309,7 @@ export namespace moorhen {
         setStyle(style: string): void;
         setUseDefaultColourRules(arg0: boolean): void;
         setColourRules(ruleList: ColourRule[]): void;
-        buildBuffers(arg0: DisplayObject[]): Promise<void>;
+        buildBuffers(arg0: DisplayObject[]): void;
         setBuffers(meshObjects: DisplayObject[]): void;
         drawSymmetry(): void
         deleteBuffers(): void;
