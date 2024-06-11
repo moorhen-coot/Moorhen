@@ -77,6 +77,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const [ribbonDNARNAWidth, setRibbonDNARNAWidth] = useState<number>(props.representation?.m2tParams?.ribbonStyleDNARNAWidth ?? props.molecule.defaultM2tParams.ribbonStyleDNARNAWidth)
     const [nucleotideRibbonStyle, setNucleotideRibbonStyle] = useState<"DishyBases" | "StickBases">(props.representation?.m2tParams?.nucleotideRibbonStyle ??  props.molecule.defaultM2tParams.nucleotideRibbonStyle)
     const [ribbonAxialSampling, setRibbonAxialSampling] = useState<number>(props.representation?.m2tParams?.ribbonStyleAxialSampling ??  props.molecule.defaultM2tParams.ribbonStyleAxialSampling)
+    const [dishStyleAngularSampling, setDishStyleAngularSampling] = useState<number>(props.representation?.m2tParams?.dishStyleAngularSampling ?? props.molecule.defaultM2tParams.dishStyleAngularSampling)
 
     const [surfaceStyleProbeRadius, setSurfaceStyleProbeRadius] = useState<number>(props.representation?.m2tParams.surfaceStyleProbeRadius ?? props.molecule.defaultM2tParams.surfaceStyleProbeRadius)
     const [ballsStyleRadiusMultiplier, setBallsStyleRadiusMultiplier] = useState<number>(props.representation?.m2tParams.ballsStyleRadiusMultiplier ?? props.molecule.defaultM2tParams.ballsStyleRadiusMultiplier)
@@ -89,11 +90,10 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const { enqueueSnackbar } = useSnackbar()
 
     const ribbonSettingsProps = {
-        ribbonCoilThickness, setRibbonCoilThickness, ribbonHelixWidth, 
-        setRibbonHelixWidth, ribbonStrandWidth, setRibbonStrandWidth, 
-        ribbonArrowWidth, setRibbonArrowWidth, ribbonDNARNAWidth, 
-        setRibbonDNARNAWidth, ribbonAxialSampling, setRibbonAxialSampling,
-        nucleotideRibbonStyle, setNucleotideRibbonStyle
+        ribbonCoilThickness, setRibbonCoilThickness, ribbonHelixWidth, setRibbonHelixWidth, 
+        ribbonStrandWidth, setRibbonStrandWidth, ribbonArrowWidth, setRibbonArrowWidth, ribbonDNARNAWidth, 
+        setRibbonDNARNAWidth, ribbonAxialSampling, setRibbonAxialSampling, nucleotideRibbonStyle, 
+        setNucleotideRibbonStyle, dishStyleAngularSampling, setDishStyleAngularSampling
     }
    
     const bondSettingsProps = {

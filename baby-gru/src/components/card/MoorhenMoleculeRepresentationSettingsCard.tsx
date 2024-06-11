@@ -259,6 +259,8 @@ export const RibbonSettingsPanel = (props: {
     setRibbonAxialSampling: React.Dispatch<React.SetStateAction<number>>;
     nucleotideRibbonStyle: "DishyBases" | "StickBases";
     setNucleotideRibbonStyle: React.Dispatch<React.SetStateAction<"DishyBases" | "StickBases">>;
+    dishStyleAngularSampling: number;
+    setDishStyleAngularSampling: React.Dispatch<React.SetStateAction<number>>;
 }) => {
 
     const {
@@ -266,7 +268,8 @@ export const RibbonSettingsPanel = (props: {
         setRibbonHelixWidth, ribbonStrandWidth, setRibbonStrandWidth, 
         ribbonArrowWidth, setRibbonArrowWidth, ribbonDNARNAWidth, 
         setRibbonDNARNAWidth, ribbonAxialSampling, setRibbonAxialSampling,
-        nucleotideRibbonStyle, setNucleotideRibbonStyle
+        nucleotideRibbonStyle, setNucleotideRibbonStyle, dishStyleAngularSampling,
+        setDishStyleAngularSampling
     } = props
 
     return <div style={{paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', borderStyle: 'solid', borderWidth: '1px', borderColor: 'grey', borderRadius: '1.5rem'}}>
@@ -335,6 +338,18 @@ export const RibbonSettingsPanel = (props: {
             incrementButton={<SliderButton stateSetter={setRibbonAxialSampling} step={1}/>}
             minVal={0}
             maxVal={15}
+            allowFloats={false}
+            logScale={false}/>
+        <MoorhenSlider
+            sliderTitle="Nucl. Dish Angular Sampling"
+            initialValue={dishStyleAngularSampling}
+            externalValue={dishStyleAngularSampling}
+            setExternalValue={setDishStyleAngularSampling}
+            showMinMaxVal={false}
+            decrementButton={<SliderButton stateSetter={setDishStyleAngularSampling} step={-1}/>}
+            incrementButton={<SliderButton stateSetter={setDishStyleAngularSampling} step={1}/>}
+            minVal={1}
+            maxVal={64}
             allowFloats={false}
             logScale={false}/>
         <Form.Group style={{ margin: '0px', width: '100%' }}>
@@ -525,7 +540,9 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
         ribbonAxialSampling: number;
         setRibbonAxialSampling: React.Dispatch<React.SetStateAction<number>>;
         nucleotideRibbonStyle: "DishyBases" | "StickBases";
-        setNucleotideRibbonStyle: React.Dispatch<React.SetStateAction<"DishyBases" | "StickBases">>;    
+        setNucleotideRibbonStyle: React.Dispatch<React.SetStateAction<"DishyBases" | "StickBases">>;
+        dishStyleAngularSampling: number;
+        setDishStyleAngularSampling: React.Dispatch<React.SetStateAction<number>>;
     };
     molSurfSettingsProps: {
         surfaceStyleProbeRadius: number;

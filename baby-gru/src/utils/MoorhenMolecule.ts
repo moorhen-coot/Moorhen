@@ -152,7 +152,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
             cylindersStyleBallRadius: 0.2,
             surfaceStyleProbeRadius: 1.4,
             ballsStyleRadiusMultiplier: 1,
-            nucleotideRibbonStyle: 'StickBases'
+            nucleotideRibbonStyle: 'StickBases',
+            dishStyleAngularSampling: 32
         }
         this.defaultResidueEnvironmentOptions = {
             maxDist: 8,

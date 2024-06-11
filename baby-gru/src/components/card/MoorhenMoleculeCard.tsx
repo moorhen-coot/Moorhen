@@ -107,6 +107,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const [ribbonDNARNAWidth, setRibbonDNARNAWidth] = useState<number>(props.molecule.defaultM2tParams.ribbonStyleDNARNAWidth)
     const [ribbonAxialSampling, setRibbonAxialSampling] = useState<number>(props.molecule.defaultM2tParams.ribbonStyleAxialSampling)
     const [nucleotideRibbonStyle, setNucleotideRibbonStyle] = useState<"DishyBases" | "StickBases">(props.molecule.defaultM2tParams.nucleotideRibbonStyle)
+    const [dishStyleAngularSampling, setDishStyleAngularSampling] = useState<number>(props.molecule.defaultM2tParams.dishStyleAngularSampling)
     
     const [bondWidth, setBondWidth] = useState<number>(props.molecule.defaultBondOptions.width)
     const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState<number>(props.molecule.defaultBondOptions.atomRadiusBondRatio)
@@ -148,7 +149,8 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
         setRibbonHelixWidth, ribbonStrandWidth, setRibbonStrandWidth, 
         ribbonArrowWidth, setRibbonArrowWidth, ribbonDNARNAWidth, 
         setRibbonDNARNAWidth, ribbonAxialSampling, setRibbonAxialSampling,
-        nucleotideRibbonStyle, setNucleotideRibbonStyle
+        nucleotideRibbonStyle, setNucleotideRibbonStyle, dishStyleAngularSampling, 
+        setDishStyleAngularSampling
     }
 
     const molSurfSettingsProps = {
@@ -413,7 +415,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     }, [ballsStyleRadiusMultiplier, surfaceStyleProbeRadius]);
 
     useEffect(() => {
-        if ([nucleotideRibbonStyle, ribbonArrowWidth, ribbonAxialSampling, ribbonCoilThickness, ribbonDNARNAWidth, ribbonHelixWidth, ribbonStrandWidth].some(item => item === null)) {
+        if ([nucleotideRibbonStyle, ribbonArrowWidth, ribbonAxialSampling, ribbonCoilThickness, ribbonDNARNAWidth, ribbonHelixWidth, ribbonStrandWidth, dishStyleAngularSampling].some(item => item === null)) {
             return
         }
 
@@ -427,6 +429,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             || props.molecule.defaultM2tParams.ribbonStyleHelixWidth !== ribbonHelixWidth
             || props.molecule.defaultM2tParams.ribbonStyleStrandWidth !== ribbonStrandWidth
             || props.molecule.defaultM2tParams.nucleotideRibbonStyle !== nucleotideRibbonStyle
+            || props.molecule.defaultM2tParams.dishStyleAngularSampling !== dishStyleAngularSampling
         )
 
         if (needsRedraw) {
@@ -438,7 +441,8 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                 ribbonStyleDNARNAWidth: ribbonDNARNAWidth,
                 ribbonStyleHelixWidth: ribbonHelixWidth,
                 ribbonStyleStrandWidth: ribbonStrandWidth,
-                nucleotideRibbonStyle: nucleotideRibbonStyle
+                nucleotideRibbonStyle: nucleotideRibbonStyle,
+                dishStyleAngularSampling: dishStyleAngularSampling
             }
         }
 
@@ -448,7 +452,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                 redrawMolIfDirty(representations.map(representation => representation.uniqueId))
             }
         }
-    }, [ribbonArrowWidth, ribbonAxialSampling, ribbonCoilThickness, ribbonDNARNAWidth, ribbonHelixWidth, ribbonStrandWidth, nucleotideRibbonStyle]);
+    }, [ribbonArrowWidth, ribbonAxialSampling, ribbonCoilThickness, ribbonDNARNAWidth, ribbonHelixWidth, ribbonStrandWidth, nucleotideRibbonStyle, dishStyleAngularSampling]);
 
     useEffect(() => {
         if ([bondSmoothness, bondWidth, atomRadiusBondRatio].some(item => item === null)) {
