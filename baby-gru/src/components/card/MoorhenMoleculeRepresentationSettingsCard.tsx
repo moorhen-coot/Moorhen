@@ -452,7 +452,7 @@ const CylinderSettingsPanel = (props: {
     </div>
 }
 
-const ResidueEnvironmentSettingsPanel = (props: {
+export const ResidueEnvironmentSettingsPanel = (props: {
     maxDist: number;
     setMaxDist: React.Dispatch<React.SetStateAction<number>>;
     labelled: boolean;
