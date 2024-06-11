@@ -3341,7 +3341,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             lines_fragment_shader_source = lines_fragment_shader_source_webgl2;
             text_instanced_vertex_shader_source = text_instanced_vertex_shader_source_webgl2;
             lines_vertex_shader_source = lines_vertex_shader_source_webgl2;
-            perfect_sphere_fragment_shader_source = perfect_sphere_fragment_shader_source_webgl2;
+            perfect_sphere_fragment_shader_source = perfect_sphere_fragment_shader_source_webgl2+fxaa_shader_source_webgl2;
             perfect_sphere_outline_fragment_shader_source = perfect_sphere_outline_fragment_shader_source_webgl2;
             pointspheres_fragment_shader_source = pointspheres_fragment_shader_source_webgl2;
             pointspheres_vertex_shader_source = pointspheres_vertex_shader_source_webgl2;
@@ -8720,14 +8720,17 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 if(theShader.doSSAO!=null) this.gl.uniform1i(theShader.doSSAO, this.doSSAO);
                 if(theShader.doEdgeDetect!=null) this.gl.uniform1i(theShader.doEdgeDetect, this.doEdgeDetect);
                 if(theShader.occludeDiffuse!=null) this.gl.uniform1i(theShader.occludeDiffuse, this.occludeDiffuse);
+                if(this.WEBGL2&&theShader.doEdgeDetect&&!this.drawingGBuffers){
+                    this.gl.uniform1i(theShader.edgeDetectMap, 2);
+                    this.gl.activeTexture(this.gl.TEXTURE2);
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.edgeDetectTexture);
+                    this.gl.activeTexture(this.gl.TEXTURE0);
+                }
                 if(this.WEBGL2&&theShader.doSSAO&&!this.drawingGBuffers){
                     //SSAO after double blur
                     this.gl.uniform1i(theShader.SSAOMap, 1);
                     this.gl.activeTexture(this.gl.TEXTURE1);
                     this.gl.bindTexture(this.gl.TEXTURE_2D, this.simpleBlurYTexture);
-                    this.gl.uniform1i(theShader.edgeDetectMap, 2);
-                    this.gl.activeTexture(this.gl.TEXTURE2);
-                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.edgeDetectTexture);
                     this.gl.activeTexture(this.gl.TEXTURE0);
                     if(!this.doDepthPeelPass){
                         if(this.renderToTexture){
@@ -8883,13 +8886,16 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 if(program.doSSAO!=null) this.gl.uniform1i(program.doSSAO, this.doSSAO);
                 if(program.doEdgeDetect!=null) this.gl.uniform1i(program.doEdgeDetect, this.doEdgeDetect);
                 if(program.occludeDiffuse!=null) this.gl.uniform1i(program.occludeDiffuse, this.occludeDiffuse);
+                if(this.WEBGL2&&program.doEdgeDetect&&!this.drawingGBuffers){
+                    this.gl.uniform1i(program.edgeDetectMap, 2);
+                    this.gl.activeTexture(this.gl.TEXTURE2);
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.edgeDetectTexture);
+                    this.gl.activeTexture(this.gl.TEXTURE0);
+                }
                 if(this.WEBGL2&&program.doSSAO&&!this.drawingGBuffers){
                     this.gl.uniform1i(program.SSAOMap, 1);
                     this.gl.activeTexture(this.gl.TEXTURE1);
                     this.gl.bindTexture(this.gl.TEXTURE_2D, this.simpleBlurYTexture);
-                    this.gl.uniform1i(program.edgeDetectMap, 2);
-                    this.gl.activeTexture(this.gl.TEXTURE2);
-                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.edgeDetectTexture);
                     this.gl.activeTexture(this.gl.TEXTURE0);
                     if(!this.doDepthPeelPass){
                         if(this.renderToTexture){

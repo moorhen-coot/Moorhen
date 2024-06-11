@@ -151,10 +151,6 @@ var triangle_fragment_shader_source = `#version 300 es\n
       color *= occ;
       if(doEdgeDetect){
 
-          /*
-          float edge = texture(edgeDetectMap, vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling) ).x;
-          */
-
           vec2 resolution;
           resolution.x = 1.0/xSSAOScaling;
           resolution.y = 1.0/ySSAOScaling;
