@@ -157,7 +157,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
         this.defaultResidueEnvironmentOptions = {
             maxDist: 8,
-            backgroundRepresentation: "CAs",
+            backgroundRepresentation: "CRs",
             focusRepresentation: "CBs",
             labelled: true,
             showHBonds: true,
