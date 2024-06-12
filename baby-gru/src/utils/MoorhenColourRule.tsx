@@ -97,7 +97,7 @@ export class MoorhenColourRule implements moorhen.ColourRule {
     }
 
     getUserDefinedColours(): { cid: string; rgba: [number, number, number, number]; applyColourToNonCarbonAtoms: boolean }[] {
-        if(this.isMultiColourRule) {
+        if (this.isMultiColourRule) {
             const allColours = this.args[0] as string
             return allColours.split('|').map(colour => {
                 const [cid, hex] = colour.split('^')
