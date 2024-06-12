@@ -27,6 +27,7 @@ export const MoorhenLhasaModal = (props) => {
 
     const [my_map,setMyMap] = useReducer(item_reducer, initial_value);
     useEffect(() => {
+
         props.commandCentre.current.cootCommand({
             returnType: 'string',
             command: "get_rdkit_mol_pickle_base64",
@@ -61,7 +62,7 @@ export const MoorhenLhasaModal = (props) => {
                 maxHeight={convertViewtoPx(90, height)}
                 maxWidth={convertViewtoPx(80, width)}
                 enforceMaxBodyDimensions={false}
-                overflowY='hidden'
+                overflowY='auto'
                 overflowX='auto'
                 headerTitle='Lhasa'
                 // footer={null}
