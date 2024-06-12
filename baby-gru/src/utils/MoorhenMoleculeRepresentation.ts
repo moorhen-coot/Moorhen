@@ -999,7 +999,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         }, false)
 
         if (this.colourRules?.length > 0) {
-            if (['CBs', 'VdwSpheres', 'ligands', 'CAs', 'adaptativeBonds'].includes(this.style)) {
+            if (['CBs', 'VdwSpheres', 'ligands', 'CAs', 'adaptativeBonds', 'residue_environment'].includes(this.style)) {
                 let colourObjectList: {cid: string; rgba: number[]; applyColourToNonCarbonAtoms: boolean}[] = []
                 this.colourRules.forEach(rule => {
                     colourObjectList.push(...rule.getUserDefinedColours())
