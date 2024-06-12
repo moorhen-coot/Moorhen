@@ -162,12 +162,13 @@ export const MoorhenAddCustomRepresentationCard = (props: {
 
         let colourRule: moorhen.ColourRule
         if (!useDefaultColoursSwitchRef.current.checked) {
+            const colourRuleCid = styleSelectRef.current.value === "residue_environment" ? "//*" : cidSelection
             switch(colourModeSelectRef.current.value) {
                 case "custom":
                     colourRule = new MoorhenColourRule(
-                        ruleSelectRef.current.value, cidSelection, colour, props.molecule.commandCentre, false, applyColourToNonCarbonAtomsSwitchRef.current?.checked
+                        ruleSelectRef.current.value, colourRuleCid, colour, props.molecule.commandCentre, false, applyColourToNonCarbonAtomsSwitchRef.current?.checked
                     )
-                    colourRule.setArgs([ cidSelection, colour ])
+                    colourRule.setArgs([ colourRuleCid, colour ])
                     colourRule.setParentMolecule(props.molecule)
                     break
                 case 'mol-symm':
@@ -205,7 +206,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
         }
 
         let bondOptions: moorhen.cootBondOptions
-        if (!useDefaultRepresentationSettingsSwitchRef.current?.checked && ['CBs', 'CAs', 'ligands', 'residue_environment'].includes(representationStyle)) {
+        if (!useDefaultRepresentationSettingsSwitchRef.current?.checked && ['CBs', 'CAs', 'ligands', 'residue_environment'].includes(styleSelectRef.current.value)) {
             bondOptions = {
                 width: bondWidth,
                 smoothness: bondSmoothness === 1 ? 1 : bondSmoothness === 50 ? 2 : 3,
@@ -214,7 +215,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
         }
 
         let m2tParams: moorhen.m2tParameters
-        if (!useDefaultRepresentationSettingsSwitchRef.current?.checked && ['CRs', 'MolecularSurface'].includes(representationStyle)) {
+        if (!useDefaultRepresentationSettingsSwitchRef.current?.checked && ['CRs', 'MolecularSurface'].includes(styleSelectRef.current.value)) {
             m2tParams = {
                 ...props.molecule.defaultM2tParams,
                 ribbonStyleArrowWidth: ribbonArrowWidth,
@@ -230,7 +231,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
         }
 
         let residueEnvSettings: moorhen.residueEnvironmentOptions
-        if (!useDefaultRepresentationSettingsSwitchRef.current?.checked && representationStyle === "residue_environment") {
+        if (!useDefaultRepresentationSettingsSwitchRef.current?.checked && styleSelectRef.current.value === "residue_environment") {
             residueEnvSettings = {
                 ...props.molecule.defaultResidueEnvironmentOptions,
                 maxDist: maxEnvDist,
