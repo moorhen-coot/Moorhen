@@ -9,7 +9,7 @@ import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDi
 import { MoorhenSetMapWeight } from "../menu-item/MoorhenSetMapWeight"
 import { MoorhenMapHistogram } from "../misc/MoorhenMapHistogram"
 import { MoorhenSlider } from "../misc/MoorhenSlider";
-import { Accordion, AccordionDetails, AccordionSummary, IconButton, MenuItem, Popover, Tooltip, hexToRgb } from "@mui/material"
+import { Accordion, AccordionDetails, AccordionSummary, IconButton, MenuItem, Popover, Tooltip } from "@mui/material"
 import { HexColorInput, RgbColorPicker } from "react-colorful"
 import { moorhen } from "../../types/moorhen"
 import { useSelector, useDispatch, batch } from 'react-redux';
