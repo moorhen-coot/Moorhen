@@ -7811,7 +7811,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.uniform1f(this.shaderProgramEdgeDetect.scaleDepth,this.scaleDepth/ratio);
                 this.gl.uniform1f(this.shaderProgramEdgeDetect.scaleNormal,this.scaleNormal);
             }
-            console.log(ratio)
             this.gl.uniform1f(this.shaderProgramEdgeDetect.xPixelOffset, 1.0/this.edgeDetectFramebuffer.width/this.zoom/ratio);
             this.gl.uniform1f(this.shaderProgramEdgeDetect.yPixelOffset, 1.0/this.edgeDetectFramebuffer.height/this.zoom/ratio);
 
@@ -8014,6 +8013,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         if(this.doPeel){//Do depth peel
             if(this.renderToTexture) {
+                console.log("Delete the normal peel buffers")
+                for(let i=0;i<this.depthPeelFramebuffers.length;i++){
+                    this.gl.deleteFramebuffer(this.depthPeelFramebuffers[i]);
+                    this.gl.deleteRenderbuffer(this.depthPeelRenderbufferDepth[i]);
+                    this.gl.deleteRenderbuffer(this.depthPeelRenderbufferColor[i]);
+                    this.gl.deleteTexture(this.depthPeelColorTextures[i]);
+                    this.gl.deleteTexture(this.depthPeelDepthTextures[i]);
+                }
                 this.depthPeelFramebuffers = [];
                 this.recreateDepthPeelBuffers(4096,4096);
             } else {
@@ -8117,6 +8124,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.activeTexture(this.gl.TEXTURE0);
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
             if(this.renderToTexture) {
+                console.log("Delete screenshot peel buffers")
+                for(let i=0;i<this.depthPeelFramebuffers.length;i++){
+                    this.gl.deleteFramebuffer(this.depthPeelFramebuffers[i]);
+                    this.gl.deleteRenderbuffer(this.depthPeelRenderbufferDepth[i]);
+                    this.gl.deleteRenderbuffer(this.depthPeelRenderbufferColor[i]);
+                    this.gl.deleteTexture(this.depthPeelColorTextures[i]);
+                    this.gl.deleteTexture(this.depthPeelDepthTextures[i]);
+                }
                 this.depthPeelFramebuffers = [];
             }
         }
