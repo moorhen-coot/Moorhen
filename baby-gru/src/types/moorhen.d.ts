@@ -564,9 +564,11 @@ export namespace moorhen {
             colourRules: ColourRuleObject[];
             bondOptions: cootBondOptions;
             m2tParams: m2tParameters;
+            resEnvOptions: residueEnvironmentOptions;
          }[];
         defaultBondOptions: cootBondOptions;
         defaultM2tParams: m2tParameters;
+        defaultResEnvOptions: residueEnvironmentOptions;
         defaultColourRules: ColourRuleObject[];
         connectedToMaps: number[];
         ligandDicts: {[comp_id: string]: string};

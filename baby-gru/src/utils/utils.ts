@@ -310,6 +310,9 @@ export async function loadSessionData(
         if (storedMoleculeData.defaultM2tParams) {
             molecule.defaultM2tParams = storedMoleculeData.defaultM2tParams
         }
+        if (storedMoleculeData.defaultResEnvOptions) {
+            molecule.defaultResidueEnvironmentOptions = storedMoleculeData.defaultResEnvOptions
+        }
         if (storedMoleculeData.representations) {
             for (const item of storedMoleculeData.representations) {
                 const colourRules = !item.colourRules ? null : item.colourRules.map(item => {
@@ -317,7 +320,7 @@ export async function loadSessionData(
                     return colourRule
                 })
                 const representation = await molecule.addRepresentation(
-                    item.style, item.cid, item.isCustom, colourRules, item.bondOptions, item.m2tParams
+                    item.style, item.cid, item.isCustom, colourRules, item.bondOptions, item.m2tParams, item.resEnvOptions
                 )
                 if (item.isCustom) {
                     dispatch( addCustomRepresentation(representation) )
