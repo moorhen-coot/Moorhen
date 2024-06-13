@@ -11,8 +11,8 @@ import { MoorhenBackupsMenuItem } from "../menu-item/MoorhenBackupsMenuItem"
 import { MoorhenImportMapCoefficientsMenuItem } from "../menu-item/MoorhenImportMapCoefficientsMenuItem"
 import { MoorhenDeleteEverythingMenuItem } from "../menu-item/MoorhenDeleteEverythingMenuItem"
 import { MenuItem } from "@mui/material";
-import { convertViewtoPx, doDownload, loadSessionFromProtoMessage, guid, readDataFile, loadSessionFromJsonString } from "../../utils/utils";
-import { getBackupLabel } from "../../utils/MoorhenTimeCapsule"
+import { convertViewtoPx, doDownload, guid, readDataFile } from "../../utils/utils";
+import { MoorhenTimeCapsule } from "../../utils/MoorhenTimeCapsule"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch } from 'react-redux';
@@ -114,7 +114,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             props.commandCentre.current.history.reset()
             let status = -1
             if (typeof session === 'string') {
-                status = await loadSessionFromJsonString(
+                status = await MoorhenTimeCapsule.loadSessionFromJsonString(
                     session as string,
                     props.monomerLibraryPath,
                     molecules, 
@@ -126,7 +126,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     dispatch
                 )
             } else {
-                status = await loadSessionFromProtoMessage(
+                status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(
                     session,
                     props.monomerLibraryPath,
                     molecules, 
@@ -168,7 +168,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         }
         const keyString = JSON.stringify({
             ...key,
-            label: getBackupLabel(key)
+            label: MoorhenTimeCapsule.getBackupLabel(key)
         })
         return props.timeCapsuleRef.current.createBackup(keyString, sessionString)
     }

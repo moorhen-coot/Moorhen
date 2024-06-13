@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useRef, useMemo } from 'react';
 import { Container, Col, Row, Spinner } from 'react-bootstrap';
 import { MoorhenWebMG } from './webMG/MoorhenWebMG';
-import { createLocalStorageInstance, getAtomInfoLabel } from '../utils/utils';
+import { createLocalStorageInstance, parseAtomInfoLabel } from '../utils/utils';
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre";
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
 import { Backdrop } from "@mui/material";
@@ -402,7 +402,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         else {
             molecules.forEach(molecule => {
                 if (molecule.buffersInclude(identifier.buffer)) {
-                    const newCid = getAtomInfoLabel(identifier.atom)
+                    const newCid = parseAtomInfoLabel(identifier.atom)
                     if (molecule !== hoveredAtom.molecule || newCid !== hoveredAtom.cid) {
                         dispatch( setHoveredAtom({ molecule: molecule, cid: newCid }) )
                     }

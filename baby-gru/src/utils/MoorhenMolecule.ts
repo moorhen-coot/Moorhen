@@ -1,7 +1,7 @@
 import 'pako';
 import { 
     guid, readTextFile, readGemmiStructure, centreOnGemmiAtoms, 
-    getRandomMoleculeColour, doDownload, formatLigandSVG, getCentreAtom, getAtomInfoLabel
+    getRandomMoleculeColour, doDownload, formatLigandSVG, getCentreAtom, parseAtomInfoLabel
  } from './utils'
 import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation"
 import { MoorhenColourRule } from "./MoorhenColourRule"
@@ -33,6 +33,7 @@ import { ToolkitStore } from '@reduxjs/toolkit/dist/configureStore';
  * @constructor
  * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
  * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance
+ * @param {ToolkitStore} [store=undefined] - A Redux store. By default Moorhen Redux store will be used
  * @param {string} [monomerLibraryPath="./baby-gru/monomers"] - A string with the path to the monomer library, relative to the root of the app
  * @example
  * import { MoorhenMolecule } from 'moorhen';
@@ -2203,8 +2204,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         return {
             molecule: this,
-            first: getAtomInfoLabel(selectionAtoms[0]),
-            second: getAtomInfoLabel(selectionAtoms[selectionAtoms.length - 1]),
+            first: parseAtomInfoLabel(selectionAtoms[0]),
+            second: parseAtomInfoLabel(selectionAtoms[selectionAtoms.length - 1]),
             isMultiCid: cid.includes('||'),
             cid: cid.includes('||') ? cid.split('||') : cid,
             label: cid
