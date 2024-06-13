@@ -85,6 +85,7 @@ export const MoorhenDraggableModalBase = (props: {
     lockAspectRatio?: boolean;
     enableResize?: false | {[key: string]: boolean};
     onResizeStop?: (evt: MouseEvent | TouchEvent, direction: 'top' | 'right' | 'bottom' | 'left' | 'topRight' | 'bottomRight' | 'bottomLeft' | 'topLeft', ref: HTMLDivElement, delta: {width: number, height: number}) => void;
+    onClose?: () => (void | Promise<void>);
 }) => {
 
     const dispatch = useDispatch()
@@ -173,6 +174,11 @@ export const MoorhenDraggableModalBase = (props: {
         }
         props.onResizeStop(evt, direction, ref, delta)
     }
+
+    const handleClose = useCallback(async () => {
+        await props.onClose?.()
+        dispatch( hideModal(props.modalId) )
+    }, [props.onClose])
         
     return <Draggable
                 nodeRef={draggableNodeRef}
@@ -201,7 +207,7 @@ export const MoorhenDraggableModalBase = (props: {
                             {collapse ? <AddOutlined/> : <RemoveOutlined/>}
                         </Button>
                         {props.showCloseButton &&
-                        <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => dispatch( hideModal(props.modalId) )}>
+                        <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={handleClose}>
                             <CloseOutlined/>
                         </Button>                    
                         }
