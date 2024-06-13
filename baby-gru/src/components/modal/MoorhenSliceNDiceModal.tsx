@@ -586,5 +586,6 @@ export const MoorhenSliceNDiceModal = (props: {
                 headerTitle='Slice-n-Dice'
                 footer={footerContent}
                 body={bodyContent}
+                onClose={handleClose}
             />
 }
