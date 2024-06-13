@@ -52,7 +52,7 @@ export const MoorhenModelsModal = (props: moorhen.CollectedProps) => {
                 defaultHeight={convertViewtoPx(10, height)}
                 defaultWidth={convertViewtoPx(10, width)}
                 minHeight={convertViewtoPx(10, height)}
-                minWidth={convertRemToPx(37)}
+                minWidth={convertRemToPx(20)}
                 maxHeight={convertViewtoPx(90, height)}
                 maxWidth={convertRemToPx(55)}
                 headerTitle={'Models'}

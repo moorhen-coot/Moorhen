@@ -36,7 +36,7 @@ export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {
             dropdownId={1}
             accordionDropdownId={1}
             setAccordionDropdownId={(arg0) => {}}
-            sideBarWidth={convertRemToPx(37)}
+            sideBarWidth={convertRemToPx(20)}
             key={map.molNo}
             index={map.molNo}
             map={map}
@@ -56,7 +56,7 @@ export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {
                 defaultHeight={convertViewtoPx(10, height)}
                 defaultWidth={convertViewtoPx(10, width)}
                 minHeight={convertViewtoPx(10, height)}
-                minWidth={convertRemToPx(37)}
+                minWidth={convertRemToPx(20)}
                 maxHeight={convertViewtoPx(90, height)}
                 maxWidth={convertRemToPx(55)}
                 headerTitle={'Maps'}
