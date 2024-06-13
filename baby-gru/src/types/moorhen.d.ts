@@ -4,6 +4,7 @@ import { gemmi } from "./gemmi";
 import { webGL } from "./mgWebGL";
 import { MoorhenMolecule } from "../moorhen";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { AnyAction, Dispatch } from "@reduxjs/toolkit";
 
 export namespace moorhen {
 
@@ -646,6 +647,54 @@ export namespace moorhen {
         createBackup(keyString: string, sessionString: string): Promise<string>;
         fetchSession(includeAdditionalMapData: boolean): Promise<backupSession>;
         toggleDisableBackups(): void;
+        addModification: () =>  Promise<string>;
+        init: () => Promise<void>;
+        retrieveBackup: (arg0: string) => Promise<string | ArrayBuffer>;
+        static getBackupLabel(key: backupKey): string;
+        static loadSessionData(
+            sessionData: backupSession,
+            monomerLibraryPath: string,
+            molecules: Molecule[],
+            maps: Map[],
+            commandCentre: React.RefObject<CommandCentre>,
+            timeCapsuleRef: React.RefObject<TimeCapsule>,
+            glRef: React.RefObject<webGL.MGWebGL>,
+            store: ToolkitStore,
+            dispatch: Dispatch<AnyAction>
+        ): Promise<number>;
+        static loadSessionFromArrayBuffer(
+            sessionArrayBuffer: ArrayBuffer,
+            monomerLibraryPath: string,
+            molecules: Molecule[],
+            maps: Map[],
+            commandCentre: React.RefObject<CommandCentre>,
+            timeCapsuleRef: React.RefObject<TimeCapsule>,
+            glRef: React.RefObject<webGL.MGWebGL>,
+            store: ToolkitStore,
+            dispatch: Dispatch<AnyAction>
+        ): Promise<number>;
+        static loadSessionFromProtoMessage(
+            sessionProtoMessage: any,
+            monomerLibraryPath: string,
+            molecules: Molecule[],
+            maps: Map[],
+            commandCentre: React.RefObject<CommandCentre>,
+            timeCapsuleRef: React.RefObject<TimeCapsule>,
+            glRef: React.RefObject<webGL.MGWebGL>,
+            store: ToolkitStore,
+            dispatch: Dispatch<AnyAction>
+        ): Promise<number>;
+        static loadSessionFromJsonString(
+            sessionDataString: string,
+            monomerLibraryPath: string,
+            molecules: Molecule[],
+            maps: Map[],
+            commandCentre: React.RefObject<CommandCentre>,
+            timeCapsuleRef: React.RefObject<TimeCapsule>,
+            glRef: React.RefObject<webGL.MGWebGL>,
+            store: ToolkitStore,
+            dispatch: Dispatch<AnyAction>
+        ): Promise<number>;
         store: ToolkitStore;
         moleculesRef: React.RefObject<Molecule[]>;
         mapsRef: React.RefObject<Map[]>;
@@ -658,9 +707,6 @@ export namespace moorhen {
         version: string;
         disableBackups: boolean;
         storageInstance: LocalStorageInstance;
-        addModification: () =>  Promise<string>;
-        init: () => Promise<void>;
-        retrieveBackup: (arg0: string) => Promise<string | ArrayBuffer>;
     }
 
     type AtomRightClickEventInfo = {

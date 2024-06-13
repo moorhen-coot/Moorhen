@@ -98,6 +98,57 @@ declare module 'moorhen' {
     }
     module.exports.MoorhenMoleculeRepresentation = MoorhenMoleculeRepresentation
 
+    interface MoorhenTimeCapsule extends _moorhen.TimeCapsule { }
+    class MoorhenTimeCapsule implements MoorhenTimeCapsule {
+        constructor(moleculesRef: React.RefObject<_moorhen.Molecule[]>, mapsRef: React.RefObject<_moorhen.Map[]>, activeMapRef: React.RefObject<_moorhen.Map>, glRef: React.RefObject<webGL.MGWebGL>, store: any)
+        static getBackupLabel(key: _moorhen.backupKey): string;
+        static loadSessionData(
+            sessionData: _moorhen.backupSession,
+            monomerLibraryPath: string,
+            molecules: _moorhen.Molecule[],
+            maps: _moorhen.Map[],
+            commandCentre: React.RefObject<_moorhen.CommandCentre>,
+            timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule>,
+            glRef: React.RefObject<webGL.MGWebGL>,
+            store: any,
+            dispatch: any
+        ): Promise<number>;
+        static loadSessionFromArrayBuffer(
+            sessionArrayBuffer: ArrayBuffer,
+            monomerLibraryPath: string,
+            molecules: _moorhen.Molecule[],
+            maps: _moorhen.Map[],
+            commandCentre: React.RefObject<_moorhen.CommandCentre>,
+            timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule>,
+            glRef: React.RefObject<webGL.MGWebGL>,
+            store: any,
+            dispatch: any
+        ): Promise<number>;
+        static loadSessionFromProtoMessage(
+            sessionProtoMessage: any,
+            monomerLibraryPath: string,
+            molecules: _moorhen.Molecule[],
+            maps: _moorhen.Map[],
+            commandCentre: React.RefObject<_moorhen.CommandCentre>,
+            timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule>,
+            glRef: React.RefObject<webGL.MGWebGL>,
+            store: any,
+            dispatch: any
+        ): Promise<number>;
+        static loadSessionFromJsonString(
+            sessionDataString: string,
+            monomerLibraryPath: string,
+            molecules: _moorhen.Molecule[],
+            maps: _moorhen.Map[],
+            commandCentre: React.RefObject<_moorhen.CommandCentre>,
+            timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule>,
+            glRef: React.RefObject<webGL.MGWebGL>,
+            store: any,
+            dispatch: any
+        ): Promise<number>;
+    }
+    module.exports.MoorhenTimeCapsule = MoorhenTimeCapsule
+
     interface MoorhenMolecule extends _moorhen.Molecule { }
     class MoorhenMolecule implements MoorhenMolecule {
         constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store?: any, monomerLibrary?: string)
@@ -110,58 +161,6 @@ declare module 'moorhen' {
         static autoReadMtz(source: File, commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: any): Promise<_moorhen.Map[]>;
     }
     module.exports.MoorhenMap = MoorhenMap
-
-    function loadSessionFromJsonString(
-        sessionDataString: string,
-        monomerLibraryPath: string,
-        molecules: _moorhen.Molecule[],
-        maps: _moorhen.Map[],
-        commandCentre: React.RefObject<_moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule>,
-        glRef: React.RefObject<webGL.MGWebGL>,
-        store: any,
-        dispatch: (reduxStoreAction: any) => void,
-    ): Promise<number>;
-    module.exports = loadSessionFromJsonString;
-
-    function loadSessionFromProtoMessage(
-        sessionProtoMessage: any,
-        monomerLibraryPath: string,
-        molecules: _moorhen.Molecule[],
-        maps: _moorhen.Map[],
-        commandCentre: React.RefObject<_moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule>,
-        glRef: React.RefObject<webGL.MGWebGL>,
-        store: any,
-        dispatch: (reduxStoreAction: any) => void,
-    ): Promise<number>;
-    module.exports = loadSessionFromProtoMessage;
-
-    function loadSessionFromArrayBuffer(
-        sessionArrayBuffer: ArrayBuffer,
-        monomerLibraryPath: string,
-        molecules: _moorhen.Molecule[],
-        maps: _moorhen.Map[],
-        commandCentre: React.RefObject<_moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule>,
-        glRef: React.RefObject<webGL.MGWebGL>,
-        store: any,
-        dispatch: (reduxStoreAction: any) => void,
-    ): Promise<number>;
-    module.exports = loadSessionFromArrayBuffer;
-
-    function loadSessionData(
-        sessionData: _moorhen.backupSession,
-        monomerLibraryPath: string,
-        molecules: _moorhen.Molecule[],
-        maps: _moorhen.Map[],
-        commandCentre: React.RefObject<_moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule>,
-        glRef: React.RefObject<webGL.MGWebGL>,
-        store: any,
-        dispatch: (reduxStoreAction: any) => void,
-    ): Promise<number>;
-    module.exports = loadSessionData;
 
     function setPositiveMapColours(arg0: {molNo: number, rgb: {r: number; g: number; b: number}}): any;
     module.exports = setPositiveMapColours;

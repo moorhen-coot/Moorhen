@@ -1,16 +1,23 @@
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { guid } from "./utils";
+import { AnyAction, Dispatch } from "@reduxjs/toolkit";
+import { MoorhenMolecule } from "./MoorhenMolecule";
+import { MoorhenMap } from "./MoorhenMap";
+import { MoorhenColourRule } from "./MoorhenColourRule";
+import { addCustomRepresentation, addMolecule, emptyMolecules } from "../store/moleculesSlice";
+import { addMap, emptyMaps } from "../store/mapsSlice";
+import { batch } from "react-redux";
+import { setActiveMap } from "../store/generalStatesSlice";
+import { setContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle, setNegativeMapColours, setPositiveMapColours } from "../store/mapContourSettingsSlice";
+import { enableUpdatingMaps, setConnectedMoleculeMolNo, setFoFcMapMolNo, setReflectionMapMolNo, setTwoFoFcMapMolNo } from "../store/moleculeMapUpdateSlice";
+import { 
+    setBackgroundColor, setDepthBlurDepth, setDepthBlurRadius, setDoEdgeDetect, setDoPerspectiveProjection, setDoSSAO, setDoShadow, 
+    setEdgeDetectDepthScale, setEdgeDetectDepthThreshold, setEdgeDetectNormalScale, setEdgeDetectNormalThreshold, setSsaoBias, 
+    setSsaoRadius, setUseOffScreenBuffers 
+} from "../store/sceneSettingsSlice";
+import { moorhensession } from "../protobuf/MoorhenSession";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
-
-export const getBackupLabel = (key: moorhen.backupKey): string => {
-    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' } as const
-    const intK: number = parseInt(key.dateTime)
-    const date: Date = new Date(intK)
-    const dateString = `${date.toLocaleDateString(Intl.NumberFormat().resolvedOptions().locale, dateOptions)} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
-    const moleculeNamesLabel: string = key.molNames.join(',').length > 10 ? key.molNames.join(',').slice(0, 8) + "..." : key.molNames.join(',')
-    return `${moleculeNamesLabel} -- ${dateString} -- ${key.type === 'automatic' ? 'AUTO' : 'MANUAL'}`
-}
 
 /**
  * Represents a time capsule with session backups
@@ -19,6 +26,7 @@ export const getBackupLabel = (key: moorhen.backupKey): string => {
  * @param {React.RefObject<moorhen.Map[]>} mapsRef - A react reference to the list of loaded maps
  * @param {React.RefObject<moorhen.Map>} activeMapRef - A react reference to the currently active map
  * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the molecular graphics renderer
+ * @param {ToolkitStore} store - The Redux store
  * @property {string} version - Version number of the current time capsule
  * @property {boolean} busy - Indicates if time capsule is busy loading from local storage
  * @property {boolean} disableBackups - Disable time capsule
@@ -41,7 +49,52 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
     storageInstance: moorhen.LocalStorageInstance;
     store: ToolkitStore;
     onIsBusyChange: (arg0: boolean) => void;
-    
+    getBackupLabel: (key: moorhen.backupKey) => string;
+    loadSessionData: (
+        sessionData: moorhen.backupSession,
+        monomerLibraryPath: string,
+        molecules: moorhen.Molecule[],
+        maps: moorhen.Map[],
+        commandCentre: React.RefObject<moorhen.CommandCentre>,
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
+        glRef: React.RefObject<webGL.MGWebGL>,
+        store: ToolkitStore,
+        dispatch: Dispatch<AnyAction>
+    ) => Promise<number>;
+    loadSessionFromArrayBuffer: (
+        sessionArrayBuffer: ArrayBuffer,
+        monomerLibraryPath: string,
+        molecules: moorhen.Molecule[],
+        maps: moorhen.Map[],
+        commandCentre: React.RefObject<moorhen.CommandCentre>,
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
+        glRef: React.RefObject<webGL.MGWebGL>,
+        store: ToolkitStore,
+        dispatch: Dispatch<AnyAction>
+    ) => Promise<number>;
+    loadSessionFromProtoMessage: (
+        sessionProtoMessage: any,
+        monomerLibraryPath: string,
+        molecules: moorhen.Molecule[],
+        maps: moorhen.Map[],
+        commandCentre: React.RefObject<moorhen.CommandCentre>,
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
+        glRef: React.RefObject<webGL.MGWebGL>,
+        store: ToolkitStore,
+        dispatch: Dispatch<AnyAction>
+    ) => Promise<number>;
+    loadSessionFromJsonString: (
+        sessionDataString: string,
+        monomerLibraryPath: string,
+        molecules: moorhen.Molecule[],
+        maps: moorhen.Map[],
+        commandCentre: React.RefObject<moorhen.CommandCentre>,
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
+        glRef: React.RefObject<webGL.MGWebGL>,
+        store: ToolkitStore,
+        dispatch: Dispatch<AnyAction>
+    ) => Promise<number>;
+
     constructor(moleculesRef: React.RefObject<moorhen.Molecule[]>, mapsRef: React.RefObject<moorhen.Map[]>, activeMapRef: React.RefObject<moorhen.Map>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore) {
         this.store = store
         this.moleculesRef = moleculesRef
@@ -327,7 +380,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             
             const keyString: string = JSON.stringify({
                 ...key,
-                label: getBackupLabel(key)
+                label: MoorhenTimeCapsule.getBackupLabel(key)
             })
 
             return this.createBackup(keyString, sessionString)
@@ -446,5 +499,356 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         const keys: moorhen.backupKey[] = keyStrings.map((keyString: string) => JSON.parse(keyString)).filter(key => ['automatic', 'manual'].includes(key.type))
         const sortedKeys = keys.sort((a, b) => { return parseInt(a.dateTime) - parseInt(b.dateTime) }).reverse()
         return sortedKeys
+    }
+
+    /**
+     * A static function that can be used to get the backup label for a given key object
+     * @param {moorhen.backupKey} key - An object with the backup key data
+     * @returns {string} A string corresponding with the backup label
+     */
+    static getBackupLabel (key: moorhen.backupKey): string {
+        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' } as const
+        const intK: number = parseInt(key.dateTime)
+        const date: Date = new Date(intK)
+        const dateString = `${date.toLocaleDateString(Intl.NumberFormat().resolvedOptions().locale, dateOptions)} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
+        const moleculeNamesLabel: string = key.molNames.join(',').length > 10 ? key.molNames.join(',').slice(0, 8) + "..." : key.molNames.join(',')
+        return `${moleculeNamesLabel} -- ${dateString} -- ${key.type === 'automatic' ? 'AUTO' : 'MANUAL'}`
+    }
+    
+    /**
+     * A static function that can be used to load a session data object
+     * @param {moorhen.backupSession} sessionData - An object containing session data
+     * @param {string} monomerLibraryPath - Path to the monomer library
+     * @param {moorhen.Molecule[]} molecules - State containing current molecules loaded in the session
+     * @param {moorhen.Map[]} maps - State containing current maps loaded in the session
+     * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - React reference to the command centre
+     * @param {React.RefObject<moorhen.TimeCapsule>} timeCapsuleRef - React reference to the time capsule
+     * @param {React.RefObject<webGL.MGWebGL>} glRef - React reference to the webGL renderer
+     * @param {ToolkitStore} store - The Redux store
+     * @param {Dispatch<AnyAction>} dispatch - Dispatch method for the MoorhenReduxStore
+     * @returns {number} Returns -1 if there was an error loading the session otherwise 0
+     */
+    static async loadSessionData(
+        sessionData: moorhen.backupSession,
+        monomerLibraryPath: string,
+        molecules: moorhen.Molecule[],
+        maps: moorhen.Map[],
+        commandCentre: React.RefObject<moorhen.CommandCentre>,
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
+        glRef: React.RefObject<webGL.MGWebGL>,
+        store: ToolkitStore,
+        dispatch: Dispatch<AnyAction>
+    ): Promise<number> {
+
+        if (!sessionData) {
+            return -1
+        } else if (!Object.hasOwn(sessionData, 'version') || timeCapsuleRef.current.version !== sessionData.version) {
+            console.warn('Outdated session backup version, wont load...')
+            return -1
+        }
+        
+        // Delete current scene
+        molecules.forEach(molecule => {
+            molecule.delete()
+        })
+
+        maps.forEach(map => {
+            map.delete()
+        })
+        
+        batch(() => {
+            dispatch( emptyMolecules() )
+            dispatch( emptyMaps() )    
+        })
+
+        // Load molecules stored in session from coords string
+        const newMoleculePromises = sessionData.moleculeData?.map(storedMoleculeData => {
+            const newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)
+            return newMolecule.loadToCootFromString(storedMoleculeData.coordString, storedMoleculeData.name)
+        }) || []
+        
+        // Load maps stored in session
+        const newMapPromises = sessionData.mapData?.map(storedMapData => {
+            const newMap = new MoorhenMap(commandCentre, glRef, store)
+            if (sessionData.includesAdditionalMapData) {
+                return newMap.loadToCootFromMapData(
+                    storedMapData.mapData, 
+                    storedMapData.name, 
+                    storedMapData.isDifference
+                    )
+            } else {
+                newMap.uniqueId = storedMapData.uniqueId
+                return timeCapsuleRef.current.retrieveBackup(
+                    JSON.stringify({
+                        type: 'mapData',
+                        name: storedMapData.uniqueId
+                    })
+                    ).then(mapData => {
+                        return newMap.loadToCootFromMapData(
+                            mapData as Uint8Array, 
+                            storedMapData.name, 
+                            storedMapData.isDifference
+                            )
+                        })    
+            }
+        }) || []
+        
+        const loadPromises = await Promise.all([...newMoleculePromises, ...newMapPromises])
+        const newMolecules = loadPromises.filter(item => item.type === 'molecule') as moorhen.Molecule[] 
+        const newMaps = loadPromises.filter(item => item.type === 'map') as moorhen.Map[] 
+        
+        // Draw the molecules with the styles stored in session (needs to be done sequentially due to colour rules)
+        for (let i = 0; i < newMolecules.length; i++) {
+            const molecule = newMolecules[i]
+            const storedMoleculeData = sessionData.moleculeData[i]
+            if (storedMoleculeData.ligandDicts) {
+                await Promise.all(Object.keys(storedMoleculeData.ligandDicts).map(compId => molecule.addDict(storedMoleculeData.ligandDicts[compId])))
+            }
+            molecule.defaultColourRules = storedMoleculeData.defaultColourRules.map(item => {
+                const colourRule = MoorhenColourRule.initFromDataObject(item, commandCentre, molecule)
+                return colourRule
+            })
+            if (storedMoleculeData.defaultBondOptions){
+                molecule.defaultBondOptions = storedMoleculeData.defaultBondOptions
+            }
+            if (storedMoleculeData.defaultM2tParams) {
+                molecule.defaultM2tParams = storedMoleculeData.defaultM2tParams
+            }
+            if (storedMoleculeData.defaultResEnvOptions) {
+                molecule.defaultResidueEnvironmentOptions = storedMoleculeData.defaultResEnvOptions
+            }
+            if (storedMoleculeData.representations) {
+                for (const item of storedMoleculeData.representations) {
+                    const colourRules = !item.colourRules ? null : item.colourRules.map(item => {
+                        const colourRule = MoorhenColourRule.initFromDataObject(item, commandCentre, molecule)
+                        return colourRule
+                    })
+                    const representation = await molecule.addRepresentation(
+                        item.style, item.cid, item.isCustom, colourRules, item.bondOptions, item.m2tParams, item.resEnvOptions
+                    )
+                    if (item.isCustom) {
+                        dispatch( addCustomRepresentation(representation) )
+                    }
+                }    
+            }
+            if (storedMoleculeData.symmetryOn) {
+                molecule.setSymmetryRadius(storedMoleculeData.symmetryRadius)
+                await molecule.toggleSymmetry()
+            } else if (storedMoleculeData.biomolOn) {
+                molecule.toggleBiomolecule()
+            }
+        }
+        
+        // Associate maps to reflection data
+        await Promise.all(
+            newMaps.map((map, index) => {
+                const storedMapData = sessionData.mapData[index]
+                if (sessionData.includesAdditionalMapData && storedMapData.reflectionData) {
+                    return map.associateToReflectionData(
+                        storedMapData.selectedColumns, 
+                        storedMapData.reflectionData
+                    )
+                } else if (storedMapData.associatedReflectionFileName && storedMapData.selectedColumns) {
+                    return timeCapsuleRef.current.retrieveBackup(
+                        JSON.stringify({
+                            type: 'mtzData',
+                            name: storedMapData.associatedReflectionFileName
+                        })
+                        ).then(reflectionData => {
+                            return map.associateToReflectionData(
+                                storedMapData.selectedColumns, 
+                                reflectionData as ArrayBuffer
+                            )
+                        })
+                }
+                return Promise.resolve()
+            })
+        )
+
+        // Add molecules
+        newMolecules.forEach(molecule => {
+            dispatch( addMolecule(molecule) )
+        })
+
+        // Add maps
+        newMaps.forEach((map, index) => {
+            const storedMapData = sessionData.mapData[index]
+            map.showOnLoad = storedMapData.showOnLoad
+            map.suggestedRadius = storedMapData.radius
+            map.suggestedContourLevel = storedMapData.contourLevel
+            batch(() => {
+                dispatch( setMapColours({molNo: map.molNo, rgb: storedMapData.rgba.mapColour}) )
+                dispatch( setNegativeMapColours({molNo: map.molNo, rgb: storedMapData.rgba.negativeDiffColour}) )
+                dispatch( setPositiveMapColours({molNo: map.molNo, rgb: storedMapData.rgba.positiveDiffColour}) )
+                dispatch( setMapRadius({molNo: map.molNo, radius: storedMapData.radius}) )
+                dispatch( setContourLevel({molNo: map.molNo, contourLevel: storedMapData.contourLevel}) )
+                dispatch( setMapAlpha({molNo: map.molNo, alpha: storedMapData.rgba.a}) )
+                dispatch( setMapStyle({molNo: map.molNo, style: storedMapData.style}) )
+                dispatch( addMap(map) )                
+            })
+        })
+
+        // Set active map
+        if (sessionData.activeMapIndex !== undefined && sessionData.activeMapIndex !== -1){
+            dispatch( setActiveMap(newMaps[sessionData.activeMapIndex]) )
+        }
+
+        // Set camera details
+        glRef.current.setAmbientLightNoUpdate(...Object.values(sessionData.viewData.ambientLight) as [number, number, number])
+        glRef.current.setSpecularLightNoUpdate(...Object.values(sessionData.viewData.specularLight) as [number, number, number])
+        glRef.current.setDiffuseLightNoUpdate(...Object.values(sessionData.viewData.diffuseLight) as [number, number, number])
+        glRef.current.setLightPositionNoUpdate(...Object.values(sessionData.viewData.lightPosition) as [number, number, number])
+        glRef.current.setZoom(sessionData.viewData.zoom, false)
+        glRef.current.set_fog_range(sessionData.viewData.fogStart, sessionData.viewData.fogEnd, false)
+        glRef.current.set_clip_range(sessionData.viewData.clipStart, sessionData.viewData.clipEnd, false)
+        glRef.current.doDrawClickedAtomLines = sessionData.viewData.doDrawClickedAtomLines
+        glRef.current.setOrigin(sessionData.viewData.origin, false)
+        glRef.current.setQuat(sessionData.viewData.quat4)
+        glRef.current.specularPower = sessionData.viewData.specularPower
+        batch(() => {
+            dispatch(setBackgroundColor(sessionData.viewData.backgroundColor))
+            dispatch(setEdgeDetectDepthScale(sessionData.viewData.edgeDetection.depthScale))
+            dispatch(setEdgeDetectDepthThreshold(sessionData.viewData.edgeDetection.depthThreshold))
+            dispatch(setEdgeDetectNormalScale(sessionData.viewData.edgeDetection.normalScale))
+            dispatch(setEdgeDetectNormalThreshold(sessionData.viewData.edgeDetection.normalThreshold))
+            dispatch(setDoEdgeDetect(sessionData.viewData.edgeDetection.enabled))
+            dispatch(setDoShadow(sessionData.viewData.shadows))
+            dispatch(setDoSSAO(sessionData.viewData.ssao.enabled))
+            dispatch(setSsaoBias(sessionData.viewData.ssao.bias))
+            dispatch(setSsaoRadius(sessionData.viewData.ssao.radius))
+            dispatch(setUseOffScreenBuffers(sessionData.viewData.blur.enabled))
+            dispatch(setDepthBlurDepth(sessionData.viewData.blur.depth))
+            dispatch(setDepthBlurRadius(sessionData.viewData.blur.radius))
+            dispatch(setUseOffScreenBuffers(sessionData.viewData.blur.enabled))
+            dispatch(setDoPerspectiveProjection(sessionData.viewData.doPerspectiveProjection ?? false))
+        })
+
+        // Set connected maps and molecules if any
+        const connectedMoleculeIndex = sessionData.moleculeData?.findIndex(molecule => molecule.connectedToMaps?.length > 0)
+        if (sessionData.mapData && sessionData.moleculeData && connectedMoleculeIndex !== -1) {
+            const oldConnectedMolecule = sessionData.moleculeData[connectedMoleculeIndex]        
+            const molecule = newMolecules[connectedMoleculeIndex].molNo
+            const [reflectionMap, twoFoFcMap, foFcMap] = oldConnectedMolecule.connectedToMaps.map(item => newMaps[sessionData.mapData.findIndex(map => map.molNo === item)].molNo)
+            const connectMapsArgs = [molecule, reflectionMap, twoFoFcMap, foFcMap]
+            const sFcalcArgs = [molecule, twoFoFcMap, foFcMap, reflectionMap]
+            
+            await commandCentre.current.cootCommand({
+                command: 'connect_updating_maps',
+                commandArgs: connectMapsArgs,
+                returnType: 'status'
+            }, false)
+                
+            await commandCentre.current.cootCommand({
+                command: 'sfcalc_genmaps_using_bulk_solvent',
+                commandArgs: sFcalcArgs,
+                returnType: 'status'
+            }, false)
+
+            batch(() => {
+                dispatch( setFoFcMapMolNo(foFcMap) )
+                dispatch( setTwoFoFcMapMolNo(twoFoFcMap) )
+                dispatch( setReflectionMapMolNo(reflectionMap) )
+                dispatch( setConnectedMoleculeMolNo(molecule) )
+                dispatch( enableUpdatingMaps() )
+            })
+        }
+        
+        return 0
+    }
+
+    /**
+     * A static function that can be used to load a session from an array buffer
+     * @param {ArrayBuffer} sessionArrayBuffer - An object containing session data
+     * @param {string} monomerLibraryPath - Path to the monomer library
+     * @param {moorhen.Molecule[]} molecules - State containing current molecules loaded in the session
+     * @param {moorhen.Map[]} maps - State containing current maps loaded in the session
+     * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - React reference to the command centre
+     * @param {React.RefObject<moorhen.TimeCapsule>} timeCapsuleRef - React reference to the time capsule
+     * @param {React.RefObject<webGL.MGWebGL>} glRef - React reference to the webGL renderer
+     * @param {ToolkitStore} store - The Redux store
+     * @param {Dispatch<AnyAction>} dispatch - Dispatch method for the MoorhenReduxStore
+     * @returns {number} Returns -1 if there was an error loading the session otherwise 0
+     */
+    static async loadSessionFromArrayBuffer(
+        sessionArrayBuffer: ArrayBuffer,
+        monomerLibraryPath: string,
+        molecules: moorhen.Molecule[],
+        maps: moorhen.Map[],
+        commandCentre: React.RefObject<moorhen.CommandCentre>,
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
+        glRef: React.RefObject<webGL.MGWebGL>,
+        store: ToolkitStore,
+        dispatch: Dispatch<AnyAction>
+    ): Promise<number> {
+        timeCapsuleRef.current.setBusy(true)
+        const bytes = new Uint8Array(sessionArrayBuffer)
+        const sessionMessage = moorhensession.Session.decode(bytes)
+        const status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(sessionMessage, monomerLibraryPath, molecules, maps, commandCentre, timeCapsuleRef, glRef, store,  dispatch) 
+        timeCapsuleRef.current.setBusy(false)
+        return status
+    }
+
+    /**
+     * A static function that can be used to load a session from a protobuf message
+     * @param {string} sessionProtoMessage - A protobuf message for the object containing session data
+     * @param {string} monomerLibraryPath - Path to the monomer library
+     * @param {moorhen.Molecule[]} molecules - State containing current molecules loaded in the session
+     * @param {moorhen.Map[]} maps - State containing current maps loaded in the session
+     * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - React reference to the command centre
+     * @param {React.RefObject<moorhen.TimeCapsule>} timeCapsuleRef - React reference to the time capsule
+     * @param {React.RefObject<webGL.MGWebGL>} glRef - React reference to the webGL renderer
+     * @param {ToolkitStore} store - The Redux store
+     * @param {Dispatch<AnyAction>} dispatch - Dispatch method for the MoorhenReduxStore
+     * @returns {number} Returns -1 if there was an error loading the session otherwise 0
+     */
+    static async loadSessionFromProtoMessage(
+        sessionProtoMessage: any,
+        monomerLibraryPath: string,
+        molecules: moorhen.Molecule[],
+        maps: moorhen.Map[],
+        commandCentre: React.RefObject<moorhen.CommandCentre>,
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
+        glRef: React.RefObject<webGL.MGWebGL>,
+        store: ToolkitStore,
+        dispatch: Dispatch<AnyAction>
+    ): Promise<number> {
+
+        timeCapsuleRef.current.setBusy(true)
+        const sessionData = moorhensession.Session.toObject(sessionProtoMessage) as moorhen.backupSession
+        const status = await MoorhenTimeCapsule.loadSessionData(sessionData, monomerLibraryPath, molecules, maps, commandCentre, timeCapsuleRef, glRef, store, dispatch)
+        timeCapsuleRef.current.setBusy(false)
+        return status
+    }
+
+    /**
+     * A static function that can be used to load a session from a JSON string representation of a session data object
+     * @param {string} sessionDataString - A JSON string representation of the object containing session data
+     * @param {string} monomerLibraryPath - Path to the monomer library
+     * @param {moorhen.Molecule[]} molecules - State containing current molecules loaded in the session
+     * @param {moorhen.Map[]} maps - State containing current maps loaded in the session
+     * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - React reference to the command centre
+     * @param {React.RefObject<moorhen.TimeCapsule>} timeCapsuleRef - React reference to the time capsule
+     * @param {React.RefObject<webGL.MGWebGL>} glRef - React reference to the webGL renderer
+     * @param {ToolkitStore} store - The Redux store
+     * @param {Dispatch<AnyAction>} dispatch - Dispatch method for the MoorhenReduxStore
+     * @returns {number} Returns -1 if there was an error loading the session otherwise 0
+     */
+    static async loadSessionFromJsonString(
+        sessionDataString: string,
+        monomerLibraryPath: string,
+        molecules: moorhen.Molecule[],
+        maps: moorhen.Map[],
+        commandCentre: React.RefObject<moorhen.CommandCentre>,
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
+        glRef: React.RefObject<webGL.MGWebGL>,
+        store: ToolkitStore,
+        dispatch: Dispatch<AnyAction>
+    ): Promise<number> {
+
+        timeCapsuleRef.current.setBusy(true)
+        const sessionData: moorhen.backupSession = JSON.parse(sessionDataString)
+        const status = await MoorhenTimeCapsule.loadSessionData(sessionData, monomerLibraryPath, molecules, maps, commandCentre, timeCapsuleRef, glRef, store, dispatch)
+        timeCapsuleRef.current.setBusy(false)
+        return status
     }
 }
