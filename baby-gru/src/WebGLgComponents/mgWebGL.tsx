@@ -7749,6 +7749,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
             // Need triangle and perfect sphere gBuffer shaders
             this.drawingGBuffers = true;
+            this.gl.enable(this.gl.DEPTH_TEST);
             this.GLrender(false);
             this.drawingGBuffers = false;
 
@@ -7757,6 +7758,20 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         const f = this.gl_clipPlane0[3]+this.fogClipOffset;
         const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
+
+        this.doPeel = false;
+        if(this.doOrderIndependentTransparency){
+            for (let idx = 0; idx < this.displayBuffers.length && !this.doPeel; idx++) {
+                if (this.displayBuffers[idx].visible) {
+                    let triangleVertexIndexBuffer = this.displayBuffers[idx].triangleVertexIndexBuffer;
+                    for (let j = 0; j < triangleVertexIndexBuffer.length&& !this.doPeel; j++) {
+                        if (this.displayBuffers[idx].transparent&&!this.displayBuffers[idx].isHoverBuffer) {
+                            this.doPeel = true;
+                        }
+                    }
+                }
+            }
+        }
 
         if (this.doEdgeDetect&&this.WEBGL2) {
 
@@ -7886,6 +7901,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
             this.textureBlur(this.offScreenFramebufferSimpleBlurX.width,this.offScreenFramebufferSimpleBlurX.height,this.ssaoTexture);
 
+        }
+
+        if((this.doEdgeDetect||this.doSSAO)&&this.WEBGL2) {
             //Back to normal
             this.gl.activeTexture(this.gl.TEXTURE2);
             this.gl.bindTexture(this.gl.TEXTURE_2D, null);
@@ -7916,20 +7934,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let invMat;
 
         this.renderSilhouettesToTexture = false;
-
-        this.doPeel = false;
-        if(this.doOrderIndependentTransparency){
-            for (let idx = 0; idx < this.displayBuffers.length && !this.doPeel; idx++) {
-                if (this.displayBuffers[idx].visible) {
-                    let triangleVertexIndexBuffer = this.displayBuffers[idx].triangleVertexIndexBuffer;
-                    for (let j = 0; j < triangleVertexIndexBuffer.length&& !this.doPeel; j++) {
-                        if (this.displayBuffers[idx].transparent&&!this.displayBuffers[idx].isHoverBuffer) {
-                            this.doPeel = true;
-                        }
-                    }
-                }
-            }
-        }
 
         if(this.doStenciling){
             //Framebuffer way
@@ -8016,12 +8020,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
 
             this.gl.clear(this.gl.DEPTH_BUFFER_BIT|this.gl.COLOR_BUFFER_BIT);
-            /*
-            if(this.canvas.width>0&&this.canvas.height>0 && (this.depthPeelFramebuffers.length===0||(this.depthPeelFramebuffers[0].width != this.canvas.width))){
-                this.depthPeelFramebuffers = [];
-                this.recreateDepthPeelBuffers(this.canvas.width,this.canvas.height);
-            }
-            */
             const ratio = 1.0 //* this.gl.viewportWidth / this.gl.viewportHeight;
 
             if(this.depthPeelFramebuffers.length>0&&this.depthPeelFramebuffers[0].width>0&&this.depthPeelFramebuffers[0].height>0){
