@@ -42,6 +42,9 @@ export const representationLabelMapping = Object.freeze({
     residue_environment: "Res. Environment"
 })
 
+export const COOT_BOND_REPRESENTATIONS = [ 'CBs', 'VdwSpheres', 'CAs', 'ligands' ]
+export const M2T_REPRESENTATIONS = [ 'CRs', 'DishyBases', 'StickBases', 'VdWSurface', 'Calpha', 'MolecularSurface' ]
+
 export const residueCodesOneToThree = Object.freeze({
     'C': 'CYS',
     'D': 'ASP',

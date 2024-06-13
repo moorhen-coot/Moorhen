@@ -16,6 +16,7 @@ import { MoorhenColourRule } from '../../utils/MoorhenColourRule';
 import { NcsColourSwatch } from './MoorhenColourRuleCard';
 import { BondSettingsPanel, MolSurfSettingsPanel, ResidueEnvironmentSettingsPanel, RibbonSettingsPanel } from './MoorhenMoleculeRepresentationSettingsCard';
 import { useSnackbar } from 'notistack';
+import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../../utils/enums"
 
 const customRepresentations = [ 'CBs', 'CAs', 'CRs', 'gaussian', 'MolecularSurface', 'VdwSpheres', 'MetaBalls', 'residue_environment' ]
 
@@ -35,6 +36,8 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const ruleSelectRef = useRef<HTMLSelectElement | null>(null)
     const cidFormRef = useRef<HTMLInputElement | null>(null)
     const styleSelectRef = useRef<HTMLSelectElement | null>(null)
+    const focusStyleSelectRef = useRef<HTMLSelectElement | null>(null)
+    const backgroundStyleSelectRef = useRef<HTMLSelectElement | null>(null)
     const chainSelectRef = useRef<HTMLSelectElement | null>(null)
     const colourModeSelectRef = useRef<HTMLSelectElement | null>(null)
     const colourSwatchRef = useRef<HTMLDivElement | null>(null)
@@ -46,9 +49,9 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const [useDefaultRepresentationSettings, setUseDefaultRepresentationSettings] = useState<boolean>(
         () => {
             if (props.representation) {
-                if (['CRs', 'MolecularSurface'].includes(props.representation.style)) {
+                if (M2T_REPRESENTATIONS.includes(props.representation.style)) {
                     return props.representation.useDefaultM2tParams
-                } else if (['CBs', 'CAs', 'ligands'].includes(props.representation.style)) {
+                } else if (COOT_BOND_REPRESENTATIONS.includes(props.representation.style)) {
                     return props.representation.useDefaultBondOptions
                 } else if (props.representation.style === "residue_environment") {
                     return props.representation.useDefaultResidueEnvironmentOptions
@@ -206,7 +209,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
         }
 
         let bondOptions: moorhen.cootBondOptions
-        if (!useDefaultRepresentationSettingsSwitchRef.current?.checked && ['CBs', 'CAs', 'ligands', 'residue_environment'].includes(styleSelectRef.current.value)) {
+        if (!useDefaultRepresentationSettingsSwitchRef.current?.checked && COOT_BOND_REPRESENTATIONS.includes(styleSelectRef.current.value)) {
             bondOptions = {
                 width: bondWidth,
                 smoothness: bondSmoothness === 1 ? 1 : bondSmoothness === 50 ? 2 : 3,
@@ -215,7 +218,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
         }
 
         let m2tParams: moorhen.m2tParameters
-        if (!useDefaultRepresentationSettingsSwitchRef.current?.checked && ['CRs', 'MolecularSurface'].includes(styleSelectRef.current.value)) {
+        if (!useDefaultRepresentationSettingsSwitchRef.current?.checked && M2T_REPRESENTATIONS.includes(styleSelectRef.current.value)) {
             m2tParams = {
                 ...props.molecule.defaultM2tParams,
                 ribbonStyleArrowWidth: ribbonArrowWidth,
@@ -237,7 +240,9 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 maxDist: maxEnvDist,
                 labelled: labelledEnv,
                 showContacts: showEnvContacts,
-                showHBonds: showEnvHBonds
+                showHBonds: showEnvHBonds,
+                focusRepresentation: focusStyleSelectRef.current.value as moorhen.RepresentationStyles,
+                backgroundRepresentation: backgroundStyleSelectRef.current.value as moorhen.RepresentationStyles
             }
         }
 
@@ -362,11 +367,31 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 {!useDefaultRepresentationSettings && representationStyle === "CRs" &&
                 <RibbonSettingsPanel {...ribbonSettingsProps}/>
                 }
-                {!useDefaultRepresentationSettings && ['CBs', 'CAs', 'ligands', 'residue_environment'].includes(representationStyle) && 
+                {!useDefaultRepresentationSettings && COOT_BOND_REPRESENTATIONS.includes(representationStyle) && 
                 <BondSettingsPanel {...bondSettingsProps}/>
                 }
                 {!useDefaultRepresentationSettings && representationStyle === "residue_environment" &&
                 <ResidueEnvironmentSettingsPanel {...residueEnvironmentSettingsProps}/>
+                }
+                {representationStyle === "residue_environment" && !useDefaultRepresentationSettings &&
+                <Stack gap={1} direction='horizontal' style={{ marginLeft: '0.1rem', marginRight: '0.1rem', paddingLeft: '1rem', paddingRight: '1rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', borderStyle: 'solid', borderWidth: '1px', borderColor: 'grey', borderRadius: '1.5rem' }}>
+                    <Form.Group style={{ margin: '0px', width: '100%' }}>
+                        <Form.Label>Focus Style</Form.Label>
+                        <FormSelect ref={focusStyleSelectRef} defaultValue={props.representation?.residueEnvironmentOptions.focusRepresentation ?? 'CBs'} size="sm">
+                            {[ 'CBs', 'CAs', 'CRs', 'MolecularSurface', 'VdwSpheres' ].map(key => {
+                                return <option value={key} key={key}>{representationLabelMapping[key]}</option>
+                            })}
+                        </FormSelect>
+                    </Form.Group>
+                    <Form.Group style={{ margin: '0px', width: '100%' }}>
+                        <Form.Label>Background Style</Form.Label>
+                        <FormSelect ref={backgroundStyleSelectRef} defaultValue={props.representation?.residueEnvironmentOptions.backgroundRepresentation ?? 'CRs'} size="sm">
+                            {[ 'CBs', 'CAs', 'CRs', 'MolecularSurface', 'VdwSpheres' ].map(key => {
+                                return <option value={key} key={key}>{representationLabelMapping[key]}</option>
+                            })}
+                        </FormSelect>
+                    </Form.Group>
+                </Stack>
                 }
                 <InputGroup className='moorhen-input-group-check'>
                     <Form.Check 

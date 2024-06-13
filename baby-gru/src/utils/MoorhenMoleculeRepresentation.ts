@@ -3,9 +3,7 @@ import { webGL } from '../types/mgWebGL';
 import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, countResiduesInSelection, copyStructureSelection } from './utils';
 import { libcootApi } from '../types/libcoot';
 import { MoorhenColourRule } from './MoorhenColourRule';
-
-const COOT_BOND_REPRESENTATIONS = [ 'CBs', 'VdwSpheres', 'CAs', 'ligands' ]
-const M2T_REPRESENTATIONS = [ 'CRs', 'DishyBases', 'StickBases', 'VdWSurface', 'Calpha', 'MolecularSurface' ]
+import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums"
 
 // TODO: It might be better to do this.glRef.current.drawScene() in the molecule... 
 export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresentation {
