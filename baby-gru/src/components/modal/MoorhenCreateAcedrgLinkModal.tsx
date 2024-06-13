@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
-import { cidToSpec, convertRemToPx, convertViewtoPx, getAtomInfoLabel } from "../../utils/utils";
+import { cidToSpec, convertRemToPx, convertViewtoPx, parseAtomInfoLabel } from "../../utils/utils";
 import { Button, Card, Dropdown, Form, InputGroup, Row, Spinner, SplitButton, Stack } from "react-bootstrap";
 import { Backdrop, TextField } from "@mui/material";
 import { moorhen } from "../../types/moorhen";
@@ -160,7 +160,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
                 </SplitButton>
                 <Form.Select disabled={!deleteAtom} ref={deleteSelectedAtomValueRef}>
                     {monomerAtoms.map(atom => {
-                        const label = getAtomInfoLabel(atom)
+                        const label = parseAtomInfoLabel(atom)
                         return <option key={label} value={label}>{atom.has_altloc ? `${atom.name}:${atom.alt_loc}` : atom.name}</option>
                     }) }
                 </Form.Select>
@@ -212,7 +212,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
                 </SplitButton>
                 <Form.Select disabled={!changeAtomCharge} ref={changeSelectedAtomChargeValueRef}>
                     {monomerAtoms.map(atom => {
-                        const label = getAtomInfoLabel(atom)
+                        const label = parseAtomInfoLabel(atom)
                         return <option key={label} value={label}>{atom.has_altloc ? `${atom.name}:${atom.alt_loc}` : atom.name}</option>
                     }) }
                 </Form.Select>

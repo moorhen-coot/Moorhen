@@ -23,7 +23,7 @@ import {
 import { moorhensession } from "../protobuf/MoorhenSession";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 
-export const getAtomInfoLabel = (atomInfo: moorhen.AtomInfo) => {
+export const parseAtomInfoLabel = (atomInfo: moorhen.AtomInfo) => {
     return `/${atomInfo.mol_name}/${atomInfo.chain_id}/${atomInfo.res_no}(${atomInfo.res_name})/${atomInfo.name}${atomInfo.has_altloc ? `:${atomInfo.alt_loc}` : ""}`
 }
 
@@ -627,7 +627,7 @@ export const atomInfoToResSpec = (atom: moorhen.AtomInfo) => {
         // FIXME: Atom info does not contain a ins_code field ?? Or is it atom.serial ?
         ins_code: "",
         alt_conf: atom.alt_loc,
-        cid: getAtomInfoLabel(atom),
+        cid: parseAtomInfoLabel(atom),
         // FIXME: Atom info does not contain a model name. This is probably not a problem...
         mol_name: "",
     }

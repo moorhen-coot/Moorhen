@@ -106,7 +106,7 @@ import { thick_lines_normal_gbuffer_vertex_shader_source as thick_lines_normal_g
 import { DistanceBetweenPointAndLine, DihedralAngle, NormalizeVec3, vec3Cross, vec3Add, vec3Subtract, vec3Create  } from './mgMaths.js';
 import { determineFontHeight } from './fontHeight.js';
 
-import { getAtomInfoLabel, guid } from '../utils/utils';
+import { parseAtomInfoLabel, guid } from '../utils/utils';
 
 import { quatToMat4, quat4Inverse } from './quatToMat4.js';
 
@@ -10019,7 +10019,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             if (minidx > -1) {
                 let theAtom : clickAtom = {
                    ...self.displayBuffers[minidx].atoms[minj],
-                   label: getAtomInfoLabel(self.displayBuffers[minidx].atoms[minj]),
+                   label: parseAtomInfoLabel(self.displayBuffers[minidx].atoms[minj]),
                    displayBuffer: self.displayBuffers[minidx]
                 };
                 let atomClicked: moorhen.AtomClickedEvent = new CustomEvent("atomClicked", {
