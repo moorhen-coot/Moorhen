@@ -7805,8 +7805,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.uniform1f(this.shaderProgramEdgeDetect.depthThreshold,this.depthThreshold);
             this.gl.uniform1f(this.shaderProgramEdgeDetect.normalThreshold,this.normalThreshold);
             if(this.renderToTexture){
-                this.gl.uniform1f(this.shaderProgramEdgeDetect.scaleDepth,this.scaleDepth*4096./this.gl.viewportWidth);
-                this.gl.uniform1f(this.shaderProgramEdgeDetect.scaleNormal,this.scaleNormal*4096./this.gl.viewportWidth);
+                this.gl.uniform1f(this.shaderProgramEdgeDetect.scaleDepth,this.scaleDepth*4096./this.gl.viewportWidth*.5);
+                this.gl.uniform1f(this.shaderProgramEdgeDetect.scaleNormal,this.scaleNormal*4096./this.gl.viewportWidth*.5);
             } else {
                 this.gl.uniform1f(this.shaderProgramEdgeDetect.scaleDepth,this.scaleDepth/ratio);
                 this.gl.uniform1f(this.shaderProgramEdgeDetect.scaleNormal,this.scaleNormal);
