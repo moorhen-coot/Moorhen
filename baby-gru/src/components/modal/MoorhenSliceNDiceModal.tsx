@@ -549,9 +549,9 @@ export const MoorhenSliceNDiceModal = (props: {
             <Button variant='primary' onClick={doSlice} disabled={clusteringType === 'pae' && !paeFileIsUploaded}>
                 Slice
             </Button>
-            <SplitButton id='download-slice-n-dice' variant="info" title="Save & Exit" onClick={() => handleClose(true)}>
-            <Dropdown.Item eventKey="1" onClick={() => handleClose(true)}>Exit and save to Moorhen</Dropdown.Item>
-                <Dropdown.Item eventKey="2" onClick={() => handleClose()}>Exit without saving</Dropdown.Item>
+            <SplitButton id='download-slice-n-dice' variant="info" title="Save & Close" onClick={() => handleClose(true)}>
+            <Dropdown.Item eventKey="1" onClick={() => handleClose(true)}>Close and save changes to Moorhen</Dropdown.Item>
+                <Dropdown.Item eventKey="2" onClick={() => handleClose()}>Close without saving</Dropdown.Item>
             </SplitButton>
         </Stack>
     </Stack>
