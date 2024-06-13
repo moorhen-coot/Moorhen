@@ -94,7 +94,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenCommandCentre.html">MoorhenCommandCentre</a></li><li><a href="MoorhenMap.html">MoorhenMap</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenPreferences.html">MoorhenPreferences</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li></ul><h3>Global</h3><ul><li><a href="global.html#MoorhenContainer">MoorhenContainer</a></li><li><a href="global.html#MoorhenDraggableModalBase">MoorhenDraggableModalBase</a></li><li><a href="global.html#MoorhenMapSelect">MoorhenMapSelect</a></li><li><a href="global.html#MoorhenMoleculeSelect">MoorhenMoleculeSelect</a></li><li><a href="global.html#loadSessionData">loadSessionData</a></li><li><a href="global.html#loadSessionFromJsonString">loadSessionFromJsonString</a></li><li><a href="global.html#loadSessionFromProtoMessage">loadSessionFromProtoMessage</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenCommandCentre.html">MoorhenCommandCentre</a></li><li><a href="MoorhenMap.html">MoorhenMap</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenPreferences.html">MoorhenPreferences</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li></ul><h3>Global</h3><ul><li><a href="global.html#MoorhenContainer">MoorhenContainer</a></li><li><a href="global.html#MoorhenDraggableModalBase">MoorhenDraggableModalBase</a></li><li><a href="global.html#MoorhenMapSelect">MoorhenMapSelect</a></li><li><a href="global.html#MoorhenMoleculeSelect">MoorhenMoleculeSelect</a></li></ul></div>
                 
             </nav>
         </div>
@@ -113,7 +113,7 @@
 
 <header>
     
-        <h2><span class="attribs"><span class="type-signature"></span></span>MoorhenTimeCapsule<span class="signature">(moleculesRef, mapsRef, activeMapRef, glRef)</span><span class="type-signature"></span></h2>
+        <h2><span class="attribs"><span class="type-signature"></span></span>MoorhenTimeCapsule<span class="signature">(moleculesRef, mapsRef, activeMapRef, glRef, store)</span><span class="type-signature"></span></h2>
         
             <div class="class-description">Represents a time capsule with session backups</div>
         
@@ -139,7 +139,7 @@
         
         <span class="code-name">
             
-                new MoorhenTimeCapsule<span class="signature">(moleculesRef, mapsRef, activeMapRef, glRef)</span><span class="type-signature"></span>
+                new MoorhenTimeCapsule<span class="signature">(moleculesRef, mapsRef, activeMapRef, glRef, store)</span><span class="type-signature"></span>
             
         </span>
     </h4>
@@ -274,6 +274,31 @@
   
 
   <td class="description last">A react reference to the molecular graphics renderer</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>store</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">ToolkitStore</code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">The Redux store</td>
 </tr>
 
 
@@ -488,7 +513,7 @@
         <p class="tag-source">
             <a href="utils_MoorhenTimeCapsule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line25">line 25</a>
+                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line29">line 29</a>
             </span>
         </p>
     
@@ -622,7 +647,7 @@ the modification threshold
         <p class="tag-source">
             <a href="utils_MoorhenTimeCapsule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line470">line 470</a>
+                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line767">line 767</a>
             </span>
         </p>
     
@@ -748,7 +773,7 @@ the modification threshold
         <p class="tag-source">
             <a href="utils_MoorhenTimeCapsule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line446">line 446</a>
+                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line743">line 743</a>
             </span>
         </p>
     
@@ -872,7 +897,7 @@ the modification threshold
         <p class="tag-source">
             <a href="utils_MoorhenTimeCapsule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line477">line 477</a>
+                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line774">line 774</a>
             </span>
         </p>
     
@@ -996,7 +1021,7 @@ the modification threshold
         <p class="tag-source">
             <a href="utils_MoorhenTimeCapsule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line484">line 484</a>
+                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line781">line 781</a>
             </span>
         </p>
     
@@ -1196,7 +1221,7 @@ the modification threshold
         <p class="tag-source">
             <a href="utils_MoorhenTimeCapsule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line493">line 493</a>
+                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line790">line 790</a>
             </span>
         </p>
     
@@ -1322,7 +1347,7 @@ the modification threshold
         <p class="tag-source">
             <a href="utils_MoorhenTimeCapsule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line523">line 523</a>
+                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line820">line 820</a>
             </span>
         </p>
     
@@ -1517,7 +1542,7 @@ the modification threshold
         <p class="tag-source">
             <a href="utils_MoorhenTimeCapsule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line462">line 462</a>
+                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line759">line 759</a>
             </span>
         </p>
     
@@ -1643,7 +1668,7 @@ the modification threshold
         <p class="tag-source">
             <a href="utils_MoorhenTimeCapsule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line530">line 530</a>
+                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line827">line 827</a>
             </span>
         </p>
     
@@ -1765,7 +1790,7 @@ the modification threshold
         <p class="tag-source">
             <a href="utils_MoorhenTimeCapsule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line428">line 428</a>
+                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line725">line 725</a>
             </span>
         </p>
     
@@ -1940,7 +1965,7 @@ the modification threshold
         <p class="tag-source">
             <a href="utils_MoorhenTimeCapsule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line516">line 516</a>
+                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line813">line 813</a>
             </span>
         </p>
     
@@ -2115,7 +2140,7 @@ the modification threshold
         <p class="tag-source">
             <a href="utils_MoorhenTimeCapsule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line501">line 501</a>
+                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line798">line 798</a>
             </span>
         </p>
     
@@ -2239,7 +2264,7 @@ the modification threshold
         <p class="tag-source">
             <a href="utils_MoorhenTimeCapsule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line508">line 508</a>
+                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line805">line 805</a>
             </span>
         </p>
     
@@ -2412,7 +2437,7 @@ the modification threshold
         <p class="tag-source">
             <a href="utils_MoorhenTimeCapsule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line439">line 439</a>
+                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line736">line 736</a>
             </span>
         </p>
     
@@ -2509,7 +2534,7 @@ the modification threshold
         <p class="tag-source">
             <a href="utils_MoorhenTimeCapsule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line433">line 433</a>
+                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line730">line 730</a>
             </span>
         </p>
     
@@ -2611,7 +2636,7 @@ using MoorhenTimeCapsule.fetchSession
         <p class="tag-source">
             <a href="utils_MoorhenTimeCapsule.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line454">line 454</a>
+                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line751">line 751</a>
             </span>
         </p>
     
@@ -2649,6 +2674,1699 @@ using MoorhenTimeCapsule.fetchSession
         <label>Type: </label>
         
 <code class="param-type">Promise.&lt;Array.&lt;string>></code>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id=".getBackupLabel">
+        <a class="href-link" href="#.getBackupLabel">#</a>
+        
+            
+                <span class='tag'>static</span>
+            
+        
+        <span class="code-name">
+            
+                getBackupLabel<span class="signature">(key)</span><span class="type-signature"> &rarr; {string}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        A static function that can be used to get the backup label for a given key object
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>key</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">moorhen.backupKey</code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">An object with the backup key data</td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="utils_MoorhenTimeCapsule.ts.html" class="button">View Source</a>
+            <span>
+                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line834">line 834</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    <div class='param-desc column is-7'>A string corresponding with the backup label</div>
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<code class="param-type">string</code>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id=".loadSessionData">
+        <a class="href-link" href="#.loadSessionData">#</a>
+        
+            
+                <span class='tag'>async</span>
+            
+                <span class='tag'>static</span>
+            
+        
+        <span class="code-name">
+            
+                loadSessionData<span class="signature">(sessionData, monomerLibraryPath, molecules, maps, commandCentre, timeCapsuleRef, glRef, store, dispatch)</span><span class="type-signature"> &rarr; {number}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        A static function that can be used to load a session data object
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>sessionData</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">moorhen.backupSession</code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">An object containing session data</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>monomerLibraryPath</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">string</code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">Path to the monomer library</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>molecules</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Array.&lt;moorhen.Molecule></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">State containing current molecules loaded in the session</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>maps</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Array.&lt;moorhen.Map></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">State containing current maps loaded in the session</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>commandCentre</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">React.RefObject.&lt;moorhen.CommandCentre></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">React reference to the command centre</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>timeCapsuleRef</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">React.RefObject.&lt;moorhen.TimeCapsule></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">React reference to the time capsule</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>glRef</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">React.RefObject.&lt;webGL.MGWebGL></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">React reference to the webGL renderer</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>store</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">ToolkitStore</code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">The Redux store</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>dispatch</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Dispatch.&lt;AnyAction></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">Dispatch method for the MoorhenReduxStore</td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="utils_MoorhenTimeCapsule.ts.html" class="button">View Source</a>
+            <span>
+                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line850">line 850</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    <div class='param-desc column is-7'>Returns -1 if there was an error loading the session otherwise 0</div>
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<code class="param-type">number</code>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id=".loadSessionFromArrayBuffer">
+        <a class="href-link" href="#.loadSessionFromArrayBuffer">#</a>
+        
+            
+                <span class='tag'>async</span>
+            
+                <span class='tag'>static</span>
+            
+        
+        <span class="code-name">
+            
+                loadSessionFromArrayBuffer<span class="signature">(sessionArrayBuffer, monomerLibraryPath, molecules, maps, commandCentre, timeCapsuleRef, glRef, store, dispatch)</span><span class="type-signature"> &rarr; {number}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        A static function that can be used to load a session from an array buffer
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>sessionArrayBuffer</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">ArrayBuffer</code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">An object containing session data</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>monomerLibraryPath</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">string</code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">Path to the monomer library</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>molecules</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Array.&lt;moorhen.Molecule></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">State containing current molecules loaded in the session</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>maps</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Array.&lt;moorhen.Map></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">State containing current maps loaded in the session</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>commandCentre</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">React.RefObject.&lt;moorhen.CommandCentre></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">React reference to the command centre</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>timeCapsuleRef</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">React.RefObject.&lt;moorhen.TimeCapsule></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">React reference to the time capsule</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>glRef</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">React.RefObject.&lt;webGL.MGWebGL></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">React reference to the webGL renderer</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>store</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">ToolkitStore</code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">The Redux store</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>dispatch</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Dispatch.&lt;AnyAction></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">Dispatch method for the MoorhenReduxStore</td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="utils_MoorhenTimeCapsule.ts.html" class="button">View Source</a>
+            <span>
+                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line866">line 866</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    <div class='param-desc column is-7'>Returns -1 if there was an error loading the session otherwise 0</div>
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<code class="param-type">number</code>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id=".loadSessionFromJsonString">
+        <a class="href-link" href="#.loadSessionFromJsonString">#</a>
+        
+            
+                <span class='tag'>async</span>
+            
+                <span class='tag'>static</span>
+            
+        
+        <span class="code-name">
+            
+                loadSessionFromJsonString<span class="signature">(sessionDataString, monomerLibraryPath, molecules, maps, commandCentre, timeCapsuleRef, glRef, store, dispatch)</span><span class="type-signature"> &rarr; {number}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        A static function that can be used to load a session from a JSON string representation of a session data object
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>sessionDataString</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">string</code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">A JSON string representation of the object containing session data</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>monomerLibraryPath</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">string</code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">Path to the monomer library</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>molecules</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Array.&lt;moorhen.Molecule></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">State containing current molecules loaded in the session</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>maps</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Array.&lt;moorhen.Map></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">State containing current maps loaded in the session</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>commandCentre</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">React.RefObject.&lt;moorhen.CommandCentre></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">React reference to the command centre</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>timeCapsuleRef</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">React.RefObject.&lt;moorhen.TimeCapsule></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">React reference to the time capsule</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>glRef</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">React.RefObject.&lt;webGL.MGWebGL></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">React reference to the webGL renderer</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>store</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">ToolkitStore</code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">The Redux store</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>dispatch</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Dispatch.&lt;AnyAction></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">Dispatch method for the MoorhenReduxStore</td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="utils_MoorhenTimeCapsule.ts.html" class="button">View Source</a>
+            <span>
+                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line898">line 898</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    <div class='param-desc column is-7'>Returns -1 if there was an error loading the session otherwise 0</div>
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<code class="param-type">number</code>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id=".loadSessionFromProtoMessage">
+        <a class="href-link" href="#.loadSessionFromProtoMessage">#</a>
+        
+            
+                <span class='tag'>async</span>
+            
+                <span class='tag'>static</span>
+            
+        
+        <span class="code-name">
+            
+                loadSessionFromProtoMessage<span class="signature">(sessionProtoMessage, monomerLibraryPath, molecules, maps, commandCentre, timeCapsuleRef, glRef, store, dispatch)</span><span class="type-signature"> &rarr; {number}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        A static function that can be used to load a session from a protobuf message
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>sessionProtoMessage</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">string</code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">A protobuf message for the object containing session data</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>monomerLibraryPath</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">string</code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">Path to the monomer library</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>molecules</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Array.&lt;moorhen.Molecule></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">State containing current molecules loaded in the session</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>maps</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Array.&lt;moorhen.Map></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">State containing current maps loaded in the session</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>commandCentre</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">React.RefObject.&lt;moorhen.CommandCentre></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">React reference to the command centre</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>timeCapsuleRef</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">React.RefObject.&lt;moorhen.TimeCapsule></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">React reference to the time capsule</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>glRef</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">React.RefObject.&lt;webGL.MGWebGL></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">React reference to the webGL renderer</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>store</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">ToolkitStore</code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">The Redux store</td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>dispatch</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Dispatch.&lt;AnyAction></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last">Dispatch method for the MoorhenReduxStore</td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="utils_MoorhenTimeCapsule.ts.html" class="button">View Source</a>
+            <span>
+                <a href="utils_MoorhenTimeCapsule.ts.html">utils/MoorhenTimeCapsule.ts</a>, <a href="utils_MoorhenTimeCapsule.ts.html#line882">line 882</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    <div class='param-desc column is-7'>Returns -1 if there was an error loading the session otherwise 0</div>
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<code class="param-type">number</code>
 
 
     </div>

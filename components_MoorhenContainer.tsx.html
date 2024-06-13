@@ -96,7 +96,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenCommandCentre.html">MoorhenCommandCentre</a></li><li><a href="MoorhenMap.html">MoorhenMap</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenPreferences.html">MoorhenPreferences</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li></ul><h3>Global</h3><ul><li><a href="global.html#MoorhenContainer">MoorhenContainer</a></li><li><a href="global.html#MoorhenDraggableModalBase">MoorhenDraggableModalBase</a></li><li><a href="global.html#MoorhenMapSelect">MoorhenMapSelect</a></li><li><a href="global.html#MoorhenMoleculeSelect">MoorhenMoleculeSelect</a></li><li><a href="global.html#loadSessionData">loadSessionData</a></li><li><a href="global.html#loadSessionFromJsonString">loadSessionFromJsonString</a></li><li><a href="global.html#loadSessionFromProtoMessage">loadSessionFromProtoMessage</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenCommandCentre.html">MoorhenCommandCentre</a></li><li><a href="MoorhenMap.html">MoorhenMap</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenPreferences.html">MoorhenPreferences</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li></ul><h3>Global</h3><ul><li><a href="global.html#MoorhenContainer">MoorhenContainer</a></li><li><a href="global.html#MoorhenDraggableModalBase">MoorhenDraggableModalBase</a></li><li><a href="global.html#MoorhenMapSelect">MoorhenMapSelect</a></li><li><a href="global.html#MoorhenMoleculeSelect">MoorhenMoleculeSelect</a></li></ul></div>
                 
             </nav>
         </div>
@@ -116,7 +116,7 @@
             <pre class="prettyprint source linenums"><code>import { useEffect, useCallback, useRef, useMemo } from 'react';
 import { Container, Col, Row, Spinner } from 'react-bootstrap';
 import { MoorhenWebMG } from './webMG/MoorhenWebMG';
-import { createLocalStorageInstance, getAtomInfoLabel } from '../utils/MoorhenUtils';
+import { createLocalStorageInstance, parseAtomInfoLabel } from '../utils/utils';
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre";
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
 import { Backdrop } from "@mui/material";
@@ -147,6 +147,8 @@ import { MoorhenModelTrajectorySnackBar } from './snack-bar/MoorhenModelTrajecto
 import { MoorhenTomogramSnackBar } from './snack-bar/MoorhenTomogramSnackBar';
 import { MoorhenMapContourLevelSnackBar } from './snack-bar/MoorhenMapContourLevelSnackBar';
 import { MoorhenRotamerChangeSnackBar } from './snack-bar/MoorhenRotamerChangeSnackbar';
+import { MoorhenScreenshotSnackBar } from './snack-bar/MoorhenScreenshotSnackBar';
+import { MoorhenSideBar } from './snack-bar/MoorhenSideBar';
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -215,10 +217,17 @@ declare module "notistack" {
             commandCentre: React.RefObject&lt;moorhen.CommandCentre>;
             glRef: React.RefObject&lt;webGL.MGWebGL>;
         }
+        screenshot: {
+            videoRecorderRef: React.RefObject&lt;moorhen.ScreenRecorder>;
+            glRef: React.RefObject&lt;webGL.MGWebGL>;    
+        };
+        sideBar: {
+            children: JSX.Element;
+            modalId: string;
+            title: string;
+        }
     }
 }
-  
-// import { MoorhenSharedSessionManager } from './misc/MoorhenSharedSessionManager';
 
 /**
  * A container for the Moorhen app. Needs to be rendered within a MoorhenReduxprovider.
@@ -508,7 +517,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         else {
             molecules.forEach(molecule => {
                 if (molecule.buffersInclude(identifier.buffer)) {
-                    const newCid = getAtomInfoLabel(identifier.atom)
+                    const newCid = parseAtomInfoLabel(identifier.atom)
                     if (molecule !== hoveredAtom.molecule || newCid !== hoveredAtom.cid) {
                         dispatch( setHoveredAtom({ molecule: molecule, cid: newCid }) )
                     }
@@ -557,9 +566,9 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     return &lt;SnackbarProvider 
         hideIconVariant={false}
         autoHideDuration={4000}
-        maxSnack={10}
+        maxSnack={20}
         anchorOrigin={{horizontal: 'center', vertical: 'top'}}
-        transitionDuration={ { enter: 500, exit: 300 }}
+        transitionDuration={{ enter: 500, exit: 300 }}
         Components={{
             goToResidue: MoorhenGoToResidueSnackbar,
             screenRecorder: MoorhenRecordingSnackBar,
@@ -573,7 +582,9 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             modelTrajectory: MoorhenModelTrajectorySnackBar,
             tomogram: MoorhenTomogramSnackBar,
             mapContourLevel: MoorhenMapContourLevelSnackBar,
-            rotamerChange: MoorhenRotamerChangeSnackBar
+            rotamerChange: MoorhenRotamerChangeSnackBar,
+            screenshot: MoorhenScreenshotSnackBar,
+            sideBar: MoorhenSideBar
         }}
         preventDuplicate={true}>
     &lt;div>
