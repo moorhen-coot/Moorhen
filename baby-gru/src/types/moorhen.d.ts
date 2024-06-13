@@ -247,6 +247,7 @@ export namespace moorhen {
         cachedGemmiAtoms: AtomInfo[];
         cachedPrivateerValidation: privateer.ResultsEntry[];
         isLigand: boolean;
+        isMRSearchModel: boolean;
         excludedCids: string[];
         commandCentre: React.RefObject<CommandCentre>;
         glRef: React.RefObject<webGL.MGWebGL>;

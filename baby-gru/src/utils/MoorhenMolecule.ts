@@ -101,6 +101,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     adaptativeBondsEnabled: boolean;
     store: ToolkitStore;
     headerInfo: libcootApi.headerInfoJS;
+    isMRSearchModel: boolean;
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore = MoorhenReduxStore, monomerLibraryPath = "./baby-gru/monomers") {
         this.type = 'molecule'
@@ -169,6 +170,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.hasDNA = false
         this.hasGlycans = false
         this.isLigand = false
+        this.isMRSearchModel = false
         this.displayObjectsTransformation = { origin: [0, 0, 0], quat: null, centre: [0, 0, 0] }
         this.uniqueId = guid()
         this.monomerLibraryPath = monomerLibraryPath
