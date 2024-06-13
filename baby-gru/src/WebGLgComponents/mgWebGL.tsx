@@ -8382,7 +8382,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.uniform1f(this.shaderProgramBlurX.blurDepth,fracDepth);
         this.gl.uniform1f(this.shaderProgramBlurX.blurSize,blurSizeX);
 
-        this.gl.clearBufferfv(this.gl.COLOR, 0, [1.0, 0.5, 1.0, 1.0]);
+        if(this.renderToTexture&&this.transparentScreenshotBackground){
+            this.gl.clearBufferfv(this.gl.COLOR, 0, [this.background_colour[0], this.background_colour[1], this.background_colour[2], 0.0]);
+        } else {
+            this.gl.clearBufferfv(this.gl.COLOR, 0, [this.background_colour[0], this.background_colour[1], this.background_colour[2], 1.0]);
+        }
         this.bindFramebufferDrawBuffers();
 
         if (this.ext) {
@@ -8427,7 +8431,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.uniform1f(this.shaderProgramBlurY.blurDepth,fracDepth);
         this.gl.uniform1f(this.shaderProgramBlurY.blurSize,blurSizeY);
 
-        this.gl.clearBufferfv(this.gl.COLOR, 0, [0.5, 0.5, 1.0, 1.0]);
+        if(this.renderToTexture&&this.transparentScreenshotBackground){
+            this.gl.clearBufferfv(this.gl.COLOR, 0, [this.background_colour[0], this.background_colour[1], this.background_colour[2], 0.0]);
+        } else {
+            this.gl.clearBufferfv(this.gl.COLOR, 0, [this.background_colour[0], this.background_colour[1], this.background_colour[2], 1.0]);
+        }
         this.bindFramebufferDrawBuffers();
 
         if (this.ext) {
