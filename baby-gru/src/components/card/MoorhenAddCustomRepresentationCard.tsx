@@ -377,7 +377,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 <Stack gap={1} direction='horizontal' style={{ marginLeft: '0.1rem', marginRight: '0.1rem', paddingLeft: '1rem', paddingRight: '1rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', borderStyle: 'solid', borderWidth: '1px', borderColor: 'grey', borderRadius: '1.5rem' }}>
                     <Form.Group style={{ margin: '0px', width: '100%' }}>
                         <Form.Label>Focus Style</Form.Label>
-                        <FormSelect ref={focusStyleSelectRef} defaultValue={'CBs'} size="sm">
+                        <FormSelect ref={focusStyleSelectRef} defaultValue={props.representation?.residueEnvironmentOptions.focusRepresentation ?? 'CBs'} size="sm">
                             {[ 'CBs', 'CAs', 'CRs', 'MolecularSurface', 'VdwSpheres' ].map(key => {
                                 return <option value={key} key={key}>{representationLabelMapping[key]}</option>
                             })}
@@ -385,7 +385,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                     </Form.Group>
                     <Form.Group style={{ margin: '0px', width: '100%' }}>
                         <Form.Label>Background Style</Form.Label>
-                        <FormSelect ref={backgroundStyleSelectRef} defaultValue={'CRs'} size="sm">
+                        <FormSelect ref={backgroundStyleSelectRef} defaultValue={props.representation?.residueEnvironmentOptions.backgroundRepresentation ?? 'CRs'} size="sm">
                             {[ 'CBs', 'CAs', 'CRs', 'MolecularSurface', 'VdwSpheres' ].map(key => {
                                 return <option value={key} key={key}>{representationLabelMapping[key]}</option>
                             })}
