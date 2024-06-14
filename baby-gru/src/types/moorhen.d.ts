@@ -325,7 +325,7 @@ export namespace moorhen {
         static mergeBufferObjects(bufferObj1: libcootApi.InstancedMeshJS[], bufferObj2: libcootApi.InstancedMeshJS[]): libcootApi.InstancedMeshJS[];
         bondOptions: cootBondOptions;
         m2tParams: m2tParameters;
-        residueEnvironmentOptions: moorhen.residueEnvironmentOptions;
+        residueEnvironmentOptions: residueEnvironmentOptions;
         useDefaultM2tParams: boolean;
         useDefaultResidueEnvironmentOptions: boolean;
         useDefaultColourRules: boolean;
