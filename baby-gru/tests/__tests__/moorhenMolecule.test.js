@@ -2,7 +2,7 @@ import { MoorhenMolecule } from "../../tsDist/src/utils/MoorhenMolecule"
 import { MockMoorhenCommandCentre } from "../__mocks__/mockMoorhenCommandCentre"
 import { MoorhenReduxStore } from "../../tsDist/src/store/MoorhenReduxStore"
 import { MockWebGL } from "../__mocks__/mockWebGL"
-import { parseAtomInfoLabel } from "../../tsDist/src/utils/MoorhenUtils"
+import { parseAtomInfoLabel } from "../../tsDist/src/utils/utils"
 import fetch from 'node-fetch'
 
 jest.setTimeout(60000)
