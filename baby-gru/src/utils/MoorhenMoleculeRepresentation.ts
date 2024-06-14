@@ -432,10 +432,10 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 objects = await this.getCootContactDotsCidBuffers(_cid)
                 break
             case 'chemical_features':
-                objects = await this.getCootChemicalFeaturesCidBuffers(_style, _cid)    
+                objects = await this.getCootChemicalFeaturesCidBuffers(_cid)    
                 break
             case 'ligand_validation':
-                objects = await this.getLigandValidationBuffers(_style, _cid)
+                objects = await this.getLigandValidationBuffers(_cid)
                 break
             case 'restraints':
                 objects = await this.getRestraintsMeshBuffers()
