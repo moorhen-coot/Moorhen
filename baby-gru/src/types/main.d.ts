@@ -89,6 +89,9 @@ declare module 'moorhen' {
     interface MoorhenColourRule extends _moorhen.ColourRule { }
     class MoorhenColourRule implements MoorhenColourRule {
         constructor(ruleType: string, cid: string, color: string, commandCentre: React.RefObject<_moorhen.CommandCentre>, isMultiColourRule?: boolean, applyColourToNonCarbonAtoms?: boolean)
+        static initFromString: (stringifiedObject: string, commandCentre: React.RefObject<_moorhen.CommandCentre>, molecule: _moorhen.Molecule) => _moorhen.ColourRule;
+        static initFromDataObject: (data: _moorhen.ColourRuleObject, commandCentre: React.RefObject<_moorhen.CommandCentre>, molecule: _moorhen.Molecule) => _moorhen.ColourRule;
+        static parseHexToRgba: (hex: string) => [number, number, number, number];    
     }
     module.exports.MoorhenColourRule = MoorhenColourRule
 
