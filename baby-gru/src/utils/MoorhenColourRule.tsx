@@ -21,7 +21,7 @@ import { guid } from './utils';
  * @param {boolean} [isMultiColourRule=false] - Indicates whether this colour rule consists of multiple colours assigned to different residues
  * @param {boolean} [applyColourToNonCarbonAtoms=false] - Indicates if the colour rule will also be applied to non carbon atoms
  * @example
- * import { MoorhenColourRule } from 'moorhen';
+ * import { MoorhenMolecule, MoorhenColourRule } from 'moorhen';
  * 
  * const example = async (ruleArgs) => {
  *    const molecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath);
