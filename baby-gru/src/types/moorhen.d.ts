@@ -152,7 +152,7 @@ export namespace moorhen {
         setParentRepresentation(representation: MoleculeRepresentation): void;    
         setApplyColourToNonCarbonAtoms(newVal: boolean): void;
         getUserDefinedColours(): { cid: string; rgba: [number, number, number, number]; applyColourToNonCarbonAtoms: boolean }[];
-        apply(style: string, ruleIndex: number): Promise<void>;
+        apply(style?: string, ruleIndex: number): Promise<void>;
     }
 
     type coorFormats = 'pdb' | 'mmcif' | 'unk' | 'mmjson' | 'xml';

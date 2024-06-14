@@ -38,21 +38,23 @@ import { ToolkitStore } from '@reduxjs/toolkit/dist/configureStore';
  * @example
  * import { MoorhenMolecule } from 'moorhen';
  * 
- * // Create a new molecule
- * const molecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath);
+ * const example = async () => {
+ *    // Create a new molecule
+ *    const molecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath);
  * 
- * // Set some defaults
- * molecule.setBackgroundColour(glRef.current.background_colour)
+ *    // Set some defaults
+ *    molecule.setBackgroundColour(glRef.current.background_colour)
  * 
- * // Load file from a URL
- * molecule.loadToCootFromURL('/uri/to/file.pdb', 'mol-1');
+ *    // Load file from a URL
+ *    await molecule.loadToCootFromURL('/uri/to/file.pdb', 'mol-1');
  * 
- * // Draw coot bond representation and centre on molecule
- * molecule.fetchIfDirtyAndDraw('CBs');
- * molecule.centreOn();
+ *    // Draw coot bond representation and centre on molecule
+ *    await molecule.fetchIfDirtyAndDraw('CBs');
+ *    await molecule.centreOn();
  * 
- * // Delete molecule
- * molecule.delete();
+ *    // Delete molecule
+ *    await molecule.delete();
+ * }
  */
 export class MoorhenMolecule implements moorhen.Molecule {
 
