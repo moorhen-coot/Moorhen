@@ -12,6 +12,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore"
+import { useSnackbar } from "notistack"
 
 const MoorhenImportLigandDictionary = (props: { 
     id: string;
@@ -292,7 +293,6 @@ export const MoorhenImportDictionaryMenuItem = (props: {
     store: ToolkitStore;
  }) => {
     
-    const fileOrLibraryRef = useRef<string>("Library")
     const tlcsOfFileRef = useRef<{ comp_id: string; dict_contents: string }[]>([])
     const filesRef = useRef<null | HTMLInputElement>(null)
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
@@ -305,10 +305,11 @@ export const MoorhenImportDictionaryMenuItem = (props: {
 
     const [tlc, setTlc] = useState<string>('')
     const [addToMolecule, setAddToMolecule] = useState<string>('')
-    const [fileOrLibrary, setFileOrLibrary] = useState<string>("Library")
     const [createInstance, setCreateInstance] = useState<boolean>(true)
     const [validDictFile, setValidDictFile] = useState<boolean>(true)
     const [tlcsOfFile, setTlcsOfFile] = useState<{ comp_id: string; dict_contents: string }[]>([])
+
+    const { enqueueSnackbar } = useSnackbar()
 
     const collectedProps = {
         tlc, setTlc, createInstance, setCreateInstance, addToMolecule,
@@ -330,86 +331,46 @@ export const MoorhenImportDictionaryMenuItem = (props: {
     }
 
     const panelContent = <>
-        <Form.Group key="fileOrLibrary" style={{ width: '20rem', margin: '0.5rem' }} controlId="fileOrLibrary" className="mb-3">
-            <Form.Label>Select a source</Form.Label>
-            <Form.Select value={fileOrLibrary} onChange={(e) => { setFileOrLibrary(e.target.value) }}>
-                <option key="File" value="File">From local file</option>
-                <option key="Library" value="Library">From monomer library</option>
-                <option key="MRC" value="MRC">Fetch from MRC-LMB</option>
-                <option key="PDBe" value="PDBe">Fetch from PDBe</option>
+        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} className="mb-3"
+            onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
+                const tlcs = await parseCifDict(e.target.files[0])
+                if (tlcs.length > 0) {
+                    tlcsOfFileRef.current = tlcs
+                    setTlcsOfFile(tlcs)
+                    setTlc(tlcs[0].comp_id)
+                    setValidDictFile(true)
+                    tlcValueRef.current = tlcs[0].comp_id
+                } else {
+                    setValidDictFile(false)
+                }
+            }}>
+            <Form.Label>Browse...</Form.Label>
+            <Form.Control ref={filesRef} type="file" accept={".cif, .dict, .mmcif"} multiple={false} style={{borderColor: validDictFile ?  '#c2c2c2' : 'red', borderWidth: validDictFile ? '0.1rem' : '0.15rem'}}/>
+            {!validDictFile && <span>Unable to parse</span>}
+        </Form.Group>
+        {createInstance &&
+        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} className="mb-3">
+        <Form.Label>Monomer identifier</Form.Label>
+            <Form.Select ref={tlcSelectRef} value={tlc} onChange={(newVal) => {
+                setTlc(newVal.target.value) 
+                tlcValueRef.current = newVal.target.value
+            }}>
+                {tlcsOfFile.map(tlcOfFile => <option key={tlcOfFile.comp_id} value={tlcOfFile.comp_id}>{tlcOfFile.comp_id}</option>)}
             </Form.Select>
         </Form.Group>
-        {fileOrLibrary === 'File' ? <>
-            <Form.Group key="uploadDicts" style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadDicts" className="mb-3"
-                onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
-                    const tlcs = await parseCifDict(e.target.files[0])
-                    if (tlcs.length > 0) {
-                        tlcsOfFileRef.current = tlcs
-                        setTlcsOfFile(tlcs)
-                        setTlc(tlcs[0].comp_id)
-                        setValidDictFile(true)
-                        tlcValueRef.current = tlcs[0].comp_id
-                    } else {
-                        setValidDictFile(false)
-                    }
-                }}>
-                <Form.Label>Browse...</Form.Label>
-                <Form.Control ref={filesRef} type="file" accept={".cif, .dict, .mmcif"} multiple={false} style={{borderColor: validDictFile ?  '#c2c2c2' : 'red', borderWidth: validDictFile ? '0.1rem' : '0.15rem'}}/>
-                {!validDictFile && <span>Unable to parse</span>}
-            </Form.Group>
-            {createInstance &&
-                <Form.Select ref={tlcSelectRef} value={tlc} style={{ width: '20rem', margin: '0.5rem' }} onChange={(newVal) => {
-                    setTlc(newVal.target.value) 
-                    tlcValueRef.current = newVal.target.value
-                }}>
-                    {tlcsOfFile.map(tlcOfFile => <option key={tlcOfFile.comp_id} value={tlcOfFile.comp_id}>{tlcOfFile.comp_id}</option>)}
-                </Form.Select>
-            }
-        </>
-        :
-            <Form.Group key="tlc" style={{ width: '20rem', margin: '0.5rem' }} controlId="tlc" className="mb-3">
-                <Form.Label>Three letter code</Form.Label>
-                <Form.Control value={tlc}
-                    onChange={(e) => {
-                        setTlc(e.target.value)
-                        tlcValueRef.current = e.target.value.toUpperCase()
-                    }}
-                    type="text" />
-            </Form.Group>
         }
     </>
 
-    useEffect(() => {
-        fileOrLibraryRef.current = fileOrLibrary
-    }, [fileOrLibrary])
-
-    const fetchLigandDictFromUrl = async (url: string) => {
-        const response = await fetch(url)
-        if (!response.ok) {
-            console.log(`Cannot fetch data from ${url}`)
-        } else {
-            const fileContent = await response.text()
-            return fileContent
-        }
-    }
-
     const fetchLigandDict = async (): Promise<string> => {
-        if (fileOrLibraryRef.current === "File" && filesRef.current.files.length > 0 && tlcValueRef.current) {
+        if (filesRef.current.files.length > 0 && tlcValueRef.current) {
             const ligandInfo = tlcsOfFileRef.current.find(lig => lig.comp_id === tlcValueRef.current)
-            if (ligandInfo) return ligandInfo.dict_contents
-        }
-        else if (fileOrLibraryRef.current === "Library" && tlcValueRef.current) {
-            const url = `${props.monomerLibraryPath}/${tlcValueRef.current.toLowerCase()[0]}/${tlcValueRef.current.toUpperCase()}.cif`
-            return fetchLigandDictFromUrl(url)
-        } else if (fileOrLibraryRef.current === "MRC" && tlcValueRef.current) {
-            const url = `https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/${tlcValueRef.current.toLowerCase()[0]}/${tlcValueRef.current.toUpperCase()}.cif`
-            return fetchLigandDictFromUrl(url)
-        } else if (fileOrLibraryRef.current === "PDBe" && tlcValueRef.current) {
-            const url = `https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/${tlcValueRef.current.toUpperCase()}.cif`
-            return fetchLigandDictFromUrl(url)
-        } else {
-            console.log(`Unkown ligand source or invalid input`)
-        }
+            if (ligandInfo) {
+                return ligandInfo.dict_contents
+            } else {
+                console.warn(`Unable to parse ligand dictionary`)
+                enqueueSnackbar("Unable to import ligand", { variant: "error" })    
+            }
+        } 
     }
 
     return <MoorhenImportLigandDictionary id='import-dict-menu-item' menuItemText="Import dictionary..." panelContent={panelContent} fetchLigandDict={fetchLigandDict} {...collectedProps} />
