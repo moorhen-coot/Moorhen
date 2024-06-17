@@ -6,9 +6,10 @@ import { useEffect, useState } from 'react';
 
 class LhasaWrapperProps {
     rdkit_molecule_pickle_map?: Map<string, string>;
+    smiles_callback?: (id: string, smiles: string) => void;
 }
 
-function LhasaWrapper({rdkit_molecule_pickle_map}: LhasaWrapperProps) {
+function LhasaWrapper({rdkit_molecule_pickle_map, smiles_callback}: LhasaWrapperProps) {
     const [isCootAttached, setCootAttached] = useState(() => { 
         // @ts-ignore
         return window.cootModule !== undefined;
@@ -35,6 +36,8 @@ function LhasaWrapper({rdkit_molecule_pickle_map}: LhasaWrapperProps) {
                     show_top_panel={false}
                     rdkit_molecule_pickle_map={rdkit_molecule_pickle_map}
                     icons_path_prefix='/baby-gru/pixmaps/lhasa_icons'
+                    name_of_host_program='Moorhen'
+                    smiles_callback={smiles_callback}
                 />
             }
         </>

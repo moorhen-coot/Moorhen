@@ -69,7 +69,10 @@ export const MoorhenLhasaModal = (props) => {
                 resizeNodeRef={resizeNodeRef}
                 body={
                     
-                    <LhasaWrapper rdkit_molecule_pickle_map={my_map} />
+                    <LhasaWrapper 
+                        rdkit_molecule_pickle_map={my_map}
+                        smiles_callback={(id, smiles) => console.info("ID=", id, " SMILES=", smiles)}
+                    />
                 }
             />
 }
