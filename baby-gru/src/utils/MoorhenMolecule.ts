@@ -1646,14 +1646,15 @@ export class MoorhenMolecule implements moorhen.Molecule {
             return
         }
 
-        let possibleIndentedLines = fileContent.split("\n")
+        const possibleIndentedLines = fileContent.split("\n")
         let unindentedLines: string[] = []
         let comp_id = 'list'
-        let rx = /data_comp_(.*)/;
+        const rx_1 = /data_comp_(.*)/
+        const rx_2 = /data_(.*)/
 
         for (let line of possibleIndentedLines) {
             let trimmedLine = line.trim()
-            let arr = rx.exec(trimmedLine)
+            let arr = rx_1.exec(trimmedLine) ?? rx_2.exec(trimmedLine)
             if (arr !== null) {
                 //Had we encountered a previous compound ?  If so, add it into the energy lib
                 if (comp_id !== 'list') {
