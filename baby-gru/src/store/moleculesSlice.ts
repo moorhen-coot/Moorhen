@@ -4,6 +4,7 @@ import { moorhen } from "../types/moorhen"
 const initialState = {
   visibleMolecules: [],
   customRepresentations: [],
+  generalRepresentations: [],
   moleculeList: [],
 }
 
@@ -18,6 +19,7 @@ export const moleculesSlice = createSlice({
     removeMolecule: (state, action: {payload: moorhen.Molecule, type: string}) => {
       state = {
         ...state,
+        generalRepresentations: state.generalRepresentations.filter(item => item.parentMolecule.molNo !== action.payload.molNo),
         customRepresentations: state.customRepresentations.filter(item => item.parentMolecule.molNo !== action.payload.molNo),
         visibleMolecules: state.visibleMolecules.filter(item => item !== action.payload.molNo),
         moleculeList: state.moleculeList.filter(item => item.molNo !== action.payload.molNo) 
@@ -49,12 +51,21 @@ export const moleculesSlice = createSlice({
       state = { ...state, customRepresentations: state.customRepresentations.filter(item => item.uniqueId !== action.payload.uniqueId) }
       return state
     },
+    addGeneralRepresentation: (state, action: {payload: moorhen.MoleculeRepresentation, type: string}) => {
+      state = { ...state, generalRepresentations: [...state.generalRepresentations, action.payload] }
+      return state
+    },
+    removeGeneralRepresentation: (state, action: {payload: moorhen.MoleculeRepresentation, type: string}) => {
+      state = { ...state, generalRepresentations: [...state.generalRepresentations, action.payload] }
+      return state
+    },
   },
 })
 
 export const { 
-  addMolecule, removeMolecule, emptyMolecules, addMoleculeList,
-  showMolecule, hideMolecule, addCustomRepresentation, removeCustomRepresentation
+  addMolecule, removeMolecule, emptyMolecules, addMoleculeList, addGeneralRepresentation,
+  showMolecule, hideMolecule, addCustomRepresentation, removeCustomRepresentation,
+  removeGeneralRepresentation
  } = moleculesSlice.actions
 
 export default moleculesSlice.reducer

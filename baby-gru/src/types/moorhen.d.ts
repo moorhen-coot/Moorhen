@@ -934,6 +934,7 @@ export namespace moorhen {
             moleculeList: Molecule[];
             visibleMolecules: number[];
             customRepresentations: MoleculeRepresentation[];
+            generalRepresentations: MoleculeRepresentation[];
         };
         maps: Map[];
         mouseSettings: {

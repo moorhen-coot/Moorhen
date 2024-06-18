@@ -35,7 +35,7 @@ import {
 } from './store/mapContourSettingsSlice';
 import { setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut, resetMiscAppSettings } from './store/miscAppSettingsSlice';
 import { setEnableRefineAfterMod, setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints, setAnimateRefine, resetRefinementSettings } from './store/refinementSettingsSlice';
-import { addMolecule, removeMolecule, emptyMolecules, addMoleculeList, showMolecule, hideMolecule, addCustomRepresentation, removeCustomRepresentation } from './store/moleculesSlice';
+import { addMolecule, removeMolecule, emptyMolecules, addMoleculeList, showMolecule, hideMolecule, addCustomRepresentation, removeCustomRepresentation, addGeneralRepresentation, removeGeneralRepresentation } from './store/moleculesSlice';
 import { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity, resetDefaultMouseSettings } from './store/mouseSettings';
 import { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts, resetShortcutSettings } from './store/shortCutsSlice';
 import { setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores, resetMoleculeMapUpdates } from './store/moleculeMapUpdateSlice';
@@ -83,5 +83,5 @@ export {
     modalsReducer, hoveringStatesReducer, mapContourSettingsReducer, moleculeMapUpdateReducer,
     sharedSessionReducer, refinementSettingsReducer, resetSceneSettings, resetBackupSettings, resetDefaultMouseSettings, 
     resetGeneralStates, resetHoveringStates, resetLabelSettings, resetMapContourSettings, resetMiscAppSettings, resetMoleculeMapUpdates,
-    resetRefinementSettings, resetShortcutSettings, resetActiveModals, focusOnModal, 
+    resetRefinementSettings, resetShortcutSettings, resetActiveModals, focusOnModal, addGeneralRepresentation, removeGeneralRepresentation
 };
