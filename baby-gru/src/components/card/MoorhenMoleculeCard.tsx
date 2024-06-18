@@ -764,7 +764,6 @@ const RepresentationCheckbox = (props: {
 
     const dispatch = useDispatch()
 
-    console.log(props.style, showState)
     const disabled: boolean = useMemo(() => { 
         return !props.isVisible 
         || (props.style === 'ligands' && props.molecule.ligands.length === 0) 
