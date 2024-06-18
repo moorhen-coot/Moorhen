@@ -9,7 +9,9 @@ import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
 import { MoorhenSlider } from "../misc/MoorhenSlider";
 import { IconButton } from "@mui/material";
 import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
+import { addGeneralRepresentation } from "../../moorhen";
 
 export const MoorhenSelfRestraintsMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -32,6 +34,8 @@ export const MoorhenSelfRestraintsMenuItem = (props: {
     const [selectedChain, setSelectedChain] = useState<string>('')
     const [maxDist, setMaxDist] = useState<number>(4.5)
     const [cid, setCid] = useState<string>('')
+
+    const dispatch = useDispatch()
     
     const modes = ["Molecule", "Chain", "Atom Selection"]
 
@@ -137,8 +141,10 @@ export const MoorhenSelfRestraintsMenuItem = (props: {
             if (restraintsRepresenation) {
                 await restraintsRepresenation.redraw()
             } else {
-                await selectedMolecule.addRepresentation("restraints", "/*/*/*/*")
+                const representation = await selectedMolecule.addRepresentation("restraints", "/*/*/*/*")
+                dispatch( addGeneralRepresentation(representation) )
             }
+            dispatch( triggerUpdate(selectedMolecule.molNo) )
         }
         
     }, [props.commandCentre])

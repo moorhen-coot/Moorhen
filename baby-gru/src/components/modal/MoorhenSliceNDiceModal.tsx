@@ -216,7 +216,7 @@ export const MoorhenSliceNDiceModal = (props: {
                 if (cidsToHide?.length > 0) {
                     await selectedMoleculeCopyRef.current.unhideAll(false)
                     await selectedMoleculeCopyRef.current.hideCid(cidsToHide.join('||'), true)
-                    selectedMoleculeCopyRef.current.show('CRs', '/*/*/*/*')
+                    await selectedMoleculeCopyRef.current.show('CRs', '/*/*/*/*')
                 } else {
                     await selectedMoleculeCopyRef.current.unhideAll(true)
                 }

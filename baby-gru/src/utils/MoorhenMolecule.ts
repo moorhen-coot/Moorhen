@@ -1119,7 +1119,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 representation.setAtomBuffers(bufferAtoms)
             }    
         }
-        representation.show()
+        await representation.show()
     }
 
     addColourRule(ruleType: string, cid: string, color: string, args: (string | number)[], isMultiColourRule: boolean = false, applyColourToNonCarbonAtoms: boolean = false, label?: string) {
@@ -1174,7 +1174,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} style - The representation style to show
      * @param {string} [cid=undefined] - The CID selection for the representation
      */
-    show(style: moorhen.RepresentationStyles, cid?: string): void {
+    async show(style: moorhen.RepresentationStyles, cid?: string): Promise<moorhen.MoleculeRepresentation> {
         let representation: moorhen.MoleculeRepresentation
         try {
             if (style === 'ligands') {
@@ -1184,13 +1184,14 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 representation = this.representations.find(item => item.style === style && item.cid === cid)
             }
             if (representation) {
-                representation.show()
+                await representation.show()
             } else {
-                this.addRepresentation(style, cid)
+                representation = await this.addRepresentation(style, cid)
             }
         } catch (err) {
             console.log(err)
         }
+        return representation
     }
 
     /**
@@ -1198,7 +1199,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} style - The representation style to hide
      * @param {string} [cid=undefined] - The CID selection for the representation
      */
-    hide(style: moorhen.RepresentationStyles, cid?: string) {
+    hide(style: moorhen.RepresentationStyles, cid?: string): moorhen.MoleculeRepresentation {
         let representation: moorhen.MoleculeRepresentation
         try {
             if (style === 'ligands') {
@@ -1213,6 +1214,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         } catch (err) {
             console.log(err)
         }
+        return representation
     }
 
     /**
@@ -1283,7 +1285,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      */
     async drawUnitCell() {
         if (this.unitCellRepresentation && this.unitCellRepresentation.buffers?.length > 0) {
-            this.unitCellRepresentation.show()
+            await this.unitCellRepresentation.show()
         } else {
             await this.unitCellRepresentation.draw()
         }
@@ -1331,7 +1333,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if (newValue) {
             const activeAtomCid = await this.getActiveAtom()
             if (activeAtomCid === this.adaptativeBondsRepresentation.cid) {
-                this.adaptativeBondsRepresentation.show()
+                await this.adaptativeBondsRepresentation.show()
             }
             await this.redrawAdaptativeBonds(activeAtomCid)
         } else {

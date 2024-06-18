@@ -56,7 +56,7 @@ export const moleculesSlice = createSlice({
       return state
     },
     removeGeneralRepresentation: (state, action: {payload: moorhen.MoleculeRepresentation, type: string}) => {
-      state = { ...state, generalRepresentations: [...state.generalRepresentations, action.payload] }
+      state = { ...state, generalRepresentations: state.generalRepresentations.filter(item => item.uniqueId !== action.payload.uniqueId) }
       return state
     },
   },

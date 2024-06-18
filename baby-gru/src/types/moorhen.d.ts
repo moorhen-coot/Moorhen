@@ -212,7 +212,7 @@ export namespace moorhen {
         clearExtraRestraints(): Promise<WorkerResponse>;
         redo(): Promise<void>;
         undo(): Promise<void>;
-        show(style: string, cid?: string): void;
+        show(style: string, cid?: string): Promise<MoleculeRepresentation>;
         setSymmetryRadius(radius: number): Promise<void>;
         drawSymmetry: (fetchSymMatrix?: boolean) => Promise<void>;
         drawBiomolecule(fetchSymMatrix?: boolean) : void;
@@ -230,7 +230,7 @@ export namespace moorhen {
         loadToCootFromURL: (inputFile: string, molName: string, options?: RequestInit) => Promise<Molecule>;
         applyTransform: () => Promise<void>;
         getAtoms(format?: coorFormats): Promise<string>;
-        hide: (style: string, cid?: string) => void;
+        hide: (style: string, cid?: string) => MoleculeRepresentation;
         redraw: () => Promise<void>;
         setAtomsDirty: (newVal: boolean) => void;
         isVisible: (excludeBuffers?: string[]) => boolean;
@@ -299,7 +299,7 @@ export namespace moorhen {
     type RepresentationStyles = 'VdwSpheres' | 'ligands' | 'CAs' | 'CBs' | 'CDs' | 'gaussian' | 'allHBonds' | 'rama' | 
     'rotamer' | 'CRs' | 'MolecularSurface' | 'DishyBases' | 'VdWSurface' | 'Calpha' | 'unitCell' | 'hover' | 'environment' | 
     'ligand_environment' | 'contact_dots' | 'chemical_features' | 'ligand_validation' | 'glycoBlocks' | 'restraints' | 
-    'residueSelection' | 'MetaBalls' | 'adaptativeBonds' | 'StickBases' | 'residue_environment'
+    'residueSelection' | 'MetaBalls' | 'adaptativeBonds' | 'StickBases' | 'residue_environment' | 'transformation'
 
     interface MoleculeRepresentation {
         addColourRule(ruleType: string, cid: string, color: string, args: (string | number)[], isMultiColourRule?: boolean, applyColourToNonCarbonAtoms?: boolean, label?: string): void;
@@ -318,7 +318,7 @@ export namespace moorhen {
         draw(): Promise<void>;
         redraw(): Promise<void>;
         setParentMolecule(arg0: Molecule): void;
-        show(): void;
+        show(): Promise<void>;
         hide(): void;
         setAtomBuffers(arg0: AtomInfo[]): void;
         setM2tParams(arg0: m2tParameters): void;
@@ -331,7 +331,7 @@ export namespace moorhen {
         useDefaultColourRules: boolean;
         useDefaultBondOptions: boolean;
         uniqueId: string;
-        style: string;
+        style: RepresentationStyles;
         cid: string;
         visible: boolean;
         buffers: DisplayObject[];

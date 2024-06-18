@@ -329,7 +329,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     /**
      * Make the representation visible 
      */
-    show() {
+    async show() {
         try {
             this.visible = true
             if (this.buffers && this.buffers.length > 0) {
@@ -344,7 +344,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 })
                 this.glRef.current.drawScene()
             } else {
-                this.draw()
+                await this.draw()
             }
         } catch (err) {
             console.log(err)

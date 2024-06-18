@@ -31,7 +31,7 @@ const LigandHitCard = (props: {
 
     const handleShow = useCallback(async () => {
         if (props.ligandMolecule.representations.length > 0) {
-            props.ligandMolecule.show('CBs')
+            await props.ligandMolecule.show('CBs')
         } else {
             await props.ligandMolecule.fetchIfDirtyAndDraw('CBs')
         }
