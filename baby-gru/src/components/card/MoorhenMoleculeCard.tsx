@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback, useImperativeHandle, forwardRef, useMemo } from 'react';
 import { Card, Row, Col, Stack, Button, Spinner } from "react-bootstrap";
-import { Accordion, AccordionDetails, AccordionSummary, Backdrop, Box, CircularProgress } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Backdrop, Box, CircularProgress, LinearProgress } from '@mui/material';
 import { convertRemToPx, convertViewtoPx, getCentreAtom } from '../../utils/utils';
 import { representationLabelMapping } from '../../utils/enums';
 import { isDarkBackground } from '../../WebGLgComponents/mgWebGL';
@@ -77,6 +77,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const isDirty = useRef<boolean>(false)
     const innerDrawMissingLoopsRef = useRef<boolean>(null)
     
+    const [busyDrawingCustomRepresentation, setBusyDrawingCustomRepresentation] = useState<boolean>(false)
     const [busyLoadingSequences, setBusyLoadingSequences] = useState<boolean>(false)
     const [busyLoadingLigands, setBusyLoadingLigands] = useState<boolean>(false)
     const [busyLoadingCarbohydrates, setBusyLoadingCarbohydrates] = useState<boolean>(false)
@@ -641,7 +642,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                                         isVisible={isVisible}
                                 />)}
                             </FormGroup>
-                            <hr style={{ marginTop: '0.5rem', marginBottom: "0.5rem", marginLeft: '0.5rem', marginRight: '0.5rem' }}></hr>
+                            <hr style={{ margin: '0.5rem' }}></hr>
                             {props.molecule.representations.some(representation => representation.isCustom) ?
                                 <FormGroup style={{ margin: "0px", padding: "0px" }} row>
                                     {customRepresentationList.filter(representation => representation !== undefined).map(representation => {
@@ -657,6 +658,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                             :
                                 <span>No custom representations</span>
                             }
+                            { busyDrawingCustomRepresentation && <LinearProgress style={{ margin: '0.5rem' }}/> }
                         </div>
                     </Col>
                     <Col md='auto' style={{paddingLeft: 0, justifyContent: 'center', display: 'flex'}} >
@@ -675,7 +677,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                     <MoorhenHeaderInfoCard anchorEl={cardHeaderDivRef} molecule={props.molecule} show={showHeaderInfo} setShow={setShowHeaderInfo}/>
                     <MoorhenMoleculeRepresentationSettingsCard residueEnvironmentSettingsProps={residueEnvironmentSettingsProps} cylinderSettingsProps={cylinderSettingsProps} molSurfSettingsProps={molSurfSettingsProps} ribbonSettingsProps={ribbonSettingsProps} symmetrySettingsProps={symmetrySettingsProps} gaussianSettingsProps={gaussianSettingsProps} bondSettingsProps={bondSettingsProps} glRef={props.glRef} urlPrefix={props.urlPrefix} molecule={props.molecule} anchorEl={addColourRulesAnchorDivRef} show={showCreateRepresentationSettingsModal} setShow={setShowCreateRepresentationSettingsModal}/>
                     <MoorhenModifyColourRulesCard anchorEl={addColourRulesAnchorDivRef} urlPrefix={props.urlPrefix} glRef={props.glRef} commandCentre={props.commandCentre} molecule={props.molecule} showColourRulesToast={showColourRulesModal} setShowColourRulesToast={setShowColourRulesModal}/>
-                    <MoorhenAddCustomRepresentationCard glRef={props.glRef} urlPrefix={props.urlPrefix} molecule={props.molecule} anchorEl={addColourRulesAnchorDivRef} show={showCreateCustomRepresentation} setShow={setShowCreateCustomRepresentation}/>
+                    <MoorhenAddCustomRepresentationCard setBusy={setBusyDrawingCustomRepresentation} glRef={props.glRef} urlPrefix={props.urlPrefix} molecule={props.molecule} anchorEl={addColourRulesAnchorDivRef} show={showCreateCustomRepresentation} setShow={setShowCreateCustomRepresentation}/>
                 </Row>
             <div>
                 <Accordion className="moorhen-accordion"  disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }}>
@@ -815,11 +817,11 @@ const RepresentationCheckbox = (props: {
                 size={'1.5rem'}
                 disableShrink={true}
                 sx={{
-                color: chipStyle['borderColor'],
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                margin: '-0.74rem',
+                    color: chipStyle['borderColor'],
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    margin: '-0.74rem',
                 }}
             />}
         </Box>
@@ -868,26 +870,28 @@ const CustomRepresentationChip = (props: {
         dispatch( removeCustomRepresentation(representation) )
     }, [molecule, representation])
 
-    return <Chip
-        style={chipStyle}
-        variant={"outlined"}
-        label={`${representationLabelMapping[representation.style]} ${representation.cid.length > 21 ? `${representation.cid.slice(0,20)} ...` : representation.cid}`}
-        deleteIcon={
-            <div>
-                <EditOutlined style={{color: isDark ? 'white' : '#696969'}} onClick={() => setShowEditRepresentation(true)}/>
-                <DeleteOutlined style={{color: isDark ? 'white' : '#696969'}} onClick={handleDelete}/>
-                <MoorhenAddCustomRepresentationCard
-                    mode='edit'
-                    glRef={props.glRef}
-                    urlPrefix={props.urlPrefix}
-                    molecule={props.molecule}
-                    anchorEl={props.addColourRulesAnchorDivRef}
-                    representation={props.representation}
-                    show={showEditRepresentation}
-                    setShow={setShowEditRepresentation}/>
-            </div>
-        }
-        onClick={handleVisibility}
-        onDelete={() => {}}
-    />
+    return <Box sx={{ marginLeft: '0.2rem', marginBottom: '0.2rem', position: 'relative' }}>
+        <Chip
+            style={chipStyle}
+            variant={"outlined"}
+            label={`${representationLabelMapping[representation.style]} ${representation.cid.length > 21 ? `${representation.cid.slice(0,20)} ...` : representation.cid}`}
+            deleteIcon={
+                <div>
+                    <EditOutlined style={{color: isDark ? 'white' : '#696969'}} onClick={() => setShowEditRepresentation(true)}/>
+                    <DeleteOutlined style={{color: isDark ? 'white' : '#696969'}} onClick={handleDelete}/>
+                    <MoorhenAddCustomRepresentationCard
+                        mode='edit'
+                        glRef={props.glRef}
+                        urlPrefix={props.urlPrefix}
+                        molecule={props.molecule}
+                        anchorEl={props.addColourRulesAnchorDivRef}
+                        representation={props.representation}
+                        show={showEditRepresentation}
+                        setShow={setShowEditRepresentation}/>
+                </div>
+            }
+            onClick={handleVisibility}
+            onDelete={() => {}}
+        />
+        </Box>
 }

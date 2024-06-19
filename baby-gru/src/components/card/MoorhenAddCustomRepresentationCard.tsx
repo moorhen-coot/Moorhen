@@ -28,6 +28,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
     mode?: "add" | "edit";
     representation?: moorhen.MoleculeRepresentation;
+    setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 
     const applyColourToNonCarbonAtomsSwitchRef = useRef<HTMLInputElement | null>(null)
@@ -138,6 +139,8 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     }, [selectedChain, ruleType])
 
     const createRepresentation = useCallback(async () => {
+        props.setBusy?.(true)
+        
         let cidSelection: string
         switch(ruleSelectRef.current.value) {
             case "molecule":
@@ -272,6 +275,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
         }
 
         props.setShow(false)
+        props.setBusy?.(false)
     }, [
         colour, props.molecule, props.representation, props.mode, bondWidth, atomRadiusBondRatio, bondSmoothness,
         nucleotideRibbonStyle, ribbonArrowWidth, ribbonAxialSampling, ribbonCoilThickness, ribbonDNARNAWidth,
