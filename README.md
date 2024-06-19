@@ -70,7 +70,7 @@ Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) 
 `source ./emsdk_env.sh`
 
 3. Get the sources:  
-`git clone https://github.com/moorhen-coot/Moorhen.git`  
+`git clone --recurse-submodules https://github.com/moorhen-coot/Moorhen.git`  
 `cd Moorhen`  
 `./get_sources`
 
