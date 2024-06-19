@@ -2,7 +2,7 @@ import { Form, Button, InputGroup, SplitButton, Dropdown } from "react-bootstrap
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { useState, useRef } from "react";
-import { getMultiColourRuleArgs, guid } from "../../utils/MoorhenUtils";
+import { getMultiColourRuleArgs, guid } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch, batch } from 'react-redux';
 import { setActiveMap } from "../../store/generalStatesSlice";
@@ -149,7 +149,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
             props.onMoleculeLoad(newMolecule)
             return newMolecule
         } catch (err) {
-            enqueueSnackbar('Failed to read molecule', {variant: 'warning'})
+            enqueueSnackbar('Failed to read molecule', {variant: "error"})
             console.log(`Cannot fetch molecule from ${url}`)
             setIsValidPdbId(false)
             props.setBusy(false)
@@ -195,7 +195,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
                 dispatch(setActiveMap(newMap))
             })
         } catch {
-            enqueueSnackbar('Failed to read mtz', {variant: 'warning'})
+            enqueueSnackbar('Failed to read mtz', {variant: "error"})
             console.log(`Cannot fetch mtz from ${url}`)
             props.setBusy(false)
         }

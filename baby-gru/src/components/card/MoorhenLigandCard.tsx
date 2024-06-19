@@ -4,7 +4,7 @@ import { Button, Card, Col, Row, Stack, ToggleButton } from "react-bootstrap";
 import { useEffect, useRef, useState } from "react";
 import { CenterFocusStrongOutlined, HelpOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined } from "@mui/icons-material";
 import parse from 'html-react-parser'
-import { convertViewtoPx, guid } from "../../utils/MoorhenUtils";
+import { convertViewtoPx, guid } from "../../utils/utils";
 import { Popover, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
 
 export const MoorhenLigandCard = (props: {

@@ -1,21 +1,25 @@
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen";
 import { useRef } from "react";
-import { Row } from "react-bootstrap";
-import { convertRemToPx, convertViewtoPx} from '../../utils/MoorhenUtils';
-import { useSelector } from "react-redux";
+import { Button, Row } from "react-bootstrap";
+import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
+import { useDispatch, useSelector } from "react-redux";
 import { MoorhenCarbohydrateValidation } from "../validation-tools/MoorhenCarbohydrateValidation";
+import { modalKeys } from "../../utils/enums";
+import { Tooltip } from "@mui/material";
+import { hideModal } from "../../store/modalsSlice";
+import { useSnackbar } from "notistack";
+import { LastPageOutlined } from "@mui/icons-material";
 
-interface MoorhenValidationModalProps extends moorhen.CollectedProps {
-    show: boolean;
-    setShow: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-export const MoorhenCarbohydrateValidationModal = (props: MoorhenValidationModalProps) => {        
+export const MoorhenCarbohydrateValidationModal = (props: moorhen.CollectedProps) => {        
     const resizeNodeRef = useRef<HTMLDivElement>();
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+
+    const dispatch = useDispatch()
+
+    const { enqueueSnackbar } = useSnackbar()
 
     const collectedProps = {
         sideBarWidth: convertViewtoPx(35, width), dropdownId: 1, busy: false, 
@@ -23,11 +27,9 @@ export const MoorhenCarbohydrateValidationModal = (props: MoorhenValidationModal
     }
 
     return <MoorhenDraggableModalBase
-                modalId="carbohydrate-validation-modal"
+                modalId={modalKeys.CARB_VALIDATION}
                 left={width / 6}
                 top={height / 3}
-                show={props.show}
-                setShow={props.setShow}
                 defaultHeight={convertViewtoPx(70, height)}
                 defaultWidth={convertViewtoPx(37, width)}
                 minHeight={convertViewtoPx(30, height)}
@@ -47,6 +49,27 @@ export const MoorhenCarbohydrateValidationModal = (props: MoorhenValidationModal
                         </Row>
                     </div>
                 }
+                additionalHeaderButtons={[
+                    <Tooltip title={"Move to side panel"}  key={1}>
+                        <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => {
+                            dispatch( hideModal(modalKeys.CARB_VALIDATION) )
+                            enqueueSnackbar(modalKeys.CARB_VALIDATION, {
+                                variant: "sideBar",
+                                persist: true,
+                                anchorOrigin: {horizontal: "right", vertical: "bottom"},
+                                modalId: modalKeys.CARB_VALIDATION,
+                                title: "Privateer",
+                                children: <div style={{ overflowY: 'scroll', overflowX: "hidden", maxHeight: '30vh' }}>
+                                            <Row className={"big-validation-tool-container-row"}>
+                                                <MoorhenCarbohydrateValidation {...collectedProps}/>
+                                            </Row>
+                                        </div>
+                            })
+                        }}>
+                            <LastPageOutlined/>
+                        </Button>
+                    </Tooltip>
+                ]}
             />
 }
 

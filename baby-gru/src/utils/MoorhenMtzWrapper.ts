@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { readDataFile } from "./MoorhenUtils";
+import { readDataFile } from "./utils";
 
 interface MoorhenMtzWrapperInterface {
     reflectionData: null | Uint8Array;

@@ -1,7 +1,7 @@
 import { useEffect, useCallback, forwardRef, useState, useRef, useReducer } from 'react';
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
-import { cidToSpec } from '../../utils/MoorhenUtils';
+import { cidToSpec } from '../../utils/utils';
 import { MoorhenScreenRecorder } from "../../utils/MoorhenScreenRecorder"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
@@ -40,15 +40,11 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     const { enqueueSnackbar } = useSnackbar()
 
-    const hBondsDirty = useRef<boolean>(false)
-    const busyDrawingHBonds = useRef<boolean>(false)
-
     const [innerMapLineWidth, setInnerMapLineWidth] = useState<number>(0.75)
     const [showContextMenu, setShowContextMenu] = useState<false | moorhen.AtomRightClickEventInfo>(false)
     const [defaultActionButtonSettings, setDefaultActionButtonSettings] = useReducer(actionButtonSettingsReducer, intialDefaultActionButtonSettings)
 
     const reContourMapOnlyOnMouseUp = useSelector((state: moorhen.State) => state.mapContourSettings.reContourMapOnlyOnMouseUp)
-    const visibleMolecules = useSelector((state: moorhen.State) => state.molecules.visibleMolecules)
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
     const isChangingRotamers = useSelector((state: moorhen.State) => state.generalStates.isChangingRotamers)
     const isDraggingAtoms = useSelector((state: moorhen.State) => state.generalStates.isDraggingAtoms)
@@ -79,8 +75,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline)
     const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius)
     const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth)
-    const GLLabelsFontFamily = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontFamily)
-    const GLLabelsFontSize = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontSize)
     const atomLabelDepthMode = useSelector((state: moorhen.State) => state.labelSettings.atomLabelDepthMode)
     const mouseSensitivity = useSelector((state: moorhen.State) => state.mouseSettings.mouseSensitivity)
     const zoomWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.zoomWheelSensitivityFactor)
@@ -91,9 +85,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
-    const envDistancesLabelled = useSelector((state: moorhen.State) => state.sceneSettings.envDistancesSettings.labelled)
-    const showHBonds = useSelector((state: moorhen.State) => state.sceneSettings.envDistancesSettings.showHBonds)
-    const showContacts = useSelector((state: moorhen.State) => state.sceneSettings.envDistancesSettings.showContacts)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
@@ -140,67 +131,11 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }
     }, [hoveredAtom])
 
-    const drawHBonds = useCallback(async () => {
-        if (hBondsDirty.current && glRef !== null && typeof glRef !== 'function') {
-            busyDrawingHBonds.current = true
-            hBondsDirty.current = false
-
-            const _visibleMolecules: moorhen.Molecule[] = molecules.filter(molecule => molecule.isVisible())
-            if (_visibleMolecules.length === 0) {
-                busyDrawingHBonds.current = false
-                return
-            }
-
-            const response = await props.commandCentre.current.cootCommand({
-                returnType: "int_string_pair",
-                command: "get_active_atom",
-                commandArgs: [...glRef.current.origin.map(coord => -coord), _visibleMolecules.map(molecule => molecule.molNo).join(':')]
-            }, false) as moorhen.WorkerResponse<libcootApi.PairType<number, string>>
-            const moleculeMolNo: number = response.data.result.result.first
-            const residueCid: string = response.data.result.result.second
-    
-            const mol: moorhen.Molecule = molecules.find(molecule => molecule.molNo === moleculeMolNo)
-            if(typeof mol !== 'undefined') {
-                await mol.drawEnvironment(residueCid)
-            }
-            
-            busyDrawingHBonds.current = false
-            drawHBonds()
-        }
-
-    }, [props.commandCentre, molecules, glRef, visibleMolecules])
-
-    const clearHBonds = useCallback(async () => {
-        if(!drawInteractions) {
-            molecules.forEach(mol => {
-                mol.clearBuffersOfStyle('environment')
-            })
-        }
-    }, [drawInteractions, molecules])
-
-    const handleOriginUpdate = useCallback(async (e) => {
-        hBondsDirty.current = true
-        if (!busyDrawingHBonds.current && drawInteractions) {
-            drawHBonds()
-        }
-    }, [drawHBonds, drawInteractions])
-
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function') {
             props.videoRecorderRef.current = new MoorhenScreenRecorder(glRef)
         }
     }, [])
-
-    useEffect(() => {
-        if (drawInteractions) {
-            hBondsDirty.current = true
-            if (!busyDrawingHBonds.current) {
-                drawHBonds()
-            }
-        } else {
-            clearHBonds()
-        }
-    }, [drawInteractions, molecules, backgroundColor, envDistancesLabelled, showHBonds, showContacts])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
@@ -348,14 +283,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [])
 
     useEffect(() => {
-        document.addEventListener("originUpdate", handleOriginUpdate);
-        return () => {
-            document.removeEventListener("originUpdate", handleOriginUpdate);
-        };
-
-    }, [handleOriginUpdate]);
-
-    useEffect(() => {
         document.addEventListener("goToBlobDoubleClick", handleGoToBlobDoubleClick);
         return () => {
             document.removeEventListener("goToBlobDoubleClick", handleGoToBlobDoubleClick);
@@ -399,20 +326,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [clipCap, glRef])
-
-    useEffect(() => {
-        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
-            glRef.current.setTextFont(GLLabelsFontFamily,GLLabelsFontSize)
-            if (drawInteractions){
-                hBondsDirty.current = true
-                if (!busyDrawingHBonds.current) {
-                    drawHBonds()
-                }
-            } else {
-                clearHBonds()
-            }
-        }
-    }, [GLLabelsFontSize, GLLabelsFontFamily, glRef])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {

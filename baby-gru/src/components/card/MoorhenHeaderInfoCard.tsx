@@ -1,7 +1,7 @@
 import { Backdrop, Popover, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
-import { convertViewtoPx } from "../../utils/MoorhenUtils";
+import { convertViewtoPx } from "../../utils/utils";
 import { useEffect, useState } from "react";
 import { Spinner } from "react-bootstrap";
 

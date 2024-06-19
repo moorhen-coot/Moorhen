@@ -8,24 +8,29 @@ on:
     - 'baby-gru/package.json'
 
 jobs:
-  updateNode16ModulesCache:
+  install_node_modules:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      
       - name: Checkout repository
         uses: actions/checkout@v1
+
       - name: Install node.js v16
         uses: actions/setup-node@v3
         with:
           node-version: 16
+
       - name: Install dependencies 
         working-directory: /home/runner/work/Moorhen/
         run: | 
           sudo apt-get update -y   
           sudo apt-get install -y npm
+
       - name: npm install
         working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
         run: npm install
+
       - name: Save node modules cache
         id: cache-node16-modules-save
         uses: actions/cache/save@v4

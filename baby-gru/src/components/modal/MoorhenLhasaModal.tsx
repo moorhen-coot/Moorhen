@@ -1,6 +1,5 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import { convertRemToPx, convertViewtoPx } from "../../utils/MoorhenUtils";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 import { moorhen } from "../../types/moorhen";
 import { LhasaWrapper } from "../../utils/LhasaGlue";
@@ -53,14 +52,12 @@ export const MoorhenLhasaModal = (props) => {
                 modalId="lhasa-modal"
                 left={width / 6}
                 top={height / 3}
-                show={props.show}
-                setShow={props.setShow}
-                defaultHeight={convertViewtoPx(70, height)}
-                defaultWidth={convertViewtoPx(37, width)}
-                minHeight={convertViewtoPx(30, height)}
-                minWidth={convertRemToPx(37)}
-                maxHeight={convertViewtoPx(90, height)}
-                maxWidth={convertViewtoPx(80, width)}
+                // defaultHeight={convertViewtoPx(70, height)}
+                // defaultWidth={convertViewtoPx(37, width)}
+                // minHeight={convertViewtoPx(30, height)}
+                // minWidth={convertRemToPx(37)}
+                // maxHeight={convertViewtoPx(90, height)}
+                // maxWidth={convertViewtoPx(80, width)}
                 enforceMaxBodyDimensions={false}
                 overflowY='auto'
                 overflowX='auto'

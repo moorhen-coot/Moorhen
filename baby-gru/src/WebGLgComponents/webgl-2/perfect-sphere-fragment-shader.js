@@ -1,5 +1,9 @@
 var perfect_sphere_fragment_shader_source = `#version 300 es\n
+
     precision mediump float;
+
+    vec4 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution);
+
     in lowp vec4 vColor;
     in lowp vec3 vNormal;
     in lowp vec4 eyePos;
@@ -165,7 +169,12 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
 
       color *= occ;
       if(doEdgeDetect){
-          float edge = texture(edgeDetectMap, vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling) ).x;
+
+          vec2 resolution;
+          resolution.x = 1.0/xSSAOScaling;
+          resolution.y = 1.0/ySSAOScaling;
+          float edge = fxaa(edgeDetectMap, gl_FragCoord.xy, resolution).x;
+
           color *= edge;
       }
       color.a = vColor.a;

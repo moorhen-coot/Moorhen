@@ -4,6 +4,7 @@ import { gemmi } from "./gemmi";
 import { webGL } from "./mgWebGL";
 import { MoorhenMolecule } from "../moorhen";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { AnyAction, Dispatch } from "@reduxjs/toolkit";
 
 export namespace moorhen {
 
@@ -103,6 +104,16 @@ export namespace moorhen {
         surfaceStyleProbeRadius: number;
         ballsStyleRadiusMultiplier: number;
         nucleotideRibbonStyle: "StickBases" | "DishyBases";
+        dishStyleAngularSampling: number;
+    }
+
+    type residueEnvironmentOptions = {
+        maxDist: number;
+        backgroundRepresentation: RepresentationStyles;
+        focusRepresentation: RepresentationStyles;
+        labelled: boolean;
+        showHBonds: boolean;
+        showContacts: boolean;
     }
     
     type ColourRuleObject = {
@@ -141,7 +152,7 @@ export namespace moorhen {
         setParentRepresentation(representation: MoleculeRepresentation): void;    
         setApplyColourToNonCarbonAtoms(newVal: boolean): void;
         getUserDefinedColours(): { cid: string; rgba: [number, number, number, number]; applyColourToNonCarbonAtoms: boolean }[];
-        apply(style: string, ruleIndex: number): Promise<void>;
+        apply(style?: string, ruleIndex: number): Promise<void>;
     }
 
     type coorFormats = 'pdb' | 'mmcif' | 'unk' | 'mmjson' | 'xml';
@@ -152,7 +163,7 @@ export namespace moorhen {
         splitMultiModels(draw?: boolean): Promise<Molecule[]>;
         getActiveAtom(): Promise<string>;
         setDrawAdaptativeBonds(newValue: boolean): Promise<void>;
-        redrawAdaptativeBonds(selectionString?: string, maxDist?: number): Promise<void>;
+        redrawAdaptativeBonds(selectionString?: string): Promise<void>;
         changeChainId(oldId: string, newId: string, redraw?: boolean, startResNo?: number, endResNo?: number): Promise<number>;
         refineResiduesUsingAtomCidAnimated(cid: string, activeMap: Map, dist?: number, redraw?: boolean, redrawFragmentFirst?: boolean): Promise<void>;
         mergeFragmentFromRefinement(cid: string, fragmentMolecule: Molecule, acceptTransform?: boolean, refineAfterMerge?: boolean): Promise<void>;
@@ -161,13 +172,13 @@ export namespace moorhen {
         getSecondaryStructInfo(modelNumber?: number): Promise<libcootApi.ResidueSpecJS[]>;
         getNonSelectedCids(cid: string): string[];
         parseCidIntoSelection(selectedCid: string): Promise<ResidueSelection>;
-        downloadAtoms(format?: coorFormats): Promise<void>;
+        downloadAtoms(format?: coorFormats, fileName?: string): Promise<void>;
         getResidueBFactors(): { cid: string; bFactor: number; normalised_bFactor: number }[];
         getNcsRelatedChains(): Promise<string[][]>;
         animateRefine(n_cyc: number, n_iteration: number, final_n_cyc?: number): Promise<void>;
         refineResidueRange(chainId: string, start: number, stop: number, ncyc?: number, redraw?: boolean): Promise<void>;
         SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string, redraw?: boolean): Promise<void>;
-        lsqkbSuperpose(refMolNo: number, residueMatches: moorhen.lskqbResidueRangeMatch[], matchType?: number, redraw?: boolean): Promise<void>;
+        lsqkbSuperpose(refMolNo: number, residueMatches: lskqbResidueRangeMatch[], matchType?: number, redraw?: boolean): Promise<void>;
         refineResiduesUsingAtomCid(cid: string, mode: string, ncyc?: number, redraw?: boolean): Promise<void>;
         deleteCid(cid: string, redraw?: boolean): Promise<{first: number, second: number}>;
         getNumberOfAtoms(): Promise<number>;
@@ -176,7 +187,7 @@ export namespace moorhen {
         fitLigand(mapMolNo: number, ligandMolNo: number, fitRightHere?: boolean, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<Molecule[]>;
         checkIsLigand(): boolean;
         removeRepresentation(representationId: string): void;
-        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: ColourRule[], bondOptions?: cootBondOptions, m2tParams?: moorhen.m2tParameters): Promise<MoleculeRepresentation>;
+        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: ColourRule[], bondOptions?: cootBondOptions, m2tParams?: m2tParameters, residueEnvOptions?: residueEnvironmentOptions): Promise<MoleculeRepresentation>;
         getNeighborResiduesCids(selectionCid: string, maxDist: number): Promise<string[]>;
         drawWithStyleFromMesh(style: string, meshObjects: any[], cid?: string, fetchAtomBuffers?: boolean): Promise<void>;
         updateWithMovedAtoms(movedResidues: AtomInfo[][]): Promise<void>;
@@ -201,7 +212,7 @@ export namespace moorhen {
         clearExtraRestraints(): Promise<WorkerResponse>;
         redo(): Promise<void>;
         undo(): Promise<void>;
-        show(style: string, cid?: string): void;
+        show(style: string, cid?: string): Promise<MoleculeRepresentation>;
         setSymmetryRadius(radius: number): Promise<void>;
         drawSymmetry: (fetchSymMatrix?: boolean) => Promise<void>;
         drawBiomolecule(fetchSymMatrix?: boolean) : void;
@@ -211,7 +222,7 @@ export namespace moorhen {
         delete(popBackImol?: boolean): Promise<WorkerResponse>;
         fetchDefaultColourRules(): Promise<void>;
         fetchIfDirtyAndDraw(arg0: string): Promise<void>;
-        drawEnvironment: (cid: string, labelled?: boolean) => Promise<void>;
+        drawEnvironment: (cid: string) => Promise<void>;
         centreOn: (selectionCid?: string, animate?: boolean, setZoom?: boolean) => Promise<void>;
         drawHover: (cid: string) => Promise<void>;
         drawResidueSelection: (cid: string) => Promise<void>;
@@ -219,7 +230,7 @@ export namespace moorhen {
         loadToCootFromURL: (inputFile: string, molName: string, options?: RequestInit) => Promise<Molecule>;
         applyTransform: () => Promise<void>;
         getAtoms(format?: coorFormats): Promise<string>;
-        hide: (style: string, cid?: string) => void;
+        hide: (style: string, cid?: string) => MoleculeRepresentation;
         redraw: () => Promise<void>;
         setAtomsDirty: (newVal: boolean) => void;
         isVisible: (excludeBuffers?: string[]) => boolean;
@@ -236,6 +247,7 @@ export namespace moorhen {
         cachedGemmiAtoms: AtomInfo[];
         cachedPrivateerValidation: privateer.ResultsEntry[];
         isLigand: boolean;
+        isMRSearchModel: boolean;
         excludedCids: string[];
         commandCentre: React.RefObject<CommandCentre>;
         glRef: React.RefObject<webGL.MGWebGL>;
@@ -256,6 +268,7 @@ export namespace moorhen {
         symmetryMatrices: number[][][];
         gaussianSurfaceSettings: gaussianSurfSettings;
         defaultM2tParams: m2tParameters;
+        defaultResidueEnvironmentOptions: residueEnvironmentOptions
         isDarkBackground: boolean;
         representations: MoleculeRepresentation[];
         defaultBondOptions: cootBondOptions;
@@ -286,7 +299,7 @@ export namespace moorhen {
     type RepresentationStyles = 'VdwSpheres' | 'ligands' | 'CAs' | 'CBs' | 'CDs' | 'gaussian' | 'allHBonds' | 'rama' | 
     'rotamer' | 'CRs' | 'MolecularSurface' | 'DishyBases' | 'VdWSurface' | 'Calpha' | 'unitCell' | 'hover' | 'environment' | 
     'ligand_environment' | 'contact_dots' | 'chemical_features' | 'ligand_validation' | 'glycoBlocks' | 'restraints' | 
-    'residueSelection' | 'MetaBalls' | 'adaptativeBonds' | 'StickBases'
+    'residueSelection' | 'MetaBalls' | 'adaptativeBonds' | 'StickBases' | 'residue_environment' | 'transformation'
 
     interface MoleculeRepresentation {
         addColourRule(ruleType: string, cid: string, color: string, args: (string | number)[], isMultiColourRule?: boolean, applyColourToNonCarbonAtoms?: boolean, label?: string): void;
@@ -294,27 +307,31 @@ export namespace moorhen {
         applyColourRules(): Promise<void>;
         exportAsGltf(): Promise<ArrayBuffer>;
         setBondOptions(bondOptions: cootBondOptions): void;
+        setResidueEnvOptions(newOptions: residueEnvironmentOptions): void;
         setStyle(style: string): void;
         setUseDefaultColourRules(arg0: boolean): void;
         setColourRules(ruleList: ColourRule[]): void;
-        buildBuffers(arg0: DisplayObject[]): Promise<void>;
+        buildBuffers(arg0: DisplayObject[]): void;
         setBuffers(meshObjects: DisplayObject[]): void;
         drawSymmetry(): void
         deleteBuffers(): void;
         draw(): Promise<void>;
         redraw(): Promise<void>;
         setParentMolecule(arg0: Molecule): void;
-        show(): void;
+        show(): Promise<void>;
         hide(): void;
         setAtomBuffers(arg0: AtomInfo[]): void;
-        setM2tParams(arg0: moorhen.m2tParameters): void;
+        setM2tParams(arg0: m2tParameters): void;
+        static mergeBufferObjects(bufferObj1: libcootApi.InstancedMeshJS[], bufferObj2: libcootApi.InstancedMeshJS[]): libcootApi.InstancedMeshJS[];
         bondOptions: cootBondOptions;
-        m2tParams: moorhen.m2tParameters;
+        m2tParams: m2tParameters;
+        residueEnvironmentOptions: residueEnvironmentOptions;
         useDefaultM2tParams: boolean;
+        useDefaultResidueEnvironmentOptions: boolean;
         useDefaultColourRules: boolean;
         useDefaultBondOptions: boolean;
         uniqueId: string;
-        style: string;
+        style: RepresentationStyles;
         cid: string;
         visible: boolean;
         buffers: DisplayObject[];
@@ -548,10 +565,12 @@ export namespace moorhen {
             isCustom: boolean;
             colourRules: ColourRuleObject[];
             bondOptions: cootBondOptions;
-            m2tParams: moorhen.m2tParameters;
+            m2tParams: m2tParameters;
+            resEnvOptions: residueEnvironmentOptions;
          }[];
         defaultBondOptions: cootBondOptions;
         defaultM2tParams: m2tParameters;
+        defaultResEnvOptions: residueEnvironmentOptions;
         defaultColourRules: ColourRuleObject[];
         connectedToMaps: number[];
         ligandDicts: {[comp_id: string]: string};
@@ -629,6 +648,54 @@ export namespace moorhen {
         createBackup(keyString: string, sessionString: string): Promise<string>;
         fetchSession(includeAdditionalMapData: boolean): Promise<backupSession>;
         toggleDisableBackups(): void;
+        addModification: () =>  Promise<string>;
+        init: () => Promise<void>;
+        retrieveBackup: (arg0: string) => Promise<string | ArrayBuffer>;
+        static getBackupLabel(key: backupKey): string;
+        static loadSessionData(
+            sessionData: backupSession,
+            monomerLibraryPath: string,
+            molecules: Molecule[],
+            maps: Map[],
+            commandCentre: React.RefObject<CommandCentre>,
+            timeCapsuleRef: React.RefObject<TimeCapsule>,
+            glRef: React.RefObject<webGL.MGWebGL>,
+            store: ToolkitStore,
+            dispatch: Dispatch<AnyAction>
+        ): Promise<number>;
+        static loadSessionFromArrayBuffer(
+            sessionArrayBuffer: ArrayBuffer,
+            monomerLibraryPath: string,
+            molecules: Molecule[],
+            maps: Map[],
+            commandCentre: React.RefObject<CommandCentre>,
+            timeCapsuleRef: React.RefObject<TimeCapsule>,
+            glRef: React.RefObject<webGL.MGWebGL>,
+            store: ToolkitStore,
+            dispatch: Dispatch<AnyAction>
+        ): Promise<number>;
+        static loadSessionFromProtoMessage(
+            sessionProtoMessage: any,
+            monomerLibraryPath: string,
+            molecules: Molecule[],
+            maps: Map[],
+            commandCentre: React.RefObject<CommandCentre>,
+            timeCapsuleRef: React.RefObject<TimeCapsule>,
+            glRef: React.RefObject<webGL.MGWebGL>,
+            store: ToolkitStore,
+            dispatch: Dispatch<AnyAction>
+        ): Promise<number>;
+        static loadSessionFromJsonString(
+            sessionDataString: string,
+            monomerLibraryPath: string,
+            molecules: Molecule[],
+            maps: Map[],
+            commandCentre: React.RefObject<CommandCentre>,
+            timeCapsuleRef: React.RefObject<TimeCapsule>,
+            glRef: React.RefObject<webGL.MGWebGL>,
+            store: ToolkitStore,
+            dispatch: Dispatch<AnyAction>
+        ): Promise<number>;
         store: ToolkitStore;
         moleculesRef: React.RefObject<Molecule[]>;
         mapsRef: React.RefObject<Map[]>;
@@ -641,9 +708,6 @@ export namespace moorhen {
         version: string;
         disableBackups: boolean;
         storageInstance: LocalStorageInstance;
-        addModification: () =>  Promise<string>;
-        init: () => Promise<void>;
-        retrieveBackup: (arg0: string) => Promise<string | ArrayBuffer>;
     }
 
     type AtomRightClickEventInfo = {
@@ -870,6 +934,7 @@ export namespace moorhen {
             moleculeList: Molecule[];
             visibleMolecules: number[];
             customRepresentations: MoleculeRepresentation[];
+            generalRepresentations: MoleculeRepresentation[];
         };
         maps: Map[];
         mouseSettings: {
@@ -925,11 +990,6 @@ export namespace moorhen {
             height: number;
             width: number;
             isDark: boolean;
-            envDistancesSettings: {
-                labelled: boolean;
-                showHBonds: boolean;
-                showContacts: boolean;
-            };
         };
         miscAppSettings: {
             defaultExpandDisplayCards: boolean; 
@@ -962,29 +1022,10 @@ export namespace moorhen {
             hoveredAtom: HoveredAtom;
             cursorStyle: string;
         };
-        activeModals: {
-            showModelsModal: boolean;
-            showMapsModal: boolean;
-            showCreateAcedrgLinkModal: boolean;
-            showQuerySequenceModal: boolean;
-            showScriptingModal: boolean;
-            showControlsModal: boolean;
-            showFitLigandModal: boolean;
-            showRamaPlotModal: boolean;
-            showDiffMapPeaksModal: boolean;
-            showValidationPlotModal: boolean;
-            showLigandValidationModal: boolean;
-            showCarbohydrateModal: boolean;
-            showPepFlipsValidationModal: boolean;
-            showFillPartialResValidationModal: boolean;
-            showUnmodelledBlobsModal: boolean;
-            showMmrrccModal: boolean;
-            showWaterValidationModal: boolean;
-            showSceneSettingsModal: boolean;
-            showSliceNDiceModal: boolean;
-            showSuperposeModal: boolean;
-            showLhasaModal: boolean;
+        modals: {
+            activeModals: string[];
             focusHierarchy: string[];
+            modalsAttachedToSideBar: { key: string; isCollapsed: boolean }[];
         };
         mapContourSettings: {
             visibleMaps: number[];

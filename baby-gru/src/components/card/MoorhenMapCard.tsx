@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useEffect, useState, useRef, useCallback, useMemo, Fragment } from "react"
 import { Card, Form, Button, Col, DropdownButton, Stack, OverlayTrigger, ToggleButton, Spinner } from "react-bootstrap"
-import { doDownload, rgbToHex } from '../../utils/MoorhenUtils'
+import { doDownload, rgbToHex } from '../../utils/utils'
 import { getNameLabel } from "./cardUtils"
 import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings, FileCopyOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined, AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
 import { MoorhenMapSettingsMenuItem } from "../menu-item/MoorhenMapSettingsMenuItem";
@@ -9,7 +9,7 @@ import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDi
 import { MoorhenSetMapWeight } from "../menu-item/MoorhenSetMapWeight"
 import { MoorhenMapHistogram } from "../misc/MoorhenMapHistogram"
 import { MoorhenSlider } from "../misc/MoorhenSlider";
-import { Accordion, AccordionDetails, AccordionSummary, IconButton, MenuItem, Popover, Tooltip, hexToRgb } from "@mui/material"
+import { Accordion, AccordionDetails, AccordionSummary, IconButton, MenuItem, Popover, Tooltip } from "@mui/material"
 import { HexColorInput, RgbColorPicker } from "react-colorful"
 import { moorhen } from "../../types/moorhen"
 import { useSelector, useDispatch, batch } from 'react-redux';

@@ -2,7 +2,7 @@ import { MoorhenMolecule } from "../../tsDist/src/utils/MoorhenMolecule"
 import { MockMoorhenCommandCentre } from "../__mocks__/mockMoorhenCommandCentre"
 import { MoorhenReduxStore } from "../../tsDist/src/store/MoorhenReduxStore"
 import { MockWebGL } from "../__mocks__/mockWebGL"
-import { getAtomInfoLabel } from "../../tsDist/src/utils/MoorhenUtils"
+import { parseAtomInfoLabel } from "../../tsDist/src/utils/utils"
 import fetch from 'node-fetch'
 
 jest.setTimeout(60000)
@@ -389,7 +389,7 @@ describe("Testing MoorhenMolecule", () => {
         const gemmiAtoms = await molecule.gemmiAtomsForCid('//A/30-31/CA||//B')
         expect(f).toHaveBeenCalled()
         expect(gemmiAtoms).toHaveLength(25)
-        expect(gemmiAtoms.map(atomInfo => getAtomInfoLabel(atomInfo))).toEqual([
+        expect(gemmiAtoms.map(atomInfo => parseAtomInfoLabel(atomInfo))).toEqual([
             "/1/A/30(LYS)/CA",
             "/1/A/31(GLY)/CA",
             "/1/B/1(G2F)/C1",

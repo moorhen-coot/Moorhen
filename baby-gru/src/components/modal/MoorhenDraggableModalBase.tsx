@@ -6,8 +6,7 @@ import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
 import { Resizable } from "re-resizable";
 import { setEnableAtomHovering } from "../../store/hoveringStatesSlice";
-import { focusOnModal, unFocusModal } from "../../store/activeModalsSlice";
-import { guid } from "../../utils/MoorhenUtils";
+import { hideModal, focusOnModal, unFocusModal } from "../../store/modalsSlice";
 
 /**
  * The base component used to create draggable modals.
@@ -64,10 +63,8 @@ import { guid } from "../../utils/MoorhenUtils";
  */
 export const MoorhenDraggableModalBase = (props: {
     headerTitle: string;
-    show: boolean;
-    setShow: React.Dispatch<React.SetStateAction<boolean>>;
     body: JSX.Element | JSX.Element[];
-    modalId?: string;
+    modalId: string;
     enforceMaxBodyDimensions?: boolean;
     resizeNodeRef?: null | React.RefObject<HTMLDivElement>;
     defaultWidth?: number;
@@ -88,14 +85,17 @@ export const MoorhenDraggableModalBase = (props: {
     lockAspectRatio?: boolean;
     enableResize?: false | {[key: string]: boolean};
     onResizeStop?: (evt: MouseEvent | TouchEvent, direction: 'top' | 'right' | 'bottom' | 'left' | 'topRight' | 'bottomRight' | 'bottomLeft' | 'topLeft', ref: HTMLDivElement, delta: {width: number, height: number}) => void;
+    onClose?: () => (void | Promise<void>);
 }) => {
 
     const dispatch = useDispatch()
-    const focusHierarchy = useSelector((state: moorhen.State) => state.activeModals.focusHierarchy)
+    
+    const focusHierarchy = useSelector((state: moorhen.State) => state.modals.focusHierarchy)
     const windowWidth = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const windowHeight = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.miscAppSettings.transparentModalsOnMouseOut)
     const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering)
+    const show = useSelector((state: moorhen.State) => state.modals.activeModals.includes(props.modalId))
     
     const [currentZIndex, setCurrentZIndex] = useState<number>(999)
     const [opacity, setOpacity] = useState<number>(1.0)
@@ -105,7 +105,7 @@ export const MoorhenDraggableModalBase = (props: {
     const draggableNodeRef = useRef<HTMLDivElement>();
     const resizeNodeRef = useRef<HTMLDivElement>();
     const cachedEnableAtomHovering = useRef<boolean>(false);
-    const modalIdRef = useRef<string>(props.modalId ? props.modalId : guid());
+    const modalIdRef = useRef<string>(props.modalId);
 
     useEffect(() => {
         const focusIndex = focusHierarchy.findIndex(item => item === modalIdRef.current)
@@ -119,12 +119,12 @@ export const MoorhenDraggableModalBase = (props: {
     }, [])
 
     useEffect(() => {
-        if (props.show) {
+        if (show) {
             dispatch(focusOnModal(modalIdRef.current))
         } else {
             dispatch(unFocusModal(modalIdRef.current))
         }
-    }, [props.show])
+    }, [show])
 
     useEffect(() => {
         setPosition({
@@ -174,6 +174,11 @@ export const MoorhenDraggableModalBase = (props: {
         }
         props.onResizeStop(evt, direction, ref, delta)
     }
+
+    const handleClose = useCallback(async () => {
+        await props.onClose?.()
+        dispatch( hideModal(props.modalId) )
+    }, [props.onClose])
         
     return <Draggable
                 nodeRef={draggableNodeRef}
@@ -188,7 +193,7 @@ export const MoorhenDraggableModalBase = (props: {
                 onClick={() => dispatch(focusOnModal(modalIdRef.current))}
                 className={`moorhen-draggable-card${focusHierarchy[0] === modalIdRef.current ? '-focused' : ''}`}
                 ref={draggableNodeRef}
-                style={{ display: props.show ? 'block' : 'none', position: 'absolute', opacity: opacity, zIndex: currentZIndex}}
+                style={{ display: show ? 'block' : 'none', position: 'absolute', opacity: opacity, zIndex: currentZIndex}}
                 onMouseOver={() => setOpacity(1.0)}
                 onMouseOut={() => {
                     if(transparentModalsOnMouseOut) setOpacity(0.5)
@@ -202,7 +207,7 @@ export const MoorhenDraggableModalBase = (props: {
                             {collapse ? <AddOutlined/> : <RemoveOutlined/>}
                         </Button>
                         {props.showCloseButton &&
-                        <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => props.setShow(false)}>
+                        <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={handleClose}>
                             <CloseOutlined/>
                         </Button>                    
                         }

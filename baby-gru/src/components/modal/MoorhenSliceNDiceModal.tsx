@@ -1,15 +1,16 @@
 import { useDispatch, useSelector } from "react-redux"
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen"
-import { convertRemToPx, convertViewtoPx, findConsecutiveRanges, hslToHex, readTextFile } from "../../utils/MoorhenUtils"
-import { Button, Card, Col, Dropdown, Form, FormSelect, OverlayTrigger, Row, Spinner, SplitButton, Stack } from "react-bootstrap"
+import { convertViewtoPx, findConsecutiveRanges, hslToHex, readTextFile } from "../../utils/utils"
+import { Button, Card, Col, Dropdown, Form, FormSelect, Row, Spinner, SplitButton, Stack } from "react-bootstrap"
 import { Backdrop, IconButton, Slider, Tooltip } from "@mui/material"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { addMolecule, hideMolecule, showMolecule } from "../../store/moleculesSlice"
 import { CenterFocusWeakOutlined, DownloadOutlined, InfoOutlined, WarningOutlined } from "@mui/icons-material"
-import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule"
+import { hideModal } from "../../store/modalsSlice"
+import { modalKeys } from "../../utils/enums"
 
 const deleteHiddenResidues = async (molecule: moorhen.Molecule) => {
     if (molecule.excludedSelections.length > 0) {
@@ -68,7 +69,7 @@ const MoorhenSliceNDiceCard = (props: {
 
     const handleDownload = async () => {
         await deleteHiddenResidues(props.fragmentMolecule)
-        await props.fragmentMolecule.downloadAtoms()
+        await props.fragmentMolecule.downloadAtoms(props.fragmentMolecule.coordsFormat, props.fragmentMolecule.name.replace(" #", "_"))
     }
 
     return <Card style={{marginTop: '0.5rem'}}>
@@ -116,8 +117,6 @@ const MoorhenSliceNDiceCard = (props: {
 }
 
 export const MoorhenSliceNDiceModal = (props: {
-    show: boolean;
-    setShow: React.Dispatch<React.SetStateAction<boolean>>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {
     
@@ -133,12 +132,6 @@ export const MoorhenSliceNDiceModal = (props: {
     const isDirty = useRef<boolean>(false)
     const thresholdTypeRef = useRef<string>('bfactor')
 
-    const dispatch = useDispatch()
-    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-
     const [paeFileIsUploaded, setPaeFileIsUploaded] = useState<boolean>(false)
     const [thresholdType, setThresholdType] = useState<string>('bfactor')
     const [moleculeBfactors, setMoleculeBfactors] = useState<{ cid: string; bFactor: number; normalised_bFactor: number; }[]>(null)
@@ -151,6 +144,13 @@ export const MoorhenSliceNDiceModal = (props: {
     const [busy, setBusy] = useState<boolean>(false)
     const [showError, setShowError] = useState<boolean>(false)
     const [slicingResults, setSlicingResults] = useState<moorhen.Molecule[]>(null)
+
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    
+    const dispatch = useDispatch()
 
     useEffect(() => {
         const copyMolecule = async (molecule: moorhen.Molecule) => {
@@ -216,7 +216,7 @@ export const MoorhenSliceNDiceModal = (props: {
                 if (cidsToHide?.length > 0) {
                     await selectedMoleculeCopyRef.current.unhideAll(false)
                     await selectedMoleculeCopyRef.current.hideCid(cidsToHide.join('||'), true)
-                    selectedMoleculeCopyRef.current.show('CRs', '/*/*/*/*')
+                    await selectedMoleculeCopyRef.current.show('CRs', '/*/*/*/*')
                 } else {
                     await selectedMoleculeCopyRef.current.unhideAll(true)
                 }
@@ -338,6 +338,7 @@ export const MoorhenSliceNDiceModal = (props: {
             if (saveToMoorhen) {
                 const sortedMolecules = slicingResults.sort((a, b) => { return  b.molNo - a.molNo })
                 for (let sliceMolecule of sortedMolecules) {
+                    sliceMolecule.isMRSearchModel = true
                     await deleteHiddenResidues(sliceMolecule)
                     dispatch( addMolecule(sliceMolecule) )
                 }
@@ -362,7 +363,7 @@ export const MoorhenSliceNDiceModal = (props: {
             commandArgs: [ ],
             returnType: 'void'
         }, false)
-        props.setShow(false)
+        dispatch( hideModal(modalKeys.SLICE_N_DICE) )
     }, [slicingResults, molecules])
 
     const handleDownload = useCallback(async (mergeSlices: boolean = false) => {
@@ -382,7 +383,7 @@ export const MoorhenSliceNDiceModal = (props: {
                 await moleculeCopy.delete(true)
             } else {
                 await Promise.all(
-                    slicingResults.map(sliceMolecule => sliceMolecule.downloadAtoms())
+                    slicingResults.map(sliceMolecule => sliceMolecule.downloadAtoms(sliceMolecule.coordsFormat, sliceMolecule.name.replace(" #", "_")))
                 )
             }
         }
@@ -403,6 +404,7 @@ export const MoorhenSliceNDiceModal = (props: {
 
     const bodyContent = <Stack direction="vertical" gap={1}>
         <Stack direction="horizontal" gap={1} style={{display: 'flex', width: '100%'}}>
+            <MoorhenMoleculeSelect {...props} width="100%" molecules={molecules} allowAny={false} ref={moleculeSelectRef} onChange={(evt) => setSelectedMolNo(parseInt(evt.target.value))}/>
             <Form.Group style={{ margin: '0.5rem', width: '100%' }}>
                 <Form.Label>Clustering algorithm...</Form.Label>
                 <FormSelect size="sm" ref={clusteringTypeSelectRef} defaultValue={'birch'} onChange={(evt) => {
@@ -419,41 +421,9 @@ export const MoorhenSliceNDiceModal = (props: {
                     <option value={'pae'} key={'pae'}>PAE</option>
                 </FormSelect>
             </Form.Group>
-            <MoorhenMoleculeSelect {...props} width="100%" molecules={molecules} allowAny={false} ref={moleculeSelectRef} onChange={(evt) => setSelectedMolNo(parseInt(evt.target.value))}/>
         </Stack>
         <Stack direction="horizontal" gap={1} style={{display: 'flex', width: '100%'}}>
-            { ['kmeans', 'agglomerative', 'birch', 'pae'].includes(clusteringType) && 
-            <div style={{ paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.1rem', paddingBottom: '0.1rem', width: '100%'}}>
-                <span>Number of slices</span>
-                <Slider
-                    aria-label="No. of clusters"
-                    getAriaValueText={(newVal: number) => `${newVal} slices`}
-                    valueLabelFormat={(newVal: number) => `${newVal} slices`}
-                    valueLabelDisplay="on"
-                    value={nClusters}
-                    onChange={(evt: any, newVal: number) => {
-                        nClustersRef.current = newVal
-                        setNClusters(newVal)
-                    }}
-                    marks={true}
-                    defaultValue={5}
-                    step={1}
-                    min={1}
-                    max={10}
-                    sx={{
-                        marginTop: '1.7rem',
-                        marginBottom: '0.8rem',
-                            '& .MuiSlider-valueLabel': {
-                                top: -1,
-                                fontSize: 14,
-                                fontWeight: 'bold',
-                                color: 'grey',
-                                backgroundColor: 'unset',
-                            },
-                    }}
-                />
-            </div>}
-            <div style={{ paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.1rem', paddingBottom: '0.1rem', width: '100%'}}>
+        <div style={{ paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.1rem', paddingBottom: '0.1rem', width: '100%'}}>
                 <Stack direction="horizontal" gap={2} style={{display: 'flex', justifyContent: 'center'}}>
                     <Form.Check
                         style={{margin: 0}} 
@@ -516,6 +486,37 @@ export const MoorhenSliceNDiceModal = (props: {
                     }}
                 />
             </div>
+            { ['kmeans', 'agglomerative', 'birch', 'pae'].includes(clusteringType) && 
+            <div style={{ paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.1rem', paddingBottom: '0.1rem', width: '100%'}}>
+                <span>Number of slices</span>
+                <Slider
+                    aria-label="No. of clusters"
+                    getAriaValueText={(newVal: number) => `${newVal} slices`}
+                    valueLabelFormat={(newVal: number) => `${newVal} slices`}
+                    valueLabelDisplay="on"
+                    value={nClusters}
+                    onChange={(evt: any, newVal: number) => {
+                        nClustersRef.current = newVal
+                        setNClusters(newVal)
+                    }}
+                    marks={true}
+                    defaultValue={5}
+                    step={1}
+                    min={1}
+                    max={10}
+                    sx={{
+                        marginTop: '1.7rem',
+                        marginBottom: '0.8rem',
+                            '& .MuiSlider-valueLabel': {
+                                top: -1,
+                                fontSize: 14,
+                                fontWeight: 'bold',
+                                color: 'grey',
+                                backgroundColor: 'unset',
+                            },
+                    }}
+                />
+            </div>}
         </Stack>
         {clusteringType === 'pae' && 
             <Form.Group style={{ margin: '0.5rem', padding: '0rem' }} controlId="uploadPAE">
@@ -549,9 +550,9 @@ export const MoorhenSliceNDiceModal = (props: {
             <Button variant='primary' onClick={doSlice} disabled={clusteringType === 'pae' && !paeFileIsUploaded}>
                 Slice
             </Button>
-            <SplitButton id='download-slice-n-dice' variant="info" title="Save & Exit" onClick={() => handleClose(true)}>
-            <Dropdown.Item eventKey="1" onClick={() => handleClose(true)}>Exit and save to Moorhen</Dropdown.Item>
-                <Dropdown.Item eventKey="2" onClick={() => handleClose()}>Exit without saving</Dropdown.Item>
+            <SplitButton id='download-slice-n-dice' variant="info" title="Save & Close" onClick={() => handleClose(true)}>
+            <Dropdown.Item eventKey="1" onClick={() => handleClose(true)}>Close and save changes to Moorhen</Dropdown.Item>
+                <Dropdown.Item eventKey="2" onClick={() => handleClose()}>Close without saving</Dropdown.Item>
             </SplitButton>
         </Stack>
     </Stack>
@@ -573,11 +574,9 @@ export const MoorhenSliceNDiceModal = (props: {
 
 
     return <MoorhenDraggableModalBase
-                modalId="slice-n-dice-modal"
+                modalId={modalKeys.SLICE_N_DICE}
                 left={width / 6}
                 top={height / 6}
-                show={props.show}
-                setShow={handleClose}
                 defaultHeight={convertViewtoPx(10, height)}
                 defaultWidth={convertViewtoPx(10, width)}
                 minHeight={convertViewtoPx(15, height)}
@@ -588,5 +587,6 @@ export const MoorhenSliceNDiceModal = (props: {
                 headerTitle='Slice-n-Dice'
                 footer={footerContent}
                 body={bodyContent}
+                onClose={handleClose}
             />
 }

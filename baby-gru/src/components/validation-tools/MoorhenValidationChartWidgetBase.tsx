@@ -7,7 +7,7 @@ import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
 import annotationPlugin from 'chartjs-plugin-annotation'
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
-import { convertViewtoPx } from "../../utils/MoorhenUtils";
+import { convertViewtoPx } from "../../utils/utils";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);

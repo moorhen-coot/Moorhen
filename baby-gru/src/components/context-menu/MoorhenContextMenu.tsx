@@ -1,7 +1,7 @@
 import styled, { css } from "styled-components";
 import { ClickAwayListener, FormGroup, List, Tooltip } from '@mui/material';
 import { MoorhenBackgroundColorMenuItem } from "../menu-item/MoorhenBackgroundColorMenuItem"
-import { atomInfoToResSpec, convertRemToPx } from "../../utils/MoorhenUtils";
+import { atomInfoToResSpec, convertRemToPx } from "../../utils/utils";
 import { useEffect, useRef, useState, useCallback, MutableRefObject, RefObject } from "react";
 import { Popover, Overlay, FormLabel, FormSelect, Button, Stack } from "react-bootstrap";
 import { MoorhenAddAltConfButton } from "../button/MoorhenAddAltConfButton"

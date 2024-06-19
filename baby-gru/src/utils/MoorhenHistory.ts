@@ -1,4 +1,4 @@
-import { guid } from './MoorhenUtils';
+import { guid } from './utils';
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
 

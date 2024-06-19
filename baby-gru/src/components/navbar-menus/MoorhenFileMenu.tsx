@@ -11,16 +11,16 @@ import { MoorhenBackupsMenuItem } from "../menu-item/MoorhenBackupsMenuItem"
 import { MoorhenImportMapCoefficientsMenuItem } from "../menu-item/MoorhenImportMapCoefficientsMenuItem"
 import { MoorhenDeleteEverythingMenuItem } from "../menu-item/MoorhenDeleteEverythingMenuItem"
 import { MenuItem } from "@mui/material";
-import { convertViewtoPx, doDownload, loadSessionFromProtoMessage, guid, readDataFile, loadSessionFromJsonString } from "../../utils/MoorhenUtils";
-import { getBackupLabel } from "../../utils/MoorhenTimeCapsule"
+import { convertViewtoPx, doDownload, guid, readDataFile } from "../../utils/utils";
+import { MoorhenTimeCapsule } from "../../utils/MoorhenTimeCapsule"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch } from 'react-redux';
 import { addMoleculeList } from "../../store/moleculesSlice";
-import { setShowQuerySequenceModal } from "../../store/activeModalsSlice";
-import { setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { showModal } from "../../store/modalsSlice";
 import { moorhensession } from "../../protobuf/MoorhenSession";
 import { useSnackbar } from "notistack";
+import { modalKeys } from "../../utils/enums";
 
 export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
 
@@ -105,7 +105,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             await loadSession(sessionMessage) 
         } catch (err) {
             console.log(err)
-            enqueueSnackbar("Error loading the session", {variant: 'warning'})
+            enqueueSnackbar("Error loading the session", {variant: "error"})
         }
     }
 
@@ -114,7 +114,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             props.commandCentre.current.history.reset()
             let status = -1
             if (typeof session === 'string') {
-                status = await loadSessionFromJsonString(
+                status = await MoorhenTimeCapsule.loadSessionFromJsonString(
                     session as string,
                     props.monomerLibraryPath,
                     molecules, 
@@ -126,7 +126,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     dispatch
                 )
             } else {
-                status = await loadSessionFromProtoMessage(
+                status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(
                     session,
                     props.monomerLibraryPath,
                     molecules, 
@@ -168,7 +168,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         }
         const keyString = JSON.stringify({
             ...key,
-            label: getBackupLabel(key)
+            label: MoorhenTimeCapsule.getBackupLabel(key)
         })
         return props.timeCapsuleRef.current.createBackup(keyString, sessionString)
     }
@@ -207,7 +207,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     <hr></hr>
 
                     <MenuItem id='query-online-services-sequence' onClick={() => {
-                        dispatch(setShowQuerySequenceModal(true))
+                        dispatch(showModal(modalKeys.SEQ_QUERY))
                         document.body.click()
                     }}>
                         Query online services with a sequence...

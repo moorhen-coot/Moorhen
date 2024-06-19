@@ -6,9 +6,10 @@ import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
-import { cidToSpec, sleep } from '../../utils/MoorhenUtils';
-import { setShowPepFlipsValidationModal } from "../../store/activeModalsSlice";
+import { cidToSpec, sleep } from '../../utils/utils';
+import { hideModal } from "../../store/modalsSlice";
 import { useSnackbar } from "notistack";
+import { modalKeys } from "../../utils/enums";
 
 interface Props extends moorhen.CollectedProps {
     dropdownId: number;
@@ -79,7 +80,7 @@ export const MoorhenPepflipsDifferenceMap = (props: Props) => {
     }
 
     const handleFlipAll = useCallback(async (selectedMolecule: moorhen.Molecule, residues: libcootApi.InterestingPlaceDataJS[]) => {
-        dispatch( setShowPepFlipsValidationModal(false) )
+        dispatch( hideModal(modalKeys.PEPTIDE_FLIPS) )
         if (selectedMolecule) {
             const handleStepFlipPeptide = async (cid: string) => {
                 const resSpec = cidToSpec(cid)

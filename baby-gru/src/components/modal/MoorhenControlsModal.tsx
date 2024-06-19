@@ -3,8 +3,9 @@ import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
-import { convertViewtoPx } from "../../utils/MoorhenUtils";
+import { convertViewtoPx } from "../../utils/utils";
 import parse from 'html-react-parser'
+import { modalKeys } from "../../utils/enums";
 
 const shortCutMouseActions = {
     open_context_menu: ['circle-right-mouse-click', 'two-finger-tap'],
@@ -20,11 +21,7 @@ const shortCutMouseActions = {
     rotate_view: ['circle-left-mouse-click', 'mouse-move', 'one-finger-move']
 }
 
-export const MoorhenControlsModal = (props: {
-    show: boolean;
-    setShow: React.Dispatch<React.SetStateAction<boolean>>;
-    urlPrefix: string;
-}) => {
+export const MoorhenControlsModal = (props: { urlPrefix: string }) => {
 
     const _shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
@@ -78,7 +75,7 @@ export const MoorhenControlsModal = (props: {
     }
 
     return <MoorhenDraggableModalBase
-                modalId="show-controls-modal"
+                modalId={modalKeys.SHOW_CONTROLS}
                 left={width / 5}
                 top={height / 5}
                 defaultHeight={convertViewtoPx(60, height)}

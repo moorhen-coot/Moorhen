@@ -1,8 +1,6 @@
 name: Update emsdk
 
-on:
-  schedule:
-  - cron: "0 3 * * 0"
+on: workflow_dispatch
 
 jobs:
   updateEmsdkCache:

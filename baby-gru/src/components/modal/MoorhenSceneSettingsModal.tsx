@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 import { useDispatch, useSelector } from "react-redux";
-import { convertRemToPx, convertViewtoPx, rgbToHex } from "../../utils/MoorhenUtils";
+import { convertRemToPx, convertViewtoPx, rgbToHex } from "../../utils/utils";
 import { MoorhenSlider } from "../misc/MoorhenSlider";
 import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
 import { Button, Form, InputGroup, Stack } from "react-bootstrap";
@@ -18,6 +18,8 @@ import { Tooltip } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { LastPageOutlined } from "@mui/icons-material";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
+import { modalKeys } from "../../utils/enums";
+import { hideModal } from "../../store/modalsSlice";
 
 const EdgeDetectPanel = (props: {}) => {
     const dispatch = useDispatch()
@@ -394,17 +396,17 @@ const MoorhenSeceneSettings = (props: { glRef: React.RefObject<webGL.MGWebGL>; s
 
 export const MoorhenSceneSettingsModal = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
-    show: boolean;
-    setShow: (show: boolean) => void;
 }) => {
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
+    const dispatch = useDispatch()
+
     const { enqueueSnackbar } = useSnackbar()
 
     return <MoorhenDraggableModalBase
-                modalId="scene-settings-modal"
+                modalId={modalKeys.SCENE_SETTINGS}
                 left={width / 5}
                 top={height / 6}
                 headerTitle="Scene settings"
@@ -422,12 +424,13 @@ export const MoorhenSceneSettingsModal = (props: {
                 additionalHeaderButtons={[
                     <Tooltip title={"Move to side panel"}  key={1}>
                         <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => {
-                            props.setShow(false)
-                            enqueueSnackbar("scene-settings", {
+                            dispatch( hideModal(modalKeys.SCENE_SETTINGS) )
+                            enqueueSnackbar(modalKeys.SCENE_SETTINGS, {
                                 variant: "sideBar",
                                 persist: true,
                                 anchorOrigin: {horizontal: "right", vertical: "bottom"},
                                 title: "Scene settings",
+                                modalId: modalKeys.SCENE_SETTINGS,
                                 children: <div style={{ overflowY: 'scroll', overflowX: "hidden", maxHeight: '50vh' }}>
                                     <MoorhenSeceneSettings glRef={props.glRef} stackDirection="vertical" />
                                 </div>

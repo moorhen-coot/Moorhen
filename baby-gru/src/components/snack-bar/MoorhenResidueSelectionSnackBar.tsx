@@ -1,5 +1,5 @@
 import { IconButton, Popover, Tooltip } from "@mui/material"
-import { cidToSpec } from "../../utils/MoorhenUtils"
+import { cidToSpec } from "../../utils/utils"
 import { AdsClickOutlined, AllOutOutlined, CloseOutlined, CopyAllOutlined, CrisisAlertOutlined, DeleteOutlined, EditOutlined, FormatColorFillOutlined, Rotate90DegreesCw, SwapVertOutlined, SwipeRightAlt } from "@mui/icons-material"
 import { batch, useDispatch, useSelector } from "react-redux"
 import { moorhen } from "../../types/moorhen"

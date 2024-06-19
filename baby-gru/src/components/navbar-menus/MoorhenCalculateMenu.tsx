@@ -11,7 +11,8 @@ import { MoorhenCalculateTrajectoryMenuItem } from "../menu-item/MoorhenCalculat
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MenuItem } from "@mui/material";
 import { useDispatch } from "react-redux";
-import { setShowScriptingModal, setShowSliceNDiceModal, setShowSuperposeModal } from "../../store/activeModalsSlice";
+import { showModal } from "../../store/modalsSlice";
+import { modalKeys } from "../../utils/enums";
 
 export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const dispatch = useDispatch()
@@ -23,7 +24,7 @@ export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterfa
     return <>
             <MoorhenAddWatersMenuItem {...menuItemProps} />
             <MenuItem onClick={() => {
-                dispatch(setShowSuperposeModal(true))
+                dispatch(showModal(modalKeys.SUPERPOSE_MODELS))
                 document.body.click()
             }}>Superpose structures...</MenuItem>
             <MoorhenStepRefinementMenuItem key="step-refinement" {...menuItemProps}/>
@@ -46,7 +47,7 @@ export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterfa
                 setPopoverIsShown={setPopoverIsShown}
             />
             <MenuItem onClick={() => {
-                dispatch(setShowSliceNDiceModal(true))
+                dispatch(showModal(modalKeys.SLICE_N_DICE))
                 document.body.click()
             }}>
                 Slice-n-Dice...
@@ -55,7 +56,7 @@ export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterfa
             <>
                 <MoorhenLoadScriptMenuItem {...menuItemProps} />
                 <MenuItem id="interactive-scripting-menu-item" onClick={() => { 
-                    dispatch(setShowScriptingModal(true))
+                    dispatch(showModal(modalKeys.SCRIPTING))
                     document.body.click()
                  }}>Interactive scripting...</MenuItem>
             </>

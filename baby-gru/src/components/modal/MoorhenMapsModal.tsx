@@ -1,18 +1,14 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { MoorhenMapCard } from "../card/MoorhenMapCard";
-import { convertRemToPx, convertViewtoPx } from "../../utils/MoorhenUtils";
+import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
 import { UnfoldLessOutlined } from '@mui/icons-material';
 import { Button } from 'react-bootstrap';
 import { useSelector } from "react-redux";
+import { modalKeys } from "../../utils/enums";
 
-interface MoorhenMapsModalProps extends moorhen.CollectedProps {
-    show: boolean;
-    setShow: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-export const MoorhenMapsModal = (props: MoorhenMapsModalProps) => {    
+export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {    
     
     const cardListRef = useRef([])
 
@@ -40,7 +36,7 @@ export const MoorhenMapsModal = (props: MoorhenMapsModalProps) => {
             dropdownId={1}
             accordionDropdownId={1}
             setAccordionDropdownId={(arg0) => {}}
-            sideBarWidth={convertRemToPx(37)}
+            sideBarWidth={convertRemToPx(20)}
             key={map.molNo}
             index={map.molNo}
             map={map}
@@ -54,15 +50,13 @@ export const MoorhenMapsModal = (props: MoorhenMapsModalProps) => {
     displayData.sort((a, b) => (a.props.index > b.props.index) ? 1 : ((b.props.index > a.props.index) ? -1 : 0))
 
     return <MoorhenDraggableModalBase
-                modalId="maps-modal"
+                modalId={modalKeys.MAPS}
                 left={width - (convertRemToPx(55) + 100)}
                 top={height / 2}
-                show={props.show}
-                setShow={props.setShow}
                 defaultHeight={convertViewtoPx(10, height)}
                 defaultWidth={convertViewtoPx(10, width)}
                 minHeight={convertViewtoPx(10, height)}
-                minWidth={convertRemToPx(37)}
+                minWidth={convertRemToPx(20)}
                 maxHeight={convertViewtoPx(90, height)}
                 maxWidth={convertRemToPx(55)}
                 headerTitle={'Maps'}

@@ -43,14 +43,14 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
             const file = filesRef.current.files[0]
             const newMaps = await MoorhenMap.autoReadMtz(file, props.commandCentre, props.glRef, props.store)    
             if (newMaps.length === 0) {
-                enqueueSnackbar('Error reading mtz file', {variant: 'warning'})
+                enqueueSnackbar('Error reading mtz file', {variant: "error"})
             } else {
                 dispatch( addMapList(newMaps) )
                 dispatch( setActiveMap(newMaps[0]) )    
             }
         } catch (err) {
             console.warn(err)
-            enqueueSnackbar('Error reading mtz file', {variant: 'warning'})
+            enqueueSnackbar('Error reading mtz file', {variant: "error"})
         }
         
     }, [filesRef.current, props.commandCentre, props.glRef])

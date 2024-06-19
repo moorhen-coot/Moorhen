@@ -1,6 +1,6 @@
 import { useRef, useState } from "react"
 import { Form } from "react-bootstrap"
-import { cidToSpec } from "../../utils/MoorhenUtils"
+import { cidToSpec } from "../../utils/utils"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";

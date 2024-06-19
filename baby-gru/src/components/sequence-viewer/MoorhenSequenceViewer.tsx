@@ -8,7 +8,7 @@ import { webGL } from "../../types/mgWebGL";
 import { clickedResidueType } from '../card/MoorhenMoleculeCard';
 import { useSelector, useDispatch } from 'react-redux';
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
-import { cidToAtomInfo, cidToSpec } from "../../utils/MoorhenUtils";
+import { cidToAtomInfo, cidToSpec } from "../../utils/utils";
 
 !window.customElements.get('protvista-navigation') && window.customElements.define("protvista-navigation", ProtvistaNavigation);
 !window.customElements.get('protvista-sequence') && window.customElements.define("protvista-sequence", ProtvistaSequence);

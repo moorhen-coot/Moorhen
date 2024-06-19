@@ -670,7 +670,7 @@ describe('Testing molecules_container_js', () => {
         const coordMolNo_2 = molecules_container.read_coords_string(pdbString_1, "mol-name")
         expect(coordMolNo_2.first).toBe(1)
         expect(coordMolNo_2.second).toBe("pdb")
-        const pdbString_2  = molecules_container.get_molecule_atoms(coordMolNo_2, "pdb")
+        const pdbString_2  = molecules_container.get_molecule_atoms(coordMolNo_2.first, "pdb")
         expect(pdbString_2).toBe(pdbString_1)
     })
 
@@ -682,7 +682,7 @@ describe('Testing molecules_container_js', () => {
         expect(coordMolNo_2.first).toBe(1)
         expect(coordMolNo_2.second).toBe("mmcif")
         // For some reason this fails, probably a coot thing
-        // const pdbString_2  = molecules_container.get_molecule_atoms(coordMolNo_2, "mmcif")
+        // const pdbString_2  = molecules_container.get_molecule_atoms(coordMolNo_2.first, "mmcif")
         // expect(pdbString_2).toBe(pdbString_1)
     })
 

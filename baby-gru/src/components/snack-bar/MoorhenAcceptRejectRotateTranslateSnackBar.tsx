@@ -4,7 +4,7 @@ import { IconButton } from "@mui/material"
 import { useDispatch, useSelector } from "react-redux"
 import { moorhen } from "../../types/moorhen"
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react"
-import { getTooltipShortcutLabel } from '../../utils/MoorhenUtils';
+import { getTooltipShortcutLabel } from '../../utils/utils';
 import { setIsRotatingAtoms } from "../../store/generalStatesSlice"
 import { webGL } from "../../types/mgWebGL"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"

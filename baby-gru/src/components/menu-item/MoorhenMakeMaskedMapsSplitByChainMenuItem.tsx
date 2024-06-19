@@ -72,7 +72,7 @@ export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
                 })
             )
         } else {
-            enqueueSnackbar("Unable to create mask", {variant: 'warning'})
+            enqueueSnackbar("Unable to create mask", {variant: "error"})
         }
         return result
     }

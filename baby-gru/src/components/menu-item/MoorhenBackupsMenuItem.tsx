@@ -25,7 +25,7 @@ export const MoorhenBackupsMenuItem = (props: {
                 props.commandCentre.current.history.reset()
                 props.loadSession(backupData)
             } catch (err) {
-                enqueueSnackbar("Error loading the session", {variant: 'warning'})
+                enqueueSnackbar("Error loading the session", {variant: "error"})
                 console.log(err)
             }
         }

@@ -24,7 +24,6 @@ const guid = () => {
 // @ts-ignore
 let print = (stuff) => {
     console.log(stuff)
-    postMessage({ consoleMessage: JSON.stringify(stuff) })
 }
 
 const parseMonLibListCif = (fileContents: string): libcootApi.compoundInfo[] => {

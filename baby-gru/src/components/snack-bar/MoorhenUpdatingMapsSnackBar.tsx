@@ -114,7 +114,7 @@ export const MoorhenUpdatingMapsManager = (props: {
         }
     }, [maps])
 
-    return <></>
+    return null
 }
 
 export const MoorhenUpdatingMapsSnackBar = forwardRef<

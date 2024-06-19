@@ -22,6 +22,15 @@ message M2tParameters {
   string nucleotideRibbonStyle = 12;
 }
 
+message residueEnvironmentOptions {
+  int32 maxDist = 1;
+  string backgroundRepresentation = 2;
+  string focusRepresentation = 3;
+  bool labelled = 4;
+  bool showHBonds = 5;
+  bool showContacts = 6;
+}
+
 message ColourRuleObject {
   string cid = 1;
   string color = 2;
@@ -53,6 +62,7 @@ message Representation {
     repeated ColourRuleObject colourRules = 4;
     CootBondOptions bondOptions = 5;
     M2tParameters m2tParams = 6;
+    residueEnvironmentOptions resEnvOptions = 7;
 }
 
 message MoleculeSessionData {
@@ -68,6 +78,7 @@ message MoleculeSessionData {
   bool symmetryOn = 10;
   bool biomolOn = 11;
   float symmetryRadius = 12;
+  residueEnvironmentOptions defaultResEnvOptions = 13;
 }
 
 message MapDataSession {

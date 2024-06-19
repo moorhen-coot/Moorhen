@@ -12,7 +12,7 @@ import { MoorhenMapToolsMenu } from './MoorhenMapToolsMenu';
 import { MoorhenValidationMenu } from './MoorhenValidationMenu'
 import { MoorhenCalculateMenu } from './MoorhenCalculateMenu';
 import { ClickAwayListener, Fab, MenuItem, IconButton, MenuList, Popper, Grow } from "@mui/material";
-import { convertRemToPx, convertViewtoPx } from '../../utils/MoorhenUtils';
+import { convertRemToPx, convertViewtoPx } from '../../utils/utils';
 import { 
     CalculateOutlined, DescriptionOutlined, EditOutlined, VisibilityOutlined,
     FactCheckOutlined, HelpOutlineOutlined, MenuOutlined, SaveOutlined, ScienceOutlined, 
@@ -20,7 +20,8 @@ import {
  } from '@mui/icons-material';
 import { moorhen } from '../../types/moorhen';
 import { useDispatch, useSelector } from 'react-redux';
-import { setShowMapsModal, setShowModelsModal } from '../../store/activeModalsSlice';
+import { showModal } from '../../store/modalsSlice';
+import { modalKeys } from '../../utils/enums';
 
 export interface MoorhenNavBarExtendedControlsInterface extends moorhen.CollectedProps {
     dropdownId: string;
@@ -121,11 +122,11 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
             case "-1":
                 break
             case "Models":
-                dispatch(setShowModelsModal(true))
+                dispatch(showModal(modalKeys.MODELS))
                 setNavBarActiveMenu('-1')
                 break
             case "Maps":
-                dispatch(setShowMapsModal(true))
+                dispatch(showModal(modalKeys.MAPS))
                 setNavBarActiveMenu('-1')
                 break
             default:

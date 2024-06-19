@@ -1,6 +1,6 @@
 import React, { ErrorInfo } from 'react';
 import { Modal, Button } from "react-bootstrap"
-import { doDownload, createLocalStorageInstance } from "./utils/MoorhenUtils"
+import { doDownload, createLocalStorageInstance } from "./utils/utils"
 import { MoorhenTimeCapsule } from "./utils/MoorhenTimeCapsule"
 import { MoorhenMolecule } from './utils/MoorhenMolecule';
 import { moorhen } from './types/moorhen';

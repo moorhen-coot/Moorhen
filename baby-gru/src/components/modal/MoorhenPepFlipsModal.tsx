@@ -2,37 +2,34 @@ import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen";
 import { useRef } from "react";
 import { Button, Row } from "react-bootstrap";
-import { convertRemToPx, convertViewtoPx} from '../../utils/MoorhenUtils';
-import { useSelector } from "react-redux";
+import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
+import { useDispatch, useSelector } from "react-redux";
 import { MoorhenPepflipsDifferenceMap } from "../validation-tools/MoorhenPepflipsDifferenceMap";
 import { Tooltip } from "@mui/material";
 import { LastPageOutlined } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
+import { modalKeys } from "../../utils/enums";
+import { hideModal } from "../../store/modalsSlice";
 
-interface MoorhenValidationModalProps extends moorhen.CollectedProps {
-    show: boolean;
-    setShow: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-export const MoorhenPepFlipsModal = (props: MoorhenValidationModalProps) => {        
+export const MoorhenPepFlipsModal = (props: moorhen.CollectedProps) => {        
     const resizeNodeRef = useRef<HTMLDivElement>();
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+
+    const dispatch = useDispatch()
+
+    const { enqueueSnackbar } = useSnackbar()
 
     const collectedProps = {
         sideBarWidth: convertViewtoPx(35, width), dropdownId: 1, busy: false, 
         accordionDropdownId: 1, setAccordionDropdownId: (arg0) => {}, showSideBar: true, ...props
     }
 
-    const { enqueueSnackbar } = useSnackbar()
-
     return <MoorhenDraggableModalBase
-                modalId="pepflips-validation-modal"
+                modalId={modalKeys.PEPTIDE_FLIPS}
                 left={width / 6}
                 top={height / 3}
-                show={props.show}
-                setShow={props.setShow}
                 defaultHeight={convertViewtoPx(70, height)}
                 defaultWidth={convertViewtoPx(37, width)}
                 minHeight={convertViewtoPx(30, height)}
@@ -55,18 +52,18 @@ export const MoorhenPepFlipsModal = (props: MoorhenValidationModalProps) => {
                 additionalHeaderButtons={[
                     <Tooltip title={"Move to side panel"}  key={1}>
                         <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => {
-                            props.setShow(false)
-                            enqueueSnackbar("peptide-flips", {
+                            dispatch( hideModal(modalKeys.PEPTIDE_FLIPS) )
+                            enqueueSnackbar(modalKeys.PEPTIDE_FLIPS, {
                                 variant: "sideBar",
                                 persist: true,
                                 anchorOrigin: {horizontal: "right", vertical: "bottom"},
                                 title: "Peptide flips",
+                                modalId: modalKeys.PEPTIDE_FLIPS,
                                 children: <div style={{maxHeight: '30vh', overflowY: 'scroll', overflowX: "hidden"}} >
                                 <Row className={"big-validation-tool-container-row"}>
                                     <MoorhenPepflipsDifferenceMap {...collectedProps}/>
                                 </Row>
                             </div>
-        
                             })
                         }}>
                             <LastPageOutlined/>

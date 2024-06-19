@@ -3,7 +3,7 @@ import { forwardRef, useCallback, useEffect, useRef } from "react";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from "react-redux";
-import { cidToSpec, getAtomInfoLabel } from "../../utils/MoorhenUtils";
+import { cidToSpec, parseAtomInfoLabel } from "../../utils/utils";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { setIsDraggingAtoms } from "../../store/generalStatesSlice";
 import { Stack } from "react-bootstrap";
@@ -68,7 +68,7 @@ export const MoorhenAcceptRejectDragAtomsSnackBar = forwardRef<
     }, [moltenFragmentRef])
 
     const handleAtomDragged = async (evt: moorhen.AtomDraggedEvent) => {
-        const atomCid = getAtomInfoLabel(evt.detail.atom)
+        const atomCid = parseAtomInfoLabel(evt.detail.atom)
         if (draggingDirty.current && atomCid) {
             busy.current = true
             refinementDirty.current = true

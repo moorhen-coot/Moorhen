@@ -5,8 +5,10 @@ import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch } from "react-redux";
 import { setDoOutline, setDoShadow } from "../../store/sceneSettingsSlice";
+import { doDownload } from "../../utils/utils";
+import { showModal } from "../../store/modalsSlice";
+import { modalKeys } from "../../utils/enums";
 import { useSnackbar } from "notistack";
-import { setShowLhasaModal } from "../../store/activeModalsSlice";
 
 export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
@@ -33,12 +35,9 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
         })
     }
 
-    const openLhasa = () => {
-        dispatch(setShowLhasaModal(true))
-    }
        
     return <>
-                    <MenuItem onClick={() => openLhasa()}>
+                    <MenuItem onClick={() => dispatch(showModal(modalKeys.LHASA))}>
                         Open Lhasa...
                     </MenuItem>
                     <MenuItem onClick={tomogramTest}>

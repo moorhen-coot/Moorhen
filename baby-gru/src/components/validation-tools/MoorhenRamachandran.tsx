@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from "react"
 import { Col, Row, Form } from 'react-bootstrap';
-import { convertRemToPx } from '../../utils/MoorhenUtils';
+import { convertRemToPx } from '../../utils/utils';
 import { MoorhenChainSelect } from '../select/MoorhenChainSelect'
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
 import { libcootApi } from "../../types/libcoot";

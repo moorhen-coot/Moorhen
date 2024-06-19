@@ -5,21 +5,19 @@ on:
   - cron: "0 0 * * *"
 
 jobs:
-  runTests:
+  test_moorhen:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 240
     steps:
 
-      # Checkout repository
       - uses: actions/checkout@v1
         name: Checkout Moorhen
 
-      # Install some general dependencies
       - name: Install dependencies 
         working-directory: /home/runner/work/Moorhen/       
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y bzr nodejs npm pkg-config libfreetype6-dev libxft-dev blt-dev build-essential zlib1g-dev autoconf autotools-dev libtool gcc cmake patch curl libeigen3-dev
+          sudo apt-get install -y bzr nodejs npm pkg-config libfreetype6-dev libxft-dev blt-dev build-essential zlib1g-dev autoconf autotools-dev libtool gcc cmake patch curl libeigen3-dev meson
 
       - name: Download and install emsdk
         run: |
@@ -29,33 +27,20 @@ jobs:
           ./emsdk install latest
           ./emsdk activate latest
 
-      - name: Download and patch Moorhen sources
+      - name: Download Moorhen sources
         working-directory: /home/runner/work/Moorhen/Moorhen
         run: |
-          cd /home/runner/work/Moorhen/Moorhen         
           source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
           ./get_sources
-      
-      # Install bindings
+
       - name: Install bindings
         working-directory: /home/runner/work/Moorhen/Moorhen
         run: |
-          cd /home/runner/work/Moorhen/Moorhen
           source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
           ./initial_build.sh
-
-      # Install coot (unless we had to run initial_build.sh)
-      - name: Install Coot
-        working-directory: /home/runner/work/Moorhen/Moorhen/CCP4_WASM_BUILD
-        run: |
-          cd /home/runner/work/Moorhen/Moorhen/CCP4_WASM_BUILD/moorhen_build/
-          source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
-          make install
-
-      # Run the tests
+          
       - name: Run tests
         working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
-        run: |             
-          cd /home/runner/work/Moorhen/Moorhen/baby-gru
+        run: |
           source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
           npm test

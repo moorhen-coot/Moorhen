@@ -21,13 +21,16 @@ in vec2 out_TexCoord0;
 
 void main() {
 
-    float pixelFrac = 2.0 / 1024.0;
-
+    float halfScaleFloorDepth = scaleDepth - 0.0625;
+    float halfScaleCeilDepth = scaleDepth + 0.0625;
+    float halfScaleFloorNormal = scaleNormal*.5 - 0.0625;
+    float halfScaleCeilNormal = scaleNormal*.5 + 0.0625;
+    /*
     float halfScaleFloorDepth = floor(scaleDepth * 0.5);
     float halfScaleCeilDepth = ceil(scaleDepth * 0.5);
-    
     float halfScaleFloorNormal = floor(scaleNormal * 0.5);
     float halfScaleCeilNormal = ceil(scaleNormal * 0.5);
+    */
     
     float depth0 = texture(gPosition, out_TexCoord0 - vec2(xPixelOffset,yPixelOffset)*halfScaleFloorDepth).z;
     float depth1 = texture(gPosition, out_TexCoord0 + vec2(xPixelOffset,yPixelOffset)*halfScaleCeilDepth).z;

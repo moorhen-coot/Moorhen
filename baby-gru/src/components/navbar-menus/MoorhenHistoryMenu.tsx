@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
-import { convertViewtoPx, loadSessionFromJsonString } from "../../utils/MoorhenUtils";
+import { convertViewtoPx } from "../../utils/utils";
+import { MoorhenTimeCapsule } from "../../utils/MoorhenTimeCapsule";
 import { Stepper, Step, StepButton, StepLabel } from "@mui/material";
 import { moorhen } from "../../types/moorhen";
 import { SaveOutlined } from "@mui/icons-material";
@@ -23,7 +24,7 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
 
     const loadSession = useCallback(async (sessionData: string) => {
         try {
-            const status = await loadSessionFromJsonString(
+            const status = await MoorhenTimeCapsule.loadSessionFromJsonString(
                 sessionData as string,
                 props.monomerLibraryPath,
                 molecules, 
@@ -39,7 +40,7 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
             }
         } catch (err) {
             console.log(err)
-            enqueueSnackbar("Error loading session", {variant: 'warning'})
+            enqueueSnackbar("Error loading session", {variant: "error"})
         }
     }, [props])
 

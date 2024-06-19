@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Form, FormSelect, OverlayTrigger, Stack, Tooltip } from "react-bootstrap";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Button, Form, FormSelect, OverlayTrigger, Stack, Tooltip } from "react-bootstrap";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
@@ -12,6 +12,7 @@ import { useSnackbar } from "notistack";
 import { Autocomplete, CircularProgress, createFilterOptions, MenuItem, Skeleton, TextField } from "@mui/material";
 import { libcootApi } from "../../types/libcoot";
 import parse from 'html-react-parser';
+import { InfoOutlined } from "@mui/icons-material";
 
 const CompoundAutoCompleteOption = (props: {
     compoundName: string;
@@ -71,7 +72,9 @@ export const MoorhenGetMonomerMenuItem = (props: {
     const searchModeSelectRef = useRef<HTMLSelectElement | null>(null)
     const monLibListRef = useRef<libcootApi.compoundInfo[]>([])
     const autoCompleteRef = useRef<string | null>(null)
+    const sourceSelectRef = useRef<HTMLSelectElement | null>(null)
 
+    const [source, setSource] = useState<string>("default")
     const [searchMode, setSearchMode] = useState<string>("tlc")
     const [busy, setBusy] = useState<boolean>(false)
     const [autoCompleteValue, setAutoCompleteValue] = useState<string>("")
@@ -84,6 +87,13 @@ export const MoorhenGetMonomerMenuItem = (props: {
         matchFrom: "start",
         limit: 5
     }), [])
+
+    const handleSourceChange = (evt) => {
+        setSource(evt.target.value)
+        if (evt.target.value !== "default") {
+            setSearchMode("tlc")
+        }
+    }
 
     const handleSearchModeChange = async (evt) => {
         setSearchMode(evt.target.value)
@@ -106,15 +116,172 @@ export const MoorhenGetMonomerMenuItem = (props: {
         }
     }
 
+    const getMonomerFromLibcootAPI = useCallback((tlc: string, fromMolNo: number) => {
+        return props.commandCentre.current.cootCommand({
+            returnType: 'status',
+            command: 'get_monomer_and_position_at',
+            commandArgs: [tlc, fromMolNo,
+                ...props.glRef.current.origin.map(coord => -coord)
+            ]
+        }, true) as Promise<moorhen.WorkerResponse<number>>
+    }, [])
+
+    const createNewLigandMolecule = useCallback(async (tlc: string, molNo: number, ligandDict?: string) => {
+        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
+        newMolecule.molNo = molNo
+        newMolecule.name = tlc
+        newMolecule.setBackgroundColour(props.glRef.current.background_colour)
+        newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
+        newMolecule.coordsFormat = 'mmcif'
+        if (ligandDict) {
+            await newMolecule.addDict(ligandDict)
+        }
+        await newMolecule.fetchIfDirtyAndDraw('CBs')
+        dispatch(addMolecule(newMolecule))
+        return newMolecule
+    }, [defaultBondSmoothness, props.commandCentre, props.glRef, props.store, props.monomerLibraryPath])
+
+    const addLigand = useCallback(async (tlc: string, ligandDict: string, fromMolNo: number) => {
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === fromMolNo)
+        if (selectedMolecule) {
+            await selectedMolecule.addDict(ligandDict)
+        } else {
+            await props.commandCentre.current.cootCommand({
+                returnType: "status",
+                command: 'read_dictionary_string',
+                commandArgs: [ligandDict, -999999],
+                changesMolecules: []
+            }, false)
+        }
+
+        const result = await getMonomerFromLibcootAPI(tlc, fromMolNo)
+        if (result.data.result.status === "Completed" && result.data.result.result !== -1) {
+            await createNewLigandMolecule(tlc, result.data.result.result, ligandDict)
+        } else {
+            enqueueSnackbar("Error getting monomer. Missing dictionary?", { variant: "warning" })
+        }
+    }, [getMonomerFromLibcootAPI, createNewLigandMolecule, molecules, props.commandCentre])
+
+    const fetchLigandDictFromUrl = useCallback(async (url: string) => {
+        const response = await fetch(url)
+        if (!response.ok) {
+            console.log(`Cannot fetch data from ${url}`)
+        } else {
+            const fileContent = await response.text()
+            return fileContent
+        }
+    }, [])
+
+    const fetchLigandDict = useCallback(async (source: string, tlc: string, fromMolNo: number = -999999) => {
+        let url: string
+        switch(source) {
+            case "pdbe":
+                url = `https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/${tlc.toUpperCase()}.cif`
+                break
+            case "remote-monomer-library":
+                url = `https://raw.githubusercontent.com/MonomerLibrary/monomers/master/${tlc.toLowerCase()[0]}/${tlc.toUpperCase()}.cif`
+                break
+            case "local-monomer-library":
+                url = `${props.monomerLibraryPath}/${tlc.toLowerCase()[0]}/${tlc.toUpperCase()}.cif`
+                break
+            default:
+                console.warn(`Unrecognised ligand source ${source}`)
+                break
+        }
+        if (url) {
+            const ligandDict = await fetchLigandDictFromUrl(url)
+            await addLigand(tlc, ligandDict, fromMolNo)
+        } else {
+            console.warn("No ligand dictionary, doing nothing...")
+        }
+    }, [fetchLigandDictFromUrl, addLigand, props.monomerLibraryPath])
+
+    const defaultGetMonomer = useCallback(async () => {
+        const fromMolNo = parseInt(moleculeSelectRef.current.value)
+
+        let newTlc: string
+        if (searchModeSelectRef.current.value === "tlc") {
+            newTlc = tlcRef.current.value.toUpperCase()
+        } else {
+            newTlc = monLibListRef.current.find(item => item.name === autoCompleteRef.current)?.three_letter_code
+        }
+
+        if (!newTlc || !moleculeSelectRef.current.value) {
+            enqueueSnackbar("Something went wrong", { variant: "warning" })
+            return
+        }
+
+        let result = await getMonomerFromLibcootAPI(newTlc, fromMolNo)
+
+        if (result.data.result.result === -1) {
+            const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
+            await newMolecule.loadMissingMonomer(newTlc, fromMolNo)
+            result = await getMonomerFromLibcootAPI(newTlc, fromMolNo)
+        }
+
+        if (result.data.result.status === "Completed" && result.data.result.result !== -1) {
+            const fromMolecule = molecules.find(molecule => molecule.molNo === fromMolNo)
+            await createNewLigandMolecule(newTlc, result.data.result.result, fromMolecule?.getDict(newTlc))
+        } else {
+            enqueueSnackbar("Error getting monomer. Missing dictionary?", { variant: 'warning' })
+            console.log('Error getting monomer. Missing dictionary?')
+        }
+    }, [getMonomerFromLibcootAPI, createNewLigandMolecule, molecules, props.commandCentre, props.glRef, props.store, props.monomerLibraryPath])
+
+    const onCompleted = useCallback(async () => {
+        if (sourceSelectRef.current.value === "libcoot-api") {
+            const tlc = tlcRef.current.value.toUpperCase()
+            const fromMolNo = parseInt(moleculeSelectRef.current.value)
+            const result = await getMonomerFromLibcootAPI(tlc, fromMolNo)
+            if (result.data.result.status === "Completed" && result.data.result.result !== -1) {
+                const fromMolecule = molecules.find(molecule => molecule.molNo === fromMolNo)
+                await createNewLigandMolecule(tlc, result.data.result.result, fromMolecule?.getDict(tlc))
+            } else {
+                enqueueSnackbar("Unable to get monomer. Missing dictionary?", { variant: "warning" })
+            }
+        } else if (["remote-monomer-library", "local-monomer-library", "pdbe"].includes(sourceSelectRef.current.value)) {
+            const tlc = tlcRef.current.value.toUpperCase()
+            await fetchLigandDict(sourceSelectRef.current.value, tlc)
+        } else {
+            await defaultGetMonomer()
+        }
+    }, [molecules, defaultGetMonomer, fetchLigandDict, getMonomerFromLibcootAPI, createNewLigandMolecule])
+
     const panelContent = <>
+            <Form.Group className='moorhen-form-group'>
+            <Form.Label>Source...</Form.Label>
+            <OverlayTrigger
+                placement="right"
+                overlay={
+                    <Tooltip id="tip-tooltip" className="moorhen-tooltip" style={{zIndex: 99999}}>
+                        <em>
+                            By default, "Get monomer" will search in each of the following sources until a match is found
+                            for your monomer. You can instead override this behaviour by selecting a specific source for your monomer.
+                        </em>
+                    </Tooltip>
+                }>
+                <InfoOutlined style={{marginLeft: '0.1rem', marginBottom: '0.2rem', width: '15px', height: '15px'}}/>
+            </OverlayTrigger>
+            <FormSelect ref={sourceSelectRef} size="sm" value={source} onChange={handleSourceChange}>
+                <option value={"default"}>Default</option>
+                <option value={"libcoot-api"}>Imported dictionary</option>
+                <option value={"local-monomer-library"}>Local monomer library</option>
+                <option value={"remote-monomer-library"}>Remote monomer library</option>
+                <option value={"pdbe"}>PDBe</option>
+            </FormSelect>
+        </Form.Group>
+        {["default", "libcoot-api"].includes(source) &&
         <MoorhenMoleculeSelect molecules={molecules} allowAny={true} ref={moleculeSelectRef} />
+        }
+        {source === "default" &&
         <Form.Group className='moorhen-form-group'>
             <Form.Label>Search by...</Form.Label>
             <FormSelect ref={searchModeSelectRef} size="sm" value={searchMode} onChange={handleSearchModeChange}>
-                <option value={"tlc"}>Three letter code</option>
+                <option value={"tlc"}>Three letter code</option>                
                 <option value={"name"}>Compound name</option>
             </FormSelect>
         </Form.Group>
+        }
         {searchMode === "tlc" ?
             <Form.Group className='moorhen-form-group' controlId="MoorhenGetMonomerMenuItem">
                 <Form.Label>Monomer identifier</Form.Label>
@@ -180,67 +347,17 @@ export const MoorhenGetMonomerMenuItem = (props: {
                 />
             </Form.Group>
         }
+        <Button variant='primary' onClick={onCompleted}>
+            OK
+        </Button>
     </>
-
-    const onCompleted = async () => {
-        const fromMolNo = parseInt(moleculeSelectRef.current.value)
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
-
-        let newTlc: string
-        if (searchModeSelectRef.current.value === "tlc") {
-            newTlc = tlcRef.current.value.toUpperCase()
-        } else {
-            newTlc = monLibListRef.current.find(item => item.name === autoCompleteRef.current)?.three_letter_code
-        }
-
-        if (!newTlc || !moleculeSelectRef.current.value) {
-            enqueueSnackbar("Something went wrong", { variant: "warning" })
-            return
-        }
-
-        const getMonomer = () => {
-            return props.commandCentre.current.cootCommand({
-                returnType: 'status',
-                command: 'get_monomer_and_position_at',
-                commandArgs: [newTlc, fromMolNo,
-                    ...props.glRef.current.origin.map(coord => -coord)
-                ]
-            }, true) as Promise<moorhen.WorkerResponse<number>>
-        }
-
-        let result = await getMonomer()
-
-        if (result.data.result.result === -1) {
-            await newMolecule.loadMissingMonomer(newTlc, fromMolNo)
-            result = await getMonomer()
-        }
-
-        if (result.data.result.status === "Completed" && result.data.result.result !== -1) {
-            newMolecule.molNo = result.data.result.result
-            newMolecule.name = newTlc
-            newMolecule.setBackgroundColour(props.glRef.current.background_colour)
-            newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
-            newMolecule.coordsFormat = 'mmcif'
-            const fromMolecule = molecules.find(molecule => molecule.molNo === fromMolNo)
-            if (typeof fromMolecule !== 'undefined') {
-                const ligandDict = fromMolecule.getDict(newTlc)
-                if (ligandDict) {
-                    await newMolecule.addDict(ligandDict)
-                }
-            }
-            await newMolecule.fetchIfDirtyAndDraw('CBs')
-            dispatch(addMolecule(newMolecule))
-        } else {
-            enqueueSnackbar("Error getting monomer. Missing dictionary?", { variant: 'warning' })
-            console.log('Error getting monomer. Missing dictionary?')
-        }
-    }
 
     return <MoorhenBaseMenuItem
         id='get-monomer-menu-item'
         popoverContent={panelContent}
         menuItemText="Get monomer..."
-        onCompleted={onCompleted}
+        onCompleted={() => {}}
+        showOkButton={false}
         setPopoverIsShown={props.setPopoverIsShown}
         popoverPlacement={props.popoverPlacement}
     />

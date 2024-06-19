@@ -3,8 +3,8 @@ import { Chart, registerables } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation'
 import { moorhen } from "../../types/moorhen";
 import { libcootApi } from "../../types/libcoot";
-import { convertViewtoPx } from "../../utils/MoorhenUtils";
-import { Col, Row, Stack } from "react-bootstrap";
+import { convertViewtoPx } from "../../utils/utils";
+import { Row, Stack } from "react-bootstrap";
 import { IconButton } from "@mui/material";
 import { ZoomInOutlined, ZoomOutOutlined } from "@mui/icons-material";
 import { useSelector } from "react-redux";

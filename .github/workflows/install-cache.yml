@@ -1,12 +1,6 @@
 name: Update install cache
 
-on:
-  push:
-    branches:
-      - master
-    paths:
-      - 'get_sources'
-      - 'VERSIONS'
+on: workflow_dispatch
 
 jobs:
   updateInstallCache:
