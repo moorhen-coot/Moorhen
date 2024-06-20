@@ -5,8 +5,7 @@ import { setContourWheelSensitivityFactor, setMouseSensitivity, setZoomWheelSens
 import { useDispatch, useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 
-
-export const MoorhenMouseSensitivitySettingsMenuItem = (props) => {
+export const MoorhenMouseSensitivitySettingsMenuItem = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>; }) => {
 
     const mouseSensitivity = useSelector((state: moorhen.State) => state.mouseSettings.mouseSensitivity)
     const zoomWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.zoomWheelSensitivityFactor)
