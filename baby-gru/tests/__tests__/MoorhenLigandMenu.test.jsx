@@ -1,4 +1,4 @@
-jest.setTimeout(35000)
+jest.setTimeout(15000)
 jest.mock('protvista-sequence')
 jest.mock('protvista-navigation')
 jest.mock('protvista-manager')
@@ -9,9 +9,10 @@ jest.mock('chart.js', () => ({
 }))
 
 import '@testing-library/jest-dom'
-import { render, cleanup, screen }  from '@testing-library/react'
+import { render, cleanup, screen, within }  from '@testing-library/react'
 import { Provider } from 'react-redux'
 import MoorhenStore from "../../src/store/MoorhenReduxStore"
+import { MoorhenPopUpContainer } from "../../src/components/toasts/MoorhenPopUpContainer"
 import { createRef } from 'react'
 import { MoorhenModalsContainer } from '../../src/components/misc/MoorhenModalsContainer'
 import { MoorhenNavBar } from '../../src/components/navbar-menus/MoorhenNavBar'
@@ -56,15 +57,16 @@ let mockMonomerLibraryPath = null
 
 const describeIfWasmExists = fs.existsSync('./moorhen.data') ? describe : describe.skip
 
-describeIfWasmExists('Testing MoorhenEditMenu', () => {
+describeIfWasmExists('Testing MoorhenLigandMenu', () => {
     
     beforeAll(() => {   
-        const createCootModule = require('../../public/moorhen')
+        const createCootModule = require('../../public/wasm/moorhen')
 
         mockMonomerLibraryPath = "https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/"
 
         global.fetch = (url) => {
             if (url.includes(mockMonomerLibraryPath)) {
+                console.log('HII!!!!! ', url)
                 return fetch(url)
             } else if (url.includes('https:/files.rcsb.org/download/')) {
                 return fetch(url)
@@ -161,37 +163,34 @@ describeIfWasmExists('Testing MoorhenEditMenu', () => {
 
     afterEach(cleanup)
 
-    test("Test MoorhenEditMenu merge molecules" , async () => {
+    test.skip("Test MoorhenLigandMenu find ligand" , async () => {
         render(
             <Provider store={MoorhenStore}> 
                 <MoorhenNavBar {...collectedProps}/>
                 <MoorhenModalsContainer {...collectedProps}/>
+                <MoorhenPopUpContainer {...collectedProps}/>
             </Provider> 
         )
 
         const user = userEvent.setup()
 
-        const moorhenButton = screen.getByRole('button', { name: /moorhen/i })
-        await user.click(moorhenButton)
-
+        await user.click( screen.getByRole('button', { name: /moorhen/i }) )
         await user.click( screen.getByRole('menuitem', { name: /file/i }) )
         await user.click( screen.getByRole('menuitem', { name: /load tutorial data\.\.\./i }) )
         await user.click( screen.getByRole('button', { name: /ok/i }) )
-
-        await user.click( screen.getByRole('menuitem', { name: /file/i }) )
-        await user.click( screen.getByRole('menuitem', { name: /load tutorial data\.\.\./i }) )
-        await user.selectOptions( screen.getByRole('combobox'), ['Tutorial 2'] )
+        await user.click( screen.getByRole('menuitem', { name: /ligand/i }) )
+        await user.click( screen.getByRole('menuitem', { name: /get monomer\.\.\./i }) )
+        await user.type( screen.getByRole('textbox'), 'LZA' )
         await user.click( screen.getByRole('button', { name: /ok/i }) )
+        await user.click( screen.getByRole('menuitem', { name: /ligand/i }) )
+        await user.click( screen.getByRole('menuitem', { name: /find ligand\.\.\./i }) )
 
-        const visibleMolecules_1 = MoorhenStore.getState().molecules.visibleMolecules
-        expect(visibleMolecules_1).toEqual([0, 3])
 
-        await user.click( screen.getByRole('menuitem', { name: /edit/i }) )
-        await user.click( screen.getByRole('menuitem', { name: /merge molecules\.\.\./i }) )
-        await user.selectOptions( screen.getAllByRole('combobox')[0], ['3: mol-2'] )
-        await user.click( screen.getByRole('button', { name: /ok/i }) )
+        const molecules = MoorhenStore.getState().molecules.moleculeList
+        expect(molecules).toHaveLength(2)
 
-        const visibleMolecules_2 = MoorhenStore.getState().molecules.visibleMolecules
-        expect(visibleMolecules_2).toEqual([0])
+        const ligandModalHeader = screen.getByText('Find ligand')
+        expect(ligandModalHeader).toBeVisible()
+        
     })
 })

@@ -4,7 +4,7 @@ jest.setTimeout(40000)
 const fs = require('fs')
 const path = require('path')
 const fetch = require('node-fetch')
-const createCootModule = require('../../public/baby-gru/moorhen')
+const createCootModule = require('../../public/moorhen')
 
 let cootModule;
 let cleanUpVariables = []

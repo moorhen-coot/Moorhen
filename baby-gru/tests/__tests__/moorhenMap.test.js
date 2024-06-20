@@ -7,7 +7,7 @@ jest.setTimeout(40000)
 
 const fs = require('fs')
 const path = require('path')
-const createCootModule = require('../../public/baby-gru/moorhen')
+const createCootModule = require('../../public/moorhen')
 let cootModule;
 
 const mockMonomerLibraryPath = "https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/"

@@ -26,7 +26,7 @@
     "forge": {
       "packagerConfig": {
         "ignore": [
-          "^/public/baby-gru$",
+          "^/public$",
           "^/public/favicon.ico$",
           "^/public/index.html",
           "^/public/logo192.png",

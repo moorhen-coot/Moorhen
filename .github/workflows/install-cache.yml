@@ -149,5 +149,5 @@ jobs:
           path: |
             /home/runner/work/Moorhen/Moorhen/install
             /home/runner/work/Moorhen/Moorhen/CCP4_WASM_BUILD
-            /home/runner/work/Moorhen/Moorhen/baby-gru/public/baby-gru/wasm
+            /home/runner/work/Moorhen/Moorhen/baby-gru/public/wasm
           key: moorhen-install-cache

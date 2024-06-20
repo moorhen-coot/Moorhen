@@ -181,12 +181,12 @@ cleargraphene() {
 clearmoorhen() {
     echo "Clear moorhen"
     rm -rf ${BUILD_DIR}/moorhen_build
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.wasm
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.data
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.worker.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/web_example.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/web_example.wasm
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen.wasm
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen.data
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen.worker.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/web_example.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/web_example.wasm
 }
 
 clearall() {
@@ -401,7 +401,7 @@ else
     BUILD_LIBEIGEN=true
 fi
 
-if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru/moorhen.wasm; then
+if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen.wasm; then
     true
 else
     BUILD_MOORHEN=true
@@ -709,6 +709,6 @@ if [ $BUILD_MOORHEN = true ]; then
     emmake make install || fail "Error installing moorhen, giving up."
     cd ${MOORHEN_SOURCE_DIR}/baby-gru/
     npm install
-    cd ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru
+    cd ${MOORHEN_SOURCE_DIR}/baby-gru/public
     ln -sf ${MOORHEN_SOURCE_DIR}/checkout/monomers
 fi
