@@ -38,9 +38,8 @@
       })
       .then((returnedModule) => {
           window.cootModule = returnedModule;
-          console.log("Coot module attached to the window", window.cootModule);
           const cootModuleAttachedEvent = new CustomEvent("cootModuleAttached", { })
-          window.dispatchEvent(cootModuleAttachedEvent);
+          document.dispatchEvent(cootModuleAttachedEvent);
       })
       .catch((e) => {
           console.log(e);

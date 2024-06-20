@@ -20,9 +20,9 @@ function LhasaWrapper({rdkit_molecule_pickle_map, smiles_callback}: LhasaWrapper
     };
 
     useEffect(() => {
-        window.addEventListener('cootModuleAttached', handler);
+        document.addEventListener('cootModuleAttached', handler);
         return () => {
-            window.removeEventListener('cootModuleAttached', handler);
+            document.removeEventListener('cootModuleAttached', handler);
         };
     },[]);
 
