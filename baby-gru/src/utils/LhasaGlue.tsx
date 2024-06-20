@@ -7,7 +7,6 @@ export const LhasaWrapper = (props: {
 }) => {
 
     const [isCootAttached, setCootAttached] = useState(() => { 
-        // @ts-ignore
         return window.cootModule !== undefined;
     });
     
@@ -24,7 +23,6 @@ export const LhasaWrapper = (props: {
 
     return  isCootAttached ?
                 <LhasaComponent 
-                    // @ts-ignore
                     Lhasa={window.cootModule}
                     show_footer={false}
                     show_top_panel={false}
