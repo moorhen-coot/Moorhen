@@ -34,7 +34,7 @@ import { ToolkitStore } from '@reduxjs/toolkit/dist/configureStore';
  * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
  * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance
  * @param {ToolkitStore} [store=undefined] - A Redux store. By default Moorhen Redux store will be used
- * @param {string} [monomerLibraryPath="./baby-gru/monomers"] - A string with the path to the monomer library, relative to the root of the app
+ * @param {string} [monomerLibraryPath="./monomers"] - A string with the path to the monomer library, relative to the root of the app
  * @example
  * import { MoorhenMolecule } from 'moorhen';
  * 
@@ -105,7 +105,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     headerInfo: libcootApi.headerInfoJS;
     isMRSearchModel: boolean;
 
-    constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore = MoorhenReduxStore, monomerLibraryPath = "./baby-gru/monomers") {
+    constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore = MoorhenReduxStore, monomerLibraryPath = "./monomers") {
         this.type = 'molecule'
         this.commandCentre = commandCentre
         this.glRef = glRef

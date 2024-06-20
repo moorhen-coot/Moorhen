@@ -60,7 +60,7 @@ export const MoorhenDeleteButton = (props: moorhen.ContextButtonProps) => {
     }
 
     return <MoorhenContextButtonBase
-        icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/delete.svg`} alt="delete-item" />}
+        icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/pixmaps/delete.svg`} alt="delete-item" />}
         refineAfterMod={false}
         needsMapData={false}
         toolTipLabel={toolTipLabel}

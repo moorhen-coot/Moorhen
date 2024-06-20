@@ -207,7 +207,7 @@ export const MoorhenColourRuleCard = (props: {
                         }
                     }}/>
                 : rule.ruleType === "secondary-structure" ?
-                    <img className='colour-rule-icon' src={`${urlPrefix}/baby-gru/pixmaps/secondary-structure-grey.svg`} alt='ss2' style={{height:'28px', width:'`12px', margin: '0.1rem'}}/>
+                    <img className='colour-rule-icon' src={`${urlPrefix}/pixmaps/secondary-structure-grey.svg`} alt='ss2' style={{height:'28px', width:'`12px', margin: '0.1rem'}}/>
                 : rule.ruleType === "jones-rainbow" ?
                 <>
                     <div style={{borderColor: 'rgb(255, 0, 0)', borderWidth:'5px', backgroundColor:  'rgb(255, 0, 0)', height:'20px', width:'5px', margin: '0rem', padding: '0rem'}}/>
@@ -223,7 +223,7 @@ export const MoorhenColourRuleCard = (props: {
                         }
                     }}/>
                 : (rule.ruleType === "b-factor" || rule.ruleType === "b-factor-norm") ?
-                    <img className="colour-rule-icon" src={`${urlPrefix}/baby-gru/pixmaps/temperature.svg`} alt='b-factor' style={{height:'28px', width:'`12px', margin: '0.1rem'}}/>
+                    <img className="colour-rule-icon" src={`${urlPrefix}/pixmaps/temperature.svg`} alt='b-factor' style={{height:'28px', width:'`12px', margin: '0.1rem'}}/>
                 :
                 <>
                     <div style={{borderColor: 'rgb(255, 125, 69)', borderWidth:'5px', backgroundColor:  'rgb(255, 125, 69)', height:'20px', width:'5px', margin: '0rem', padding: '0rem'}}/>

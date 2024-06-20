@@ -86,7 +86,7 @@ export const MoorhenRigidBodyFitButton = (props: moorhen.ContextButtonProps) => 
     }, [activeMap, randomJiggleMode])
 
     return <MoorhenContextButtonBase
-        icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rigid-body.svg`} alt='Rigid body fit' />}
+        icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/pixmaps/rigid-body.svg`} alt='Rigid body fit' />}
         refineAfterMod={false}
         needsMapData={true}
         toolTipLabel="Rigid body fit"

@@ -55,16 +55,16 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         const newMap = new MoorhenMap(props.commandCentre, props.glRef, props.store)
         const newDiffMap = new MoorhenMap(props.commandCentre, props.glRef, props.store)
-        await newMolecule.loadToCootFromURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `mol-${tutorialNumber}`)
+        await newMolecule.loadToCootFromURL(`${props.urlPrefix}/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `mol-${tutorialNumber}`)
         await newMolecule.fetchIfDirtyAndDraw('CBs')
         await newMolecule.centreOn('/*/*/*/*', true)
         await newMap.loadToCootFromMtzURL(
-            `${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`,
+            `${props.urlPrefix}/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`,
             `map-${tutorialNumber}`,
             { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: true, ...tutorialMtzColumnNames[tutorialNumber] }
         )
         await newDiffMap.loadToCootFromMtzURL(
-            `${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`,
+            `${props.urlPrefix}/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`,
             `diff-map-${tutorialNumber}`,
             { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false, calcStructFact: true, ...tutorialMtzColumnNames[tutorialNumber] }
         )

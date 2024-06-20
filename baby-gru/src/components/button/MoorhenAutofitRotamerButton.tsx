@@ -32,7 +32,7 @@ export const MoorhenAutofitRotamerButton = (props: moorhen.ContextButtonProps) =
     }, [shortCuts])
 
     return <MoorhenContextButtonBase
-        icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/auto-fit-rotamer.svg`} alt='Auto-Fit rotamer' />}
+        icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/pixmaps/auto-fit-rotamer.svg`} alt='Auto-Fit rotamer' />}
         needsMapData={true}
         toolTipLabel={toolTipLabel}
         cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}

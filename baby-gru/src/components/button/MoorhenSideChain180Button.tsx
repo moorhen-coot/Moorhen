@@ -14,7 +14,7 @@ export const MoorhenSideChain180Button = (props: moorhen.ContextButtonProps) => 
     }
 
     return <MoorhenContextButtonBase
-        icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/side-chain-180.svg`} alt='Rotate Side-chain' />}
+        icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/pixmaps/side-chain-180.svg`} alt='Rotate Side-chain' />}
         toolTipLabel="Rotate side-chain 180 degrees"
         cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}
         {...props}

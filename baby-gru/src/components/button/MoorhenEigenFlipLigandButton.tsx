@@ -27,7 +27,7 @@ export const MoorhenEigenFlipLigandButton = (props: moorhen.ContextButtonProps) 
     }, [shortCuts])
 
     return <MoorhenContextButtonBase
-        icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/spin-view.svg`} alt='Eigen flip' />}
+        icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/pixmaps/spin-view.svg`} alt='Eigen flip' />}
         toolTipLabel={toolTipLabel}
         cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}
         {...props}

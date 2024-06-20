@@ -27,7 +27,7 @@ export const MoorhenAddTerminalResidueButton = (props: moorhen.ContextButtonProp
     }, [shortCuts])
 
     return <MoorhenContextButtonBase
-        icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/add-peptide-1.svg`} alt='Add Residue' />}
+        icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/pixmaps/add-peptide-1.svg`} alt='Add Residue' />}
         needsMapData={true}
         toolTipLabel={toolTip}
         cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}

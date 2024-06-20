@@ -14,7 +14,7 @@ export const MoorhenJedFlipTrueButton = (props: moorhen.ContextButtonProps) => {
     }
 
     return <MoorhenContextButtonBase
-        icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/jed-flip-reverse.svg`} alt='jed-flip-reverse' />}
+        icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/pixmaps/jed-flip-reverse.svg`} alt='jed-flip-reverse' />}
         toolTipLabel="JED Flip: wag the dog"
         cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}
         {...props}

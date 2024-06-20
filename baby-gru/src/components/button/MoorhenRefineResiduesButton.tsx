@@ -35,7 +35,7 @@ export const MoorhenRefineResiduesButton = (props: moorhen.ContextButtonProps) =
     }, [animateRefine, refinementSelection])
     
     return <MoorhenContextButtonBase
-        icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/refine-1.svg`} alt='Refine Residues' />}
+        icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/pixmaps/refine-1.svg`} alt='Refine Residues' />}
         needsMapData={true}
         refineAfterMod={false}
         toolTipLabel={toolTipLabel}

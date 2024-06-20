@@ -58,7 +58,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryPropsType, Error
         if (this.state.hasError) {
             let head = document.head;
             let style: any = document.createElement("link");
-            style.href = `${this.props.urlPrefix}/baby-gru/flatly.css`
+            style.href = `${this.props.urlPrefix}/flatly.css`
             style.rel = "stylesheet";
             style.async = true
             style.type = 'text/css'

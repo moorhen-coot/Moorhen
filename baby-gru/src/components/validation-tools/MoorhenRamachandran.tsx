@@ -329,67 +329,67 @@ export const MoorhenRamachandran = (props: Props) => {
     useEffect(() => {
 
         const imgAll = new window.Image();
-        imgAll.src = `${props.urlPrefix}/baby-gru/pixmaps/rama2_all.png`;
+        imgAll.src = `${props.urlPrefix}/pixmaps/rama2_all.png`;
         imgAll.crossOrigin = "Anonymous";
         imageRefAll.current = imgAll;
 
         const imgGly = new window.Image();
-        imgGly.src = `${props.urlPrefix}/baby-gru/pixmaps/rama2_gly.png`;
+        imgGly.src = `${props.urlPrefix}/pixmaps/rama2_gly.png`;
         imgGly.crossOrigin = "Anonymous";
         imageRefGly.current = imgGly;
 
         const imgPrePro = new window.Image();
-        imgPrePro.src = `${props.urlPrefix}/baby-gru/pixmaps/rama2_pre_pro.png`;
+        imgPrePro.src = `${props.urlPrefix}/pixmaps/rama2_pre_pro.png`;
         imgPrePro.crossOrigin = "Anonymous";
         imageRefPrePro.current = imgPrePro;
 
         const imgPro = new window.Image();
-        imgPro.src = `${props.urlPrefix}/baby-gru/pixmaps/rama2_pro.png`;
+        imgPro.src = `${props.urlPrefix}/pixmaps/rama2_pro.png`;
         imgPro.crossOrigin= "Anonymous";
         imageRefPro.current = imgPro;
 
         const imgIleVal = new window.Image();
-        imgIleVal.src = `${props.urlPrefix}/baby-gru/pixmaps/rama2_ileval.png`;
+        imgIleVal.src = `${props.urlPrefix}/pixmaps/rama2_ileval.png`;
         imgIleVal.crossOrigin = "Anonymous";
         imageRefIleVal.current = imgIleVal;
 
         const imgNonGlyPro = new window.Image();
-        imgNonGlyPro.src = `${props.urlPrefix}/baby-gru/pixmaps/rama2_non_gly_pro.png`;
+        imgNonGlyPro.src = `${props.urlPrefix}/pixmaps/rama2_non_gly_pro.png`;
         imgNonGlyPro.crossOrigin = "Anonymous";
         imageRefNonGlyPro.current = imgNonGlyPro;
 
         const imgNonGlyProIleVal = new window.Image();
-        imgNonGlyProIleVal.src = `${props.urlPrefix}/baby-gru/pixmaps/rama2_non_gly_pro_pre_pro_ileval.png`;
+        imgNonGlyProIleVal.src = `${props.urlPrefix}/pixmaps/rama2_non_gly_pro_pre_pro_ileval.png`;
         imgNonGlyProIleVal.crossOrigin = "Anonymous";
         imageRefNonGlyProIleVal.current = imgNonGlyProIleVal;
 
         const imgGlyNormal = new window.Image();
-        imgGlyNormal.src = `${props.urlPrefix}/baby-gru/pixmaps/rama-plot-gly-normal.png`;
+        imgGlyNormal.src = `${props.urlPrefix}/pixmaps/rama-plot-gly-normal.png`;
         imgGlyNormal.crossOrigin = "Anonymous";
         ramaPlotGlyNormalImageRef.current = imgGlyNormal;
 
         const imgGlyOutlier = new window.Image();
-        imgGlyOutlier.src = `${props.urlPrefix}/baby-gru/pixmaps/rama-plot-gly-outlier.png`;
+        imgGlyOutlier.src = `${props.urlPrefix}/pixmaps/rama-plot-gly-outlier.png`;
         imgGlyOutlier.crossOrigin = "Anonymous";
         ramaPlotGlyOutlierImageRef.current = imgGlyOutlier;
 
         const imgProNormal = new window.Image();
-        imgProNormal.src = `${props.urlPrefix}/baby-gru/pixmaps/rama-plot-pro-normal.png`;
+        imgProNormal.src = `${props.urlPrefix}/pixmaps/rama-plot-pro-normal.png`;
         imgProNormal.crossOrigin = "Anonymous";
         ramaPlotProNormalImageRef.current = imgProNormal;
 
         const imgProOutlier = new window.Image();
-        imgProOutlier.src = `${props.urlPrefix}/baby-gru/pixmaps/rama-plot-pro-outlier.png`;
+        imgProOutlier.src = `${props.urlPrefix}/pixmaps/rama-plot-pro-outlier.png`;
         imgProOutlier.crossOrigin = "Anonymous";
         ramaPlotProOutlierImageRef.current = imgProOutlier;
 
         const imgOtherNormal = new window.Image();
-        imgOtherNormal.src = `${props.urlPrefix}/baby-gru/pixmaps/rama-plot-other-normal.png`;
+        imgOtherNormal.src = `${props.urlPrefix}/pixmaps/rama-plot-other-normal.png`;
         imgOtherNormal.crossOrigin = "Anonymous";
         ramaPlotOtherNormalImageRef.current = imgOtherNormal;
 
         const imgOtherOutlier = new window.Image();
-        imgOtherOutlier.src = `${props.urlPrefix}/baby-gru/pixmaps/rama-plot-other-outlier.png`;
+        imgOtherOutlier.src = `${props.urlPrefix}/pixmaps/rama-plot-other-outlier.png`;
         imgOtherOutlier.crossOrigin = "Anonymous";
         ramaPlotOtherOutlierImageRef.current = imgOtherOutlier;
         

@@ -65,7 +65,7 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.ContextButtonPro
     }
 
     return <MoorhenContextButtonBase
-        icon={<img alt="rotate/translate" className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rtz.svg`} />}
+        icon={<img alt="rotate/translate" className="moorhen-context-button__icon" src={`${props.urlPrefix}/pixmaps/rtz.svg`} />}
         toolTipLabel="Rotate/Translate zone"
         nonCootCommand={nonCootCommand}
         popoverSettings={{

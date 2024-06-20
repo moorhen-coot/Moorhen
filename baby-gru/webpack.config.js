@@ -11,7 +11,7 @@ const paths = {
   dist: path.resolve(__dirname, 'dist'),
   public: path.resolve(__dirname, 'public'),
   publicBabyGru: path.resolve(__dirname, 'public', 'baby-gru'),
-  pixmapsPath: path.resolve(__dirname, 'public', 'baby-gru', 'pixmaps'),
+  pixmapsPath: path.resolve(__dirname, 'pixmaps'),
   monomerLibraryPath: path.resolve(__dirname, 'public', 'baby-gru', 'monomers'),
   minimalMonomerLib: [
     'ALA', 'ASP', 'ASN', 'CYS', 'GLN', 'GLY', 'GLU', 'PHE', 'HIS', 'ILE', 'LYS', 
@@ -72,7 +72,7 @@ module.exports = (env, argv) => {
           ...paths.requiredCootPixmaps.map(pixmap => {
             return {
               from: path.resolve(paths.pixmapsPath, pixmap),
-              to: path.resolve(paths.dist, 'baby-gru', 'pixmaps'),
+              to: path.resolve(paths.dist, 'pixmaps'),
               toType: 'dir',  
             }
           }),

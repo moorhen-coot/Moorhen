@@ -231,7 +231,7 @@ export const MoorhenSharedSessionManager = (props: {
                                 return  <Stack key={item.id} gap={1} direction='horizontal' style={{ justifyContent: 'space-between', width: '100%' }}>
                                             <Stack gap={1} direction='horizontal' style={{display: 'flex'}}>
                                                 <Avatar sx={{ bgcolor: item.hexColor, height: '35px', width: '35px'}} key={item.id}>
-                                                    <img style={{width: '25px', height: '20px'}} className='moorhen-navbar-menu-item-icon' src={`./baby-gru/pixmaps/MoorhenLogo.png`} alt='user' /> 
+                                                    <img style={{width: '25px', height: '20px'}} className='moorhen-navbar-menu-item-icon' src={`./pixmaps/MoorhenLogo.png`} alt='user' /> 
                                                 </Avatar>
                                                 <span>{item.name}</span>
                                             </Stack>

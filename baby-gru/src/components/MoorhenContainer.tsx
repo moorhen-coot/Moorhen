@@ -122,7 +122,7 @@ declare module "notistack" {
  * @property {React.RefObject<moorhen.Molecule[]>} [moleculesRef] - React reference holding a list of loaded MoorhenMolecule instances
  * @property {React.RefObject<moorhen.Map[]>} [mapsRef] - React reference holding a list of loaded MoorhenMap instances
  * @property {string} [urlPrefix='.'] - The root url used to load sources from public folder
- * @property {string} [monomerLibraryPath='./baby-gru/monomers'] - A string with the path to the monomer library, relative to the root of the app
+ * @property {string} [monomerLibraryPath='./monomers'] - A string with the path to the monomer library, relative to the root of the app
  * @property {function} setMoorhenDimensions - Callback executed on window resize. Return type is an array of two numbers [width, height]
  * @property {function} onUserPreferencesChange - Callback executed whenever a user-defined preference changes (key: string, value: any) => void.
  * @property {boolean} [disableFileUploads=false] - Indicates if file uploads should b disabled
@@ -228,7 +228,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     useEffect(() => {
         let head = document.head
         let style: any = document.createElement("link")
-        style.href = `${props.urlPrefix}/baby-gru/moorhen.css`
+        style.href = `${props.urlPrefix}/moorhen.css`
         style.rel = "stylesheet"
         style.async = true
         style.type = 'text/css'
@@ -296,9 +296,9 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         let style: any = document.createElement("link");
 
         if (isDark) {
-            style.href = `${urlPrefix}/baby-gru/darkly.css`
+            style.href = `${urlPrefix}/darkly.css`
         } else {
-            style.href = `${urlPrefix}/baby-gru/flatly.css`
+            style.href = `${urlPrefix}/flatly.css`
         }
         
         style.rel = "stylesheet";
@@ -534,7 +534,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 MoorhenContainer.defaultProps = {
     onUserPreferencesChange: () => {},
     urlPrefix: '.',
-    monomerLibraryPath: './baby-gru/monomers',
+    monomerLibraryPath: './monomers',
     setMoorhenDimensions: null,
     disableFileUploads: false,
     includeNavBarMenuNames: [],

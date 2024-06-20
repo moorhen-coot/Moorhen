@@ -31,7 +31,7 @@ export const MoorhenControlsModal = (props: { urlPrefix: string }) => {
 
     useEffect(() => {
         const fetchSVG = async () => {
-            const response = await fetch(`${props.urlPrefix}/baby-gru/pixmaps/keyboard-blank.svg`)
+            const response = await fetch(`${props.urlPrefix}/pixmaps/keyboard-blank.svg`)
             if (response.ok) {
                 const text = await response.text()
                 setSvgString(text)

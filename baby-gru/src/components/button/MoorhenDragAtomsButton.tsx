@@ -91,7 +91,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
     }, [refinementSelection])
 
     return <MoorhenContextButtonBase
-        icon={<img alt="drag atoms" className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/drag.svg`} />}
+        icon={<img alt="drag atoms" className="moorhen-context-button__icon" src={`${props.urlPrefix}/pixmaps/drag.svg`} />}
         toolTipLabel="Drag atoms"
         refineAfterMod={false}
         needsMapData={true}

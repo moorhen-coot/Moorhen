@@ -34,10 +34,11 @@ export default defineConfig({
         },
         watch: {
             ignored: [
-                '**/public/baby-gru/monomers/**',
-                '**/public/baby-gru/wasm/**',
-                '**/public/baby-gru/pixmaps/**',
-                '**/public/baby-gru/tutorials/**'
+                '**/public/monomers/**',
+                '**/public/**.wasm',
+                '**/public/**.data',
+                '**/public/pixmaps/**',
+                '**/public/tutorials/**'
             ]
         }
     },

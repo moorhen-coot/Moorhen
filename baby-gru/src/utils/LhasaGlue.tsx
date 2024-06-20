@@ -35,7 +35,7 @@ function LhasaWrapper({rdkit_molecule_pickle_map, smiles_callback}: LhasaWrapper
                     show_footer={false}
                     show_top_panel={false}
                     rdkit_molecule_pickle_map={rdkit_molecule_pickle_map}
-                    icons_path_prefix='/baby-gru/pixmaps/lhasa_icons'
+                    icons_path_prefix='/pixmaps/lhasa_icons'
                     name_of_host_program='Moorhen'
                     smiles_callback={smiles_callback}
                 />

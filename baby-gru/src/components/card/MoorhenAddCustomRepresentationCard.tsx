@@ -434,9 +434,9 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                         <option value={'mol-symm'} key={'mol-symm'}>Mol. Symmetry</option>
                     </FormSelect>
                     {(colourMode === 'b-factor' || colourMode === 'b-factor-norm') ?
-                        <img className="colour-rule-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/temperature.svg`} alt='b-factor' style={{ width: '36px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}}/>
+                        <img className="colour-rule-icon" src={`${props.urlPrefix}/pixmaps/temperature.svg`} alt='b-factor' style={{ width: '36px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}}/>
                     : colourMode === "secondary-structure" ?
-                        <img className='colour-rule-icon' src={`${props.urlPrefix}/baby-gru/pixmaps/secondary-structure-grey.svg`} alt='ss2' style={{ width: '36px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}}/>
+                        <img className='colour-rule-icon' src={`${props.urlPrefix}/pixmaps/secondary-structure-grey.svg`} alt='ss2' style={{ width: '36px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}}/>
                     : colourMode === "jones-rainbow" ?
                     <>
                         <div style={{borderColor: 'rgb(255, 0, 0)', borderWidth:'5px', backgroundColor:  'rgb(255, 0, 0)', height:'20px', width:'5px', marginTop: '0.2rem', padding: '0rem'}}/>

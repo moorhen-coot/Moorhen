@@ -21,7 +21,7 @@ export const MoorhenRotamerChangeButton = (props: moorhen.ContextButtonProps) =>
     }
 
     return <MoorhenContextButtonBase
-        icon={<img alt="change rotamer" className="moorhen-context-button__icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rotamers.svg`} />}
+        icon={<img alt="change rotamer" className="moorhen-context-button__icon" src={`${props.urlPrefix}/pixmaps/rotamers.svg`} />}
         toolTipLabel="Change rotamers"
         nonCootCommand={nonCootCommand}
         {...props}
