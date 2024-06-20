@@ -10,9 +10,11 @@ jobs:
     timeout-minutes: 240
     steps:
 
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
         name: Checkout Moorhen
-
+        with:
+          submodules: recursive
+  
       - name: Install dependencies 
         working-directory: /home/runner/work/Moorhen/       
         run: |
