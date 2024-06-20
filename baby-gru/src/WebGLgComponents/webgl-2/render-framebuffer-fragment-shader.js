@@ -17,7 +17,7 @@ var render_framebuffer_fragment_shader_source = `#version 300 es\n
         vec4 focusColor = texture(inFocus, out_TexCoord0);
         vec4 blurColor = texture(blurred, out_TexCoord0);
 
-        float blur = smoothstep ( minDistance , maxDistance , min(position.x*0.75,1.0));
+        float blur = smoothstep ( minDistance , maxDistance , min(position.x,1.0));
 
         if(blur>blurDepth){
             float frac = (blur-blurDepth)/(1.0 - blurDepth);
@@ -26,6 +26,7 @@ var render_framebuffer_fragment_shader_source = `#version 300 es\n
         } else {
             fragColor = focusColor;
         }
+        //fragColor = vec4(position.x,position.x,position.x,1.0);
     }
 `;
 

@@ -58,18 +58,13 @@ var triangle_fragment_shader_source = `#version 300 es\n
     out vec4 fragColor;
 
     float lookup(vec2 offSet){
-      //float xPixelOffset_old = 1.0/800.0;
-      //float yPixelOffset_old = 1.0/800.0;
-      vec4 coord = ShadowCoord + vec4(offSet.x * xPixelOffset * ShadowCoord.w, offSet.y * yPixelOffset * ShadowCoord.w, 0.07, 0.0);
-      if(coord.s>1.0||coord.s<0.0||coord.t>1.0||coord.t<0.0)
-          return 1.0;
-      float shad = texture(ShadowMap, coord.xy ).x;
-      shad = shad/(coord.p/coord.q);
-      if(shad<0.8){
-          shad = 0.0;
-      } else {
-          shad = 1.0;
-      }
+      vec2 resolution;
+      resolution.x = 1.0/xSSAOScaling;
+      resolution.y = 1.0/ySSAOScaling;
+      float shad = 1.0;
+      float bias = 0.005;
+      if(fxaa(ShadowMap, ShadowCoord.xy*resolution, resolution ).x < ShadowCoord.z-bias)
+          shad = 0.2;
       return shad;
     }
 
@@ -86,7 +81,7 @@ var triangle_fragment_shader_source = `#version 300 es\n
           vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*xSSAOScaling);
           float max_depth;
           max_depth = texture(depthPeelSamplers,tex_coord).r;
-          if(gl_FragCoord.z <= max_depth || abs(gl_FragCoord.z - max_depth)<1e-6 ) {
+          if(gl_FragCoord.z <= max_depth || abs(gl_FragCoord.z - max_depth)<1e-6 || gl_FrontFacing!=true ) {
               discard;
           }
       }
@@ -161,6 +156,7 @@ var triangle_fragment_shader_source = `#version 300 es\n
       color.a = vColor.a;
 
       fragColor = mix(color, fogColour, fogFactor );
+
     }
 `;
 

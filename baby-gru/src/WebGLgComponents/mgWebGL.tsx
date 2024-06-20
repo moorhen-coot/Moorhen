@@ -48,6 +48,7 @@ import { thick_lines_vertex_shader_source as thick_lines_vertex_shader_source_we
 import { thick_lines_normal_vertex_shader_source as thick_lines_normal_vertex_shader_source_webgl2 } from './webgl-2/thick-lines-normal-vertex-shader.js';
 import { triangle_fragment_shader_source as triangle_fragment_shader_source_webgl2 } from './webgl-2/triangle-fragment-shader.js';
 import { fxaa_shader_source as fxaa_shader_source_webgl2 } from './webgl-2/fxaa.js';
+import { fxaa_shader_source as fxaa_shader_source_webgl1 } from './webgl-1/fxaa.js';
 import { triangle_vertex_shader_source as triangle_vertex_shader_source_webgl2 } from './webgl-2/triangle-vertex-shader.js';
 import { twod_fragment_shader_source as twod_fragment_shader_source_webgl2 } from './webgl-2/twodshapes-fragment-shader.js';
 import { twod_vertex_shader_source as twod_vertex_shader_source_webgl2 } from './webgl-2/twodshapes-vertex-shader.js';
@@ -2810,7 +2811,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.activeMolecule = null;
         this.draggableMolecule = null;
         this.currentlyDraggedAtom = null;
-        this.fogClipOffset = 50;
+        this.fogClipOffset = 250;
         this.doPerspectiveProjection = false;
 
         this.shinyBack = true;
@@ -3297,7 +3298,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let lines_fragment_shader_source = lines_fragment_shader_source_webgl1;
         let text_instanced_vertex_shader_source = text_instanced_vertex_shader_source_webgl1;
         let lines_vertex_shader_source = lines_vertex_shader_source_webgl1;
-        let perfect_sphere_fragment_shader_source = perfect_sphere_fragment_shader_source_webgl1;
+        let perfect_sphere_fragment_shader_source = perfect_sphere_fragment_shader_source_webgl1+fxaa_shader_source_webgl1;
         let perfect_sphere_outline_fragment_shader_source = perfect_sphere_outline_fragment_shader_source_webgl1;
         let pointspheres_fragment_shader_source = pointspheres_fragment_shader_source_webgl1;
         let pointspheres_vertex_shader_source = pointspheres_vertex_shader_source_webgl1;
@@ -3313,7 +3314,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let circles_vertex_shader_source = circles_vertex_shader_source_webgl1;
         let thick_lines_vertex_shader_source = thick_lines_vertex_shader_source_webgl1;
         let thick_lines_normal_vertex_shader_source = thick_lines_normal_vertex_shader_source_webgl1;
-        let triangle_fragment_shader_source = triangle_fragment_shader_source_webgl1;
+        let triangle_fragment_shader_source = triangle_fragment_shader_source_webgl1+fxaa_shader_source_webgl1;
         let triangle_vertex_shader_source = triangle_vertex_shader_source_webgl1;
         let twod_fragment_shader_source = twod_fragment_shader_source_webgl1;
         let twod_vertex_shader_source = twod_vertex_shader_source_webgl1;
@@ -7482,12 +7483,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         mat4.identity(this.mvMatrix);
 
-        var oldQuat = quat4.clone(this.myQuat);
-        var newQuat = quat4.clone(this.myQuat);
+        const oldQuat = quat4.clone(this.myQuat);
+        const newQuat = quat4.clone(this.myQuat);
 
         if (calculatingShadowMap) {
-            //FIXME - This needs to depend on molecule.
-            var shadowExtent = 170.0; // ??
+
             let min_x =  1e5;
             let max_x = -1e5;
             let min_y =  1e5;
@@ -7496,42 +7496,55 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             let max_z = -1e5;
 
             this.displayBuffers.forEach(buffer => {
-                buffer.atoms.forEach(atom => {
-                    if(atom.x>max_x) max_x = atom.x;
-                    if(atom.x<min_x) min_x = atom.x;
-                    if(atom.y>max_y) max_y = atom.y;
-                    if(atom.y<min_y) min_y = atom.y;
-                    if(atom.z>max_z) max_z = atom.z;
-                    if(atom.z<min_z) min_z = atom.z;
-                })
+                if (buffer.visible) {
+                    buffer.atoms.forEach(atom => {
+                        if(atom.x>max_x) max_x = atom.x;
+                        if(atom.x<min_x) min_x = atom.x;
+                        if(atom.y>max_y) max_y = atom.y;
+                        if(atom.y<min_y) min_y = atom.y;
+                        if(atom.z>max_z) max_z = atom.z;
+                        if(atom.z<min_z) min_z = atom.z;
+                    })
+                }
             })
             let atom_span = Math.sqrt((max_x - min_x) * (max_x - min_x) + (max_y - min_y) * (max_y - min_y) +(max_z - min_z) * (max_z - min_z));
             atom_span = Math.min(1000.0,atom_span);
             this.atom_span = atom_span;
+            const shadowExtent = Math.max(170.0,atom_span); // 170. ??
 
-            //The extent (24) should probably be scaled to viewable area - lets see if we can show that.
-            mat4.ortho(this.pMatrix, -24 * ratio / this.zoom, 24 * ratio / this.zoom, -24 / this.zoom, 24 / this.zoom, 0.1, shadowExtent);//??
-            mat4.translate(this.mvMatrix, this.mvMatrix, [0, 0, -atom_span]);
+            //The extent (atom_span) should probably be scaled to viewable area - lets see if we can calculate that.
+            //But, the angle of the light is important ...
 
-            var rotX = quat4.create();
+            let d = Math.min(48*this.zoom,atom_span)
+
+            let rotX = quat4.create();
             quat4.set(rotX, 0, 0, 0, -1);
-            var zprime = vec3Create([this.light_positions[0], this.light_positions[1], this.light_positions[2]]);
+            const zprime = vec3Create([this.light_positions[0], this.light_positions[1], this.light_positions[2]]);
             NormalizeVec3(zprime);
-            var zorig = vec3Create([0.0, 0.0, 1.0]);
-            var dp = vec3.dot(zprime, zorig);
+            const zorig = vec3Create([0.0, 0.0, 1.0]);
+            const dp = vec3.dot(zprime, zorig);
+            let tanA = 0.0;
             if ((1.0 - dp) > 1e-6) {
-                var axis = vec3.create();
+                const axis = vec3.create();
                 vec3Cross(zprime, zorig, axis);
                 NormalizeVec3(axis);
-                var angle = -Math.acos(dp);
-                var dval3 = Math.cos(angle / 2.0);
-                var dval0 = axis[0] * Math.sin(angle / 2.0);
-                var dval1 = axis[1] * Math.sin(angle / 2.0);
-                var dval2 = axis[2] * Math.sin(angle / 2.0);
+                const angle = -Math.acos(dp);
+                const dval3 = Math.cos(angle / 2.0);
+                const dval0 = axis[0] * Math.sin(angle / 2.0);
+                const dval1 = axis[1] * Math.sin(angle / 2.0);
+                const dval2 = axis[2] * Math.sin(angle / 2.0);
                 rotX = quat4.create();
                 quat4.set(rotX, dval0, dval1, dval2, dval3);
                 quat4.multiply(newQuat, newQuat, rotX);
+                tanA = Math.tan(angle)
             }
+
+            const excess = Math.abs(shadowExtent*tanA);
+            d += excess;
+
+            mat4.ortho(this.pMatrix, -d * ratio, d * ratio, -d, d, 0.1, 1000.);
+            mat4.translate(this.mvMatrix, this.mvMatrix, [0, 0, -atom_span]);
+
             this.gl.disable(this.gl.CULL_FACE);
             this.gl.cullFace(this.gl.FRONT);
         } else {
@@ -7580,7 +7593,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         this.myQuat = quat4.clone(newQuat);
-        var theMatrix = quatToMat4(this.myQuat);
+        const theMatrix = quatToMat4(this.myQuat);
         mat4.multiply(this.mvMatrix, this.mvMatrix, theMatrix);
 
         mat4.identity(this.mvInvMatrix);
@@ -7591,9 +7604,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const invMat = quatToMat4(invQuat);
         this.mvInvMatrix = invMat;
 
-        var right = vec3.create();
+        const right = vec3.create();
         vec3.set(right, 1.0, 0.0, 0.0);
-        var up = vec3.create();
+        const up = vec3.create();
         vec3.set(up, 0.0, 1.0, 0.0);
         vec3.transformMat4(up, up, invMat);
         vec3.transformMat4(right, right, invMat);
@@ -8144,21 +8157,26 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.drawFPSMeter();
         }
 
-        if (this.showAxes) {
-            this.drawAxes(invMat);
+        if(!(this.useOffScreenBuffers&&this.offScreenReady)){
+            if (this.showAxes) {
+                this.drawAxes(invMat);
+            }
         }
 
         if (this.showCrosshairs) {
             this.drawCrosshairs(invMat);
         }
 
-        if (this.showScaleBar) {
-            this.drawScaleBar(invMat);
+        if(!(this.useOffScreenBuffers&&this.offScreenReady)){
+            if (this.showScaleBar) {
+                this.drawScaleBar(invMat);
+            }
         }
 
-        this.drawLineMeasures(invMat);
-
-        this.drawTextOverlays(invMat);
+        if(!(this.useOffScreenBuffers&&this.offScreenReady)){
+            this.drawLineMeasures(invMat);
+            this.drawTextOverlays(invMat);
+        }
 
         if(this.trackMouse&&!this.renderToTexture){
             this.drawMouseTrack();
@@ -8244,7 +8262,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         if(this.useOffScreenBuffers&&this.offScreenReady){
-            this.depthBlur();
+            this.depthBlur(invMat);
         }
 
         if(this.showFPS){
@@ -8270,7 +8288,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
     }
 
-    depthBlur() {
+    depthBlur(invMat) {
 
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
 
@@ -8370,10 +8388,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         const f = -(this.gl_clipPlane0[3]+this.fogClipOffset);
         const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
-        //console.log("In blur",f,b,this.fogClipOffset)
+        //console.log("In blur",f,b,this.blurDepth)
         const absDepth = this.blurDepth * (1000. - -1000.) - 1000.;
         let fracDepth = (absDepth-f)/(b - f);
-        //console.log(this.blurDepth,fracDepth);
+        fracDepth = this.blurDepth * 1000. / (b-f) - f/(b-f) - this.fogClipOffset/(b-f)
+        //console.log(this.blurDepth,fracDepth,b-f,b+f,b,f);
         if(fracDepth > 1.0) fracDepth = 1.0;
         if(fracDepth < 0.0) fracDepth = 0.0;
 
@@ -8501,6 +8520,16 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         } else {
             this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
         }
+
+        if (this.showAxes) {
+            this.drawAxes(invMat)
+        }
+
+        if (this.showScaleBar) {
+            this.drawScaleBar(invMat);
+        }
+        this.drawLineMeasures(invMat);
+        this.drawTextOverlays(invMat);
 
         if(this.renderToTexture) {
             console.log("SCREENSHOT MkII !");
@@ -10984,6 +11013,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         for(let i = 0; i<16; i++)
             this.gl.disableVertexAttribArray(i);
 
+        this.gl.uniform1f(this.shaderProgramThickLines.fog_start, 1000.0);
+        this.gl.uniform1f(this.shaderProgramThickLines.fog_end, 1000.0);
         this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexNormalAttribute);
         this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexPositionAttribute);
         this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexColourAttribute);
@@ -11115,6 +11146,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         for(let i = 0; i<16; i++)
             this.gl.disableVertexAttribArray(i);
 
+        this.gl.uniform1f(this.shaderProgramThickLines.fog_start, 1000.0);
+        this.gl.uniform1f(this.shaderProgramThickLines.fog_end, 1000.0);
         this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexNormalAttribute);
         this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexPositionAttribute);
         this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexColourAttribute);
@@ -11385,11 +11418,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         for(let i = 0; i<16; i++)
             this.gl.disableVertexAttribArray(i);
 
+        this.gl.activeTexture(this.gl.TEXTURE0);
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.textTex);
         this.gl.depthFunc(this.gl.ALWAYS);
-        this.gl.useProgram(this.shaderProgramTextBackground);
-        this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
-        this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
         let axesOffset = vec3.create();
         let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
         //if(this.renderToTexture) ratio = 1.0;
@@ -11543,6 +11574,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         //console.log("thickLines",thickLines);
         this.gl.depthFunc(this.gl.ALWAYS);
 
+        this.gl.uniform4fv(this.shaderProgramThickLines.clipPlane0, [0, 0, -1, 1000]);
+        this.gl.uniform4fv(this.shaderProgramThickLines.clipPlane1, [0, 0, 1, 1000]);
+        this.gl.uniform1f(this.shaderProgramThickLines.fog_start, 1000.0);
+        this.gl.uniform1f(this.shaderProgramThickLines.fog_end, 1000.0);
         this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexNormalAttribute);
         this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexPositionAttribute);
         this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexColourAttribute);
@@ -11576,8 +11611,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.useProgram(this.shaderProgramTextBackground);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
-        this.setMatrixUniforms(this.shaderProgramTextBackground);
-        this.gl.uniformMatrix4fv(this.shaderProgramTextBackground.pMatrixUniform, false, this.pmvMatrix);
         this.gl.uniform3fv(this.shaderProgramTextBackground.screenZ, this.screenZ);
         this.gl.uniform1f(this.shaderProgramTextBackground.pixelZoom, 0.04 * this.zoom);
 
@@ -11587,6 +11620,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
         this.setMatrixUniforms(this.shaderProgramTextBackground);
+        this.gl.uniformMatrix4fv(this.shaderProgramTextBackground.pMatrixUniform, false, pMatrix);
+        this.gl.uniform4fv(this.shaderProgramTextBackground.clipPlane0, [0, 0, -1, 1000]);
+        this.gl.uniform4fv(this.shaderProgramTextBackground.clipPlane1, [0, 0, 1, 1000]);
+        this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
+        this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
 
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextNormalBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]), this.gl.STATIC_DRAW);
