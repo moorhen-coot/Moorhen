@@ -1,15 +1,11 @@
-// Is this import needed here?
-import '../LhasaReact/src/lhasa.d.ts';
 import { LhasaComponent } from '../LhasaReact/src/Lhasa';
 import { useEffect, useState } from 'react';
 
-
-class LhasaWrapperProps {
+export const LhasaWrapper = (props: {
     rdkit_molecule_pickle_map?: Map<string, string>;
     smiles_callback?: (id: string, smiles: string) => void;
-}
+}) => {
 
-function LhasaWrapper({rdkit_molecule_pickle_map, smiles_callback}: LhasaWrapperProps) {
     const [isCootAttached, setCootAttached] = useState(() => { 
         // @ts-ignore
         return window.cootModule !== undefined;
@@ -26,22 +22,15 @@ function LhasaWrapper({rdkit_molecule_pickle_map, smiles_callback}: LhasaWrapper
         };
     },[]);
 
-    return (
-        <>
-            {isCootAttached &&
+    return  isCootAttached ?
                 <LhasaComponent 
                     // @ts-ignore
                     Lhasa={window.cootModule}
                     show_footer={false}
                     show_top_panel={false}
-                    rdkit_molecule_pickle_map={rdkit_molecule_pickle_map}
+                    rdkit_molecule_pickle_map={props.rdkit_molecule_pickle_map}
                     icons_path_prefix='/pixmaps/lhasa_icons'
                     name_of_host_program='Moorhen'
-                    smiles_callback={smiles_callback}
-                />
-            }
-        </>
-    );
+                    smiles_callback={props.smiles_callback}
+                /> : null
 }
-
-export { LhasaWrapper }
