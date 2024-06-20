@@ -33,30 +33,33 @@ const LhasaWrapper = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {
 
+    const inputLigandInfo = useSelector((state: moorhen.State) => state.lhasa.inputLigandInfo)
+
     const [isCootAttached, setCootAttached] = useState(window.cootModule !== undefined)
     
     const [rdkiMoleculePickleMap, setRdkiMoleculePickleMap] = useReducer(rdkitMoleculeReducer, initialRdkitMolecules)
 
-
     useEffect(() => {
-
-        props.commandCentre.current.cootCommand({
-            returnType: 'string',
-            command: "get_rdkit_mol_pickle_base64",
-            commandArgs: [
-                "LZA",
-                -999999
-            ]
-        },false).then((response) => {
-            const pickle = response.data.result.result;
-            setRdkiMoleculePickleMap({
-                type: "add",
-                id: "LZA"+(-999999),
-                value: pickle
+        console.log(inputLigandInfo)
+        if (inputLigandInfo) {
+            console.log(">>>>> OH!")
+            props.commandCentre.current.cootCommand({
+                returnType: 'string',
+                command: "get_rdkit_mol_pickle_base64",
+                commandArgs: [ inputLigandInfo.ligandName, inputLigandInfo.moleculeMolNo ]
+            },false).then((response) => {
+                const pickle = response.data.result.result;
+                setRdkiMoleculePickleMap({
+                    type: "add",
+                    id: `${inputLigandInfo.ligandName}_${inputLigandInfo.moleculeMolNo}`,
+                    value: pickle
+                });
             });
-        });
-
-    }, []);
+        }
+        else {
+            console.log(">>>>> DUH!")
+        }
+    }, [inputLigandInfo]);
 
     const handleCootAttached = useCallback(() => {
         if (window.cootModule !== undefined) {

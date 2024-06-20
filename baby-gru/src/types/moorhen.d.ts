@@ -1060,6 +1060,9 @@ export namespace moorhen {
             animateRefine: boolean;
             refinementSelection: 'SINGLE' | 'TRIPLE' | 'SPHERE';
         };
+        lhasa: {
+            inputLigandInfo: { cid: string; moleculeMolNo: number; ligandName: string; };
+        }
     }
     
     type actionButtonSettings = {

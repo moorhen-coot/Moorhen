@@ -7,6 +7,7 @@ type MoorhenLigandSelectPropsType = {
     width?: string;
     margin?: string;
     label?: string;
+    disabled?: boolean;
     selectedCoordMolNo: number;
     molecules: moorhen.Molecule[];
     onChange?: (arg0: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -34,11 +35,11 @@ export const MoorhenLigandSelect = forwardRef<HTMLSelectElement, MoorhenLigandSe
 
     return <Form.Group style={{ width: props.width, margin: props.margin, height:props.height }}>
         <Form.Label>{props.label}</Form.Label>
-        <FormSelect size="sm" ref={selectRef} defaultValue={''} onChange={handleChange}>
+        <FormSelect size="sm" ref={selectRef} defaultValue={''} onChange={handleChange} disabled={props.disabled}>
             {props.selectedCoordMolNo !== null ? getLigandOptions(props.selectedCoordMolNo) :  null}
         </FormSelect>
     </Form.Group>
 
 })
 
-MoorhenLigandSelect.defaultProps = { height: '4rem', width: '20rem', margin: '0.5rem', selectedCoordMolNo: null, label: "Ligand" }
+MoorhenLigandSelect.defaultProps = { disabled: false, height: '4rem', width: '20rem', margin: '0.5rem', selectedCoordMolNo: null, label: "Ligand" }

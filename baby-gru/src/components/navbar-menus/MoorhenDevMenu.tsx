@@ -5,9 +5,6 @@ import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch } from "react-redux";
 import { setDoOutline, setDoShadow } from "../../store/sceneSettingsSlice";
-import { doDownload } from "../../utils/utils";
-import { showModal } from "../../store/modalsSlice";
-import { modalKeys } from "../../utils/enums";
 import { useSnackbar } from "notistack";
 
 export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
@@ -35,11 +32,7 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
         })
     }
 
-       
     return <>
-                    <MenuItem onClick={() => dispatch(showModal(modalKeys.LHASA))}>
-                        Open Lhasa...
-                    </MenuItem>
                     <MenuItem onClick={tomogramTest}>
                         Tomogram...
                     </MenuItem>

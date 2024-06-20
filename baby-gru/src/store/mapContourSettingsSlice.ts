@@ -27,7 +27,7 @@ export const mapContourSettingsSlice = createSlice({
     setReContourMapOnlyOnMouseUp: (state, action: {payload: boolean, type: string}) => {
       state = { ...state, reContourMapOnlyOnMouseUp: action.payload }
       return state
-  },
+    },
     showMap: (state, action: {payload: moorhen.Map, type: string}) => {
         if (!state.visibleMaps.includes(action.payload.molNo)) state = { ...state, visibleMaps: [...state.visibleMaps, action.payload.molNo] }
         return state

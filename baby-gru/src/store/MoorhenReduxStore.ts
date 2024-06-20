@@ -14,6 +14,7 @@ import mapContourSettingsReducer from './mapContourSettingsSlice'
 import moleculeMapUpdateReducer from './moleculeMapUpdateSlice'
 import sharedSessionReducer from './sharedSessionSlice'
 import refinementSettingsReducer from './refinementSettingsSlice'
+import lhasaReducer from './lhasaSlice'
 
 export default configureStore({
     reducer: {
@@ -32,6 +33,7 @@ export default configureStore({
         moleculeMapUpdate: moleculeMapUpdateReducer,
         sharedSession: sharedSessionReducer,
         refinementSettings: refinementSettingsReducer,
+        lhasa: lhasaReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

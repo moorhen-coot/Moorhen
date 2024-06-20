@@ -8,6 +8,7 @@ type MoorhenMoleculeSelectPropsType = {
     margin?: string;
     allowAny?: boolean;
     label?: string;
+    disabled?: boolean;
     molecules: moorhen.Molecule[];
     onChange?: (arg0: React.ChangeEvent<HTMLSelectElement>) => void;
     filterFunction?: (arg0: moorhen.Molecule) => boolean;
@@ -62,7 +63,7 @@ export const MoorhenMoleculeSelect = forwardRef<HTMLSelectElement, MoorhenMolecu
 
     return <Form.Group style={{ width: props.width, margin: props.margin, height:props.height }}>
         <Form.Label>{props.label}</Form.Label>
-        <FormSelect size="sm" ref={selectRef} defaultValue={-999999} onChange={(evt) => {
+        <FormSelect size="sm" ref={selectRef} defaultValue={-999999} disabled={props.disabled} onChange={(evt) => {
             if (props.onChange) {
                 props.onChange(evt)
             }
@@ -75,4 +76,4 @@ export const MoorhenMoleculeSelect = forwardRef<HTMLSelectElement, MoorhenMolecu
     </Form.Group>
 })
 
-MoorhenMoleculeSelect.defaultProps = { height: '4rem', width: '20rem', allowAny: false, label: "Molecule", margin: '0.5rem', filterFunction: () => true }
+MoorhenMoleculeSelect.defaultProps = { disabled: false, height: '4rem', width: '20rem', allowAny: false, label: "Molecule", margin: '0.5rem', filterFunction: () => true }
