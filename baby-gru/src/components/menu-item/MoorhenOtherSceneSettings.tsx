@@ -2,11 +2,11 @@ import { Form, InputGroup } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { useDispatch, useSelector } from "react-redux"
 import { moorhen } from "../../types/moorhen"
-import { setDoPerspectiveProjection, setDoSpin, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawInteractions, setDrawMissingLoops, setDrawScaleBar } from "../../store/sceneSettingsSlice"
+import { setDoPerspectiveProjection, setDoSpin, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDrawScaleBar } from "../../store/sceneSettingsSlice"
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice"
 
 
-export const MoorhenOtherSceneSettings = (props) => {
+export const MoorhenOtherSceneSettings = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> }) => {
     
     const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering)
     const drawScaleBar = useSelector((state: moorhen.State) => state.sceneSettings.drawScaleBar)
@@ -14,7 +14,6 @@ export const MoorhenOtherSceneSettings = (props) => {
     const drawFPS = useSelector((state: moorhen.State) => state.sceneSettings.drawFPS)
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops)
     const drawAxes = useSelector((state: moorhen.State) => state.sceneSettings.drawAxes)
-    const drawInteractions = useSelector((state: moorhen.State) => state.sceneSettings.drawInteractions)
     const doPerspectiveProjection = useSelector((state: moorhen.State) => state.sceneSettings.doPerspectiveProjection)
     const doSpin = useSelector((state: moorhen.State) => state.sceneSettings.doSpin)
     
@@ -67,13 +66,6 @@ export const MoorhenOtherSceneSettings = (props) => {
                 checked={drawMissingLoops}
                 onChange={() => {dispatch( setDrawMissingLoops(!drawMissingLoops) )}}
                 label="Show missing loops"/>
-        </InputGroup>
-        <InputGroup className='moorhen-input-group-check'>
-            <Form.Check 
-                type="switch"
-                checked={drawInteractions}
-                onChange={() => {dispatch( setDrawInteractions(!drawInteractions) )}}
-                label="Show environment distances"/>
         </InputGroup>
         <InputGroup className='moorhen-input-group-check'>
             <Form.Check 

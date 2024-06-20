@@ -1364,12 +1364,19 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     /**
      * Draw enviroment distances for a given residue
-     * @param {string} selectionCid - The CID selection to draw the environment
+     * @param {string} [selectionCid=undefined] - The CID selection to draw the environment. If undefined then it will automatically determine the closest CID to the screen center.
      */
-    async drawEnvironment(selectionCid: string): Promise<void> {
+    async drawEnvironment(selectionCid?: string): Promise<void> {
         if (typeof selectionCid === 'string') {
             this.environmentRepresentation.cid = selectionCid
             await this.environmentRepresentation.redraw()
+        } else {
+            const [molecule, cid] = await getCentreAtom([this], this.commandCentre, this.glRef)
+            this.clearBuffersOfStyle('environment')
+            if (molecule?.molNo === this.molNo && cid) {
+                this.environmentRepresentation.cid = cid
+                await this.environmentRepresentation.redraw()
+            }
         }
     }
 

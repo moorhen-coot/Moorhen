@@ -8,7 +8,6 @@ const initialState = {
     drawMissingLoops: null,
     defaultBondSmoothness: null,
     drawAxes: null,
-    drawInteractions: null,
     doSSAO: null,
     doEdgeDetect: null,
     edgeDetectDepthThreshold: null,
@@ -60,9 +59,6 @@ export const sceneSettingsSlice = createSlice({
     },
     setDrawAxes: (state, action: {payload: boolean, type: string}) => {
         return {...state, drawAxes: action.payload}
-    },
-    setDrawInteractions: (state, action: {payload: boolean, type: string}) => {
-        return {...state, drawInteractions: action.payload}
     },
     setDoSSAO: (state, action: {payload: boolean, type: string}) => {
         return {...state, doSSAO: action.payload}
@@ -134,11 +130,10 @@ export const sceneSettingsSlice = createSlice({
 
 export const {
     setDefaultBackgroundColor, setDrawCrosshairs, setDrawScaleBar, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
-    setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap,  
-    setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius,
-    setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setBackgroundColor,
-    setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setEdgeDetectNormalScale,
-    resetSceneSettings
+    setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap, resetSceneSettings, setEdgeDetectNormalScale,
+    setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius, setBackgroundColor,
+    setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setEdgeDetectDepthScale, 
+    setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold
 } = sceneSettingsSlice.actions
 
 export default sceneSettingsSlice.reducer

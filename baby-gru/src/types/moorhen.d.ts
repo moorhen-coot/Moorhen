@@ -222,7 +222,7 @@ export namespace moorhen {
         delete(popBackImol?: boolean): Promise<WorkerResponse>;
         fetchDefaultColourRules(): Promise<void>;
         fetchIfDirtyAndDraw(arg0: string): Promise<void>;
-        drawEnvironment: (cid: string) => Promise<void>;
+        drawEnvironment: (cid?: string) => Promise<void>;
         centreOn: (selectionCid?: string, animate?: boolean, setZoom?: boolean) => Promise<void>;
         drawHover: (cid: string) => Promise<void>;
         drawResidueSelection: (cid: string) => Promise<void>;
@@ -832,7 +832,6 @@ export namespace moorhen {
         drawAxes: boolean; 
         drawFPS: boolean; 
         drawMissingLoops: boolean; 
-        drawInteractions: boolean; 
         doPerspectiveProjection: boolean; 
         useOffScreenBuffers: boolean; 
         depthBlurRadius: number; 
@@ -966,7 +965,6 @@ export namespace moorhen {
             drawAxes: boolean; 
             drawFPS: boolean; 
             drawMissingLoops: boolean; 
-            drawInteractions: boolean; 
             doPerspectiveProjection: boolean; 
             useOffScreenBuffers: boolean; 
             depthBlurRadius: number; 

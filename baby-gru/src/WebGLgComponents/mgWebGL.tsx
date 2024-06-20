@@ -2184,8 +2184,6 @@ interface MGWebGLPropsInterface {
                     showAxes : boolean | null;
                     showFPS : boolean | null;
                     mapLineWidth : number;
-                    drawMissingLoops :  boolean | null;
-                    drawInteractions :  boolean | null;
                     width? : number;
                     height? : number;
 }

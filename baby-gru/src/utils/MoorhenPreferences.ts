@@ -32,7 +32,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
     }
 
     static defaultPreferencesValues: moorhen.PreferencesValues = {
-        version: 'v39',
+        version: 'v40',
         reContourMapOnlyOnMouseUp: false,
         transparentModalsOnMouseOut: false,
         defaultBackgroundColor: [1, 1, 1, 1],
@@ -46,7 +46,6 @@ export class MoorhenPreferences implements moorhen.Preferences {
         drawAxes: false,
         drawFPS: false,
         drawMissingLoops: true,
-        drawInteractions: false,
         doPerspectiveProjection: false,
         useOffScreenBuffers: false,
         defaultMapSamplingRate: 1.8,

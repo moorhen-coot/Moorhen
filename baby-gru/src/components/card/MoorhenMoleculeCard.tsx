@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback, useImperativeHandle, forwardRef, useMemo } from 'react';
 import { Card, Row, Col, Stack, Button, Spinner } from "react-bootstrap";
-import { Accordion, AccordionDetails, AccordionSummary, Backdrop, Box, CircularProgress, LinearProgress } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Box, CircularProgress, LinearProgress } from '@mui/material';
 import { convertRemToPx, convertViewtoPx, getCentreAtom } from '../../utils/utils';
 import { representationLabelMapping } from '../../utils/enums';
 import { isDarkBackground } from '../../WebGLgComponents/mgWebGL';
@@ -22,7 +22,7 @@ import { MoorhenHeaderInfoCard } from './MoorhenHeaderInfoCard';
 import { MoorhenCarbohydrateList } from "../list/MoorhenCarbohydrateList";
 import { MoorhenColourRule } from '../../utils/MoorhenColourRule';
 
-const allRepresentations: moorhen.RepresentationStyles[] = [ 'CBs', 'adaptativeBonds', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks', 'restraints' ]
+const allRepresentations: moorhen.RepresentationStyles[] = [ 'environment', 'CBs', 'adaptativeBonds', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks', 'restraints' ]
 
 interface MoorhenMoleculeCardPropsInterface extends moorhen.CollectedProps {
     dropdownId: number;
@@ -55,7 +55,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const userPreferencesMounted = useSelector((state: moorhen.State) => state.generalStates.userPreferencesMounted)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const isVisible = useSelector((state: moorhen.State) => state.molecules.visibleMolecules.includes(props.molecule.molNo))
-    const drawInteractions = useSelector((state: moorhen.State) => state.sceneSettings.drawInteractions)
+    const drawInteractions = useSelector((state: moorhen.State) => state.molecules.generalRepresentations.some(item => item.parentMolecule?.molNo === props.molecule.molNo && item.style === "environment" && !item.isCustom))
     const GLLabelsFontFamily = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontFamily)
     const GLLabelsFontSize = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontSize)
     const customRepresentationsString = useSelector((state: moorhen.State) => {
@@ -277,10 +277,6 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
         }
 
     }, [backgroundColor, generalRepresentationString]);
-
-    useEffect(() => {
-        redrawEnvironment()
-    }, [drawInteractions])
 
     useEffect(() => {
         props.glRef.current.setTextFont(GLLabelsFontFamily, GLLabelsFontSize)
@@ -791,6 +787,11 @@ const RepresentationCheckbox = (props: {
                 props.molecule.setDrawAdaptativeBonds(!showState).then(_ => {
                     dispatch( showState ? removeGeneralRepresentation(props.molecule.adaptativeBondsRepresentation) : addGeneralRepresentation(props.molecule.adaptativeBondsRepresentation) )
                     setBusyDrawingRepresentation(false)    
+                })
+            } else if (props.style === 'environment') {
+                props.molecule.drawEnvironment().then(_ => {
+                    dispatch( showState ? removeGeneralRepresentation(props.molecule.environmentRepresentation) : addGeneralRepresentation(props.molecule.environmentRepresentation) )
+                    setBusyDrawingRepresentation(false)
                 })
             } else if (showState) {
                 const representation = props.molecule.hide(props.style)

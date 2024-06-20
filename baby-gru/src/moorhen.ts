@@ -16,10 +16,10 @@ import { MoorhenSlider } from "./components/misc/MoorhenSlider";
 import { MoorhenFetchOnlineSourcesForm } from "./components/form/MoorhenFetchOnlineSourcesForm";
 import MoorhenReduxStore from "./store/MoorhenReduxStore";
 import { setDefaultBackgroundColor, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
-    setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap,  
-    setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius,
-    setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setBackgroundColor, setDrawScaleBar,
-    setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setEdgeDetectNormalScale, resetSceneSettings
+    setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap, setEdgeDetectNormalScale, resetSceneSettings,
+    setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius, setDrawScaleBar,
+    setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setBackgroundColor, 
+    setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale
 } from './store/sceneSettingsSlice';
 import { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold, resetBackupSettings } from './store/backupSettingsSlice';
 import { 
@@ -62,7 +62,7 @@ export {
     ErrorBoundary, MoorhenApp, MoorhenContainer, MoorhenTimeCapsule, MoorhenMoleculeSelect, MoorhenMolecule, MoorhenMap,
     MoorhenCommandCentre, MoorhenMapSelect, MoorhenDraggableModalBase, MoorhenStore,
     setDefaultBackgroundColor, setDrawCrosshairs, setDrawScaleBar, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
-    setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap, MoorhenColourRule,
+    setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap, MoorhenColourRule,
     setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius,
     setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, 
     setModificationCountBackupThreshold, setHeight, setWidth, setIsDark, setBackgroundColor, 

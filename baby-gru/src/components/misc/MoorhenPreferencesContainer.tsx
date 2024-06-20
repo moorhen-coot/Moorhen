@@ -10,7 +10,7 @@ import { setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } fro
 import { 
     setClipCap, setDefaultBackgroundColor, setDefaultBondSmoothness, setDepthBlurDepth, setDepthBlurRadius, setDoOutline,
     setDoPerspectiveProjection, setDoSSAO, setDoShadow, setDoShadowDepthDebug, setDrawAxes, setDrawCrosshairs, setUseOffScreenBuffers,
-    setDrawFPS, setDrawInteractions, setDrawMissingLoops, setResetClippingFogging, setSsaoBias, setSsaoRadius, setEdgeDetectNormalScale,
+    setDrawFPS, setDrawMissingLoops, setResetClippingFogging, setSsaoBias, setSsaoRadius, setEdgeDetectNormalScale,
     setDrawScaleBar, setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale
 } from "../../store/sceneSettingsSlice";
 import { setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut } from "../../store/miscAppSettingsSlice";
@@ -68,7 +68,6 @@ export const MoorhenPreferencesContainer = (props: {
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const drawAxes = useSelector((state: moorhen.State) => state.sceneSettings.drawAxes)
-    const drawInteractions = useSelector((state: moorhen.State) => state.sceneSettings.drawInteractions)
     const doSSAO = useSelector((state: moorhen.State) => state.sceneSettings.doSSAO)
     const doEdgeDetect = useSelector((state: moorhen.State) => state.sceneSettings.doEdgeDetect)
     const edgeDetectDepthThreshold = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectDepthThreshold)
@@ -117,34 +116,33 @@ export const MoorhenPreferencesContainer = (props: {
         20: { label: "defaultUpdatingScores", value: defaultUpdatingScores, valueSetter: overwriteMapUpdatingScores},
         21: { label: "maxBackupCount", value: maxBackupCount, valueSetter: setMaxBackupCount},
         22: { label: "modificationCountBackupThreshold", value: modificationCountBackupThreshold, valueSetter: setModificationCountBackupThreshold},
-        23: { label: "drawInteractions", value: drawInteractions, valueSetter: setDrawInteractions},
-        24: { label: "clipCap", value: clipCap, valueSetter: setClipCap},
-        25: { label: "enableTimeCapsule", value: enableTimeCapsule, valueSetter: setEnableTimeCapsule},
-        26: { label: "doPerspectiveProjection", value: doPerspectiveProjection, valueSetter: setDoPerspectiveProjection},
-        27: { label: "useOffScreenBuffers", value: useOffScreenBuffers, valueSetter: setUseOffScreenBuffers},
-        28: { label: "contourWheelSensitivityFactor", value: contourWheelSensitivityFactor, valueSetter: setContourWheelSensitivityFactor},
-        29: { label: "drawAxes", value: drawAxes, valueSetter: setDrawAxes},
-        30: { label: "devMode", value: devMode, valueSetter: setDevMode},
-        31: { label: "doShadowDepthDebug", value: doShadowDepthDebug, valueSetter: setDoShadowDepthDebug},
-        32: { label: "doShadow", value: doShadow, valueSetter: setDoShadow},
-        33: { label: "GLLabelsFontFamily", value: GLLabelsFontFamily, valueSetter: setGLLabelsFontFamily},
-        34: { label: "GLLabelsFontSize", value: GLLabelsFontSize, valueSetter: setGLLabelsFontSize},
-        35: { label: "doOutline", value: doOutline, valueSetter: setDoOutline},
-        36: { label: "depthBlurRadius", value: depthBlurRadius, valueSetter: setDepthBlurRadius},
-        37: { label: "depthBlurDepth", value: depthBlurDepth, valueSetter: setDepthBlurDepth},
-        38: { label: "transparentModalsOnMouseOut", value: transparentModalsOnMouseOut, valueSetter: setTransparentModalsOnMouseOut},
-        39: { label: "defaultMapSamplingRate", value: defaultMapSamplingRate, valueSetter: setDefaultMapSamplingRate},
-        40: { label: "doSSAO", value: doSSAO, valueSetter: setDoSSAO},
-        41: { label: "ssaoRadius", value: ssaoRadius, valueSetter: setSsaoRadius},
-        42: { label: "ssaoBias", value: ssaoBias, valueSetter: setSsaoBias},
-        43: { label: "drawScaleBar", value: drawScaleBar, valueSetter: setDrawScaleBar},
-        44: { label: "animateRefine", value: animateRefine, valueSetter: setAnimateRefine},
-        45: { label: "doEdgeDetect", value: doEdgeDetect, valueSetter: setDoEdgeDetect},
-        46: { label: "edgeDetectDepthThreshold", value: edgeDetectDepthThreshold, valueSetter: setEdgeDetectDepthThreshold},
-        47: { label: "edgeDetectNormalThreshold", value: edgeDetectNormalThreshold, valueSetter: setEdgeDetectNormalThreshold},
-        48: { label: "edgeDetectDepthScale", value: edgeDetectDepthScale, valueSetter: setEdgeDetectDepthScale},
-        49: { label: "edgeDetectNormalScale", value: edgeDetectNormalScale, valueSetter: setEdgeDetectNormalScale},
-        50: { label: "reContourMapOnlyOnMouseUp", value: reContourMapOnlyOnMouseUp, valueSetter: setReContourMapOnlyOnMouseUp},
+        23: { label: "clipCap", value: clipCap, valueSetter: setClipCap},
+        24: { label: "enableTimeCapsule", value: enableTimeCapsule, valueSetter: setEnableTimeCapsule},
+        25: { label: "doPerspectiveProjection", value: doPerspectiveProjection, valueSetter: setDoPerspectiveProjection},
+        26: { label: "useOffScreenBuffers", value: useOffScreenBuffers, valueSetter: setUseOffScreenBuffers},
+        27: { label: "contourWheelSensitivityFactor", value: contourWheelSensitivityFactor, valueSetter: setContourWheelSensitivityFactor},
+        28: { label: "drawAxes", value: drawAxes, valueSetter: setDrawAxes},
+        29: { label: "devMode", value: devMode, valueSetter: setDevMode},
+        30: { label: "doShadowDepthDebug", value: doShadowDepthDebug, valueSetter: setDoShadowDepthDebug},
+        31: { label: "doShadow", value: doShadow, valueSetter: setDoShadow},
+        32: { label: "GLLabelsFontFamily", value: GLLabelsFontFamily, valueSetter: setGLLabelsFontFamily},
+        33: { label: "GLLabelsFontSize", value: GLLabelsFontSize, valueSetter: setGLLabelsFontSize},
+        34: { label: "doOutline", value: doOutline, valueSetter: setDoOutline},
+        35: { label: "depthBlurRadius", value: depthBlurRadius, valueSetter: setDepthBlurRadius},
+        36: { label: "depthBlurDepth", value: depthBlurDepth, valueSetter: setDepthBlurDepth},
+        37: { label: "transparentModalsOnMouseOut", value: transparentModalsOnMouseOut, valueSetter: setTransparentModalsOnMouseOut},
+        38: { label: "defaultMapSamplingRate", value: defaultMapSamplingRate, valueSetter: setDefaultMapSamplingRate},
+        39: { label: "doSSAO", value: doSSAO, valueSetter: setDoSSAO},
+        40: { label: "ssaoRadius", value: ssaoRadius, valueSetter: setSsaoRadius},
+        41: { label: "ssaoBias", value: ssaoBias, valueSetter: setSsaoBias},
+        42: { label: "drawScaleBar", value: drawScaleBar, valueSetter: setDrawScaleBar},
+        43: { label: "animateRefine", value: animateRefine, valueSetter: setAnimateRefine},
+        44: { label: "doEdgeDetect", value: doEdgeDetect, valueSetter: setDoEdgeDetect},
+        45: { label: "edgeDetectDepthThreshold", value: edgeDetectDepthThreshold, valueSetter: setEdgeDetectDepthThreshold},
+        46: { label: "edgeDetectNormalThreshold", value: edgeDetectNormalThreshold, valueSetter: setEdgeDetectNormalThreshold},
+        47: { label: "edgeDetectDepthScale", value: edgeDetectDepthScale, valueSetter: setEdgeDetectDepthScale},
+        48: { label: "edgeDetectNormalScale", value: edgeDetectNormalScale, valueSetter: setEdgeDetectNormalScale},
+        49: { label: "reContourMapOnlyOnMouseUp", value: reContourMapOnlyOnMouseUp, valueSetter: setReContourMapOnlyOnMouseUp},
     }
 
     const restoreDefaults = (preferences: moorhen.Preferences, defaultValues: moorhen.PreferencesValues)=> {
@@ -633,16 +631,6 @@ export const MoorhenPreferencesContainer = (props: {
         localForageInstanceRef.current?.localStorageInstance.setItem('GLLabelsFontSize', GLLabelsFontSize)
         .then(_ => props.onUserPreferencesChange('GLLabelsFontSize', GLLabelsFontSize));
     }, [GLLabelsFontSize]);
-
-    useMemo(() => {
-
-        if (drawInteractions === null) {
-            return
-        }
-       
-        localForageInstanceRef.current?.localStorageInstance.setItem('drawInteractions', drawInteractions)
-        .then(_ => props.onUserPreferencesChange('drawInteractions', drawInteractions));
-    }, [drawInteractions]);
 
     useMemo(() => {
 

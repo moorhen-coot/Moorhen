@@ -5,11 +5,9 @@ import { cidToSpec } from '../../utils/utils';
 import { MoorhenScreenRecorder } from "../../utils/MoorhenScreenRecorder"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { libcootApi } from '../../types/libcoot';
 import { useDispatch, useSelector } from 'react-redux';
 import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
 import { useSnackbar } from 'notistack';
-
 
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
@@ -54,9 +52,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const drawScaleBar = useSelector((state: moorhen.State) => state.sceneSettings.drawScaleBar)
     const drawCrosshairs = useSelector((state: moorhen.State) => state.sceneSettings.drawCrosshairs)
     const drawFPS = useSelector((state: moorhen.State) => state.sceneSettings.drawFPS)
-    const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops)
     const drawAxes = useSelector((state: moorhen.State) => state.sceneSettings.drawAxes)
-    const drawInteractions = useSelector((state: moorhen.State) => state.sceneSettings.drawInteractions)
     const doSSAO = useSelector((state: moorhen.State) => state.sceneSettings.doSSAO)
     const doEdgeDetect = useSelector((state: moorhen.State) => state.sceneSettings.doEdgeDetect)
     const edgeDetectDepthThreshold = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectDepthThreshold)
@@ -384,9 +380,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     showAxes={drawAxes}
                     showFPS={drawFPS}
                     mapLineWidth={innerMapLineWidth}
-                    drawMissingLoops={drawMissingLoops}
-                    reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp}
-                    drawInteractions={drawInteractions} />
+                    reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp}/>
 
                 {showContextMenu &&
                 <MoorhenContextMenu 
