@@ -40,7 +40,8 @@ export const representationLabelMapping = Object.freeze({
     restraints: "Restraints",
     MetaBalls: "MetaBalls",
     adaptativeBonds: "Adapt. Bonds",
-    residue_environment: "Res. Environment"
+    residue_environment: "Res. Environment",
+    environment: 'Env.'
 })
 
 export const COOT_BOND_REPRESENTATIONS = [ 'CBs', 'VdwSpheres', 'CAs', 'ligands' ]

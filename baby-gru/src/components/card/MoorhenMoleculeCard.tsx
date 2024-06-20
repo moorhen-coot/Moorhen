@@ -22,7 +22,7 @@ import { MoorhenHeaderInfoCard } from './MoorhenHeaderInfoCard';
 import { MoorhenCarbohydrateList } from "../list/MoorhenCarbohydrateList";
 import { MoorhenColourRule } from '../../utils/MoorhenColourRule';
 
-const allRepresentations: moorhen.RepresentationStyles[] = [ 'environment', 'CBs', 'adaptativeBonds', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks', 'restraints' ]
+const allRepresentations: moorhen.RepresentationStyles[] = ['CBs', 'adaptativeBonds', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks', 'restraints',  'environment' ]
 
 interface MoorhenMoleculeCardPropsInterface extends moorhen.CollectedProps {
     dropdownId: number;
@@ -775,7 +775,7 @@ const RepresentationCheckbox = (props: {
 
     useEffect(() => {
         setChipStyle({
-            ...getChipStyle(props.molecule.defaultColourRules, showState, isDark, `${convertRemToPx(6.5)}px`),
+            ...getChipStyle(props.molecule.defaultColourRules, showState, isDark, `${convertRemToPx(9.5)}px`),
             opacity: isDisabled ? 0.3 : 1.0
         })
     }, [showState, isDark, isDisabled, props.molecule.defaultColourRules])
