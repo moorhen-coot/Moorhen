@@ -5,6 +5,7 @@ import { webGL } from "../../types/mgWebGL";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { useDispatch, useSelector } from 'react-redux';
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
+import { removeGeneralRepresentation } from "../../moorhen";
 
 export const MoorhenClearSelfRestraintsMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -30,6 +31,10 @@ export const MoorhenClearSelfRestraintsMenuItem = (props: {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
         if (selectedMolecule) {
             await selectedMolecule.clearExtraRestraints()
+            const restraintsRepresenation = selectedMolecule.representations.find(representation => representation.style === 'restraints')
+            if (restraintsRepresenation) {
+                dispatch( removeGeneralRepresentation(restraintsRepresenation) )
+            }
             dispatch( triggerUpdate(selectedMolecule.molNo) )
         }
         const restraintsRepresenation = selectedMolecule.representations.find(item => item.style === 'restraints')
