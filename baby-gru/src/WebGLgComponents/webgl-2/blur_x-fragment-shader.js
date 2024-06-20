@@ -39,7 +39,7 @@ void main() {
     for (int i = 0; i < N && i < 4; i++) {
         vec2 tc = out_TexCoord0 + u_direction * float(i - M);
         vec4 position = texture(depth, tc);
-        float blur = smoothstep ( minDistance , maxDistance , min(position.x*0.75,1.0));
+        float blur = smoothstep ( minDistance , maxDistance , min(position.x,1.0));
         if(blur>blurDepth){
             sum += row0[i] * texture(shader0, tc);
         } else {
@@ -49,7 +49,7 @@ void main() {
     for (int i = 4; i < N && i < 8; i++) {
         vec2 tc = out_TexCoord0 + u_direction * float(i - M);
         vec4 position = texture(depth, tc);
-        float blur = smoothstep ( minDistance , maxDistance , min(position.x*0.75,1.0));
+        float blur = smoothstep ( minDistance , maxDistance , min(position.x,1.0));
         if(blur>blurDepth){
             sum += row1[i-4] * texture(shader0, tc);
         } else {
@@ -59,7 +59,7 @@ void main() {
     for (int i = 8; i < N && i < 12; i++) {
         vec2 tc = out_TexCoord0 + u_direction * float(i - M);
         vec4 position = texture(depth, tc);
-        float blur = smoothstep ( minDistance , maxDistance , min(position.x*0.75,1.0));
+        float blur = smoothstep ( minDistance , maxDistance , min(position.x,1.0));
         if(blur>blurDepth){
             sum += row2[i-8] * texture(shader0, tc);
         } else {
@@ -69,7 +69,7 @@ void main() {
     for (int i = 12; i < N && i < 16; i++) {
         vec2 tc = out_TexCoord0 + u_direction * float(i - M);
         vec4 position = texture(depth, tc);
-        float blur = smoothstep ( minDistance , maxDistance , min(position.x*0.75,1.0));
+        float blur = smoothstep ( minDistance , maxDistance , min(position.x,1.0));
         if(blur>blurDepth){
             sum += row3[i-12] * texture(shader0, tc);
         } else {
@@ -79,7 +79,7 @@ void main() {
     for (int i = 16; i < N && i < 20; i++) {
         vec2 tc = out_TexCoord0 + u_direction * float(i - M);
         vec4 position = texture(depth, tc);
-        float blur = smoothstep ( minDistance , maxDistance , min(position.x*0.75,1.0));
+        float blur = smoothstep ( minDistance , maxDistance , min(position.x,1.0));
         if(blur>blurDepth){
             sum += row4[i-16] * texture(shader0, tc);
         } else {
@@ -89,7 +89,7 @@ void main() {
     for (int i = 20; i < N && i < 24; i++) {
         vec2 tc = out_TexCoord0 + u_direction * float(i - M);
         vec4 position = texture(depth, tc);
-        float blur = smoothstep ( minDistance , maxDistance , min(position.x*0.75,1.0));
+        float blur = smoothstep ( minDistance , maxDistance , min(position.x,1.0));
         if(blur>blurDepth){
             sum += row5[i-20] * texture(shader0, tc);
         } else {
@@ -99,7 +99,7 @@ void main() {
     for (int i = 24; i < N && i < 28; i++) {
         vec2 tc = out_TexCoord0 + u_direction * float(i - M);
         vec4 position = texture(depth, tc);
-        float blur = smoothstep ( minDistance , maxDistance , min(position.x*0.75,1.0));
+        float blur = smoothstep ( minDistance , maxDistance , min(position.x,1.0));
         if(blur>blurDepth){
             sum += row6[i-24] * texture(shader0, tc);
         } else {
@@ -109,7 +109,7 @@ void main() {
     for (int i = 28; i < N && i < 32; i++) {
         vec2 tc = out_TexCoord0 + u_direction * float(i - M);
         vec4 position = texture(depth, tc);
-        float blur = smoothstep ( minDistance , maxDistance , min(position.x*0.75,1.0));
+        float blur = smoothstep ( minDistance , maxDistance , min(position.x,1.0));
         if(blur>blurDepth){
             sum += row7[i-28] * texture(shader0, tc);
         } else {
@@ -119,7 +119,7 @@ void main() {
     for (int i = 32; i < N && i < 36; i++) {
         vec2 tc = out_TexCoord0 + u_direction * float(i - M);
         vec4 position = texture(depth, tc);
-        float blur = smoothstep ( minDistance , maxDistance , min(position.x*0.75,1.0));
+        float blur = smoothstep ( minDistance , maxDistance , min(position.x,1.0));
         if(blur>blurDepth){
             sum += row8[i-32] * texture(shader0, tc);
         } else {

@@ -21,12 +21,14 @@ var text_fragment_shader_source = `#version 300 es\n
     out vec4 fragColor;
 
     void main(void) {
+
       if(dot(eyePos, clipPlane0)<0.0){
        discard;
       }
       if(dot(eyePos, clipPlane1)<0.0){
        discard;
       }
+
       float FogFragCoord = abs(eyePos.z/eyePos.w);
       float fogFactor = (fog_end - FogFragCoord)/(fog_end - fog_start);
       fogFactor = 1.0 - clamp(fogFactor,0.0,1.0);

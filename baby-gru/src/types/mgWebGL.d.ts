@@ -127,7 +127,7 @@ export namespace webGL {
         buildBuffers(): void;
         drawScene() : void;
         textureBlur(width: number,height: number,inputTexture: WebGLTexture) : void;
-        depthBlur() : void;
+        depthBlur(invMat) : void;
         appendOtherData(jsondata: any, skipRebuild?: boolean, name?: string) : any;
         setZoom(z: number, drawScene?: boolean);
         setOriginOrientationAndZoomAnimated(o: number[],q: quat4,z: number) : void;

@@ -1,7 +1,11 @@
 var perfect_sphere_fragment_shader_source = `
 #extension GL_OES_element_index : enable
 #extension GL_EXT_frag_depth : enable
+
     precision mediump float;
+
+    vec4 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution);
+
     varying lowp vec4 vColor;
     varying lowp vec3 vNormal;
     varying lowp vec4 eyePos;
@@ -48,16 +52,13 @@ var perfect_sphere_fragment_shader_source = `
     uniform sampler2D depthPeelSamplers;
 
     float lookup(vec2 offSet){
-      vec4 coord = ShadowCoord + vec4(offSet.x * xPixelOffset * ShadowCoord.w, offSet.y * yPixelOffset * ShadowCoord.w, 0.07, 0.0);
-      if(coord.s>1.0||coord.s<0.0||coord.t>1.0||coord.t<0.0)
-          return 1.0;
-      float shad = texture2D(ShadowMap, coord.xy ).x;
-      shad = shad/(coord.p/coord.q);
-      if(shad<0.8){
-          shad = 0.0;
-      } else {
-          shad = 1.0;
-      }
+      vec2 resolution;
+      resolution.x = 1.0/xSSAOScaling;
+      resolution.y = 1.0/ySSAOScaling;
+      float shad = 1.0;
+      float bias = 0.005;
+      if(fxaa(ShadowMap, ShadowCoord.xy*resolution, resolution ).x < ShadowCoord.z-bias)
+          shad = 0.2;
       return shad;
     }
 
