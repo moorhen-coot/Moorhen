@@ -1,10 +1,9 @@
 import { libcootApi } from './libcoot';
 
-// Adapted from auto-generated embind code
-
 export interface DisplayModeValue<T extends number> {
   value: T;
 }
+
 export type DisplayMode = DisplayModeValue<0>|DisplayModeValue<1>|DisplayModeValue<2>;
 
 export interface DrawingCommandVector {

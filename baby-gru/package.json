@@ -62,6 +62,7 @@
       ]
     }
   },
+  "dependencies": {},
   "scripts": {
     "transpile-protobuf": "npx pbjs -t static-module -w es6 -o ./src/protobuf/MoorhenSession.js ./src/protobuf/MoorhenSession.proto",
     "create-version": "npx genversion -e -p ./package.json -d -s ./src/version.js",

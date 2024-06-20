@@ -10,7 +10,6 @@ const item_reducer = (old_map: Map<string, string>, action: any) => {
         old_map.set(action.id, action.value);
     }
     let ret = new Map<string, string>();
-    // JS can't copy a damn map
     old_map.forEach((value,key) => {
         ret.set(key, value);
     })
