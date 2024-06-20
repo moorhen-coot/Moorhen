@@ -68,6 +68,7 @@ ${coot_src}/layla/ligand_editor_canvas/model.cpp
 ${coot_src}/layla/ligand_editor_canvas/tools.cpp
 ${coot_src}/layla/ligand_editor_canvas/render.cpp
 ${coot_src}/layla/utils.cpp
+${coot_src}/layla/qed.cpp
 ${coot_src}/lhasa/lhasa.cpp
 ${coot_src}/lhasa/glog_replacement.cpp
 ${coot_src}/lidia-core/svg-molecule.cc
