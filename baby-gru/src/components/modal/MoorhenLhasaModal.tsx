@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
@@ -6,39 +6,39 @@ import { moorhen } from "../../types/moorhen";
 import { LhasaComponent } from '../../LhasaReact/src/Lhasa';
 
 const LhasaWrapper = (props: {
-    rdkit_molecule_pickle_map?: Map<string, string>;
-    smiles_callback?: (id: string, smiles: string) => void;
+    rdkiMoleculePickleMap?: Map<string, string>;
+    smilesCallback?: (id: string, smiles: string) => void;
 }) => {
 
-    const [isCootAttached, setCootAttached] = useState(() => { 
-        return window.cootModule !== undefined;
-    });
+    const [isCootAttached, setCootAttached] = useState(window.cootModule !== undefined)
     
-    let handler = () => {
-        setCootAttached(true);
-    };
+    const handleCootAttached = useCallback(() => {
+        if (window.cootModule !== undefined) {
+            setCootAttached(true)
+        } else {
+            console.warn("Unable to locate coot module... Cannot start Lhasa.")
+        }
+    }, [])
 
     useEffect(() => {
-        document.addEventListener('cootModuleAttached', handler);
+        document.addEventListener('cootModuleAttached', handleCootAttached)
         return () => {
-            document.removeEventListener('cootModuleAttached', handler);
+            document.removeEventListener('cootModuleAttached', handleCootAttached)
         };
-    },[]);
+    }, [handleCootAttached])
 
     return  isCootAttached ?
                 <LhasaComponent 
                     Lhasa={window.cootModule}
                     show_footer={false}
                     show_top_panel={false}
-                    rdkit_molecule_pickle_map={props.rdkit_molecule_pickle_map}
+                    rdkit_molecule_pickle_map={props.rdkiMoleculePickleMap}
                     icons_path_prefix='/pixmaps/lhasa_icons'
                     name_of_host_program='Moorhen'
-                    smiles_callback={props.smiles_callback}
+                    smiles_callback={props.smilesCallback}
                 /> : null
 }
 
-
-export { LhasaWrapper }
 const item_reducer = (old_map: Map<string, string>, action: any) => {
     if(action.type === 'add') {
         old_map.set(action.id, action.value);
