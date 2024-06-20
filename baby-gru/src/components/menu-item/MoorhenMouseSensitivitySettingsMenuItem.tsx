@@ -26,7 +26,7 @@ export const MoorhenMouseSensitivitySettingsMenuItem = (props: { setPopoverIsSho
     </>
     
     return  <MoorhenBaseMenuItem
-            id='meouse-sens-settings-menu-item'
+            id='mouse-sens-settings-menu-item'
             popoverContent={panelContent}
             menuItemText="Mouse sensitivity..."
             onCompleted={() => {}}
