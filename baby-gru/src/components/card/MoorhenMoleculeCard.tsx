@@ -789,10 +789,16 @@ const RepresentationCheckbox = (props: {
                     setBusyDrawingRepresentation(false)    
                 })
             } else if (props.style === 'environment') {
-                props.molecule.drawEnvironment().then(_ => {
-                    dispatch( showState ? removeGeneralRepresentation(props.molecule.environmentRepresentation) : addGeneralRepresentation(props.molecule.environmentRepresentation) )
+                if (showState) {
+                    props.molecule.environmentRepresentation?.hide()
+                    dispatch(removeGeneralRepresentation(props.molecule.environmentRepresentation))
                     setBusyDrawingRepresentation(false)
-                })
+                } else {
+                    props.molecule.drawEnvironment().then(_ => {
+                        dispatch(addGeneralRepresentation(props.molecule.environmentRepresentation))
+                        setBusyDrawingRepresentation(false)
+                    })    
+                }
             } else if (showState) {
                 const representation = props.molecule.hide(props.style)
                 dispatch(removeGeneralRepresentation(representation))
