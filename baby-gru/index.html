@@ -25,16 +25,30 @@
         print(t) { console.log(["output", t]) },
         printErr(t) { console.log(["output", t]); }
       })
-        .then(function (CCP4Mod) {
-          window.CCP4Module = CCP4Mod;
-        })
-        .catch((e) => {
-          console.log("CCP4 problem :(");
+      .then(function (CCP4Mod) {
+        window.CCP4Module = CCP4Mod;
+      })
+      .catch((e) => {
+        console.log("CCP4 problem :(");
+        console.log(e);
+      });
+      createRSRModule({
+        print(t) { console.log(["output", t]) },
+        printErr(t) { console.log(["output", t]); }
+      })
+      .then((returnedModule) => {
+          window.cootModule = returnedModule;
+          console.log("Coot module attached to the window", window.cootModule);
+          const cootModuleAttachedEvent = new CustomEvent("cootModuleAttached", { })
+          window.dispatchEvent(cootModuleAttachedEvent);
+      })
+      .catch((e) => {
           console.log(e);
-        });
+      });
     }
   </script>
-  <script src="/baby-gru/web_example.js"></script>
+  <script src="/web_example.js"></script>
+  <script src="/moorhen.js"></script>
 
   <title>Moorhen</title>
 </head>

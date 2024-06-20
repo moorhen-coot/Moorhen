@@ -18,6 +18,7 @@ import { MoorhenFillPartialResiduesModal } from '../modal/MoorhenFillPartialResi
 import { MoorhenSceneSettingsModal } from '../modal/MoorhenSceneSettingsModal';
 import { MoorhenSliceNDiceModal } from '../modal/MoorhenSliceNDiceModal';
 import { MoorheSuperposeStructuresModal } from '../modal/MoorhenSuperposeStructuresModal';
+import { MoorhenLhasaModal } from '../modal/MoorhenLhasaModal';
 import { useSelector } from 'react-redux';
 import { moorhen } from '../../types/moorhen';
 import { modalKeys } from "../../utils/enums";
@@ -41,6 +42,7 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
     const showSliceNDiceModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.SLICE_N_DICE))
     const showSuperposeModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.SUPERPOSE_MODELS))
     const showSceneSettingsModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.SCENE_SETTINGS))
+    const showLhasaModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.LHASA))
 
     return <>
         <MoorhenModelsModal {...props}/>
@@ -117,6 +119,10 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
 
         {showSuperposeModal &&
             <MoorheSuperposeStructuresModal {...props} />
+        }
+
+        {showLhasaModal &&
+            <MoorhenLhasaModal {...props} />
         }
 
         {props.extraDraggableModals && props.extraDraggableModals.map(modal => modal)}

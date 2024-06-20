@@ -35,6 +35,7 @@ import { MoorhenRotamerChangeSnackBar } from './snack-bar/MoorhenRotamerChangeSn
 import { MoorhenScreenshotSnackBar } from './snack-bar/MoorhenScreenshotSnackBar';
 import { MoorhenSideBar } from './snack-bar/MoorhenSideBar';
 
+
 declare module "notistack" {
     interface VariantOverrides {
         goToResidue: {

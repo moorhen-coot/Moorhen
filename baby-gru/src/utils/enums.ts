@@ -19,7 +19,8 @@ export const modalKeys = Object.freeze({
     CARB_VALIDATION: "carb-validation",
     SLICE_N_DICE: "slice-n-dice",
     SUPERPOSE_MODELS: "superpose",
-    SCENE_SETTINGS: "scene-settings"
+    SCENE_SETTINGS: "scene-settings",
+    LHASA: "lhasa"
 })
 
 export const representationLabelMapping = Object.freeze({

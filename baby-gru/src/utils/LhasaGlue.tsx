@@ -1,22 +1,46 @@
-// Import auto-generated type-definitions
+// Is this import needed here?
 import '../LhasaReact/src/lhasa.d.ts';
 import { LhasaComponent } from '../LhasaReact/src/Lhasa';
-import { useSelector } from 'react-redux';
-import { moorhen } from '../types/moorhen.js';
-//import Module from '/baby-gru/moorhen.js?url';
+import { useEffect, useState } from 'react';
 
-function LhasaWrapper() {
-    const cootInitialized = useSelector((state: moorhen.State) => state.generalStates.cootInitialized)
+
+class LhasaWrapperProps {
+    rdkit_molecule_pickle_map?: Map<string, string>;
+    smiles_callback?: (id: string, smiles: string) => void;
+}
+
+function LhasaWrapper({rdkit_molecule_pickle_map, smiles_callback}: LhasaWrapperProps) {
+    const [isCootAttached, setCootAttached] = useState(() => { 
+        // @ts-ignore
+        return window.cootModule !== undefined;
+    });
     
-    if(cootInitialized) {
-        console.log("Blob is: ", window.CCP4Module);
-    }
+    let handler = () => {
+        setCootAttached(true);
+    };
+
+    useEffect(() => {
+        window.addEventListener('cootModuleAttached', handler);
+        return () => {
+            window.removeEventListener('cootModuleAttached', handler);
+        };
+    },[]);
+
     return (
-    <>
-            {cootInitialized &&
-                <LhasaComponent Lhasa={window.CCP4Module} />
+        <>
+            {isCootAttached &&
+                <LhasaComponent 
+                    // @ts-ignore
+                    Lhasa={window.cootModule}
+                    show_footer={false}
+                    show_top_panel={false}
+                    rdkit_molecule_pickle_map={rdkit_molecule_pickle_map}
+                    icons_path_prefix='/baby-gru/pixmaps/lhasa_icons'
+                    name_of_host_program='Moorhen'
+                    smiles_callback={smiles_callback}
+                />
             }
-    </>
+        </>
     );
 }
 
