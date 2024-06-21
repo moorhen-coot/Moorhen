@@ -76,8 +76,8 @@ const LhasaWrapper = (props: {
         };
     }, [handleCootAttached])
 
-    const smilesCallback = useCallback((id: string, smiles: string) => {
-        console.log(`>> Received SMILES back from Lhasa: ID=${id} SMILES=${smiles}`)
+    const smilesCallback = useCallback((internal_lhasa_id: number, id: string, smiles: string) => {
+        console.log(`>> Received SMILES back from Lhasa: InternalLhasaID=${internal_lhasa_id} ID=${id} SMILES=${smiles}`)
     }, [])
 
     return  isCootAttached ?

@@ -307,6 +307,6 @@ interface EmbindModule {
   SmilesMap: {new(): SmilesMap};
   MoleculeIdVector: {new(): MoleculeIdVector};
   Canvas: {new(): Canvas};
-  append_from_smiles(_0: Canvas, _1: string): void;
-  append_from_pickle_base64(_0: Canvas, _1: string): void;
+  append_from_smiles(_0: Canvas, _1: string): number;
+  append_from_pickle_base64(_0: Canvas, _1: string): number;
 }
