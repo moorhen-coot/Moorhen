@@ -62,7 +62,6 @@ ${coot_src}/src/c-interface-image.cc
 ]]
 
 set(coot_exception_srcs
-${coot_src}/layla/qed.cpp
 ${coot_src}/layla/ligand_editor_canvas.cpp
 ${coot_src}/layla/ligand_editor_canvas/core.cpp
 ${coot_src}/layla/ligand_editor_canvas/model.cpp
