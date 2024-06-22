@@ -216,7 +216,8 @@ export type QEDInfo = {
   number_of_alerts: number,
   molecular_weight: number,
   alogp: number,
-  molecular_polar_surface_area: number
+  molecular_polar_surface_area: number,
+  qed_score: number
 };
 
 export interface ImplWidgetCoreData {
