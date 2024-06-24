@@ -132,7 +132,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
 
     const generalRepresentationsList: moorhen.RepresentationStyles[] = useMemo(() => {
         return JSON.parse(generalRepresentationString)
-    }, [customRepresentationsString])
+    }, [generalRepresentationString])
 
     useImperativeHandle(cardRef, () => ({
         forceIsCollapsed: (value: boolean) => { 
