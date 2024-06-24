@@ -1,16 +1,27 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 import { moorhen } from "../../types/moorhen";
 import { LhasaComponent } from '../../LhasaReact/src/Lhasa';
 import { modalKeys } from "../../utils/enums";
+import { libcootApi } from "../../types/libcoot";
+import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
+import { useSnackbar } from "notistack";
+import { addMolecule } from "../../store/moleculesSlice";
+import { webGL } from "../../types/mgWebGL";
+import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 
 const LhasaWrapper = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
+    glRef: React.RefObject<webGL.MGWebGL>;
+    monomerLibraryPath: string;
+    store: ToolkitStore;
 }) => {
 
     const rdkitMoleculePickleList = useSelector((state: moorhen.State) => state.lhasa.rdkitMoleculePickleList)
+    const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
+    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
 
     const [isCootAttached, setCootAttached] = useState(window.cootModule !== undefined)
 
@@ -20,6 +31,10 @@ const LhasaWrapper = (props: {
         rdkitMoleculePickleList.forEach(item => rdkitMolPickleMap.set(item.id, item.pickle))
         return rdkitMolPickleMap
     }, [rdkitMoleculePickleList])
+
+    const dispatch = useDispatch()
+
+    const { enqueueSnackbar } = useSnackbar()
 
     const handleCootAttached = useCallback(() => {
         if (window.cootModule !== undefined) {
@@ -36,9 +51,45 @@ const LhasaWrapper = (props: {
         };
     }, [handleCootAttached])
 
-    const smilesCallback = useCallback((internalLhasaID: number, id: string, smiles: string) => {
-        console.log(`>> Received SMILES back from Lhasa: InternalLhasaID=${internalLhasaID} ID=${id} SMILES=${smiles}`)
-    }, [])
+    const smilesCallback = useCallback(async (internalLhasaID: number, id: string, smiles: string) => {
+        const ligandName = id ?? "LIG"
+        console.log(internalLhasaID, ligandName, smiles)
+        const smilesResult = await props.commandCentre.current.cootCommand({
+            command: 'smiles_to_pdb',
+            commandArgs: [smiles, ligandName, 10, 100],
+            returnType: 'str_str_pair'
+        }, true) as moorhen.WorkerResponse<libcootApi.PairType<string, string>>
+
+        await props.commandCentre.current.cootCommand({
+            returnType: "status",
+            command: 'read_dictionary_string',
+            commandArgs: [smilesResult.data.result.result.second, -999999],
+            changesMolecules: []
+        }, false)
+        
+        const result = await props.commandCentre.current.cootCommand({
+            returnType: 'status',
+            command: 'get_monomer_and_position_at',
+            commandArgs: [ligandName, -999999, ...props.glRef.current.origin.map(coord => -coord)]
+        }, true) as moorhen.WorkerResponse<number> 
+
+        if (result.data.result.status === "Completed") {
+            const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
+            newMolecule.molNo = result.data.result.result
+            newMolecule.name = ligandName
+            newMolecule.setBackgroundColour(backgroundColor)
+            newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
+            newMolecule.coordsFormat = 'mmcif'
+            await Promise.all([
+                newMolecule.fetchDefaultColourRules(),
+                newMolecule.addDict(smilesResult.data.result.result.second)
+            ])
+            await newMolecule.fetchIfDirtyAndDraw("CBs")
+            dispatch( addMolecule(newMolecule) )
+        } else {
+            enqueueSnackbar("Something went wrong...", {variant: "warning"})
+        }
+    }, [props.commandCentre, props.glRef, props.store, props.monomerLibraryPath])
 
     return  isCootAttached ?
                 <LhasaComponent 
@@ -73,6 +124,12 @@ export const MoorhenLhasaModal = (props: moorhen.CollectedProps) => {
                 overflowX='auto'
                 headerTitle='Lhasa'
                 resizeNodeRef={resizeNodeRef}
-                body={ <LhasaWrapper commandCentre={props.commandCentre}/> }
+                body={ 
+                    <LhasaWrapper
+                        commandCentre={props.commandCentre}
+                        glRef={props.glRef}
+                        monomerLibraryPath={props.monomerLibraryPath}
+                        store={props.store}/>
+                }
             />
 }

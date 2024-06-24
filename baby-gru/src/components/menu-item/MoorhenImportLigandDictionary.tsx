@@ -68,7 +68,7 @@ const MoorhenImportLigandDictionary = (props: {
                 command: 'read_dictionary_string',
                 commandArgs: [fileContent, selectedMoleculeIndex],
                 changesMolecules: []
-            }, false),
+            }, false)
             await Promise.all(molecules.map(molecule => {
                 molecule.cacheLigandDict(fileContent)
                 molNosToUpdate.push(molecule.molNo)
