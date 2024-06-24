@@ -11,12 +11,15 @@ import { useSnackbar } from "notistack";
 import { addMolecule } from "../../store/moleculesSlice";
 import { webGL } from "../../types/mgWebGL";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { Backdrop } from "@mui/material";
+import { Spinner, Stack } from "react-bootstrap";
 
 const LhasaWrapper = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     monomerLibraryPath: string;
     store: ToolkitStore;
+    setBusy: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 
     const rdkitMoleculePickleList = useSelector((state: moorhen.State) => state.lhasa.rdkitMoleculePickleList)
@@ -52,6 +55,7 @@ const LhasaWrapper = (props: {
     }, [handleCootAttached])
 
     const smilesCallback = useCallback(async (internalLhasaID: number, id: string, smiles: string) => {
+        props.setBusy(true)
         const ligandName = id ?? "LIG"
         const smilesResult = await props.commandCentre.current.cootCommand({
             command: 'smiles_to_pdb',
@@ -88,6 +92,7 @@ const LhasaWrapper = (props: {
         } else {
             enqueueSnackbar("Something went wrong...", {variant: "warning"})
         }
+        props.setBusy(false)
     }, [props.commandCentre, props.glRef, props.store, props.monomerLibraryPath])
 
     return  isCootAttached ?
@@ -107,6 +112,8 @@ export const MoorhenLhasaModal = (props: moorhen.CollectedProps) => {
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+
+    const [busy, setBusy] = useState<boolean>(false)
 
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.LHASA}
@@ -128,7 +135,16 @@ export const MoorhenLhasaModal = (props: moorhen.CollectedProps) => {
                         commandCentre={props.commandCentre}
                         glRef={props.glRef}
                         monomerLibraryPath={props.monomerLibraryPath}
-                        store={props.store}/>
+                        store={props.store}
+                        setBusy={setBusy}/>
+                }
+                additionalChildren={
+                    <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={busy}>
+                        <Stack gap={2} direction='vertical'style={{justifyContent: 'center', alignItems: 'center'}}>
+                            <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
+                            <span>Please wait...</span>
+                        </Stack>
+                    </Backdrop>
                 }
             />
 }
