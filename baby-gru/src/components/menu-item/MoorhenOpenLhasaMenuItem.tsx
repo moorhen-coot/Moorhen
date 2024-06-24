@@ -40,13 +40,17 @@ export const MoorhenOpenLhasaMenuItem = (props) => {
             command: "get_rdkit_mol_pickle_base64",
             commandArgs: [ resName, molNo ]
         },false) as moorhen.WorkerResponse<string>
-        dispatch(addRdkitMoleculePickle({
-            ligandName: resName,
-            cid: cid,
-            moleculeMolNo: molNo,
-            id: `${resName}_${molNo}`,
-            pickle: result.data.result.result
-        }))
+        if (result.data.result.result) {
+            dispatch(addRdkitMoleculePickle({
+                ligandName: resName,
+                cid: cid,
+                moleculeMolNo: molNo,
+                id: `${resName}_${molNo}`,
+                pickle: result.data.result.result
+            }))    
+        } else {
+            enqueueSnackbar("Error getting monomer. Missing dictionary?", {variant: "warning"})
+        }
     }, [props.commandCentre])
 
     const onCompleted = useCallback(async () => {
