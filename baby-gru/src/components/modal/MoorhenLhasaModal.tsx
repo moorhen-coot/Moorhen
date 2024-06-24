@@ -53,7 +53,6 @@ const LhasaWrapper = (props: {
 
     const smilesCallback = useCallback(async (internalLhasaID: number, id: string, smiles: string) => {
         const ligandName = id ?? "LIG"
-        console.log(internalLhasaID, ligandName, smiles)
         const smilesResult = await props.commandCentre.current.cootCommand({
             command: 'smiles_to_pdb',
             commandArgs: [smiles, ligandName, 10, 100],
