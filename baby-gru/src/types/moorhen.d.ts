@@ -1055,13 +1055,13 @@ export namespace moorhen {
         };
         refinementSettings: {
             useRamaRefinementRestraints: boolean;
-            useTorsionRefinementRestraints: boolean;        
+            useTorsionRefinementRestraints: boolean;
             enableRefineAfterMod: boolean; 
             animateRefine: boolean;
             refinementSelection: 'SINGLE' | 'TRIPLE' | 'SPHERE';
         };
         lhasa: {
-            inputLigandInfo: { cid: string; moleculeMolNo: number; ligandName: string; };
+            rdkitMoleculePickleList: { cid: string; moleculeMolNo: number; ligandName: string; pickle: string; id: string }[];
         }
     }
     

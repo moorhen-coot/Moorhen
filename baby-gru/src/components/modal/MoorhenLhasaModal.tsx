@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
@@ -6,60 +6,20 @@ import { moorhen } from "../../types/moorhen";
 import { LhasaComponent } from '../../LhasaReact/src/Lhasa';
 import { modalKeys } from "../../utils/enums";
 
-type rdkitMoleculesChange = {
-    type: "add";
-    id: string;
-    value: string;
-}
-
-const rdkitMoleculeReducer = (oldMap: Map<string, string>, action: rdkitMoleculesChange) => {
-    const newMap = new Map<string, string>()
-    
-    if (action.type === 'add') {
-        newMap.set(action.id, action.value)
-        oldMap.forEach((value, key) => {
-            newMap.set(key, value);
-        })
-    } else {
-        console.error(`Unknown rdkitMoleculeReducer action type '${action.type}'... Doing nothing.`)
-    }
-
-    return newMap
-}
-
-const initialRdkitMolecules = new Map<string, string>();
-
 const LhasaWrapper = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {
 
-    const inputLigandInfo = useSelector((state: moorhen.State) => state.lhasa.inputLigandInfo)
+    const rdkitMoleculePickleList = useSelector((state: moorhen.State) => state.lhasa.rdkitMoleculePickleList)
 
     const [isCootAttached, setCootAttached] = useState(window.cootModule !== undefined)
-    
-    const [rdkiMoleculePickleMap, setRdkiMoleculePickleMap] = useReducer(rdkitMoleculeReducer, initialRdkitMolecules)
 
-    useEffect(() => {
-        console.log(inputLigandInfo)
-        if (inputLigandInfo) {
-            console.log(">>>>> OH!")
-            props.commandCentre.current.cootCommand({
-                returnType: 'string',
-                command: "get_rdkit_mol_pickle_base64",
-                commandArgs: [ inputLigandInfo.ligandName, inputLigandInfo.moleculeMolNo ]
-            },false).then((response) => {
-                const pickle = response.data.result.result;
-                setRdkiMoleculePickleMap({
-                    type: "add",
-                    id: `${inputLigandInfo.ligandName}_${inputLigandInfo.moleculeMolNo}`,
-                    value: pickle
-                });
-            });
-        }
-        else {
-            console.log(">>>>> DUH!")
-        }
-    }, [inputLigandInfo]);
+    // FIXME: Lhasa should really be able to take the array of objects directly instead of having to do this stupid conversion at every redux update...
+    const rdkiMoleculePickleMap = useMemo(() => {
+        const rdkitMolPickleMap: Map<string, string> = new Map()
+        rdkitMoleculePickleList.forEach(item => rdkitMolPickleMap.set(item.id, item.pickle))
+        return rdkitMolPickleMap
+    }, [rdkitMoleculePickleList])
 
     const handleCootAttached = useCallback(() => {
         if (window.cootModule !== undefined) {
@@ -76,8 +36,8 @@ const LhasaWrapper = (props: {
         };
     }, [handleCootAttached])
 
-    const smilesCallback = useCallback((internal_lhasa_id: number, id: string, smiles: string) => {
-        console.log(`>> Received SMILES back from Lhasa: InternalLhasaID=${internal_lhasa_id} ID=${id} SMILES=${smiles}`)
+    const smilesCallback = useCallback((internalLhasaID: number, id: string, smiles: string) => {
+        console.log(`>> Received SMILES back from Lhasa: InternalLhasaID=${internalLhasaID} ID=${id} SMILES=${smiles}`)
     }, [])
 
     return  isCootAttached ?

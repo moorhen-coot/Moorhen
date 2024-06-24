@@ -1,9 +1,9 @@
 import { createSlice } from '@reduxjs/toolkit'
 
 const initialState = {
-    inputLigandInfo: null
+  rdkitMoleculePickleList: [],
 }
-    
+
 export const lhasaSlice = createSlice({
   name: 'lhasa',
   initialState: initialState,
@@ -11,12 +11,21 @@ export const lhasaSlice = createSlice({
     resetLhasaSettings: (state) => {
         return initialState
     },
-    setLhasaInputLigandInfo: (state, action: {payload: { cid: string; moleculeMolNo: number; ligandName: string }, type: string}) => {
-        return { ...state, inputLigandInfo: action.payload}
+    addRdkitMoleculePickle: (state, action: {payload: { cid: string; moleculeMolNo: number; ligandName: string; pickle: string; id: string }, type: string}) => {
+      return { 
+        ...state,
+        rdkitMoleculePickleList: [ ...state.rdkitMoleculePickleList, action.payload],
+      }
     },
-  },
+    removeRdkitMoleculePickle: (state, action: {payload: string, type: string}) => {
+      return { 
+        ...state,
+        rdkitMoleculePickleList: [ ...state.rdkitMoleculePickleList.filter(item => item.id !== action.payload)],
+      }
+    },
+},
 })
 
-export const { resetLhasaSettings, setLhasaInputLigandInfo } = lhasaSlice.actions
+export const { resetLhasaSettings, addRdkitMoleculePickle, removeRdkitMoleculePickle } = lhasaSlice.actions
 
 export default lhasaSlice.reducer
