@@ -29,13 +29,6 @@ const LhasaWrapper = (props: {
 
     const [isCootAttached, setCootAttached] = useState(window.cootModule !== undefined)
 
-    // FIXME: Lhasa should really be able to take the array of objects directly instead of having to do this stupid conversion at every redux update...
-    const rdkitMoleculePickleMap = useMemo(() => {
-        const rdkitMolPickleMap: Map<string, string> = new Map()
-        rdkitMoleculePickleList.forEach(item => rdkitMolPickleMap.set(item.id, item.pickle))
-        return rdkitMolPickleMap
-    }, [rdkitMoleculePickleList])
-
     const dispatch = useDispatch()
 
     const { enqueueSnackbar } = useSnackbar()
@@ -101,7 +94,7 @@ const LhasaWrapper = (props: {
                     Lhasa={window.cootModule}
                     show_footer={false}
                     show_top_panel={false}
-                    rdkit_molecule_pickle_map={rdkitMoleculePickleMap}
+                    rdkit_molecule_pickle_list={rdkitMoleculePickleList}
                     icons_path_prefix='/pixmaps/lhasa_icons'
                     name_of_host_program='Moorhen'
                     smiles_callback={smilesCallback}
