@@ -13,6 +13,7 @@ import { webGL } from "../../types/mgWebGL";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 import { Backdrop } from "@mui/material";
 import { Spinner, Stack } from "react-bootstrap";
+import { emptyRdkitMoleculePickleList } from "../../store/lhasaSlice";
 
 const LhasaWrapper = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -115,6 +116,12 @@ export const MoorhenLhasaModal = (props: moorhen.CollectedProps) => {
 
     const [busy, setBusy] = useState<boolean>(false)
 
+    const dispatch = useDispatch()
+
+    const handleClose = () => {
+        dispatch(emptyRdkitMoleculePickleList())
+    }
+
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.LHASA}
                 left={width / 6}
@@ -130,6 +137,7 @@ export const MoorhenLhasaModal = (props: moorhen.CollectedProps) => {
                 overflowX='auto'
                 headerTitle='Lhasa'
                 resizeNodeRef={resizeNodeRef}
+                onClose={handleClose}
                 body={ 
                     <LhasaWrapper
                         commandCentre={props.commandCentre}

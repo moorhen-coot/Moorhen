@@ -23,9 +23,15 @@ export const lhasaSlice = createSlice({
         rdkitMoleculePickleList: [ ...state.rdkitMoleculePickleList.filter(item => item.id !== action.payload)],
       }
     },
+    emptyRdkitMoleculePickleList: (state) => {
+      return { 
+        ...state,
+        rdkitMoleculePickleList: [ ],
+      }
+    }
 },
 })
 
-export const { resetLhasaSettings, addRdkitMoleculePickle, removeRdkitMoleculePickle } = lhasaSlice.actions
+export const { resetLhasaSettings, addRdkitMoleculePickle, removeRdkitMoleculePickle, emptyRdkitMoleculePickleList } = lhasaSlice.actions
 
 export default lhasaSlice.reducer
