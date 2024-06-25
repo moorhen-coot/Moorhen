@@ -8393,12 +8393,17 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.uniformMatrix4fv(this.shaderProgramBlurX.pMatrixUniform, false, paintPMatrix);
         this.gl.uniformMatrix4fv(this.shaderProgramBlurX.mvMatrixUniform, false, paintMvMatrix);
 
-        const f = -(this.gl_clipPlane0[3]+this.fogClipOffset);
-        const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
+        let f = -(this.gl_clipPlane0[3]+this.fogClipOffset);
+        let b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
+        if(this.doPerspectiveProjection){
+            f = 100.
+            b = 270.
+        }
         //console.log("In blur",f,b,this.blurDepth)
         const absDepth = this.blurDepth * (1000. - -1000.) - 1000.;
         let fracDepth = (absDepth-f)/(b - f);
-        fracDepth = this.blurDepth * 1000. / (b-f) - f/(b-f) - this.fogClipOffset/(b-f)
+        fracDepth = this.blurDepth * 1000. / (b-f) - f/(b-f) - this.fogClipOffset/(b-f);
+        console.log(fracDepth);
         //console.log(this.blurDepth,fracDepth,b-f,b+f,b,f);
         if(fracDepth > 1.0) fracDepth = 1.0;
         if(fracDepth < 0.0) fracDepth = 0.0;
