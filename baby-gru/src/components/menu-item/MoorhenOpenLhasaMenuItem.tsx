@@ -47,7 +47,7 @@ export const MoorhenOpenLhasaMenuItem = (props) => {
                 moleculeMolNo: molNo,
                 id: `${resName}_${molNo}`,
                 pickle: result.data.result.result
-            }))    
+            }))
         } else {
             enqueueSnackbar("Error getting monomer. Missing dictionary?", {variant: "warning"})
         }

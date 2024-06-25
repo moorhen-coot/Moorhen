@@ -13,6 +13,7 @@ import { webGL } from "../../types/mgWebGL";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 import { Backdrop } from "@mui/material";
 import { Spinner, Stack } from "react-bootstrap";
+import { emptyRdkitMoleculePickleList } from "../../store/lhasaSlice";
 
 const LhasaWrapper = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -27,13 +28,6 @@ const LhasaWrapper = (props: {
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
 
     const [isCootAttached, setCootAttached] = useState(window.cootModule !== undefined)
-
-    // FIXME: Lhasa should really be able to take the array of objects directly instead of having to do this stupid conversion at every redux update...
-    const rdkitMoleculePickleMap = useMemo(() => {
-        const rdkitMolPickleMap: Map<string, string> = new Map()
-        rdkitMoleculePickleList.forEach(item => rdkitMolPickleMap.set(item.id, item.pickle))
-        return rdkitMolPickleMap
-    }, [rdkitMoleculePickleList])
 
     const dispatch = useDispatch()
 
@@ -100,7 +94,7 @@ const LhasaWrapper = (props: {
                     Lhasa={window.cootModule}
                     show_footer={false}
                     show_top_panel={false}
-                    rdkit_molecule_pickle_map={rdkitMoleculePickleMap}
+                    rdkit_molecule_pickle_list={rdkitMoleculePickleList}
                     icons_path_prefix='/pixmaps/lhasa_icons'
                     name_of_host_program='Moorhen'
                     smiles_callback={smilesCallback}
@@ -114,6 +108,12 @@ export const MoorhenLhasaModal = (props: moorhen.CollectedProps) => {
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
     const [busy, setBusy] = useState<boolean>(false)
+
+    const dispatch = useDispatch()
+
+    const handleClose = () => {
+        dispatch(emptyRdkitMoleculePickleList())
+    }
 
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.LHASA}
@@ -130,6 +130,7 @@ export const MoorhenLhasaModal = (props: moorhen.CollectedProps) => {
                 overflowX='auto'
                 headerTitle='Lhasa'
                 resizeNodeRef={resizeNodeRef}
+                onClose={handleClose}
                 body={ 
                     <LhasaWrapper
                         commandCentre={props.commandCentre}
