@@ -7554,11 +7554,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             if(this.renderToTexture){
                 //FIXME - drawingGBuffers stanza?
                 if(this.doPerspectiveProjection){
-                    if(this.gl.viewportWidth > this.gl.viewportHeight){
-                        mat4.perspective(this.pMatrix, 1.0*ratio, 1.0, 0.1, 100.0);
-                    } else {
-                        mat4.perspective(this.pMatrix, 1.0, 1.0, 0.1, 100.0);
-                    }
+                    mat4.perspective(this.pMatrix, 1.0, 1.0, 100., 270.0);
                 } else {
                     const f = this.gl_clipPlane0[3]+this.fogClipOffset;
                     const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
@@ -7572,7 +7568,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 }
             } else {
                 if(this.doPerspectiveProjection){
-                    mat4.perspective(this.pMatrix, 1.0, this.gl.viewportWidth / this.gl.viewportHeight, 0.1, 100.0);
+                    mat4.perspective(this.pMatrix, 1.0, this.gl.viewportWidth / this.gl.viewportHeight, 100., 270.0);
                 } else {
                     if(this.drawingGBuffers){
                         //This should probably be based on min of atom span, fog, clip.
@@ -7635,7 +7631,18 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
         this.gl.uniform1i(this.shaderProgramInstanced.shinyBack, this.shinyBack);
 
-        mat4.scale(this.pMatrix, this.pMatrix, [1. / this.zoom, 1. / this.zoom, 1.0]);
+        if(this.doPerspectiveProjection){
+            //FIXME - What is the justificatio of 5.7?
+            let perspMult = 1.0;
+            if(this.renderToTexture){
+                if(this.gl.viewportWidth > this.gl.viewportHeight){
+                    perspMult = 1.0 / ratio;
+                }
+            }
+            mat4.scale(this.pMatrix, this.pMatrix, [perspMult * 5.7 / this.zoom, perspMult * 5.7 / this.zoom, 1.0]);
+        } else {
+            mat4.scale(this.pMatrix, this.pMatrix, [1. / this.zoom, 1. / this.zoom, 1.0]);
+        }
         mat4.translate(this.mvMatrix, this.mvMatrix, this.origin);
 
         this.pmvMatrix = mat4.create();
