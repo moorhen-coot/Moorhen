@@ -248,10 +248,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     const handleWindowResized = useCallback(() => {
         if (glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setAmbientLightNoUpdate(0.2, 0.2, 0.2)
-            glRef.current.setSpecularLightNoUpdate(0.6, 0.6, 0.6)
-            glRef.current.setDiffuseLight(1., 1., 1.)
-            glRef.current.setLightPositionNoUpdate(10., 10., 60.)
             if (resetClippingFogging) {
                 setClipFogByZoom()
             }
