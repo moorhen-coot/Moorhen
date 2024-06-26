@@ -49,44 +49,64 @@ const LhasaWrapper = (props: {
     }, [handleCootAttached])
 
     const smilesCallback = useCallback(async (internalLhasaID: number, id: string, smiles: string) => {
-        props.setBusy(true)
-        const ligandName = id ?? "LIG"
-        const smilesResult = await props.commandCentre.current.cootCommand({
-            command: 'smiles_to_pdb',
-            commandArgs: [smiles, ligandName, 10, 100],
-            returnType: 'str_str_pair'
-        }, true) as moorhen.WorkerResponse<libcootApi.PairType<string, string>>
+        try {
+            props.setBusy(true)
+            const ligandName = id ?? "LIG"
+            const smilesResult = await props.commandCentre.current.cootCommand({
+                command: 'smiles_to_pdb',
+                commandArgs: [smiles, ligandName, 10, 100],
+                returnType: 'str_str_pair'
+            }, true) as moorhen.WorkerResponse<libcootApi.PairType<string, string>>
+            
+            if (!smilesResult.data.result.result.second) {
+                enqueueSnackbar("Unable to read SMILES...", {variant: "error"})
+                props.setBusy(false)
+                return
+            }
+    
+            const readDictResult = await props.commandCentre.current.cootCommand({
+                returnType: "status",
+                command: 'read_dictionary_string',
+                commandArgs: [smilesResult.data.result.result.second, -999999],
+                changesMolecules: []
+            }, false) as moorhen.WorkerResponse<number>
 
-        await props.commandCentre.current.cootCommand({
-            returnType: "status",
-            command: 'read_dictionary_string',
-            commandArgs: [smilesResult.data.result.result.second, -999999],
-            changesMolecules: []
-        }, false)
-        
-        const result = await props.commandCentre.current.cootCommand({
-            returnType: 'status',
-            command: 'get_monomer_and_position_at',
-            commandArgs: [ligandName, -999999, ...props.glRef.current.origin.map(coord => -coord)]
-        }, true) as moorhen.WorkerResponse<number> 
+            if (readDictResult.data.result.result !== 1) {
+                enqueueSnackbar("Unable to read dictionary...", {variant: "error"})
+                props.setBusy(false)
+                return
+            }
 
-        if (result.data.result.status === "Completed") {
-            const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
-            newMolecule.molNo = result.data.result.result
-            newMolecule.name = ligandName
-            newMolecule.setBackgroundColour(backgroundColor)
-            newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
-            newMolecule.coordsFormat = 'mmcif'
-            await Promise.all([
-                newMolecule.fetchDefaultColourRules(),
-                newMolecule.addDict(smilesResult.data.result.result.second)
-            ])
-            await newMolecule.fetchIfDirtyAndDraw("CBs")
-            dispatch( addMolecule(newMolecule) )
-        } else {
+            const getMonomerResult = await props.commandCentre.current.cootCommand({
+                returnType: 'status',
+                command: 'get_monomer_and_position_at',
+                commandArgs: [ligandName, -999999, ...props.glRef.current.origin.map(coord => -coord)]
+            }, true) as moorhen.WorkerResponse<number> 
+    
+            if (getMonomerResult.data.result.result === -1) {
+                enqueueSnackbar("Unable to get monomer...", {variant: "error"})
+            } else if (getMonomerResult.data.result.status === "Completed") {
+                const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
+                newMolecule.molNo = getMonomerResult.data.result.result
+                newMolecule.name = ligandName
+                newMolecule.setBackgroundColour(backgroundColor)
+                newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
+                newMolecule.coordsFormat = 'mmcif'
+                await Promise.all([
+                    newMolecule.fetchDefaultColourRules(),
+                    newMolecule.addDict(smilesResult.data.result.result.second)
+                ])
+                await newMolecule.fetchIfDirtyAndDraw("CBs")
+                dispatch( addMolecule(newMolecule) )
+            } else {
+                enqueueSnackbar("Something went wrong...", {variant: "warning"})
+            }
+            props.setBusy(false)
+        } catch (err) {
+            console.warn(err)
             enqueueSnackbar("Something went wrong...", {variant: "warning"})
+            props.setBusy(false)
         }
-        props.setBusy(false)
     }, [props.commandCentre, props.glRef, props.store, props.monomerLibraryPath])
 
     return  isCootAttached ?

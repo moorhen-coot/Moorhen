@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef, useMemo } from 'react';
+import { useEffect, useCallback, useRef, useLayoutEffect } from 'react';
 import { Container, Col, Row, Spinner } from 'react-bootstrap';
 import { MoorhenWebMG } from './webMG/MoorhenWebMG';
 import { createLocalStorageInstance, parseAtomInfoLabel } from '../utils/utils';
@@ -225,7 +225,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         includeNavBarMenuNames
     }
     
-    useEffect(() => {
+    useLayoutEffect(() => {
         let head = document.head
         let style: any = document.createElement("link")
         style.href = `${props.urlPrefix}/moorhen.css`
@@ -291,7 +291,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         
     }, [userPreferencesMounted])
 
-    useMemo(() => {
+    useLayoutEffect(() => {
         let head = document.head;
         let style: any = document.createElement("link");
 
@@ -477,9 +477,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
             <span>Starting moorhen...</span>
         </Backdrop>
-        
         <MoorhenNavBar {...collectedProps}/>
-        
     </div>
 
     <MoorhenModalsContainer {...collectedProps}/>
