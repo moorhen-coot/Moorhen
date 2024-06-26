@@ -7539,7 +7539,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 tanA = Math.tan(angle)
             }
 
-            const excess = Math.abs(shadowExtent*tanA);
+            let excess = Math.abs(shadowExtent*tanA);
+            if(this.doPerspectiveProjection){
+                excess += 150; // ?? It works.
+            }
             d += excess;
 
             mat4.ortho(this.pMatrix, -d * ratio, d * ratio, -d, d, 0.1, 1000.);
@@ -7632,7 +7635,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.uniform1i(this.shaderProgramInstanced.shinyBack, this.shinyBack);
 
         if(this.doPerspectiveProjection){
-            //FIXME - What is the justificatio of 5.7?
+            //FIXME - What is the justificatio of 5.7? (Approximately tan(acos(48./270.)), but not quite close enough)....
             let perspMult = 1.0;
             if(this.renderToTexture){
                 if(this.gl.viewportWidth > this.gl.viewportHeight){
