@@ -12,6 +12,27 @@ import { enqueueSnackbar } from "notistack";
 import { useQuery, gql } from "@apollo/client";
 import { Skeleton } from "@mui/material";
 
+const batchPolimerInfoQuery = gql`
+query GetPolimerInfo ($entryIds: [String!]! $entityIds: [String!]!) {
+  entries(entry_ids: $entryIds) {
+    rcsb_entry_info {
+      resolution_combined
+    }
+    rcsb_accession_info {
+      initial_release_date
+    }
+    rcsb_comp_model_provenance {
+      source_db
+      source_url
+    }
+  }
+  polymer_entities (entity_ids: $entityIds) {
+    rcsb_polymer_entity_container_identifiers {
+      auth_asym_ids
+    }
+  }
+}`
+
 const getPolimerInfoQuery = gql`
 query GetPolimerInfo ($entryId: String! $entityId: String!) {
     entry(entry_id: $entryId) {
