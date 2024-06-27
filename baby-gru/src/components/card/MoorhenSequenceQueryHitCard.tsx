@@ -15,23 +15,20 @@ import { Skeleton } from "@mui/material";
 const getPolimerInfoQuery = gql`
 query GetPolimerInfo ($entryId: String! $entityId: String!) {
     entry(entry_id: $entryId) {
-        struct {
-            title
+        entryInfo: rcsb_entry_info {
+            resolution: resolution_combined
         }
-        rcsb_entry_info {
-            resolution_combined
+        accessionInfo: rcsb_accession_info {
+            date: initial_release_date
         }
-        rcsb_accession_info {
-            initial_release_date
-        }
-        rcsb_comp_model_provenance {
-            source_db
-            source_url
+        compModelInfo: rcsb_comp_model_provenance {
+            db: source_db
+            url: source_url
         }
     }
-    polymer_entity(entry_id: $entryId entity_id: $entityId) {
-        rcsb_polymer_entity_container_identifiers {
-            auth_asym_ids
+    entity: polymer_entity(entry_id: $entryId entity_id: $entityId) {
+        entityIds: rcsb_polymer_entity_container_identifiers {
+            authId: auth_asym_ids
         }
     }
 }`
@@ -84,19 +81,19 @@ export const MoorhenQueryHitCard = (props: {
 
     useEffect(() => {
         if (error) {
-            console.warn(error.cause)
+            console.warn(error.message)
             setLabel("Something went wrong... Unable to fetch.")
         } else if (data && source !== 'AFDB') {
-            const chain = data.polymer_entity.rcsb_polymer_entity_container_identifiers.auth_asym_ids[0]
-            const resolution = data.entry.rcsb_entry_info.resolution_combined[0].toFixed(1)
-            const depositionDate = new Date(data.entry.rcsb_accession_info.initial_release_date)
+            const chain = data.entity.entityIds.authId[0]
+            const resolution = data.entry.entryInfo.resolution[0].toFixed(1)
+            const depositionDate = new Date(data.entry.accessionInfo.date)
             const depositionYear = depositionDate.getFullYear()
             setLabel(
                 `${entryId}:${chain} - ${resolution}Å - (${depositionYear})`
             )
         } else if (data) {
-            const sourceDb = data.entry.rcsb_comp_model_provenance.source_db
-            const depositionDate = new Date(data.entry.rcsb_accession_info.initial_release_date)
+            const sourceDb = data.entry.compModelInfo.db
+            const depositionDate = new Date(data.entry.accessionInfo.date)
             const depositionYear = depositionDate.getFullYear()
             setLabel(
                 `${entryId} - ${sourceDb} - (${depositionYear})`
@@ -119,8 +116,8 @@ export const MoorhenQueryHitCard = (props: {
     }, [backgroundColor, defaultBondSmoothness])
 
     const fetchAndSuperpose = useCallback(async () => {
-        const coordUrl = source === "AFDB" ? data.entry.rcsb_comp_model_provenance.source_url : `https://files.rcsb.org/download/${entryId}.pdb`
-        const chainId = data.polymer_entity.rcsb_polymer_entity_container_identifiers.auth_asym_ids[0]
+        const coordUrl = source === "AFDB" ? data.entry.compModelInfo.url : `https://files.rcsb.org/download/${entryId}.pdb`
+        const chainId = data.entity.entityIds.authId[0]
         const newMolecule = await fetchMoleculeFromURL(coordUrl, polimerEntity)
         if (!newMolecule) {
             return
