@@ -106,7 +106,7 @@ const MoorhenQuerySequence = (props: {
                 }],
                 "paginate": {
                     "start": start,
-                    "rows": 10
+                    "rows": 5
                 }
             },
             "return_type": "polymer_entity"
@@ -150,7 +150,7 @@ const MoorhenQuerySequence = (props: {
         const sequence = molecule.sequences.find(sequence => sequence.chain === chainSelectRef.current.value)
         let results: { result_set: { [id: number]: { identifier: string; score: number; } }, total_count: number }
         
-        results = await doPDBQuery(sequence.sequence.map(residue => residue.resCode).join(''), resultsPageNumber * 10, seqIdCutoff / 100, eValCutoff, sourceSelectRef.current.value === 'PDB' ? 'experimental' : 'computational')
+        results = await doPDBQuery(sequence.sequence.map(residue => residue.resCode).join(''), resultsPageNumber * 5, seqIdCutoff / 100, eValCutoff, sourceSelectRef.current.value === 'PDB' ? 'experimental' : 'computational')
         if (!results) {
             setQueryResults(emptyQueryResults)
             setBusy(false)
@@ -200,7 +200,7 @@ const MoorhenQuerySequence = (props: {
                         <Form.Label>Source</Form.Label>
                         <FormSelect size="sm" ref={sourceSelectRef} defaultValue={'PDB'} onChange={handleSourceChange}>
                             <option value='PDB' key='PDB'>PDB</option>
-                            <option value='AFDB' key='AFDB'>AFDB</option>
+                            <option value='AFDB' key='AFDB'>Predicted Models</option>
                         </FormSelect>
                     </Form.Group>
                 </Col>
@@ -246,14 +246,14 @@ const MoorhenQuerySequence = (props: {
         footer={
             <>
             <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
-                {queryResults?.total_count > 0 ? <span>Page {currentResultsPage+1} of {Math.ceil(queryResults.total_count/10)}</span> : null}
+                {queryResults?.total_count > 0 ? <span>Page {currentResultsPage+1} of {Math.ceil(queryResults.total_count/5)}</span> : null}
                 <Button variant='primary' onClick={() =>  queryOnlineServices(cachedSeqIdCutoff.current, cachedEValCutoff.current, 0)}>
                     <FirstPageOutlined/>
                 </Button>
                 <Button variant='primary' disabled={currentResultsPage === 0} onClick={() => queryOnlineServices(cachedSeqIdCutoff.current, cachedEValCutoff.current, currentResultsPage - 1)}>
                     <ArrowBackIosOutlined/>
                 </Button>
-                <Button variant='primary' disabled={currentResultsPage === Math.ceil(queryResults?.total_count/10) - 1} onClick={() => queryOnlineServices(cachedSeqIdCutoff.current, cachedEValCutoff.current, currentResultsPage + 1)}>
+                <Button variant='primary' disabled={currentResultsPage === Math.ceil(queryResults?.total_count/5) - 1} onClick={() => queryOnlineServices(cachedSeqIdCutoff.current, cachedEValCutoff.current, currentResultsPage + 1)}>
                     <ArrowForwardIosOutlined/>
                 </Button>
             </Stack>

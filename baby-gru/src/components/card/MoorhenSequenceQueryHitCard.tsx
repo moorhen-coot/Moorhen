@@ -12,7 +12,8 @@ import { enqueueSnackbar } from "notistack";
 import { useQuery, gql } from "@apollo/client";
 import { Skeleton } from "@mui/material";
 
-const batchPolimerInfoQuery = gql`
+// TODO: We probably want to batch this in the parent component...
+const _batchPolimerInfoQuery = gql`
 query GetPolimerInfo ($entryIds: [String!]! $entityIds: [String!]!) {
   entries(entry_ids: $entryIds) {
     rcsb_entry_info {
