@@ -12,8 +12,33 @@ import { webGL } from "../../types/mgWebGL";
 import { useSelector } from 'react-redux';
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 import { modalKeys } from "../../utils/enums";
-import { ApolloClient, InMemoryCache, ApolloProvider } from "@apollo/client";
+import { ApolloClient, InMemoryCache, ApolloProvider, useLazyQuery } from "@apollo/client";
+import { gql } from '../../utils/__graphql__/gql';
 import { MoorhenQueryHitCard } from "../card/MoorhenSequenceQueryHitCard";
+import { GetPolimerInfoQueryVariables } from "../../utils/__graphql__/graphql";
+
+const GET_POLYMER_INFO = gql(`
+query GetPolimerInfo ($entryIds: [String!]! $entityIds: [String!]!) {
+  entryInfo: entries(entry_ids: $entryIds) {
+    entryId: rcsb_id
+    info: rcsb_entry_info {
+      resolution: resolution_combined
+    }
+    accessionInfo:  rcsb_accession_info {
+      date: initial_release_date
+    }
+    compModelInfo: rcsb_comp_model_provenance {
+      db: source_db
+      url: source_url
+    }
+  }
+  entityInfo: polymer_entities (entity_ids: $entityIds) {
+    entityId: rcsb_id
+    entityIds: rcsb_polymer_entity_container_identifiers {
+      authId: auth_asym_ids
+    }
+  }
+}`)
 
 export const MoorhenQuerySequenceModal = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -32,12 +57,6 @@ export const MoorhenQuerySequenceModal = (props: {
         </ApolloProvider>
 }
 
-type QueryResult =  { result_set: { [id: number]: { identifier: string; score: number; } }, total_count: number } 
-const emptyQueryResults: QueryResult = {
-    total_count: 0,
-    result_set: { }
-}
-
 const MoorhenQuerySequence = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -52,7 +71,7 @@ const MoorhenQuerySequence = (props: {
     const [seqIdCutoff, setSeqIdCutoff] = useState<number>(90)
     const [eValCutoff, setEValCutoff] = useState<number>(0.1)
     const [busy, setBusy] = useState<boolean>(false);
-    const [queryResults, setQueryResults] = useState<QueryResult>(null)
+    const [totalNumberOfHits, setTotalNumberOfHits] = useState<number>(0)
 
     const timerRef = useRef<any>(null);
     const cachedSeqIdCutoff = useRef<number | null>(null);
@@ -65,6 +84,8 @@ const MoorhenQuerySequence = (props: {
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
 
+    const [getPolimerInfo, { loading, error, data }] = useLazyQuery(GET_POLYMER_INFO)
+    
     const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedModel(parseInt(evt.target.value))
         setSelectedChain(chainSelectRef.current.value)
@@ -75,7 +96,7 @@ const MoorhenQuerySequence = (props: {
     }
 
     const handleSourceChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
-        setQueryResults(null)
+        setTotalNumberOfHits(0)
         setSelectedSource(evt.target.value)
     }
 
@@ -106,7 +127,7 @@ const MoorhenQuerySequence = (props: {
                 }],
                 "paginate": {
                     "start": start,
-                    "rows": 5
+                    "rows": 10
                 }
             },
             "return_type": "polymer_entity"
@@ -141,7 +162,7 @@ const MoorhenQuerySequence = (props: {
             // User didn't finish moving the slider...
             return
         }  else if (!moleculeSelectRef.current.value || !chainSelectRef.current.value) {
-            setQueryResults(emptyQueryResults)
+            setTotalNumberOfHits(0)
             return
         }
         
@@ -150,14 +171,29 @@ const MoorhenQuerySequence = (props: {
         const sequence = molecule.sequences.find(sequence => sequence.chain === chainSelectRef.current.value)
         let results: { result_set: { [id: number]: { identifier: string; score: number; } }, total_count: number }
         
-        results = await doPDBQuery(sequence.sequence.map(residue => residue.resCode).join(''), resultsPageNumber * 5, seqIdCutoff / 100, eValCutoff, sourceSelectRef.current.value === 'PDB' ? 'experimental' : 'computational')
+        results = await doPDBQuery(sequence.sequence.map(residue => residue.resCode).join(''), resultsPageNumber * 10, seqIdCutoff / 100, eValCutoff, sourceSelectRef.current.value === 'PDB' ? 'experimental' : 'computational')
         if (!results) {
-            setQueryResults(emptyQueryResults)
+            setTotalNumberOfHits(0)
             setBusy(false)
             return
         }
+
+        let queryInput: GetPolimerInfoQueryVariables
+        if (sourceSelectRef.current.value === "AFDB") {
+            queryInput = { 
+                entryIds: Object.keys(results.result_set).map(key => results.result_set[key].identifier.slice(0, results.result_set[key].identifier.length - 2)),
+                entityIds: Object.keys(results.result_set).map(key => results.result_set[key].identifier) 
+            }
+        } else {
+            queryInput = {
+                entryIds: Object.keys(results.result_set).map(key => results.result_set[key].identifier.slice(0, 4)),
+                entityIds: Object.keys(results.result_set).map(key => results.result_set[key].identifier)
+            }
+        }
+
+        getPolimerInfo({ variables: queryInput })
         setCurrentResultsPage(resultsPageNumber)
-        setQueryResults(results)
+        setTotalNumberOfHits(results.total_count)
         setBusy(false)
     }, [seqIdCutoff, eValCutoff, molecules])
 
@@ -180,7 +216,7 @@ const MoorhenQuerySequence = (props: {
         maxHeight={convertViewtoPx(50, height)}
         maxWidth={convertViewtoPx(50, width)}
         additionalChildren={
-            <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={busy}>
+            <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={busy || loading}>
                 <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
                 <span>Fetching...</span>
             </Backdrop>
@@ -219,18 +255,18 @@ const MoorhenQuerySequence = (props: {
             </Row>
             <hr></hr>
             <Row>
-                {queryResults !== null ?
+                {data ?
                 <>
-                {queryResults.total_count > 0 ? <span>Found {queryResults.total_count} hits</span> : null}
-                {queryResults.total_count > 0 ? 
+                {totalNumberOfHits > 0 ? <span>Found {totalNumberOfHits} hits</span> : null}
+                {totalNumberOfHits > 0 ? 
                     <div style={{height: '100px', width: '100%'}}>
-                    {Object.keys(queryResults.result_set).map(key => {
+                    {data && data.entityInfo.map((entityInfo, idx) => {
                         return <MoorhenQueryHitCard
-                            key={queryResults.result_set[key].identifier}
-                            source={sourceSelectRef.current.value}
-                            polimerEntity={queryResults.result_set[key].identifier}
+                            key={entityInfo.entityId}
                             selectedMolNo={parseInt(moleculeSelectRef.current.value)}
                             selectedChain={chainSelectRef.current.value}
+                            data={data}
+                            idx={idx}
                             {...props} />
                     })}
                     </div>
@@ -246,14 +282,14 @@ const MoorhenQuerySequence = (props: {
         footer={
             <>
             <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
-                {queryResults?.total_count > 0 ? <span>Page {currentResultsPage+1} of {Math.ceil(queryResults.total_count/5)}</span> : null}
+                {totalNumberOfHits > 0 ? <span>Page {currentResultsPage+1} of {Math.ceil(totalNumberOfHits/10)}</span> : null}
                 <Button variant='primary' onClick={() =>  queryOnlineServices(cachedSeqIdCutoff.current, cachedEValCutoff.current, 0)}>
                     <FirstPageOutlined/>
                 </Button>
                 <Button variant='primary' disabled={currentResultsPage === 0} onClick={() => queryOnlineServices(cachedSeqIdCutoff.current, cachedEValCutoff.current, currentResultsPage - 1)}>
                     <ArrowBackIosOutlined/>
                 </Button>
-                <Button variant='primary' disabled={currentResultsPage === Math.ceil(queryResults?.total_count/5) - 1} onClick={() => queryOnlineServices(cachedSeqIdCutoff.current, cachedEValCutoff.current, currentResultsPage + 1)}>
+                <Button variant='primary' disabled={currentResultsPage === Math.ceil(totalNumberOfHits/10) - 1} onClick={() => queryOnlineServices(cachedSeqIdCutoff.current, cachedEValCutoff.current, currentResultsPage + 1)}>
                     <ArrowForwardIosOutlined/>
                 </Button>
             </Stack>
