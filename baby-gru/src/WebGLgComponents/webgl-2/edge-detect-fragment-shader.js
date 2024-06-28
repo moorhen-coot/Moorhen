@@ -15,6 +15,7 @@ uniform float scaleDepth;
 uniform float scaleNormal;
 uniform float xPixelOffset;
 uniform float yPixelOffset;
+uniform float depthFactor;
 
 in mediump mat4 pMatrix;
 in vec2 out_TexCoord0;
@@ -32,11 +33,12 @@ void main() {
     float halfScaleCeilNormal = ceil(scaleNormal * 0.5);
     */
     
-    float depth0 = texture(gPosition, out_TexCoord0 - vec2(xPixelOffset,yPixelOffset)*halfScaleFloorDepth).z;
-    float depth1 = texture(gPosition, out_TexCoord0 + vec2(xPixelOffset,yPixelOffset)*halfScaleCeilDepth).z;
-    float depth2 = texture(gPosition, out_TexCoord0 + vec2( xPixelOffset * halfScaleCeilDepth, -yPixelOffset * halfScaleFloorDepth)).z;
-    float depth3 = texture(gPosition, out_TexCoord0 + vec2(-xPixelOffset * halfScaleFloorDepth, yPixelOffset * halfScaleCeilDepth)).z;
-    float depth4 = texture(gPosition, out_TexCoord0).z;
+
+    float depth0 = depthFactor*texture(gPosition, out_TexCoord0 - vec2(xPixelOffset,yPixelOffset)*halfScaleFloorDepth).z;
+    float depth1 = depthFactor*texture(gPosition, out_TexCoord0 + vec2(xPixelOffset,yPixelOffset)*halfScaleCeilDepth).z;
+    float depth2 = depthFactor*texture(gPosition, out_TexCoord0 + vec2( xPixelOffset * halfScaleCeilDepth, -yPixelOffset * halfScaleFloorDepth)).z;
+    float depth3 = depthFactor*texture(gPosition, out_TexCoord0 + vec2(-xPixelOffset * halfScaleFloorDepth, yPixelOffset * halfScaleCeilDepth)).z;
+    float depth4 = depthFactor*texture(gPosition, out_TexCoord0).z;
 
     vec3 normal0 = normalize(texture(gNormal, out_TexCoord0 - vec2(xPixelOffset,yPixelOffset)*halfScaleFloorNormal)).xyz;
     vec3 normal1 = normalize(texture(gNormal, out_TexCoord0 + vec2(xPixelOffset,yPixelOffset)*halfScaleCeilNormal)).xyz;

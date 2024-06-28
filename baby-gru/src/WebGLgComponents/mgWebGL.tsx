@@ -2113,6 +2113,7 @@ interface ShaderEdgeDetect extends MGWebGLShader {
     scaleNormal: WebGLUniformLocation | null;
     xPixelOffset: WebGLUniformLocation | null;
     yPixelOffset: WebGLUniformLocation | null;
+    depthFactor: WebGLUniformLocation | null;
     zoom: WebGLUniformLocation | null;
 }
 
@@ -4842,6 +4843,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramEdgeDetect.scaleNormal = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "scaleNormal");
         this.shaderProgramEdgeDetect.xPixelOffset = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "xPixelOffset");
         this.shaderProgramEdgeDetect.yPixelOffset = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "yPixelOffset");
+        this.shaderProgramEdgeDetect.depthFactor = this.gl.getUniformLocation(this.shaderProgramEdgeDetect, "depthFactor");
     }
 
     initSSAOShader(vertexShaderSSAO, fragmentShaderSSAO) {
@@ -7553,16 +7555,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         } else {
             this.gl.disable(this.gl.CULL_FACE);
             this.gl.cullFace(this.gl.BACK);
-            //mat4.perspective(45, this.gl.viewportWidth / this.gl.viewportHeight, 0.1, 10000.0, this.pMatrix);
             if(this.renderToTexture){
                 //FIXME - drawingGBuffers stanza?
                 if(this.doPerspectiveProjection){
-                    mat4.perspective(this.pMatrix, 1.0, 1.0, 100., 270.0);
+                    mat4.perspective(this.pMatrix, 1.0, 1.0, 100., 1270.0);
                 } else {
                     const f = this.gl_clipPlane0[3]+this.fogClipOffset;
                     const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
-                    // FIXME - those below are great for SSAO, but bad for depth blur which wants something like:
-                    //         mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.);
                     if(this.gl.viewportWidth > this.gl.viewportHeight){
                         mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, -f, b);
                     } else {
@@ -7571,19 +7570,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 }
             } else {
                 if(this.doPerspectiveProjection){
-                    mat4.perspective(this.pMatrix, 1.0, this.gl.viewportWidth / this.gl.viewportHeight, 100., 270.0);
+                    mat4.perspective(this.pMatrix, 1.0, this.gl.viewportWidth / this.gl.viewportHeight, 100., 1270.0);
                 } else {
-                    if(this.drawingGBuffers){
-                        //This should probably be based on min of atom span, fog, clip.
-                        const f = this.gl_clipPlane0[3]+this.fogClipOffset;
-                        const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
-                        mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, -f, b);
-                    } else {
-                        //mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, -(this.gl_clipPlane0[3]+this.fogClipOffset), 1000.0);
-                        const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
-                        //FIXME This can go -ve, causing reverse fog to be apparent with very large molecules. Boo.
-                        mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, -(this.gl_clipPlane0[3]+this.fogClipOffset), b);
-                    }
+                    const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
+                    const f = this.gl_clipPlane0[3]+this.fogClipOffset;
+                    mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, -f, b);
                 }
             }
 
@@ -7708,6 +7699,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.gl.useProgram(this.shaderProgramInstanced);
         this.gl.enableVertexAttribArray(this.shaderProgramInstanced.vertexNormalAttribute);
+
+        if(this.drawingGBuffers&&this.doPerspectiveProjection){
+            this.gl.disable(this.gl.BLEND);
+        } else {
+            this.gl.enable(this.gl.BLEND);
+        }
 
         if(this.drawingGBuffers){
             this.drawTriangles(calculatingShadowMap, invMat);
@@ -7834,6 +7831,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
             this.gl.uniform1f(this.shaderProgramEdgeDetect.xPixelOffset, 1.0/this.edgeDetectFramebuffer.width/this.zoom/ratio);
             this.gl.uniform1f(this.shaderProgramEdgeDetect.yPixelOffset, 1.0/this.edgeDetectFramebuffer.height/this.zoom/ratio);
+            if(this.doPerspectiveProjection){
+                this.gl.uniform1f(this.shaderProgramEdgeDetect.depthFactor, 1.0/80.0);
+            } else {
+                this.gl.uniform1f(this.shaderProgramEdgeDetect.depthFactor, 1.0);
+            }
 
             this.gl.activeTexture(this.gl.TEXTURE0);
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.gBufferPositionTexture);
@@ -8087,8 +8089,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.gl.uniform1i(shader.peelNumber,-1);
                         })
 
-                // And now accumulate onto one fullscreen quad somehow ...
-                // See /Users/stuart/ccp4mg-ccp4-pyside2-opengl33/vulkan/shaders/shader_dummy2.frag
+                // And now accumulate onto one fullscreen quad
 
                 const theShader = this.shaderProgramDepthPeelAccum;
                 this.gl.useProgram(theShader);
