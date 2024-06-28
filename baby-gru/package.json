@@ -64,13 +64,14 @@
   },
   "dependencies": {},
   "scripts": {
+    "transpile-graphql-codegen": "npx graphql-codegen",
     "transpile-protobuf": "npx pbjs -t static-module -w es6 -o ./src/protobuf/MoorhenSession.js ./src/protobuf/MoorhenSession.proto",
     "create-version": "npx genversion -e -p ./package.json -d -s ./src/version.js",
     "transpile-ts-worker": "npx tsc --module es2015 --lib webworker --skipLibCheck public/CootWorker.ts && sed -i.bak '/export {}/d' public/CootWorker.js && rm public/CootWorker.js.bak",
     "transpile-ts-worker-jest": "npx tsc --module es2015 --lib webworker --skipLibCheck public/CootWorker.ts && sed -i.bak 's/export {}/export { doCootCommand, setModules }/g' public/CootWorker.js && sed -i.bak '/importScripts.*;/d' public/CootWorker.js && sed -i.bak 's/onmessage/function setModules(arg0, arg1) { molecules_container = arg0; cootModule = arg1 }; let postMessage = () => {}; let onmessage/g' public/CootWorker.js && rm public/CootWorker.js.bak",
-    "prestart": "npm run create-version && npm run transpile-ts-worker && npm run transpile-protobuf",
+    "prestart": "npm run create-version && npm run transpile-ts-worker && npm run transpile-protobuf && npm run transpile-graphql-codegen",
     "start": "vite",
-    "prebuild": "npm run create-version && npm run transpile-ts-worker && npm run transpile-protobuf",
+    "prebuild": "npm run create-version && npm run transpile-ts-worker && npm run transpile-protobuf && npm run transpile-graphql-codegen",
     "build": "vite build",
     "build-release": "npm run prebuild && webpack --mode production --devtool inline-source-map",
     "dev": "concurrently -k \"BROWSER=none npm start\" \"npm:electron\"",
@@ -80,8 +81,8 @@
     "make-linux": "npm run build && electron-forge make --platform linux",
     "make-win32": "npm run build && electron-forge make --platform win32",
     "create-docs": "npm run create-version && npx jsdoc -c jsdoc.json",
-    "test": "npm run create-version && npm run transpile-protobuf && npx tsc && npm run transpile-ts-worker-jest && ln -s ./public/moorhen.data ./moorhen.data && ln -s ./public/ ./baby-gru && node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit",
-    "test-react": "npm run create-version && npm run transpile-protobuf && npx tsc && node --trace-warnings --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --forceExit --testPathIgnorePatterns=MoorhenContainer.test.jsx --testPathIgnorePatterns=MoorhenLigandMenu.test.jsx --testPathIgnorePatterns=MoorhenEditMenu.test.jsx --selectProjects react-components"
+    "test": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && npm run transpile-ts-worker-jest && ln -s ./public/moorhen.data ./moorhen.data && ln -s ./public/ ./baby-gru && node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit",
+    "test-react": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && node --trace-warnings --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --forceExit --testPathIgnorePatterns=MoorhenContainer.test.jsx --testPathIgnorePatterns=MoorhenLigandMenu.test.jsx --testPathIgnorePatterns=MoorhenEditMenu.test.jsx --selectProjects react-components"
   },
   "eslintConfig": {
     "extends": [
@@ -112,6 +113,9 @@
     "@electron-forge/maker-zip": "^6.0.5",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
+    "@graphql-codegen/cli": "^5.0.2",
+    "@graphql-codegen/client-preset": "^4.3.1",
+    "@graphql-typed-document-node/core": "^3.2.0",
     "@mui/icons-material": "^5.10.9",
     "@mui/lab": "^5.0.0-alpha.140",
     "@mui/material": "^5.15.19",
