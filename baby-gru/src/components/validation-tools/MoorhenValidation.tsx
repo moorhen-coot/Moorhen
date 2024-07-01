@@ -83,7 +83,7 @@ export const MoorhenValidation = (props: Props) => {
             let sequenceData = selectedMolecule.sequences.find(sequence => sequence.chain === selectedChain)
             if (sequenceData) {
                 return sequenceData.sequence
-            }    
+            }
         }
     }
 
@@ -201,16 +201,17 @@ export const MoorhenValidation = (props: Props) => {
                 stacked: true,
                 beginAtZero: true,
                 display:true,
-                ticks: {color: isDark ? 'white' : 'black',
-                        font:{size:barWidth, family:'Helvetica'},
-                        maxRotation: 0, 
-                        minRotation: 0,
-                        autoSkip: false,                                
+                ticks: {
+                    color: isDark ? 'white' : 'black',
+                    font:{size:barWidth, family:'Helvetica'},
+                    maxRotation: 0, 
+                    minRotation: 0,
+                    autoSkip: false,
                 },
                 grid: {
-                  display:false,
-                  borderWidth: 1,
-                  borderColor: 'black'
+                    display:false,
+                    borderWidth: 1,
+                    borderColor: 'black'
                 },
             }
         }
@@ -286,7 +287,7 @@ export const MoorhenValidation = (props: Props) => {
                         bodyColor: 'black',
                         footerColor: 'black',
                         callbacks: {
-                        title: setTooltipTitle,
+                            title: setTooltipTitle,
                         },
                         titleFont: {
                             size:tooltipFontSize,

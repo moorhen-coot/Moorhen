@@ -24,12 +24,10 @@ export const MoorhenValidationMenu = (props: MoorhenNavBarExtendedControlsInterf
                 dispatch(showModal(modalKeys.LIGAND_VALIDATION))
                 document.body.click()
             }}>Ligand validation...</MenuItem>
-
             <MenuItem onClick={() => {
                 dispatch(showModal(modalKeys.CARB_VALIDATION))
                 document.body.click()
             }}>Carbohydrate validation...</MenuItem>
-
             <MenuItem onClick={() => {
                 dispatch(showModal(modalKeys.PEPTIDE_FLIPS))
                 document.body.click()
@@ -46,6 +44,10 @@ export const MoorhenValidationMenu = (props: MoorhenNavBarExtendedControlsInterf
                 dispatch(showModal(modalKeys.MMRRCC))
                 document.body.click()
             }}>MMRRCC plot...</MenuItem>
+            <MenuItem onClick={() => {
+                dispatch(showModal(modalKeys.QSCORE))
+                document.body.click()
+            }}>Calculate Q-Score</MenuItem>
             <MenuItem onClick={() => {
                 dispatch(showModal(modalKeys.WATER_VALIDATION))
                 document.body.click()
