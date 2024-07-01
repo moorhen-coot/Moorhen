@@ -11,6 +11,8 @@ export const MoorhenAboutMenuItem = (props: { setPopoverIsShown: React.Dispatch<
             <li>Filomeno Sanchez</li>
             <li>Martin Noble</li>
             <li>Stuart McNicholas</li>
+            <li>Lucrezia Catapano</li>
+            <li>Jakub Smulski</li>
         </ul>
         <p>Current version: {version}</p>
     </div>
