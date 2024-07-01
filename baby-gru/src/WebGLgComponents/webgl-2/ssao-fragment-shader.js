@@ -16,6 +16,7 @@ int kernelSize = 16;
 
 uniform float radius;// = 0.4;
 uniform float bias;// = 1.0;
+uniform float depthFactor;
 
 // tile noise texture over screen based on screen dimensions divided by noise size
 const vec2 noiseScale = vec2(4096.0/4.0, 4096.0/4.0);
@@ -36,11 +37,12 @@ void main() {
     float occlusion;
 
     vec3 fragPos;
+
     float diffMult = 0.5 * depthBufferSize;
     if(normal_all.a>0.9){
         vec3 normal = normalize(normal_all.rgb);
 
-        fragPos = texture(gPosition, out_TexCoord0).xyz;
+        fragPos = depthFactor*texture(gPosition, out_TexCoord0).xyz;
         vec3 randomVec = texture(texNoise, out_TexCoord0 * noiseScale).xyz;
         // create TBN change-of-basis matrix: from tangent-space to view-space
         tangent = normalize(randomVec - normal * dot(randomVec, normal));
@@ -61,7 +63,7 @@ void main() {
             offset.xyz = offset.xyz * 0.5 + 0.5; // transform to range 0.0 - 1.0
 
             // get sample depth
-            float sampleDepth = texture(gPosition, offset.xy).z; // get depth value of kernel sample
+            float sampleDepth = depthFactor*texture(gPosition, offset.xy).z; // get depth value of kernel sample
 
             float   dz = max ( fragPos.z - sampleDepth, 0.0 ) * diffMult;
             occlusion += 1.0 / ( 1.0 + dz*dz );

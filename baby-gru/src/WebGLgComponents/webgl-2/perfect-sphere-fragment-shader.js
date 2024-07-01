@@ -44,6 +44,7 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
     uniform bool doShadows;
     uniform bool doSSAO;
     uniform bool doEdgeDetect;
+    uniform bool doPerspective;
     uniform int shadowQuality;
 
     uniform bool clipCap;
@@ -126,8 +127,14 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
       }
 
       float occ = 1.0;
-      if(doSSAO)
-          occ = texture(SSAOMap, vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling) ).x;
+      if(doSSAO){
+          if(doPerspective){
+              occ = texture(SSAOMap, vec2(0.35*gl_FragCoord.x*xSSAOScaling+0.325,0.35*gl_FragCoord.y*ySSAOScaling+0.325) ).z;
+          } else {
+              occ = texture(SSAOMap, vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling) ).z;
+          }
+      }
+
 
       vec3 L;
       vec3 E;
