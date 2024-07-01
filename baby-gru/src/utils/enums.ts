@@ -20,7 +20,8 @@ export const modalKeys = Object.freeze({
     SLICE_N_DICE: "slice-n-dice",
     SUPERPOSE_MODELS: "superpose",
     SCENE_SETTINGS: "scene-settings",
-    LHASA: "lhasa"
+    LHASA: "lhasa",
+    QSCORE: "qscore"
 })
 
 export const representationLabelMapping = Object.freeze({

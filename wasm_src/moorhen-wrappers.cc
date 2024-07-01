@@ -1460,6 +1460,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_gphl_chem_comp_info",&molecules_container_t::get_gphl_chem_comp_info)
     .function("get_map_section_texture", &molecules_container_t::get_map_section_texture)
     .function("get_rdkit_mol_pickle_base64", &molecules_container_t::get_rdkit_mol_pickle_base64)
+    .function("get_q_score", &molecules_container_t::get_q_score)
     .property("use_gemmi", &molecules_container_t::use_gemmi)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
