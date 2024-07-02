@@ -14,6 +14,10 @@ jobs:
       uses: actions/checkout@v3
       with:
         submodules: recursive
+    
+    - name: Update Lhasa
+      working-directory: /home/runner/work/Moorhen/
+      run: git submodule update -f --remote --merge 
 
     - name: Install node.js v16
       uses: actions/setup-node@v3
@@ -51,6 +55,7 @@ jobs:
       run: |             
         npm run create-version
         npm run transpile-protobuf 
+        npx graphql-codegen
         npx tsc
         
     - name: Run react tests
