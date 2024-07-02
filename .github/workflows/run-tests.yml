@@ -15,10 +15,6 @@ jobs:
       with:
         submodules: recursive
     
-    - name: Update Lhasa
-      working-directory: /home/runner/work/Moorhen/
-      run: git submodule update -f --remote --merge 
-
     - name: Install node.js v16
       uses: actions/setup-node@v3
       with:
