@@ -156,6 +156,7 @@ export const MoorhenSliceNDiceModal = (props: {
         const copyMolecule = async (molecule: moorhen.Molecule) => {
             prevSelectedMoleculeRef.current = molecule
             selectedMoleculeCopyRef.current = await molecule.copyFragmentUsingCid('//', false)
+            selectedMoleculeCopyRef.current.name = molecule.name
             selectedMoleculeCopyRef.current.defaultColourRules = molecule.defaultColourRules.map(rule => {
                 return MoorhenColourRule.initFromDataObject(rule.objectify(), props.commandCentre, selectedMoleculeCopyRef.current)
             })
@@ -347,6 +348,10 @@ export const MoorhenSliceNDiceModal = (props: {
                     slicingResults.map(sliceMolecule => sliceMolecule.delete())
                 )
             }
+        } else if (selectedMoleculeCopyRef.current && saveToMoorhen) {
+            await deleteHiddenResidues(selectedMoleculeCopyRef.current)
+            const newMolecule = await selectedMoleculeCopyRef.current.copyMolecule()
+            dispatch(addMolecule(newMolecule))
         }
         
         await selectedMoleculeCopyRef.current?.delete?.()

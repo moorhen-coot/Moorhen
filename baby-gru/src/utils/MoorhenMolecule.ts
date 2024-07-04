@@ -548,7 +548,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     async copyMolecule(doRedraw: boolean = true): Promise<moorhen.Molecule> {
         let coordString = await this.getAtoms()
         let newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
-        newMolecule.name = `${this.name}-placeholder`
+        newMolecule.name = `${this.name}-copy`
 
         let response = await this.commandCentre.current.cootCommand({
             returnType: "status",
