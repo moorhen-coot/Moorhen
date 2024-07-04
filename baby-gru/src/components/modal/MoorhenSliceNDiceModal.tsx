@@ -130,10 +130,10 @@ export const MoorhenSliceNDiceModal = (props: {
     const prevSelectedMoleculeRef = useRef<moorhen.Molecule>(null)
     const isBusy = useRef<boolean>(false)
     const isDirty = useRef<boolean>(false)
-    const thresholdTypeRef = useRef<string>('bfactor')
+    const thresholdTypeRef = useRef<string>('plddt')
 
     const [paeFileIsUploaded, setPaeFileIsUploaded] = useState<boolean>(false)
-    const [thresholdType, setThresholdType] = useState<string>('bfactor')
+    const [thresholdType, setThresholdType] = useState<string>('plddt')
     const [moleculeBfactors, setMoleculeBfactors] = useState<{ cid: string; bFactor: number; normalised_bFactor: number; }[]>(null)
     const [moleculeMinBfactor, setMoleculeMinBfactor] = useState<number>(null)
     const [moleculeMaxBfactor, setMoleculeMaxBfactor] = useState<number>(null)
@@ -428,21 +428,6 @@ export const MoorhenSliceNDiceModal = (props: {
                     <Form.Check
                         style={{margin: 0}} 
                         type="radio"
-                        checked={thresholdType === 'bfactor'}
-                        onChange={() => {
-                            setThresholdType('bfactor')
-                            thresholdTypeRef.current = 'bfactor'
-                            setBFactorThreshold(moleculeMaxBfactor)
-                            bFactorThresholdRef.current = moleculeMaxBfactor    
-                            isDirty.current = true
-                            if (!isBusy.current) {
-                                trimBfactorThreshold()
-                            }    
-                        }}
-                        label="B-Factor"/>
-                    <Form.Check
-                        style={{margin: 0}} 
-                        type="radio"
                         checked={thresholdType === 'plddt'}
                         onChange={() => { 
                             setThresholdType('plddt')
@@ -455,6 +440,21 @@ export const MoorhenSliceNDiceModal = (props: {
                             }    
                         }}
                         label="PLDDT"/>
+                    <Form.Check
+                        style={{margin: 0}} 
+                        type="radio"
+                        checked={thresholdType === 'bfactor'}
+                        onChange={() => {
+                            setThresholdType('bfactor')
+                            thresholdTypeRef.current = 'bfactor'
+                            setBFactorThreshold(moleculeMaxBfactor)
+                            bFactorThresholdRef.current = moleculeMaxBfactor    
+                            isDirty.current = true
+                            if (!isBusy.current) {
+                                trimBfactorThreshold()
+                            }    
+                        }}
+                        label="B-Factor"/>
                 </Stack>
                 <Slider
                     aria-label="B-Factor threshold"
