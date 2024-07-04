@@ -255,7 +255,7 @@ export const MoorheFindLigandModal = (props: { }) => {
                 left={width / 6}
                 top={height / 6}
                 defaultHeight={convertViewtoPx(10, height)}
-                defaultWidth={convertViewtoPx(10, width)}
+                defaultWidth={convertViewtoPx(40, width)}
                 minHeight={convertViewtoPx(15, height)}
                 minWidth={convertViewtoPx(25, width)}
                 maxHeight={convertViewtoPx(50, height)}

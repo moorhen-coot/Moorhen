@@ -3,7 +3,7 @@ import { version } from '../../version'
 
 export const MoorhenAboutMenuItem = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> }) => {
 
-    const panelContent = <div style={{ minWidth: "20rem" }}>
+    const panelContent = <div style={{ width: "18rem" }}>
         <p>Moorhen is a molecular graphics program based on the Coot desktop program.</p>
         <p>Authors</p>
         <ul>
