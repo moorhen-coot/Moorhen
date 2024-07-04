@@ -74,6 +74,7 @@
     "prebuild": "npm run create-version && npm run transpile-ts-worker && npm run transpile-protobuf && npm run transpile-graphql-codegen",
     "build": "vite build",
     "build-release": "npm run prebuild && webpack --mode production --devtool inline-source-map",
+    "build-release-dev": "npm run prebuild && webpack --mode development --devtool inline-source-map",
     "dev": "concurrently -k \"BROWSER=none npm start\" \"npm:electron\"",
     "electron": "wait-on tcp:3000 && electron-forge start",
     "package": "npm run build && electron-forge package",

@@ -34,7 +34,7 @@ module.exports = (env, argv) => {
       new TerserPlugin({
         terserOptions: {
           compress: {
-            pure_funcs: ['console.log']
+            pure_funcs: argv.mode === 'production' ? [ 'console.log' ] : [ ]
           }
         }
       }),
@@ -71,7 +71,7 @@ module.exports = (env, argv) => {
     entry: path.join(paths.src, 'moorhen.ts'),
     target: 'web',
     optimization: {
-      minimize: argv.mode === 'development' ? false : true
+      minimize: argv.mode === 'production'
     },
     cache: false,
     output: {
