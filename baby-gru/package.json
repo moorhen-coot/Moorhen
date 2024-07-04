@@ -192,6 +192,7 @@
     "react-simple-code-editor": "^0.13.1",
     "reactcss": "^1.2.3",
     "sass": "^1.77.4",
+    "sass-loader": "^14.2.1",
     "style-loader": "^3.3.1",
     "styled-components": "^5.3.9",
     "taffydb": "^2.7.3",
