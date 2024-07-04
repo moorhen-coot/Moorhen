@@ -1,6 +1,7 @@
 const webpack = require('webpack');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 
 const path = require('path');
 
@@ -29,6 +30,13 @@ module.exports = (env, argv) => {
         filename: 'moorhen.css',
         chunkFilename: '[id].css',
         ignoreOrder: false,
+      }),
+      new TerserPlugin({
+        terserOptions: {
+          compress: {
+            pure_funcs: ['console.log']
+          }
+        }
       }),
       new CopyWebpackPlugin({
         patterns: [
