@@ -21,11 +21,6 @@ export const MoorhenFillPartialResiduesModal = (props: moorhen.CollectedProps) =
 
     const { enqueueSnackbar } = useSnackbar()
 
-    const collectedProps = {
-        sideBarWidth: convertViewtoPx(35, width), dropdownId: 1, busy: false, 
-        accordionDropdownId: 1, setAccordionDropdownId: (arg0) => {}, showSideBar: true, ...props
-    }
-
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.FILL_PART_RES}
                 left={width / 6}
@@ -45,7 +40,7 @@ export const MoorhenFillPartialResiduesModal = (props: moorhen.CollectedProps) =
                 body={
                     <div style={{height: '100%'}} >
                         <Row className={"big-validation-tool-container-row"}>
-                            <MoorhenFillMissingAtoms {...collectedProps}/>
+                            <MoorhenFillMissingAtoms {...props}/>
                         </Row>
                     </div>
                 }
@@ -61,7 +56,7 @@ export const MoorhenFillPartialResiduesModal = (props: moorhen.CollectedProps) =
                                 title: "Fill partial res.",
                                 children: <div style={{ overflowY: 'scroll', overflowX: "hidden", maxHeight: '30vh' }}>
                                             <Row className={"big-validation-tool-container-row"}>
-                                                <MoorhenFillMissingAtoms {...collectedProps}/>
+                                                <MoorhenFillMissingAtoms {...props}/>
                                             </Row>
                                         </div>
                             })

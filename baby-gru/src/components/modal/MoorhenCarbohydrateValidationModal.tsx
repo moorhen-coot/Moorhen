@@ -21,11 +21,6 @@ export const MoorhenCarbohydrateValidationModal = (props: moorhen.CollectedProps
 
     const { enqueueSnackbar } = useSnackbar()
 
-    const collectedProps = {
-        sideBarWidth: convertViewtoPx(35, width), dropdownId: 1, busy: false, 
-        accordionDropdownId: 1, setAccordionDropdownId: (arg0) => {}, showSideBar: true, ...props
-    }
-
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.CARB_VALIDATION}
                 left={width / 6}
@@ -45,7 +40,7 @@ export const MoorhenCarbohydrateValidationModal = (props: moorhen.CollectedProps
                 body={
                     <div style={{height: '100%'}} >
                         <Row className={"big-validation-tool-container-row"}>
-                            <MoorhenCarbohydrateValidation {...collectedProps}/>
+                            <MoorhenCarbohydrateValidation {...props}/>
                         </Row>
                     </div>
                 }
@@ -61,7 +56,7 @@ export const MoorhenCarbohydrateValidationModal = (props: moorhen.CollectedProps
                                 title: "Privateer",
                                 children: <div style={{ overflowY: 'scroll', overflowX: "hidden", maxHeight: '30vh' }}>
                                             <Row className={"big-validation-tool-container-row"}>
-                                                <MoorhenCarbohydrateValidation {...collectedProps}/>
+                                                <MoorhenCarbohydrateValidation {...props}/>
                                             </Row>
                                         </div>
                             })

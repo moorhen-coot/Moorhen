@@ -13,11 +13,6 @@ export const MoorhenDiffMapPeaksModal = (props: moorhen.CollectedProps) => {
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
-    const collectedProps = {
-        sideBarWidth: convertViewtoPx(35, width), dropdownId: 1, busy: false, chartId: 'diff-map-peaks-chart',
-        accordionDropdownId: 1, setAccordionDropdownId: (arg0) => {}, showSideBar: true, ...props
-    }
-
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.DIFF_MAP_PEAKS}
                 left={width / 6}
@@ -37,7 +32,7 @@ export const MoorhenDiffMapPeaksModal = (props: moorhen.CollectedProps) => {
                 body={
                     <div style={{height: '100%'}} >
                         <Row className={"big-validation-tool-container-row"}>
-                            <MoorhenDifferenceMapPeaks {...collectedProps}/>
+                            <MoorhenDifferenceMapPeaks chartId="diff-map-peaks-chart" {...props}/>
                         </Row>
                     </div>
                 }

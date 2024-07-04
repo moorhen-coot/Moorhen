@@ -21,11 +21,6 @@ export const MoorhenPepFlipsModal = (props: moorhen.CollectedProps) => {
 
     const { enqueueSnackbar } = useSnackbar()
 
-    const collectedProps = {
-        sideBarWidth: convertViewtoPx(35, width), dropdownId: 1, busy: false, 
-        accordionDropdownId: 1, setAccordionDropdownId: (arg0) => {}, showSideBar: true, ...props
-    }
-
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.PEPTIDE_FLIPS}
                 left={width / 6}
@@ -45,7 +40,7 @@ export const MoorhenPepFlipsModal = (props: moorhen.CollectedProps) => {
                 body={
                     <div style={{height: '100%'}} >
                         <Row className={"big-validation-tool-container-row"}>
-                            <MoorhenPepflipsDifferenceMap {...collectedProps}/>
+                            <MoorhenPepflipsDifferenceMap {...props}/>
                         </Row>
                     </div>
                 }
@@ -61,7 +56,7 @@ export const MoorhenPepFlipsModal = (props: moorhen.CollectedProps) => {
                                 modalId: modalKeys.PEPTIDE_FLIPS,
                                 children: <div style={{maxHeight: '30vh', overflowY: 'scroll', overflowX: "hidden"}} >
                                 <Row className={"big-validation-tool-container-row"}>
-                                    <MoorhenPepflipsDifferenceMap {...collectedProps}/>
+                                    <MoorhenPepflipsDifferenceMap {...props}/>
                                 </Row>
                             </div>
                             })

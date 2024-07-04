@@ -21,21 +21,6 @@ export const MoorhenUnmodelledBlobsModal = (props: moorhen.CollectedProps) => {
 
     const { enqueueSnackbar } = useSnackbar()
 
-    const collectedProps = {
-        sideBarWidth: convertViewtoPx(35, width), dropdownId: 1, busy: false, 
-        accordionDropdownId: 1, setAccordionDropdownId: (arg0) => {}, showSideBar: true, ...props
-    }
-
-    /**
-     * .big-validation-tool-container-row {
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  height: calc(100% - 6rem);
-}
-
-
-     */
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.UNMODELLED_BLOBS}
                 left={width / 6}
@@ -55,7 +40,7 @@ export const MoorhenUnmodelledBlobsModal = (props: moorhen.CollectedProps) => {
                 body={
                     <div style={{height: '100%'}} >
                         <Row className="big-validation-tool-container-row">
-                            <MoorhenUnmodelledBlobs {...collectedProps}/>
+                            <MoorhenUnmodelledBlobs {...props}/>
                         </Row>
                     </div>
                 }
@@ -71,7 +56,7 @@ export const MoorhenUnmodelledBlobsModal = (props: moorhen.CollectedProps) => {
                                 modalId: modalKeys.UNMODELLED_BLOBS,
                                 children: <div style={{maxHeight: '30vh', overflowY: 'scroll', overflowX: "hidden"}} >
                                             <Row className={"big-validation-tool-container-row"}>
-                                                <MoorhenUnmodelledBlobs {...collectedProps}/>
+                                                <MoorhenUnmodelledBlobs {...props}/>
                                             </Row>
                                         </div>
                             })

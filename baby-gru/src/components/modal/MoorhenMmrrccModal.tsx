@@ -13,11 +13,6 @@ export const MoorhenMmrrccModal = (props: moorhen.CollectedProps) => {
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
-    const collectedProps = {
-        sideBarWidth: convertViewtoPx(35, width), dropdownId: 1, busy: false, chartId: 'mmrrcc-chart',
-        accordionDropdownId: 1, setAccordionDropdownId: (arg0) => {}, showSideBar: true, ...props
-    }
-
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.MMRRCC}
                 left={width / 6}
@@ -37,7 +32,7 @@ export const MoorhenMmrrccModal = (props: moorhen.CollectedProps) => {
                 body={
                     <div style={{height: '100%'}} >
                         <Row className={"big-validation-tool-container-row"}>
-                            <MoorhenMMRRCCPlot {...collectedProps}/>
+                            <MoorhenMMRRCCPlot {...props}/>
                         </Row>
                     </div>
                 }

@@ -23,11 +23,6 @@ export const MoorhenRamaPlotModal = (props: moorhen.CollectedProps) => {
 
     const { enqueueSnackbar } = useSnackbar()
 
-    const collectedProps = {
-        sideBarWidth: convertViewtoPx(35, width), dropdownId: 1, busy: false, 
-        accordionDropdownId: 1, setAccordionDropdownId: (arg0) => {}, showSideBar: true, ...props
-    }
-
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.RAMA_PLOT}
                 left={width / 6}
@@ -48,7 +43,7 @@ export const MoorhenRamaPlotModal = (props: moorhen.CollectedProps) => {
                 body={
                     <div style={{height: '100%'}} >
                         <Row className={"rama-validation-tool-container-row"}>
-                            <MoorhenRamachandran resizeNodeRef={resizeNodeRef} resizeTrigger={draggableResizeTrigger} {...collectedProps}/>
+                            <MoorhenRamachandran resizeNodeRef={resizeNodeRef} resizeTrigger={draggableResizeTrigger} {...props}/>
                         </Row>
                     </div>
                 }
@@ -64,7 +59,7 @@ export const MoorhenRamaPlotModal = (props: moorhen.CollectedProps) => {
                                 title: "Rama. Plot",
                                 children: <div style={{height: '100%'}} >
                                 <Row className={"rama-validation-tool-container-row"}>
-                                    <MoorhenRamachandran resizeTrigger={draggableResizeTrigger} {...collectedProps}/>
+                                    <MoorhenRamachandran resizeTrigger={draggableResizeTrigger} {...props}/>
                                 </Row>
                             </div>
                             })
