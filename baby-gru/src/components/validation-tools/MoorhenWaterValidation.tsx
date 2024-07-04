@@ -7,15 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 
-interface Props extends moorhen.CollectedProps {
-    dropdownId: number;
-    accordionDropdownId: number;
-    setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
-    sideBarWidth: number;
-    showSideBar: boolean;
-}
-
-export const MoorhenWaterValidation = (props: Props) => {
+export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
 
     const isDirty = useRef<boolean>(false)
     const busyFetching = useRef<boolean>(false)
@@ -205,10 +197,6 @@ export const MoorhenWaterValidation = (props: Props) => {
     </>
 
     return <MoorhenValidationListWidgetBase 
-                sideBarWidth={props.sideBarWidth}
-                dropdownId={props.dropdownId}
-                accordionDropdownId={props.accordionDropdownId}
-                showSideBar={props.showSideBar}
                 filterMapFunction={ (map: moorhen.Map) => !map.isDifference }
                 fetchData={fetchCardData}
                 getCards={getCards}

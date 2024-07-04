@@ -1,4 +1,4 @@
-import { useRef } from "react"
+import { useCallback, useRef } from "react"
 import { Chart, ChartEvent, ChartType, TooltipItem, registerables } from 'chart.js';
 import { getResidueInfo, convertViewtoPx } from '../../utils/utils'
 import { residueCodesOneToThree } from '../../utils/enums'
@@ -13,11 +13,6 @@ Chart.register(...registerables);
 Chart.register(annotationPlugin);
 
 interface Props extends moorhen.CollectedProps {
-    dropdownId: number;
-    accordionDropdownId: number;
-    setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
-    sideBarWidth: number;
-    showSideBar: boolean;
     chartId: string;
 }
 
@@ -42,6 +37,7 @@ export const MoorhenValidation = (props: Props) => {
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
 
     const chartRef = useRef(null);
 
@@ -50,7 +46,7 @@ export const MoorhenValidation = (props: Props) => {
         afterDatasetsDraw: (chart, args, options) => {
             const {ctx} = chart;
             ctx.save();
-            ctx.lineWidth = props.sideBarWidth / 250;
+            ctx.lineWidth = convertViewtoPx(35, width) / 250;
             for(let datasetIndex=0; datasetIndex<chart._metasets.length; datasetIndex++){
                 if(chart._metasets[datasetIndex].data.length > 0 && chart._metasets[datasetIndex].data[0]['$context'].raw < 0){
                     ctx.beginPath();
@@ -129,7 +125,7 @@ export const MoorhenValidation = (props: Props) => {
 
     }
 
-    const getChart = (selectedModel: number, selectedMap: number, selectedChain: string, plotData: libcootApi.ValidationInformationJS[][]) => {
+    const getChart = useCallback((selectedModel: number, selectedMap: number, selectedChain: string, plotData: libcootApi.ValidationInformationJS[][]) => {
 
         const handleClick = (evt: ChartEvent) => {
             if (chartRef.current === null){
@@ -189,7 +185,7 @@ export const MoorhenValidation = (props: Props) => {
             }
         })
        
-        const barWidth = props.sideBarWidth / 40
+        const barWidth = convertViewtoPx(35, width) / 40
         const tooltipFontSize = 12
         const axisLabelsFontSize = convertViewtoPx(70, height) / 60
         
@@ -310,16 +306,12 @@ export const MoorhenValidation = (props: Props) => {
             }
         };
 
-    }
+    }, [isDark, width, height])
 
     return <MoorhenValidationChartWidgetBase
                 ref={chartRef}
                 fetchData={fetchData}
                 getChart={getChart} 
-                sideBarWidth={props.sideBarWidth}
-                dropdownId={props.dropdownId}
-                accordionDropdownId={props.accordionDropdownId}
-                showSideBar={props.showSideBar}
                 chartId={props.chartId}
             />
 }

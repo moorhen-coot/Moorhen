@@ -9,11 +9,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 
 interface Props extends moorhen.CollectedProps {
-    dropdownId: number;
-    accordionDropdownId: number;
-    setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
-    sideBarWidth: number;
-    showSideBar: boolean;
     resizeTrigger: boolean;
     resizeNodeRef?: React.RefObject<HTMLDivElement>;
 }

@@ -10,15 +10,8 @@ import { hideModal } from '../../store/modalsSlice';
 import { useSnackbar } from 'notistack';
 import { modalKeys } from '../../utils/enums';
 
-interface Props extends moorhen.CollectedProps {
-    dropdownId: number;
-    accordionDropdownId: number;
-    setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
-    sideBarWidth: number;
-    showSideBar: boolean;
-}
 
-export const MoorhenFillMissingAtoms = (props: Props) => {
+export const MoorhenFillMissingAtoms = (props: moorhen.CollectedProps) => {
     const dispatch = useDispatch()
 
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod)
@@ -134,10 +127,6 @@ export const MoorhenFillMissingAtoms = (props: Props) => {
     }, [molecules])
 
     return <MoorhenValidationListWidgetBase 
-                sideBarWidth={props.sideBarWidth}
-                dropdownId={props.dropdownId}
-                accordionDropdownId={props.accordionDropdownId}
-                showSideBar={props.showSideBar}
                 enableMapSelect={false}
                 fetchData={fetchCardData}
                 getCards={getCards}

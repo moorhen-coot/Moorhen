@@ -3,15 +3,7 @@ import { useSelector } from 'react-redux';
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 import { MoorhenLigandCard } from "../card/MoorhenLigandCard";
 
-interface Props extends moorhen.CollectedProps {
-    dropdownId: number;
-    accordionDropdownId: number;
-    setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
-    sideBarWidth: number;
-    showSideBar: boolean;
-}
-
-export const MoorhenLigandValidation = (props: Props) => {
+export const MoorhenLigandValidation = (props: moorhen.CollectedProps) => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const fetchCardData = async (selectedModel: number, selectedMap: number): Promise<moorhen.LigandInfo[]> => {
@@ -41,10 +33,6 @@ export const MoorhenLigandValidation = (props: Props) => {
     }
 
     return <MoorhenValidationListWidgetBase
-                sideBarWidth={props.sideBarWidth}
-                dropdownId={props.dropdownId}
-                accordionDropdownId={props.accordionDropdownId}
-                showSideBar={props.showSideBar}
                 enableMapSelect={false}
                 fetchData={fetchCardData}
                 getCards={getCards}

@@ -9,11 +9,7 @@ import { LinearProgress } from "@mui/material";
 export const MoorhenValidationListWidgetBase = (props: {
     filterMapFunction?: (arg0: moorhen.Map) => boolean;
     fetchData: (arg0: number, arg1: number) => Promise<any>;
-    dropdownId: number;
-    accordionDropdownId: number;
-    showSideBar: boolean;
     getCards: (arg0: number, arg1: number, arg2: any) => JSX.Element[];
-    sideBarWidth: number;
     extraControlForm?: JSX.Element;
     extraControlFormValue?: any;
     enableMapSelect?: boolean;
@@ -88,13 +84,13 @@ export const MoorhenValidationListWidgetBase = (props: {
     }, [updateSwitch])
 
     useEffect(() => {
-        if (selectedModel === null || (props.enableMapSelect && selectedMap === null) || cardData === null || props.dropdownId !== props.accordionDropdownId || !props.showSideBar) {
+        if (selectedModel === null || (props.enableMapSelect && selectedMap === null) || cardData === null) {
             setCardList([])
         } else {
             const newCardList = props.getCards(selectedModel, selectedMap, cardData)
             setCardList(newCardList)
         }
-    }, [cardData, backgroundColor, props.sideBarWidth, props.showSideBar, props.accordionDropdownId])
+    }, [cardData, backgroundColor])
 
     return <Fragment>
                 <Form style={{ padding:'0', margin: '0' }}>
@@ -110,13 +106,13 @@ export const MoorhenValidationListWidgetBase = (props: {
                             }
                             {props.extraControlForm}
                         </Row>
-                    </Form.Group>                
+                    </Form.Group>
                 </Form>                
                 {busy && 
                 <div style={{display: 'flex', justifyContent: 'center', padding: '0.5rem'}}>
                     <LinearProgress style={{width: '95%'}} variant="indeterminate"/>    
                 </div>}
-                <div style={{overflowY: 'auto', height:'100%', paddingTop:'0.5rem', paddingLeft:'0.25rem', paddingRight:'0.25rem'}} >
+                <div style={{overflowY: 'auto', height:'100%', paddingTop:'0.5rem',}} >
                     {cardList.length > 0 ? cardList : busy ? null : <b>Nothing to show here...</b>}
                 </div>
             </Fragment>

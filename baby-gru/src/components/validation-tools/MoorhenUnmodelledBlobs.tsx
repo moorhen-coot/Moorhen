@@ -3,15 +3,7 @@ import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBa
 import { libcootApi } from '../../types/libcoot';
 import { moorhen } from '../../types/moorhen';
 
-interface Props extends moorhen.CollectedProps {
-    dropdownId: number;
-    accordionDropdownId: number;
-    setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
-    sideBarWidth: number;
-    showSideBar: boolean;
-}
-
-export const MoorhenUnmodelledBlobs = (props: Props) => {
+export const MoorhenUnmodelledBlobs = (props: moorhen.CollectedProps) => {
 
     async function fetchCardData(selectedModel: number, selectedMap: number): Promise<libcootApi.InterestingPlaceDataJS[]> {
         const inputData = {
@@ -48,10 +40,6 @@ export const MoorhenUnmodelledBlobs = (props: Props) => {
     }
 
     return <MoorhenValidationListWidgetBase 
-                sideBarWidth={props.sideBarWidth}
-                dropdownId={props.dropdownId}
-                accordionDropdownId={props.accordionDropdownId}
-                showSideBar={props.showSideBar}
                 fetchData={fetchCardData}
                 getCards={getCards}
             />

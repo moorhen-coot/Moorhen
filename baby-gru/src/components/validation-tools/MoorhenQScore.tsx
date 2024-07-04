@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from "react-redux"
 import { MoorhenValidationChartWidgetBase } from "./MoorhenValidationChartWidgetBase"
 import { moorhen } from "../../types/moorhen"
-import { convertViewtoPx, getResidueInfo } from "../../utils/utils"
+import { getResidueInfo } from "../../utils/utils"
 import { useCallback, useRef } from "react"
 import { libcootApi } from "../../types/libcoot"
 import { ChartEvent, ChartType, TooltipItem } from "chart.js"
@@ -12,7 +12,6 @@ export const MoorhenQScore = (props: moorhen.CollectedProps) => {
 
     const chartRef = useRef(null)
 
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
@@ -181,10 +180,6 @@ export const MoorhenQScore = (props: moorhen.CollectedProps) => {
                 ref={chartRef}
                 fetchData={fetchData}
                 getChart={getChart} 
-                sideBarWidth={convertViewtoPx(35, width)}
-                dropdownId={1}
-                accordionDropdownId={1}
-                showSideBar={true}
                 chartId={"qscore-plot-chart"}
             />
 }

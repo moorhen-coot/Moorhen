@@ -16,10 +16,6 @@ Chart.register(...registerables);
 Chart.register(annotationPlugin);
 
 export const MoorhenMMRRCCPlot = (props: {
-    sideBarWidth: number;
-    showSideBar: boolean;
-    dropdownId: number;
-    accordionDropdownId: number;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {
     const chartCardRef = useRef<HTMLDivElement>();
@@ -39,6 +35,7 @@ export const MoorhenMMRRCCPlot = (props: {
 
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const maps = useSelector((state: moorhen.State) => state.maps)
@@ -154,7 +151,7 @@ export const MoorhenMMRRCCPlot = (props: {
             chartRef.current.destroy()
         }
 
-        if (chainSelectRef.current.value === null || selectedModel === null || props.dropdownId !== props.accordionDropdownId || !props.showSideBar || plotData === null) {
+        if (chainSelectRef.current.value === null || selectedModel === null || plotData === null) {
             return;
         }
 
@@ -172,7 +169,7 @@ export const MoorhenMMRRCCPlot = (props: {
             }
         })
                
-        const barWidth = props.sideBarWidth / 40
+        const barWidth = convertViewtoPx(35, width) / 40
         const tooltipFontSize = 12
         const axisLabelsFontSize = convertViewtoPx(70, height) / 60
         
@@ -187,7 +184,9 @@ export const MoorhenMMRRCCPlot = (props: {
                 beginAtZero: true,
                 display:true,
                 ticks: {color: isDark ? 'white' : 'black',
-                        font:{size:barWidth, family:'Helvetica'},
+                        font: {
+                            size: barWidth, family:'Helvetica'
+                        },
                         maxRotation: 0, 
                         minRotation: 0,
                         autoSkip: false,                                
@@ -293,7 +292,7 @@ export const MoorhenMMRRCCPlot = (props: {
         });
 
 
-    }, [plotData, backgroundColor, props.sideBarWidth, props.showSideBar, props.accordionDropdownId])
+    }, [plotData, backgroundColor, isDark, height, width])
     
     return  <Fragment>
                 <Form style={{ padding:'0', margin: '0' }}>

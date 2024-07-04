@@ -11,15 +11,7 @@ import { hideModal } from "../../store/modalsSlice";
 import { useSnackbar } from "notistack";
 import { modalKeys } from "../../utils/enums";
 
-interface Props extends moorhen.CollectedProps {
-    dropdownId: number;
-    accordionDropdownId: number;
-    setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
-    sideBarWidth: number;
-    showSideBar: boolean;
-}
-
-export const MoorhenPepflipsDifferenceMap = (props: Props) => {
+export const MoorhenPepflipsDifferenceMap = (props: moorhen.CollectedProps) => {
     
     const [selectedRmsd, setSelectedRmsd] = useState<number>(4.5)
     
@@ -145,10 +137,6 @@ export const MoorhenPepflipsDifferenceMap = (props: Props) => {
     }, [molecules])
 
     return <MoorhenValidationListWidgetBase 
-                sideBarWidth={props.sideBarWidth}
-                dropdownId={props.dropdownId}
-                accordionDropdownId={props.accordionDropdownId}
-                showSideBar={props.showSideBar}
                 filterMapFunction={filterMapFunction}
                 fetchData={fetchCardData}
                 getCards={getCards}

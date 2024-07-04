@@ -4,15 +4,7 @@ import { privateer } from "../../types/privateer";
 import { MoorhenCarbohydrateCard } from "../card/MoorhenCarbohydrateCard";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 
-interface Props extends moorhen.CollectedProps {
-    dropdownId: number;
-    accordionDropdownId: number;
-    setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
-    sideBarWidth: number;
-    showSideBar: boolean;
-}
-
-export const MoorhenCarbohydrateValidation = (props: Props) => {
+export const MoorhenCarbohydrateValidation = (props: moorhen.CollectedProps) => {
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
@@ -37,10 +29,6 @@ export const MoorhenCarbohydrateValidation = (props: Props) => {
     }
 
     return <MoorhenValidationListWidgetBase
-        sideBarWidth={props.sideBarWidth}
-        dropdownId={props.dropdownId}
-        accordionDropdownId={props.accordionDropdownId}
-        showSideBar={props.showSideBar}
         enableMapSelect={false}
         fetchData={fetchCardData}
         getCards={getCards}

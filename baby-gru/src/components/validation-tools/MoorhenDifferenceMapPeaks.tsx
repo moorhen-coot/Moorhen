@@ -1,4 +1,4 @@
-import { useRef, useState } from "react"
+import { useCallback, useRef, useState } from "react"
 import { Col, Form } from 'react-bootstrap';
 import { Chart, ChartEvent, ChartType, TooltipItem, registerables } from 'chart.js';
 import { MoorhenSlider } from '../misc/MoorhenSlider' 
@@ -13,27 +13,25 @@ Chart.register(...registerables);
 Chart.register(annotationPlugin);
 
 interface Props extends moorhen.CollectedProps {
-    dropdownId: number;
-    accordionDropdownId: number;
-    setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
-    sideBarWidth: number;
-    showSideBar: boolean;
     chartId: string;
 }
 
 export const MoorhenDifferenceMapPeaks = (props: Props) => {
     const chartRef = useRef(null);
+    
     const [selectedRmsd, setSelectedRmsd] = useState<number>(4.5)
     const [mapRmsd, setMapRmsd] = useState<number>(4.5)
+
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
 
     const plugin = {
         id: 'custom_bar_borders',
         afterDatasetsDraw: (chart, args, options) => {
             const {ctx} = chart;
             ctx.save();
-            ctx.lineWidth = props.sideBarWidth / 250;
+            ctx.lineWidth = convertViewtoPx(35, width) / 250;
             for(let datasetIndex=0; datasetIndex<chart._metasets.length; datasetIndex++){
                 for(let dataPoint=0; dataPoint<chart._metasets[datasetIndex].data.length; dataPoint++){
                     ctx.beginPath();
@@ -90,7 +88,7 @@ export const MoorhenDifferenceMapPeaks = (props: Props) => {
 
     }
 
-    const getChart = (selectedModel: number, selectedMap: number, selectedChain: string, plotData: libcootApi.InterestingPlaceDataJS[]) => {
+    const getChart = useCallback((selectedModel: number, selectedMap: number, selectedChain: string, plotData: libcootApi.InterestingPlaceDataJS[]) => {
         
         const handleClick = (evt: ChartEvent) => {
             if (chartRef.current === null){
@@ -121,7 +119,7 @@ export const MoorhenDifferenceMapPeaks = (props: Props) => {
         }
 
         let labels = plotData.map((peak, idx) => idx % 10 === 0 ? idx : '')
-        const barWidth = props.sideBarWidth / 40
+        const barWidth = convertViewtoPx(35, width) / 40
         const tooltipFontSize = 12
         const axisLabelsFontSize = convertViewtoPx(70, height) / 60
         
@@ -133,11 +131,12 @@ export const MoorhenDifferenceMapPeaks = (props: Props) => {
                 stacked: false,
                 beginAtZero: true,
                 display: true,
-                ticks: {color: isDark ? 'white' : 'black',
-                        font:{size:barWidth, family:'Helvetica'},
-                        maxRotation: 0, 
-                        minRotation: 0,
-                        autoSkip: false,                                
+                ticks: {
+                    color: isDark ? 'white' : 'black',
+                    font:{size: barWidth, family:'Helvetica'},
+                    maxRotation: 0, 
+                    minRotation: 0,
+                    autoSkip: false,                                
                 },
                 grid: {
                   display:false,
@@ -151,7 +150,7 @@ export const MoorhenDifferenceMapPeaks = (props: Props) => {
                 beginAtZero: true,
                 title: {
                     display: true,
-                    font:{size:axisLabelsFontSize, family:'Helvetica', weight:800},
+                    font:{size: axisLabelsFontSize, family:'Helvetica', weight: 800},
                     text: 'Difference Map Peaks',
                     color: isDark ? 'white' : 'black'
                 },
@@ -226,7 +225,7 @@ export const MoorhenDifferenceMapPeaks = (props: Props) => {
                 scales: scales
             }            
         }
-    }
+    }, [width, height, props.chartId, isDark])
 
     return <MoorhenValidationChartWidgetBase
                 ref={chartRef}
@@ -235,10 +234,6 @@ export const MoorhenDifferenceMapPeaks = (props: Props) => {
                 getChart={getChart} 
                 filterMapFunction={filterMapFunction}
                 enableChainSelect={false}
-                sideBarWidth={props.sideBarWidth}
-                dropdownId={props.dropdownId}
-                accordionDropdownId={props.accordionDropdownId}
-                showSideBar={props.showSideBar}
                 extraControlForm={
                     <Col style={{justifyContent:'center', alignContent:'center', alignItems:'center', display:'flex'}}>
                         <Form.Group controlId="rmsdSlider" style={{margin:'0.5rem', width: '100%'}}>

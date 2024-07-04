@@ -16,10 +16,6 @@ type ValidationChartProps = {
     filterMapFunction?: (arg0: moorhen.Map) => boolean;
     fetchData: (arg0: number, arg1: number, arg2: string) => Promise<any>;
     getChart: (arg0: number, arg1: number, arg2: string, arg3: any) => any;
-    dropdownId: number;
-    accordionDropdownId: number;
-    showSideBar: boolean;
-    sideBarWidth: number;
     extraControlForm?: JSX.Element;
     extraControlFormValue?: any;
     enableChainSelect?: boolean;
@@ -100,7 +96,7 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
             chartRef.current.destroy()
         }
 
-        if (props.dropdownId !== props.accordionDropdownId || !props.showSideBar || plotData === null) {
+        if (plotData === null) {
             return;
         }
         
@@ -116,7 +112,7 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
         }
         
 
-    }, [plotData, backgroundColor, props.sideBarWidth, props.showSideBar, props.accordionDropdownId])
+    }, [plotData, backgroundColor])
 
     return <Fragment>
                 <Form style={{ padding:'0', margin: '0' }}>

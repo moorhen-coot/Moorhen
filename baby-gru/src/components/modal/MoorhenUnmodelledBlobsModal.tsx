@@ -26,6 +26,16 @@ export const MoorhenUnmodelledBlobsModal = (props: moorhen.CollectedProps) => {
         accordionDropdownId: 1, setAccordionDropdownId: (arg0) => {}, showSideBar: true, ...props
     }
 
+    /**
+     * .big-validation-tool-container-row {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  height: calc(100% - 6rem);
+}
+
+
+     */
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.UNMODELLED_BLOBS}
                 left={width / 6}
@@ -44,7 +54,7 @@ export const MoorhenUnmodelledBlobsModal = (props: moorhen.CollectedProps) => {
                 resizeNodeRef={resizeNodeRef}
                 body={
                     <div style={{height: '100%'}} >
-                        <Row className={"big-validation-tool-container-row"}>
+                        <Row className="big-validation-tool-container-row">
                             <MoorhenUnmodelledBlobs {...collectedProps}/>
                         </Row>
                     </div>
