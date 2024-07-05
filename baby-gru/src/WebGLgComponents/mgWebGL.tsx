@@ -7709,7 +7709,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.useProgram(this.shaderProgramInstanced);
         this.gl.enableVertexAttribArray(this.shaderProgramInstanced.vertexNormalAttribute);
 
-        if(this.drawingGBuffers&&this.doPerspectiveProjection){
+        if(this.doDepthPeelPass||(this.drawingGBuffers&&this.doPerspectiveProjection)){
             this.gl.disable(this.gl.BLEND);
         } else {
             this.gl.enable(this.gl.BLEND);
