@@ -1,4 +1,4 @@
-import { useEffect, useCallback, forwardRef, useState, useRef, useReducer } from 'react';
+import { useEffect, useCallback, forwardRef, useState, useReducer } from 'react';
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
 import { cidToSpec } from '../../utils/utils';
