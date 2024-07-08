@@ -17,8 +17,6 @@ export const MoorhenMmrrccModal = (props: moorhen.CollectedProps) => {
                 modalId={modalKeys.MMRRCC}
                 left={width / 6}
                 top={height / 3}
-                defaultHeight={convertViewtoPx(70, height)}
-                defaultWidth={convertViewtoPx(37, width)}
                 minHeight={convertViewtoPx(30, height)}
                 minWidth={convertRemToPx(37)}
                 maxHeight={convertViewtoPx(90, height)}

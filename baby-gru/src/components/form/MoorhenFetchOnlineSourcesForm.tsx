@@ -21,15 +21,15 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
     sources?: string[];
     downloadMaps?: boolean;
-    onMoleculeLoad: (newMolecule: moorhen.Molecule) => any;
+    onMoleculeLoad?: (newMolecule: moorhen.Molecule) => any;
 }) => {
 
     const defaultProps = {
-        sources: ['PDBe', 'PDB-REDO', 'AFDB', 'EMDB'], downloadMaps: true, onMoleculeLoad: () => {}
+        sources: ['PDBe', 'PDB-REDO', 'AFDB', 'EMDB'], downloadMaps: true
     }
     
     const { 
-        sources, downloadMaps, onMoleculeLoad, commandCentre, glRef, store, monomerLibraryPath
+        sources, downloadMaps, commandCentre, glRef, store, monomerLibraryPath
      } = { ...defaultProps, ...props }
 
     const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
@@ -140,7 +140,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
             await newMolecule.fetchIfDirtyAndDraw(newMolecule.atomCount >= 50000 ? 'CRs' : 'CBs')
             await newMolecule.centreOn('/*/*/*/*', true)
             dispatch(addMolecule(newMolecule))
-            onMoleculeLoad(newMolecule)
+            props.onMoleculeLoad?.(newMolecule)
             return newMolecule
         } catch (err) {
             enqueueSnackbar('Failed to read molecule', {variant: "error"})

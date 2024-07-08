@@ -31,16 +31,8 @@ export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterfa
             <MoorhenMultiplyBfactorMenuItem key="bfactor-multiply" {...menuItemProps}/>
             <MoorhenShiftFieldBFactorRefinement key="bfactor-refinement" {...menuItemProps}/>
             <MoorhenCalculateTrajectoryMenuItem key="calcualte-trajectory" {...menuItemProps}/>
-            <MoorhenSelfRestraintsMenuItem
-                glRef={props.glRef}
-                commandCentre={props.commandCentre}
-                setPopoverIsShown={setPopoverIsShown}
-            />
-            <MoorhenClearSelfRestraintsMenuItem
-                glRef={props.glRef}
-                commandCentre={props.commandCentre}
-                setPopoverIsShown={setPopoverIsShown}
-            />
+            <MoorhenSelfRestraintsMenuItem key="add-self-restraints" setPopoverIsShown={setPopoverIsShown}/>
+            <MoorhenClearSelfRestraintsMenuItem key="clear-self-restraints" setPopoverIsShown={setPopoverIsShown}/>
             <MoorhenRandomJiggleBlurMenuItem
                 glRef={props.glRef}
                 commandCentre={props.commandCentre}
