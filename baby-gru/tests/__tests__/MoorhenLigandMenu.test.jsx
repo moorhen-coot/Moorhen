@@ -12,7 +12,6 @@ import '@testing-library/jest-dom'
 import { render, cleanup, screen, within }  from '@testing-library/react'
 import { Provider } from 'react-redux'
 import MoorhenStore from "../../src/store/MoorhenReduxStore"
-import { MoorhenPopUpContainer } from "../../src/components/toasts/MoorhenPopUpContainer"
 import { createRef } from 'react'
 import { MoorhenModalsContainer } from '../../src/components/misc/MoorhenModalsContainer'
 import { MoorhenNavBar } from '../../src/components/navbar-menus/MoorhenNavBar'
@@ -66,7 +65,6 @@ describeIfWasmExists('Testing MoorhenLigandMenu', () => {
 
         global.fetch = (url) => {
             if (url.includes(mockMonomerLibraryPath)) {
-                console.log('HII!!!!! ', url)
                 return fetch(url)
             } else if (url.includes('https:/files.rcsb.org/download/')) {
                 return fetch(url)
@@ -74,13 +72,13 @@ describeIfWasmExists('Testing MoorhenLigandMenu', () => {
                 return Promise.resolve({
                     ok: true,
                     text: async () => {
-                        const fileContents = fs.readFileSync(url, { encoding: 'utf8', flag: 'r' })
+                        const fileContents = fs.readFileSync(`./public/${url}`, { encoding: 'utf8', flag: 'r' })
                         return fileContents
                     },
                     blob: async () => {
                         return {
                             arrayBuffer: async () => {
-                                const fileContents = fs.readFileSync(url)
+                                const fileContents = fs.readFileSync(`./public/${url}`)
                                 const buff = fileContents.buffer
                                 return buff
                             }    
@@ -168,7 +166,6 @@ describeIfWasmExists('Testing MoorhenLigandMenu', () => {
             <Provider store={MoorhenStore}> 
                 <MoorhenNavBar {...collectedProps}/>
                 <MoorhenModalsContainer {...collectedProps}/>
-                <MoorhenPopUpContainer {...collectedProps}/>
             </Provider> 
         )
 
