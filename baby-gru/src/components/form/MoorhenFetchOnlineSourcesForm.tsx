@@ -2,7 +2,7 @@ import { Form, Button, InputGroup, SplitButton, Dropdown } from "react-bootstrap
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { useState, useRef } from "react";
-import { getMultiColourRuleArgs, guid } from "../../utils/utils";
+import { getMultiColourRuleArgs } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch, batch } from 'react-redux';
 import { setActiveMap } from "../../store/generalStatesSlice";
@@ -24,6 +24,14 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
     onMoleculeLoad: (newMolecule: moorhen.Molecule) => any;
 }) => {
 
+    const defaultProps = {
+        sources: ['PDBe', 'PDB-REDO', 'AFDB', 'EMDB'], downloadMaps: true, onMoleculeLoad: () => {}
+    }
+    
+    const { 
+        sources, downloadMaps, onMoleculeLoad, commandCentre, glRef, store, monomerLibraryPath
+     } = { ...defaultProps, ...props }
+
     const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
     const fetchMapDataCheckRef = useRef<HTMLInputElement | null>(null);
 
@@ -36,8 +44,6 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
 
     const { enqueueSnackbar } = useSnackbar()
-
-    const { commandCentre, glRef, monomerLibraryPath, store } = props;
 
     const fetchFiles = (): void => {
         if (pdbCodeFetchInputRef.current.value === "") {
@@ -71,18 +77,6 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
             newMap.centreOnMap()
         } else {
             console.log('Error: no EMDB entry provided')
-        }
-    }
-
-    const fetchFilesFromCOD = () => {
-        const entryCod: string = pdbCodeFetchInputRef.current.value.toLowerCase()
-        const codUrl = `http://www.crystallography.net/cod/${entryCod}.cif`
-        if (entryCod) {
-            Promise.all([
-                fetchMoleculeFromURL(codUrl, `cod-${entryCod}`),
-            ])
-        } else {
-            console.log('Error: no COD entry')
         }
     }
 
@@ -146,7 +140,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
             await newMolecule.fetchIfDirtyAndDraw(newMolecule.atomCount >= 50000 ? 'CRs' : 'CBs')
             await newMolecule.centreOn('/*/*/*/*', true)
             dispatch(addMolecule(newMolecule))
-            props.onMoleculeLoad(newMolecule)
+            onMoleculeLoad(newMolecule)
             return newMolecule
         } catch (err) {
             enqueueSnackbar('Failed to read molecule', {variant: "error"})
@@ -206,7 +200,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
         <Form.Label>Fetch from online services</Form.Label>
         <InputGroup>
             <SplitButton title={remoteSource} id="fetch-coords-online-source-select">
-                {props.sources.map(source => {
+                {sources.map(source => {
                     /* @ts-ignore */
                     return  <Dropdown.Item key={source} href="#" onClick={() => {
                                 setRemoteSource(source)
@@ -224,10 +218,6 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
             </Button>
         </InputGroup>
         <Form.Label style={{ display: isValidPdbId ? 'none' : 'block', alignContent: 'center', textAlign: 'center' }}>Problem fetching</Form.Label>
-        {props.downloadMaps && <Form.Check style={{ marginTop: '0.5rem' }} ref={fetchMapDataCheckRef} label={'fetch data for map'} name={`fetchMapData`} type="checkbox" />}        
+        {downloadMaps && <Form.Check style={{ marginTop: '0.5rem' }} ref={fetchMapDataCheckRef} label={'fetch data for map'} name={`fetchMapData`} type="checkbox" />}        
     </Form.Group>
-}
-
-MoorhenFetchOnlineSourcesForm.defaultProps = {
-    sources: ['PDBe', 'PDB-REDO', 'AFDB', 'EMDB'], downloadMaps: true, onMoleculeLoad: () => {}
 }

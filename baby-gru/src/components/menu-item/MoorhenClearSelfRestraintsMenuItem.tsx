@@ -1,15 +1,12 @@
 import { useRef } from "react";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { useDispatch, useSelector } from 'react-redux';
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { removeGeneralRepresentation } from "../../moorhen";
 
 export const MoorhenClearSelfRestraintsMenuItem = (props: {
-    glRef: React.RefObject<webGL.MGWebGL>;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     popoverPlacement?: 'left' | 'right';
 }) => {
@@ -48,10 +45,9 @@ export const MoorhenClearSelfRestraintsMenuItem = (props: {
         popoverContent={panelContent}
         menuItemText="Clear self-restraints..."
         onCompleted={onCompleted}
-        popoverPlacement={props.popoverPlacement}
+        popoverPlacement={props.popoverPlacement ?? "right"}
         setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 
-MoorhenClearSelfRestraintsMenuItem.defaultProps = { popoverPlacement: "right" }
 

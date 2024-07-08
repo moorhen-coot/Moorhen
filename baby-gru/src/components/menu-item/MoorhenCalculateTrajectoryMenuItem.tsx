@@ -60,7 +60,7 @@ export const MoorhenCalculateTrajectoryMenuItem = (props: {
 
     return <MoorhenBaseMenuItem
         id='calculate-trajectory-menu-item'
-        popoverPlacement={props.popoverPlacement}
+        popoverPlacement={props.popoverPlacement ?? "right"}
         popoverContent={panelContent}
         menuItemText="Animate multi-model trajectory..."
         onCompleted={onCompleted}
@@ -68,7 +68,4 @@ export const MoorhenCalculateTrajectoryMenuItem = (props: {
     />
 }
 
-MoorhenCalculateTrajectoryMenuItem.defaultProps = {
-    popoverPlacement: "right",
-}
 

@@ -2,7 +2,6 @@ import { useRef, useCallback, useState, useEffect } from "react";
 import { Form, FormSelect } from "react-bootstrap";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
@@ -14,8 +13,6 @@ import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { addGeneralRepresentation } from "../../moorhen";
 
 export const MoorhenSelfRestraintsMenuItem = (props: {
-    glRef: React.RefObject<webGL.MGWebGL>;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     popoverPlacement?: 'left' | 'right';
 }) => {
@@ -147,17 +144,16 @@ export const MoorhenSelfRestraintsMenuItem = (props: {
             dispatch( triggerUpdate(selectedMolecule.molNo) )
         }
         
-    }, [props.commandCentre])
+    }, [ ])
 
     return <MoorhenBaseMenuItem
         id='create-restraints-menu-item'
         popoverContent={panelContent}
         menuItemText="Generate self-restraints..."
         onCompleted={onCompleted}
-        popoverPlacement={props.popoverPlacement}
+        popoverPlacement={props.popoverPlacement ?? 'right'}
         setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 
-MoorhenSelfRestraintsMenuItem.defaultProps = { popoverPlacement: "right" }
 

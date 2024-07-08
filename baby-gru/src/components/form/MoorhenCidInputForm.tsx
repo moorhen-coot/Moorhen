@@ -16,6 +16,16 @@ type MoorhenCidInputFormPropsType = {
 }
 
 export const MoorhenCidInputForm = forwardRef<HTMLInputElement, MoorhenCidInputFormPropsType>((props, cidFormRef) => {
+
+    const defaultProps = { 
+        height: '4rem', width: '20rem', margin: '0.1rem', label: "Atom selection", 
+        placeholder: "", defaultValue: "", invalidCid: false, allowUseCurrentSelection: false
+    }
+
+    const {
+        height, width, margin, label, placeholder, defaultValue, invalidCid, allowUseCurrentSelection
+    } = { ...defaultProps, ...props }
+    
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
     const showResidueSelection = useSelector((state: moorhen.State) => state.generalStates.showResidueSelection)
 
@@ -39,15 +49,11 @@ export const MoorhenCidInputForm = forwardRef<HTMLInputElement, MoorhenCidInputF
     }
 
     return  <>
-    <Form.Group style={{ width: props.width, margin: props.margin, height:props.height }}>
-        {props.label && <Form.Label>{props.label}</Form.Label>}
-        <Form.Control size="sm" type='text' placeholder={props.placeholder} defaultValue={props.defaultValue} style={{width: "100%", color: props.invalidCid ? 'red' : '', borderColor: props.invalidCid ? 'red' : ''}} onChange={handleChange} ref={cidFormRef}/>
+    <Form.Group style={{ width: width, margin: margin, height: height }}>
+        {label && <Form.Label>{label}</Form.Label>}
+        <Form.Control size="sm" type='text' placeholder={placeholder} defaultValue={defaultValue} style={{width: "100%", color: invalidCid ? 'red' : '', borderColor: invalidCid ? 'red' : ''}} onChange={handleChange} ref={cidFormRef}/>
     </Form.Group>
-    {props.allowUseCurrentSelection && showResidueSelection && <Form.Check type="checkbox" label="Use current selection?" style={{width: props.width, margin: props.margin}} onChange={handleFillCurrentSelection}/>}
+    {allowUseCurrentSelection && showResidueSelection && <Form.Check type="checkbox" label="Use current selection?" style={{width: width, margin: margin }} onChange={handleFillCurrentSelection}/>}
     </>
 })
 
-MoorhenCidInputForm.defaultProps = { 
-    height: '4rem', width: '20rem', margin: '0.1rem', label: "Atom selection", 
-    placeholder: "", defaultValue: "", invalidCid: false, allowUseCurrentSelection: false
-}

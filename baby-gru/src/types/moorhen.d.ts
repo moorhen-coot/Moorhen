@@ -874,7 +874,6 @@ export namespace moorhen {
     interface Context extends ContextSetters, PreferencesValues { }
     
     type ContextButtonProps = {
-        mode: 'context';
         monomerLibraryPath: string;
         urlPrefix: string;
         commandCentre: React.RefObject<CommandCentre>

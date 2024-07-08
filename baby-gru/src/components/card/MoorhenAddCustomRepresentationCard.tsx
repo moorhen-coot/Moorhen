@@ -100,6 +100,8 @@ export const MoorhenAddCustomRepresentationCard = (props: {
 
     const { enqueueSnackbar } = useSnackbar()
 
+    const mode = props.mode ?? "add"
+
     const ribbonSettingsProps = {
         ribbonCoilThickness, setRibbonCoilThickness, ribbonHelixWidth, setRibbonHelixWidth, 
         ribbonStrandWidth, setRibbonStrandWidth, ribbonArrowWidth, setRibbonArrowWidth, ribbonDNARNAWidth, 
@@ -249,7 +251,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
             }
         }
 
-        if (props.mode === 'add') {
+        if (mode === 'add') {
             const representation = await props.molecule.addRepresentation(
                 styleSelectRef.current.value,
                 cidSelection, 
@@ -260,7 +262,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 residueEnvSettings
             )
             dispatch( addCustomRepresentation(representation) )
-        } else if (props.mode === 'edit' && props.representation.uniqueId) {
+        } else if (mode === 'edit' && props.representation.uniqueId) {
             const representation = props.molecule.representations.find(item => item.uniqueId === props.representation.uniqueId)
             if (representation) {
                 representation.cid = cidSelection
@@ -277,7 +279,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
         props.setShow(false)
         props.setBusy?.(false)
     }, [
-        colour, props.molecule, props.representation, props.mode, bondWidth, atomRadiusBondRatio, bondSmoothness,
+        colour, props.molecule, props.representation, mode, bondWidth, atomRadiusBondRatio, bondSmoothness,
         nucleotideRibbonStyle, ribbonArrowWidth, ribbonAxialSampling, ribbonCoilThickness, ribbonDNARNAWidth,
         ribbonHelixWidth, ribbonStrandWidth, maxEnvDist, labelledEnv, showEnvContacts, showEnvHBonds
     ])
@@ -287,17 +289,17 @@ export const MoorhenAddCustomRepresentationCard = (props: {
             await createRepresentation()
         } catch (err) {
             console.warn(err)
-            enqueueSnackbar(`Something went wrong while ${props.mode === "edit" ? "editing" : "creating a new"} custom representation`, { variant: "error" })
+            enqueueSnackbar(`Something went wrong while ${mode === "edit" ? "editing" : "creating a new"} custom representation`, { variant: "error" })
         }
     }, [createRepresentation])
 
     const handleColourModeChange = useCallback((evt) => {
-        if (evt.target.value === "mol-symm" && !ncsColourRuleRef.current && props.mode === "edit") {
+        if (evt.target.value === "mol-symm" && !ncsColourRuleRef.current && mode === "edit") {
             const representation = props.molecule.representations.find(item => item.uniqueId === props.representation.uniqueId)
             if (representation?.colourRules?.length > 0) ncsColourRuleRef.current = representation.colourRules[0]
         }
         setColourMode(evt.target.value)
-    }, [props.molecule, props.mode, props.representation])
+    }, [props.molecule, mode, props.representation])
 
     const applyNcsColourChange = useCallback(async () => {
         await props.molecule.redraw()
@@ -445,7 +447,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                         <div style={{borderColor: 'rgb(0, 0, 255)', borderWidth:'5px', backgroundColor: 'rgb(0, 0, 255)', height:'20px', width:'5px', marginTop: '0.2rem', padding: '0rem'}}/>
                     </>
                     : colourMode === "mol-symm" ?
-                    props.mode === "edit" ?
+                    mode === "edit" ?
                     <NcsColourSwatch style={{cursor: "pointer", height:'30px', width:'36px', padding: "0px", borderStyle: 'solid', borderColor: '#ced4da', borderWidth: '3px', borderRadius: '8px'}} rule={ncsColourRuleRef?.current} applyColourChange={applyNcsColourChange} />
                     :
                     <GrainOutlined style={{height:'30px', width:'36px', padding:0, borderStyle: 'solid', borderColor: '#ced4da', borderWidth: '3px', borderRadius: '8px'}}/>
@@ -490,12 +492,8 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 </>
                 }
                 <Button onClick={handleCreateRepresentation}>
-                    {props.mode === 'add' ? 'Create' : 'Apply'}
+                    {mode === 'add' ? 'Create' : 'Apply'}
                 </Button>
             </Stack>
         </Popover>
-}
-
-MoorhenAddCustomRepresentationCard.defaultProps = { 
-    mode: 'add'
 }

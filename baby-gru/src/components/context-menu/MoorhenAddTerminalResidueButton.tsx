@@ -7,7 +7,10 @@ import { useSelector } from "react-redux";
 export const MoorhenAddTerminalResidueButton = (props: moorhen.ContextButtonProps) => {
 
     const [toolTip, setToolTip] = useState<string>("Add Residue")
+    
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
+
+    const { selectedMolecule, chosenAtom, urlPrefix } = { ...props }
 
     const getCootCommandInput = (selectedMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, localParameters?: string): moorhen.cootCommandKwargs => {
         return {
@@ -27,12 +30,10 @@ export const MoorhenAddTerminalResidueButton = (props: moorhen.ContextButtonProp
     }, [shortCuts])
 
     return <MoorhenContextButtonBase
-        icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/pixmaps/add-peptide-1.svg`} alt='Add Residue' />}
+        icon={<img className="moorhen-context-button__icon" src={`${urlPrefix}/pixmaps/add-peptide-1.svg`} alt='Add Residue' />}
         needsMapData={true}
         toolTipLabel={toolTip}
-        cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}
+        cootCommandInput={getCootCommandInput(selectedMolecule, chosenAtom)}
         {...props}
     />
 }
-
-MoorhenAddTerminalResidueButton.defaultProps = { mode: 'edit' }

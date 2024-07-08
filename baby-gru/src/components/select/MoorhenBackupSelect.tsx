@@ -10,6 +10,11 @@ type MoorhenBackupSelectPropsType = {
 }
 
 export const MoorhenBackupSelect = forwardRef<HTMLSelectElement, MoorhenBackupSelectPropsType>((props, selectRef) => {
+    
+    const defaultProps = { height: '4rem', width: '20rem', label: "Backup" }
+
+    const { height, width, label } = { ...defaultProps, ...props }
+    
     const [backupOptions, setBackupOptions] = useState<null | JSX.Element[]>(null)
 
     useEffect(() => {
@@ -26,12 +31,11 @@ export const MoorhenBackupSelect = forwardRef<HTMLSelectElement, MoorhenBackupSe
         }
     }, [props.timeCapsuleRef]);
 
-    return <Form.Group style={{ width: props.width, height:props.height }}>
-                <Form.Label>{props.label}</Form.Label>
+    return <Form.Group style={{ width: width, height:height }}>
+                <Form.Label>{label}</Form.Label>
                 <FormSelect size="sm" ref={selectRef} defaultValue={-999999} >
                     {backupOptions}
                 </FormSelect>
             </Form.Group>
 })
 
-MoorhenBackupSelect.defaultProps = { height: '4rem', width: '20rem', label: "Backup" }

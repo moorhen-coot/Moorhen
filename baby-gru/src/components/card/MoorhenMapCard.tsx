@@ -42,12 +42,18 @@ interface MoorhenMapCardPropsInterface extends moorhen.CollectedProps {
 }
 
 export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((props, cardRef) => {
+    const defaultProps = {
+        initialContour: 0.8, initialRadius: 13
+    }
+
+    const { initialContour, initialRadius } = {...defaultProps, ...props}
+
     const mapRadius = useSelector((state: moorhen.State) => {
         const map = state.mapContourSettings.mapRadii.find(item => item.molNo === props.map.molNo)
         if (map) {
             return map.radius
         } else {
-            return props.initialRadius
+            return initialRadius
         }
     })
     const mapContourLevel = useSelector((state: moorhen.State) => {
@@ -55,7 +61,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         if (map) {
             return map.contourLevel
         } else {
-            return props.initialContour
+            return initialContour
         }
     })
     const mapStyle = useSelector((state: moorhen.State) => {
@@ -616,7 +622,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                             logScale={true}
                             showSliderTitle={false}
                             isDisabled={!mapIsVisible}
-                            initialValue={props.initialContour}
+                            initialValue={initialContour}
                             externalValue={mapContourLevel}
                             setExternalValue={(newVal) => dispatch( setContourLevel({molNo: props.map.molNo, contourLevel: newVal}) )}
                         />
@@ -633,7 +639,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                             sliderTitle="Radius" 
                             decimalPlaces={2} 
                             isDisabled={!mapIsVisible} 
-                            initialValue={props.initialRadius} 
+                            initialValue={initialRadius} 
                             externalValue={mapRadius} 
                             setExternalValue={(newVal) => dispatch( setMapRadius({molNo: props.map.molNo, radius: newVal}) )}
                         />
@@ -657,7 +663,3 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         </Card.Body>
     </Card >
 })
-
-MoorhenMapCard.defaultProps = {
-    initialContour: 0.8, initialRadius: 13
-}

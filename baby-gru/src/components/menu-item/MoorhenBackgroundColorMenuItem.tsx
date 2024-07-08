@@ -65,8 +65,6 @@ export const MoorhenBackgroundColorMenuItem = (props: {
         menuItemText="Set background colour..."
         onCompleted={() => props.setPopoverIsShown(false)}
         setPopoverIsShown={props.setPopoverIsShown}
-        popoverPlacement={props.popoverPlacement}
+        popoverPlacement={props.popoverPlacement ?? "right"}
     />
 }
-
-MoorhenBackgroundColorMenuItem.defaultProps = { popoverPlacement: "right" }

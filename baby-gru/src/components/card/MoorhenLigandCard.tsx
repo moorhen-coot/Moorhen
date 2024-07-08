@@ -29,14 +29,18 @@ export const MoorhenLigandCard = (props: {
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
 
-    const { ligand, molecule } = props
+    const defaultValidationStyles = [
+        'contact_dots', 'chemical_features', 'ligand_environment', 'ligand_validation'
+    ]
+    
+    const { ligand, molecule, validationStyles } = { validationStyles: defaultValidationStyles,  ...props }
 
     useEffect(() => {
         const changedState = { ...showState }
-        props.validationStyles.forEach(style => changedState[style] = molecule.representations.some(representation => representation.style === style && representation.visible))
+        validationStyles.forEach(style => changedState[style] = molecule.representations.some(representation => representation.style === style && representation.visible))
         setShowState(changedState)
         return () => {
-            props.validationStyles.forEach(key => {
+            validationStyles.forEach(key => {
                 molecule.hide(key, ligand.cid)
             })
         }
@@ -120,7 +124,7 @@ export const MoorhenLigandCard = (props: {
                                 <CenterFocusStrongOutlined style={{marginRight: '0.5rem'}}/>
                                 {ligand.cid}
                             </Button>
-                            {props.validationStyles.map(style => {
+                            {validationStyles.map(style => {
                                 return getToggleButton(style, validationLabels[style])
                             })}
                             {ligand.chem_comp_info?.length > 0 &&
@@ -134,10 +138,4 @@ export const MoorhenLigandCard = (props: {
                 </Row>
             </Card.Body>
         </Card>
-}
-
-MoorhenLigandCard.defaultProps = {
-    validationStyles: [
-        'contact_dots', 'chemical_features', 'ligand_environment', 'ligand_validation'
-    ]
 }
