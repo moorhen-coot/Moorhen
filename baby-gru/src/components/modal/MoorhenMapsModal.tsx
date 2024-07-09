@@ -31,14 +31,7 @@ export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {
     let displayData = maps.map((map, index) => {
         return <MoorhenMapCard
             ref={el => cardListRef.current[index] = el}
-            showSideBar={true}
-            busy={false}
-            dropdownId={1}
-            accordionDropdownId={1}
-            setAccordionDropdownId={(arg0) => {}}
-            sideBarWidth={convertRemToPx(20)}
             key={map.molNo}
-            index={map.molNo}
             map={map}
             initialContour={map.suggestedContourLevel ? map.suggestedContourLevel : 0.8}
             initialRadius={map.suggestedRadius ? map.suggestedRadius : 13}
@@ -53,8 +46,6 @@ export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {
                 modalId={modalKeys.MAPS}
                 left={width - (convertRemToPx(55) + 100)}
                 top={height / 2}
-                defaultHeight={convertViewtoPx(10, height)}
-                defaultWidth={convertViewtoPx(10, width)}
                 minHeight={convertViewtoPx(10, height)}
                 minWidth={convertRemToPx(20)}
                 maxHeight={convertViewtoPx(90, height)}

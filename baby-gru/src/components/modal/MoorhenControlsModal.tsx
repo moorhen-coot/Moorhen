@@ -78,8 +78,6 @@ export const MoorhenControlsModal = (props: { urlPrefix: string }) => {
                 modalId={modalKeys.SHOW_CONTROLS}
                 left={width / 5}
                 top={height / 5}
-                defaultHeight={convertViewtoPx(60, height)}
-                defaultWidth={convertViewtoPx(60, width)}
                 minHeight={convertViewtoPx(60, height)}
                 minWidth={convertViewtoPx(60, width)}
                 maxHeight={convertViewtoPx(60, height)}

@@ -14,10 +14,13 @@ type MoorhenLigandSelectPropsType = {
 }
 
 export const MoorhenLigandSelect = forwardRef<HTMLSelectElement, MoorhenLigandSelectPropsType>((props, selectRef) => {
+    const defaultProps = { disabled: false, height: '4rem', width: '20rem', margin: '0.5rem', selectedCoordMolNo: null, label: "Ligand" }
+    const {
+        disabled, height, width, margin, selectedCoordMolNo, label
+    } = { ...defaultProps, ...props }
+
     const handleChange = (evt: ChangeEvent<HTMLSelectElement>) => {
-        if (props.onChange) {
-            props.onChange(evt)
-        }
+        props.onChange?.(evt)
         if (selectRef !== null && typeof selectRef !== 'function') {
             selectRef.current.value = evt.target.value
         }
@@ -30,16 +33,14 @@ export const MoorhenLigandSelect = forwardRef<HTMLSelectElement, MoorhenLigandSe
                 return <option value={ligand.cid} key={ligand.cid}>{ligand.cid}</option>
             })
         }
-        
     }
 
-    return <Form.Group style={{ width: props.width, margin: props.margin, height:props.height }}>
-        <Form.Label>{props.label}</Form.Label>
-        <FormSelect size="sm" ref={selectRef} defaultValue={''} onChange={handleChange} disabled={props.disabled}>
-            {props.selectedCoordMolNo !== null ? getLigandOptions(props.selectedCoordMolNo) :  null}
+    return <Form.Group style={{ width: width, margin: margin, height:height }}>
+        <Form.Label>{label}</Form.Label>
+        <FormSelect size="sm" ref={selectRef} defaultValue={''} onChange={handleChange} disabled={disabled}>
+            {selectedCoordMolNo !== null ? getLigandOptions(selectedCoordMolNo) :  null}
         </FormSelect>
     </Form.Group>
 
 })
 
-MoorhenLigandSelect.defaultProps = { disabled: false, height: '4rem', width: '20rem', margin: '0.5rem', selectedCoordMolNo: null, label: "Ligand" }

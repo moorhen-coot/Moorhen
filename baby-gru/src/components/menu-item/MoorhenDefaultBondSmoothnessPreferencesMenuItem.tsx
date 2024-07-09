@@ -11,7 +11,9 @@ export const MoorhenDefaultBondSmoothnessPreferencesMenuItem = (props: {
 }) => {
     
     const dispatch = useDispatch()
+
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
+    
     const smoothnesSelectRef = useRef<null | HTMLSelectElement>(null)
 
     const onCompleted = () => { dispatch(
@@ -31,14 +33,10 @@ export const MoorhenDefaultBondSmoothnessPreferencesMenuItem = (props: {
         </>
 
     return <MoorhenBaseMenuItem
-        popoverPlacement={props.popoverPlacement}
+        popoverPlacement={props.popoverPlacement ?? "right"}
         popoverContent={panelContent}
         menuItemText={"Default smoothness of molecule bonds..."}
         setPopoverIsShown={props.setPopoverIsShown}
         onCompleted={onCompleted}
     />
-}
-
-MoorhenDefaultBondSmoothnessPreferencesMenuItem.defaultProps = {
-    popoverPlacement: 'right'
 }

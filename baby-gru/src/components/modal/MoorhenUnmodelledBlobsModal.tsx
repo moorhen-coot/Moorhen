@@ -25,8 +25,6 @@ export const MoorhenUnmodelledBlobsModal = (props: moorhen.CollectedProps) => {
                 modalId={modalKeys.UNMODELLED_BLOBS}
                 left={width / 6}
                 top={height / 3}
-                defaultHeight={convertViewtoPx(70, height)}
-                defaultWidth={convertViewtoPx(37, width)}
                 minHeight={convertViewtoPx(30, height)}
                 minWidth={convertRemToPx(37)}
                 maxHeight={convertViewtoPx(70, height)}

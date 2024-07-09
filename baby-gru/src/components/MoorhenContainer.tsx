@@ -171,7 +171,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const innerActiveMapRef = useRef<null | moorhen.Map>(null)
     const innerlastHoveredAtomRef = useRef<null | moorhen.HoveredAtom>(null)
     
-    const dispatch = useDispatch()
     const maps = useSelector((state: moorhen.State) => state.maps)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const cursorStyle = useSelector((state: moorhen.State) => state.hoveringStates.cursorStyle)
@@ -191,15 +190,17 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const modificationCountBackupThreshold = useSelector((state: moorhen.State) => state.backupSettings.modificationCountBackupThreshold)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
-    const innerStatesMap: moorhen.ContainerRefs = {
+    const dispatch = useDispatch()
+
+    const innerRefsMap: moorhen.ContainerRefs = {
         glRef: innerGlRef, timeCapsuleRef: innerTimeCapsuleRef, commandCentre: innnerCommandCentre,
         moleculesRef: innerMoleculesRef, mapsRef: innerMapsRef, activeMapRef: innerActiveMapRef,
         lastHoveredAtomRef: innerlastHoveredAtomRef, videoRecorderRef: innerVideoRecorderRef,
     }
 
     let refs = {} as moorhen.ContainerRefs
-    Object.keys(innerStatesMap).forEach(key => {
-        refs[key] = props[key] ? props[key] : innerStatesMap[key]
+    Object.keys(innerRefsMap).forEach(key => {
+        refs[key] = props[key] ? props[key] : innerRefsMap[key]
     })
 
     const { 
@@ -210,12 +211,32 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     moleculesRef.current = molecules
     mapsRef.current = maps
 
+    const defaultProps = {
+        onUserPreferencesChange: () => {},
+        urlPrefix: '.',
+        monomerLibraryPath: './monomers',
+        setMoorhenDimensions: null,
+        disableFileUploads: false,
+        includeNavBarMenuNames: [],
+        extraNavBarModals: [],
+        extraNavBarMenus: [],
+        extraFileMenuItems: [],
+        extraEditMenuItems: [],
+        extraCalculateMenuItems: [],
+        extraDraggableModals: [],
+        viewOnly: false,
+        allowScripting: true,
+        backupStorageInstance: createLocalStorageInstance('Moorhen-TimeCapsule'),
+        aceDRGInstance: null,
+        store: MoorhenReduxStore
+    }
+
     const {
         disableFileUploads, urlPrefix, extraNavBarMenus, viewOnly, extraDraggableModals, 
         monomerLibraryPath, extraFileMenuItems, allowScripting, backupStorageInstance,
         extraEditMenuItems, aceDRGInstance, extraCalculateMenuItems, setMoorhenDimensions,
         onUserPreferencesChange, extraNavBarModals, includeNavBarMenuNames, store
-    } = props
+    } = { ...defaultProps, ...props }
 
     const collectedProps: moorhen.CollectedProps = {
         glRef, commandCentre, timeCapsuleRef, disableFileUploads, extraDraggableModals, aceDRGInstance, 
@@ -228,7 +249,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     useLayoutEffect(() => {
         let head = document.head
         let style: any = document.createElement("link")
-        style.href = `${props.urlPrefix}/moorhen.css`
+        style.href = `${urlPrefix}/moorhen.css`
         style.rel = "stylesheet"
         style.async = true
         style.type = 'text/css'
@@ -486,7 +507,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     <MoorhenSnackBarManager {...collectedProps}/>
 
-    <MoorhenUpdatingMapsManager commandCentre={props.commandCentre} glRef={props.glRef}/>
+    <MoorhenUpdatingMapsManager commandCentre={commandCentre} glRef={glRef}/>
 
     {/**
     <MoorhenSharedSessionManager
@@ -527,24 +548,4 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         </Row>
     </Container>
     </SnackbarProvider>
-}
-
-MoorhenContainer.defaultProps = {
-    onUserPreferencesChange: () => {},
-    urlPrefix: '.',
-    monomerLibraryPath: './monomers',
-    setMoorhenDimensions: null,
-    disableFileUploads: false,
-    includeNavBarMenuNames: [],
-    extraNavBarModals: [],
-    extraNavBarMenus: [],
-    extraFileMenuItems: [],
-    extraEditMenuItems: [],
-    extraCalculateMenuItems: [],
-    extraDraggableModals: [],
-    viewOnly: false,
-    allowScripting: true,
-    backupStorageInstance: createLocalStorageInstance('Moorhen-TimeCapsule'),
-    aceDRGInstance: null,
-    store: MoorhenReduxStore
 }

@@ -30,7 +30,7 @@ export const MoorhenImportFSigFMenuItem = (props:{
 
     const connectMap = async () => {
         const [molecule, reflectionMap, twoFoFcMap, foFcMap] = [
-            props.selectedMolNo !== null ? props.selectedMolNo : parseInt(moleculeSelectRef.current.value),
+            props.selectedMolNo !== undefined ? props.selectedMolNo : parseInt(moleculeSelectRef.current.value),
             parseInt(mapSelectRef.current.value),
             parseInt(twoFoFcSelectRef.current.value),
             parseInt(foFcSelectRef.current.value)
@@ -110,7 +110,7 @@ export const MoorhenImportFSigFMenuItem = (props:{
             <Col key="Col2">
                 <MoorhenMapSelect maps={maps} ref={foFcSelectRef} label="FoFc" filterFunction={(map) => map.isDifference} width='100%' />
             </Col>
-            {props.selectedMolNo === null &&
+            {props.selectedMolNo === undefined &&
                 <Col key="Col3">
                     <MoorhenMoleculeSelect molecules={molecules} ref={moleculeSelectRef} label="Molecule" allowAny={false} width='100%' />
                 </Col>
@@ -127,5 +127,4 @@ export const MoorhenImportFSigFMenuItem = (props:{
     />
 }
 
-MoorhenImportFSigFMenuItem.defaultProps = { selectedMolNo: null }
 

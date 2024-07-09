@@ -378,14 +378,13 @@ const LightingPanel = (props: {
                 }
             }}
         />
-                    <InputGroup className='moorhen-input-group-check'>
-                        <Form.Check 
-                            type="switch"
-                            checked={doShadow}
-                            onChange={() => {dispatch( setDoShadow(!doShadow) )}}
-                            label="Shadows"/>
-                    </InputGroup>
-        
+        <InputGroup className='moorhen-input-group-check'>
+            <Form.Check 
+                type="switch"
+                checked={doShadow}
+                onChange={() => {dispatch( setDoShadow(!doShadow) )}}
+                label="Shadows"/>
+        </InputGroup>
     </div>
 }
 
@@ -421,8 +420,6 @@ export const MoorhenSceneSettingsModal = (props: {
                 left={width / 5}
                 top={height / 6}
                 headerTitle="Scene settings"
-                defaultHeight={convertViewtoPx(40, height)}
-                defaultWidth={convertViewtoPx(40, width)}
                 minHeight={convertViewtoPx(60, height)}
                 minWidth={convertRemToPx(40)}
                 maxHeight={convertViewtoPx(75, height)}

@@ -19,15 +19,34 @@ export const MoorhenBaseMenuItem = (props: {
     disabled?: boolean;
 }) => {
 
+    const defaultProps = {
+        id: '',
+        showOkButton: true,
+        buttonText: "OK",
+        buttonVariant: "primary",
+        textClassName: "",
+        popoverPlacement: "right",
+        onEntering: () => { },
+        onExiting: () => { },
+        onCompleted: () => { },
+        disabled: false
+    }
+
+    const {
+        popoverContent, popoverPlacement, onCompleted, onEntering, setPopoverIsShown, 
+        onExiting, menuItemTitle, showOkButton, buttonVariant, buttonText, 
+        textClassName, id, menuItemText, disabled
+    } = { ...defaultProps, ...props }
+
     const resolveOrRejectRef = useRef({
         resolve: (_arg0?: any) => { },
         reject: (_arg0?: any) => { }
     })
 
     return <>
-        {props.popoverContent ? <OverlayTrigger
+        {popoverContent ? <OverlayTrigger
             rootClose
-            placement={props.popoverPlacement}
+            placement={popoverPlacement as "left" | "right"}
             trigger="click"
 
             onToggle={(doShow) => {
@@ -35,60 +54,48 @@ export const MoorhenBaseMenuItem = (props: {
                     new Promise((resolve, reject) => {
                         resolveOrRejectRef.current = { resolve, reject }
                     }).then(_result => {
-                        props.onCompleted()
+                        onCompleted()
                         document.body.click()
                     }).catch(err => console.log(err))
                 }
             }}
 
             onEntering={() => {
-                props.onEntering()
+                onEntering()
             }}
 
             onEntered={() => {
-                props.setPopoverIsShown(true)
+                setPopoverIsShown(true)
             }}
 
             onExit={() => {
-                props.setPopoverIsShown(false)
+                setPopoverIsShown(false)
             }}
 
             onExiting={() => {
-                props.onExiting()
+                onExiting()
             }}
 
             overlay={
                 <Popover style={{ maxWidth: "40rem", zIndex: 99999 }}>
-                    <PopoverHeader as="h3">{props.menuItemTitle}</PopoverHeader>
+                    <PopoverHeader as="h3">{menuItemTitle}</PopoverHeader>
                     <PopoverBody>
-                        {props.popoverContent}
-                        {props.showOkButton &&
-                            <Button variant={props.buttonVariant} onClick={() => {
+                        {popoverContent}
+                        {showOkButton &&
+                            <Button variant={buttonVariant} onClick={() => {
                                 resolveOrRejectRef.current.resolve()
                             }}>
-                                {props.buttonText}
+                                {buttonText}
                             </Button>
                         }
 
                     </PopoverBody>
                 </Popover>
             }>
-            <MenuItem disabled={props.disabled} className={props.textClassName} id={props.id}>{props.menuItemText}</MenuItem>
+            <MenuItem disabled={disabled} className={textClassName} id={id}>{menuItemText}</MenuItem>
         </OverlayTrigger> :
-            <MenuItem disabled={props.disabled} className={props.textClassName}>{props.menuItemText}</MenuItem>
+            <MenuItem disabled={disabled} className={textClassName}>{menuItemText}</MenuItem>
         }
     </>
 }
 
-MoorhenBaseMenuItem.defaultProps = {
-    id: '',
-    showOkButton: true,
-    buttonText: "OK",
-    buttonVariant: "primary",
-    textClassName: "",
-    popoverPlacement: "right",
-    onEntering: () => { },
-    onExiting: () => { },
-    onCompleted: () => { },
-    disabled: false
-}
