@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useEffect, useState, useRef, useCallback, useMemo, Fragment } from "react"
 import { Card, Form, Button, Col, DropdownButton, Stack, OverlayTrigger, ToggleButton, Spinner } from "react-bootstrap"
-import { doDownload, rgbToHex } from '../../utils/utils'
+import { convertRemToPx, doDownload, rgbToHex } from '../../utils/utils'
 import { getNameLabel } from "./cardUtils"
 import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings, FileCopyOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined, AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
 import { MoorhenMapSettingsMenuItem } from "../menu-item/MoorhenMapSettingsMenuItem";
@@ -26,14 +26,6 @@ type ActionButtonType = {
 }
 
 interface MoorhenMapCardPropsInterface extends moorhen.CollectedProps {
-    dropdownId: number;
-    accordionDropdownId: number;
-    setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
-    sideBarWidth: number;
-    showSideBar: boolean;
-    busy: boolean;
-    key: number;
-    index: number;
     map: moorhen.Map;
     initialContour?: number;
     initialRadius?: number;
@@ -278,8 +270,9 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         },
     }
 
-    const getButtonBar = (sideBarWidth: number) => {
-        const maximumAllowedWidth = sideBarWidth * 0.55
+    const getButtonBar = () => {
+        const minWidth = convertRemToPx(20)
+        const maximumAllowedWidth = minWidth * 0.55
         let currentlyUsedWidth = 0
         let expandedButtons: JSX.Element[] = []
         let compressedButtons: JSX.Element[] = []
@@ -583,7 +576,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                 </OverlayTrigger>
     }
 
-    return <Card ref={cardRef} className="px-0" style={{ display: 'flex', minWidth: props.sideBarWidth, marginBottom: '0.5rem', padding: '0' }} key={props.map.molNo}>
+    return <Card ref={cardRef} className="px-0" style={{ display: 'flex', minWidth: convertRemToPx(20), marginBottom: '0.5rem', padding: '0' }} key={props.map.molNo}>
         <Card.Header style={{ padding: '0.1rem' }}>
             <Stack gap={2} direction='horizontal'>
                 <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left', color: isDark ? 'white' : 'black' }}>
@@ -591,7 +584,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                     {getMapColourSelector()}
                 </Col>
                 <Col style={{ display: 'flex', justifyContent: 'right' }}>
-                    {getButtonBar(props.sideBarWidth)}
+                    {getButtonBar()}
                 </Col>
             </Stack>
         </Card.Header>
