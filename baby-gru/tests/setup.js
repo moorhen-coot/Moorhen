@@ -6,7 +6,7 @@ module.exports = () => {
         if (err == null) {
             // file exists
         } else if (err.code === 'ENOENT') {
-            fs.symlink(path.join(__dirname, '..', 'public', 'baby-gru', 'wasm', 'moorhen.data'), 'moorhen.data', 'file', (err) => {
+            fs.symlink(path.join(__dirname, '..', 'public', 'moorhen.data'), 'moorhen.data', 'file', (err) => {
                 if (err) {
                     console.log(err);
                 }

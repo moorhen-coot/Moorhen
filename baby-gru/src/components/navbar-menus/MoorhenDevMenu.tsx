@@ -4,7 +4,7 @@ import { MenuItem } from "@mui/material";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch } from "react-redux";
-import { setDoOutline, setDoShadow } from "../../store/sceneSettingsSlice";
+import { setDoOutline } from "../../store/sceneSettingsSlice";
 import { useSnackbar } from "notistack";
 
 export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
@@ -14,7 +14,6 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
     
     const dispatch = useDispatch()
     
-    const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline)
 
     const menuItemProps = {setPopoverIsShown, customCid, ...props}
@@ -37,13 +36,6 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                         Tomogram...
                     </MenuItem>
                     <hr></hr>
-                    <InputGroup className='moorhen-input-group-check'>
-                        <Form.Check 
-                            type="switch"
-                            checked={doShadow}
-                            onChange={() => {dispatch( setDoShadow(!doShadow) )}}
-                            label="Shadows"/>
-                    </InputGroup>
                     <InputGroup className='moorhen-input-group-check'>
                         <Form.Check 
                             type="switch"

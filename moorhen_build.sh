@@ -621,7 +621,8 @@ if [ $BUILD_LIBSIGCPP = true ]; then
         -Dcpp_link_args="-pthread $MOORHEN_CMAKE_FLAGS" \
         -Dcpp_args="-s USE_PTHREADS=1 $MOORHEN_CMAKE_FLAGS" \
         --buildtype=release \
-        -Dbuild-tests=false && \
+        -Dbuild-tests=false \
+        -Dbuild-examples=false && \
         meson install -C ${BUILD_DIR}/libsigcplusplus_build || fail "Error installing sigc++, giving up."
     cd ${BUILD_DIR}
 fi

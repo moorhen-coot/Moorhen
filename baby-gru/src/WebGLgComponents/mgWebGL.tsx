@@ -7709,7 +7709,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.useProgram(this.shaderProgramInstanced);
         this.gl.enableVertexAttribArray(this.shaderProgramInstanced.vertexNormalAttribute);
 
-        if(this.drawingGBuffers&&this.doPerspectiveProjection){
+        if(this.doDepthPeelPass||(this.drawingGBuffers&&this.doPerspectiveProjection)){
             this.gl.disable(this.gl.BLEND);
         } else {
             this.gl.enable(this.gl.BLEND);
@@ -7758,7 +7758,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.uniform1i(shader.peelNumber,-1);
         })
 
-        var oldMouseDown = this.mouseDown;
+        const oldMouseDown = this.mouseDown;
 
         if ((this.doEdgeDetect||this.doSSAO)&&this.WEBGL2) {
             if(this.renderToTexture) {
@@ -8723,6 +8723,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let symms = [];
         const bright_y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
 
+        if(this.doShadow&&!calculatingShadowMap&&!this.drawingGBuffers){
+            this.gl.activeTexture(this.gl.TEXTURE0);
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTextureDepth);
+        }
+
         for (let idx = 0; idx < this.displayBuffers.length; idx++) {
 
             if (!this.displayBuffers[idx].visible) {
@@ -8790,16 +8795,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.uniform1i(theShader.doShadows, false);
                 if(this.doShadow&&!calculatingShadowMap&&!this.drawingGBuffers){
                     this.gl.uniform1i(theShader.ShadowMap, 0);
-                    this.gl.activeTexture(this.gl.TEXTURE0);
-                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTextureDepth);
                     this.gl.uniform1f(theShader.xPixelOffset, 1.0/this.rttFramebufferDepth.width);
                     this.gl.uniform1f(theShader.yPixelOffset, 1.0/this.rttFramebufferDepth.height);
                     this.gl.uniformMatrix4fv(theShader.textureMatrixUniform, false, this.textureMatrix);
                     this.gl.uniform1i(theShader.doShadows, true);
-                    if(this.mouseDown)
-                        this.gl.uniform1i(theShader.shadowQuality, 0);
-                    else
+                    if(this.renderToTexture)
                         this.gl.uniform1i(theShader.shadowQuality, 1);
+                    else
+                        this.gl.uniform1i(theShader.shadowQuality, 0);
                 }
                 if(theShader.doSSAO!=null) this.gl.uniform1i(theShader.doSSAO, this.doSSAO);
                 if(theShader.doEdgeDetect!=null) this.gl.uniform1i(theShader.doEdgeDetect, this.doEdgeDetect);
@@ -8963,10 +8966,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.gl.uniform1f(program.yPixelOffset, 1.0/this.rttFramebufferDepth.height);
                     this.gl.uniformMatrix4fv(program.textureMatrixUniform, false, this.textureMatrix);
                     this.gl.uniform1i(program.doShadows, true);
-                    if(this.mouseDown)
-                        this.gl.uniform1i(program.shadowQuality, 0);
-                    else
+                    if(this.renderToTexture)
                         this.gl.uniform1i(program.shadowQuality, 1);
+                    else
+                        this.gl.uniform1i(program.shadowQuality, 0);
                 }
                 if(program.doSSAO!=null) this.gl.uniform1i(program.doSSAO, this.doSSAO);
                 if(program.doEdgeDetect!=null) this.gl.uniform1i(program.doEdgeDetect, this.doEdgeDetect);

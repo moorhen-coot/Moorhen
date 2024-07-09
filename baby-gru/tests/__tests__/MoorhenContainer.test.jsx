@@ -9,15 +9,14 @@ jest.mock('chart.js', () => ({
 }))
 
 import '@testing-library/jest-dom'
-import { render, cleanup, screen, within }  from '@testing-library/react'
+import { render, cleanup, screen }  from '@testing-library/react'
 import { Provider } from 'react-redux'
 import MoorhenStore from "../../src/store/MoorhenReduxStore"
-import { createRef } from 'react'
+import { createRef, act } from 'react'
 import { MoorhenModalsContainer } from '../../src/components/misc/MoorhenModalsContainer'
 import { MoorhenNavBar } from '../../src/components/navbar-menus/MoorhenNavBar'
 import { MockWebGL } from '../__mocks__/mockWebGL'
 import { MockMoorhenCommandCentre } from '../__mocks__/mockMoorhenCommandCentre'
-import { act } from 'react-dom/test-utils'
 import { setHoveredAtom } from '../../src/store/hoveringStatesSlice'
 import { setCootInitialized, setDevMode } from '../../src/store/generalStatesSlice'
 import { setDefaultBondSmoothness, setHeight, setIsDark, setWidth } from '../../src/store/sceneSettingsSlice'
@@ -72,13 +71,13 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
                 return Promise.resolve({
                     ok: true,
                     text: async () => {
-                        const fileContents = fs.readFileSync(url, { encoding: 'utf8', flag: 'r' })
+                        const fileContents = fs.readFileSync(`./public/${url}`, { encoding: 'utf8', flag: 'r' })
                         return fileContents
                     },
                     blob: async () => {
                         return {
                             arrayBuffer: async () => {
-                                const fileContents = fs.readFileSync(url)
+                                const fileContents = fs.readFileSync(`./public/${url}`)
                                 const buff = fileContents.buffer
                                 return buff
                             }    

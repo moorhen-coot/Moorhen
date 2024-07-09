@@ -72,13 +72,13 @@ describeIfWasmExists('Testing MoorhenEditMenu', () => {
                 return Promise.resolve({
                     ok: true,
                     text: async () => {
-                        const fileContents = fs.readFileSync(url, { encoding: 'utf8', flag: 'r' })
+                        const fileContents = fs.readFileSync(`./public/${url}`, { encoding: 'utf8', flag: 'r' })
                         return fileContents
                     },
                     blob: async () => {
                         return {
                             arrayBuffer: async () => {
-                                const fileContents = fs.readFileSync(url)
+                                const fileContents = fs.readFileSync(`./public/${url}`)
                                 const buff = fileContents.buffer
                                 return buff
                             }    

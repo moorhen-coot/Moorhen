@@ -8,7 +8,7 @@ import { Button, Form, InputGroup, Stack } from "react-bootstrap";
 import { 
     setBackgroundColor, setClipCap, setDepthBlurDepth, setDepthBlurRadius, setDoSSAO, setResetClippingFogging,
     setSsaoRadius, setSsaoBias,setUseOffScreenBuffers, setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold,
-    setEdgeDetectDepthScale, setEdgeDetectNormalScale
+    setEdgeDetectDepthScale, setEdgeDetectNormalScale, setDoShadow
 } from "../../store/sceneSettingsSlice";
 import { HexColorInput, RgbColorPicker } from "react-colorful";
 import { CirclePicker } from "react-color"
@@ -305,6 +305,9 @@ const LightingPanel = (props: {
     const [ambient, setAmbient] = useState<[number, number, number, number]>(props.glRef.current.light_colours_ambient)
     const [specularPower, setSpecularPower] = useState<number>(props.glRef.current.specularPower)
     const [position, setPosition] = useState<[number, number, number]>([props.glRef.current.light_positions[0], props.glRef.current.light_positions[1], props.glRef.current.light_positions[2]])
+    const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
+
+    const dispatch = useDispatch()
 
     const setLightingPositionIfDirty = () => {
         if (isSetLightPosIsDirty.current) {
@@ -375,6 +378,14 @@ const LightingPanel = (props: {
                 }
             }}
         />
+                    <InputGroup className='moorhen-input-group-check'>
+                        <Form.Check 
+                            type="switch"
+                            checked={doShadow}
+                            onChange={() => {dispatch( setDoShadow(!doShadow) )}}
+                            label="Shadows"/>
+                    </InputGroup>
+        
     </div>
 }
 
