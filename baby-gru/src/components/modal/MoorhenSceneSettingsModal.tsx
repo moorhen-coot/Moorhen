@@ -378,14 +378,13 @@ const LightingPanel = (props: {
                 }
             }}
         />
-                    <InputGroup className='moorhen-input-group-check'>
-                        <Form.Check 
-                            type="switch"
-                            checked={doShadow}
-                            onChange={() => {dispatch( setDoShadow(!doShadow) )}}
-                            label="Shadows"/>
-                    </InputGroup>
-        
+        <InputGroup className='moorhen-input-group-check'>
+            <Form.Check 
+                type="switch"
+                checked={doShadow}
+                onChange={() => {dispatch( setDoShadow(!doShadow) )}}
+                label="Shadows"/>
+        </InputGroup>
     </div>
 }
 
