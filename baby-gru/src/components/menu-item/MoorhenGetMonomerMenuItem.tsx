@@ -61,8 +61,6 @@ export const MoorhenGetMonomerMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 
-    const dispatch = useDispatch()
-
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
@@ -79,6 +77,8 @@ export const MoorhenGetMonomerMenuItem = (props: {
     const [busy, setBusy] = useState<boolean>(false)
     const [autoCompleteValue, setAutoCompleteValue] = useState<string>("")
     const [autocompleteOpen, setAutocompleteOpen] = useState<boolean>(false)
+
+    const dispatch = useDispatch()
 
     const { enqueueSnackbar } = useSnackbar()
 
@@ -359,8 +359,6 @@ export const MoorhenGetMonomerMenuItem = (props: {
         onCompleted={() => {}}
         showOkButton={false}
         setPopoverIsShown={props.setPopoverIsShown}
-        popoverPlacement={props.popoverPlacement}
+        popoverPlacement={props.popoverPlacement ?? "right"}
     />
 }
-
-MoorhenGetMonomerMenuItem.defaultProps = { popoverPlacement: "right" }

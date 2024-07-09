@@ -111,7 +111,6 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
                         setPopoverIsShown={setPopoverIsShown}
                     />
                     <MapContourSettingsMenuItem
-                        glRef={props.glRef}
                         commandCentre={props.commandCentre}
                         setPopoverIsShown={setPopoverIsShown}
                     />

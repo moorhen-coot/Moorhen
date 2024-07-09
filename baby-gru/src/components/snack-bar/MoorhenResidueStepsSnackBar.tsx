@@ -20,11 +20,16 @@ export const MoorhenResidueStepsSnackBar = forwardRef<
         onStop?: () => void;
         onPause?: () => void;
         onResume?: () => void;
-        onProgress?: (progress: number) => void;
         disableTimeCapsule?: boolean
         sleepTime?: number;
     }
 >((props, ref) => {
+
+    const defaultProps = {
+        disableTimeCapsule: true, sleepTime: 600,
+    }
+
+    const { sleepTime, disableTimeCapsule } = { ...defaultProps, ...props }
 
     const dispatch = useDispatch()
 
@@ -42,16 +47,16 @@ export const MoorhenResidueStepsSnackBar = forwardRef<
     const { closeSnackbar } = useSnackbar()
 
     const exit = useCallback(async () => {
-        props.onStop()
-        if (props.disableTimeCapsule) props.timeCapsuleRef.current.disableBackups = !timeCapsuleIsEnabled
+        props.onStop?.()
+        if (disableTimeCapsule) props.timeCapsuleRef.current.disableBackups = !timeCapsuleIsEnabled
         await props.timeCapsuleRef.current.addModification()
         closeSnackbar(props.id)
     }, [timeCapsuleIsEnabled])
 
     const init = async () => {
-        await props.onStart()
+        await props.onStart?.()
         dispatch( setHoveredAtom({molecule: null, cid: null}) )
-        if (props.disableTimeCapsule) props.timeCapsuleRef.current.disableBackups = true
+        if (disableTimeCapsule) props.timeCapsuleRef.current.disableBackups = true
     }
 
     const steppedRefine = async () => {
@@ -76,7 +81,7 @@ export const MoorhenResidueStepsSnackBar = forwardRef<
             setCid(residue.cid)
             await props.onStep(residue.cid)
             setProgress((prev) => prev + singleStepPercent)
-            await sleep(props.sleepTime)
+            await sleep(sleepTime)
         }
         await exit()
     }
@@ -98,9 +103,9 @@ export const MoorhenResidueStepsSnackBar = forwardRef<
                     <div style={{display: 'flex', justifyContent: 'end'}}>
                         <IconButton style={{padding: '0.1rem'}} onClick={() => {
                             if (isRunningRef.current) {
-                                props.onPause()
+                                props.onPause?.()
                             } else {
-                                props.onResume()
+                                props.onResume?.()
                             }
                             isRunningRef.current = !isRunningRef.current
                             setIsRunning(isRunningRef.current)
@@ -116,8 +121,3 @@ export const MoorhenResidueStepsSnackBar = forwardRef<
                 </Stack>
     </SnackbarContent>
 })
-
-MoorhenResidueStepsSnackBar.defaultProps = {
-    disableTimeCapsule: true, sleepTime: 600, onStart: () => {}, onStop: () => {}, 
-    onPause: () => {}, onResume: () => {}, onProgress: () => {}
-}

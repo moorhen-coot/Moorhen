@@ -13,6 +13,14 @@ type MoorhenNumberFormPropsType = {
 }
 
 export const MoorhenNumberForm = forwardRef<string, MoorhenNumberFormPropsType>((props, formRef) => {
+    const defaultProps = { 
+        allowNegativeValues: false, label: 'Input', disabled: false, width: '', margin: '', padding: ''
+    }
+
+    const {
+        allowNegativeValues, label, disabled, width, margin, padding
+    } = { ...defaultProps, ...props }
+
     const [currentValue, setCurrentValue] = useState<string>(props.defaultValue.toString())
     const [isValidInput, setIsValidInput] = useState<boolean>(true)
 
@@ -21,7 +29,7 @@ export const MoorhenNumberForm = forwardRef<string, MoorhenNumberFormPropsType>(
             return false
         } else if (parseInt(input) === Infinity) {
             return false
-        } else if (!props.allowNegativeValues && parseInt(input) < 0) {
+        } else if (!allowNegativeValues && parseInt(input) < 0) {
             return false
         } 
         return true
@@ -33,10 +41,10 @@ export const MoorhenNumberForm = forwardRef<string, MoorhenNumberFormPropsType>(
         }
     }, [])
     
-    return  <Form.Group className='moorhen-form-group' controlId="MoorhenNumberForm" style={{padding: props.padding, margin: props.margin, width: props.width}}>
-                <Form.Label style={{color: props.disabled ? 'grey' : ''}}>{props.label}</Form.Label>
-                <Form.Control type="number" value={currentValue} disabled={props.disabled}
-                style={{color: props.disabled ? 'grey' : '', borderColor: isValidInput ? '#ced4da' : 'red'}}
+    return  <Form.Group className='moorhen-form-group' controlId="MoorhenNumberForm" style={{padding: padding, margin: margin, width: width}}>
+                <Form.Label style={{color: disabled ? 'grey' : ''}}>{label}</Form.Label>
+                <Form.Control type="number" value={currentValue} disabled={disabled}
+                style={{color: disabled ? 'grey' : '', borderColor: isValidInput ? '#ced4da' : 'red'}}
                 onChange={(evt) => {
                     if (formRef !== null && typeof formRef !== 'function') {
                         const _isValid = checkIsValidInput(evt.target.value)
@@ -47,12 +55,8 @@ export const MoorhenNumberForm = forwardRef<string, MoorhenNumberFormPropsType>(
                         }
                         setCurrentValue(evt.target.value)
                         setIsValidInput(_isValid)
-                        props.onChange(evt.target.value)
+                        props.onChange?.(evt.target.value)
                     }
                 }} />
             </Form.Group>
 })
-
-MoorhenNumberForm.defaultProps = { 
-    allowNegativeValues: false, label: 'Input', onChange: () => {}, disabled: false, width: '', margin: '', padding: ''
- }

@@ -13,6 +13,7 @@ export const MoorhenMoveMoleculeHere = (props: {
 }) => {
 
     const dispatch = useDispatch()
+
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
@@ -34,15 +35,10 @@ export const MoorhenMoveMoleculeHere = (props: {
 
     return <MoorhenBaseMenuItem
         id='merge-molecules-menu-item'
-        popoverPlacement={props.popoverPlacement}
+        popoverPlacement={props.popoverPlacement ?? "right"}
         popoverContent={panelContent}
         menuItemText="Move molecule here..."
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />
 }
-
-MoorhenMoveMoleculeHere.defaultProps = {
-    popoverPlacement: "right",
-}
-

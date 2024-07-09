@@ -21,13 +21,13 @@ export const MoorhenMergeMoleculesMenuItem = (props: {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const panelContent = <>
-        {props.fromMolNo === null ? <MoorhenMoleculeSelect molecules={molecules} label="From molecule" allowAny={false} ref={fromRef} /> : null}
+        {props.fromMolNo === undefined ? <MoorhenMoleculeSelect molecules={molecules} label="From molecule" allowAny={false} ref={fromRef} /> : null}
         <MoorhenMoleculeSelect molecules={molecules} label="Into molecule" allowAny={false} ref={toRef} />
     </>
 
     const onCompleted = useCallback(async () => {
         const toMolecule = molecules.find(molecule => molecule.molNo === parseInt(toRef.current.value))
-        const fromMolNo: number = props.fromMolNo !== null ? props.fromMolNo : parseInt(fromRef.current.value)
+        const fromMolNo: number = props.fromMolNo ?? parseInt(fromRef.current.value)
         const otherMolecules = molecules.filter(molecule => (molecule.molNo === fromMolNo) && (molecule.molNo !== toMolecule.molNo))
         if (otherMolecules.length <= 0) {
             console.log('No valid molecules selected, skipping merge...')
@@ -40,17 +40,11 @@ export const MoorhenMergeMoleculesMenuItem = (props: {
 
     return <MoorhenBaseMenuItem
         id='merge-molecules-menu-item'
-        popoverPlacement={props.popoverPlacement}
+        popoverPlacement={props.popoverPlacement ?? "right"}
         popoverContent={panelContent}
-        menuItemText={props.menuItemText}
+        menuItemText={props.menuItemText ?? 'Merge molecules...'}
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />
-}
-
-MoorhenMergeMoleculesMenuItem.defaultProps = {
-    popoverPlacement: "right",
-    menuItemText: 'Merge molecules...',
-    fromMolNo: null
 }
 
