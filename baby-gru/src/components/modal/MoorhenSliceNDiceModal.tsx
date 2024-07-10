@@ -192,8 +192,8 @@ export const MoorhenSliceNDiceModal = (props: {
             const min = parseFloat(Math.min(...bFactors.map(residue => residue.bFactor)).toFixed(2))
             setMoleculeMaxBfactor( max )
             setMoleculeMinBfactor( min )
-            setBFactorThreshold( thresholdTypeRef.current === 'b-factor-norm' ? max : 70 )
-            bFactorThresholdRef.current = thresholdTypeRef.current === 'b-factor-norm' ? max : 70
+            setBFactorThreshold( thresholdTypeRef.current === 'b-factor-norm' ? max : min )
+            bFactorThresholdRef.current = thresholdTypeRef.current === 'b-factor-norm' ? max : min
             if (selectedMoleculeCopyRef.current === null) {
                 // This here is necessary because React mounts components twice in strict mode and served in dev server
                 // @ts-ignore
@@ -455,8 +455,8 @@ export const MoorhenSliceNDiceModal = (props: {
                         onChange={() => { 
                             setThresholdType('af2-plddt')
                             thresholdTypeRef.current = 'af2-plddt'
-                            setBFactorThreshold(70)
-                            bFactorThresholdRef.current = 70    
+                            setBFactorThreshold(moleculeMinBfactor)
+                            bFactorThresholdRef.current = moleculeMinBfactor    
                             isDirty.current = true
                             if (!isBusy.current) {
                                 trimBfactorThreshold()
