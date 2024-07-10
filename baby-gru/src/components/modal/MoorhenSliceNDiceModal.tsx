@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from "react-redux"
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen"
-import { convertViewtoPx, findConsecutiveRanges, hslToHex, readTextFile } from "../../utils/utils"
+import { convertViewtoPx, findConsecutiveRanges, getMultiColourRuleArgs, hslToHex, readTextFile } from "../../utils/utils"
 import { Button, Card, Col, Dropdown, Form, FormSelect, Row, Spinner, SplitButton, Stack } from "react-bootstrap"
 import { Backdrop, IconButton, Slider, Tooltip } from "@mui/material"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
@@ -130,10 +130,10 @@ export const MoorhenSliceNDiceModal = (props: {
     const prevSelectedMoleculeRef = useRef<moorhen.Molecule>(null)
     const isBusy = useRef<boolean>(false)
     const isDirty = useRef<boolean>(false)
-    const thresholdTypeRef = useRef<string>('plddt')
+    const thresholdTypeRef = useRef<string>('af2-plddt')
 
     const [paeFileIsUploaded, setPaeFileIsUploaded] = useState<boolean>(false)
-    const [thresholdType, setThresholdType] = useState<string>('plddt')
+    const [thresholdType, setThresholdType] = useState<string>('af2-plddt')
     const [moleculeBfactors, setMoleculeBfactors] = useState<{ cid: string; bFactor: number; normalised_bFactor: number; }[]>(null)
     const [moleculeMinBfactor, setMoleculeMinBfactor] = useState<number>(null)
     const [moleculeMaxBfactor, setMoleculeMaxBfactor] = useState<number>(null)
@@ -152,16 +152,34 @@ export const MoorhenSliceNDiceModal = (props: {
     
     const dispatch = useDispatch()
 
+    const setColourRule = useCallback(async (molecule: moorhen.Molecule, colourRuleType: string) => {
+        const newColourRule = new MoorhenColourRule(
+            colourRuleType, "/*/*/*/*", "#ffffff", props.commandCentre, true
+        )
+        newColourRule.setLabel(colourRuleType ===  'af2-plddt' ? "PLDDT" : "B-Factor")
+        const ruleArgs = await getMultiColourRuleArgs(molecule, colourRuleType)
+        newColourRule.setArgs([ ruleArgs ])
+        newColourRule.setParentMolecule(molecule)
+        molecule.defaultColourRules = [ newColourRule ]
+        return newColourRule
+    }, [props.commandCentre])
+
+    useEffect(() => {
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current?.value))
+        if (selectedMoleculeCopyRef.current?.molNo !== undefined && thresholdType && selectedMolecule) {
+            setColourRule(selectedMoleculeCopyRef.current, thresholdType)
+        }
+    }, [thresholdType])
+
     useEffect(() => {
         const copyMolecule = async (molecule: moorhen.Molecule) => {
             prevSelectedMoleculeRef.current = molecule
             selectedMoleculeCopyRef.current = await molecule.copyFragmentUsingCid('//', false)
             selectedMoleculeCopyRef.current.name = molecule.name
-            selectedMoleculeCopyRef.current.defaultColourRules = molecule.defaultColourRules.map(rule => {
-                return MoorhenColourRule.initFromDataObject(rule.objectify(), props.commandCentre, selectedMoleculeCopyRef.current)
-            })
-            dispatch(hideMolecule(molecule))
             selectedMoleculeCopyRef.current.setAtomsDirty(true)
+            await selectedMoleculeCopyRef.current.updateAtoms()
+            await setColourRule(selectedMoleculeCopyRef.current, thresholdTypeRef.current)
+            dispatch(hideMolecule(molecule))
             await selectedMoleculeCopyRef.current.fetchIfDirtyAndDraw('CRs')
             await selectedMoleculeCopyRef.current.centreOn('/*/*/*/*', true, true)
         }
@@ -174,8 +192,8 @@ export const MoorhenSliceNDiceModal = (props: {
             const min = parseFloat(Math.min(...bFactors.map(residue => residue.bFactor)).toFixed(2))
             setMoleculeMaxBfactor( max )
             setMoleculeMinBfactor( min )
-            setBFactorThreshold( thresholdTypeRef.current === 'bfactor' ? max : min )
-            bFactorThresholdRef.current = thresholdTypeRef.current === 'bfactor' ? max : min
+            setBFactorThreshold( thresholdTypeRef.current === 'b-factor-norm' ? max : min )
+            bFactorThresholdRef.current = thresholdTypeRef.current === 'b-factor-norm' ? max : min
             if (selectedMoleculeCopyRef.current === null) {
                 // This here is necessary because React mounts components twice in strict mode and served in dev server
                 // @ts-ignore
@@ -209,7 +227,7 @@ export const MoorhenSliceNDiceModal = (props: {
             }
             if (typeof selectedMoleculeCopyRef.current === 'object') {
                 let cidsToHide: string[]
-                if (thresholdTypeRef.current === 'bfactor') {
+                if (thresholdTypeRef.current === 'b-factor-norm') {
                     cidsToHide = moleculeBfactors.filter(residue => residue.bFactor > bFactorThresholdRef.current).map(residue => residue.cid)
                 } else {
                     cidsToHide = moleculeBfactors.filter(residue => residue.bFactor < bFactorThresholdRef.current).map(residue => residue.cid)
@@ -308,7 +326,7 @@ export const MoorhenSliceNDiceModal = (props: {
                 await newMolecule.updateAtoms()
                 const bFactors = newMolecule.getResidueBFactors()
                 let cidsToDelete: string[]
-                if (thresholdTypeRef.current === 'bfactor') {
+                if (thresholdTypeRef.current === 'b-factor-norm') {
                     cidsToDelete = bFactors.filter(residue => residue.bFactor > bFactorThresholdRef.current).map(residue => residue.cid)
                 } else {
                     cidsToDelete = bFactors.filter(residue => residue.bFactor < bFactorThresholdRef.current).map(residue => residue.cid)
@@ -433,25 +451,25 @@ export const MoorhenSliceNDiceModal = (props: {
                     <Form.Check
                         style={{margin: 0}} 
                         type="radio"
-                        checked={thresholdType === 'plddt'}
+                        checked={thresholdType === 'af2-plddt'}
                         onChange={() => { 
-                            setThresholdType('plddt')
-                            thresholdTypeRef.current = 'plddt'
+                            setThresholdType('af2-plddt')
+                            thresholdTypeRef.current = 'af2-plddt'
                             setBFactorThreshold(moleculeMinBfactor)
                             bFactorThresholdRef.current = moleculeMinBfactor    
                             isDirty.current = true
                             if (!isBusy.current) {
                                 trimBfactorThreshold()
-                            }    
+                            }
                         }}
                         label="PLDDT"/>
                     <Form.Check
                         style={{margin: 0}} 
                         type="radio"
-                        checked={thresholdType === 'bfactor'}
+                        checked={thresholdType === 'b-factor-norm'}
                         onChange={() => {
-                            setThresholdType('bfactor')
-                            thresholdTypeRef.current = 'bfactor'
+                            setThresholdType('b-factor-norm')
+                            thresholdTypeRef.current = 'b-factor-norm'
                             setBFactorThreshold(moleculeMaxBfactor)
                             bFactorThresholdRef.current = moleculeMaxBfactor    
                             isDirty.current = true
@@ -463,8 +481,8 @@ export const MoorhenSliceNDiceModal = (props: {
                 </Stack>
                 <Slider
                     aria-label="B-Factor threshold"
-                    getAriaValueText={(newVal: number) => `${newVal} ${thresholdType === 'bfactor' ? "Å^2" : "PLDDT"}`}
-                    valueLabelFormat={(newVal: number) => thresholdType === 'bfactor' ? <span>{"≤ "}{newVal}</span> : <span>≥ {newVal}</span>}
+                    getAriaValueText={(newVal: number) => `${newVal} ${thresholdType === 'b-factor-norm' ? "Å^2" : "PLDDT"}`}
+                    valueLabelFormat={(newVal: number) => thresholdType === 'b-factor-norm' ? <span>{"≤ "}{newVal}</span> : <span>≥ {newVal}</span>}
                     valueLabelDisplay="on"
                     value={bFactorThreshold}
                     onChange={(evt: any, newVal: number) => {
