@@ -1,7 +1,7 @@
 jest.setTimeout(10000)
 
 import '@testing-library/jest-dom'
-import { render, screen, cleanup, act, within }  from '@testing-library/react'
+import { render, screen, cleanup, within }  from '@testing-library/react'
 import { MoorhenNavBar }  from '../../src/components/navbar-menus/MoorhenNavBar'
 import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
@@ -60,17 +60,15 @@ describe('Testing MoorhenNavBar', () => {
             aceDRGInstance: null,
         }
 
-        act(() => {
-            MoorhenStore.dispatch(setHoveredAtom({
-                molecule: null,
-                cid: null,
-            }))
-            MoorhenStore.dispatch( setDevMode(false) )    
-            MoorhenStore.dispatch( setIsDark(false) )    
-            MoorhenStore.dispatch( setWidth(1600) )    
-            MoorhenStore.dispatch( setHeight(900) )    
-            MoorhenStore.dispatch( setCootInitialized(true) )
-        })
+        MoorhenStore.dispatch(setHoveredAtom({
+            molecule: null,
+            cid: null,
+        }))
+        MoorhenStore.dispatch( setDevMode(false) )    
+        MoorhenStore.dispatch( setIsDark(false) )    
+        MoorhenStore.dispatch( setWidth(1600) )    
+        MoorhenStore.dispatch( setHeight(900) )    
+        MoorhenStore.dispatch( setCootInitialized(true) )
     })
     
     afterEach(cleanup)

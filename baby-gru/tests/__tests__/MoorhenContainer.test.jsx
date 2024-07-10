@@ -12,7 +12,7 @@ import '@testing-library/jest-dom'
 import { render, cleanup, screen }  from '@testing-library/react'
 import { Provider } from 'react-redux'
 import MoorhenStore from "../../src/store/MoorhenReduxStore"
-import { createRef, act } from 'react'
+import { createRef } from 'react'
 import { MoorhenModalsContainer } from '../../src/components/misc/MoorhenModalsContainer'
 import { MoorhenNavBar } from '../../src/components/navbar-menus/MoorhenNavBar'
 import { MockWebGL } from '../__mocks__/mockWebGL'
@@ -142,20 +142,18 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
             includeNavBarMenuNames, onAtomHovered: () => {}, onKeyPress: () => {}
         }
 
-        act(() => {
-            MoorhenStore.dispatch(setHoveredAtom({
-                molecule: null,
-                cid: null,
-            }))
-            MoorhenStore.dispatch( setDevMode(false) )    
-            MoorhenStore.dispatch( setIsDark(false) )    
-            MoorhenStore.dispatch( setWidth(1600) )    
-            MoorhenStore.dispatch( setHeight(900) )    
-            MoorhenStore.dispatch( setCootInitialized(true) )
-            MoorhenStore.dispatch( setDefaultBondSmoothness(1) )
-            MoorhenStore.dispatch( overwriteMapUpdatingScores(['Rfactor', 'Rfree', 'Moorhen Points']) )
-            MoorhenStore.dispatch( setShowScoresToast(true) )
-        })
+        MoorhenStore.dispatch(setHoveredAtom({
+            molecule: null,
+            cid: null,
+        }))
+        MoorhenStore.dispatch( setDevMode(false) )    
+        MoorhenStore.dispatch( setIsDark(false) )    
+        MoorhenStore.dispatch( setWidth(1600) )    
+        MoorhenStore.dispatch( setHeight(900) )    
+        MoorhenStore.dispatch( setCootInitialized(true) )
+        MoorhenStore.dispatch( setDefaultBondSmoothness(1) )
+        MoorhenStore.dispatch( overwriteMapUpdatingScores(['Rfactor', 'Rfree', 'Moorhen Points']) )
+        MoorhenStore.dispatch( setShowScoresToast(true) )
     })
 
     afterEach(cleanup)
