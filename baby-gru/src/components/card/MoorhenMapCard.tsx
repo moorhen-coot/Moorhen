@@ -271,7 +271,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     }
 
     const getButtonBar = () => {
-        const minWidth = convertRemToPx(20)
+        const minWidth = convertRemToPx(28)
         const maximumAllowedWidth = minWidth * 0.55
         let currentlyUsedWidth = 0
         let expandedButtons: JSX.Element[] = []
@@ -576,7 +576,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                 </OverlayTrigger>
     }
 
-    return <Card ref={cardRef} className="px-0" style={{ display: 'flex', minWidth: convertRemToPx(20), marginBottom: '0.5rem', padding: '0' }} key={props.map.molNo}>
+    return <Card ref={cardRef} className="px-0" style={{ display: 'flex', minWidth: convertRemToPx(28), marginBottom: '0.5rem', padding: '0' }} key={props.map.molNo}>
         <Card.Header style={{ padding: '0.1rem' }}>
             <Stack gap={2} direction='horizontal'>
                 <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left', color: isDark ? 'white' : 'black' }}>

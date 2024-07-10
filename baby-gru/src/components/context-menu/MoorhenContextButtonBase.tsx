@@ -104,12 +104,11 @@ export const MoorhenContextButtonBase = (props: {
 }) => {
 
     const defaultProps = {
-        needsMapData: false, needsAtomData: true, 
-        refineAfterMod: true, onExit: null, onCompleted: null
+        needsMapData: false, needsAtomData: true, refineAfterMod: true
     }
     
     const {
-        refineAfterMod, onCompleted, needsAtomData, needsMapData, onExit
+        refineAfterMod, needsAtomData, needsMapData,
     } = {...defaultProps, ...props}
     
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
@@ -126,9 +125,7 @@ export const MoorhenContextButtonBase = (props: {
         
         const cootResult = await props.commandCentre.current.cootCommand(cootCommandInput, true)
         
-        if (onCompleted) {
-            onCompleted(props.selectedMolecule, props.chosenAtom)
-        }
+        props.onCompleted?.(props.selectedMolecule, props.chosenAtom)
         
         if (refineAfterMod && enableRefineAfterMod && activeMap) {
             try {
@@ -149,9 +146,7 @@ export const MoorhenContextButtonBase = (props: {
         dispatch( triggerUpdate(props.selectedMolecule.molNo) )
         props.selectedMolecule.clearBuffersOfStyle('hover')
       
-        if(onExit) {
-            onExit(props.selectedMolecule, props.chosenAtom, cootResult)
-        }        
+        props.onExit?.(props.selectedMolecule, props.chosenAtom, cootResult)
     }
   
     const handleClick = useCallback(async () => {
