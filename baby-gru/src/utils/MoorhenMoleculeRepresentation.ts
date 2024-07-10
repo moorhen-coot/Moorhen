@@ -480,7 +480,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     /**
      * Get the buffers objects for a representation of style residue_environment
      * @param {string} cid - The CID selection for the representation
-     * @returns An array with the buffer objects for this representation
+     * @returns {object[]} An array with the buffer objects for this representation
      */
     async getResidueEnvironmentBuffers(cid: string) {
         const envBuffers = await this.getEnvironmentBuffers(cid)
@@ -493,7 +493,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
      * @param {string} cid - The CID selection for the representation
      * @param {moorhen.RepresentationStyles} [focusRepresentation="CBs"] - The representation style for the CID at focus
      * @param {moorhen.RepresentationStyles} [backgroundRepresentation="CAs"] - The representation style for the rest of the molecule
-     * @returns An array with the buffer objects for this representation
+     * @returns {object[]} An array with the buffer objects for this representation
      */
     async getAdaptativeBondBuffers(cid: string, focusRepresentation: moorhen.RepresentationStyles = "CBs", backgroundRepresentation: moorhen.RepresentationStyles = "CAs") {
         if (!cid) {
@@ -583,7 +583,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
 
     /**
      * Get buffer objects for restraints mesh representation
-     * @returns {objects[]} An array with the buffer objects for this representation
+     * @returns {object[]} An array with the buffer objects for this representation
      */
     async getRestraintsMeshBuffers() {
         try {
@@ -602,7 +602,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     /**
      * Get buffer objects for residue environment representation
      * @param {string} cid - The CID selection for this representation
-     * @returns {objects[]} An array with the buffer objects for this representation
+     * @returns {object[]} An array with the buffer objects for this representation
      */
     async getEnvironmentBuffers(cid: string) {
         const resSpec = cidToSpec(cid)
@@ -812,7 +812,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
      * Get representation buffers for a M2T representation 
      * @param style 
      * @param cidSelection 
-     * @returns 
      */
     async getM2TRepresentationBuffers(style: string, cidSelection?: string): Promise<libcootApi.InstancedMeshJS[]> {
         const { m2tStyle, m2tSelection } = this.getM2tArgs(style, cidSelection)
