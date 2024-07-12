@@ -1,7 +1,7 @@
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen";
 import { useRef } from "react";
-import { Button, Row } from "react-bootstrap";
+import { Button, Row, Stack } from "react-bootstrap";
 import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
 import { useDispatch, useSelector } from "react-redux";
 import { MoorhenCarbohydrateValidation } from "../validation-tools/MoorhenCarbohydrateValidation";
@@ -9,7 +9,7 @@ import { modalKeys } from "../../utils/enums";
 import { Tooltip } from "@mui/material";
 import { hideModal } from "../../store/modalsSlice";
 import { useSnackbar } from "notistack";
-import { LastPageOutlined } from "@mui/icons-material";
+import { InfoOutlined, LastPageOutlined } from "@mui/icons-material";
 
 export const MoorhenCarbohydrateValidationModal = (props: moorhen.CollectedProps) => {        
     const resizeNodeRef = useRef<HTMLDivElement>();
@@ -20,6 +20,23 @@ export const MoorhenCarbohydrateValidationModal = (props: moorhen.CollectedProps
     const dispatch = useDispatch()
 
     const { enqueueSnackbar } = useSnackbar()
+
+    const header = (title: string) => <Stack direction="horizontal" gap={1}>
+                        <span>
+                            {title}
+                        </span>
+                        <Tooltip title="This pluggin uses Privateer, a software for the conformational validation of carbohydrate structures. Please cite Agirre, J. et al. Nat Struct Mol Biol (2015)." key={1}>
+                            <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => window.open('https://www.nature.com/articles/nsmb.3115')}>
+                                <InfoOutlined/>
+                            </Button>
+                        </Tooltip>
+                    </Stack>
+
+    const body = (style) => <div style={style} >
+                                <Row className={"big-validation-tool-container-row"}>
+                                    <MoorhenCarbohydrateValidation {...props}/>
+                                </Row>
+                            </div> 
 
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.CARB_VALIDATION}
@@ -32,18 +49,12 @@ export const MoorhenCarbohydrateValidationModal = (props: moorhen.CollectedProps
                 enforceMaxBodyDimensions={true}
                 overflowY='auto'
                 overflowX='auto'
-                headerTitle='Carbohydrate validation with Privateer'
+                headerTitle={header("Carbohydrate validation with Privateer")}
                 footer={null}
                 resizeNodeRef={resizeNodeRef}
-                body={
-                    <div style={{height: '100%'}} >
-                        <Row className={"big-validation-tool-container-row"}>
-                            <MoorhenCarbohydrateValidation {...props}/>
-                        </Row>
-                    </div>
-                }
+                body={ body({ height: '100%' }) }
                 additionalHeaderButtons={[
-                    <Tooltip title={"Move to side panel"}  key={1}>
+                    <Tooltip title={"Move to side panel"}  key={2}>
                         <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => {
                             dispatch( hideModal(modalKeys.CARB_VALIDATION) )
                             enqueueSnackbar(modalKeys.CARB_VALIDATION, {
@@ -51,12 +62,8 @@ export const MoorhenCarbohydrateValidationModal = (props: moorhen.CollectedProps
                                 persist: true,
                                 anchorOrigin: {horizontal: "right", vertical: "bottom"},
                                 modalId: modalKeys.CARB_VALIDATION,
-                                title: "Privateer",
-                                children: <div style={{ overflowY: 'scroll', overflowX: "hidden", maxHeight: '30vh' }}>
-                                            <Row className={"big-validation-tool-container-row"}>
-                                                <MoorhenCarbohydrateValidation {...props}/>
-                                            </Row>
-                                        </div>
+                                title: header("Privateer"),
+                                children: body({ overflowY: 'scroll', overflowX: "hidden", maxHeight: '30vh' })
                             })
                         }}>
                             <LastPageOutlined/>

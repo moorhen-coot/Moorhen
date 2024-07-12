@@ -109,7 +109,7 @@ declare module "notistack" {
         sideBar: {
             children: JSX.Element;
             modalId: string;
-            title: string;
+            title: string | JSX.Element;
         }
     }
 }

@@ -62,7 +62,7 @@ import { hideModal, focusOnModal, unFocusModal } from "../../store/modalsSlice";
  * 
  */
 export const MoorhenDraggableModalBase = (props: {
-    headerTitle: string;
+    headerTitle: string | JSX.Element;
     body: JSX.Element | JSX.Element[];
     modalId: string;
     enforceMaxBodyDimensions?: boolean;
