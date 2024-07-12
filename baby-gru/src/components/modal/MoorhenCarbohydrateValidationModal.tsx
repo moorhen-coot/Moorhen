@@ -1,6 +1,6 @@
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen";
-import { useRef } from "react";
+import { CSSProperties, useRef } from "react";
 import { Button, Row, Stack } from "react-bootstrap";
 import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
 import { useDispatch, useSelector } from "react-redux";
@@ -32,7 +32,7 @@ export const MoorhenCarbohydrateValidationModal = (props: moorhen.CollectedProps
                         </Tooltip>
                     </Stack>
 
-    const body = (style) => <div style={style} >
+    const body = (style: CSSProperties) => <div style={style} >
                                 <Row className={"big-validation-tool-container-row"}>
                                     <MoorhenCarbohydrateValidation {...props}/>
                                 </Row>

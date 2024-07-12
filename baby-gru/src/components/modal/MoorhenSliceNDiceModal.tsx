@@ -595,6 +595,16 @@ export const MoorhenSliceNDiceModal = (props: {
                             } 
                             </Backdrop>
 
+    const header = <Stack direction="horizontal" gap={1}>
+                        <span>
+                            Slice-n-Dice
+                        </span>
+                        <Tooltip title="This pluggin uses Slice-N-Dice, a software for slicing models into distinct structural units. Preprint Simpkin, A. et al. (2022) available at bioRxiv." key={1}>
+                            <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => window.open('https://doi.org/10.1101/2022.06.30.497974')}>
+                                <InfoOutlined/>
+                            </Button>
+                        </Tooltip>
+                    </Stack>
 
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.SLICE_N_DICE}
@@ -605,7 +615,7 @@ export const MoorhenSliceNDiceModal = (props: {
                 maxHeight={convertViewtoPx(50, height)}
                 maxWidth={convertViewtoPx(50, width)}
                 additionalChildren={spinnerContent}
-                headerTitle='Slice-n-Dice'
+                headerTitle={header}
                 footer={footerContent}
                 body={bodyContent}
                 onClose={handleClose}
