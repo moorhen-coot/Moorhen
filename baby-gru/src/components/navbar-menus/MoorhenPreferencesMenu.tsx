@@ -12,7 +12,7 @@ import { MoorhenRefinementSettingsMenuItem } from "../menu-item/MoorhenRefinemen
 import { MoorhenMouseSensitivitySettingsMenuItem } from "../menu-item/MoorhenMouseSensitivitySettingsMenuItem"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { useSelector, useDispatch } from "react-redux";
-import { setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut } from "../../store/miscAppSettingsSlice";
+import { setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut } from "../../store/generalStatesSlice";
 import { setAtomLabelDepthMode } from "../../store/labelSettingsSlice";
 import { setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
 import { setMakeBackups } from "../../store/backupSettingsSlice";
@@ -30,8 +30,8 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
     const showShortcutToast = useSelector((state: moorhen.State) => state.shortcutSettings.showShortcutToast)
     const shortcutOnHoveredAtom = useSelector((state: moorhen.State) => state.shortcutSettings.shortcutOnHoveredAtom)
     const atomLabelDepthMode = useSelector((state: moorhen.State) => state.labelSettings.atomLabelDepthMode)
-    const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.miscAppSettings.defaultExpandDisplayCards)
-    const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.miscAppSettings.transparentModalsOnMouseOut)
+    const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.generalStates.defaultExpandDisplayCards)
+    const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.generalStates.transparentModalsOnMouseOut)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
      const [showModal, setShowModal] = useState<boolean | null>(null);

@@ -988,10 +988,6 @@ export namespace moorhen {
             width: number;
             isDark: boolean;
         };
-        miscAppSettings: {
-            defaultExpandDisplayCards: boolean; 
-            transparentModalsOnMouseOut: boolean; 
-        };
         generalStates: {
             devMode: boolean; 
             userPreferencesMounted: boolean;
@@ -1008,6 +1004,8 @@ export namespace moorhen {
             newCootCommandExit: boolean;
             newCootCommandStart: boolean;        
             showResidueSelection: boolean;
+            defaultExpandDisplayCards: boolean; 
+            transparentModalsOnMouseOut: boolean; 
         };
         sharedSession: {
             isInSharedSession: boolean;

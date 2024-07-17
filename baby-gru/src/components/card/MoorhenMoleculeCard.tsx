@@ -50,7 +50,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
-    const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.miscAppSettings.defaultExpandDisplayCards)
+    const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.generalStates.defaultExpandDisplayCards)
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops)
     const userPreferencesMounted = useSelector((state: moorhen.State) => state.generalStates.userPreferencesMounted)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)

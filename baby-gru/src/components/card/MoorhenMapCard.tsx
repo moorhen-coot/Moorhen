@@ -143,7 +143,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const contourWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.contourWheelSensitivityFactor)
-    const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.miscAppSettings.defaultExpandDisplayCards)
+    const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.generalStates.defaultExpandDisplayCards)
     const mapIsVisible = useSelector((state: moorhen.State) => state.mapContourSettings.visibleMaps.includes(props.map.molNo))
 
     const [isCollapsed, setIsCollapsed] = useState<boolean>(!defaultExpandDisplayCards);

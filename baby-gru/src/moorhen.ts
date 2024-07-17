@@ -23,7 +23,7 @@ import { setDefaultBackgroundColor, setDrawCrosshairs, setDrawFPS, setDrawMissin
 } from './store/sceneSettingsSlice';
 import { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold, resetBackupSettings } from './store/backupSettingsSlice';
 import { 
-    setActiveMap, setCootInitialized, setAppTittle, 
+    setActiveMap, setCootInitialized, setAppTittle, setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut,
     setUserPreferencesMounted, setDevMode, setTheme, setViewOnly, resetGeneralStates
  } from './store/generalStatesSlice';
 import { addMap, addMapList, removeMap, emptyMaps } from "./store/mapsSlice";
@@ -33,7 +33,6 @@ import {
     showMap, hideMap, setPositiveMapColours, setNegativeMapColours, setMapAlpha, setMapColours, setMapRadius, 
     setMapStyle, setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, setDefaultMapSurface, setContourLevel, resetMapContourSettings
 } from './store/mapContourSettingsSlice';
-import { setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut, resetMiscAppSettings } from './store/miscAppSettingsSlice';
 import { setEnableRefineAfterMod, setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints, setAnimateRefine, resetRefinementSettings } from './store/refinementSettingsSlice';
 import { addMolecule, removeMolecule, emptyMolecules, addMoleculeList, showMolecule, hideMolecule, addCustomRepresentation, removeCustomRepresentation, addGeneralRepresentation, removeGeneralRepresentation } from './store/moleculesSlice';
 import { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity, resetDefaultMouseSettings } from './store/mouseSettings';
@@ -48,7 +47,6 @@ import backupSettingsReducer from './store/backupSettingsSlice';
 import shortcutSettingsReducer from './store/shortCutsSlice';
 import labelSettingsReducer from './store/labelSettingsSlice';
 import sceneSettingsReducer from './store/sceneSettingsSlice';
-import miscAppSettingsReducer from './store/miscAppSettingsSlice';
 import generalStatesReducer from './store/generalStatesSlice';
 import hoveringStatesReducer from './store/hoveringStatesSlice';
 import modalsReducer from './store/modalsSlice';
@@ -79,9 +77,9 @@ export {
     setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setEdgeDetectNormalScale,
     setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints, setAnimateRefine, MoorhenReduxStore, 
     moleculesReducer, mapsReducer, mouseSettingsReducer, backupSettingsReducer, unFocusModal, resetSharedSession,
-    shortcutSettingsReducer, labelSettingsReducer, sceneSettingsReducer, miscAppSettingsReducer, generalStatesReducer,
-    modalsReducer, hoveringStatesReducer, mapContourSettingsReducer, moleculeMapUpdateReducer,
+    shortcutSettingsReducer, labelSettingsReducer, sceneSettingsReducer, generalStatesReducer, removeGeneralRepresentation,
+    modalsReducer, hoveringStatesReducer, mapContourSettingsReducer, moleculeMapUpdateReducer, addGeneralRepresentation,
     sharedSessionReducer, refinementSettingsReducer, resetSceneSettings, resetBackupSettings, resetDefaultMouseSettings, 
-    resetGeneralStates, resetHoveringStates, resetLabelSettings, resetMapContourSettings, resetMiscAppSettings, resetMoleculeMapUpdates,
-    resetRefinementSettings, resetShortcutSettings, resetActiveModals, focusOnModal, addGeneralRepresentation, removeGeneralRepresentation
+    resetGeneralStates, resetHoveringStates, resetLabelSettings, resetMapContourSettings, resetMoleculeMapUpdates,
+    resetRefinementSettings, resetShortcutSettings, resetActiveModals, focusOnModal,
 };

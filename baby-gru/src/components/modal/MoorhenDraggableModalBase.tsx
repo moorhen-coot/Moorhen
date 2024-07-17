@@ -104,7 +104,7 @@ export const MoorhenDraggableModalBase = (props: {
     const focusHierarchy = useSelector((state: moorhen.State) => state.modals.focusHierarchy)
     const windowWidth = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const windowHeight = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.miscAppSettings.transparentModalsOnMouseOut)
+    const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.generalStates.transparentModalsOnMouseOut)
     const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering)
     const show = useSelector((state: moorhen.State) => state.modals.activeModals.includes(props.modalId))
     

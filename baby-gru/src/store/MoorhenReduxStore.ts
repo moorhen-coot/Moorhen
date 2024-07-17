@@ -6,7 +6,6 @@ import backupSettingsReducer from './backupSettingsSlice'
 import shortcutSettingsReducer from './shortCutsSlice'
 import labelSettingsReducer from './labelSettingsSlice'
 import sceneSettingsReducer from './sceneSettingsSlice'
-import miscAppSettingsReducer from './miscAppSettingsSlice'
 import generalStatesReducer from './generalStatesSlice'
 import hoveringStatesReducer from './hoveringStatesSlice'
 import modalsReducer from './modalsSlice'
@@ -25,7 +24,6 @@ export default configureStore({
         shortcutSettings: shortcutSettingsReducer,
         labelSettings: labelSettingsReducer,
         sceneSettings: sceneSettingsReducer,
-        miscAppSettings: miscAppSettingsReducer,
         generalStates: generalStatesReducer,
         hoveringStates: hoveringStatesReducer,
         modals: modalsReducer,
