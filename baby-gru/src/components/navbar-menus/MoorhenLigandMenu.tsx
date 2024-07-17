@@ -24,7 +24,7 @@ export const MoorhenLigandMenu = (props: MoorhenNavBarExtendedControlsInterface)
 
     return <>
             <MoorhenGetMonomerMenuItem {...menuItemProps} />
-            <MoorhenImportDictionaryMenuItem {...menuItemProps} />
+            {!props.disableFileUploads && <MoorhenImportDictionaryMenuItem {...menuItemProps} />}
             <MoorhenSMILESToLigandMenuItem {...menuItemProps} />
             <MoorhenCentreOnLigandMenuItem {...menuItemProps} />
             <MoorhenMinimizeEnergyMenuItem {...menuItemProps} />
