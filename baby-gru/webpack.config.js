@@ -6,7 +6,6 @@ const TerserPlugin = require('terser-webpack-plugin');
 const path = require('path');
 
 const paths = {
-  cloud: path.resolve(__dirname, 'cloud'),
   src: path.resolve(__dirname, 'src'),
   types: path.resolve(__dirname, 'src', 'types'),
   dist: path.resolve(__dirname, 'dist'),
