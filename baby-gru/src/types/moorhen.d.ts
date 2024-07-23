@@ -1059,7 +1059,18 @@ export namespace moorhen {
         };
         lhasa: {
             rdkitMoleculePickleList: { cid: string; moleculeMolNo: number; ligandName: string; pickle: string; id: string }[];
-        }
+        };
+        sliceNDice: {
+            paeFileIsUploaded: boolean;
+            thresholdType: "b-factor-norm" | "af2-plddt";
+            moleculeBfactors: { cid: string; bFactor: number; normalised_bFactor: number; }[];
+            moleculeMinBfactor: number;
+            moleculeMaxBfactor: number;
+            bFactorThreshold: number;
+            nClusters: number;
+            clusteringType: string;
+            slicingResults: Molecule[];
+        };
     }
     
     type actionButtonSettings = {

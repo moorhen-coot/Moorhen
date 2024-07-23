@@ -1,0 +1,57 @@
+import { createSlice } from '@reduxjs/toolkit'
+import { moorhen } from '../types/moorhen'
+
+const initialState = {
+    paeFileIsUploaded: false,
+    thresholdType: "af2-plddt",
+    moleculeBfactors: [],
+    moleculeMinBfactor: null,
+    moleculeMaxBfactor: null,
+    bFactorThreshold: 70,
+    nClusters: 2,
+    clusteringType: "birch",
+    slicingResults: null
+}
+
+export const sliceNDiceSlice = createSlice({
+  name: 'sliceNDice',
+  initialState: initialState,
+  reducers: {
+    resetSliceNDiceSlice: (state) => {
+        return initialState
+    },
+    setPaeFileIsUploaded: (state, action: {payload: boolean, type: string}) => {
+        return { ...state, paeFileIsUploaded: action.payload }
+    },
+    setThresholdType: (state, action: {payload: "b-factor-norm" | "af2-plddt", type: string}) => {
+        return { ...state, thresholdType: action.payload }
+    },
+    setMoleculeBfactors: (state, action: {payload: { cid: string; bFactor: number; normalised_bFactor: number; }[], type: string}) => {
+        return { ...state, moleculeBfactors: action.payload }
+    },
+    setMoleculeMinBfactor: (state, action: {payload: number, type: string}) => {
+        return { ...state, moleculeMinBfactor: action.payload }
+    },
+    setMoleculeMaxBfactor: (state, action: {payload: number, type: string}) => {
+        return { ...state, moleculeMaxBfactor: action.payload }
+    },
+    setBFactorThreshold: (state, action: {payload: number, type: string}) => {
+        return { ...state, bFactorThreshold: action.payload }
+    },
+    setNClusters: (state, action: {payload: number, type: string}) => {
+        return { ...state, nClusters: action.payload }
+    },
+    setSlicingResults: (state, action: {payload: moorhen.Molecule[], type: string}) => {
+        return { ...state, slicingResults: action.payload }
+    },
+    setClusteringType: (state, action: {payload: string, type: string}) => {
+        return { ...state, clusteringType: action.payload }
+    },
+}})
+
+export const {
+    resetSliceNDiceSlice, setPaeFileIsUploaded, setThresholdType, setMoleculeBfactors, setSlicingResults,
+    setMoleculeMaxBfactor, setMoleculeMinBfactor, setBFactorThreshold, setNClusters, setClusteringType
+} = sliceNDiceSlice.actions
+
+export default sliceNDiceSlice.reducer

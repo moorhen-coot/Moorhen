@@ -11,6 +11,10 @@ import { CenterFocusWeakOutlined, DownloadOutlined, InfoOutlined, WarningOutline
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule"
 import { hideModal } from "../../store/modalsSlice"
 import { modalKeys } from "../../utils/enums"
+import { 
+    setBFactorThreshold, setClusteringType, setMoleculeBfactors, setMoleculeMaxBfactor,
+    setMoleculeMinBfactor, setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType
+ } from "../../store/sliceNDiceSlice"
 
 const deleteHiddenResidues = async (molecule: moorhen.Molecule) => {
     if (molecule.excludedSelections.length > 0) {
@@ -125,6 +129,7 @@ export const MoorhenSliceNDiceModal = (props: {
     
     const paeFileContents = useRef<null | string>(null)
     const paeFileUploadFormRef = useRef<null | HTMLInputElement>(null)
+    const paeFileSelectFormRef = useRef<null | HTMLSelectElement>(null)
     const clusteringTypeSelectRef = useRef<null | HTMLSelectElement>(null)
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const nClustersRef = useRef<number>(2)
@@ -135,23 +140,23 @@ export const MoorhenSliceNDiceModal = (props: {
     const isDirty = useRef<boolean>(false)
     const thresholdTypeRef = useRef<string>('af2-plddt')
 
-    const [paeFileIsUploaded, setPaeFileIsUploaded] = useState<boolean>(false)
-    const [thresholdType, setThresholdType] = useState<string>('af2-plddt')
-    const [moleculeBfactors, setMoleculeBfactors] = useState<{ cid: string; bFactor: number; normalised_bFactor: number; }[]>(null)
-    const [moleculeMinBfactor, setMoleculeMinBfactor] = useState<number>(null)
-    const [moleculeMaxBfactor, setMoleculeMaxBfactor] = useState<number>(null)
-    const [bFactorThreshold, setBFactorThreshold] = useState<number>(70)
-    const [nClusters, setNClusters] = useState<number>(2)
     const [selectedMolNo, setSelectedMolNo] = useState<number>(null)
-    const [clusteringType, setClusteringType] = useState<string>('birch')
     const [busy, setBusy] = useState<boolean>(false)
     const [showError, setShowError] = useState<boolean>(false)
-    const [slicingResults, setSlicingResults] = useState<moorhen.Molecule[]>(null)
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const paeFileIsUploaded = useSelector((state: moorhen.State) => state.sliceNDice.paeFileIsUploaded)
+    const thresholdType = useSelector((state: moorhen.State) => state.sliceNDice.thresholdType)
+    const moleculeBfactors = useSelector((state: moorhen.State) => state.sliceNDice.moleculeBfactors)
+    const moleculeMinBfactor = useSelector((state: moorhen.State) => state.sliceNDice.moleculeMinBfactor)
+    const moleculeMaxBfactor = useSelector((state: moorhen.State) => state.sliceNDice.moleculeMaxBfactor)
+    const bFactorThreshold = useSelector((state: moorhen.State) => state.sliceNDice.bFactorThreshold)
+    const nClusters = useSelector((state: moorhen.State) => state.sliceNDice.nClusters)
+    const clusteringType = useSelector((state: moorhen.State) => state.sliceNDice.clusteringType)
+    const slicingResults = useSelector((state: moorhen.State) => state.sliceNDice.slicingResults)
     
     const dispatch = useDispatch()
 
@@ -188,12 +193,12 @@ export const MoorhenSliceNDiceModal = (props: {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current?.value))
         if (selectedMolecule) {
             const bFactors = selectedMolecule.getResidueBFactors()
-            setMoleculeBfactors( bFactors )
             const max = parseFloat(Math.max(...bFactors.map(residue => residue.bFactor)).toFixed(1))
             const min = parseFloat(Math.min(...bFactors.map(residue => residue.bFactor)).toFixed(1))
-            setMoleculeMaxBfactor( max )
-            setMoleculeMinBfactor( min )
-            setBFactorThreshold( thresholdTypeRef.current === 'b-factor-norm' ? max : 70 )
+            dispatch(setMoleculeBfactors( bFactors ))
+            dispatch(setMoleculeMaxBfactor( max ))
+            dispatch(setMoleculeMinBfactor( min ))
+            dispatch(setBFactorThreshold( thresholdTypeRef.current === 'b-factor-norm' ? max : 70 ))
             bFactorThresholdRef.current = thresholdTypeRef.current === 'b-factor-norm' ? max : 70
             if (selectedMoleculeCopyRef.current === null) {
                 // This here is necessary because React mounts components twice in strict mode and served in dev server
@@ -214,7 +219,7 @@ export const MoorhenSliceNDiceModal = (props: {
                         )
                     }
                 }).then(_ => {
-                    if (slicingResults && slicingResults.length > 0 ) setSlicingResults(null)
+                    if (slicingResults && slicingResults.length > 0 ) dispatch(setSlicingResults(null))
                     return copyMolecule(selectedMolecule)
                 })
                 .then(_ => {
@@ -232,7 +237,7 @@ export const MoorhenSliceNDiceModal = (props: {
             isDirty.current = false
             if (slicingResults?.length > 0) {
                 await Promise.all( slicingResults.map(sliceMolecule => sliceMolecule.delete()) )
-                setSlicingResults(null)
+                dispatch(setSlicingResults(null))
             }
             if (typeof selectedMoleculeCopyRef.current === 'object') {
                 let cidsToHide: string[]
@@ -297,7 +302,7 @@ export const MoorhenSliceNDiceModal = (props: {
         
         if (!commandArgs) {
             setBusy(false)
-            setSlicingResults(null)
+            dispatch(setSlicingResults(null))
             return
         }
 
@@ -310,7 +315,7 @@ export const MoorhenSliceNDiceModal = (props: {
         if (result.data.result.status === 'Exception') {
             console.warn(result.data.consoleMessage)
             setBusy(false)
-            setSlicingResults(null)
+            dispatch(setSlicingResults(null))
             setTimeout(() => setShowError(true), 500)
             setTimeout(() => setShowError(false), 3000)
             return
@@ -358,7 +363,9 @@ export const MoorhenSliceNDiceModal = (props: {
             await selectedMolecule.delete()
         }
 
-        setSlicingResults(newMolecules.filter(molecule => molecule !== undefined).sort( (a, b) => {  return parseInt(a.name.replace('Slice #', '')) - parseInt(b.name.replace('Slice #', ''))  }))
+        dispatch(setSlicingResults(
+            newMolecules.filter(molecule => molecule !== undefined).sort( (a, b) => {  return parseInt(a.name.replace('Slice #', '')) - parseInt(b.name.replace('Slice #', ''))  })
+        ))
         setBusy(false)
     }, [molecules, slicingResults, isDark])
 
@@ -427,10 +434,10 @@ export const MoorhenSliceNDiceModal = (props: {
             const fileContents = await readTextFile(e.target.files[0]) as string
             if (fileContents.length > 0) {
                 paeFileContents.current = fileContents
-                setPaeFileIsUploaded(true)
+                dispatch(setPaeFileIsUploaded(true))
             } else {
                 paeFileContents.current = null
-                setPaeFileIsUploaded(false)
+                dispatch(setPaeFileIsUploaded(false))
             }
         }
     }
@@ -443,10 +450,10 @@ export const MoorhenSliceNDiceModal = (props: {
                 <FormSelect size="sm" ref={clusteringTypeSelectRef} defaultValue={'birch'} onChange={(evt) => {
                     if (evt.target.value === 'pae') {
                         paeFileContents.current = null
-                        setPaeFileIsUploaded(false)
+                        dispatch(setPaeFileIsUploaded(false))
                     }
                     clusteringTypeSelectRef.current.value = evt.target.value
-                    setClusteringType(evt.target.value)
+                    dispatch(setClusteringType(evt.target.value))
                 }}>
                     <option value={'birch'} key={'birch'}>Birch</option>
                     <option value={'kmeans'} key={'kmeans'}>K-Means</option>
@@ -463,9 +470,9 @@ export const MoorhenSliceNDiceModal = (props: {
                         type="radio"
                         checked={thresholdType === 'af2-plddt'}
                         onChange={() => { 
-                            setThresholdType('af2-plddt')
+                            dispatch(setThresholdType('af2-plddt'))
                             thresholdTypeRef.current = 'af2-plddt'
-                            setBFactorThreshold(70)
+                            dispatch(setBFactorThreshold(70))
                             bFactorThresholdRef.current = 70    
                             isDirty.current = true
                             if (!isBusy.current) {
@@ -478,9 +485,9 @@ export const MoorhenSliceNDiceModal = (props: {
                         type="radio"
                         checked={thresholdType === 'b-factor-norm'}
                         onChange={() => {
-                            setThresholdType('b-factor-norm')
+                            dispatch(setThresholdType('b-factor-norm'))
                             thresholdTypeRef.current = 'b-factor-norm'
-                            setBFactorThreshold(moleculeMaxBfactor)
+                            dispatch(setBFactorThreshold(moleculeMaxBfactor))
                             bFactorThresholdRef.current = moleculeMaxBfactor    
                             isDirty.current = true
                             if (!isBusy.current) {
@@ -496,7 +503,7 @@ export const MoorhenSliceNDiceModal = (props: {
                     valueLabelDisplay="on"
                     value={bFactorThreshold}
                     onChange={(evt: any, newVal: number) => {
-                        setBFactorThreshold(newVal)
+                        dispatch(setBFactorThreshold(newVal))
                         bFactorThresholdRef.current = newVal
                         isDirty.current = true
                         if (!isBusy.current) {
@@ -530,7 +537,7 @@ export const MoorhenSliceNDiceModal = (props: {
                     value={nClusters}
                     onChange={(evt: any, newVal: number) => {
                         nClustersRef.current = newVal
-                        setNClusters(newVal)
+                        dispatch(setNClusters(newVal))
                     }}
                     marks={true}
                     defaultValue={5}
@@ -558,7 +565,9 @@ export const MoorhenSliceNDiceModal = (props: {
                     <InfoOutlined style={{marginLeft: '0.1rem', marginBottom: '0.2rem', width: '15px', height: '15px'}}/>
                 </Tooltip>
                 {props.disableFileUploads ?
-                null
+                <FormSelect size="sm" ref={paeFileSelectFormRef} onChange={(evt) => {}}>
+                    <option value={'birch'} key={'birch'}>Birch</option>
+                </FormSelect>                
                 :
                 <Form.Control ref={paeFileUploadFormRef} type="file" multiple={false} accept=".json" onChange={(e: React.ChangeEvent<HTMLInputElement>) => {handlePaeFileUpload(e)}} />
                 }

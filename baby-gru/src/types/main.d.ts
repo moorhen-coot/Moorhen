@@ -420,6 +420,9 @@ declare module 'moorhen' {
     function resetSceneSettings(): any;
     module.exports = resetSceneSettings;
 
+    function resetSliceNDiceSlice(): any;
+    module.exports = resetSliceNDiceSlice;
+
     function resetBackupSettings(): any;
     module.exports = resetBackupSettings;
     
