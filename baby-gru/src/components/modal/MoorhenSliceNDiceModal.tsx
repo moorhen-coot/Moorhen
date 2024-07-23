@@ -118,6 +118,7 @@ const MoorhenSliceNDiceCard = (props: {
 
 export const MoorhenSliceNDiceModal = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
+    disableFileUploads: boolean;
 }) => {
     
     const paeFileContents = useRef<null | string>(null)
@@ -188,8 +189,8 @@ export const MoorhenSliceNDiceModal = (props: {
         if (selectedMolecule) {
             const bFactors = selectedMolecule.getResidueBFactors()
             setMoleculeBfactors( bFactors )
-            const max = parseFloat(Math.max(...bFactors.map(residue => residue.bFactor)).toFixed(2))
-            const min = parseFloat(Math.min(...bFactors.map(residue => residue.bFactor)).toFixed(2))
+            const max = parseFloat(Math.max(...bFactors.map(residue => residue.bFactor)).toFixed(1))
+            const min = parseFloat(Math.min(...bFactors.map(residue => residue.bFactor)).toFixed(1))
             setMoleculeMaxBfactor( max )
             setMoleculeMinBfactor( min )
             setBFactorThreshold( thresholdTypeRef.current === 'b-factor-norm' ? max : min )
@@ -446,8 +447,8 @@ export const MoorhenSliceNDiceModal = (props: {
             </Form.Group>
         </Stack>
         <Stack direction="horizontal" gap={1} style={{display: 'flex', width: '100%'}}>
-        <div style={{ paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.1rem', paddingBottom: '0.1rem', width: '100%'}}>
-                <Stack direction="horizontal" gap={2} style={{display: 'flex', justifyContent: 'center'}}>
+        <div style={{ margin: "0.5rem", padding: '0.2rem',  width: '100%'}}>
+                <Stack direction="horizontal" gap={2} style={{ justifyContent: 'center'}}>
                     <Form.Check
                         style={{margin: 0}} 
                         type="radio"
@@ -510,12 +511,12 @@ export const MoorhenSliceNDiceModal = (props: {
                 />
             </div>
             { ['kmeans', 'agglomerative', 'birch', 'pae'].includes(clusteringType) && 
-            <div style={{ paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.1rem', paddingBottom: '0.1rem', width: '100%'}}>
+            <div style={{ margin: "0.5rem", padding: '0.1rem', width: '100%'}}>
                 <span>Number of slices</span>
                 <Slider
                     aria-label="No. of clusters"
-                    getAriaValueText={(newVal: number) => `${newVal} slices`}
-                    valueLabelFormat={(newVal: number) => `${newVal} slices`}
+                    getAriaValueText={(newVal: number) => `${newVal}`}
+                    valueLabelFormat={(newVal: number) => `${newVal}`}
                     valueLabelDisplay="on"
                     value={nClusters}
                     onChange={(evt: any, newVal: number) => {
@@ -542,12 +543,16 @@ export const MoorhenSliceNDiceModal = (props: {
             </div>}
         </Stack>
         {clusteringType === 'pae' && 
-            <Form.Group style={{ margin: '0.5rem', padding: '0rem' }} controlId="uploadPAE">
+            <Form.Group style={{ margin: '0.5rem', padding: '0.2rem' }} controlId="uploadPAE">
                 <Form.Label>Upload PAE file</Form.Label>
                 <Tooltip title='Predicted Aligned Error (PAE) .json file' placement="top">
                     <InfoOutlined style={{marginLeft: '0.1rem', marginBottom: '0.2rem', width: '15px', height: '15px'}}/>
                 </Tooltip>
+                {props.disableFileUploads ?
+                null
+                :
                 <Form.Control ref={paeFileUploadFormRef} type="file" multiple={false} accept=".json" onChange={(e: React.ChangeEvent<HTMLInputElement>) => {handlePaeFileUpload(e)}} />
+                }
             </Form.Group>    
         }
         <hr></hr>
