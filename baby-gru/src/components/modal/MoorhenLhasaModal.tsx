@@ -21,6 +21,7 @@ const LhasaWrapper = (props: {
     monomerLibraryPath: string;
     store: ToolkitStore;
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
+    urlPrefix: string;
 }) => {
 
     const rdkitMoleculePickleList = useSelector((state: moorhen.State) => state.lhasa.rdkitMoleculePickleList)
@@ -115,7 +116,7 @@ const LhasaWrapper = (props: {
                     show_footer={false}
                     show_top_panel={false}
                     rdkit_molecule_pickle_list={rdkitMoleculePickleList}
-                    icons_path_prefix='/pixmaps/lhasa_icons'
+                    icons_path_prefix={`${props.urlPrefix}/pixmaps/lhasa_icons`}
                     name_of_host_program='Moorhen'
                     smiles_callback={smilesCallback}
                 /> : null
@@ -155,6 +156,7 @@ export const MoorhenLhasaModal = (props: moorhen.CollectedProps) => {
                         glRef={props.glRef}
                         monomerLibraryPath={props.monomerLibraryPath}
                         store={props.store}
+                        urlPrefix={props.urlPrefix}
                         setBusy={setBusy}/>
                 }
                 additionalChildren={
