@@ -241,6 +241,7 @@ export const MoorhenSliceNDiceModal = (props: {
                     await selectedMoleculeCopyRef.current.show('CRs', '/*/*/*/*')
                 } else {
                     await selectedMoleculeCopyRef.current.unhideAll(true)
+                    await selectedMoleculeCopyRef.current.show('CRs', '/*/*/*/*')
                 }
             }
             isBusy.current = false
