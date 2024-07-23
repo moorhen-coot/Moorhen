@@ -10,7 +10,8 @@ const initialState = {
     bFactorThreshold: 70,
     nClusters: 2,
     clusteringType: "birch",
-    slicingResults: null
+    slicingResults: null,
+    paeFileContents: []
 }
 
 export const sliceNDiceSlice = createSlice({
@@ -47,11 +48,15 @@ export const sliceNDiceSlice = createSlice({
     setClusteringType: (state, action: {payload: string, type: string}) => {
         return { ...state, clusteringType: action.payload }
     },
+    setPAEFileContents: (state, action: {payload: { fileContents: string; fileName: string }[], type: string}) => {
+        return { ...state, paeFileContents: action.payload }
+    },
 }})
 
 export const {
     resetSliceNDiceSlice, setPaeFileIsUploaded, setThresholdType, setMoleculeBfactors, setSlicingResults,
-    setMoleculeMaxBfactor, setMoleculeMinBfactor, setBFactorThreshold, setNClusters, setClusteringType
+    setMoleculeMaxBfactor, setMoleculeMinBfactor, setBFactorThreshold, setNClusters, setClusteringType,
+    setPAEFileContents
 } = sliceNDiceSlice.actions
 
 export default sliceNDiceSlice.reducer

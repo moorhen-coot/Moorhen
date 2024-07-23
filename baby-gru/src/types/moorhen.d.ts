@@ -1070,6 +1070,7 @@ export namespace moorhen {
             nClusters: number;
             clusteringType: string;
             slicingResults: Molecule[];
+            paeFileContents: { fileContents: string; fileName: string }[];
         };
     }
     

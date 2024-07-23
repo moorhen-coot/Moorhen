@@ -127,7 +127,7 @@ export const MoorhenSliceNDiceModal = (props: {
     disableFileUploads: boolean;
 }) => {
     
-    const paeFileContents = useRef<null | string>(null)
+    const paeFileContentsRef = useRef<null | string>(null)
     const paeFileUploadFormRef = useRef<null | HTMLInputElement>(null)
     const paeFileSelectFormRef = useRef<null | HTMLSelectElement>(null)
     const clusteringTypeSelectRef = useRef<null | HTMLSelectElement>(null)
@@ -157,7 +157,9 @@ export const MoorhenSliceNDiceModal = (props: {
     const nClusters = useSelector((state: moorhen.State) => state.sliceNDice.nClusters)
     const clusteringType = useSelector((state: moorhen.State) => state.sliceNDice.clusteringType)
     const slicingResults = useSelector((state: moorhen.State) => state.sliceNDice.slicingResults)
-    
+    // This is messy but it is how we pre-load input for slice-n-dice... Needed for CCP4 Cloud...
+    const paeFileContents = useSelector((state: moorhen.State) => state.sliceNDice.paeFileContents)
+
     const dispatch = useDispatch()
 
     const setColourRule = useCallback(async (molecule: moorhen.Molecule, colourRuleType: string) => {
@@ -261,7 +263,7 @@ export const MoorhenSliceNDiceModal = (props: {
     }, [slicingResults, moleculeBfactors])
 
     const doSlice = useCallback(async () => {
-        if (!moleculeSelectRef.current.value || (clusteringTypeSelectRef.current.value === 'pae' && !paeFileContents.current)) {
+        if (!moleculeSelectRef.current.value || (clusteringTypeSelectRef.current.value === 'pae' && !paeFileContentsRef.current)) {
             return
         }
 
@@ -293,7 +295,7 @@ export const MoorhenSliceNDiceModal = (props: {
             case "agglomerative":
             case "birch":
             case "pae":
-                commandArgs = [ selectedMolecule.molNo, nClustersRef.current, clusteringTypeSelectRef.current.value, paeFileContents.current ? paeFileContents.current : ""]
+                commandArgs = [ selectedMolecule.molNo, nClustersRef.current, clusteringTypeSelectRef.current.value, paeFileContentsRef.current ? paeFileContentsRef.current : ""]
                 break
             default:
                 console.warn(`Unkown clustering algorithm ${clusteringTypeSelectRef.current}`)
@@ -433,28 +435,30 @@ export const MoorhenSliceNDiceModal = (props: {
         if (e.target.files?.length > 0) {            
             const fileContents = await readTextFile(e.target.files[0]) as string
             if (fileContents.length > 0) {
-                paeFileContents.current = fileContents
+                paeFileContentsRef.current = fileContents
                 dispatch(setPaeFileIsUploaded(true))
             } else {
-                paeFileContents.current = null
+                paeFileContentsRef.current = null
                 dispatch(setPaeFileIsUploaded(false))
             }
         }
     }
+
+    const handleClusteringTypeChange = useCallback((evt) => {
+        if (evt.target.value === 'pae') {
+            paeFileContentsRef.current = paeFileContents.length > 0 ? paeFileContents[0].fileContents : null
+            dispatch(setPaeFileIsUploaded(paeFileContents.length > 0))
+        }
+        clusteringTypeSelectRef.current.value = evt.target.value
+        dispatch(setClusteringType(evt.target.value))
+    }, [paeFileContents])
 
     const bodyContent = <Stack direction="vertical" gap={1}>
         <Stack direction="horizontal" gap={1} style={{display: 'flex', width: '100%'}}>
             <MoorhenMoleculeSelect {...props} width="100%" molecules={molecules} allowAny={false} ref={moleculeSelectRef} onChange={(evt) => setSelectedMolNo(parseInt(evt.target.value))}/>
             <Form.Group style={{ margin: '0.5rem', width: '100%' }}>
                 <Form.Label>Clustering algorithm...</Form.Label>
-                <FormSelect size="sm" ref={clusteringTypeSelectRef} defaultValue={'birch'} onChange={(evt) => {
-                    if (evt.target.value === 'pae') {
-                        paeFileContents.current = null
-                        dispatch(setPaeFileIsUploaded(false))
-                    }
-                    clusteringTypeSelectRef.current.value = evt.target.value
-                    dispatch(setClusteringType(evt.target.value))
-                }}>
+                <FormSelect size="sm" ref={clusteringTypeSelectRef} defaultValue={'birch'} onChange={handleClusteringTypeChange}>
                     <option value={'birch'} key={'birch'}>Birch</option>
                     <option value={'kmeans'} key={'kmeans'}>K-Means</option>
                     <option value={'agglomerative'} key={'agglomerative'}>Agglomerative</option>
@@ -565,9 +569,16 @@ export const MoorhenSliceNDiceModal = (props: {
                     <InfoOutlined style={{marginLeft: '0.1rem', marginBottom: '0.2rem', width: '15px', height: '15px'}}/>
                 </Tooltip>
                 {props.disableFileUploads ?
-                <FormSelect size="sm" ref={paeFileSelectFormRef} onChange={(evt) => {}}>
-                    <option value={'birch'} key={'birch'}>Birch</option>
-                </FormSelect>                
+                <FormSelect size="sm" ref={paeFileSelectFormRef} onChange={(evt) => {
+                    if (evt.target.value) {
+                        paeFileContentsRef.current = evt.target.value
+                        dispatch(setPaeFileIsUploaded(true))
+                    }            
+                }}>
+                    {paeFileContents.map(item => {
+                        return <option key={item.fileName} value={item.fileContents}>{item.fileName}</option>
+                    })}
+                </FormSelect>
                 :
                 <Form.Control ref={paeFileUploadFormRef} type="file" multiple={false} accept=".json" onChange={(e: React.ChangeEvent<HTMLInputElement>) => {handlePaeFileUpload(e)}} />
                 }

@@ -420,6 +420,9 @@ declare module 'moorhen' {
     function resetSceneSettings(): any;
     module.exports = resetSceneSettings;
 
+    function setPAEFileContents(arg0: { fileContents: string; fileName: string }[]): any;
+    module.exports = setPAEFileContents;
+    
     function resetSliceNDiceSlice(): any;
     module.exports = resetSliceNDiceSlice;
 

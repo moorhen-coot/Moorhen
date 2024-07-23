@@ -35,7 +35,7 @@ import {
 } from './store/mapContourSettingsSlice';
 import { 
     setBFactorThreshold, setClusteringType, setMoleculeBfactors, setMoleculeMaxBfactor, resetSliceNDiceSlice,
-    setMoleculeMinBfactor, setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType
+    setMoleculeMinBfactor, setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType, setPAEFileContents
  } from "./store/sliceNDiceSlice"
 import { setEnableRefineAfterMod, setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints, setAnimateRefine, resetRefinementSettings } from './store/refinementSettingsSlice';
 import { addMolecule, removeMolecule, emptyMolecules, addMoleculeList, showMolecule, hideMolecule, addCustomRepresentation, removeCustomRepresentation, addGeneralRepresentation, removeGeneralRepresentation } from './store/moleculesSlice';
@@ -87,5 +87,5 @@ export {
     resetGeneralStates, resetHoveringStates, resetLabelSettings, resetMapContourSettings, resetMoleculeMapUpdates,
     resetRefinementSettings, resetShortcutSettings, resetActiveModals, focusOnModal, setBFactorThreshold, 
     setClusteringType, setMoleculeBfactors, setMoleculeMaxBfactor, resetSliceNDiceSlice, setMoleculeMinBfactor, 
-    setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType
+    setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType, setPAEFileContents
 };
