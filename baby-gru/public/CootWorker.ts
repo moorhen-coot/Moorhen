@@ -22,8 +22,13 @@ const guid = () => {
 }
 
 // @ts-ignore
-let print = (stuff) => {
-    console.log(stuff)
+const print = (msg) => {
+    console.log(msg)
+}
+
+// @ts-ignore
+const printErr = (msg) => {
+    console.error(msg)
 }
 
 const parseMonLibListCif = (fileContents: string): libcootApi.compoundInfo[] => {
@@ -1254,39 +1259,37 @@ onmessage = function (e) {
             onRuntimeInitialized: () => { },
             mainScriptUrlOrBlob: "moorhen.js",
             print: print,
-            printErr: print,
+            printErr: printErr,
         })
-            .then((returnedModule) => {
-                postMessage({ consoleMessage: 'Initialized molecules_container', message: e.data.message, messageId: e.data.messageId })
-                cootModule = returnedModule;
-                molecules_container = new cootModule.molecules_container_js(false)
-                molecules_container.set_use_gemmi(false)
-                molecules_container.set_show_timings(false)
-                molecules_container.set_refinement_is_verbose(false)
-                molecules_container.fill_rotamer_probability_tables()
-                molecules_container.set_map_sampling_rate(1.7)
-                molecules_container.set_map_is_contoured_with_thread_pool(true)
-                molecules_container.set_max_number_of_threads(3)
-                cootModule.FS.mkdir("COOT_BACKUP")
-            })
-            .catch((e) => {
-                console.log(e)
-                print(e);
-            });
+        .then((returnedModule) => {
+            postMessage({ consoleMessage: 'Initialized molecules_container', message: e.data.message, messageId: e.data.messageId })
+            cootModule = returnedModule;
+            molecules_container = new cootModule.molecules_container_js(false)
+            molecules_container.set_use_gemmi(false)
+            molecules_container.set_show_timings(false)
+            molecules_container.set_refinement_is_verbose(false)
+            molecules_container.fill_rotamer_probability_tables()
+            molecules_container.set_map_sampling_rate(1.7)
+            molecules_container.set_map_is_contoured_with_thread_pool(true)
+            molecules_container.set_max_number_of_threads(3)
+            cootModule.FS.mkdir("COOT_BACKUP")
+        })
+        .catch((e) => {
+            console.log(e)
+        });
         
         createCCP4Module({
             onRuntimeInitialized: () => { },
             mainScriptUrlOrBlob: "web_example.js",
             print: print,
-            printErr: print,
+            printErr: printErr,
         })
-            .then((returnedModule) => {
-                ccp4Module = returnedModule;
-            })
-            .catch((e) => {
-                console.log(e)
-                print(e);
-            });
+        .then((returnedModule) => {
+            ccp4Module = returnedModule;
+        })
+        .catch((e) => {
+            console.log(e)
+        });
     }
 
     else if (e.data.message === 'close') {
