@@ -128,7 +128,7 @@ export const MoorhenSliceNDiceModal = (props: {
     const clusteringTypeSelectRef = useRef<null | HTMLSelectElement>(null)
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const nClustersRef = useRef<number>(2)
-    const bFactorThresholdRef = useRef<number>(5)
+    const bFactorThresholdRef = useRef<number>(70)
     const selectedMoleculeCopyRef = useRef<moorhen.Molecule>(null)
     const prevSelectedMoleculeRef = useRef<moorhen.Molecule>(null)
     const isBusy = useRef<boolean>(false)
@@ -140,7 +140,7 @@ export const MoorhenSliceNDiceModal = (props: {
     const [moleculeBfactors, setMoleculeBfactors] = useState<{ cid: string; bFactor: number; normalised_bFactor: number; }[]>(null)
     const [moleculeMinBfactor, setMoleculeMinBfactor] = useState<number>(null)
     const [moleculeMaxBfactor, setMoleculeMaxBfactor] = useState<number>(null)
-    const [bFactorThreshold, setBFactorThreshold] = useState<number>(5)
+    const [bFactorThreshold, setBFactorThreshold] = useState<number>(70)
     const [nClusters, setNClusters] = useState<number>(2)
     const [selectedMolNo, setSelectedMolNo] = useState<number>(null)
     const [clusteringType, setClusteringType] = useState<string>('birch')
@@ -183,8 +183,6 @@ export const MoorhenSliceNDiceModal = (props: {
             await selectedMoleculeCopyRef.current.updateAtoms()
             await setColourRule(selectedMoleculeCopyRef.current, thresholdTypeRef.current)
             dispatch(hideMolecule(molecule))
-            await selectedMoleculeCopyRef.current.fetchIfDirtyAndDraw('CRs')
-            await selectedMoleculeCopyRef.current.centreOn('/*/*/*/*', true, true)
         }
 
         const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current?.value))
@@ -195,13 +193,16 @@ export const MoorhenSliceNDiceModal = (props: {
             const min = parseFloat(Math.min(...bFactors.map(residue => residue.bFactor)).toFixed(1))
             setMoleculeMaxBfactor( max )
             setMoleculeMinBfactor( min )
-            setBFactorThreshold( thresholdTypeRef.current === 'b-factor-norm' ? max : min )
-            bFactorThresholdRef.current = thresholdTypeRef.current === 'b-factor-norm' ? max : min
+            setBFactorThreshold( thresholdTypeRef.current === 'b-factor-norm' ? max : 70 )
+            bFactorThresholdRef.current = thresholdTypeRef.current === 'b-factor-norm' ? max : 70
             if (selectedMoleculeCopyRef.current === null) {
                 // This here is necessary because React mounts components twice in strict mode and served in dev server
                 // @ts-ignore
                 selectedMoleculeCopyRef.current = 1
-                copyMolecule(selectedMolecule)
+                copyMolecule(selectedMolecule).then(_ => {
+                    isDirty.current = true
+                    trimBfactorThreshold(bFactors)
+                }).catch((err) => console.error(err))
             } else if (typeof selectedMoleculeCopyRef.current === 'object') {
                 selectedMoleculeCopyRef.current.hide('CRs', '/*/*/*/*')
                 if (prevSelectedMoleculeRef.current) dispatch(showMolecule(prevSelectedMoleculeRef.current))
@@ -214,13 +215,18 @@ export const MoorhenSliceNDiceModal = (props: {
                     }
                 }).then(_ => {
                     if (slicingResults && slicingResults.length > 0 ) setSlicingResults(null)
-                    copyMolecule(selectedMolecule)
-                }).catch((err) => console.error(err))
+                    return copyMolecule(selectedMolecule)
+                })
+                .then(_ => {
+                    isDirty.current = true
+                    trimBfactorThreshold(bFactors)
+                })
+                .catch((err) => console.error(err))
             }
         }
     }, [selectedMolNo])
 
-    const trimBfactorThreshold = useCallback(async () => {
+    const trimBfactorThreshold = useCallback(async (bFactors?: { cid: string; bFactor: number; normalised_bFactor: number; }[]) => {
         if (isDirty.current) {
             isBusy.current = true
             isDirty.current = false
@@ -231,9 +237,9 @@ export const MoorhenSliceNDiceModal = (props: {
             if (typeof selectedMoleculeCopyRef.current === 'object') {
                 let cidsToHide: string[]
                 if (thresholdTypeRef.current === 'b-factor-norm') {
-                    cidsToHide = moleculeBfactors.filter(residue => residue.bFactor > bFactorThresholdRef.current).map(residue => residue.cid)
+                    cidsToHide = (bFactors ?? moleculeBfactors).filter(residue => residue.bFactor > bFactorThresholdRef.current).map(residue => residue.cid)
                 } else {
-                    cidsToHide = moleculeBfactors.filter(residue => residue.bFactor < bFactorThresholdRef.current).map(residue => residue.cid)
+                    cidsToHide = (bFactors ?? moleculeBfactors).filter(residue => residue.bFactor < bFactorThresholdRef.current).map(residue => residue.cid)
                 }
                 if (cidsToHide?.length > 0) {
                     await selectedMoleculeCopyRef.current.unhideAll(false)
@@ -245,7 +251,7 @@ export const MoorhenSliceNDiceModal = (props: {
                 }
             }
             isBusy.current = false
-            trimBfactorThreshold()
+            trimBfactorThreshold(bFactors)
         }
     }, [slicingResults, moleculeBfactors])
 
@@ -459,8 +465,8 @@ export const MoorhenSliceNDiceModal = (props: {
                         onChange={() => { 
                             setThresholdType('af2-plddt')
                             thresholdTypeRef.current = 'af2-plddt'
-                            setBFactorThreshold(moleculeMinBfactor)
-                            bFactorThresholdRef.current = moleculeMinBfactor    
+                            setBFactorThreshold(70)
+                            bFactorThresholdRef.current = 70    
                             isDirty.current = true
                             if (!isBusy.current) {
                                 trimBfactorThreshold()
