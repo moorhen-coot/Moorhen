@@ -54,13 +54,15 @@ const MoorhenSliceNDiceCard = (props: {
         if (isDirty.current) {
             isBusy.current = true
             isDirty.current = false
-            await props.fragmentMolecule.unhideAll(false)
             let toHideFragments = []
             for (let chainId in residueMap) {
                 toHideFragments.push(...residueMap[chainId].filter(fragment => fragment.size < sizeThresholdRef.current))
             }
             if (toHideFragments.length > 0) {
+                await props.fragmentMolecule.unhideAll(false)
                 await props.fragmentMolecule.hideCid(toHideFragments.map(fragment => fragment.cid).join('||'))
+            } else {
+                await props.fragmentMolecule.unhideAll()                
             }
             isBusy.current = false
             hideSmallFragments()
