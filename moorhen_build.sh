@@ -402,10 +402,18 @@ else
     BUILD_LIBEIGEN=true
 fi
 
+if test x"${MEMORY64}" = x"1"; then
+if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen64.wasm; then
+    true
+else
+    BUILD_MOORHEN=true
+fi
+else
 if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen.wasm; then
     true
 else
     BUILD_MOORHEN=true
+fi
 fi
 
 for mod in $MODULES; do
