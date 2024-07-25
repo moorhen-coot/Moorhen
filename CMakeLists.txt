@@ -15,5 +15,4 @@ if("${EMSCRIPTEN_VERSION}" VERSION_GREATER 3.1.26)
 add_link_options(-sDEFAULT_PTHREAD_STACK_SIZE=2MB -sSTACK_SIZE=5MB)
 endif()
 
-add_subdirectory(wasm_src_frontend)
 add_subdirectory(wasm_src)

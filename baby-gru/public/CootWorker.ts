@@ -2,12 +2,8 @@ import { libcootApi } from "../src/types/libcoot"
 import { emscriptem } from "../src/types/emscriptem"
 import { privateer } from "../src/types/privateer";
 
-// @ts-ignore
-importScripts('./web_example.js')
-
 let cootModule: libcootApi.CootModule;
 let molecules_container: libcootApi.MoleculesContainerJS;
-let ccp4Module: any;
 
 const guid = () => {
     var d = Date.now();
@@ -1301,19 +1297,7 @@ onmessage = function (e) {
         .catch((e) => {
             console.log(e)
         });
-        
-        createCCP4Module({
-            onRuntimeInitialized: () => { },
-            mainScriptUrlOrBlob: "web_example.js",
-            print: print,
-            printErr: printErr,
-        })
-        .then((returnedModule) => {
-            ccp4Module = returnedModule;
-        })
-        .catch((e) => {
-            console.log(e)
-        });
+
     }
 
     else if (e.data.message === 'close') {
