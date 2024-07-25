@@ -23,24 +23,25 @@ else
 fi
 
 
+MEMORY64=0
 BUILD_DIR=${PWD}/CCP4_WASM_BUILD
 INSTALL_DIR=${PWD}/install
 
-mkdir -p ${BUILD_DIR}
-mkdir -p ${INSTALL_DIR}
-
-MEMORY64=0
-
 if [ x"$1" = x"--64bit" ]; then
    MEMORY64=1
+   BUILD_DIR=${PWD}/CCP4_WASM_BUILD_64
+   INSTALL_DIR=${PWD}/install64
    shift
-   MODULES=$*
-elif [ x"$1" = x"--clear" ]; then
+fi
+if [ x"$1" = x"--clear" ]; then
    shift
    CLEAR_MODULES=$*
 else
    MODULES=$*
 fi
+
+mkdir -p ${BUILD_DIR}
+mkdir -p ${INSTALL_DIR}
 
 fail() {
     echo $1

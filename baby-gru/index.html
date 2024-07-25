@@ -43,6 +43,7 @@
             })
             .then((returnedModule) => {
                 window.cootModule = returnedModule;
+                window.CCP4Module = returnedModule;
                 const cootModuleAttachedEvent = new CustomEvent("cootModuleAttached", { })
                 document.dispatchEvent(cootModuleAttachedEvent);
             })
@@ -61,6 +62,7 @@
                 })
                 .then((returnedModule) => {
                       window.cootModule = returnedModule;
+                      window.CCP4Module = returnedModule;
                       const cootModuleAttachedEvent = new CustomEvent("cootModuleAttached", { })
                       document.dispatchEvent(cootModuleAttachedEvent);
                 })
@@ -79,6 +81,7 @@
             })
             .then((returnedModule) => {
                   window.cootModule = returnedModule;
+                  window.CCP4Module = returnedModule;
                   const cootModuleAttachedEvent = new CustomEvent("cootModuleAttached", { })
                   document.dispatchEvent(cootModuleAttachedEvent);
             })
@@ -88,24 +91,6 @@
         })
     }
   </script>
-  <script>
-    window.onload = () => {
-      createCCP4Module({
-        print(t) { console.log(["output", t]) },
-        printErr(t) { console.log(["output", t]); }
-      })
-      .then(function (CCP4Mod) {
-        window.CCP4Module = CCP4Mod;
-      })
-      .catch((e) => {
-        console.log("CCP4 problem :(");
-        console.log(e);
-      });
-    }
-
-  </script>
-  <script src="/web_example.js"></script>
-  <script src="/moorhen.js"></script>
 
   <title>Moorhen</title>
 </head>
