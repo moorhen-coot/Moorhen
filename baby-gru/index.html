@@ -56,7 +56,7 @@
             loadScript('/moorhen.js')
                 .then(src => {
                 console.log(src + ' loaded 32-bit successfully (fallback).')
-                createRSRModule({
+                createCootModule({
                     print(t) { console.log(["output", t]) },
                     printErr(t) { console.log(["output", t]); }
                 })
@@ -75,7 +75,7 @@
         loadScript('/moorhen.js')
             .then(src => {
             console.log(src + ' loaded 32-bit successfully.')
-            createRSRModule({
+            createCootModule({
                 print(t) { console.log(["output", t]) },
                 printErr(t) { console.log(["output", t]); }
             })

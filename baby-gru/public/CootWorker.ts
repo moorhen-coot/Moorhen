@@ -1264,14 +1264,14 @@ onmessage = function (e) {
                 console.log("Failed to load 64-bit libcoot in Worker thread")
                 importScripts('./moorhen.js')
 // @ts-ignore
-                mod = createRSRModule;
+                mod = createCootModule;
                 scriptName = "moorhen.js"
                 console.log("Loaded 32-bit libcoot in Worker thread")
             }
         } else {
             importScripts('./moorhen.js')
 // @ts-ignore
-            mod = createRSRModule;
+            mod = createCootModule;
             scriptName = "moorhen.js"
             console.log("Loaded 32-bit libcoot in Worker thread")
         }
