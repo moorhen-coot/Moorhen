@@ -3,8 +3,6 @@ import { emscriptem } from "../src/types/emscriptem"
 import { privateer } from "../src/types/privateer";
 
 // @ts-ignore
-importScripts('./moorhen.js')
-// @ts-ignore
 importScripts('./web_example.js')
 
 let cootModule: libcootApi.CootModule;
@@ -1254,10 +1252,36 @@ const doCootCommand = (messageData: {
 }
 
 onmessage = function (e) {
+// @ts-ignore
     if (e.data.message === 'CootInitialize') {
-        createRSRModule({
+        const memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]))
+        let mod;
+        let scriptName;
+        if(memory64){
+            try {
+                importScripts('./moorhen64.js')
+// @ts-ignore
+                mod = createCoot64Module;
+                scriptName = "moorhen64.js"
+                console.log("Loaded 64-bit libcoot in Worker thread")
+            } catch(e) {
+                console.log("Failed to load 64-bit libcoot in Worker thread")
+                importScripts('./moorhen.js')
+// @ts-ignore
+                mod = createRSRModule;
+                scriptName = "moorhen.js"
+                console.log("Loaded 32-bit libcoot in Worker thread")
+            }
+        } else {
+            importScripts('./moorhen.js')
+// @ts-ignore
+            mod = createRSRModule;
+            scriptName = "moorhen.js"
+            console.log("Loaded 32-bit libcoot in Worker thread")
+        }
+        mod({
             onRuntimeInitialized: () => { },
-            mainScriptUrlOrBlob: "moorhen.js",
+            mainScriptUrlOrBlob: scriptName,
             print: print,
             printErr: printErr,
         })
