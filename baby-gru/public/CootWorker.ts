@@ -1248,32 +1248,27 @@ const doCootCommand = (messageData: {
 }
 
 onmessage = function (e) {
-// @ts-ignore
     if (e.data.message === 'CootInitialize') {
-        const memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]))
-        let mod;
-        let scriptName;
-        if(memory64){
+        let mod
+        let scriptName
+        let memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]))
+        if (memory64) {
             try {
                 importScripts('./moorhen64.js')
-// @ts-ignore
-                mod = createCoot64Module;
+                mod = createCoot64Module
                 scriptName = "moorhen64.js"
-                console.log("Loaded 64-bit libcoot in Worker thread")
+                console.log("Successfully loaded 64-bit libcoot in worker thread")
             } catch(e) {
-                console.log("Failed to load 64-bit libcoot in Worker thread")
-                importScripts('./moorhen.js')
-// @ts-ignore
-                mod = createCootModule;
-                scriptName = "moorhen.js"
-                console.log("Loaded 32-bit libcoot in Worker thread")
+                console.error(e)
+                console.log("Failed to load 64-bit libcoot in worker thread. Falling back to 32-bit.")
+                memory64 = false
             }
-        } else {
+        } 
+        if (!memory64) {
             importScripts('./moorhen.js')
-// @ts-ignore
-            mod = createCootModule;
+            mod = createCootModule
             scriptName = "moorhen.js"
-            console.log("Loaded 32-bit libcoot in Worker thread")
+            console.log("Successfully loaded 32-bit libcoot in worker thread")
         }
         mod({
             onRuntimeInitialized: () => { },
@@ -1296,8 +1291,7 @@ onmessage = function (e) {
         })
         .catch((e) => {
             console.log(e)
-        });
-
+        })
     }
 
     else if (e.data.message === 'close') {
