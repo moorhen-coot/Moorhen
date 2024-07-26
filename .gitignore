@@ -18,6 +18,7 @@
 /checkout
 /rdkit
 /CCP4_WASM_BUILD
+/CCP4_WASM_BUILD_64
 /moorhen_tests
 /coot/bfactan.js
 /coot/coot_env.js
@@ -598,3 +599,6 @@ baby-gru/public/moorhen.worker.js
 baby-gru/public/web_example.js
 baby-gru/public/coot_env_web.js
 baby-gru/src/utils/__graphql__/*
+baby-gru/public/moorhen64*
+CCP4_WASM_BUILD_64/*
+install64/*
