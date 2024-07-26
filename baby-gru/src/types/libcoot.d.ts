@@ -7,8 +7,8 @@ import { privateer } from "./privateer";
 
 declare global {
     function print(arg0: string): void;
-    function createRSRModule(arg0: any): Promise<any>;
-    function createCCP4Module(arg0: any): Promise<libcootApi.CCP4ModuleType>;    
+    function createCoot64Module(arg0: any): Promise<libcootApi.CootModule>;
+    function createCootModule(arg0: any): Promise<libcootApi.CootModule>;
 }
 
 export namespace libcootApi {
