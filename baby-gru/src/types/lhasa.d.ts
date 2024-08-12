@@ -217,6 +217,14 @@ export type QEDInfo = {
   molecular_weight: number,
   alogp: number,
   molecular_polar_surface_area: number,
+  ads_mw: number,
+  ads_alogp: number,
+  ads_hba: number,
+  ads_hbd: number,
+  ads_psa: number,
+  ads_rotb: number,
+  ads_arom: number,
+  ads_alert: number,
   qed_score: number
 };
 
@@ -244,6 +252,7 @@ export interface MoleculeIdVector {
 
 export interface Canvas extends ImplWidgetCoreData {
   set_active_tool(_0: ActiveTool): void;
+  update_molecule_from_smiles(_0: number, _1: string): void;
   set_scale(_0: number): void;
   get_scale(): number;
   undo_edition(): void;
