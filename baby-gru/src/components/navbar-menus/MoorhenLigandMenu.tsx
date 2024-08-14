@@ -11,9 +11,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { showModal } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
 import { moorhen } from "../../types/moorhen";
+import { convertViewtoPx } from "../../utils/utils";
 
 export const MoorhenLigandMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
 
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
 
     const dispatch = useDispatch()
@@ -22,7 +24,7 @@ export const MoorhenLigandMenu = (props: MoorhenNavBarExtendedControlsInterface)
     
     const menuItemProps = { setPopoverIsShown, ...props }
 
-    return <>
+    return <div style={{maxHeight: convertViewtoPx(65, height), overflow: 'auto'}}>
             <MoorhenGetMonomerMenuItem {...menuItemProps} />
             {!props.disableFileUploads && <MoorhenImportDictionaryMenuItem {...menuItemProps} />}
             <MoorhenSMILESToLigandMenuItem {...menuItemProps} />
@@ -34,6 +36,6 @@ export const MoorhenLigandMenu = (props: MoorhenNavBarExtendedControlsInterface)
                 dispatch(showModal(modalKeys.FIT_LIGAND))
                 document.body.click()
             }}>Find ligand...</MenuItem>
-    </>
+    </div>
 }
 

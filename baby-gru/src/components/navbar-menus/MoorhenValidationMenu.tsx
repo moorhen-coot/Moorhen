@@ -1,13 +1,17 @@
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MenuItem } from "@mui/material";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { showModal } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
+import { convertViewtoPx } from "../../utils/utils";
+import { moorhen } from "../../types/moorhen";
 
 export const MoorhenValidationMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    
     const dispatch = useDispatch()
    
-    return <>
+    return <div style={{maxHeight: convertViewtoPx(65, height), overflow: 'auto'}}>
             <MenuItem onClick={() => {
                 dispatch(showModal(modalKeys.DIFF_MAP_PEAKS))
                 document.body.click()
@@ -52,6 +56,6 @@ export const MoorhenValidationMenu = (props: MoorhenNavBarExtendedControlsInterf
                 dispatch(showModal(modalKeys.WATER_VALIDATION))
                 document.body.click()
             }}>Water validation...</MenuItem>
-    </>
+    </div>
 }
 
