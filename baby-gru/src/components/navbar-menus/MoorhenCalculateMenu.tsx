@@ -10,18 +10,23 @@ import { MoorhenMultiplyBfactorMenuItem } from "../menu-item/MoorhenMultiplyBfac
 import { MoorhenCalculateTrajectoryMenuItem } from "../menu-item/MoorhenCalculateTrajectoryMenuItem"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MenuItem } from "@mui/material";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { showModal } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
+import { convertViewtoPx } from "../../utils/utils";
+import { moorhen } from "../../types/moorhen";
 
 export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
-    const dispatch = useDispatch()
-    
+
     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
+
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    
+    const dispatch = useDispatch()    
     
     const menuItemProps = { setPopoverIsShown, ...props }
 
-    return <>
+    return <div style={{maxHeight: convertViewtoPx(65, height), overflow: 'auto'}}>
             <MoorhenAddWatersMenuItem {...menuItemProps} />
             <MenuItem onClick={() => {
                 dispatch(showModal(modalKeys.SUPERPOSE_MODELS))
@@ -54,6 +59,6 @@ export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterfa
             </>
             }
             {props.extraCalculateMenuItems && props.extraCalculateMenuItems.map(menu => menu)}
-    </>
+    </div>
 }
 

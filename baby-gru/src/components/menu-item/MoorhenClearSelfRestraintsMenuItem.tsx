@@ -8,7 +8,6 @@ import { removeGeneralRepresentation } from "../../moorhen";
 
 export const MoorhenClearSelfRestraintsMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    popoverPlacement?: 'left' | 'right';
 }) => {
 
     const moleculeSelectRef = useRef<HTMLSelectElement | null>(null)
@@ -45,7 +44,6 @@ export const MoorhenClearSelfRestraintsMenuItem = (props: {
         popoverContent={panelContent}
         menuItemText="Clear self-restraints..."
         onCompleted={onCompleted}
-        popoverPlacement={props.popoverPlacement ?? "right"}
         setPopoverIsShown={props.setPopoverIsShown}
     />
 }

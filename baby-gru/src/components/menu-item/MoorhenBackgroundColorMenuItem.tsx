@@ -9,7 +9,6 @@ import { setBackgroundColor } from "../../store/sceneSettingsSlice";
 
 export const MoorhenBackgroundColorMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    popoverPlacement?: 'left' | 'right' ;
 }) => {
     
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
@@ -65,6 +64,5 @@ export const MoorhenBackgroundColorMenuItem = (props: {
         menuItemText="Set background colour..."
         onCompleted={() => props.setPopoverIsShown(false)}
         setPopoverIsShown={props.setPopoverIsShown}
-        popoverPlacement={props.popoverPlacement ?? "right"}
     />
 }
