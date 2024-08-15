@@ -339,12 +339,16 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
 
     const handleWheelContourLevelCallback = useCallback((evt: moorhen.WheelContourLevelEvent) => {
         let newMapContourLevel: number
-        if (mapIsVisible && props.map.molNo === activeMap.molNo) {
-            if (evt.detail.factor > 1) {
+        if (props.map.molNo === activeMap.molNo) {
+            if (!mapIsVisible) {
+                enqueueSnackbar("Active map not displayed, cannot change contour lvl.", { variant: "warning"})
+            } else if (evt.detail.factor > 1) {
                 newMapContourLevel = mapContourLevel + contourWheelSensitivityFactor
             } else {
                 newMapContourLevel = mapContourLevel - contourWheelSensitivityFactor
             }
+        }
+        if (newMapContourLevel) {
             batch(() => {
                 dispatch( setContourLevel({ molNo: props.map.molNo, contourLevel: newMapContourLevel }) )
                 enqueueSnackbar(`map-${props.map.molNo}-contour-lvl-change`, {
