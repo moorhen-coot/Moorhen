@@ -18,7 +18,8 @@ const shortCutMouseActions = {
     center_atom: ['middle-right-mouse-click', 'one-finger-tap'],
     set_map_contour: ['middle-right-mouse-click', 'mouse-scroll-arrows', 'two-finger-scroll'],
     pan_view: ['circle-left-mouse-click', 'mouse-move', 'one-finger-move'],
-    rotate_view: ['circle-left-mouse-click', 'mouse-move', 'one-finger-move']
+    rotate_view: ['circle-left-mouse-click', 'mouse-move', 'one-finger-move'],
+    contour_lvl: ['mouse-scroll-arrows', 'two-finger-scroll']
 }
 
 export const MoorhenControlsModal = (props: { urlPrefix: string }) => {
@@ -45,6 +46,7 @@ export const MoorhenControlsModal = (props: { urlPrefix: string }) => {
         shortCuts['pan_view'] = {modifiers: ['shiftKey', 'altKey'], keyPress: '', label: 'Pan view'}
         shortCuts['rotate_view'] = {modifiers: ['shiftKey'], keyPress: '', label: 'Rotate view'} 
         shortCuts['open_context_menu'] = {modifiers: [], keyPress: '', label: 'Open context menu'} 
+        shortCuts['contour_lvl'] = {modifiers: ['ctrlKey'], keyPress: '', label: 'Change active map contour'}
     }
 
     const handleMouseHover = (key: string, modifiers: string[], isMouseEnter: boolean = true) => {
