@@ -549,7 +549,7 @@ FILE(COPY ${coot_src}/data/metal/metal-O-distance.table DESTINATION data/coot/da
 FILE(COPY ${coot_src}/data/metal/metal-S-distance.table DESTINATION data/coot/data/metal )
 FILE(COPY ${CMAKE_INSTALL_PREFIX}/share/RDKit/Data/BaseFeatures.fdef DESTINATION data/RDKit/Data )
 
-add_executable(moorhen moorhen-wrappers.cc gemmi-wrappers.cc smilestopdb.cc ${coot_src}/lhasa/embind.cpp)
+add_executable(moorhen moorhen-wrappers.cc ../wasm_src_frontend/headers.cc gemmi-wrappers.cc smilestopdb.cc ${coot_src}/lhasa/embind.cpp)
 if(${MEMORY64} MATCHES "1")
 target_link_options(moorhen PRIVATE -sASSERTIONS=2 -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCoot64Module -sEXPORTED_RUNTIME_METHODS=['FS'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 set_target_properties(moorhen PROPERTIES OUTPUT_NAME moorhen64)
@@ -628,6 +628,7 @@ target_include_directories(moorhen PRIVATE
     ${coot_src}/src
     ${CMAKE_INSTALL_PREFIX}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../include 
+    ${CMAKE_CURRENT_SOURCE_DIR}/../wasm_src_frontend
     ${DEPS_INCLUDE_DIRS}
 )
 

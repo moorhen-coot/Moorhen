@@ -62,6 +62,8 @@ using namespace emscripten;
 
 #include "privateer-wrappers.h"
 
+#include "headers.h"
+
 struct RamachandranInfo {
     std::string chainId;
     int seqNum;
@@ -80,6 +82,19 @@ struct ResiduePropertyInfo {
     std::string restype;
     double property;
 };
+
+std::vector<std::string>  get_mtz_columns(const std::string& mtz_file_name){
+    const char *filename_c = mtz_file_name.c_str();
+    header_info hinfo((char*)filename_c);
+    std::vector<std::vector<std::string> > theTypes = hinfo.GetUnsortedHeadersAndTypes();
+    std::vector<std::string> shortTypes;
+    for(unsigned ityp=0;ityp<theTypes.size();ityp++){
+        shortTypes.push_back(theTypes[ityp][0]);
+        shortTypes.push_back(theTypes[ityp][1]);
+    }
+    return shortTypes;
+
+}
 
 std::vector<coot::residue_spec_t> getSecondaryStructure(mmdb::Manager *m, int imodel=1){
     /* int_user_data is an int of secondary structure as defined in MMDB:
@@ -1915,4 +1930,5 @@ EMSCRIPTEN_BINDINGS(my_module) {
     //For testing
     //function("TakeColourMap",&TakeColourMap);
     //function("TakeStringIntPairVector",&TakeStringIntPairVector);
+    function("get_mtz_columns",&get_mtz_columns);
 }
