@@ -186,6 +186,10 @@ clearmoorhen() {
     rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen.wasm
     rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen.data
     rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen.worker.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen64.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen64.wasm
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen64.data
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen64.worker.js
     rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/web_example.js
     rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/web_example.wasm
 }
