@@ -269,7 +269,7 @@ export interface Canvas extends ImplWidgetCoreData {
   get_pickled_molecule(_0: number): string;
   get_pickled_molecule_base64(_0: number): string;
   clear_molecules(): void;
-  on_hover(_0: number, _1: number, _2: boolean): void;
+  on_hover(_0: number, _1: number, _2: boolean, _3: boolean): void;
   on_scroll(_0: number, _1: number, _2: boolean): void;
   on_left_click(_0: number, _1: number, _2: boolean, _3: boolean, _4: boolean): void;
   on_left_click_released(_0: number, _1: number, _2: boolean, _3: boolean, _4: boolean): void;
