@@ -37,7 +37,7 @@ add_library(gemmi_cpp
             ${gemmi_src}/src/topo.cpp
             ${gemmi_src}/src/xds_ascii.cpp)
 
-set_target_properties(gemmi_cpp PROPERTIES COMPILE_FLAGS "-fexceptions -pthread -s USE_ZLIB=1" )
+set_target_properties(gemmi_cpp PROPERTIES COMPILE_FLAGS "-pthread -s USE_ZLIB=1" )
 
 set(gemmi_HEADERS
 ${gemmi_src}/include/gemmi/addends.hpp

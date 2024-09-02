@@ -162,6 +162,51 @@ getfftw() {
     echo
 }
 
+getfreetype() {
+    cdcheckout
+    if [ -r freetype-$freetype_release ]; then
+        echo "Using existing freetype"
+    else
+        cdcheckout
+        echo "Downloading freetype-$freetype_release"
+        curl -L https://download.savannah.gnu.org/releases/freetype/freetype-$freetype_release.tar.gz -o freetype-$freetype_release.tar.gz
+        echo
+        echo "Unpacking freetype-$freetype_release"
+        tar xf freetype-$freetype_release.tar.gz
+    fi
+    echo
+}
+
+getpng() {
+    cdcheckout
+    if [ -r libpng-$png_release ]; then
+        echo "Using existing png"
+    else
+        cdcheckout
+        echo "Downloading png-$png_release"
+        curl -L http://prdownloads.sourceforge.net/libpng/libpng-$png_release.tar.gz -o libpng-$png_release.tar.gz
+        echo
+        echo "Unpacking png-$png_release"
+        tar xf libpng-$png_release.tar.gz
+    fi
+    echo
+}
+
+getzlib() {
+    cdcheckout
+    if [ -r zlib-$zlib_release ]; then
+        echo "Using existing zlib"
+    else
+        cdcheckout
+        echo "Downloading zlib-$zlib_release"
+        curl -L https://www.zlib.net/zlib-$zlib_release.tar.gz -o zlib-$zlib_release.tar.gz
+        echo
+        echo "Unpacking zlib-$zlib_release"
+        tar xf zlib-$zlib_release.tar.gz
+    fi
+    echo
+}
+
 getgsl() {
 #FIXME This is mysteriously in top level!!!
     cd ${MOORHEN_SOURCE_DIR}
