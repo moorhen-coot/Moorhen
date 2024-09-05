@@ -48,6 +48,35 @@ fail() {
     exit 1
 }
 
+clearzlib() {
+    echo "Clear zlib"
+    rm -rf ${BUILD_DIR}/zlib_build
+    rm -rf ${INSTALL_DIR}/lib/libz.a
+    rm -rf ${INSTALL_DIR}/include/zlib.h
+    rm -rf ${INSTALL_DIR}/include/zconf.h
+}
+
+clearfreetype() {
+    echo "Clear freetype"
+    rm -rf ${BUILD_DIR}/freetype_build
+    rm -rf ${INSTALL_DIR}/lib/libfreetype.a
+    rm -rf ${INSTALL_DIR}/lib/pkgconfig/freetype2.pc
+    rm -rf ${INSTALL_DIR}/include/freetype2
+}
+
+clearpng() {
+    echo "Clear png"
+    rm -rf ${BUILD_DIR}/png_build
+    rm -rf ${INSTALL_DIR}/include/libpng16
+    rm -rf ${INSTALL_DIR}/include/png*.h
+    rm -rf ${INSTALL_DIR}/lib/libpng*.a
+    rm -rf ${INSTALL_DIR}/lib/libpng*.la
+    rm -rf ${INSTALL_DIR}/lib/pkgconfig/libpng.pc
+    rm -rf ${INSTALL_DIR}/lib/pkgconfig/libpng16.pc
+    rm -rf ${INSTALL_DIR}/bin/libpng-config
+    rm -rf ${INSTALL_DIR}/bin/libpng16-config
+}
+
 clearboost() {
     echo "Clear boost"
     rm -rf ${BUILD_DIR}/boost
@@ -196,6 +225,9 @@ clearmoorhen() {
 
 clearall() {
     echo "Clear all"
+    clearfreetype
+    clearpng
+    clearzlib
     clearboost
     cleargemmi
     cleargsl
@@ -221,6 +253,12 @@ else
     for mod in $CLEAR_MODULES; do
         case $mod in
            all) clearall
+               ;;
+           png) clearpng
+               ;;
+           zlib) clearzlib
+               ;;
+           freetype) clearfreetype
                ;;
            boost) clearboost
                ;;
@@ -271,8 +309,8 @@ echo "Installing in ${INSTALL_DIR}"
 echo "Attempting to get emsdk zlib/png ports"
 echo
 echo "" > silly.c
-emcc silly.c -s USE_ZLIB=1 -s USE_LIBPNG=1 -s USE_FREETYPE=1 -pthread -sMEMORY64=1 -Wno-experimental
-emcc silly.c -s USE_ZLIB=1 -s USE_LIBPNG=1 -s USE_FREETYPE=1 -pthread
+emcc silly.c  -pthread -sMEMORY64=1 -Wno-experimental
+emcc silly.c  -pthread
 rm -f silly.c
 rm -f a.out.js
 rm -f a.out.wasm
@@ -283,13 +321,13 @@ if test x"${MEMORY64}" = x"1"; then
     echo "Building ** 64-bit ** (large memory) version of Moorhen"
     echo "#######################################################"
     echo
-    MOORHEN_CMAKE_FLAGS="-sMEMORY64=1 -pthread"
+    MOORHEN_CMAKE_FLAGS="-sMEMORY64=1 -pthread -fwasm-exceptions"
 else
     echo "########################################"
     echo "Building ** 32-bit ** version of Moorhen"
     echo "########################################"
     echo
-    MOORHEN_CMAKE_FLAGS="-pthread"
+    MOORHEN_CMAKE_FLAGS="-pthread -fwasm-exceptions"
 fi
 
 BUILD_GSL=false
@@ -309,6 +347,9 @@ BUILD_CLIPPER=false
 BUILD_PRIVATEER=false
 BUILD_SSM=false
 BUILD_SLICENDICE=false
+BUILD_FREETYPE=false
+BUILD_ZLIB=false
+BUILD_PNG=false
 
 if test -d ${INSTALL_DIR}/include/slicendice_cpp; then
     true
@@ -406,6 +447,24 @@ else
     BUILD_LIBEIGEN=true
 fi
 
+if test -r ${INSTALL_DIR}/include/zlib.h; then
+    true
+else
+    BUILD_ZLIB=true
+fi
+
+if test -r ${INSTALL_DIR}/include/freetype2/ft2build.h; then
+    true
+else
+    BUILD_FREETYPE=true
+fi
+
+if test -r ${INSTALL_DIR}/include/pngconf.h; then
+    true
+else
+    BUILD_PNG=true
+fi
+
 if test x"${MEMORY64}" = x"1"; then
 if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen64.wasm; then
     true
@@ -467,6 +526,15 @@ for mod in $MODULES; do
        moorhen) echo "Force build moorhen"
        BUILD_MOORHEN=true
        ;;
+       png) echo "Force build png"
+       BUILD_PNG=true
+       ;;
+       zlib) echo "Force build zlib"
+       BUILD_ZLIB=true
+       ;;
+       freetype) echo "Force build freetype"
+       BUILD_FREETYPE=true
+       ;;
     esac
 done
 
@@ -486,6 +554,9 @@ echo "BUILD_CLIPPER    " $BUILD_CLIPPER
 echo "BUILD_PRIVATEER  " $BUILD_PRIVATEER
 echo "BUILD_SSM        " $BUILD_SSM
 echo "BUILD_SLICENDICE " $BUILD_SLICENDICE
+echo "BUILD_FREETYPE   " $BUILD_FREETYPE
+echo "BUILD_ZLIB       " $BUILD_ZLIB
+echo "BUILD_PNG        " $BUILD_PNG
 echo "BUILD_MOORHEN    " $BUILD_MOORHEN
 
 #eigen
@@ -495,6 +566,36 @@ if [ $BUILD_LIBEIGEN = true ]; then
     cd ${BUILD_DIR}/eigen_build
     emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/eigen-$libeigen_release
     make install || fail "Error installing eigen, giving up."
+fi
+
+#png
+if [ $BUILD_PNG = true ]; then
+    getpng
+    mkdir -p ${BUILD_DIR}/png_build
+    cd ${BUILD_DIR}/png_build
+    emcmake cmake -DPNG_SHARED=OFF -DSKIP_INSTALL_PROGRAMS=ON -DSKIP_INSTALL_EXECUTABLES=ON -DCMAKE_EXE_LINKER_FLAGS="-fwasm-exceptions" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/libpng-$png_release
+    emmake make LDFLAGS="-all-static -fwasm-exceptions" -j ${NUMPROCS} CXXFLAGS="${MOORHEN_CMAKE_FLAGS}" CFLAGS="${MOORHEN_CMAKE_FLAGS}"
+    emmake make install || fail "Error installing png, giving up."
+fi
+
+#freetype
+if [ $BUILD_FREETYPE = true ]; then
+    getfreetype
+    mkdir -p ${BUILD_DIR}/freetype_build
+    cd ${BUILD_DIR}/freetype_build
+    emcmake cmake -DCMAKE_EXE_LINKER_FLAGS="-fwasm-exceptions" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/freetype-$freetype_release
+    emmake make  -j ${NUMPROCS}
+    emmake make install || fail "Error installing freetype, giving up."
+fi
+
+#zlib
+if [ $BUILD_ZLIB = true ]; then
+    getzlib
+    mkdir -p ${BUILD_DIR}/zlib_build
+    cd ${BUILD_DIR}/zlib_build
+    emcmake cmake -DZLIB_BUILD_EXAMPLES=OFF -DCMAKE_EXE_LINKER_FLAGS="-fwasm-exceptions" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/zlib-$zlib_release
+    emmake make -j ${NUMPROCS}
+    emmake make install || fail "Error installing zlib, giving up."
 fi
 
 #gsl
