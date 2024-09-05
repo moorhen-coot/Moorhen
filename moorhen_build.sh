@@ -627,6 +627,12 @@ if [ $BUILD_RDKIT = true ]; then
     emcmake cmake -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_STACKTRACE=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -Wno-enum-constexpr-conversion -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing RDKit, giving up."
+    # Manually copy coordgen and maeparser headers
+    mkdir -p ${INSTALL_DIR}/include/coordgen
+    mkdir -p ${INSTALL_DIR}/include/maeparser
+    # cp -v ${MOORHEN_SOURCE_DIR}/rdkit/External/CoordGen/*.h ${INSTALL_DIR}/include/
+    cp -v ${MOORHEN_SOURCE_DIR}/rdkit/External/CoordGen/coordgen/*.{h,hpp} ${INSTALL_DIR}/include/coordgen
+    cp -v ${MOORHEN_SOURCE_DIR}/rdkit/External/CoordGen/maeparser/*.hpp ${INSTALL_DIR}/include/maeparser
 fi
 
 #gemmi
