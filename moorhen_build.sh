@@ -129,6 +129,8 @@ clearrdkit() {
     echo "Clear rdkit"
     rm -rf ${BUILD_DIR}/rdkit_build
     rm -rf ${INSTALL_DIR}/include/rdkit
+    rm -rf ${INSTALL_DIR}/include/maeparser
+    rm -rf ${INSTALL_DIR}/include/coordgen
     rm -rf ${INSTALL_DIR}/lib/libRDKit*.a
     rm -rf ${INSTALL_DIR}/lib/cmake/rdkit
 }
