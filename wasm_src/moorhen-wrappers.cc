@@ -1428,6 +1428,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("difference_map_peaks",&molecules_container_t::difference_map_peaks)
     .function("pepflips_using_difference_map",&molecules_container_t::pepflips_using_difference_map)
     .function("add_waters",&molecules_container_t::add_waters)
+    .function("set_add_waters_water_to_protein_distance_lim_min",&molecules_container_t::set_add_waters_water_to_protein_distance_lim_min)
+    .function("set_add_waters_water_to_protein_distance_lim_max",&molecules_container_t::set_add_waters_water_to_protein_distance_lim_max)
     .function("ramachandran_analysis",&molecules_container_t::ramachandran_analysis)
     .function("density_correlation_analysis",&molecules_container_t::density_correlation_analysis)
     .function("rotamer_analysis",&molecules_container_t::rotamer_analysis)
