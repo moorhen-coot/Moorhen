@@ -102,6 +102,7 @@ And then point a web browser at `http://localhost:5173/` .
     4. `git pull`
     5. `cd ../..`
     6. `./moorhen_build.sh moorhen`
+    7. `./moorhen_build.sh --64bit moorhen` if you want to (re-)build the 64-bit version.
 
 ![Moorhen](wasm_src_frontend/baby_gru.png)
 *The Moorhen WebGL application*
