@@ -95,7 +95,7 @@ And then point a web browser at `http://localhost:5173/` .
 
 ## **Updating**
 
-1. When you wish to update the application from this git repository and the `Coot` git repository, do the following steps:  
+When you wish to update the application from this git repository and the `Coot` git repository, do the following steps:  
     1. `git pull`
     2. `git submodule update -f --remote --merge`
     3. `cd checkout/coot-1.0`
