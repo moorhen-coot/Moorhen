@@ -95,13 +95,14 @@ And then point a web browser at `http://localhost:5173/` .
 
 ## **Updating**
 
-1. When you wish to update the application from this git repository and the `Coot` git repository, do the following steps:  
-    1. `git pull`
-    2. `git submodule update -f --remote --merge`
-    3. `cd checkout/coot-1.0`
-    4. `git pull`
-    5. `cd ../..`
-    6. `./moorhen_build.sh moorhen`
+When you wish to update the application from this git repository and the `Coot` git repository, do the following steps:  
+1. `git pull`
+2. `git submodule update -f --remote --merge`
+3. `cd checkout/coot-1.0`
+4. `git pull`
+5. `cd ../..`
+6. `./moorhen_build.sh moorhen`
+7. `./moorhen_build.sh --64bit moorhen` if you want to (re-)build the 64-bit version.
 
 ![Moorhen](wasm_src_frontend/baby_gru.png)
 *The Moorhen WebGL application*
