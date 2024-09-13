@@ -784,7 +784,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             returnType: "mesh_perm3",
             command: "get_molecular_representation_mesh",
             commandArgs: [
-                this.parentMolecule.molNo, cidSelection, "colorRampChainsScheme", style
+                this.parentMolecule.molNo, cidSelection, "colorRampChainsScheme", style, 2
             ]
         }, false) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
 
@@ -822,7 +822,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             returnType: "mesh",
             command: "get_molecular_representation_mesh",
             commandArgs: [
-                this.parentMolecule.molNo, m2tSelection, "colorRampChainsScheme", m2tStyle
+                this.parentMolecule.molNo, m2tSelection, "colorRampChainsScheme", m2tStyle, 2
             ]
         }, false) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
 
