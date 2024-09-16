@@ -1003,7 +1003,7 @@ emscripten::val testFloat32Array(const emscripten::val &floatArrayObject){
 }
 
 EMSCRIPTEN_BINDINGS(my_module) {
-    // PRIVATEER
+        // PRIVATEER
     value_object<TorsionEntry>("TorsionEntry")
       .field("sugar_1", &TorsionEntry::sugar_1)
       .field("sugar_2", &TorsionEntry::sugar_2)
@@ -1115,6 +1115,18 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .field("chain_id", &merge_molecule_results_info_t::chain_id)
     .field("spec", &merge_molecule_results_info_t::spec)
     .field("is_chain", &merge_molecule_results_info_t::is_chain)
+    ;
+    value_object<coot::acedrg_types_for_bond_t>("acedrg_types_for_bond_t")
+       .field("atom_id_1",   &coot::acedrg_types_for_bond_t::atom_id_1)
+       .field("atom_id_2",   &coot::acedrg_types_for_bond_t::atom_id_2)
+       .field("atom_type_1", &coot::acedrg_types_for_bond_t::atom_type_1)
+       .field("atom_type_2", &coot::acedrg_types_for_bond_t::atom_type_2)
+       .field("bond_length", &coot::acedrg_types_for_bond_t::bond_length)
+    ;
+    register_vector<coot::acedrg_types_for_bond_t>("VectorAcedrgTypesForBond_t");
+
+    value_object<coot::acedrg_types_for_residue_t>("acedrg_types_for_residue_t")
+       .field("bond_types",   &coot::acedrg_types_for_residue_t::bond_types)
     ;
     value_object<coot::residue_validation_information_t>("residue_validation_information_t")
     .field("function_value", &coot::residue_validation_information_t::function_value)
@@ -1503,6 +1515,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_map_section_texture", &molecules_container_t::get_map_section_texture)
     .function("get_rdkit_mol_pickle_base64", &molecules_container_t::get_rdkit_mol_pickle_base64)
     .function("get_q_score", &molecules_container_t::get_q_score)
+    .function("get_acedrg_atom_types_for_ligand", &molecules_container_t::get_acedrg_atom_types_for_ligand)
     .property("use_gemmi", &molecules_container_t::use_gemmi)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
