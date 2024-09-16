@@ -262,7 +262,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
      * @param {moorhen.DisplayObject[]} objects - The display objects for this representation
      */
     buildBuffers(objects: moorhen.DisplayObject[]) {
-        if (objects.length > 0 && !this.parentMolecule.gemmiStructure.isDeleted()) {
+        if (objects.length > 0 && !this.parentMolecule.gemmiStructure?.isDeleted()) {
             objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
                 const a = this.glRef.current.appendOtherData(object, true)
                 if (this.buffers) {
