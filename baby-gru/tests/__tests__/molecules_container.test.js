@@ -544,7 +544,7 @@ describe('Testing molecules_container_js', () => {
     test('Test Surface mesh', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const simpleMesh = molecules_container.get_molecular_representation_mesh(
-            0, "//", "colorRampChainsScheme", "MolecularSurface"
+            0, "//", "colorRampChainsScheme", "MolecularSurface", true
         );
         expect(simpleMesh.vertices.size()).toBeCloseTo(143439, -3)
         expect(simpleMesh.triangles.size()).toBeCloseTo(174034, -3)
@@ -561,7 +561,7 @@ describe('Testing molecules_container_js', () => {
             tlc, -999999, ...coords
         )
         const simpleMesh = molecules_container.get_molecular_representation_mesh(
-            ligandMolNo, "//", "colorRampChainsScheme", "MolecularSurface"
+            ligandMolNo, "//", "colorRampChainsScheme", "MolecularSurface", true
         )
 
         expect(simpleMesh.vertices.size()).toBeGreaterThan(100)
@@ -637,6 +637,24 @@ describe('Testing molecules_container_js', () => {
         })
 
         cleanUpVariables.push(instanced_mesh_1, instanced_mesh_2, geom_vec_1, geom_vec_2)
+    })
+
+    test("Test get_acedrg_types_for_residue_t", () => {
+        const coordMolNo = molecules_container.read_pdb('./5a3h-nitrobenzene.pdb')
+        expect(coordMolNo).toBe(0)
+
+        const cifString = fs.readFileSync(path.join(__dirname, '..', 'test_data', 'nitrobenzene.cif'), { encoding: 'utf8', flag: 'r' })
+        expect(cifString.match(/data_comp_([A-Z0-9]{3,5})[\r\n+]/)[1]).toBe('LIG')
+
+        molecules_container.read_dictionary_string(cifString, coordMolNo)
+
+        //Residue A/298 is a Leucine, so should have eight bonds
+        const result_298 = molecules_container.get_acedrg_atom_types_for_ligand(coordMolNo, '/1/A/298/*')
+        expect(result_298.bond_types.size()).toBe(8)
+
+        //Residue A/301 is a LIG, so should have nine bonds
+        const result_301 = molecules_container.get_acedrg_atom_types_for_ligand(coordMolNo, '/1/A/301/*')
+        expect(result_301.bond_types.size()).toBe(9)
     })
 
     test("Test smiles_to_pdb", () => {
@@ -1972,7 +1990,9 @@ describe('Testing molecules_container_js', () => {
     })
 })
 
-const testDataFiles = ['1cxq_phases.mtz', '1cxq.cif', '7ZTVU.cif', '5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'MOI.restraints.cif', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
+const testDataFiles = ['1cxq_phases.mtz', '1cxq.cif', '7ZTVU.cif', '5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'MOI.restraints.cif', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb', '5a3h-nitrobenzene.pdb'
+
+]
 
 const setupFunctions = {
     removeTestDataFromFauxFS: () => {
