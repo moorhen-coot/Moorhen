@@ -148,6 +148,20 @@ export namespace libcootApi {
         residue_name: string;
         altLoc: number | string;
     }
+    interface AcedrgTypesForBond extends emscriptem.instance<AcedrgTypesForBond>{
+        atom_id_1: string;
+        atom_id_2: string;
+        atom_type_1: string;
+        atom_type_2: string;
+        bond_length: Number;
+    }
+    interface AcedrgTypesForBondJS {
+        atom_id_1: string;
+        atom_id_2: string;
+        atom_type_1: string;
+        atom_type_2: string;
+        bond_length: Number;
+    }
     interface MoorhenHBond extends emscriptem.instance<MoorhenHBond> {
         hb_hydrogen: HBondAtom;
         donor: HBondAtom;
