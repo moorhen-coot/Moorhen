@@ -639,11 +639,13 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(instanced_mesh_1, instanced_mesh_2, geom_vec_1, geom_vec_2)
     })
 
-    test("Test get_acedrg_types_for_residue_t", () => {
+    test("Test get_acedrg_types_for_residue_t", async () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h-nitrobenzene.pdb')
         expect(coordMolNo).toBe(0)
+        const pdbChemLig = await fetch(`https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/LIG.cif`).then(response=>response.text())
+        molecules_container.read_dictionary_string(pdbChemLig, coordMolNo)
 
-        const cifString = fs.readFileSync(path.join(__dirname, '..', 'test_data', 'nitrobenzene.cif'), { encoding: 'utf8', flag: 'r' })
+        const cifString = fs.readFileSync(path.join(__dirname, '..', 'test_data', 'full-nitrobenzene.cif'), { encoding: 'utf8', flag: 'r' })
         expect(cifString.match(/data_comp_([A-Z0-9]{3,5})[\r\n+]/)[1]).toBe('LIG')
 
         molecules_container.read_dictionary_string(cifString, coordMolNo)
@@ -652,9 +654,9 @@ describe('Testing molecules_container_js', () => {
         const result_298 = molecules_container.get_acedrg_atom_types_for_ligand(coordMolNo, '/1/A/298/*')
         expect(result_298.bond_types.size()).toBe(8)
 
-        //Residue A/301 is a LIG, so should have nine bonds
+        //Residue A/301 is a nitrobenzene, so should have 14 bonds
         const result_301 = molecules_container.get_acedrg_atom_types_for_ligand(coordMolNo, '/1/A/301/*')
-        expect(result_301.bond_types.size()).toBe(9)
+        expect(result_301.bond_types.size()).toBe(14)
     })
 
     test("Test smiles_to_pdb", () => {
@@ -1990,7 +1992,7 @@ describe('Testing molecules_container_js', () => {
     })
 })
 
-const testDataFiles = ['1cxq_phases.mtz', '1cxq.cif', '7ZTVU.cif', '5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'MOI.restraints.cif', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb', '5a3h-nitrobenzene.pdb'
+const testDataFiles = ['1cxq_phases.mtz', '1cxq.cif', '7ZTVU.cif', '5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'MOI.restraints.cif', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb', '5a3h-nitrobenzene.pdb', 'full-nitrobenzene.cif'
 
 ]
 
