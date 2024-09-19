@@ -92,12 +92,9 @@ describe("Testing MoorhenMolecule", () => {
         const molecule_1 = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule_1.loadToCootFromURL(fileUrl_1, 'mol-test-1')
 
-        const ligandFileName_1 = path.join(__dirname, '..', 'test_data', 'nitrobenzene.cif')
+        const ligandFileName_1 = path.join(__dirname, '..', 'test_data', 'full-nitrobenzene.cif')
         const ligandFileContents_1 = fs.readFileSync(ligandFileName_1, { encoding: 'utf8', flag: 'r' })
         await molecule_1.addDict(ligandFileContents_1)
-        expect(molecule_1.ligandDicts).toEqual({
-            "LIG": ligandFileContents_1
-        })
 
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
         const map = new MoorhenMap(commandCentre, glRef)
@@ -106,32 +103,22 @@ describe("Testing MoorhenMolecule", () => {
         const cid = `//A/301`
         const refineResult = await molecule_1.refineResiduesUsingAtomCidAnimated(cid, map, -1.0, false)
 
-        let bondSettings = [
-            "COLOUR-BY-CHAIN-AND-DICTIONARY",
-            molecule_1.isDarkBackground
-        ]
-        bondSettings.push(
-            molecule_1.defaultBondOptions.width * 1.5,
-            molecule_1.defaultBondOptions.atomRadiusBondRatio * 1.5,
-            molecule_1.defaultBondOptions.smoothness
-        )
-
-        const response = await commandCentre.current.cootCommand({
-            returnType: "instanced_mesh",
-            command: "get_bonds_mesh_for_selection_instanced",
+        //Residue A/301 is a nitrobenzene, so should have 14 bonds
+        const acedrgTypesForBondData = await commandCentre.current.cootCommand({
+            returnType: 'acedrg_types_for_bond_data',
+            command: "get_acedrg_atom_types_for_ligand",
             commandArgs: [
-                molecule_1.molNo,
-                cid,
-                ...bondSettings
+                molecule_1.molNo, '/1/A/301/*'
             ]
-        }, false)
-
-        console.log({ "response.data.result": response.data.result.result.instance_sizes[0][0] })
-        expect('Black').toBe('White')
+        })
+        //const result_301 = molecules_container.get_acedrg_atom_types_for_ligand(molecule_1.molNo, '/1/A/301/*')
+        //console.log(acedrgTypesForBondData.data.result.result)
+        expect(acedrgTypesForBondData.data.result.result.length).toBe(14)
+        expect(acedrgTypesForBondData.data.result.result.every(bond=>bond.bond_length<2.25)).toBeTruthy()
     })
 })
 
-const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb']
+const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb', 'full-nitrobenzene.cif']
 
 const setupFunctions = {
     removeTestDataFromFauxFS: () => {
