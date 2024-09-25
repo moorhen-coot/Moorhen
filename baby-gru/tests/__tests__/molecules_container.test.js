@@ -63,6 +63,26 @@ describe('Testing molecules_container_js', () => {
         expect(mesh.triangles.size()).toBeGreaterThan(1000)
     })
 
+    test("Test H-Bonds", () => {
+        const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
+        const coordMolNo_2 = molecules_container.read_pdb('./5a3h.pdb')
+        const g2fTlc = "G2F"
+        const bgcTlc = "BGC"
+        const attachMolNo_1 = coordMolNo_1
+        const attachMolNo_2 = -999999
+        const fileContents_G2F = fs.readFileSync(path.join(__dirname, '..', 'test_data', 'G2F.cif'), { encoding: 'utf8', flag: 'r' })
+        const fileContents_BGC = fs.readFileSync(path.join(__dirname, '..', 'test_data', 'BGC.cif'), { encoding: 'utf8', flag: 'r' })
+        const status_G2F_1 = molecules_container.read_dictionary_string(fileContents_G2F,attachMolNo_1)
+        const status_BGC_1 = molecules_container.read_dictionary_string(fileContents_BGC,attachMolNo_1)
+        const hbonds_1 = molecules_container.get_h_bonds(coordMolNo_1,"/*/*/*/*",false)
+        const status_G2F_2 = molecules_container.read_dictionary_string(fileContents_G2F,attachMolNo_2)
+        const status_BGC_2 = molecules_container.read_dictionary_string(fileContents_BGC,attachMolNo_2)
+        const hbonds_2 = molecules_container.get_h_bonds(coordMolNo_2,"/*/*/*/*",false)
+        expect(coordMolNo_1).toBe(0)
+        expect(coordMolNo_2).toBe(1)
+        expect(hbonds_1.size()).toBe(hbonds_2.size())
+    })
+
     test("Test read PDB", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const atomCount = molecules_container.get_number_of_atoms(coordMolNo)
@@ -1992,7 +2012,7 @@ describe('Testing molecules_container_js', () => {
     })
 })
 
-const testDataFiles = ['1cxq_phases.mtz', '1cxq.cif', '7ZTVU.cif', '5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'MOI.restraints.cif', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb', '5a3h-nitrobenzene.pdb', 'full-nitrobenzene.cif'
+const testDataFiles = ['1cxq_phases.mtz', '1cxq.cif', '7ZTVU.cif', '5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'MOI.restraints.cif', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb', '5a3h-nitrobenzene.pdb', 'full-nitrobenzene.cif', 'BGC.cif', 'G2F.cif'
 
 ]
 
