@@ -82,7 +82,7 @@
     "make-linux": "npm run build && electron-forge make --platform linux",
     "make-win32": "npm run build && electron-forge make --platform win32",
     "create-docs": "npm run create-version && npx jsdoc -c jsdoc.json",
-    "test": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && npm run transpile-ts-worker-jest && ln -s ./public/moorhen.data ./moorhen.data && ln -s ./public/ ./baby-gru && node --trace-warnings --experimental-wasm-eh --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit",
+    "test": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && npm run transpile-ts-worker-jest && ln -sf ./public/moorhen.data ./moorhen.data && ln -s ./public/ ./baby-gru && node --trace-warnings --experimental-wasm-eh --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit",
     "test-react": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && node --trace-warnings --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --forceExit --testPathIgnorePatterns=MoorhenContainer.test.jsx --testPathIgnorePatterns=MoorhenLigandMenu.test.jsx --testPathIgnorePatterns=MoorhenEditMenu.test.jsx --selectProjects react-components"
   },
   "eslintConfig": {
