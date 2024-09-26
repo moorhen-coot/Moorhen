@@ -112,6 +112,7 @@ const LhasaWrapper = (props: {
 
     return  isCootAttached ?
                 <LhasaComponent 
+                    bansu_endpoint="127.0.0.1:5173"
                     Lhasa={window.cootModule}
                     show_footer={false}
                     show_top_panel={false}
