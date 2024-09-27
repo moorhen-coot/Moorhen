@@ -472,7 +472,7 @@ target_include_directories(coot PRIVATE
     ${DEPS_INCLUDE_DIRS}
 )
 
-set_target_properties(coot PROPERTIES COMPILE_FLAGS "-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -Wno-deprecated-declarations -Wno-deprecated-builtins -pthread -DHAVE_CXX11=1 -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT" LINK_FLAGS "-pthread -sASSERTIONS=2")
+set_target_properties(coot PROPERTIES COMPILE_FLAGS "-D__MOORHEN__ -DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -Wno-deprecated-declarations -Wno-deprecated-builtins -pthread -DHAVE_CXX11=1 -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT" LINK_FLAGS "-pthread -sASSERTIONS=2")
 
 set_source_files_properties(${coot_exception_srcs} PROPERTIES COMPILE_FLAGS "-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -pthread -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT" )
 
