@@ -42,6 +42,7 @@ import { addMolecule, removeMolecule, emptyMolecules, addMoleculeList, showMolec
 import { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity, resetDefaultMouseSettings } from './store/mouseSettings';
 import { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts, resetShortcutSettings } from './store/shortCutsSlice';
 import { setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores, resetMoleculeMapUpdates } from './store/moleculeMapUpdateSlice';
+import { resetLhasaSettings, addRdkitMoleculePickle, removeRdkitMoleculePickle, emptyRdkitMoleculePickleList }  from './store/lhasaSlice';
 import { resetActiveModals, focusOnModal, unFocusModal } from './store/modalsSlice';
 import { resetSharedSession } from './store/sharedSessionSlice';
 import moleculesReducer from './store/moleculesSlice';
@@ -58,6 +59,7 @@ import mapContourSettingsReducer from './store/mapContourSettingsSlice';
 import moleculeMapUpdateReducer from './store/moleculeMapUpdateSlice';
 import sharedSessionReducer from './store/sharedSessionSlice';
 import refinementSettingsReducer from './store/refinementSettingsSlice';
+import lhasaReducer from './store/lhasaSlice';
 import MoorhenStore from './store/MoorhenReduxStore';
 
 export {
