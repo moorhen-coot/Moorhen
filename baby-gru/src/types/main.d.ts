@@ -50,6 +50,9 @@ declare module 'moorhen' {
     let refinementSettingsReducer: any;
     module.exports = refinementSettingsReducer
 
+    let lhasaReducer: any;
+    module.exports = lhasaReducer
+
     let MoorhenReduxStore: any;
     module.exports = MoorhenReduxStore
 
