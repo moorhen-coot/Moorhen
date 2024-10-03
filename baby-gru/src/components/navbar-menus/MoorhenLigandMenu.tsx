@@ -16,7 +16,6 @@ import { convertViewtoPx } from "../../utils/utils";
 export const MoorhenLigandMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
 
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
 
     const dispatch = useDispatch()
 
@@ -31,7 +30,7 @@ export const MoorhenLigandMenu = (props: MoorhenNavBarExtendedControlsInterface)
             <MoorhenCentreOnLigandMenuItem {...menuItemProps} />
             <MoorhenMinimizeEnergyMenuItem {...menuItemProps} />
             <MoorhenMatchLigandsMenuItem {...menuItemProps} />
-            {devMode && <MoorhenOpenLhasaMenuItem {...menuItemProps}/>}
+            <MoorhenOpenLhasaMenuItem {...menuItemProps}/>
             <MenuItem onClick={() => {
                 dispatch(showModal(modalKeys.FIT_LIGAND))
                 document.body.click()
