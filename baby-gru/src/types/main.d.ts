@@ -53,6 +53,9 @@ declare module 'moorhen' {
     let lhasaReducer: any;
     module.exports = lhasaReducer
 
+    let sliceNDiceReducer: any;
+    module.exports = sliceNDiceReducer
+
     let MoorhenReduxStore: any;
     module.exports = MoorhenReduxStore
 

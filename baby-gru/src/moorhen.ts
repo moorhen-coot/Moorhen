@@ -60,6 +60,7 @@ import moleculeMapUpdateReducer from './store/moleculeMapUpdateSlice';
 import sharedSessionReducer from './store/sharedSessionSlice';
 import refinementSettingsReducer from './store/refinementSettingsSlice';
 import lhasaReducer from './store/lhasaSlice';
+import sliceNDiceReducer from './store/sliceNDiceSlice';
 import MoorhenStore from './store/MoorhenReduxStore';
 
 export {
@@ -85,7 +86,7 @@ export {
     moleculesReducer, mapsReducer, mouseSettingsReducer, backupSettingsReducer, unFocusModal, resetSharedSession,
     shortcutSettingsReducer, labelSettingsReducer, sceneSettingsReducer, generalStatesReducer, removeGeneralRepresentation,
     modalsReducer, hoveringStatesReducer, mapContourSettingsReducer, moleculeMapUpdateReducer, addGeneralRepresentation,
-    sharedSessionReducer, refinementSettingsReducer, lhasaReducer, resetSceneSettings, resetBackupSettings, resetDefaultMouseSettings, 
+    sharedSessionReducer, refinementSettingsReducer, sliceNDiceReducer, lhasaReducer, resetSceneSettings, resetBackupSettings, resetDefaultMouseSettings,
     resetGeneralStates, resetHoveringStates, resetLabelSettings, resetMapContourSettings, resetMoleculeMapUpdates,
     resetRefinementSettings, resetShortcutSettings, resetActiveModals, focusOnModal, setBFactorThreshold, 
     setClusteringType, setMoleculeBfactors, setMoleculeMaxBfactor, resetSliceNDiceSlice, setMoleculeMinBfactor, 
