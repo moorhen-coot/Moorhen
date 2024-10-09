@@ -64,11 +64,6 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
     }
     
     async init() {
-        console.log("##################################################")
-        console.log("##################################################")
-        console.log(`/CootWorker.js`)
-        console.log("##################################################")
-        console.log("##################################################")
         this.isClosed = false
         this.cootWorker = new Worker(`/CootWorker.js`)
         this.cootWorker.onmessage = this.handleMessage.bind(this)
