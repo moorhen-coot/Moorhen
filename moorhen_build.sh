@@ -832,6 +832,6 @@ if [ $BUILD_MOORHEN = true ]; then
     emmake make install || fail "Error installing moorhen, giving up."
     cd ${MOORHEN_SOURCE_DIR}/baby-gru/
     npm install
-    cd ${MOORHEN_SOURCE_DIR}/baby-gru/public
+    cd ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru
     ln -sf ${MOORHEN_SOURCE_DIR}/checkout/monomers
 fi
