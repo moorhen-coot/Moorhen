@@ -11,8 +11,7 @@ It is developed by porting some [CCP4](https://www.ccp4.ac.uk/) libraries and pr
 The emscripten suite of tools is required to do the
 compilation.
 
-The sources of CCP4, Coot, Privateer, FFTW, and GSL are not included. They are downloaded and (possibly) patched by the running
-the `get_sources` script, which is part of the build process of this project.
+The sources of CCP4, Coot, Privateer, FFTW, and GSL are not included. They are downloaded and (possibly) patched by the build process of this project.
 
 The following libraries/programs are compiled to Web Assembly:
 * libccp4 (8.0.0)
@@ -69,10 +68,9 @@ Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) 
 2. Each time you want to use emscripten:  
 `source ./emsdk_env.sh`
 
-3. Get the sources:  
+3. Get the source:  
 `git clone --recurse-submodules https://github.com/moorhen-coot/Moorhen.git`  
-`cd Moorhen`  
-`./get_sources`
+`cd Moorhen`
 
 5. Build gsl, Boost, RDKIt, Coot, the CCP4 libraries and examples:  
 <br>In this branch, it is intended that you do the build in the source directory. 
