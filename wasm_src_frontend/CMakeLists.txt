@@ -17,7 +17,7 @@ else()
     set(EXAMPLE_MODULE_SUFFIX "")
 endif()
 
-target_link_libraries(web_example ssm  mmdb2 clipper-minimol clipper-phs clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw fftw3fccp4 clipper-minimol gemmi_cpp gsl gslcblas m z idbfs.js)
+target_link_libraries(web_example ssm  mmdb2 clipper-minimol clipper-phs clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw fftw3f ccp4 clipper-minimol gemmi_cpp gsl gslcblas m z idbfs.js)
 target_compile_options(web_example PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_ -DGEMMI_WRITE_IMPLEMENTATION )
 install(TARGETS web_example DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/web_example${EXAMPLE_MODULE_SUFFIX}.wasm  
