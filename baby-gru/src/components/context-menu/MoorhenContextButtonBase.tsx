@@ -21,6 +21,12 @@ const MoorhenPopoverOptions = (props: {
     defaultValue?: string;
     setDefaultValue?: (arg0: string) => void;
 }) => {
+
+    const defaultProps = { defaultValue: 'TRIPLE', nonCootCommand: null }
+
+    const {
+        defaultValue, nonCootCommand
+    } = { ...defaultProps, ...props }
     
     const selectRef = useRef<HTMLSelectElement | null>(null)
     const extraInputRef = useRef(null)
@@ -32,11 +38,11 @@ const MoorhenPopoverOptions = (props: {
     }, [])
 
     const handleClick = useCallback(() => {
-        props.setDefaultValue(selectRef.current.value)
-        if (!props.nonCootCommand) {
-            props.doEdit(props.getCootCommandInput(props.selectedMolecule, props.chosenAtom, selectRef.current.value, extraInputRef))
+        props.setDefaultValue?.(selectRef.current.value)
+        if (!nonCootCommand) {
+            props.doEdit(props.getCootCommandInput?.(props.selectedMolecule, props.chosenAtom, selectRef.current.value, extraInputRef))
         } else {
-            props.nonCootCommand(props.selectedMolecule, props.chosenAtom, selectRef.current.value)
+            nonCootCommand(props.selectedMolecule, props.chosenAtom, selectRef.current.value)
         }
       }, [props])
     
@@ -51,22 +57,20 @@ const MoorhenPopoverOptions = (props: {
         <Stack direction="vertical" gap={2}>
             <FormGroup>
                 <FormLabel>{props.label}</FormLabel>
-                <FormSelect key={props.label} ref={selectRef} defaultValue={props.defaultValue ? props.defaultValue : 'TRIPLE'}>
+                <FormSelect key={props.label} ref={selectRef} defaultValue={defaultValue}>
                     {props.options.map(optionName => {
                         return <option key={optionName} value={optionName}>{optionName}</option>
                     })}
                 </FormSelect>
             </FormGroup>
-            {props.extraInput(extraInputRef)}
+            {props.extraInput?.(extraInputRef)}
             <Button onClick={handleClick}>
                 OK
             </Button>
         </Stack>
     </ClickAwayListener>
-    }
+} 
 
-MoorhenPopoverOptions.defaultProps = {extraInput: () => null, nonCootCommand: false}
-  
 
 export const MoorhenContextButtonBase = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -98,13 +102,22 @@ export const MoorhenContextButtonBase = (props: {
         setDefaultValue?: (arg0: string) => void;
     };
 }) => {
+
+    const defaultProps = {
+        needsMapData: false, needsAtomData: true, refineAfterMod: true
+    }
     
-    const dispatch = useDispatch()
+    const {
+        refineAfterMod, needsAtomData, needsMapData,
+    } = {...defaultProps, ...props}
+    
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
     const animateRefine = useSelector((state: moorhen.State) => state.refinementSettings.animateRefine)
+
+    const dispatch = useDispatch()
 
     const doEdit = async (cootCommandInput: moorhen.cootCommandKwargs) => {
         dispatch( setHoveredAtom({molecule: null, cid: null}) )
@@ -112,11 +125,9 @@ export const MoorhenContextButtonBase = (props: {
         
         const cootResult = await props.commandCentre.current.cootCommand(cootCommandInput, true)
         
-        if (props.onCompleted) {
-            props.onCompleted(props.selectedMolecule, props.chosenAtom)
-        }
+        props.onCompleted?.(props.selectedMolecule, props.chosenAtom)
         
-        if (props.refineAfterMod && enableRefineAfterMod && activeMap) {
+        if (refineAfterMod && enableRefineAfterMod && activeMap) {
             try {
                 if (animateRefine) {
                     await props.selectedMolecule.refineResiduesUsingAtomCidAnimated(`//${props.chosenAtom.chain_id}/${props.chosenAtom.res_no}`, activeMap, 2, true, false)
@@ -135,9 +146,7 @@ export const MoorhenContextButtonBase = (props: {
         dispatch( triggerUpdate(props.selectedMolecule.molNo) )
         props.selectedMolecule.clearBuffersOfStyle('hover')
       
-        if(props.onExit) {
-            props.onExit(props.selectedMolecule, props.chosenAtom, cootResult)
-        }        
+        props.onExit?.(props.selectedMolecule, props.chosenAtom, cootResult)
     }
   
     const handleClick = useCallback(async () => {
@@ -159,15 +168,9 @@ export const MoorhenContextButtonBase = (props: {
             onClick={handleClick}
             onMouseEnter={() => props.setToolTip(props.toolTipLabel)}
             style={{ backgroundColor: isDark ? 'grey' : 'white' }}
-            disabled={props.needsMapData && !activeMap || (props.needsAtomData && molecules.length === 0)}
+            disabled={needsMapData && !activeMap || (needsAtomData && molecules.length === 0)}
         >
             {props.icon}
         </IconButton>
     </>
 }
-  
-MoorhenContextButtonBase.defaultProps = {
-    needsMapData: false, needsAtomData: true, 
-    refineAfterMod: true, onExit: null, onCompleted: null
-}
-  

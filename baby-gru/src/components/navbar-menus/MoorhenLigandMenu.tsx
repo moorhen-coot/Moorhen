@@ -11,10 +11,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { showModal } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
 import { moorhen } from "../../types/moorhen";
+import { convertViewtoPx } from "../../utils/utils";
 
 export const MoorhenLigandMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
 
-    const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
     const dispatch = useDispatch()
 
@@ -22,18 +23,18 @@ export const MoorhenLigandMenu = (props: MoorhenNavBarExtendedControlsInterface)
     
     const menuItemProps = { setPopoverIsShown, ...props }
 
-    return <>
+    return <div style={{maxHeight: convertViewtoPx(65, height), overflow: 'auto'}}>
             <MoorhenGetMonomerMenuItem {...menuItemProps} />
-            <MoorhenImportDictionaryMenuItem {...menuItemProps} />
+            {!props.disableFileUploads && <MoorhenImportDictionaryMenuItem {...menuItemProps} />}
             <MoorhenSMILESToLigandMenuItem {...menuItemProps} />
             <MoorhenCentreOnLigandMenuItem {...menuItemProps} />
             <MoorhenMinimizeEnergyMenuItem {...menuItemProps} />
             <MoorhenMatchLigandsMenuItem {...menuItemProps} />
-            {devMode && <MoorhenOpenLhasaMenuItem {...menuItemProps}/>}
+            <MoorhenOpenLhasaMenuItem {...menuItemProps}/>
             <MenuItem onClick={() => {
                 dispatch(showModal(modalKeys.FIT_LIGAND))
                 document.body.click()
             }}>Find ligand...</MenuItem>
-    </>
+    </div>
 }
 

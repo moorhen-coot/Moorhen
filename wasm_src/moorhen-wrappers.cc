@@ -62,6 +62,8 @@ using namespace emscripten;
 
 #include "privateer-wrappers.h"
 
+#include "headers.h"
+
 struct RamachandranInfo {
     std::string chainId;
     int seqNum;
@@ -80,6 +82,19 @@ struct ResiduePropertyInfo {
     std::string restype;
     double property;
 };
+
+std::vector<std::string>  get_mtz_columns(const std::string& mtz_file_name){
+    const char *filename_c = mtz_file_name.c_str();
+    header_info hinfo((char*)filename_c);
+    std::vector<std::vector<std::string> > theTypes = hinfo.GetUnsortedHeadersAndTypes();
+    std::vector<std::string> shortTypes;
+    for(unsigned ityp=0;ityp<theTypes.size();ityp++){
+        shortTypes.push_back(theTypes[ityp][0]);
+        shortTypes.push_back(theTypes[ityp][1]);
+    }
+    return shortTypes;
+
+}
 
 std::vector<coot::residue_spec_t> getSecondaryStructure(mmdb::Manager *m, int imodel=1){
     /* int_user_data is an int of secondary structure as defined in MMDB:
@@ -988,7 +1003,7 @@ emscripten::val testFloat32Array(const emscripten::val &floatArrayObject){
 }
 
 EMSCRIPTEN_BINDINGS(my_module) {
-    // PRIVATEER
+        // PRIVATEER
     value_object<TorsionEntry>("TorsionEntry")
       .field("sugar_1", &TorsionEntry::sugar_1)
       .field("sugar_2", &TorsionEntry::sugar_2)
@@ -1100,6 +1115,18 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .field("chain_id", &merge_molecule_results_info_t::chain_id)
     .field("spec", &merge_molecule_results_info_t::spec)
     .field("is_chain", &merge_molecule_results_info_t::is_chain)
+    ;
+    value_object<coot::acedrg_types_for_bond_t>("acedrg_types_for_bond_t")
+       .field("atom_id_1",   &coot::acedrg_types_for_bond_t::atom_id_1)
+       .field("atom_id_2",   &coot::acedrg_types_for_bond_t::atom_id_2)
+       .field("atom_type_1", &coot::acedrg_types_for_bond_t::atom_type_1)
+       .field("atom_type_2", &coot::acedrg_types_for_bond_t::atom_type_2)
+       .field("bond_length", &coot::acedrg_types_for_bond_t::bond_length)
+    ;
+    register_vector<coot::acedrg_types_for_bond_t>("VectorAcedrgTypesForBond_t");
+
+    value_object<coot::acedrg_types_for_residue_t>("acedrg_types_for_residue_t")
+       .field("bond_types",   &coot::acedrg_types_for_residue_t::bond_types)
     ;
     value_object<coot::residue_validation_information_t>("residue_validation_information_t")
     .field("function_value", &coot::residue_validation_information_t::function_value)
@@ -1249,12 +1276,38 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("mmcif_tests", &molecules_container_t::mmcif_tests)
     .function("M2T_updateIntParameter", &molecules_container_t::M2T_updateIntParameter)
     .function("M2T_updateFloatParameter", &molecules_container_t::M2T_updateFloatParameter)
     .function("clear_lsq_matches", &molecules_container_t::clear_lsq_matches)
     .function("add_lsq_superpose_match", &molecules_container_t::add_lsq_superpose_match)
+    .function("assign_sequence",&molecules_container_t::assign_sequence)
+    .function("associate_sequence",&molecules_container_t::associate_sequence)
+    .function("average_map",&molecules_container_t::average_map)
+    .function("get_group_for_monomer",&molecules_container_t::get_group_for_monomer)
+    .function("get_groups_for_monomers",&molecules_container_t::get_groups_for_monomers)
+    .function("get_hb_type",&molecules_container_t::get_hb_type)
+    .function("get_imol_enc_any",&molecules_container_t::get_imol_enc_any)
+    //this requires std::pair<short int, clipper::RTop_orth>
+    //.function("get_lsq_matrix",&molecules_container_t::get_lsq_matrix)
+    .function("get_median_temperature_factor",&molecules_container_t::get_median_temperature_factor)
+    .function("get_number_of_map_sections",&molecules_container_t::get_number_of_map_sections)
+    .function("get_number_of_molecules",&molecules_container_t::get_number_of_molecules)
+    .function("get_residues_near_residue",&molecules_container_t::get_residues_near_residue)
+    .function("get_use_rama_plot_restraints",&molecules_container_t::get_use_rama_plot_restraints)
+    .function("get_use_torsion_restraints",&molecules_container_t::get_use_torsion_restraints)
+    .function("make_power_scaled_map",&molecules_container_t::make_power_scaled_map)
+    .function("print_secondary_structure_info",&molecules_container_t::print_secondary_structure_info)
+    .function("read_coordinates",&molecules_container_t::read_coordinates)
+    .function("refine_residues",&molecules_container_t::refine_residues)
+    .function("regen_map",&molecules_container_t::regen_map)
+    .function("set_add_waters_sigma_cutoff",&molecules_container_t::set_add_waters_sigma_cutoff)
+    .function("set_add_waters_variance_limit",&molecules_container_t::set_add_waters_variance_limit)
+    .function("set_molecule_name",&molecules_container_t::set_molecule_name)
+    .function("write_coordinates",&molecules_container_t::write_coordinates)
+    .function("get_density_at_position",&molecules_container_t::get_density_at_position)
+    .function("get_dictionary_conformers",&molecules_container_t::get_dictionary_conformers)
     .function("lsq_superpose", &molecules_container_t::lsq_superpose)
-    .function("new_molecule", &molecules_container_t::new_molecule)
     .function("new_molecule", &molecules_container_t::new_molecule)
     .function("get_header_info", &molecules_container_t::get_header_info)
     .function("copy_dictionary", &molecules_container_t::copy_dictionary)
@@ -1336,8 +1389,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("delete_side_chain",&molecules_container_t::delete_side_chain)
     .function("delete_chain_using_cid",&molecules_container_t::delete_chain_using_cid)
     .function("get_molecule_centre",&molecules_container_t::get_molecule_centre)
-    .function("set_refinement_is_verbose",&molecules_container_t::set_refinement_is_verbose)
-    .function("set_refinement_is_verbose",&molecules_container_t::set_refinement_is_verbose)
     .function("peptide_omega_analysis",&molecules_container_t::peptide_omega_analysis)
     .function("calculate_new_rail_points",&molecules_container_t::calculate_new_rail_points)
     .function("rail_points_total",&molecules_container_t::rail_points_total)
@@ -1349,7 +1400,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("fit_ligand_right_here",&molecules_container_t::fit_ligand_right_here)
     .function("fit_ligand",&molecules_container_t::fit_ligand)
     .function("fit_to_map_by_random_jiggle",&molecules_container_t::fit_to_map_by_random_jiggle)
-    .function("fit_to_map_by_random_jiggle_using_cid",&molecules_container_t::fit_to_map_by_random_jiggle_using_cid)
     .function("get_svg_for_residue_type",&molecules_container_t::get_svg_for_residue_type)
     .function("is_valid_model_molecule",&molecules_container_t::is_valid_model_molecule)
     .function("is_valid_map_molecule",&molecules_container_t::is_valid_map_molecule)
@@ -1377,7 +1427,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("auto_fit_rotamer",&molecules_container_t::auto_fit_rotamer)
     .function("rigid_body_fit",&molecules_container_t::rigid_body_fit)
     .function("cis_trans_convert",&molecules_container_t::cis_trans_convert)
-    .function("set_draw_missing_residue_loops",&molecules_container_t::set_draw_missing_residue_loops)
     .function("get_map_contours_mesh",&molecules_container_t::get_map_contours_mesh)
     .function("geometry_init_standard",&molecules_container_t::geometry_init_standard)
     .function("fill_rotamer_probability_tables",&molecules_container_t::fill_rotamer_probability_tables)
@@ -1402,7 +1451,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_bonds_mesh_instanced",&molecules_container_t::get_bonds_mesh_instanced)
     .function("get_bonds_mesh_for_selection_instanced",&molecules_container_t::get_bonds_mesh_for_selection_instanced)
     .function("go_to_blob",&molecules_container_t::go_to_blob)
-    .function("set_map_sampling_rate",&molecules_container_t::set_map_sampling_rate)
     .function("get_monomer",&molecules_container_t::get_monomer)
     .function("get_monomer_and_position_at",&molecules_container_t::get_monomer_and_position_at)
     .function("move_molecule_to_new_centre",&molecules_container_t::move_molecule_to_new_centre)
@@ -1413,6 +1461,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("difference_map_peaks",&molecules_container_t::difference_map_peaks)
     .function("pepflips_using_difference_map",&molecules_container_t::pepflips_using_difference_map)
     .function("add_waters",&molecules_container_t::add_waters)
+    .function("set_add_waters_water_to_protein_distance_lim_min",&molecules_container_t::set_add_waters_water_to_protein_distance_lim_min)
+    .function("set_add_waters_water_to_protein_distance_lim_max",&molecules_container_t::set_add_waters_water_to_protein_distance_lim_max)
     .function("ramachandran_analysis",&molecules_container_t::ramachandran_analysis)
     .function("density_correlation_analysis",&molecules_container_t::density_correlation_analysis)
     .function("rotamer_analysis",&molecules_container_t::rotamer_analysis)
@@ -1448,7 +1498,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("unmodelled_blobs",&molecules_container_t::unmodelled_blobs)
     .function("get_map_molecule_centre",&molecules_container_t::get_map_molecule_centre)
     .function("get_cell",&molecules_container_t::get_cell)
-    .function("get_cell",&molecules_container_t::get_cell)
     .function("make_masked_maps_split_by_chain",&molecules_container_t::make_masked_maps_split_by_chain)
     .function("fit_to_map_by_random_jiggle_with_blur_using_cid",&molecules_container_t::fit_to_map_by_random_jiggle_with_blur_using_cid)
     .function("get_map_contours_mesh_using_other_map_for_colours",&molecules_container_t::get_map_contours_mesh_using_other_map_for_colours)
@@ -1461,6 +1510,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_map_section_texture", &molecules_container_t::get_map_section_texture)
     .function("get_rdkit_mol_pickle_base64", &molecules_container_t::get_rdkit_mol_pickle_base64)
     .function("get_q_score", &molecules_container_t::get_q_score)
+    .function("get_acedrg_atom_types_for_ligand", &molecules_container_t::get_acedrg_atom_types_for_ligand)
     .property("use_gemmi", &molecules_container_t::use_gemmi)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
@@ -1915,4 +1965,5 @@ EMSCRIPTEN_BINDINGS(my_module) {
     //For testing
     //function("TakeColourMap",&TakeColourMap);
     //function("TakeStringIntPairVector",&TakeStringIntPairVector);
+    function("get_mtz_columns",&get_mtz_columns);
 }

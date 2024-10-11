@@ -2,14 +2,8 @@ import { libcootApi } from "../src/types/libcoot"
 import { emscriptem } from "../src/types/emscriptem"
 import { privateer } from "../src/types/privateer";
 
-// @ts-ignore
-importScripts('./moorhen.js')
-// @ts-ignore
-importScripts('./web_example.js')
-
 let cootModule: libcootApi.CootModule;
 let molecules_container: libcootApi.MoleculesContainerJS;
-let ccp4Module: any;
 
 const guid = () => {
     var d = Date.now();
@@ -22,8 +16,13 @@ const guid = () => {
 }
 
 // @ts-ignore
-let print = (stuff) => {
-    console.log(stuff)
+const print = (msg) => {
+    console.log(msg)
+}
+
+// @ts-ignore
+const printErr = (msg) => {
+    console.error(msg)
 }
 
 const parseMonLibListCif = (fileContents: string): libcootApi.compoundInfo[] => {
@@ -200,7 +199,7 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
     }
 
     geom.delete()
-    const simpleMeshData = simpleMeshToMeshData(markup) 
+    const simpleMeshData = simpleMeshToMeshData(markup)
 
     if (simpleMeshData.idx_tri.length > 0 && simpleMeshData.idx_tri[0].length > 0 && simpleMeshData.idx_tri[0][0].length > 0) {
         if (toSpheres) {
@@ -250,41 +249,41 @@ const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean 
 
     const vertices = simpleMesh.vertices;
     const triangles = simpleMesh.triangles;
-    
+
     const verticesSize = vertices.size();
     const trianglesSize = triangles.size()
 
-    let totIdxs_C = new Uint32Array(trianglesSize*3)
-    let totPos_C  = new Float32Array(verticesSize*3)
-    let totNorm_C = new Float32Array(verticesSize*3)
-    let totCol_C  = new Float32Array(verticesSize*4)
+    let totIdxs_C = new Uint32Array(trianglesSize * 3)
+    let totPos_C = new Float32Array(verticesSize * 3)
+    let totNorm_C = new Float32Array(verticesSize * 3)
+    let totCol_C = new Float32Array(verticesSize * 4)
 
-    cootModule.getPositionsFromSimpleMesh2(simpleMesh,totPos_C)
-    cootModule.getColoursFromSimpleMesh2(simpleMesh,totCol_C)
+    cootModule.getPositionsFromSimpleMesh2(simpleMesh, totPos_C)
+    cootModule.getColoursFromSimpleMesh2(simpleMesh, totCol_C)
 
-    if (perm){
-        if(keepNorm){
-            cootModule.getReversedNormalsFromSimpleMesh3(simpleMesh,totNorm_C)
+    if (perm) {
+        if (keepNorm) {
+            cootModule.getReversedNormalsFromSimpleMesh3(simpleMesh, totNorm_C)
         } else {
-            cootModule.getReversedNormalsFromSimpleMesh2(simpleMesh,totNorm_C)
+            cootModule.getReversedNormalsFromSimpleMesh2(simpleMesh, totNorm_C)
         }
-        cootModule.getPermutedTriangleIndicesFromSimpleMesh2(simpleMesh,totIdxs_C)
+        cootModule.getPermutedTriangleIndicesFromSimpleMesh2(simpleMesh, totIdxs_C)
     } else {
-        cootModule.getNormalsFromSimpleMesh2(simpleMesh,totNorm_C)
-        cootModule.getTriangleIndicesFromSimpleMesh2(simpleMesh,totIdxs_C)
+        cootModule.getNormalsFromSimpleMesh2(simpleMesh, totNorm_C)
+        cootModule.getTriangleIndicesFromSimpleMesh2(simpleMesh, totIdxs_C)
     }
 
     const tm = performance.now()
-    if(print_timing) console.log("DEBUG: SIMPLE MESH TO MESH DATA C++",tm-ts)
+    if (print_timing) console.log("DEBUG: SIMPLE MESH TO MESH DATA C++", tm - ts)
 
-    let totPos =  totPos_C
-    let totCol =  totCol_C
-    let totNorm =  totNorm_C
-    let totIdxs =  totIdxs_C
+    let totPos = totPos_C
+    let totCol = totCol_C
+    let totNorm = totNorm_C
+    let totIdxs = totIdxs_C
 
-    if(print_timing) {
+    if (print_timing) {
         const te = performance.now()
-        console.log("DEBUG: SIMPLE MESH TO MESH DATA",te-ts)
+        console.log("DEBUG: SIMPLE MESH TO MESH DATA", te - ts)
     }
 
     vertices.delete();
@@ -303,7 +302,7 @@ const SuperposeResultsToJSArray = (superposeResults: libcootApi.SuperposeResults
     const alignedPairsVec = superposeResults.aligned_pairs
     const alignedPairsVecSize = alignedPairsVec.size()
     let alignedPairsData: { reference: libcootApi.ValidationInformationJS, moving: libcootApi.ValidationInformationJS }[] = []
-    
+
     for (let i = 0; i < alignedPairsVecSize; i++) {
         const alignedPairs = alignedPairsVec.get(i)
         const refResidueData = alignedPairs.first
@@ -331,9 +330,9 @@ const SuperposeResultsToJSArray = (superposeResults: libcootApi.SuperposeResults
 
         alignedPairsData.push(currentPairData)
     }
-    
+
     alignedPairsVec.delete()
-    
+
     return {
         referenceSequence: superposeResults.alignment.first,
         movingSequence: superposeResults.alignment.second,
@@ -400,24 +399,24 @@ const mapMoleculeCentreInfoToJSObject = (mapMoleculeCentreInfo: libcootApi.MapMo
     return returnResult;
 }
 
-const textureAsFloatsToJSTextureAsFloats = (data:libcootApi.textureAsFloats): libcootApi.textureAsFloatsJS => {
+const textureAsFloatsToJSTextureAsFloats = (data: libcootApi.textureAsFloats): libcootApi.textureAsFloatsJS => {
 
     const imageDataVecSize = data.width * data.height
 
     let image_data = new Float32Array(imageDataVecSize)
 
     const t1 = performance.now()
-    cootModule.getTextureArray(data,image_data)
+    cootModule.getTextureArray(data, image_data)
     const t2 = performance.now()
-    console.log("Time to convert texture array to JS",t2-t1)
+    console.log("Time to convert texture array to JS", t2 - t1)
 
     return {
-        width:data.width,
-        height:data.height,
-        x_size:data.x_size,
-        y_size:data.y_size,
-        z_position:data.z_position,
-        image_data:image_data,
+        width: data.width,
+        height: data.height,
+        x_size: data.x_size,
+        y_size: data.y_size,
+        z_position: data.z_position,
+        image_data: image_data,
     };
 }
 
@@ -473,7 +472,7 @@ const export_molecular_represenation_as_gltf = (imol: number, cid: string, colou
 }
 
 const export_molecule_as_gltf = (
-    imol: number, cid: string, mode: string, isDark: boolean, bondWidth: number, 
+    imol: number, cid: string, mode: string, isDark: boolean, bondWidth: number,
     atomRadius: number, bondSmoothness: number, drawHydrogens: boolean, drawMissingResidues: boolean
 ) => {
     const fileName = `${guid()}.glb`
@@ -495,7 +494,7 @@ const export_molecule_as_gltf = (
 }
 
 const symmetryToJSData = (symmetryDataPair: libcootApi.PairType<libcootApi.SymmetryData, emscriptem.vector<number[][]>>) => {
-    let result: { x: number; y: number; z: number; asString: string; isym: number; us: number; ws: number; vs: number; matrix: number[][]; }[]= []
+    let result: { x: number; y: number; z: number; asString: string; isym: number; us: number; ws: number; vs: number; matrix: number[][]; }[] = []
     const symmetryData = symmetryDataPair.first
     const symmetryMatrices = symmetryDataPair.second
     const symm_trans = symmetryData.symm_trans
@@ -528,7 +527,7 @@ const symmetryToJSData = (symmetryDataPair: libcootApi.PairType<libcootApi.Symme
 
 const mmrrccStatsToJSArray = (mmrrccStats: libcootApi.PairType<emscriptem.map<libcootApi.DensityCorrelationStatsInfoT, libcootApi.ResidueSpecT>, emscriptem.map<libcootApi.DensityCorrelationStatsInfoT, libcootApi.ResidueSpecT>>): libcootApi.MMRCCStatsJS => {
     const parseStats = (stats: emscriptem.map<libcootApi.DensityCorrelationStatsInfoT, libcootApi.ResidueSpecT>) => {
-        let result: {resNum: number; insCode: string; modelNumber: number; chainId: string; n: number; correlation: number; }[] = []
+        let result: { resNum: number; insCode: string; modelNumber: number; chainId: string; n: number; correlation: number; }[] = []
         const residueSpecs = stats.keys()
         const mapSize = residueSpecs.size()
         for (let i = 0; i < mapSize; i++) {
@@ -604,7 +603,7 @@ const stringPairVectorToJSArray = (stringPairsVector: emscriptem.vector<libcootA
     const stringPairsVectorSize = stringPairsVector.size()
     for (let ic = 0; ic < stringPairsVectorSize; ic++) {
         const data = stringPairsVector.get(ic)
-        result.push({first: data.first, second: data.second})
+        result.push({ first: data.first, second: data.second })
     }
     stringPairsVector.delete()
     return result
@@ -641,11 +640,11 @@ const validationDataToJSArray = (validationData: libcootApi.ValidationInformatio
 }
 
 const linesBoxToJSArray = (BoxData: libcootApi.Generic3dLinesBondsBoxT): libcootApi.Generic3dLinesBondsBoxJS[][] => {
-    let envdata: {start: {x: number; y: number; z: number; }; end: {x: number; y: number; z: number; }; dist: number; }[][]= []
+    let envdata: { start: { x: number; y: number; z: number; }; end: { x: number; y: number; z: number; }; dist: number; }[][] = []
     const segments = BoxData.line_segments;
     const nSeg = segments.size()
     for (let i = 0; i < nSeg; i++) {
-        let thisEnvdata: {start: {x: number; y: number; z: number; }; end: {x: number; y: number; z: number; }; dist: number; }[] = []
+        let thisEnvdata: { start: { x: number; y: number; z: number; }; end: { x: number; y: number; z: number; }; dist: number; }[] = []
         const segsI = segments.get(i)
         const nSegI = segsI.size()
         for (let j = 0; j < nSegI; j++) {
@@ -697,7 +696,7 @@ const vectorHBondToJSArray = (HBondData: emscriptem.vector<libcootApi.MoorhenHBo
 }
 
 const interestingPlaceDataToJSArray = (interestingPlaceData: emscriptem.vector<libcootApi.InterestingPlaceT>): libcootApi.InterestingPlaceDataJS[] => {
-    let returnResult: { 
+    let returnResult: {
         intUserData: number;
         modelNumber: number;
         chainId: string;
@@ -710,7 +709,7 @@ const interestingPlaceDataToJSArray = (interestingPlaceData: emscriptem.vector<l
         coordX: number;
         coordY: number;
         coordZ: number;
-     }[] = [];
+    }[] = [];
 
     const interestingPlaceDataSize = interestingPlaceData.size()
     for (let ir = 0; ir < interestingPlaceDataSize; ir++) {
@@ -746,8 +745,27 @@ const histogramInfoToJSData = (histogramInfo: libcootApi.HistogramInfo): libcoot
     return result
 }
 
+const acedrgTypesForBondDataToJSArray = (acedrgTypesForBondData: emscriptem.vector<libcootApi.AcedrgTypesForBond>): libcootApi.AcedrgTypesForBondJS[] => {
+    const result: libcootApi.AcedrgTypesForBondJS[] = []
+    const nBondTypes = acedrgTypesForBondData.size();
+    for (let i = 0; i < nBondTypes; i++) {
+        const acedrgTypesForBond: libcootApi.AcedrgTypesForBond = acedrgTypesForBondData.get(i)
+        const acedrgTypesForBondJS: libcootApi.AcedrgTypesForBondJS = {
+            atom_id_1: acedrgTypesForBond.atom_id_1,
+            atom_id_2: acedrgTypesForBond.atom_id_1,
+            atom_type_1: acedrgTypesForBond.atom_type_1,
+            atom_type_2: acedrgTypesForBond.atom_type_1,
+            bond_length: acedrgTypesForBond.bond_length
+        }
+        result.push(acedrgTypesForBondJS)
+    }
+    acedrgTypesForBondData.delete()
+    return result
+}
+
 const autoReadMtzInfoVectToJSArray = (autoReadMtzInfoArray: emscriptem.vector<libcootApi.AutoReadMtzInfo>): libcootApi.AutoReadMtzInfoJS[] => {
-    let returnResult: {idx: number;
+    let returnResult: {
+        idx: number;
         F: string;
         phi: string;
         w: string;
@@ -758,7 +776,7 @@ const autoReadMtzInfoVectToJSArray = (autoReadMtzInfoArray: emscriptem.vector<li
     }[] = []
 
     const autoReadMtzInfoArraySize = autoReadMtzInfoArray.size()
-    for(let i = 0; i < autoReadMtzInfoArraySize; i++) {
+    for (let i = 0; i < autoReadMtzInfoArraySize; i++) {
         const autoReadMtzInfo = autoReadMtzInfoArray.get(i)
         returnResult.push({
             idx: autoReadMtzInfo.idx,
@@ -786,7 +804,7 @@ const autoReadMtzInfoVectToJSArray = (autoReadMtzInfoArray: emscriptem.vector<li
         }
         returnResult = returnResult.filter(item => item.idx !== -1)
     }
-    
+
     return returnResult
 }
 
@@ -815,24 +833,24 @@ const ramachandranDataToJSArray = (ramachandraData: emscriptem.vector<libcootApi
     return returnResult
 }
 
-const vectorPairStringIntToJSArray = (vectorData: emscriptem.vector<{first: string; second: number}>) => {
-    let result: {residue: string; slice: number; }[] = []
+const vectorPairStringIntToJSArray = (vectorData: emscriptem.vector<{ first: string; second: number }>) => {
+    let result: { residue: string; slice: number; }[] = []
     const vectorSize = vectorData.size()
     for (let i = 0; i < vectorSize; i++) {
         const pair = vectorData.get(i)
         const residue = pair.first
         const slice = pair.second
-        const jspair = {residue: residue, slice: slice }
+        const jspair = { residue: residue, slice: slice }
         result.push(jspair)
     }
     vectorData.delete()
     return result
 }
 
-const vectorPairClipperCoordFloatToJSArray = (vectorData: emscriptem.vector<{first: libcootApi.CootCartesian; second: number}>): libcootApi.DiffDiffMapPeaksJS => {
-    let result: {value: number; coord: { x: number; y: number; z: number }}[] = []
+const vectorPairClipperCoordFloatToJSArray = (vectorData: emscriptem.vector<{ first: libcootApi.CootCartesian; second: number }>): libcootApi.DiffDiffMapPeaksJS => {
+    let result: { value: number; coord: { x: number; y: number; z: number } }[] = []
     const vectorSize = vectorData.size()
-    for(let i = 0; i < vectorSize; i++) {
+    for (let i = 0; i < vectorSize; i++) {
         const pair = vectorData.get(i)
         const value = pair.second
         const clipperCoord = pair.first
@@ -842,7 +860,7 @@ const vectorPairClipperCoordFloatToJSArray = (vectorData: emscriptem.vector<{fir
             z: clipperCoord.z(),
         }
         clipperCoord.delete()
-        result.push({value, coord})
+        result.push({ value, coord })
     }
     vectorData.delete()
     return result
@@ -858,26 +876,26 @@ const simpleMeshToLineMeshData = (simpleMesh: libcootApi.SimpleMeshT, normalLigh
     const trianglesSize = triangles.size()
     const verticesSize = vertices.size()
 
-    let totIdxs_C = new Uint32Array(trianglesSize*6)
-    let totPos_C  = new Float32Array(verticesSize*3)
-    let totNorm_C = new Float32Array(verticesSize*3)
-    let totCol_C  = new Float32Array(verticesSize*4)
-    cootModule.getLineIndicesFromSimpleMesh2(simpleMesh,totIdxs_C)
-    cootModule.getPositionsFromSimpleMesh2(simpleMesh,totPos_C)
-    cootModule.getNormalsFromSimpleMesh2(simpleMesh,totNorm_C)
-    cootModule.getColoursFromSimpleMesh2(simpleMesh,totCol_C)
+    let totIdxs_C = new Uint32Array(trianglesSize * 6)
+    let totPos_C = new Float32Array(verticesSize * 3)
+    let totNorm_C = new Float32Array(verticesSize * 3)
+    let totCol_C = new Float32Array(verticesSize * 4)
+    cootModule.getLineIndicesFromSimpleMesh2(simpleMesh, totIdxs_C)
+    cootModule.getPositionsFromSimpleMesh2(simpleMesh, totPos_C)
+    cootModule.getNormalsFromSimpleMesh2(simpleMesh, totNorm_C)
+    cootModule.getColoursFromSimpleMesh2(simpleMesh, totCol_C)
 
     const tm = performance.now()
-    if(print_timing) console.log("DEBUG: SIMPLE MESH TO LINE MESH DATA C++",tm-ts)
+    if (print_timing) console.log("DEBUG: SIMPLE MESH TO LINE MESH DATA C++", tm - ts)
 
     let totIdxs = totIdxs_C
-    let totPos  = totPos_C
+    let totPos = totPos_C
     let totNorm = totNorm_C
-    let totCol  = totCol_C
+    let totCol = totCol_C
 
-    if(print_timing) {
+    if (print_timing) {
         const te = performance.now()
-        console.log("SIMPLE MESH TO LINE MESH DATA",te-ts)
+        console.log("SIMPLE MESH TO LINE MESH DATA", te - ts)
     }
 
     vertices.delete();
@@ -913,7 +931,7 @@ const replace_map_by_mtz_from_file = (imol: number, mtzData: ArrayBufferLike, se
 
 const new_positions_for_residue_atoms = (molToUpDate: number, residues: libcootApi.AtomInfo[][]) => {
     let success = 0
-    const movedResidueVector  = new cootModule.Vectormoved_residue_t()
+    const movedResidueVector = new cootModule.Vectormoved_residue_t()
     residues.forEach(atoms => {
         if (atoms.length > 0) {
             const atomInfo = atoms[0]
@@ -980,7 +998,7 @@ const read_ccp4_map = (mapData: ArrayBufferLike, name: string, isDiffMap: boolea
 const setUserDefinedBondColours = (imol: number, colours: { cid: string; rgba: [number, number, number, number] }[], applyColourToNonCarbonAtoms: boolean = false) => {
     let colourMap = new cootModule.MapIntFloat4()
     let indexedResiduesVec = new cootModule.VectorStringUInt_pair()
-    
+
     colours.forEach((colour, index) => {
         colourMap.set(index + 51, colour.rgba)
         const i = { first: colour.cid, second: index + 51 }
@@ -994,7 +1012,7 @@ const setUserDefinedBondColours = (imol: number, colours: { cid: string; rgba: [
     colourMap.delete()
 }
 
-const privateerValidationToJSArray = (results: emscriptem.vector<privateer.ResultsEntry>) : privateer.ResultsEntry[] => {
+const privateerValidationToJSArray = (results: emscriptem.vector<privateer.ResultsEntry>): privateer.ResultsEntry[] => {
 
     const sanitizeID = (id: string): string => {
         const regex = /: *32/g;
@@ -1003,7 +1021,7 @@ const privateerValidationToJSArray = (results: emscriptem.vector<privateer.Resul
 
     const data: privateer.ResultsEntry[] = [];
     const resultSize = results.size();
-    for (let i = 0; i < resultSize ; i++) {
+    for (let i = 0; i < resultSize; i++) {
         const entry = results.get(i);
 
         const collectedTorsions: privateer.TorsionEntry[] = [];
@@ -1058,7 +1076,7 @@ const headerInfoAsJSObject = (result: libcootApi.headerInfo): libcootApi.headerI
     }
 }
 
-const doCootCommand = (messageData: { 
+const doCootCommand = (messageData: {
     myTimeStamp: number;
     chainID?: string;
     messageId?: string;
@@ -1066,10 +1084,10 @@ const doCootCommand = (messageData: {
     returnType: string;
     command: string;
     commandArgs: any[];
- }) => {
+}) => {
 
     const { returnType, command, commandArgs, messageId, myTimeStamp, message } = messageData
-    
+
     try {
 
         let cootResult
@@ -1105,7 +1123,7 @@ const doCootCommand = (messageData: {
                 cootResult = export_molecular_represenation_as_gltf(...commandArgs as [number, string, string, string])
                 break
             case "parse_mon_lib_list_cif":
-                cootResult =  parseMonLibListCif(...commandArgs as [string])
+                cootResult = parseMonLibListCif(...commandArgs as [string])
                 break
             default:
                 cootResult = molecules_container[command](...commandArgs)
@@ -1186,6 +1204,9 @@ const doCootCommand = (messageData: {
             case 'ramachandran_data':
                 returnResult = ramachandranDataToJSArray(cootResult, messageData.chainID as string)
                 break;
+            case 'acedrg_types_for_bond_data':
+                returnResult = acedrgTypesForBondDataToJSArray(cootResult.bond_types)
+                break;
             case 'validation_data':
                 returnResult = validationDataToJSArray(cootResult, messageData.chainID)
                 break;
@@ -1250,11 +1271,32 @@ const doCootCommand = (messageData: {
 
 onmessage = function (e) {
     if (e.data.message === 'CootInitialize') {
-        createRSRModule({
+        let mod
+        let scriptName
+        let memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]))
+        if (memory64) {
+            try {
+                importScripts('./moorhen64.js')
+                mod = createCoot64Module
+                scriptName = "moorhen64.js"
+                console.log("Successfully loaded 64-bit libcoot in worker thread")
+            } catch (e) {
+                console.error(e)
+                console.log("Failed to load 64-bit libcoot in worker thread. Falling back to 32-bit.")
+                memory64 = false
+            }
+        }
+        if (!memory64) {
+            importScripts('./moorhen.js')
+            mod = createCootModule
+            scriptName = "moorhen.js"
+            console.log("Successfully loaded 32-bit libcoot in worker thread")
+        }
+        mod({
             onRuntimeInitialized: () => { },
-            mainScriptUrlOrBlob: "moorhen.js",
+            mainScriptUrlOrBlob: scriptName,
             print: print,
-            printErr: print,
+            printErr: printErr,
         })
             .then((returnedModule) => {
                 postMessage({ consoleMessage: 'Initialized molecules_container', message: e.data.message, messageId: e.data.messageId })
@@ -1271,22 +1313,7 @@ onmessage = function (e) {
             })
             .catch((e) => {
                 console.log(e)
-                print(e);
-            });
-        
-        createCCP4Module({
-            onRuntimeInitialized: () => { },
-            mainScriptUrlOrBlob: "web_example.js",
-            print: print,
-            printErr: print,
-        })
-            .then((returnedModule) => {
-                ccp4Module = returnedModule;
             })
-            .catch((e) => {
-                console.log(e)
-                print(e);
-            });
     }
 
     else if (e.data.message === 'close') {
@@ -1296,7 +1323,7 @@ onmessage = function (e) {
             myTimeStamp: e.data.myTimeStamp,
             consoleMessage: `Closed molecules container`,
             message: e.data.message,
-            result: {  }
+            result: {}
         })
     }
 
@@ -1338,7 +1365,7 @@ onmessage = function (e) {
         })
 
     } else if (e.data.message === 'coot_command_list') {
-        const resultList = e.data.commandList.map(command => doCootCommand({...e.data, ...command}))
+        const resultList = e.data.commandList.map(command => doCootCommand({ ...e.data, ...command }))
         postMessage({
             messageId: e.data.messageId, resultList
         })

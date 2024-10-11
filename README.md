@@ -11,8 +11,7 @@ It is developed by porting some [CCP4](https://www.ccp4.ac.uk/) libraries and pr
 The emscripten suite of tools is required to do the
 compilation.
 
-The sources of CCP4, Coot, Privateer, FFTW, and GSL are not included. They are downloaded and (possibly) patched by the running
-the `get_sources` script, which is part of the build process of this project.
+The sources of CCP4, Coot, Privateer, FFTW, and GSL are not included. They are downloaded and (possibly) patched by the build process of this project.
 
 The following libraries/programs are compiled to Web Assembly:
 * libccp4 (8.0.0)
@@ -69,10 +68,9 @@ Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) 
 2. Each time you want to use emscripten:  
 `source ./emsdk_env.sh`
 
-3. Get the sources:  
+3. Get the source:  
 `git clone --recurse-submodules https://github.com/moorhen-coot/Moorhen.git`  
-`cd Moorhen`  
-`./get_sources`
+`cd Moorhen`
 
 5. Build gsl, Boost, RDKIt, Coot, the CCP4 libraries and examples:  
 <br>In this branch, it is intended that you do the build in the source directory. 
@@ -95,13 +93,14 @@ And then point a web browser at `http://localhost:5173/` .
 
 ## **Updating**
 
-1. When you wish to update the application from this git repository and the `Coot` git repository, do the following steps:  
-    1. `git pull`
-    2. `cd checkout/coot-1.0`
-    3. `git pull`
-    4. `cd ../..`
-    5. `cd CCP4_WASM_BUILD/moorhen_build`
-    6. `make install` (or e.g. `make -j8 install` to build on 8 processors).
+When you wish to update the application from this git repository and the `Coot` git repository, do the following steps:  
+1. `git pull`
+2. `git submodule update -f --remote --merge`
+3. `cd checkout/coot-1.0`
+4. `git pull`
+5. `cd ../..`
+6. `./moorhen_build.sh moorhen`
+7. `./moorhen_build.sh --64bit moorhen` if you want to (re-)build the 64-bit version.
 
 ![Moorhen](wasm_src_frontend/baby_gru.png)
 *The Moorhen WebGL application*

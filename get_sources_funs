@@ -31,7 +31,7 @@ getlibccp4() {
         echo "Using existing libccp4"
     else
         echo "Checking out libccp4"
-        curl -L http://ftp.ccp4.ac.uk/opensource/libccp4-$libccp4_release.tar.gz -o libccp4-$libccp4_release.tar.gz
+        curl -L https://ftp.ccp4.ac.uk/opensource/libccp4-$libccp4_release.tar.gz -o libccp4-$libccp4_release.tar.gz
         echo
         echo "Unpacking libccp4 source"
         tar xf libccp4-$libccp4_release.tar.gz
@@ -64,7 +64,7 @@ getssm() {
         echo "Using existing ssm"
     else
         echo "Checking out ssm"
-        curl http://ftp.ccp4.ac.uk/opensource/ssm-$ssm_release.tar.gz -o ssm-$ssm_release.tar.gz
+        curl https://ftp.ccp4.ac.uk/opensource/ssm-$ssm_release.tar.gz -o ssm-$ssm_release.tar.gz
         echo
         echo "Unpacking ssm source"
         tar xf ssm-$ssm_release.tar.gz
@@ -80,7 +80,7 @@ getmmdb2() {
         echo "Using existing mmdb2"
     else
         echo "Checking out mmdb2"
-        curl -L http://ftp.ccp4.ac.uk/opensource/mmdb2-$mmdb_release.tar.gz -o mmdb2-$mmdb_release.tar.gz
+        curl -L https://ftp.ccp4.ac.uk/opensource/mmdb2-$mmdb_release.tar.gz -o mmdb2-$mmdb_release.tar.gz
         echo
         echo "Unpacking mmdb2 source"
         tar xf mmdb2-$mmdb_release.tar.gz
@@ -172,6 +172,51 @@ getfftw3() {
         echo
         echo "Unpacking fftw-$fftw3_release"
         tar xf fftw-$fftw3_release.tar.gz
+    fi
+    echo
+}
+
+getfreetype() {
+    cdcheckout
+    if [ -r freetype-$freetype_release ]; then
+        echo "Using existing freetype"
+    else
+        cdcheckout
+        echo "Downloading freetype-$freetype_release"
+        curl -L https://download.savannah.gnu.org/releases/freetype/freetype-$freetype_release.tar.gz -o freetype-$freetype_release.tar.gz
+        echo
+        echo "Unpacking freetype-$freetype_release"
+        tar xf freetype-$freetype_release.tar.gz
+    fi
+    echo
+}
+
+getpng() {
+    cdcheckout
+    if [ -r libpng-$png_release ]; then
+        echo "Using existing png"
+    else
+        cdcheckout
+        echo "Downloading png-$png_release"
+        curl -L http://prdownloads.sourceforge.net/libpng/libpng-$png_release.tar.gz -o libpng-$png_release.tar.gz
+        echo
+        echo "Unpacking png-$png_release"
+        tar xf libpng-$png_release.tar.gz
+    fi
+    echo
+}
+
+getzlib() {
+    cdcheckout
+    if [ -r zlib-$zlib_release ]; then
+        echo "Using existing zlib"
+    else
+        cdcheckout
+        echo "Downloading zlib-$zlib_release"
+        curl -L https://www.zlib.net/zlib-$zlib_release.tar.gz -o zlib-$zlib_release.tar.gz
+        echo
+        echo "Unpacking zlib-$zlib_release"
+        tar xf zlib-$zlib_release.tar.gz
     fi
     echo
 }

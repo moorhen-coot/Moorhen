@@ -247,9 +247,23 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
                 }
             }}
         >
-            {hoveredAtom.cid && <Form.Control className='moorhen-hovered-atom-form' type="text" readOnly={true} value={`${hoveredAtom.molecule.name}:${hoveredAtom.cid}`} />}
-            {busy && <Spinner className='moorhen-spinner' animation="border" variant={isDark ? 'light' : 'dark'} />}
-            {timeCapsuleBusy && <SaveOutlined style={{ padding: 0, margin: 0, color: 'black' }}/>}
+            {hoveredAtom.cid && 
+            <Form.Control
+                className='moorhen-hovered-atom-form'
+                type="text"
+                readOnly={true}
+                value={`${hoveredAtom.molecule.name.length > 10 ? `${hoveredAtom.molecule.name.substring(0, 7)}...` : `${hoveredAtom.molecule.name}:`}${hoveredAtom.cid}`}
+            />}
+            {busy &&
+            <Spinner
+                className='moorhen-spinner'
+                animation="border"
+                variant={isDark ? 'light' : 'dark'}
+            />}
+            {timeCapsuleBusy &&
+            <SaveOutlined
+                style={{ padding: 0, margin: 0, color: 'black' }}
+            />}
         </Fab>
     </>
 })

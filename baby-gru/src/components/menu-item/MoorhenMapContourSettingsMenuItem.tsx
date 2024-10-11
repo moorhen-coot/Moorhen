@@ -2,7 +2,6 @@ import { Slider } from "@mui/material";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { useEffect, useState } from "react";
 import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from "react-redux";
 import { setDefaultMapSamplingRate, setMapLineWidth } from "../../store/mapContourSettingsSlice";
 import { Form, InputGroup } from "react-bootstrap";
@@ -30,10 +29,8 @@ export const MapContourSettingsMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>; 
     popoverPlacement?: "left" | "right";
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
-    const dispatch = useDispatch()
     const maps = useSelector((state: moorhen.State) => state.maps)
     const defaultMapSamplingRate = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapSamplingRate)
     const mapLineWidth = useSelector((state: moorhen.State) => state.mapContourSettings.mapLineWidth)
@@ -43,6 +40,8 @@ export const MapContourSettingsMenuItem = (props: {
     const reContourMapOnlyOnMouseUp = useSelector((state: moorhen.State) => state.mapContourSettings.reContourMapOnlyOnMouseUp)
 
     const [mapSampling, setMapSampling] = useState<number>(convertPercentageToSamplingRate(defaultMapSamplingRate, true))
+
+    const dispatch = useDispatch()
 
     useEffect(() => {
         const setMapSamplingRate = async () => {
@@ -149,15 +148,11 @@ export const MapContourSettingsMenuItem = (props: {
     </>
 
     return <MoorhenBaseMenuItem
-        popoverPlacement={props.popoverPlacement}
+        popoverPlacement={props.popoverPlacement ?? "right"}
         popoverContent={panelContent}
         showOkButton={false}
         menuItemText={"Map contour settings..."}
         setPopoverIsShown={props.setPopoverIsShown}
         onCompleted={() => {}}
     />
-}
-
-MapContourSettingsMenuItem.defaultProps = {
-    popoverPlacement: 'right'
 }

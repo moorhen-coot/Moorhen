@@ -62,6 +62,7 @@ ${coot_src}/src/c-interface-image.cc
 ]]
 
 set(coot_exception_srcs
+${coot_src}/api/mmcif-tests.cc
 ${coot_src}/layla/ligand_editor_canvas.cpp
 ${coot_src}/layla/ligand_editor_canvas/core.cpp
 ${coot_src}/layla/ligand_editor_canvas/model.cpp
@@ -457,6 +458,8 @@ pkg_check_modules(DEPS REQUIRED sigc++-3.0 graphene-1.0 jsoncpp igraph)
 find_package(RDKit REQUIRED)
 find_package(Boost COMPONENTS iostreams thread serialization system REQUIRED)
 pkg_check_modules(GSL REQUIRED gsl)
+pkg_check_modules(FreeType REQUIRED freetype2)
+pkg_check_modules(libpng REQUIRED libpng16)
 
 target_include_directories(coot PRIVATE 
     ${coot_src} 
@@ -470,9 +473,9 @@ target_include_directories(coot PRIVATE
     ${DEPS_INCLUDE_DIRS}
 )
 
-set_target_properties(coot PROPERTIES COMPILE_FLAGS "-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -Wno-deprecated-declarations -Wno-deprecated-builtins -pthread -DHAVE_CXX11=1 -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1" LINK_FLAGS "-fexceptions -pthread -s USE_LIBPNG=1 -s USE_ZLIB=1 -sASSERTIONS=2")
+set_target_properties(coot PROPERTIES COMPILE_FLAGS "-D__MOORHEN__ -DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -Wno-deprecated-declarations -Wno-deprecated-builtins -pthread -DHAVE_CXX11=1 -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT" LINK_FLAGS "-pthread -sASSERTIONS=2")
 
-set_source_files_properties(${coot_exception_srcs} PROPERTIES COMPILE_FLAGS "-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -fexceptions -pthread -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1" )
+set_source_files_properties(${coot_exception_srcs} PROPERTIES COMPILE_FLAGS "-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -pthread -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT" )
 
 FILE(WRITE ${CMAKE_BINARY_DIR}/coot/coot_env.js
 Module.preRun = [function() {ENV.COOT_DATA_DIR="${coot_src}"}, function() {ENV.COOT_REFMAC_LIB_DIR="${CMAKE_BINARY_DIR}/ccp4_lib"}, function() {ENV.CCP4_LIB="${CMAKE_BINARY_DIR}/ccp4_lib"}]
@@ -549,17 +552,20 @@ FILE(COPY ${coot_src}/data/metal/metal-O-distance.table DESTINATION data/coot/da
 FILE(COPY ${coot_src}/data/metal/metal-S-distance.table DESTINATION data/coot/data/metal )
 FILE(COPY ${CMAKE_INSTALL_PREFIX}/share/RDKit/Data/BaseFeatures.fdef DESTINATION data/RDKit/Data )
 
-#-sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=512MB -sMAXIMUM_MEMORY=4092MB -sTOTAL_MEMORY=4092MB
-add_executable(moorhen moorhen-wrappers.cc gemmi-wrappers.cc smilestopdb.cc ${coot_src}/lhasa/embind.cpp)
+add_executable(moorhen moorhen-wrappers.cc ../wasm_src_frontend/headers.cc gemmi-wrappers.cc smilestopdb.cc ${coot_src}/lhasa/embind.cpp)
 if(${MEMORY64} MATCHES "1")
-target_link_options(moorhen PRIVATE -sASSERTIONS=2 -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
+target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCoot64Module -sEXPORTED_RUNTIME_METHODS=['FS'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
+set_target_properties(moorhen PROPERTIES OUTPUT_NAME moorhen64)
+target_link_directories(moorhen PUBLIC 
+    ${CMAKE_INSTALL_PREFIX}/install64/lib
+)
 else()
-target_link_options(moorhen PRIVATE -sASSERTIONS=2 -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
-endif()
-
+target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 target_link_directories(moorhen PUBLIC 
     ${CMAKE_INSTALL_PREFIX}/install/lib
 )
+endif()
+
 
 target_link_libraries(moorhen 
     ssm
@@ -615,6 +621,7 @@ target_link_libraries(moorhen
     Boost::thread
     Boost::serialization
     freetype
+    png16
     m
     z
     idbfs.js
@@ -626,41 +633,26 @@ target_include_directories(moorhen PRIVATE
     ${coot_src}/src
     ${CMAKE_INSTALL_PREFIX}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../include 
+    ${CMAKE_CURRENT_SOURCE_DIR}/../wasm_src_frontend
     ${DEPS_INCLUDE_DIRS}
 )
 
-target_compile_options(moorhen PUBLIC -DGEMMI_WRITE_IMPLEMENTATION -Wno-deprecated-builtins -Wno-deprecated-declarations -fexceptions -pthread -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
+target_compile_options(moorhen PUBLIC -DGEMMI_WRITE_IMPLEMENTATION -Wno-deprecated-builtins -Wno-deprecated-declarations -pthread -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
 
-#[[
-add_executable(test-molecules-container ${coot_src}/api/test-molecules-container.cc)
-target_link_options(test-molecules-container PRIVATE -sEXIT_RUNTIME=1 -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -pthread -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
-target_link_directories(test-molecules-container PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
-target_link_libraries(test-molecules-container mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl gslcblas RDKitMolDraw2D RDKitForceFieldHelpers RDKitDescriptors RDKitForceField RDKitSubstructMatch RDKitOptimizer RDKitDistGeomHelpers RDKitDistGeometry RDKitChemReactions RDKitAlignment RDKitEigenSolvers RDKitDepictor RDKitcoordgen RDKitMolChemicalFeatures RDKitPartialCharges RDKitFileParsers RDKitRDGeometryLib RDKitGraphMol RDKitShapeHelpers RDKitFingerprints RDKitMolAlign RDKitMolTransforms RDKitChemTransforms RDKitSmilesParse RDKitFilterCatalog RDKitCatalogs RDKitSubgraphs RDKitRDGeneral RDKitDataStructs RDKitGenericGroups boost_thread boost_serialization gemmi_cpp freetype m z nodefs.js)
-target_include_directories(test-molecules-container PRIVATE ${coot_src} ${coot_src}/src ../include  ${dependency_install_dir}/include)
-target_compile_options(test-molecules-container PUBLIC -Wno-deprecated-declarations -Wno-deprecated-builtins -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
-]]
+if(${MEMORY64} MATCHES "1")
+    set(MOORHEN_MODULE_SUFFIX "64")
+else()
+    set(MOORHEN_MODULE_SUFFIX "")
+endif()
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/moorhen.wasm
-${CMAKE_CURRENT_BINARY_DIR}/moorhen.worker.js
-${CMAKE_CURRENT_BINARY_DIR}/moorhen.js
-${CMAKE_CURRENT_BINARY_DIR}/moorhen.data
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.wasm
+${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.js
+${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.data
 ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js
 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public)
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/moorhen.wasm
-${CMAKE_CURRENT_BINARY_DIR}/moorhen.worker.js
-${CMAKE_CURRENT_BINARY_DIR}/moorhen.js
-${CMAKE_CURRENT_BINARY_DIR}/moorhen.data
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.wasm
+${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.js
+${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.data
 ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js
 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../moorhen_tests)
-
-#[[
-#I do not think this should be done - the targets seem to be in repo anyway.
-install(FILES 
-${coot_src}/api/gideondoesntapprove.mtz
-DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/tutorials RENAME moorhen-tutorial-map-number-1.mtz)
-
-install(FILES 
-${coot_src}/api/gideondoesntapprove.pdb
-DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/tutorials RENAME moorhen-tutorial-structure-number-1.pdb)
-]]

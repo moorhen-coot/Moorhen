@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Row, Col } from "react-bootstrap";
 import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { useSelector } from "react-redux";
 import { MoorhenLigandCard } from "../card/MoorhenLigandCard";
 import { LinearProgress } from "@mui/material";
@@ -11,7 +10,6 @@ export const MoorhenLigandList = (props: {
     setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     molecule: moorhen.Molecule;
-    glRef: React.RefObject<webGL.MGWebGL>; 
     height?: number | string;
 }) => {
 
@@ -22,7 +20,7 @@ export const MoorhenLigandList = (props: {
     const [ligandList, setLigandList] = useState<moorhen.LigandInfo[]>(null)
 
     async function updateLigandList() {
-        props.setBusy(true)
+        props.setBusy?.(true)
         if (props.molecule.gemmiStructure === null || props.molecule.atomsDirty || props.molecule.ligands === null) {
             await props.molecule.updateAtoms()
         }
@@ -45,7 +43,7 @@ export const MoorhenLigandList = (props: {
         }
 
         setLigandList(ligandList)
-        props.setBusy(false)
+        props.setBusy?.(false)
     }
     
     useEffect(() => {
@@ -67,9 +65,9 @@ export const MoorhenLigandList = (props: {
                 <LinearProgress variant="indeterminate"/>
             : ligandList.length > 0 ? 
                 <>
-                    <Row style={{ maxHeight: props.height, overflowY: 'auto' }}>
+                    <Row style={{ maxHeight: props.height ?? '30vh', overflowY: 'auto' }}>
                         <Col style={{paddingLeft: '0.5rem', paddingRight: '0.5rem'}}>
-                            {ligandList.map((ligand, index) => {
+                            {ligandList.map(ligand => {
                                 return <MoorhenLigandCard key={`${ligand.cid}-${props.molecule.molNo}`} ligand={ligand} molecule={props.molecule}/>
                             })}
                         </Col>
@@ -82,5 +80,3 @@ export const MoorhenLigandList = (props: {
             }
         </>
 }
-
-MoorhenLigandList.defaultProps = { setBusy: () => {}, height: '30vh'}

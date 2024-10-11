@@ -5,7 +5,7 @@ export const MoorhenAboutMenuItem = (props: { setPopoverIsShown: React.Dispatch<
 
     const panelContent = <div style={{ width: "18rem" }}>
         <p>Moorhen is a molecular graphics program based on the Coot desktop program.</p>
-        <p>Authors</p>
+        <p>Authors:</p>
         <ul>
             <li>Paul Emsley</li>
             <li>Filomeno Sanchez</li>
@@ -14,7 +14,7 @@ export const MoorhenAboutMenuItem = (props: { setPopoverIsShown: React.Dispatch<
             <li>Lucrezia Catapano</li>
             <li>Jakub Smulski</li>
         </ul>
-        <p>Current version: {version}</p>
+        <p>This is Moorhen v{version} ({WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1])) ? "64" : "32"}-bit)</p>
     </div>
 
     return <MoorhenBaseMenuItem

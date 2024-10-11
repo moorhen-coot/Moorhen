@@ -50,6 +50,12 @@ declare module 'moorhen' {
     let refinementSettingsReducer: any;
     module.exports = refinementSettingsReducer
 
+    let lhasaReducer: any;
+    module.exports = lhasaReducer
+
+    let sliceNDiceReducer: any;
+    module.exports = sliceNDiceReducer
+
     let MoorhenReduxStore: any;
     module.exports = MoorhenReduxStore
 
@@ -419,6 +425,12 @@ declare module 'moorhen' {
 
     function resetSceneSettings(): any;
     module.exports = resetSceneSettings;
+
+    function setPAEFileContents(arg0: { fileContents: string; fileName: string }[]): any;
+    module.exports = setPAEFileContents;
+    
+    function resetSliceNDiceSlice(): any;
+    module.exports = resetSliceNDiceSlice;
 
     function resetBackupSettings(): any;
     module.exports = resetBackupSettings;

@@ -6,7 +6,6 @@ import backupSettingsReducer from './backupSettingsSlice'
 import shortcutSettingsReducer from './shortCutsSlice'
 import labelSettingsReducer from './labelSettingsSlice'
 import sceneSettingsReducer from './sceneSettingsSlice'
-import miscAppSettingsReducer from './miscAppSettingsSlice'
 import generalStatesReducer from './generalStatesSlice'
 import hoveringStatesReducer from './hoveringStatesSlice'
 import modalsReducer from './modalsSlice'
@@ -14,6 +13,7 @@ import mapContourSettingsReducer from './mapContourSettingsSlice'
 import moleculeMapUpdateReducer from './moleculeMapUpdateSlice'
 import sharedSessionReducer from './sharedSessionSlice'
 import refinementSettingsReducer from './refinementSettingsSlice'
+import sliceNDiceReducer from './sliceNDiceSlice'
 import lhasaReducer from './lhasaSlice'
 
 export default configureStore({
@@ -25,7 +25,6 @@ export default configureStore({
         shortcutSettings: shortcutSettingsReducer,
         labelSettings: labelSettingsReducer,
         sceneSettings: sceneSettingsReducer,
-        miscAppSettings: miscAppSettingsReducer,
         generalStates: generalStatesReducer,
         hoveringStates: hoveringStatesReducer,
         modals: modalsReducer,
@@ -34,6 +33,7 @@ export default configureStore({
         sharedSession: sharedSessionReducer,
         refinementSettings: refinementSettingsReducer,
         lhasa: lhasaReducer,
+        sliceNDice: sliceNDiceReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

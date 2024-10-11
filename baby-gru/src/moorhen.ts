@@ -23,7 +23,7 @@ import { setDefaultBackgroundColor, setDrawCrosshairs, setDrawFPS, setDrawMissin
 } from './store/sceneSettingsSlice';
 import { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold, resetBackupSettings } from './store/backupSettingsSlice';
 import { 
-    setActiveMap, setCootInitialized, setAppTittle, 
+    setActiveMap, setCootInitialized, setAppTittle, setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut,
     setUserPreferencesMounted, setDevMode, setTheme, setViewOnly, resetGeneralStates
  } from './store/generalStatesSlice';
 import { addMap, addMapList, removeMap, emptyMaps } from "./store/mapsSlice";
@@ -33,12 +33,16 @@ import {
     showMap, hideMap, setPositiveMapColours, setNegativeMapColours, setMapAlpha, setMapColours, setMapRadius, 
     setMapStyle, setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, setDefaultMapSurface, setContourLevel, resetMapContourSettings
 } from './store/mapContourSettingsSlice';
-import { setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut, resetMiscAppSettings } from './store/miscAppSettingsSlice';
+import { 
+    setBFactorThreshold, setClusteringType, setMoleculeBfactors, setMoleculeMaxBfactor, resetSliceNDiceSlice,
+    setMoleculeMinBfactor, setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType, setPAEFileContents
+ } from "./store/sliceNDiceSlice"
 import { setEnableRefineAfterMod, setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints, setAnimateRefine, resetRefinementSettings } from './store/refinementSettingsSlice';
 import { addMolecule, removeMolecule, emptyMolecules, addMoleculeList, showMolecule, hideMolecule, addCustomRepresentation, removeCustomRepresentation, addGeneralRepresentation, removeGeneralRepresentation } from './store/moleculesSlice';
 import { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity, resetDefaultMouseSettings } from './store/mouseSettings';
 import { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts, resetShortcutSettings } from './store/shortCutsSlice';
 import { setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores, resetMoleculeMapUpdates } from './store/moleculeMapUpdateSlice';
+import { resetLhasaSettings, addRdkitMoleculePickle, removeRdkitMoleculePickle, emptyRdkitMoleculePickleList }  from './store/lhasaSlice';
 import { resetActiveModals, focusOnModal, unFocusModal } from './store/modalsSlice';
 import { resetSharedSession } from './store/sharedSessionSlice';
 import moleculesReducer from './store/moleculesSlice';
@@ -48,7 +52,6 @@ import backupSettingsReducer from './store/backupSettingsSlice';
 import shortcutSettingsReducer from './store/shortCutsSlice';
 import labelSettingsReducer from './store/labelSettingsSlice';
 import sceneSettingsReducer from './store/sceneSettingsSlice';
-import miscAppSettingsReducer from './store/miscAppSettingsSlice';
 import generalStatesReducer from './store/generalStatesSlice';
 import hoveringStatesReducer from './store/hoveringStatesSlice';
 import modalsReducer from './store/modalsSlice';
@@ -56,6 +59,8 @@ import mapContourSettingsReducer from './store/mapContourSettingsSlice';
 import moleculeMapUpdateReducer from './store/moleculeMapUpdateSlice';
 import sharedSessionReducer from './store/sharedSessionSlice';
 import refinementSettingsReducer from './store/refinementSettingsSlice';
+import lhasaReducer from './store/lhasaSlice';
+import sliceNDiceReducer from './store/sliceNDiceSlice';
 import MoorhenStore from './store/MoorhenReduxStore';
 
 export {
@@ -79,9 +84,11 @@ export {
     setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setEdgeDetectNormalScale,
     setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints, setAnimateRefine, MoorhenReduxStore, 
     moleculesReducer, mapsReducer, mouseSettingsReducer, backupSettingsReducer, unFocusModal, resetSharedSession,
-    shortcutSettingsReducer, labelSettingsReducer, sceneSettingsReducer, miscAppSettingsReducer, generalStatesReducer,
-    modalsReducer, hoveringStatesReducer, mapContourSettingsReducer, moleculeMapUpdateReducer,
-    sharedSessionReducer, refinementSettingsReducer, resetSceneSettings, resetBackupSettings, resetDefaultMouseSettings, 
-    resetGeneralStates, resetHoveringStates, resetLabelSettings, resetMapContourSettings, resetMiscAppSettings, resetMoleculeMapUpdates,
-    resetRefinementSettings, resetShortcutSettings, resetActiveModals, focusOnModal, addGeneralRepresentation, removeGeneralRepresentation
+    shortcutSettingsReducer, labelSettingsReducer, sceneSettingsReducer, generalStatesReducer, removeGeneralRepresentation,
+    modalsReducer, hoveringStatesReducer, mapContourSettingsReducer, moleculeMapUpdateReducer, addGeneralRepresentation,
+    sharedSessionReducer, refinementSettingsReducer, sliceNDiceReducer, lhasaReducer, resetSceneSettings, resetBackupSettings, resetDefaultMouseSettings,
+    resetGeneralStates, resetHoveringStates, resetLabelSettings, resetMapContourSettings, resetMoleculeMapUpdates,
+    resetRefinementSettings, resetShortcutSettings, resetActiveModals, focusOnModal, setBFactorThreshold, 
+    setClusteringType, setMoleculeBfactors, setMoleculeMaxBfactor, resetSliceNDiceSlice, setMoleculeMinBfactor, 
+    setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType, setPAEFileContents
 };

@@ -228,6 +228,7 @@ export namespace moorhen {
         drawResidueSelection: (cid: string) => Promise<void>;
         clearBuffersOfStyle: (style: string) => void;
         loadToCootFromURL: (inputFile: string, molName: string, options?: RequestInit) => Promise<Molecule>;
+        loadToCootFromString: (coordData: ArrayBuffer | string, name: string) => Promise<Molecule>;
         applyTransform: () => Promise<void>;
         getAtoms(format?: coorFormats): Promise<string>;
         hide: (style: string, cid?: string) => MoleculeRepresentation;
@@ -511,6 +512,8 @@ export namespace moorhen {
         getMap(): Promise<WorkerResponse>;
         loadToCootFromMtzURL(url: RequestInfo | URL, name: string, selectedColumns: selectedMtzColumns, options?: RequestInit): Promise<Map>;
         loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap?: boolean, decompress?: boolean, options?: RequestInit): Promise<Map>;
+        loadToCootFromMtzData(data: Uint8Array, name: string, selectedColumns: selectedMtzColumns): Promise<Map>;
+        loadToCootFromMapData(data: ArrayBuffer | Uint8Array, name: string, isDiffMap: boolean): Promise<Map>;
         setActive(): Promise<void>;
         setupContourBuffers(objects: any[], keepCootColours?: boolean): void;
         setOtherMapForColouring(molNo: number, min?: number, max?: number): void;
@@ -874,7 +877,6 @@ export namespace moorhen {
     interface Context extends ContextSetters, PreferencesValues { }
     
     type ContextButtonProps = {
-        mode: 'context';
         monomerLibraryPath: string;
         urlPrefix: string;
         commandCentre: React.RefObject<CommandCentre>
@@ -989,10 +991,6 @@ export namespace moorhen {
             width: number;
             isDark: boolean;
         };
-        miscAppSettings: {
-            defaultExpandDisplayCards: boolean; 
-            transparentModalsOnMouseOut: boolean; 
-        };
         generalStates: {
             devMode: boolean; 
             userPreferencesMounted: boolean;
@@ -1009,6 +1007,8 @@ export namespace moorhen {
             newCootCommandExit: boolean;
             newCootCommandStart: boolean;        
             showResidueSelection: boolean;
+            defaultExpandDisplayCards: boolean; 
+            transparentModalsOnMouseOut: boolean; 
         };
         sharedSession: {
             isInSharedSession: boolean;
@@ -1062,7 +1062,19 @@ export namespace moorhen {
         };
         lhasa: {
             rdkitMoleculePickleList: { cid: string; moleculeMolNo: number; ligandName: string; pickle: string; id: string }[];
-        }
+        };
+        sliceNDice: {
+            paeFileIsUploaded: boolean;
+            thresholdType: "b-factor-norm" | "af2-plddt";
+            moleculeBfactors: { cid: string; bFactor: number; normalised_bFactor: number; }[];
+            moleculeMinBfactor: number;
+            moleculeMaxBfactor: number;
+            bFactorThreshold: number;
+            nClusters: number;
+            clusteringType: string;
+            slicingResults: Molecule[];
+            paeFileContents: { fileContents: string; fileName: string }[];
+        };
     }
     
     type actionButtonSettings = {

@@ -14,7 +14,7 @@ import { hideModal, focusOnModal, unFocusModal } from "../../store/modalsSlice";
  * @property {boolean} show - Indicates if the modal is to be displayed
  * @property {function} setShow - Setter function for props.show
  * @property {JSX.Element} body - Element rendered as the modal body
- * @property {string} [modalId=null] - The id assigned to the modal used to keep track of the focused modal and the z-index. If empty then random string is used.
+ * @property {string} modalId - The id assigned to the modal used to keep track of the focused modal and the z-index. 
  * @property {number} [width=35] - The width of the modal measured in wh
  * @property {number} [height=45] - The height of the modal measured in vh
  * @property {number} [top=500] - The intial top location of the modal
@@ -62,13 +62,11 @@ import { hideModal, focusOnModal, unFocusModal } from "../../store/modalsSlice";
  * 
  */
 export const MoorhenDraggableModalBase = (props: {
-    headerTitle: string;
+    headerTitle: string | JSX.Element;
     body: JSX.Element | JSX.Element[];
     modalId: string;
     enforceMaxBodyDimensions?: boolean;
     resizeNodeRef?: null | React.RefObject<HTMLDivElement>;
-    defaultWidth?: number;
-    defaultHeight?: number;
     maxWidth?: number;
     maxHeight?: number;
     minWidth?: number;
@@ -88,19 +86,32 @@ export const MoorhenDraggableModalBase = (props: {
     onClose?: () => (void | Promise<void>);
 }) => {
 
+    const defaultProps = { 
+        showCloseButton: true, handleClassName: 'handle', additionalHeaderButtons:null, additionalChildren: null, 
+        enableResize: { top: false, right: true, bottom: true, left: false, topRight: false, bottomRight: true, bottomLeft: true, topLeft: false },
+        top: 500, left: 500, overflowY: 'auto', overflowX: 'hidden', lockAspectRatio: false, maxHeight: 100, maxWidth: 100, 
+        minHeight: 100, minWidth: 100, enforceMaxBodyDimensions: true,
+    }
+    
+    const {
+        showCloseButton, handleClassName, additionalHeaderButtons, additionalChildren, 
+        enableResize, top, left, overflowY, overflowX, lockAspectRatio, maxHeight, maxWidth, 
+        minHeight, minWidth, enforceMaxBodyDimensions
+    } = {...defaultProps, ...props}
+
     const dispatch = useDispatch()
     
     const focusHierarchy = useSelector((state: moorhen.State) => state.modals.focusHierarchy)
     const windowWidth = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const windowHeight = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.miscAppSettings.transparentModalsOnMouseOut)
+    const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.generalStates.transparentModalsOnMouseOut)
     const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering)
     const show = useSelector((state: moorhen.State) => state.modals.activeModals.includes(props.modalId))
     
     const [currentZIndex, setCurrentZIndex] = useState<number>(999)
     const [opacity, setOpacity] = useState<number>(1.0)
     const [collapse, setCollapse] = useState<boolean>(false)
-    const [position, setPosition] = useState<{x: number, y: number}>({x: props.left, y: props.top})
+    const [position, setPosition] = useState<{x: number, y: number}>({x: left, y: top})
 
     const draggableNodeRef = useRef<HTMLDivElement>();
     const resizeNodeRef = useRef<HTMLDivElement>();
@@ -128,7 +139,7 @@ export const MoorhenDraggableModalBase = (props: {
 
     useEffect(() => {
         setPosition({
-            x: props.left, y: props.top
+            x: left, y: top
         })
     }, [windowWidth, windowHeight])
 
@@ -172,7 +183,7 @@ export const MoorhenDraggableModalBase = (props: {
         if (cachedEnableAtomHovering.current) {
             dispatch( setEnableAtomHovering(true) )
         }
-        props.onResizeStop(evt, direction, ref, delta)
+        props.onResizeStop?.(evt, direction, ref, delta)
     }
 
     const handleClose = useCallback(async () => {
@@ -182,7 +193,7 @@ export const MoorhenDraggableModalBase = (props: {
         
     return <Draggable
                 nodeRef={draggableNodeRef}
-                handle={`.${props.handleClassName}`}
+                handle={`.${handleClassName}`}
                 position={position}
                 onDrag={handleDrag}
                 onStop={handleDragStop}
@@ -199,14 +210,14 @@ export const MoorhenDraggableModalBase = (props: {
                     if(transparentModalsOnMouseOut) setOpacity(0.5)
                 }}
             >
-                <Card.Header className={props.handleClassName} style={{ minWidth: props.minWidth, justifyContent: 'space-between', display: 'flex', cursor: 'move', alignItems:'center'}}>
+                <Card.Header className={handleClassName} style={{ minWidth: minWidth, justifyContent: 'space-between', display: 'flex', cursor: 'move', alignItems:'center'}}>
                     {props.headerTitle}
                     <Stack gap={2} direction="horizontal">
-                        {props.additionalHeaderButtons?.map(button => button)}
+                        {additionalHeaderButtons?.map(button => button)}
                         <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => setCollapse(!collapse)}>
                             {collapse ? <AddOutlined/> : <RemoveOutlined/>}
                         </Button>
-                        {props.showCloseButton &&
+                        {showCloseButton &&
                         <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={handleClose}>
                             <CloseOutlined/>
                         </Button>                    
@@ -215,30 +226,30 @@ export const MoorhenDraggableModalBase = (props: {
                 </Card.Header>
                 <Card.Body style={{display: collapse ? 'none' : 'flex', justifyContent: 'center', flexDirection: 'column'}}>
                     <Resizable
-                    maxWidth={props.maxWidth}
-                    maxHeight={props.maxHeight}
-                    minWidth={props.minWidth}
-                    minHeight={props.minHeight}
+                    maxWidth={maxWidth}
+                    maxHeight={maxHeight}
+                    minWidth={minWidth}
+                    minHeight={minHeight}
                     bounds={'window'}
                     resizeRatio={1.3}
-                    lockAspectRatio={props.lockAspectRatio}
-                    enable={props.enableResize}
-                    handleComponent={{bottomRight: props.enableResize ? <SquareFootOutlined style={{transform: 'rotate(270deg)'}}/> : <></>}}
+                    lockAspectRatio={lockAspectRatio}
+                    enable={enableResize}
+                    handleComponent={{bottomRight: enableResize ? <SquareFootOutlined style={{transform: 'rotate(270deg)'}}/> : <></>}}
                     onResizeStop={handleResizeStop}
                     onResizeStart={handleStart}
                     >
-                    <div ref={props.resizeNodeRef ? props.resizeNodeRef : resizeNodeRef}
+                    <div ref={props.resizeNodeRef ?? resizeNodeRef}
                         style={{
-                            overflowY: props.overflowY,
-                            overflowX: props.overflowX,
+                            overflowY: overflowY as 'visible' | 'hidden' | 'clip' | 'scroll' | 'auto',
+                            overflowX: overflowX as 'visible' | 'hidden' | 'clip' | 'scroll' | 'auto',
                             height: '100%',
                             width: '100%',
                             display: 'block',
                             alignItems: 'center',
                             justifyContent: 'center'
                             }}>
-                        {props.enforceMaxBodyDimensions ? 
-                        <div style={props.enforceMaxBodyDimensions ? {maxHeight: props.maxHeight, maxWidth: props.maxWidth} : {}}>
+                        {enforceMaxBodyDimensions ? 
+                        <div style={enforceMaxBodyDimensions ? {maxHeight: maxHeight, maxWidth: maxWidth} : {}}>
                             {props.body}
                         </div>
                         : 
@@ -252,14 +263,7 @@ export const MoorhenDraggableModalBase = (props: {
                     {props.footer}
                 </Card.Footer>
                 }
-                {props.additionalChildren}
+                {additionalChildren}
             </Card>
         </Draggable>
-}
-
-MoorhenDraggableModalBase.defaultProps = { 
-    showCloseButton: true, handleClassName: 'handle', additionalHeaderButtons:null, additionalChildren: null, 
-    enableResize: { top: false, right: true, bottom: true, left: false, topRight: false, bottomRight: true, bottomLeft: true, topLeft: false },
-    top: 500, left: 500, overflowY: 'auto', overflowX: 'hidden', lockAspectRatio: false, maxHeight: 100, maxWidth: 100, modalId: null,
-    minHeight: 100, minWidth: 100, deafultWidth: 100, defaultHeight: 100, onResizeStop: () => {}, resizeNodeRef: null, enforceMaxBodyDimensions: true,
 }

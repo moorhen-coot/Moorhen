@@ -396,4 +396,3 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
     )   
 }
 
-MoorhenSequenceViewer.defaultProps = { useMainStateResidueSelections: false }

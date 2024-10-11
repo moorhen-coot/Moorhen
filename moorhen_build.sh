@@ -23,28 +23,58 @@ else
 fi
 
 
+MEMORY64=0
 BUILD_DIR=${PWD}/CCP4_WASM_BUILD
 INSTALL_DIR=${PWD}/install
 
-mkdir -p ${BUILD_DIR}
-mkdir -p ${INSTALL_DIR}
-
-MEMORY64=0
-
 if [ x"$1" = x"--64bit" ]; then
    MEMORY64=1
+   BUILD_DIR=${PWD}/CCP4_WASM_BUILD_64
+   INSTALL_DIR=${PWD}/install64
    shift
-   MODULES=$*
-elif [ x"$1" = x"--clear" ]; then
+fi
+if [ x"$1" = x"--clear" ]; then
    shift
    CLEAR_MODULES=$*
 else
    MODULES=$*
 fi
 
+mkdir -p ${BUILD_DIR}
+mkdir -p ${INSTALL_DIR}
+
 fail() {
     echo $1
     exit 1
+}
+
+clearzlib() {
+    echo "Clear zlib"
+    rm -rf ${BUILD_DIR}/zlib_build
+    rm -rf ${INSTALL_DIR}/lib/libz.a
+    rm -rf ${INSTALL_DIR}/include/zlib.h
+    rm -rf ${INSTALL_DIR}/include/zconf.h
+}
+
+clearfreetype() {
+    echo "Clear freetype"
+    rm -rf ${BUILD_DIR}/freetype_build
+    rm -rf ${INSTALL_DIR}/lib/libfreetype.a
+    rm -rf ${INSTALL_DIR}/lib/pkgconfig/freetype2.pc
+    rm -rf ${INSTALL_DIR}/include/freetype2
+}
+
+clearpng() {
+    echo "Clear png"
+    rm -rf ${BUILD_DIR}/png_build
+    rm -rf ${INSTALL_DIR}/include/libpng16
+    rm -rf ${INSTALL_DIR}/include/png*.h
+    rm -rf ${INSTALL_DIR}/lib/libpng*.a
+    rm -rf ${INSTALL_DIR}/lib/libpng*.la
+    rm -rf ${INSTALL_DIR}/lib/pkgconfig/libpng.pc
+    rm -rf ${INSTALL_DIR}/lib/pkgconfig/libpng16.pc
+    rm -rf ${INSTALL_DIR}/bin/libpng-config
+    rm -rf ${INSTALL_DIR}/bin/libpng16-config
 }
 
 clearboost() {
@@ -99,6 +129,8 @@ clearrdkit() {
     echo "Clear rdkit"
     rm -rf ${BUILD_DIR}/rdkit_build
     rm -rf ${INSTALL_DIR}/include/rdkit
+    rm -rf ${INSTALL_DIR}/include/maeparser
+    rm -rf ${INSTALL_DIR}/include/coordgen
     rm -rf ${INSTALL_DIR}/lib/libRDKit*.a
     rm -rf ${INSTALL_DIR}/lib/cmake/rdkit
 }
@@ -192,12 +224,19 @@ clearmoorhen() {
     rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen.wasm
     rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen.data
     rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen.worker.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen64.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen64.wasm
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen64.data
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen64.worker.js
     rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/web_example.js
     rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/web_example.wasm
 }
 
 clearall() {
     echo "Clear all"
+    clearfreetype
+    clearpng
+    clearzlib
     clearboost
     cleargemmi
     cleargsl
@@ -224,6 +263,12 @@ else
     for mod in $CLEAR_MODULES; do
         case $mod in
            all) clearall
+               ;;
+           png) clearpng
+               ;;
+           zlib) clearzlib
+               ;;
+           freetype) clearfreetype
                ;;
            boost) clearboost
                ;;
@@ -276,8 +321,8 @@ echo "Installing in ${INSTALL_DIR}"
 echo "Attempting to get emsdk zlib/png ports"
 echo
 echo "" > silly.c
-emcc silly.c -s USE_ZLIB=1 -s USE_LIBPNG=1 -s USE_FREETYPE=1 -pthread -sMEMORY64=1 -Wno-experimental
-emcc silly.c -s USE_ZLIB=1 -s USE_LIBPNG=1 -s USE_FREETYPE=1 -pthread
+emcc silly.c  -pthread -sMEMORY64=1 -Wno-experimental
+emcc silly.c  -pthread
 rm -f silly.c
 rm -f a.out.js
 rm -f a.out.wasm
@@ -288,13 +333,13 @@ if test x"${MEMORY64}" = x"1"; then
     echo "Building ** 64-bit ** (large memory) version of Moorhen"
     echo "#######################################################"
     echo
-    MOORHEN_CMAKE_FLAGS="-sMEMORY64=1 -pthread"
+    MOORHEN_CMAKE_FLAGS="-sMEMORY64=1 -pthread -fwasm-exceptions"
 else
     echo "########################################"
     echo "Building ** 32-bit ** version of Moorhen"
     echo "########################################"
     echo
-    MOORHEN_CMAKE_FLAGS="-pthread"
+    MOORHEN_CMAKE_FLAGS="-pthread -fwasm-exceptions"
 fi
 
 BUILD_GSL=false
@@ -315,6 +360,9 @@ BUILD_CLIPPER=false
 BUILD_PRIVATEER=false
 BUILD_SSM=false
 BUILD_SLICENDICE=false
+BUILD_FREETYPE=false
+BUILD_ZLIB=false
+BUILD_PNG=false
 
 if test -d ${INSTALL_DIR}/include/slicendice_cpp; then
     true
@@ -418,10 +466,36 @@ else
     BUILD_LIBEIGEN=true
 fi
 
+if test -r ${INSTALL_DIR}/include/zlib.h; then
+    true
+else
+    BUILD_ZLIB=true
+fi
+
+if test -r ${INSTALL_DIR}/include/freetype2/ft2build.h; then
+    true
+else
+    BUILD_FREETYPE=true
+fi
+
+if test -r ${INSTALL_DIR}/include/pngconf.h; then
+    true
+else
+    BUILD_PNG=true
+fi
+
+if test x"${MEMORY64}" = x"1"; then
+if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen64.wasm; then
+    true
+else
+    BUILD_MOORHEN=true
+fi
+else
 if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen.wasm; then
     true
 else
     BUILD_MOORHEN=true
+fi
 fi
 
 for mod in $MODULES; do
@@ -474,6 +548,15 @@ for mod in $MODULES; do
        moorhen) echo "Force build moorhen"
        BUILD_MOORHEN=true
        ;;
+       png) echo "Force build png"
+       BUILD_PNG=true
+       ;;
+       zlib) echo "Force build zlib"
+       BUILD_ZLIB=true
+       ;;
+       freetype) echo "Force build freetype"
+       BUILD_FREETYPE=true
+       ;;
     esac
 done
 
@@ -494,6 +577,9 @@ echo "BUILD_CLIPPER    " $BUILD_CLIPPER
 echo "BUILD_PRIVATEER  " $BUILD_PRIVATEER
 echo "BUILD_SSM        " $BUILD_SSM
 echo "BUILD_SLICENDICE " $BUILD_SLICENDICE
+echo "BUILD_FREETYPE   " $BUILD_FREETYPE
+echo "BUILD_ZLIB       " $BUILD_ZLIB
+echo "BUILD_PNG        " $BUILD_PNG
 echo "BUILD_MOORHEN    " $BUILD_MOORHEN
 
 #eigen
@@ -503,6 +589,36 @@ if [ $BUILD_LIBEIGEN = true ]; then
     cd ${BUILD_DIR}/eigen_build
     emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/eigen-$libeigen_release
     make install || fail "Error installing eigen, giving up."
+fi
+
+#zlib
+if [ $BUILD_ZLIB = true ]; then
+    getzlib
+    mkdir -p ${BUILD_DIR}/zlib_build
+    cd ${BUILD_DIR}/zlib_build
+    emcmake cmake -DZLIB_BUILD_EXAMPLES=OFF -DCMAKE_EXE_LINKER_FLAGS="-fwasm-exceptions" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/zlib-$zlib_release
+    emmake make -j ${NUMPROCS}
+    emmake make install || fail "Error installing zlib, giving up."
+fi
+
+#png
+if [ $BUILD_PNG = true ]; then
+    getpng
+    mkdir -p ${BUILD_DIR}/png_build
+    cd ${BUILD_DIR}/png_build
+    emcmake cmake -DZLIB_LIBRARY=${INSTALL_DIR}/lib/libz.a -DZLIB_INCLUDE_DIR=${INSTALL_DIR}/include -DPNG_SHARED=OFF -DSKIP_INSTALL_PROGRAMS=ON -DSKIP_INSTALL_EXECUTABLES=ON -DCMAKE_EXE_LINKER_FLAGS="-fwasm-exceptions" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/libpng-$png_release
+    emmake make LDFLAGS="-all-static -fwasm-exceptions" -j ${NUMPROCS} CXXFLAGS="${MOORHEN_CMAKE_FLAGS}" CFLAGS="${MOORHEN_CMAKE_FLAGS}"
+    emmake make install || fail "Error installing png, giving up."
+fi
+
+#freetype
+if [ $BUILD_FREETYPE = true ]; then
+    getfreetype
+    mkdir -p ${BUILD_DIR}/freetype_build
+    cd ${BUILD_DIR}/freetype_build
+    emcmake cmake -DCMAKE_EXE_LINKER_FLAGS="-fwasm-exceptions" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/freetype-$freetype_release
+    emmake make  -j ${NUMPROCS}
+    emmake make install || fail "Error installing freetype, giving up."
 fi
 
 #gsl
@@ -531,9 +647,15 @@ if [ $BUILD_RDKIT = true ]; then
     BOOST_CMAKE_STUFF=`for i in ${INSTALL_DIR}/lib/cmake/boost*; do j=${i%-$boost_release}; k=${j#${INSTALL_DIR}/lib/cmake/boost_}; echo -Dboost_${k}_DIR=$i; done`
     mkdir -p ${BUILD_DIR}/rdkit_build
     cd ${BUILD_DIR}/rdkit_build
-    emcmake cmake -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_STACKTRACE=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -Wno-enum-constexpr-conversion -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
+    emcmake cmake -DFREETYPE_LIBRARY=${INSTALL_DIR}/lib/libfreetype.a -DFREETYPE_INCLUDE_DIRS=${INSTALL_DIR}/include/freetype2 -DZLIB_LIBRARY=${INSTALL_DIR}/lib/libz.a -DZLIB_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_STACKTRACE=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -Wno-enum-constexpr-conversion -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing RDKit, giving up."
+    # Manually copy coordgen and maeparser headers
+    mkdir -p ${INSTALL_DIR}/include/coordgen
+    mkdir -p ${INSTALL_DIR}/include/maeparser
+    # cp -v ${MOORHEN_SOURCE_DIR}/rdkit/External/CoordGen/*.h ${INSTALL_DIR}/include/
+    cp -v ${MOORHEN_SOURCE_DIR}/rdkit/External/CoordGen/coordgen/*.{h,hpp} ${INSTALL_DIR}/include/coordgen
+    cp -v ${MOORHEN_SOURCE_DIR}/rdkit/External/CoordGen/maeparser/*.hpp ${INSTALL_DIR}/include/maeparser
 fi
 
 #gemmi
@@ -741,11 +863,11 @@ if [ $BUILD_MOORHEN = true ]; then
     getmonomers
     mkdir -p ${BUILD_DIR}/moorhen_build
     cd ${BUILD_DIR}/moorhen_build
-    emcmake cmake -DMEMORY64=${MEMORY64} -DCMAKE_EXE_LINKER_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw -I${INSTALL_DIR}/include/eigen3 -I${INSTALL_DIR}/include/ssm -I${MOORHEN_SOURCE_DIR}/checkout/glm-0.9.9.8 -I${INSTALL_DIR}/include/privateer -I${INSTALL_DIR}/include/privateer/pybind11" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw -I${INSTALL_DIR}/include/eigen3 -I${INSTALL_DIR}/include/ssm -I${MOORHEN_SOURCE_DIR}/checkout/glm-0.9.9.8 -I${INSTALL_DIR}/include/privateer -I${INSTALL_DIR}/include/privateer/pybind11" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR} -DCMAKE_PREFIX_PATH=${INSTALL_DIR} -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake -DRDKit_DIR=${INSTALL_DIR}/lib/cmake/rdkit -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include/boost -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DEigen3_DIR=${INSTALL_DIR}/share/eigen3/cmake/
+    emcmake cmake -DMEMORY64=${MEMORY64} -DFREETYPE_LIBRARY=${INSTALL_DIR}/lib/libfreetype.a -DFREETYPE_INCLUDE_DIRS=${INSTALL_DIR}/include/freetype2 -DZLIB_LIBRARY=${INSTALL_DIR}/lib/libz.a -DZLIB_INCLUDE_DIR=${INSTALL_DIR}/include -DCMAKE_EXE_LINKER_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw -I${INSTALL_DIR}/include/eigen3 -I${INSTALL_DIR}/include/ssm -I${MOORHEN_SOURCE_DIR}/checkout/glm-0.9.9.8 -I${INSTALL_DIR}/include/privateer -I${INSTALL_DIR}/include/privateer/pybind11" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw -I${INSTALL_DIR}/include/eigen3 -I${INSTALL_DIR}/include/ssm -I${MOORHEN_SOURCE_DIR}/checkout/glm-0.9.9.8 -I${INSTALL_DIR}/include/privateer -I${INSTALL_DIR}/include/privateer/pybind11" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR} -DCMAKE_PREFIX_PATH=${INSTALL_DIR} -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake -DRDKit_DIR=${INSTALL_DIR}/lib/cmake/rdkit -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include/boost -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DEigen3_DIR=${INSTALL_DIR}/share/eigen3/cmake/
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing moorhen, giving up."
     cd ${MOORHEN_SOURCE_DIR}/baby-gru/
     npm install
-    cd ${MOORHEN_SOURCE_DIR}/baby-gru/public
+    cd ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru
     ln -sf ${MOORHEN_SOURCE_DIR}/checkout/monomers
 fi

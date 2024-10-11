@@ -50,7 +50,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
-    const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.miscAppSettings.defaultExpandDisplayCards)
+    const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.generalStates.defaultExpandDisplayCards)
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops)
     const userPreferencesMounted = useSelector((state: moorhen.State) => state.generalStates.userPreferencesMounted)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
@@ -697,7 +697,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                         Ligands
                     </AccordionSummary>
                     <AccordionDetails style={{padding: '0.2rem', backgroundColor: isDark ? '#ced5d6' : 'white'}}>
-                        <MoorhenLigandList setBusy={setBusyLoadingLigands} commandCentre={props.commandCentre} molecule={props.molecule} glRef={props.glRef} height={convertViewtoPx(40, height)}/>
+                        <MoorhenLigandList setBusy={setBusyLoadingLigands} commandCentre={props.commandCentre} molecule={props.molecule} height={convertViewtoPx(40, height)}/>
                     </AccordionDetails>
                 </Accordion>
                 {props.molecule.hasGlycans && 
@@ -706,7 +706,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                         Carbohydrates
                     </AccordionSummary>
                     <AccordionDetails style={{padding: '0.2rem', backgroundColor: isDark ? '#ced5d6' : 'white'}}>
-                        <MoorhenCarbohydrateList setBusy={setBusyLoadingCarbohydrates} commandCentre={props.commandCentre} molecule={props.molecule} glRef={props.glRef} height={convertViewtoPx(40, height)}/>
+                        <MoorhenCarbohydrateList setBusy={setBusyLoadingCarbohydrates} molecule={props.molecule} height={convertViewtoPx(40, height)}/>
                     </AccordionDetails>
                 </Accordion>            
                 }

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Row, Col } from "react-bootstrap";
 import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { useSelector } from "react-redux";
 import { MoorhenCarbohydrateCard } from "../card/MoorhenCarbohydrateCard";
 import { privateer } from "../../types/privateer";
@@ -10,9 +9,7 @@ import { modalKeys } from "../../utils/enums";
 
 export const MoorhenCarbohydrateList = (props: {
     setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
     molecule: moorhen.Molecule;
-    glRef: React.RefObject<webGL.MGWebGL>; 
     height?: number | string;
 }) => {
 
@@ -23,10 +20,10 @@ export const MoorhenCarbohydrateList = (props: {
     const [carbohydrateList, setCarbohydrateList] = useState<privateer.ResultsEntry[] | null>(null)
 
     const validate = async () => {
-        props.setBusy(true)
+        props.setBusy?.(true)
         const result = await props.molecule.getPrivateerValidation(true)
         setCarbohydrateList(result)
-        props.setBusy(false)
+        props.setBusy?.(false)
     }
    
     useEffect(() => {
@@ -48,9 +45,9 @@ export const MoorhenCarbohydrateList = (props: {
                 <LinearProgress variant="indeterminate"/>
             : carbohydrateList.length > 0 ?
                 <>
-                    <Row style={{ maxHeight: props.height, overflowY: 'auto' }}>
+                    <Row style={{ maxHeight: props.height ?? "30vh", overflowY: 'auto' }}>
                         <Col style={{paddingLeft: '0.5rem', paddingRight: '0.5rem'}}>
-                            {carbohydrateList.map((carbohydrate, index) => {
+                            {carbohydrateList.map(carbohydrate => {
                                 return <MoorhenCarbohydrateCard key={carbohydrate.id} carbohydrate={carbohydrate} molecule={props.molecule}/>
                             })}
                         </Col>
@@ -63,5 +60,3 @@ export const MoorhenCarbohydrateList = (props: {
             }
         </>
 }
-
-MoorhenCarbohydrateList.defaultProps = { setBusy: () => {}, height: '30vh'}

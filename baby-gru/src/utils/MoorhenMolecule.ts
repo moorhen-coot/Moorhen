@@ -851,7 +851,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             try {
                 const ligandDicts = await Promise.all(
                     response.data.result.result.map(newTlc => {
-                        return this.loadMissingMonomer(newTlc, -999999)
+                        return this.loadMissingMonomer(newTlc, this.molNo)
                     })
                 )
                 ligandDicts.forEach(ligandDict => this.cacheLigandDict(ligandDict))

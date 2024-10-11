@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8" />
-  <link rel="icon" href="/favicon.ico" />
+  <link rel="icon" href="/baby-gru/favicon.ico" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#000000" />
   <meta name="description" content="Moorhen is a molecular graphics web application based on the Coot desktop program." />
@@ -18,35 +18,84 @@
     Here some imports and actions to make some simple crystallographic logic available to the 
     main UI thread (as opposed to the CootWorker)
   -->
+
+
   <script>
     window.onload = () => {
-      createCCP4Module({
-        print(t) { console.log(["output", t]) },
-        printErr(t) { console.log(["output", t]); }
-      })
-      .then(function (CCP4Mod) {
-        window.CCP4Module = CCP4Mod;
-      })
-      .catch((e) => {
-        console.log("CCP4 problem :(");
-        console.log(e);
-      });
-      createRSRModule({
-        print(t) { console.log(["output", t]) },
-        printErr(t) { console.log(["output", t]); }
-      })
-      .then((returnedModule) => {
-          window.cootModule = returnedModule;
-          const cootModuleAttachedEvent = new CustomEvent("cootModuleAttached", { })
-          document.dispatchEvent(cootModuleAttachedEvent);
-      })
-      .catch((e) => {
-          console.log(e);
-      });
+      
+      const loadScript = (src) => {
+        return new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+          script.src = src
+          script.onload = () => resolve(src)
+          script.onerror = () => reject(new Error('Failed to load script: ' + src))
+          document.head.appendChild(script)
+        })
+      }
+
+      const memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]))
+
+      if (memory64) {
+        loadScript('/moorhen64.js')
+          .then(src => {
+            console.log(src + ' loaded 64-bit successfully.')
+            createCoot64Module({
+              print(t) { console.log(["output", t]) },
+              printErr(t) { console.error(["output", t]) }
+            })
+            .then((returnedModule) => {
+              window.cootModule = returnedModule
+              window.CCP4Module = returnedModule
+              const cootModuleAttachedEvent = new CustomEvent("cootModuleAttached", { })
+              document.dispatchEvent(cootModuleAttachedEvent)
+            })
+            .catch((e) => {
+              console.log(e)
+              console.log("There was a problem creating Coot64Module...")
+            });
+          })
+          .catch((error) => {
+            console.error(error.message)
+            console.log("Trying 32-bit fallback")
+            loadScript('/moorhen.js')
+              .then(src => {
+                console.log(src + ' loaded 32-bit successfully (fallback).')
+                createCootModule({
+                  print(t) { console.log(["output", t]) },
+                  printErr(t) { console.log(["output", t]) }
+                })
+                .then((returnedModule) => {
+                  window.cootModule = returnedModule;
+                  window.CCP4Module = returnedModule;
+                  const cootModuleAttachedEvent = new CustomEvent("cootModuleAttached", { })
+                  document.dispatchEvent(cootModuleAttachedEvent)
+                })
+                .catch((e) => {
+                  console.log(e);
+                });
+              })
+          });
+      } else {
+        loadScript('/moorhen.js')
+          .then(src => {
+            console.log(src + ' loaded 32-bit successfully.')
+            createCootModule({
+              print(t) { console.log(["output", t]) },
+              printErr(t) { console.log(["output", t]) }
+            })
+            .then((returnedModule) => {
+              window.cootModule = returnedModule
+              window.CCP4Module = returnedModule
+              const cootModuleAttachedEvent = new CustomEvent("cootModuleAttached", { })
+              document.dispatchEvent(cootModuleAttachedEvent)
+            })
+            .catch((e) => {
+              console.log(e)
+            });
+          })
+      }
     }
   </script>
-  <script src="/web_example.js"></script>
-  <script src="/moorhen.js"></script>
 
   <title>Moorhen</title>
 </head>

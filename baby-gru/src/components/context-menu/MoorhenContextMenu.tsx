@@ -2,24 +2,24 @@ import styled, { css } from "styled-components";
 import { ClickAwayListener, FormGroup, List, Tooltip } from '@mui/material';
 import { MoorhenBackgroundColorMenuItem } from "../menu-item/MoorhenBackgroundColorMenuItem"
 import { atomInfoToResSpec, convertRemToPx } from "../../utils/utils";
-import { useEffect, useRef, useState, useCallback, MutableRefObject, RefObject } from "react";
-import { Popover, Overlay, FormLabel, FormSelect, Button, Stack } from "react-bootstrap";
-import { MoorhenAddAltConfButton } from "../button/MoorhenAddAltConfButton"
-import { MoorhenAddTerminalResidueButton } from "../button/MoorhenAddTerminalResidueButton"
-import { MoorhenAutofitRotamerButton } from "../button/MoorhenAutofitRotamerButton"
-import { MoorhenFlipPeptideButton } from "../button/MoorhenFlipPeptideButton"
-import { MoorhenConvertCisTransButton } from "../button/MoorhenConvertCisTransButton"
-import { MoorhenSideChain180Button } from "../button/MoorhenSideChain180Button"
-import { MoorhenRefineResiduesButton } from "../button/MoorhenRefineResiduesButton"
-import { MoorhenDeleteButton } from "../button/MoorhenDeleteButton"
-import { MoorhenMutateButton } from "../button/MoorhenMutateButton";
-import { MoorhenEigenFlipLigandButton } from "../button/MoorhenEigenFlipLigandButton";
-import { MoorhenJedFlipFalseButton } from "../button/MoorhenJedFlipFalseButton";
-import { MoorhenJedFlipTrueButton } from "../button/MoorhenJedFlipTrueButton";
-import { MoorhenRotamerChangeButton } from "../button/MoorhenRotamerChangeButton";
-import { MoorhenRotateTranslateZoneButton } from "../button/MoorhenRotateTranslateZoneButton";
-import { MoorhenDragAtomsButton } from "../button/MoorhenDragAtomsButton";
-import { MoorhenRigidBodyFitButton } from "../button/MoorhenRigidBodyFitButton";
+import { useEffect, useRef, useState, useCallback, RefObject } from "react";
+import { Popover, Overlay } from "react-bootstrap";
+import { MoorhenAddAltConfButton } from "./MoorhenAddAltConfButton"
+import { MoorhenAddTerminalResidueButton } from "./MoorhenAddTerminalResidueButton"
+import { MoorhenAutofitRotamerButton } from "./MoorhenAutofitRotamerButton"
+import { MoorhenFlipPeptideButton } from "./MoorhenFlipPeptideButton"
+import { MoorhenConvertCisTransButton } from "./MoorhenConvertCisTransButton"
+import { MoorhenSideChain180Button } from "./MoorhenSideChain180Button"
+import { MoorhenRefineResiduesButton } from "./MoorhenRefineResiduesButton"
+import { MoorhenDeleteButton } from "./MoorhenDeleteButton"
+import { MoorhenMutateButton } from "./MoorhenMutateButton";
+import { MoorhenEigenFlipLigandButton } from "./MoorhenEigenFlipLigandButton";
+import { MoorhenJedFlipFalseButton } from "./MoorhenJedFlipFalseButton";
+import { MoorhenJedFlipTrueButton } from "./MoorhenJedFlipTrueButton";
+import { MoorhenRotamerChangeButton } from "./MoorhenRotamerChangeButton";
+import { MoorhenRotateTranslateZoneButton } from "./MoorhenRotateTranslateZoneButton";
+import { MoorhenDragAtomsButton } from "./MoorhenDragAtomsButton";
+import { MoorhenRigidBodyFitButton } from "./MoorhenRigidBodyFitButton";
 import { moorhen } from "../../types/moorhen";
 import { JSX } from "react/jsx-runtime";
 import { webGL } from "../../types/mgWebGL";
@@ -36,62 +36,6 @@ const ContextMenu = styled.div`
     opacity: ${opacity};
     `}
 `;
-
-const MoorhenPopoverOptions = (props: {
-  showContextMenu: boolean;
-  setShowOverlay: React.Dispatch<React.SetStateAction<boolean>>;
-  label: string;
-  options: string[];
-  extraInput: (arg0: MutableRefObject<any>) => JSX.Element;
-  nonCootCommand?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec, arg2: string) => void;
-  doEdit: (arg0: moorhen.cootCommandKwargs) => void;
-  formatArgs: (arg0: string, arg1: MutableRefObject<any>) => moorhen.cootCommandKwargs;
-  selectedMolecule: moorhen.Molecule;
-  chosenAtom: moorhen.ResidueSpec; 
-}) => {
-
-  const selectRef = useRef<null | HTMLSelectElement>(null)
-  const extraInputRef = useRef(null)
-  
-  const handleRightClick = useCallback(() => {
-    if (props.showContextMenu) {
-      props.setShowOverlay(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    document.addEventListener("rightClick", handleRightClick);
-    return () => {
-        document.removeEventListener("rightClick", handleRightClick);
-    };
-
-}, [handleRightClick]);
-
-  return <ClickAwayListener onClickAway={() => props.setShowOverlay(false)}>
-          <Stack direction="vertical" gap={2}>
-            <FormGroup>
-              <FormLabel>{props.label}</FormLabel>
-              <FormSelect ref={selectRef} defaultValue='TRIPLE'>
-                  {props.options.map(optionName => {
-                      return <option key={optionName} value={optionName}>{optionName}</option>
-                  })}
-              </FormSelect>
-            </FormGroup>
-            {props.extraInput(extraInputRef)}
-            <Button onClick={() => {
-              if (!props.nonCootCommand) {
-                props.doEdit(props.formatArgs(selectRef.current.value, extraInputRef))
-              } else {
-                props.nonCootCommand(props.selectedMolecule, props.chosenAtom, selectRef.current.value)
-              }
-            }}>
-              OK
-            </Button>
-          </Stack>
-        </ClickAwayListener>
-}
-
-MoorhenPopoverOptions.defaultProps = {extraInput: () => null, nonCootCommand: false}
 
 export const MoorhenContextMenu = (props: {
   urlPrefix: string;
@@ -184,22 +128,22 @@ export const MoorhenContextMenu = (props: {
               <div style={{ display:'flex', justifyContent: 'center' }}>
               <Tooltip className="moorhen-tooltip" title={toolTip}>
               <FormGroup ref={quickActionsFormGroupRef} style={{ justifyContent: 'center', margin: "0px", padding: "0px", width: '18rem' }} row>
-              <MoorhenAutofitRotamerButton mode='context' {...collectedProps} />
-              <MoorhenFlipPeptideButton mode='context' {...collectedProps}/>
-              <MoorhenSideChain180Button mode='context' {...collectedProps}/> 
-              <MoorhenRefineResiduesButton mode='context' {...collectedProps}/> 
-              <MoorhenDeleteButton mode='context' {...collectedProps} />
-              <MoorhenMutateButton mode='context' {...collectedProps} />
-              <MoorhenAddTerminalResidueButton mode='context' {...collectedProps} />
-              <MoorhenRotamerChangeButton mode='context' {...collectedProps}/>
-              <MoorhenRigidBodyFitButton  mode='context' {...collectedProps}/>
-              <MoorhenEigenFlipLigandButton mode='context' {...collectedProps}/>
-              <MoorhenJedFlipFalseButton mode='context' {...collectedProps}/>
-              <MoorhenJedFlipTrueButton mode='context' {...collectedProps}/>
-              <MoorhenRotateTranslateZoneButton mode='context' {...collectedProps} />
-              <MoorhenDragAtomsButton mode='context' {...collectedProps} />
-              <MoorhenAddAltConfButton mode ='context' {...collectedProps} />
-              <MoorhenConvertCisTransButton mode='context' {...collectedProps} />
+              <MoorhenAutofitRotamerButton {...collectedProps} />
+              <MoorhenFlipPeptideButton {...collectedProps}/>
+              <MoorhenSideChain180Button {...collectedProps}/> 
+              <MoorhenRefineResiduesButton {...collectedProps}/> 
+              <MoorhenDeleteButton {...collectedProps} />
+              <MoorhenMutateButton {...collectedProps} />
+              <MoorhenAddTerminalResidueButton {...collectedProps} />
+              <MoorhenRotamerChangeButton {...collectedProps}/>
+              <MoorhenRigidBodyFitButton  {...collectedProps}/>
+              <MoorhenEigenFlipLigandButton {...collectedProps}/>
+              <MoorhenJedFlipFalseButton {...collectedProps}/>
+              <MoorhenJedFlipTrueButton {...collectedProps}/>
+              <MoorhenRotateTranslateZoneButton {...collectedProps} />
+              <MoorhenDragAtomsButton {...collectedProps} />
+              <MoorhenAddAltConfButton {...collectedProps} />
+              <MoorhenConvertCisTransButton {...collectedProps} />
               </FormGroup>
               </Tooltip>
               </div>

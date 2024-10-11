@@ -315,6 +315,7 @@ export const moorhenKeyPress = (
             glRef.current.showShortCutHelp.push(`<Shift><Alt> Translate View`)
             glRef.current.showShortCutHelp.push(`<Shift> Rotate View`)
             glRef.current.showShortCutHelp.push(`Double click go to blob`)
+            glRef.current.showShortCutHelp.push(`<Ctrl><Scroll> Change active map contour lvl.`)
             glRef.current.drawScene()
         } else  {
             glRef.current.showShortCutHelp = null

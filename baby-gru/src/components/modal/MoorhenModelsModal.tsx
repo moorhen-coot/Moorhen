@@ -49,8 +49,6 @@ export const MoorhenModelsModal = (props: moorhen.CollectedProps) => {
                 modalId={modalKeys.MODELS}
                 left={width - (convertRemToPx(55) + 100)}
                 top={height / 4}
-                defaultHeight={convertViewtoPx(10, height)}
-                defaultWidth={convertViewtoPx(10, width)}
                 minHeight={convertViewtoPx(10, height)}
                 minWidth={convertRemToPx(20)}
                 maxHeight={convertViewtoPx(90, height)}

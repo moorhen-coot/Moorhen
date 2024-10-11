@@ -14,7 +14,6 @@ import { clearResidueSelection } from "../../store/generalStatesSlice";
 export const MoorhenRandomJiggleBlurMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
-    popoverPlacement?: 'left' | 'right'
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
     
@@ -193,7 +192,6 @@ export const MoorhenRandomJiggleBlurMenuItem = (props: {
 
     return <MoorhenBaseMenuItem
         id='jiggle-fit-blur-menu-item'
-        popoverPlacement={props.popoverPlacement}
         popoverContent={panelContent}
         menuItemText="Jiggle Fit with Fourier Filtering..."
         onCompleted={onCompleted}

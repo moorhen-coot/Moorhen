@@ -15,6 +15,13 @@ export const MoorhenValidationListWidgetBase = (props: {
     enableMapSelect?: boolean;
 }) => {
 
+    const defaultProps = { 
+        filterMapFunction: (_maps: moorhen.Map) => true, extraControlForm: null, extraControlFormValue: null, enableMapSelect: true }
+
+    const {
+        filterMapFunction, extraControlForm, extraControlFormValue, enableMapSelect
+    } = { ...defaultProps, ...props }
+
     const mapSelectRef = useRef<undefined | HTMLSelectElement>();
     const moleculeSelectRef = useRef<undefined | HTMLSelectElement>();
 
@@ -50,7 +57,7 @@ export const MoorhenValidationListWidgetBase = (props: {
     }, [molecules.length])
 
     useEffect(() => {
-        const filteredMaps = maps.filter(map => props.filterMapFunction(map))
+        const filteredMaps = maps.filter(map => filterMapFunction(map))
 
         if (maps.length === 0 || filteredMaps.length === 0) {
             setSelectedMap(null)
@@ -64,7 +71,7 @@ export const MoorhenValidationListWidgetBase = (props: {
 
     async function fetchData() {
         setBusy(true)
-        if (selectedModel === null || (props.enableMapSelect && selectedMap === null)) {
+        if (selectedModel === null || (enableMapSelect && selectedMap === null)) {
             setCardData(null)
         } else {
             let newData = await props.fetchData(selectedModel, selectedMap)
@@ -75,7 +82,7 @@ export const MoorhenValidationListWidgetBase = (props: {
 
     useEffect(() => {
         fetchData()
-    }, [selectedMap, selectedModel, props.extraControlFormValue])
+    }, [selectedMap, selectedModel, extraControlFormValue])
 
     useEffect(() => {
         if (selectedModel !== null  && selectedModel === updateMolNo) {
@@ -84,7 +91,7 @@ export const MoorhenValidationListWidgetBase = (props: {
     }, [updateSwitch])
 
     useEffect(() => {
-        if (selectedModel === null || (props.enableMapSelect && selectedMap === null) || cardData === null) {
+        if (selectedModel === null || (enableMapSelect && selectedMap === null) || cardData === null) {
             setCardList([])
         } else {
             const newCardList = props.getCards(selectedModel, selectedMap, cardData)
@@ -99,12 +106,12 @@ export const MoorhenValidationListWidgetBase = (props: {
                             <Col>
                                 <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef}/>
                             </Col>
-                            {props.enableMapSelect && 
+                            {enableMapSelect && 
                             <Col>
-                                <MoorhenMapSelect filterFunction={props.filterMapFunction} width="" onChange={handleMapChange} maps={maps} ref={mapSelectRef}/>
+                                <MoorhenMapSelect filterFunction={filterMapFunction} width="" onChange={handleMapChange} maps={maps} ref={mapSelectRef}/>
                             </Col>
                             }
-                            {props.extraControlForm}
+                            {extraControlForm}
                         </Row>
                     </Form.Group>
                 </Form>                
@@ -117,5 +124,3 @@ export const MoorhenValidationListWidgetBase = (props: {
                 </div>
             </Fragment>
 }
-
-MoorhenValidationListWidgetBase.defaultProps = {filterMapFunction: (maps: moorhen.Map) => {return true}, extraControlForm: null, extraControlFormValue: null, enableMapSelect: true}

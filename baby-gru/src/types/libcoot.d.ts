@@ -7,8 +7,8 @@ import { privateer } from "./privateer";
 
 declare global {
     function print(arg0: string): void;
-    function createRSRModule(arg0: any): Promise<any>;
-    function createCCP4Module(arg0: any): Promise<libcootApi.CCP4ModuleType>;    
+    function createCoot64Module(arg0: any): Promise<libcootApi.CootModule>;
+    function createCootModule(arg0: any): Promise<libcootApi.CootModule>;
 }
 
 export namespace libcootApi {
@@ -147,6 +147,20 @@ export namespace libcootApi {
         res_no: number;
         residue_name: string;
         altLoc: number | string;
+    }
+    interface AcedrgTypesForBond extends emscriptem.instance<AcedrgTypesForBond>{
+        atom_id_1: string;
+        atom_id_2: string;
+        atom_type_1: string;
+        atom_type_2: string;
+        bond_length: Number;
+    }
+    interface AcedrgTypesForBondJS {
+        atom_id_1: string;
+        atom_id_2: string;
+        atom_type_1: string;
+        atom_type_2: string;
+        bond_length: Number;
     }
     interface MoorhenHBond extends emscriptem.instance<MoorhenHBond> {
         hb_hydrogen: HBondAtom;

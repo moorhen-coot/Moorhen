@@ -11,7 +11,6 @@ import { useSnackbar } from "notistack";
 const animationRepresentations = [ 'CBs', 'CAs', 'CRs', 'gaussian', 'MolecularSurface', 'VdwSpheres' ]
 
 export const MoorhenCalculateTrajectoryMenuItem = (props: {
-    popoverPlacement?: 'left' | 'right'
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -60,7 +59,6 @@ export const MoorhenCalculateTrajectoryMenuItem = (props: {
 
     return <MoorhenBaseMenuItem
         id='calculate-trajectory-menu-item'
-        popoverPlacement={props.popoverPlacement}
         popoverContent={panelContent}
         menuItemText="Animate multi-model trajectory..."
         onCompleted={onCompleted}
@@ -68,7 +66,4 @@ export const MoorhenCalculateTrajectoryMenuItem = (props: {
     />
 }
 
-MoorhenCalculateTrajectoryMenuItem.defaultProps = {
-    popoverPlacement: "right",
-}
 

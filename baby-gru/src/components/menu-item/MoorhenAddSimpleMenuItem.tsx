@@ -28,7 +28,7 @@ export const MoorhenAddSimpleMenuItem = (props: {
                 {molTypes.map(type => {return <option value={type} key={type}>{type}</option>})}
             </FormSelect>
         </Form.Group>
-        <MoorhenMoleculeSelect {...props} molecules={molecules} allowAny={false} ref={moleculeSelectRef} />
+        <MoorhenMoleculeSelect molecules={molecules} allowAny={false} ref={moleculeSelectRef} />
     </>
 
 
@@ -45,10 +45,8 @@ export const MoorhenAddSimpleMenuItem = (props: {
         popoverContent={panelContent}
         menuItemText="Add simple..."
         onCompleted={onCompleted}
-        popoverPlacement={props.popoverPlacement}
+        popoverPlacement={props.popoverPlacement ?? 'right'}
         setPopoverIsShown={props.setPopoverIsShown}
     />
 }
-
-MoorhenAddSimpleMenuItem.defaultProps = { popoverPlacement: "right" }
 
