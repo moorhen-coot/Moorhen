@@ -10,7 +10,7 @@ const paths = {
   types: path.resolve(__dirname, 'src', 'types'),
   dist: path.resolve(__dirname, 'dist'),
   public: path.resolve(__dirname, 'public'),
-  monomerLibraryPath: path.resolve(__dirname, 'public', 'monomers'),
+  monomerLibraryPath: path.resolve(__dirname, 'public', 'baby-gru', 'monomers'),
   minimalMonomerLib: [
     'ALA', 'ASP', 'ASN', 'CYS', 'GLN', 'GLY', 'GLU', 'PHE', 'HIS', 'ILE', 'LYS', 
     'LEU', 'MET', 'MSE', 'PRO', 'ARG', 'SER', 'THR', 'VAL', 'TRP', 'TYR', 'PO4',
@@ -55,7 +55,7 @@ module.exports = (env, argv) => {
           ...paths.minimalMonomerLib.map(monomer => {
             return {
               from: path.resolve(paths.monomerLibraryPath, monomer.charAt(0).toLowerCase(), `${monomer}.cif`),
-              to: path.resolve(paths.dist, 'public', 'monomers', monomer.charAt(0).toLowerCase()),
+              to: path.resolve(paths.dist, 'public', 'baby-gru', 'monomers', monomer.charAt(0).toLowerCase()),
               toType: 'dir',  
             }
           }),
