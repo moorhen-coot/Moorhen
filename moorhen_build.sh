@@ -798,11 +798,6 @@ if [ $BUILD_FFTW3 = true ]; then
     emconfigure ${MOORHEN_SOURCE_DIR}/checkout/fftw-$fftw3_release/configure --prefix=${INSTALL_DIR} --enable-float
     emmake make LDFLAGS=-all-static -j ${NUMPROCS} CXXFLAGS="${MOORHEN_CMAKE_FLAGS}" CFLAGS="${MOORHEN_CMAKE_FLAGS}"
     emmake make install || fail "Error installing fftw3, giving up."
-    #emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/fftw  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}"
-    #emmake make -j ${NUMPROCS}
-    #emmake make install || fail "Error installing fftw, giving up."
-    echo "fftw3"
-    exit
 fi
 
 #mmdb2
