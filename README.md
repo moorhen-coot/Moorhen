@@ -63,18 +63,17 @@ Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) 
 `cd emsdk`  
 `git pull`  
 `./emsdk install latest`  
-`./emsdk activate latest`
-
+`./emsdk activate latest`  
 (Moorhen is known to build successfully with emscripten version 3.1.68, the 30th September 2024 release.)
 
-3. Each time you want to use emscripten:  
+2. Each time you want to use emscripten:  
 `source ./emsdk_env.sh`
 
-4. Get the source:  
+3. Get the source:  
 `git clone --recurse-submodules https://github.com/moorhen-coot/Moorhen.git`  
 `cd Moorhen`
 
-5. Build gsl, Boost, RDKIt, Coot, the CCP4 libraries and examples:  
+4. Build gsl, Boost, RDKIt, Coot, the CCP4 libraries and examples:  
 <br>In this branch, it is intended that you do the build in the source directory. 
 <br/>After first checkout you should run the following script to build:  
 `./moorhen_build.sh`  
@@ -88,7 +87,7 @@ Note that you need a 64-bit WASM capable web browser to use this. Most browsers 
 See the `MEMORY64` feature at [https://webassembly.org/features/](https://webassembly.org/features/)  
 Moorhen developers have seen success with Firefox Nightly on MacOS and Linux and Chrome Canary (with `chrome://flags/#enable-experimental-webassembly-features`) on MacOS.
 
-6. To run the Moorhen molecular graphics application:  
+5. To run the Moorhen molecular graphics application:  
 `cd baby-gru`  
 `npm start`  
 And then point a web browser at `http://localhost:5173/` .  
