@@ -22,7 +22,7 @@
         "staticFiles": {
           "include": [
             "./docs.styles.css",
-            "./public/pixmaps/MoorhenLogo.png"
+            "./public/baby-gru/pixmaps/MoorhenLogo.png"
           ]
         }
       },

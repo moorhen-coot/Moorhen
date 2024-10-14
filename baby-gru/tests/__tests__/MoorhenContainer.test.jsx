@@ -71,13 +71,13 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
                 return Promise.resolve({
                     ok: true,
                     text: async () => {
-                        const fileContents = fs.readFileSync(`./public/${url}`, { encoding: 'utf8', flag: 'r' })
+                        const fileContents = fs.readFileSync(`./public/baby-gru/${url}`, { encoding: 'utf8', flag: 'r' })
                         return fileContents
                     },
                     blob: async () => {
                         return {
                             arrayBuffer: async () => {
-                                const fileContents = fs.readFileSync(`./public/${url}`)
+                                const fileContents = fs.readFileSync(`./public/baby-gru/${url}`)
                                 const buff = fileContents.buffer
                                 return buff
                             }    
