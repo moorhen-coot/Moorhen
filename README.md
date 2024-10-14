@@ -104,7 +104,7 @@ When you wish to update the application from this git repository and the `Coot` 
 7. `./moorhen_build.sh --64bit moorhen` if you want to (re-)build the 64-bit version.
 
 ![Moorhen](wasm_src_frontend/baby_gru.png)
-*The Moorhen WebGL application*
+*The Moorhen application*
 
 ## **What else can do with the compiled libraries?**
 
