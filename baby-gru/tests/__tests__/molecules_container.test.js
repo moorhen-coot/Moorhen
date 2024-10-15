@@ -1,5 +1,6 @@
+import moorhen_test_use_gemmi from '../MoorhenTestsSettings'
 
-jest.setTimeout(40000)
+jest.setTimeout(60000)
 
 const fs = require('fs')
 const path = require('path')
@@ -32,7 +33,7 @@ describe('Testing molecules_container_js', () => {
             molecules_container.delete?.()
         }
         molecules_container = new cootModule.molecules_container_js(false)
-        molecules_container.set_use_gemmi(false)
+        molecules_container.set_use_gemmi(moorhen_test_use_gemmi)
     })
 
     afterEach(() => {

@@ -5,6 +5,7 @@ import { MoorhenReduxStore } from "../../tsDist/src/store/MoorhenReduxStore"
 import { MockWebGL } from "../__mocks__/mockWebGL"
 import { parseAtomInfoLabel } from "../../tsDist/src/utils/utils"
 import fetch from 'node-fetch'
+import moorhen_test_use_gemmi from '../MoorhenTestsSettings'
 
 jest.setTimeout(60000)
 
@@ -78,7 +79,7 @@ describe("Testing MoorhenMolecule", () => {
             molecules_container.delete?.()
         }
         molecules_container = new cootModule.molecules_container_js(false)
-        molecules_container.set_use_gemmi(false)
+        molecules_container.set_use_gemmi(moorhen_test_use_gemmi)
         glRef = {
             current: new MockWebGL()
         }
