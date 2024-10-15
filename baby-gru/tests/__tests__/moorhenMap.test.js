@@ -2,6 +2,7 @@ import { MoorhenMap } from "../../tsDist/src/utils/MoorhenMap"
 import { MockMoorhenCommandCentre } from "../__mocks__/mockMoorhenCommandCentre"
 import { MockWebGL } from "../__mocks__/mockWebGL"
 import fetch from 'node-fetch';
+import moorhen_test_use_gemmi from '../MoorhenTestsSettings'
 
 jest.setTimeout(40000)
 
@@ -62,7 +63,7 @@ describe("Testing MoorhenMap", () => {
             molecules_container.delete?.()
         }
         molecules_container = new cootModule.molecules_container_js(false)
-        molecules_container.set_use_gemmi(false)
+        molecules_container.set_use_gemmi(moorhen_test_use_gemmi)
         glRef = {
             current: new MockWebGL()
         }

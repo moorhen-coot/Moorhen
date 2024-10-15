@@ -1,3 +1,4 @@
+import moorhen_test_use_gemmi from '../MoorhenTestsSettings'
 
 jest.setTimeout(40000)
 
@@ -45,7 +46,7 @@ describe('Testing slice-n-dice', () => {
             molecules_container.delete?.()
         }
         molecules_container = new cootModule.molecules_container_js(false)
-        molecules_container.set_use_gemmi(false)
+        molecules_container.set_use_gemmi(moorhen_test_use_gemmi)
     })
 
     afterEach(() => {
