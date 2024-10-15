@@ -1,0 +1,29 @@
+diff -ru /Users/stuart/Moorhen-fftw3/checkout/clipper/clipper/gemmi/clipper_gemmi.cpp ./clipper/gemmi/clipper_gemmi.cpp
+--- /Users/stuart/Moorhen-fftw3/checkout/clipper/clipper/gemmi/clipper_gemmi.cpp	2024-05-15 13:55:35
++++ ./clipper/gemmi/clipper_gemmi.cpp	2024-10-15 12:12:35
+@@ -166,6 +166,7 @@
+   size_t cols[ncols];
+   std::vector<String> col_names = extract_column_names(colpath, ncols);
+   std::vector<String> dat_names = cdata.data_names().split(" ");
++  std::vector<ftype> scls(ncols, 1.0);
+   String dataset_name = colpath.split("/")[1];
+   // get the column indices
+   for (int c = 0; c < ncols; c++) {
+@@ -175,6 +176,8 @@
+       else
+         cols[c] = mtzobj.column_with_label(col_names[c].c_str())->idx;
+     }
++    if (dat_names[c] == "phi")
++      scls[c] = Util::rad2d(1.0);
+   }
+   // loop through nreflections,data
+   xtype values[ncols];
+@@ -184,7 +187,7 @@
+       // set to Nan unless readable and present
+       Util::set_null(values[c]);
+       if (!Util::is_nan(xtype(mtzobj.data[i + cols[c]])))
+-        values[c] = xtype(mtzobj.data[i + cols[c]]);
++        values[c] = xtype(mtzobj.data[i + cols[c]]/scls[c]);
+     }
+     cdata.data_import(Hkl(mtzobj.get_hkl(i)), values);
+   }
