@@ -1,9 +1,10 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react-swc'
-import crossOriginIsolation from 'vite-plugin-cross-origin-isolation'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react-swc';
+import crossOriginIsolation from 'vite-plugin-cross-origin-isolation';
 import wasm from "vite-plugin-wasm";
 import topLevelAwait from "vite-plugin-top-level-await";
 import checker from 'vite-plugin-checker';
+import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
     plugins: [
@@ -16,12 +17,23 @@ export default defineConfig({
             tsconfigPath: 'tsconfig.json'
 
         }}),
+        VitePWA({
+            registerType: "autoUpdate",
+            workbox: {
+                maximumFileSizeToCacheInBytes: 20 * 1024 * 1024
+            },
+            devOptions: {
+                enabled: true,
+                type: "module"
+            }
+        }),
         {
             name: "configure-response-headers",
             configureServer: (server) => {
                 server.middlewares.use((_req, res, next) => {
                     res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
                     res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+                    res.setHeader("Access-Control-Allow-Origin", "*");
                     next();
                 });
             },
@@ -31,6 +43,7 @@ export default defineConfig({
         headers: {
             "Cross-Origin-Opener-Policy": "same-origin",
             "Cross-Origin-Embedder-Policy": "require-corp",
+            "Access-Control-Allow-Origin": "*"
         },
         watch: {
             ignored: [
