@@ -3,17 +3,17 @@
   "name": "Moorhen",
   "icons": [
     {
-      "src": "baby-gru/favicon.ico",
+      "src": "/baby-gru/favicon.ico",
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/x-icon"
     },
     {
-      "src": "baby-gru/logo192.png",
+      "src": "/baby-gru/logo192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "baby-gru/logo512.png",
+      "src": "/baby-gru/logo512.png",
       "sizes": "512x512"
     }
   ],
