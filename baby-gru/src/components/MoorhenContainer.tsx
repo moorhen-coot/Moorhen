@@ -213,7 +213,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     const defaultProps = {
         onUserPreferencesChange: () => {},
-        urlPrefix: 'baby-gru',
+        urlPrefix: '/baby-gru',
         monomerLibraryPath: './baby-gru/monomers',
         setMoorhenDimensions: null,
         disableFileUploads: false,
