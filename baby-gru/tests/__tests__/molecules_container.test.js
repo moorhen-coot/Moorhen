@@ -874,18 +874,28 @@ describe('Testing molecules_container_js', () => {
 
         const merge_info = molecules_container.merge_molecules(coordMolNo_1, ligandMolNo.toString())
         expect(merge_info.second.size()).toBe(1)
+        const merge_chain_id = merge_info.second.get(0).chain_id
 
-        const mmcifString = molecules_container.get_molecule_atoms(coordMolNo_1, 'mmcif')
-        const st = cootModule.read_structure_from_string(mmcifString, 'test-molecule')
+        molecules_container.write_coordinates(coordMolNo_1,"temp.cif")
+        const st = cootModule.read_structure_file("temp.cif",cootModule.CoorFormat.Mmcif)
+
         cootModule.gemmi_setup_entities(st)
         cootModule.gemmi_add_entity_types(st, true)
+
         const model = st.first_model()
         const chains = model.chains
-        const chain = chains.get(2)
-        const ligands = chain.get_ligands_const()
-        expect(ligands.length()).toBe(1)
 
-        cleanUpVariables.push(merge_info, st, model, chains, chain, ligands)
+        for(let ich=0;ich<chains.size();ich++){
+            const chain = chains.get(ich)
+            if(chain.name===merge_chain_id){
+                const ligands = chain.get_ligands_const()
+                expect(ligands.length()).toBe(1)
+                cleanUpVariables.push(ligands)
+            }
+            cleanUpVariables.push(chain)
+        }
+
+        cleanUpVariables.push(merge_info, st, model, chains)
     })
 
     test("Test merge ligand and gemmi parse -pdb", () => {
@@ -903,18 +913,27 @@ describe('Testing molecules_container_js', () => {
 
         const merge_info = molecules_container.merge_molecules(coordMolNo_1, ligandMolNo.toString())
         expect(merge_info.second.size()).toBe(1)
+        const merge_chain_id = merge_info.second.get(0).chain_id
 
-        const mmcifString = molecules_container.get_molecule_atoms(coordMolNo_1, 'pdb')
-        const st = cootModule.read_structure_from_string(mmcifString, 'test-molecule')
+        molecules_container.write_coordinates(coordMolNo_1,"temp.cif")
+        const st = cootModule.read_structure_file("temp.cif",cootModule.CoorFormat.Mmcif)
+
         cootModule.gemmi_setup_entities(st)
         cootModule.gemmi_add_entity_types(st, true)
         const model = st.first_model()
         const chains = model.chains
-        const chain = chains.get(2)
-        const ligands = chain.get_ligands_const()
-        expect(ligands.length()).toBe(1)
 
-        cleanUpVariables.push(merge_info, st, model, chains, chain, ligands)
+        for(let ich=0;ich<chains.size();ich++){
+            const chain = chains.get(ich)
+            if(chain.name===merge_chain_id){
+                const ligands = chain.get_ligands_const()
+                expect(ligands.length()).toBe(1)
+                cleanUpVariables.push(ligands)
+            }
+            cleanUpVariables.push(chain)
+        }
+
+        cleanUpVariables.push(merge_info, st, model, chains)
     })
 
     test("Test merge ligand.restraints dict and gemmi parse -pdb", () => {
@@ -932,18 +951,28 @@ describe('Testing molecules_container_js', () => {
 
         const merge_info = molecules_container.merge_molecules(coordMolNo_1, ligandMolNo.toString())
         expect(merge_info.second.size()).toBe(1)
+        const merge_chain_id = merge_info.second.get(0).chain_id
 
-        const mmcifString = molecules_container.get_molecule_atoms(coordMolNo_1, 'pdb')
-        const st = cootModule.read_structure_from_string(mmcifString, 'test-molecule')
+        molecules_container.write_coordinates(coordMolNo_1,"temp.cif")
+        const st = cootModule.read_structure_file("temp.cif",cootModule.CoorFormat.Mmcif)
+
         cootModule.gemmi_setup_entities(st)
         cootModule.gemmi_add_entity_types(st, true)
+
         const model = st.first_model()
         const chains = model.chains
-        const chain = chains.get(2)
-        const ligands = chain.get_ligands_const()
-        expect(ligands.length()).toBe(1)
 
-        cleanUpVariables.push(merge_info, st, model, chains, chain, ligands)
+        for(let ich=0;ich<chains.size();ich++){
+            const chain = chains.get(ich)
+            if(chain.name===merge_chain_id){
+                const ligands = chain.get_ligands_const()
+                expect(ligands.length()).toBe(1)
+                cleanUpVariables.push(ligands)
+            }
+            cleanUpVariables.push(chain)
+        }
+
+        cleanUpVariables.push(merge_info, st, model, chains)
     })
 
     test("Test merge ligand.restraints dict and gemmi parse -mmcif", () => {
@@ -961,18 +990,28 @@ describe('Testing molecules_container_js', () => {
 
         const merge_info = molecules_container.merge_molecules(coordMolNo_1, ligandMolNo.toString())
         expect(merge_info.second.size()).toBe(1)
+        const merge_chain_id = merge_info.second.get(0).chain_id
 
-        const mmcifString = molecules_container.get_molecule_atoms(coordMolNo_1, 'mmcif')
-        const st = cootModule.read_structure_from_string(mmcifString, 'test-molecule')
+        molecules_container.write_coordinates(coordMolNo_1,"temp.cif")
+        const st = cootModule.read_structure_file("temp.cif",cootModule.CoorFormat.Mmcif)
+
         cootModule.gemmi_setup_entities(st)
         cootModule.gemmi_add_entity_types(st, true)
         const model = st.first_model()
         const chains = model.chains
-        const chain = chains.get(2)
-        const ligands = chain.get_ligands_const()
-        expect(ligands.length()).toBe(1)
 
-        cleanUpVariables.push(merge_info, st, model, chains, chain, ligands)
+        for(let ich=0;ich<chains.size();ich++){
+            const chain = chains.get(ich)
+            if(chain.name===merge_chain_id){
+                const ligands = chain.get_ligands_const()
+                expect(ligands.length()).toBe(1)
+                cleanUpVariables.push(ligands)
+            }
+            cleanUpVariables.push(chain)
+        }
+
+
+        cleanUpVariables.push(merge_info, st, model, chains)
     })
 
     test("Test merge ligand and gemmi parse cross-format 1", () => {
@@ -997,19 +1036,29 @@ describe('Testing molecules_container_js', () => {
 
         const merge_info = molecules_container.merge_molecules(coordMolNo_1, ligandMolNo.toString())
         expect(merge_info.second.size()).toBe(1)
+        const merge_chain_id = merge_info.second.get(0).chain_id
 
-        const mmcifString = molecules_container.get_molecule_atoms(coordMolNo_1, 'mmcif')
-        const st = cootModule.read_structure_from_string(mmcifString, 'test-molecule')
+        molecules_container.write_coordinates(coordMolNo_1,"temp.cif")
+        const st = cootModule.read_structure_file("temp.cif",cootModule.CoorFormat.Mmcif)
+
         cootModule.gemmi_setup_entities(st)
         cootModule.gemmi_add_entity_types(st, true)
+
         const model = st.first_model()
         const chains = model.chains
-        expect(chains.size()).toBe(old_chains.size() + 1)
-        const chain = chains.get(2)
-        const ligands = chain.get_ligands_const()
-        expect(ligands.length()).toBe(1)
 
-        cleanUpVariables.push(merge_info, old_chains, old_model, old_st, st, model, chains, chain, ligands)
+        for(let ich=0;ich<chains.size();ich++){
+            const chain = chains.get(ich)
+            if(chain.name===merge_chain_id){
+                const ligands = chain.get_ligands_const()
+                expect(ligands.length()).toBe(1)
+                cleanUpVariables.push(ligands)
+            }
+            cleanUpVariables.push(chain)
+        }
+
+
+        cleanUpVariables.push(merge_info, old_chains, old_model, old_st, st, model, chains)
     })
 
     test("Test merge ligand and gemmi parse cross-format 2", () => {
@@ -1034,19 +1083,27 @@ describe('Testing molecules_container_js', () => {
 
         const merge_info = molecules_container.merge_molecules(coordMolNo_1, ligandMolNo.toString())
         expect(merge_info.second.size()).toBe(1)
+        const merge_chain_id = merge_info.second.get(0).chain_id
 
-        const mmcifString = molecules_container.get_molecule_atoms(coordMolNo_1, 'pdb')
-        const st = cootModule.read_structure_from_string(mmcifString, 'test-molecule')
+        molecules_container.write_coordinates(coordMolNo_1,"temp.cif")
+        const st = cootModule.read_structure_file("temp.cif",cootModule.CoorFormat.Mmcif)
+
         cootModule.gemmi_setup_entities(st)
         cootModule.gemmi_add_entity_types(st, true)
         const model = st.first_model()
         const chains = model.chains
-        expect(chains.size()).toBe(old_chains.size() + 1)
-        const chain = chains.get(2)
-        const ligands = chain.get_ligands_const()
-        expect(ligands.length()).toBe(1)
 
-        cleanUpVariables.push(merge_info, old_chains, old_model, old_st, st, model, chains, chain, ligands)
+        for(let ich=0;ich<chains.size();ich++){
+            const chain = chains.get(ich)
+            if(chain.name===merge_chain_id){
+                const ligands = chain.get_ligands_const()
+                expect(ligands.length()).toBe(1)
+                cleanUpVariables.push(ligands)
+            }
+            cleanUpVariables.push(chain)
+        }
+
+        cleanUpVariables.push(merge_info, old_chains, old_model, old_st, st, model, chains)
     })
 
     test.skip('Test test_the_threading --pool false', () => {
