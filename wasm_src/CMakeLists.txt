@@ -63,6 +63,8 @@ ${coot_src}/src/c-interface-image.cc
 
 set(coot_exception_srcs
 ${coot_src}/api/mmcif-tests.cc
+${coot_src}/api/molecules-container-gltf.cc
+${coot_src}/api/coot-molecule-modelling.cc
 ${coot_src}/layla/ligand_editor_canvas.cpp
 ${coot_src}/layla/ligand_editor_canvas/core.cpp
 ${coot_src}/layla/ligand_editor_canvas/model.cpp

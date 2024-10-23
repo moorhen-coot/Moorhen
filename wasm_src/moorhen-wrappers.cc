@@ -45,6 +45,7 @@
 #include "api/interfaces.hh"
 #include "api/molecules-container.hh"
 #include "api/validation-information.hh"
+#include "api/header-info.hh"
 #include "coot-utils/g_triangle.hh"
 #include "coot-utils/vertex.hh"
 #include "coot-utils/coot-map-utils.hh"
@@ -1293,6 +1294,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_median_temperature_factor",&molecules_container_t::get_median_temperature_factor)
     .function("get_number_of_map_sections",&molecules_container_t::get_number_of_map_sections)
     .function("get_number_of_molecules",&molecules_container_t::get_number_of_molecules)
+    .function("get_octahemisphere",&molecules_container_t::get_octahemisphere)
     .function("get_residues_near_residue",&molecules_container_t::get_residues_near_residue)
     .function("get_use_rama_plot_restraints",&molecules_container_t::get_use_rama_plot_restraints)
     .function("get_use_torsion_restraints",&molecules_container_t::get_use_torsion_restraints)
@@ -1368,6 +1370,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("set_show_timings",&molecules_container_t::set_show_timings)
     .function("get_molecule_name",&molecules_container_t::get_molecule_name)
     .function("non_standard_residue_types_in_model",&molecules_container_t::non_standard_residue_types_in_model)
+    .function("partition_map_by_chain",&molecules_container_t::partition_map_by_chain)
     .function("get_map_mean",&molecules_container_t::get_map_mean)
     .function("get_map_rmsd_approx",&molecules_container_t::get_map_rmsd_approx)
     .function("set_draw_missing_residue_loops",&molecules_container_t::set_draw_missing_residue_loops)
@@ -1411,6 +1414,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("import_cif_dictionary",&molecules_container_t::import_cif_dictionary)
     .function("density_fit_analysis",&molecules_container_t::density_fit_analysis)
     .function("get_number_of_atoms",&molecules_container_t::get_number_of_atoms)
+    .function("get_number_of_hydrogen_atoms",&molecules_container_t::get_number_of_hydrogen_atoms)
     //Using allow_raw_pointers(). Perhaps suggests we need to do something different from exposing mmdb pointers to JS.
     .function("get_residue",&molecules_container_t::get_residue, allow_raw_pointers())
     .function("get_atom",&molecules_container_t::get_atom, allow_raw_pointers())
@@ -1427,6 +1431,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("auto_fit_rotamer",&molecules_container_t::auto_fit_rotamer)
     .function("rigid_body_fit",&molecules_container_t::rigid_body_fit)
     .function("cis_trans_convert",&molecules_container_t::cis_trans_convert)
+    .function("get_lsq_matrix",&molecules_container_t::get_lsq_matrix)
     .function("get_map_contours_mesh",&molecules_container_t::get_map_contours_mesh)
     .function("geometry_init_standard",&molecules_container_t::geometry_init_standard)
     .function("fill_rotamer_probability_tables",&molecules_container_t::fill_rotamer_probability_tables)
@@ -1443,6 +1448,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("set_imol_refinement_map",&molecules_container_t::set_imol_refinement_map)
     .function("mutate",&molecules_container_t::mutate)
     .function("fill_partial_residue",&molecules_container_t::fill_partial_residue)
+    .function("fill_partial_residues",&molecules_container_t::fill_partial_residues)
     .function("add_alternative_conformation",&molecules_container_t::add_alternative_conformation)
     .function("delete_using_cid",&molecules_container_t::delete_using_cid)
     .function("get_bonds_mesh",&molecules_container_t::get_bonds_mesh)
@@ -1485,6 +1491,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("clear_non_drawn_bonds",&molecules_container_t::clear_non_drawn_bonds)
     .function("file_name_to_string",&molecules_container_t::file_name_to_string)
     .function("replace_molecule_by_model_from_file",&molecules_container_t::replace_molecule_by_model_from_file)
+    .function("replace_residue",&molecules_container_t::replace_residue)
     .function("replace_map_by_mtz_from_file",&molecules_container_t::replace_map_by_mtz_from_file)
     .function("replace_fragment",&molecules_container_t::replace_fragment)
     .function("sharpen_blur_map",&molecules_container_t::sharpen_blur_map)
@@ -1550,6 +1557,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .field("imol", &molecules_container_t::fit_ligand_info_t::imol)
     .field("cluster_idx", &molecules_container_t::fit_ligand_info_t::cluster_idx)
     .field("ligand_idx", &molecules_container_t::fit_ligand_info_t::ligand_idx)
+    .field("fitting_score", &molecules_container_t::fit_ligand_info_t::fitting_score)
+    .field("cluster_volume", &molecules_container_t::fit_ligand_info_t::cluster_volume)
     ;
     value_object<generic_3d_lines_bonds_box_t>("generic_3d_lines_bonds_box_t")
     .field("line_segments", &generic_3d_lines_bonds_box_t::line_segments)
@@ -1679,7 +1688,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("sum_sqrd_x",&coot::util::density_correlation_stats_info_t::sum_sqrd_x)
     .property("sum_sqrd_y",&coot::util::density_correlation_stats_info_t::sum_sqrd_y)
     .property("sum_x",&coot::util::density_correlation_stats_info_t::sum_x)
-    .property("sum_x",&coot::util::density_correlation_stats_info_t::sum_x)
+    .property("sum_y",&coot::util::density_correlation_stats_info_t::sum_y)
     .function("var_x",&coot::util::density_correlation_stats_info_t::var_x)
     .function("var_y",&coot::util::density_correlation_stats_info_t::var_y)
     .function("correlation",&coot::util::density_correlation_stats_info_t::correlation)
@@ -1729,7 +1738,10 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("journal_lines", &moorhen::header_info_t::journal_lines)
         .field("author_lines", &moorhen::header_info_t::author_lines)
         .field("compound_lines", &moorhen::header_info_t::compound_lines)
+        .field("helix_info", &moorhen::header_info_t::helix_info)
     ;
+
+    register_vector<moorhen::header_info_t>("vector_header_info_t");
 
     value_object<coot::molecule_t::histogram_info_t>("histogram_info_t")
         .field("base", &coot::molecule_t::histogram_info_t::base)
@@ -1896,6 +1908,33 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("first",  &std::pair<coot::residue_validation_information_t, coot::residue_validation_information_t>::first)
         .field("second", &std::pair<coot::residue_validation_information_t, coot::residue_validation_information_t>::second)
     ;
+
+    value_object<lsq_results_t>("lsq_results_t")
+      .field("rotation_matrix", &lsq_results_t::rotation_matrix)
+      .field("translation",     &lsq_results_t::translation)
+    ;
+
+    class_<moorhen::helix_t>("helix_t")
+       .constructor<int, const std::string &, const std::string &, const std::string &,
+              int, const std::string &,
+              const std::string &, const std::string &, int, const std::string &,
+              int, const std::string &, int>()
+       .property("serNum", &moorhen::helix_t::serNum)
+       .property("helixID", &moorhen::helix_t::helixID)
+       .property("initResName", &moorhen::helix_t::initResName)
+       .property("initChainID", &moorhen::helix_t::initChainID)
+       .property("initSeqNum", &moorhen::helix_t::initSeqNum)
+       .property("initICode", &moorhen::helix_t::initICode)
+       .property("endResName", &moorhen::helix_t::endResName)
+       .property("endChainID", &moorhen::helix_t::endChainID)
+       .property("endSeqNum", &moorhen::helix_t::endSeqNum)
+       .property("endICode", &moorhen::helix_t::endICode)
+       .property("helixClass", &moorhen::helix_t::helixClass)
+       .property("comment", &moorhen::helix_t::comment)
+       .property("length", &moorhen::helix_t::length)
+    ;
+
+    register_vector<moorhen::helix_t>("vector_helix_t");
 
     value_object<moorhen_hbond>("moorhen_hbond")
       .field("hb_hydrogen",&moorhen_hbond::hb_hydrogen)

@@ -54,6 +54,20 @@ describe('Testing molecules_container_js', () => {
         expect(ret).toBe(1)
     })
 
+    test("Test header_info", () => {
+        const coordMol = molecules_container.read_pdb('./5a3h.pdb')
+        const header_info = molecules_container.get_header_info(coordMol)
+        const journal_lines = header_info.journal_lines
+        const author_lines = header_info.author_lines
+        const compound_lines = header_info.compound_lines
+        const helix_info = header_info.helix_info
+        expect(journal_lines.size()).toBe(8)
+        expect(author_lines.size()).toBe(2)
+        expect(compound_lines.size()).toBe(9)
+        expect(helix_info.size()).toBe(12)
+        cleanUpVariables.push(journal_lines, author_lines, compound_lines, helix_info)
+    })
+
     test("Test metaballs", () => {
         const coordMol = molecules_container.read_pdb('./5a3h.pdb')
         const gridSize = 0.15
