@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
+import { FormSelect, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { Dropdown, Form, InputGroup, SplitButton } from "react-bootstrap"
@@ -12,9 +13,10 @@ import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore"
+import { InfoOutlined } from "@mui/icons-material";
 import { useSnackbar } from "notistack"
 
-const MoorhenImportLigandDictionary = (props: { 
+const MoorhenImportLigandDictionary = (props: {
     id: string;
     menuItemText: string;
     createInstance: boolean;
@@ -52,7 +54,7 @@ const MoorhenImportLigandDictionary = (props: {
         let newMolecule: moorhen.Molecule
         let selectedMoleculeIndex: number
         let molNosToUpdate: number[] = []
-        
+
         if (moleculeSelectValueRef.current) {
             selectedMoleculeIndex = parseInt(moleculeSelectValueRef.current)
             const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedMoleculeIndex)
@@ -75,7 +77,7 @@ const MoorhenImportLigandDictionary = (props: {
                 return molecule.redraw()
             }))
         }
-                
+
         if (createRef.current) {
             const instanceName = tlcValueRef.current
             const result = await commandCentre.current.cootCommand({
@@ -84,7 +86,7 @@ const MoorhenImportLigandDictionary = (props: {
                 commandArgs: [instanceName,
                     selectedMoleculeIndex,
                     ...glRef.current.origin.map(coord => -coord)]
-            }, true) as moorhen.WorkerResponse<number> 
+            }, true) as moorhen.WorkerResponse<number>
             if (result.data.result.status === "Completed") {
                 newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)
                 newMolecule.molNo = result.data.result.result
@@ -157,7 +159,7 @@ const MoorhenImportLigandDictionary = (props: {
             console.log('Unable to get ligand dict...')
         }
     }, [handleFileContent, fetchLigandDict])
-    
+
     return <MoorhenBaseMenuItem
         id={id}
         popoverContent={popoverContent}
@@ -182,6 +184,7 @@ export const MoorhenSMILESToLigandMenuItem = (props: {
     const [addToMolecule, setAddToMolecule] = useState<string>('')
     const [conformerCount, setConformerCount] = useState<number>(10)
     const [iterationCount, setIterationCount] = useState<number>(100)
+    const [source, setSource] = useState<string>("smiles")
 
     const smileRef = useRef<null | string>(null)
     const tlcValueRef = useRef<null | string>(null)
@@ -192,6 +195,7 @@ export const MoorhenSMILESToLigandMenuItem = (props: {
     const addToMoleculeValueRef = useRef<null | number>(null)
     const conformerCountRef = useRef<number>(10)
     const iterationCountRef = useRef<number>(100)
+    const sourceSelectRef = useRef<HTMLSelectElement | null>(null)
 
     const collectedProps = {
         smile, setSmile, tlc, setTlc, createInstance, setCreateInstance, addToMolecule,
@@ -200,7 +204,24 @@ export const MoorhenSMILESToLigandMenuItem = (props: {
     }
 
     const smilesToPDB = async (): Promise<string> => {
-        if (!smileRef.current) {
+
+        let smilesText = ""
+        if(sourceSelectRef.current.value==="pubchem"){
+            const molSearchUrl = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/"+smileRef.current+"/cids/TXT"
+            console.log(molSearchUrl)
+            const moleculeSearchResponse = await fetch(molSearchUrl)
+            const moleculeId = await moleculeSearchResponse.text()
+            const smilesSearchUrl = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/"+moleculeId+"/property/CanonicalSMILES/TXT"
+            console.log(moleculeId)
+            const smilesResponse = await fetch(smilesSearchUrl)
+            const pubchemSmiles = await smilesResponse.text()
+            console.log(pubchemSmiles)
+            smilesText = pubchemSmiles
+        } else {
+            smilesText = smileRef.current
+        }
+
+        if (!smilesText) {
             console.log('Empty smile, do nothing...')
             return
         }
@@ -215,7 +236,7 @@ export const MoorhenSMILESToLigandMenuItem = (props: {
             return
         }
 
-        if ( (isNaN(n_conformer) || n_conformer < 0 || n_conformer === Infinity) || 
+        if ( (isNaN(n_conformer) || n_conformer < 0 || n_conformer === Infinity) ||
             (isNaN(n_iteration) || n_iteration < 0 || n_iteration === Infinity) ) {
             console.log('Unable to parse n_conformer / n_iteration count into a valid int...')
             return
@@ -223,7 +244,7 @@ export const MoorhenSMILESToLigandMenuItem = (props: {
 
         const response = await props.commandCentre.current.cootCommand({
             command: 'smiles_to_pdb',
-            commandArgs: [smileRef.current, tlcValueRef.current, n_conformer, n_iteration],
+            commandArgs: [smilesText, tlcValueRef.current, n_conformer, n_iteration],
             returnType: 'str_str_pair'
         }, true) as moorhen.WorkerResponse<libcootApi.PairType<string, string>>
         const result = response.data.result.result.second
@@ -235,18 +256,42 @@ export const MoorhenSMILESToLigandMenuItem = (props: {
         }
     }
 
+    const handleSourceChange = async (evt) => {
+        setSource(evt.target.value)
+    }
+
     const panelContent = <>
         <Form.Group key="smile" style={{ width: '20rem', margin: '0.5rem' }} controlId="tlc" className="mb-3">
-            <Form.Label>Type a smile</Form.Label>
-            <Form.Control value={smile} type="text" 
+            <Form.Label>Source...</Form.Label>
+            <OverlayTrigger
+                placement="right"
+                overlay={
+                    <Tooltip id="tip-tooltip" className="moorhen-tooltip" style={{zIndex: 99999}}>
+                        <em>
+                            By default, a structure will be created from a user inputted SMILES string.
+                            Alternatively, a molecule name can be used in which case the SMILES string will be
+                            generated by searching PubChem.
+                        </em>
+                    </Tooltip>
+                }>
+                <InfoOutlined style={{marginLeft: '0.1rem', marginBottom: '0.2rem', width: '15px', height: '15px'}}/>
+            </OverlayTrigger>
+            <FormSelect ref={sourceSelectRef} size="sm" value={source} onChange={handleSourceChange}>
+                <option value={"smiles"}>SMILES</option>
+                <option value={"pubchem"}>PubChem search</option>
+            </FormSelect>
+        </Form.Group>
+
+        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="SmilesString" className="mb-3">
+            <Form.Control value={smile} type="text"
                 onChange={(e) => {
                     setSmile(e.target.value)
                     smileRef.current = e.target.value
                 }}/>
-        </Form.Group>            
-        <Form.Group key="tlc" style={{ width: '20rem', margin: '0.5rem' }} controlId="tlc" className="mb-3">
+        </Form.Group>
+        <Form.Group key="tlc" style={{ width: '20rem', margin: '0.5rem' }} controlId="SmilesMoleculeName" className="mb-3">
             <Form.Label>Assign a name</Form.Label>
-            <Form.Control value={tlc} type="text" 
+            <Form.Control value={tlc} type="text"
                 onChange={(e) => {
                     setTlc(e.target.value)
                     tlcValueRef.current = e.target.value
@@ -254,7 +299,7 @@ export const MoorhenSMILESToLigandMenuItem = (props: {
         </Form.Group>
         <Form.Group>
             <TextField
-                style={{margin: '0.5rem', width: '9rem'}} 
+                style={{margin: '0.5rem', width: '9rem'}}
                 id='conformer-count'
                 label='No. of conformers'
                 type='number'
@@ -267,7 +312,7 @@ export const MoorhenSMILESToLigandMenuItem = (props: {
                 }}
             />
             <TextField
-                style={{margin: '0.5rem', width: '9rem'}} 
+                style={{margin: '0.5rem', width: '9rem'}}
                 id='iteration-count'
                 label='No. of iterations'
                 type='number'
@@ -285,14 +330,14 @@ export const MoorhenSMILESToLigandMenuItem = (props: {
     return <MoorhenImportLigandDictionary id='smiles-to-ligand-menu-item' menuItemText="From SMILES..." panelContent={panelContent} fetchLigandDict={smilesToPDB} {...collectedProps} />
 }
 
-export const MoorhenImportDictionaryMenuItem = (props: { 
+export const MoorhenImportDictionaryMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     monomerLibraryPath: string;
     store: ToolkitStore;
  }) => {
-    
+
     const tlcsOfFileRef = useRef<{ comp_id: string; dict_contents: string }[]>([])
     const filesRef = useRef<null | HTMLInputElement>(null)
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
@@ -352,7 +397,7 @@ export const MoorhenImportDictionaryMenuItem = (props: {
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} className="mb-3">
         <Form.Label>Monomer identifier</Form.Label>
             <Form.Select ref={tlcSelectRef} value={tlc} onChange={(newVal) => {
-                setTlc(newVal.target.value) 
+                setTlc(newVal.target.value)
                 tlcValueRef.current = newVal.target.value
             }}>
                 {tlcsOfFile.map(tlcOfFile => <option key={tlcOfFile.comp_id} value={tlcOfFile.comp_id}>{tlcOfFile.comp_id}</option>)}
@@ -368,9 +413,9 @@ export const MoorhenImportDictionaryMenuItem = (props: {
                 return ligandInfo.dict_contents
             } else {
                 console.warn(`Unable to parse ligand dictionary`)
-                enqueueSnackbar("Unable to import ligand", { variant: "error" })    
+                enqueueSnackbar("Unable to import ligand", { variant: "error" })
             }
-        } 
+        }
     }
 
     return <MoorhenImportLigandDictionary id='import-dict-menu-item' menuItemText="Import dictionary..." panelContent={panelContent} fetchLigandDict={fetchLigandDict} {...collectedProps} />
