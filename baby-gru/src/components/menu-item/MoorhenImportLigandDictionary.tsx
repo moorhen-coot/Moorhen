@@ -210,9 +210,8 @@ export const MoorhenSMILESToLigandMenuItem = (props: {
             const molSearchUrl = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/"+smileRef.current+"/cids/TXT"
             console.log(molSearchUrl)
             const moleculeSearchResponse = await fetch(molSearchUrl)
-            const moleculeId = await moleculeSearchResponse.text()
-            const smilesSearchUrl = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/"+moleculeId+"/property/CanonicalSMILES/TXT"
-            console.log(moleculeId)
+            const moleculeIds = await moleculeSearchResponse.text()
+            const smilesSearchUrl = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/"+moleculeIds.split("\n")[0]+"/property/CanonicalSMILES/TXT"
             const smilesResponse = await fetch(smilesSearchUrl)
             const pubchemSmiles = await smilesResponse.text()
             console.log(pubchemSmiles)
