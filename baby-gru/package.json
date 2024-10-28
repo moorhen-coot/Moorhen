@@ -29,7 +29,6 @@
           "^/public$",
           "^/public/favicon.ico$",
           "^/public/index.html",
-          "^/public/logo192.png",
           "^/public/manifest.json",
           "^/Dockerfile",
           "^/README.md",

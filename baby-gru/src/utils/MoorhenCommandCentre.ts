@@ -67,7 +67,9 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
         this.isClosed = false
         this.cootWorker = new Worker(`${this.urlPrefix}/../CootWorker.js`)
         this.cootWorker.onmessage = this.handleMessage.bind(this)
-        await this.postMessage({ message: 'CootInitialize', data: {} })
+        const fileResponse = await fetch("baby-gru/data.tar.gz")
+        const fileData = await fileResponse.arrayBuffer()
+        await this.postMessage({ message: 'CootInitialize', data: {cootData:new Uint8Array(fileData)} })
         if (this.onCootInitialized) {
             this.onCootInitialized()
         }

@@ -1298,17 +1298,14 @@ onmessage = function (e) {
             print: print,
             printErr: printErr,
         })
-            .then(async (returnedModule) => {
+            .then((returnedModule) => {
                 postMessage({ consoleMessage: 'Initialized molecules_container', message: e.data.message, messageId: e.data.messageId })
 
                 cootModule = returnedModule;
 
+                const fileData = e.data.data.cootData
                 cootModule.FS.mkdir("data_tmp")
-                const fileResponse = await fetch("baby-gru/data.tar.gz")
-
-                const fileData = await fileResponse.arrayBuffer()
-
-                cootModule.FS_createDataFile("data_tmp", "data.tar", new Uint8Array(fileData), true, true);
+                cootModule.FS_createDataFile("data_tmp", "data.tar", fileData, true, true);
                 const retVal = cootModule.unpackCootDataFile("data_tmp/data.tar","/")
                 cootModule.FS_unlink("data_tmp/data.tar")
 
