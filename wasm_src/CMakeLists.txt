@@ -650,7 +650,7 @@ add_custom_target(create_tar ALL COMMAND
     ${CMAKE_COMMAND} -E tar "cfvz" "data.tar.gz" ${CMAKE_CURRENT_BINARY_DIR}/data)
 add_dependencies(create_tar moorhen)
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/data.tgz DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/baby-gru)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/data.tar.gz DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/baby-gru)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.wasm
 ${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.js
