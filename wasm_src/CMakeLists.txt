@@ -88,8 +88,6 @@ ${coot_src}/pli/pi-stacking.cc
 ${coot_src}/coot-utils/cmtz-interface.cc
 ${coot_src}/coot-utils/lidia-core-functions.cc
 ${coot_src}/coot-utils/atom-selection-container.cc
-${coot_src}/coot-utils/dictionary-atom-types.cc
-${coot_src}/coot-utils/cod-db-access.cc
 ${coot_src}/coot-utils/diff-diff-map-peaks.cc
 ${coot_src}/coot-utils/gltf-export.cc
 ${coot_src}/coot-utils/texture-as-floats.cc
@@ -216,7 +214,6 @@ ${coot_src}/skeleton/graphical_skel.cc
 ${coot_src}/ideal/pepflip.cc
 ${coot_src}/ideal/parallel-planes.cc
 ${coot_src}/ideal/simple-restraint.cc
-#${coot_src}/ideal/mini-rsr.cc
 ${coot_src}/ideal/ng.cc
 ${coot_src}/ideal/torsion-bonds.cc
 ${coot_src}/ideal/chi-squareds.cc
@@ -258,7 +255,6 @@ ${coot_src}/utils/logging.cc
 ${coot_src}/utils/pir-alignment.cc
 ${coot_src}/utils/setup-syminfo.cc
 ${coot_src}/db-main/db-strands.cc
-#${coot_src}/db-main/testdbmain.cc
 ${coot_src}/high-res/residue-distortions.cc
 ${coot_src}/high-res/coot-atom-graph.cc
 ${coot_src}/high-res/sequence-assignment.cc
@@ -270,7 +266,6 @@ ${coot_src}/pli/flev-annotations.cc
 ${coot_src}/pli/protein-ligand-interactions.cc
 ${coot_src}/pli/pi-stacking.cc
 ${coot_src}/pli/sdf-interface.cc
-#${coot_src}/pli/specs.cc
 ${coot_src}/utils/base64-encode-decode.cc
 ${coot_src}/coot-utils/merge-atom-selections.cc
 ${coot_src}/coot-utils/coot-least-squares.cc
@@ -374,7 +369,6 @@ ${coot_src}/geometry/mol-utils-2.cc
 ${coot_src}/geometry/protein-donor-acceptors.cc
 ${coot_src}/geometry/intercept-3GP.cc
 ${coot_src}/build/CalphaBuild.cc
-#${coot_src}/build/testcabuild.cc
 ${coot_src}/mini-mol/mini-mol-utils.cc
 ${coot_src}/mini-mol/mini-mol.cc
 ${coot_src}/mini-mol/atom-quads.cc
