@@ -4,6 +4,8 @@ jest.setTimeout(40000)
 const fs = require('fs')
 const path = require('path')
 const fetch = require('node-fetch')
+const {gzip, ungzip} = require('node-gzip');
+
 const createCootModule = require('../../public/moorhen')
 
 let cootModule;
@@ -15,8 +17,7 @@ beforeAll(() => {
         printErr(t) { () => console.log(["output", t]); }
     }).then(moduleCreated => {
         cootModule = moduleCreated
-        setupFunctions.copyTestDataToFauxFS()
-        return Promise.resolve()
+        return setupFunctions.copyTestDataToFauxFS()
     })
 })
 
@@ -321,5 +322,12 @@ const setupFunctions = {
             cootModule.FS_createDataFile(".", fileName, coordData, true, true);
         })
         cootModule.FS.mkdir("COOT_BACKUP");
+        const cootDataZipped = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'baby-gru', 'data.tar.gz' ), { encoding: null, flag: 'r' })
+        return ungzip(cootDataZipped).then((cootData) => {
+            cootModule.FS.mkdir("data_tmp")
+            cootModule.FS_createDataFile("data_tmp", "data.tar", cootData, true, true);
+            cootModule.unpackCootDataFile("data_tmp/data.tar","/")
+            cootModule.FS_unlink("data_tmp/data.tar")
+        })
     }
 }
