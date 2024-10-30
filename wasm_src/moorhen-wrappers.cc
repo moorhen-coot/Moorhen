@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <zlib.h>
+#include <unistd.h>
 
 #include <filesystem>
 #include <complex>
@@ -1006,18 +1008,73 @@ emscripten::val testFloat32Array(const emscripten::val &floatArrayObject){
     return result;
 }
 
+void unzipFileToFP(const std::string &file_name, FILE *fp){
 
-void unpackCootDataFile(const std::string &fileName, const std::string &targetDir){
+    const int LENGTH = 1024;
+    struct stat s;
+    int fstat = stat(file_name.c_str(), &s);
+    if (fstat == 0) {
+        gzFile file = gzopen(file_name.c_str(), "rb");
+        int z_status = Z_OK;
+        unsigned char buffer[LENGTH];
+        size_t read_pos = 0;
+        while (!gzeof(file)) {
+            int bytes_read = gzread(file, buffer, LENGTH - 1);
+            const char *error_message = gzerror(file, &z_status);
+            if ((bytes_read == -1) || z_status != Z_OK) {
+                std::cerr << "WARNING:: gz read error for " << file_name << " "
+                    << error_message << std::endl;
+                break;
+            }
+            if(bytes_read>0){
+                int bytes_wrote = fwrite(buffer,1,bytes_read,fp);
+                if(bytes_wrote==-1) {
+                    std::cerr << "Failed to write in unzipFileToFP" << std::endl;
+                    return;
+                }
+            }
+        }
+        z_status = gzclose_r(file);
+        if (z_status != Z_OK) {
+            std::cerr << "WARNING:: gz close read error for " << file_name << std::endl;
+        }
+    } else {
+        std::cerr << "Error in unzipFileToFP, file " << file_name<< " does not exist" << std::endl;
+    }
+}
 
-    //FIXME - targetDir is ignored
-    std::cout << fileName << std::endl;
 
-    const char *fn_cp = fileName.c_str();
+void unpackCootDataFile(const std::string &fileName, bool doUnzip, const std::string &unzipFileName, const std::string &targetDir){
+
+    char *cwd;
+    if(targetDir.length()>0){
+        char buf[4096];
+        cwd = getcwd(buf,4096);
+        const char *dir_cp = targetDir.c_str();
+        chdir(dir_cp);
+    }
+
+    const char *fn_cp;
+
+    if(doUnzip){
+        fn_cp = unzipFileName.c_str();
+        FILE *tf = fopen(fn_cp, "wb+");
+        if(!tf) perror("fopen:");
+        unzipFileToFP(fileName,tf);
+        fclose(tf);
+    } else {
+        std::cout << "Not unzipping (file already unzipped)" << std::endl;
+        fn_cp = fileName.c_str();
+    }
+
     FILE *a = fopen(fn_cp, "rb");
     untar(a, fn_cp);
     fclose(a);
 
-    return;
+    if(targetDir.length()>0){
+        chdir(cwd);
+    }
+
 }
 
 EMSCRIPTEN_BINDINGS(my_module) {

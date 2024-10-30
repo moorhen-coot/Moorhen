@@ -1304,10 +1304,22 @@ onmessage = function (e) {
                 cootModule = returnedModule;
 
                 const fileData = e.data.data.cootData
+                let doUnzip = false
+                let unzipName = ""
+
+
+                let tarFileName = "data.tar"
+                if(fileData[0]==0x1F && fileData[1]==0x8B){
+                    doUnzip = true
+                    tarFileName = "data.tar.gz"
+                    unzipName = "data_tmp/data.tar"
+                }
+
+                //FIXME - Need to consider the case of doUnzip is true.
                 cootModule.FS.mkdir("data_tmp")
-                cootModule.FS_createDataFile("data_tmp", "data.tar", fileData, true, true);
-                const retVal = cootModule.unpackCootDataFile("data_tmp/data.tar","/")
-                cootModule.FS_unlink("data_tmp/data.tar")
+                cootModule.FS_createDataFile("data_tmp", tarFileName, fileData, true, true);
+                const retVal = cootModule.unpackCootDataFile("data_tmp/"+tarFileName,doUnzip, unzipName,"")
+                cootModule.FS_unlink("data_tmp/"+tarFileName)
 
                 molecules_container = new cootModule.molecules_container_js(false)
                 molecules_container.set_use_gemmi(false)

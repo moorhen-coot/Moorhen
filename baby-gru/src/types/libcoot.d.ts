@@ -480,7 +480,7 @@ export namespace libcootApi {
         three_letter_code: string;
     }
     type CootModule = {
-        unpackCootDataFile(arg0: string, arg1: string): number;
+        unpackCootDataFile(arg0: string, arg1: boolean, arg2: string, arg3: string): number;
         SmilesToPDB(arg0: string, arg1: string, arg2: number, arg3: number): PairType<string, string>;
         FS: {
             readFile(tempFilename: string, arg1: { encoding: string; }): string | Uint8Array;
