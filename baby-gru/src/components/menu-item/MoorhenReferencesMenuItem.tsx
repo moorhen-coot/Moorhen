@@ -78,7 +78,7 @@ export const MoorhenReferencesMenuItem = (props: { setPopoverIsShown: React.Disp
 </li>
 <li>Igraph<ul>
 <li>Csardi G, Nepusz T (2006). <em>"The igraph software package for complex network research."</em> InterJournal, Complex Systems, 1695. <a href="https://igraph.org">https://igraph.org</a>.</li>
-<li>Cs&aacute;rdi G, Nepusz T, Traag V, Horvát S, Zanini F, Noom D, Müller K (2024). <em>igraph: Network Analysis and Visualization in R.</em> <a href="doi:10.5281/zenodo.7682609">doi:10.5281/zenodo.7682609</a>, R package version 2.1.1, <a href="https://CRAN.R-project.org/package=igraph">https://CRAN.R-project.org/package=igraph</a> .</li>
+<li>Cs&aacute;rdi G, Nepusz T, Traag V, Horvát S, Zanini F, Noom D, Müller K (2024). <em>igraph: Network Analysis and Visualization in R.</em> <a href="https://doi.org/10.5281/zenodo.7682609">https://doi.org/10.5281/zenodo.7682609</a>, R package version 2.1.1, <a href="https://CRAN.R-project.org/package=igraph">https://CRAN.R-project.org/package=igraph</a> .</li>
 </ul>
 </li>
 <li>JsonCPP<ul>
@@ -106,11 +106,11 @@ export const MoorhenReferencesMenuItem = (props: { setPopoverIsShown: React.Disp
 </ul>
 </li>
 <li>PubChem<ul>
-<li>Kim S, Chen J, Cheng T, Gindulyte A, He J, He S, Li Q, Shoemaker BA, Thiessen PA, Yu B, Zaslavsky L, Zhang J, Bolton EE. PubChem 2023 update. Nucleic Acids Res. 2023 Jan 6;51(D1):D1373-D1380. <a href="https://doi:10.1093/nar/gkac956">https://doi:10.1093/nar/gkac956</a>. PMID: 36305812</li>
+<li>Kim S, Chen J, Cheng T, Gindulyte A, He J, He S, Li Q, Shoemaker BA, Thiessen PA, Yu B, Zaslavsky L, Zhang J, Bolton EE. PubChem 2023 update. Nucleic Acids Res. 2023 Jan 6;51(D1):D1373-D1380. <a href="https://doi.org/10.1093/nar/gkac956">https://doi.org/10.1093/nar/gkac956</a>. PMID: 36305812</li>
 </ul>
 </li>
 <li>SMILES<ul>
-<li>Weininger, David <em>SMILES, a chemical language and information system. 1. Introduction to methodology and encoding rules</em> ournal of Chemical Information and Computer Sciences <strong>28(1)</strong>, p31-36 (1988) <a href="https://doi:10.1021/ci00057a005">https://doi:10.1021/ci00057a005</a> </li>
+<li>Weininger, David <em>SMILES, a chemical language and information system. 1. Introduction to methodology and encoding rules</em> ournal of Chemical Information and Computer Sciences <strong>28(1)</strong>, p31-36 (1988) <a href="https://doi.org/10.1021/ci00057a005">https://doi.org/10.1021/ci00057a005</a> </li>
 </ul>
 </li>
 </ul>
