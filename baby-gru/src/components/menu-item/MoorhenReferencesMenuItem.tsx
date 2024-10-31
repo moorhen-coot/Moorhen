@@ -77,8 +77,8 @@ export const MoorhenReferencesMenuItem = (props: { setPopoverIsShown: React.Disp
 </ul>
 </li>
 <li>Igraph<ul>
-<li>Csardi G, Nepusz T (2006). <em>“The igraph software package for complex network research.”</em> InterJournal, Complex Systems, 1695. <a href="https://igraph.org">https://igraph.org</a>.</li>
-<li>Csárdi G, Nepusz T, Traag V, Horvát S, Zanini F, Noom D, Müller K (2024). <em>igraph: Network Analysis and Visualization in R.</em> <a href="doi:10.5281/zenodo.7682609">doi:10.5281/zenodo.7682609</a>, R package version 2.1.1, <a href="https://CRAN.R-project.org/package=igraph">https://CRAN.R-project.org/package=igraph</a> .</li>
+<li>Csardi G, Nepusz T (2006). <em>"The igraph software package for complex network research."</em> InterJournal, Complex Systems, 1695. <a href="https://igraph.org">https://igraph.org</a>.</li>
+<li>Cs&aacute;rdi G, Nepusz T, Traag V, Horvát S, Zanini F, Noom D, Müller K (2024). <em>igraph: Network Analysis and Visualization in R.</em> <a href="doi:10.5281/zenodo.7682609">doi:10.5281/zenodo.7682609</a>, R package version 2.1.1, <a href="https://CRAN.R-project.org/package=igraph">https://CRAN.R-project.org/package=igraph</a> .</li>
 </ul>
 </li>
 <li>JsonCPP<ul>
