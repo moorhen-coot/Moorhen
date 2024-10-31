@@ -180,10 +180,18 @@ export const MoorheSuperposeStructuresModal = (props: { commandCentre: React.Ref
         const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(evt.target.value))
         if (isReferenceModel) {
             setSelectedRefModel(parseInt(evt.target.value))
-            setSelectedRefChain(selectedMolecule.sequences[0].chain)
+            if(selectedMolecule.sequences&&selectedMolecule.sequences.length>0&&selectedMolecule.sequences[0].chain){
+                setSelectedRefChain(selectedMolecule.sequences[0].chain)
+            } else {
+                setSelectedRefChain("A")
+            }
         } else {
             setSelectedMovModel(parseInt(evt.target.value))
-            setSelectedMovChain(selectedMolecule.sequences[0].chain)
+            if(selectedMolecule.sequences&&selectedMolecule.sequences.length>0&&selectedMolecule.sequences[0].chain){
+                setSelectedMovChain(selectedMolecule.sequences[0].chain)
+            } else {
+                setSelectedMovChain("A")
+            }
         }
         setLsqkbResidueRanges({ action: "empty" })
     }
@@ -233,12 +241,20 @@ export const MoorheSuperposeStructuresModal = (props: { commandCentre: React.Ref
 
         if (selectedRefModel === null || !molecules.map(molecule => molecule.molNo).includes(selectedRefModel)) {
             setSelectedRefModel(molecules[0].molNo)
-            setSelectedRefChain(molecules[0].sequences[0].chain)
+            if(molecules[0].sequences&&molecules[0].sequences.length>0&&molecules[0].sequences[0].chain){
+                setSelectedRefChain(molecules[0].sequences[0].chain)
+            } else {
+                setSelectedRefChain("A")
+            }
         }
 
         if (selectedMovModel === null || !molecules.map(molecule => molecule.molNo).includes(selectedMovModel)) {
             setSelectedMovModel(molecules[0].molNo)
-            setSelectedMovChain(molecules[0].sequences[0].chain)
+            if(molecules[0].sequences&&molecules[0].sequences.length>0&&molecules[0].sequences[0].chain){
+                setSelectedMovChain(molecules[0].sequences[0].chain)
+            } else {
+                setSelectedMovChain("A")
+            }
         }
 
     }, [molecules.length])

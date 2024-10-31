@@ -28,9 +28,15 @@ export const MoorhenSequenceRangeSlider = forwardRef<
             if (!sequence) {
                 sequence = molecule.sequences[0]
             }
-            setSequenceLength(sequence.sequence.length)
-            setMinMaxValue([1, sequence.sequence.length])
-            if (ref !== null && typeof ref !== 'function') ref.current = [1, sequence.sequence.length]
+            if (!sequence) {
+                setSequenceLength(1)
+                setMinMaxValue([1, 1])
+                if (ref !== null && typeof ref !== 'function') ref.current = [1, 1]
+            } else {
+                setSequenceLength(sequence.sequence.length)
+                setMinMaxValue([1, sequence.sequence.length])
+                if (ref !== null && typeof ref !== 'function') ref.current = [1, sequence.sequence.length]
+            }
         }
     }, [props.selectedMolNo, props.selectedChainId])
 
@@ -50,7 +56,6 @@ export const MoorhenSequenceRangeSlider = forwardRef<
         }
         
         const resNum = Math.floor(value)
-        
         return sequence.sequence[resNum - 1]?.cid
     
     }, [molecules, props.selectedMolNo, props.selectedChainId])
