@@ -25,6 +25,7 @@ The following libraries/programs are compiled to Web Assembly:
 * Boost 1.83.0
 * glm 0.9.9.8
 * RDKit 2023_09_1
+* Freetype
 
 Moorhen is available to use at [https://moorhen.org](https://moorhen.org).
 
@@ -146,4 +147,29 @@ different in the 2 cases. If you require more classes or methods from the librar
     * Boost C++ libraries [https://www.boost.org/users/license.html](https://www.boost.org/users/license.html)
 * GLM
     * Open GL Mathematics [https://github.com/g-truc/glm](https://github.com/g-truc/glm)
+* Eigen C++ Template Library
+    * Eigen: a c++ linear algebra library. [Libraries for scientific computing](http://www.association-aristote.fr/doku.php/public:seminaires:seminaire-2013-05-15). Ecole Polytechnique, May 15th, 2013
+* Freetype
+    * FreeType is a freely available software library to render fonts. [https://www.freetype.org](https://www.freetype.org)
+* Igraph
+    * Csardi G, Nepusz T (2006). *“The igraph software package for complex network research.”* InterJournal, Complex Systems, 1695. [https://igraph.org](https://igraph.org).
+    * Csárdi G, Nepusz T, Traag V, Horvát S, Zanini F, Noom D, Müller K (2024). *igraph: Network Analysis and Visualization in R.* [doi:10.5281/zenodo.7682609](doi:10.5281/zenodo.7682609), R package version 2.1.1, [https://CRAN.R-project.org/package=igraph](https://CRAN.R-project.org/package=igraph) .
+* JsonCPP
+    * [https://github.com/open-source-parsers/jsoncpp](https://github.com/open-source-parsers/jsoncpp)
+* Libpng
+    * [https://github.com/pnggroup/libpng](https://github.com/pnggroup/libpng)
+* libsigcplusplus
+    * [https://libsigcplusplus.github.io/libsigcplusplus/](https://libsigcplusplus.github.io/libsigcplusplus/)
+* Privateer
+    * The Web app: Dialpuri, J. S., Bagdonas, H., Schofield, L. C., Pham, P. T., Holland, L., Bond, P. S., Sánchez Rodríguez, F., McNicholas, S. J. & Agirre, J. (2024). *Online carbohydrate 3D structure validation with the Privateer web app.* Acta Cryst. **F80**, 30-35.
+    * General Privateer citation (old): Agirre, J., Iglesias-Fernández, J., Rovira, C., Davies, G.J., Wilson, K.S. and Cowtan, K.D., 2015. *Privateer: software for the conformational validation of carbohydrate structures.* Nature Structural and Molecular Biology, **22(11)**, p.833.
+    * Glycomics powered validation: Bagdonas, H., Ungar, D. and Agirre, J., 2020. *Leveraging glycomics data in glycoprotein 3D structure validation with Privateer.* Beilstein Journal of Organic Chemistry, **16(1)**, 2523-2533.
+    * Theory behind Privateer: Agirre, J., 2017. *Strategies for carbohydrate model building, refinement and validation.* Acta Crystallographica Section D, **73(2)**, pp.171-186.
+    * Torsional analyses: Dialpuri, J. S., Bagdonas, H., Atanasova, M., Schofield, L. C., Hekkelman, M. L., Joosten, R. P. & Agirre, J., 2023. *Analysis and validation of overall N-glycan conformation in Privateer.* Acta Crystallographica Section D, **79**, 462-472.
+* Zlib
+    *  Adler, Mark (22 January 2024). "[Zlib-announce](https://madler.net/pipermail/zlib-announce_madler.net/2024/000015.html) zlib 1.3.1 released". Retrieved 23 January 2024.
+* PubChem
+    * Kim S, Chen J, Cheng T, Gindulyte A, He J, He S, Li Q, Shoemaker BA, Thiessen PA, Yu B, Zaslavsky L, Zhang J, Bolton EE. PubChem 2023 update. Nucleic Acids Res. 2023 Jan 6;51(D1):D1373-D1380. [https://doi:10.1093/nar/gkac956](https://doi:10.1093/nar/gkac956). PMID: 36305812
+* SMILES
+    * Weininger, David *SMILES, a chemical language and information system. 1. Introduction to methodology and encoding rules* ournal of Chemical Information and Computer Sciences **28(1)**, p31-36 (1988) [https://doi:10.1021/ci00057a005](https://doi:10.1021/ci00057a005) 
 
