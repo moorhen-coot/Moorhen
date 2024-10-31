@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MoorhenAboutMenuItem } from "../menu-item/MoorhenAboutMenuItem";
+import { MoorhenReferencesMenuItem } from "../menu-item/MoorhenReferencesMenuItem";
 import { MoorhenContactMenuItem } from "../menu-item/MoorhenContactMenuItem";
 import { MenuItem } from "@mui/material";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
@@ -27,5 +28,6 @@ export const MoorhenHelpMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         }}>Show controls...</MenuItem>
         <MoorhenContactMenuItem {...menuItemProps} />
         <MoorhenAboutMenuItem {...menuItemProps} />
+        <MoorhenReferencesMenuItem {...menuItemProps} />
     </div>
 }
