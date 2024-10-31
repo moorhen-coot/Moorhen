@@ -2113,7 +2113,7 @@ const setupFunctions = {
         return ungzip(cootDataZipped).then((cootData) => {
             cootModule.FS.mkdir("data_tmp")
             cootModule.FS_createDataFile("data_tmp", "data.tar", cootData, true, true);
-            cootModule.unpackCootDataFile("data_tmp/data.tar","/")
+            cootModule.unpackCootDataFile("data_tmp/data.tar",false,"","")
             cootModule.FS_unlink("data_tmp/data.tar")
         })
     }
