@@ -153,7 +153,7 @@ different in the 2 cases. If you require more classes or methods from the librar
     * FreeType is a freely available software library to render fonts. [https://www.freetype.org](https://www.freetype.org)
 * Igraph
     * Csardi G, Nepusz T (2006). *“The igraph software package for complex network research.”* InterJournal, Complex Systems, 1695. [https://igraph.org](https://igraph.org).
-    * Csárdi G, Nepusz T, Traag V, Horvát S, Zanini F, Noom D, Müller K (2024). *igraph: Network Analysis and Visualization in R.* [doi:10.5281/zenodo.7682609](doi:10.5281/zenodo.7682609), R package version 2.1.1, [https://CRAN.R-project.org/package=igraph](https://CRAN.R-project.org/package=igraph) .
+    * Csárdi G, Nepusz T, Traag V, Horvát S, Zanini F, Noom D, Müller K (2024). *igraph: Network Analysis and Visualization in R.* [https://doi.org/10.5281/zenodo.7682609](https://doi.org/10.5281/zenodo.7682609), R package version 2.1.1, [https://CRAN.R-project.org/package=igraph](https://CRAN.R-project.org/package=igraph) .
 * JsonCPP
     * [https://github.com/open-source-parsers/jsoncpp](https://github.com/open-source-parsers/jsoncpp)
 * Libpng
@@ -169,7 +169,6 @@ different in the 2 cases. If you require more classes or methods from the librar
 * Zlib
     *  Adler, Mark (22 January 2024). "[Zlib-announce](https://madler.net/pipermail/zlib-announce_madler.net/2024/000015.html) zlib 1.3.1 released". Retrieved 23 January 2024.
 * PubChem
-    * Kim S, Chen J, Cheng T, Gindulyte A, He J, He S, Li Q, Shoemaker BA, Thiessen PA, Yu B, Zaslavsky L, Zhang J, Bolton EE. PubChem 2023 update. Nucleic Acids Res. 2023 Jan 6;51(D1):D1373-D1380. [https://doi:10.1093/nar/gkac956](https://doi:10.1093/nar/gkac956). PMID: 36305812
+    * Kim S, Chen J, Cheng T, Gindulyte A, He J, He S, Li Q, Shoemaker BA, Thiessen PA, Yu B, Zaslavsky L, Zhang J, Bolton EE. PubChem 2023 update. Nucleic Acids Res. 2023 Jan 6;51(D1):D1373-D1380. [https://doi.org/10.1093/nar/gkac956](https://doi.org/10.1093/nar/gkac956). PMID: 36305812
 * SMILES
-    * Weininger, David *SMILES, a chemical language and information system. 1. Introduction to methodology and encoding rules* ournal of Chemical Information and Computer Sciences **28(1)**, p31-36 (1988) [https://doi:10.1021/ci00057a005](https://doi:10.1021/ci00057a005) 
-
+    * Weininger, David *SMILES, a chemical language and information system. 1. Introduction to methodology and encoding rules* ournal of Chemical Information and Computer Sciences **28(1)**, p31-36 (1988) [https://doi.org/10.1021/ci00057a005](https://doi.org/10.1021/ci00057a005)
