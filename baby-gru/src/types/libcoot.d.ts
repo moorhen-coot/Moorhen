@@ -520,7 +520,7 @@ export namespace libcootApi {
         set_refinement_is_verbose(arg0: boolean): void;
         set_use_gemmi(arg0: boolean): void;
         get_use_gemmi(): boolean;
-        export_molecular_represenation_as_gltf(imol: number, cid: string, colourScheme: string, style: string, fileName: string): void;
+        export_molecular_representation_as_gltf(imol: number, cid: string, colourScheme: string, style: string, fileName: string): void;
         export_model_molecule_as_gltf(imol: number, cid: string, mode: string, isDark: boolean, bondWidth: number, atomRadius: number, bondSmoothness: number, drawHydrogens: boolean, drawMissingResidues: boolean, fileName: string): void;
         export_map_molecule_as_gltf(imol: number, x: number, y: number, z: number, radius: number, contourLevel: number, fileName: string): void;
         set_max_number_of_threads(arg0: number): void;

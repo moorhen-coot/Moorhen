@@ -1226,14 +1226,14 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("residue_name", &coot::phi_psi_prob_t::residue_name)// Should be function?
     .function("is_allowed", &coot::phi_psi_prob_t::is_allowed)
     ;
-    class_<coot::molecule_t::moved_atom_t>("moved_atom_t")
+    class_<coot::api::moved_atom_t>("moved_atom_t")
     .constructor<const std::string&, const std::string&, float, float, float, int>()
-    .property("atom_name", &coot::molecule_t::moved_atom_t::atom_name)
-    .property("alt_conf", &coot::molecule_t::moved_atom_t::alt_conf)
-    .property("x", &coot::molecule_t::moved_atom_t::x)
-    .property("y", &coot::molecule_t::moved_atom_t::y)
-    .property("z", &coot::molecule_t::moved_atom_t::z)
-    .property("index", &coot::molecule_t::moved_atom_t::index)
+    .property("atom_name", &coot::api::moved_atom_t::atom_name)
+    .property("alt_conf", &coot::api::moved_atom_t::alt_conf)
+    .property("x", &coot::api::moved_atom_t::x)
+    .property("y", &coot::api::moved_atom_t::y)
+    .property("z", &coot::api::moved_atom_t::z)
+    .property("index", &coot::api::moved_atom_t::index)
     ;
     value_object<molecules_container_t::auto_read_mtz_info_t>("auto_read_mtz_info_t")
     .field("idx", &molecules_container_t::auto_read_mtz_info_t::idx)
@@ -1255,13 +1255,13 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .field("y", &coot::molecule_t::interesting_place_t::y)
     .field("z", &coot::molecule_t::interesting_place_t::z)
     ;
-    class_<coot::molecule_t::moved_residue_t>("moved_residue_t")
+    class_<coot::api::moved_residue_t>("moved_residue_t")
     .constructor<const std::string&, int, const std::string&>()
-    .property("chain_id", &coot::molecule_t::moved_residue_t::chain_id)
-    .property("res_no", &coot::molecule_t::moved_residue_t::res_no)
-    .property("ins_code", &coot::molecule_t::moved_residue_t::ins_code)
-    .property("moved_atoms", &coot::molecule_t::moved_residue_t::moved_atoms)
-    .function("add_atom",&coot::molecule_t::moved_residue_t::add_atom)
+    .property("chain_id", &coot::api::moved_residue_t::chain_id)
+    .property("res_no", &coot::api::moved_residue_t::res_no)
+    .property("ins_code", &coot::api::moved_residue_t::ins_code)
+    .property("moved_atoms", &coot::api::moved_residue_t::moved_atoms)
+    .function("add_atom",&coot::api::moved_residue_t::add_atom)
     ;
     value_object<coot::Cell>("Coot_Cell")
     .field("a", &coot::Cell::a)
@@ -1475,7 +1475,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("associate_data_mtz_file_with_map",&molecules_container_t::associate_data_mtz_file_with_map)
     .function("connect_updating_maps",&molecules_container_t::connect_updating_maps)
     .function("get_diff_diff_map_peaks", &molecules_container_t::get_diff_diff_map_peaks)
-    .function("export_molecular_represenation_as_gltf", &molecules_container_t::export_molecular_represenation_as_gltf)
+    .function("export_molecular_representation_as_gltf", &molecules_container_t::export_molecular_representation_as_gltf)
     .function("export_model_molecule_as_gltf", &molecules_container_t::export_model_molecule_as_gltf)
     .function("export_map_molecule_as_gltf", &molecules_container_t::export_map_molecule_as_gltf)
     .function("residues_with_missing_atoms",&molecules_container_t::residues_with_missing_atoms)
@@ -1802,8 +1802,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<std::pair<std::string, std::string>>("Vectorstring_string_pair");
     register_vector<moorhen_hbond>("Vectormoorhen_hbond");
     register_vector<coot::instanced_geometry_t>("Vectorinstanced_geometry_t");
-    register_vector<coot::molecule_t::moved_residue_t>("Vectormoved_residue_t");
-    register_vector<coot::molecule_t::moved_atom_t>("Vectormoved_atom_t");
+    register_vector<coot::api::moved_residue_t>("Vectormoved_residue_t");
+    register_vector<coot::api::moved_atom_t>("Vectormoved_atom_t");
     register_vector<std::string>("VectorString");
     register_vector<std::vector<std::string>>("VectorVectorString");
     register_vector<float>("VectorFloat");

@@ -1290,7 +1290,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             const { m2tStyle, m2tSelection } = this.getM2tArgs(this.style, this.cid)
             const result = await this.commandCentre.current.cootCommand({
                 returnType: 'string',
-                command: 'shim_export_molecular_represenation_as_gltf',
+                command: 'shim_export_molecular_representation_as_gltf',
                 commandArgs: [ this.parentMolecule.molNo, m2tSelection, "colorRampChainsScheme", m2tStyle ],
             }, false) as moorhen.WorkerResponse<ArrayBuffer>
             gltfData = result.data.result.result
