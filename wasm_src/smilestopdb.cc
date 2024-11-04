@@ -24,7 +24,7 @@
 #include "rdkit/GraphMol/Substruct/SubstructMatch.h"
 #include "rdkit/GraphMol/Substruct/SubstructUtils.h"
 
-std::pair<std::string, std::string> MolToPDB(RDKit::RWMol *mol, const std::string &TLC, int nconf, int maxIters, bool keep_orig_coords);
+std::pair<std::string, std::string> MolToPDB(RDKit::RWMol *mol, const std::string &TLC, int nconf, int maxIters, bool keep_orig_coords, bool minimize);
 
 std::string writeCIF(RDKit::RWMol *mol, const std::string &resname="UNL",  int confId=0){
     RDKit::AtomMonomerInfo *info = mol->getAtomWithIdx(0)->getMonomerInfo();
@@ -717,7 +717,7 @@ int MolMinimize(RDKit::RWMol *mol, int nconf, int maxIters){
   return minCid;
 }
 
-std::pair<std::string, std::string> MolTextToPDB(const std::string &mol_text_cpp, const std::string &TLC, int nconf, int maxIters, bool keep_orig_coords){
+std::pair<std::string, std::string> MolTextToPDB(const std::string &mol_text_cpp, const std::string &TLC, int nconf, int maxIters, bool keep_orig_coords, bool minimize){
 
     std::pair<std::string, std::string> retval;
 
@@ -736,7 +736,7 @@ std::pair<std::string, std::string> MolTextToPDB(const std::string &mol_text_cpp
         std::cout << "ROMol Conformer 0 has " << romol->getConformer(0).getNumAtoms() << " atoms" << std::endl;
         std::cout << "RWMol Conformer 0 has " << mol->getConformer(0).getNumAtoms() << " atoms" << std::endl;
         */
-        return MolToPDB(mol,TLC,nconf,maxIters,keep_orig_coords);
+        return MolToPDB(mol,TLC,nconf,maxIters,keep_orig_coords,minimize);
     } catch (RDKit::FileParseException &e) {
         std::cout << e.what() << std::endl;
         return retval;
@@ -774,10 +774,10 @@ std::pair<std::string, std::string> SmilesToPDB(const std::string &smile_cpp, co
         return retval;
     }
 
-    return MolToPDB(mol,TLC,nconf,maxIters,false);
+    return MolToPDB(mol,TLC,nconf,maxIters,false,true);
 }
 
-std::pair<std::string, std::string> MolToPDB(RDKit::RWMol *mol, const std::string &TLC, int nconf, int maxIters, bool keep_orig_coords){
+std::pair<std::string, std::string> MolToPDB(RDKit::RWMol *mol, const std::string &TLC, int nconf, int maxIters, bool keep_orig_coords, bool minimize){
 
     std::pair<std::string, std::string> retval;
 
@@ -799,17 +799,22 @@ std::pair<std::string, std::string> MolToPDB(RDKit::RWMol *mol, const std::strin
         orig_conf = mol->getConformer(0);
     }
 
-    try {
-        RDKit::DGeomHelpers::EmbedMolecule(*mol);
-    } catch (...) {
-        std::cout << "Error embedding molecule in MolToPDB." << std::endl;
-        return retval;
+    if(minimize){
+        try {
+            RDKit::DGeomHelpers::EmbedMolecule(*mol);
+        } catch (...) {
+            std::cout << "Error embedding molecule in MolToPDB." << std::endl;
+            return retval;
+        }
     }
 
-    int minCid = MolMinimize(mol, nconf, maxIters);
-    if(minCid==-1){
-        std::cout << "Minimize from MOL error in MolToPDB" << std::endl;
-        return retval;
+    int minCid=0;
+    if(minimize){
+        int minCid = MolMinimize(mol, nconf, maxIters);
+        if(minCid==-1){
+            std::cout << "Minimize from MOL error in MolToPDB" << std::endl;
+            return retval;
+        }
     }
 
     if(keep_orig_coords){

@@ -714,6 +714,23 @@ export class MoorhenMolecule implements moorhen.Molecule {
     async loadToCootFromFile(source: File): Promise<moorhen.Molecule> {
         try {
             const coordData = await readTextFile(source);
+            if(source.name.endsWith(".mol")){
+                const response = await this.commandCentre.current.cootCommand({
+                    command: 'mol_text_to_pdb',
+                    commandArgs: [coordData, "UNL" , 10, 100, true, false],
+                    returnType: 'str_str_pair'
+                }, true) as moorhen.WorkerResponse<libcootApi.PairType<string, string>>
+                const pdb = response.data.result.result.first
+                const dict = response.data.result.result.second
+                const mol = await this.loadToCootFromString(pdb, source.name);
+                await this.commandCentre.current.cootCommand({
+                    returnType: "status",
+                    command: 'read_dictionary_string',
+                    commandArgs: [dict,  mol.molNo],
+                    changesMolecules: []
+                }, false)
+                return mol
+            }
             return await this.loadToCootFromString(coordData, source.name);
         } catch (err) {
             return await Promise.reject(err);

@@ -38,6 +38,7 @@ export namespace libcootApi {
         remove_hydrogens_structure(gemmiStructure: gemmi.Structure): void;
         read_structure_from_string(coordData: string | ArrayBuffer, molName: string): gemmi.Structure;
         get_mtz_columns(fileName: string): emscriptem.vector<string>;
+        SmallMoleculeCifToMMCif(fileName: string): string;
         FS_createDataFile(arg0: string, fileName: string, byteArray: Uint8Array, arg3: boolean, arg4: boolean): void;
         getElementNameAsString: (arg0: emscriptem.instance<string>) => string;
         FS_unlink: (arg0: string) => void;
@@ -481,6 +482,8 @@ export namespace libcootApi {
     }
     type CootModule = {
         SmilesToPDB(arg0: string, arg1: string, arg2: number, arg3: number): PairType<string, string>;
+        MolTextToPDB(mol_text_cpp:string, TLC: string, nconf: number, maxIters: number, keep_orig_coords: boolean, minimize: boolean): PairType<string, string>;
+
         FS: {
             readFile(tempFilename: string, arg1: { encoding: string; }): string | Uint8Array;
             mkdir: (arg0: string) => void; 

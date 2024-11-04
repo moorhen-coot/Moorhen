@@ -35,6 +35,16 @@ describe("Testing gemmi", () => {
         cleanUpVariables = []
     })
 
+    test("Test small molecule to mmcif", async () => {
+        const response = await fetch("https://www.crystallography.net/cod/1100231.cif")
+        expect(response.ok).toBeTruthy()
+        const fileContents = await response.text()
+        console.log(fileContents)
+        const result = cootModule.SmallMoleculeCifToMMCif(fileContents)
+        console.log(result)
+    })
+
+    
     test("Test parse_mon_lib_list_cif", async () => {
         const response = await fetch("https://raw.githubusercontent.com/MonomerLibrary/monomers/master/list/mon_lib_list.cif")
         expect(response.ok).toBeTruthy()
