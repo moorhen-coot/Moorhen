@@ -36,6 +36,8 @@
 #include <gemmi/calculate.hpp>
 #include <gemmi/util.hpp>
 #include <gemmi/fstream.hpp>
+#include <gemmi/resinfo.hpp>
+#include <gemmi/cifdoc.hpp>
 
 using namespace emscripten;
 
@@ -2025,7 +2027,6 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("find_column_position",&gemmi::cif::Table::find_column_position)
     .function("find_column",&gemmi::cif::Table::find_column)
     .function("erase",&gemmi::cif::Table::erase)
-    .function("convert_pair_to_loop",&gemmi::cif::Table::convert_pair_to_loop)
     ;
 
     class_<gemmi::cif::Item>("cifItem")
@@ -2042,7 +2043,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("find_tag_lc",&gemmi::cif::Loop::find_tag_lc)
     .function("has_tag",&gemmi::cif::Loop::has_tag)
     .function("width",&gemmi::cif::Loop::width)
-    .function("val",&gemmi::cif::Loop::val)
+    .function("val",select_overload<const std::string&(size_t , size_t )const>(&gemmi::cif::Loop::val))
     .function("clear",&gemmi::cif::Loop::clear)
     .function("pop_row",&gemmi::cif::Loop::pop_row)
     .function("move_row",&gemmi::cif::Loop::move_row)
@@ -2138,7 +2139,6 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
 
     class_<gemmi::MonLib>("MonLib")
     .property("monomer_dir",&gemmi::MonLib::monomer_dir)
-    .property("lib_version",&gemmi::MonLib::lib_version)
     .property("ener_lib",&gemmi::MonLib::ener_lib)
     /* TODO
   std::map<std::string, ChemComp> monomers;
@@ -2581,7 +2581,6 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
 
     class_<gemmi::Grid<float>, base<gemmi::GridBase<float>>>("Grid")
     .function("calculate_spacing",&gemmi::Grid<float>::calculate_spacing)
-    .function("min_spacing",&gemmi::Grid<float>::min_spacing)
     .function("set_size_without_checking",&gemmi::Grid<float>::set_size_without_checking)
     .function("set_size",&gemmi::Grid<float>::set_size)
     .function("set_size_from_spacing",&gemmi::Grid<float>::set_size_from_spacing)
