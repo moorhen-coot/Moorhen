@@ -229,13 +229,13 @@ export class MoorhenPreferences implements moorhen.Preferences {
             "measure_distances": {
                 modifiers: [],
                 keyPress: "m",
-                label: "Measure distances between atoms on click",
+                label: "Measure distances and angles between atoms on click",
                 viewOnly: true
             },
             "measure_angles": {
                 modifiers: ["shiftKey"],
                 keyPress: "m",
-                label: "Measure angles between atoms on click",
+                label: "(Not enabled currently - use above)",
                 viewOnly: true
             },
             "dist_ang_2d": {
