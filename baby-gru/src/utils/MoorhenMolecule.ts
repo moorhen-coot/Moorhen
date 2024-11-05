@@ -772,7 +772,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} name - The new molecule name
      * @returns {Promise<moorhen.Molecule>} The new molecule
      */
-    async loadToCootFromString(coordData: ArrayBuffer | string, name: string): Promise<moorhen.Molecule> {
+    async loadToCootFromString(coordData_in: ArrayBuffer | string, name: string, isSmallMoleculeCif: boolean = false): Promise<moorhen.Molecule> {
         const pdbRegex = /.pdb$/;
         const entRegex = /.ent$/;
         const cifRegex = /.cif$/;
@@ -783,6 +783,22 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
 
         this.name = name.replace(pdbRegex, "").replace(entRegex, "").replace(cifRegex, "").replace(mmcifRegex, "");
+
+        let coordData: ArrayBuffer | string;
+        if(isSmallMoleculeCif){
+            try {
+                const response = await this.commandCentre.current.cootCommand({
+                    returnType: "string",
+                    command: 'SmallMoleculeCifToMMCif',
+                    commandArgs: [coordData_in],
+                }, false) as moorhen.WorkerResponse<string>
+                coordData = response.data.result.result
+            } catch (err) {
+                console.error('Error in SmallMoleculeCifToMMCif', err)
+            }
+        } else {
+            coordData = coordData_in
+        }
 
         try {
             this.updateGemmiStructure(coordData as string)

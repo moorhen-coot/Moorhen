@@ -38,7 +38,6 @@ export namespace libcootApi {
         remove_hydrogens_structure(gemmiStructure: gemmi.Structure): void;
         read_structure_from_string(coordData: string | ArrayBuffer, molName: string): gemmi.Structure;
         get_mtz_columns(fileName: string): emscriptem.vector<string>;
-        SmallMoleculeCifToMMCif(fileName: string): string;
         FS_createDataFile(arg0: string, fileName: string, byteArray: Uint8Array, arg3: boolean, arg4: boolean): void;
         getElementNameAsString: (arg0: emscriptem.instance<string>) => string;
         FS_unlink: (arg0: string) => void;
@@ -511,6 +510,7 @@ export namespace libcootApi {
         getRamachandranData(arg0: string, arg1: string): emscriptem.vector<RamaData>;
         validate(arg0: string, arg1: string): emscriptem.vector<PrivateerResultsEntry>;
         parse_mon_lib_list_cif(arg0: string): emscriptem.vector<compoundInfo>;
+        SmallMoleculeCifToMMCif(fileName: string): string;
         molecules_container_js: { new(verbose: boolean): MoleculesContainerJS };
         Vectormoved_residue_t: { new(): emscriptem.vector<MovedResidueT>};
         moved_residue_t: { new(arg0: string, arg1: number, arg2: string): MovedResidueT};
