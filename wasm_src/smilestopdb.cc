@@ -810,7 +810,7 @@ std::pair<std::string, std::string> MolToPDB(RDKit::RWMol *mol, const std::strin
 
     int minCid=0;
     if(minimize){
-        int minCid = MolMinimize(mol, nconf, maxIters);
+        minCid = MolMinimize(mol, nconf, maxIters);
         if(minCid==-1){
             std::cout << "Minimize from MOL error in MolToPDB" << std::endl;
             return retval;

@@ -481,6 +481,7 @@ export namespace libcootApi {
         three_letter_code: string;
     }
     type CootModule = {
+        unpackCootDataFile(arg0: string, arg1: boolean, arg2: string, arg3: string): number;
         SmilesToPDB(arg0: string, arg1: string, arg2: number, arg3: number): PairType<string, string>;
         MolTextToPDB(mol_text_cpp:string, TLC: string, nconf: number, maxIters: number, keep_orig_coords: boolean, minimize: boolean): PairType<string, string>;
 
