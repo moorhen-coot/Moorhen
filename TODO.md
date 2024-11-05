@@ -2,7 +2,6 @@
 A JavaScript molecular graphics program
 
 ### Todo
-- [ ] Restore measuring angles
 - [ ] Highlight things other than balls.
 - [ ] Electrostatics
 - [ ] Auto scaled shadow box
