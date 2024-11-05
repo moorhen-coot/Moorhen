@@ -10155,18 +10155,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     updateLabels = true
                     if (self.labelledAtoms.length === 0 || (self.labelledAtoms[self.labelledAtoms.length - 1].length > 1)) {
                         self.labelledAtoms.push([]);
-                        self.labelledAtoms[self.labelledAtoms.length - 1].push(theAtom);
-                    } else {
-                        self.labelledAtoms[self.labelledAtoms.length - 1].push(theAtom);
                     }
+                    self.labelledAtoms[self.labelledAtoms.length - 1].push(theAtom);
                 } else if (self.keysDown['measure_distances']) {
                     updateLabels = true
-                    if (self.measuredAtoms.length === 0 || (self.measuredAtoms[self.measuredAtoms.length - 1].length > 1 && !self.keysDown['measure_angles'])) {
+                    if (self.measuredAtoms.length === 0) {
                         self.measuredAtoms.push([]);
-                        self.measuredAtoms[self.measuredAtoms.length - 1].push(theAtom);
-                    } else {
-                        self.measuredAtoms[self.measuredAtoms.length - 1].push(theAtom);
                     }
+                    self.measuredAtoms[self.measuredAtoms.length - 1].push(theAtom);
                 }
             }
             if(updateLabels) self.updateLabels()
