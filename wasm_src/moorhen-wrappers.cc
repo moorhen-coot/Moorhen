@@ -56,6 +56,10 @@
 #include "clipper/core/ramachandran.h"
 #include "clipper/clipper-ccp4.h"
 
+#include "gemmi/small.hpp"
+#include "gemmi/smcif.hpp"
+#include "gemmi/to_mmcif.hpp"
+
 #include "cartesian.h"
 #include "geomutil.h"
 #include "matrix.h"
@@ -320,8 +324,8 @@ class molecules_container_js : public molecules_container_t {
             return GenerateMoorhenMetaBalls(mol,cid_str,gridSize,radius,isoLevel);
         }
 
-        std::pair<std::string, std::string> mol_text_to_pdb(const std::string &mol_text_cpp, const std::string &TLC, int nconf, int maxIters, bool keep_orig_coords) {
-            return MolTextToPDB(mol_text_cpp, TLC, nconf, maxIters, keep_orig_coords);
+        std::pair<std::string, std::string> mol_text_to_pdb(const std::string &mol_text_cpp, const std::string &TLC, int nconf, int maxIters, bool keep_orig_coords, bool minimize) {
+            return MolTextToPDB(mol_text_cpp, TLC, nconf, maxIters, keep_orig_coords, minimize);
         }
 
         std::pair<std::string, std::string> smiles_to_pdb(const std::string &smile_cpp, const std::string &TLC, int nconf, int maxIters) {
@@ -1008,6 +1012,71 @@ emscripten::val testFloat32Array(const emscripten::val &floatArrayObject){
     return result;
 }
 
+std::string SmallMoleculeCifToMMCif(const std::string &small_molecule_cif){
+
+    std::string mmcif_string;
+    gemmi::cif::Document doc = gemmi::cif::read_string(small_molecule_cif);
+    gemmi::cif::Block block = doc.sole_block();
+
+    gemmi::SmallStructure small = gemmi::make_small_structure_from_block(block);
+
+
+    gemmi::Residue r;
+    r.name = "UNK";
+    r.label_seq = 1;
+
+    std::map<std::string,int> atoms;
+
+    for (const auto& site : small.sites) {
+        gemmi::Atom atom;
+        auto orth = small.cell.orthogonalize(site.fract);
+        atom.pos = orth;
+        atom.element = site.element;
+
+        if(atoms.count(std::string(site.element.name()))==0){
+            atoms[std::string(site.element.name())]  = 1;
+        } else {
+            atoms[std::string(site.element.name())] += 1;
+        }
+        atom.name = std::string(site.element.name())+std::to_string(atoms[std::string(site.element.name())]);
+
+        r.atoms.push_back(atom);
+    }
+
+    gemmi::Structure st2;
+
+    gemmi::Model m("1");
+    gemmi::Chain c("A");
+
+    c.residues.push_back(r);
+    m.chains.push_back(c);
+    st2.models.push_back(m);
+
+    st2.cell = small.cell;
+    st2.name = small.name;
+
+    st2.spacegroup_hm = small.spacegroup_hm;
+
+    gemmi::cif::Document doc2 = gemmi::make_mmcif_document(st2);
+    gemmi::cif::Table data = doc2.sole_block().find_mmcif_category("_atom_site.");
+
+    for (auto d: data) {
+        int auth_seq_id_pos = d.tab.find_column_position("auth_seq_id");
+        d.value_at_unsafe(auth_seq_id_pos) = "1";
+        int label_entity_id_pos = d.tab.find_column_position("label_entity_id");
+        d.value_at_unsafe(label_entity_id_pos) = "1";
+        int label_asym_id_pos = d.tab.find_column_position("label_asym_id");
+        d.value_at_unsafe(label_asym_id_pos) = "A";
+    }
+
+    std::ostringstream s;
+    gemmi::cif::write_cif_to_stream(s, doc2);
+
+    mmcif_string = s.str();
+
+    return mmcif_string;
+}
+
 void unzipFileToFP(const std::string &file_name, FILE *fp){
 
     const int LENGTH = 1024;
@@ -1074,7 +1143,6 @@ void unpackCootDataFile(const std::string &fileName, bool doUnzip, const std::st
     if(targetDir.length()>0){
         chdir(cwd);
     }
-
 }
 
 EMSCRIPTEN_BINDINGS(my_module) {
@@ -2076,8 +2144,12 @@ EMSCRIPTEN_BINDINGS(my_module) {
 
     function("getRotamersMap",&getRotamersMap);
 
+    function("SmallMoleculeCifToMMCif",&SmallMoleculeCifToMMCif);
+
     //For testing
     //function("TakeColourMap",&TakeColourMap);
     //function("TakeStringIntPairVector",&TakeStringIntPairVector);
     function("get_mtz_columns",&get_mtz_columns);
+
+
 }

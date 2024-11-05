@@ -1125,6 +1125,9 @@ const doCootCommand = (messageData: {
             case "parse_mon_lib_list_cif":
                 cootResult = parseMonLibListCif(...commandArgs as [string])
                 break
+            case "SmallMoleculeCifToMMCif":
+                cootResult = cootModule.SmallMoleculeCifToMMCif(...commandArgs as [string])
+                break
             default:
                 cootResult = molecules_container[command](...commandArgs)
                 break

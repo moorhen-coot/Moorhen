@@ -11,7 +11,7 @@ const createCootModule = require('../../public/moorhen')
 let cootModule;
 let cleanUpVariables = []
 
-beforeAll(() => {   
+beforeAll(() => {
     return createCootModule({
         print(t) { () => console.log(["output", t]) },
         printErr(t) { () => console.log(["output", t]); }
@@ -34,6 +34,15 @@ describe("Testing gemmi", () => {
             }
         })
         cleanUpVariables = []
+    })
+
+    test("Test small molecule to mmcif", async () => {
+        const response = await fetch("https://www.crystallography.net/cod/1100231.cif")
+        expect(response.ok).toBeTruthy()
+        const fileContents = await response.text()
+        console.log(fileContents)
+        const result = cootModule.SmallMoleculeCifToMMCif(fileContents)
+        console.log(result)
     })
 
     test("Test parse_mon_lib_list_cif", async () => {
@@ -171,7 +180,7 @@ describe("Testing gemmi", () => {
         const model = st.first_model()
         const modelMass = cootModule.calculate_mass_model(model)
         expect(modelMass).toBeCloseTo(37224.72, 1)
-        
+
         const chains = model.chains
         expect(chains.size()).toBe(3)
 
@@ -199,10 +208,10 @@ describe("Testing gemmi", () => {
         cootModule.gemmi_setup_entities(st)
         const model = st.first_model()
         const chains = model.chains
-        
+
         const chain = chains.get(1)
         expect(chain.name).toBe('B')
-        
+
         const ligands = chain.get_ligands_const()
         expect(ligands.size()).toBe(2)
 
@@ -217,10 +226,10 @@ describe("Testing gemmi", () => {
         cootModule.gemmi_setup_entities(st)
         const model = st.first_model()
         const chains = model.chains
-        
+
         const chain = chains.get(2)
         expect(chain.name).toBe('A')
-        
+
         const waters = chain.get_waters_const()
         expect(waters.size()).toBe(348)
 
@@ -228,7 +237,7 @@ describe("Testing gemmi", () => {
         expect(water.name).toBe('HOH')
         const waterSeqId = water.seqid
         expect(waterSeqId.str()).toBe('901')
-        
+
         cleanUpVariables.push(st, model, chain, chains, water, waters, waterSeqId)
 
     })
@@ -289,7 +298,7 @@ describe("Testing gemmi", () => {
     test("Test structure_is_ligand", () => {
         const st_1 = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
         cootModule.gemmi_setup_entities(st_1)
-        
+
         const is_ligand_1 = cootModule.structure_is_ligand(st_1)
         expect(is_ligand_1).toBeFalsy()
 
