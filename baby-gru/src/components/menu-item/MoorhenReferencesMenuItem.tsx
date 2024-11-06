@@ -11,7 +11,7 @@ export const MoorhenReferencesMenuItem = (props: { setPopoverIsShown: React.Disp
     };
     
     const panelContent = <div style={divStyle}>
-        <p>References:</p>
+        <p>The following have been used to create Moorhen:</p>
 <ul>
 <li>Emscripten<ul>
 <li><a href="https://emscripten.org/">https://emscripten.org/</a></li>
