@@ -1661,6 +1661,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_rdkit_mol_pickle_base64", &molecules_container_t::get_rdkit_mol_pickle_base64)
     .function("get_q_score", &molecules_container_t::get_q_score)
     .function("get_acedrg_atom_types_for_ligand", &molecules_container_t::get_acedrg_atom_types_for_ligand)
+    .function("dictionary_atom_name_map", &molecules_container_t::dictionary_atom_name_map)
+    .function("transform_map_using_lsq_matrix", &molecules_container_t::transform_map_using_lsq_matrix)
     .property("use_gemmi", &molecules_container_t::use_gemmi)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
