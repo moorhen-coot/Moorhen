@@ -41,7 +41,8 @@ describe("Testing gemmi", () => {
         expect(response.ok).toBeTruthy()
         const fileContents = await response.text()
         const result = cootModule.SmallMoleculeCifToMMCif(fileContents)
-        const st = cootModule.read_structure_from_string(result, "1100231")
+        const st = cootModule.read_structure_from_string(result.first, "1100231")
+        console.log(result.second)
         cootModule.gemmi_setup_entities(st)
 
         const model = st.first_model()

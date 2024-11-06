@@ -1012,7 +1012,7 @@ emscripten::val testFloat32Array(const emscripten::val &floatArrayObject){
     return result;
 }
 
-std::string SmallMoleculeCifToMMCif(const std::string &small_molecule_cif){
+std::pair<std::string,std::string> SmallMoleculeCifToMMCif(const std::string &small_molecule_cif){
 
     std::string mmcif_string;
     gemmi::cif::Document doc = gemmi::cif::read_string(small_molecule_cif);
@@ -1027,6 +1027,9 @@ std::string SmallMoleculeCifToMMCif(const std::string &small_molecule_cif){
 
     std::map<std::string,int> atoms;
 
+    int nAtAll = 0;
+    int nAtNoH = 0;
+
     for (const auto& site : small.sites) {
         gemmi::Atom atom;
         auto orth = small.cell.orthogonalize(site.fract);
@@ -1040,7 +1043,12 @@ std::string SmallMoleculeCifToMMCif(const std::string &small_molecule_cif){
         }
         atom.name = std::string(site.element.name())+std::to_string(atoms[std::string(site.element.name())]);
 
+        nAtAll++;
+        atom.serial = nAtAll;
         r.atoms.push_back(atom);
+        if(strncmp(site.element.name(),"H",1)!=0){
+            nAtNoH++;
+        }
     }
 
     gemmi::Structure st2;
@@ -1074,7 +1082,99 @@ std::string SmallMoleculeCifToMMCif(const std::string &small_molecule_cif){
 
     mmcif_string = s.str();
 
-    return mmcif_string;
+    std::ostringstream dict_output;
+    dict_output << "global_\n";
+    dict_output << "_lib_name         ?\n";
+    dict_output << "_lib_version      ?\n";
+    dict_output << "_lib_update       ?\n";
+    dict_output << "# ------------------------------------------------\n";
+    dict_output << "#\n";
+    dict_output << "# ---   LIST OF MONOMERS ---\n";
+    dict_output << "#\n";
+    dict_output << "data_comp_list\n";
+    dict_output << "loop_\n";
+    dict_output << "_chem_comp.id\n";
+    dict_output << "_chem_comp.three_letter_code\n";
+    dict_output << "_chem_comp.name\n";
+    dict_output << "_chem_comp.group\n";
+    dict_output << "_chem_comp.number_atoms_all\n";
+    dict_output << "_chem_comp.number_atoms_nh\n";
+    dict_output << "_chem_comp.desc_level\n";
+    std::string resname = "UNK";
+    dict_output << resname << "      " << resname << " 'UNKNOWN LIGAND                      ' non-polymer        " << nAtAll << " " <<  nAtNoH << " .\n";
+    dict_output << "# ------------------------------------------------------\n";
+    dict_output << "# ------------------------------------------------------\n";
+    dict_output << "#\n";
+    dict_output << "# --- DESCRIPTION OF MONOMERS ---\n";
+    dict_output << "#\n";
+    dict_output << "data_comp_" << resname << "\n";
+    dict_output << "#\n";
+    dict_output << "loop_\n";
+    dict_output << "_chem_comp_atom.comp_id\n";
+    dict_output << "_chem_comp_atom.atom_id\n";
+    dict_output << "_chem_comp_atom.type_symbol\n";
+    dict_output << "_chem_comp_atom.type_energy\n";
+    dict_output << "_chem_comp_atom.charge\n";
+    dict_output << "_chem_comp_atom.x\n";
+    dict_output << "_chem_comp_atom.y\n";
+    dict_output << "_chem_comp_atom.z\n";
+
+    atoms.clear();
+    for (const auto& site : small.sites) {
+        gemmi::Atom atom;
+        auto orth = small.cell.orthogonalize(site.fract);
+        float x = orth.x;
+        float y = orth.y;
+        float z = orth.z;
+        atom.pos = orth;
+        atom.element = site.element;
+        float charge = 0.0;
+
+        if(atoms.count(std::string(site.element.name()))==0){
+            atoms[std::string(site.element.name())]  = 1;
+        } else {
+            atoms[std::string(site.element.name())] += 1;
+        }
+        atom.name = std::string(site.element.name())+std::to_string(atoms[std::string(site.element.name())]);
+
+        dict_output << resname << "           " << atom.name << " " << site.element.name()  << " " << atom.name << " " << charge << " " << x << " " << y << " " << z << "\n";
+    }
+
+    dict_output << "loop_\n";
+    dict_output << "_chem_comp_bond.comp_id\n";
+    dict_output << "_chem_comp_bond.atom_id_1\n";
+    dict_output << "_chem_comp_bond.atom_id_2\n";
+    dict_output << "_chem_comp_bond.type\n";
+    dict_output << "_chem_comp_bond.aromatic\n";
+    dict_output << "_chem_comp_bond.value_dist\n";
+    dict_output << "_chem_comp_bond.value_dist_esd\n";
+
+    std::string aromaticFlag = "n";
+
+    for(const auto &a1: r.atoms){
+        for(const auto &a2: r.atoms){
+            if(a1.serial<a2.serial){
+                float dsq = (a1.pos.x - a2.pos.x) * (a1.pos.x - a2.pos.x)
+                          + (a1.pos.y - a2.pos.y) * (a1.pos.y - a2.pos.y)
+                          + (a1.pos.z - a2.pos.z) * (a1.pos.z - a2.pos.z);
+                float bondLength = sqrt(dsq);
+                float radiiSum = a1.element.covalent_r() + a2.element.covalent_r();
+                std::string bondType = "single";
+                if(a1.element.is_metal()||a2.element.is_metal()){
+                    bondType = "metal";
+                }
+                if(fabs(bondLength-radiiSum)<0.2){
+                    dict_output << resname << "  " << "    " << a1.name <<   " "  << a2.name  << " " << bondType  << " " << aromaticFlag << " " << bondLength << "  0.020\n";
+                }
+            }
+        }
+    }
+
+    dict_output << "# ------------------------------------------------------\n";
+
+    std::string dict_string = dict_output.str();
+
+    return std::pair<std::string,std::string>(mmcif_string,dict_string);
 }
 
 void unzipFileToFP(const std::string &file_name, FILE *fp){
