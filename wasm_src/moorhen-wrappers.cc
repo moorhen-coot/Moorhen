@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <zlib.h>
+#include <unistd.h>
 
 #include <filesystem>
 #include <complex>
@@ -54,6 +56,10 @@
 #include "clipper/core/ramachandran.h"
 #include "clipper/clipper-ccp4.h"
 
+#include "gemmi/small.hpp"
+#include "gemmi/smcif.hpp"
+#include "gemmi/to_mmcif.hpp"
+
 #include "cartesian.h"
 #include "geomutil.h"
 #include "matrix.h"
@@ -64,6 +70,10 @@ using namespace emscripten;
 #include "privateer-wrappers.h"
 
 #include "headers.h"
+
+extern "C" {
+void untar(FILE *a, const char *path);
+}
 
 struct RamachandranInfo {
     std::string chainId;
@@ -203,7 +213,6 @@ bool isSugar(const std::string &resName);
 class molecules_container_js : public molecules_container_t {
     public:
         explicit molecules_container_js(bool verbose=true) : molecules_container_t(verbose) {
-            
         }
 
         std::vector<std::pair<std::string,int>> slicendice_slice(int imol, int nclusters, const std::string &clustering_method, const std::string &pae_contents_string){
@@ -315,8 +324,8 @@ class molecules_container_js : public molecules_container_t {
             return GenerateMoorhenMetaBalls(mol,cid_str,gridSize,radius,isoLevel);
         }
 
-        std::pair<std::string, std::string> mol_text_to_pdb(const std::string &mol_text_cpp, const std::string &TLC, int nconf, int maxIters, bool keep_orig_coords) {
-            return MolTextToPDB(mol_text_cpp, TLC, nconf, maxIters, keep_orig_coords);
+        std::pair<std::string, std::string> mol_text_to_pdb(const std::string &mol_text_cpp, const std::string &TLC, int nconf, int maxIters, bool keep_orig_coords, bool minimize) {
+            return MolTextToPDB(mol_text_cpp, TLC, nconf, maxIters, keep_orig_coords, minimize);
         }
 
         std::pair<std::string, std::string> smiles_to_pdb(const std::string &smile_cpp, const std::string &TLC, int nconf, int maxIters) {
@@ -332,7 +341,7 @@ class molecules_container_js : public molecules_container_t {
                 for (int ichain=0; ichain < nchains; ichain++) {
                     mmdb::Chain *chain = model->GetChain(ichain);
                     int nres = chain->GetNumberOfResidues();
-                    for (int ires=0; ires<nres; ires++) { 
+                    for (int ires=0; ires<nres; ires++) {
                         mmdb::Residue *residue = chain->GetResidue(ires);
                         if (isSugar(residue->name)) {
                             return true;
@@ -347,16 +356,16 @@ class molecules_container_js : public molecules_container_t {
             const std::string charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             std::string rand_str;
             rand_str.reserve(len);
-            
+
             std::random_device rand_dev;
             std::mt19937 gen(rand_dev());
             std::uniform_int_distribution<> distrib(0, charset.length() - 1);
-    
+
             for (int i = 0; i < len; ++i) {
                 int randomIndex = distrib(gen);
                 rand_str += charset[randomIndex];
             }
-            
+
             return rand_str;
         }
 
@@ -364,7 +373,7 @@ class molecules_container_js : public molecules_container_t {
             std::string line;
             std::string file_contents;
             std::ifstream file_stream (file_name.c_str());
-            
+
             if (file_stream.is_open()) {
                 while(!file_stream.eof()) {
                     std::getline(file_stream, line);
@@ -372,9 +381,9 @@ class molecules_container_js : public molecules_container_t {
                 }
                 file_stream.close();
             } else {
-                std::cout << "Unable to open file"; 
+                std::cout << "Unable to open file";
             }
-            
+
             return file_contents;
         }
 
@@ -398,7 +407,7 @@ class molecules_container_js : public molecules_container_t {
 
         std::string get_molecule_atoms(int imol, const std::string &format) {
             std::string file_name = generate_rand_str(32);
-            std::string pdb_data;  
+            std::string pdb_data;
             try {
                 if (format == "pdb") {
                     file_name += ".pdb";
@@ -424,7 +433,7 @@ class molecules_container_js : public molecules_container_t {
             char *c_data = (char *)file_contents.c_str();
             size_t size = file_contents.length();
             const char* end = c_data + size;
-            
+
             int coor_format = int(gemmi::coor_format_from_content(c_data, end));
 
             std::string result;
@@ -473,7 +482,7 @@ class molecules_container_js : public molecules_container_t {
                 file_name += ".pdb";
             }
             write_text_file(file_name, pdb_string);
-            molecules_container_t::replace_molecule_by_model_from_file(imol, file_name); 
+            molecules_container_t::replace_molecule_by_model_from_file(imol, file_name);
             remove_file(file_name);
         }
 
@@ -485,7 +494,7 @@ class molecules_container_js : public molecules_container_t {
         std::vector<std::pair<int, int>> get_consecutive_ranges(const std::vector<int> &numbers) {
             std::vector<int> numbers_vec = numbers;
             std::sort(numbers_vec.begin(), numbers_vec.end());
-            
+
             std::vector<std::pair<int, int>> ranges;
             if (!numbers_vec.empty()) {
                 int start = numbers_vec[0];
@@ -504,7 +513,7 @@ class molecules_container_js : public molecules_container_t {
                 std::pair<int, int> i_pair(start, end);
                 ranges.push_back(i_pair);
             }
-            
+
             return ranges;
         }
 
@@ -543,7 +552,7 @@ class molecules_container_js : public molecules_container_t {
             return neighb_cid;
         }
 
-        std::pair<coot::symmetry_info_t,std::vector<std::array<float, 16>>> get_symmetry_with_matrices(int imol, float symmetry_search_radius, float x, float y, float z) { 
+        std::pair<coot::symmetry_info_t,std::vector<std::array<float, 16>>> get_symmetry_with_matrices(int imol, float symmetry_search_radius, float x, float y, float z) {
             coot::symmetry_info_t si = get_symmetry(imol, symmetry_search_radius, x, y, z);
             mmdb::Manager *mol = get_mol(imol);
             mmdb::Cryst *cryst = mol->GetCrystData();
@@ -598,21 +607,21 @@ class molecules_container_js : public molecules_container_t {
             return thePair;
         }
 
-        std::vector<float> getFloats(unsigned nFloats) { 
+        std::vector<float> getFloats(unsigned nFloats) {
             std::vector<float> fs;
             for(unsigned i=0;i<nFloats;i++){
                 fs.push_back(i*1.0);
             }
             return fs;
         }
-        int add(int ic) { 
+        int add(int ic) {
             return ic + 1;
         }
-        int writePDBASCII(int imol, const std::string &file_name) { 
+        int writePDBASCII(int imol, const std::string &file_name) {
             const char *fname_cp = file_name.c_str();
             return get_mol(imol)->WritePDBASCII(fname_cp);
         }
-        int writeCIFASCII(int imol, const std::string &file_name) { 
+        int writeCIFASCII(int imol, const std::string &file_name) {
             const auto mol = get_mol(imol);
             mmdb::Manager *mol_copy  = new mmdb::Manager;
             mol_copy->Copy(mol, mmdb::MMDBFCM_All);
@@ -625,7 +634,7 @@ class molecules_container_js : public molecules_container_t {
             clipperMap.open_write(file_name);
             clipperMap.export_xmap(xMap);
             return 0;
-        }        
+        }
         int count_simple_mesh_vertices(const coot::simple_mesh_t &m) { return m.vertices.size(); }
         std::vector<float> go_to_blob_array(float x1, float y1, float z1, float x2, float y2, float z2, float contour_level){
             std::vector<float> o;
@@ -674,7 +683,7 @@ std::string GetLabelAsymIDFromResidue(mmdb::Residue *res){
 std::string GetLabelCompIDFromResidue(mmdb::Residue *res){
     return std::string(res->GetLabelCompID());
 }
- 
+
 std::string GetInsCodeFromResidue(mmdb::Residue *res){
     return std::string(res->GetInsCode());
 }
@@ -1003,6 +1012,139 @@ emscripten::val testFloat32Array(const emscripten::val &floatArrayObject){
     return result;
 }
 
+std::string SmallMoleculeCifToMMCif(const std::string &small_molecule_cif){
+
+    std::string mmcif_string;
+    gemmi::cif::Document doc = gemmi::cif::read_string(small_molecule_cif);
+    gemmi::cif::Block block = doc.sole_block();
+
+    gemmi::SmallStructure small = gemmi::make_small_structure_from_block(block);
+
+
+    gemmi::Residue r;
+    r.name = "UNK";
+    r.label_seq = 1;
+
+    std::map<std::string,int> atoms;
+
+    for (const auto& site : small.sites) {
+        gemmi::Atom atom;
+        auto orth = small.cell.orthogonalize(site.fract);
+        atom.pos = orth;
+        atom.element = site.element;
+
+        if(atoms.count(std::string(site.element.name()))==0){
+            atoms[std::string(site.element.name())]  = 1;
+        } else {
+            atoms[std::string(site.element.name())] += 1;
+        }
+        atom.name = std::string(site.element.name())+std::to_string(atoms[std::string(site.element.name())]);
+
+        r.atoms.push_back(atom);
+    }
+
+    gemmi::Structure st2;
+
+    gemmi::Model m("1");
+    gemmi::Chain c("A");
+
+    c.residues.push_back(r);
+    m.chains.push_back(c);
+    st2.models.push_back(m);
+
+    st2.cell = small.cell;
+    st2.name = small.name;
+
+    st2.spacegroup_hm = small.spacegroup_hm;
+
+    gemmi::cif::Document doc2 = gemmi::make_mmcif_document(st2);
+    gemmi::cif::Table data = doc2.sole_block().find_mmcif_category("_atom_site.");
+
+    for (auto d: data) {
+        int auth_seq_id_pos = d.tab.find_column_position("auth_seq_id");
+        d.value_at_unsafe(auth_seq_id_pos) = "1";
+        int label_entity_id_pos = d.tab.find_column_position("label_entity_id");
+        d.value_at_unsafe(label_entity_id_pos) = "1";
+        int label_asym_id_pos = d.tab.find_column_position("label_asym_id");
+        d.value_at_unsafe(label_asym_id_pos) = "A";
+    }
+
+    std::ostringstream s;
+    gemmi::cif::write_cif_to_stream(s, doc2);
+
+    mmcif_string = s.str();
+
+    return mmcif_string;
+}
+
+void unzipFileToFP(const std::string &file_name, FILE *fp){
+
+    const int LENGTH = 1024;
+    struct stat s;
+    int fstat = stat(file_name.c_str(), &s);
+    if (fstat == 0) {
+        gzFile file = gzopen(file_name.c_str(), "rb");
+        int z_status = Z_OK;
+        unsigned char buffer[LENGTH];
+        size_t read_pos = 0;
+        while (!gzeof(file)) {
+            int bytes_read = gzread(file, buffer, LENGTH - 1);
+            const char *error_message = gzerror(file, &z_status);
+            if ((bytes_read == -1) || z_status != Z_OK) {
+                std::cerr << "WARNING:: gz read error for " << file_name << " "
+                    << error_message << std::endl;
+                break;
+            }
+            if(bytes_read>0){
+                int bytes_wrote = fwrite(buffer,1,bytes_read,fp);
+                if(bytes_wrote==-1) {
+                    std::cerr << "Failed to write in unzipFileToFP" << std::endl;
+                    return;
+                }
+            }
+        }
+        z_status = gzclose_r(file);
+        if (z_status != Z_OK) {
+            std::cerr << "WARNING:: gz close read error for " << file_name << std::endl;
+        }
+    } else {
+        std::cerr << "Error in unzipFileToFP, file " << file_name<< " does not exist" << std::endl;
+    }
+}
+
+
+void unpackCootDataFile(const std::string &fileName, bool doUnzip, const std::string &unzipFileName, const std::string &targetDir){
+
+    char *cwd;
+    if(targetDir.length()>0){
+        char buf[4096];
+        cwd = getcwd(buf,4096);
+        const char *dir_cp = targetDir.c_str();
+        chdir(dir_cp);
+    }
+
+    const char *fn_cp;
+
+    if(doUnzip){
+        fn_cp = unzipFileName.c_str();
+        FILE *tf = fopen(fn_cp, "wb+");
+        if(!tf) perror("fopen:");
+        unzipFileToFP(fileName,tf);
+        fclose(tf);
+    } else {
+        std::cout << "Not unzipping (file already unzipped)" << std::endl;
+        fn_cp = fileName.c_str();
+    }
+
+    FILE *a = fopen(fn_cp, "rb");
+    untar(a, fn_cp);
+    fclose(a);
+
+    if(targetDir.length()>0){
+        chdir(cwd);
+    }
+}
+
 EMSCRIPTEN_BINDINGS(my_module) {
         // PRIVATEER
     value_object<TorsionEntry>("TorsionEntry")
@@ -1035,6 +1177,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<TableEntry>("Table");
     // END PRIVATEER
 
+    function("unpackCootDataFile",&unpackCootDataFile);
     function("testFloat32Array", &testFloat32Array);
     function("getPositionsFromSimpleMesh2", &getPositionsFromSimpleMesh2);
     function("getReversedNormalsFromSimpleMesh2", &getReversedNormalsFromSimpleMesh2);
@@ -2001,8 +2144,12 @@ EMSCRIPTEN_BINDINGS(my_module) {
 
     function("getRotamersMap",&getRotamersMap);
 
+    function("SmallMoleculeCifToMMCif",&SmallMoleculeCifToMMCif);
+
     //For testing
     //function("TakeColourMap",&TakeColourMap);
     //function("TakeStringIntPairVector",&TakeStringIntPairVector);
     function("get_mtz_columns",&get_mtz_columns);
+
+
 }

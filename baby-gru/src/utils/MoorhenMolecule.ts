@@ -714,6 +714,23 @@ export class MoorhenMolecule implements moorhen.Molecule {
     async loadToCootFromFile(source: File): Promise<moorhen.Molecule> {
         try {
             const coordData = await readTextFile(source);
+            if(source.name.endsWith(".mol")){
+                const response = await this.commandCentre.current.cootCommand({
+                    command: 'mol_text_to_pdb',
+                    commandArgs: [coordData, "UNL" , 10, 100, true, false],
+                    returnType: 'str_str_pair'
+                }, true) as moorhen.WorkerResponse<libcootApi.PairType<string, string>>
+                const pdb = response.data.result.result.first
+                const dict = response.data.result.result.second
+                const mol = await this.loadToCootFromString(pdb, source.name);
+                await this.commandCentre.current.cootCommand({
+                    returnType: "status",
+                    command: 'read_dictionary_string',
+                    commandArgs: [dict,  mol.molNo],
+                    changesMolecules: []
+                }, false)
+                return mol
+            }
             return await this.loadToCootFromString(coordData, source.name);
         } catch (err) {
             return await Promise.reject(err);
@@ -755,7 +772,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} name - The new molecule name
      * @returns {Promise<moorhen.Molecule>} The new molecule
      */
-    async loadToCootFromString(coordData: ArrayBuffer | string, name: string): Promise<moorhen.Molecule> {
+    async loadToCootFromString(coordData_in: ArrayBuffer | string, name: string, isSmallMoleculeCif: boolean = false): Promise<moorhen.Molecule> {
         const pdbRegex = /.pdb$/;
         const entRegex = /.ent$/;
         const cifRegex = /.cif$/;
@@ -766,6 +783,22 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
 
         this.name = name.replace(pdbRegex, "").replace(entRegex, "").replace(cifRegex, "").replace(mmcifRegex, "");
+
+        let coordData: ArrayBuffer | string;
+        if(isSmallMoleculeCif){
+            try {
+                const response = await this.commandCentre.current.cootCommand({
+                    returnType: "string",
+                    command: 'SmallMoleculeCifToMMCif',
+                    commandArgs: [coordData_in],
+                }, false) as moorhen.WorkerResponse<string>
+                coordData = response.data.result.result
+            } catch (err) {
+                console.error('Error in SmallMoleculeCifToMMCif', err)
+            }
+        } else {
+            coordData = coordData_in
+        }
 
         try {
             this.updateGemmiStructure(coordData as string)
