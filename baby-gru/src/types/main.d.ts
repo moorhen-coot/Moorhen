@@ -171,6 +171,9 @@ declare module 'moorhen' {
     }
     module.exports.MoorhenMap = MoorhenMap
 
+    function getMultiColourRuleArgs(molecule: _moorhen.Molecule, ruleType: string): Promise<string>;
+    module.exports = getMultiColourRuleArgs;
+
     function setPositiveMapColours(arg0: {molNo: number, rgb: {r: number; g: number; b: number}}): any;
     module.exports = setPositiveMapColours;
     

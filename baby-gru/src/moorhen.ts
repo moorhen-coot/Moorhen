@@ -7,6 +7,7 @@ import { MoorhenColourRule } from './utils/MoorhenColourRule';
 import { MoorhenMoleculeRepresentation } from './utils/MoorhenMoleculeRepresentation';
 import { MoorhenMolecule } from './utils/MoorhenMolecule';
 import { MoorhenMap } from './utils/MoorhenMap';
+import { getMultiColourRuleArgs } from './utils/utils';
 import { MoorhenCommandCentre } from './utils/MoorhenCommandCentre';
 import { MoorhenTimeCapsule } from './utils/MoorhenTimeCapsule';
 import { MoorhenPreferences } from "./utils/MoorhenPreferences";
@@ -90,5 +91,5 @@ export {
     resetGeneralStates, resetHoveringStates, resetLabelSettings, resetMapContourSettings, resetMoleculeMapUpdates,
     resetRefinementSettings, resetShortcutSettings, resetActiveModals, focusOnModal, setBFactorThreshold, 
     setClusteringType, setMoleculeBfactors, setMoleculeMaxBfactor, resetSliceNDiceSlice, setMoleculeMinBfactor, 
-    setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType, setPAEFileContents
+    setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType, setPAEFileContents, getMultiColourRuleArgs
 };

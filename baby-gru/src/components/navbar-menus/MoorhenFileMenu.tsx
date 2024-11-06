@@ -193,7 +193,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     {!props.disableFileUploads && 
                     <Form.Group className='moorhen-form-group' controlId="upload-coordinates-form">
                         <Form.Label>Coordinates</Form.Label>
-                        <Form.Control type="file" accept=".pdb, .mmcif, .cif, .ent" multiple={true} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { loadPdbFiles(e.target.files) }}/>
+                        <Form.Control type="file" accept=".pdb, .mmcif, .cif, .ent, .mol" multiple={true} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { loadPdbFiles(e.target.files) }}/>
                     </Form.Group>}
                     
                     <MoorhenFetchOnlineSourcesForm commandCentre={commandCentre} glRef={glRef} setBusy={setBusy} monomerLibraryPath={monomerLibraryPath} store={store} />
