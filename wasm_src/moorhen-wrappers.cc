@@ -1026,6 +1026,7 @@ std::pair<std::string,std::string> SmallMoleculeCifToMMCif(const std::string &sm
     r.label_seq = 1;
 
     std::map<std::string,int> atoms;
+    std::map<std::string,int> name_disorder_group_map;
 
     int nAtAll = 0;
     int nAtNoH = 0;
@@ -1128,7 +1129,7 @@ std::pair<std::string,std::string> SmallMoleculeCifToMMCif(const std::string &sm
         float z = orth.z;
         atom.pos = orth;
         atom.element = site.element;
-        float charge = 0.0;
+        float charge = 0.0;//FIXME Small molecules have a signed char charge
 
         if(atoms.count(std::string(site.element.name()))==0){
             atoms[std::string(site.element.name())]  = 1;
@@ -1136,6 +1137,7 @@ std::pair<std::string,std::string> SmallMoleculeCifToMMCif(const std::string &sm
             atoms[std::string(site.element.name())] += 1;
         }
         atom.name = std::string(site.element.name())+std::to_string(atoms[std::string(site.element.name())]);
+        name_disorder_group_map[atom.name] = site.disorder_group;
 
         dict_output << resname << "           " << atom.name << " " << site.element.name()  << " " << atom.name << " " << charge << " " << x << " " << y << " " << z << "\n";
     }
@@ -1153,7 +1155,7 @@ std::pair<std::string,std::string> SmallMoleculeCifToMMCif(const std::string &sm
 
     for(const auto &a1: r.atoms){
         for(const auto &a2: r.atoms){
-            if(a1.serial<a2.serial){
+            if(a1.serial<a2.serial&&name_disorder_group_map[a1.name]==name_disorder_group_map[a2.name]){
                 float dsq = (a1.pos.x - a2.pos.x) * (a1.pos.x - a2.pos.x)
                           + (a1.pos.y - a2.pos.y) * (a1.pos.y - a2.pos.y)
                           + (a1.pos.z - a2.pos.z) * (a1.pos.z - a2.pos.z);
