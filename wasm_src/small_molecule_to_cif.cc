@@ -173,59 +173,39 @@ std::pair<std::string,std::string> SmallMoleculeCifToMMCif(const std::string &sm
 
     std::string aromaticFlag = "n";
 
-    //try {
-        // Unfortunately, thsi does not consider disorder groups. Hmm. It cna be done, but just need to be really clever.
-    std::string xyz_string = xyz_output.str();
+    try {
+        std::string xyz_string = xyz_output.str();
 
-    std::unique_ptr<RDKit::RWMol> mol = RDKit::v2::FileParsers::MolFromXYZBlock(xyz_string);
-    RDKit::determineConnectivity(*mol);
+        std::unique_ptr<RDKit::RWMol> mol = RDKit::v2::FileParsers::MolFromXYZBlock(xyz_string);
+        RDKit::determineConnectivity(*mol);
 
-    RDKit::ROMol::BondIterator bondIter = mol->beginBonds();
+        RDKit::ROMol::BondIterator bondIter = mol->beginBonds();
 
-    const RDKit::Conformer *conf=&(mol->getConformer(0));
+        const RDKit::Conformer *conf=&(mol->getConformer(0));
 
-    while(bondIter!=mol->endBonds()){
-      std::string beginAtom =  atomMap[(*bondIter)->getBeginAtomIdx()];
-      std::string endAtom =  atomMap[(*bondIter)->getEndAtomIdx()];
-      const RDGeom::Point3D pos1 = conf->getAtomPos((*bondIter)->getBeginAtomIdx());
-      const RDGeom::Point3D pos2 = conf->getAtomPos((*bondIter)->getEndAtomIdx());
-      double bondLength = sqrt((pos1.x-pos2.x)*(pos1.x-pos2.x) + (pos1.y-pos2.y)*(pos1.y-pos2.y) + (pos1.z-pos2.z)*(pos1.z-pos2.z));
-      std::string bondType;
-      std::string aromaticFlag;
-      bool isAromatic = mol->getAtomWithIdx((*bondIter)->getBeginAtomIdx())->getIsAromatic() && mol->getAtomWithIdx((*bondIter)->getEndAtomIdx())->getIsAromatic();
-      bondType = "SINGLE";
-      aromaticFlag = "n";
-      dict_output << resname << "  " << "    " << beginAtom <<   " "  << endAtom  << " " << bondType  << " " << aromaticFlag << " " << bondLength << "  0.020\n";
-      bondIter++;
-        
-    }
-    //} catch(...) {
-        //dict_output << "Failure!!!" << std::endl;
-    //}
-
-/*
-    for(const auto &a1: r.atoms){
-        for(const auto &a2: r.atoms){
-            if(a1.serial<a2.serial&&name_disorder_group_map[a1.name]==name_disorder_group_map[a2.name]){
-                float dsq = (a1.pos.x - a2.pos.x) * (a1.pos.x - a2.pos.x)
-                          + (a1.pos.y - a2.pos.y) * (a1.pos.y - a2.pos.y)
-                          + (a1.pos.z - a2.pos.z) * (a1.pos.z - a2.pos.z);
-                float bondLength = sqrt(dsq);
-                float radiiSum = a1.element.covalent_r() + a2.element.covalent_r();
-                std::string bondType = "SINGLE";
-                if(a1.element.is_metal()||a2.element.is_metal()){
-                    bondType = "metal";
-                }
-                if(bondLength<(radiiSum*1.08)){
-                    dict_output << resname << "  " << "    " << a1.name <<   " "  << a2.name  << " " << bondType  << " " << aromaticFlag << " " << bondLength << "  0.020\n";
-                }
+        while(bondIter!=mol->endBonds()){
+            std::string beginAtom =  atomMap[(*bondIter)->getBeginAtomIdx()];
+            std::string endAtom =  atomMap[(*bondIter)->getEndAtomIdx()];
+            if((name_disorder_group_map[beginAtom]==name_disorder_group_map[endAtom])||name_disorder_group_map[beginAtom]==0||name_disorder_group_map[endAtom]==0){
+                const RDGeom::Point3D pos1 = conf->getAtomPos((*bondIter)->getBeginAtomIdx());
+                const RDGeom::Point3D pos2 = conf->getAtomPos((*bondIter)->getEndAtomIdx());
+                double bondLength = sqrt((pos1.x-pos2.x)*(pos1.x-pos2.x) + (pos1.y-pos2.y)*(pos1.y-pos2.y) + (pos1.z-pos2.z)*(pos1.z-pos2.z));
+                std::string bondType;
+                std::string aromaticFlag;
+                bool isAromatic = mol->getAtomWithIdx((*bondIter)->getBeginAtomIdx())->getIsAromatic() && mol->getAtomWithIdx((*bondIter)->getEndAtomIdx())->getIsAromatic();
+                bondType = "SINGLE";
+                aromaticFlag = "n";
+                dict_output << resname << "  " << "    " << beginAtom <<   " "  << endAtom  << " " << bondType  << " " << aromaticFlag << " " << bondLength << "  0.020\n";
             }
+            bondIter++;
+
         }
+    } catch(...) {
+        // We will have no bonds.
     }
 
     dict_output << "# ------------------------------------------------------\n";
 
-    */
     std::string dict_string = dict_output.str();
 
     return std::pair<std::string,std::string>(mmcif_string,dict_string);
