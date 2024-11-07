@@ -2166,6 +2166,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }, true) as moorhen.WorkerResponse<(number[] | libcootApi.fitLigandInfo[])>
         
         if (result.data.result.status === "Completed") {
+            const ligandMolecule: moorhen.Molecule = this.store.getState().molecules.moleculeList.find((molecule: moorhen.Molecule) => molecule.molNo === ligandMolNo)
             newMolecules = await Promise.all(
                 result.data.result.result.map(async (fitLigandResult: (number | libcootApi.fitLigandInfo), idx: number) => {
                     const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
@@ -2173,6 +2174,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                     newMolecule.name = `Fit. lig. #${idx + 1}`
                     newMolecule.isDarkBackground = this.isDarkBackground
                     newMolecule.defaultBondOptions = this.defaultBondOptions
+                    await ligandMolecule?.transferLigandDicts?.(newMolecule)
                     if (redraw) {
                         await newMolecule.fetchIfDirtyAndDraw('CBs')
                     }
