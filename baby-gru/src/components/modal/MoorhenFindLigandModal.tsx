@@ -260,6 +260,7 @@ export const MoorheFindLigandModal = (props: { }) => {
                 maxWidth={convertViewtoPx(50, width)}
                 additionalChildren={spinnerContent}
                 headerTitle='Find ligand'
+                onClose={handleClose}
                 footer={footerContent}
                 body={bodyContent}
             />
