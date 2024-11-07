@@ -1171,8 +1171,7 @@ std::pair<std::string,std::string> SmallMoleculeCifToMMCif(const std::string &sm
                 if(a1.element.is_metal()||a2.element.is_metal()){
                     bondType = "metal";
                 }
-                //if(fabs(bondLength-radiiSum)<0.2){
-                if(bondLength<(radiiSum+0.1)){
+                if(bondLength<(radiiSum*1.08)){
                     dict_output << resname << "  " << "    " << a1.name <<   " "  << a2.name  << " " << bondType  << " " << aromaticFlag << " " << bondLength << "  0.020\n";
                 }
             }
