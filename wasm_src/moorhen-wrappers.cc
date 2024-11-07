@@ -1037,17 +1037,20 @@ std::pair<std::string,std::string> SmallMoleculeCifToMMCif(const std::string &sm
         atom.pos = orth;
         atom.element = site.element;
 
-        if(atoms.count(std::string(site.element.name()))==0){
-            atoms[std::string(site.element.name())]  = 1;
+        std::string elname = std::string(site.element.name());
+        std::transform(elname.begin(), elname.end(), elname.begin(), ::toupper);
+
+        if(atoms.count(elname)==0){
+            atoms[elname]  = 1;
         } else {
-            atoms[std::string(site.element.name())] += 1;
+            atoms[elname] += 1;
         }
-        atom.name = std::string(site.element.name())+std::to_string(atoms[std::string(site.element.name())]);
+        atom.name = elname+std::to_string(atoms[elname]);
 
         nAtAll++;
         atom.serial = nAtAll;
         r.atoms.push_back(atom);
-        if(strncmp(site.element.name(),"H",1)!=0){
+        if(elname!="H"){
             nAtNoH++;
         }
     }
@@ -1131,15 +1134,18 @@ std::pair<std::string,std::string> SmallMoleculeCifToMMCif(const std::string &sm
         atom.element = site.element;
         float charge = 0.0;//FIXME Small molecules have a signed char charge
 
-        if(atoms.count(std::string(site.element.name()))==0){
-            atoms[std::string(site.element.name())]  = 1;
+        std::string elname = std::string(site.element.name());
+        std::transform(elname.begin(), elname.end(), elname.begin(), ::toupper);
+
+        if(atoms.count(elname)==0){
+            atoms[elname]  = 1;
         } else {
-            atoms[std::string(site.element.name())] += 1;
+            atoms[elname] += 1;
         }
-        atom.name = std::string(site.element.name())+std::to_string(atoms[std::string(site.element.name())]);
+        atom.name = elname+std::to_string(atoms[elname]);
         name_disorder_group_map[atom.name] = site.disorder_group;
 
-        dict_output << resname << "           " << atom.name << " " << site.element.name()  << " " << atom.name << " " << charge << " " << x << " " << y << " " << z << "\n";
+        dict_output << resname << "           " << atom.name << " " << elname  << " " << atom.name << " " << charge << " " << x << " " << y << " " << z << "\n";
     }
 
     dict_output << "loop_\n";
@@ -1161,11 +1167,12 @@ std::pair<std::string,std::string> SmallMoleculeCifToMMCif(const std::string &sm
                           + (a1.pos.z - a2.pos.z) * (a1.pos.z - a2.pos.z);
                 float bondLength = sqrt(dsq);
                 float radiiSum = a1.element.covalent_r() + a2.element.covalent_r();
-                std::string bondType = "single";
+                std::string bondType = "SINGLE";
                 if(a1.element.is_metal()||a2.element.is_metal()){
                     bondType = "metal";
                 }
-                if(fabs(bondLength-radiiSum)<0.2){
+                //if(fabs(bondLength-radiiSum)<0.2){
+                if(bondLength<(radiiSum+0.1)){
                     dict_output << resname << "  " << "    " << a1.name <<   " "  << a2.name  << " " << bondType  << " " << aromaticFlag << " " << bondLength << "  0.020\n";
                 }
             }
