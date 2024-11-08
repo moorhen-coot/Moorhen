@@ -63,6 +63,8 @@ ${coot_src}/src/c-interface-image.cc
 
 set(coot_exception_srcs
 ${coot_src}/api/mmcif-tests.cc
+${coot_src}/api/molecules-container-gltf.cc
+${coot_src}/api/coot-molecule-modelling.cc
 ${coot_src}/layla/ligand_editor_canvas.cpp
 ${coot_src}/layla/ligand_editor_canvas/core.cpp
 ${coot_src}/layla/ligand_editor_canvas/model.cpp
@@ -86,8 +88,6 @@ ${coot_src}/pli/pi-stacking.cc
 ${coot_src}/coot-utils/cmtz-interface.cc
 ${coot_src}/coot-utils/lidia-core-functions.cc
 ${coot_src}/coot-utils/atom-selection-container.cc
-${coot_src}/coot-utils/dictionary-atom-types.cc
-${coot_src}/coot-utils/cod-db-access.cc
 ${coot_src}/coot-utils/diff-diff-map-peaks.cc
 ${coot_src}/coot-utils/gltf-export.cc
 ${coot_src}/coot-utils/texture-as-floats.cc
@@ -214,7 +214,6 @@ ${coot_src}/skeleton/graphical_skel.cc
 ${coot_src}/ideal/pepflip.cc
 ${coot_src}/ideal/parallel-planes.cc
 ${coot_src}/ideal/simple-restraint.cc
-#${coot_src}/ideal/mini-rsr.cc
 ${coot_src}/ideal/ng.cc
 ${coot_src}/ideal/torsion-bonds.cc
 ${coot_src}/ideal/chi-squareds.cc
@@ -256,7 +255,6 @@ ${coot_src}/utils/logging.cc
 ${coot_src}/utils/pir-alignment.cc
 ${coot_src}/utils/setup-syminfo.cc
 ${coot_src}/db-main/db-strands.cc
-#${coot_src}/db-main/testdbmain.cc
 ${coot_src}/high-res/residue-distortions.cc
 ${coot_src}/high-res/coot-atom-graph.cc
 ${coot_src}/high-res/sequence-assignment.cc
@@ -268,7 +266,6 @@ ${coot_src}/pli/flev-annotations.cc
 ${coot_src}/pli/protein-ligand-interactions.cc
 ${coot_src}/pli/pi-stacking.cc
 ${coot_src}/pli/sdf-interface.cc
-#${coot_src}/pli/specs.cc
 ${coot_src}/utils/base64-encode-decode.cc
 ${coot_src}/coot-utils/merge-atom-selections.cc
 ${coot_src}/coot-utils/coot-least-squares.cc
@@ -372,7 +369,6 @@ ${coot_src}/geometry/mol-utils-2.cc
 ${coot_src}/geometry/protein-donor-acceptors.cc
 ${coot_src}/geometry/intercept-3GP.cc
 ${coot_src}/build/CalphaBuild.cc
-#${coot_src}/build/testcabuild.cc
 ${coot_src}/mini-mol/mini-mol-utils.cc
 ${coot_src}/mini-mol/mini-mol.cc
 ${coot_src}/mini-mol/atom-quads.cc
@@ -552,15 +548,15 @@ FILE(COPY ${coot_src}/data/metal/metal-O-distance.table DESTINATION data/coot/da
 FILE(COPY ${coot_src}/data/metal/metal-S-distance.table DESTINATION data/coot/data/metal )
 FILE(COPY ${CMAKE_INSTALL_PREFIX}/share/RDKit/Data/BaseFeatures.fdef DESTINATION data/RDKit/Data )
 
-add_executable(moorhen moorhen-wrappers.cc ../wasm_src_frontend/headers.cc gemmi-wrappers.cc smilestopdb.cc ${coot_src}/lhasa/embind.cpp)
+add_executable(moorhen untar.c moorhen-wrappers.cc ../wasm_src_frontend/headers.cc gemmi-wrappers.cc small_molecule_to_cif.cc smilestopdb.cc ${coot_src}/lhasa/embind.cpp)
 if(${MEMORY64} MATCHES "1")
-target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCoot64Module -sEXPORTED_RUNTIME_METHODS=['FS'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
+target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCoot64Module -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 set_target_properties(moorhen PROPERTIES OUTPUT_NAME moorhen64)
 target_link_directories(moorhen PUBLIC 
     ${CMAKE_INSTALL_PREFIX}/install64/lib
 )
 else()
-target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
+target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 target_link_directories(moorhen PUBLIC 
     ${CMAKE_INSTALL_PREFIX}/install/lib
 )
@@ -605,6 +601,7 @@ target_link_libraries(moorhen
     RDKit::FileParsers
     RDKit::RDGeometryLib
     RDKit::GraphMol
+    RDKit::DetermineBonds
     RDKit::ShapeHelpers
     RDKit::Fingerprints
     RDKit::MolAlign
@@ -644,14 +641,18 @@ else()
     set(MOORHEN_MODULE_SUFFIX "")
 endif()
 
+add_custom_target(create_tar ALL COMMAND
+    ${CMAKE_COMMAND} -E tar "cfvz" "data.tar.gz" ${CMAKE_CURRENT_BINARY_DIR}/data)
+add_dependencies(create_tar moorhen)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/data.tar.gz DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/baby-gru)
+
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.wasm
 ${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.js
-${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.data
 ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js
 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.wasm
 ${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.js
-${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.data
 ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js
 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../moorhen_tests)

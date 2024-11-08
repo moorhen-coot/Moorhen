@@ -5,11 +5,14 @@ import { MoorhenReduxStore } from "../../tsDist/src/store/MoorhenReduxStore"
 import { MockWebGL } from "../__mocks__/mockWebGL"
 import { parseAtomInfoLabel } from "../../tsDist/src/utils/utils"
 import fetch from 'node-fetch'
+import moorhen_test_use_gemmi from '../MoorhenTestsSettings'
 
 jest.setTimeout(60000)
 
 const fs = require('fs')
 const path = require('path')
+const {gzip, ungzip} = require('node-gzip');
+
 const createCootModule = require('../../public/moorhen')
 let cootModule;
 
@@ -59,11 +62,10 @@ beforeAll(() => {
         printErr(t) { () => console.log(["output", t]); }
     }).then(moduleCreated => {
         cootModule = moduleCreated
-        setupFunctions.copyTestDataToFauxFS()
         global.window = {
             CCP4Module: cootModule,
         }
-        return Promise.resolve()
+        return setupFunctions.copyTestDataToFauxFS()
     })
 })
 
@@ -78,7 +80,7 @@ describe("Testing MoorhenMolecule", () => {
             molecules_container.delete?.()
         }
         molecules_container = new cootModule.molecules_container_js(false)
-        molecules_container.set_use_gemmi(false)
+        molecules_container.set_use_gemmi(moorhen_test_use_gemmi)
         glRef = {
             current: new MockWebGL()
         }
@@ -138,6 +140,13 @@ const setupFunctions = {
             }
             const coordData = fs.readFileSync(path.join(dirName, fileName), { encoding: fileName.includes('mtz') ? null : 'utf8', flag: 'r' })
             cootModule.FS_createDataFile(".", fileName, coordData, true, true);
+        })
+        const cootDataZipped = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'baby-gru', 'data.tar.gz' ), { encoding: null, flag: 'r' })
+        return ungzip(cootDataZipped).then((cootData) => {
+            cootModule.FS.mkdir("data_tmp")
+            cootModule.FS_createDataFile("data_tmp", "data.tar", cootData, true, true);
+            cootModule.unpackCootDataFile("data_tmp/data.tar",false,"","")
+            cootModule.FS_unlink("data_tmp/data.tar")
         })
         cootModule.FS.mkdir("COOT_BACKUP");
     }

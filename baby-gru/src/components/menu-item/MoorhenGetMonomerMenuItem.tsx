@@ -277,7 +277,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
         <Form.Group className='moorhen-form-group'>
             <Form.Label>Search by...</Form.Label>
             <FormSelect ref={searchModeSelectRef} size="sm" value={searchMode} onChange={handleSearchModeChange}>
-                <option value={"tlc"}>Three letter code</option>                
+                <option value={"tlc"}>Three letter code</option>
                 <option value={"name"}>Compound name</option>
             </FormSelect>
         </Form.Group>

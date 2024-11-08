@@ -480,7 +480,10 @@ export namespace libcootApi {
         three_letter_code: string;
     }
     type CootModule = {
+        unpackCootDataFile(arg0: string, arg1: boolean, arg2: string, arg3: string): number;
         SmilesToPDB(arg0: string, arg1: string, arg2: number, arg3: number): PairType<string, string>;
+        MolTextToPDB(mol_text_cpp:string, TLC: string, nconf: number, maxIters: number, keep_orig_coords: boolean, minimize: boolean): PairType<string, string>;
+
         FS: {
             readFile(tempFilename: string, arg1: { encoding: string; }): string | Uint8Array;
             mkdir: (arg0: string) => void; 
@@ -507,6 +510,7 @@ export namespace libcootApi {
         getRamachandranData(arg0: string, arg1: string): emscriptem.vector<RamaData>;
         validate(arg0: string, arg1: string): emscriptem.vector<PrivateerResultsEntry>;
         parse_mon_lib_list_cif(arg0: string): emscriptem.vector<compoundInfo>;
+        SmallMoleculeCifToMMCif(fileName: string): PairType<string, string>;
         molecules_container_js: { new(verbose: boolean): MoleculesContainerJS };
         Vectormoved_residue_t: { new(): emscriptem.vector<MovedResidueT>};
         moved_residue_t: { new(arg0: string, arg1: number, arg2: string): MovedResidueT};
@@ -520,7 +524,7 @@ export namespace libcootApi {
         set_refinement_is_verbose(arg0: boolean): void;
         set_use_gemmi(arg0: boolean): void;
         get_use_gemmi(): boolean;
-        export_molecular_represenation_as_gltf(imol: number, cid: string, colourScheme: string, style: string, fileName: string): void;
+        export_molecular_representation_as_gltf(imol: number, cid: string, colourScheme: string, style: string, fileName: string): void;
         export_model_molecule_as_gltf(imol: number, cid: string, mode: string, isDark: boolean, bondWidth: number, atomRadius: number, bondSmoothness: number, drawHydrogens: boolean, drawMissingResidues: boolean, fileName: string): void;
         export_map_molecule_as_gltf(imol: number, x: number, y: number, z: number, radius: number, contourLevel: number, fileName: string): void;
         set_max_number_of_threads(arg0: number): void;

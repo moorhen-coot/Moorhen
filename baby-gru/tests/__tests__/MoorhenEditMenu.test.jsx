@@ -24,6 +24,7 @@ import { setDefaultBondSmoothness, setHeight, setIsDark, setWidth } from '../../
 import { overwriteMapUpdatingScores, setShowScoresToast } from '../../src/store/moleculeMapUpdateSlice'
 import userEvent from '@testing-library/user-event'
 import fetch from 'node-fetch'
+import moorhen_test_use_gemmi from '../MoorhenTestsSettings'
 
 const fs = require('fs')
 
@@ -100,7 +101,7 @@ describeIfWasmExists('Testing MoorhenEditMenu', () => {
     
     beforeEach(() => {
         molecules_container = new cootModule.molecules_container_js(false)
-        molecules_container.set_use_gemmi(false)
+        molecules_container.set_use_gemmi(moorhen_test_use_gemmi)
         molecules_container.set_show_timings(false)
         molecules_container.set_refinement_is_verbose(false)
         molecules_container.fill_rotamer_probability_tables()

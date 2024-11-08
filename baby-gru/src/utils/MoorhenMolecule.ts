@@ -714,6 +714,23 @@ export class MoorhenMolecule implements moorhen.Molecule {
     async loadToCootFromFile(source: File): Promise<moorhen.Molecule> {
         try {
             const coordData = await readTextFile(source);
+            if(source.name.endsWith(".mol")){
+                const response = await this.commandCentre.current.cootCommand({
+                    command: 'mol_text_to_pdb',
+                    commandArgs: [coordData, "UNL" , 10, 100, true, false],
+                    returnType: 'str_str_pair'
+                }, true) as moorhen.WorkerResponse<libcootApi.PairType<string, string>>
+                const pdb = response.data.result.result.first
+                const dict = response.data.result.result.second
+                const mol = await this.loadToCootFromString(pdb, source.name);
+                await this.commandCentre.current.cootCommand({
+                    returnType: "status",
+                    command: 'read_dictionary_string',
+                    commandArgs: [dict,  mol.molNo],
+                    changesMolecules: []
+                }, false)
+                return mol
+            }
             return await this.loadToCootFromString(coordData, source.name);
         } catch (err) {
             return await Promise.reject(err);
@@ -2123,6 +2140,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }, true) as moorhen.WorkerResponse<(number[] | libcootApi.fitLigandInfo[])>
         
         if (result.data.result.status === "Completed") {
+            const ligandMolecule: moorhen.Molecule = this.store.getState().molecules.moleculeList.find((molecule: moorhen.Molecule) => molecule.molNo === ligandMolNo)
             newMolecules = await Promise.all(
                 result.data.result.result.map(async (fitLigandResult: (number | libcootApi.fitLigandInfo), idx: number) => {
                     const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
@@ -2130,6 +2148,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                     newMolecule.name = `Fit. lig. #${idx + 1}`
                     newMolecule.isDarkBackground = this.isDarkBackground
                     newMolecule.defaultBondOptions = this.defaultBondOptions
+                    await ligandMolecule?.transferLigandDicts?.(newMolecule)
                     if (redraw) {
                         await newMolecule.fetchIfDirtyAndDraw('CBs')
                     }

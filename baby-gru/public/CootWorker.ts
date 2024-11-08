@@ -463,9 +463,9 @@ const export_map_as_gltf = (imol: number, x: number, y: number, z: number, radiu
     return fileContents.buffer
 }
 
-const export_molecular_represenation_as_gltf = (imol: number, cid: string, colourScheme: string, style: string) => {
+const export_molecular_representation_as_gltf = (imol: number, cid: string, colourScheme: string, style: string) => {
     const fileName = `${guid()}.glb`
-    molecules_container.export_molecular_represenation_as_gltf(imol, cid, colourScheme, style, fileName)
+    molecules_container.export_molecular_representation_as_gltf(imol, cid, colourScheme, style, fileName)
     const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
     cootModule.FS_unlink(fileName)
     return fileContents.buffer
@@ -1119,11 +1119,14 @@ const doCootCommand = (messageData: {
             case 'shim_export_molecule_as_gltf':
                 cootResult = export_molecule_as_gltf(...commandArgs as [number, string, string, boolean, number, number, number, boolean, boolean])
                 break
-            case 'shim_export_molecular_represenation_as_gltf':
-                cootResult = export_molecular_represenation_as_gltf(...commandArgs as [number, string, string, string])
+            case 'shim_export_molecular_representation_as_gltf':
+                cootResult = export_molecular_representation_as_gltf(...commandArgs as [number, string, string, string])
                 break
             case "parse_mon_lib_list_cif":
                 cootResult = parseMonLibListCif(...commandArgs as [string])
+                break
+            case "SmallMoleculeCifToMMCif":
+                cootResult = cootModule.SmallMoleculeCifToMMCif(...commandArgs as [string])
                 break
             default:
                 cootResult = molecules_container[command](...commandArgs)
@@ -1300,7 +1303,27 @@ onmessage = function (e) {
         })
             .then((returnedModule) => {
                 postMessage({ consoleMessage: 'Initialized molecules_container', message: e.data.message, messageId: e.data.messageId })
+
                 cootModule = returnedModule;
+
+                const fileData = e.data.data.cootData
+                let doUnzip = false
+                let unzipName = ""
+
+
+                let tarFileName = "data.tar"
+                if(fileData[0]==0x1F && fileData[1]==0x8B){
+                    doUnzip = true
+                    tarFileName = "data.tar.gz"
+                    unzipName = "data_tmp/data.tar"
+                }
+
+                //FIXME - Need to consider the case of doUnzip is true.
+                cootModule.FS.mkdir("data_tmp")
+                cootModule.FS_createDataFile("data_tmp", tarFileName, fileData, true, true);
+                const retVal = cootModule.unpackCootDataFile("data_tmp/"+tarFileName,doUnzip, unzipName,"")
+                cootModule.FS_unlink("data_tmp/"+tarFileName)
+
                 molecules_container = new cootModule.molecules_container_js(false)
                 molecules_container.set_use_gemmi(false)
                 molecules_container.set_show_timings(false)
