@@ -155,7 +155,7 @@ std::pair<std::string,std::string> SmallMoleculeCifToMMCif(const std::string &sm
         atom.name = elname+std::to_string(atoms[elname]);
         name_disorder_group_map[atom.name] = site.disorder_group;
 
-        dict_output << resname << "           " << atom.name << " " << elname  << " " << atom.name << " " << charge << " " << x << " " << y << " " << z << "\n";
+        dict_output << resname << "           " << atom.name << " " << elname  << " " << elname << " " << charge << " " << x << " " << y << " " << z << "\n";
         xyz_output << elname  << " " << x << " " << y << " " << z << "\n";
         atomMap[iat] = atom.name;
         iat++;

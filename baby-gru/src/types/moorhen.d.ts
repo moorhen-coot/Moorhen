@@ -228,7 +228,7 @@ export namespace moorhen {
         drawResidueSelection: (cid: string) => Promise<void>;
         clearBuffersOfStyle: (style: string) => void;
         loadToCootFromURL: (inputFile: string, molName: string, options?: RequestInit) => Promise<Molecule>;
-        loadToCootFromString: (coordData: ArrayBuffer | string, name: string, isSmallMoleculeCif?: boolean) => Promise<Molecule>;
+        loadToCootFromString: (coordData: ArrayBuffer | string, name: string) => Promise<Molecule>;
         applyTransform: () => Promise<void>;
         getAtoms(format?: coorFormats): Promise<string>;
         hide: (style: string, cid?: string) => MoleculeRepresentation;
