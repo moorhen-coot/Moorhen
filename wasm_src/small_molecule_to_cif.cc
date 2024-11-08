@@ -24,9 +24,11 @@ std::pair<std::string,std::string> SmallMoleculeCifToMMCif(const std::string &sm
 
     gemmi::SmallStructure small = gemmi::make_small_structure_from_block(block);
 
+    std::string resname = "UNK";
 
     gemmi::Residue r;
-    r.name = "UNK";
+    r.name = resname;
+
     r.label_seq = 1;
 
     std::map<std::string,int> atoms;
@@ -112,7 +114,6 @@ std::pair<std::string,std::string> SmallMoleculeCifToMMCif(const std::string &sm
     dict_output << "_chem_comp.number_atoms_all\n";
     dict_output << "_chem_comp.number_atoms_nh\n";
     dict_output << "_chem_comp.desc_level\n";
-    std::string resname = "UNK";
     dict_output << resname << "      " << resname << " 'UNKNOWN LIGAND                      ' non-polymer        " << nAtAll << " " <<  nAtNoH << " .\n";
     dict_output << "# ------------------------------------------------------\n";
     dict_output << "# ------------------------------------------------------\n";
