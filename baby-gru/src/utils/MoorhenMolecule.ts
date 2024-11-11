@@ -2488,4 +2488,18 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         return headerInfo.data.result.result
     }
+    
+    /**
+     * Calculate the Q-Score for a CID
+     * @param {string} cid - The CID selection used to calcualte the qscore
+     * @param {moorhen.Map} activeMap - The map instance used in the refinement
+     */
+    async calculateQscore(activeMap: moorhen.Map, cid?: string) {
+        const result = await this.commandCentre.current.cootCommand({
+            command: cid ? 'get_q_score_for_cid' : 'get_q_score',
+            commandArgs: cid ? [ this.molNo, cid, activeMap.molNo ] : [ this.molNo, activeMap.molNo ],
+            returnType: 'validation_data',
+        }, false) as moorhen.WorkerResponse<libcootApi.ValidationInformationJS[]>
+        return result.data.result.result
+    }
 }

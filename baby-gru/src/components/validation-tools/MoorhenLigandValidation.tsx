@@ -28,7 +28,7 @@ export const MoorhenLigandValidation = (props: moorhen.CollectedProps) => {
         }
 
         return ligandInfo.map((ligand, index) => {
-            return <MoorhenLigandCard key={`${ligand.cid}-${selectedModel}`} ligand={ligand} molecule={selectedMolecule}/>
+            return <MoorhenLigandCard key={`${ligand.cid}-${selectedModel}`} ligand={ligand} molecule={selectedMolecule} calculateQScore={true}/>
         })
     }
 
