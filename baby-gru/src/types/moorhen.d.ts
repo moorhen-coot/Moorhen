@@ -241,6 +241,7 @@ export namespace moorhen {
         getLigandSVG(resName: string, useCache?: boolean): Promise<string>;
         isValidSelection(cid: string): Promise<boolean>;
         fetchHeaderInfo(useCache?: boolean): Promise<libcootApi.headerInfoJS>;
+        calculateQscore(activeMap: Map, cid?: string): Promise<libcootApi.ValidationInformationJS[]>;
         type: string;
         adaptativeBondsEnabled: boolean;
         cachedLigandSVGs: {[key: string]: string};

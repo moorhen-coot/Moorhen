@@ -2471,4 +2471,44 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         return headerInfo.data.result.result
     }
+    
+    /**
+     * Calculate the Q-Score for a CID
+     * @param {string} cid - The CID selection used to calcualte the qscore
+     * @param {moorhen.Map} activeMap - The map instance used in the refinement
+     */
+    async calculateQscore(activeMap: moorhen.Map, cid?: string) {
+        if (!cid) {
+            const result = await this.commandCentre.current.cootCommand({
+                command: 'get_q_score',
+                commandArgs: [ this.molNo, activeMap.molNo ],
+                returnType: 'validation_data',
+            }, false) as moorhen.WorkerResponse<libcootApi.ValidationInformationJS[]>
+            return result.data.result.result    
+        } else {
+            //Here we copy the ligand into a separate fragment and calculate the q-score.
+            // Newer versions can do this directly with molecules_container.get_q_score_for_cid
+            const copyMoleculeResponse = await this.commandCentre.current.cootCommand({
+                returnType: "status",
+                command: "copy_fragment_using_cid",
+                commandArgs: [this.molNo, cid],
+            }, true) as moorhen.WorkerResponse<number>
+            const qScoreResponse = await this.commandCentre.current.cootCommand({
+                command: 'get_q_score',
+                commandArgs: [copyMoleculeResponse.data.result.result, activeMap.molNo],
+                returnType: "validation_data"
+            }, false) as moorhen.WorkerResponse<libcootApi.ValidationInformationJS[]>
+            await this.commandCentre.current.cootCommand({
+                returnType: 'status',
+                commandArgs: [copyMoleculeResponse.data.result.result],
+                command: "close_molecule"
+            }, false) as moorhen.WorkerResponse<number>
+            await this.commandCentre.current.cootCommand({
+                returnType: 'status',
+                commandArgs: [ ],
+                command: "end_delete_closed_molecules"
+            }, false) as moorhen.WorkerResponse<number>
+            return qScoreResponse.data.result.result
+        }
+    }
 }
