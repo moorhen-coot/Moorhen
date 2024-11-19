@@ -8,10 +8,11 @@ import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 import { Backdrop, IconButton, Tooltip } from "@mui/material";
-import { CenterFocusWeakOutlined, CrisisAlertOutlined, MergeTypeOutlined } from "@mui/icons-material";
+import { CenterFocusWeakOutlined, CrisisAlertOutlined, DoneOutlined, MergeTypeOutlined } from "@mui/icons-material";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { hideModal } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
+import { addMolecule } from "../../store/moleculesSlice";
 
 const LigandHitCard = (props: {
     selectedMolNo: number;
@@ -20,6 +21,8 @@ const LigandHitCard = (props: {
     setLigandCardMolNoFocus: React.Dispatch<React.SetStateAction<number>>;
     ligandResults: moorhen.Molecule[];
     setLigandResults: React.Dispatch<React.SetStateAction<moorhen.Molecule[]>>;
+    allowMergeLigand?: boolean;
+    allowCreateLigand?: boolean;
 }) => {
 
     const dispatch = useDispatch()
@@ -28,6 +31,10 @@ const LigandHitCard = (props: {
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
+
+    const {
+        allowMergeLigand, allowCreateLigand
+    } = { allowMergeLigand: true, allowCreateLigand: false, ...props }
 
     const handleShow = useCallback(async () => {
         if (props.ligandMolecule.representations.length > 0) {
@@ -57,11 +64,19 @@ const LigandHitCard = (props: {
     const handleMerge = useCallback(async () => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === props.selectedMolNo)
         if (selectedMolecule) {
-            selectedMolecule.mergeMolecules([props.ligandMolecule], true).then(_ => props.ligandMolecule.delete())
+            await selectedMolecule.mergeMolecules([props.ligandMolecule], true)
+            await props.ligandMolecule.delete()
             dispatch( triggerUpdate(selectedMolecule.molNo) )
             props.setLigandResults((prevLigands) => prevLigands.filter(ligand => ligand.molNo !== props.ligandMolecule.molNo))
         }
     }, [molecules])
+
+    const handleAdd = useCallback(async () => {
+        if (props.ligandMolecule) {
+            dispatch( addMolecule(props.ligandMolecule) )
+            props.setLigandResults((prevLigands) => prevLigands.filter(ligand => ligand.molNo !== props.ligandMolecule.molNo))
+        }
+    }, [])
 
     return <Card style={{marginTop: '0.5rem', borderStyle: 'solid', borderColor: isDark ? 'white' : 'grey', borderWidth: props.ligandCardMolNoFocus === props.ligandMolecule.molNo ? '3px' : '1px'}}>
         <Card.Body style={{padding:'0.5rem'}}>
@@ -82,11 +97,20 @@ const LigandHitCard = (props: {
                         <CrisisAlertOutlined/>
                     </IconButton>
                     </Tooltip>
-                    <Tooltip title="Merge">
+                    {allowCreateLigand &&
+                    <Tooltip title="Add to new molecule">
+                    <IconButton style={{ marginRight:'0.5rem', color: isDark ? 'white' : 'grey' }} onClick={handleAdd}>
+                        <DoneOutlined/>
+                    </IconButton>
+                    </Tooltip>                    
+                    }
+                    {allowMergeLigand &&
+                    <Tooltip title="Merge to molecule">
                     <IconButton style={{ marginRight:'0.5rem', color: isDark ? 'white' : 'grey' }} onClick={handleMerge}>
                         <MergeTypeOutlined/>
                     </IconButton>
                     </Tooltip>
+                    }
                 </Col>
             </Row>
         </Card.Body>

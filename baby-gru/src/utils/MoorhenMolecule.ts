@@ -2128,7 +2128,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 result.data.result.result.map(async (fitLigandResult: (number | libcootApi.fitLigandInfo), idx: number) => {
                     const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
                     newMolecule.molNo = fitRightHere ? fitLigandResult as number : (fitLigandResult as libcootApi.fitLigandInfo).imol 
-                    newMolecule.name = `Fit. lig. #${idx + 1}`
+                    newMolecule.name = `${ligandMolecule?.name ? ligandMolecule.name : "Lig."} fit. #${idx + 1}`
                     newMolecule.isDarkBackground = this.isDarkBackground
                     newMolecule.defaultBondOptions = this.defaultBondOptions
                     await ligandMolecule?.transferLigandDicts?.(newMolecule)
