@@ -6,7 +6,6 @@ import { CenterFocusStrongOutlined, HelpOutlined, RadioButtonCheckedOutlined, Ra
 import parse from 'html-react-parser'
 import { convertViewtoPx, guid } from "../../utils/utils";
 import { LinearProgress, Popover, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
-import { libcootApi } from "../../types/libcoot";
 
 export const MoorhenLigandCard = (props: {
     ligand: moorhen.LigandInfo;
