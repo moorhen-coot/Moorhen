@@ -228,14 +228,17 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         allowScripting: true,
         backupStorageInstance: createLocalStorageInstance('Moorhen-TimeCapsule'),
         aceDRGInstance: null,
-        store: MoorhenReduxStore
+        store: MoorhenReduxStore,
+        allowAddNewFittedLigand: false,
+        allowMergeFittedLigand: true,
     }
 
     const {
         disableFileUploads, urlPrefix, extraNavBarMenus, viewOnly, extraDraggableModals, 
         monomerLibraryPath, extraFileMenuItems, allowScripting, backupStorageInstance,
         extraEditMenuItems, aceDRGInstance, extraCalculateMenuItems, setMoorhenDimensions,
-        onUserPreferencesChange, extraNavBarModals, includeNavBarMenuNames, store
+        onUserPreferencesChange, extraNavBarModals, includeNavBarMenuNames, store,
+        allowAddNewFittedLigand, allowMergeFittedLigand
     } = { ...defaultProps, ...props }
 
     const collectedProps: moorhen.CollectedProps = {
@@ -243,7 +246,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems, extraEditMenuItems,
         extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, activeMapRef,
         videoRecorderRef, lastHoveredAtomRef, onUserPreferencesChange, extraNavBarModals, store,
-        includeNavBarMenuNames
+        includeNavBarMenuNames, allowAddNewFittedLigand, allowMergeFittedLigand
     }
     
     useLayoutEffect(() => {

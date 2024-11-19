@@ -922,6 +922,8 @@ export namespace moorhen {
         aceDRGInstance: AceDRGInstance | null; 
         includeNavBarMenuNames: string[];
         store: ToolkitStore;
+        allowAddNewFittedLigand: boolean;
+        allowMergeFittedLigand: boolean;
     }
     
     interface ContainerProps extends Partial<ContainerRefs>, Partial<ContainerOptionalProps> { }
