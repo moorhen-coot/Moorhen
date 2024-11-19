@@ -21,8 +21,8 @@ const LigandHitCard = (props: {
     setLigandCardMolNoFocus: React.Dispatch<React.SetStateAction<number>>;
     ligandResults: moorhen.Molecule[];
     setLigandResults: React.Dispatch<React.SetStateAction<moorhen.Molecule[]>>;
-    allowMergeLigand?: boolean;
-    allowCreateLigand?: boolean;
+    allowAddNewFittedLigand?: boolean;
+    allowMergeFittedLigand?: boolean;
 }) => {
 
     const dispatch = useDispatch()
@@ -33,8 +33,8 @@ const LigandHitCard = (props: {
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
     const {
-        allowMergeLigand, allowCreateLigand
-    } = { allowMergeLigand: true, allowCreateLigand: false, ...props }
+        allowMergeFittedLigand, allowAddNewFittedLigand
+    } = { allowMergeFittedLigand: true, allowAddNewFittedLigand: false, ...props }
 
     const handleShow = useCallback(async () => {
         if (props.ligandMolecule.representations.length > 0) {
@@ -97,14 +97,14 @@ const LigandHitCard = (props: {
                         <CrisisAlertOutlined/>
                     </IconButton>
                     </Tooltip>
-                    {allowCreateLigand &&
+                    {allowAddNewFittedLigand &&
                     <Tooltip title="Add to new molecule">
                     <IconButton style={{ marginRight:'0.5rem', color: isDark ? 'white' : 'grey' }} onClick={handleAdd}>
                         <DoneOutlined/>
                     </IconButton>
                     </Tooltip>                    
                     }
-                    {allowMergeLigand &&
+                    {allowMergeFittedLigand &&
                     <Tooltip title="Merge to molecule">
                     <IconButton style={{ marginRight:'0.5rem', color: isDark ? 'white' : 'grey' }} onClick={handleMerge}>
                         <MergeTypeOutlined/>
@@ -117,7 +117,10 @@ const LigandHitCard = (props: {
     </Card>
 }
 
-export const MoorheFindLigandModal = (props: { }) => {    
+export const MoorheFindLigandModal = (props: {
+    allowAddNewFittedLigand?: boolean;
+    allowMergeFittedLigand?: boolean;
+}) => {    
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const maps = useSelector((state: moorhen.State) => state.maps)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
@@ -252,7 +255,8 @@ export const MoorheFindLigandModal = (props: { }) => {
                             ligandCardMolNoFocus={ligandCardMolNoFocus}
                             setLigandCardMolNoFocus={setLigandCardMolNoFocus}
                             ligandResults={ligandResults}
-                            setLigandResults={setLigandResults}/>
+                            setLigandResults={setLigandResults}
+                            {...props}/>
             })
             }</div> : <span>No results...</span>}
         </Row>
