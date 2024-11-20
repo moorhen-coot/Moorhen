@@ -136,5 +136,6 @@ export namespace gemmi {
         assemblies: emscriptem.vector<Assembly>;
         first_model: () => Model;
         remove_empty_chains: () => void;
+        get_info: (tag: string) => string;
     }
 }

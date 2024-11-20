@@ -190,6 +190,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 case 'mol-symm':
                 case "b-factor":
                 case "b-factor-norm":
+                case 'electrostatics':
                 case "af2-plddt":
                     colourRule = new MoorhenColourRule(
                         colourModeSelectRef.current.value, "/*/*/*/*", "#ffffff", props.molecule.commandCentre, true, applyColourToNonCarbonAtomsSwitchRef.current?.checked
@@ -201,6 +202,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                         : colourModeSelectRef.current.value === "b-factor" ? 'B-factor'
                         : colourModeSelectRef.current.value === "b-factor-norm" ? 'B-factor norm.'
                         : colourModeSelectRef.current.value === "af2-plddt" ? 'PLDDT'
+                        : colourModeSelectRef.current.value === "electrostatics" ? 'Electrostatics'
                         : ''
                     }`)
                     const ruleArgs = await getMultiColourRuleArgs(props.molecule, colourModeSelectRef.current.value)
@@ -434,11 +436,16 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                         <option value={'b-factor-norm'} key={'b-factor-norm'}>B-Factor (normalised)</option>
                         <option value={'af2-plddt'} key={'af2-plddt'}>AF2 PLDDT</option>
                         <option value={'mol-symm'} key={'mol-symm'}>Mol. Symmetry</option>
+                        {representationStyle === "MolecularSurface" &&
+                        <option value={'electrostatics'} key={'mol-symm'}>Electrostatics</option>
+                        }
                     </FormSelect>
                     {(colourMode === 'b-factor' || colourMode === 'b-factor-norm') ?
                         <img className="colour-rule-icon" src={`${props.urlPrefix}/pixmaps/temperature.svg`} alt='b-factor' style={{ width: '36px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}}/>
                     : colourMode === "secondary-structure" ?
                         <img className='colour-rule-icon' src={`${props.urlPrefix}/pixmaps/secondary-structure-grey.svg`} alt='ss2' style={{ width: '36px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}}/>
+                    : colourMode === "electrostatics" ?
+                    <div/>
                     : colourMode === "jones-rainbow" ?
                     <>
                         <div style={{borderColor: 'rgb(255, 0, 0)', borderWidth:'5px', backgroundColor:  'rgb(255, 0, 0)', height:'20px', width:'5px', marginTop: '0.2rem', padding: '0rem'}}/>

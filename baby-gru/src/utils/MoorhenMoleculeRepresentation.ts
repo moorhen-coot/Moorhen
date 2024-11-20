@@ -818,11 +818,16 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
 
         await this.applyM2tParams()
 
+        let colorStyle : string = "colorRampChainsScheme"
+
+        if(this.colourRules.length>0&&this.colourRules[0].ruleType==="electrostatics")
+            colorStyle = "ByOwnPotential"
+
         const response = await this.commandCentre.current.cootCommand({
             returnType: "mesh",
             command: "get_molecular_representation_mesh",
             commandArgs: [
-                this.parentMolecule.molNo, m2tSelection, "colorRampChainsScheme", m2tStyle, 2
+                this.parentMolecule.molNo, m2tSelection, colorStyle, m2tStyle, 2
             ]
         }, false) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
         console.log(response)
@@ -1235,7 +1240,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         if (this.useDefaultColourRules) {
             this.colourRules = this.parentMolecule.defaultColourRules
         }
-        
+
         await this.commandCentre.current.cootCommand({
             message: 'coot_command',
             command: "delete_colour_rules",
