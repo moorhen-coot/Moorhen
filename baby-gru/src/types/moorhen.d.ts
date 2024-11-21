@@ -187,7 +187,7 @@ export namespace moorhen {
         fitLigand(mapMolNo: number, ligandMolNo: number, fitRightHere?: boolean, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<Molecule[]>;
         checkIsLigand(): boolean;
         removeRepresentation(representationId: string): void;
-        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: ColourRule[], bondOptions?: cootBondOptions, m2tParams?: m2tParameters, residueEnvOptions?: residueEnvironmentOptions): Promise<MoleculeRepresentation>;
+        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: ColourRule[], bondOptions?: cootBondOptions, m2tParams?: m2tParameters, residueEnvOptions?: residueEnvironmentOptions, nonCustomOpacity?: number): Promise<MoleculeRepresentation>;
         getNeighborResiduesCids(selectionCid: string, maxDist: number): Promise<string[]>;
         drawWithStyleFromMesh(style: string, meshObjects: any[], cid?: string, fetchAtomBuffers?: boolean): Promise<void>;
         updateWithMovedAtoms(movedResidues: AtomInfo[][]): Promise<void>;
@@ -305,6 +305,7 @@ export namespace moorhen {
 
     interface MoleculeRepresentation {
         addColourRule(ruleType: string, cid: string, color: string, args: (string | number)[], isMultiColourRule?: boolean, applyColourToNonCarbonAtoms?: boolean, label?: string): void;
+        setNonCustomOpacity(nonCustomOpacity: number): void;
         getBufferObjects(): Promise<any>;
         applyColourRules(): Promise<void>;
         exportAsGltf(): Promise<ArrayBuffer>;
@@ -327,6 +328,7 @@ export namespace moorhen {
         static mergeBufferObjects(bufferObj1: libcootApi.InstancedMeshJS[], bufferObj2: libcootApi.InstancedMeshJS[]): libcootApi.InstancedMeshJS[];
         bondOptions: cootBondOptions;
         m2tParams: m2tParameters;
+        nonCustomOpacity: number;
         residueEnvironmentOptions: residueEnvironmentOptions;
         useDefaultM2tParams: boolean;
         useDefaultResidueEnvironmentOptions: boolean;
@@ -570,6 +572,7 @@ export namespace moorhen {
             colourRules: ColourRuleObject[];
             bondOptions: cootBondOptions;
             m2tParams: m2tParameters;
+            nonCustomOpacity: number;
             resEnvOptions: residueEnvironmentOptions;
          }[];
         defaultBondOptions: cootBondOptions;
