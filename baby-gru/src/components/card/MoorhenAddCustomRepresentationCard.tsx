@@ -462,7 +462,10 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                     : colourMode === "secondary-structure" ?
                         <img className='colour-rule-icon' src={`${props.urlPrefix}/pixmaps/secondary-structure-grey.svg`} alt='ss2' style={{ width: '36px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}}/>
                     : colourMode === "electrostatics" ?
-                        <img className='colour-rule-icon' src={`${props.urlPrefix}/pixmaps/esurf.svg`} alt='Electrostatic surface' style={{ width: '36px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}} ref={alphaSwatchRef} onClick={() => setShowAlphaSlider(true)}/>
+                    <>
+                        <img className='colour-rule-icon' src={`${props.urlPrefix}/pixmaps/esurf.svg`} alt='Electrostatic surface' style={{ width: '36px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}} />
+                        <img className='colour-rule-icon' src={`${props.urlPrefix}/pixmaps/transparency-svgrepo-com.svg`} alt='Opacity' style={{ width: '36px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}} ref={alphaSwatchRef} onClick={() => setShowAlphaSlider(true)}/>
+                    </>
                     : colourMode === "jones-rainbow" ?
                     <>
                         <div style={{borderColor: 'rgb(255, 0, 0)', borderWidth:'5px', backgroundColor:  'rgb(255, 0, 0)', height:'20px', width:'5px', marginTop: '0.2rem', padding: '0rem'}}/>
