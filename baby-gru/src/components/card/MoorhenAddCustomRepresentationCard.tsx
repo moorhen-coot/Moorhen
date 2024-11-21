@@ -458,26 +458,18 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                         }
                     </FormSelect>
                     {(colourMode === 'b-factor' || colourMode === 'b-factor-norm') ?
-                        <img className="colour-rule-icon" src={`${props.urlPrefix}/pixmaps/temperature.svg`} alt='b-factor' style={{ width: '36px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}}/>
+                        <img className="colour-rule-icon" src={`${props.urlPrefix}/pixmaps/temperature.svg`} alt='b-factor' style={{ width: '30px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}} ref={alphaSwatchRef} onClick={() => setShowAlphaSlider(true)}/>
                     : colourMode === "secondary-structure" ?
-                        <img className='colour-rule-icon' src={`${props.urlPrefix}/pixmaps/secondary-structure-grey.svg`} alt='ss2' style={{ width: '36px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}}/>
+                        <img className='colour-rule-icon' src={`${props.urlPrefix}/pixmaps/secondary-structure-grey.svg`} alt='ss2' style={{ width: '30px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}} ref={alphaSwatchRef} onClick={() => setShowAlphaSlider(true)}/>
                     : colourMode === "electrostatics" ?
-                    <>
-                        <img className='colour-rule-icon' src={`${props.urlPrefix}/pixmaps/esurf.svg`} alt='Electrostatic surface' style={{ width: '36px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}} />
-                        <img className='colour-rule-icon' src={`${props.urlPrefix}/pixmaps/transparency-svgrepo-com.svg`} alt='Opacity' style={{ width: '36px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}} ref={alphaSwatchRef} onClick={() => setShowAlphaSlider(true)}/>
-                    </>
+                        <img className='colour-rule-icon' src={`${props.urlPrefix}/pixmaps/esurf.svg`} alt='Electrostatic surface' style={{ width: '30px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}} ref={alphaSwatchRef} onClick={() => setShowAlphaSlider(true)}/>
                     : colourMode === "jones-rainbow" ?
-                    <>
-                        <div style={{borderColor: 'rgb(255, 0, 0)', borderWidth:'5px', backgroundColor:  'rgb(255, 0, 0)', height:'20px', width:'5px', marginTop: '0.2rem', padding: '0rem'}}/>
-                        <div style={{borderColor: 'rgb(255, 255, 0)', borderWidth:'5px', backgroundColor: 'rgb(255, 255, 0)', height:'20px', width:'5px', marginTop: '0.2rem', padding: '0rem'}}/>
-                        <div style={{borderColor: 'rgb(0, 255, 0)', borderWidth:'5px', backgroundColor: 'rgb(0, 255, 0)', height:'20px', width:'5px', marginTop: '0.2rem', padding: '0rem'}}/>
-                        <div style={{borderColor: 'rgb(0, 0, 255)', borderWidth:'5px', backgroundColor: 'rgb(0, 0, 255)', height:'20px', width:'5px', marginTop: '0.2rem', padding: '0rem'}}/>
-                    </>
+                        <img className='colour-rule-icon' src={`${props.urlPrefix}/pixmaps/jones_rainbow.svg`} alt='ss2' style={{ width: '30px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}} ref={alphaSwatchRef} onClick={() => setShowAlphaSlider(true)}/>
                     : colourMode === "mol-symm" ?
                     mode === "edit" ?
-                    <NcsColourSwatch style={{cursor: "pointer", height:'30px', width:'36px', padding: "0px", borderStyle: 'solid', borderColor: '#ced4da', borderWidth: '3px', borderRadius: '8px'}} rule={ncsColourRuleRef?.current} applyColourChange={applyNcsColourChange} />
+                    <NcsColourSwatch style={{cursor: "pointer", height:'30px', width:'30px', padding: "0px", borderStyle: 'solid', borderColor: '#ced4da', borderWidth: '3px', borderRadius: '8px'}} rule={ncsColourRuleRef?.current} applyColourChange={applyNcsColourChange} />
                     :
-                    <GrainOutlined style={{height:'30px', width:'36px', padding:0, borderStyle: 'solid', borderColor: '#ced4da', borderWidth: '3px', borderRadius: '8px'}}/>
+                    <GrainOutlined style={{height:'30px', width:'30px', padding:0, borderStyle: 'solid', borderColor: '#ced4da', borderWidth: '3px', borderRadius: '8px'}}/>
                     :
                     colourMode === 'custom' ?
                     <div
@@ -486,12 +478,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                         ref={colourSwatchRef}
                     />
                     :
-                    <>
-                        <div style={{borderColor: 'rgb(255, 125, 69)', borderWidth:'5px', backgroundColor:  'rgb(255, 125, 69)', height:'20px', width:'5px', marginTop: '0.2rem', padding: '0rem'}}/>
-                        <div style={{borderColor: 'rgb(255, 219, 19)', borderWidth:'5px', backgroundColor: 'rgb(255, 219, 19)', height:'20px', width:'5px', marginTop: '0.2rem', padding: '0rem'}}/>
-                        <div style={{borderColor: 'rgb(101, 203, 243)', borderWidth:'5px', backgroundColor: 'rgb(101, 203, 243)', height:'20px', width:'5px', marginTop: '0.2rem', padding: '0rem'}}/>
-                        <div style={{borderColor: 'rgb(0, 83, 214)', borderWidth:'5px', backgroundColor: 'rgb(0, 83, 214)', height:'20px', width:'5px', marginTop: '0.2rem', padding: '0rem'}}/>
-                    </>
+                        <img className='colour-rule-icon' src={`${props.urlPrefix}/pixmaps/alphafold_rainbow.svg`} alt='ss2' style={{ width: '30px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}} ref={alphaSwatchRef} onClick={() => setShowAlphaSlider(true)}/>
                     }
                 </Row>
                 <Popover
