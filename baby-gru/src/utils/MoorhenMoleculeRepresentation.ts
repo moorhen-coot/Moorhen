@@ -145,8 +145,8 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 buffer.alphaChanged = true;
             })
             this.glRef.current.buildBuffers();
+            this.glRef.current.drawScene();
         }
-        this.glRef.current.drawScene();
     }
 
     /**
