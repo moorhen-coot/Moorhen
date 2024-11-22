@@ -44,12 +44,6 @@ export const MoorhenHeaderInfoCard = (props: {
             sx={{'& .MuiPaper-root': { backgroundColor: isDark ? 'grey' : 'white', marginTop: '0.1rem', borderRadius: '1rem', borderStyle: 'solid', borderColor: 'grey', borderWidth: '1px' }}}>
         <TableContainer style={{maxWidth: convertViewtoPx(40, width), maxHeight: convertViewtoPx(40, height), overflow: 'auto'}}>
             <Table stickyHeader={true}>
-                <TableHead>
-                    <TableRow>
-                        <TableCell>Field</TableCell>
-                        <TableCell>Value</TableCell>
-                    </TableRow>
-                </TableHead>
                 <TableBody>
                     {title === null ? 
                      <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={busy}>

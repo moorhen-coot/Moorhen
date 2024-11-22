@@ -109,12 +109,6 @@ export const MoorhenLigandCard = (props: {
                             >
                             <TableContainer style={{maxWidth: convertViewtoPx(40, width), maxHeight: convertViewtoPx(40, height), overflow: 'auto'}}>
                                 <Table stickyHeader={true}>
-                                    <TableHead>
-                                        <TableRow>
-                                            <TableCell>Field</TableCell>
-                                            <TableCell>Value</TableCell>
-                                        </TableRow>
-                                    </TableHead>
                                     <TableBody>
                                     {ligand.chem_comp_info.map((chemInfo, idx) => 
                                         <TableRow style={{backgroundColor: idx % 2 !== 0 ? 'white' : 'rgba(233, 233, 233, 0.3)'}} key={`${chemInfo.first} - ${chemInfo.second}`} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
