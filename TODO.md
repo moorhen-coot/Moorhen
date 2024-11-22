@@ -1,6 +1,13 @@
 # Moorhen
 A JavaScript molecular graphics program
 
+### For 0.14.1
+- [ ] Electrostatics
+- [ ] Small molecule CIF loading via UI
+- [ ] Print out molecule info - B-factors, etc. This could be hover info, atom label, full print
+      of ATOM cards, context menu option.
+- [ ] "Somehow" determine PLDDT vs B-factor in SliceNDice
+
 ### Todo
 - [ ] Highlight things other than balls.
 - [ ] Electrostatics

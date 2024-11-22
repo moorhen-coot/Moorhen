@@ -55,6 +55,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     useDefaultM2tParams: boolean;
     bondOptions: moorhen.cootBondOptions;
     m2tParams: moorhen.m2tParameters;
+    nonCustomOpacity: number;
     residueEnvironmentOptions: moorhen.residueEnvironmentOptions;
     ligandsCid: string;
     hoverColor: number[];
@@ -74,6 +75,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.isCustom = false
         this.useDefaultColourRules = true
         this.useDefaultBondOptions = true
+        this.nonCustomOpacity = 1.0
         this.useDefaultM2tParams = true
         this.useDefaultResidueEnvironmentOptions = true
         this.bondOptions = {
@@ -119,6 +121,31 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             this.m2tParams = m2tParams
         } else {
             this.useDefaultM2tParams = true
+        }
+    }
+
+    /**
+     * A method to set alpha for molecular representation in case of colour not picked with colour picker
+     */
+    setNonCustomOpacity(nonCustomOpacity: number) {
+        this.nonCustomOpacity = nonCustomOpacity
+        if(this.buffers){
+            this.buffers.forEach((buffer) => {
+                if (nonCustomOpacity < 0.99) {
+                    buffer.transparent = true
+                } else {
+                    buffer.transparent = false
+                }
+                buffer.triangleColours.forEach(colbuffer => {
+                    for (let idx = 0; idx < colbuffer.length; idx += 4) {
+                        colbuffer[idx + 3] = nonCustomOpacity
+                    }
+                })
+                buffer.isDirty = true;
+                buffer.alphaChanged = true;
+            })
+            this.glRef.current.buildBuffers();
+            this.glRef.current.drawScene();
         }
     }
 
@@ -291,7 +318,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     /**
-     * Redraw this molecule representation (tipically not the first time)
+     * Redraw this molecule representation (typically not the first time)
      */
     async redraw() {
         this.visible = true
@@ -818,11 +845,16 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
 
         await this.applyM2tParams()
 
+        let colorStyle : string = "colorRampChainsScheme"
+
+        if(this.colourRules.length>0&&this.colourRules[0].ruleType==="electrostatics")
+            colorStyle = "ByOwnPotential"
+
         const response = await this.commandCentre.current.cootCommand({
             returnType: "mesh",
             command: "get_molecular_representation_mesh",
             commandArgs: [
-                this.parentMolecule.molNo, m2tSelection, "colorRampChainsScheme", m2tStyle, 2
+                this.parentMolecule.molNo, m2tSelection, colorStyle, m2tStyle, 2
             ]
         }, false) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
         console.log(response)
@@ -1235,7 +1267,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         if (this.useDefaultColourRules) {
             this.colourRules = this.parentMolecule.defaultColourRules
         }
-        
+
         await this.commandCentre.current.cootCommand({
             message: 'coot_command',
             command: "delete_colour_rules",

@@ -1158,10 +1158,11 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {moorhen.cootBondOptions} [bondOptions=undefined] - An object that describes bond width, atom/bond ratio and other bond settings.
      * @param {moorhen.m2tParameters} [m2tParams=undefined] - An object that describes ribbon width, nucleotide style and other ribbon settings.
      */
-    async addRepresentation(style: moorhen.RepresentationStyles, cid: string = '/*/*/*/*', isCustom: boolean = false, colourRules?: moorhen.ColourRule[], bondOptions?: moorhen.cootBondOptions, m2tParams?: moorhen.m2tParameters, residueEnvOptions?: moorhen.residueEnvironmentOptions) {
+    async addRepresentation(style: moorhen.RepresentationStyles, cid: string = '/*/*/*/*', isCustom: boolean = false, colourRules?: moorhen.ColourRule[], bondOptions?: moorhen.cootBondOptions, m2tParams?: moorhen.m2tParameters, residueEnvOptions?: moorhen.residueEnvironmentOptions, nonCustomOpacity?: number) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules()
         }
+        console.log("addRepresentation",nonCustomOpacity)
         const representation = new MoorhenMoleculeRepresentation(style, cid, this.commandCentre, this.glRef)
         representation.isCustom = isCustom
         representation.setParentMolecule(this)
@@ -1170,6 +1171,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         representation.setM2tParams(m2tParams)
         representation.setResidueEnvOptions(residueEnvOptions)
         await representation.draw()
+        representation.setNonCustomOpacity(nonCustomOpacity)
         this.representations.push(representation)
         await this.drawSymmetry(false)
         this.drawBiomolecule(false)
