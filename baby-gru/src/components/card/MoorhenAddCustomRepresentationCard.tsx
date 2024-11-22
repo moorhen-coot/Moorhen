@@ -259,8 +259,6 @@ export const MoorhenAddCustomRepresentationCard = (props: {
         }
 
         if (mode === 'add') {
-            console.log("createRepresentation ref",nonCustomOpacitySliderRef)
-            console.log("createRepresentation cur",nonCustomOpacitySliderRef.current)
             const representation = await props.molecule.addRepresentation(
                 styleSelectRef.current.value,
                 cidSelection,
@@ -275,7 +273,6 @@ export const MoorhenAddCustomRepresentationCard = (props: {
         } else if (mode === 'edit' && props.representation.uniqueId) {
             const representation = props.molecule.representations.find(item => item.uniqueId === props.representation.uniqueId)
             if (representation) {
-                console.log("createRepresentation (edit) cur",nonCustomOpacitySliderRef.current,representation.setNonCustomOpacity)
                 representation.cid = cidSelection
                 representation.setStyle(styleSelectRef.current.value)
                 representation.setUseDefaultColourRules(!colourRule)

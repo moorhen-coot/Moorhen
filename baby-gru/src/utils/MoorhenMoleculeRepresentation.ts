@@ -128,6 +128,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
      * A method to set alpha for molecular representation in case of colour not picked with colour picker
      */
     setNonCustomOpacity(nonCustomOpacity: number) {
+        if(typeof(nonCustomOpacity)!=="number") return
         this.nonCustomOpacity = nonCustomOpacity
         if(this.buffers){
             this.buffers.forEach((buffer) => {
