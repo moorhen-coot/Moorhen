@@ -1162,7 +1162,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules()
         }
-        console.log("addRepresentation",nonCustomOpacity)
         const representation = new MoorhenMoleculeRepresentation(style, cid, this.commandCentre, this.glRef)
         representation.isCustom = isCustom
         representation.setParentMolecule(this)
