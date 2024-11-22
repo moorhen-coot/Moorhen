@@ -11,7 +11,6 @@ A JavaScript molecular graphics program
 
 ### Todo
 - [ ] Highlight things other than balls.
-- [ ] Electrostatics
 - [ ] Auto scaled shadow box
 - [ ] Lipid cartoons
 - [ ] Images/Legends
