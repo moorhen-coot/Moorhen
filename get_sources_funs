@@ -230,7 +230,7 @@ getcoot() {
         echo "Using existing coot"
     else
         echo "Downloading coot-1"
-        git clone --branch main https://github.com/pemsley/coot.git coot-1.0
+        git clone --branch main https://github.com/stuartjamesmcnicholas/coot.git coot-1.0
         cd coot-1.0
     fi
     echo
