@@ -1,8 +1,7 @@
 # Moorhen
 A JavaScript molecular graphics program
 
-### For 0.14.1
-- [x] Electrostatics
+### For 0.14.2
 - [ ] Fix wrong colour of custom gaussian surface.
 - [ ] Small molecule CIF loading via UI
 - [ ] Print out molecule info - B-factors, etc. This could be hover info, atom label, full print
