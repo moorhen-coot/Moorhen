@@ -34,6 +34,7 @@ import { MoorhenMapContourLevelSnackBar } from './snack-bar/MoorhenMapContourLev
 import { MoorhenRotamerChangeSnackBar } from './snack-bar/MoorhenRotamerChangeSnackbar';
 import { MoorhenScreenshotSnackBar } from './snack-bar/MoorhenScreenshotSnackBar';
 import { MoorhenSideBar } from './snack-bar/MoorhenSideBar';
+import { MoorhenAtomInfoSnackBar } from './snack-bar/MoorhenAtomInfoSnackBar';
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -47,6 +48,13 @@ declare module "notistack" {
         };
         residueSelection: true;
         acceptRejectDraggingAtoms: {
+            commandCentre: React.RefObject<moorhen.CommandCentre>;
+            moleculeRef: React.RefObject<moorhen.Molecule>;
+            cidRef: React.RefObject<string[]>;
+            glRef: React.RefObject<webGL.MGWebGL>;
+            monomerLibraryPath: string;
+        },
+        atomInformation: {
             commandCentre: React.RefObject<moorhen.CommandCentre>;
             moleculeRef: React.RefObject<moorhen.Molecule>;
             cidRef: React.RefObject<string[]>;
@@ -493,7 +501,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             mapContourLevel: MoorhenMapContourLevelSnackBar,
             rotamerChange: MoorhenRotamerChangeSnackBar,
             screenshot: MoorhenScreenshotSnackBar,
-            sideBar: MoorhenSideBar
+            sideBar: MoorhenSideBar,
+            atomInformation: MoorhenAtomInfoSnackBar,
         }}
         preventDuplicate={true}>
     <div>

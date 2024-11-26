@@ -206,9 +206,42 @@ coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::s
 coot::instanced_mesh_t DrawSugarBlocks(mmdb::Manager *molHnd, const std::string &cid_str);
 bool isSugar(const std::string &resName);
 
+struct moorhen_atom_info_t  {
+      float tempFactor;
+      float occupancy;
+      float x;
+      float y;
+      float z;
+};
+
 class molecules_container_js : public molecules_container_t {
     public:
         explicit molecules_container_js(bool verbose=true) : molecules_container_t(verbose) {
+        }
+
+        moorhen_atom_info_t get_atom_info(int imol, const std::string &cid){
+            moorhen_atom_info_t info;
+            info.tempFactor = -1.0;
+            info.occupancy = -1.0;
+            info.x = -99999.0;
+            info.y = -99999.0;
+            info.z = -99999.0;
+            const char * cid_cpstr = cid.c_str();
+            mmdb::Manager *mol = get_mol(imol);
+            int selHnd = mol->NewSelection();
+            mol->Select(selHnd, mmdb::STYPE_ATOM, cid_cpstr, mmdb::SKEY_NEW);
+            mmdb::PPAtom SelAtom;
+            int nSelAtoms;
+            mol->GetSelIndex(selHnd, SelAtom, nSelAtoms);
+            if(nSelAtoms>0){
+                info.tempFactor = SelAtom[0]->tempFactor;
+                info.occupancy = SelAtom[0]->occupancy;
+                info.x = SelAtom[0]->x;
+                info.y = SelAtom[0]->y;
+                info.z = SelAtom[0]->z;
+            }
+            mol->DeleteSelection(selHnd);
+            return info;
         }
 
         std::vector<std::pair<std::string,int>> slicendice_slice(int imol, int nclusters, const std::string &clustering_method, const std::string &pae_contents_string){
@@ -1623,6 +1656,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("replace_molecule_by_model_from_string", &molecules_container_js::replace_molecule_by_model_from_string)
     .function("read_dictionary_string", &molecules_container_js::read_dictionary_string)
     .function("slicendice_slice", &molecules_container_js::slicendice_slice)
+    .function("get_atom_info", &molecules_container_js::get_atom_info)
     ;
     value_object<texture_as_floats_t>("texture_as_floats_t")
     .field("width", &texture_as_floats_t::width)
@@ -1991,6 +2025,14 @@ EMSCRIPTEN_BINDINGS(my_module) {
     value_object<lsq_results_t>("lsq_results_t")
       .field("rotation_matrix", &lsq_results_t::rotation_matrix)
       .field("translation",     &lsq_results_t::translation)
+    ;
+
+    value_object<moorhen_atom_info_t>("moorhen_atom_info_t")
+      .field("tempFactor", &moorhen_atom_info_t::tempFactor)
+      .field("occupancy",     &moorhen_atom_info_t::occupancy)
+      .field("x",     &moorhen_atom_info_t::x)
+      .field("y",     &moorhen_atom_info_t::y)
+      .field("z",     &moorhen_atom_info_t::z)
     ;
 
     class_<moorhen::helix_t>("helix_t")

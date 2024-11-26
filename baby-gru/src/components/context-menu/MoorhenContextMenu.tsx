@@ -9,6 +9,7 @@ import { MoorhenAddTerminalResidueButton } from "./MoorhenAddTerminalResidueButt
 import { MoorhenAutofitRotamerButton } from "./MoorhenAutofitRotamerButton"
 import { MoorhenFlipPeptideButton } from "./MoorhenFlipPeptideButton"
 import { MoorhenConvertCisTransButton } from "./MoorhenConvertCisTransButton"
+import { MoorhenAtomInfoButton } from "./MoorhenAtomInfoButton"
 import { MoorhenSideChain180Button } from "./MoorhenSideChain180Button"
 import { MoorhenRefineResiduesButton } from "./MoorhenRefineResiduesButton"
 import { MoorhenDeleteButton } from "./MoorhenDeleteButton"
@@ -127,7 +128,7 @@ export const MoorhenContextMenu = (props: {
               selectedMolecule && chosenAtom &&
               <div style={{ display:'flex', justifyContent: 'center' }}>
               <Tooltip className="moorhen-tooltip" title={toolTip}>
-              <FormGroup ref={quickActionsFormGroupRef} style={{ justifyContent: 'center', margin: "0px", padding: "0px", width: '18rem' }} row>
+              <FormGroup ref={quickActionsFormGroupRef} style={{ justifyContent: 'left', margin: "0px", padding: "0px", width: '18rem' }} row>
               <MoorhenAutofitRotamerButton {...collectedProps} />
               <MoorhenFlipPeptideButton {...collectedProps}/>
               <MoorhenSideChain180Button {...collectedProps}/> 
@@ -144,6 +145,7 @@ export const MoorhenContextMenu = (props: {
               <MoorhenDragAtomsButton {...collectedProps} />
               <MoorhenAddAltConfButton {...collectedProps} />
               <MoorhenConvertCisTransButton {...collectedProps} />
+              <MoorhenAtomInfoButton {...collectedProps} />
               </FormGroup>
               </Tooltip>
               </div>
