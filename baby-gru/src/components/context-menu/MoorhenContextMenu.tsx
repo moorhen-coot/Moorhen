@@ -64,6 +64,8 @@ export const MoorhenContextMenu = (props: {
   const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
   const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
+  const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
+
   const handleContextMenu = useCallback((evt) => {
     evt.stopPropagation()
     evt.preventDefault()
@@ -145,7 +147,7 @@ export const MoorhenContextMenu = (props: {
               <MoorhenDragAtomsButton {...collectedProps} />
               <MoorhenAddAltConfButton {...collectedProps} />
               <MoorhenConvertCisTransButton {...collectedProps} />
-              <MoorhenAtomInfoButton {...collectedProps} />
+              {devMode && <MoorhenAtomInfoButton {...collectedProps} />}
               </FormGroup>
               </Tooltip>
               </div>
