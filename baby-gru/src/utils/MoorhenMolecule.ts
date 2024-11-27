@@ -1498,6 +1498,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                                 element: atomElementString,
                                 tempFactor: atom.b_iso,
                                 charge: atom.charge,
+                                occupancy: atom.occ,
                                 x: transPos[0] - this.glRef.current.origin[0] + diff[0],
                                 y: transPos[1] - this.glRef.current.origin[1] + diff[1],
                                 z: transPos[2] - this.glRef.current.origin[2] + diff[2],

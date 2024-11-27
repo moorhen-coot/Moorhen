@@ -402,6 +402,7 @@ struct AtomInfo {
     std::string element;
     std::string symbol;
     float tempFactor;
+    float occupancy;
     int serial;
     std::string name;
     bool has_altloc;
@@ -656,6 +657,7 @@ std::vector<AtomInfo> atom_info_vec;
                         atom_info.tempFactor = atom.b_iso;
                         atom_info.serial = atom.serial;
                         atom_info.name = atom.name;
+                        atom_info.occupancy = atom.occ;
                         atom_info.has_altloc = atom.has_altloc();
                         atom_info.mol_name = model.name;
                         atom_info.chain_id = chain.name;
@@ -2681,6 +2683,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .field("element", &AtomInfo::element)
     .field("tempFactor", &AtomInfo::tempFactor)
     .field("serial", &AtomInfo::serial)
+    .field("occupancy", &AtomInfo::occupancy)
     .field("name", &AtomInfo::name)
     .field("has_altloc", &AtomInfo::has_altloc)
     .field("alt_loc", &AtomInfo::alt_loc)

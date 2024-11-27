@@ -61,6 +61,7 @@ export namespace moorhen {
         element: string;
         tempFactor: number;
         serial: number;
+        occupancy: number;
         name: string;
         has_altloc: boolean;
         alt_loc: string;

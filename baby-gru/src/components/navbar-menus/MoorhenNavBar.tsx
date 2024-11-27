@@ -165,11 +165,8 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
     useEffect(() => {
         const getHoverInfo = async () => { 
             if(hoveredAtom.molecule&&hoveredAtom.cid){
-                const result = await props.commandCentre.current.cootCommand({
-                    command: 'get_atom_info',
-                    commandArgs: [hoveredAtom.molecule.molNo,hoveredAtom.cid],
-                }, false)
-                setTempFactor(result.data.result.result.tempFactor)
+                const gemmiAtoms = await hoveredAtom.molecule.gemmiAtomsForCid(hoveredAtom.cid)
+                setTempFactor(gemmiAtoms[0].tempFactor)
             }
         }
         getHoverInfo()    

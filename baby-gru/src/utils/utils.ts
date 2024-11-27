@@ -325,6 +325,7 @@ export const cidToAtomInfo = (cid: string): moorhen.AtomInfo => {
         element: null,
         tempFactor: null,
         serial: null,
+        occupancy: null,
         name: resSpec.atom_name,
         has_altloc: resSpec.alt_conf !== "",
         alt_loc: resSpec.alt_conf,

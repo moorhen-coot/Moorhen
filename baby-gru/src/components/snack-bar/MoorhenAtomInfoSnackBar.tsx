@@ -27,7 +27,7 @@ export const MoorhenAtomInfoSnackBar = forwardRef<
     const dispatch = useDispatch()
 
     const { closeSnackbar } = useSnackbar()
-    const [tempFactor, setTempFactor] = useState(20.0);
+    const [atomProps, setAtomProps] = useState({tempFactor:100.0,occupancy:0.0,x:-9999.,y:-9999.,z:-9999.,charge:0});
 
     const finishDragging = async (acceptTransform: boolean) => {
         closeSnackbar(props.id)
@@ -36,12 +36,14 @@ export const MoorhenAtomInfoSnackBar = forwardRef<
     useEffect(() => {
         const getAtomInfo = async () => { 
             if(props.moleculeRef.current&&props.cidRef){
-                console.log(props.moleculeRef.current.molNo,props.cidRef.current)
-                const result = await props.commandCentre.current.cootCommand({
-                    command: 'get_atom_info',
-                    commandArgs: [props.moleculeRef.current.molNo,props.cidRef.current[0]],
-                }, false)
-                setTempFactor(result.data.result.result.tempFactor)
+                const gemmiAtoms = await props.moleculeRef.current.gemmiAtomsForCid(props.cidRef.current[0])
+                setAtomProps({tempFactor:gemmiAtoms[0].tempFactor, 
+                              occupancy:gemmiAtoms[0].occupancy,
+                              x:gemmiAtoms[0].x,
+                              y:gemmiAtoms[0].y,
+                              z:gemmiAtoms[0].z,
+                              charge:gemmiAtoms[0].charge
+                              })
             }
         }
         getAtomInfo()    
@@ -54,9 +56,9 @@ export const MoorhenAtomInfoSnackBar = forwardRef<
                         <table>
                         <tr><td>Name: {props.cidRef.current}</td></tr>
                         <tr><td>Molecule: {props.cidRef.current}</td></tr>
-                        <tr><td>Temp. factor: {tempFactor.toFixed(3)}</td></tr>
-                        <tr><td>Occupancy: {props.cidRef.current}</td></tr>
-                        <tr><td>Position: {props.cidRef.current}</td></tr>
+                        <tr><td>Temp. factor: {atomProps.tempFactor.toFixed(3)}</td></tr>
+                        <tr><td>Occupancy: {atomProps.occupancy.toFixed(3)}</td></tr>
+                        <tr><td>Position: {atomProps.x.toFixed(3)} {atomProps.y.toFixed(3)} {atomProps.z.toFixed(3)}</td></tr>
                         </table>
                     </div>
                     <div>
