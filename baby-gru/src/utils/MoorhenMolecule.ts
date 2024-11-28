@@ -772,7 +772,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} name - The new molecule name
      * @returns {Promise<moorhen.Molecule>} The new molecule
      */
-    async loadToCootFromString(coordData_in: ArrayBuffer | string, name: string, isSmallMoleculeCif: boolean = false): Promise<moorhen.Molecule> {
+    async loadToCootFromString(coordData: ArrayBuffer | string, name: string): Promise<moorhen.Molecule> {
         const pdbRegex = /.pdb$/;
         const entRegex = /.ent$/;
         const cifRegex = /.cif$/;
@@ -783,22 +783,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
 
         this.name = name.replace(pdbRegex, "").replace(entRegex, "").replace(cifRegex, "").replace(mmcifRegex, "");
-
-        let coordData: ArrayBuffer | string;
-        if(isSmallMoleculeCif){
-            try {
-                const response = await this.commandCentre.current.cootCommand({
-                    returnType: "string",
-                    command: 'SmallMoleculeCifToMMCif',
-                    commandArgs: [coordData_in],
-                }, false) as moorhen.WorkerResponse<string>
-                coordData = response.data.result.result
-            } catch (err) {
-                console.error('Error in SmallMoleculeCifToMMCif', err)
-            }
-        } else {
-            coordData = coordData_in
-        }
 
         try {
             this.updateGemmiStructure(coordData as string)
@@ -1174,7 +1158,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {moorhen.cootBondOptions} [bondOptions=undefined] - An object that describes bond width, atom/bond ratio and other bond settings.
      * @param {moorhen.m2tParameters} [m2tParams=undefined] - An object that describes ribbon width, nucleotide style and other ribbon settings.
      */
-    async addRepresentation(style: moorhen.RepresentationStyles, cid: string = '/*/*/*/*', isCustom: boolean = false, colourRules?: moorhen.ColourRule[], bondOptions?: moorhen.cootBondOptions, m2tParams?: moorhen.m2tParameters, residueEnvOptions?: moorhen.residueEnvironmentOptions) {
+    async addRepresentation(style: moorhen.RepresentationStyles, cid: string = '/*/*/*/*', isCustom: boolean = false, colourRules?: moorhen.ColourRule[], bondOptions?: moorhen.cootBondOptions, m2tParams?: moorhen.m2tParameters, residueEnvOptions?: moorhen.residueEnvironmentOptions, nonCustomOpacity?: number) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules()
         }
@@ -1186,6 +1170,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         representation.setM2tParams(m2tParams)
         representation.setResidueEnvOptions(residueEnvOptions)
         await representation.draw()
+        representation.setNonCustomOpacity(nonCustomOpacity)
         this.representations.push(representation)
         await this.drawSymmetry(false)
         this.drawBiomolecule(false)
@@ -2156,13 +2141,15 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }, true) as moorhen.WorkerResponse<(number[] | libcootApi.fitLigandInfo[])>
         
         if (result.data.result.status === "Completed") {
+            const ligandMolecule: moorhen.Molecule = this.store.getState().molecules.moleculeList.find((molecule: moorhen.Molecule) => molecule.molNo === ligandMolNo)
             newMolecules = await Promise.all(
                 result.data.result.result.map(async (fitLigandResult: (number | libcootApi.fitLigandInfo), idx: number) => {
                     const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
                     newMolecule.molNo = fitRightHere ? fitLigandResult as number : (fitLigandResult as libcootApi.fitLigandInfo).imol 
-                    newMolecule.name = `Fit. lig. #${idx + 1}`
+                    newMolecule.name = `${ligandMolecule?.name ? ligandMolecule.name : "Lig."} fit. #${idx + 1}`
                     newMolecule.isDarkBackground = this.isDarkBackground
                     newMolecule.defaultBondOptions = this.defaultBondOptions
+                    await ligandMolecule?.transferLigandDicts?.(newMolecule)
                     if (redraw) {
                         await newMolecule.fetchIfDirtyAndDraw('CBs')
                     }
@@ -2501,5 +2488,19 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
 
         return headerInfo.data.result.result
+    }
+    
+    /**
+     * Calculate the Q-Score for a CID
+     * @param {string} cid - The CID selection used to calcualte the qscore
+     * @param {moorhen.Map} activeMap - The map instance used in the refinement
+     */
+    async calculateQscore(activeMap: moorhen.Map, cid?: string) {
+        const result = await this.commandCentre.current.cootCommand({
+            command: cid ? 'get_q_score_for_cid' : 'get_q_score',
+            commandArgs: cid ? [ this.molNo, cid, activeMap.molNo ] : [ this.molNo, activeMap.molNo ],
+            returnType: 'validation_data',
+        }, false) as moorhen.WorkerResponse<libcootApi.ValidationInformationJS[]>
+        return result.data.result.result
     }
 }

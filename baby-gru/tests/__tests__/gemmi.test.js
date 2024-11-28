@@ -40,9 +40,27 @@ describe("Testing gemmi", () => {
         const response = await fetch("https://www.crystallography.net/cod/1100231.cif")
         expect(response.ok).toBeTruthy()
         const fileContents = await response.text()
-        console.log(fileContents)
         const result = cootModule.SmallMoleculeCifToMMCif(fileContents)
-        console.log(result)
+        const st = cootModule.read_structure_from_string(result.first, "1100231")
+        cootModule.gemmi_setup_entities(st)
+
+        const model = st.first_model()
+        const chains = model.chains
+        const chain = chains.get(0)
+        expect(chains.size()).toBe(1)
+
+        const residues = chain.residues
+        const residue = residues.get(0)
+        const residue_seqId = residue.seqid
+        expect(chains.size()).toBe(1)
+        expect(chain.name).toBe('A')
+        expect(residues.size()).toBe(1)
+        expect(residue_seqId.str()).toBe('1')
+        const atoms = residue.atoms
+        expect(atoms.size()).toBe(143)
+
+        cleanUpVariables.push(st, model, chains, chain, residues, residue_seqId, residue, atoms)
+
     })
 
     test("Test parse_mon_lib_list_cif", async () => {

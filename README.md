@@ -6,7 +6,7 @@
 [![Inline docs](https://github.com/moorhen-coot/wiki/actions/workflows/jekyll.yml/badge.svg)](https://moorhen-coot.github.io/wiki/)
 
 Moorhen is a web browser molecular graphics program based on the Coot desktop program.
-It is developed by porting some [CCP4](https://www.ccp4.ac.uk/) libraries and programs, [Coot](https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/), [FFTW2](https://www.fftw.org/), [Privateer](https://github.com/glycojones/privateer) and the [Gnu Scientific Library](https://www.gnu.org/software/gsl/) to Web Assembly.
+It is developed by compiling some [CCP4](https://www.ccp4.ac.uk/) libraries and programs, [Coot](https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/) and their dependencies to Web Assembly and then combining with a React user interface.
 
 The emscripten suite of tools is required to do the
 compilation.
@@ -19,12 +19,12 @@ The following libraries/programs are compiled to Web Assembly:
 * ssm (1.4.0)
 * mmdb2 (2.0.22)
 * gemmi 0.6.4
-* Coot 1.0 ('gtk3' git branch)
+* Coot 1.0
 * fftw 2.1.5
 * gsl 2.7.1
-* Boost 1.83.0
+* Boost 1.84.0
 * glm 0.9.9.8
-* RDKit 2023_09_1
+* RDKit 2024_03_5
 * Freetype
 
 Moorhen is available to use at [https://moorhen.org](https://moorhen.org).

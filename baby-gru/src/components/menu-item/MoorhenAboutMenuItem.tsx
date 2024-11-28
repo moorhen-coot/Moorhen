@@ -15,6 +15,7 @@ export const MoorhenAboutMenuItem = (props: { setPopoverIsShown: React.Dispatch<
             <li>Jakub Smulski</li>
         </ul>
         <p>This is Moorhen v{version} ({WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1])) ? "64" : "32"}-bit)</p>
+        <p><a href={`https://github.com/moorhen-coot/Moorhen`}>Source code</a></p>
     </div>
 
     return <MoorhenBaseMenuItem

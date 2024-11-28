@@ -374,7 +374,7 @@ export const MoorhenSliceNDiceModal = (props: {
     const handleClose = useCallback(async (saveToMoorhen: boolean = false) => {
         if (slicingResults?.length > 0) {
             if (saveToMoorhen) {
-                const sortedMolecules = slicingResults.sort((a, b) => { return  b.molNo - a.molNo })
+                const sortedMolecules = [...slicingResults].sort((a, b) => { return  b.molNo - a.molNo })
                 for (let sliceMolecule of sortedMolecules) {
                     sliceMolecule.isMRSearchModel = true
                     await deleteHiddenResidues(sliceMolecule)

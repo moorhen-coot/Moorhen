@@ -187,7 +187,7 @@ export namespace moorhen {
         fitLigand(mapMolNo: number, ligandMolNo: number, fitRightHere?: boolean, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<Molecule[]>;
         checkIsLigand(): boolean;
         removeRepresentation(representationId: string): void;
-        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: ColourRule[], bondOptions?: cootBondOptions, m2tParams?: m2tParameters, residueEnvOptions?: residueEnvironmentOptions): Promise<MoleculeRepresentation>;
+        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: ColourRule[], bondOptions?: cootBondOptions, m2tParams?: m2tParameters, residueEnvOptions?: residueEnvironmentOptions, nonCustomOpacity?: number): Promise<MoleculeRepresentation>;
         getNeighborResiduesCids(selectionCid: string, maxDist: number): Promise<string[]>;
         drawWithStyleFromMesh(style: string, meshObjects: any[], cid?: string, fetchAtomBuffers?: boolean): Promise<void>;
         updateWithMovedAtoms(movedResidues: AtomInfo[][]): Promise<void>;
@@ -228,7 +228,7 @@ export namespace moorhen {
         drawResidueSelection: (cid: string) => Promise<void>;
         clearBuffersOfStyle: (style: string) => void;
         loadToCootFromURL: (inputFile: string, molName: string, options?: RequestInit) => Promise<Molecule>;
-        loadToCootFromString: (coordData: ArrayBuffer | string, name: string, isSmallMoleculeCif?: boolean) => Promise<Molecule>;
+        loadToCootFromString: (coordData: ArrayBuffer | string, name: string) => Promise<Molecule>;
         applyTransform: () => Promise<void>;
         getAtoms(format?: coorFormats): Promise<string>;
         hide: (style: string, cid?: string) => MoleculeRepresentation;
@@ -242,6 +242,7 @@ export namespace moorhen {
         getLigandSVG(resName: string, useCache?: boolean): Promise<string>;
         isValidSelection(cid: string): Promise<boolean>;
         fetchHeaderInfo(useCache?: boolean): Promise<libcootApi.headerInfoJS>;
+        calculateQscore(activeMap: Map, cid?: string): Promise<libcootApi.ValidationInformationJS[]>;
         type: string;
         adaptativeBondsEnabled: boolean;
         cachedLigandSVGs: {[key: string]: string};
@@ -304,6 +305,7 @@ export namespace moorhen {
 
     interface MoleculeRepresentation {
         addColourRule(ruleType: string, cid: string, color: string, args: (string | number)[], isMultiColourRule?: boolean, applyColourToNonCarbonAtoms?: boolean, label?: string): void;
+        setNonCustomOpacity(nonCustomOpacity: number): void;
         getBufferObjects(): Promise<any>;
         applyColourRules(): Promise<void>;
         exportAsGltf(): Promise<ArrayBuffer>;
@@ -326,6 +328,7 @@ export namespace moorhen {
         static mergeBufferObjects(bufferObj1: libcootApi.InstancedMeshJS[], bufferObj2: libcootApi.InstancedMeshJS[]): libcootApi.InstancedMeshJS[];
         bondOptions: cootBondOptions;
         m2tParams: m2tParameters;
+        nonCustomOpacity: number;
         residueEnvironmentOptions: residueEnvironmentOptions;
         useDefaultM2tParams: boolean;
         useDefaultResidueEnvironmentOptions: boolean;
@@ -569,6 +572,7 @@ export namespace moorhen {
             colourRules: ColourRuleObject[];
             bondOptions: cootBondOptions;
             m2tParams: m2tParameters;
+            nonCustomOpacity: number;
             resEnvOptions: residueEnvironmentOptions;
          }[];
         defaultBondOptions: cootBondOptions;
@@ -924,6 +928,8 @@ export namespace moorhen {
         aceDRGInstance: AceDRGInstance | null; 
         includeNavBarMenuNames: string[];
         store: ToolkitStore;
+        allowAddNewFittedLigand: boolean;
+        allowMergeFittedLigand: boolean;
     }
     
     interface ContainerProps extends Partial<ContainerRefs>, Partial<ContainerOptionalProps> { }

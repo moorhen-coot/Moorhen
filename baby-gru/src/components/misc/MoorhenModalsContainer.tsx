@@ -68,7 +68,7 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
         }
 
         {showFitLigandModal &&
-            <MoorheFindLigandModal />
+            <MoorheFindLigandModal {...props}/>
         }
 
         {showRamaPlotModal &&
