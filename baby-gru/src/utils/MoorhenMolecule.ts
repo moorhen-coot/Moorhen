@@ -10,6 +10,7 @@ import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { hideMolecule } from '../store/moleculesSlice';
 import * as vec3 from 'gl-matrix/vec3';
 import * as mat3 from 'gl-matrix/mat3';
+import * as mat4 from 'gl-matrix/mat4';
 import * as quat4 from 'gl-matrix/quat';
 import { moorhen } from "../types/moorhen"
 import { webGL } from "../types/mgWebGL"
@@ -292,11 +293,29 @@ export class MoorhenMolecule implements moorhen.Molecule {
                         const transform = op.transform
                         const vec = transform.vec
                         const mat = transform.mat
+
                         const mat_array = mat.as_array()
-                        mat16.push(mat_array[0]); mat16.push(mat_array[1]); mat16.push(mat_array[2]); mat16.push(vec.x);
-                        mat16.push(mat_array[3]); mat16.push(mat_array[4]); mat16.push(mat_array[5]); mat16.push(vec.y);
-                        mat16.push(mat_array[6]); mat16.push(mat_array[7]); mat16.push(mat_array[8]); mat16.push(vec.z);
-                        mat16.push(0.0);          mat16.push(0.0);          mat16.push(0.0);          mat16.push(1.0);
+
+                        let matrot = mat4.create();
+                        mat4.set(matrot,
+                        mat_array[0],mat_array[1],mat_array[2], 0.0,
+                        mat_array[3],mat_array[4],mat_array[5], 0.0,
+                        mat_array[6],mat_array[7],mat_array[8], 0.0,
+                        0.0, 0.0, 0.0, 1.0)
+                        let matvec = mat4.create();
+                        mat4.set(matvec,
+                        1.0, 0.0, 0.0, 0.0,
+                        0.0, 1.0, 0.0, 0.0,
+                        0.0, 0.0, 1.0, 0.0,
+                        -vec.x, -vec.y, -vec.z, 1.0)
+
+                        mat4.multiply(matrot, matrot, matvec);
+
+                        mat16.push(matrot[0]);  mat16.push(matrot[1]);  mat16.push(matrot[2]);  mat16.push(matrot[3]);
+                        mat16.push(matrot[4]);  mat16.push(matrot[5]);  mat16.push(matrot[6]);  mat16.push(matrot[7]);
+                        mat16.push(matrot[8]);  mat16.push(matrot[9]);  mat16.push(matrot[10]); mat16.push(matrot[11]);
+                        mat16.push(matrot[12]); mat16.push(matrot[13]); mat16.push(matrot[14]); mat16.push(matrot[15]);
+
                         this.symmetryMatrices.push(mat16);
                         transform.delete()
                         vec.delete()
