@@ -26,13 +26,20 @@ export const BondSettingsPanel = (props: {
     setBondWidth: React.Dispatch<React.SetStateAction<number>>;
     atomRadiusBondRatio: number;
     setAtomRadiusBondRatio: React.Dispatch<React.SetStateAction<number>>;
+    showAniso: boolean;
+    setShowAniso: React.Dispatch<React.SetStateAction<boolean>>;
+    showOrtep: boolean;
+    setShowOrtep: React.Dispatch<React.SetStateAction<boolean>>;
+    showHs: boolean;
+    setShowHs: React.Dispatch<React.SetStateAction<boolean>>;
     bondSmoothness: number;
     setBondSmoothness: React.Dispatch<React.SetStateAction<number>>;
 }) => {
 
     const {
         bondWidth, setBondWidth, atomRadiusBondRatio,
-        setAtomRadiusBondRatio, bondSmoothness, setBondSmoothness
+        setAtomRadiusBondRatio, bondSmoothness, setBondSmoothness,
+        showAniso, setShowAniso, showOrtep, setShowOrtep, showHs, setShowHs
     } = props
 
     return <div style={{paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', borderStyle: 'solid', borderWidth: '1px', borderColor: 'grey', borderRadius: '1.5rem'}}>
@@ -58,6 +65,21 @@ export const BondSettingsPanel = (props: {
             minVal={1.0}
             maxVal={3.5}
             logScale={false}/>
+        <Form.Check 
+            type="switch"
+            checked={showAniso}
+            onChange={() => setShowAniso((prev) => !prev)}
+            label="Show Thermal ellipsoids"/>
+        <Form.Check 
+            type="switch"
+            checked={showOrtep}
+            onChange={() => setShowOrtep((prev) => !prev)}
+            label="Ortep style"/>
+        <Form.Check 
+            type="switch"
+            checked={showHs}
+            onChange={() => setShowHs((prev) => !prev)}
+            label="Show Hs"/>
         <span>Bond Smoothness</span>        
         <Slider
             aria-label="Smoothness"
@@ -523,6 +545,12 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
         setBondWidth: React.Dispatch<React.SetStateAction<number>>;
         atomRadiusBondRatio: number;
         setAtomRadiusBondRatio: React.Dispatch<React.SetStateAction<number>>;
+        showAniso: boolean;
+        setShowAniso: React.Dispatch<React.SetStateAction<boolean>>;
+        showOrtep: boolean;
+        setShowOrtep: React.Dispatch<React.SetStateAction<boolean>>;
+        showHs: boolean;
+        setShowHs: React.Dispatch<React.SetStateAction<boolean>>;
         bondSmoothness: number;
         setBondSmoothness: React.Dispatch<React.SetStateAction<number>>;
     };

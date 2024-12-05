@@ -162,6 +162,7 @@ var triangle_fragment_shader_source = `#version 300 es\n
       color.a = vColor.a;
 
       fragColor = mix(color, fogColour, fogFactor );
+      fragColor.a = vColor.a;
 
     }
 `;
