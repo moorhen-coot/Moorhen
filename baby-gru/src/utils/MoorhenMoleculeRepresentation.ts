@@ -901,8 +901,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 this.bondOptions.smoothness
             )
         }
-        console.log(this.parentMolecule.defaultBondOptions)
-        console.log(this.bondOptions)
         return bondSettings as [string, boolean, number, number, boolean, boolean, boolean, number]
     }
 
@@ -939,7 +937,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 commandArgs: [
                     this.parentMolecule.molNo,
                     cid,
-                    ...bondArgs
+                    ...bondArgsSel
                 ]
             }, false)
         }
