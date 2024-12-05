@@ -160,15 +160,43 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
 
                 const instDataOrientation = inst_data.orientation
 
-                thisInstance_orientations.push(instDataOrientation[0][0])
-                thisInstance_orientations.push(instDataOrientation[0][1])
-                thisInstance_orientations.push(instDataOrientation[0][2])
-                thisInstance_orientations.push(instDataOrientation[0][3])
+                const vec1 = [instDataOrientation[0][0],instDataOrientation[0][1],instDataOrientation[0][2]]
+                const vec2 = [instDataOrientation[1][0],instDataOrientation[1][1],instDataOrientation[1][2]]
+                const vec3 = [instDataOrientation[2][0],instDataOrientation[2][1],instDataOrientation[2][2]]
+                const d1 = Math.sqrt(vec1[0]*vec1[0]+vec1[1]*vec1[1]+vec1[2]*vec1[2]);
+                const d2 = Math.sqrt(vec2[0]*vec2[0]+vec2[1]*vec2[1]+vec2[2]*vec2[2]);
+                const d3 = Math.sqrt(vec3[0]*vec3[0]+vec3[1]*vec3[1]+vec3[2]*vec3[2]);
+                const vec1Norm = [vec1[0]/d1,vec1[1]/d1,vec1[2]/d1]
+                const vec2Norm = [vec2[0]/d2,vec2[1]/d2,vec2[2]/d2]
+                const vec3Norm = [vec3[0]/d3,vec3[1]/d3,vec3[2]/d3]
 
-                thisInstance_orientations.push(instDataOrientation[1][0])
-                thisInstance_orientations.push(instDataOrientation[1][1])
-                thisInstance_orientations.push(instDataOrientation[1][2])
-                thisInstance_orientations.push(instDataOrientation[1][3])
+                const v3x = vec1Norm[1] * vec2Norm[2] - vec2Norm[1] * vec1Norm[2];
+                const v3y = vec1Norm[2] * vec2Norm[0] - vec2Norm[2] * vec1Norm[0];
+                const v3z = vec1Norm[0] * vec2Norm[1] - vec2Norm[0] * vec1Norm[1];
+                const vec3p = [v3x,v3y,v3z]
+                const dot33 = vec3p[0]*vec3Norm[0] + vec3p[1]*vec3Norm[1] + vec3p[2]*vec3Norm[2]
+
+                if(dot33>0.0){
+                    thisInstance_orientations.push(instDataOrientation[0][0])
+                    thisInstance_orientations.push(instDataOrientation[0][1])
+                    thisInstance_orientations.push(instDataOrientation[0][2])
+                    thisInstance_orientations.push(instDataOrientation[0][3])
+
+                    thisInstance_orientations.push(instDataOrientation[1][0])
+                    thisInstance_orientations.push(instDataOrientation[1][1])
+                    thisInstance_orientations.push(instDataOrientation[1][2])
+                    thisInstance_orientations.push(instDataOrientation[1][3])
+                } else {
+                    thisInstance_orientations.push(instDataOrientation[1][0])
+                    thisInstance_orientations.push(instDataOrientation[1][1])
+                    thisInstance_orientations.push(instDataOrientation[1][2])
+                    thisInstance_orientations.push(instDataOrientation[1][3])
+
+                    thisInstance_orientations.push(instDataOrientation[0][0])
+                    thisInstance_orientations.push(instDataOrientation[0][1])
+                    thisInstance_orientations.push(instDataOrientation[0][2])
+                    thisInstance_orientations.push(instDataOrientation[0][3])
+                }
 
                 thisInstance_orientations.push(instDataOrientation[2][0])
                 thisInstance_orientations.push(instDataOrientation[2][1])
