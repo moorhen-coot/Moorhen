@@ -8,6 +8,7 @@ A JavaScript molecular graphics program
 - [ ] Undo button on a molecule loaded from SMILES/PubChem with name > 3 letters breaks the structure.
 - [ ] Small molecule CIF loading via UI
 - [ ] "Somehow" determine PLDDT vs B-factor in SliceNDice
+- [ ] 1dp4 biomolecule may not be correct.
 - [ ] Should biomolecules be automatic?
 - [ ] Add Zoom to "Show controls"
 

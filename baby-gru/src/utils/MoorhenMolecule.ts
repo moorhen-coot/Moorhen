@@ -143,7 +143,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.defaultBondOptions = {
             smoothness: 1,
             width: 0.1,
-            atomRadiusBondRatio: 1
+            atomRadiusBondRatio: 1,
+            showAniso: false,
+            showOrtep: false,
+            showHs: false
         }
         this.defaultM2tParams = {
             ribbonStyleCoilThickness: 0.3,

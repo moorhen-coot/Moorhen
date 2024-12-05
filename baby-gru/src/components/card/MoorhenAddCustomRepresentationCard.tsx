@@ -78,6 +78,9 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const [selectedChain, setSelectedChain] = useState<string>(null)
 
     const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState<number>(props.representation?.bondOptions?.atomRadiusBondRatio ?? props.molecule.defaultBondOptions.atomRadiusBondRatio)
+    const [showAniso, setShowAniso] = useState<boolean>(props.representation?.bondOptions?.showAniso ?? props.molecule.defaultBondOptions.showAniso)
+    const [showOrtep, setShowOrtep] = useState<boolean>(props.representation?.bondOptions?.showOrtep ?? props.molecule.defaultBondOptions.showOrtep)
+    const [showHs, setShowHs] = useState<boolean>(props.representation?.bondOptions?.showHs ?? props.molecule.defaultBondOptions.showHs)
     const [bondWidth, setBondWidth] = useState<number>(props.representation?.bondOptions?.width ?? props.molecule.defaultBondOptions.width)
     const [bondSmoothness, setBondSmoothness] = useState<number>(props.molecule.defaultBondOptions.smoothness === 1 ? 1 : props.molecule.defaultBondOptions.smoothness === 2 ? 50 : 100)
 
@@ -116,7 +119,8 @@ export const MoorhenAddCustomRepresentationCard = (props: {
 
     const bondSettingsProps = {
         bondWidth, setBondWidth, atomRadiusBondRatio,
-        setAtomRadiusBondRatio, bondSmoothness, setBondSmoothness
+        setAtomRadiusBondRatio, bondSmoothness, setBondSmoothness,
+        showAniso, setShowAniso, showOrtep, setShowOrtep, showHs, setShowHs
     }
 
     const molSurfSettingsProps = {
@@ -225,7 +229,10 @@ export const MoorhenAddCustomRepresentationCard = (props: {
             bondOptions = {
                 width: bondWidth,
                 smoothness: bondSmoothness === 1 ? 1 : bondSmoothness === 50 ? 2 : 3,
-                atomRadiusBondRatio: atomRadiusBondRatio
+                atomRadiusBondRatio: atomRadiusBondRatio,
+                showAniso: showAniso,
+                showOrtep: showOrtep,
+                showHs: showHs
             }
         }
 
@@ -290,7 +297,8 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     }, [
         colour, props.molecule, props.representation, mode, bondWidth, atomRadiusBondRatio, bondSmoothness,
         nucleotideRibbonStyle, ribbonArrowWidth, ribbonAxialSampling, ribbonCoilThickness, ribbonDNARNAWidth,
-        ribbonHelixWidth, ribbonStrandWidth, maxEnvDist, labelledEnv, showEnvContacts, showEnvHBonds
+        ribbonHelixWidth, ribbonStrandWidth, maxEnvDist, labelledEnv, showEnvContacts, showEnvHBonds,
+        showAniso, showOrtep, showHs
     ])
 
     const handleCreateRepresentation = useCallback(async () => {
