@@ -109,6 +109,9 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     
     const [bondWidth, setBondWidth] = useState<number>(props.molecule.defaultBondOptions.width)
     const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState<number>(props.molecule.defaultBondOptions.atomRadiusBondRatio)
+    const [showAniso, setShowAniso] = useState<boolean>(props.molecule.defaultBondOptions.showAniso)
+    const [showOrtep, setShowOrtep] = useState<boolean>(props.molecule.defaultBondOptions.showOrtep)
+    const [showHs, setShowHs] = useState<boolean>(props.molecule.defaultBondOptions.showHs)
     const [bondSmoothness, setBondSmoothness] = useState<number>(props.molecule.defaultBondOptions.smoothness === 1 ? 1 : props.molecule.defaultBondOptions.smoothness === 2 ? 50 : 100)
     
     const [surfaceSigma, setSurfaceSigma] = useState<number>(4.4)
@@ -143,7 +146,8 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
 
     const bondSettingsProps = {
         bondWidth, setBondWidth, atomRadiusBondRatio,
-        setAtomRadiusBondRatio, bondSmoothness, setBondSmoothness
+        setAtomRadiusBondRatio, bondSmoothness, setBondSmoothness,
+        showAniso, setShowAniso, showOrtep, setShowOrtep, showHs, setShowHs
     }
 
     const ribbonSettingsProps = {
@@ -453,7 +457,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     }, [ribbonArrowWidth, ribbonAxialSampling, ribbonCoilThickness, ribbonDNARNAWidth, ribbonHelixWidth, ribbonStrandWidth, nucleotideRibbonStyle, dishStyleAngularSampling]);
 
     useEffect(() => {
-        if ([bondSmoothness, bondWidth, atomRadiusBondRatio].some(item => item === null)) {
+        if ([bondSmoothness, bondWidth, atomRadiusBondRatio, showAniso, showOrtep, showHs].some(item => item === null)) {
             return
         }
 
@@ -463,12 +467,18 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             props.molecule.defaultBondOptions.width !== bondWidth
             || props.molecule.defaultBondOptions.atomRadiusBondRatio !== atomRadiusBondRatio
             || props.molecule.defaultBondOptions.smoothness !== bondSmoothness
+            || props.molecule.defaultBondOptions.showAniso !== showAniso
+            || props.molecule.defaultBondOptions.showOrtep !== showOrtep
+            || props.molecule.defaultBondOptions.showHs !== showHs
         )
 
         if (needsRedraw) {
             props.molecule.defaultBondOptions = {
                 width: bondWidth,
                 atomRadiusBondRatio: atomRadiusBondRatio,
+                showAniso: showAniso,
+                showOrtep: showOrtep,
+                showHs: showHs,
                 smoothness: bondSmoothness === 1 ? 1 : bondSmoothness === 50 ? 2 : 3
             }
         }
@@ -480,7 +490,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             }
         } 
 
-    }, [bondSmoothness, bondWidth, atomRadiusBondRatio]);
+    }, [bondSmoothness, bondWidth, atomRadiusBondRatio,showAniso,showOrtep,showHs]);
 
     useEffect(() => {
         if (symmetryRadius === null) {

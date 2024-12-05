@@ -82,6 +82,9 @@ export namespace moorhen {
         smoothness: number;
         width: number;
         atomRadiusBondRatio: number;
+        showAniso: boolean;
+        showOrtep: boolean;
+        showHs: boolean;
     }
 
     type gaussianSurfSettings = {
