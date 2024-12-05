@@ -432,7 +432,8 @@ ${coot_src}/src/coot-nomenclature.cc
 ${coot_src}/db-main/db-main.cc
 ${coot_src}/compat/getopt.cc
 ${coot_src}/compat/getopt1.cc
-${coot_src}/src/gl-matrix.cc
+${coot_src}/coot-utils/gl-matrix.cc
+${coot_src}/coot-utils/gl-matrix-eigensystem.cc
 glycoblocks.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/../metaballs/metaballs.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/../metaballs/metaballs-mmdb.cc
