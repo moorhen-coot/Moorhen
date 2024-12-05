@@ -5,6 +5,9 @@ message CootBondOptions {
   float smoothness = 1;
   float width = 2;
   float atomRadiusBondRatio = 3;
+  bool showAniso = 4;
+  bool showOrtep = 5;
+  bool showHs = 6;
 }
 
 message M2tParameters {
