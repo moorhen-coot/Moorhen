@@ -25,8 +25,8 @@ export const MoorhenCarbohydrateValidationModal = (props: moorhen.CollectedProps
                         <span>
                             {title}
                         </span>
-                        <Tooltip title="This pluggin uses Privateer, a software for the conformational validation of carbohydrate structures. Please cite Agirre, J. et al. Nat Struct Mol Biol (2015)." key={1}>
-                            <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => window.open('https://www.nature.com/articles/nsmb.3115')}>
+                        <Tooltip title="This plugin uses Privateer, a software for the conformational validation of carbohydrate structures. Please cite Dialpuri, J. et al. Acta Cryst. Section F 80.2 (2024)." key={1}>
+                            <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => window.open('https://privateer.york.ac.uk/')}>
                                 <InfoOutlined/>
                             </Button>
                         </Tooltip>

@@ -108,6 +108,7 @@ export namespace gemmi {
     }
     interface Mat33 extends emscriptem.instance<Mat33> {
         as_array: () => number[];
+        is_identity: () => boolean;
     }
     interface Vec3 extends emscriptem.instance<Vec3> {
         x: number;
@@ -136,5 +137,6 @@ export namespace gemmi {
         assemblies: emscriptem.vector<Assembly>;
         first_model: () => Model;
         remove_empty_chains: () => void;
+        get_info: (tag: string) => string;
     }
 }

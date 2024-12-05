@@ -5,12 +5,13 @@ import { useEffect, useRef, useState } from "react";
 import { CenterFocusStrongOutlined, HelpOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined } from "@mui/icons-material";
 import parse from 'html-react-parser'
 import { convertViewtoPx, guid } from "../../utils/utils";
-import { Popover, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
+import { LinearProgress, Popover, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
 
 export const MoorhenLigandCard = (props: {
     ligand: moorhen.LigandInfo;
     molecule: moorhen.Molecule;
-    validationStyles?: moorhen.RepresentationStyles[]
+    validationStyles?: moorhen.RepresentationStyles[];
+    calculateQScore?: boolean;
 }) => {
 
     const validationLabels = {
@@ -24,16 +25,18 @@ export const MoorhenLigandCard = (props: {
 
     const [showState, setShowState] = useState<{ [key: string]: boolean }>({})
     const [showInfoTable, setShowInfoTable] = useState<boolean>(false)
+    const [qScore, setQScore] = useState<number | null>(null)
     
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
+    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
     const defaultValidationStyles = [
         'contact_dots', 'chemical_features', 'ligand_environment', 'ligand_validation'
     ]
     
-    const { ligand, molecule, validationStyles } = { validationStyles: defaultValidationStyles,  ...props }
+    const { ligand, molecule, validationStyles, calculateQScore } = { validationStyles: defaultValidationStyles, calculateQScore: false,  ...props }
 
     useEffect(() => {
         const changedState = { ...showState }
@@ -44,6 +47,16 @@ export const MoorhenLigandCard = (props: {
                 molecule.hide(key, ligand.cid)
             })
         }
+    }, [])
+
+    useEffect(() => {
+        const getQScore = async () => {
+            if (activeMap && calculateQScore) {
+                const qScoreResponse = await molecule.calculateQscore(activeMap, ligand.cid)
+                setQScore(qScoreResponse?.[0]?.value)
+            }    
+        }
+        getQScore()
     }, [])
 
     const getToggleButton = (style: string, label: string) => {
@@ -114,7 +127,16 @@ export const MoorhenLigandCard = (props: {
                                 </Table>
                             </TableContainer>
                             </Popover>}
-                            {ligand.svg ? parse(ligand.svg) : <span>{ligand.cid}</span>}
+                            <Stack direction="vertical" gap={1}>
+                                {ligand.svg ? parse(ligand.svg) : <span>{ligand.cid}</span>}
+                                {(calculateQScore && activeMap) ?
+                                <div style={{ display: "flex", justifyContent: "center" }}>
+                                    {
+                                    qScore ? <span>Q-Score: {qScore.toFixed(2)}</span> : <LinearProgress variant="indeterminate" style={{ width: "50%" }}/>
+                                    }
+                                </div>
+                                : null}
+                            </Stack>
                     </Col>
                     <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
                         <Stack direction='vertical' gap={1} style={{display: 'flex', justifyContent: 'center'}}>
