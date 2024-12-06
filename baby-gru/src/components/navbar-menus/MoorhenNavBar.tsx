@@ -263,7 +263,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
                 className='moorhen-hovered-atom-form'
                 type="text"
                 readOnly={true}
-                value={`${hoveredAtom.molecule.name.length > 10 ? `${hoveredAtom.molecule.name.substring(0, 7)}...` : `${hoveredAtom.molecule.name}:`}${hoveredAtom.cid} : ${tempFactor.toFixed(3)}`}
+                value={`${hoveredAtom.molecule.name.length > 10 ? `${hoveredAtom.molecule.name.substring(0, 7)}...` : `${hoveredAtom.molecule.name}:`}${hoveredAtom.cid} BFac:${tempFactor.toFixed(3)}`}
             />}
             {(hoveredAtom.cid&&!devMode) &&
             <Form.Control

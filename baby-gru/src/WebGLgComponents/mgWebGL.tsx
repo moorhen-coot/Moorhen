@@ -10154,6 +10154,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.currentlyDraggedAtom = { atom: self.displayBuffers[minidx].atoms[minj], buffer: self.displayBuffers[minidx] }
                 }
                 if (self.keysDown['label_atom']) {
+                    //FIXME - these should be optional
+                    theAtom.label += " B:"+self.displayBuffers[minidx].atoms[minj].tempFactor.toFixed(3)
+                    theAtom.label += " occ:"+self.displayBuffers[minidx].atoms[minj].occupancy.toFixed(3)
                     updateLabels = true
                     if (self.labelledAtoms.length === 0 || (self.labelledAtoms[self.labelledAtoms.length - 1].length > 1)) {
                         self.labelledAtoms.push([]);

@@ -55,7 +55,7 @@ export const MoorhenAtomInfoSnackBar = forwardRef<
                         <span>Atom information</span>
                         <table>
                         <tr><td>Name: {props.cidRef.current}</td></tr>
-                        <tr><td>Molecule: {props.cidRef.current}</td></tr>
+                        <tr><td>Molecule: {props.moleculeRef.current.name}</td></tr>
                         <tr><td>Temp. factor: {atomProps.tempFactor.toFixed(3)}</td></tr>
                         <tr><td>Occupancy: {atomProps.occupancy.toFixed(3)}</td></tr>
                         <tr><td>Position: {atomProps.x.toFixed(3)} {atomProps.y.toFixed(3)} {atomProps.z.toFixed(3)}</td></tr>
