@@ -37,6 +37,7 @@ export namespace libcootApi {
         remove_ligands_and_waters_structure(gemmiStructure: gemmi.Structure): void;
         remove_hydrogens_structure(gemmiStructure: gemmi.Structure): void;
         read_structure_from_string(coordData: string | ArrayBuffer, molName: string): gemmi.Structure;
+        read_small_structure_from_string(coordData: string | ArrayBuffer, molName: string): gemmi.SmallStructure;
         get_mtz_columns(fileName: string): emscriptem.vector<string>;
         FS_createDataFile(arg0: string, fileName: string, byteArray: Uint8Array, arg3: boolean, arg4: boolean): void;
         getElementNameAsString: (arg0: emscriptem.instance<string>) => string;

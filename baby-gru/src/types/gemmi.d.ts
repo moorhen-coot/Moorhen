@@ -139,4 +139,6 @@ export namespace gemmi {
         remove_empty_chains: () => void;
         get_info: (tag: string) => string;
     }
+    interface SmallStructure extends emscriptem.instance<SmallStructure> {
+    }
 }

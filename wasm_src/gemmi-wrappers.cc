@@ -36,6 +36,7 @@
 #include <gemmi/calculate.hpp>
 #include <gemmi/util.hpp>
 #include <gemmi/fstream.hpp>
+#include <gemmi/smcif.hpp>
 
 using namespace emscripten;
 
@@ -64,6 +65,14 @@ std::string get_pdb_string_from_gemmi_struct(const gemmi::Structure &Structure){
     gemmi::write_pdb(Structure, oss);
     std::string s = oss.str();
     return s;
+}
+
+gemmi::SmallStructure read_small_structure_from_string(const std::string &data, const std::string& path){
+    char *c_data = (char *)data.c_str();
+    char *c_path = (char *)path.c_str();
+    size_t size = data.length();
+    gemmi::cif::Block block = gemmi::cif::read_memory(c_data,size,c_path).sole_block();
+    return gemmi::SmallStructure(gemmi::make_small_structure_from_block(block));
 }
 
 gemmi::Structure read_structure_from_string(const std::string &data, const std::string& path){
@@ -2793,6 +2802,7 @@ GlobWalk
     function("get_pdb_string_from_gemmi_struct",&get_pdb_string_from_gemmi_struct);
     function("structure_is_ligand",&structure_is_ligand);
     function("read_structure_from_string",&read_structure_from_string);
+    function("read_small_structure_from_string",&read_small_structure_from_string);
     function("parse_ligand_dict_info", &parse_ligand_dict_info);
     function("read_structure_file",&gemmi::read_structure_file);
 #if __EMSCRIPTEN_major__ == 3 && __EMSCRIPTEN_minor__ == 1 && __EMSCRIPTEN_tiny__ >= 60
