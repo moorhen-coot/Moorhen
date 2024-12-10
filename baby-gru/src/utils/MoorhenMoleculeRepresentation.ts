@@ -929,15 +929,13 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 ]
             }, false)
         } else {
-            //FIXME - Currently there is an incosistency in args between get_bonds_mesh_instanced and get_bonds_mesh_for_selection_instanced
-            const bondArgsSel = [bondArgs[0], bondArgs[1], bondArgs[2], bondArgs[3], bondArgs[7]]
             meshCommand = this.commandCentre.current.cootCommand({
                 returnType: returnType,
                 command: "get_bonds_mesh_for_selection_instanced",
                 commandArgs: [
                     this.parentMolecule.molNo,
                     cid,
-                    ...bondArgsSel
+                    ...bondArgs
                 ]
             }, false)
         }

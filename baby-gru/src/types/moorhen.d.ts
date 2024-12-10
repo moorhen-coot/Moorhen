@@ -31,6 +31,7 @@ export namespace moorhen {
         modelName: string;
         cid: string;
         svg?: string;
+        smiles?: string;
         chem_comp_info?: {first: string; second: string}[];
     }
     
