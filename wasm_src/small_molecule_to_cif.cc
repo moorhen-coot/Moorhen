@@ -63,7 +63,7 @@ std::pair<std::string,std::string> SmallMoleculeCifToMMCif(const std::string &sm
 
     gemmi::Structure st2;
 
-    gemmi::Model m("1");
+    gemmi::Model m(1);
     gemmi::Chain c("A");
 
     c.residues.push_back(r);

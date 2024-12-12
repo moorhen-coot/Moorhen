@@ -237,7 +237,7 @@ class molecules_container_js : public molecules_container_t {
                                 at[1] = atom.pos.y;
                                 at[2] = atom.pos.z;
                                 std::stringstream cidbuffer;
-                                cidbuffer << "/" << model.name << "/" << chain.name << "/" << residue.seqid.num.value;
+                                cidbuffer << "/" << model.num << "/" << chain.name << "/" << residue.seqid.num.value;
                                 if(residue.seqid.icode!=' ')
                                     cidbuffer << "." << residue.seqid.icode;
                                 const std::string cid = cidbuffer.str();

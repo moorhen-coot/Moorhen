@@ -64,7 +64,6 @@ ${gemmi_src}/include/gemmi/calculate.hpp
 ${gemmi_src}/include/gemmi/ccp4.hpp
 ${gemmi_src}/include/gemmi/cellred.hpp
 ${gemmi_src}/include/gemmi/chemcomp.hpp
-${gemmi_src}/include/gemmi/chemcomp_xyz.hpp
 ${gemmi_src}/include/gemmi/cif.hpp
 ${gemmi_src}/include/gemmi/cif2mtz.hpp
 ${gemmi_src}/include/gemmi/cifdoc.hpp
@@ -94,6 +93,7 @@ ${gemmi_src}/include/gemmi/iterator.hpp
 ${gemmi_src}/include/gemmi/json.hpp
 ${gemmi_src}/include/gemmi/levmar.hpp
 ${gemmi_src}/include/gemmi/linkhunt.hpp
+${gemmi_src}/include/gemmi/logger.hpp
 ${gemmi_src}/include/gemmi/math.hpp
 ${gemmi_src}/include/gemmi/metadata.hpp
 ${gemmi_src}/include/gemmi/mmcif.hpp
