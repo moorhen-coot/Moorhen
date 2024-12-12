@@ -1597,6 +1597,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_acedrg_atom_types_for_ligand", &molecules_container_t::get_acedrg_atom_types_for_ligand)
     .function("dictionary_atom_name_map", &molecules_container_t::dictionary_atom_name_map)
     .function("transform_map_using_lsq_matrix", &molecules_container_t::transform_map_using_lsq_matrix)
+    .function("get_SMILES_for_residue_type", &molecules_container_t::get_SMILES_for_residue_type)
+    .function("set_occupancy", &molecules_container_t::set_occupancy)
+    .function("read_small_molecule_cif", &molecules_container_t::read_small_molecule_cif)
     .property("use_gemmi", &molecules_container_t::use_gemmi)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
