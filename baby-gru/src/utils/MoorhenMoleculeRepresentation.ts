@@ -1326,10 +1326,11 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             gltfData = result.data.result.result
         } else if (this.styleIsM2tRepresentation || this.styleIsCombinedRepresentation) {
             const { m2tStyle, m2tSelection } = this.getM2tArgs(this.style, this.cid)
+            const ssUseageScheme = 2;
             const result = await this.commandCentre.current.cootCommand({
                 returnType: 'string',
                 command: 'shim_export_molecular_representation_as_gltf',
-                commandArgs: [ this.parentMolecule.molNo, m2tSelection, "colorRampChainsScheme", m2tStyle ],
+                commandArgs: [ this.parentMolecule.molNo, m2tSelection, "colorRampChainsScheme", m2tStyle, ssUseageScheme ],
             }, false) as moorhen.WorkerResponse<ArrayBuffer>
             gltfData = result.data.result.result
         } else {

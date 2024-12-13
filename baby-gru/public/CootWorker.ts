@@ -491,9 +491,9 @@ const export_map_as_gltf = (imol: number, x: number, y: number, z: number, radiu
     return fileContents.buffer
 }
 
-const export_molecular_representation_as_gltf = (imol: number, cid: string, colourScheme: string, style: string) => {
+const export_molecular_representation_as_gltf = (imol: number, cid: string, colourScheme: string, style: string, ssUsageScheme: number) => {
     const fileName = `${guid()}.glb`
-    molecules_container.export_molecular_representation_as_gltf(imol, cid, colourScheme, style, fileName)
+    molecules_container.export_molecular_representation_as_gltf(imol, cid, colourScheme, style, ssUsageScheme, fileName)
     const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
     cootModule.FS_unlink(fileName)
     return fileContents.buffer
@@ -1148,7 +1148,7 @@ const doCootCommand = (messageData: {
                 cootResult = export_molecule_as_gltf(...commandArgs as [number, string, string, boolean, number, number, number, boolean, boolean])
                 break
             case 'shim_export_molecular_representation_as_gltf':
-                cootResult = export_molecular_representation_as_gltf(...commandArgs as [number, string, string, string])
+                cootResult = export_molecular_representation_as_gltf(...commandArgs as [number, string, string, string, number])
                 break
             case "parse_mon_lib_list_cif":
                 cootResult = parseMonLibListCif(...commandArgs as [string])
