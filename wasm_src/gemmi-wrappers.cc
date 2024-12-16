@@ -69,10 +69,8 @@ std::string get_pdb_string_from_gemmi_struct(const gemmi::Structure &Structure){
 }
 
 gemmi::Structure read_structure_from_string(const std::string &data, const std::string& path){
-    std::cout << data << std::endl;
     char *c_data = (char *)data.c_str();
     size_t size = data.length();
-    std::cout << size << std::endl;
     return gemmi::read_structure_from_char_array(c_data,size,path);
 }
 
