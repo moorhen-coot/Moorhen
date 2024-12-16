@@ -38,6 +38,7 @@ add_library(gemmi_cpp
             ${gemmi_src}/src/read_map.cpp
             ${gemmi_src}/src/resinfo.cpp
             ${gemmi_src}/src/riding_h.cpp
+            ${gemmi_src}/src/select.cpp
             ${gemmi_src}/src/sprintf.cpp
             ${gemmi_src}/src/to_mmcif.cpp
             ${gemmi_src}/src/to_pdb.cpp
