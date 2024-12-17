@@ -160,8 +160,13 @@ clearfftw() {
 clearfftw3() {
     echo "Clear fftw3"
     rm -rf ${BUILD_DIR}/fftw3_build
-    rm -rf ${INSTALL_DIR}/include/fftw
+    rm -rf ${INSTALL_DIR}/include/fftw3.f
+    rm -rf ${INSTALL_DIR}/include/fftw3.h
+    rm -rf ${INSTALL_DIR}/include/fftw3.f03
+    rm -rf ${INSTALL_DIR}/include/fftw3l.f03
+    rm -rf ${INSTALL_DIR}/include/fftw3q.f03
     rm -rf ${INSTALL_DIR}/lib/libfftw3.a
+    rm -rf ${INSTALL_DIR}/lib/libfftw3f.a
 }
 
 clearmmdb2() {
