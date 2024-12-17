@@ -331,6 +331,7 @@ getprivateer() {
         mv privateer-moorhen-build-0.3.5 privateer-wasm
         echo "Getting updated simdjson.h"
         curl -L https://raw.githubusercontent.com/simdjson/simdjson/master/singleheader/simdjson.h -o privateer-wasm/src/privateer/cpp/third-party/simdjson/simdjson.h
+        patch -p0 < ../patches/privateer-gemmi070.patch
     fi
     echo
 }
