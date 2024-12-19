@@ -109,6 +109,7 @@ export namespace moorhen {
         ballsStyleRadiusMultiplier: number;
         nucleotideRibbonStyle: "StickBases" | "DishyBases";
         dishStyleAngularSampling: number;
+        ssUsageScheme: number;
     }
 
     type residueEnvironmentOptions = {

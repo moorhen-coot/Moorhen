@@ -146,7 +146,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             atomRadiusBondRatio: 1,
             showAniso: false,
             showOrtep: false,
-            showHs: false
+            showHs: false,
         }
         this.defaultM2tParams = {
             ribbonStyleCoilThickness: 0.3,
@@ -161,7 +161,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
             surfaceStyleProbeRadius: 1.4,
             ballsStyleRadiusMultiplier: 1,
             nucleotideRibbonStyle: 'StickBases',
-            dishStyleAngularSampling: 32
+            dishStyleAngularSampling: 32,
+            ssUsageScheme: 2
         }
         this.defaultResidueEnvironmentOptions = {
             maxDist: 8,
