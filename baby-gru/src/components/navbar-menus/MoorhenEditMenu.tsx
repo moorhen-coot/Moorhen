@@ -8,6 +8,7 @@ import { MoorhenAddSimpleMenuItem } from "../menu-item/MoorhenAddSimpleMenuItem"
 import { MoorhenAddRemoveHydrogenAtomsMenuItem } from "../menu-item/MoorhenAddRemoveHydrogenAtomsMenuItem"
 import { MoorhenMoveMoleculeHere } from "../menu-item/MoorhenMoveMoleculeHere"
 import { MoorhenChangeChainIdMenuItem } from "../menu-item/MoorhenChangeChainIdMenuItem"
+import { MoorhenSetOccupancyMenuItem } from "../menu-item/MoorhenSetOccupancyMenuItem"
 import { MoorhenCreateSelectionMenuItem } from "../menu-item/MoorhenCreateSelectionMenuItem"
 import { MoorhenSplitModelsMenuItem } from "../menu-item/MoorhenSplitModelsMenuItem"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
@@ -34,6 +35,7 @@ export const MoorhenEditMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             <MoorhenMergeMoleculesMenuItem key="merge" {...menuItemProps} />
             <MoorhenMoveMoleculeHere key="move" {...menuItemProps}/>
             <MoorhenChangeChainIdMenuItem key="change_chain_id" {...menuItemProps}/>
+            <MoorhenSetOccupancyMenuItem key="set-occupancy" {...menuItemProps}/>
             <MoorhenSplitModelsMenuItem key="split_models" {...menuItemProps}/>
             <MoorhenDeleteUsingCidMenuItem key="delete" {...menuItemProps} />
             <MoorhenCreateSelectionMenuItem key="create-selection" {...menuItemProps} />
