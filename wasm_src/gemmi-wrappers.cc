@@ -2795,7 +2795,7 @@ GlobWalk
     function("read_structure_from_string",&read_structure_from_string);
     function("parse_ligand_dict_info", &parse_ligand_dict_info);
     function("read_structure_file",&gemmi::read_structure_file);
-#if __EMSCRIPTEN_major__ == 3 && __EMSCRIPTEN_minor__ == 1 && __EMSCRIPTEN_tiny__ >= 60
+#if (__EMSCRIPTEN_major__ == 3 && __EMSCRIPTEN_minor__ == 1 && __EMSCRIPTEN_tiny__ >= 60) || __EMSCRIPTEN_major__ > 3
     function("read_mtz_file",&gemmi::read_mtz_file,return_value_policy::take_ownership());
 #else
     function("read_mtz_file",&gemmi::read_mtz_file);
