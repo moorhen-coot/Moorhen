@@ -13,6 +13,9 @@ A JavaScript molecular graphics program
 - [ ] Add Zoom to "Show controls"
 
 ### Todo
+- [ ] Coloured sequences: https://ebi-webcomponents.github.io/nightingale/#/coloured-sequence
+- [ ] Sequence alignments: https://ebi-webcomponents.github.io/nightingale/#/msa
+- [ ] Secondary structure annotation and other kinds of annotation: https://ebi-webcomponents.github.io/nightingale/#/track
 - [ ] Highlight things other than balls.
 - [ ] Auto scaled shadow box
 - [ ] Lipid cartoons
