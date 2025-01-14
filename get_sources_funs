@@ -54,6 +54,7 @@ getclipper() {
         echo "Unpacking clipper source"
         tar xf clipper-gemmi-wrapper.tar.gz
         mv clipper-gemmi-wrapper clipper
+        patch -p0 < ../patches/clipper-emcc4.patch
     fi
     echo
 }
