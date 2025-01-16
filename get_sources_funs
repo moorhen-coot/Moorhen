@@ -123,7 +123,8 @@ getjsoncpp() {
     else
         echo "Checking out jsoncpp"
         git clone https://github.com/open-source-parsers/jsoncpp.git
-        patch -p0 < ../patches/jsoncpp-c++17.patch
+        cd jsoncpp
+        git checkout $jsoncpp_release
     fi
     echo
 }
