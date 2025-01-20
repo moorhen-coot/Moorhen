@@ -768,6 +768,24 @@ export class MoorhenMolecule implements moorhen.Molecule {
     async loadToCootFromFile(source: File): Promise<moorhen.Molecule> {
         try {
             const coordData = await readTextFile(source);
+            const is_small = window.CCP4Module.is_small_structure(coordData as string)
+            if(is_small){
+                const small_to_cif_response = await this.commandCentre.current.cootCommand({
+                    command: 'SmallMoleculeCifToMMCif',
+                    commandArgs: [coordData],
+                    returnType: 'str_str_pair'
+                }, true) as moorhen.WorkerResponse<libcootApi.PairType<string, string>>
+                const coordContent = small_to_cif_response.data.result.result.first
+                const dictContent = small_to_cif_response.data.result.result.second
+                //FIXME - I think I want specific molecule, but there is a circular dependency between mol and dicts
+                const anyMolNo = -999999
+                await this.commandCentre.current.cootCommand({
+                    returnType: "status",
+                    command: 'read_dictionary_string',
+                    commandArgs: [dictContent, anyMolNo],
+                }, false)
+                return await this.loadToCootFromString(coordContent, source.name);
+            }
             if(source.name.endsWith(".mol")){
                 const response = await this.commandCentre.current.cootCommand({
                     command: 'mol_text_to_pdb',
