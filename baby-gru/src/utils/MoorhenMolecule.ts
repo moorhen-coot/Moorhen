@@ -304,7 +304,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
                     const subchains = gen.subchains
                     const n_chains = chains.size()
                     const n_subchains = subchains.size()
-                    /*
                     console.log(n_chains)
                     console.log(n_subchains)
                     for (let i_ch=0; i_ch < n_chains; i_ch++) {
@@ -313,7 +312,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
                     for (let i_subch=0; i_subch < n_subchains; i_subch++) {
                         console.log("subch:",subchains.get(i_subch))
                     }
-                    */
 
                     for (let i_op=0; i_op < n_op; i_op++) {
                         let mat16 = []
@@ -2463,6 +2461,30 @@ export class MoorhenMolecule implements moorhen.Molecule {
             console.warn(`change_chain_id returned status ${status.data.result.result.first}`)
         }
         return status.data.result.result.first
+    }
+
+    /**
+     * Split a molecule with multiple models into separate molecules (one for each model)
+     * @param {boolean} [draw=false] - Indicates whether the new molecules should be drawn
+     * @returns {moorhen.Molecule[]} - A list with the new molecules
+     */
+    async generateAssembly(assemblyNumber: string, draw: boolean = false): Promise<moorhen.Molecule> {
+        let coordString = await this.gemmiStructure.as_string()
+        let newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
+        newMolecule.name = `${this.name}-assembly-${assemblyNumber}`
+        const response = await this.commandCentre.current.cootCommand({
+            returnType: 'status',
+            command: 'shim_generate_assembly',
+            commandArgs: [ coordString, assemblyNumber, newMolecule.name ],
+        }, true) as moorhen.WorkerResponse<libcootApi.PairType<number, moorhen.coorFormats>>
+        console.log(response)
+
+        newMolecule.molNo = response.data.result.result.first
+
+        await this.transferMetaData(newMolecule)
+        await newMolecule.fetchDefaultColourRules()
+        await newMolecule.fetchIfDirtyAndDraw('CBs')
+        return newMolecule
     }
 
     /**

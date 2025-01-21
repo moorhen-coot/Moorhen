@@ -5,6 +5,7 @@ import { MenuItem } from "@mui/material";
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings, InfoOutlined } from '@mui/icons-material';
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
 import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem"
+import { MoorhenGenerateBiomoleculeMenuItem } from "../menu-item/MoorhenGenerateBiomoleculeMenuItem"
 import { clickedResidueType } from "../card/MoorhenMoleculeCard";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
@@ -118,6 +119,14 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
         },
     }
 
+    const bioMolButtons: { [key: number]: { label: string; compressed: () => JSX.Element; expanded: null | (() => JSX.Element); } } = {
+        8: {
+            label: 'Generate biomolecule',
+            compressed: () => { return (<MoorhenGenerateBiomoleculeMenuItem key={8} setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />) },
+            expanded: null
+        },
+    }
+
     const maximumAllowedWidth = props.sideBarWidth * 0.65
     let currentlyUsedWidth = 0
     let expandedButtons: JSX.Element[] = []
@@ -135,6 +144,21 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
             }
         }
     })
+
+    if(props.molecule.gemmiStructure.assemblies.size()>0){
+        Object.keys(bioMolButtons).forEach(key => {
+            if (bioMolButtons[key].expanded === null) {
+                compressedButtons.push(bioMolButtons[key].compressed())
+            } else {
+                currentlyUsedWidth += 60
+                if (currentlyUsedWidth < maximumAllowedWidth) {
+                    expandedButtons.push(bioMolButtons[key].expanded())
+                } else {
+                    compressedButtons.push(bioMolButtons[key].compressed())
+                }
+            }
+        })
+    }
 
     compressedButtons.push(
         <MoorhenDeleteDisplayObjectMenuItem 

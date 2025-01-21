@@ -138,5 +138,6 @@ export namespace gemmi {
         first_model: () => Model;
         remove_empty_chains: () => void;
         get_info: (tag: string) => string;
+        as_string: () => string;
     }
 }
