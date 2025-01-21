@@ -121,7 +121,7 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
 
     const bioMolButtons: { [key: number]: { label: string; compressed: () => JSX.Element; expanded: null | (() => JSX.Element); } } = {
         8: {
-            label: 'Generate biomolecule',
+            label: 'Generate assembly',
             compressed: () => { return (<MoorhenGenerateBiomoleculeMenuItem key={8} setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />) },
             expanded: null
         },
@@ -145,7 +145,20 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
         }
     })
 
-    if(props.molecule.gemmiStructure.assemblies.size()>0){
+    const assemblies = props.molecule.gemmiStructure.assemblies
+    let showAssemblies = false
+    for(let i=0; i<assemblies.size(); i++){
+        const assembly = assemblies.get(i)
+        const is_icoso_kind = assembly.is_complete_icosohedral_special_kind()
+        assembly.delete()
+        if(!is_icoso_kind){
+            showAssemblies = true
+            break
+        }
+    }
+    assemblies.delete()
+
+    if(showAssemblies){
         Object.keys(bioMolButtons).forEach(key => {
             if (bioMolButtons[key].expanded === null) {
                 compressedButtons.push(bioMolButtons[key].compressed())

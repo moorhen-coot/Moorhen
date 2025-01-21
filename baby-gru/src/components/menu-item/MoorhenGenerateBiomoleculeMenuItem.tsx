@@ -20,7 +20,9 @@ export const MoorhenGenerateBiomoleculeMenuItem = (props: {
     for(let i=0; i<assemblies.size(); i++){
         const assembly = assemblies.get(i)
         const assembly_name = assembly.name
-        rows.push(<option value={assembly_name} key={assembly_name}>{assembly_name}</option>)
+        const oligomeric_details = assembly.oligomeric_details
+        const is_icoso_kind = assembly.is_complete_icosohedral_special_kind()
+        if(!is_icoso_kind) rows.push(<option value={assembly_name} key={assembly_name}>({assembly_name}) {oligomeric_details}</option>)
         assembly.delete()
     }
     assemblies.delete()
@@ -42,7 +44,7 @@ export const MoorhenGenerateBiomoleculeMenuItem = (props: {
     return <MoorhenBaseMenuItem
         popoverPlacement='left'
         popoverContent={panelContent}
-        menuItemText={"Generate biomolecule"}
+        menuItemText={"Generate assembly"}
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />

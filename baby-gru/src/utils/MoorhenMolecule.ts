@@ -2477,7 +2477,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
             command: 'shim_generate_assembly',
             commandArgs: [ coordString, assemblyNumber, newMolecule.name ],
         }, true) as moorhen.WorkerResponse<libcootApi.PairType<number, moorhen.coorFormats>>
-        console.log(response)
 
         newMolecule.molNo = response.data.result.result.first
 
