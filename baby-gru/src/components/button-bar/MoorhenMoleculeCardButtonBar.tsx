@@ -5,7 +5,7 @@ import { MenuItem } from "@mui/material";
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings, InfoOutlined } from '@mui/icons-material';
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
 import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem"
-import { MoorhenGenerateBiomoleculeMenuItem } from "../menu-item/MoorhenGenerateBiomoleculeMenuItem"
+import { MoorhenGenerateAssemblyMenuItem } from "../menu-item/MoorhenGenerateAssemblyMenuItem"
 import { clickedResidueType } from "../card/MoorhenMoleculeCard";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
@@ -122,7 +122,7 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
     const bioMolButtons: { [key: number]: { label: string; compressed: () => JSX.Element; expanded: null | (() => JSX.Element); } } = {
         8: {
             label: 'Generate assembly',
-            compressed: () => { return (<MoorhenGenerateBiomoleculeMenuItem key={8} setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />) },
+            compressed: () => { return (<MoorhenGenerateAssemblyMenuItem key={8} setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />) },
             expanded: null
         },
     }

@@ -5,7 +5,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { addMolecule, hideMolecule, showMolecule } from "../../store/moleculesSlice"
 
-export const MoorhenGenerateBiomoleculeMenuItem = (props: {
+export const MoorhenGenerateAssemblyMenuItem = (props: {
     item: moorhen.Molecule;
     setCurrentName: React.Dispatch<React.SetStateAction<string>>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
@@ -27,7 +27,7 @@ export const MoorhenGenerateBiomoleculeMenuItem = (props: {
     }
     assemblies.delete()
     const panelContent = <>
-        <Form.Group style={{ width: '10rem', margin: '0' }} controlId="MoorhenGenerateBiomoleculeMenuItem" className="mb-3">
+        <Form.Group style={{ width: '10rem', margin: '0' }} controlId="MoorhenGenerateAssemblyMenuItem" className="mb-3">
             <Form.Label>Assembly</Form.Label>
             <FormSelect size="sm" ref={ruleSelectRef} onChange={(val) => setSelectionType(val.target.value)}>
             {rows}
