@@ -229,6 +229,32 @@ const SymmetrySettingsPanel = (props: {
         }
     }, [showUnitCell])
 
+    const assemblies = props.molecule.gemmiStructure.assemblies
+    let showAssemblies = false
+    for(let i=0; i<assemblies.size(); i++){
+        const assembly = assemblies.get(i)
+        const generators = assembly.generators
+        const n_gen = generators.size()
+        let n_tot_op = 0
+        for (let i_gen=0; i_gen < n_gen; i_gen++) { 
+            const gen = generators.get(i_gen)
+            const operators = gen.operators
+            const n_op = operators.size()
+            n_tot_op += n_op
+            gen.delete()
+            operators.delete()
+        }
+        assembly.delete()
+        generators.delete()
+
+        if(n_tot_op===60){
+            showAssemblies = true
+            break
+        }
+
+    }
+    assemblies.delete()
+
     return <div style={{paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', borderStyle: 'solid', borderWidth: '1px', borderColor: 'grey', borderRadius: '1.5rem'}}>
         <Form.Check
             type="switch"
@@ -243,14 +269,14 @@ const SymmetrySettingsPanel = (props: {
                 setSymmetryOn(!symmetryOn)
             }}
             label="Show symmetry mates" />
-        <Form.Check
+        {showAssemblies && <Form.Check
             type="switch"
             checked={biomolOn}
             onChange={() => { 
                 if(symmetryOn && !biomolOn) setSymmetryOn(false)
                 setBiomolOn(!biomolOn)
             }}
-            label="Show biomolecule" />
+            label="Show biomolecule" />}
         <MoorhenSlider
             isDisabled={!symmetryOn}
             sliderTitle="Symmetry Radius"

@@ -296,8 +296,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 const generators = assembly.generators
                 const n_gen = generators.size()
                 console.log("n_gen",n_gen)
-                if (n_gen > 0) {
-                    const gen = generators.get(0)
+                for (let i_gen=0; i_gen < n_gen; i_gen++) { 
+                    const gen = generators.get(i_gen)
                     const operators = gen.operators
                     const n_op = operators.size()
                     const chains = gen.chains
@@ -363,6 +363,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             }
             assemblies.delete()
         }
+        console.log("Number of matrices",this.symmetryMatrices.length)
     }
 
     /**

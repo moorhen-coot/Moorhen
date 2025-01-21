@@ -149,9 +149,21 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
     let showAssemblies = false
     for(let i=0; i<assemblies.size(); i++){
         const assembly = assemblies.get(i)
-        const is_icoso_kind = assembly.is_complete_icosohedral_special_kind()
+        const generators = assembly.generators
+        const n_gen = generators.size()
+        let n_tot_op = 0
+        for (let i_gen=0; i_gen < n_gen; i_gen++) { 
+            const gen = generators.get(i_gen)
+            const operators = gen.operators
+            const n_op = operators.size()
+            n_tot_op += n_op
+            gen.delete()
+            operators.delete()
+        }
         assembly.delete()
-        if(!is_icoso_kind){
+        generators.delete()
+
+        if(n_tot_op!==60){
             showAssemblies = true
             break
         }
