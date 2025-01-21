@@ -47,10 +47,6 @@ using namespace emscripten;
 using GemmiSMat33double = gemmi::SMat33<double>;
 using GemmiSMat33float = gemmi::SMat33<float>;
 
-bool isCompleteIcosohedralSpecialKind(const gemmi::Assembly &assembly){
-    return assembly.special_kind == gemmi::Assembly::SpecialKind::CompleteIcosahedral;
-}
-
 bool structure_is_ligand(const gemmi::Structure &Structure) {
     bool isLigand = true;
     auto structure_copy = Structure;
@@ -1702,7 +1698,6 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .property("ssa",&gemmi::Assembly::ssa)
     .property("more",&gemmi::Assembly::more)
     .property("generators",&gemmi::Assembly::generators)
-    .function("is_complete_icosohedral_special_kind",&isCompleteIcosohedralSpecialKind)
     ;
 
     class_<gemmi::NcsOp>("NcsOp")

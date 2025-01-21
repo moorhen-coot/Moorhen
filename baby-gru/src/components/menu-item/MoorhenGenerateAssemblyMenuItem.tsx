@@ -21,9 +21,8 @@ export const MoorhenGenerateAssemblyMenuItem = (props: {
         const assembly = assemblies.get(i)
         const assembly_name = assembly.name
         const oligomeric_details = assembly.oligomeric_details
-        const is_icoso_kind = assembly.is_complete_icosohedral_special_kind()
-        if(!is_icoso_kind) rows.push(<option value={assembly_name} key={assembly_name}>({assembly_name}) {oligomeric_details}</option>)
         assembly.delete()
+        rows.push(<option value={assembly_name} key={assembly_name}>({assembly_name}) {oligomeric_details}</option>)
     }
     assemblies.delete()
     const panelContent = <>

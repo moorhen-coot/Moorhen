@@ -130,8 +130,6 @@ export namespace gemmi {
     interface Assembly extends emscriptem.instance<Assembly> {
         name: string;
         oligomeric_details: string;
-        special_kind: string;
-        is_complete_icosohedral_special_kind: () => boolean;
         generators: emscriptem.vector<Gen>;
     }
     interface Structure extends emscriptem.instance<Structure> {
