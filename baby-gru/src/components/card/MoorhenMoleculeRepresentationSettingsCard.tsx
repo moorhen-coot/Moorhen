@@ -283,6 +283,8 @@ export const RibbonSettingsPanel = (props: {
     setNucleotideRibbonStyle: React.Dispatch<React.SetStateAction<"DishyBases" | "StickBases">>;
     dishStyleAngularSampling: number;
     setDishStyleAngularSampling: React.Dispatch<React.SetStateAction<number>>;
+    ssUsageScheme: number;
+    setSsUsageScheme: React.Dispatch<React.SetStateAction<number>>;
 }) => {
 
     const {
@@ -291,7 +293,7 @@ export const RibbonSettingsPanel = (props: {
         ribbonArrowWidth, setRibbonArrowWidth, ribbonDNARNAWidth, 
         setRibbonDNARNAWidth, ribbonAxialSampling, setRibbonAxialSampling,
         nucleotideRibbonStyle, setNucleotideRibbonStyle, dishStyleAngularSampling,
-        setDishStyleAngularSampling
+        setDishStyleAngularSampling, ssUsageScheme, setSsUsageScheme
     } = props
 
     return <div style={{paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', borderStyle: 'solid', borderWidth: '1px', borderColor: 'grey', borderRadius: '1.5rem'}}>
@@ -374,6 +376,14 @@ export const RibbonSettingsPanel = (props: {
             maxVal={64}
             allowFloats={false}
             logScale={false}/>
+        <Form.Group style={{ margin: '0px', width: '100%' }}>
+            <Form.Label>Secondary structure method</Form.Label>
+            <FormSelect size="sm" value={ssUsageScheme} onChange={(evt) => setSsUsageScheme(parseInt(evt.target.value))}>
+                <option value={'0'}>Use header</option>
+                <option value={'1'}>Do not use header</option>
+                <option value={'2'}>Calculate secondary structure</option>
+            </FormSelect>
+        </Form.Group>
         <Form.Group style={{ margin: '0px', width: '100%' }}>
             <Form.Label>Nucleotide ribbon style</Form.Label>
             <FormSelect size="sm" value={nucleotideRibbonStyle} onChange={(evt) => setNucleotideRibbonStyle(evt.target.value as "DishyBases" | "StickBases")}>
@@ -571,6 +581,8 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
         setNucleotideRibbonStyle: React.Dispatch<React.SetStateAction<"DishyBases" | "StickBases">>;
         dishStyleAngularSampling: number;
         setDishStyleAngularSampling: React.Dispatch<React.SetStateAction<number>>;
+        ssUsageScheme: number;
+        setSsUsageScheme: React.Dispatch<React.SetStateAction<number>>;
     };
     molSurfSettingsProps: {
         surfaceStyleProbeRadius: number;
