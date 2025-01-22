@@ -163,7 +163,7 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
         assembly.delete()
         generators.delete()
 
-        if(n_tot_op!==60){
+        if(n_tot_op!==60&&n_tot_op!==1){
             showAssemblies = true
             break
         }
