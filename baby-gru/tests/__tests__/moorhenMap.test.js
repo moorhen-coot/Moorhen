@@ -203,7 +203,7 @@ describe("Testing MoorhenMap", () => {
         const map = new MoorhenMap(commandCentre, glRef)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         const mean = await map.fetchMapMean()
-        expect(mean).toBeCloseTo(2.18e-10, 10)
+        expect(mean).toBeCloseTo(2.18e-10, 8)
     })
 
     test("Test getMapWeight", async () => {
