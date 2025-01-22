@@ -157,6 +157,18 @@ clearfftw() {
     rm -rf ${INSTALL_DIR}/lib/librfftw.a
 }
 
+clearfftw3() {
+    echo "Clear fftw3"
+    rm -rf ${BUILD_DIR}/fftw3_build
+    rm -rf ${INSTALL_DIR}/include/fftw3.f
+    rm -rf ${INSTALL_DIR}/include/fftw3.h
+    rm -rf ${INSTALL_DIR}/include/fftw3.f03
+    rm -rf ${INSTALL_DIR}/include/fftw3l.f03
+    rm -rf ${INSTALL_DIR}/include/fftw3q.f03
+    rm -rf ${INSTALL_DIR}/lib/libfftw3.a
+    rm -rf ${INSTALL_DIR}/lib/libfftw3f.a
+}
+
 clearmmdb2() {
     echo "Clear mmdb2"
     rm -rf ${BUILD_DIR}/mmdb2_build
@@ -239,6 +251,7 @@ clearall() {
     cleareigen
     clearccp4
     clearfftw
+    clearfftw3
     clearmmdb2
     clearclipper
     clearprivateer
@@ -277,6 +290,8 @@ else
            eigen) cleareigen
                ;;
            libccp4) clearccp4
+               ;;
+           fftw3) clearfftw3
                ;;
            fftw) clearfftw
                ;;
@@ -344,6 +359,7 @@ BUILD_LIBEIGEN=false
 BUILD_MOORHEN=false
 BUILD_LIBCCP4=false
 BUILD_FFTW=false
+BUILD_FFTW3=false
 BUILD_MMDB2=false
 BUILD_CLIPPER=false
 BUILD_PRIVATEER=false
@@ -387,6 +403,12 @@ if test -d ${INSTALL_DIR}/include/rfftw; then
     true
 else
     BUILD_FFTW=true
+fi
+
+if test -r ${INSTALL_DIR}/include/fftw3.h; then
+    true
+else
+    BUILD_FFTW3=true
 fi
 
 if test -d ${INSTALL_DIR}/include/ccp4; then
@@ -510,6 +532,9 @@ for mod in $MODULES; do
        fftw) echo "Force build fftw"
        BUILD_FFTW=true
        ;;
+       fftw3) echo "Force build fftw3"
+       BUILD_FFTW3=true
+       ;;
        mmdb2) echo "Force build mmdb2"
        BUILD_MMDB2=true
        ;;
@@ -551,6 +576,7 @@ echo "BUILD_LIBSIGCPP  " $BUILD_LIBSIGCPP
 echo "BUILD_LIBEIGEN   " $BUILD_LIBEIGEN
 echo "BUILD_LIBCCP4    " $BUILD_LIBCCP4
 echo "BUILD_FFTW       " $BUILD_FFTW
+echo "BUILD_FFTW3      " $BUILD_FFTW3
 echo "BUILD_MMDB2      " $BUILD_MMDB2
 echo "BUILD_CLIPPER    " $BUILD_CLIPPER
 echo "BUILD_PRIVATEER  " $BUILD_PRIVATEER
@@ -767,6 +793,16 @@ if [ $BUILD_FFTW = true ]; then
     emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/fftw  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}"
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing fftw, giving up."
+fi
+
+#fftw3
+if [ $BUILD_FFTW3 = true ]; then
+    getfftw3
+    mkdir -p ${BUILD_DIR}/fftw3_build
+    cd ${BUILD_DIR}/fftw3_build
+    emconfigure ${MOORHEN_SOURCE_DIR}/checkout/fftw-$fftw3_release/configure --prefix=${INSTALL_DIR} --enable-float
+    emmake make LDFLAGS=-all-static -j ${NUMPROCS} CXXFLAGS="${MOORHEN_CMAKE_FLAGS}" CFLAGS="${MOORHEN_CMAKE_FLAGS}"
+    emmake make install || fail "Error installing fftw3, giving up."
 fi
 
 #mmdb2

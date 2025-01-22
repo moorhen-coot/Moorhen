@@ -581,6 +581,7 @@ target_link_libraries(moorhen
     slicendice_cpp
     fftw
     rfftw
+    fftw3f
     coot
     ${GSL_LIBRARIES}
     ${DEPS_LIBRARIES}

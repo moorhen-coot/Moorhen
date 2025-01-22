@@ -49,12 +49,12 @@ getclipper() {
         echo "Using existing clipper"
     else
         echo "Checking out clipper"
-        curl -L http://www.ysbl.york.ac.uk/jsd523/clipper-gemmi-wrapper-$clipper_release.tar.gz -o clipper-gemmi-wrapper.tar.gz
+        curl -L https://ccp4forge.rc-harwell.ac.uk/ccp4/clipper/-/archive/gemmi/clipper-gemmi.tar.gz -o clipper-gemmi.tar.gz
         echo
         echo "Unpacking clipper source"
-        tar xf clipper-gemmi-wrapper.tar.gz
-        mv clipper-gemmi-wrapper clipper
-        patch -p0 < ../patches/clipper-emcc4.patch
+        tar xf clipper-gemmi.tar.gz
+        mv clipper-gemmi clipper
+        patch -p0 < ../patches/clipper-fftw3-scaling.patch 
     fi
     echo
 }
@@ -161,6 +161,20 @@ getfftw() {
         echo
         echo "Unpacking fftw-$fftw_release"
         tar xf fftw-$fftw_release.tar.gz
+    fi
+    echo
+}
+
+getfftw3() {
+    cdcheckout
+    if [ -r fftw-$fftw3_release ]; then
+        echo "Using existing fftw3"
+    else
+        echo "Downloading out fftw-$fftw3_release"
+        curl -L http://www.fftw.org/fftw-$fftw3_release.tar.gz -o fftw-$fftw3_release.tar.gz
+        echo
+        echo "Unpacking fftw-$fftw3_release"
+        tar xf fftw-$fftw3_release.tar.gz
     fi
     echo
 }
@@ -319,6 +333,7 @@ getprivateer() {
         mv privateer-moorhen-build-0.3.5 privateer-wasm
         echo "Getting updated simdjson.h"
         curl -L https://raw.githubusercontent.com/simdjson/simdjson/master/singleheader/simdjson.h -o privateer-wasm/src/privateer/cpp/third-party/simdjson/simdjson.h
+        patch -p0 < ../patches/privateer-gemmi070.patch
     fi
     echo
 }
