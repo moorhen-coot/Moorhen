@@ -2419,16 +2419,21 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         const state = this.store.getState()
         const isDark = state.sceneSettings.isDark
+        let coot_bg_type
+        if(isDark)
+            coot_bg_type = "light-bonds/transparent-bg"
+        else
+            coot_bg_type = "dark-bonds/transparent-bg"
 
-        const use_rdkit = true
+        const use_rdkit = false
 
         const result = await this.commandCentre.current.cootCommand({
                 returnType: "string",
                 command: 'get_svg_for_residue_type',
-                commandArgs: [this.molNo, resName, use_rdkit, isDark],
+                commandArgs: [this.molNo, resName, use_rdkit, coot_bg_type],
             }, false) as moorhen.WorkerResponse<string>
 
-        const ligandSVG = formatLigandSVG(result.data.result.result, !use_rdkit)
+        const ligandSVG = formatLigandSVG(result.data.result.result, false)
 
         if (useCache && ligandSVG !== `No dictionary for ${resName}`) {
             this.cachedLigandSVGs = { ...this.cachedLigandSVGs, [resName]: ligandSVG }
