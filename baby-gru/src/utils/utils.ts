@@ -29,7 +29,7 @@ export const getCentreAtom = async (molecules: moorhen.Molecule[], commandCentre
 
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-export const formatLigandSVG = (svg: string): string => {
+export const formatLigandSVG = (svg: string, edit_VB: boolean): string => {
     
     const parser = new DOMParser()
     let theText = svg
@@ -86,7 +86,7 @@ export const formatLigandSVG = (svg: string): string => {
     let svgs = doc.getElementsByTagName("svg")
     const viewBoxStr = xmin+" "+ymin+" "+xmax+" "+ymax
     for (let item of svgs) {
-        item.setAttribute("viewBox" , viewBoxStr)
+        if(edit_VB) item.setAttribute("viewBox" , viewBoxStr)
         item.setAttribute("width" , "100%")
         item.setAttribute("height" , "100%")
         theText = item.outerHTML
