@@ -344,12 +344,8 @@ getboost() {
         echo "Using existing boost"
     else
         echo "Checking out boost"
-        curl -L https://github.com/boostorg/boost/releases/download/boost-$boost_release/boost-$boost_release.tar.gz  -o boost_$boost_release.tar.gz
+        curl -L https://github.com/boostorg/boost/releases/download/boost-$boost_release/boost-$boost_release-cmake.tar.gz -o boost_$boost_release.tar.gz
         tar xf boost_$boost_release.tar.gz
-        cd ${MOORHEN_SOURCE_DIR}
-        rm -f boost
-        ln -s checkout/boost-$boost_release boost
-        patch -p0 < patches/boost-emscripten.patch
     fi
     echo
 }
