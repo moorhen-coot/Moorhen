@@ -91,6 +91,7 @@ ${coot_src}/coot-utils/atom-selection-container.cc
 ${coot_src}/coot-utils/diff-diff-map-peaks.cc
 ${coot_src}/coot-utils/gltf-export.cc
 ${coot_src}/coot-utils/texture-as-floats.cc
+${coot_src}/coot-utils/coot-align.cc
 ${coot_src}/src/coot-hydrogens.cc
 ${coot_src}/src/cfc.cc
 ${coot_src}/MoleculesToTriangles/CXXSurface/CXXBall.cpp

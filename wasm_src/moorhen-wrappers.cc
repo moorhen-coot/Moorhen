@@ -51,6 +51,7 @@
 #include "coot-utils/g_triangle.hh"
 #include "coot-utils/vertex.hh"
 #include "coot-utils/coot-map-utils.hh"
+#include "coot-utils/coot-align.hh"
 
 #include "mmdb2/mmdb_manager.h"
 #include "clipper/core/ramachandran.h"
@@ -1090,6 +1091,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
 
     register_vector<TorsionEntry>("vector<TorsionEntry>");
+    register_vector<coot::residue_range_t>("vector_residue_range_t");
+    register_vector<coot::geometry_distortion_info_container_t>("vector_geometry_distortion_info_container_t");
 
     value_object<TableEntry>("TableEntry")
       .field("svg", &TableEntry::svg)
@@ -1187,6 +1190,65 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("P_r1234",&coot::simple_rotamer::P_r1234)
     .function("Probability_rich",&coot::simple_rotamer::Probability_rich)
     .function("get_chi",&coot::simple_rotamer::get_chi)
+    ;
+    class_<coot::geometry_distortion_info_container_t>("geometry_distortion_info_container_t")
+      .constructor()
+      .property("geometry_distortion",&coot::geometry_distortion_info_container_t::geometry_distortion)
+      .property("chain_id",&coot::geometry_distortion_info_container_t::chain_id)
+      .property("n_atoms",&coot::geometry_distortion_info_container_t::n_atoms)
+      .property("min_resno",&coot::geometry_distortion_info_container_t::min_resno)
+      .property("max_resno",&coot::geometry_distortion_info_container_t::max_resno)
+      .function("set_min_max",&coot::geometry_distortion_info_container_t::set_min_max)
+      .function("size",&coot::geometry_distortion_info_container_t::size)
+      .function("print",&coot::geometry_distortion_info_container_t::print)
+      .function("distortion",&coot::geometry_distortion_info_container_t::distortion)
+      .function("distortion_sum",&coot::geometry_distortion_info_container_t::distortion_sum)
+      .function("get_geometry_distortion_info",&coot::geometry_distortion_info_container_t::get_geometry_distortion_info)
+    ;
+    //FIXME - this ignores simple_restraint
+    class_<coot::geometry_distortion_info_t>("geometry_distortion_info_t")
+      .constructor()
+      .property("is_set",&coot::geometry_distortion_info_t::is_set)
+      .property("distortion_score",&coot::geometry_distortion_info_t::distortion_score)
+      .property("atom_indices",&coot::geometry_distortion_info_t::atom_indices)
+      .property("atom_specs",&coot::geometry_distortion_info_t::atom_specs)
+      .property("residue_spec",&coot::geometry_distortion_info_t::residue_spec)
+      .function("initialised_p",&coot::geometry_distortion_info_t::initialised_p)
+    ;
+    class_<coot::residue_range_t>("residue_range_t")
+      .constructor()
+      .constructor<const std::string&, int, int>()
+      .property("chain_id",&coot::residue_range_t::chain_id)
+      .property("res_no_start",&coot::residue_range_t::res_no_start)
+      .property("res_no_end",&coot::residue_range_t::res_no_end)
+    ;
+    class_<coot::mutate_insertion_range_info_t>("mutate_insertion_range_info_t")
+      .constructor<int, const std::vector<std::string>&>()
+      .property("start_resno",&coot::mutate_insertion_range_info_t::start_resno)
+      .property("types",&coot::mutate_insertion_range_info_t::types)
+      .function("end_resno",&coot::mutate_insertion_range_info_t::end_resno)
+    ;
+    class_<coot::chain_mutation_info_container_t>("chain_mutation_info_container_t")
+      .constructor()
+      .constructor<const std::string&>()
+      .property("chain_id",&coot::chain_mutation_info_container_t::chain_id)
+      .property("alignedS",&coot::chain_mutation_info_container_t::alignedS)
+      .property("alignedT",&coot::chain_mutation_info_container_t::alignedT)
+      .property("alignedS_label",&coot::chain_mutation_info_container_t::alignedS_label)
+      .property("alignedT_label",&coot::chain_mutation_info_container_t::alignedT_label)
+      .property("alignment_string",&coot::chain_mutation_info_container_t::alignment_string)
+      .property("alignment_score",&coot::chain_mutation_info_container_t::alignment_score)
+      .property("insertions",&coot::chain_mutation_info_container_t::insertions)
+      .property("single_insertions",&coot::chain_mutation_info_container_t::single_insertions)
+      .property("deletions",&coot::chain_mutation_info_container_t::deletions)
+      .property("mutations",&coot::chain_mutation_info_container_t::mutations)
+      .function("add_deletion",&coot::chain_mutation_info_container_t::add_deletion)
+      .function("add_mutation",&coot::chain_mutation_info_container_t::add_mutation)
+      .function("add_insertion",&coot::chain_mutation_info_container_t::add_insertion)
+      .function("rationalize_insertions",&coot::chain_mutation_info_container_t::rationalize_insertions)
+      .function("get_residue_type",&coot::chain_mutation_info_container_t::get_residue_type)
+      .function("print",&coot::chain_mutation_info_container_t::print)
+      .function("dissimilarity_score",&coot::chain_mutation_info_container_t::dissimilarity_score)
     ;
     value_object<merge_molecule_results_info_t>("merge_molecule_results_info_t")
     .field("chain_id", &merge_molecule_results_info_t::chain_id)
@@ -1353,6 +1415,22 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("get_mutation_info",&molecules_container_t::get_mutation_info)
+    .function("get_ligand_validation_vs_dictionary",&molecules_container_t::get_ligand_validation_vs_dictionary)
+    .function("get_validation_vs_dictionary_for_selection",&molecules_container_t::get_validation_vs_dictionary_for_selection)
+    .function("rotate_around_bond",&molecules_container_t::rotate_around_bond)
+    .function("read_extra_restraints",&molecules_container_t::read_extra_restraints)
+    .function("get_sum_density_for_atoms_in_residue",&molecules_container_t::get_sum_density_for_atoms_in_residue)
+    .function("get_residue_sidechain_average_position",&molecules_container_t::get_residue_sidechain_average_position)
+    .function("get_residue_CA_position",&molecules_container_t::get_residue_CA_position)
+    .function("get_residue_average_position",&molecules_container_t::get_residue_average_position)
+    .function("get_missing_residue_ranges",&molecules_container_t::get_missing_residue_ranges)
+    .function("get_ligand_distortion",&molecules_container_t::get_ligand_distortion)
+    .function("add_lsq_superpose_atom_match",&molecules_container_t::add_lsq_superpose_atom_match)
+    .function("split_residue_using_map",&molecules_container_t::split_residue_using_map)
+    .function("flood",&molecules_container_t::flood)
+    .function("copy_molecule",&molecules_container_t::copy_molecule)
+    .function("add_terminal_residue_directly",&molecules_container_t::add_terminal_residue_directly)
     .function("mmcif_tests", &molecules_container_t::mmcif_tests)
     .function("M2T_updateIntParameter", &molecules_container_t::M2T_updateIntParameter)
     .function("M2T_updateFloatParameter", &molecules_container_t::M2T_updateFloatParameter)
@@ -1551,6 +1629,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("associate_data_mtz_file_with_map",&molecules_container_t::associate_data_mtz_file_with_map)
     .function("connect_updating_maps",&molecules_container_t::connect_updating_maps)
     .function("get_diff_diff_map_peaks", &molecules_container_t::get_diff_diff_map_peaks)
+    .function("export_chemical_features_as_gltf", &molecules_container_t::export_chemical_features_as_gltf)
     .function("export_molecular_representation_as_gltf", &molecules_container_t::export_molecular_representation_as_gltf)
     .function("export_model_molecule_as_gltf", &molecules_container_t::export_model_molecule_as_gltf)
     .function("export_map_molecule_as_gltf", &molecules_container_t::export_map_molecule_as_gltf)
@@ -1924,6 +2003,10 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("rail_points_total",&molecules_container_t::r_factor_stats::rail_points_total)
         .field("rail_points_new",&molecules_container_t::r_factor_stats::rail_points_new)
     ;
+    value_object<std::pair<bool, float>>("pair_bool_float")
+        .field("first",&std::pair<bool, float>::first)
+        .field("second",&std::pair<bool, float>::second)
+    ;
     value_object<std::pair<clipper::Coord_orth, float>>("pair_clipper_coord_orth_float")
         .field("first",&std::pair<clipper::Coord_orth, float>::first)
         .field("second",&std::pair<clipper::Coord_orth, float>::second)
@@ -1975,6 +2058,10 @@ EMSCRIPTEN_BINDINGS(my_module) {
     value_object<std::pair<double,double>>("double_double_pair")
         .field("first",&std::pair<double,double>::first)
         .field("second",&std::pair<double,double>::second)
+    ;
+    value_object<std::pair<int,double>>("int_double_pair")
+        .field("first",&std::pair<int,double>::first)
+        .field("second",&std::pair<int,double>::second)
     ;
     value_object<std::pair<std::string, unsigned int>>("string_uint_pair")
         .field("first",&std::pair<std::string, unsigned int>::first)
