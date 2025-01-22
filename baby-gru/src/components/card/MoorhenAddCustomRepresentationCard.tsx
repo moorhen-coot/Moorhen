@@ -92,6 +92,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const [nucleotideRibbonStyle, setNucleotideRibbonStyle] = useState<"DishyBases" | "StickBases">(props.representation?.m2tParams?.nucleotideRibbonStyle ??  props.molecule.defaultM2tParams.nucleotideRibbonStyle)
     const [ribbonAxialSampling, setRibbonAxialSampling] = useState<number>(props.representation?.m2tParams?.ribbonStyleAxialSampling ??  props.molecule.defaultM2tParams.ribbonStyleAxialSampling)
     const [dishStyleAngularSampling, setDishStyleAngularSampling] = useState<number>(props.representation?.m2tParams?.dishStyleAngularSampling ?? props.molecule.defaultM2tParams.dishStyleAngularSampling)
+    const [ssUsageScheme, setSsUsageScheme] = useState<number>(props.representation?.m2tParams?.ssUsageScheme ?? props.molecule.defaultM2tParams.ssUsageScheme)
 
     const [surfaceStyleProbeRadius, setSurfaceStyleProbeRadius] = useState<number>(props.representation?.m2tParams.surfaceStyleProbeRadius ?? props.molecule.defaultM2tParams.surfaceStyleProbeRadius)
     const [ballsStyleRadiusMultiplier, setBallsStyleRadiusMultiplier] = useState<number>(props.representation?.m2tParams.ballsStyleRadiusMultiplier ?? props.molecule.defaultM2tParams.ballsStyleRadiusMultiplier)
@@ -114,7 +115,8 @@ export const MoorhenAddCustomRepresentationCard = (props: {
         ribbonCoilThickness, setRibbonCoilThickness, ribbonHelixWidth, setRibbonHelixWidth,
         ribbonStrandWidth, setRibbonStrandWidth, ribbonArrowWidth, setRibbonArrowWidth, ribbonDNARNAWidth,
         setRibbonDNARNAWidth, ribbonAxialSampling, setRibbonAxialSampling, nucleotideRibbonStyle,
-        setNucleotideRibbonStyle, dishStyleAngularSampling, setDishStyleAngularSampling
+        setNucleotideRibbonStyle, dishStyleAngularSampling, setDishStyleAngularSampling,
+        ssUsageScheme, setSsUsageScheme
     }
 
     const bondSettingsProps = {
