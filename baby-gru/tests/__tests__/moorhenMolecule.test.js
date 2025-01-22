@@ -791,7 +791,7 @@ describe("Testing MoorhenMolecule", () => {
                 molecule_1.molNo,
                 '//',
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, 1
+                false, 0.1, 1, false, false, false, 1
             ]
         })
 
@@ -832,7 +832,7 @@ describe("Testing MoorhenMolecule", () => {
                 molecule_2.molNo,
                 '//',
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, 1
+                false, 0.1, 1, false, false, false, 1
             ]
         })
 
