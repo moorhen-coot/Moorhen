@@ -93,7 +93,8 @@ bool is_small_structure(const std::string &data){
 gemmi::Structure copy_to_assembly_to_new_structure(const gemmi::Structure &s, const std::string &name){
     gemmi::Structure assembly = s;
     gemmi::HowToNameCopiedChain how = gemmi::HowToNameCopiedChain::AddNumber;
-    gemmi::transform_to_assembly(assembly,name,how,nullptr);
+    gemmi::Logger logger{&gemmi::Logger::to_stdout,  3};
+    gemmi::transform_to_assembly(assembly,name,how,logger);
     return assembly;
 }
 
