@@ -1,6 +1,7 @@
 import { libcootApi } from "../src/types/libcoot"
 import { emscriptem } from "../src/types/emscriptem"
 import { privateer } from "../src/types/privateer";
+import { gemmi } from "../src/types/gemmi";
 
 let cootModule: libcootApi.CootModule;
 let molecules_container: libcootApi.MoleculesContainerJS;
@@ -957,6 +958,13 @@ const replace_map_by_mtz_from_file = (imol: number, mtzData: ArrayBufferLike, se
     return result
 }
 
+const generate_assembly = (coordString: string, assemblyNumber: string, mol_name: string) => {
+    const gemmiStructure = cootModule.read_structure_from_string(coordString,mol_name)
+    const assembly = cootModule.copy_to_assembly_to_new_structure(gemmiStructure,assemblyNumber)
+    const assembly_cif_string = cootModule.get_mmcif_string_from_gemmi_struct(assembly)
+    return molecules_container["read_coords_string"](assembly_cif_string,mol_name)
+}
+
 const new_positions_for_residue_atoms = (molToUpDate: number, residues: libcootApi.AtomInfo[][]) => {
     let success = 0
     const movedResidueVector = new cootModule.Vectormoved_residue_t()
@@ -1120,6 +1128,9 @@ const doCootCommand = (messageData: {
 
         let cootResult
         switch (command) {
+            case 'shim_generate_assembly':
+                cootResult = generate_assembly(...commandArgs as [string, string, string])
+                break
             case 'shim_new_positions_for_residue_atoms':
                 cootResult = new_positions_for_residue_atoms(...commandArgs as [number, libcootApi.AtomInfo[][]])
                 break

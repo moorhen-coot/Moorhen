@@ -166,6 +166,7 @@ export namespace moorhen {
         minimizeEnergyUsingCidAnimated(cid: string, ncyc: number, nIterations: number, useRamaRestraints: boolean, ramaWeight: number, useTorsionRestraints: boolean, torsionWeight: number): Promise<void>;
         addColourRule(ruleType: string, cid: string, color: string, args: (string | number)[], isMultiColourRule?: boolean, applyColourToNonCarbonAtoms?: boolean, label?: string): void;
         splitMultiModels(draw?: boolean): Promise<Molecule[]>;
+        generateAssembly(assemblyNumber: string, draw?: boolean): Promise<Molecule>;
         getActiveAtom(): Promise<string>;
         setDrawAdaptativeBonds(newValue: boolean): Promise<void>;
         redrawAdaptativeBonds(selectionString?: string): Promise<void>;

@@ -297,24 +297,14 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 const generators = assembly.generators
                 const n_gen = generators.size()
                 console.log("n_gen",n_gen)
-                if (n_gen > 0) {
-                    const gen = generators.get(0)
+                for (let i_gen=0; i_gen < n_gen; i_gen++) { 
+                    const gen = generators.get(i_gen)
                     const operators = gen.operators
                     const n_op = operators.size()
                     const chains = gen.chains
                     const subchains = gen.subchains
                     const n_chains = chains.size()
                     const n_subchains = subchains.size()
-                    /*
-                    console.log(n_chains)
-                    console.log(n_subchains)
-                    for (let i_ch=0; i_ch < n_chains; i_ch++) {
-                        console.log("ch:",chains.get(i_ch))
-                    }
-                    for (let i_subch=0; i_subch < n_subchains; i_subch++) {
-                        console.log("subch:",subchains.get(i_subch))
-                    }
-                    */
 
                     for (let i_op=0; i_op < n_op; i_op++) {
                         let mat16 = []
@@ -366,6 +356,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             }
             assemblies.delete()
         }
+        console.log("Number of matrices",this.symmetryMatrices.length)
     }
 
     /**
@@ -2471,6 +2462,29 @@ export class MoorhenMolecule implements moorhen.Molecule {
             console.warn(`change_chain_id returned status ${status.data.result.result.first}`)
         }
         return status.data.result.result.first
+    }
+
+    /**
+     * Split a molecule with multiple models into separate molecules (one for each model)
+     * @param {boolean} [draw=false] - Indicates whether the new molecules should be drawn
+     * @returns {moorhen.Molecule[]} - A list with the new molecules
+     */
+    async generateAssembly(assemblyNumber: string, draw: boolean = false): Promise<moorhen.Molecule> {
+        let coordString = await this.gemmiStructure.as_string()
+        let newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
+        newMolecule.name = `${this.name}-assembly-${assemblyNumber}`
+        const response = await this.commandCentre.current.cootCommand({
+            returnType: 'status',
+            command: 'shim_generate_assembly',
+            commandArgs: [ coordString, assemblyNumber, newMolecule.name ],
+        }, true) as moorhen.WorkerResponse<libcootApi.PairType<number, moorhen.coorFormats>>
+
+        newMolecule.molNo = response.data.result.result.first
+
+        await this.transferMetaData(newMolecule)
+        await newMolecule.fetchDefaultColourRules()
+        await newMolecule.fetchIfDirtyAndDraw('CBs')
+        return newMolecule
     }
 
     /**

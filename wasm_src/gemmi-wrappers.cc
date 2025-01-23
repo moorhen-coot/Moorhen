@@ -17,6 +17,7 @@
 #include <emscripten/bind.h>
 
 #include <gemmi/to_cif.hpp>
+#include <gemmi/to_mmcif.hpp> 
 #include <gemmi/to_pdb.hpp>
 #include <gemmi/span.hpp>
 #include <gemmi/neighbor.hpp>
@@ -62,6 +63,14 @@ bool structure_is_ligand(const gemmi::Structure &Structure) {
     return isLigand;
 }
 
+std::string get_mmcif_string_from_gemmi_struct(const gemmi::Structure &Structure){
+    gemmi::cif::Document doc = gemmi::make_mmcif_document(Structure);
+    std::ostringstream oss;
+    gemmi::cif::write_cif_to_stream(oss, doc);
+    std::string s = oss.str();
+    return s;
+}
+
 std::string get_pdb_string_from_gemmi_struct(const gemmi::Structure &Structure){
     std::ostringstream oss;
     gemmi::write_pdb(Structure, oss);
@@ -79,6 +88,13 @@ bool is_small_structure(const std::string &data){
       return false;
   }
   return false;
+}
+
+gemmi::Structure copy_to_assembly_to_new_structure(const gemmi::Structure &s, const std::string &name){
+    gemmi::Structure assembly = s;
+    gemmi::HowToNameCopiedChain how = gemmi::HowToNameCopiedChain::AddNumber;
+    gemmi::transform_to_assembly(assembly,name,how,nullptr);
+    return assembly;
 }
 
 gemmi::Structure read_structure_from_string(const std::string &data, const std::string& path){
@@ -1850,6 +1866,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("empty_copy",&gemmi::Structure::empty_copy)
     .function("setup_cell_images",&gemmi::Structure::setup_cell_images)
     .function("first_model",select_overload<const gemmi::Model&(void)const>(&gemmi::Structure::first_model))
+    .function("as_string",&get_mmcif_string_from_gemmi_struct)
     ;
 
     class_<gemmi::NearestImage>("NearestImage")
@@ -2804,9 +2821,11 @@ GlobWalk
     function("remove_selected_residues",&remove_selected_residues);
     function("count_residues_in_selection",&count_residues_in_selection);
     function("get_pdb_string_from_gemmi_struct",&get_pdb_string_from_gemmi_struct);
+    function("get_mmcif_string_from_gemmi_struct",&get_mmcif_string_from_gemmi_struct);
     function("structure_is_ligand",&structure_is_ligand);
     function("read_structure_from_string",&read_structure_from_string);
     function("is_small_structure",&is_small_structure);
+    function("copy_to_assembly_to_new_structure",&copy_to_assembly_to_new_structure);
     function("parse_ligand_dict_info", &parse_ligand_dict_info);
     function("read_structure_file",&gemmi::read_structure_file);
 #if (__EMSCRIPTEN_major__ == 3 && __EMSCRIPTEN_minor__ == 1 && __EMSCRIPTEN_tiny__ >= 60) || __EMSCRIPTEN_major__ > 3

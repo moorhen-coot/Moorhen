@@ -129,6 +129,7 @@ export namespace gemmi {
     }
     interface Assembly extends emscriptem.instance<Assembly> {
         name: string;
+        oligomeric_details: string;
         generators: emscriptem.vector<Gen>;
     }
     interface Structure extends emscriptem.instance<Structure> {
@@ -138,5 +139,6 @@ export namespace gemmi {
         first_model: () => Model;
         remove_empty_chains: () => void;
         get_info: (tag: string) => string;
+        as_string: () => string;
     }
 }

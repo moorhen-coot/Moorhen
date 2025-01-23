@@ -38,12 +38,14 @@ export namespace libcootApi {
         remove_hydrogens_structure(gemmiStructure: gemmi.Structure): void;
         read_structure_from_string(coordData: string | ArrayBuffer, molName: string): gemmi.Structure;
         is_small_structure(coordData: string): boolean;
+        copy_to_assembly_to_new_structure(gemmiStructure: gemmi.Structure, assembly_name: string): gemmi.Structure;
         get_mtz_columns(fileName: string): emscriptem.vector<string>;
         FS_createDataFile(arg0: string, fileName: string, byteArray: Uint8Array, arg3: boolean, arg4: boolean): void;
         getElementNameAsString: (arg0: emscriptem.instance<string>) => string;
         FS_unlink: (arg0: string) => void;
         cif_parse_string: (arg0: gemmi.cifDocument, arg1: string) => void;
         get_pdb_string_from_gemmi_struct: (arg0:gemmi.Structure) => string;
+        get_mmcif_string_from_gemmi_struct: (arg0:gemmi.Structure) => string;
         validate: (file: string, name: string) => emscriptem.vector<privateer.ResultsEntry>;
         Selection: { new(cid: string): gemmi.Selection };
         NeighborSearch: { new(model: gemmi.Model, unitCell: gemmi.UnitCell, radius: number): gemmi.NeighborSearch };
@@ -483,6 +485,8 @@ export namespace libcootApi {
     type CootModule = {
         unpackCootDataFile(arg0: string, arg1: boolean, arg2: string, arg3: string): number;
         SmilesToPDB(arg0: string, arg1: string, arg2: number, arg3: number): PairType<string, string>;
+        get_mmcif_string_from_gemmi_struct(arg0:gemmi.Structure): string;
+        read_structure_from_string(coordData: string | ArrayBuffer, molName: string): gemmi.Structure;
         MolTextToPDB(mol_text_cpp:string, TLC: string, nconf: number, maxIters: number, keep_orig_coords: boolean, minimize: boolean): PairType<string, string>;
 
         FS: {
@@ -492,6 +496,7 @@ export namespace libcootApi {
         FS_unlink(tempFilename: string): void;
         FS_createDataFile(arg0: string, arg1: string, arg2: Uint8Array | string, arg3: boolean, arg4: boolean, arg5?: boolean): void;
         testFloat32Array( arg0: any ): Float32Array;
+        copy_to_assembly_to_new_structure(gemmiStructure: gemmi.Structure, assembly_name: string): gemmi.Structure;
         getPositionsFromSimpleMesh( arg0: any ): Float32Array;
         getNormalsFromSimpleMesh( arg0: any ): Float32Array;
         getReversedNormalsFromSimpleMesh( arg0: any ): Float32Array;
