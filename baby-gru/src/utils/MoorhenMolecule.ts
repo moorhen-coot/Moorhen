@@ -304,14 +304,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
                     const subchains = gen.subchains
                     const n_chains = chains.size()
                     const n_subchains = subchains.size()
-                    console.log(n_chains)
-                    console.log(n_subchains)
-                    for (let i_ch=0; i_ch < n_chains; i_ch++) {
-                        console.log("ch:",chains.get(i_ch))
-                    }
-                    for (let i_subch=0; i_subch < n_subchains; i_subch++) {
-                        console.log("subch:",subchains.get(i_subch))
-                    }
 
                     for (let i_op=0; i_op < n_op; i_op++) {
                         let mat16 = []
