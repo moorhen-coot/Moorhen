@@ -84,7 +84,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             atomRadiusBondRatio: 1,
             showAniso: false,
             showOrtep: false,
-            showHs: false
+            showHs: true
         }
         this.m2tParams = {
             ribbonStyleCoilThickness: 0.3,

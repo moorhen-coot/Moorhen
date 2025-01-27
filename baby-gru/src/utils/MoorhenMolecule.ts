@@ -146,7 +146,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             atomRadiusBondRatio: 1,
             showAniso: false,
             showOrtep: false,
-            showHs: false,
+            showHs: true,
         }
         this.defaultM2tParams = {
             ribbonStyleCoilThickness: 0.3,
