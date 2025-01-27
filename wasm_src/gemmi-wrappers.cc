@@ -79,15 +79,17 @@ std::string get_pdb_string_from_gemmi_struct(const gemmi::Structure &Structure){
 }
 
 bool is_small_structure(const std::string &data){
-  // auto block = gemmi::cif::read_string(data).sole_block();
-  // gemmi::SmallStructure small = gemmi::make_small_structure_from_block(block);
-  // try {
-  // if(small.sites.size()>0)
-  // return true;
-  // } catch(...) {
-  // return false;
-  // }
-  return false;
+    try {
+        auto document = gemmi::cif::read_string(data);
+        if(document.blocks.size()==0) return false;
+        auto block = document.sole_block();
+        gemmi::SmallStructure small = gemmi::make_small_structure_from_block(block);
+        if(small.sites.size()>0)
+            return true;
+    } catch(...) {
+        return false;
+    }
+    return false;
 }
 
 gemmi::Structure copy_to_assembly_to_new_structure(const gemmi::Structure &s, const std::string &name){

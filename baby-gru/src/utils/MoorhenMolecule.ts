@@ -760,7 +760,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
     async loadToCootFromFile(source: File): Promise<moorhen.Molecule> {
         try {
             const coordData = await readTextFile(source);
-            const is_small = window.CCP4Module.is_small_structure(coordData as string)
+            let is_small = false;
+            if(source.name.endsWith(".mmcif")||source.name.endsWith(".cif")||source.name.endsWith(".pdbx"))
+                is_small = window.CCP4Module.is_small_structure(coordData as string)
             if(is_small){
                 const small_to_cif_response = await this.commandCentre.current.cootCommand({
                     command: 'SmallMoleculeCifToMMCif',
