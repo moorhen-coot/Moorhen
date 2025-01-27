@@ -18,13 +18,13 @@ The following libraries/programs are compiled to Web Assembly:
 * clipper (20240123)
 * ssm (1.4.0)
 * mmdb2 (2.0.22)
-* gemmi 0.6.4
+* gemmi 0.7.0
 * Coot 1.0
 * fftw 2.1.5
 * gsl 2.7.1
-* Boost 1.84.0
+* Boost 1.86.0
 * glm 0.9.9.8
-* RDKit 2024_03_5
+* RDKit 2024\_09\_3
 * Freetype
 
 Moorhen is available to use at [https://moorhen.org](https://moorhen.org).
@@ -57,7 +57,7 @@ Binaries are available on the releases page. Please read the instructions there 
 Most of these (except emscripten) can be installed by somelike like `sudo apt install git cmake curl patch meson ninja-build autoconf automake libtool flex bison g++` on a Debian like system. All of these should be available through Homebrew or Ports on macOS.
 \
 \
-Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) and any reasonly recent Linux distribution (x86_64 or aarch64). Tested on Ubuntu 22.04 x86_64, Raspberry Pi OS Bookworm/Debian 12 on Pi5, macOS Monteray and Sonama and others.
+Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) and any reasonly recent Linux distribution (x86\_64 or aarch64). Tested on Ubuntu 22.04 x86\_64, Raspberry Pi OS Bookworm/Debian 12 on Pi5, macOS Monteray and Sonama and others.
 
 1. Install emscripten (following  [https://emscripten.org/docs/getting_started/downloads.html](https://emscripten.org/docs/getting_started/downloads.html)):  
 `git clone https://github.com/emscripten-core/emsdk.git`  
