@@ -5,6 +5,7 @@ A JavaScript molecular graphics program
 - [x] SMILES string is white on dark background.
 - [ ] Print out molecule info - B-factors, etc. This could be hover info, atom label, full print
       of ATOM cards, context menu option. Environment of temp factors.
+- [ ] Edit occupancy should be reflected in atom info card above. It only seems to work after some other edit.
 - [ ] Undo button on a molecule loaded from SMILES/PubChem with name > 3 letters breaks the structure.
 - [ ] "Somehow" determine PLDDT vs B-factor in SliceNDice
 - [ ] Add Zoom to "Show controls"

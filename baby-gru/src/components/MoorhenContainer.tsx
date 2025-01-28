@@ -56,8 +56,8 @@ declare module "notistack" {
         },
         atomInformation: {
             commandCentre: React.RefObject<moorhen.CommandCentre>;
-            moleculeRef: React.RefObject<moorhen.Molecule>;
-            cidRef: React.RefObject<string[]>;
+            moleculeRef: moorhen.Molecule;
+            cidRef: string;
             glRef: React.RefObject<webGL.MGWebGL>;
             monomerLibraryPath: string;
         },
