@@ -1,14 +1,12 @@
 # Moorhen
 A JavaScript molecular graphics program
 
-### For 0.14.2
+### For 0.16.4
+- [x] SMILES string is white on dark background.
 - [ ] Print out molecule info - B-factors, etc. This could be hover info, atom label, full print
       of ATOM cards, context menu option. Environment of temp factors.
-- [x] Display SMILES string for ligand.
 - [ ] Undo button on a molecule loaded from SMILES/PubChem with name > 3 letters breaks the structure.
-- [x] Small molecule CIF loading via UI
 - [ ] "Somehow" determine PLDDT vs B-factor in SliceNDice
-- [x] 1dp4 biomolecule may not be correct.
 - [ ] Add Zoom to "Show controls"
 
 ### Todo

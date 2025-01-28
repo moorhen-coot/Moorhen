@@ -158,7 +158,7 @@ export const MoorhenLigandCard = (props: {
                         </Stack>
                     </Col>
                 </Row>
-            <div style={{ display: "flex", justifyContent: "left" }}>{ligand.smiles}</div>
+            <div style={{ display: "flex", justifyContent: "left", color: isDark ? 'white' : 'black' }}>{ligand.smiles}</div>
             </Card.Body>
         </Card>
 }
