@@ -84,7 +84,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             atomRadiusBondRatio: 1,
             showAniso: false,
             showOrtep: false,
-            showHs: false
+            showHs: true
         }
         this.m2tParams = {
             ribbonStyleCoilThickness: 0.3,
@@ -99,7 +99,8 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             surfaceStyleProbeRadius: 1.4,
             ballsStyleRadiusMultiplier: 1,
             nucleotideRibbonStyle: 'StickBases',
-            dishStyleAngularSampling: 32
+            dishStyleAngularSampling: 32,
+            ssUsageScheme: 2
         }
         this.residueEnvironmentOptions = {
             maxDist: 8,
@@ -854,11 +855,23 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         if(this.colourRules.length>0&&this.colourRules[0].ruleType==="electrostatics")
             colorStyle = "ByOwnPotential"
 
+        let ssUsageScheme
+        if (this.useDefaultM2tParams) {
+            ssUsageScheme = this.parentMolecule.defaultM2tParams.ssUsageScheme
+        } else {
+            ssUsageScheme = this.m2tParams.ssUsageScheme
+        }
+
+        console.log("##################################################")
+        console.log("##################################################")
+        console.log("get_molecular_representation_mesh, ssUsageScheme",ssUsageScheme)
+        console.log("##################################################")
+        console.log("##################################################")
         const response = await this.commandCentre.current.cootCommand({
             returnType: "mesh",
             command: "get_molecular_representation_mesh",
             commandArgs: [
-                this.parentMolecule.molNo, m2tSelection, colorStyle, m2tStyle, 2
+                this.parentMolecule.molNo, m2tSelection, colorStyle, m2tStyle, ssUsageScheme
             ]
         }, false) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
         console.log(response)
@@ -1326,10 +1339,16 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             gltfData = result.data.result.result
         } else if (this.styleIsM2tRepresentation || this.styleIsCombinedRepresentation) {
             const { m2tStyle, m2tSelection } = this.getM2tArgs(this.style, this.cid)
+            let ssUsageScheme
+            if (this.useDefaultM2tParams) {
+                ssUsageScheme = this.parentMolecule.defaultM2tParams.ssUsageScheme
+            } else {
+                ssUsageScheme = this.m2tParams.ssUsageScheme
+            }
             const result = await this.commandCentre.current.cootCommand({
                 returnType: 'string',
                 command: 'shim_export_molecular_representation_as_gltf',
-                commandArgs: [ this.parentMolecule.molNo, m2tSelection, "colorRampChainsScheme", m2tStyle ],
+                commandArgs: [ this.parentMolecule.molNo, m2tSelection, "colorRampChainsScheme", m2tStyle, ssUsageScheme ],
             }, false) as moorhen.WorkerResponse<ArrayBuffer>
             gltfData = result.data.result.result
         } else {

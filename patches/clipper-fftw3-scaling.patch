@@ -1,0 +1,141 @@
+--- ./clipper/clipper/gemmi/clipper_gemmi.cpp	2024-05-15 13:55:35
++++ ./clipper/clipper/gemmi/clipper_gemmi.cpp	2024-10-15 12:12:35
+@@ -166,6 +166,7 @@
+   size_t cols[ncols];
+   std::vector<String> col_names = extract_column_names(colpath, ncols);
+   std::vector<String> dat_names = cdata.data_names().split(" ");
++  std::vector<ftype> scls(ncols, 1.0);
+   String dataset_name = colpath.split("/")[1];
+   // get the column indices
+   for (int c = 0; c < ncols; c++) {
+@@ -175,6 +176,8 @@
+       else
+         cols[c] = mtzobj.column_with_label(col_names[c].c_str())->idx;
+     }
++    if (dat_names[c] == "phi")
++      scls[c] = Util::rad2d(1.0);
+   }
+   // loop through nreflections,data
+   xtype values[ncols];
+@@ -184,7 +187,7 @@
+       // set to Nan unless readable and present
+       Util::set_null(values[c]);
+       if (!Util::is_nan(xtype(mtzobj.data[i + cols[c]])))
+-        values[c] = xtype(mtzobj.data[i + cols[c]]);
++        values[c] = xtype(mtzobj.data[i + cols[c]]/scls[c]);
+     }
+     cdata.data_import(Hkl(mtzobj.get_hkl(i)), values);
+   }
+@@ -288,8 +288,8 @@
+   HKL_data<data64::ABCD> hkl_data(hkl_info);
+   data64::ABCD abcd;
+   for (std::size_t i = 0; i < miller_indices.size(); i++) {
+-    std::array<double, 4> datum = {data[0]->at(i), data[1]->at(i), data[2]->at(i), data[3]->at(i)};
+-    abcd.data_import(datum.begin());
++    double datum[4] = {data[0]->at(i), data[1]->at(i), data[2]->at(i), data[3]->at(i)};
++    abcd.data_import(datum);
+     if (!hkl_data.set_data(Hkl(miller_indices[i]), abcd))
+       Message::message(Message_fatal("GEMMI: Unable to set data for " + Hkl(miller_indices[i]).format()));
+
+--- ./clipper/clipper/gemmi/clipper_gemmi_model.cpp	2024-05-15 13:55:35
++++ ./clipper/clipper/gemmi/clipper_gemmi_model.cpp	2024-12-16 16:40:42
+@@ -175,12 +175,12 @@
+   // Model
+   String GemmiModel::id() const
+   {
+-    return String(name);
++    return String(num);
+   }
+ 
+   void GemmiModel::set_id(const String &n)
+   {
+-    name = (char *)n.c_str();
++    num = std::stoi(n);
+   }
+ 
+   // Structure
+
+--- ./clipper/clipper/minimol/minimol_io_gemmi.cpp	2024-05-15 13:55:35
++++ ./clipper/clipper/minimol/minimol_io_gemmi.cpp	2024-12-16 16:36:27
+@@ -41,8 +41,6 @@
+ 
+ #include "minimol_io_gemmi.h"
+ 
+-#include <gemmi/chemcomp_xyz.hpp>
+-
+ extern "C" {
+ #include <string.h>
+ }
+@@ -166,9 +164,7 @@
+     if (type == CIF) {
+       ::gemmi::cif::write_cif_to_stream(os.ref(), doc, cif_write_style_);
+     } else { // mmjson
+-      ::gemmi::cif::JsonWriter jswriter(os.ref());
+-      jswriter.set_mmjson();
+-      jswriter.write_json(doc);
++      ::gemmi::cif::write_json_to_stream(os.ref(), doc, gemmi::cif::JsonWriteOptions::mmjson());
+     }
+   } break;
+   case PDB:
+@@ -223,8 +219,8 @@
+   int model_nth = 0;
+   if (model_num > 0) // just in case
+     model_nth = model_num - 1;
+-  std::string model_name = structure_.models[model_nth].name;
+-  gemmi::Model* p_mod = structure_.find_model(model_name);
++  std::string model_name = std::to_string(structure_.models[model_nth].num);
++  gemmi::Model* p_mod = structure_.find_model(std::stoi(model_name));
+   mol.set_property("StrucName", Property<String>(structure_.name));
+   gemmi::CRA cra;
+ 
+@@ -252,7 +248,7 @@
+             if (a.aniso.u11 != 0)
+               atm.set_u_aniso_orth(
+                   U_aniso_orth(a.aniso.u11, a.aniso.u22, a.aniso.u33, a.aniso.u12, a.aniso.u13, a.aniso.u23));
+-            txt = structure_.GetID_str(p_mod->name, cra, a.what()); // Get atom ID
++            txt = structure_.GetID_str(std::to_string(p_mod->num), cra, a.what()); // Get atom ID
+             atm.set_property("CID", Property<String>(txt));
+             if (a.has_altloc())
+               atm.set_property("AltConf", Property<String>(altLoc));
+@@ -264,19 +260,19 @@
+           String inscode = res.seqid.has_icode() ? String(&res.seqid.icode, 1) : "";
+           mon.set_seqnum(res.seqid.num.value, inscode); // String(&res.seqid.icode, 1));
+           mon.set_type(res.name);
+-          txt = structure_.GetID_str(p_mod->name, cra, res.what()); // Get residue ID
++          txt = structure_.GetID_str(std::to_string(p_mod->num), cra, res.what()); // Get residue ID
+           mon.set_property("CID", Property<String>(String(txt)));
+           pol.insert(mon); // store the residue
+         }
+         pol.set_id(p_chn->name);
+         cra.residue = nullptr;
+-        txt = structure_.GetID_str(p_mod->name, cra, p_chn->what()); // Get chain ID
++        txt = structure_.GetID_str(std::to_string(p_mod->num), cra, p_chn->what()); // Get chain ID
+         pol.set_property("CID", Property<String>(String(txt)));
+         mol.insert(pol); // store the chain
+       }
+     }
+     cra.chain = nullptr;
+-    txt = structure_.GetID_str(p_mod->name, cra, p_mod->what()); // Get model ID
++    txt = structure_.GetID_str(std::to_string(p_mod->num), cra, p_mod->what()); // Get model ID
+     mol.set_property("CID", Property<String>(String(txt)));
+   }
+ }
+@@ -364,7 +360,7 @@
+   // create GEMMI object for anything that is missing
+   // fill information in Gemmi from MiniMol
+   if (gmod.db == NULL) {
+-    structure_.models.emplace_back("1");
++    structure_.models.emplace_back(1);
+     gmod.db = &structure_.models.back();
+   }
+   for (int p = 0; p < gmod.data.size(); p++) { // chains
+--- ./clipper/clipper/minimol/minimol_io_gemmi.h	2024-05-15 13:55:35
++++ ./clipper/clipper/minimol/minimol_io_gemmi.h	2024-12-16 16:37:44
+@@ -55,6 +55,7 @@
+ #include <gemmi/to_json.hpp> // JsonWriter
+ #include <gemmi/align.hpp> // assign_label_seq_id
+ #include <gemmi/assembly.hpp> // shorten_chain_name
++#include <gemmi/seqtools.hpp> //find_tabulated_residue
+ 
+ namespace clipper {
+ 

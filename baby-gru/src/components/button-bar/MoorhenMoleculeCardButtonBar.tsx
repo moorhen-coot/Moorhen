@@ -5,6 +5,7 @@ import { MenuItem } from "@mui/material";
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings, InfoOutlined } from '@mui/icons-material';
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
 import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem"
+import { MoorhenGenerateAssemblyMenuItem } from "../menu-item/MoorhenGenerateAssemblyMenuItem"
 import { clickedResidueType } from "../card/MoorhenMoleculeCard";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
@@ -31,10 +32,10 @@ type MoorhenMoleculeCardButtonBarPropsType = {
 
 export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBarPropsType) => {
     const dropdownCardButtonRef = useRef<HTMLDivElement>()
-    
+
     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
     const [currentName, setCurrentName] = useState<string>(props.molecule.name);
-    
+
     const dispatch = useDispatch()
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const makeBackups = useSelector((state: moorhen.State) => state.backupSettings.makeBackups)
@@ -118,6 +119,14 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
         },
     }
 
+    const bioMolButtons: { [key: number]: { label: string; compressed: () => JSX.Element; expanded: null | (() => JSX.Element); } } = {
+        8: {
+            label: 'Generate assembly',
+            compressed: () => { return (<MoorhenGenerateAssemblyMenuItem key={8} setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />) },
+            expanded: null
+        },
+    }
+
     const maximumAllowedWidth = props.sideBarWidth * 0.65
     let currentlyUsedWidth = 0
     let expandedButtons: JSX.Element[] = []
@@ -136,11 +145,54 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
         }
     })
 
+    let showAssemblies = false
+
+    if(props.molecule.gemmiStructure){
+        const assemblies = props.molecule.gemmiStructure.assemblies
+        for(let i=0; i<assemblies.size(); i++){
+            const assembly = assemblies.get(i)
+            const generators = assembly.generators
+            const n_gen = generators.size()
+            let n_tot_op = 0
+            for (let i_gen=0; i_gen < n_gen; i_gen++) {
+                const gen = generators.get(i_gen)
+                const operators = gen.operators
+                const n_op = operators.size()
+                n_tot_op += n_op
+                gen.delete()
+                operators.delete()
+            }
+            assembly.delete()
+            generators.delete()
+
+            if(n_tot_op!==60&&n_tot_op!==1){
+                showAssemblies = true
+                break
+            }
+        }
+        assemblies.delete()
+    }
+
+    if(showAssemblies){
+        Object.keys(bioMolButtons).forEach(key => {
+            if (bioMolButtons[key].expanded === null) {
+                compressedButtons.push(bioMolButtons[key].compressed())
+            } else {
+                currentlyUsedWidth += 60
+                if (currentlyUsedWidth < maximumAllowedWidth) {
+                    expandedButtons.push(bioMolButtons[key].expanded())
+                } else {
+                    compressedButtons.push(bioMolButtons[key].compressed())
+                }
+            }
+        })
+    }
+
     compressedButtons.push(
-        <MoorhenDeleteDisplayObjectMenuItem 
+        <MoorhenDeleteDisplayObjectMenuItem
             key="deleteDisplayObjectMenuItem"
-            setPopoverIsShown={setPopoverIsShown} 
-            glRef={props.glRef} 
+            setPopoverIsShown={setPopoverIsShown}
+            glRef={props.glRef}
             item={props.molecule} />
     )
 

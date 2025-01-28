@@ -3,7 +3,7 @@ project(privateer C CXX)
 
 option(BUILD_SHARED_LIBS "Build as a shared library" ON)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 if(DEFINED ENV{PRIVATEER_DEBUG})
     add_definitions(-DDUMP=1)

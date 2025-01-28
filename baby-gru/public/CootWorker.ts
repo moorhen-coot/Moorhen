@@ -1,6 +1,7 @@
 import { libcootApi } from "../src/types/libcoot"
 import { emscriptem } from "../src/types/emscriptem"
 import { privateer } from "../src/types/privateer";
+import { gemmi } from "../src/types/gemmi";
 
 let cootModule: libcootApi.CootModule;
 let molecules_container: libcootApi.MoleculesContainerJS;
@@ -491,9 +492,9 @@ const export_map_as_gltf = (imol: number, x: number, y: number, z: number, radiu
     return fileContents.buffer
 }
 
-const export_molecular_representation_as_gltf = (imol: number, cid: string, colourScheme: string, style: string) => {
+const export_molecular_representation_as_gltf = (imol: number, cid: string, colourScheme: string, style: string, ssUsageScheme: number) => {
     const fileName = `${guid()}.glb`
-    molecules_container.export_molecular_representation_as_gltf(imol, cid, colourScheme, style, fileName)
+    molecules_container.export_molecular_representation_as_gltf(imol, cid, colourScheme, style, ssUsageScheme, fileName)
     const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
     cootModule.FS_unlink(fileName)
     return fileContents.buffer
@@ -957,6 +958,13 @@ const replace_map_by_mtz_from_file = (imol: number, mtzData: ArrayBufferLike, se
     return result
 }
 
+const generate_assembly = (coordString: string, assemblyNumber: string, mol_name: string) => {
+    const gemmiStructure = cootModule.read_structure_from_string(coordString,mol_name)
+    const assembly = cootModule.copy_to_assembly_to_new_structure(gemmiStructure,assemblyNumber)
+    const assembly_cif_string = cootModule.get_mmcif_string_from_gemmi_struct(assembly)
+    return molecules_container["read_coords_string"](assembly_cif_string,mol_name)
+}
+
 const new_positions_for_residue_atoms = (molToUpDate: number, residues: libcootApi.AtomInfo[][]) => {
     let success = 0
     const movedResidueVector = new cootModule.Vectormoved_residue_t()
@@ -1120,6 +1128,9 @@ const doCootCommand = (messageData: {
 
         let cootResult
         switch (command) {
+            case 'shim_generate_assembly':
+                cootResult = generate_assembly(...commandArgs as [string, string, string])
+                break
             case 'shim_new_positions_for_residue_atoms':
                 cootResult = new_positions_for_residue_atoms(...commandArgs as [number, libcootApi.AtomInfo[][]])
                 break
@@ -1148,7 +1159,7 @@ const doCootCommand = (messageData: {
                 cootResult = export_molecule_as_gltf(...commandArgs as [number, string, string, boolean, number, number, number, boolean, boolean])
                 break
             case 'shim_export_molecular_representation_as_gltf':
-                cootResult = export_molecular_representation_as_gltf(...commandArgs as [number, string, string, string])
+                cootResult = export_molecular_representation_as_gltf(...commandArgs as [number, string, string, string, number])
                 break
             case "parse_mon_lib_list_cif":
                 cootResult = parseMonLibListCif(...commandArgs as [string])

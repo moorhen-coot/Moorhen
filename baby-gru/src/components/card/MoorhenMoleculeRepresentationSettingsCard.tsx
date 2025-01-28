@@ -229,6 +229,32 @@ const SymmetrySettingsPanel = (props: {
         }
     }, [showUnitCell])
 
+    const assemblies = props.molecule.gemmiStructure.assemblies
+    let showAssemblies = false
+    for(let i=0; i<assemblies.size(); i++){
+        const assembly = assemblies.get(i)
+        const generators = assembly.generators
+        const n_gen = generators.size()
+        let n_tot_op = 0
+        for (let i_gen=0; i_gen < n_gen; i_gen++) { 
+            const gen = generators.get(i_gen)
+            const operators = gen.operators
+            const n_op = operators.size()
+            n_tot_op += n_op
+            gen.delete()
+            operators.delete()
+        }
+        assembly.delete()
+        generators.delete()
+
+        if(n_tot_op===60){
+            showAssemblies = true
+            break
+        }
+
+    }
+    assemblies.delete()
+
     return <div style={{paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', borderStyle: 'solid', borderWidth: '1px', borderColor: 'grey', borderRadius: '1.5rem'}}>
         <Form.Check
             type="switch"
@@ -243,14 +269,14 @@ const SymmetrySettingsPanel = (props: {
                 setSymmetryOn(!symmetryOn)
             }}
             label="Show symmetry mates" />
-        <Form.Check
+        {showAssemblies && <Form.Check
             type="switch"
             checked={biomolOn}
             onChange={() => { 
                 if(symmetryOn && !biomolOn) setSymmetryOn(false)
                 setBiomolOn(!biomolOn)
             }}
-            label="Show biomolecule" />
+            label="Show biomolecule" />}
         <MoorhenSlider
             isDisabled={!symmetryOn}
             sliderTitle="Symmetry Radius"
@@ -283,6 +309,8 @@ export const RibbonSettingsPanel = (props: {
     setNucleotideRibbonStyle: React.Dispatch<React.SetStateAction<"DishyBases" | "StickBases">>;
     dishStyleAngularSampling: number;
     setDishStyleAngularSampling: React.Dispatch<React.SetStateAction<number>>;
+    ssUsageScheme: number;
+    setSsUsageScheme: React.Dispatch<React.SetStateAction<number>>;
 }) => {
 
     const {
@@ -291,7 +319,7 @@ export const RibbonSettingsPanel = (props: {
         ribbonArrowWidth, setRibbonArrowWidth, ribbonDNARNAWidth, 
         setRibbonDNARNAWidth, ribbonAxialSampling, setRibbonAxialSampling,
         nucleotideRibbonStyle, setNucleotideRibbonStyle, dishStyleAngularSampling,
-        setDishStyleAngularSampling
+        setDishStyleAngularSampling, ssUsageScheme, setSsUsageScheme
     } = props
 
     return <div style={{paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', borderStyle: 'solid', borderWidth: '1px', borderColor: 'grey', borderRadius: '1.5rem'}}>
@@ -374,6 +402,14 @@ export const RibbonSettingsPanel = (props: {
             maxVal={64}
             allowFloats={false}
             logScale={false}/>
+        <Form.Group style={{ margin: '0px', width: '100%' }}>
+            <Form.Label>Secondary structure method</Form.Label>
+            <FormSelect size="sm" value={ssUsageScheme} onChange={(evt) => setSsUsageScheme(parseInt(evt.target.value))}>
+                <option value={'0'}>Use header</option>
+                <option value={'1'}>Do not use header</option>
+                <option value={'2'}>Calculate secondary structure</option>
+            </FormSelect>
+        </Form.Group>
         <Form.Group style={{ margin: '0px', width: '100%' }}>
             <Form.Label>Nucleotide ribbon style</Form.Label>
             <FormSelect size="sm" value={nucleotideRibbonStyle} onChange={(evt) => setNucleotideRibbonStyle(evt.target.value as "DishyBases" | "StickBases")}>
@@ -571,6 +607,8 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
         setNucleotideRibbonStyle: React.Dispatch<React.SetStateAction<"DishyBases" | "StickBases">>;
         dishStyleAngularSampling: number;
         setDishStyleAngularSampling: React.Dispatch<React.SetStateAction<number>>;
+        ssUsageScheme: number;
+        setSsUsageScheme: React.Dispatch<React.SetStateAction<number>>;
     };
     molSurfSettingsProps: {
         surfaceStyleProbeRadius: number;

@@ -17,6 +17,7 @@
 #include <emscripten/bind.h>
 
 #include <gemmi/to_cif.hpp>
+#include <gemmi/to_mmcif.hpp> 
 #include <gemmi/to_pdb.hpp>
 #include <gemmi/span.hpp>
 #include <gemmi/neighbor.hpp>
@@ -36,6 +37,9 @@
 #include <gemmi/calculate.hpp>
 #include <gemmi/util.hpp>
 #include <gemmi/fstream.hpp>
+#include <gemmi/resinfo.hpp>
+#include <gemmi/cifdoc.hpp>
+#include <gemmi/smcif.hpp>
 
 using namespace emscripten;
 
@@ -59,11 +63,41 @@ bool structure_is_ligand(const gemmi::Structure &Structure) {
     return isLigand;
 }
 
+std::string get_mmcif_string_from_gemmi_struct(const gemmi::Structure &Structure){
+    gemmi::cif::Document doc = gemmi::make_mmcif_document(Structure);
+    std::ostringstream oss;
+    gemmi::cif::write_cif_to_stream(oss, doc);
+    std::string s = oss.str();
+    return s;
+}
+
 std::string get_pdb_string_from_gemmi_struct(const gemmi::Structure &Structure){
     std::ostringstream oss;
     gemmi::write_pdb(Structure, oss);
     std::string s = oss.str();
     return s;
+}
+
+bool is_small_structure(const std::string &data){
+    try {
+        auto document = gemmi::cif::read_string(data);
+        if(document.blocks.size()==0) return false;
+        auto block = document.sole_block();
+        gemmi::SmallStructure small = gemmi::make_small_structure_from_block(block);
+        if(small.sites.size()>0)
+            return true;
+    } catch(...) {
+        return false;
+    }
+    return false;
+}
+
+gemmi::Structure copy_to_assembly_to_new_structure(const gemmi::Structure &s, const std::string &name){
+    gemmi::Structure assembly = s;
+    gemmi::HowToNameCopiedChain how = gemmi::HowToNameCopiedChain::AddNumber;
+    gemmi::Logger logger{&gemmi::Logger::to_stdout,  3};
+    gemmi::transform_to_assembly(assembly,name,how,logger);
+    return assembly;
 }
 
 gemmi::Structure read_structure_from_string(const std::string &data, const std::string& path){
@@ -510,12 +544,12 @@ std::vector<std::string> get_non_selected_cids(const gemmi::Structure &Structure
 
     for (const auto& model : structure_copy.models) {
         if (!selection_vector_matches_model(selections_vec, model)) {
-            result.push_back("/" + model.name + "//");
+            result.push_back("/" + std::to_string(model.num) + "//");
             continue;
         }
         for (const auto& chain : model.chains) {
             if (!selection_vector_matches_chain(selections_vec, chain)) {
-                result.push_back("/" + model.name + "/" + chain.name + "/");
+                result.push_back("/" + std::to_string(model.num) + "/" + chain.name + "/");
                 continue;
             }
             std::vector<int> resNums;
@@ -525,7 +559,7 @@ std::vector<std::string> get_non_selected_cids(const gemmi::Structure &Structure
             if (resNums.size() > 0) {
                 auto residue_ranges = get_consecutive_ranges_gemmi(resNums);
                 for (const auto& i_residue_range : residue_ranges) {
-                    result.push_back("/" + model.name + "/" + chain.name + "/" + std::to_string(i_residue_range.first) + "-" + std::to_string(i_residue_range.second));
+                    result.push_back("/" + std::to_string(model.num) + "/" + chain.name + "/" + std::to_string(i_residue_range.first) + "-" + std::to_string(i_residue_range.second));
                 }
             }
         }
@@ -540,7 +574,7 @@ std::vector<ResidueBFactorInfo> get_structure_bfactors(const gemmi::Structure &S
     for (const auto& model : Structure.models) {
         for (const auto& chain : model.chains) {
             for (const auto& residue : chain.residues) {
-                cid_vec.push_back("/" + model.name + "/" + chain.name + "/" + residue.seqid.str() +"(" + residue.name + ")/*");
+                cid_vec.push_back("/" + std::to_string(model.num) + "/" + chain.name + "/" + residue.seqid.str() +"(" + residue.name + ")/*");
                 float bFactor = 0.0;
                 for (const auto& atom : residue.atoms) {
                     bFactor += atom.b_iso;
@@ -577,9 +611,9 @@ std::vector<LigandInfo> get_ligand_info_for_structure(const gemmi::Structure &St
                 LigandInfo ligand_info;
                 ligand_info.resName = ligand.name;
                 ligand_info.resNum = ligand.seqid.str();
-                ligand_info.cid = "/" + model.name + "/" + chain.name + "/" + ligand.seqid.str() + "(" + ligand.name + ")";
+                ligand_info.cid = "/" + std::to_string(model.num) + "/" + chain.name + "/" + ligand.seqid.str() + "(" + ligand.name + ")";
                 ligand_info.chainName = chain.name;
-                ligand_info.modelName = model.name;
+                ligand_info.modelName = std::to_string(model.num);
                 ligand_info_vec.push_back(ligand_info);
             }
         }
@@ -610,10 +644,10 @@ std::vector<std::string> parse_multi_cids(const gemmi::Structure &Structure, con
         for (auto chainIndex = 0; chainIndex < chain_id_vec.size(); chainIndex++) {
             if (!selection.from_seqid.empty()) {
                 if (selection.to_seqid.empty()) {
-                    result.push_back("/" + model.name + "/" + chain_id_vec[chainIndex] + "/" + selection.from_seqid.str() + "/*");
+                    result.push_back("/" + std::to_string(model.num) + "/" + chain_id_vec[chainIndex] + "/" + selection.from_seqid.str() + "/*");
                 } else {
                     for (auto resNum = selection.from_seqid.seqnum; resNum <= selection.to_seqid.seqnum; resNum++) {
-                        result.push_back("/" + model.name + "/" + chain_id_vec[chainIndex] + "/" + std::to_string(resNum) + "/*");
+                        result.push_back("/" + std::to_string(model.num) + "/" + chain_id_vec[chainIndex] + "/" + std::to_string(resNum) + "/*");
                     }
                 }
             } else {
@@ -621,7 +655,7 @@ std::vector<std::string> parse_multi_cids(const gemmi::Structure &Structure, con
                 const auto& residues = chain->residues;
                 for (int residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
                     const auto residue = residues[residueIndex];
-                    result.push_back("/" + model.name + "/" + chain->name + "/" + residue.seqid.str() + "/*");
+                    result.push_back("/" + std::to_string(model.num) + "/" + chain->name + "/" + residue.seqid.str() + "/*");
                 }
             }
         }
@@ -659,7 +693,7 @@ std::vector<AtomInfo> atom_info_vec;
                         atom_info.name = atom.name;
                         atom_info.occupancy = atom.occ;
                         atom_info.has_altloc = atom.has_altloc();
-                        atom_info.mol_name = model.name;
+                        atom_info.mol_name = std::to_string(model.num);
                         atom_info.chain_id = chain.name;
                         atom_info.res_no = residue.seqid.str();
                         atom_info.res_name = residue.name;
@@ -1146,15 +1180,19 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("is_ending",&gemmi::MutableVectorSpan<gemmi::Residue>::is_ending)
     ;
 
-    class_<gemmi::UnitCell>("UnitCell")
+    class_<gemmi::UnitCellParameters>("UnitCellParameters")
     .constructor<>()
-    .constructor<double,  double, double, double, double, double>()
     .property("a",&gemmi::UnitCell::a)
     .property("b",&gemmi::UnitCell::b)
     .property("c",&gemmi::UnitCell::c)
     .property("alpha",&gemmi::UnitCell::alpha)
     .property("beta",&gemmi::UnitCell::beta)
     .property("gamma",&gemmi::UnitCell::gamma)
+    ;
+
+    class_<gemmi::UnitCell, base<gemmi::UnitCellParameters>>("UnitCell")
+    .constructor<>()
+    .constructor<double,  double, double, double, double, double>()
     .property("orth",&gemmi::UnitCell::orth)
     .property("frac",&gemmi::UnitCell::frac)
     .property("volume",&gemmi::UnitCell::volume)
@@ -1213,7 +1251,8 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     ;
 
     class_<gemmi::Model>("Model")
-    .property("name",&gemmi::Model::name)
+    .property("num",&gemmi::Model::num)
+    .property("name",&gemmi::Model::num)
     .property("chains",&gemmi::Model::chains)
     .function("remove_chain",&gemmi::Model::remove_chain)
     .function("merge_chain_parts",&gemmi::Model::merge_chain_parts)
@@ -1694,7 +1733,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("has_d",select_overload<bool(double gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
     .function("has_i",select_overload<bool(int gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
     .function("has_s",select_overload<bool(std::string gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
-    .function("has_m33",select_overload<bool(gemmi::Mat33 gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
+    .function("has_m33",select_overload<bool(gemmi::SMat33<double> gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
     ;
 
     class_<gemmi::SoftwareItem>("SoftwareItem")
@@ -1758,6 +1797,8 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .property("r_all",&gemmi::BasicRefinementInfo::r_all)
     .property("r_work",&gemmi::BasicRefinementInfo::r_work)
     .property("r_free",&gemmi::BasicRefinementInfo::r_free)
+    .property("cc_fo_fc_work",&gemmi::RefinementInfo::cc_fo_fc_work)
+    .property("cc_fo_fc_free",&gemmi::RefinementInfo::cc_fo_fc_free)
     ;
 
     class_<gemmi::TlsGroup::Selection>("TlsGroupSelection")
@@ -1797,8 +1838,6 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .property("dpi_blow_rfree",&gemmi::RefinementInfo::dpi_blow_rfree)
     .property("dpi_cruickshank_r",&gemmi::RefinementInfo::dpi_cruickshank_r)
     .property("dpi_cruickshank_rfree",&gemmi::RefinementInfo::dpi_cruickshank_rfree)
-    .property("cc_fo_fc",&gemmi::RefinementInfo::cc_fo_fc)
-    .property("cc_fo_fc_free",&gemmi::RefinementInfo::cc_fo_fc_free)
     .property("restr_stats",&gemmi::RefinementInfo::restr_stats)
     .property("tls_groups",&gemmi::RefinementInfo::tls_groups)
     .property("remarks",&gemmi::RefinementInfo::remarks)
@@ -1823,7 +1862,6 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .property("raw_remarks",&gemmi::Structure::raw_remarks)
     .property("input_format",&gemmi::Structure::input_format)
     .function("get_info",&gemmi::Structure::get_info)
-    .function("remove_model",&gemmi::Structure::remove_model)
     .function("renumber_models",&gemmi::Structure::renumber_models)
     .function("ncs_given_count",&gemmi::Structure::ncs_given_count)
     .function("get_ncs_multiplier",&gemmi::Structure::get_ncs_multiplier)
@@ -1833,6 +1871,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("empty_copy",&gemmi::Structure::empty_copy)
     .function("setup_cell_images",&gemmi::Structure::setup_cell_images)
     .function("first_model",select_overload<const gemmi::Model&(void)const>(&gemmi::Structure::first_model))
+    .function("as_string",&get_mmcif_string_from_gemmi_struct)
     ;
 
     class_<gemmi::NearestImage>("NearestImage")
@@ -2014,7 +2053,6 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("length",&gemmi::cif::Table::length)
     .function("size",&gemmi::cif::Table::size)
     .function("has_column",&gemmi::cif::Table::has_column)
-    .function("first_of",&gemmi::cif::Table::first_of)
     .function("at",&gemmi::cif::Table::at)
     .function("one",&gemmi::cif::Table::one)
     .function("get_prefix",&gemmi::cif::Table::get_prefix)
@@ -2027,7 +2065,6 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("find_column_position",&gemmi::cif::Table::find_column_position)
     .function("find_column",&gemmi::cif::Table::find_column)
     .function("erase",&gemmi::cif::Table::erase)
-    .function("convert_pair_to_loop",&gemmi::cif::Table::convert_pair_to_loop)
     ;
 
     class_<gemmi::cif::Item>("cifItem")
@@ -2044,7 +2081,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("find_tag_lc",&gemmi::cif::Loop::find_tag_lc)
     .function("has_tag",&gemmi::cif::Loop::has_tag)
     .function("width",&gemmi::cif::Loop::width)
-    .function("val",&gemmi::cif::Loop::val)
+    .function("val",select_overload<const std::string&(size_t , size_t )const>(&gemmi::cif::Loop::val))
     .function("clear",&gemmi::cif::Loop::clear)
     .function("pop_row",&gemmi::cif::Loop::pop_row)
     .function("move_row",&gemmi::cif::Loop::move_row)
@@ -2140,7 +2177,6 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
 
     class_<gemmi::MonLib>("MonLib")
     .property("monomer_dir",&gemmi::MonLib::monomer_dir)
-    .property("lib_version",&gemmi::MonLib::lib_version)
     .property("ener_lib",&gemmi::MonLib::ener_lib)
     /* TODO
   std::map<std::string, ChemComp> monomers;
@@ -2452,8 +2488,6 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("switch_to_asu_hkl",&gemmi::Mtz::switch_to_asu_hkl)
     .function("add_dataset",&gemmi::Mtz::add_dataset)
     .function("add_column",&gemmi::Mtz::add_column)
-    .function("check_trailing_cols",&gemmi::Mtz::check_trailing_cols)
-    .function("do_replace_column",&gemmi::Mtz::do_replace_column)
     .function("replace_column",&gemmi::Mtz::replace_column)
     .function("copy_column",&gemmi::Mtz::copy_column)
     .function("remove_column",&gemmi::Mtz::remove_column)
@@ -2545,7 +2579,8 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("get_fractional",&gemmi::GridMeta::get_fractional)
     .function("get_position",&gemmi::GridMeta::get_position)
     .function("get_scaled_ops_except_id",&gemmi::GridMeta::get_scaled_ops_except_id)
-    .function("index_q",&gemmi::GridMeta::index_q)
+    .function("index_q_int",select_overload<size_t(int, int, int)const>(&gemmi::GridMeta::index_q))
+    .function("index_q_size_t",select_overload<size_t(size_t, size_t, size_t)const>(&gemmi::GridMeta::index_q))
     .function("index_n",&gemmi::GridMeta::index_n)
     //.function("index_n_ref",&gemmi::GridMeta::index_n_ref) references?
     .function("index_near_zero",&gemmi::GridMeta::index_near_zero)
@@ -2583,7 +2618,6 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
 
     class_<gemmi::Grid<float>, base<gemmi::GridBase<float>>>("Grid")
     .function("calculate_spacing",&gemmi::Grid<float>::calculate_spacing)
-    .function("min_spacing",&gemmi::Grid<float>::min_spacing)
     .function("set_size_without_checking",&gemmi::Grid<float>::set_size_without_checking)
     .function("set_size",&gemmi::Grid<float>::set_size)
     .function("set_size_from_spacing",&gemmi::Grid<float>::set_size_from_spacing)
@@ -2592,7 +2626,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("get_value",&gemmi::Grid<float>::get_value)
     .function("set_value",&gemmi::Grid<float>::set_value)
     .function("get_point",&gemmi::Grid<float>::get_point)
-    .function("interpolate_value",select_overload<float(double, double, double)const>(&gemmi::Grid<float>::interpolate_value))
+    .function("interpolate_value",select_overload<float(const gemmi::Position&, int)const>(&gemmi::Grid<float>::interpolate_value))
     .function("tricubic_interpolation",select_overload<double(double, double, double)const>(&gemmi::Grid<float>::tricubic_interpolation))
     .function("symmetrize_min",&gemmi::Grid<float>::symmetrize_min)
     .function("symmetrize_max",&gemmi::Grid<float>::symmetrize_max)
@@ -2600,7 +2634,6 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("symmetrize_sum",&gemmi::Grid<float>::symmetrize_sum)
     .function("symmetrize_nondefault",&gemmi::Grid<float>::symmetrize_nondefault)
     .function("normalize",&gemmi::Grid<float>::normalize)
-    .function("resample_to",&gemmi::Grid<float>::resample_to)
     ;
 
     class_<gemmi::Grid<int8_t>, base<gemmi::GridBase<int8_t>>>("GridInt8_t")
@@ -2794,11 +2827,14 @@ GlobWalk
     function("remove_selected_residues",&remove_selected_residues);
     function("count_residues_in_selection",&count_residues_in_selection);
     function("get_pdb_string_from_gemmi_struct",&get_pdb_string_from_gemmi_struct);
+    function("get_mmcif_string_from_gemmi_struct",&get_mmcif_string_from_gemmi_struct);
     function("structure_is_ligand",&structure_is_ligand);
     function("read_structure_from_string",&read_structure_from_string);
+    function("is_small_structure",&is_small_structure);
+    function("copy_to_assembly_to_new_structure",&copy_to_assembly_to_new_structure);
     function("parse_ligand_dict_info", &parse_ligand_dict_info);
     function("read_structure_file",&gemmi::read_structure_file);
-#if __EMSCRIPTEN_major__ == 3 && __EMSCRIPTEN_minor__ == 1 && __EMSCRIPTEN_tiny__ >= 60
+#if (__EMSCRIPTEN_major__ == 3 && __EMSCRIPTEN_minor__ == 1 && __EMSCRIPTEN_tiny__ >= 60) || __EMSCRIPTEN_major__ > 3
     function("read_mtz_file",&gemmi::read_mtz_file,return_value_policy::take_ownership());
 #else
     function("read_mtz_file",&gemmi::read_mtz_file);
@@ -2824,7 +2860,6 @@ GlobWalk
     function("remove_ligands_and_waters_model",    select_overload<void(gemmi::Model&)>(&gemmi::remove_ligands_and_waters));
     function("remove_ligands_and_waters_chain",    select_overload<void(gemmi::Chain&)>(&gemmi::remove_ligands_and_waters));
     function("has_hydrogen", select_overload<bool(const gemmi::Model&)>(&gemmi::has_hydrogen));
-    function("count_hydrogen_sites", select_overload<size_t(const gemmi::Model&)>(&gemmi::count_hydrogen_sites));
     function("calculate_mass_model", select_overload<double(const gemmi::Model&)>(&gemmi::calculate_mass));
     function("calculate_mass_chain", select_overload<double(const gemmi::Chain&)>(&gemmi::calculate_mass));
     function("add_residue_chain", select_overload<gemmi::Residue&(gemmi::Chain&, gemmi::Residue, int)>(&add_child));

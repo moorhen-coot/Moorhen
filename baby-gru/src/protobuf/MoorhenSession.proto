@@ -23,6 +23,8 @@ message M2tParameters {
   float surfaceStyleProbeRadius = 10;
   float ballsStyleRadiusMultiplier = 11;
   string nucleotideRibbonStyle = 12;
+  int32 dishStyleAngularSampling = 13;
+  int32 ssUsageScheme = 14;
 }
 
 message residueEnvironmentOptions {

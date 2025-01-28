@@ -146,7 +146,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             atomRadiusBondRatio: 1,
             showAniso: false,
             showOrtep: false,
-            showHs: false
+            showHs: true,
         }
         this.defaultM2tParams = {
             ribbonStyleCoilThickness: 0.3,
@@ -161,7 +161,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
             surfaceStyleProbeRadius: 1.4,
             ballsStyleRadiusMultiplier: 1,
             nucleotideRibbonStyle: 'StickBases',
-            dishStyleAngularSampling: 32
+            dishStyleAngularSampling: 32,
+            ssUsageScheme: 2
         }
         this.defaultResidueEnvironmentOptions = {
             maxDist: 8,
@@ -296,24 +297,14 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 const generators = assembly.generators
                 const n_gen = generators.size()
                 console.log("n_gen",n_gen)
-                if (n_gen > 0) {
-                    const gen = generators.get(0)
+                for (let i_gen=0; i_gen < n_gen; i_gen++) { 
+                    const gen = generators.get(i_gen)
                     const operators = gen.operators
                     const n_op = operators.size()
                     const chains = gen.chains
                     const subchains = gen.subchains
                     const n_chains = chains.size()
                     const n_subchains = subchains.size()
-                    /*
-                    console.log(n_chains)
-                    console.log(n_subchains)
-                    for (let i_ch=0; i_ch < n_chains; i_ch++) {
-                        console.log("ch:",chains.get(i_ch))
-                    }
-                    for (let i_subch=0; i_subch < n_subchains; i_subch++) {
-                        console.log("subch:",subchains.get(i_subch))
-                    }
-                    */
 
                     for (let i_op=0; i_op < n_op; i_op++) {
                         let mat16 = []
@@ -365,6 +356,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             }
             assemblies.delete()
         }
+        console.log("Number of matrices",this.symmetryMatrices.length)
     }
 
     /**
@@ -768,6 +760,26 @@ export class MoorhenMolecule implements moorhen.Molecule {
     async loadToCootFromFile(source: File): Promise<moorhen.Molecule> {
         try {
             const coordData = await readTextFile(source);
+            let is_small = false;
+            if(source.name.endsWith(".mmcif")||source.name.endsWith(".cif")||source.name.endsWith(".pdbx"))
+                is_small = window.CCP4Module.is_small_structure(coordData as string)
+            if(is_small){
+                const small_to_cif_response = await this.commandCentre.current.cootCommand({
+                    command: 'SmallMoleculeCifToMMCif',
+                    commandArgs: [coordData],
+                    returnType: 'str_str_pair'
+                }, true) as moorhen.WorkerResponse<libcootApi.PairType<string, string>>
+                const coordContent = small_to_cif_response.data.result.result.first
+                const dictContent = small_to_cif_response.data.result.result.second
+                //FIXME - I think I want specific molecule, but there is a circular dependency between mol and dicts
+                const anyMolNo = -999999
+                await this.commandCentre.current.cootCommand({
+                    returnType: "status",
+                    command: 'read_dictionary_string',
+                    commandArgs: [dictContent, anyMolNo],
+                }, false)
+                return await this.loadToCootFromString(coordContent, source.name);
+            }
             if(source.name.endsWith(".mol")){
                 const response = await this.commandCentre.current.cootCommand({
                     command: 'mol_text_to_pdb',
@@ -2402,14 +2414,21 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         const state = this.store.getState()
         const isDark = state.sceneSettings.isDark
+        let coot_bg_type
+        if(isDark)
+            coot_bg_type = "light-bonds/transparent-bg"
+        else
+            coot_bg_type = "dark-bonds/transparent-bg"
+
+        const use_rdkit = false
 
         const result = await this.commandCentre.current.cootCommand({
                 returnType: "string",
                 command: 'get_svg_for_residue_type',
-                commandArgs: [this.molNo, resName, false, isDark],
+                commandArgs: [this.molNo, resName, use_rdkit, coot_bg_type],
             }, false) as moorhen.WorkerResponse<string>
 
-        const ligandSVG = formatLigandSVG(result.data.result.result)
+        const ligandSVG = formatLigandSVG(result.data.result.result, false)
 
         if (useCache && ligandSVG !== `No dictionary for ${resName}`) {
             this.cachedLigandSVGs = { ...this.cachedLigandSVGs, [resName]: ligandSVG }
@@ -2446,6 +2465,29 @@ export class MoorhenMolecule implements moorhen.Molecule {
             console.warn(`change_chain_id returned status ${status.data.result.result.first}`)
         }
         return status.data.result.result.first
+    }
+
+    /**
+     * Split a molecule with multiple models into separate molecules (one for each model)
+     * @param {boolean} [draw=false] - Indicates whether the new molecules should be drawn
+     * @returns {moorhen.Molecule[]} - A list with the new molecules
+     */
+    async generateAssembly(assemblyNumber: string, draw: boolean = false): Promise<moorhen.Molecule> {
+        let coordString = await this.gemmiStructure.as_string()
+        let newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
+        newMolecule.name = `${this.name}-assembly-${assemblyNumber}`
+        const response = await this.commandCentre.current.cootCommand({
+            returnType: 'status',
+            command: 'shim_generate_assembly',
+            commandArgs: [ coordString, assemblyNumber, newMolecule.name ],
+        }, true) as moorhen.WorkerResponse<libcootApi.PairType<number, moorhen.coorFormats>>
+
+        newMolecule.molNo = response.data.result.result.first
+
+        await this.transferMetaData(newMolecule)
+        await newMolecule.fetchDefaultColourRules()
+        await newMolecule.fetchIfDirtyAndDraw('CBs')
+        return newMolecule
     }
 
     /**
