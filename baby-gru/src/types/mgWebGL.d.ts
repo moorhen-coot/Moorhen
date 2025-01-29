@@ -64,7 +64,6 @@ export namespace webGL {
         updateLabels(): void;
         doRightClick(event: Event, self: any): void;
         doClick(event: Event, self: any): void;
-        drawAtomLabels(up: vec3, right: vec3, labelledAtoms: any, textColour: string, textTextureDirty: boolean) : void;
         drawDistancesAndLabels(up: vec3, right: vec3) : void;
         drawCircles(up: vec3, right: vec3) : void;
         drawTextLabels(up: vec3, right: vec3) : void;
@@ -180,6 +179,7 @@ export namespace webGL {
         setOrientationAndZoomFrame(qOld: quat4, qNew: quat4, oldZoom: number, zoomDelta: number, iframe: number) : void;
         setOrientationAndZoomAnimated(q: quat4,z: number) : void;
         setOrientationAnimated(q: quat4) : void;
+        handleOriginUpdated(doDispatch: boolean) : void;
         setOriginOrientationAndZoomFrame(oo: number[],d:number[],qOld:quat4, qNew:quat4, oldZoom:number, zoomDelta:number, iframe:number) : void;
         setViewAnimated(o: number[],q: quat4,z: number) : void;
         drawOriginFrame(oo: number[],d: number, iframe: number) : void;
@@ -222,6 +222,8 @@ export namespace webGL {
         light_colours_ambient: any;
         background_colour: [number, number, number, number];
         origin: [number, number, number];
+        drawEnvironmentLabels: boolean;
+        environmentAtoms: clickAtom[][];
         labelledAtoms: clickAtom[][];
         measuredAtoms: clickAtom[][];
         pixel_data: Uint8Array;
