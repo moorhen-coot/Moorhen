@@ -50,7 +50,7 @@ export const MoorhenSetOccupancyMenuItem = (props) => {
         return `${value}0%`
     }
 
-    const multiplyBfactor = async () => {
+    const set_occupancy = async () => {
         if (!moleculeSelectRef.current.value || !ruleSelectRef.current?.value || occupancyValueRef.current === null) {
             console.warn('Missing data, doing nothing...')
             return
@@ -84,6 +84,8 @@ export const MoorhenSetOccupancyMenuItem = (props) => {
             }, false)
             dispatch( triggerUpdate(selectedMolecule.molNo) )
             props.setPopoverIsShown(false)
+            selectedMolecule.setAtomsDirty(true)
+            await selectedMolecule.redraw()
             document.body.click()    
         } else {
             if (ruleSelectRef.current.value === 'cid') setInvalidCid(true)
@@ -140,7 +142,7 @@ export const MoorhenSetOccupancyMenuItem = (props) => {
                 }}
             />
         </Form.Group>
-        <Button variant="primary" onClick={multiplyBfactor}>
+        <Button variant="primary" onClick={set_occupancy}>
             OK
         </Button>
     </>

@@ -109,6 +109,8 @@ export const MoorhenMultiplyBfactorMenuItem = (props) => {
             }, false)
             dispatch( triggerUpdate(selectedMolecule.molNo) )
             props.setPopoverIsShown(false)
+            selectedMolecule.setAtomsDirty(true)
+            await selectedMolecule.redraw()
             document.body.click()    
         } else {
             if (ruleSelectRef.current.value === 'cid') setInvalidCid(true)
