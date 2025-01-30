@@ -225,6 +225,7 @@ export namespace webGL {
         background_colour: [number, number, number, number];
         origin: [number, number, number];
         drawEnvBOcc: boolean;
+        environmentRadius: number;
         environmentAtoms: clickAtom[][];
         labelledAtoms: clickAtom[][];
         measuredAtoms: clickAtom[][];

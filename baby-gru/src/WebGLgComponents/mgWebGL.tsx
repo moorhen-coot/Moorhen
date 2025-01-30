@@ -1722,6 +1722,7 @@ class DisplayBuffer {
     textNormals: number[];
     textColours: number[];
     isHoverBuffer: boolean;
+    id: string;
 
     constructor() {
         this.visible = true;
@@ -1735,6 +1736,7 @@ class DisplayBuffer {
         this.symmetryAtoms = []
         this.changeColourWithSymmetry = true;
         this.isHoverBuffer = false;
+        this.id = "";
     }
 
     setCustomColour(col) {
@@ -2219,6 +2221,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         background_colour: [number, number, number, number];
         origin: [number, number, number];
         drawEnvBOcc: boolean;
+        environmentRadius: number;
         environmentAtoms: clickAtom[][];
         labelledAtoms: clickAtom[][];
         measuredAtoms: clickAtom[][];
@@ -2978,6 +2981,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl_clipPlane7 = new Float32Array(4);
         this.clipCapPerfectSpheres = false;
         this.drawEnvBOcc = false;
+        this.environmentRadius = 8.0;
         this.environmentAtoms = [];
         this.labelledAtoms = [];
         this.measuredAtoms = [];
@@ -3897,36 +3901,35 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             document.dispatchEvent(originUpdateEvent);
         }
         if(this.drawEnvBOcc) {
-             let near_atoms = []
-             this.displayBuffers.forEach(buffer => {
-                 if (buffer.visible) {
-                     buffer.atoms.forEach(atom => {
-                         const ax = atom.x
-                         const ay = atom.y
-                         const az = atom.z
-                         const ox = -this.origin[0]
-                         const oy = -this.origin[1]
-                         const oz = -this.origin[2]
-                         if(Math.abs(ax-ox)<7 && Math.abs(ay-oy)<7 && Math.abs(az-oz)<7){
-                             const distsq = (ax-ox)*(ax-ox) + (ay-oy)*(ay-oy) + (az-oz)*(az-oz)
-                             if(distsq<49) near_atoms.push(atom)
-                         }
-                     })
-                 }
-             })
-             this.environmentAtoms = []
-             const spacing = " ".repeat(400)
-             console.log("."+spacing+".")
-             near_atoms.forEach(atom => {
-                 const atomLabel = parseAtomInfoLabel(atom);
-                 if (this.environmentAtoms.length === 0 || (this.environmentAtoms[this.environmentAtoms.length - 1].length > 1)) {
-                     this.environmentAtoms.push([]);
-                 }
-                 // The spacing + ")" adjusts the height/baseline so that they are same as click atom labels.
-                 atom.label = atom.tempFactor.toFixed(2) + " " + atom.occupancy.toFixed(2) + spacing + ")"
-                 //atom.label = atom.tempFactor.toFixed(2) + " " + atom.occupancy.toFixed(2) + " " + atomLabel
-                 this.environmentAtoms[this.environmentAtoms.length - 1].push(atom)
-             })
+            let near_atoms = []
+            this.displayBuffers.forEach(buffer => {
+                if (buffer.visible) {
+                    buffer.atoms.forEach(atom => {
+                        const ax = atom.x
+                        const ay = atom.y
+                        const az = atom.z
+                        const ox = -this.origin[0]
+                        const oy = -this.origin[1]
+                        const oz = -this.origin[2]
+                        if(Math.abs(ax-ox)<this.environmentRadius && Math.abs(ay-oy)<this.environmentRadius && Math.abs(az-oz)<this.environmentRadius){
+                            const distsq = (ax-ox)*(ax-ox) + (ay-oy)*(ay-oy) + (az-oz)*(az-oz)
+                            if(distsq<this.environmentRadius*this.environmentRadius) near_atoms.push(atom)
+                        }
+                    })
+                }
+            })
+            this.environmentAtoms = []
+            const spacing = " ".repeat(400)
+            near_atoms.forEach(atom => {
+                const atomLabel = parseAtomInfoLabel(atom);
+                if (this.environmentAtoms.length === 0 || (this.environmentAtoms[this.environmentAtoms.length - 1].length > 1)) {
+                    this.environmentAtoms.push([]);
+                }
+                // The spacing + ")" adjusts the height/baseline so that they are same as click atom labels.
+                atom.label = atom.tempFactor.toFixed(2) + " " + atom.occupancy.toFixed(2) + spacing + ")"
+                //atom.label = atom.tempFactor.toFixed(2) + " " + atom.occupancy.toFixed(2) + " " + atomLabel
+                this.environmentAtoms[this.environmentAtoms.length - 1].push(atom)
+            })
             this.updateLabels()
         }
     }
@@ -10128,7 +10131,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.measureCylinderBuffers.forEach((buffer) => {
                 if("clearBuffers" in buffer){
                     buffer.clearBuffers()
-                    this.displayBuffers.filter(glBuffer => glBuffer !== buffer)
+                    this.displayBuffers = this.displayBuffers.filter(glBuffer => glBuffer.id !== buffer.id)
                 }
             })
         }

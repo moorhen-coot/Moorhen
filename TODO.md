@@ -6,6 +6,8 @@ A JavaScript molecular graphics program
 - [x] Print out molecule info - B-factors, etc. This could be hover info, atom label, full print
       of ATOM cards, context menu option. Environment of temp factors.
 - [x] Edit occupancy should be reflected in atom info card above. It only seems to work after some other edit.
+- [x] Fix that updateLabels increases number of buffers.
+- [ ] Fix that turning on additional representations slows down panning, even if they are subsequently turned off.
 - [ ] Undo button on a molecule loaded from SMILES/PubChem with name > 3 letters breaks the structure.
 - [ ] "Somehow" determine PLDDT vs B-factor in SliceNDice
 - [ ] Add Zoom to "Show controls"
