@@ -63,8 +63,6 @@ export const MoorhenContextMenu = (props: {
   const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
   const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
-  const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
-
   const handleContextMenu = useCallback((evt) => {
     evt.stopPropagation()
     evt.preventDefault()
@@ -129,7 +127,7 @@ export const MoorhenContextMenu = (props: {
               selectedMolecule && chosenAtom &&
               <div style={{ display:'flex', justifyContent: 'center' }}>
               <Tooltip className="moorhen-tooltip" title={toolTip}>
-              <FormGroup ref={quickActionsFormGroupRef} style={{ justifyContent: 'left', margin: "0px", padding: "0px", width: '18rem' }} row>
+              <FormGroup ref={quickActionsFormGroupRef} style={{ justifyContent: 'center', margin: "0px", padding: "0px", width: '18rem' }} row>
               <MoorhenAutofitRotamerButton {...collectedProps} />
               <MoorhenFlipPeptideButton {...collectedProps}/>
               <MoorhenSideChain180Button {...collectedProps}/> 
