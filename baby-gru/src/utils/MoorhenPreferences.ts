@@ -32,7 +32,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
     }
 
     static defaultPreferencesValues: moorhen.PreferencesValues = {
-        version: 'v40',
+        version: 'v41',
         reContourMapOnlyOnMouseUp: false,
         transparentModalsOnMouseOut: false,
         defaultBackgroundColor: [1, 1, 1, 1],
@@ -45,6 +45,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
         drawScaleBar: false,
         drawAxes: false,
         drawFPS: false,
+        drawEnvBOcc: false, 
         drawMissingLoops: true,
         doPerspectiveProjection: false,
         useOffScreenBuffers: false,
@@ -290,6 +291,12 @@ export class MoorhenPreferences implements moorhen.Preferences {
                 modifiers: [],
                 keyPress: "[",
                 label: "Decrease map radius",
+                viewOnly: true
+            },
+            "show_atom_info": {
+                modifiers: [],
+                keyPress: "i",
+                label: "Show atom info",
                 viewOnly: true
             },
         }

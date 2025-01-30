@@ -13,9 +13,9 @@ import { MoorhenValidationMenu } from './MoorhenValidationMenu'
 import { MoorhenCalculateMenu } from './MoorhenCalculateMenu';
 import { ClickAwayListener, Fab, MenuItem, IconButton, MenuList, Popper, Grow } from "@mui/material";
 import { convertRemToPx, convertViewtoPx } from '../../utils/utils';
-import { 
+import {
     CalculateOutlined, DescriptionOutlined, EditOutlined, VisibilityOutlined,
-    FactCheckOutlined, HelpOutlineOutlined, MenuOutlined, SaveOutlined, ScienceOutlined, 
+    FactCheckOutlined, HelpOutlineOutlined, MenuOutlined, SaveOutlined, ScienceOutlined,
     SettingsSuggestOutlined, CloseOutlined, HistoryOutlined, ConstructionOutlined,
  } from '@mui/icons-material';
 import { moorhen } from '../../types/moorhen';
@@ -29,13 +29,13 @@ export interface MoorhenNavBarExtendedControlsInterface extends moorhen.Collecte
 }
 
 export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((props, ref) => {
-    
+
     const [timeCapsuleBusy, setTimeCapsuleBusy] = useState<boolean>(false)
     const [busy, setBusy] = useState<boolean>(false)
     const [speedDialOpen, setSpeedDialOpen] = useState<boolean>(false)
     const [navBarActiveMenu, setNavBarActiveMenu] = useState<string>('-1')
     const [popoverTargetRef, setPopoverTargetRef] = useState()
-    
+
     const speedDialRef = useRef()
     const fileSpeedDialActionRef = useRef()
     const editSpeedDialActionRef = useRef()
@@ -50,7 +50,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
     const mapToolsDialActionRef = useRef()
     const helpDialActionRef = useRef()
     const devDialActionRef = useRef()
-    
+
     const dispatch = useDispatch()
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const cootInitialized = useSelector((state: moorhen.State) => state.generalStates.cootInitialized)
@@ -62,7 +62,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
     useEffect(() => {
         if (props.commandCentre.current) {
             props.commandCentre.current.onActiveMessagesChanged = (newActiveMessages) => setBusy(newActiveMessages.length !== 0)
-        }         
+        }
     }, [cootInitialized])
 
     useEffect(() => {
@@ -159,7 +159,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
     } else {
         canvasLeft = 0
         canvasTop = 0
-    } 
+    }
 
     return <>
         <Fab
@@ -168,7 +168,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
             size={"large"}
             onClick={() => {
                 setNavBarActiveMenu('-1')
-                setSpeedDialOpen(!speedDialOpen)        
+                setSpeedDialOpen(!speedDialOpen)
             }}
             sx={{
                 display: props.viewOnly ? 'none' : 'flex',
@@ -183,7 +183,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
             }}
         >
             { (speedDialOpen) ? <CloseOutlined style={{color: 'black'}}/> : <MenuOutlined style={{color: 'black'}}/> }
-            <img className='moorhen-navbar-menu-item-icon' src={`${props.urlPrefix}/pixmaps/MoorhenLogo.png`} alt='Moorhen' /> 
+            <img className='moorhen-navbar-menu-item-icon' src={`${props.urlPrefix}/pixmaps/MoorhenLogo.png`} alt='Moorhen' />
         </Fab>
         <ClickAwayListener onClickAway={() => { setNavBarActiveMenu('-1') }}>
         <Popper open={speedDialOpen} anchorEl={speedDialRef.current} placement='bottom-start'>
@@ -229,7 +229,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
             </Overlay>
         </Popper>
         </ClickAwayListener>
-   
+
         { props.extraNavBarModals && props.extraNavBarModals.filter(modal => modal.show).map(modal => modal.JSXElement) }
 
         <Fab
@@ -247,7 +247,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
                 }
             }}
         >
-            {hoveredAtom.cid && 
+            {hoveredAtom.cid &&
             <Form.Control
                 className='moorhen-hovered-atom-form'
                 type="text"

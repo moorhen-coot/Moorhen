@@ -8,6 +8,7 @@ const initialState = {
     drawMissingLoops: null,
     defaultBondSmoothness: null,
     drawAxes: null,
+    drawEnvBOcc: null,
     doSSAO: null,
     doEdgeDetect: null,
     edgeDetectDepthThreshold: null,
@@ -44,6 +45,9 @@ export const sceneSettingsSlice = createSlice({
     },
     setDrawScaleBar: (state, action: {payload: boolean, type: string}) => {
       return {...state, drawScaleBar: action.payload}
+    },
+    setDrawEnvBOcc: (state, action: {payload: boolean, type: string}) => {
+      return {...state, drawEnvBOcc: action.payload}
     },
     setDrawCrosshairs: (state, action: {payload: boolean, type: string}) => {
       return {...state, drawCrosshairs: action.payload}
@@ -125,15 +129,15 @@ export const sceneSettingsSlice = createSlice({
     },
     setIsDark: (state, action: {payload: boolean, type: string}) => {
         return {...state, isDark: action.payload}
-    }  
+    }
 }})
 
 export const {
     setDefaultBackgroundColor, setDrawCrosshairs, setDrawScaleBar, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
     setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap, resetSceneSettings, setEdgeDetectNormalScale,
     setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius, setBackgroundColor,
-    setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setEdgeDetectDepthScale, 
-    setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold
+    setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setEdgeDetectDepthScale,
+    setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setDrawEnvBOcc
 } = sceneSettingsSlice.actions
 
 export default sceneSettingsSlice.reducer

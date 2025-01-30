@@ -23,7 +23,7 @@ export namespace moorhen {
         resNum: number;
         cid: string;
     }
-    
+
     type LigandInfo = {
         resName: string;
         chainName: string;
@@ -34,14 +34,14 @@ export namespace moorhen {
         smiles?: string;
         chem_comp_info?: {first: string; second: string}[];
     }
-    
+
     type Sequence = {
         name: string;
         chain: string;
         type: number;
         sequence: ResidueInfo[];
     }
-    
+
     type ResidueSpec = {
         mol_name: string;
         mol_no: string;
@@ -53,7 +53,7 @@ export namespace moorhen {
         alt_conf: string;
         cid: string
     }
-    
+
     type AtomInfo = {
         x: number;
         y: number;
@@ -62,6 +62,7 @@ export namespace moorhen {
         element: string;
         tempFactor: number;
         serial: number;
+        occupancy: number;
         name: string;
         has_altloc: boolean;
         alt_loc: string;
@@ -70,14 +71,14 @@ export namespace moorhen {
         res_no: string;
         res_name: string;
     }
-    
+
     type DisplayObject = {
         symmetryMatrices: any;
         updateSymmetryAtoms(): void;
         changeColourWithSymmetry: boolean;
         [attr: string]: any;
     }
-    
+
     type cootBondOptions = {
         smoothness: number;
         width: number;
@@ -120,7 +121,7 @@ export namespace moorhen {
         showHBonds: boolean;
         showContacts: boolean;
     }
-    
+
     type ColourRuleObject = {
         cid: string;
         color: string;
@@ -154,7 +155,7 @@ export namespace moorhen {
         setLabel(label: string): void;
         setArgs(args: (string | number)[]): void;
         setParentMolecule(molecule: Molecule): void;
-        setParentRepresentation(representation: MoleculeRepresentation): void;    
+        setParentRepresentation(representation: MoleculeRepresentation): void;
         setApplyColourToNonCarbonAtoms(newVal: boolean): void;
         getUserDefinedColours(): { cid: string; rgba: [number, number, number, number]; applyColourToNonCarbonAtoms: boolean }[];
         apply(style?: string, ruleIndex: number): Promise<void>;
@@ -304,9 +305,9 @@ export namespace moorhen {
         movResidueRange: [number, number];
     }
 
-    type RepresentationStyles = 'VdwSpheres' | 'ligands' | 'CAs' | 'CBs' | 'CDs' | 'gaussian' | 'allHBonds' | 'rama' | 
-    'rotamer' | 'CRs' | 'MolecularSurface' | 'DishyBases' | 'VdWSurface' | 'Calpha' | 'unitCell' | 'hover' | 'environment' | 
-    'ligand_environment' | 'contact_dots' | 'chemical_features' | 'ligand_validation' | 'glycoBlocks' | 'restraints' | 
+    type RepresentationStyles = 'VdwSpheres' | 'ligands' | 'CAs' | 'CBs' | 'CDs' | 'gaussian' | 'allHBonds' | 'rama' |
+    'rotamer' | 'CRs' | 'MolecularSurface' | 'DishyBases' | 'VdWSurface' | 'Calpha' | 'unitCell' | 'hover' | 'environment' |
+    'ligand_environment' | 'contact_dots' | 'chemical_features' | 'ligand_validation' | 'glycoBlocks' | 'restraints' |
     'residueSelection' | 'MetaBalls' | 'adaptativeBonds' | 'StickBases' | 'residue_environment' | 'transformation'
 
     interface MoleculeRepresentation {
@@ -366,7 +367,7 @@ export namespace moorhen {
         isMultiCid: boolean;
         label: string;
     }
-    
+
     type HoveredAtom = {
         molecule: Molecule | null,
         cid: string | null
@@ -412,8 +413,8 @@ export namespace moorhen {
         cootCommand: (kwargs: cootCommandKwargs, doJournal?: boolean) => Promise<WorkerResponse>;
         postMessage: (kwargs: cootCommandKwargs) => Promise<WorkerResponse>;
     }
-    
-    interface cootCommandKwargs { 
+
+    interface cootCommandKwargs {
         message?: string;
         data?: {};
         returnType?: string;
@@ -422,14 +423,14 @@ export namespace moorhen {
         changesMolecules?: number[];
         [key: string]: any;
     }
-    
-    type WorkerMessage = { 
+
+    type WorkerMessage = {
         consoleMessage?: string;
         messageId: string;
         handler: (reply: WorkerResponse) => void;
         kwargs: cootCommandKwargs;
     }
-    
+
     type WorkerResult<T = any> = {
         result: {
             status: string;
@@ -442,11 +443,11 @@ export namespace moorhen {
         message: string;
         consoleMessage: string;
     }
-    
-    type WorkerResponse<T = any> = { 
+
+    type WorkerResponse<T = any> = {
         data: WorkerResult<T>;
     }
-        
+
     type createCovLinkAtomInput = {
         selectedMolNo: number;
         selectedAtom: string;
@@ -472,7 +473,7 @@ export namespace moorhen {
         FreeR?: string;
         isDifference?: boolean;
         useWeight?: boolean;
-        calcStructFact?: any; 
+        calcStructFact?: any;
     }
 
     interface ScreenRecorder {
@@ -496,13 +497,13 @@ export namespace moorhen {
         centreOnMap(): Promise<void>;
         getSuggestedSettings(): Promise<void>;
         copyMap(): Promise<Map>;
-        getMapContourParams(): { 
-            mapRadius: number; 
-            contourLevel: number; 
-            mapAlpha: number; 
-            mapStyle: "lines" | "solid" | "lit-lines"; 
-            mapColour: {r: number; g: number; b: number}; 
-            positiveMapColour: {r: number; g: number; b: number}; 
+        getMapContourParams(): {
+            mapRadius: number;
+            contourLevel: number;
+            mapAlpha: number;
+            mapStyle: "lines" | "solid" | "lit-lines";
+            mapColour: {r: number; g: number; b: number};
+            positiveMapColour: {r: number; g: number; b: number};
             negativeMapColour: {r: number; g: number; b: number}
         };
         hideMapContour(): void;
@@ -515,7 +516,7 @@ export namespace moorhen {
         fetchMapCentre(): Promise<[number, number, number]>;
         replaceMapWithMtzFile(fileUrl: RequestInfo | URL, selectedColumns: selectedMtzColumns): Promise<void>;
         associateToReflectionData (selectedColumns: selectedMtzColumns, reflectionData: Uint8Array | ArrayBuffer): Promise<void>;
-        delete(): Promise<void> 
+        delete(): Promise<void>
         doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number, style: "lines" | "lit-lines" | "solid"): Promise<void>;
         fetchReflectionData(): Promise<WorkerResponse<Uint8Array>>;
         getMap(): Promise<WorkerResponse>;
@@ -554,7 +555,7 @@ export namespace moorhen {
         defaultPositiveMapColour: {r: number, g: number, b: number};
         defaultNegativeMapColour: {r: number, g: number, b: number};
     }
-    
+
     interface backupKey {
         name?: string;
         label?: string;
@@ -565,13 +566,13 @@ export namespace moorhen {
         mapNames?: string[];
         mtzNames?: string[];
     }
-    
+
     type moleculeSessionData = {
         name: string;
         molNo: number;
         coordString: string;
         coordFormat: coorFormats;
-        representations: { 
+        representations: {
             cid: string;
             style: strin;
             isCustom: boolean;
@@ -591,7 +592,7 @@ export namespace moorhen {
         biomolOn: boolean;
         symmetryRadius: number;
     }
-    
+
     type mapDataSession = {
         name: string;
         molNo: number;
@@ -641,7 +642,7 @@ export namespace moorhen {
         doPerspectiveProjection: boolean;
         blur: {enabled: boolean; depth: number; radius: number};
     }
-    
+
     type backupSession = {
         version: string;
         includesAdditionalMapData: boolean;
@@ -650,7 +651,7 @@ export namespace moorhen {
         viewData: viewDataSession;
         activeMapIndex: number;
     }
-    
+
     interface TimeCapsule {
         setBusy: (arg0: boolean) => void;
         onIsBusyChange: (arg0: boolean) => void;
@@ -732,8 +733,8 @@ export namespace moorhen {
     }
 
     type AtomRightClickEvent = CustomEvent<AtomRightClickEventInfo>
-    
-    type AtomDraggedEvent = CustomEvent<{ 
+
+    type AtomDraggedEvent = CustomEvent<{
         atom: AtomInfo
         buffer: any;
     }>
@@ -758,7 +759,7 @@ export namespace moorhen {
         mapColour: [number, number, number, number],
         litLines: boolean;
     }>
-    
+
     interface LocalStorageInstance {
         clear: () => Promise<void>;
         keys: () => Promise<string[]>;
@@ -827,7 +828,7 @@ export namespace moorhen {
         }>;
         setTransparentModalsOnMouseOut: React.Dispatch<React.SetStateAction<boolean>>;
     }
-    
+
     interface PreferencesValues {
         version?: string;
         reContourMapOnlyOnMouseUp: boolean;
@@ -835,57 +836,58 @@ export namespace moorhen {
         defaultMapSamplingRate: number;
         transparentModalsOnMouseOut: boolean;
         defaultBackgroundColor: [number, number, number, number];
-        atomLabelDepthMode: boolean; 
+        atomLabelDepthMode: boolean;
         enableTimeCapsule: boolean;
         defaultExpandDisplayCards: boolean;
         defaultMapLitLines: boolean;
-        enableRefineAfterMod: boolean; 
-        drawScaleBar: boolean; 
-        drawCrosshairs: boolean; 
-        drawAxes: boolean; 
-        drawFPS: boolean; 
-        drawMissingLoops: boolean; 
-        doPerspectiveProjection: boolean; 
-        useOffScreenBuffers: boolean; 
-        depthBlurRadius: number; 
-        depthBlurDepth: number; 
-        ssaoBias: number; 
-        ssaoRadius: number; 
-        doShadowDepthDebug: boolean; 
-        doShadow: boolean; 
-        doSSAO: boolean; 
-        doEdgeDetect: boolean; 
+        enableRefineAfterMod: boolean;
+        drawScaleBar: boolean;
+        drawCrosshairs: boolean;
+        drawAxes: boolean;
+        drawFPS: boolean;
+        drawEnvBOcc: boolean;
+        drawMissingLoops: boolean;
+        doPerspectiveProjection: boolean;
+        useOffScreenBuffers: boolean;
+        depthBlurRadius: number;
+        depthBlurDepth: number;
+        ssaoBias: number;
+        ssaoRadius: number;
+        doShadowDepthDebug: boolean;
+        doShadow: boolean;
+        doSSAO: boolean;
+        doEdgeDetect: boolean;
         edgeDetectDepthThreshold: number;
         edgeDetectNormalThreshold: number;
         edgeDetectDepthScale: number;
         edgeDetectNormalScale: number;
-        doOutline: boolean; 
+        doOutline: boolean;
         GLLabelsFontFamily: string;
         GLLabelsFontSize: number;
         mouseSensitivity: number;
         zoomWheelSensitivityFactor: number;
         contourWheelSensitivityFactor: number;
         mapLineWidth: number;
-        makeBackups: boolean; 
-        showShortcutToast: boolean; 
-        defaultMapSurface: boolean; 
+        makeBackups: boolean;
+        showShortcutToast: boolean;
+        defaultMapSurface: boolean;
         defaultBondSmoothness: number,
-        showScoresToast: boolean; 
-        shortcutOnHoveredAtom: boolean; 
-        resetClippingFogging: boolean; 
-        clipCap: boolean; 
+        showScoresToast: boolean;
+        shortcutOnHoveredAtom: boolean;
+        resetClippingFogging: boolean;
+        clipCap: boolean;
         defaultUpdatingScores: string[],
         maxBackupCount: number;
         modificationCountBackupThreshold: number;
         animateRefine: boolean;
-        devMode: boolean; 
+        devMode: boolean;
         shortCuts: string | {
             [label: string]: Shortcut;
         };
     }
-    
+
     interface Context extends ContextSetters, PreferencesValues { }
-    
+
     type ContextButtonProps = {
         monomerLibraryPath: string;
         urlPrefix: string;
@@ -902,7 +904,7 @@ export namespace moorhen {
         setOverrideMenuContents: React.Dispatch<React.SetStateAction<JSX.Element | boolean>>;
         showContextMenu: false | AtomRightClickEventInfo;
         defaultActionButtonSettings: actionButtonSettings;
-        setDefaultActionButtonSettings: (arg0: {key: string; value: string}) => void;     
+        setDefaultActionButtonSettings: (arg0: {key: string; value: string}) => void;
     }
 
     interface ContainerRefs {
@@ -915,7 +917,7 @@ export namespace moorhen {
         activeMapRef: React.MutableRefObject<Map>;
         lastHoveredAtomRef: React.MutableRefObject<null | HoveredAtom>;
     }
-      
+
     interface ContainerOptionalProps {
         onUserPreferencesChange: (key: string, value: any) => void;
         disableFileUploads: boolean;
@@ -931,15 +933,15 @@ export namespace moorhen {
         backupStorageInstance?: any;
         extraEditMenuItems: JSX.Element[];
         extraCalculateMenuItems: JSX.Element[];
-        aceDRGInstance: AceDRGInstance | null; 
+        aceDRGInstance: AceDRGInstance | null;
         includeNavBarMenuNames: string[];
         store: ToolkitStore;
         allowAddNewFittedLigand: boolean;
         allowMergeFittedLigand: boolean;
     }
-    
+
     interface ContainerProps extends Partial<ContainerRefs>, Partial<ContainerOptionalProps> { }
-    
+
     interface CollectedProps extends ContainerRefs, ContainerOptionalProps { }
 
     interface State {
@@ -959,12 +961,12 @@ export namespace moorhen {
             enableTimeCapsule: boolean;
             makeBackups: boolean;
             maxBackupCount: number;
-            modificationCountBackupThreshold: number;     
+            modificationCountBackupThreshold: number;
         };
         shortcutSettings: {
             shortcutOnHoveredAtom: boolean;
             showShortcutToast: boolean;
-            shortCuts: string;        
+            shortCuts: string;
         };
         labelSettings: {
             atomLabelDepthMode: boolean;
@@ -974,29 +976,30 @@ export namespace moorhen {
         };
         sceneSettings: {
             defaultBackgroundColor: [number, number, number, number];
-            drawScaleBar: boolean; 
-            drawCrosshairs: boolean; 
-            drawAxes: boolean; 
-            drawFPS: boolean; 
-            drawMissingLoops: boolean; 
-            doPerspectiveProjection: boolean; 
-            useOffScreenBuffers: boolean; 
-            depthBlurRadius: number; 
-            depthBlurDepth: number; 
-            ssaoBias: number; 
-            ssaoRadius: number; 
-            doShadowDepthDebug: boolean; 
-            doShadow: boolean; 
-            doSSAO: boolean; 
-            doEdgeDetect: boolean; 
+            drawScaleBar: boolean;
+            drawCrosshairs: boolean;
+            drawAxes: boolean;
+            drawEnvBOcc: boolean;
+            drawFPS: boolean;
+            drawMissingLoops: boolean;
+            doPerspectiveProjection: boolean;
+            useOffScreenBuffers: boolean;
+            depthBlurRadius: number;
+            depthBlurDepth: number;
+            ssaoBias: number;
+            ssaoRadius: number;
+            doShadowDepthDebug: boolean;
+            doShadow: boolean;
+            doSSAO: boolean;
+            doEdgeDetect: boolean;
             edgeDetectDepthThreshold: number;
             edgeDetectNormalThreshold: number;
             edgeDetectDepthScale: number;
             edgeDetectNormalScale: number;
-            doOutline: boolean; 
+            doOutline: boolean;
             doSpin: boolean;
             defaultBondSmoothness: number,
-            resetClippingFogging: boolean; 
+            resetClippingFogging: boolean;
             clipCap: boolean;
             backgroundColor: [number, number, number, number];
             height: number;
@@ -1004,7 +1007,7 @@ export namespace moorhen {
             isDark: boolean;
         };
         generalStates: {
-            devMode: boolean; 
+            devMode: boolean;
             userPreferencesMounted: boolean;
             appTitle: string;
             cootInitialized: boolean;
@@ -1017,10 +1020,10 @@ export namespace moorhen {
             isDraggingAtoms: boolean;
             isRotatingAtoms: boolean;
             newCootCommandExit: boolean;
-            newCootCommandStart: boolean;        
+            newCootCommandStart: boolean;
             showResidueSelection: boolean;
-            defaultExpandDisplayCards: boolean; 
-            transparentModalsOnMouseOut: boolean; 
+            defaultExpandDisplayCards: boolean;
+            transparentModalsOnMouseOut: boolean;
         };
         sharedSession: {
             isInSharedSession: boolean;
@@ -1068,7 +1071,7 @@ export namespace moorhen {
         refinementSettings: {
             useRamaRefinementRestraints: boolean;
             useTorsionRefinementRestraints: boolean;
-            enableRefineAfterMod: boolean; 
+            enableRefineAfterMod: boolean;
             animateRefine: boolean;
             refinementSelection: 'SINGLE' | 'TRIPLE' | 'SPHERE';
         };
@@ -1088,7 +1091,7 @@ export namespace moorhen {
             paeFileContents: { fileContents: string; fileName: string }[];
         };
     }
-    
+
     type actionButtonSettings = {
         mutate: 'ALA' | 'CYS' | 'ASP' | 'GLU' | 'PHE' | 'GLY' | 'HIS' | 'ILE' | 'LYS' | 'LEU' | 'MET' | 'ASN' | 'PRO' | 'GLN' | 'ARG' | 'SER' | 'THR' | 'VAL' | 'TRP' | 'TYR';
         refine: 'SINGLE' | 'TRIPLE' | 'QUINTUPLE' | 'HEPTUPLE' | 'SPHERE' | 'BIG_SPHERE' | 'CHAIN' | 'ALL';
@@ -1097,5 +1100,5 @@ export namespace moorhen {
         drag: 'SINGLE' | 'TRIPLE' | 'QUINTUPLE' | 'HEPTUPLE' | 'SPHERE';
         rigidBodyFit: 'SINGLE' | 'TRIPLE' | 'QUINTUPLE' | 'HEPTUPLE' | 'CHAIN' | 'ALL';
     }
-    
+
 }

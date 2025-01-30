@@ -71,6 +71,7 @@ export namespace gemmi {
         element: emscriptem.instance<string>;
         pos: { x: number, y: number, z: number, delete: () => void };
         altloc: number;
+        occ: number;
         charge: number;
         b_iso: number;
         serial: number;

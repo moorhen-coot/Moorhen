@@ -2218,6 +2218,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         light_colours_ambient: Float32Array;
         background_colour: [number, number, number, number];
         origin: [number, number, number];
+        drawEnvBOcc: boolean;
+        environmentAtoms: clickAtom[][];
         labelledAtoms: clickAtom[][];
         measuredAtoms: clickAtom[][];
         pixel_data: Uint8Array;
@@ -2638,6 +2640,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             requestAnimationFrame(this.doSpinTestFrame.bind(this));
     }
 
+    setDrawEnvBOcc(drawEnvBOcc) {
+        this.drawEnvBOcc = drawEnvBOcc;
+        if(!drawEnvBOcc){
+            this.environmentAtoms = []
+            this.updateLabels()
+        }
+    }
+
     setSpinTestState(doSpin) {
         this.doSpin = doSpin;
         if(this.doSpin){
@@ -2967,6 +2977,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl_clipPlane6 = new Float32Array(4);
         this.gl_clipPlane7 = new Float32Array(4);
         this.clipCapPerfectSpheres = false;
+        this.drawEnvBOcc = false;
+        this.environmentAtoms = [];
         this.labelledAtoms = [];
         this.measuredAtoms = [];
         this.ids = [];
@@ -3879,6 +3891,46 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         requestAnimationFrame(this.setOrientationFrame.bind(this,oldQuat,q,1))
     }
 
+    handleOriginUpdated(doDispatch: boolean) {
+        if(doDispatch){
+            const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
+            document.dispatchEvent(originUpdateEvent);
+        }
+        if(this.drawEnvBOcc) {
+             let near_atoms = []
+             this.displayBuffers.forEach(buffer => {
+                 if (buffer.visible) {
+                     buffer.atoms.forEach(atom => {
+                         const ax = atom.x
+                         const ay = atom.y
+                         const az = atom.z
+                         const ox = -this.origin[0]
+                         const oy = -this.origin[1]
+                         const oz = -this.origin[2]
+                         if(Math.abs(ax-ox)<7 && Math.abs(ay-oy)<7 && Math.abs(az-oz)<7){
+                             const distsq = (ax-ox)*(ax-ox) + (ay-oy)*(ay-oy) + (az-oz)*(az-oz)
+                             if(distsq<49) near_atoms.push(atom)
+                         }
+                     })
+                 }
+             })
+             this.environmentAtoms = []
+             const spacing = " ".repeat(400)
+             console.log("."+spacing+".")
+             near_atoms.forEach(atom => {
+                 const atomLabel = parseAtomInfoLabel(atom);
+                 if (this.environmentAtoms.length === 0 || (this.environmentAtoms[this.environmentAtoms.length - 1].length > 1)) {
+                     this.environmentAtoms.push([]);
+                 }
+                 // The spacing + ")" adjusts the height/baseline so that they are same as click atom labels.
+                 atom.label = atom.tempFactor.toFixed(2) + " " + atom.occupancy.toFixed(2) + spacing + ")"
+                 //atom.label = atom.tempFactor.toFixed(2) + " " + atom.occupancy.toFixed(2) + " " + atomLabel
+                 this.environmentAtoms[this.environmentAtoms.length - 1].push(atom)
+             })
+            this.updateLabels()
+        }
+    }
+
     setOriginOrientationAndZoomFrame(oo,d,qOld, qNew, oldZoom, zoomDelta, iframe) {
         const frac = iframe / this.nAnimationFrames;
         const newQuat = this.quatSlerp(qOld, qNew,frac)
@@ -3890,8 +3942,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             requestAnimationFrame(this.setOriginOrientationAndZoomFrame.bind(this,oo,d,qOld,qNew,oldZoom,zoomDelta,iframe+1))
             return
         }
-        const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
-        document.dispatchEvent(originUpdateEvent);
+        this.handleOriginUpdated(true)
     }
 
     setViewAnimated(o,q,z) {
@@ -3945,9 +3996,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             requestAnimationFrame(this.drawOriginAndZoomFrame.bind(this, oldOrigin, oldZoom, deltaOrigin, deltaZoom, iframe + 1))
         } else {
             const zoomChanged = new CustomEvent("zoomChanged", { detail: { oldZoom, newZoom: this.zoom } })
-            const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
             document.dispatchEvent(zoomChanged)
-            document.dispatchEvent(originUpdateEvent)
+            this.handleOriginUpdated(true)
         }
     }
 
@@ -3968,8 +4018,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if(iframe<this.nAnimationFrames){
             requestAnimationFrame(this.drawOriginFrame.bind(this,oo,d,iframe+1))
         } else {
-            const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
-            document.dispatchEvent(originUpdateEvent)
+            this.handleOriginUpdated(true)
         }
     }
 
@@ -3979,10 +4028,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if (doDrawScene) {
             this.drawScene();
         }
-        if (dispatchEvent) {
-            const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
-            document.dispatchEvent(originUpdateEvent);
-        }
+        this.handleOriginUpdated(dispatchEvent)
     }
 
     setAmbientLightNoUpdate(r:number, g:number, b:number) : void {
@@ -9849,119 +9895,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
-    drawAtomLabels(up, right, labelledAtoms, textColour, textTextureDirty) {
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.textTex);
-        for (let iat = 0; iat < labelledAtoms.length; iat++) {
-            for (let jat = 0; jat < labelledAtoms[iat].length; jat++) {
-
-                const theAtom = labelledAtoms[iat][jat];
-                const theBuffer = theAtom.displayBuffer;
-
-                if (this.displayBuffers.indexOf(theBuffer) > -1 && theBuffer.atoms.length > 0 && !theBuffer.textPositionBuffer) {
-                    this.initTextBuffersBuffer(theBuffer);
-                    theBuffer.textIndexs = [];
-                    theBuffer.textTexCoords = [];
-                    theBuffer.textTexCoords = theBuffer.textTexCoords.concat([0, 1, 1, 1, 1, 0]);
-                    theBuffer.textTexCoords = theBuffer.textTexCoords.concat([0, 1, 1, 0, 0, 0]);
-                    theBuffer.textIndexs = theBuffer.textIndexs.concat([0, 1, 2]);
-                    theBuffer.textIndexs = theBuffer.textIndexs.concat([3, 4, 5]);
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.textTexCoordBuffer);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(theBuffer.textTexCoords), this.gl.STATIC_DRAW);
-                    this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexTextureAttribute, 2, this.gl.FLOAT, false, 0, 0);
-
-                    this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, theBuffer.textIndexesBuffer);
-                    if (this.ext) {
-                        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(theBuffer.textIndexs), this.gl.STATIC_DRAW);
-                    } else {
-                        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(theBuffer.textIndexs), this.gl.STATIC_DRAW);
-                    }
-                    this.makeTextCanvas("Fluffy", 512, 32, textColour);
-                    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.textCtx.canvas);
-
-                    theBuffer.textNormals = [];
-                    theBuffer.textColours = [];
-                    theBuffer.textNormals = theBuffer.textNormals.concat([0, 0, 1, 0, 0, 1, 0, 0, 1]);
-                    theBuffer.textNormals = theBuffer.textNormals.concat([0, 0, 1, 0, 0, 1, 0, 0, 1]);
-                    theBuffer.textColours = theBuffer.textColours.concat([1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1]);
-                    theBuffer.textColours = theBuffer.textColours.concat([1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1]);
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.textNormalBuffer);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(theBuffer.textNormals), this.gl.STATIC_DRAW);
-                    this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.textColourBuffer);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(theBuffer.textColours), this.gl.STATIC_DRAW);
-                    this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
-                }
-            }
-        }
-
-        this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
-        this.setMatrixUniforms(this.shaderProgramTextBackground);
-
-        if (this.atomLabelDepthMode) {
-            //If we want to fog them
-            this.gl.depthFunc(this.gl.LESS);
-            this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, this.gl_fog_start);
-            this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, this.gl_fog_end);
-        } else {
-            //If we want them to be on top
-            this.gl.depthFunc(this.gl.ALWAYS);
-            this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
-            this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
-        }
-        this.gl.uniform4fv(this.shaderProgramTextBackground.fogColour, new Float32Array(this.background_colour));
-
-        for (let iat = 0; iat < labelledAtoms.length; iat++) {
-            for (let jat = 0; jat < labelledAtoms[iat].length; jat++) {
-
-                const theAtom = labelledAtoms[iat][jat];
-                const theBuffer = theAtom.displayBuffer;
-                if (theBuffer.textNormals.length === 0 || theBuffer.atoms.length === 0)
-                    continue;
-
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.textTexCoordBuffer);
-                this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexTextureAttribute, 2, this.gl.FLOAT, false, 0, 0);
-
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.textNormalBuffer);
-                this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.textColourBuffer);
-                this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
-
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.textPositionBuffer);
-                this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-                this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, theBuffer.textIndexesBuffer);
-
-                theBuffer.textVertices = [];
-
-                if (textTextureDirty || typeof (labelledAtoms[iat][jat].imgData) === "undefined") {
-                    const ret = this.makeTextCanvas(labelledAtoms[iat][jat].label, 512, 32, textColour);
-                    const maxTextureS = ret[0];
-                    labelledAtoms[iat][jat].imgData = this.textCtx.getImageData(0, 0, 512, 32);
-                    labelledAtoms[iat][jat].maxImgTextureS = maxTextureS;
-                }
-                this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, labelledAtoms[iat][jat].maxImgTextureS);
-                this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, labelledAtoms[iat][jat].imgData);
-
-                let x = labelledAtoms[iat][jat].x;
-                let y = labelledAtoms[iat][jat].y;
-                let z = labelledAtoms[iat][jat].z;
-                let tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
-                let tSizeY = 2.0 * this.zoom;
-                theBuffer.textVertices = theBuffer.textVertices.concat([x, y, z, x + tSizeX * right[0], y + tSizeX * right[1], z + tSizeX * right[2], x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2]]);
-                theBuffer.textVertices = theBuffer.textVertices.concat([x, y, z, x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2], x + tSizeY * up[0], y + tSizeY * up[1], z + tSizeY * up[2]]);
-
-                this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(theBuffer.textVertices), this.gl.DYNAMIC_DRAW);
-
-                if (this.ext) {
-                    this.gl.drawElements(this.gl.TRIANGLES, theBuffer.textIndexs.length, this.gl.UNSIGNED_INT, 0);
-                } else {
-                    this.gl.drawElements(this.gl.TRIANGLES, theBuffer.textIndexs.length, this.gl.UNSIGNED_SHORT, 0);
-                }
-            }
-        }
-    }
-
     drawCircles(up, right) {
         this.gl.useProgram(this.shaderProgramCircles);
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.circleTex);
@@ -9974,107 +9907,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         //TODO
         // Use the right coords and colours and not do this for clicked atoms!
         // Big texture
-        // I think this below is for debugging, but I have forgotten ...
-        if (false && this.labelledAtoms.length > 0) {
-
-            this.gl.enableVertexAttribArray(this.shaderProgramCircles.vertexTextureAttribute);
-            this.setMatrixUniforms(this.shaderProgramCircles);
-
-            this.gl.depthFunc(this.gl.ALWAYS);
-
-            //FIXME - class/displayobject members
-            let circlesVertexBuffer = this.gl.createBuffer();
-            let circlesNormalBuffer = this.gl.createBuffer();
-            let circlesTextureBuffer = this.gl.createBuffer();
-            let circlesIndexesBuffer = this.gl.createBuffer();
-
-            circlesVertexBuffer.itemSize = 3;
-            circlesNormalBuffer.itemSize = 3;
-            circlesTextureBuffer.itemSize = 2;
-
-            let circlesVertices = [];
-            let circlesNormals = [];
-            let circlesTextures = [];
-            let circlesIndexes = [];
-            let idx = 0;
-
-            for (let iat = 0; iat < this.labelledAtoms.length; iat++) {
-                //FIXME - Obviously not wanting to use clicked atom data ...
-                for (let jat = 0; jat < this.labelledAtoms[iat].length; jat++) {
-                    this.displayBuffers[0].textVertices = [];
-
-                    if (!this.labelledAtoms[iat][jat].circleData) {
-                        let element = this.labelledAtoms[iat][jat].symbol;
-                        console.log(element);
-                        this.makeCircleCanvas(element, 128, 128, "black");
-                        this.labelledAtoms[iat][jat].circleData = this.circleCtx.getImageData(0, 0, 128, 128);
-                    }
-                    //console.log(this.labelledAtoms[iat][jat].circleData);
-                    this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.labelledAtoms[iat][jat].circleData);
-
-                    let x = this.labelledAtoms[iat][jat].x;
-                    let y = this.labelledAtoms[iat][jat].y;
-                    let z = this.labelledAtoms[iat][jat].z;
-                    let tSizeX = 0.5;
-                    let tSizeY = 0.5;
-
-                    circlesVertices = circlesVertices.concat([x, y, z, x, y, z, x, y, z])
-                    circlesVertices = circlesVertices.concat([x, y, z, x, y, z, x, y, z])
-
-                    //This is were our +/- x,y offsets go.
-                    circlesNormals = circlesNormals.concat([-1.0 * tSizeX, -1.0 * tSizeY, 0, 1.0 * tSizeX, -1.0 * tSizeY, 0, 1.0 * tSizeX, 1.0 * tSizeY, 0]);
-                    circlesNormals = circlesNormals.concat([-1.0 * tSizeX, -1.0 * tSizeY, 0, 1.0 * tSizeX, 1.0 * tSizeY, 0, -1.0 * tSizeX, 1.0 * tSizeY, 0]);
-
-                    //FIXME - Bummer, forgot that I need to a "big" texture and that texture coords must cross reference that.
-                    circlesTextures = circlesTextures.concat([0.0, 0.0, 1.0, 0.0, 1.0, 1.0]);
-                    circlesTextures = circlesTextures.concat([0.0, 0.0, 1.0, 1.0, 0.0, 1.0]);
-
-                    circlesIndexes.push(idx++);
-                    circlesIndexes.push(idx++);
-                    circlesIndexes.push(idx++);
-                    circlesIndexes.push(idx++);
-                    circlesIndexes.push(idx++);
-                    circlesIndexes.push(idx++);
-
-                }
-            }
-
-            circlesTextureBuffer.numItems = circlesTextures.length / 2;
-            circlesNormalBuffer.numItems = circlesNormals.length / 3;
-            circlesVertexBuffer.numItems = circlesVertices.length / 3;
-            circlesIndexesBuffer.numItems = circlesIndexes.length;
-
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, circlesTextureBuffer);
-            this.gl.vertexAttribPointer(this.shaderProgramCircles.vertexTextureAttribute, 2, this.gl.FLOAT, false, 0, 0);
-            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(circlesTextures), this.gl.DYNAMIC_DRAW);
-
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, circlesNormalBuffer);
-            this.gl.vertexAttribPointer(this.shaderProgramCircles.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
-            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(circlesNormals), this.gl.DYNAMIC_DRAW);
-
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, circlesVertexBuffer);
-            this.gl.vertexAttribPointer(this.shaderProgramCircles.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
-            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(circlesVertices), this.gl.DYNAMIC_DRAW);
-
-            this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, circlesIndexesBuffer);
-
-            if (this.ext) {
-                this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(circlesIndexes), this.gl.DYNAMIC_DRAW);
-                this.drawMaxElementsUInt(this.gl.TRIANGLES, circlesIndexes.length);
-            } else {
-                this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(circlesIndexes), this.gl.DYNAMIC_DRAW);
-                this.gl.drawElements(this.gl.TRIANGLES, circlesIndexes.length, this.gl.UNSIGNED_SHORT, 0);
-            }
-
-            //console.log(circlesTextures);
-            //console.log(circlesNormals);
-            //console.log(circlesVertices);
-            //console.log(circlesIndexes);
-
-            this.gl.disableVertexAttribArray(this.shaderProgramCircles.vertexTextureAttribute);
-            this.gl.depthFunc(this.gl.LESS);
-
-        }
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.textTex);
     }
 
@@ -10137,9 +9969,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             //console.log(npass+" "+npass0+" "+npass1+" "+ntest);
             const [minidx,minj,mindist,minsym,minx,miny,minz] = self.getAtomFomMouseXY(event,self);
             if (minidx > -1) {
+                const atomLabel = parseAtomInfoLabel(self.displayBuffers[minidx].atoms[minj]);
                 let theAtom : clickAtom = {
                    ...self.displayBuffers[minidx].atoms[minj],
-                   label: parseAtomInfoLabel(self.displayBuffers[minidx].atoms[minj]),
+                   label: atomLabel,
                    displayBuffer: self.displayBuffers[minidx]
                 };
                 let atomClicked: moorhen.AtomClickedEvent = new CustomEvent("atomClicked", {
@@ -10154,6 +9987,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.currentlyDraggedAtom = { atom: self.displayBuffers[minidx].atoms[minj], buffer: self.displayBuffers[minidx] }
                 }
                 if (self.keysDown['label_atom']) {
+                    if(self.drawEnvBOcc) {
+                        theAtom.label = self.displayBuffers[minidx].atoms[minj].tempFactor.toFixed(2) + " " + self.displayBuffers[minidx].atoms[minj].occupancy.toFixed(2) + " " + atomLabel
+                    }
                     updateLabels = true
                     if (self.labelledAtoms.length === 0 || (self.labelledAtoms[self.labelledAtoms.length - 1].length > 1)) {
                         self.labelledAtoms.push([]);
@@ -10272,6 +10108,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         })
 
         self.labelledAtoms.forEach(atoms => {
+            atoms.forEach(atom => {
+                self.measureTextCanvasTexture.addBigTextureTextImage({font:self.glTextFont,text:atom.label,x:atom.x,y:atom.y,z:atom.z})
+            })
+        })
+
+        self.environmentAtoms.forEach(atoms => {
             atoms.forEach(atom => {
                 self.measureTextCanvasTexture.addBigTextureTextImage({font:self.glTextFont,text:atom.label,x:atom.x,y:atom.y,z:atom.z})
             })
@@ -11960,12 +11802,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     }
                 }
             } else if (this.reContourMapOnlyOnMouseUp) {
-                const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
-                document.dispatchEvent(originUpdateEvent);
+                this.handleOriginUpdated(true)
             }
         } else if (event.altKey && event.shiftKey && this.reContourMapOnlyOnMouseUp) {
-            const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
-            document.dispatchEvent(originUpdateEvent);
+            this.handleOriginUpdated(true)
         }
         self.mouseDown = false;
         self.doHover(event,self);

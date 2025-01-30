@@ -6,12 +6,12 @@ import { getDeviceScale } from '../WebGLgComponents/mgWebGL';
 import { vec3Create } from '../WebGLgComponents/mgMaths';
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
-import { Dispatch } from "react";
+import { Dispatch, createRef } from "react";
 import { AnyAction } from "@reduxjs/toolkit";
 import { setHoveredAtom } from "../store/hoveringStatesSlice";
 import { changeMapRadius } from "../store/mapContourSettingsSlice";
 import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
-import { EnqueueSnackbar } from "notistack";
+import { EnqueueSnackbar, closeSnackbar } from "notistack";
 
 const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, dispatch: Dispatch<AnyAction>) => {
     molecule.setAtomsDirty(true)
@@ -42,6 +42,26 @@ export const moorhenKeyPress = (
         hoveredAtom, commandCentre, activeMap, glRef, molecules, 
         viewOnly, videoRecorderRef, enqueueSnackbar, dispatch
     } = collectedProps;
+
+    const doAtomInfo = async (): Promise<boolean> => {
+        if (hoveredAtom.molecule) {
+            let chosenAtom: moorhen.ResidueSpec
+            chosenAtom = cidToSpec(hoveredAtom.cid)
+            const fragmentCid = chosenAtom.cid
+            const chosenMolecule = hoveredAtom.molecule
+            await closeSnackbar()
+            showShortcutToast && await enqueueSnackbar("atoms-info_"+chosenMolecule.molNo+"_"+fragmentCid, {
+                variant: "atomInformation",
+                monomerLibraryPath: hoveredAtom.molecule.monomerLibraryPath,
+                commandCentre: commandCentre,
+                cidRef: fragmentCid,
+                glRef: glRef,
+                moleculeRef: chosenMolecule,
+                persist: true
+            })
+            return false
+        }
+    }
 
     const doShortCut = async (cootCommand: string, formatArgs: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec) => any[]): Promise<boolean> => {
         let chosenMolecule: moorhen.Molecule
@@ -385,6 +405,9 @@ export const moorhenKeyPress = (
         glRef.current.drawScene()
         showShortcutToast && enqueueSnackbar("Back clip up", { variant: "info"})
         return false
+    }
+    else if (action === 'show_atom_info') {
+        return doAtomInfo()
     }
 
     return true
