@@ -2218,7 +2218,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         light_colours_ambient: Float32Array;
         background_colour: [number, number, number, number];
         origin: [number, number, number];
-        drawEnvironmentLabels: boolean;
+        drawEnvBOcc: boolean;
         environmentAtoms: clickAtom[][];
         labelledAtoms: clickAtom[][];
         measuredAtoms: clickAtom[][];
@@ -2640,6 +2640,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             requestAnimationFrame(this.doSpinTestFrame.bind(this));
     }
 
+    setDrawEnvBOcc(drawEnvBOcc) {
+        this.drawEnvBOcc = drawEnvBOcc;
+        if(!drawEnvBOcc){
+            this.environmentAtoms = []
+            this.updateLabels()
+        }
+    }
+
     setSpinTestState(doSpin) {
         this.doSpin = doSpin;
         if(this.doSpin){
@@ -2969,7 +2977,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl_clipPlane6 = new Float32Array(4);
         this.gl_clipPlane7 = new Float32Array(4);
         this.clipCapPerfectSpheres = false;
-        this.drawEnvironmentLabels = false;
+        this.drawEnvBOcc = false;
         this.environmentAtoms = [];
         this.labelledAtoms = [];
         this.measuredAtoms = [];
@@ -3888,7 +3896,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
             document.dispatchEvent(originUpdateEvent);
         }
-        if(this.drawEnvironmentLabels) {
+        if(this.drawEnvBOcc) {
              let near_atoms = []
              this.displayBuffers.forEach(buffer => {
                  if (buffer.visible) {
@@ -9979,7 +9987,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.currentlyDraggedAtom = { atom: self.displayBuffers[minidx].atoms[minj], buffer: self.displayBuffers[minidx] }
                 }
                 if (self.keysDown['label_atom']) {
-                    if(self.drawEnvironmentLabels) {
+                    if(self.drawEnvBOcc) {
                         theAtom.label = self.displayBuffers[minidx].atoms[minj].tempFactor.toFixed(2) + " " + self.displayBuffers[minidx].atoms[minj].occupancy.toFixed(2) + " " + atomLabel
                     }
                     updateLabels = true

@@ -45,6 +45,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
         drawScaleBar: false,
         drawAxes: false,
         drawFPS: false,
+        drawEnvBOcc: false, 
         drawMissingLoops: true,
         doPerspectiveProjection: false,
         useOffScreenBuffers: false,

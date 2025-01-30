@@ -142,6 +142,7 @@ export namespace webGL {
         componentDidUpdate(oldProps:any) : void;
         componentDidMount() : void;
         setSpinTestState(doSpin:boolean): void;
+        setDrawEnvBOcc(drawEnvBOcc:boolean): void;
         setDiffuseLightNoUpdate(r:number, g:number, b:number) : void;
         setAmbientLightNoUpdate(r:number, g:number, b:number) : void;
         setSpecularLightNoUpdate(r:number, g:number, b:number) : void;
@@ -168,6 +169,7 @@ export namespace webGL {
         setDoOrderIndependentTransparency(doOrderIndependentTransparency: boolean): void;
         setDoTransparentScreenshotBackground(transparentScreenshotBackground: boolean): void;
         setSpinTestState(doSpinTest: boolean): void;
+        setDrawEnvBOcc(drawEnvBOcc: boolean): void;
         setBlurSize(blurSize: number): void;
         setSSAORadius(radius: number): void;
         setSSAOBias(bias: number): void;
@@ -222,7 +224,7 @@ export namespace webGL {
         light_colours_ambient: any;
         background_colour: [number, number, number, number];
         origin: [number, number, number];
-        drawEnvironmentLabels: boolean;
+        drawEnvBOcc: boolean;
         environmentAtoms: clickAtom[][];
         labelledAtoms: clickAtom[][];
         measuredAtoms: clickAtom[][];
