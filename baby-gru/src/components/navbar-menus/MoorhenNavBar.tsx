@@ -35,7 +35,6 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
     const [speedDialOpen, setSpeedDialOpen] = useState<boolean>(false)
     const [navBarActiveMenu, setNavBarActiveMenu] = useState<string>('-1')
     const [popoverTargetRef, setPopoverTargetRef] = useState()
-    const [tempFactor, setTempFactor] = useState(20.0);
 
     const speedDialRef = useRef()
     const fileSpeedDialActionRef = useRef()
@@ -162,16 +161,6 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
         canvasTop = 0
     }
 
-    useEffect(() => {
-        const getHoverInfo = async () => {
-            if(hoveredAtom.molecule&&hoveredAtom.cid){
-                const gemmiAtoms = await hoveredAtom.molecule.gemmiAtomsForCid(hoveredAtom.cid)
-                setTempFactor(gemmiAtoms[0].tempFactor)
-            }
-        }
-        if(devMode) getHoverInfo()
-    }, [hoveredAtom])
-
     return <>
         <Fab
             ref={speedDialRef}
@@ -258,14 +247,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
                 }
             }}
         >
-            {(hoveredAtom.cid&&devMode) &&
-            <Form.Control
-                className='moorhen-hovered-atom-form'
-                type="text"
-                readOnly={true}
-                value={`${hoveredAtom.molecule.name.length > 10 ? `${hoveredAtom.molecule.name.substring(0, 7)}...` : `${hoveredAtom.molecule.name}:`}${hoveredAtom.cid} BFac:${tempFactor.toFixed(3)}`}
-            />}
-            {(hoveredAtom.cid&&!devMode) &&
+            {hoveredAtom.cid &&
             <Form.Control
                 className='moorhen-hovered-atom-form'
                 type="text"
