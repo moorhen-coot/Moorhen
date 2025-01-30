@@ -966,7 +966,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 displayObject.symmetryMatrices = this.parentMolecule.symmetryMatrices
                 displayObject.updateSymmetryAtoms()
             })
-            this.glRef.current.drawScene()
         }
     }
 
