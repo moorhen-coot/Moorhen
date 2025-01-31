@@ -13,6 +13,9 @@ A JavaScript molecular graphics program
 - [ ] Add Zoom to "Show controls"
 
 ### Todo
+- [ ] Prosmart (this is complicated because of the subprocess model).
+  - [ ] Results parsing for starters.
+- [ ] CCP4MG/MrBump. As above results parsing would be good start.
 - [ ] Coloured sequences: https://ebi-webcomponents.github.io/nightingale/#/coloured-sequence
 - [ ] Sequence alignments: https://ebi-webcomponents.github.io/nightingale/#/msa
 - [ ] Secondary structure annotation and other kinds of annotation: https://ebi-webcomponents.github.io/nightingale/#/track
@@ -20,7 +23,6 @@ A JavaScript molecular graphics program
 - [ ] Auto scaled shadow box
 - [ ] Lipid cartoons
 - [ ] Images/Legends
-- [ ] Prosmart (this is complicated because of the subprocess model).
 - [ ] Generate Helices
 - [ ] Normal modes
     - [ ] Experimental vs. Theoretical B-values
