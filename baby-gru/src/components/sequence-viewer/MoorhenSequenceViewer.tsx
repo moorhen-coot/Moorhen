@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react"
+import * as React from 'react';
 import ProtvistaManager from "protvista-manager";
 import ProtvistaSequence from "protvista-sequence";
 import ProtvistaNavigation from "protvista-navigation";
@@ -14,6 +15,17 @@ import { cidToAtomInfo, cidToSpec } from "../../utils/utils";
 !window.customElements.get('protvista-sequence') && window.customElements.define("protvista-sequence", ProtvistaSequence);
 !window.customElements.get('protvista-track') && window.customElements.define("protvista-track", ProtvistaTrack);
 !window.customElements.get('protvista-manager') && window.customElements.define("protvista-manager", ProtvistaManager);
+
+declare module "react" {
+    namespace JSX {
+        interface IntrinsicElements {
+          "protvista-manager": any;
+          "protvista-navigation": any;
+          "protvista-sequence": any;
+          "protvista-track": any;
+        }
+    }
+}
 
  const calculateDisplayStartAndEnd = (rulerStart: number, sequenceLength: number): [number, number] => {
     if (sequenceLength <= 40) {

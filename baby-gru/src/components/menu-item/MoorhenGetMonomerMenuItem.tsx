@@ -7,7 +7,7 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice";
-import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { Store } from "@reduxjs/toolkit";
 import { useSnackbar } from "notistack";
 import { Autocomplete, CircularProgress, createFilterOptions, MenuItem, Skeleton, TextField } from "@mui/material";
 import { libcootApi } from "../../types/libcoot";
@@ -57,7 +57,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
     popoverPlacement?: 'left' | 'right'
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     monomerLibraryPath: string;
-    store: ToolkitStore;
+    store: Store;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 
@@ -65,7 +65,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
-    const tlcRef = useRef<HTMLInputElement>()
+    const tlcRef = useRef<HTMLInputElement>(null)
     const moleculeSelectRef = useRef<HTMLSelectElement | null>(null)
     const searchModeSelectRef = useRef<HTMLSelectElement | null>(null)
     const monLibListRef = useRef<libcootApi.compoundInfo[]>([])

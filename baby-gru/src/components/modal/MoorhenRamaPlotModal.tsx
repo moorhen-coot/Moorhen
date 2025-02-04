@@ -12,7 +12,7 @@ import { modalKeys } from "../../utils/enums";
 import { hideModal } from "../../store/modalsSlice";
 
 export const MoorhenRamaPlotModal = (props: moorhen.CollectedProps) => {        
-    const resizeNodeRef = useRef<HTMLDivElement>();
+    const resizeNodeRef = useRef<HTMLDivElement>(null);
     
     const [draggableResizeTrigger, setDraggableResizeTrigger] = useState<boolean>(true)
     

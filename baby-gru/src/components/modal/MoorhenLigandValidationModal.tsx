@@ -8,7 +8,7 @@ import { MoorhenLigandValidation } from "../validation-tools/MoorhenLigandValida
 import { modalKeys } from "../../utils/enums";
 
 export const MoorhenLigandValidationModal = (props: moorhen.CollectedProps) => {        
-    const resizeNodeRef = useRef<HTMLDivElement>();
+    const resizeNodeRef = useRef<HTMLDivElement>(null);
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)

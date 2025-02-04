@@ -7,13 +7,13 @@ import { webGL } from "../../types/mgWebGL";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { batch, useDispatch, useSelector } from 'react-redux';
 import { addMap } from "../../store/mapsSlice";
-import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { Store } from "@reduxjs/toolkit";
 import { useSnackbar } from "notistack";
 
 export const MoorhenImportMapMenuItem = (props: { 
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
-    store: ToolkitStore;
+    store: Store;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 
@@ -23,7 +23,7 @@ export const MoorhenImportMapMenuItem = (props: {
     const maps = useSelector((state: moorhen.State) => state.maps)
 
     const filesRef = useRef<null | HTMLInputElement>(null)
-    const isDiffRef = useRef<undefined | HTMLInputElement>()
+    const isDiffRef = useRef<undefined | HTMLInputElement>(null)
 
     const { enqueueSnackbar } = useSnackbar()
 

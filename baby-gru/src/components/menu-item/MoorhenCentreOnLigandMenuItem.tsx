@@ -22,8 +22,6 @@ export const MoorhenCentreOnLigandMenuItem = (props: {
                 <div style={{overflowY: 'auto', maxHeight: convertViewtoPx(30, height)}}>
                 <TreeView
                 aria-label="file system navigator"
-                defaultCollapseIcon={<ExpandMoreOutlined />}
-                defaultExpandIcon={<ChevronRightOutlined />}
                 >
                     {molecules.filter(molecule => molecule.ligands.length > 0).map(molecule => {
                         let uniqueChainNames: string[] = molecule.ligands.reduce((uniqueChains: string[], lig) => {
@@ -32,13 +30,13 @@ export const MoorhenCentreOnLigandMenuItem = (props: {
                             }
                             return uniqueChains
                         }, [])
-                        return <TreeItem key={molecule.molNo} nodeId={molecule.molNo.toString()} label={molecule.name}>
+                        return <TreeItem key={molecule.molNo} itemId={molecule.molNo.toString()} label={molecule.name}>
                             {uniqueChainNames.map(chainName => {
-                                return <TreeItem key={`${molecule.molNo}-${chainName}`} nodeId={`${molecule.molNo}-${chainName}`} label={`Chain ${chainName}`}>
+                                return <TreeItem key={`${molecule.molNo}-${chainName}`} itemId={`${molecule.molNo}-${chainName}`} label={`Chain ${chainName}`}>
                                     {molecule.ligands.filter(lig => lig.chainName === chainName).map(ligand => {
                                         return <TreeItem
                                         key={`${molecule.molNo}-${ligand.cid}`}
-                                        nodeId={`${molecule.molNo}-${ligand.cid}`}
+                                        itemId={`${molecule.molNo}-${ligand.cid}`}
                                         label={ligand.cid}
                                         onClick={() => molecule.centreOn(ligand.cid, true, true)}/>
                                     })}

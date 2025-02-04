@@ -45,7 +45,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const colourSwatchRef = useRef<HTMLDivElement | null>(null)
     const alphaSwatchRef = useRef<HTMLImageElement | null>(null)
     const nonCustomOpacitySliderRef = useRef<any>(null)
-    const residueRangeSelectRef = useRef<any>()
+    const residueRangeSelectRef = useRef<any>(null)
     const ncsColourRuleRef = useRef<null | moorhen.ColourRule>(null)
 
     const [ruleType, setRuleType] = useState<string>(props.representation ? "cid" : "molecule")

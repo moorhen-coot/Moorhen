@@ -54,7 +54,7 @@ export const MoorhenContextMenu = (props: {
   const quickActionsFormGroupRef = useRef<HTMLInputElement>(null)
   
   const [showOverlay, setShowOverlay] = useState<boolean>(false)
-  const [overlayContents, setOverlayContents] = useState<null | JSX.Element>(null)
+  const [overlayContents, setOverlayContents] = useState<null | React.JSX.Element>(null)
   const [overrideMenuContents, setOverrideMenuContents] = useState<boolean>(false)
   const [opacity, setOpacity] = useState<number>(1.0)
   const [toolTip, setToolTip] = useState<string>('')

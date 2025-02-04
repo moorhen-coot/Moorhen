@@ -48,7 +48,7 @@ export const MoorhenMoleculeSelect = forwardRef<HTMLSelectElement, MoorhenMolecu
     } = { ...defaultProps, ...props }
 
     const getMoleculeOptions = () => {
-        let moleculeOptions: JSX.Element[] = []
+        let moleculeOptions: React.JSX.Element[] = []
         
         if (props.molecules) {
             if (allowAny) {

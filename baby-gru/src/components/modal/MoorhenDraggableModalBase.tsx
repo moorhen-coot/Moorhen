@@ -13,17 +13,17 @@ import { hideModal, focusOnModal, unFocusModal } from "../../store/modalsSlice";
  * @property {string} headerTitle - The title displayed on the modal header
  * @property {boolean} show - Indicates if the modal is to be displayed
  * @property {function} setShow - Setter function for props.show
- * @property {JSX.Element} body - Element rendered as the modal body
+ * @property {React.JSX.Element} body - Element rendered as the modal body
  * @property {string} modalId - The id assigned to the modal used to keep track of the focused modal and the z-index. 
  * @property {number} [width=35] - The width of the modal measured in wh
  * @property {number} [height=45] - The height of the modal measured in vh
  * @property {number} [top=500] - The intial top location of the modal
  * @property {number} [left=500] - The intial top location of the modal
- * @property {JSX.Element[]} [additionalHeaderButtons=null] - Additional buttons rendered on the modal header
- * @property {JSX.Element[]} [additionalChildren=null] - Additional JSX elements rendered inside the modal
+ * @property {React.JSX.Element[]} [additionalHeaderButtons=null] - Additional buttons rendered on the modal header
+ * @property {React.JSX.Element[]} [additionalChildren=null] - Additional JSX elements rendered inside the modal
  * @property {string} [overflowY="scroll"] - Indicates how to handle content overflow on vertical axis
  * @property {string} [handleClassName="handle"] - The css class name for the draggable handle
- * @property {JSX.Element} [footer=null] - Element rendered as the modal footer
+ * @property {React.JSX.Element} [footer=null] - Element rendered as the modal footer
  * @example 
  * import { MoorhenDraggableModalBase } from "moorhen";
  * 
@@ -62,8 +62,8 @@ import { hideModal, focusOnModal, unFocusModal } from "../../store/modalsSlice";
  * 
  */
 export const MoorhenDraggableModalBase = (props: {
-    headerTitle: string | JSX.Element;
-    body: JSX.Element | JSX.Element[];
+    headerTitle: string | React.JSX.Element;
+    body: React.JSX.Element | React.JSX.Element[];
     modalId: string;
     enforceMaxBodyDimensions?: boolean;
     resizeNodeRef?: null | React.RefObject<HTMLDivElement>;
@@ -73,9 +73,9 @@ export const MoorhenDraggableModalBase = (props: {
     minHeight?: number;
     top?: number;
     left?: number;
-    additionalHeaderButtons?: JSX.Element[];
-    footer?: JSX.Element;
-    additionalChildren?: JSX.Element;
+    additionalHeaderButtons?: React.JSX.Element[];
+    footer?: React.JSX.Element;
+    additionalChildren?: React.JSX.Element;
     overflowY?: 'visible' | 'hidden' | 'clip' | 'scroll' | 'auto';
     overflowX?: 'visible' | 'hidden' | 'clip' | 'scroll' | 'auto';
     handleClassName?: string;
@@ -113,8 +113,8 @@ export const MoorhenDraggableModalBase = (props: {
     const [collapse, setCollapse] = useState<boolean>(false)
     const [position, setPosition] = useState<{x: number, y: number}>({x: left, y: top})
 
-    const draggableNodeRef = useRef<HTMLDivElement>();
-    const resizeNodeRef = useRef<HTMLDivElement>();
+    const draggableNodeRef = useRef<HTMLDivElement>(null);
+    const resizeNodeRef = useRef<HTMLDivElement>(null);
     const cachedEnableAtomHovering = useRef<boolean>(false);
     const modalIdRef = useRef<string>(props.modalId);
 

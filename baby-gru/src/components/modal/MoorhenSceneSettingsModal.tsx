@@ -298,7 +298,7 @@ const LightingPanel = (props: {
 }) => {
 
     const busyLighting = useRef<boolean>(false)
-    const newLightPosition = useRef<[number, number, number]>()
+    const newLightPosition = useRef<[number, number, number]>(null)
     const isSetLightPosIsDirty = useRef<boolean>(false)
     const [diffuse, setDiffuse] = useState<[number, number, number, number]>(props.glRef.current.light_colours_diffuse)
     const [specular, setSpecular] = useState<[number, number, number, number]>(props.glRef.current.light_colours_specular)

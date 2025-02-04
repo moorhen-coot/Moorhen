@@ -81,7 +81,7 @@ export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
         return badWaters
     }, [bFactorLim, sigmaLevel, minDist, maxDist])
     
-    const getCards = (selectedModel: number, selectedMap: number, badWaters: libcootApi.AtomSpecJS[]): JSX.Element[] => {
+    const getCards = (selectedModel: number, selectedMap: number, badWaters: libcootApi.AtomSpecJS[]): React.JSX.Element[] => {
         if (badWaters) {
             return badWaters.map((water, index) => {
                 return <Card key={`${index}/${selectedModel}/${water.model_number}/${water.chain_id}/${water.res_no}`} style={{marginTop: '0.5rem'}}>

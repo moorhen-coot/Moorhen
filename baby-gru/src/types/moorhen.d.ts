@@ -3,7 +3,7 @@ import { emscriptem } from "./emscriptem";
 import { gemmi } from "./gemmi";
 import { webGL } from "./mgWebGL";
 import { MoorhenMolecule } from "../moorhen";
-import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { Store } from "@reduxjs/toolkit";
 import { AnyAction, Dispatch } from "@reduxjs/toolkit";
 
 export namespace moorhen {
@@ -260,7 +260,7 @@ export namespace moorhen {
         excludedCids: string[];
         commandCentre: React.RefObject<CommandCentre>;
         glRef: React.RefObject<webGL.MGWebGL>;
-        store: ToolkitStore;
+        store: Store;
         atomsDirty: boolean;
         name: string;
         molNo: number;
@@ -528,8 +528,8 @@ export namespace moorhen {
         setupContourBuffers(objects: any[], keepCootColours?: boolean): void;
         setOtherMapForColouring(molNo: number, min?: number, max?: number): void;
         exportAsGltf(): Promise<ArrayBuffer>;
-        static autoReadMtz(source: File, commandCentre: React.RefObject<CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore): Promise<Map[]>;
-        store: ToolkitStore;
+        static autoReadMtz(source: File, commandCentre: React.RefObject<CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: Store): Promise<Map[]>;
+        store: Store;
         isEM: boolean;
         suggestedContourLevel: number;
         suggestedRadius: number;
@@ -674,7 +674,7 @@ export namespace moorhen {
             commandCentre: React.RefObject<CommandCentre>,
             timeCapsuleRef: React.RefObject<TimeCapsule>,
             glRef: React.RefObject<webGL.MGWebGL>,
-            store: ToolkitStore,
+            store: Store,
             dispatch: Dispatch<AnyAction>
         ): Promise<number>;
         static loadSessionFromArrayBuffer(
@@ -685,7 +685,7 @@ export namespace moorhen {
             commandCentre: React.RefObject<CommandCentre>,
             timeCapsuleRef: React.RefObject<TimeCapsule>,
             glRef: React.RefObject<webGL.MGWebGL>,
-            store: ToolkitStore,
+            store: Store,
             dispatch: Dispatch<AnyAction>
         ): Promise<number>;
         static loadSessionFromProtoMessage(
@@ -696,7 +696,7 @@ export namespace moorhen {
             commandCentre: React.RefObject<CommandCentre>,
             timeCapsuleRef: React.RefObject<TimeCapsule>,
             glRef: React.RefObject<webGL.MGWebGL>,
-            store: ToolkitStore,
+            store: Store,
             dispatch: Dispatch<AnyAction>
         ): Promise<number>;
         static loadSessionFromJsonString(
@@ -707,10 +707,10 @@ export namespace moorhen {
             commandCentre: React.RefObject<CommandCentre>,
             timeCapsuleRef: React.RefObject<TimeCapsule>,
             glRef: React.RefObject<webGL.MGWebGL>,
-            store: ToolkitStore,
+            store: Store,
             dispatch: Dispatch<AnyAction>
         ): Promise<number>;
-        store: ToolkitStore;
+        store: Store;
         moleculesRef: React.RefObject<Molecule[]>;
         mapsRef: React.RefObject<Map[]>;
         glRef: React.RefObject<webGL.MGWebGL>;
@@ -895,13 +895,13 @@ export namespace moorhen {
         selectedMolecule: Molecule;
         chosenAtom: ResidueSpec;
         glRef: React.RefObject<webGL.MGWebGL>;
-        setOverlayContents: React.Dispatch<React.SetStateAction<JSX.Element>>;
+        setOverlayContents: React.Dispatch<React.SetStateAction<React.JSX.Element>>;
         setShowOverlay: React.Dispatch<React.SetStateAction<boolean>>;
         timeCapsuleRef: React.RefObject<TimeCapsule>;
         setToolTip: React.Dispatch<React.SetStateAction<string>>;
         setShowContextMenu: React.Dispatch<React.SetStateAction<false | AtomRightClickEventInfo>>;
         setOpacity: React.Dispatch<React.SetStateAction<number>>;
-        setOverrideMenuContents: React.Dispatch<React.SetStateAction<JSX.Element | boolean>>;
+        setOverrideMenuContents: React.Dispatch<React.SetStateAction<React.JSX.Element | boolean>>;
         showContextMenu: false | AtomRightClickEventInfo;
         defaultActionButtonSettings: actionButtonSettings;
         setDefaultActionButtonSettings: (arg0: {key: string; value: string}) => void;
@@ -922,20 +922,20 @@ export namespace moorhen {
         onUserPreferencesChange: (key: string, value: any) => void;
         disableFileUploads: boolean;
         urlPrefix: string;
-        extraNavBarMenus: {name: string; ref: React.RefObject<any> ; icon: JSX.Element; JSXElement: JSX.Element}[];
-        extraNavBarModals: {name: string; ref: React.RefObject<any> ; icon: JSX.Element; JSXElement: JSX.Element; show: boolean; setShow: React.Dispatch<React.SetStateAction<boolean>>;}[];
+        extraNavBarMenus: {name: string; ref: React.RefObject<any> ; icon: React.JSX.Element; JSXElement: React.JSX.Element}[];
+        extraNavBarModals: {name: string; ref: React.RefObject<any> ; icon: React.JSX.Element; JSXElement: React.JSX.Element; show: boolean; setShow: React.Dispatch<React.SetStateAction<boolean>>;}[];
         viewOnly: boolean;
-        extraDraggableModals: JSX.Element[];
+        extraDraggableModals: React.JSX.Element[];
         monomerLibraryPath: string;
         setMoorhenDimensions?: null | ( () => [number, number] );
-        extraFileMenuItems: JSX.Element[];
+        extraFileMenuItems: React.JSX.Element[];
         allowScripting: boolean;
         backupStorageInstance?: any;
-        extraEditMenuItems: JSX.Element[];
-        extraCalculateMenuItems: JSX.Element[];
+        extraEditMenuItems: React.JSX.Element[];
+        extraCalculateMenuItems: React.JSX.Element[];
         aceDRGInstance: AceDRGInstance | null;
         includeNavBarMenuNames: string[];
-        store: ToolkitStore;
+        store: Store;
         allowAddNewFittedLigand: boolean;
         allowMergeFittedLigand: boolean;
     }

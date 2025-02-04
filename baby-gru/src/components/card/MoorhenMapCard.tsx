@@ -21,8 +21,8 @@ import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 
 type ActionButtonType = {
     label: string;
-    compressed: () => JSX.Element;
-    expanded: null | ( () => JSX.Element );
+    compressed: () => React.JSX.Element;
+    expanded: null | ( () => React.JSX.Element );
 }
 
 interface MoorhenMapCardPropsInterface extends moorhen.CollectedProps {
@@ -274,8 +274,8 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         const minWidth = convertRemToPx(28)
         const maximumAllowedWidth = minWidth * 0.55
         let currentlyUsedWidth = 0
-        let expandedButtons: JSX.Element[] = []
-        let compressedButtons: JSX.Element[] = []
+        let expandedButtons: React.JSX.Element[] = []
+        let compressedButtons: React.JSX.Element[] = []
 
         Object.keys(actionButtons).forEach(key => {
             if (actionButtons[key].expanded === null) {
@@ -468,7 +468,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             return null
         }
 
-        let dropdown: JSX.Element
+        let dropdown: React.JSX.Element
         if (props.map.isDifference) {
             dropdown = <>
                     <div ref={colourSwatchRef} onClick={() => setShowColourPicker(true)}

@@ -31,7 +31,7 @@ type MoorhenMoleculeCardButtonBarPropsType = {
 }
 
 export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBarPropsType) => {
-    const dropdownCardButtonRef = useRef<HTMLDivElement>()
+    const dropdownCardButtonRef = useRef<HTMLDivElement>(null)
 
     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
     const [currentName, setCurrentName] = useState<string>(props.molecule.name);
@@ -54,7 +54,7 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
         props.setCurrentDropdownMolNo(-1)
     }, [isVisible])
 
-    const actionButtons: { [key: number]: { label: string; compressed: () => JSX.Element; expanded: null | (() => JSX.Element); } } = {
+    const actionButtons: { [key: number]: { label: string; compressed: () => React.JSX.Element; expanded: null | (() => React.JSX.Element); } } = {
         1: {
             label: isVisible ? "Hide molecule" : "Show molecule",
             compressed: () => { return (<MenuItem key={1} onClick={handleVisibility}>{isVisible ? "Hide molecule" : "Show molecule"}</MenuItem>) },
@@ -119,7 +119,7 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
         },
     }
 
-    const bioMolButtons: { [key: number]: { label: string; compressed: () => JSX.Element; expanded: null | (() => JSX.Element); } } = {
+    const bioMolButtons: { [key: number]: { label: string; compressed: () => React.JSX.Element; expanded: null | (() => React.JSX.Element); } } = {
         8: {
             label: 'Generate assembly',
             compressed: () => { return (<MoorhenGenerateAssemblyMenuItem key={8} setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />) },
@@ -129,8 +129,8 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
 
     const maximumAllowedWidth = props.sideBarWidth * 0.65
     let currentlyUsedWidth = 0
-    let expandedButtons: JSX.Element[] = []
-    let compressedButtons: JSX.Element[] = []
+    let expandedButtons: React.JSX.Element[] = []
+    let compressedButtons: React.JSX.Element[] = []
 
     Object.keys(actionButtons).forEach(key => {
         if (actionButtons[key].expanded === null) {

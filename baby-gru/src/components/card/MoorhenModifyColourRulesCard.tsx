@@ -76,10 +76,10 @@ export const MoorhenModifyColourRulesCard = (props: {
     anchorEl: React.RefObject<HTMLDivElement>;
 }) => {
     
-    const chainSelectRef = useRef<HTMLSelectElement>()
-    const ruleSelectRef = useRef<HTMLSelectElement>()
-    const residueRangeSelectRef = useRef<any>()
-    const cidFormRef = useRef<HTMLInputElement>()
+    const chainSelectRef = useRef<HTMLSelectElement>(null)
+    const ruleSelectRef = useRef<HTMLSelectElement>(null)
+    const residueRangeSelectRef = useRef<any>(null)
+    const cidFormRef = useRef<HTMLInputElement>(null)
     
     const [ruleType, setRuleType] = useState<string>('molecule')
     const [colourProperty, setColourProperty] = useState<string>('b-factor')

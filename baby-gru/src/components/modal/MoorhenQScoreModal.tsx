@@ -8,7 +8,7 @@ import { MoorhenQScore } from "../validation-tools/MoorhenQScore";
 import { Row } from "react-bootstrap";
 
 export const MoorhenQScoreModal = (props) => {
-    const resizeNodeRef = useRef<HTMLDivElement>();
+    const resizeNodeRef = useRef<HTMLDivElement>(null);
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)

@@ -16,10 +16,10 @@ import { SnackbarContent, enqueueSnackbar, useSnackbar } from "notistack"
 
 export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, {id: string}>((props, ref) => {
 
-    const notificationComponentRef = useRef()
-    const changeColourAnchorRef = useRef()
-    const cidAnchorRef = useRef()
-    const cidFormRef = useRef()
+    const notificationComponentRef = useRef(null)
+    const changeColourAnchorRef = useRef(null)
+    const cidAnchorRef = useRef(null)
+    const cidFormRef = useRef(null)
 
     const [cidFormValue, setCidFormValue] = useState<null | string>(null)
     const [showCidEditForm, setShowCidEditForm] = useState<boolean>(false)

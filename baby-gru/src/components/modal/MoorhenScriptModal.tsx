@@ -12,13 +12,13 @@ import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
 import { useSelector } from "react-redux";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
-import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { Store } from "@reduxjs/toolkit";
 import { modalKeys } from "../../utils/enums";
 
 export const MoorhenScriptModal = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    store: ToolkitStore;
+    store: Store;
 }) => {
 
     const [code, setCode] = useState<string>("")

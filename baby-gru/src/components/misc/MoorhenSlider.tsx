@@ -16,9 +16,9 @@ type MoorhenSliderProps = {
     sliderTitle?: string;
     decimalPlaces?: number;
     showMinMaxVal?: boolean;
-    decrementButton?: JSX.Element;
+    decrementButton?: React.JSX.Element;
     isDisabled?: boolean;
-    incrementButton?: JSX.Element; 
+    incrementButton?: React.JSX.Element; 
 }
 
 export const MoorhenSlider = forwardRef<number, MoorhenSliderProps>((props, ref) => {

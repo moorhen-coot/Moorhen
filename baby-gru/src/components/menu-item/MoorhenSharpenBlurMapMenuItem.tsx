@@ -9,13 +9,13 @@ import { webGL } from "../../types/mgWebGL";
 import { batch, useDispatch, useSelector } from "react-redux";
 import { addMap } from "../../store/mapsSlice";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
-import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { Store } from "@reduxjs/toolkit";
 
 export const MoorhenSharpenBlurMapMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
-    store: ToolkitStore;
+    store: Store;
 }) => {
 
     const dispatch = useDispatch()

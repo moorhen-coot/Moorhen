@@ -16,7 +16,7 @@ type ValidationChartProps = {
     filterMapFunction?: (arg0: moorhen.Map) => boolean;
     fetchData: (arg0: number, arg1: number, arg2: string) => Promise<any>;
     getChart: (arg0: number, arg1: number, arg2: string, arg3: any) => any;
-    extraControlForm?: JSX.Element;
+    extraControlForm?: React.JSX.Element;
     extraControlFormValue?: any;
     enableChainSelect?: boolean;
     chartId: string;

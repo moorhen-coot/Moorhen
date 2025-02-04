@@ -12,7 +12,7 @@ import { useSnackbar } from "notistack";
 import { InfoOutlined, LastPageOutlined } from "@mui/icons-material";
 
 export const MoorhenCarbohydrateValidationModal = (props: moorhen.CollectedProps) => {        
-    const resizeNodeRef = useRef<HTMLDivElement>();
+    const resizeNodeRef = useRef<HTMLDivElement>(null);
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)

@@ -4,7 +4,7 @@ import { webGL } from "../types/mgWebGL";
 import { libcootApi } from "../types/libcoot";
 import pako from "pako"
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
-import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { Store } from "@reduxjs/toolkit";
 import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
 
 const _DEFAULT_CONTOUR_LEVEL = 0.8
@@ -27,7 +27,7 @@ const _DEFAULT_NEGATIVE_MAP_COLOUR = {r: 0.800000011920929, g: 0.400000005960464
  * @constructor
  * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
  * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance
- * @param {ToolkitStore} [store=undefined] - A Redux store. By default Moorhen Redux store will be used
+ * @param {Store} [store=undefined] - A Redux store. By default Moorhen Redux store will be used
  * @example
  * import { MoorhenMap } from "moorhen";
  * 
@@ -52,7 +52,7 @@ export class MoorhenMap implements moorhen.Map {
     name: string
     isEM: boolean
     molNo: number
-    store: ToolkitStore
+    store: Store
     commandCentre: React.RefObject<moorhen.CommandCentre>
     glRef: React.RefObject<webGL.MGWebGL>
     mapCentre: [number, number, number]
@@ -74,9 +74,9 @@ export class MoorhenMap implements moorhen.Map {
     defaultMapColour: {r: number, g: number, b: number};
     defaultPositiveMapColour: {r: number, g: number, b: number};
     defaultNegativeMapColour: {r: number, g: number, b: number};
-    autoReadMtz: (source: File, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore) => Promise<moorhen.Map[]>;
+    autoReadMtz: (source: File, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: Store) => Promise<moorhen.Map[]>;
 
-    constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore = MoorhenReduxStore) {
+    constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: Store = MoorhenReduxStore) {
         this.type = 'map'
         this.name = "unnamed"
         this.isEM = false
@@ -346,10 +346,10 @@ export class MoorhenMap implements moorhen.Map {
      * @param {File} source - The mtz file
      * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance 
      * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance 
-     * @param {ToolkitStore} store - The redux store
+     * @param {Store} store - The redux store
      * @returns {moorhen.Map[]} A list of maps resulting from reading the mtz file
      */
-    static async autoReadMtz(source: File, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore): Promise<moorhen.Map[]> {
+    static async autoReadMtz(source: File, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: Store): Promise<moorhen.Map[]> {
         const mtzWrapper = new MoorhenMtzWrapper()
         await mtzWrapper.loadHeaderFromFile(source)
 
