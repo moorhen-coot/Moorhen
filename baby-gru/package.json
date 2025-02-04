@@ -167,10 +167,6 @@
     "prop-types": "^15.8.1",
     "protobufjs": "^7.4.0",
     "protobufjs-cli": "^1.1.3",
-    "protvista-manager": "^3.8.22",
-    "protvista-navigation": "^3.8.22",
-    "protvista-sequence": "^3.8.22",
-    "protvista-track": "^3.8.22",
     "rc-tree": "4.2.2",
     "re-resizable": "^6.10.3",
     "react": "^19.0.0",
@@ -211,5 +207,11 @@
     "worker-loader": "^3.0.8",
     "y-websocket": "^1.5.4",
     "yjs": "^13.6.23"
+  },
+  "dependencies": {
+    "@nightingale-elements/nightingale-manager": "^5.4.1",
+    "@nightingale-elements/nightingale-navigation": "^5.4.1",
+    "@nightingale-elements/nightingale-sequence": "^5.4.1",
+    "@nightingale-elements/nightingale-track": "^5.4.1"
   }
 }

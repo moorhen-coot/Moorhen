@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from "react"
 import * as React from 'react';
-import ProtvistaManager from "protvista-manager";
-import ProtvistaSequence from "protvista-sequence";
-import ProtvistaNavigation from "protvista-navigation";
-import ProtvistaTrack from "protvista-track";
+import "@nightingale-elements/nightingale-manager";
+import "@nightingale-elements/nightingale-sequence";
+import "@nightingale-elements/nightingale-navigation";
+import "@nightingale-elements/nightingale-track";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { clickedResidueType } from '../card/MoorhenMoleculeCard';
@@ -11,18 +11,13 @@ import { useSelector, useDispatch } from 'react-redux';
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { cidToAtomInfo, cidToSpec } from "../../utils/utils";
 
-!window.customElements.get('protvista-navigation') && window.customElements.define("protvista-navigation", ProtvistaNavigation);
-!window.customElements.get('protvista-sequence') && window.customElements.define("protvista-sequence", ProtvistaSequence);
-!window.customElements.get('protvista-track') && window.customElements.define("protvista-track", ProtvistaTrack);
-!window.customElements.get('protvista-manager') && window.customElements.define("protvista-manager", ProtvistaManager);
-
 declare module "react" {
     namespace JSX {
         interface IntrinsicElements {
-          "protvista-manager": any;
-          "protvista-navigation": any;
-          "protvista-sequence": any;
-          "protvista-track": any;
+          "nightingale-manager": any;
+          "nightingale-navigation": any;
+          "nightingale-sequence": any;
+          "nightingale-track": any;
         }
     }
 }
@@ -32,26 +27,26 @@ declare module "react" {
         return [rulerStart, sequenceLength + rulerStart]
     }
     let middleIndex = Math.round((sequenceLength) / 2)
-    return [middleIndex - 20 + rulerStart, middleIndex + 20 + rulerStart]        
+    return [middleIndex - 20 + rulerStart, middleIndex + 20 + rulerStart]
 }
 
 const parseSequenceData = (sequence: moorhen.ResidueInfo[]): [number, number, string, number, number]=> {
     let rulerStart = sequence[0].resNum
     let finalSequence: string[] = Array(sequence[sequence.length-1].resNum).fill('-')
-    let seqLenght = sequence[sequence.length-1].resNum - rulerStart + 1
+    let seqLength = sequence[sequence.length-1].resNum - rulerStart + 1
 
     sequence.forEach(residue => {
         finalSequence[residue.resNum - 1] = residue.resCode
     })
 
-    return [rulerStart, seqLenght, finalSequence.join(''), ...calculateDisplayStartAndEnd(rulerStart, seqLenght)]
+    return [rulerStart, seqLength, finalSequence.join(''), ...calculateDisplayStartAndEnd(rulerStart, seqLength)]
 }
 
 type DisplaySettingsType = {
     rulerStart: number;
     start: number;
     end: number;
-    seqLenght: number;
+    seqLength: number;
     displaySequence: string;
 }
 
@@ -73,18 +68,18 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
     const navigationRef = useRef<any>(null);
     const selectedResiduesTrackRef = useRef<any>(null)
     const shiftKey = useRef<boolean>(false);
-    
-    const [initialRulerStart, initialSeqLenght, initialDisplaySequence, intialStart, initialEnd] = parseSequenceData(props.sequence.sequence)
-    
+
+    const [initialRulerStart, initialSeqLength, initialDisplaySequence, intialStart, initialEnd] = parseSequenceData(props.sequence.sequence)
+
     const [message, setMessage] = useState<string>("");
     const [displaySettings, setDisplaySettings] = useState<DisplaySettingsType>({
         rulerStart: initialRulerStart,
         start: intialStart,
         end: initialEnd,
-        seqLenght: initialSeqLenght,
+        seqLength: initialSeqLength,
         displaySequence: initialDisplaySequence
     });
-    
+
     const dispatch = useDispatch()
     const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo)
     const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch)
@@ -121,9 +116,9 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
 
         selectedResiduesTrackRef.current.data = dummyData
     }
-    
+
     /**
-     * Sets a range of highlighted residues in the sequence viewer 
+     * Sets a range of highlighted residues in the sequence viewer
      * @param {Number} start The first residues of the range
      * @param {Number} end The last residue of the range
     */
@@ -156,17 +151,17 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                 "locations": [{"fragments": fragments}]
             }
         ]
-      
+
         selectedResiduesTrackRef.current.data = selectedResiduesTrackData
     }
 
     /**
-     * Sets a highlighted residue in the sequence viewer 
+     * Sets a highlighted residue in the sequence viewer
      */
     const setHighlight = (resNum: string) => {
-        sequenceRef.current.trackHighlighter.changedCallBack('highlightstart', resNum)
-        sequenceRef.current.trackHighlighter.changedCallBack('highlightend', resNum)
-    } 
+        //sequenceRef.current.trackHighlighter.changedCallBack('highlightstart', resNum)
+        //sequenceRef.current.trackHighlighter.changedCallBack('highlightend', resNum)
+    }
 
     /**
      * Hook used to handle hovering events on the visualisation panel
@@ -181,13 +176,13 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
         if (chainId !== sequence.chain || !resInfo || hoveredAtom.molecule.molNo !== molecule.molNo) {
             return
         }
-        
+
         const resNum = resInfo.split('(')[0]
-        
+
         if (!resNum) {
             return
         }
-        
+
         setMessage(hoveredAtom.cid)
         setHighlight(resNum)
 
@@ -221,9 +216,9 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
             clearSelection()
         }
     }, [residueSelection])
-  
+
     /**
-     * Callback to handle changes in the protvista component
+     * Callback to handle changes in the nightingale component
      */
     const handleChange = useCallback((evt) => {
         setTimeout(() => {
@@ -239,7 +234,7 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                             isResidueSelection: true
                         }
                     })
-                    document.dispatchEvent(atomClicked)   
+                    document.dispatchEvent(atomClicked)
                 } else if (evt.detail.feature !== null && !(evt.detail.highlight.includes(','))) {
                     setClickedResidue({modelIndex:0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.start})
                     setSelectedResidues(null)
@@ -257,6 +252,7 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                     setClickedResidue({modelIndex: 0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.start})
                 }
             } else if (evt.detail.eventtype === "mouseover") {
+                console.log("mouseover")
                 if (evt.detail.feature !== null) {
                     let hoveredResidue = sequence.sequence.find(residue => residue.resNum === evt.detail.feature.start)
                     if (hoveredResidue) {
@@ -266,13 +262,13 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                 }
             } else if (evt.detail.eventtype === "mouseout") {
                 setMessage("")
-            }   
+            }
         }, 1)
     }, [clickedResidue, sequence, selectedResidues, molecule, setSelectedResidues, setClickedResidue])
 
 
     /**
-     * Hook used to control mouse events. Adds an event listener on the protvista-sequence component for mouse clicks 
+     * Hook used to control mouse events. Adds an event listener on the nightingale-sequence component for mouse clicks
      * and mouse over. It will also disable mouse double click.
      */
     useEffect(()=> {
@@ -288,7 +284,7 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
         const handleClick = (evt: MouseEvent) => {
             shiftKey.current = evt.shiftKey
         }
-        
+
         sequenceRef.current.addEventListener("click", handleClick)
         sequenceRef.current.addEventListener("change", handleChange)
         sequenceRef.current.addEventListener('dblclick', disableDoubleClick, true)
@@ -300,23 +296,30 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                 sequenceRef.current.removeEventListener('dblclick', disableDoubleClick, true);
             }
         };
-        
-    }, [handleChange]);    
-    
+
+    }, [handleChange]);
+
     /**
      * Hook used when the component mounts to set the display start and end.
      */
-    useEffect(()=> {       
-        sequenceRef.current._sequence = displaySettings.displaySequence
-        sequenceRef.current._displaystart = displaySettings.start
-        sequenceRef.current._displayend = displaySettings.end
-        sequenceRef.current.trackHighlighter.element._highlightcolor = hoveredResidueColor
-        navigationRef.current._displaystart = displaySettings.start
-        navigationRef.current._displayend = displaySettings.end
-        selectedResiduesTrackRef.current._displaystart = displaySettings.start
-        selectedResiduesTrackRef.current._displayend = displaySettings.end
-        selectedResiduesTrackRef.current.trackHighlighter.element._highlightcolor = transparentColor
-        
+    useEffect(()=> {
+        if(sequenceRef && customElements.whenDefined("nightingale-sequence")) {
+            sequenceRef.current.sequence = displaySettings.displaySequence
+        }
+    }, [displaySettings])
+
+    useEffect(()=> {
+        if(sequenceRef && customElements.whenDefined("nightingale-sequence")) {
+            sequenceRef.current.sequence = displaySettings.displaySequence
+            sequenceRef.current.displayStart = displaySettings.start
+            sequenceRef.current.displayEnd = displaySettings.end
+            //sequenceRef.current.trackHighlighter.element._highlightcolor = hoveredResidueColor
+            navigationRef.current.displayStart = displaySettings.start
+            navigationRef.current.displayEnd = displaySettings.end
+            selectedResiduesTrackRef.current.displayStart = displaySettings.start
+            selectedResiduesTrackRef.current.displayEnd = displaySettings.end
+            //selectedResiduesTrackRef.current.trackHighlighter.element._highlightcolor = transparentColor
+        }
     }, [])
 
     /**
@@ -331,24 +334,26 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
         if (!newSequence) {
             return
         }
-        
-        const [newRulerStart, newSeqLenght, newDisplaySequence, newStart, newEnd] = parseSequenceData(newSequence)
-        
+
+        const [newRulerStart, newSeqLength, newDisplaySequence, newStart, newEnd] = parseSequenceData(newSequence)
+
         if (newDisplaySequence !== displaySettings.displaySequence) {
-            sequenceRef.current.sequence = newDisplaySequence
-            navigationRef.current._rulerStart = newRulerStart
-            sequenceRef.current._createSequence()
-            setDisplaySettings({
-                rulerStart: newRulerStart,
-                start: newStart,
-                end: newEnd,
-                seqLenght: newSeqLenght,
-                displaySequence: newDisplaySequence     
-            })
-        } 
+            if(sequenceRef && customElements.whenDefined("nightingale-sequence")) {
+                sequenceRef.current.sequence = newDisplaySequence
+                navigationRef.current.rulerStart = newRulerStart
+                sequenceRef.current._createSequence()
+                setDisplaySettings({
+                    rulerStart: newRulerStart,
+                    start: newStart,
+                    end: newEnd,
+                    seqLength: newSeqLength,
+                    displaySequence: newDisplaySequence
+                })
+            }
+        }
 
     }, [updateSwitch])
-    
+
     /**
      * Hook used to clear the current selection if user selects residue from different chain
      */
@@ -376,35 +381,41 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
         <div className='align-items-center' style={{marginBottom:'0', padding:'0'}}>
             <span>{`${molecule.name}${message ? "" : "/" + sequence.chain}${message}`}</span>
             <div style={{width: '100%'}}>
-                <protvista-manager ref={managerRef}>
-                    <protvista-navigation 
+                <nightingale-manager ref={managerRef}>
+                    <nightingale-navigation
+                        style={{width: '50%'}}
                         ref={navigationRef}
-                        length={displaySettings.seqLenght}
-                        rulerStart={displaySettings.rulerStart}
-                        displaystart={displaySettings.start}
-                        displayend={displaySettings.end}
+                        length={displaySettings.seqLength}
+                        ruler-start={displaySettings.rulerStart}
+                        display-start={displaySettings.start}
+                        display-end={displaySettings.end}
+                        height={40}
+                        width={displaySettings.seqLength}
                         use-ctrl-to-zoom
                         />
-                    <protvista-sequence
+                    <nightingale-sequence
                         ref={sequenceRef}
                         sequence={displaySettings.displaySequence}
-                        length={displaySettings.seqLenght} 
+                        length={displaySettings.seqLength}
                         numberofticks="10"
-                        displaystart={displaySettings.start}
-                        displayend={displaySettings.end}
+                        display-start={displaySettings.start}
+                        display-end={displaySettings.end}
+                        height={40}
                         use-ctrl-to-zoom
                         />
-                    <protvista-track 
+                    <nightingale-track
                         ref={selectedResiduesTrackRef}
-                        length={displaySettings.seqLenght} 
-                        displaystart={displaySettings.start}
-                        displayend={displaySettings.end}
-                        height='10'
+                        length={displaySettings.seqLength}
+                        display-start={displaySettings.start}
+                        display-end={displaySettings.end}
+                        withHighlight={true}
+                        highlight-color={"red"}
+                        height={20}
                         use-ctrl-to-zoom
                         />
-                </protvista-manager>
-            </div>    
+                </nightingale-manager>
+            </div>
         </div>
-    )   
+    )
 }
 
