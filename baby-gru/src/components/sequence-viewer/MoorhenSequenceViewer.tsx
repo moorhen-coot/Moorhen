@@ -235,22 +235,9 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                         }
                     })
                     document.dispatchEvent(atomClicked)
-                //} else if (evt.detail.feature !== null && !(evt.detail.highlight.includes(','))) {
                 } else if (evt.detail.feature !== null) {
                     setClickedResidue({modelIndex:0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.position})
                     setSelectedResidues(null)
-                } else if (evt.detail.highlight.includes(',')) {
-                    let residues;
-                    if (clickedResidue === null) {
-                        setClickedResidue({modelIndex: 0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.position})
-                        return
-                    } else if (selectedResidues === null || selectedResidues.length < 2){
-                        residues = [clickedResidue.seqNum, evt.detail.feature.position]
-                    } else {
-                        residues = [evt.detail.feature.position, ...selectedResidues]
-                    }
-                    setSelectedResidues([Math.min(...residues), Math.max(...residues)])
-                    setClickedResidue({modelIndex: 0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.position})
                 }
             } else if (evt.detail.eventType === "mouseover") {
                 if (evt.detail.feature !== null) {
@@ -341,7 +328,7 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
             if(sequenceRef && customElements.whenDefined("nightingale-sequence")) {
                 sequenceRef.current.sequence = newDisplaySequence
                 navigationRef.current.rulerStart = newRulerStart
-                sequenceRef.current._createSequence()
+                sequenceRef.current.createSequence()
                 setDisplaySettings({
                     rulerStart: newRulerStart,
                     start: newStart,
