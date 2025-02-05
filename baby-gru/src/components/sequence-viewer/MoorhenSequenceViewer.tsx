@@ -222,8 +222,8 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
      */
     const handleChange = useCallback((evt) => {
         setTimeout(() => {
-            if (evt.detail.eventtype === "click") {
-                let residue = sequence.sequence.find(residue => residue.resNum === evt.detail.feature.start)
+            if (evt.detail.eventType === "click") {
+                let residue = sequence.sequence.find(residue => residue.resNum === evt.detail.feature.position)
                 if (!residue) {
                     return
                 } else if (shiftKey.current && props.useMainStateResidueSelections) {
@@ -235,32 +235,32 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                         }
                     })
                     document.dispatchEvent(atomClicked)
-                } else if (evt.detail.feature !== null && !(evt.detail.highlight.includes(','))) {
-                    setClickedResidue({modelIndex:0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.start})
+                //} else if (evt.detail.feature !== null && !(evt.detail.highlight.includes(','))) {
+                } else if (evt.detail.feature !== null) {
+                    setClickedResidue({modelIndex:0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.position})
                     setSelectedResidues(null)
                 } else if (evt.detail.highlight.includes(',')) {
                     let residues;
                     if (clickedResidue === null) {
-                        setClickedResidue({modelIndex: 0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.start})
+                        setClickedResidue({modelIndex: 0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.position})
                         return
                     } else if (selectedResidues === null || selectedResidues.length < 2){
-                        residues = [clickedResidue.seqNum, evt.detail.feature.start]
+                        residues = [clickedResidue.seqNum, evt.detail.feature.position]
                     } else {
-                        residues = [evt.detail.feature.start, ...selectedResidues]
+                        residues = [evt.detail.feature.position, ...selectedResidues]
                     }
                     setSelectedResidues([Math.min(...residues), Math.max(...residues)])
-                    setClickedResidue({modelIndex: 0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.start})
+                    setClickedResidue({modelIndex: 0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.position})
                 }
-            } else if (evt.detail.eventtype === "mouseover") {
-                console.log("mouseover")
+            } else if (evt.detail.eventType === "mouseover") {
                 if (evt.detail.feature !== null) {
-                    let hoveredResidue = sequence.sequence.find(residue => residue.resNum === evt.detail.feature.start)
+                    let hoveredResidue = sequence.sequence.find(residue => residue.resNum === evt.detail.feature.position)
                     if (hoveredResidue) {
                         let cid = hoveredResidue.cid
                         dispatch( setHoveredAtom({ molecule: molecule, cid: cid }) )
                     }
                 }
-            } else if (evt.detail.eventtype === "mouseout") {
+            } else if (evt.detail.eventType === "mouseout") {
                 setMessage("")
             }
         }, 1)
