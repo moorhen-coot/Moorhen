@@ -485,7 +485,7 @@ class molecules_container_js : public molecules_container_t {
 
         generic_3d_lines_bonds_box_t make_exportable_environment_bond_box(int imol, const std::string &chainID, int resNo,  const std::string &altLoc){
             coot::residue_spec_t resSpec(chainID,resNo,altLoc);
-            return molecules_container_t::make_exportable_environment_bond_box(imol,resSpec);
+            return molecules_container_t::make_exportable_environment_bond_box(imol,resSpec,3.5);
         }
 
         std::vector<std::pair<int, int>> get_consecutive_ranges(const std::vector<int> &numbers) {
