@@ -22,7 +22,7 @@ declare module "react" {
     }
 }
 
- const calculateDisplayStartAndEnd = (rulerStart: number, sequenceLength: number): [number, number] => {
+const calculateDisplayStartAndEnd = (rulerStart: number, sequenceLength: number): [number, number] => {
     if (sequenceLength <= 40) {
         return [rulerStart, sequenceLength + rulerStart]
     }
