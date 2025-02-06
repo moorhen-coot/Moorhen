@@ -86,9 +86,6 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
 
-    const hoveredResidueColor = '#FFEB3B66'
-    const transparentColor = '#FFEB3B00'
-
     const {
         molecule, sequence, clickedResidue,
         setClickedResidue, selectedResidues, setSelectedResidues
@@ -159,8 +156,10 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
      * Sets a highlighted residue in the sequence viewer
      */
     const setHighlight = (resNum: string) => {
-        //sequenceRef.current.trackHighlighter.changedCallBack('highlightstart', resNum)
-        //sequenceRef.current.trackHighlighter.changedCallBack('highlightend', resNum)
+        if (sequenceRef.current === null) {
+            return;
+        }
+        sequenceRef.current.highlight = resNum+":"+resNum
     }
 
     /**
@@ -243,6 +242,7 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                 if (evt.detail.feature !== null) {
                     let hoveredResidue = sequence.sequence.find(residue => residue.resNum === evt.detail.feature.position)
                     if (hoveredResidue) {
+                        sequenceRef.current.highlight = evt.detail.feature.position+":"+evt.detail.feature.position
                         let cid = hoveredResidue.cid
                         dispatch( setHoveredAtom({ molecule: molecule, cid: cid }) )
                     }
@@ -300,12 +300,10 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
             sequenceRef.current.sequence = displaySettings.displaySequence
             sequenceRef.current.displayStart = displaySettings.start
             sequenceRef.current.displayEnd = displaySettings.end
-            //sequenceRef.current.trackHighlighter.element._highlightcolor = hoveredResidueColor
             navigationRef.current.displayStart = displaySettings.start
             navigationRef.current.displayEnd = displaySettings.end
             selectedResiduesTrackRef.current.displayStart = displaySettings.start
             selectedResiduesTrackRef.current.displayEnd = displaySettings.end
-            //selectedResiduesTrackRef.current.trackHighlighter.element._highlightcolor = transparentColor
         }
     }, [])
 
@@ -395,9 +393,7 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                         length={displaySettings.seqLength}
                         display-start={displaySettings.start}
                         display-end={displaySettings.end}
-                        withHighlight={true}
-                        highlight-color={"red"}
-                        height={20}
+                        height={10}
                         use-ctrl-to-zoom
                         />
                 </nightingale-manager>
