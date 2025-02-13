@@ -592,6 +592,15 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {moorhen.Molecule} New molecule instance
      */
     async copyMolecule(doRedraw: boolean = true): Promise<moorhen.Molecule> {
+        const state = this.store.getState()
+        console.log("copyMolecule state",state)
+        const useGemmi = state.generalStates.useGemmi
+        console.log("copyMolecule useGemmi",useGemmi)
+        const use_gemmi_response = await this.commandCentre.current.cootCommand({
+            returnType: "status",
+            command: 'set_use_gemmi',
+            commandArgs: [useGemmi],
+        }, true)
         let coordString = await this.getAtoms()
         let newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
         newMolecule.name = `${this.name}-copy`
@@ -851,6 +860,15 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.name = name.replace(pdbRegex, "").replace(entRegex, "").replace(cifRegex, "").replace(mmcifRegex, "");
 
         try {
+            const state = this.store.getState()
+            console.log("loadToCootFromString state",state)
+            const useGemmi = state.generalStates.useGemmi
+            console.log("loadToCootFromString useGemmi",useGemmi)
+            const use_gemmi_response = await this.commandCentre.current.cootCommand({
+                returnType: "status",
+                command: 'set_use_gemmi',
+                commandArgs: [useGemmi],
+            }, true)
             this.updateGemmiStructure(coordData as string)
             this.atomsDirty = false
             const response = await this.commandCentre.current.cootCommand({
@@ -962,12 +980,16 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {string}  A string representation file contents
      */
     async getAtoms(format?: moorhen.coorFormats): Promise<string> {
+        const state = this.store.getState()
+        const useGemmi = state.generalStates.useGemmi
         let cootCommand = 'molecule_to_PDB_string'
         if (format) {
             cootCommand = format === 'mmcif' ? 'molecule_to_mmCIF_string' : 'molecule_to_PDB_string'
         } else if (this.coordsFormat) {
             cootCommand = this.coordsFormat === 'mmcif' ? 'molecule_to_mmCIF_string' : 'molecule_to_PDB_string'
         }
+        if(useGemmi && cootCommand === 'molecule_to_mmCIF_string')
+            cootCommand = 'molecule_to_mmCIF_string_with_gemmi'
         const response = await this.commandCentre.current.cootCommand({
             returnType: "string",
             command: cootCommand,
