@@ -5,12 +5,13 @@ import { moorhen } from '../../types/moorhen';
 
 export const MoorhenUnmodelledBlobs = (props: moorhen.CollectedProps) => {
 
+    //FIXME - RMSD cutoff should be user settable.
     async function fetchCardData(selectedModel: number, selectedMap: number): Promise<libcootApi.InterestingPlaceDataJS[]> {
         const inputData = {
             message:'coot_command',
             command: "unmodelled_blobs", 
             returnType:'interesting_places_data',
-            commandArgs:[selectedModel, selectedMap]
+            commandArgs:[selectedModel, selectedMap, 1.4]
         }
         let response = await props.commandCentre.current.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.InterestingPlaceDataJS[]>
         let blobs = response.data.result.result
