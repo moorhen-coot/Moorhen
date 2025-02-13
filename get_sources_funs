@@ -54,7 +54,7 @@ getclipper() {
         echo "Unpacking clipper source"
         tar xf clipper-gemmi.tar.gz
         mv clipper-gemmi clipper
-        patch -p0 < ../patches/clipper-fftw3-scaling.patch 
+        patch -p0 < ../patches/clipper-emcc4.patch
     fi
     echo
 }
