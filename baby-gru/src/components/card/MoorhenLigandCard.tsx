@@ -154,7 +154,7 @@ export const MoorhenLigandCard = (props: {
                              let link: any = document.getElementById('download_svg_link');
                              if (!link) {
                                  link = document.createElement('a');
-                                 link.id = 'download_image_link';
+                                 link.id = 'download_svg_link';
                                  document.body.appendChild(link);
                              }
                              const file = new Blob([ligand.svg], { type: 'image/svg+xml' });

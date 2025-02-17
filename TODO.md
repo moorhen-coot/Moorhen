@@ -8,14 +8,16 @@ A JavaScript molecular graphics program
 - [x] Edit occupancy should be reflected in atom info card above. It only seems to work after some other edit.
 - [x] Fix that updateLabels increases number of buffers.
 - [x] Fix that turning on additional representations slows down panning, even if they are subsequently turned off.
-- [X] Change ligand SVG to RDKit (for now).
-- [X] Download SVG from ligand card.
-- [ ] Download SVG from carbohydrate card.
+- [x] Change ligand SVG to RDKit (for now).
+- [x] Download SVG from ligand card.
+- [x] Download SVG from carbohydrate card.
+- [ ] Copy SMILES button.
+- [ ] Dishy bases/sticks with selections.
+
+### Todo
 - [ ] Undo button on a molecule loaded from SMILES/PubChem with name > 3 letters breaks the structure.
 - [ ] "Somehow" determine PLDDT vs B-factor in SliceNDice
 - [ ] Add Zoom to "Show controls"
-
-### Todo
 - [ ] Prosmart (this is complicated because of the subprocess model).
   - [ ] Results parsing for starters.
 - [ ] CCP4MG/MrBump. As above results parsing would be good start.
