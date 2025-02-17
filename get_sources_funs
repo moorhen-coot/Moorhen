@@ -55,6 +55,7 @@ getclipper() {
         tar xf clipper-gemmi.tar.gz
         mv clipper-gemmi clipper
         patch -p0 < ../patches/clipper-emcc4.patch
+        patch -p0 < ../patches/clipper-gemmi-minimol.patch
     fi
     echo
 }
