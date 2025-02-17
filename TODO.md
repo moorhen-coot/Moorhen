@@ -9,7 +9,7 @@ A JavaScript molecular graphics program
 - [x] Fix that updateLabels increases number of buffers.
 - [x] Fix that turning on additional representations slows down panning, even if they are subsequently turned off.
 - [X] Change ligand SVG to RDKit (for now).
-- [ ] Download SVG from ligand card.
+- [X] Download SVG from ligand card.
 - [ ] Download SVG from carbohydrate card.
 - [ ] Undo button on a molecule loaded from SMILES/PubChem with name > 3 letters breaks the structure.
 - [ ] "Somehow" determine PLDDT vs B-factor in SliceNDice
