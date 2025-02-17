@@ -32,6 +32,8 @@ export const MoorhenLigandCard = (props: {
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
+    const [buttonText, setButtonText] = useState<string>("copy");
+
     const defaultValidationStyles = [
         'contact_dots', 'chemical_features', 'ligand_environment', 'ligand_validation'
     ]
@@ -173,7 +175,17 @@ export const MoorhenLigandCard = (props: {
                         </Stack>
                     </Col>
                 </Row>
-            <div style={{ display: "flex", justifyContent: "left", color: isDark ? 'white' : 'black' }}>{ligand.smiles}</div>
+            <p className="fs-5" style={{ display: "flex", justifyContent: "left", color: isDark ? 'white' : 'black' }}>{ligand.smiles}&nbsp;&nbsp;
+            <Button className="fs-6" onClick={() => {
+                navigator.clipboard.writeText(ligand.smiles)
+                setButtonText("copied")
+                setTimeout(() => {
+                    setButtonText("copy")
+                }, 700);
+            }}>
+            {buttonText}
+            </Button>
+            </p>
             </Card.Body>
         </Card>
 }
