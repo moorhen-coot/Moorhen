@@ -8,9 +8,9 @@ A JavaScript molecular graphics program
 - [x] Edit occupancy should be reflected in atom info card above. It only seems to work after some other edit.
 - [x] Fix that updateLabels increases number of buffers.
 - [x] Fix that turning on additional representations slows down panning, even if they are subsequently turned off.
-- [ ] Change ligand SVG to RDKit?
-- [ ] Download SVG from ligand card
-- [ ] Download SVG from carbohydrate card
+- [X] Change ligand SVG to RDKit (for now).
+- [ ] Download SVG from ligand card.
+- [ ] Download SVG from carbohydrate card.
 - [ ] Undo button on a molecule loaded from SMILES/PubChem with name > 3 letters breaks the structure.
 - [ ] "Somehow" determine PLDDT vs B-factor in SliceNDice
 - [ ] Add Zoom to "Show controls"
