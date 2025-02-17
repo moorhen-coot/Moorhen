@@ -374,7 +374,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 }
                 {(ruleType === 'chain' || ruleType === 'residue-range')  &&
                 <div style={{justifyContent: 'center', display: 'flex'}}>
-                    <MoorhenChainSelect molecules={molecules} onChange={(evt) => setSelectedChain(evt.target.value)} selectedCoordMolNo={props.molecule.molNo} ref={chainSelectRef} allowedTypes={[1, 2]}/>
+                    <MoorhenChainSelect molecules={molecules} onChange={(evt) => setSelectedChain(evt.target.value)} selectedCoordMolNo={props.molecule.molNo} ref={chainSelectRef} allowedTypes={[1, 2, 3, 4, 5]}/>
                 </div>
                 }
                 {ruleType === 'residue-range' &&
