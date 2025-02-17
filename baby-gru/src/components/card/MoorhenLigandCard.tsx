@@ -2,6 +2,7 @@ import { moorhen } from "../../types/moorhen";
 import { useSelector } from 'react-redux';
 import { Button, Card, Col, Row, Stack, ToggleButton } from "react-bootstrap";
 import { useEffect, useRef, useState } from "react";
+import Tooltip from '@mui/material/Tooltip';
 import { CenterFocusStrongOutlined, HelpOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined, DownloadOutlined } from "@mui/icons-material";
 import parse from 'html-react-parser'
 import { convertViewtoPx, guid } from "../../utils/utils";
@@ -32,7 +33,7 @@ export const MoorhenLigandCard = (props: {
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
-    const [buttonText, setButtonText] = useState<string>("copy");
+    const [textCopied, setTextCopied] = useState<boolean>(false);
 
     const defaultValidationStyles = [
         'contact_dots', 'chemical_features', 'ligand_environment', 'ligand_validation'
@@ -176,15 +177,27 @@ export const MoorhenLigandCard = (props: {
                     </Col>
                 </Row>
             <p className="fs-5" style={{ display: "flex", justifyContent: "left", color: isDark ? 'white' : 'black' }}>{ligand.smiles}&nbsp;&nbsp;
-            <Button className="fs-6" onClick={() => {
+            {(!textCopied&&ligand.smiles) &&
+            <Tooltip title="Copy SMILES to clipboard" placement="right-end">
+            <Button variant="secondary" className="fs-6" onClick={() => {
                 navigator.clipboard.writeText(ligand.smiles)
-                setButtonText("copied")
+                setTextCopied(true)
                 setTimeout(() => {
-                    setButtonText("copy")
-                }, 700);
+                    setTextCopied(false)
+                }, 900);
             }}>
-            {buttonText}
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-clipboard" viewBox="0 0 16 16">
+  <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z"/>
+  <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z"/>
+</svg>
             </Button>
+            </Tooltip>
+            }
+            {(textCopied&&ligand.smiles) &&
+            <Button variant="secondary" className="fs-6">
+              {parse("&check;")}
+            </Button>
+            }
             </p>
             </Card.Body>
         </Card>
