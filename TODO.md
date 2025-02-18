@@ -11,7 +11,7 @@ A JavaScript molecular graphics program
 - [x] Change ligand SVG to RDKit (for now).
 - [x] Download SVG from ligand card.
 - [x] Download SVG from carbohydrate card.
-- [ ] Copy SMILES button.
+- [x] Copy SMILES button.
 - [ ] Dishy bases/sticks with selections.
 
 ### Todo

@@ -6,6 +6,7 @@ import { CenterFocusStrongOutlined, HelpOutlined, RadioButtonCheckedOutlined, Ra
 import parse from 'html-react-parser'
 import { convertViewtoPx, guid } from "../../utils/utils";
 import { LinearProgress, Popover, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
+import { MoorhenCopyToClipBoard } from '../misc/MoorhenCopyToClipBoard';
 
 export const MoorhenLigandCard = (props: {
     ligand: moorhen.LigandInfo;
@@ -173,7 +174,12 @@ export const MoorhenLigandCard = (props: {
                         </Stack>
                     </Col>
                 </Row>
-            <div style={{ display: "flex", justifyContent: "left", color: isDark ? 'white' : 'black' }}>{ligand.smiles}</div>
+            <p className="fs-5" style={{ display: "flex", justifyContent: "left", color: isDark ? 'white' : 'black' }}>{ligand.smiles}
+            &nbsp;&nbsp;
+            {ligand.smiles &&
+            <MoorhenCopyToClipBoard text={ligand.smiles} tooltip="Copy SMILES to clipboard"/>
+            }
+            </p>
             </Card.Body>
         </Card>
 }
