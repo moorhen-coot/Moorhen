@@ -11,6 +11,7 @@ import { MoorhenValidationPlotModal } from '../modal/MoorhenValidationPlotModal'
 import { MoorhenMmrrccModal } from '../modal/MoorhenMmrrccModal';
 import { MoorhenWaterValidationModal } from '../modal/MoorhenWaterValidationModal';
 import { MoorhenLigandValidationModal } from '../modal/MoorhenLigandValidationModal';
+import { MoorhenMrBumpModal } from '../modal/MoorhenMrBumpModal';
 import { MoorhenCarbohydrateValidationModal } from '../modal/MoorhenCarbohydrateValidationModal';
 import { MoorhenPepFlipsModal } from '../modal/MoorhenPepFlipsModal';
 import { MoorhenUnmodelledBlobsModal } from '../modal/MoorhenUnmodelledBlobsModal';
@@ -36,6 +37,7 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
     const showMmrrccModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.MMRRCC))
     const showWaterValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.WATER_VALIDATION))
     const showLigandValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.LIGAND_VALIDATION))
+    const showMoorhenMrBumpModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.MRBUMP))
     const showFillPartialResValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.FILL_PART_RES))
     const showPepFlipsValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.PEPTIDE_FLIPS))
     const showUnmodelledBlobsModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.UNMODELLED_BLOBS))
@@ -93,6 +95,10 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
 
         {showLigandValidationModal &&
             <MoorhenLigandValidationModal {...props} />
+        }
+
+        {showMoorhenMrBumpModal &&
+            <MoorhenMrBumpModal {...props} />
         }
 
         {showCarbohydrateValidationModal &&
