@@ -22,6 +22,7 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
 
     const dispatch = useDispatch()
 
+    //TODO - useSelector is need here if state is to be restored when closing/opening this component
     const [mrBumpDomains, setMrBumpDomains] = useState<{}>({})
 
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
@@ -131,21 +132,23 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
         const theMols = val as moorhen.Molecule[]
         const mols = theMols.map(item => {
             return (
-                <Row style={{ padding: '0', margin: '0' }}>
-                    <Col key={item.name}>
+                <Row key={'row'+item.name} style={{ padding: '0', margin: '0' }}>
+                    <Col key={'row'+item.name}>
                     {item.name}
                     </Col>
                 </Row>
             )
         })
         return (
-            <Row style={{ padding: '0', margin: '0' }}>
-                <Col key={key}>
+            <Row key={'row'+key} style={{ padding: '0', margin: '0' }}>
+                <Col key={'col'+key}>
                 {key}{mols}
                 </Col>
             </Row>
         )
     })
+
+    console.log(mrBumpDomains)
 
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.MRBUMP}
