@@ -1,17 +1,17 @@
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
-import { moorhen } from "../../types/moorhen";
-import { useRef } from "react";
-import { Form,Row } from "react-bootstrap";
-import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
-import { useSelector, useDispatch } from "react-redux";
-import { modalKeys } from "../../utils/enums";
-import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
+import { moorhen } from "../../types/moorhen"
+import { useRef, useState } from "react"
+import { Form, Row, Col, Stack  } from "react-bootstrap"
+import { convertRemToPx, convertViewtoPx} from '../../utils/utils'
+import { useSelector, useDispatch } from "react-redux"
+import { modalKeys } from "../../utils/enums"
+import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import { readTextFile } from "../../utils/utils"
 import { useSnackbar } from "notistack"
-import { addMoleculeList } from "../../store/moleculesSlice";
+import { addMoleculeList } from "../../store/moleculesSlice"
 
 export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
-    const resizeNodeRef = useRef<HTMLDivElement>();
+    const resizeNodeRef = useRef<HTMLDivElement>()
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
@@ -21,6 +21,8 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
     const { enqueueSnackbar } = useSnackbar()
 
     const dispatch = useDispatch()
+
+    const [mrBumpDomains, setMrBumpDomains] = useState<{}>({})
 
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
@@ -102,9 +104,48 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
         dispatch(addMoleculeList(molecules))
         newMolecules.at(-1).molecule.centreOn('/*/*/*/*', true)
 
-        console.log(newMolecules)
+        const theDomains = {}
+        for(const [key, value] of Object.entries(domains)){
+            theDomains[key] = []
+            for (const newMolecule of newMolecules) {
+                if(newMolecule.domain === key){
+                    theDomains[key].push(newMolecule.molecule)
+                }
+            }
+        }
+
+        setMrBumpDomains(theDomains)
 
     }
+
+    const footerContent = <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'space-between', alignContent: 'space-between', justifyContent: 'space-between', width: '100%' }}>
+        <Stack gap={2} direction='horizontal' style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
+            <Form.Group style={{ width: '20rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadMtBump" className="mb-3">
+            {/* @ts-expect-error */}
+            <Form.Control ref={filesRef} directory="" webkitdirectory="true" type="file" multiple={true} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { loadMrBumpFiles(e.target.files) }}/>
+            </Form.Group>
+        </Stack>
+    </Stack>
+
+    const domains = Object.entries(mrBumpDomains).map(([key, val]) => {
+        const theMols = val as moorhen.Molecule[]
+        const mols = theMols.map(item => {
+            return (
+                <Row style={{ padding: '0', margin: '0' }}>
+                    <Col key={item.name}>
+                    {item.name}
+                    </Col>
+                </Row>
+            )
+        })
+        return (
+            <Row style={{ padding: '0', margin: '0' }}>
+                <Col key={key}>
+                {key}{mols}
+                </Col>
+            </Row>
+        )
+    })
 
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.MRBUMP}
@@ -118,17 +159,19 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
                 overflowY='auto'
                 overflowX='auto'
                 headerTitle='MrBump results'
-                footer={null}
+                footer={footerContent}
                 resizeNodeRef={resizeNodeRef}
                 body={
-                    <div style={{height: '100%'}} >
-                        <Row className={"big-validation-tool-container-row"}>
-                             <Form.Group style={{ width: '20rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadMtBump" className="mb-3">
-                                 {/* @ts-expect-error */}
-                                 <Form.Control ref={filesRef} directory="" webkitdirectory="true" type="file" multiple={true} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { loadMrBumpFiles(e.target.files) }}/>
-                             </Form.Group>
-                        </Row>
-                    </div>
+                    <>
+                       Domains
+                       {(Object.entries(mrBumpDomains).length>0) &&
+                       <Row style={{ padding: '0', margin: '0' }}>
+                       <Col>
+                       {domains}
+                       </Col>
+                       </Row>
+                       }
+                    </>
                 }
             />
 }
