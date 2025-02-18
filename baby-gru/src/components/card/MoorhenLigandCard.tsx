@@ -8,6 +8,37 @@ import parse from 'html-react-parser'
 import { convertViewtoPx, guid } from "../../utils/utils";
 import { LinearProgress, Popover, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
 
+export const MoorhenCopyToClipBoard = (props: {
+    text: string;
+    tooltip: string;
+}) => {
+    const [textCopied, setTextCopied] = useState<boolean>(false)
+
+    return <>
+            {!textCopied &&
+            <Tooltip title={props.tooltip} placement="right-end">
+            <Button variant="secondary" className="fs-6" onClick={() => {
+                navigator.clipboard.writeText(props.text)
+                setTextCopied(true)
+                setTimeout(() => {
+                    setTextCopied(false)
+                }, 900);
+            }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-clipboard" viewBox="0 0 16 16">
+  <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z"/>
+  <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z"/>
+</svg>
+            </Button>
+            </Tooltip>
+            }
+            {textCopied &&
+            <Button variant="secondary" className="fs-6">
+              {parse("&check;")}
+            </Button>
+            }
+            </>
+}
+
 export const MoorhenLigandCard = (props: {
     ligand: moorhen.LigandInfo;
     molecule: moorhen.Molecule;
@@ -176,27 +207,10 @@ export const MoorhenLigandCard = (props: {
                         </Stack>
                     </Col>
                 </Row>
-            <p className="fs-5" style={{ display: "flex", justifyContent: "left", color: isDark ? 'white' : 'black' }}>{ligand.smiles}&nbsp;&nbsp;
-            {(!textCopied&&ligand.smiles) &&
-            <Tooltip title="Copy SMILES to clipboard" placement="right-end">
-            <Button variant="secondary" className="fs-6" onClick={() => {
-                navigator.clipboard.writeText(ligand.smiles)
-                setTextCopied(true)
-                setTimeout(() => {
-                    setTextCopied(false)
-                }, 900);
-            }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-clipboard" viewBox="0 0 16 16">
-  <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z"/>
-  <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z"/>
-</svg>
-            </Button>
-            </Tooltip>
-            }
-            {(textCopied&&ligand.smiles) &&
-            <Button variant="secondary" className="fs-6">
-              {parse("&check;")}
-            </Button>
+            <p className="fs-5" style={{ display: "flex", justifyContent: "left", color: isDark ? 'white' : 'black' }}>{ligand.smiles}
+            &nbsp;&nbsp;
+            {ligand.smiles &&
+            <MoorhenCopyToClipBoard text={ligand.smiles} tooltip="Copy SMILES to clipboard"/>
             }
             </p>
             </Card.Body>
