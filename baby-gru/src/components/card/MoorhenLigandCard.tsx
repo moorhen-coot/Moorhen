@@ -33,8 +33,6 @@ export const MoorhenLigandCard = (props: {
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
-    const [textCopied, setTextCopied] = useState<boolean>(false);
-
     const defaultValidationStyles = [
         'contact_dots', 'chemical_features', 'ligand_environment', 'ligand_validation'
     ]
