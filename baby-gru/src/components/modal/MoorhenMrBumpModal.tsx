@@ -10,6 +10,7 @@ import { readTextFile } from "../../utils/utils"
 import { useSnackbar } from "notistack"
 import { addMoleculeList } from "../../store/moleculesSlice"
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings, InfoOutlined } from '@mui/icons-material';
+import { Slider,Typography } from '@mui/material';
 
 export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
     const resizeNodeRef = useRef<HTMLDivElement>()
@@ -172,6 +173,17 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
                     <ListGroup className="list-group-flush">
                         {mols}
                     </ListGroup>
+                    <Card.Footer>
+                    <Typography gutterBottom style={{ display: 'flex', justifyContent: 'left'}}>Variance</Typography>
+                    <Slider
+                         aria-label="Small steps"
+                         defaultValue={110}
+                         step={10}
+                         marks
+                         min={10}
+                         max={110}
+                         valueLabelDisplay="auto"/>
+                    </Card.Footer>
                 </Card>
                 </ListGroup.Item>
         )
