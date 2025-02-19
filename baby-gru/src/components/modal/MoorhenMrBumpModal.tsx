@@ -1,7 +1,7 @@
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen"
 import { useRef, useState } from "react"
-import { Form, Row, Col, Stack  } from "react-bootstrap"
+import { Form, Row, Col, Stack, Card, Container, ListGroup, Button  } from "react-bootstrap"
 import { convertRemToPx, convertViewtoPx} from '../../utils/utils'
 import { useSelector, useDispatch } from "react-redux"
 import { modalKeys } from "../../utils/enums"
@@ -9,12 +9,14 @@ import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import { readTextFile } from "../../utils/utils"
 import { useSnackbar } from "notistack"
 import { addMoleculeList } from "../../store/moleculesSlice"
+import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings, InfoOutlined } from '@mui/icons-material';
 
 export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
     const resizeNodeRef = useRef<HTMLDivElement>()
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
     const filesRef = useRef<null | HTMLInputElement>(null)
 
@@ -132,23 +134,48 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
         const theMols = val as moorhen.Molecule[]
         const mols = theMols.map(item => {
             return (
-                <Row key={'row'+item.name} style={{ padding: '0', margin: '0' }}>
-                    <Col key={'row'+item.name}>
+                <ListGroup.Item key={'row'+item.name}>
+                <Stack gap={2} direction='horizontal'>
+                <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left'}}>
                     {item.name}
-                    </Col>
-                </Row>
+                </Col>
+                <Col style={{ display: 'flex', justifyContent: 'right' }}>
+                <Button key={1} size="sm" variant="outlined">
+                <VisibilityOutlined />
+                </Button>
+                <Button key={2} size="sm" variant="outlined">
+                <CenterFocusWeakOutlined />
+                </Button>
+                <Button key={3} size="sm" variant="outlined">
+                <DownloadOutlined />
+                </Button>
+                </Col>
+                </Stack>
+                </ListGroup.Item>
             )
         })
         return (
-            <Row key={'row'+key} style={{ padding: '0', margin: '0' }}>
-                <Col key={'col'+key}>
-                {key}{mols}
-                </Col>
-            </Row>
+                <ListGroup.Item key={'cardy'+key}>
+                <Card key={'col'+key}>
+                    <Card.Title style={{ backgroundColor: isDark ? '#adb5bd' : '#ecf0f1'}}>
+                    <Stack gap={2} direction='horizontal'>
+                    <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left'}}>
+                    Range {key}
+                    </Col>
+                    <Col style={{ display: 'flex', justifyContent: 'right' }}>
+                    <Button key={1} size="sm" variant="outlined">
+                    <VisibilityOutlined />
+                    </Button>
+                    </Col>
+                    </Stack>
+                    </Card.Title>
+                    <ListGroup className="list-group-flush">
+                        {mols}
+                    </ListGroup>
+                </Card>
+                </ListGroup.Item>
         )
     })
-
-    console.log(mrBumpDomains)
 
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.MRBUMP}
@@ -165,16 +192,15 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
                 footer={footerContent}
                 resizeNodeRef={resizeNodeRef}
                 body={
-                    <>
-                       Domains
+                    <Container>
+                    <Row>
                        {(Object.entries(mrBumpDomains).length>0) &&
-                       <Row style={{ padding: '0', margin: '0' }}>
-                       <Col>
+                    <ListGroup>
                        {domains}
-                       </Col>
-                       </Row>
+                    </ListGroup>
                        }
-                    </>
+                    </Row>
+                    </Container>
                 }
             />
 }
