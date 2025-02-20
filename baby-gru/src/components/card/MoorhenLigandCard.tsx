@@ -2,10 +2,11 @@ import { moorhen } from "../../types/moorhen";
 import { useSelector } from 'react-redux';
 import { Button, Card, Col, Row, Stack, ToggleButton } from "react-bootstrap";
 import { useEffect, useRef, useState } from "react";
-import { CenterFocusStrongOutlined, HelpOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined } from "@mui/icons-material";
+import { CenterFocusStrongOutlined, HelpOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined, DownloadOutlined } from "@mui/icons-material";
 import parse from 'html-react-parser'
 import { convertViewtoPx, guid } from "../../utils/utils";
 import { LinearProgress, Popover, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
+import { MoorhenCopyToClipBoard } from '../misc/MoorhenCopyToClipBoard';
 
 export const MoorhenLigandCard = (props: {
     ligand: moorhen.LigandInfo;
@@ -149,6 +150,21 @@ export const MoorhenLigandCard = (props: {
                             {validationStyles.map(style => {
                                 return getToggleButton(style, validationLabels[style])
                             })}
+                            {ligand.svg && <Button variant="secondary" style={{marginRight:'0.5rem', display: 'flex', justifyContent: 'left'}}
+                             onClick={() => {
+                             let link: any = document.getElementById('download_svg_link');
+                             if (!link) {
+                                 link = document.createElement('a');
+                                 link.id = 'download_svg_link';
+                                 document.body.appendChild(link);
+                             }
+                             const file = new Blob([ligand.svg], { type: 'image/svg+xml' });
+                             link.href = URL.createObjectURL(file);
+                             link.download = ligand.resName + ".svg";
+                             link.click()
+                             }}>
+                            <DownloadOutlined/>Download image (svg)
+                            </Button>}
                             {ligand.chem_comp_info?.length > 0 &&
                             <Button  variant="secondary" style={{marginRight:'0.5rem', display: 'flex', justifyContent: 'left'}} onClick={() => setShowInfoTable((prev) => !prev)}>
                                 <HelpOutlined style={{marginRight: '0.5rem'}}/>
@@ -158,7 +174,12 @@ export const MoorhenLigandCard = (props: {
                         </Stack>
                     </Col>
                 </Row>
-            <div style={{ display: "flex", justifyContent: "left", color: isDark ? 'white' : 'black' }}>{ligand.smiles}</div>
+            <p className="fs-5" style={{ display: "flex", justifyContent: "left", color: isDark ? 'white' : 'black' }}>{ligand.smiles}
+            &nbsp;&nbsp;
+            {ligand.smiles &&
+            <MoorhenCopyToClipBoard text={ligand.smiles} tooltip="Copy SMILES to clipboard"/>
+            }
+            </p>
             </Card.Body>
         </Card>
 }

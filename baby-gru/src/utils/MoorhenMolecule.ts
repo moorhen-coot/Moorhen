@@ -2442,7 +2442,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         else
             coot_bg_type = "dark-bonds/transparent-bg"
 
-        const use_rdkit = false
+        const use_rdkit = true
 
         const result = await this.commandCentre.current.cootCommand({
                 returnType: "string",
