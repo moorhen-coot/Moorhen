@@ -24,6 +24,10 @@
 #include <utility>
 #include <cctype>
 #include <gemmi/mmdb.hpp>
+#include <gemmi/mmcif.hpp>
+#include <gemmi/to_mmcif.hpp>
+#include <gemmi/to_cif.hpp>
+
 
 #include "slicendice_cpp/kmeans.h"
 #include "slicendice_cpp/agglomerative.h"
@@ -210,6 +214,16 @@ bool isSugar(const std::string &resName);
 class molecules_container_js : public molecules_container_t {
     public:
         explicit molecules_container_js(bool verbose=true) : molecules_container_t(verbose) {
+        }
+
+        std::string molecule_to_mmCIF_string_with_gemmi(int imol){
+            mmdb::Manager *mol = get_mol(imol);
+            auto st = gemmi::copy_from_mmdb(mol);
+            std::ostringstream os;
+            gemmi::cif::write_cif_to_stream(os, gemmi::make_mmcif_document(st));
+            os.flush();
+            std::string s = os.str();
+            return s;
         }
 
         std::vector<std::pair<std::string,int>> slicendice_slice(int imol, int nclusters, const std::string &clustering_method, const std::string &pae_contents_string){
@@ -1705,6 +1719,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("replace_molecule_by_model_from_string", &molecules_container_js::replace_molecule_by_model_from_string)
     .function("read_dictionary_string", &molecules_container_js::read_dictionary_string)
     .function("slicendice_slice", &molecules_container_js::slicendice_slice)
+    .function("molecule_to_mmCIF_string_with_gemmi", &molecules_container_js::molecule_to_mmCIF_string_with_gemmi)
     ;
     value_object<texture_as_floats_t>("texture_as_floats_t")
     .field("width", &texture_as_floats_t::width)

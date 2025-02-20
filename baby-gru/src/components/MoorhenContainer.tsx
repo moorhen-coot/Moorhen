@@ -197,6 +197,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const maxBackupCount = useSelector((state: moorhen.State) => state.backupSettings.maxBackupCount)
     const modificationCountBackupThreshold = useSelector((state: moorhen.State) => state.backupSettings.modificationCountBackupThreshold)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
+    const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi)
 
     const dispatch = useDispatch()
 

@@ -324,6 +324,9 @@ declare module 'moorhen' {
     function setDevMode(arg0: boolean): any;
     module.exports = setDevMode;
 
+    function setUseGemmi(arg0: boolean): any;
+    module.exports = setUseGemmi;
+
     function setTheme(arg0: string): any;
     module.exports = setTheme;
 
