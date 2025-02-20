@@ -12,9 +12,11 @@ A JavaScript molecular graphics program
 - [x] Download SVG from ligand card.
 - [x] Download SVG from carbohydrate card.
 - [x] Copy SMILES button.
-- [ ] Dishy bases/sticks with selections.
+- [x] Dishy bases/sticks with selections.
+- [ ] 4oo8 symmetry is wrong.
 
 ### Todo
+- [ ] Get Structure factors if no map download available.
 - [ ] Undo button on a molecule loaded from SMILES/PubChem with name > 3 letters breaks the structure.
 - [ ] "Somehow" determine PLDDT vs B-factor in SliceNDice
 - [ ] Add Zoom to "Show controls"
