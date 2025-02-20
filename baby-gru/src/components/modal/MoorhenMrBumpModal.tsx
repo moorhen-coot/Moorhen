@@ -1,7 +1,7 @@
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen"
 import { useRef, useState } from "react"
-import { Form, Row, Col, Stack, Card, Container, ListGroup, Button  } from "react-bootstrap"
+import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Tab, Tabs  } from "react-bootstrap"
 import { convertRemToPx, convertViewtoPx} from '../../utils/utils'
 import { useSelector, useDispatch } from "react-redux"
 import { modalKeys } from "../../utils/enums"
@@ -9,11 +9,48 @@ import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import { readTextFile } from "../../utils/utils"
 import { useSnackbar } from "notistack"
 import { addMoleculeList } from "../../store/moleculesSlice"
-import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings, InfoOutlined } from '@mui/icons-material';
-import { Slider,Typography } from '@mui/material';
+import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings, InfoOutlined } from '@mui/icons-material'
+import { Slider,Typography } from '@mui/material'
+
+const mrbump_json_keys = ['modelName', 'rank', 'tarStart', 'tarEnd',
+    'tarGroupStart', 'tarGroupEnd',
+    'RID', 'ENS', 'eLLG', 'evalue', 'score', 'seqID',
+    'coverage', 'resolution', 'experiment',
+    'modelPDBfile', 'unmodifiedPDBfile', 'type',
+    'mgName', 'chainSource', 'sourceChainID', 'source']
+
+interface PictureDomains {
+  [index: number]: [string[],number[]];
+}
+interface MrBUMPModelJson  {
+    modelName: string;
+    rank: number;
+    tarStart: number;
+    tarEnd: number;
+    tarGroupStart: number;
+    tarGroupEnd: number;
+    RID: number;
+    ENS: number;
+    eLLG: number;
+    evalue: number;
+    score: number;
+    seqID: number;
+    coverage: number;
+    resolution: number;
+    experiment: string;
+    modelPDBfile: string;
+    unmodifiedPDBfile: string;
+    type: string;
+    mgName: string;
+    chainSource: string;
+    sourceChainID: string;
+    source: string;
+}
 
 export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
     const resizeNodeRef = useRef<HTMLDivElement>()
+    const canvasRef = useRef<null | HTMLCanvasElement>(null)
+    const [canvasDimensions, setCanvasDimensions] = useState<number>(700)
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
@@ -39,29 +76,97 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
         return {molecule:newMolecule,domain:domain}
     }
 
+    const drawDomainsPicture = (pic_domains:PictureDomains) => {
+
+        let minRes = 9999
+        let maxRes = -9999
+        for(const iter of Object.entries(pic_domains)){
+            const val: number[] = iter[1][1]
+            minRes = Math.min(minRes,val[0])
+            maxRes = Math.max(maxRes,val[1])
+        }
+
+        const ctx = canvasRef.current.getContext('2d')
+        ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
+        ctx.fillStyle = 'gray'
+        ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height)
+
+        ctx.strokeStyle = 'white'
+        ctx.lineWidth = 2
+        ctx.font = "18px helvetica"
+
+        for(const iter of Object.entries(pic_domains)){
+            const key: string = iter[0]
+            const val: number[] = iter[1][1]
+            const y = parseInt(key) * 30
+            const s = (val[0] - minRes) / (maxRes-minRes) * canvasRef.current.width
+            const e = (val[1] - minRes) / (maxRes-minRes) * canvasRef.current.width
+            ctx.fillStyle = 'white'
+            ctx.beginPath()
+            ctx.roundRect(s, y, e-s, 16, 3)
+            ctx.fill()
+            ctx.stroke()
+            ctx.fillStyle = 'black'
+            const tm = ctx.measureText("Range "+key)
+            console.log("text height",tm.actualBoundingBoxDescent+tm.actualBoundingBoxAscent)
+            ctx.fillText("Range "+key, (s+e-tm.width)/2, 4+y+(tm.actualBoundingBoxDescent+tm.actualBoundingBoxAscent)/2)
+            console.log(parseInt(key),s,e)
+        }
+
+        const numRanges = Object.entries(pic_domains).length
+        ctx.strokeStyle = 'black'
+
+        ctx.beginPath()
+        ctx.moveTo(0, numRanges*30)
+        ctx.lineTo(canvasRef.current.width, numRanges*30)
+        ctx.stroke()
+
+    }
+
     const loadMrBumpFiles = async (files: FileList) => {
 
-        const mrbump_json_keys = ['modelName', 'rank', 'tarStart', 'tarEnd',
-         'tarGroupStart', 'tarGroupEnd',
-         'RID', 'ENS', 'eLLG', 'evalue', 'score', 'seqID',
-         'coverage', 'resolution', 'experiment',
-         'modelPDBfile', 'unmodifiedPDBfile', 'type',
-         'mgName', 'chainSource', 'sourceChainID', 'source']
+        if(files.length===0) return
 
         const readPromises: Promise<{molecule:moorhen.Molecule,domain:string}>[] = []
         const modelFiles = []
         const domains = {}
+        const pic_domains:PictureDomains = {}
+        const allModels: string[] = []
+
+        let alignText: string = ""
+        let phmmerText: string = ""
+        let models_json: MrBUMPModelJson[] = []
 
         for (const file of files) {
             if(file.name==="models.json"&&file.webkitRelativePath.includes("logs/models.json")){
                 const fileContents = await readTextFile(file) as string
                 const json = JSON.parse(fileContents)
-                for(const [key, value] of Object.entries(json)){
+                for(const iter of Object.entries(json)){
+                    const key: string = iter[0]
+                    const value: any = iter[1]
                     const fullName = value[mrbump_json_keys.indexOf("modelPDBfile")]
                     const relName = fullName.substring(fullName.lastIndexOf("models/range_"))
                     modelFiles.push(relName)
+                    const this_model_json: MrBUMPModelJson = {} as MrBUMPModelJson
+                    let iv = 0
+                    for(const v of value){
+                        this_model_json[mrbump_json_keys[iv]] = v
+                        iv++
+                    }
+                    models_json.push(this_model_json)
+                    allModels.push(this_model_json.modelName)
+                    if(this_model_json.RID in pic_domains){
+                        pic_domains[this_model_json.RID][0].push(this_model_json.modelName)
+                    } else {
+                        pic_domains[this_model_json.RID] = [[this_model_json.modelName],[this_model_json.tarGroupStart,this_model_json.tarGroupEnd]]
+                    }
                 }
-                break
+            }
+            if(file.name==="alignment_report.log"&&file.webkitRelativePath.includes("alignment_report.log")){
+                alignText = await readTextFile(file) as string
+            }
+            if(file.name==="phmmer.log"&&file.webkitRelativePath.includes("phmmer.log")){
+                phmmerText = await readTextFile(file) as string
             }
         }
 
@@ -82,6 +187,12 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
                 }
             }
         }
+
+        //console.log(models_json)
+        //console.log(allModels)
+        //console.log(pic_domains)
+
+        drawDomainsPicture(pic_domains)
 
         if(readPromises.length===0) return
 
@@ -204,6 +315,13 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
                 footer={footerContent}
                 resizeNodeRef={resizeNodeRef}
                 body={
+                    <>
+                    <Tabs
+                        defaultActiveKey="controls"
+                        id="uncontrolled-tab-example"
+                        className="mb-3"
+                    >
+                    <Tab eventKey="controls" title="Controls">
                     <Container>
                     <Row>
                        {(Object.entries(mrBumpDomains).length>0) &&
@@ -213,6 +331,12 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
                        }
                     </Row>
                     </Container>
+                    </Tab>
+                    <Tab eventKey="ranges" title="Ranges">
+                    <canvas ref={canvasRef} style={{ marginTop:'1rem' }} height={canvasDimensions} width={canvasDimensions}></canvas>
+                    </Tab>
+                    </Tabs>
+                    </>
                 }
             />
 }
