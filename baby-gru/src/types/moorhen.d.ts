@@ -810,6 +810,7 @@ export namespace moorhen {
         setMakeBackups: React.Dispatch<React.SetStateAction<boolean>>;
         setContourWheelSensitivityFactor: React.Dispatch<React.SetStateAction<number>>;
         setDevMode: React.Dispatch<React.SetStateAction<boolean>>;
+        setUseGemmi: React.Dispatch<React.SetStateAction<boolean>>;
         setEnableTimeCapsule: React.Dispatch<React.SetStateAction<boolean>>;
         setShowScoresToast: React.Dispatch<React.SetStateAction<boolean>>;
         setDefaultMapSurface: React.Dispatch<React.SetStateAction<boolean>>;
@@ -881,6 +882,7 @@ export namespace moorhen {
         modificationCountBackupThreshold: number;
         animateRefine: boolean;
         devMode: boolean;
+        useGemmi: boolean;
         shortCuts: string | {
             [label: string]: Shortcut;
         };
@@ -1008,6 +1010,7 @@ export namespace moorhen {
         };
         generalStates: {
             devMode: boolean;
+            useGemmi: boolean;
             userPreferencesMounted: boolean;
             appTitle: string;
             cootInitialized: boolean;
