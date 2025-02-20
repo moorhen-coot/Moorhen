@@ -76,7 +76,7 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
         return {molecule:newMolecule,domain:domain}
     }
 
-    const drawDomainsPicture = (pic_domains:PictureDomains) => {
+    const drawDomainsPicture = (pic_domains:PictureDomains, models_json: MrBUMPModelJson[]) => {
 
         let minRes = 9999
         let maxRes = -9999
@@ -86,10 +86,14 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
             maxRes = Math.max(maxRes,val[1])
         }
 
+        const numRanges = Object.entries(pic_domains).length
+
         const ctx = canvasRef.current.getContext('2d')
         ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
-        ctx.fillStyle = 'gray'
+        ctx.fillStyle = '#aaaaaa'
         ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height)
+        ctx.fillStyle = '#dddddd'
+        ctx.fillRect(0, (numRanges+1)*30, canvasRef.current.width, canvasRef.current.height)
 
         ctx.strokeStyle = 'white'
         ctx.lineWidth = 2
@@ -103,24 +107,63 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
             const e = (val[1] - minRes) / (maxRes-minRes) * canvasRef.current.width
             ctx.fillStyle = 'white'
             ctx.beginPath()
-            ctx.roundRect(s, y, e-s, 16, 3)
+            ctx.roundRect(s, y, e-s, 16, 6)
             ctx.fill()
             ctx.stroke()
             ctx.fillStyle = 'black'
             const tm = ctx.measureText("Range "+key)
-            console.log("text height",tm.actualBoundingBoxDescent+tm.actualBoundingBoxAscent)
             ctx.fillText("Range "+key, (s+e-tm.width)/2, 4+y+(tm.actualBoundingBoxDescent+tm.actualBoundingBoxAscent)/2)
-            console.log(parseInt(key),s,e)
         }
 
-        const numRanges = Object.entries(pic_domains).length
         ctx.strokeStyle = 'black'
 
+        ctx.lineWidth = 1
         ctx.beginPath()
-        ctx.moveTo(0, numRanges*30)
-        ctx.lineTo(canvasRef.current.width, numRanges*30)
+        ctx.moveTo(0, (numRanges+1)*30)
+        ctx.lineTo(canvasRef.current.width, (numRanges+1)*30)
         ctx.stroke()
 
+        for(let i=0; i<maxRes; i += 20){
+            ctx.beginPath()
+            const x = (i - minRes) / (maxRes-minRes) * canvasRef.current.width
+            ctx.moveTo(x, (numRanges+1)*30)
+            ctx.lineTo(x, (numRanges+1)*30+15)
+            ctx.stroke()
+        }
+
+        const tm2 = ctx.measureText("100")
+        const t_off = 2*(tm2.actualBoundingBoxDescent+tm2.actualBoundingBoxAscent)
+        const text_y = (numRanges+1)*30+t_off
+        for(let i=0; i<maxRes; i += 100){
+            const x = (i - minRes) / (maxRes-minRes) * canvasRef.current.width
+            const tm = ctx.measureText(""+i)
+            ctx.fillText(""+i, x-tm.width/2, 4+text_y+(tm2.actualBoundingBoxDescent+tm2.actualBoundingBoxAscent)/2)
+        }
+
+        ctx.strokeStyle = 'white'
+        ctx.lineWidth = 2
+        ctx.font = "18px helvetica"
+
+        console.log(models_json)
+
+        const models_base_y = text_y + tm2.actualBoundingBoxDescent+tm2.actualBoundingBoxAscent + 10
+
+        let i = 0
+        for(const model of models_json){
+            const s = (model.tarStart - minRes) / (maxRes-minRes) * canvasRef.current.width
+            const e = (model.tarEnd - minRes)   / (maxRes-minRes) * canvasRef.current.width
+            const y = i * 30 + models_base_y
+            ctx.fillStyle = 'white'
+            ctx.beginPath()
+            ctx.roundRect(s, y, e-s, 16, 6)
+            ctx.fill()
+            ctx.stroke()
+            const text = model.mgName + " (" + model.seqID.toFixed(2) + "%) (" + model.RID +")"
+            ctx.fillStyle = 'black'
+            const tm = ctx.measureText(text)
+            ctx.fillText(text, (s+e-tm.width)/2, 4+y+(tm.actualBoundingBoxDescent+tm.actualBoundingBoxAscent)/2)
+            i++
+        }
     }
 
     const loadMrBumpFiles = async (files: FileList) => {
@@ -188,11 +231,7 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
             }
         }
 
-        //console.log(models_json)
-        //console.log(allModels)
-        //console.log(pic_domains)
-
-        drawDomainsPicture(pic_domains)
+        drawDomainsPicture(pic_domains,models_json)
 
         if(readPromises.length===0) return
 
