@@ -190,8 +190,8 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
             ctx.fillText(""+i, x-tm.width/2, 4+text_y+(tm2.actualBoundingBoxDescent+tm2.actualBoundingBoxAscent)/2)
         }
 
-        ctx.lineWidth = 2
         ctx.font = "18px helvetica"
+        ctx.miterLimit = 2
 
         const models_base_y = text_y + tm2.actualBoundingBoxDescent+tm2.actualBoundingBoxAscent + 10
 
@@ -219,13 +219,17 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
             const col_str = '#'+r_str+g_str+b_str
             ctx.fillStyle = col_str
             ctx.strokeStyle = col_str
+            ctx.lineWidth = 2
             ctx.beginPath()
             ctx.roundRect(s, y, e-s, 16, 6)
             ctx.fill()
             ctx.stroke()
+            ctx.strokeStyle = 'white'
             const text = model.mgName + " (" + model.seqID.toFixed(2) + "%) (" + model.RID +")"
             ctx.fillStyle = 'black'
+            ctx.lineWidth = 6
             const tm = ctx.measureText(text)
+            ctx.strokeText(text, (s+e-tm.width)/2, 4+y+(tm.actualBoundingBoxDescent+tm.actualBoundingBoxAscent)/2)
             ctx.fillText(text, (s+e-tm.width)/2, 4+y+(tm.actualBoundingBoxDescent+tm.actualBoundingBoxAscent)/2)
             i++
         }
