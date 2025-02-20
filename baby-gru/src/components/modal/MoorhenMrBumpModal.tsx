@@ -47,6 +47,56 @@ interface MrBUMPModelJson  {
     source: string;
 }
 
+function rgb2hsv(r, g, b) {
+    if (arguments.length === 1) {
+        g = r.g, b = r.b, r = r.r;
+    }
+    var max = Math.max(r, g, b), min = Math.min(r, g, b),
+        d = max - min,
+        h,
+        s = (max === 0 ? 0 : d / max),
+        v = max / 255;
+
+    switch (max) {
+        case min: h = 0; break;
+        case r: h = (g - b) + d * (g < b ? 6: 0); h /= 6 * d; break;
+        case g: h = (b - r) + d * 2; h /= 6 * d; break;
+        case b: h = (r - g) + d * 4; h /= 6 * d; break;
+    }
+
+    return {
+        h: h,
+        s: s,
+        v: v
+    };
+}
+
+
+function hsv2rgb(h, s, v) {
+    var r, g, b, i, f, p, q, t;
+    if (arguments.length === 1) {
+        s = h.s, v = h.v, h = h.h;
+    }
+    i = Math.floor(h * 6);
+    f = h * 6 - i;
+    p = v * (1 - s);
+    q = v * (1 - f * s);
+    t = v * (1 - (1 - f) * s);
+    switch (i % 6) {
+        case 0: r = v, g = t, b = p; break;
+        case 1: r = q, g = v, b = p; break;
+        case 2: r = p, g = v, b = t; break;
+        case 3: r = p, g = q, b = v; break;
+        case 4: r = t, g = p, b = v; break;
+        case 5: r = v, g = p, b = q; break;
+    }
+    return {
+        r: Math.round(r * 255),
+        g: Math.round(g * 255),
+        b: Math.round(b * 255)
+    };
+}
+
 export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
     const resizeNodeRef = useRef<HTMLDivElement>()
     const canvasRef = useRef<null | HTMLCanvasElement>(null)
@@ -140,20 +190,35 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
             ctx.fillText(""+i, x-tm.width/2, 4+text_y+(tm2.actualBoundingBoxDescent+tm2.actualBoundingBoxAscent)/2)
         }
 
-        ctx.strokeStyle = 'white'
         ctx.lineWidth = 2
         ctx.font = "18px helvetica"
 
-        console.log(models_json)
-
         const models_base_y = text_y + tm2.actualBoundingBoxDescent+tm2.actualBoundingBoxAscent + 10
+
+        const redHsv = rgb2hsv(255,0,0)
+        const blueHsv = rgb2hsv(0,0,255)
 
         let i = 0
         for(const model of models_json){
             const s = (model.tarStart - minRes) / (maxRes-minRes) * canvasRef.current.width
             const e = (model.tarEnd - minRes)   / (maxRes-minRes) * canvasRef.current.width
             const y = i * 30 + models_base_y
-            ctx.fillStyle = 'white'
+            let factor = model.seqID / 100.
+            if(factor<0) factor = 0
+            if(factor>1) factor = 1
+            const fh = factor * redHsv.h + (1.0 - factor) * blueHsv.h
+            const fs = factor * redHsv.s + (1.0 - factor) * blueHsv.s
+            const fv = factor * redHsv.v + (1.0 - factor) * blueHsv.v
+            const rgb = hsv2rgb(fh,fs,fv)
+            let r_str = rgb.r.toString(16)
+            let g_str = rgb.g.toString(16)
+            let b_str = rgb.b.toString(16)
+            if(r_str.length<2) r_str = "0" + r_str
+            if(g_str.length<2) g_str = "0" + g_str
+            if(b_str.length<2) b_str = "0" + b_str
+            const col_str = '#'+r_str+g_str+b_str
+            ctx.fillStyle = col_str
+            ctx.strokeStyle = col_str
             ctx.beginPath()
             ctx.roundRect(s, y, e-s, 16, 6)
             ctx.fill()
