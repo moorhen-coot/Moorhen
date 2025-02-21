@@ -1572,6 +1572,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("fit_ligand",&molecules_container_t::fit_ligand)
     .function("fit_to_map_by_random_jiggle",&molecules_container_t::fit_to_map_by_random_jiggle)
     .function("get_svg_for_residue_type",&molecules_container_t::get_svg_for_residue_type)
+    .function("get_svg_for_2d_ligand_environment_view",&molecules_container_t::get_svg_for_2d_ligand_environment_view)
     .function("is_valid_model_molecule",&molecules_container_t::is_valid_model_molecule)
     .function("is_valid_map_molecule",&molecules_container_t::is_valid_map_molecule)
     .function("read_pdb",&molecules_container_t::read_pdb)
