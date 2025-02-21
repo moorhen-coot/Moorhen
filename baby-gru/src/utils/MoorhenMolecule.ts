@@ -2424,6 +2424,24 @@ export class MoorhenMolecule implements moorhen.Molecule {
     }
 
     /**
+     * Get SVG descriptions for the ligand environment
+     * @param {string} cid - The selection string of the ligand to get SVG descriptions for
+     */
+    async getFLEVSVG(cid: string): Promise<string> {
+
+        const flev_result = await this.commandCentre.current.cootCommand({
+                returnType: "string",
+                command: 'get_svg_for_2d_ligand_environment_view',
+                commandArgs: [this.molNo, cid]
+            }, false) as moorhen.WorkerResponse<string>
+            console.log(flev_result.data.result.result)
+
+        const ligandSVG = formatLigandSVG(flev_result.data.result.result, false)
+
+        return ligandSVG
+    }
+
+    /**
      * Get SVG descriptions for the ligands in this molecule instance
      * @param {string} resName - The name of the ligand to get SVG descriptions for
      * @param {boolean} useCache - Whether to use the cached results or not

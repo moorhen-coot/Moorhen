@@ -174,12 +174,17 @@ export const MoorhenLigandCard = (props: {
                         </Stack>
                     </Col>
                 </Row>
+            {ligand.smiles &&
+            <Row>
+            <Col>
             <p className="fs-5" style={{ display: "flex", justifyContent: "left", color: isDark ? 'white' : 'black' }}>{ligand.smiles}
             &nbsp;&nbsp;
-            {ligand.smiles &&
             <MoorhenCopyToClipBoard text={ligand.smiles} tooltip="Copy SMILES to clipboard"/>
-            }
             </p>
+            </Col>
+            </Row>
+            }
+            {(ligand.flev_svg && ligand.flev_svg.includes("<!-- Substitution Contour -->")  ) ? parse(ligand.flev_svg) : <span></span>}
             </Card.Body>
         </Card>
 }
