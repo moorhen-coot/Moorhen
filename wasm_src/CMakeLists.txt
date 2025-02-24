@@ -51,7 +51,6 @@ ${coot_src}/src/testing.cc
 ${coot_src}/src/molecule-class-info-maps-2.cc
 ${coot_src}/src/coot-extended.cc
 ${coot_src}/src/molecule-class-info-residues.cc
-${coot_src}/src/flev.cc
 ${coot_src}/src/coot-embedded.cc
 ${coot_src}/src/lbg-interface.cc
 ${coot_src}/src/c-interface-ligands.cc
@@ -190,6 +189,8 @@ ${coot_src}/api/molecules-container-ligand-fitting.cc
 ${coot_src}/api/molecules-container.cc
 ${coot_src}/api/rama-plot-phi-psi.cc
 ${coot_src}/api/coot-molecule-change-chain-id.cc
+${coot_src}/api/ncs-ghosts.cc
+${coot_src}/api/ghost-molecule-display.cc
 ${coot_src}/analysis/daca.cc
 ${coot_src}/analysis/kolmogorov.cc
 ${coot_src}/analysis/stats.cc
@@ -263,10 +264,19 @@ ${coot_src}/high-res/high-res.cc
 ${coot_src}/protein_db/protein_db.cpp
 ${coot_src}/protein_db/protein_db_utils.cpp
 ${coot_src}/protein_db/rna_db.cpp
+${coot_src}/utils/split-indices.cc
 ${coot_src}/pli/flev-annotations.cc
+${coot_src}/pli/flev.cc
+${coot_src}/pli/flev-annotations.cc
+${coot_src}/pli/flev-attached-hydrogens.cc
+${coot_src}/pli/optimise-residue-circles.cc
+${coot_src}/pli/residue-circles.cc
+${coot_src}/pli/dots-representation-info.cc
+${coot_src}/pli/pi-stacking.cc
 ${coot_src}/pli/protein-ligand-interactions.cc
 ${coot_src}/pli/pi-stacking.cc
 ${coot_src}/pli/sdf-interface.cc
+${coot_src}/pli/specs.cc
 ${coot_src}/utils/base64-encode-decode.cc
 ${coot_src}/coot-utils/merge-atom-selections.cc
 ${coot_src}/coot-utils/coot-least-squares.cc
