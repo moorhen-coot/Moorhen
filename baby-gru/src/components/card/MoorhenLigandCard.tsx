@@ -1,11 +1,11 @@
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from 'react-redux';
-import { Button, Card, Col, Row, Stack, ToggleButton } from "react-bootstrap";
+import { Button, Card, Col, Row, Stack, ToggleButton, Spinner } from "react-bootstrap";
 import { useEffect, useRef, useState } from "react";
-import { CenterFocusStrongOutlined, HelpOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined, DownloadOutlined } from "@mui/icons-material";
+import { CenterFocusStrongOutlined, HelpOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined, DownloadOutlined, ExpandMoreOutlined } from "@mui/icons-material";
 import parse from 'html-react-parser'
 import { convertViewtoPx, guid } from "../../utils/utils";
-import { LinearProgress, Popover, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, LinearProgress, Popover, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
 import { MoorhenCopyToClipBoard } from '../misc/MoorhenCopyToClipBoard';
 
 export const MoorhenLigandCard = (props: {
@@ -184,7 +184,22 @@ export const MoorhenLigandCard = (props: {
             </Col>
             </Row>
             }
-            {(ligand.flev_svg && ligand.flev_svg.includes("<!-- Substitution Contour -->")  ) ? parse(ligand.flev_svg) : <span></span>}
+            {(ligand.flev_svg && ligand.flev_svg.includes("<!-- Substitution Contour -->")) &&
+            <Accordion className="moorhen-accordion"  disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }}>
+                <AccordionSummary style={{backgroundColor: isDark ? '#adb5bd' : '#ecf0f1'}} expandIcon={<ExpandMoreOutlined/>} >
+                Environment
+                </AccordionSummary>
+            <Card key={guid()} style={{marginTop: '0.5rem'}}>
+                <Card.Body ref={anchorEl} style={{padding:'0.5rem'}}>
+                    <Row style={{display:'flex', justifyContent:'between'}}>
+                        <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
+                            {parse(ligand.flev_svg)}
+                        </Col>
+                    </Row>
+            </Card.Body>
+            </Card>
+            </Accordion>
+            }
             </Card.Body>
         </Card>
 }
