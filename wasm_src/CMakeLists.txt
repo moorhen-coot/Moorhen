@@ -189,6 +189,8 @@ ${coot_src}/api/molecules-container-ligand-fitting.cc
 ${coot_src}/api/molecules-container.cc
 ${coot_src}/api/rama-plot-phi-psi.cc
 ${coot_src}/api/coot-molecule-change-chain-id.cc
+${coot_src}/api/ncs-ghosts.cc
+${coot_src}/api/ghost-molecule-display.cc
 ${coot_src}/analysis/daca.cc
 ${coot_src}/analysis/kolmogorov.cc
 ${coot_src}/analysis/stats.cc
