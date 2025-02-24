@@ -593,9 +593,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      */
     async copyMolecule(doRedraw: boolean = true): Promise<moorhen.Molecule> {
         const state = this.store.getState()
-        console.log("copyMolecule state",state)
         const useGemmi = state.generalStates.useGemmi
-        console.log("copyMolecule useGemmi",useGemmi)
         const use_gemmi_response = await this.commandCentre.current.cootCommand({
             returnType: "status",
             command: 'set_use_gemmi',
@@ -861,9 +859,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         try {
             const state = this.store.getState()
-            console.log("loadToCootFromString state",state)
             const useGemmi = state.generalStates.useGemmi
-            console.log("loadToCootFromString useGemmi",useGemmi)
             const use_gemmi_response = await this.commandCentre.current.cootCommand({
                 returnType: "status",
                 command: 'set_use_gemmi',
