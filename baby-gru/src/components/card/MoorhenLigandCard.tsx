@@ -185,19 +185,40 @@ export const MoorhenLigandCard = (props: {
             </Row>
             }
             {(ligand.flev_svg && ligand.flev_svg.includes("<!-- Substitution Contour -->")) &&
-            <Accordion className="moorhen-accordion"  disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }}>
+            <Accordion className="moorhen-accordion"  disableGutters={true} elevation={0}>
                 <AccordionSummary style={{backgroundColor: isDark ? '#adb5bd' : '#ecf0f1'}} expandIcon={<ExpandMoreOutlined/>} >
                 Environment
                 </AccordionSummary>
-            <Card key={guid()} style={{marginTop: '0.5rem'}}>
-                <Card.Body ref={anchorEl} style={{padding:'0.5rem'}}>
-                    <Row style={{display:'flex', justifyContent:'between'}}>
-                        <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
-                            {parse(ligand.flev_svg)}
-                        </Col>
-                    </Row>
-            </Card.Body>
-            </Card>
+                <AccordionDetails style={{padding: '0.2rem', backgroundColor: isDark ? '#ced5d6' : 'white'}}>
+                    <Card key={guid()} style={{marginTop: '0.5rem'}}>
+                        <Card.Body style={{padding:'0.5rem'}}>
+                            <Row style={{display:'flex', justifyContent:'between'}}>
+                                <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
+                                    {parse(ligand.flev_svg)}
+                                </Col>
+                                <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
+                                    <Stack direction='vertical' gap={1} style={{display: 'flex', justifyContent: 'center'}}>
+                                        <Button variant="secondary" style={{marginRight:'0.5rem', display: 'flex', justifyContent: 'left'}}
+                                               onClick={() => {
+                                               let link: any = document.getElementById('download_flev_svg_link');
+                                               if (!link) {
+                                                   link = document.createElement('a');
+                                                   link.id = 'download_flev_svg_link';
+                                                   document.body.appendChild(link);
+                                               }
+                                               const file = new Blob([ligand.flev_svg], { type: 'image/svg+xml' });
+                                               link.href = URL.createObjectURL(file);
+                                               link.download = ligand.resName + "_flev.svg";
+                                               link.click()
+                                               }}>
+                                            <DownloadOutlined/>Download image (svg)
+                                        </Button>
+                                    </Stack>
+                                </Col>
+                            </Row>
+                        </Card.Body>
+                    </Card>
+                </AccordionDetails>
             </Accordion>
             }
             </Card.Body>
