@@ -2430,7 +2430,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 command: 'get_svg_for_2d_ligand_environment_view',
                 commandArgs: [this.molNo, cid]
             }, false) as moorhen.WorkerResponse<string>
-            console.log(flev_result.data.result.result)
 
         const ligandSVG = formatLigandSVG(flev_result.data.result.result, false)
 
