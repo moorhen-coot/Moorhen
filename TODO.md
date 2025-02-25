@@ -1,7 +1,10 @@
 # Moorhen
 A JavaScript molecular graphics program
 
-### For 0.16.4
+### For 0.17.1
+- [ ] 4oo8 symmetry is wrong.
+
+### For 0.17.0
 - [x] SMILES string is white on dark background.
 - [x] Print out molecule info - B-factors, etc. This could be hover info, atom label, full print
       of ATOM cards, context menu option. Environment of temp factors.
@@ -13,7 +16,6 @@ A JavaScript molecular graphics program
 - [x] Download SVG from carbohydrate card.
 - [x] Copy SMILES button.
 - [x] Dishy bases/sticks with selections.
-- [ ] 4oo8 symmetry is wrong.
 
 ### Todo
 - [ ] Get Structure factors if no map download available.
