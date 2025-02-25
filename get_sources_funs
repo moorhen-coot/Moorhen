@@ -49,13 +49,8 @@ getclipper() {
         echo "Using existing clipper"
     else
         echo "Checking out clipper"
-        curl -L https://ccp4forge.rc-harwell.ac.uk/ccp4/clipper/-/archive/gemmi/clipper-gemmi.tar.gz -o clipper-gemmi.tar.gz
+        git clone -b patch_issue_with_emscripten_compiler https://ccp4forge.rc-harwell.ac.uk/ccp4/clipper.git
         echo
-        echo "Unpacking clipper source"
-        tar xf clipper-gemmi.tar.gz
-        mv clipper-gemmi clipper
-        patch -p0 < ../patches/clipper-emcc4.patch
-        patch -p0 < ../patches/clipper-gemmi-minimol.patch
     fi
     echo
 }
