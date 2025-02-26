@@ -1,6 +1,6 @@
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from 'react-redux';
-import { Button, Card, Col, Row, Stack, ToggleButton, Spinner } from "react-bootstrap";
+import { Button, Card, Col, Row, Stack, ToggleButton } from "react-bootstrap";
 import { useEffect, useRef, useState } from "react";
 import { CenterFocusStrongOutlined, HelpOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined, DownloadOutlined, ExpandMoreOutlined } from "@mui/icons-material";
 import parse from 'html-react-parser'
