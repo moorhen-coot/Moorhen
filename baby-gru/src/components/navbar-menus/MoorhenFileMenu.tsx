@@ -34,7 +34,6 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-    const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
 
     const { enqueueSnackbar } = useSnackbar()
 
@@ -76,10 +75,6 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         await newMolecule.loadToCootFromFile(file)
         return newMolecule
-    }
-
-    const handleLoadMrBump = async () => {
-        dispatch(showModal(modalKeys.MRBUMP))
     }
 
     const handleExportGltf = async () => {
@@ -260,12 +255,6 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     <MenuItem id='recording-menu-item' onClick={handleRecording}>
                         Record a video
                     </MenuItem>
-
-                    {(!props.disableFileUploads && devMode) &&
-                    <MenuItem id='load-mrbum-menu-item' onClick={handleLoadMrBump}>
-                    Load MrBump results...
-                    </MenuItem>
-                    }
 
                     {props.extraFileMenuItems && props.extraFileMenuItems.map( menu => menu)}
 
