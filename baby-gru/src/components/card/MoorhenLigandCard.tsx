@@ -27,6 +27,7 @@ export const MoorhenLigandCard = (props: {
     const [showState, setShowState] = useState<{ [key: string]: boolean }>({})
     const [showInfoTable, setShowInfoTable] = useState<boolean>(false)
     const [qScore, setQScore] = useState<number | null>(null)
+    const [flevAccordianExpanded, setFlevAccordianExpanded] = useState<boolean>(false);
     
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
@@ -185,7 +186,7 @@ export const MoorhenLigandCard = (props: {
             </Row>
             }
             {(ligand.flev_svg && ligand.flev_svg.includes("<!-- Substitution Contour -->")) &&
-            <Accordion className="moorhen-accordion"  disableGutters={true} elevation={0}>
+            <Accordion onChange={() => setFlevAccordianExpanded((prev) => !prev)} expanded={flevAccordianExpanded} className="moorhen-accordion"  disableGutters={true} elevation={0}>
                 <AccordionSummary style={{backgroundColor: isDark ? '#adb5bd' : '#ecf0f1'}} expandIcon={<ExpandMoreOutlined/>} >
                 Environment
                 </AccordionSummary>
