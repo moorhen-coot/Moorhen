@@ -154,6 +154,7 @@ set(gemmi_third_party-headers_HEADERS
 ${gemmi_src}/include/gemmi/third_party/fast_float.h
 ${gemmi_src}/include/gemmi/third_party/pocketfft_hdronly.h
 ${gemmi_src}/include/gemmi/third_party/tinydir.h
+${gemmi_src}/third_party/sajson.h
 )
 
 set(gemmi_third_party_tao-headers_HEADERS

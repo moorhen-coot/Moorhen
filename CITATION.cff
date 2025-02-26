@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "A JavaScript molecular graphics program."
+authors:
+- family-names: "Sanchez"
+  given-names: "Filomeno"
+- family-names: "Smulski"
+  given-names: "Jakub"
+- family-names: "Dialpuri"
+  given-names: "Jordan"
+- family-names: "Catapano"
+  given-names: "Lucrezia"
+- family-names: "Noble"
+  given-names: "Martin"
+- family-names: "Bond"
+  given-names: "Paul"
+- family-names: "Emsley"
+  given-names: "Paul"
+- family-names: "McNicholas"
+  given-names: "Stuart"
+title: "Moorhen"
+version: 0.17.1
+doi: 10.5281/zenodo.14924916
+date-released: 2025-02-25
+url: "https://github.com/moorhen-coot/Moorhen"
