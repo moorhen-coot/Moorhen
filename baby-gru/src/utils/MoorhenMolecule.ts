@@ -2425,15 +2425,24 @@ export class MoorhenMolecule implements moorhen.Molecule {
      */
     async getFLEVSVG(cid: string): Promise<string> {
 
-        const flev_result = await this.commandCentre.current.cootCommand({
+        if(window.CCP4Module.has_hydrogen(this.gemmiStructure.first_model())){
+            const flev_result = await this.commandCentre.current.cootCommand({
                 returnType: "string",
                 command: 'get_svg_for_2d_ligand_environment_view',
                 commandArgs: [this.molNo, cid]
             }, false) as moorhen.WorkerResponse<string>
+            const ligandSVG = flev_result.data.result.result
+            return ligandSVG
+        } else {
 
-        const ligandSVG = formatLigandSVG(flev_result.data.result.result, false)
+            const placeHolderSVG = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="-12.000000 -2.000000 22.000000 2.000000" width="100%" height="100%">
+<!-- Substitution Contour -->
+   <text x="-9." y="-1.1" text-anchor="middle" font-family="Helvetica, sans-serif" font-size="0.055000em" fill="slategrey">You must add hydrogen atoms to the model </text>
+   <text x="-9." y="-0.4" text-anchor="middle" font-family="Helvetica, sans-serif" font-size="0.055000em" fill="slategrey">before ligand environment can be shown correctly</text>
+</svg>`
 
-        return ligandSVG
+            return placeHolderSVG
+        }
     }
 
     /**

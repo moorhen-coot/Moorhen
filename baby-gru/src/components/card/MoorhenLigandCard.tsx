@@ -185,7 +185,7 @@ export const MoorhenLigandCard = (props: {
             </Col>
             </Row>
             }
-            {(ligand.flev_svg && ligand.flev_svg.includes("<!-- Substitution Contour -->")) &&
+            {(ligand.smiles && ligand.flev_svg && (ligand.flev_svg.includes("<!-- Substitution Contour -->")||ligand.flev_svg.includes("<!-- Solvent Accessibilty of Atom -->")||ligand.flev_svg.includes("<!-- Exposure Circle -->")||ligand.flev_svg.includes("<!-- Residue Circle"))) &&
             <Accordion onChange={() => setFlevAccordianExpanded((prev) => !prev)} expanded={flevAccordianExpanded} className="moorhen-accordion"  disableGutters={true} elevation={0}>
                 <AccordionSummary style={{backgroundColor: isDark ? '#adb5bd' : '#ecf0f1'}} expandIcon={<ExpandMoreOutlined/>} >
                 Environment
