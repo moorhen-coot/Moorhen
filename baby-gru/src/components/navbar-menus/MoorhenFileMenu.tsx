@@ -40,7 +40,6 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const { commandCentre, glRef, monomerLibraryPath, setBusy, store } = props;
 
     const menuItemProps = { setPopoverIsShown, ...props }
-    const mrBumpenuItemProps = { monomerLibraryPath, setPopoverIsShown, ...props }
 
     const loadPdbFiles = async (files: FileList) => {
         let readPromises: Promise<moorhen.Molecule>[] = []
