@@ -116,7 +116,14 @@ module.exports = (env, argv) => {
         },
         {
           test: /\.s[ac]ss$/,
-          use: [ "style-loader", "css-loader", "sass-loader" ]
+          use: [ "style-loader", "css-loader",
+          {
+              loader: "sass-loader",
+              options: {
+                  api: "modern",
+                },
+              }
+          ]
         }
       ]
     },
