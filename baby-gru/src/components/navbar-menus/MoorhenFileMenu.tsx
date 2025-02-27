@@ -82,6 +82,10 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         dispatch(showModal(modalKeys.MRBUMP))
     }
 
+    const handleLoadMrParse = async () => {
+        dispatch(showModal(modalKeys.MRPARSE))
+    }
+
     const handleExportGltf = async () => {
         for (let map of maps) {
             const gltfData = await map.exportAsGltf()
@@ -262,8 +266,14 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     </MenuItem>
 
                     {(!props.disableFileUploads && devMode) &&
-                    <MenuItem id='load-mrbum-menu-item' onClick={handleLoadMrBump}>
+                    <MenuItem id='load-mrbump-menu-item' onClick={handleLoadMrBump}>
                     Load MrBump results...
+                    </MenuItem>
+                    }
+
+                    {(!props.disableFileUploads && devMode) &&
+                    <MenuItem id='load-mrparse-menu-item' onClick={handleLoadMrParse}>
+                    Load MrParse results...
                     </MenuItem>
                     }
 
