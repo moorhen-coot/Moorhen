@@ -11,6 +11,7 @@ import { useSnackbar } from "notistack"
 import { addMoleculeList } from "../../store/moleculesSlice"
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings, InfoOutlined } from '@mui/icons-material'
 import { Slider,Typography } from '@mui/material'
+import { hideMolecule, showMolecule } from "../../store/moleculesSlice";
 
 interface MrParsePDBModelJson  {
     chain_id : string;
@@ -76,6 +77,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
 
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
+    const visibleMolecules = useSelector((state: moorhen.State) => state.molecules.visibleMolecules)
 
     const readPdbFile = async (file: File): Promise<moorhen.Molecule> => {
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
@@ -167,7 +169,6 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         setMrParseModels(newMolecules)
     }
 
-
     const footerContent = <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'space-between', alignContent: 'space-between', justifyContent: 'space-between', width: '100%' }}>
         <Stack gap={2} direction='horizontal' style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
             <Form.Group style={{ width: '20rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadMrParse" className="mb-3">
@@ -178,6 +179,16 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
     </Stack>
 
     const model_files = mrParseModels.map(item => {
+            const isVisible = (visibleMolecules.indexOf(item.molNo)>-1)
+            const handleDownload = async () => {
+                await item.downloadAtoms()
+            }
+            const handleCentering = () => {
+                item.centreOn()
+            }
+            const handleVisibility = (() => {
+                dispatch( isVisible ? hideMolecule(item) : showMolecule(item) )
+            })
             return (
                 <ListGroup.Item key={'row'+item.name}>
                 <Stack gap={2} direction='horizontal'>
@@ -185,13 +196,13 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                     {item.name}
                 </Col>
                 <Col style={{ display: 'flex', justifyContent: 'right' }}>
-                <Button key={1} size="sm" variant="outlined">
-                <VisibilityOutlined />
+                <Button key={1} size="sm" variant="outlined" onClick={handleVisibility}>
+                {isVisible ? <VisibilityOutlined /> : <VisibilityOffOutlined />}
                 </Button>
-                <Button key={2} size="sm" variant="outlined">
+                <Button key={2} size="sm" variant="outlined" onClick={handleCentering}>
                 <CenterFocusWeakOutlined />
                 </Button>
-                <Button key={3} size="sm" variant="outlined">
+                <Button key={3} size="sm" variant="outlined" onClick={handleDownload}>
                 <DownloadOutlined />
                 </Button>
                 </Col>
