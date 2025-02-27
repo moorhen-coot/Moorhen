@@ -39,7 +39,6 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
     const showLigandValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.LIGAND_VALIDATION))
     const showFillPartialResValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.FILL_PART_RES))
     const showMoorhenMrBumpModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.MRBUMP))
-
     const showPepFlipsValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.PEPTIDE_FLIPS))
     const showUnmodelledBlobsModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.UNMODELLED_BLOBS))
     const showCarbohydrateValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.CARB_VALIDATION))

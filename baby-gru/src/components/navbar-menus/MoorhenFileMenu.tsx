@@ -35,7 +35,6 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
-    console.log("devMode",devMode)
 
     const { enqueueSnackbar } = useSnackbar()
 
