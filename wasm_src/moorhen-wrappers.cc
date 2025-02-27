@@ -1502,6 +1502,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("set_max_number_of_threads", &molecules_container_t::set_max_number_of_threads)
     .function("set_map_is_contoured_with_thread_pool", &molecules_container_t::set_map_is_contoured_with_thread_pool)
     .function("is_EM_map",&molecules_container_t::is_EM_map)
+    .function("scale_map",&molecules_container_t::scale_map)
     .function("set_map_sampling_rate",&molecules_container_t::set_map_sampling_rate)
     .function("get_mesh_for_ligand_validation_vs_dictionary",&molecules_container_t::get_mesh_for_ligand_validation_vs_dictionary)
     .function("molecule_to_mmCIF_string", &molecules_container_t::molecule_to_mmCIF_string)

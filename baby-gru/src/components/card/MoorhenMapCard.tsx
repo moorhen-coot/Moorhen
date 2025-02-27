@@ -7,6 +7,7 @@ import { MoorhenMapSettingsMenuItem } from "../menu-item/MoorhenMapSettingsMenuI
 import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem"
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
 import { MoorhenSetMapWeight } from "../menu-item/MoorhenSetMapWeight"
+import { MoorhenScaleMap } from "../menu-item/MoorhenScaleMap"
 import { MoorhenMapHistogram } from "../misc/MoorhenMapHistogram"
 import { MoorhenSlider } from "../misc/MoorhenSlider";
 import { Accordion, AccordionDetails, AccordionSummary, IconButton, MenuItem, Popover, Tooltip } from "@mui/material"
@@ -266,6 +267,11 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         7: {
             label: "Set map weight...",
             compressed: () => { return (<MoorhenSetMapWeight key='set-map-weight' disabled={!mapIsVisible} map={props.map} setPopoverIsShown={setPopoverIsShown} />) },
+            expanded: null
+        },
+        8: {
+            label: "Set map scale...",
+            compressed: () => { return (<MoorhenScaleMap key='scale-map' disabled={!mapIsVisible} map={props.map} setPopoverIsShown={setPopoverIsShown} />) },
             expanded: null
         },
     }

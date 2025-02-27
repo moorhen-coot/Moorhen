@@ -492,6 +492,7 @@ export namespace moorhen {
     interface Map {
         getHistogram(nBins?: number, zoomFactor?: number): Promise<libcootApi.HistogramInfoJS>;
         setMapWeight(weight?: number): Promise<WorkerResponse>;
+        scaleMap(scale: number): Promise<WorkerResponse>;
         estimateMapWeight(): Promise<void>;
         fetchMapAlphaAndRedraw(): Promise<void>;
         centreOnMap(): Promise<void>;
