@@ -88,6 +88,8 @@ export const MoorhenLigandCard = (props: {
         </ToggleButton>
     }
 
+    const flev_placeholder = ligand.flev_svg.includes("You must add hydrogen atoms to the model")
+
     // For some reason a random key needs to be used here otherwise the scroll of the card list gets reset with every re-render
     return <Card key={guid()} style={{marginTop: '0.5rem'}}>
             <Card.Body ref={anchorEl} style={{padding:'0.5rem'}}>
@@ -197,6 +199,7 @@ export const MoorhenLigandCard = (props: {
                                 <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
                                     {parse(ligand.flev_svg)}
                                 </Col>
+                                {!flev_placeholder &&
                                 <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
                                     <Stack direction='vertical' gap={1} style={{display: 'flex', justifyContent: 'center'}}>
                                         <Button variant="secondary" style={{marginRight:'0.5rem', display: 'flex', justifyContent: 'left'}}
@@ -216,6 +219,7 @@ export const MoorhenLigandCard = (props: {
                                         </Button>
                                     </Stack>
                                 </Col>
+                                }
                             </Row>
                         </Card.Body>
                     </Card>
