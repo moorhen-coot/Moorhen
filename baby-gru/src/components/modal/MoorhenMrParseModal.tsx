@@ -158,7 +158,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         for (const newMolecule of newMolecules) {
             molecules.push(newMolecule)
             drawPromises.push(
-                newMolecule.fetchIfDirtyAndDraw(newMolecule.atomCount >= 50000 ? 'CRs' : 'CBs')
+                newMolecule.fetchIfDirtyAndDraw('CRs')
             )
         }
         await Promise.all(drawPromises)
@@ -207,6 +207,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                 </Button>
                 </Col>
                 </Stack>
+                {false &&
                 <Stack gap={2} direction='horizontal'>
                 <Typography gutterBottom style={{ display: 'flex', justifyContent: 'left'}}>Variance</Typography>
                 <Slider
@@ -218,6 +219,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                      max={110}
                      valueLabelDisplay="auto"/>
                 </Stack>
+                }
                 </ListGroup.Item>
             )
     })
