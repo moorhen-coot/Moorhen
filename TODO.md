@@ -1,8 +1,9 @@
 # Moorhen
 A JavaScript molecular graphics program
 
-### For 0.17.1
-- [ ] 4oo8 symmetry is wrong.
+### For 0.17.2
+- [x] FLEV.
+- [ ] Fix 4oo8 symmetry.
 
 ### For 0.17.0
 - [x] SMILES string is white on dark background.
