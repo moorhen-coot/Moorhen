@@ -6,6 +6,13 @@ import topLevelAwait from "vite-plugin-top-level-await";
 import checker from 'vite-plugin-checker';
 
 export default defineConfig({
+    css: {
+      preprocessorOptions: {
+        scss: {
+          api: 'modern',
+        }
+      }
+    },
     plugins: [
         react(),
         wasm(),

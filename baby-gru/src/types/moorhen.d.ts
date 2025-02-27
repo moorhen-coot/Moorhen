@@ -31,6 +31,7 @@ export namespace moorhen {
         modelName: string;
         cid: string;
         svg?: string;
+        flev_svg?: string;
         smiles?: string;
         chem_comp_info?: {first: string; second: string}[];
     }
@@ -247,6 +248,7 @@ export namespace moorhen {
         redrawRepresentation: (id: string) => Promise<void>;
         getPrivateerValidation(useCache?: boolean): Promise<privateer.ResultsEntry[]>;
         getLigandSVG(resName: string, useCache?: boolean): Promise<string>;
+        getFLEVSVG(cid: string): Promise<string>;
         isValidSelection(cid: string): Promise<boolean>;
         fetchHeaderInfo(useCache?: boolean): Promise<libcootApi.headerInfoJS>;
         calculateQscore(activeMap: Map, cid?: string): Promise<libcootApi.ValidationInformationJS[]>;
@@ -492,6 +494,7 @@ export namespace moorhen {
     interface Map {
         getHistogram(nBins?: number, zoomFactor?: number): Promise<libcootApi.HistogramInfoJS>;
         setMapWeight(weight?: number): Promise<WorkerResponse>;
+        scaleMap(scale: number): Promise<WorkerResponse>;
         estimateMapWeight(): Promise<void>;
         fetchMapAlphaAndRedraw(): Promise<void>;
         centreOnMap(): Promise<void>;
