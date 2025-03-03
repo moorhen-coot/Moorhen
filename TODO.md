@@ -3,6 +3,8 @@ A JavaScript molecular graphics program
 
 ### For 0.17.2
 - [x] FLEV.
+- [ ] Info button on models shows nothing. Use gemmi?
+- [ ] Add a maps info button.
 - [ ] Fix 4oo8 symmetry.
 
 ### For 0.17.0
