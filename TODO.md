@@ -3,6 +3,7 @@ A JavaScript molecular graphics program
 
 ### For 0.17.2
 - [x] FLEV.
+- [ ] Fitting 5-letter ligand truncates name, e.g. A1LU6
 - [ ] Info button on models shows nothing. Use gemmi?
 - [ ] Add a maps info button.
 - [ ] Fix 4oo8 symmetry.
