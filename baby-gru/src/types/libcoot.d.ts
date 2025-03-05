@@ -33,6 +33,7 @@ export namespace libcootApi {
         check_polymer_type(polymerConst: emscriptem.instance<number>): {value: number};
         remove_ligands_and_waters_chain(chain: gemmi.Chain): void;
         gemmi_setup_entities(gemmiStructure: gemmi.Structure): void;
+        has_hydrogen(model: gemmi.Model): number;
         gemmi_add_entity_types(gemmiStructure: gemmi.Structure, overWrite: boolean): void;
         remove_ligands_and_waters_structure(gemmiStructure: gemmi.Structure): void;
         remove_hydrogens_structure(gemmiStructure: gemmi.Structure): void;

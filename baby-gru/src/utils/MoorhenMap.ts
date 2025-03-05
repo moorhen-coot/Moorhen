@@ -436,6 +436,19 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     /**
+     * Set the map weight
+     * @param {number} [weight=moorhen.Map.suggestedMapWeight] - The new map weight
+     * @returns {Promise<moorhen.WorkerResponse>} Void worker response
+     */
+    scaleMap(scale: number): Promise<moorhen.WorkerResponse> {
+        return this.commandCentre.current.cootCommand({
+            returnType: 'status',
+            command: "scale_map",
+            commandArgs: [this.molNo, scale]
+        }, false)
+    }
+
+    /**
      * Get the current map weight
      * @returns {Promise<number>} The current map weight
      */
