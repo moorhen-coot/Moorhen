@@ -2429,7 +2429,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             const flev_result = await this.commandCentre.current.cootCommand({
                 returnType: "string",
                 command: 'get_svg_for_2d_ligand_environment_view',
-                commandArgs: [this.molNo, cid]
+                commandArgs: [this.molNo, cid, true]
             }, false) as moorhen.WorkerResponse<string>
             const ligandSVG = flev_result.data.result.result
             return ligandSVG
