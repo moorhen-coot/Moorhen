@@ -745,6 +745,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {Promise<moorhen.Molecule>} The new molecule
      */
     async loadToCootFromURL(url: RequestInfo | URL, molName: string, options?: RequestInit): Promise<moorhen.Molecule> {
+        console.log(url)
         const response = await fetch(url, options)
         try {
             if (response.ok) {
@@ -2614,6 +2615,16 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {Promise<libcootApi.headerInfoJS>} Object containing header information
      */
     async fetchHeaderInfo(useCache: boolean = true): Promise<libcootApi.headerInfoJS> {
+
+        let coordString = await this.gemmiStructure.as_string()
+        console.log(coordString)
+        const headerInfoGemmi = await this.commandCentre.current.cootCommand({
+                    command: 'get_coord_header_info',
+                    commandArgs: [coordString,"dum.cif"], //FIXME - Hardwire
+                    returnType: 'str_str_pair'
+                }, true) as moorhen.WorkerResponse<libcootApi.headerInfoGemmi>
+        console.log(headerInfoGemmi.data.result.result)
+        
         if (useCache && this.headerInfo !== null) {
             return this.headerInfo
         }
@@ -2626,7 +2637,11 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         if (useCache) {
             this.headerInfo = headerInfo.data.result.result
+            this.headerInfo.title = headerInfoGemmi.data.result.result.title
+            this.headerInfo.author_lines = [headerInfoGemmi.data.result.result.author]
+            this.headerInfo.journal_lines = [headerInfoGemmi.data.result.result.journal]
         }
+        console.log(this.headerInfo)
 
         return headerInfo.data.result.result
     }

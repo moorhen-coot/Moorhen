@@ -1167,6 +1167,9 @@ const doCootCommand = (messageData: {
             case "SmallMoleculeCifToMMCif":
                 cootResult = cootModule.SmallMoleculeCifToMMCif(...commandArgs as [string])
                 break
+            case "get_coord_header_info":
+                cootResult = cootModule.get_coord_header_info(...commandArgs as [string,string])
+                break
             default:
                 cootResult = molecules_container[command](...commandArgs)
                 break
