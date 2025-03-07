@@ -27,6 +27,7 @@
 #include <gemmi/mmcif.hpp>
 #include <gemmi/to_mmcif.hpp>
 #include <gemmi/to_cif.hpp>
+#include <gemmi/read_cif.hpp>
 
 
 #include "slicendice_cpp/kmeans.h"
@@ -75,6 +76,44 @@ using namespace emscripten;
 extern "C" {
 void untar(FILE *a, const char *path);
 }
+
+namespace moorhen {
+    inline void ltrim_inplace(std::string &s) {
+        s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
+                    return !std::isspace(ch);
+                    }));
+    }
+    inline void rtrim_inplace(std::string &s) {
+        s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
+                    return !std::isspace(ch);
+                    }).base(), s.end());
+    }
+    inline std::string ltrim(const std::string &s){
+        std::string s_copy = s;
+        ltrim_inplace(s_copy);
+        return s_copy;
+    }
+    inline std::string rtrim(const std::string &s){
+        std::string s_copy = s;
+        rtrim_inplace(s_copy);
+        return s_copy;
+    }
+    static bool ends_with(std::string_view str, std::string_view suffix) {
+        return str.size() >= suffix.size() && str.compare(str.size()-suffix.size(), suffix.size(), suffix) == 0;
+    }
+
+    static bool starts_with(std::string_view str, std::string_view prefix) {
+        return str.size() >= prefix.size() && str.compare(0, prefix.size(), prefix) == 0;
+    }
+}
+
+struct CoordinateHeaderInfo {
+    std::string title;
+    std::string author;
+    std::string journal;
+    std::string software;
+    std::string compound;
+};
 
 struct RamachandranInfo {
     std::string chainId;
@@ -140,6 +179,109 @@ std::vector<coot::residue_spec_t> getSecondaryStructure(mmdb::Manager *m, int im
     delete [] resTable;
     return v;
 }
+
+CoordinateHeaderInfo get_coord_header_info(const std::string &data, const std::string& path){
+
+    CoordinateHeaderInfo header_info;
+
+    char *c_data = (char *)data.c_str();
+    const size_t size = data.length();
+    auto c_path = path.c_str();
+
+    const auto st = gemmi::read_structure_from_char_array(c_data,size,path);
+
+    const auto& authors = st.meta.authors;
+
+    if(authors.size()>0){
+        header_info.author = std::accumulate(++authors.begin(), authors.end(), authors[0],
+                     [](const std::string& a, const std::string& b){
+                           return a + ", " + b;
+                     });
+    }
+
+    std::vector<std::string> soft_strings;
+    for(const auto& soft : st.meta.software){
+        std::string soft_str = soft.name;
+        if((soft.version.length()>0)||(soft.date.length()>0)){
+            soft_str += " (";
+            if((soft.version.length()>0)){
+                soft_str += soft.version;
+            }
+            if((soft.version.length()>0)&&(soft.date.length()>0)){
+                soft_str += ", ";
+            }
+            if((soft.date.length()>0)){
+                soft_str += soft.date;
+            }
+            soft_str += ")";
+        }
+        soft_strings.push_back(soft_str);
+    }
+
+    if(soft_strings.size()>0){
+        header_info.software = std::accumulate(++soft_strings.begin(), soft_strings.end(), soft_strings[0],
+                     [](const std::string& a, const std::string& b){
+                           return a + ", " + b;
+                     });
+    }
+
+    auto have_compound_card = false;
+
+    for(const auto& rem : st.raw_remarks){
+        if (rem.rfind("REMARK 400", 0) == 0) {
+            const auto rem_copy = moorhen::rtrim(rem);
+            const auto len = std::string("REMARK 400").length();
+            if((!have_compound_card) && (rem_copy.length()==len)){
+                continue;
+            }
+            if(rem_copy==std::string("REMARK 400 COMPOUND")){
+                have_compound_card = true;
+                continue;
+            }
+            header_info.compound += moorhen::ltrim(rem_copy.substr(len))+"\n";
+        }
+    }
+
+    for(const auto& kv : st.info){
+        if(kv.first=="_struct.title"){
+            header_info.title = kv.second;
+            break;
+        }
+    }
+
+    if(moorhen::ends_with(path,"cif")){
+
+        auto doc = gemmi::read_cif_from_memory(c_data,size,c_path);  
+        auto block = doc.sole_block();
+        auto citation_author = block.find_mmcif_category("_citation_author.");
+        std::vector<std::string> authors;
+
+        for(const auto& row : citation_author){
+            authors.push_back(row[1]);
+        }
+
+        if(authors.size()>0){
+            header_info.author = std::accumulate(++authors.begin(), authors.end(), authors[0],
+                     [](const std::string& a, const std::string& b){
+                           return a + ", " + b;
+                     });
+        }
+
+        for(const auto& item : block.items){
+            if (item.type == gemmi::cif::ItemType::Pair){
+                if(moorhen::starts_with(item.pair[0],"_citation.")){
+                    if(item.pair[1]!="?"){
+                        header_info.journal += item.pair[0].substr(std::string("_citation.").length())+":"+std::string((40-item.pair[0].length()),' ')+item.pair[1]+"\n";
+                    }
+                }
+            }
+        }
+    }
+
+    return header_info;
+
+}
+
 
 std::map<std::string,std::vector<coot::simple_rotamer> > getRotamersMap(){
 
@@ -2162,6 +2304,14 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("second",&std::pair<int,coot::instanced_mesh_t>::second)
     ;
 
+    value_object<CoordinateHeaderInfo>("CoordinateHeaderInfo")
+        .field("title",&CoordinateHeaderInfo::title)
+        .field("author",&CoordinateHeaderInfo::author)
+        .field("journal",&CoordinateHeaderInfo::journal)
+        .field("software",&CoordinateHeaderInfo::software)
+        .field("compound",&CoordinateHeaderInfo::compound)
+    ;
+
     value_array<glm::mat4>("array_mat4")
         .element(emscripten::index<0>())
         .element(emscripten::index<1>())
@@ -2189,10 +2339,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
 
     function("SmallMoleculeCifToMMCif",&SmallMoleculeCifToMMCif);
 
-    //For testing
-    //function("TakeColourMap",&TakeColourMap);
-    //function("TakeStringIntPairVector",&TakeStringIntPairVector);
     function("get_mtz_columns",&get_mtz_columns);
-
+    function("get_coord_header_info",&get_coord_header_info);
 
 }
