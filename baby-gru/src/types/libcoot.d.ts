@@ -38,6 +38,7 @@ export namespace libcootApi {
         remove_ligands_and_waters_structure(gemmiStructure: gemmi.Structure): void;
         remove_hydrogens_structure(gemmiStructure: gemmi.Structure): void;
         read_structure_from_string(coordData: string | ArrayBuffer, molName: string): gemmi.Structure;
+        read_string(coordData: string) : gemmi.cifDocument;
         is_small_structure(coordData: string): boolean;
         copy_to_assembly_to_new_structure(gemmiStructure: gemmi.Structure, assembly_name: string): gemmi.Structure;
         get_mtz_columns(fileName: string): emscriptem.vector<string>;
@@ -496,6 +497,7 @@ export namespace libcootApi {
         SmilesToPDB(arg0: string, arg1: string, arg2: number, arg3: number): PairType<string, string>;
         get_mmcif_string_from_gemmi_struct(arg0:gemmi.Structure): string;
         read_structure_from_string(coordData: string | ArrayBuffer, molName: string): gemmi.Structure;
+        read_string(coordData: string) : gemmi.cifDocument;
         MolTextToPDB(mol_text_cpp:string, TLC: string, nconf: number, maxIters: number, keep_orig_coords: boolean, minimize: boolean): PairType<string, string>;
 
         FS: {
@@ -526,7 +528,7 @@ export namespace libcootApi {
         validate(arg0: string, arg1: string): emscriptem.vector<PrivateerResultsEntry>;
         parse_mon_lib_list_cif(arg0: string): emscriptem.vector<compoundInfo>;
         SmallMoleculeCifToMMCif(fileName: string): PairType<string, string>;
-        get_coord_header_info(fileName: string, path: string): headerInfoGemmi;
+        get_coord_header_info(coordString: string, docString: string, path: string): headerInfoGemmi;
         molecules_container_js: { new(verbose: boolean): MoleculesContainerJS };
         Vectormoved_residue_t: { new(): emscriptem.vector<MovedResidueT>};
         moved_residue_t: { new(arg0: string, arg1: number, arg2: string): MovedResidueT};

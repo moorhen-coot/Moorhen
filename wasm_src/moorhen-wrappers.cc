@@ -180,7 +180,7 @@ std::vector<coot::residue_spec_t> getSecondaryStructure(mmdb::Manager *m, int im
     return v;
 }
 
-CoordinateHeaderInfo get_coord_header_info(const std::string &data, const std::string& path){
+CoordinateHeaderInfo get_coord_header_info(const std::string &data, const std::string& docData, const std::string& path){
 
     CoordinateHeaderInfo header_info;
 
@@ -189,6 +189,7 @@ CoordinateHeaderInfo get_coord_header_info(const std::string &data, const std::s
     auto c_path = path.c_str();
 
     const auto st = gemmi::read_structure_from_char_array(c_data,size,path);
+    auto doc = gemmi::cif::read_string(docData);
 
     const auto& authors = st.meta.authors;
 
@@ -251,27 +252,27 @@ CoordinateHeaderInfo get_coord_header_info(const std::string &data, const std::s
 
     if(moorhen::ends_with(path,"cif")){
 
-        auto doc = gemmi::read_cif_from_memory(c_data,size,c_path);  
-        auto block = doc.sole_block();
+        for (gemmi::cif::Block& block : doc.blocks){
         auto citation_author = block.find_mmcif_category("_citation_author.");
-        std::vector<std::string> authors;
+            std::vector<std::string> authors;
 
-        for(const auto& row : citation_author){
-            authors.push_back(row[1]);
-        }
+            for(const auto& row : citation_author){
+                authors.push_back(row[1]);
+            }
 
-        if(authors.size()>0){
-            header_info.author = std::accumulate(++authors.begin(), authors.end(), authors[0],
-                     [](const std::string& a, const std::string& b){
-                           return a + ", " + b;
-                     });
-        }
+            if(authors.size()>0){
+                header_info.author = std::accumulate(++authors.begin(), authors.end(), authors[0],
+                         [](const std::string& a, const std::string& b){
+                               return a + ", " + b;
+                         });
+            }
 
-        for(const auto& item : block.items){
-            if (item.type == gemmi::cif::ItemType::Pair){
-                if(moorhen::starts_with(item.pair[0],"_citation.")){
-                    if(item.pair[1]!="?"){
-                        header_info.journal += item.pair[0].substr(std::string("_citation.").length())+":"+std::string((40-item.pair[0].length()),' ')+item.pair[1]+"\n";
+            for(const auto& item : block.items){
+                if (item.type == gemmi::cif::ItemType::Pair){
+                    if(moorhen::starts_with(item.pair[0],"_citation.")){
+                        if(item.pair[1]!="?"){
+                            header_info.journal += item.pair[0].substr(std::string("_citation.").length())+":"+std::string((40-item.pair[0].length()),' ')+item.pair[1]+"\n";
+                        }
                     }
                 }
             }
