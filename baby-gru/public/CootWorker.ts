@@ -1093,6 +1093,23 @@ const privateerValidationToJSArray = (results: emscriptem.vector<privateer.Resul
     return data;
 }
 
+const headerInfoGemmiAsJSObject = (result: libcootApi.headerInfoGemmi): libcootApi.headerInfoGemmiJS => {
+
+    const authorLines = result.author
+    const author: string[] = stringArrayToJSArray(authorLines)
+
+    const journalLines = result.journal
+    const journal: string[] = stringArrayToJSArray(journalLines)
+
+    return {
+        title: result.title,
+        author,
+        compound: result.compound,
+        software: result.software,
+        journal
+    }
+}
+
 const headerInfoAsJSObject = (result: libcootApi.headerInfo): libcootApi.headerInfoJS => {
 
     const authorLines = result.author_lines
@@ -1179,6 +1196,9 @@ const doCootCommand = (messageData: {
         switch (returnType) {
             case 'header_info_t':
                 returnResult = headerInfoAsJSObject(cootResult)
+                break
+            case 'header_info_gemmi_t':
+                returnResult = headerInfoGemmiAsJSObject(cootResult)
                 break
             case 'texture_as_floats_t':
                 returnResult = textureAsFloatsToJSTextureAsFloats(cootResult)

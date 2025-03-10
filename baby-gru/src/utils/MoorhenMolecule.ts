@@ -2637,8 +2637,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
         const headerInfoGemmi = await this.commandCentre.current.cootCommand({
                     command: 'get_coord_header_info',
                     commandArgs: [coordString,docString,dummy_name],
-                    returnType: 'str_str_pair'
-                }, true) as moorhen.WorkerResponse<libcootApi.headerInfoGemmi>
+                    returnType: 'header_info_gemmi_t'
+                }, true) as moorhen.WorkerResponse<libcootApi.headerInfoGemmiJS>
         console.log(headerInfoGemmi)
         
         if (useCache && this.headerInfo !== null) {
@@ -2655,8 +2655,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
             this.headerInfo = headerInfo.data.result.result
             if(headerInfoGemmi.data.result.status==="Completed") {
                 this.headerInfo.title = headerInfoGemmi.data.result.result.title
-                this.headerInfo.author_lines = [headerInfoGemmi.data.result.result.author]
-                this.headerInfo.journal_lines = [headerInfoGemmi.data.result.result.journal]
+                this.headerInfo.author_lines = headerInfoGemmi.data.result.result.author
+                this.headerInfo.journal_lines = headerInfoGemmi.data.result.result.journal
             } else {
                 this.headerInfo.title = headerInfo.data.result.result.title
                 this.headerInfo.author_lines = headerInfo.data.result.result.author_lines

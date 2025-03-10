@@ -109,8 +109,8 @@ namespace moorhen {
 
 struct CoordinateHeaderInfo {
     std::string title;
-    std::string author;
-    std::string journal;
+    std::vector<std::string> author;
+    std::vector<std::string> journal;
     std::string software;
     std::string compound;
 };
@@ -191,14 +191,7 @@ CoordinateHeaderInfo get_coord_header_info(const std::string &data, const std::s
     const auto st = gemmi::read_structure_from_char_array(c_data,size,path);
     auto doc = gemmi::cif::read_string(docData);
 
-    const auto& authors = st.meta.authors;
-
-    if(authors.size()>0){
-        header_info.author = std::accumulate(++authors.begin(), authors.end(), authors[0],
-                     [](const std::string& a, const std::string& b){
-                           return a + ", " + b;
-                     });
-    }
+    header_info.author = st.meta.authors;
 
     std::vector<std::string> soft_strings;
     for(const auto& soft : st.meta.software){
@@ -253,25 +246,20 @@ CoordinateHeaderInfo get_coord_header_info(const std::string &data, const std::s
     if(moorhen::ends_with(path,"cif")){
 
         for (gemmi::cif::Block& block : doc.blocks){
-        auto citation_author = block.find_mmcif_category("_citation_author.");
-            std::vector<std::string> authors;
+            auto citation_author = block.find_mmcif_category("_citation_author.");
+
+            if(citation_author.size()>0)
+                header_info.author.clear();
 
             for(const auto& row : citation_author){
-                authors.push_back(row[1]);
-            }
-
-            if(authors.size()>0){
-                header_info.author = std::accumulate(++authors.begin(), authors.end(), authors[0],
-                         [](const std::string& a, const std::string& b){
-                               return a + ", " + b;
-                         });
+                header_info.author.push_back(row[1]);
             }
 
             for(const auto& item : block.items){
                 if (item.type == gemmi::cif::ItemType::Pair){
                     if(moorhen::starts_with(item.pair[0],"_citation.")){
                         if(item.pair[1]!="?"){
-                            header_info.journal += item.pair[0].substr(std::string("_citation.").length())+":"+std::string((40-item.pair[0].length()),' ')+item.pair[1]+"\n";
+                            header_info.journal.push_back(item.pair[0].substr(std::string("_citation.").length())+":"+std::string((40-item.pair[0].length()),' ')+item.pair[1]);
                         }
                     }
                 }
