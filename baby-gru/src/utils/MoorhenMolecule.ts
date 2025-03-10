@@ -438,12 +438,17 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
         this.cachedGemmiAtoms = null
         this.gemmiStructure = readGemmiStructure(coordString, this.name)
-        this.gemmiDocument = readGemmiCifDocument(coordString as string)
         window.CCP4Module.gemmi_setup_entities(this.gemmiStructure)
         // Only override if this is mmcif
         window.CCP4Module.gemmi_add_entity_types(this.gemmiStructure, this.coordsFormat === 'mmcif')
         this.parseSequences()
         this.updateLigands()
+        console.log(this.coordsFormat)
+        try {
+            this.gemmiDocument = readGemmiCifDocument(coordString as string)
+        } catch(e) {
+            this.gemmiDocument = null
+        }
     }
 
     /**
@@ -2622,13 +2627,19 @@ export class MoorhenMolecule implements moorhen.Molecule {
     async fetchHeaderInfo(useCache: boolean = true): Promise<libcootApi.headerInfoJS> {
 
         let coordString = await this.gemmiStructure.as_string()
-        let docString = await this.gemmiDocument.as_string()
+        let docString
+        if(this.gemmiDocument){
+            docString = await this.gemmiDocument.as_string()
+        }
+
+        const dummy_name = (this.gemmiDocument) ? "dummy.cif" :  "dummy.pdb"
 
         const headerInfoGemmi = await this.commandCentre.current.cootCommand({
                     command: 'get_coord_header_info',
-                    commandArgs: [coordString,docString,"dum.cif"], //FIXME - Hardwire
+                    commandArgs: [coordString,docString,dummy_name],
                     returnType: 'str_str_pair'
                 }, true) as moorhen.WorkerResponse<libcootApi.headerInfoGemmi>
+        console.log(headerInfoGemmi)
         
         if (useCache && this.headerInfo !== null) {
             return this.headerInfo
@@ -2642,9 +2653,15 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         if (useCache) {
             this.headerInfo = headerInfo.data.result.result
-            this.headerInfo.title = headerInfoGemmi.data.result.result.title
-            this.headerInfo.author_lines = [headerInfoGemmi.data.result.result.author]
-            this.headerInfo.journal_lines = [headerInfoGemmi.data.result.result.journal]
+            if(headerInfoGemmi.data.result.status==="Completed") {
+                this.headerInfo.title = headerInfoGemmi.data.result.result.title
+                this.headerInfo.author_lines = [headerInfoGemmi.data.result.result.author]
+                this.headerInfo.journal_lines = [headerInfoGemmi.data.result.result.journal]
+            } else {
+                this.headerInfo.title = headerInfo.data.result.result.title
+                this.headerInfo.author_lines = headerInfo.data.result.result.author_lines
+                this.headerInfo.journal_lines = headerInfo.data.result.result.journal_lines
+            }
         }
 
         return headerInfo.data.result.result
