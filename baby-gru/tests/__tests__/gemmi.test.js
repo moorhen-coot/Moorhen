@@ -72,6 +72,88 @@ describe("Testing gemmi", () => {
         cleanUpVariables.push(table)
     })
 
+    test("Test get_coord_header_info with gemmi 3j2w.pdb", () => {
+        const filePath = './3j2w.pdb'
+        const st = cootModule.read_structure_file(filePath, cootModule.CoorFormat.Pdb)
+        const docData = fs.readFileSync(path.join(__dirname, '..', 'test_data',filePath), 'utf8');
+        const data = st.as_string()
+        const header_info = cootModule.get_coord_header_info(data, docData, filePath)
+        expect(header_info.title).toBe('ELECTRON CRYO-MICROSCOPY OF CHIKUNGUNYA VIRUS')
+        expect(header_info.software).toBe('')
+        expect(header_info.compound).toBe('')
+        const author = header_info.author
+        const journal = header_info.journal
+        expect(author.size()).toBe(3)
+        const author_1 = author.get(0)
+        const author_2 = author.get(1)
+        const author_3 = author.get(2)
+        expect(journal.size()).toBe(0)
+        expect(author_1).toBe('SUN, S.')
+        expect(author_2).toBe('XIANG, Y.')
+        expect(author_3).toBe('ROSSMANN, M.G.')
+        cleanUpVariables.push(author,author_1,author_2,author_3,journal,header_info)
+    })
+
+    test("Test get_coord_header_info with gemmi 8zuv_updated.cif", () => {
+        const filePath = './8zuv_updated.cif'
+        const st = cootModule.read_structure_file(filePath, cootModule.CoorFormat.Mmcif)
+        const docData = fs.readFileSync(path.join(__dirname, '..', 'test_data',filePath), 'utf8');
+        const data = st.as_string()
+        const header_info = cootModule.get_coord_header_info(data, docData, filePath)
+        expect(header_info.title).toBe('Crystal structure of mouse Galectin-3 in complex with small molecule inhibitor')
+        expect(header_info.software).toBe('BUSTER (5.8.0232), Aimless, XDS, PHASER')
+        expect(header_info.compound).toBe('')
+        const author = header_info.author
+        const journal = header_info.journal
+        expect(author.size()).toBe(19)
+        const author_1 = author.get(0)
+        const author_2 = author.get(1)
+        const author_3 = author.get(2)
+        expect(journal.size()).toBe(13)
+        expect(author_1).toBe('Yoon, D.S.')
+        expect(author_2).toBe('Liu, C.')
+        expect(author_3).toBe('Jalagam, P.R.')
+        const journal_1 = journal.get(0)
+        const journal_2 = journal.get(1)
+        const journal_3 = journal.get(2)
+        const journal_7 = journal.get(6)
+        expect(journal_1).toBe('country:                       US')
+        expect(journal_2).toBe('id:                            primary')
+        expect(journal_3).toBe(`journal_abbrev:                'J. Med. Chem.'`)
+        expect(journal_7).toBe('journal_volume:                67')
+        cleanUpVariables.push(author,author_1,author_2,author_3,journal_1,journal_2,journal_3,journal_7,journal,header_info)
+    })
+
+    test("Test get_coord_header_info with gemmi 6owe.cif", () => {
+        const filePath = './6owe.cif'
+        const st = cootModule.read_structure_file(filePath, cootModule.CoorFormat.Mmcif)
+        const docData = fs.readFileSync(path.join(__dirname, '..', 'test_data',filePath), 'utf8');
+        const data = st.as_string()
+        const header_info = cootModule.get_coord_header_info(data, docData, filePath)
+        expect(header_info.title).toBe('Enoyl-CoA carboxylases/reductases in complex with ethylmalonyl CoA')
+        expect(header_info.software).toBe('PHENIX ((1.15.2_3472)), XDS, XSCALE, PHASER')
+        expect(header_info.compound).toBe('')
+        const author = header_info.author
+        const journal = header_info.journal
+        expect(author.size()).toBe(10)
+        const author_1 = author.get(0)
+        const author_2 = author.get(1)
+        const author_3 = author.get(2)
+        expect(journal.size()).toBe(13)
+        expect(author_1).toBe('Stoffel, G.M.M.')
+        expect(author_2).toBe('Saez, D.A.')
+        expect(author_3).toBe('DeMirci, H.')
+        const journal_1 = journal.get(0)
+        const journal_2 = journal.get(1)
+        const journal_3 = journal.get(2)
+        const journal_7 = journal.get(6)
+        expect(journal_1).toBe('country:                       US')
+        expect(journal_2).toBe('id:                            primary')
+        expect(journal_3).toBe(`journal_abbrev:                Proc.Natl.Acad.Sci.USA`)
+        expect(journal_7).toBe('journal_volume:                116')
+        cleanUpVariables.push(author,author_1,author_2,author_3,journal_1,journal_2,journal_3,journal_7,journal,header_info)
+    })
+
     test("Test assembly 3j2w.pdb", () => {
         const st = cootModule.read_structure_file('./3j2w.pdb', cootModule.CoorFormat.Pdb)
         const assemblies = st.assemblies
@@ -327,7 +409,7 @@ describe("Testing gemmi", () => {
     })
 })
 
-const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb', '3j2w.pdb', '3j2w_updated.cif']
+const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb', '3j2w.pdb', '3j2w_updated.cif', '8zuv_updated.cif', '6owe.cif']
 
 const setupFunctions = {
     removeTestDataFromFauxFS: () => {
