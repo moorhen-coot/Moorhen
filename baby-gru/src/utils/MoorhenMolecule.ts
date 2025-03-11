@@ -2639,7 +2639,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
                     commandArgs: [coordString,docString,dummy_name],
                     returnType: 'header_info_gemmi_t'
                 }, true) as moorhen.WorkerResponse<libcootApi.headerInfoGemmiJS>
-        console.log(headerInfoGemmi)
         
         if (useCache && this.headerInfo !== null) {
             return this.headerInfo
