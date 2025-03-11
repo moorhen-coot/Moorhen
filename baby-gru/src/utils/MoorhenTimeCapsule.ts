@@ -576,16 +576,16 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             dispatch( emptyMaps() )    
         })
 
-        console.log("##################################################")
-        console.log("##################################################")
-        console.log("loadSessionData",sessionData.dataIsEmbedded)
-        console.log("##################################################")
-        console.log("##################################################")
         // Load molecules stored in session from coords string
         const newMoleculePromises = sessionData.moleculeData?.map(storedMoleculeData => {
-            console.log(storedMoleculeData)
             const newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)
-            return newMolecule.loadToCootFromString(storedMoleculeData.coordString, storedMoleculeData.name)
+            if(sessionData.dataIsEmbedded){
+                return newMolecule.loadToCootFromString(storedMoleculeData.coordString, storedMoleculeData.name)
+            } else {
+                newMolecule.uniqueId = storedMoleculeData.uniqueId
+                //const doppioUrl = someFunctionOf(storedMoleculeData.uniqueId)
+                //return newMolecule.loadToCootFromUrl(doppioUrl, storedMoleculeData.name)
+            }
         }) || []
         
         // Load maps stored in session
