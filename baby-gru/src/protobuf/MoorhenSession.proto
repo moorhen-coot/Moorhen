@@ -165,4 +165,5 @@ message Session {
   repeated MapDataSession mapData = 4;
   ViewDataSession viewData = 5;
   int32 activeMapIndex = 6;
+  bool dataIsEmbedded = 7;
 }

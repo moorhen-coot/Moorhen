@@ -105,7 +105,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         this.modificationCount = 0
         this.modificationCountBackupThreshold = 5
         this.maxBackupCount = 10
-        this.version = 'v21'
+        this.version = 'v22'
         this.disableBackups = false
         this.storageInstance = null
         this.onIsBusyChange = null
@@ -194,7 +194,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
      * @param {boolean} [includeAdditionalMapData=true] - True if map data should be fetched and included in the resulting session
      * @returns {Promise<moorhen.backupSession>} A backup for the current session
      */
-    async fetchSession (includeAdditionalMapData: boolean = true): Promise<moorhen.backupSession> {
+    async fetchSession (includeAdditionalMapData: boolean = true, embedData: boolean = true ): Promise<moorhen.backupSession> {
         this.setBusy(true)
         const keyStrings = await this.storageInstance.keys()
         const mtzFileNames = keyStrings.map((keyString: string) => JSON.parse(keyString)).filter((key: moorhen.backupKey) => key.type === 'mtzData').map((key: moorhen.backupKey) => key.name)
@@ -245,11 +245,23 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             } else if (promise === 'map_data') {
                 mapDataPromises.push(null)
             } else if (typeof promise === "object" && promise.data.message === "get_mtz_data") {
-                reflectionDataPromises.push(promise.data.result.mtzData)
+                if(embedData){
+                    reflectionDataPromises.push(promise.data.result.mtzData)
+                } else {
+                    reflectionDataPromises.push(Buffer.from("NODATA"))
+                }
             } else if (typeof promise === "object" && promise.data.message === 'get_atoms') {
-                moleculeDataPromises.push(promise.data.result.result)
+                if(embedData){
+                    moleculeDataPromises.push(promise.data.result.result)
+                } else {
+                    moleculeDataPromises.push("NODATA")
+                }
             } else if (typeof promise === "object" && promise.data.message === 'get_map') {
-                mapDataPromises.push(new Uint8Array(promise.data.result.mapData))
+                if(embedData){
+                    mapDataPromises.push(new Uint8Array(promise.data.result.mapData))
+                } else {
+                    mapDataPromises.push(Buffer.from("NODATA"))
+                }
             } else {
                 console.log(`Unrecognised promise type when fetching session... ${promise}`)
             }
@@ -343,13 +355,16 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             }
         }
 
+        console.log("Set  moorhen.backupSession data",embedData)
+
         const session: moorhen.backupSession = {
             includesAdditionalMapData: includeAdditionalMapData,
             moleculeData: moleculeData,
             mapData: mapData,
             viewData: viewData,
             activeMapIndex: this.mapsRef.current.findIndex(map => map.molNo === this.activeMapRef.current?.molNo),
-            version: this.version
+            version: this.version,
+            dataIsEmbedded: embedData
         }
 
         return session
@@ -562,6 +577,12 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             dispatch( emptyMaps() )    
         })
 
+        console.log("##################################################")
+        console.log("##################################################")
+        console.log("loadSessionData",sessionData)
+        console.log("loadSessionData",sessionData.dataIsEmbedded)
+        console.log("##################################################")
+        console.log("##################################################")
         // Load molecules stored in session from coords string
         const newMoleculePromises = sessionData.moleculeData?.map(storedMoleculeData => {
             const newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)

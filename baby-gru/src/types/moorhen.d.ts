@@ -653,6 +653,7 @@ export namespace moorhen {
         mapData: mapDataSession[];
         viewData: viewDataSession;
         activeMapIndex: number;
+        dataIsEmbedded: boolean;
     }
 
     interface TimeCapsule {
@@ -663,7 +664,7 @@ export namespace moorhen {
         removeBackup(key: string): Promise<void>;
         updateDataFiles(): Promise<(string | void)[]>;
         createBackup(keyString: string, sessionString: string): Promise<string>;
-        fetchSession(includeAdditionalMapData: boolean): Promise<backupSession>;
+        fetchSession(includeAdditionalMapData: boolean, embedData: boolean=true): Promise<backupSession>;
         toggleDisableBackups(): void;
         addModification: () =>  Promise<string>;
         init: () => Promise<void>;
