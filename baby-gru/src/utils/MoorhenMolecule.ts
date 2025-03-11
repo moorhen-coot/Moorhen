@@ -2627,7 +2627,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     async fetchHeaderInfo(useCache: boolean = true): Promise<libcootApi.headerInfoJS> {
 
         let coordString = await this.gemmiStructure.as_string()
-        let docString
+        let docString = ""
         if(this.gemmiDocument){
             docString = await this.gemmiDocument.as_string()
         }

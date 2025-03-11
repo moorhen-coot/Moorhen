@@ -189,7 +189,6 @@ CoordinateHeaderInfo get_coord_header_info(const std::string &data, const std::s
     auto c_path = path.c_str();
 
     const auto st = gemmi::read_structure_from_char_array(c_data,size,path);
-    auto doc = gemmi::cif::read_string(docData);
 
     header_info.author = st.meta.authors;
 
@@ -244,7 +243,7 @@ CoordinateHeaderInfo get_coord_header_info(const std::string &data, const std::s
     }
 
     if(moorhen::ends_with(path,"cif")){
-
+        auto doc = gemmi::cif::read_string(docData);
         for (gemmi::cif::Block& block : doc.blocks){
             auto citation_author = block.find_mmcif_category("_citation_author.");
 
