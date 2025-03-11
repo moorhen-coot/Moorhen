@@ -84,6 +84,7 @@ message MoleculeSessionData {
   bool biomolOn = 11;
   float symmetryRadius = 12;
   residueEnvironmentOptions defaultResEnvOptions = 13;
+  string uniqueId = 14;
 }
 
 message MapDataSession {

@@ -594,6 +594,7 @@ export namespace moorhen {
         symmetryOn: boolean;
         biomolOn: boolean;
         symmetryRadius: number;
+        uniqueId: string;
     }
 
     type mapDataSession = {

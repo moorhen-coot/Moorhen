@@ -105,7 +105,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         this.modificationCount = 0
         this.modificationCountBackupThreshold = 5
         this.maxBackupCount = 10
-        this.version = 'v22'
+        this.version = 'v23'
         this.disableBackups = false
         this.storageInstance = null
         this.onIsBusyChange = null
@@ -273,6 +273,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                 molNo: molecule.molNo,
                 coordFormat: molecule.coordsFormat,
                 coordString: moleculeDataPromises[index],
+                uniqueId: molecule.uniqueId,
                 representations: molecule.representations.filter(item => item.visible).map(item => { return {
                     cid: item.cid,
                     style: item.style,
@@ -582,6 +583,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         console.log("##################################################")
         // Load molecules stored in session from coords string
         const newMoleculePromises = sessionData.moleculeData?.map(storedMoleculeData => {
+            console.log(storedMoleculeData)
             const newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)
             return newMolecule.loadToCootFromString(storedMoleculeData.coordString, storedMoleculeData.name)
         }) || []
