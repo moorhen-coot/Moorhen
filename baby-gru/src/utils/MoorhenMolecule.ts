@@ -443,7 +443,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
         window.CCP4Module.gemmi_add_entity_types(this.gemmiStructure, this.coordsFormat === 'mmcif')
         this.parseSequences()
         this.updateLigands()
-        console.log(this.coordsFormat)
         try {
             this.gemmiDocument = readGemmiCifDocument(coordString as string)
         } catch(e) {

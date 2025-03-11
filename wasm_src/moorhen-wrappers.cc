@@ -78,24 +78,32 @@ void untar(FILE *a, const char *path);
 }
 
 namespace moorhen {
-    inline void ltrim_inplace(std::string &s) {
-        s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
-                    return !std::isspace(ch);
-                    }));
+    inline void ltrim_inplace(std::string &s, const char cht='\0') {
+        s.erase(s.begin(), std::find_if(s.begin(), s.end(), [cht](unsigned char ch) {
+            if(cht!='\0') {
+                return ch != cht;
+            } else {
+                return !std::isspace(ch);
+            }
+        }));
     }
-    inline void rtrim_inplace(std::string &s) {
-        s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
-                    return !std::isspace(ch);
-                    }).base(), s.end());
+    inline void rtrim_inplace(std::string &s, const char cht='\0') {
+        s.erase(std::find_if(s.rbegin(), s.rend(), [cht](unsigned char ch) {
+            if(cht!='\0') {
+                return ch != cht;
+            } else {
+                return !std::isspace(ch);
+            }
+        }).base(), s.end());
     }
-    inline std::string ltrim(const std::string &s){
+    inline std::string ltrim(const std::string &s, const char cht='\0'){
         std::string s_copy = s;
-        ltrim_inplace(s_copy);
+        ltrim_inplace(s_copy,cht);
         return s_copy;
     }
-    inline std::string rtrim(const std::string &s){
+    inline std::string rtrim(const std::string &s, const char cht='\0'){
         std::string s_copy = s;
-        rtrim_inplace(s_copy);
+        rtrim_inplace(s_copy,cht);
         return s_copy;
     }
     static bool ends_with(std::string_view str, std::string_view suffix) {
@@ -251,7 +259,7 @@ CoordinateHeaderInfo get_coord_header_info(const std::string &data, const std::s
                 header_info.author.clear();
 
             for(const auto& row : citation_author){
-                header_info.author.push_back(row[1]);
+                header_info.author.push_back(moorhen::rtrim(moorhen::ltrim(row[1],'\''),'\''));
             }
 
             for(const auto& item : block.items){
