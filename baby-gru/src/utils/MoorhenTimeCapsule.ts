@@ -355,8 +355,6 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             }
         }
 
-        console.log("Set  moorhen.backupSession data",embedData)
-
         const session: moorhen.backupSession = {
             includesAdditionalMapData: includeAdditionalMapData,
             moleculeData: moleculeData,
@@ -579,7 +577,6 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
 
         console.log("##################################################")
         console.log("##################################################")
-        console.log("loadSessionData",sessionData)
         console.log("loadSessionData",sessionData.dataIsEmbedded)
         console.log("##################################################")
         console.log("##################################################")
