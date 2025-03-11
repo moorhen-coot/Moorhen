@@ -248,7 +248,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                 if(embedData){
                     reflectionDataPromises.push(promise.data.result.mtzData)
                 } else {
-                    reflectionDataPromises.push(Buffer.from("NODATA"))
+                    reflectionDataPromises.push(new TextEncoder().encode("NODATA"))
                 }
             } else if (typeof promise === "object" && promise.data.message === 'get_atoms') {
                 if(embedData){
@@ -260,7 +260,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                 if(embedData){
                     mapDataPromises.push(new Uint8Array(promise.data.result.mapData))
                 } else {
-                    mapDataPromises.push(Buffer.from("NODATA"))
+                    mapDataPromises.push(new TextEncoder().encode("NODATA"))
                 }
             } else {
                 console.log(`Unrecognised promise type when fetching session... ${promise}`)
