@@ -557,6 +557,7 @@ export namespace moorhen {
         defaultMapColour: {r: number, g: number, b: number};
         defaultPositiveMapColour: {r: number, g: number, b: number};
         defaultNegativeMapColour: {r: number, g: number, b: number};
+        fetchHeaderInfo(): Promise<libcootApi.mapHeaderInfo>;
     }
 
     interface backupKey {

@@ -81,6 +81,32 @@ export namespace libcootApi {
         author_lines: string[];
         compound_lines: string[];
     }
+    type mapCell = {
+        a: () => number;
+        b: () => number;
+        c: () => number;
+        alpha: () => number;
+        beta: () => number;
+        gamma: () => number;
+    }
+    type mapCellJS = {
+        a: number;
+        b: number;
+        c: number;
+        alpha: number;
+        beta: number;
+        gamma: number;
+    }
+    type mapHeaderInfo = {
+        spacegroup: string;
+        cell_a: number;
+        cell_b: number;
+        cell_c: number;
+        cell_alpha: number;
+        cell_beta: number;
+        cell_gamma: number;
+        resolution: number;
+    }
     type SequenceResInfo = {
         resNum: number;
         resCode: string;
@@ -573,5 +599,7 @@ export namespace libcootApi {
         read_pdb(tempFilename: string): number;
         set_show_timings: (arg0: boolean) => void;
         new_positions_for_atoms_in_residues: (arg0: number, arg1: emscriptem.vector<MovedResidueT>) => number;
+        get_map_spacegroup(arg0: number): string;
+        get_map_data_resolution(arg0: number): number;
     }       
 }

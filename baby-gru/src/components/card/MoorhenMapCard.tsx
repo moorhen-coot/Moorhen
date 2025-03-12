@@ -8,6 +8,7 @@ import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDi
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
 import { MoorhenSetMapWeight } from "../menu-item/MoorhenSetMapWeight"
 import { MoorhenScaleMap } from "../menu-item/MoorhenScaleMap"
+import { MoorhenMapInfoCard } from "../card/MoorhenMapInfoCard"
 import { MoorhenMapHistogram } from "../misc/MoorhenMapHistogram"
 import { MoorhenSlider } from "../misc/MoorhenSlider";
 import { Accordion, AccordionDetails, AccordionSummary, IconButton, MenuItem, Popover, Tooltip } from "@mui/material"
@@ -162,6 +163,8 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
 
     const dispatch = useDispatch()
 
+    const anchorEl = useRef(null)
+
     const { enqueueSnackbar } = useSnackbar()
 
     useImperativeHandle(cardRef, () => ({
@@ -272,6 +275,11 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         8: {
             label: "Set map scale...",
             compressed: () => { return (<MoorhenScaleMap key='scale-map' disabled={!mapIsVisible} map={props.map} setPopoverIsShown={setPopoverIsShown} />) },
+            expanded: null
+        },
+        9: {
+            label: "Map information...",
+            compressed: () => { return (<MoorhenMapInfoCard key='info-map' disabled={!mapIsVisible} map={props.map} setPopoverIsShown={setPopoverIsShown} />) },
             expanded: null
         },
     }

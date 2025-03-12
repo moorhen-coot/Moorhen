@@ -1110,6 +1110,19 @@ const headerInfoGemmiAsJSObject = (result: libcootApi.headerInfoGemmi): libcootA
     }
 }
 
+const cellInfoAsJSObject = (result: libcootApi.mapCell): libcootApi.mapCellJS => {
+        console.log(result)
+        const cell: libcootApi.mapCellJS = {
+            a: result.a(),
+            b: result.b(),
+            c: result.c(),
+            alpha: result.alpha(),
+            beta: result.beta(),
+            gamma: result.gamma(),
+        }
+        return cell
+}
+
 const headerInfoAsJSObject = (result: libcootApi.headerInfo): libcootApi.headerInfoJS => {
 
     const authorLines = result.author_lines
@@ -1188,12 +1201,22 @@ const doCootCommand = (messageData: {
                 cootResult = cootModule.get_coord_header_info(...commandArgs as [string,string,string])
                 break
             default:
+                console.log("Calling",command)
                 cootResult = molecules_container[command](...commandArgs)
                 break
         }
 
         let returnResult;
         switch (returnType) {
+            case 'number':
+                returnResult = cootResult
+                break
+            case 'clipper_spacegroup':
+                returnResult = cootResult.symbol_hm().as_string()
+                break
+            case 'map_cell_info_t':
+                returnResult = cellInfoAsJSObject(cootResult)
+                break
             case 'header_info_t':
                 returnResult = headerInfoAsJSObject(cootResult)
                 break
