@@ -155,6 +155,10 @@ std::vector<std::string>  get_mtz_columns(const std::string& mtz_file_name){
 
 }
 
+std::string clipperStringAsString(const clipper::String &s){
+    return static_cast<std::string>(s);
+}
+
 std::vector<coot::residue_spec_t> getSecondaryStructure(mmdb::Manager *m, int imodel=1){
     /* int_user_data is an int of secondary structure as defined in MMDB:
 
@@ -795,6 +799,39 @@ class molecules_container_js : public molecules_container_t {
             }
             return o;
         }
+
+        clipper::Spacegroup get_map_spacegroup(int imol){
+            clipper::Spacegroup sg;
+            if(is_valid_map_molecule(imol)){
+                auto xMap = (*this)[imol].xmap;
+                sg = xMap.spacegroup();
+            }
+            return sg;
+        }
+
+        double get_map_data_resolution(int imol){
+            /* This can only work if associate_data_mtz_file_with_map has be called. */
+            if(is_valid_map_molecule(imol)){
+                try {
+                    (*this)[imol].fill_fobs_sigfobs();
+                    auto fobs = (*this)[imol].get_original_fobs_sigfobs();
+                    auto reso = fobs->resolution();
+                    return reso.limit();
+                } catch(std::exception e){
+                    //Presumably we do not have original fobs.
+                }
+            }
+            return -1.0;
+        }
+
+        clipper::Cell get_map_cell(int imol){
+            clipper::Cell cell;
+            if(is_valid_map_molecule(imol)){
+                auto xMap = (*this)[imol].xmap;
+                cell = xMap.cell();
+            }
+            return cell;
+        }
 };
 
 std::string GetAtomNameFromAtom(mmdb::Atom *atom){
@@ -1295,6 +1332,15 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .field("suggested_radius", &coot::util::map_molecule_centre_info_t::suggested_radius)
     .field("suggested_contour_level", &coot::util::map_molecule_centre_info_t::suggested_contour_level)
     ;
+    class_<clipper::Spgr_descr>("Spgr_descr")
+    .function("spacegroup_number", &clipper::Spgr_descr::spacegroup_number)
+    .function("symbol_hall", &clipper::Spgr_descr::symbol_hall)
+    .function("symbol_hm", &clipper::Spgr_descr::symbol_hm)
+    .function("symbol_xhm", &clipper::Spgr_descr::symbol_xhm)
+    .function("symbol_hm_ext", &clipper::Spgr_descr::symbol_hm_ext)
+    ;
+    class_<clipper::Spacegroup, base<clipper::Spgr_descr>>("Spacegroup")
+    ;
     class_<clipper::Cell_descr>("Cell_descr")
     .constructor<const clipper::ftype&, const clipper::ftype&, const clipper::ftype&, const clipper::ftype&, const clipper::ftype&, const clipper::ftype&>()
     .function("a", &clipper::Cell_descr::a)
@@ -1327,6 +1373,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<clipper::String>("Clipper_String")
     .constructor()
     .constructor<const std::string>()
+    .function("as_string", &clipperStringAsString)
     ;
     class_<clipper::Xmap<float>, base<clipper::Xmap_base>>("Xmap_float")
     .constructor()
@@ -1840,6 +1887,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("writePDBASCII",&molecules_container_js::writePDBASCII)
     .function("writeCIFASCII",&molecules_container_js::writeCIFASCII)
     .function("writeCCP4Map",&molecules_container_js::writeCCP4Map)
+    .function("get_map_data_resolution",&molecules_container_js::get_map_data_resolution)
+    .function("get_map_cell",&molecules_container_js::get_map_cell)
+    .function("get_map_spacegroup",&molecules_container_js::get_map_spacegroup)
     .function("count_simple_mesh_vertices",&molecules_container_js::count_simple_mesh_vertices)
     .function("go_to_blob_array",&molecules_container_js::go_to_blob_array)
     .function("add",&molecules_container_js::add)
