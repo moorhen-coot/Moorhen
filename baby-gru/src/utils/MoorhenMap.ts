@@ -1115,15 +1115,10 @@ export class MoorhenMap implements moorhen.Map {
         return result.data.result.result
     }
 
-    async fetchHeaderInfo(): Promise<libcootApi.mapHeaderInfo> {
-        const headerInfo: libcootApi.mapHeaderInfo = {
+    async fetchHeaderInfo(): Promise<moorhen.mapHeaderInfo> {
+        const headerInfo: moorhen.mapHeaderInfo = {
             spacegroup: "",
-            cell_a: -1,
-            cell_b: -1,
-            cell_c: -1,
-            cell_alpha: -1,
-            cell_beta: -1,
-            cell_gamma: -1,
+            cell: {a:-1,b:-1,c:-1,alpha:-1,beta:-1,gamma:-1},
             resolution: -1,
         }
 
@@ -1133,12 +1128,12 @@ export class MoorhenMap implements moorhen.Map {
             returnType: 'map_cell_info_t',
         }, false) as moorhen.WorkerResponse<libcootApi.mapCellJS>
 
-        headerInfo.cell_a = cell.data.result.result.a
-        headerInfo.cell_b = cell.data.result.result.b
-        headerInfo.cell_c = cell.data.result.result.c
-        headerInfo.cell_alpha = cell.data.result.result.alpha
-        headerInfo.cell_beta = cell.data.result.result.beta
-        headerInfo.cell_gamma = cell.data.result.result.gamma
+        headerInfo.cell.a = cell.data.result.result.a
+        headerInfo.cell.b = cell.data.result.result.b
+        headerInfo.cell.c = cell.data.result.result.c
+        headerInfo.cell.alpha = cell.data.result.result.alpha
+        headerInfo.cell.beta = cell.data.result.result.beta
+        headerInfo.cell.gamma = cell.data.result.result.gamma
 
         const sg = await this.commandCentre.current.cootCommand({
             command: 'get_map_spacegroup',

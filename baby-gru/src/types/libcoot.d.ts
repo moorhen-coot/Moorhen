@@ -97,16 +97,6 @@ export namespace libcootApi {
         beta: number;
         gamma: number;
     }
-    type mapHeaderInfo = {
-        spacegroup: string;
-        cell_a: number;
-        cell_b: number;
-        cell_c: number;
-        cell_alpha: number;
-        cell_beta: number;
-        cell_gamma: number;
-        resolution: number;
-    }
     type SequenceResInfo = {
         resNum: number;
         resCode: string;

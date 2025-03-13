@@ -24,8 +24,8 @@ export const MoorhenMapInfoCard = (props: {
 
     useEffect(() => {
         const fetchHeaderInfo = async () => {
-            const headerInfo = await props.map.fetchHeaderInfo()
-            setCell(headerInfo.cell_a.toFixed(2)+" "+headerInfo.cell_b.toFixed(2)+" "+headerInfo.cell_c.toFixed(2)+" "+(headerInfo.cell_alpha*180./Math.PI).toFixed(2)+" "+(headerInfo.cell_beta*180./Math.PI).toFixed(2)+" "+(headerInfo.cell_gamma*180./Math.PI).toFixed(2))
+            const headerInfo: moorhen.mapHeaderInfo = await props.map.fetchHeaderInfo()
+            setCell(headerInfo.cell.a.toFixed(2)+" "+headerInfo.cell.b.toFixed(2)+" "+headerInfo.cell.c.toFixed(2)+" "+(headerInfo.cell.alpha*180./Math.PI).toFixed(2)+" "+(headerInfo.cell.beta*180./Math.PI).toFixed(2)+" "+(headerInfo.cell.gamma*180./Math.PI).toFixed(2))
             setSpacegroup(headerInfo.spacegroup)
             setResolution(headerInfo.resolution.toFixed(2))
             setBusy(false)
