@@ -64,7 +64,7 @@ export const MoorhenHeaderInfoCard = (props: {
                     </TableRow>
                     <TableRow style={{backgroundColor: 'white'}} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                         <TableCell component="th" scope="row">Author</TableCell>
-                        <TableCell component="th" scope="row">{authorLines.map((item, idx) => <p style={{margin: 0}} key={idx}>{item}</p>)}</TableCell>
+                        <TableCell component="th" scope="row">{authorLines.map((item, idx) => <span style={{margin: 0}} key={idx}>{item}</span>)}</TableCell>
                     </TableRow>
                     <TableRow style={{backgroundColor: 'rgba(233, 233, 233, 0.3)'}} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                         <TableCell component="th" scope="row">Journal</TableCell>
