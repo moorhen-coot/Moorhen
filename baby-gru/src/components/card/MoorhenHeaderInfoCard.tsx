@@ -39,6 +39,9 @@ export const MoorhenHeaderInfoCard = (props: {
         if(item.startsWith("pdbx_database_id_DOI")&&(item.split(/(?<=^\S+)\s/)).length>1){
             const doi = "https://doi.org/"+item.split(/(?<=^\S+)\s/)[1].trim()
             return <p style={{margin: 0}} key={idx}><a href={doi} target="_blank" rel="noopener noreferrer">{item}</a></p>
+        } else if(item.startsWith("pdbx_database_id_PubMed")&&(item.split(/(?<=^\S+)\s/)).length>1){
+            const doi = "https://pubmed.ncbi.nlm.nih.gov/"+item.split(/(?<=^\S+)\s/)[1].trim()
+            return <p style={{margin: 0}} key={idx}><a href={doi} target="_blank" rel="noopener noreferrer">{item}</a></p>
         } else {
             return <p style={{margin: 0}} key={idx}>{item}</p>
         }
