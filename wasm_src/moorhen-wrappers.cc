@@ -277,7 +277,7 @@ CoordinateHeaderInfo get_coord_header_info(const std::string &data, const std::s
                                 int ipos=0;
                                 for(const auto& s : row){
                                     if(s!="?"){
-                                        header_info.journal.push_back(loop.tags[ipos].substr(std::string("_citation.").length())+":"+std::string((40-loop.tags[ipos].length()),' ')+s);
+                                        header_info.journal.push_back(loop.tags[ipos].substr(std::string("_citation.").length())+":"+std::string((40-loop.tags[ipos].length()),' ')+moorhen::rtrim(moorhen::ltrim(s,'\''),'\''));
                                     }
                                     ipos++;
                                 }
@@ -291,7 +291,7 @@ CoordinateHeaderInfo get_coord_header_info(const std::string &data, const std::s
                     if (item.type == gemmi::cif::ItemType::Pair){
                         if(moorhen::starts_with(item.pair[0],"_citation.")){
                             if(item.pair[1]!="?"){
-                                header_info.journal.push_back(item.pair[0].substr(std::string("_citation.").length())+":"+std::string((40-item.pair[0].length()),' ')+item.pair[1]);
+                                header_info.journal.push_back(item.pair[0].substr(std::string("_citation.").length())+":"+std::string((40-item.pair[0].length()),' ')+moorhen::rtrim(moorhen::ltrim(item.pair[1],'\''),'\''));
                             }
                         }
                     }
