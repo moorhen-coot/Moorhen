@@ -1317,8 +1317,8 @@ onmessage = function (e) {
         let mod
         let scriptName
         let memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]))
-        const isLinux = (navigator.appVersion.indexOf("Linux") != -1)
-        if (memory64&&!isLinux) {
+        const isChromeLinux = (navigator.appVersion.indexOf("Linux") != -1) && (navigator.appVersion.indexOf("Chrome") != -1)
+        if (memory64&&!isChromeLinux) {
             try {
                 importScripts('./moorhen64.js')
                 mod = createCoot64Module
