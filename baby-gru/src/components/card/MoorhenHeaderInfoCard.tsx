@@ -35,6 +35,15 @@ export const MoorhenHeaderInfoCard = (props: {
         fetchHeaderInfo()
     }, [])
 
+    const journal_stanza = journalLines.map((item, idx) => {
+        if(item.startsWith("pdbx_database_id_DOI")&&(item.split(/(?<=^\S+)\s/)).length>1){
+            const doi = "https://doi.org/"+item.split(/(?<=^\S+)\s/)[1].trim()
+            return <p style={{margin: 0}} key={idx}><a href={doi} target="_blank" rel="noopener noreferrer">{item}</a></p>
+        } else {
+            return <p style={{margin: 0}} key={idx}>{item}</p>
+        }
+    })
+
     return <Popover
             onClose={() => props.setShow(false)}
             open={props.show}
@@ -68,7 +77,7 @@ export const MoorhenHeaderInfoCard = (props: {
                     </TableRow>
                     <TableRow style={{backgroundColor: 'rgba(233, 233, 233, 0.3)'}} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                         <TableCell component="th" scope="row">Journal</TableCell>
-                        <TableCell component="th" scope="row">{journalLines.map((item, idx) => <p style={{margin: 0}} key={idx}>{item}</p>)}</TableCell>
+                        <TableCell component="th" scope="row">{journal_stanza}</TableCell>
                     </TableRow>
                     <TableRow style={{backgroundColor: 'white'}} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                         <TableCell component="th" scope="row">Compound</TableCell>

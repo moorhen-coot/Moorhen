@@ -94,6 +94,36 @@ describe("Testing gemmi", () => {
         cleanUpVariables.push(author,author_1,author_2,author_3,journal,header_info)
     })
 
+    test("Test get_coord_header_info with gemmi 5a3h.mmcif", () => {
+        const filePath = './5a3h.mmcif'
+        const st = cootModule.read_structure_file(filePath, cootModule.CoorFormat.Mmcif)
+        const docData = fs.readFileSync(path.join(__dirname, '..', 'test_data',filePath), 'utf8');
+        const data = st.as_string()
+        const header_info = cootModule.get_coord_header_info(data, docData, filePath)
+        expect(header_info.title).toBe('2-DEOXY-2-FLURO-B-D-CELLOBIOSYL/ENZYME INTERMEDIATE COMPLEX OF THE ENDOGLUCANASE CEL5A FROM BACILLUS AGARADHEARANS AT 1.8 ANGSTROMS RESOLUTION')
+        expect(header_info.software).toBe('CCP4, REFMAC, DENZO, SCALEPACK, CCP4')
+        expect(header_info.compound).toBe('')
+        const author = header_info.author
+        expect(author.size()).toBe(13)
+        const author_1 = author.get(0)
+        const author_2 = author.get(1)
+        const author_3 = author.get(2)
+        expect(author_1).toBe('Davies, G.J.')
+        expect(author_2).toBe('Mackenzie, L.')
+        expect(author_3).toBe('Varrot, A.')
+        const journal = header_info.journal
+        expect(journal.size()).toBe(13)
+        const journal_1 = journal.get(0)
+        const journal_3 = journal.get(2)
+        const journal_4 = journal.get(3)
+        const journal_9 = journal.get(8)
+        expect(journal_1).toBe('id:                            primary')
+        expect(journal_3).toBe(`journal_abbrev:                Biochemistry`)
+        expect(journal_4).toBe('journal_volume:                37')
+        expect(journal_9).toBe('country:                       US')
+        cleanUpVariables.push(author,author_1,author_2,author_3,journal_1,journal_3,journal_4,journal_9,journal,header_info)
+    })
+
     test("Test get_coord_header_info with gemmi 8zuv_updated.cif", () => {
         const filePath = './8zuv_updated.cif'
         const st = cootModule.read_structure_file(filePath, cootModule.CoorFormat.Mmcif)

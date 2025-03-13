@@ -266,11 +266,33 @@ CoordinateHeaderInfo get_coord_header_info(const std::string &data, const std::s
                 header_info.author.push_back(moorhen::rtrim(moorhen::ltrim(row[1],'\''),'\''));
             }
 
-            for(const auto& item : block.items){
-                if (item.type == gemmi::cif::ItemType::Pair){
-                    if(moorhen::starts_with(item.pair[0],"_citation.")){
-                        if(item.pair[1]!="?"){
-                            header_info.journal.push_back(item.pair[0].substr(std::string("_citation.").length())+":"+std::string((40-item.pair[0].length()),' ')+item.pair[1]);
+            if(block.find_loop_item("_citation.id")){
+                auto& loop = block.find_loop_item("_citation.id")->loop;
+                for(const auto& row : block.find_mmcif_category("_citation.")){
+                    if(row.size()==loop.tags.size()){
+                        auto pos = std::find(loop.tags.begin(), loop.tags.end(), "_citation.id");
+                        if(pos != loop.tags.end()){
+                            auto index = std::distance(loop.tags.begin(), pos);
+                            if(row[index]=="primary"){
+                                int ipos=0;
+                                for(const auto& s : row){
+                                    if(s!="?"){
+                                        header_info.journal.push_back(loop.tags[ipos].substr(std::string("_citation.").length())+":"+std::string((40-loop.tags[ipos].length()),' ')+s);
+                                    }
+                                    ipos++;
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            } else {
+                for(const auto& item : block.items){
+                    if (item.type == gemmi::cif::ItemType::Pair){
+                        if(moorhen::starts_with(item.pair[0],"_citation.")){
+                            if(item.pair[1]!="?"){
+                                header_info.journal.push_back(item.pair[0].substr(std::string("_citation.").length())+":"+std::string((40-item.pair[0].length()),' ')+item.pair[1]);
+                            }
                         }
                     }
                 }
