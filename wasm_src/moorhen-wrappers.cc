@@ -258,14 +258,21 @@ CoordinateHeaderInfo get_coord_header_info(const std::string &data, const std::s
         auto doc = gemmi::cif::read_string(docData);
         for (gemmi::cif::Block& block : doc.blocks){
 
-            auto citation_author = block.find_mmcif_category("_citation_author.");
-
-            if(citation_author.size()>0)
+            if(block.find_loop_item("_citation_author.citation_id")){
                 header_info.author.clear();
-
-            for(const auto& row : citation_author){
-                if(row[0]=="primary"){
-                    header_info.author.push_back(moorhen::rtrim(moorhen::ltrim(row[1],'\''),'\''));
+                auto& loop = block.find_loop_item("_citation_author.citation_id")->loop;
+                for(const auto& row : block.find_mmcif_category("_citation_author.")){
+                    if(row.size()==loop.tags.size()){
+                        auto id_pos = std::find(loop.tags.begin(), loop.tags.end(), "_citation_author.citation_id");
+                        auto name_pos = std::find(loop.tags.begin(), loop.tags.end(), "_citation_author.name");
+                        if(id_pos != loop.tags.end() && name_pos != loop.tags.end()){
+                            auto pos_index = std::distance(loop.tags.begin(), id_pos);
+                            if(row[pos_index]=="primary"){
+                                auto name_index = std::distance(loop.tags.begin(), name_pos);
+                                header_info.author.push_back(moorhen::rtrim(moorhen::ltrim(row[name_index],'\''),'\''));
+                            }
+                        }
+                    }
                 }
             }
 

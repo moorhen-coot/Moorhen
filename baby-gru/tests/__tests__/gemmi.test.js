@@ -109,7 +109,7 @@ THIS ENTRY REPRESENTS THE NATURALLY OCCURRING CATALYTIC
 CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
 ;`)
         const author = header_info.author
-        expect(author.size()).toBe(13)
+        expect(author.size()).toBe(7)
         const author_1 = author.get(0)
         const author_2 = author.get(1)
         const author_3 = author.get(2)
