@@ -57,8 +57,8 @@ export namespace libcootApi {
     }
     type headerInfoGemmi = {
         title: string;
-        journal: emscriptem.vector<string>;
-        author:  emscriptem.vector<string>;
+        journal: emscriptem.map<emscriptem.vector<string>,string>;
+        author:  emscriptem.map<emscriptem.vector<string>,string>;
         compound: string;
         software: string;
     }

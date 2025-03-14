@@ -117,8 +117,8 @@ namespace moorhen {
 
 struct CoordinateHeaderInfo {
     std::string title;
-    std::vector<std::string> author;
-    std::vector<std::string> journal;
+    std::map<std::string,std::vector<std::string>> author;
+    std::map<std::string,std::vector<std::string>> journal;
     std::string software;
     std::string compound;
 };
@@ -202,7 +202,8 @@ CoordinateHeaderInfo get_coord_header_info(const std::string &data, const std::s
 
     const auto st = gemmi::read_structure_from_char_array(c_data,size,path);
 
-    header_info.author = st.meta.authors;
+    header_info.author["primary"] = st.meta.authors;
+    header_info.journal["primary"] = std::vector<std::string>();
 
     std::vector<std::string> soft_strings;
     for(const auto& soft : st.meta.software){
@@ -267,10 +268,12 @@ CoordinateHeaderInfo get_coord_header_info(const std::string &data, const std::s
                         auto name_pos = std::find(loop.tags.begin(), loop.tags.end(), "_citation_author.name");
                         if(id_pos != loop.tags.end() && name_pos != loop.tags.end()){
                             auto pos_index = std::distance(loop.tags.begin(), id_pos);
-                            if(row[pos_index]=="primary"){
-                                auto name_index = std::distance(loop.tags.begin(), name_pos);
-                                header_info.author.push_back(moorhen::rtrim(moorhen::ltrim(row[name_index],'\''),'\''));
-                            }
+                            //if(row[pos_index]=="primary"){
+                            if(header_info.author.count(row[pos_index])==0)
+                                header_info.author[row[pos_index]] = std::vector<std::string>();
+                            auto name_index = std::distance(loop.tags.begin(), name_pos);
+                            header_info.author[row[pos_index]].push_back(moorhen::rtrim(moorhen::ltrim(row[name_index],'\''),'\''));
+                            //}
                         }
                     }
                 }
@@ -283,25 +286,27 @@ CoordinateHeaderInfo get_coord_header_info(const std::string &data, const std::s
                         auto pos = std::find(loop.tags.begin(), loop.tags.end(), "_citation.id");
                         if(pos != loop.tags.end()){
                             auto index = std::distance(loop.tags.begin(), pos);
-                            if(row[index]=="primary"){
-                                int ipos=0;
-                                for(const auto& s : row){
-                                    if(s!="?"){
-                                        header_info.journal.push_back(loop.tags[ipos].substr(std::string("_citation.").length())+":"+std::string((40-loop.tags[ipos].length()),' ')+moorhen::rtrim(moorhen::ltrim(s,'\''),'\''));
-                                    }
-                                    ipos++;
+                            //if(row[index]=="primary"){
+                            if(header_info.journal.count(row[index])==0)
+                                header_info.journal[row[index]] = std::vector<std::string>();
+                            int ipos=0;
+                            for(const auto& s : row){
+                                if(s!="?"){
+                                    header_info.journal[row[index]].push_back(loop.tags[ipos].substr(std::string("_citation.").length())+":"+std::string((40-loop.tags[ipos].length()),' ')+moorhen::rtrim(moorhen::ltrim(s,'\''),'\''));
                                 }
-                                break;
+                                ipos++;
                             }
+                            //}
                         }
                     }
                 }
             } else {
+                header_info.journal["primary"] = std::vector<std::string>();
                 for(const auto& item : block.items){
                     if (item.type == gemmi::cif::ItemType::Pair){
                         if(moorhen::starts_with(item.pair[0],"_citation.")){
                             if(item.pair[1]!="?"){
-                                header_info.journal.push_back(item.pair[0].substr(std::string("_citation.").length())+":"+std::string((40-item.pair[0].length()),' ')+moorhen::rtrim(moorhen::ltrim(item.pair[1],'\''),'\''));
+                                header_info.journal["primary"].push_back(item.pair[0].substr(std::string("_citation.").length())+":"+std::string((40-item.pair[0].length()),' ')+moorhen::rtrim(moorhen::ltrim(item.pair[1],'\''),'\''));
                             }
                         }
                     }
@@ -2196,6 +2201,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<std::vector<coot::CartesianPair>>("VectorVectorCootCartesianPair");
     register_vector<coot::Cartesian>("VectorCootCartesian");
     register_vector<std::vector<coot::Cartesian>>("VectorVectorCootCartesian");
+    register_map<std::string,std::vector<std::string>>("MapStringVectorString");
     register_map<unsigned int, std::array<float, 3>>("MapIntFloat3");
     register_map<unsigned int, std::array<float, 4>>("MapIntFloat4");
     register_map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>("Map_residue_spec_t_density_correlation_stats_info_t");

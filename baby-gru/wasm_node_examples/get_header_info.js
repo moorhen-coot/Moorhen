@@ -23,13 +23,25 @@ createCootModule({
             const res = cootModule.get_coord_header_info(fileContents,fileContents,fn)
     
             console.log(res.title)
-            console.log(res.author)
-            console.log(res.journal)
             console.log(res.software)
             console.log(res.compound)
-            console.log(res.author.size())
-            for(let i=0;i<res.author.size();i++){
-                console.log(res.author.get(i))
+            const journalMapKeys = res.journal.keys();
+            const authorMapKeys = res.author.keys();
+            for(let i=0;i<authorMapKeys.size();i++){
+                const key = authorMapKeys.get(i)
+                if(key){
+                    const journal = res.journal.get(key)
+                    const authors = res.author.get(key)
+                    if(journal&&authors){
+                        console.log("########################################")
+                        for(let i=0;i<authors.size();i++){
+                            console.log(authors.get(i))
+                        }
+                        for(let i=0;i<journal.size();i++){
+                            console.log(journal.get(i))
+                        }
+                    }
+                }
             }
     })
 

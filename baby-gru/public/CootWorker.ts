@@ -1095,10 +1095,10 @@ const privateerValidationToJSArray = (results: emscriptem.vector<privateer.Resul
 
 const headerInfoGemmiAsJSObject = (result: libcootApi.headerInfoGemmi): libcootApi.headerInfoGemmiJS => {
 
-    const authorLines = result.author
+    const authorLines = result.author.get("primary")
     const author: string[] = stringArrayToJSArray(authorLines)
 
-    const journalLines = result.journal
+    const journalLines = result.journal.get("primary")
     const journal: string[] = stringArrayToJSArray(journalLines)
 
     return {
@@ -1108,10 +1108,12 @@ const headerInfoGemmiAsJSObject = (result: libcootApi.headerInfoGemmi): libcootA
         software: result.software,
         journal
     }
+    authorLines.delete()
+    journalLines.delete()
 }
 
 const cellInfoAsJSObject = (result: libcootApi.mapCell): libcootApi.mapCellJS => {
-        console.log(result)
+
         const cell: libcootApi.mapCellJS = {
             a: result.a(),
             b: result.b(),

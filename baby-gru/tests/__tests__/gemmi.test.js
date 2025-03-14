@@ -81,8 +81,8 @@ describe("Testing gemmi", () => {
         expect(header_info.title).toBe('ELECTRON CRYO-MICROSCOPY OF CHIKUNGUNYA VIRUS')
         expect(header_info.software).toBe('')
         expect(header_info.compound).toBe('')
-        const author = header_info.author
-        const journal = header_info.journal
+        const author = header_info.author.get("primary")
+        const journal = header_info.journal.get("primary")
         expect(author.size()).toBe(3)
         const author_1 = author.get(0)
         const author_2 = author.get(1)
@@ -108,7 +108,7 @@ ONE OF THE GH-A CLAN MEMBERS.
 THIS ENTRY REPRESENTS THE NATURALLY OCCURRING CATALYTIC
 CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
 ;`)
-        const author = header_info.author
+        const author = header_info.author.get("primary")
         expect(author.size()).toBe(7)
         const author_1 = author.get(0)
         const author_2 = author.get(1)
@@ -116,7 +116,7 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         expect(author_1).toBe('Davies, G.J.')
         expect(author_2).toBe('Mackenzie, L.')
         expect(author_3).toBe('Varrot, A.')
-        const journal = header_info.journal
+        const journal = header_info.journal.get("primary")
         expect(journal.size()).toBe(13)
         const journal_1 = journal.get(0)
         const journal_3 = journal.get(2)
@@ -138,8 +138,8 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         expect(header_info.title).toBe('Crystal structure of mouse Galectin-3 in complex with small molecule inhibitor')
         expect(header_info.software).toBe('BUSTER (5.8.0232), Aimless, XDS, PHASER')
         expect(header_info.compound).toBe('')
-        const author = header_info.author
-        const journal = header_info.journal
+        const author = header_info.author.get("primary")
+        const journal = header_info.journal.get("primary")
         expect(author.size()).toBe(19)
         const author_1 = author.get(0)
         const author_2 = author.get(1)
@@ -168,8 +168,8 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         expect(header_info.title).toBe('Enoyl-CoA carboxylases/reductases in complex with ethylmalonyl CoA')
         expect(header_info.software).toBe('PHENIX ((1.15.2_3472)), XDS, XSCALE, PHASER')
         expect(header_info.compound).toBe('')
-        const author = header_info.author
-        const journal = header_info.journal
+        const author = header_info.author.get("primary")
+        const journal = header_info.journal.get("primary")
         expect(author.size()).toBe(10)
         const author_1 = author.get(0)
         const author_2 = author.get(1)
