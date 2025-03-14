@@ -20,13 +20,17 @@ createCootModule({
             const fn = process.argv[2]
             const fileContents = fs.readFileSync(fn).toString()
 
-            const res = cootModule.get_coord_header_info(fileContents,fn)
+            const res = cootModule.get_coord_header_info(fileContents,fileContents,fn)
     
             console.log(res.title)
             console.log(res.author)
             console.log(res.journal)
             console.log(res.software)
             console.log(res.compound)
+            console.log(res.author.size())
+            for(let i=0;i<res.author.size();i++){
+                console.log(res.author.get(i))
+            }
     })
 
 })

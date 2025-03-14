@@ -102,7 +102,12 @@ describe("Testing gemmi", () => {
         const header_info = cootModule.get_coord_header_info(data, docData, filePath)
         expect(header_info.title).toBe('2-DEOXY-2-FLURO-B-D-CELLOBIOSYL/ENZYME INTERMEDIATE COMPLEX OF THE ENDOGLUCANASE CEL5A FROM BACILLUS AGARADHEARANS AT 1.8 ANGSTROMS RESOLUTION')
         expect(header_info.software).toBe('CCP4, REFMAC, DENZO, SCALEPACK, CCP4')
-        expect(header_info.compound).toBe('')
+        expect(header_info.compound).toBe(`;CEL5A IS A MEMBER OF GLYCOSIDE HYDROLASE FAMILY 5, IT IS
+ONE OF THE GH-A CLAN MEMBERS.
+
+THIS ENTRY REPRESENTS THE NATURALLY OCCURRING CATALYTIC
+CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
+;`)
         const author = header_info.author
         expect(author.size()).toBe(13)
         const author_1 = author.get(0)
@@ -149,7 +154,7 @@ describe("Testing gemmi", () => {
         const journal_7 = journal.get(6)
         expect(journal_1).toBe('country:                       US')
         expect(journal_2).toBe('id:                            primary')
-        expect(journal_3).toBe(`journal_abbrev:                'J. Med. Chem.'`)
+        expect(journal_3).toBe(`journal_abbrev:                J. Med. Chem.`)
         expect(journal_7).toBe('journal_volume:                67')
         cleanUpVariables.push(author,author_1,author_2,author_3,journal_1,journal_2,journal_3,journal_7,journal,header_info)
     })

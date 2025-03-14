@@ -2655,6 +2655,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 this.headerInfo.title = headerInfoGemmi.data.result.result.title
                 this.headerInfo.author_lines = headerInfoGemmi.data.result.result.author
                 this.headerInfo.journal_lines = headerInfoGemmi.data.result.result.journal
+                this.headerInfo.compound_lines = headerInfoGemmi.data.result.result.compound.split("\n")
             } else {
                 this.headerInfo.title = headerInfo.data.result.result.title
                 this.headerInfo.author_lines = headerInfo.data.result.result.author_lines
