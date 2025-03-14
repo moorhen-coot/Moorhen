@@ -1095,21 +1095,30 @@ const privateerValidationToJSArray = (results: emscriptem.vector<privateer.Resul
 
 const headerInfoGemmiAsJSObject = (result: libcootApi.headerInfoGemmi): libcootApi.headerInfoGemmiJS => {
 
-    const authorLines = result.author.get("primary")
-    const author: string[] = stringArrayToJSArray(authorLines)
+    const journalMapKeys = result.journal.keys();
 
-    const journalLines = result.journal.get("primary")
-    const journal: string[] = stringArrayToJSArray(journalLines)
+    const author_journal: libcootApi.AuthorJournal[] = []
+
+    for(let i=0;i<journalMapKeys.size();i++){
+         const key = journalMapKeys.get(i)
+         if(key){
+             const journalLines = result.journal.get(key)
+             const authorLines = result.author.get(key)
+             if(journalLines&&authorLines){
+                  const author: string[] = stringArrayToJSArray(authorLines)
+                  const journal: string[] = stringArrayToJSArray(journalLines)
+                  author_journal.push({author,journal,id:key})
+             }
+         }
+    }
+    journalMapKeys.delete()
 
     return {
         title: result.title,
-        author,
         compound: result.compound,
         software: result.software,
-        journal
+        author_journal
     }
-    authorLines.delete()
-    journalLines.delete()
 }
 
 const cellInfoAsJSObject = (result: libcootApi.mapCell): libcootApi.mapCellJS => {

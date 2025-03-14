@@ -62,10 +62,14 @@ export namespace libcootApi {
         compound: string;
         software: string;
     }
-    type headerInfoGemmiJS = {
-        title: string;
+    type AuthorJournal = {
         journal: string[];
         author:  string[];
+        id:  string;
+    }
+    type headerInfoGemmiJS = {
+        title: string;
+        author_journal: AuthorJournal[];
         compound: string;
         software: string;
     }

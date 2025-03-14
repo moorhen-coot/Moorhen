@@ -2653,8 +2653,11 @@ export class MoorhenMolecule implements moorhen.Molecule {
             this.headerInfo = headerInfo.data.result.result
             if(headerInfoGemmi.data.result.status==="Completed") {
                 this.headerInfo.title = headerInfoGemmi.data.result.result.title
-                this.headerInfo.author_lines = headerInfoGemmi.data.result.result.author
-                this.headerInfo.journal_lines = headerInfoGemmi.data.result.result.journal
+                if(headerInfoGemmi.data.result.result.author_journal.length>0){
+                    const author_journal = headerInfoGemmi.data.result.result.author_journal.find((element) => element.id=="primary")
+                    this.headerInfo.author_lines = author_journal.author
+                    this.headerInfo.journal_lines = author_journal.journal
+                }
                 this.headerInfo.compound_lines = headerInfoGemmi.data.result.result.compound.split("\n")
             } else {
                 this.headerInfo.title = headerInfo.data.result.result.title
