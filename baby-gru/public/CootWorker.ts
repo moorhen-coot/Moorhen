@@ -1358,11 +1358,13 @@ const doCootCommand = (messageData: {
 }
 
 onmessage = function (e) {
+
     if (e.data.message === 'CootInitialize') {
         let mod
         let scriptName
         let memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]))
-        if (memory64) {
+        const isChromeLinux = (navigator.appVersion.indexOf("Linux") != -1) && (navigator.appVersion.indexOf("Chrome") != -1)
+        if (memory64&&!isChromeLinux) {
             try {
                 importScripts('./moorhen64.js')
                 mod = createCoot64Module
@@ -1373,8 +1375,7 @@ onmessage = function (e) {
                 console.log("Failed to load 64-bit libcoot in worker thread. Falling back to 32-bit.")
                 memory64 = false
             }
-        }
-        if (!memory64) {
+        } else {
             importScripts('./moorhen.js')
             mod = createCootModule
             scriptName = "moorhen.js"
