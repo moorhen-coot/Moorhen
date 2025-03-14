@@ -1,25 +1,11 @@
 # Moorhen
 A JavaScript molecular graphics program
 
-### For 0.17.2
-- [x] FLEV.
+### For 0.18.2
+- [x] Fix that info button on models shows nothing.
+- [x] Add a maps info button.
 - [ ] Fitting 5-letter ligand truncates name, e.g. A1LU6
-- [ ] Info button on models shows nothing. Use gemmi?
-- [ ] Add a maps info button.
 - [ ] Fix 4oo8 symmetry.
-
-### For 0.17.0
-- [x] SMILES string is white on dark background.
-- [x] Print out molecule info - B-factors, etc. This could be hover info, atom label, full print
-      of ATOM cards, context menu option. Environment of temp factors.
-- [x] Edit occupancy should be reflected in atom info card above. It only seems to work after some other edit.
-- [x] Fix that updateLabels increases number of buffers.
-- [x] Fix that turning on additional representations slows down panning, even if they are subsequently turned off.
-- [x] Change ligand SVG to RDKit (for now).
-- [x] Download SVG from ligand card.
-- [x] Download SVG from carbohydrate card.
-- [x] Copy SMILES button.
-- [x] Dishy bases/sticks with selections.
 
 ### Todo
 - [ ] Get Structure factors if no map download available.
