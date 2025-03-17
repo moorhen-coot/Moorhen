@@ -81,8 +81,7 @@ export namespace libcootApi {
     }
     type headerInfoJS = {
         title: string;
-        journal_lines: string[];
-        author_lines: string[];
+        author_journal: AuthorJournal[];
         compound_lines: string[];
     }
     type mapCell = {

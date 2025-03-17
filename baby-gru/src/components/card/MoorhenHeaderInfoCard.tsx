@@ -26,8 +26,14 @@ export const MoorhenHeaderInfoCard = (props: {
         const fetchHeaderInfo = async () => {
             const headerInfo = await props.molecule.fetchHeaderInfo(true)
             setTitle(headerInfo.title)
-            setAuthorLines(headerInfo.author_lines)
-            setJournalLines(headerInfo.journal_lines)
+            if(headerInfo.author_journal.length>1){
+                const author_journal = headerInfo.author_journal.find((element) => element.id==="primary")
+                setAuthorLines(author_journal.author)
+                setJournalLines(author_journal.journal)
+            } else if(headerInfo.author_journal.length>0){
+                setAuthorLines(headerInfo.author_journal[0].author)
+                setJournalLines(headerInfo.author_journal[0].journal)
+            }
             setCompoundLines(headerInfo.compound_lines)
             setBusy(false)
         }

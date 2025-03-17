@@ -1147,9 +1147,8 @@ const headerInfoAsJSObject = (result: libcootApi.headerInfo): libcootApi.headerI
 
     return {
         title: result.title,
-        author_lines,
+        author_journal: [{author:author_lines,journal:journal_lines,id:"primary"}],
         compound_lines,
-        journal_lines
     }
 }
 
