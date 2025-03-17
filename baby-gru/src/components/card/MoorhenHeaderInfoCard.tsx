@@ -50,7 +50,10 @@ export const MoorhenHeaderInfoCard = (props: {
             }
         })
 
-        return <TableRow key={idx} style={{backgroundColor: 'white'}} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+       let row_style={backgroundColor: 'rgba(233, 233, 233, 0.3)'}
+       if(idx%2==0)
+             row_style = {backgroundColor: 'white'}
+       return <TableRow key={idx} style={row_style} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
             <TableCell>
             Journal
             </TableCell>
@@ -61,6 +64,9 @@ export const MoorhenHeaderInfoCard = (props: {
         </TableRow>
     })
 
+    let last_row_style={backgroundColor: 'rgba(233, 233, 233, 0.3)'}
+    if(authorJournal.length%2==0)
+        last_row_style = {backgroundColor: 'white'}
     return <Popover
             onClose={() => props.setShow(false)}
             open={props.show}
@@ -89,7 +95,7 @@ export const MoorhenHeaderInfoCard = (props: {
                         <TableCell component="th" scope="row">{title}</TableCell>
                     </TableRow>
                     {auth_journal_stanza}
-                    <TableRow style={{backgroundColor: 'white'}} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                    <TableRow style={last_row_style} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                         <TableCell component="th" scope="row">Compound</TableCell>
                         <TableCell component="th" scope="row">{compoundLines.map((item, idx) => <p style={{margin: 0}} key={idx}>{item}</p>)}</TableCell>
                     </TableRow>
