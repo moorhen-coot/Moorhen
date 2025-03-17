@@ -34,7 +34,7 @@ export const MoorhenHeaderInfoCard = (props: {
         fetchHeaderInfo()
     }, [])
 
-    const auth_journal_stanza = authorJournal.map((item, idx) => {
+    const auth_journal_stanza = authorJournal.sort((r1, r2) => {if(r1.id==="primary"){return -1} else if(r2.id==="primary"){return 1} else if(r1.id<r2.id){return -1}else{return 1}}).map((item, idx) => {
         const auth = item.author
         const journ = item.journal
 
