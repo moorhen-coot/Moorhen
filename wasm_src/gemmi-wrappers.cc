@@ -17,7 +17,7 @@
 #include <emscripten/bind.h>
 
 #include <gemmi/to_cif.hpp>
-#include <gemmi/to_mmcif.hpp> 
+#include <gemmi/to_mmcif.hpp>
 #include <gemmi/to_pdb.hpp>
 #include <gemmi/span.hpp>
 #include <gemmi/neighbor.hpp>
@@ -59,7 +59,7 @@ bool structure_is_ligand(const gemmi::Structure &Structure) {
         if (model.chains.size() > 0) {
             isLigand = false;
         }
-    }    
+    }
     return isLigand;
 }
 
@@ -98,6 +98,11 @@ gemmi::Structure copy_to_assembly_to_new_structure(const gemmi::Structure &s, co
     gemmi::Logger logger{&gemmi::Logger::to_stdout,  3};
     gemmi::transform_to_assembly(assembly,name,how,logger);
     return assembly;
+}
+
+gemmi::cif::Document read_string(const std::string &data){
+    gemmi::cif::Document doc = gemmi::cif::read_string(data);
+    return doc;
 }
 
 gemmi::Structure read_structure_from_string(const std::string &data, const std::string& path){
@@ -247,7 +252,7 @@ gemmi::Structure remove_non_selected_atoms(const gemmi::Structure &Structure, co
             }
         }
     }
-    
+
     new_structure.remove_empty_chains();
 
     return new_structure;
@@ -536,7 +541,7 @@ std::vector<std::pair<int, int>> get_consecutive_ranges_gemmi(const std::vector<
 std::vector<std::string> get_non_selected_cids(const gemmi::Structure &Structure, const std::string &cids) {
     std::vector<gemmi::Selection> selections_vec = parse_multi_cid_selections(cids);
     std::vector<std::string> result;
-    
+
     auto structure_copy = Structure;
     for (const auto& selection : selections_vec) {
         structure_copy = remove_selected_residues(structure_copy, selection);
@@ -584,7 +589,7 @@ std::vector<ResidueBFactorInfo> get_structure_bfactors(const gemmi::Structure &S
             }
         }
     }
-    
+
     auto minMax = std::minmax_element(bfactor_vec.begin(), bfactor_vec.end());
     float minBFactor = *minMax.first;
     float maxBFactor = *minMax.second;
@@ -598,7 +603,7 @@ std::vector<ResidueBFactorInfo> get_structure_bfactors(const gemmi::Structure &S
         res_bfactor_info.normalised_bFactor = 100.0f * ( (bfactor_vec[i] - minBFactor) / (range) );
         res_bfactor_info_vec.push_back(res_bfactor_info);
     }
-    
+
     return res_bfactor_info_vec;
 }
 
@@ -624,14 +629,14 @@ std::vector<LigandInfo> get_ligand_info_for_structure(const gemmi::Structure &St
 std::vector<std::string> parse_multi_cids(const gemmi::Structure &Structure, const std::string &cids) {
     std::vector<std::string> result;
     std::vector<gemmi::Selection> selections_vec = parse_multi_cid_selections(cids);
-    
+
     auto structure_copy = Structure;
     gemmi::remove_ligands_and_waters(structure_copy);
     structure_copy.remove_empty_chains();
     const auto& model = structure_copy.first_model();
 
     for (const auto& selection : selections_vec) {
-            
+
         std::vector<std::string> chain_id_vec;
         if (selection.chain_ids.all) {
             for (const auto& chain : model.chains) {
@@ -700,8 +705,8 @@ std::vector<AtomInfo> atom_info_vec;
                         if (atom.has_altloc()) {
                             std::string altloc_str(1, atom.altloc);
                             atom_info.alt_loc = altloc_str;
-                        } 
-                        atom_info_vec.push_back(std::move(atom_info)); 
+                        }
+                        atom_info_vec.push_back(std::move(atom_info));
                     }
                 }
             }
@@ -2830,6 +2835,7 @@ GlobWalk
     function("get_mmcif_string_from_gemmi_struct",&get_mmcif_string_from_gemmi_struct);
     function("structure_is_ligand",&structure_is_ligand);
     function("read_structure_from_string",&read_structure_from_string);
+    function("read_string",&read_string);
     function("is_small_structure",&is_small_structure);
     function("copy_to_assembly_to_new_structure",&copy_to_assembly_to_new_structure);
     function("parse_ligand_dict_info", &parse_ligand_dict_info);

@@ -1114,4 +1114,41 @@ export class MoorhenMap implements moorhen.Map {
         }, false) as moorhen.WorkerResponse<ArrayBuffer>
         return result.data.result.result
     }
+
+    async fetchHeaderInfo(): Promise<moorhen.mapHeaderInfo> {
+        const headerInfo: moorhen.mapHeaderInfo = {
+            spacegroup: "",
+            cell: {a:-1,b:-1,c:-1,alpha:-1,beta:-1,gamma:-1},
+            resolution: -1,
+        }
+
+        const cell = await this.commandCentre.current.cootCommand({
+            command: 'get_map_cell',
+            commandArgs: [ this.molNo ],
+            returnType: 'map_cell_info_t',
+        }, false) as moorhen.WorkerResponse<libcootApi.mapCellJS>
+
+        headerInfo.cell.a = cell.data.result.result.a
+        headerInfo.cell.b = cell.data.result.result.b
+        headerInfo.cell.c = cell.data.result.result.c
+        headerInfo.cell.alpha = cell.data.result.result.alpha
+        headerInfo.cell.beta = cell.data.result.result.beta
+        headerInfo.cell.gamma = cell.data.result.result.gamma
+
+        const sg = await this.commandCentre.current.cootCommand({
+            command: 'get_map_spacegroup',
+            commandArgs: [ this.molNo ],
+            returnType: 'clipper_spacegroup',
+        }, false) as moorhen.WorkerResponse<string>
+        headerInfo.spacegroup = sg.data.result.result
+
+        const resol = await this.commandCentre.current.cootCommand({
+            command: 'get_map_data_resolution',
+            commandArgs: [ this.molNo ],
+            returnType: 'number',
+        }, false) as moorhen.WorkerResponse<number>
+        headerInfo.resolution = resol.data.result.result
+
+        return headerInfo
+    }
 }
