@@ -192,12 +192,12 @@ std::vector<coot::residue_spec_t> getSecondaryStructure(mmdb::Manager *m, int im
     return v;
 }
 
-CoordinateHeaderInfo get_coord_header_info(const std::string &data, const std::string& docData, const std::string& path){
+CoordinateHeaderInfo get_coord_header_info(const std::string& docData, const std::string& path){
 
     CoordinateHeaderInfo header_info;
 
-    char *c_data = (char *)data.c_str();
-    const size_t size = data.length();
+    char *c_data = (char *)docData.c_str();
+    const size_t size = docData.length();
     auto c_path = path.c_str();
 
     const auto st = gemmi::read_structure_from_char_array(c_data,size,path);

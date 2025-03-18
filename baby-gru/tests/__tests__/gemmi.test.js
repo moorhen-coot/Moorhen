@@ -76,8 +76,7 @@ describe("Testing gemmi", () => {
         const filePath = './3j2w.pdb'
         const st = cootModule.read_structure_file(filePath, cootModule.CoorFormat.Pdb)
         const docData = fs.readFileSync(path.join(__dirname, '..', 'test_data',filePath), 'utf8');
-        const data = st.as_string()
-        const header_info = cootModule.get_coord_header_info(data, docData, filePath)
+        const header_info = cootModule.get_coord_header_info(docData, filePath)
         expect(header_info.title).toBe('ELECTRON CRYO-MICROSCOPY OF CHIKUNGUNYA VIRUS')
         expect(header_info.software).toBe('')
         expect(header_info.compound).toBe('')
@@ -98,8 +97,7 @@ describe("Testing gemmi", () => {
         const filePath = './5a3h.mmcif'
         const st = cootModule.read_structure_file(filePath, cootModule.CoorFormat.Mmcif)
         const docData = fs.readFileSync(path.join(__dirname, '..', 'test_data',filePath), 'utf8');
-        const data = st.as_string()
-        const header_info = cootModule.get_coord_header_info(data, docData, filePath)
+        const header_info = cootModule.get_coord_header_info(docData, filePath)
         expect(header_info.title).toBe('2-DEOXY-2-FLURO-B-D-CELLOBIOSYL/ENZYME INTERMEDIATE COMPLEX OF THE ENDOGLUCANASE CEL5A FROM BACILLUS AGARADHEARANS AT 1.8 ANGSTROMS RESOLUTION')
         expect(header_info.software).toBe('CCP4, REFMAC, DENZO, SCALEPACK, CCP4')
         expect(header_info.compound).toBe(`;CEL5A IS A MEMBER OF GLYCOSIDE HYDROLASE FAMILY 5, IT IS
@@ -133,8 +131,7 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         const filePath = './8zuv_updated.cif'
         const st = cootModule.read_structure_file(filePath, cootModule.CoorFormat.Mmcif)
         const docData = fs.readFileSync(path.join(__dirname, '..', 'test_data',filePath), 'utf8');
-        const data = st.as_string()
-        const header_info = cootModule.get_coord_header_info(data, docData, filePath)
+        const header_info = cootModule.get_coord_header_info(docData, filePath)
         expect(header_info.title).toBe('Crystal structure of mouse Galectin-3 in complex with small molecule inhibitor')
         expect(header_info.software).toBe('BUSTER (5.8.0232), Aimless, XDS, PHASER')
         expect(header_info.compound).toBe('')
@@ -163,8 +160,7 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         const filePath = './6owe.cif'
         const st = cootModule.read_structure_file(filePath, cootModule.CoorFormat.Mmcif)
         const docData = fs.readFileSync(path.join(__dirname, '..', 'test_data',filePath), 'utf8');
-        const data = st.as_string()
-        const header_info = cootModule.get_coord_header_info(data, docData, filePath)
+        const header_info = cootModule.get_coord_header_info(docData, filePath)
         expect(header_info.title).toBe('Enoyl-CoA carboxylases/reductases in complex with ethylmalonyl CoA')
         expect(header_info.software).toBe('PHENIX ((1.15.2_3472)), XDS, XSCALE, PHASER')
         expect(header_info.compound).toBe('')

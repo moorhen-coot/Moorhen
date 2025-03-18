@@ -1208,7 +1208,7 @@ const doCootCommand = (messageData: {
                 cootResult = cootModule.SmallMoleculeCifToMMCif(...commandArgs as [string])
                 break
             case "get_coord_header_info":
-                cootResult = cootModule.get_coord_header_info(...commandArgs as [string,string,string])
+                cootResult = cootModule.get_coord_header_info(...commandArgs as [string,string])
                 break
             default:
                 console.log("Calling",command)

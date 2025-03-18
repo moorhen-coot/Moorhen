@@ -554,7 +554,7 @@ export namespace libcootApi {
         validate(arg0: string, arg1: string): emscriptem.vector<PrivateerResultsEntry>;
         parse_mon_lib_list_cif(arg0: string): emscriptem.vector<compoundInfo>;
         SmallMoleculeCifToMMCif(fileName: string): PairType<string, string>;
-        get_coord_header_info(coordString: string, docString: string, path: string): headerInfoGemmi;
+        get_coord_header_info(docString: string, path: string): headerInfoGemmi;
         molecules_container_js: { new(verbose: boolean): MoleculesContainerJS };
         Vectormoved_residue_t: { new(): emscriptem.vector<MovedResidueT>};
         moved_residue_t: { new(arg0: string, arg1: number, arg2: string): MovedResidueT};
