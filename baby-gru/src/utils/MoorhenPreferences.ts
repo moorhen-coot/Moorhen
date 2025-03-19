@@ -36,7 +36,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
         reContourMapOnlyOnMouseUp: false,
         transparentModalsOnMouseOut: false,
         defaultBackgroundColor: [1, 1, 1, 1],
-        atomLabelDepthMode: true,
+        atomLabelDepthMode: false,
         enableTimeCapsule: true,
         defaultExpandDisplayCards: true,
         defaultMapLitLines: false,

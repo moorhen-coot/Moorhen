@@ -2518,7 +2518,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.state = { width: this.props.width, height: this.props.height };
         this.canvasRef = React.createRef();
         this.keysDown = {};
-        this.atomLabelDepthMode = true;
+        this.atomLabelDepthMode = false;
         this.showScaleBar = false
         this.showCrosshairs = false
         this.trackMouse = false

@@ -1,6 +1,7 @@
 import React from "react"
 import { emscriptem } from "./emscriptem";
 import { gemmi } from "./gemmi";
+import { libcootApi } from "./libcoot";
 import { webGL } from "./mgWebGL";
 import { MoorhenMolecule } from "../moorhen";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
@@ -491,6 +492,12 @@ export namespace moorhen {
         takeScreenShot: (fileName: string, doTransparentBackground?: boolean) => void;
     }
 
+    type mapHeaderInfo = {
+        spacegroup: string;
+        cell: libcootApi.mapCellJS;
+        resolution: number;
+    }
+
     interface Map {
         getHistogram(nBins?: number, zoomFactor?: number): Promise<libcootApi.HistogramInfoJS>;
         setMapWeight(weight?: number): Promise<WorkerResponse>;
@@ -557,6 +564,7 @@ export namespace moorhen {
         defaultMapColour: {r: number, g: number, b: number};
         defaultPositiveMapColour: {r: number, g: number, b: number};
         defaultNegativeMapColour: {r: number, g: number, b: number};
+        fetchHeaderInfo(): Promise<mapHeaderInfo>;
     }
 
     interface backupKey {

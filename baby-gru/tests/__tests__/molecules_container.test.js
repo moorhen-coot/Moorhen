@@ -46,6 +46,23 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables = []
     })
 
+    test('Test get_map_cell', () => {
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
+        expect(mapMolNo).toBe(0)
+        const cell = molecules_container.get_map_cell(mapMolNo)
+        expect(cell.a()).toBeCloseTo(54.71,2)
+        expect(cell.b()).toBeCloseTo(69.57,2)
+        expect(cell.c()).toBeCloseTo(77.04,2)
+        expect(cell.alpha()).toBeCloseTo(1.57,2)
+        expect(cell.beta()).toBeCloseTo(1.57,2)
+        expect(cell.gamma()).toBeCloseTo(1.57,2)
+        const sg = molecules_container.get_map_spacegroup(mapMolNo)
+        expect(sg.symbol_hm().as_string()).toBe("P 21 21 21")
+        molecules_container.associate_data_mtz_file_with_map(mapMolNo, "./5a3h_sigmaa.mtz", "FP", "SIGFP", "FREE")
+        const resol = molecules_container.get_map_data_resolution(mapMolNo)
+        expect(resol).toBeCloseTo(1.82,2)
+    })
+
     test('Test fill_rotamer_probability_tables', () => {
         molecules_container.fill_rotamer_probability_tables()
     })
