@@ -1,9 +1,10 @@
 # Moorhen
 A JavaScript molecular graphics program
 
-### For 0.18.2
+### For 0.19.0
 - [x] Fix that info button on models shows nothing.
 - [x] Add a maps info button.
+- [x] Option to not embed data in session file - useful in CCPEM context.
 - [ ] Fitting 5-letter ligand truncates name, e.g. A1LU6
 - [ ] Fix 4oo8 symmetry.
 
