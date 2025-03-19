@@ -688,7 +688,8 @@ export namespace moorhen {
             timeCapsuleRef: React.RefObject<TimeCapsule>,
             glRef: React.RefObject<webGL.MGWebGL>,
             store: ToolkitStore,
-            dispatch: Dispatch<AnyAction>
+            dispatch: Dispatch<AnyAction>,
+            fetchExternalUrl?: (uniqueId: string) => Promise<string>
         ): Promise<number>;
         static loadSessionFromArrayBuffer(
             sessionArrayBuffer: ArrayBuffer,
