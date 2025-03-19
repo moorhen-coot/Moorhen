@@ -602,6 +602,7 @@ export namespace moorhen {
         symmetryOn: boolean;
         biomolOn: boolean;
         symmetryRadius: number;
+        uniqueId: string;
     }
 
     type mapDataSession = {
@@ -661,6 +662,7 @@ export namespace moorhen {
         mapData: mapDataSession[];
         viewData: viewDataSession;
         activeMapIndex: number;
+        dataIsEmbedded: boolean;
     }
 
     interface TimeCapsule {
@@ -671,7 +673,7 @@ export namespace moorhen {
         removeBackup(key: string): Promise<void>;
         updateDataFiles(): Promise<(string | void)[]>;
         createBackup(keyString: string, sessionString: string): Promise<string>;
-        fetchSession(includeAdditionalMapData: boolean): Promise<backupSession>;
+        fetchSession(includeAdditionalMapData: boolean, embedData: boolean=true): Promise<backupSession>;
         toggleDisableBackups(): void;
         addModification: () =>  Promise<string>;
         init: () => Promise<void>;
@@ -686,7 +688,8 @@ export namespace moorhen {
             timeCapsuleRef: React.RefObject<TimeCapsule>,
             glRef: React.RefObject<webGL.MGWebGL>,
             store: ToolkitStore,
-            dispatch: Dispatch<AnyAction>
+            dispatch: Dispatch<AnyAction>,
+            fetchExternalUrl?: (uniqueId: string) => Promise<string>
         ): Promise<number>;
         static loadSessionFromArrayBuffer(
             sessionArrayBuffer: ArrayBuffer,
