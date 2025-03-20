@@ -74,6 +74,9 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
 
     const dispatch = useDispatch()
     const [mrParseModels, setMrParseModels] = useState<moorhen.Molecule[]>([])
+    const [afJson, setAfJson] = useState<any[]>([])
+    const [esmJson, setEsmJson] = useState<any[]>([])
+    const [homologsJson, setHomologsJson] = useState<any[]>([])
 
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
@@ -98,6 +101,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             if(file.name==="af_models.json"){
                 const fileContents = await readTextFile(file) as string
                 const json = JSON.parse(fileContents)
+                setAfJson(json)
                 for(const iter of Object.entries(json)){
                     const key: string = iter[0]
                     const value: MrParseAFModelJson = iter[1] as MrParseAFModelJson
@@ -111,6 +115,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             if(file.name==="esm_models.json"){
                 const fileContents = await readTextFile(file) as string
                 const json = JSON.parse(fileContents)
+                setEsmJson(json)
                 for(const iter of Object.entries(json)){
                     const key: string = iter[0]
                     const value: any = iter[1]
@@ -120,6 +125,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             if(file.name==="homologs.json"){
                 const fileContents = await readTextFile(file) as string
                 const json = JSON.parse(fileContents)
+                setHomologsJson(json)
                 for(const iter of Object.entries(json)){
                     const key: string = iter[0]
                     const value: MrParsePDBModelJson = iter[1] as MrParsePDBModelJson

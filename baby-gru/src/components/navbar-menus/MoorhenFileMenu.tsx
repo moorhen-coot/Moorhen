@@ -80,10 +80,12 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
 
     const handleLoadMrBump = async () => {
         dispatch(showModal(modalKeys.MRBUMP))
+        document.body.click()
     }
 
     const handleLoadMrParse = async () => {
         dispatch(showModal(modalKeys.MRPARSE))
+        document.body.click()
     }
 
     const handleExportGltf = async () => {
@@ -265,7 +267,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                         Record a video
                     </MenuItem>
 
-                    {(!props.disableFileUploads && devMode) &&
+                    {(!props.disableFileUploads && devMode && false) &&
                     <MenuItem id='load-mrbump-menu-item' onClick={handleLoadMrBump}>
                     Load MrBump results...
                     </MenuItem>
