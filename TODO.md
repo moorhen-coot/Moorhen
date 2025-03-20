@@ -2,7 +2,8 @@
 A JavaScript molecular graphics program
 
 ### For 0.19.1
-- [ ] Fitting 5-letter ligand truncates name, e.g. A1LU6
+- [ ] MrParse results viewing.
+- [ ] Side-by-side, cross-eyed, anaglyph stereo.
 
 ### For 0.19.0
 - [x] Fix that info button on models shows nothing.
@@ -11,6 +12,7 @@ A JavaScript molecular graphics program
 - [x] Fix 4oo8 symmetry.
 
 ### Todo
+- [ ] Fitting 5-letter ligand truncates name, e.g. A1LU6
 - [ ] Get Structure factors if no map download available.
 - [ ] Undo button on a molecule loaded from SMILES/PubChem with name > 3 letters breaks the structure.
 - [ ] "Somehow" determine PLDDT vs B-factor in SliceNDice
