@@ -1,6 +1,6 @@
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState, createRef } from "react"
 import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Tab, Tabs  } from "react-bootstrap"
 import { convertRemToPx, convertViewtoPx} from '../../utils/utils'
 import { useSelector, useDispatch } from "react-redux"
@@ -12,6 +12,15 @@ import { addMoleculeList } from "../../store/moleculesSlice"
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings, InfoOutlined } from '@mui/icons-material'
 import { Slider,Typography } from '@mui/material'
 import { hideMolecule, showMolecule } from "../../store/moleculesSlice";
+import ProtvistaManager from "protvista-manager";
+import ProtvistaSequence from "protvista-sequence";
+import ProtvistaNavigation from "protvista-navigation";
+import ProtvistaTrack from "protvista-track";
+
+!window.customElements.get('protvista-navigation') && window.customElements.define("protvista-navigation", ProtvistaNavigation);
+!window.customElements.get('protvista-sequence') && window.customElements.define("protvista-sequence", ProtvistaSequence);
+!window.customElements.get('protvista-track') && window.customElements.define("protvista-track", ProtvistaTrack);
+!window.customElements.get('protvista-manager') && window.customElements.define("protvista-manager", ProtvistaManager);
 
 interface MrParsePDBModelJson  {
     chain_id : string;
@@ -61,6 +70,14 @@ interface MrParseAFModelJson  {
     total_frac_scat_known : null|number;
 }
 
+type DisplaySettingsType = {
+    rulerStart: number;
+    start: number;
+    end: number;
+    seqLength: number;
+    displaySequence: string;
+}
+
 export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
     const resizeNodeRef = useRef<HTMLDivElement>()
 
@@ -82,6 +99,21 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const visibleMolecules = useSelector((state: moorhen.State) => state.molecules.visibleMolecules)
 
+    const managerRef = useRef<any>(null);
+    const selectedResiduesTrackRef = useRef<{}>({})
+    const sequenceRef = useRef<any>(null);
+
+    selectedResiduesTrackRef[0] = createRef()
+    selectedResiduesTrackRef[1] = createRef()
+
+    const [displaySettings, setDisplaySettings] = useState<DisplaySettingsType>({
+        rulerStart: 0,
+        start: 0,
+        end: 15,
+        seqLength: 16,
+        displaySequence: "ABCDEFGHIJKLMNOP"
+    });
+
     const readPdbFile = async (file: File): Promise<moorhen.Molecule> => {
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
         newMolecule.setBackgroundColour(backgroundColor)
@@ -89,6 +121,29 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         await newMolecule.loadToCootFromFile(file)
         return newMolecule
     }
+
+    useEffect(() => {
+        /* Here I will construct some useful track data from the MrParse json */
+        console.log(afJson)
+        const selectedResiduesTrackData  = [
+            {
+                "accession": "X",
+                "color": "red",
+                "locations": [{"fragments": [{start:1,end:4}]}]
+            },
+            {
+                "accession": "X",
+                "color": "blue",
+                "locations": [{"fragments": [{start:7,end:10}]}]
+            },
+
+        ]
+
+        afJson.map((el,i) => {
+            console.log(selectedResiduesTrackRef[i])
+            selectedResiduesTrackRef[i].current.data = selectedResiduesTrackData
+        })
+    }, [afJson])
 
     const loadMrParseFiles = async (files: FileList) => {
 
@@ -99,8 +154,12 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
 
         for (const file of files) {
             if(file.name==="af_models.json"){
+                setAfJson([])
                 const fileContents = await readTextFile(file) as string
                 const json = JSON.parse(fileContents)
+                json.map((el,i) => {
+                    selectedResiduesTrackRef[i] = createRef()
+                })
                 setAfJson(json)
                 for(const iter of Object.entries(json)){
                     const key: string = iter[0]
@@ -230,6 +289,11 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             )
     })
 
+    console.log(afJson)
+    console.log(esmJson)
+    console.log(homologsJson)
+    console.log(selectedResiduesTrackRef)
+
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.MRPARSE}
                 left={width / 6}
@@ -261,6 +325,32 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                        }
                     </Row>
                     </Container>
+                    </Tab>
+                    <Tab disabled={true} eventKey="sequence" title="Sequence (in development)">
+                    <div style={{width: '100%'}}>
+                    <protvista-manager ref={managerRef}>
+                        <protvista-sequence
+                            ref={sequenceRef}
+                            sequence={displaySettings.displaySequence}
+                            length={displaySettings.seqLength}
+                            numberofticks="0"
+                            displaystart={displaySettings.start}
+                            displayend={displaySettings.end}
+                            use-ctrl-to-zoom
+                        />
+                        {afJson.map((afEl,i) => (
+                        <protvista-track
+                            key={i}
+                            ref={el => selectedResiduesTrackRef[i].current = el}
+                            length={displaySettings.seqLength}
+                            displaystart={displaySettings.start}
+                            displayend={displaySettings.end}
+                            height='10'
+                            use-ctrl-to-zoom
+                        />
+                        ))}
+                        </protvista-manager>
+                    </div>
                     </Tab>
                     </Tabs>
                     </>
