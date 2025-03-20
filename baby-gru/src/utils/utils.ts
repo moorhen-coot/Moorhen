@@ -264,6 +264,11 @@ export const readGemmiStructure = (coordData: ArrayBuffer | string, molName: str
     return structure
 }
 
+export const readGemmiCifDocument = (coordData: string): gemmi.cifDocument => {
+    const doc: gemmi.cifDocument = window.CCP4Module.read_string(coordData)
+    return doc
+}
+
 export const centreOnGemmiAtoms = (atoms: moorhen.AtomInfo[]): [number, number, number] => {
     const atomCount = atoms.length
     if (atomCount === 0) {

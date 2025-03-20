@@ -1093,6 +1093,47 @@ const privateerValidationToJSArray = (results: emscriptem.vector<privateer.Resul
     return data;
 }
 
+const headerInfoGemmiAsJSObject = (result: libcootApi.headerInfoGemmi): libcootApi.headerInfoGemmiJS => {
+
+    const journalMapKeys = result.journal.keys();
+
+    const author_journal: libcootApi.AuthorJournal[] = []
+
+    for(let i=0;i<journalMapKeys.size();i++){
+         const key = journalMapKeys.get(i)
+         if(key){
+             const journalLines = result.journal.get(key)
+             const authorLines = result.author.get(key)
+             if(journalLines&&authorLines){
+                  const author: string[] = stringArrayToJSArray(authorLines)
+                  const journal: string[] = stringArrayToJSArray(journalLines)
+                  author_journal.push({author,journal,id:key})
+             }
+         }
+    }
+    journalMapKeys.delete()
+
+    return {
+        title: result.title,
+        compound: result.compound,
+        software: result.software,
+        author_journal
+    }
+}
+
+const cellInfoAsJSObject = (result: libcootApi.mapCell): libcootApi.mapCellJS => {
+
+        const cell: libcootApi.mapCellJS = {
+            a: result.a(),
+            b: result.b(),
+            c: result.c(),
+            alpha: result.alpha(),
+            beta: result.beta(),
+            gamma: result.gamma(),
+        }
+        return cell
+}
+
 const headerInfoAsJSObject = (result: libcootApi.headerInfo): libcootApi.headerInfoJS => {
 
     const authorLines = result.author_lines
@@ -1106,9 +1147,8 @@ const headerInfoAsJSObject = (result: libcootApi.headerInfo): libcootApi.headerI
 
     return {
         title: result.title,
-        author_lines,
+        author_journal: [{author:author_lines,journal:journal_lines,id:"primary"}],
         compound_lines,
-        journal_lines
     }
 }
 
@@ -1167,15 +1207,31 @@ const doCootCommand = (messageData: {
             case "SmallMoleculeCifToMMCif":
                 cootResult = cootModule.SmallMoleculeCifToMMCif(...commandArgs as [string])
                 break
+            case "get_coord_header_info":
+                cootResult = cootModule.get_coord_header_info(...commandArgs as [string,string])
+                break
             default:
+                console.log("Calling",command)
                 cootResult = molecules_container[command](...commandArgs)
                 break
         }
 
         let returnResult;
         switch (returnType) {
+            case 'number':
+                returnResult = cootResult
+                break
+            case 'clipper_spacegroup':
+                returnResult = cootResult.symbol_hm().as_string()
+                break
+            case 'map_cell_info_t':
+                returnResult = cellInfoAsJSObject(cootResult)
+                break
             case 'header_info_t':
                 returnResult = headerInfoAsJSObject(cootResult)
+                break
+            case 'header_info_gemmi_t':
+                returnResult = headerInfoGemmiAsJSObject(cootResult)
                 break
             case 'texture_as_floats_t':
                 returnResult = textureAsFloatsToJSTextureAsFloats(cootResult)
@@ -1312,11 +1368,13 @@ const doCootCommand = (messageData: {
 }
 
 onmessage = function (e) {
+
     if (e.data.message === 'CootInitialize') {
         let mod
         let scriptName
         let memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]))
-        if (memory64) {
+        const isChromeLinux = (navigator.appVersion.indexOf("Linux") != -1) && (navigator.appVersion.indexOf("Chrome") != -1)
+        if (memory64&&!isChromeLinux) {
             try {
                 importScripts('./moorhen64.js')
                 mod = createCoot64Module
@@ -1327,8 +1385,7 @@ onmessage = function (e) {
                 console.log("Failed to load 64-bit libcoot in worker thread. Falling back to 32-bit.")
                 memory64 = false
             }
-        }
-        if (!memory64) {
+        } else {
             importScripts('./moorhen.js')
             mod = createCootModule
             scriptName = "moorhen.js"

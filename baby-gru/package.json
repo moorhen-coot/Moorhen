@@ -1,6 +1,6 @@
 {
   "name": "moorhen",
-  "version": "0.17.1",
+  "version": "0.19.0",
   "private": false,
   "main": "moorhen.js",
   "types": "./types/main.d.ts",
@@ -63,7 +63,7 @@
   },
   "dependencies": {},
   "scripts": {
-    "transpile-graphql-codegen": "npx graphql-codegen",
+    "transpile-graphql-codegen": "node -e \"if (process.env.NO_GRAPHQL_CODEGEN !== '1'){process.exit(1)} \" || npx graphql-codegen",
     "transpile-protobuf": "npx pbjs -t static-module -w es6 -o ./src/protobuf/MoorhenSession.js ./src/protobuf/MoorhenSession.proto",
     "create-version": "npx genversion -e -p ./package.json -d -s ./src/version.js",
     "transpile-ts-worker": "npx tsc --module es2015 --lib webworker --skipLibCheck public/CootWorker.ts && sed -i.bak '/export {}/d' public/CootWorker.js && rm public/CootWorker.js.bak",
