@@ -273,7 +273,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     </MenuItem>
                     }
 
-                    {(!props.disableFileUploads && devMode) &&
+                    {(!props.disableFileUploads) &&
                     <MenuItem id='load-mrparse-menu-item' onClick={handleLoadMrParse}>
                     Load MrParse results...
                     </MenuItem>
