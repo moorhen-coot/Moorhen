@@ -109,9 +109,9 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
     const [displaySettings, setDisplaySettings] = useState<DisplaySettingsType>({
         rulerStart: 0,
         start: 0,
-        end: 15,
-        seqLength: 16,
-        displaySequence: "ABCDEFGHIJKLMNOP"
+        end: 1,
+        seqLength: 1,
+        displaySequence: "A"
     });
 
     const readPdbFile = async (file: File): Promise<moorhen.Molecule> => {
@@ -123,25 +123,85 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
     }
 
     useEffect(() => {
-        /* Here I will construct some useful track data from the MrParse json */
-        console.log(afJson)
-        const selectedResiduesTrackData  = [
-            {
-                "accession": "X",
-                "color": "red",
-                "locations": [{"fragments": [{start:1,end:4}]}]
-            },
-            {
-                "accession": "X",
-                "color": "blue",
-                "locations": [{"fragments": [{start:7,end:10}]}]
-            },
 
-        ]
+        let minRes = 0
+        let maxRes = 0
+
+        const allSelectedResiduesTrackData = []
+
+        afJson.forEach(res => {
+            if(Object.hasOwn(res,"query_start")&&res.query_start<minRes){
+                minRes = res.query_start
+            }
+            if(Object.hasOwn(res,"query_stop")&&res.query_stop>maxRes){
+                maxRes = res.query_stop
+            }
+            const v_low_fragments = []
+            const low_fragments = []
+            const confident_fragments = []
+            const high_fragments = []
+            if(Object.hasOwn(res,"plddt_regions")){
+                if(Object.hasOwn(res.plddt_regions,"v_low")){
+                    res.plddt_regions.v_low.forEach(region => {
+                        v_low_fragments.push({start:region[0],end:region[1]})
+                    })
+                }
+                if(Object.hasOwn(res.plddt_regions,"low")){
+                    res.plddt_regions.low.forEach(region => {
+                        low_fragments.push({start:region[0],end:region[1]})
+                    })
+                }
+                if(Object.hasOwn(res.plddt_regions,"confident")){
+                    res.plddt_regions.confident.forEach(region => {
+                        confident_fragments.push({start:region[0],end:region[1]})
+                    })
+                }
+                if(Object.hasOwn(res.plddt_regions,"v_high")){
+                    res.plddt_regions.v_high.forEach(region => {
+                        high_fragments.push({start:region[0],end:region[1]})
+                    })
+                }
+                const selectedResiduesTrackData  = [
+                    {
+                        "accession": "X",
+                        "color": "#FF7D45",
+                        "locations": [{"fragments": v_low_fragments}]
+                    },
+                    {
+                        "accession": "X",
+                        "color": "#FFDB13",
+                        "locations": [{"fragments": low_fragments}]
+                    },
+                    {
+                        "accession": "X",
+                        "color": "#65CBF3",
+                        "locations": [{"fragments": confident_fragments}]
+                    },
+                    {
+                        "accession": "X",
+                        "color": "#0053D6",
+                        "locations": [{"fragments": high_fragments}]
+                    },
+                ]
+                allSelectedResiduesTrackData.push(selectedResiduesTrackData)
+            }
+        })
+
+        const seq = ".".repeat(maxRes-minRes+1)
+
+        sequenceRef.current.sequence = seq
+        sequenceRef.current._createSequence()
+        const newSequenceData = {
+            rulerStart: 0,
+            start: minRes,
+            end: maxRes,
+            seqLength: seq.length,
+            displaySequence: seq
+        }
+        setDisplaySettings(newSequenceData);
 
         afJson.map((el,i) => {
-            console.log(selectedResiduesTrackRef[i])
-            selectedResiduesTrackRef[i].current.data = selectedResiduesTrackData
+            selectedResiduesTrackRef[i].current.data = allSelectedResiduesTrackData[i]
         })
     }, [afJson])
 
@@ -178,7 +238,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                 for(const iter of Object.entries(json)){
                     const key: string = iter[0]
                     const value: any = iter[1]
-                    console.log(value)
+                    //console.log(value)
                 }
             }
             if(file.name==="homologs.json"){
@@ -289,10 +349,9 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             )
     })
 
-    console.log(afJson)
-    console.log(esmJson)
-    console.log(homologsJson)
-    console.log(selectedResiduesTrackRef)
+    //console.log(afJson)
+    //console.log(esmJson)
+    //console.log(homologsJson)
 
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.MRPARSE}
@@ -326,31 +385,45 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                     </Row>
                     </Container>
                     </Tab>
-                    <Tab disabled={true} eventKey="sequence" title="Sequence (in development)">
-                    <div style={{width: '100%'}}>
+                    <Tab eventKey="sequence" title="Sequence (in development)">
+                    <Container>
                     <protvista-manager ref={managerRef}>
+                       <Row>
+                       <Col md={3}>
+                       </Col>
+                       <Col md={9}>
                         <protvista-sequence
                             ref={sequenceRef}
                             sequence={displaySettings.displaySequence}
                             length={displaySettings.seqLength}
-                            numberofticks="0"
+                            numberofticks="10"
                             displaystart={displaySettings.start}
                             displayend={displaySettings.end}
                             use-ctrl-to-zoom
                         />
+                       </Col>
+                       </Row>
                         {afJson.map((afEl,i) => (
+                       <Row>
+                       <Col md={3}>
+                       {afEl.model_id}
+                       </Col>
+                       <Col md={9}>
                         <protvista-track
                             key={i}
                             ref={el => selectedResiduesTrackRef[i].current = el}
                             length={displaySettings.seqLength}
                             displaystart={displaySettings.start}
                             displayend={displaySettings.end}
-                            height='10'
+                            height='15'
+                            min-height='15'
                             use-ctrl-to-zoom
                         />
+                       </Col>
+                       </Row>
                         ))}
                         </protvista-manager>
-                    </div>
+                    </Container>
                     </Tab>
                     </Tabs>
                     </>
