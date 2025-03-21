@@ -460,7 +460,6 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                        </Col>
                        <Col md={9}>
                         <protvista-sequence
-                            key={0}
                             ref={HomologsSequenceRef}
                             sequence={HomologsDisplaySettings.displaySequence}
                             length={HomologsDisplaySettings.seqLength}
@@ -472,13 +471,12 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                         </Col>
                         </Row>
                         {homologsJson.map((homEl,i) => (
-                       <Row>
+                       <Row key={i}>
                        <Col md={3}>
                        {homEl.pdb_id}
                        </Col>
                        <Col md={9}>
                         <protvista-track
-                            key={i+1}
                             ref={el => HomologsSelectedResiduesTrackRef[i].current = el}
                             length={HomologsDisplaySettings.seqLength}
                             displaystart={HomologsDisplaySettings.start}
@@ -498,7 +496,6 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                        </Col>
                        <Col md={9}>
                         <protvista-sequence
-                            key={0}
                             ref={AFSequenceRef}
                             sequence={AFDisplaySettings.displaySequence}
                             length={AFDisplaySettings.seqLength}
@@ -510,13 +507,12 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                        </Col>
                        </Row>
                         {afJson.map((afEl,i) => (
-                       <Row>
+                       <Row key={i}>
                        <Col md={3}>
                        {afEl.model_id}
                        </Col>
                        <Col md={9}>
                         <protvista-track
-                            key={i+1}
                             ref={el => AFSelectedResiduesTrackRef[i].current = el}
                             length={AFDisplaySettings.seqLength}
                             displaystart={AFDisplaySettings.start}
