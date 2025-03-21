@@ -99,14 +99,27 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const visibleMolecules = useSelector((state: moorhen.State) => state.molecules.visibleMolecules)
 
-    const managerRef = useRef<any>(null);
-    const selectedResiduesTrackRef = useRef<{}>({})
-    const sequenceRef = useRef<any>(null);
+    const AFManagerRef = useRef<any>(null);
+    const AFSelectedResiduesTrackRef = useRef<{}>({})
+    const AFSequenceRef = useRef<any>(null);
+    AFSelectedResiduesTrackRef[0] = createRef()
+    AFSelectedResiduesTrackRef[1] = createRef()
 
-    selectedResiduesTrackRef[0] = createRef()
-    selectedResiduesTrackRef[1] = createRef()
+    const HomologsManagerRef = useRef<any>(null);
+    const HomologsSelectedResiduesTrackRef = useRef<{}>({})
+    const HomologsSequenceRef = useRef<any>(null);
+    HomologsSelectedResiduesTrackRef[0] = createRef()
+    HomologsSelectedResiduesTrackRef[1] = createRef()
 
-    const [displaySettings, setDisplaySettings] = useState<DisplaySettingsType>({
+    const [AFDisplaySettings, setAFDisplaySettings] = useState<DisplaySettingsType>({
+        rulerStart: 0,
+        start: 0,
+        end: 1,
+        seqLength: 1,
+        displaySequence: "A"
+    });
+
+    const [HomologsDisplaySettings, setHomologsDisplaySettings] = useState<DisplaySettingsType>({
         rulerStart: 0,
         start: 0,
         end: 1,
@@ -121,6 +134,54 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         await newMolecule.loadToCootFromFile(file)
         return newMolecule
     }
+
+    useEffect(() => {
+        let minRes = 0
+        let maxRes = 0
+
+        const allSelectedResiduesTrackData = []
+
+        homologsJson.forEach(res => {
+            if(Object.hasOwn(res,"query_start")&&res.query_start<minRes){
+                minRes = res.query_start
+            }
+            if(Object.hasOwn(res,"query_stop")&&res.query_stop>maxRes){
+                maxRes = res.query_stop
+            }
+            const fragments = []
+            if(Object.hasOwn(res,"query_start")&&Object.hasOwn(res,"query_stop")){
+                fragments.push({start:res.query_start,end:res.query_stop})
+            }
+            const selectedResiduesTrackData  = [
+                {
+                    "accession": "X",
+                    "color": "#4f3727",
+                    "locations": [{"fragments": fragments}]
+                },
+            ]
+            allSelectedResiduesTrackData.push(selectedResiduesTrackData)
+        })
+
+        const seq = ".".repeat(maxRes-minRes+1)
+
+        if(HomologsSequenceRef.current){
+            HomologsSequenceRef.current.sequence = seq
+            HomologsSequenceRef.current._createSequence()
+        }
+        const newSequenceData = {
+            rulerStart: 0,
+            start: minRes,
+            end: maxRes,
+            seqLength: seq.length,
+            displaySequence: seq
+        }
+        setHomologsDisplaySettings(newSequenceData);
+
+        homologsJson.map((el,i) => {
+            if(HomologsSelectedResiduesTrackRef[i].current) HomologsSelectedResiduesTrackRef[i].current.data = allSelectedResiduesTrackData[i]
+        })
+
+    }, [homologsJson])
 
     useEffect(() => {
 
@@ -189,8 +250,10 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
 
         const seq = ".".repeat(maxRes-minRes+1)
 
-        sequenceRef.current.sequence = seq
-        sequenceRef.current._createSequence()
+        if( AFSequenceRef.current){
+            AFSequenceRef.current.sequence = seq
+            AFSequenceRef.current._createSequence()
+        }
         const newSequenceData = {
             rulerStart: 0,
             start: minRes,
@@ -198,10 +261,10 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             seqLength: seq.length,
             displaySequence: seq
         }
-        setDisplaySettings(newSequenceData);
+        setAFDisplaySettings(newSequenceData);
 
         afJson.map((el,i) => {
-            selectedResiduesTrackRef[i].current.data = allSelectedResiduesTrackData[i]
+            if(AFSelectedResiduesTrackRef[i].current) AFSelectedResiduesTrackRef[i].current.data = allSelectedResiduesTrackData[i]
         })
     }, [afJson])
 
@@ -218,7 +281,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                 const fileContents = await readTextFile(file) as string
                 const json = JSON.parse(fileContents)
                 json.map((el,i) => {
-                    selectedResiduesTrackRef[i] = createRef()
+                    AFSelectedResiduesTrackRef[i] = createRef()
                 })
                 setAfJson(json)
                 for(const iter of Object.entries(json)){
@@ -244,6 +307,9 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             if(file.name==="homologs.json"){
                 const fileContents = await readTextFile(file) as string
                 const json = JSON.parse(fileContents)
+                json.map((el,i) => {
+                    HomologsSelectedResiduesTrackRef[i] = createRef()
+                })
                 setHomologsJson(json)
                 for(const iter of Object.entries(json)){
                     const key: string = iter[0]
@@ -385,20 +451,60 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                     </Row>
                     </Container>
                     </Tab>
-                    <Tab eventKey="sequence" title="Sequence (in development)">
+                    <Tab eventKey="sequence" title="Results (in development)">
                     <Container>
-                    <protvista-manager ref={managerRef}>
+                    PDB
+                    <protvista-manager ref={HomologsManagerRef}>
+                        <Row>
+                       <Col md={3}>
+                       </Col>
+                       <Col md={9}>
+                        <protvista-sequence
+                            key={0}
+                            ref={HomologsSequenceRef}
+                            sequence={HomologsDisplaySettings.displaySequence}
+                            length={HomologsDisplaySettings.seqLength}
+                            numberofticks="10"
+                            displaystart={HomologsDisplaySettings.start}
+                            displayend={HomologsDisplaySettings.end}
+                            use-ctrl-to-zoom
+                        />
+                        </Col>
+                        </Row>
+                        {homologsJson.map((homEl,i) => (
+                       <Row>
+                       <Col md={3}>
+                       {homEl.pdb_id}
+                       </Col>
+                       <Col md={9}>
+                        <protvista-track
+                            key={i+1}
+                            ref={el => HomologsSelectedResiduesTrackRef[i].current = el}
+                            length={HomologsDisplaySettings.seqLength}
+                            displaystart={HomologsDisplaySettings.start}
+                            displayend={HomologsDisplaySettings.end}
+                            height='15'
+                            min-height='15'
+                            use-ctrl-to-zoom
+                        />
+                       </Col>
+                       </Row>
+                        ))}
+                    </protvista-manager>
+                    AlphaFold
+                    <protvista-manager ref={AFManagerRef}>
                        <Row>
                        <Col md={3}>
                        </Col>
                        <Col md={9}>
                         <protvista-sequence
-                            ref={sequenceRef}
-                            sequence={displaySettings.displaySequence}
-                            length={displaySettings.seqLength}
+                            key={0}
+                            ref={AFSequenceRef}
+                            sequence={AFDisplaySettings.displaySequence}
+                            length={AFDisplaySettings.seqLength}
                             numberofticks="10"
-                            displaystart={displaySettings.start}
-                            displayend={displaySettings.end}
+                            displaystart={AFDisplaySettings.start}
+                            displayend={AFDisplaySettings.end}
                             use-ctrl-to-zoom
                         />
                        </Col>
@@ -410,11 +516,11 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                        </Col>
                        <Col md={9}>
                         <protvista-track
-                            key={i}
-                            ref={el => selectedResiduesTrackRef[i].current = el}
-                            length={displaySettings.seqLength}
-                            displaystart={displaySettings.start}
-                            displayend={displaySettings.end}
+                            key={i+1}
+                            ref={el => AFSelectedResiduesTrackRef[i].current = el}
+                            length={AFDisplaySettings.seqLength}
+                            displaystart={AFDisplaySettings.start}
+                            displayend={AFDisplaySettings.end}
                             height='15'
                             min-height='15'
                             use-ctrl-to-zoom
