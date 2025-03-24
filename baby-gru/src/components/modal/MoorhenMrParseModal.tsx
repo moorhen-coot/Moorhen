@@ -1,6 +1,6 @@
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen"
-import { useEffect, useRef, useState, createRef } from "react"
+import { useEffect, useRef, useState, createRef, useCallback } from "react"
 import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Tab, Tabs  } from "react-bootstrap"
 import { convertRemToPx, convertViewtoPx} from '../../utils/utils'
 import { useSelector, useDispatch } from "react-redux"
@@ -91,6 +91,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
 
     const dispatch = useDispatch()
     const [mrParseModels, setMrParseModels] = useState<moorhen.Molecule[]>([])
+    const [htmlSequence, setHtmlSequence] = useState<string>("")
     const [afJson, setAfJson] = useState<any[]>([])
     const [esmJson, setEsmJson] = useState<any[]>([])
     const [homologsJson, setHomologsJson] = useState<any[]>([])
@@ -162,7 +163,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             allSelectedResiduesTrackData.push(selectedResiduesTrackData)
         })
 
-        const seq = ".".repeat(maxRes-minRes+1)
+        const seq = htmlSequence //".".repeat(maxRes-minRes+1)
 
         if(HomologsSequenceRef.current){
             HomologsSequenceRef.current.sequence = seq
@@ -178,10 +179,32 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         setHomologsDisplaySettings(newSequenceData);
 
         homologsJson.map((el,i) => {
-            if(HomologsSelectedResiduesTrackRef[i].current) HomologsSelectedResiduesTrackRef[i].current.data = allSelectedResiduesTrackData[i]
+            if(HomologsSelectedResiduesTrackRef[i].current){
+                HomologsSelectedResiduesTrackRef[i].current.data = allSelectedResiduesTrackData[i]
+                HomologsSelectedResiduesTrackRef[i].current.addEventListener("click", handleClick)
+                HomologsSelectedResiduesTrackRef[i].current.addEventListener("change", handleChange)
+                HomologsSelectedResiduesTrackRef[i].current.addEventListener('dblclick', disableDoubleClick, true)
+            }
         })
 
-    }, [homologsJson])
+    }, [homologsJson,htmlSequence])
+
+    const handleChange = useCallback((evt) => {
+        setTimeout(() => {
+            console.log("change")
+        }, 1)
+    },[])
+
+    const handleClick = useCallback((evt) => {
+        setTimeout(() => {
+            console.log("click")
+        }, 1)
+    },[])
+
+    const disableDoubleClick = (evt: MouseEvent) => {
+        evt.preventDefault()
+        evt.stopPropagation()
+    }
 
     useEffect(() => {
 
@@ -248,7 +271,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             }
         })
 
-        const seq = ".".repeat(maxRes-minRes+1)
+        const seq = htmlSequence //".".repeat(maxRes-minRes+1)
 
         if( AFSequenceRef.current){
             AFSequenceRef.current.sequence = seq
@@ -264,9 +287,14 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         setAFDisplaySettings(newSequenceData);
 
         afJson.map((el,i) => {
-            if(AFSelectedResiduesTrackRef[i].current) AFSelectedResiduesTrackRef[i].current.data = allSelectedResiduesTrackData[i]
+            if(AFSelectedResiduesTrackRef[i].current){
+                AFSelectedResiduesTrackRef[i].current.data = allSelectedResiduesTrackData[i]
+                AFSelectedResiduesTrackRef[i].current.addEventListener("click", handleClick)
+                AFSelectedResiduesTrackRef[i].current.addEventListener("change", handleChange)
+                AFSelectedResiduesTrackRef[i].current.addEventListener('dblclick', disableDoubleClick, true)
+            }
         })
-    }, [afJson])
+    }, [afJson,htmlSequence])
 
     const loadMrParseFiles = async (files: FileList) => {
 
@@ -276,6 +304,29 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         const modelFiles: string[] = []
 
         for (const file of files) {
+            if(file.name==="mrparse.html"){
+                try {
+                    const regex = /"sequence":\s"/;
+                    const regex_q = /"/;
+                    const fileContents = await readTextFile(file) as string
+                    const report_dom = new DOMParser().parseFromString(fileContents,"text/html")
+                    const script_tags = report_dom.getElementsByTagName("script")
+                    for(let i=0;i<script_tags.length;i++){
+                        const paragraph = script_tags[i].innerText
+                        const match = regex.exec(paragraph)
+                        if(match){
+                            const sub = paragraph.substring(match.index+'"sequence":'.length).trim().substring(1)
+                            const end_match = regex_q.exec(sub)
+                            const sub2 = sub.substring(0,end_match.index)
+                            console.log(sub2,end_match.index)
+                            setHtmlSequence(sub2)
+                        }
+                    }
+                } catch(e) {
+                    console.log("Failed to extract sequence from HTML")
+                }
+
+            }
             if(file.name==="af_models.json"){
                 setAfJson([])
                 const fileContents = await readTextFile(file) as string
