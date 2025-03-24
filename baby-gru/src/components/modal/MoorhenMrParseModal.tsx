@@ -179,16 +179,19 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
 
         homologsJson.map((el,i) => {
             if(HomologsSelectedResiduesTrackRef[i].current){
+                HomologsSelectedResiduesTrackRef[i].current.removeEventListener("click", handleClick)
+                HomologsSelectedResiduesTrackRef[i].current.removeEventListener('change', (e) => {handleChange(e,"A",el.pdb_file)});
+                HomologsSelectedResiduesTrackRef[i].current.removeEventListener('dblclick', disableDoubleClick, true);
                 HomologsSelectedResiduesTrackRef[i].current.data = allSelectedResiduesTrackData[i]
                 HomologsSelectedResiduesTrackRef[i].current.addEventListener("click", handleClick)
-                HomologsSelectedResiduesTrackRef[i].current.addEventListener("change", handleChange)
+                HomologsSelectedResiduesTrackRef[i].current.addEventListener("change", (e) => {handleChange(e,el.chain_id,el.pdb_file)})
                 HomologsSelectedResiduesTrackRef[i].current.addEventListener('dblclick', disableDoubleClick, true)
             }
         })
 
-    }, [homologsJson,htmlSequence])
+    }, [homologsJson,htmlSequence,mrParseModels])
 
-    const handleChange = useCallback((evt) => {
+    const handleChange = useCallback((evt,chain_id,model_id) => {
         setTimeout(() => {
             if(evt&&evt.detail&&(evt.detail.eventtype==="mouseover"||evt.detail.eventtype==="click")){
                 if(evt.detail.feature){
@@ -197,7 +200,13 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                             const frag = evt.detail.feature.locations[0].fragments[0]
                             if(Object.hasOwn(frag,"start")&&Object.hasOwn(frag,"end")){
                                 if(frag.start===frag.end){
-                                    console.log(evt.detail.eventtype,frag.start)
+                                    const foundModel = mrParseModels.find(mod => (("models/"+mod.name+".pdb" === model_id)||"homologs/"+mod.name+".pdb" === model_id));
+                                    console.log(foundModel)
+                                    console.log(evt.detail.eventtype,frag.start,chain_id,model_id)
+                                    if(evt.detail.eventtype==="click"&&foundModel){
+                                        console.log(`/*/${chain_id}/${frag.start}-${frag.start}/*`)
+                                        foundModel.centreOn(`/*/${chain_id}/${frag.start}-${frag.start}/*`)
+                                    }
                                 }
                             }
                         }
@@ -205,7 +214,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                 }
             }
         }, 1)
-    },[])
+    },[mrParseModels])
 
     const handleClick = (evt: MouseEvent) => {
     }
@@ -296,13 +305,16 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
 
         afJson.map((el,i) => {
             if(AFSelectedResiduesTrackRef[i].current){
+                AFSelectedResiduesTrackRef[i].current.removeEventListener("click", handleClick)
+                AFSelectedResiduesTrackRef[i].current.removeEventListener('change', (e) => {handleChange(e,"A",el.pdb_file)});
+                AFSelectedResiduesTrackRef[i].current.removeEventListener('dblclick', disableDoubleClick, true);
                 AFSelectedResiduesTrackRef[i].current.data = allSelectedResiduesTrackData[i]
                 AFSelectedResiduesTrackRef[i].current.addEventListener("click", handleClick)
-                AFSelectedResiduesTrackRef[i].current.addEventListener("change", handleChange)
+                AFSelectedResiduesTrackRef[i].current.addEventListener("change", (e) => {handleChange(e,"A",el.pdb_file)})
                 AFSelectedResiduesTrackRef[i].current.addEventListener('dblclick', disableDoubleClick, true)
             }
         })
-    }, [afJson,htmlSequence])
+    }, [afJson,htmlSequence,mrParseModels])
 
     const loadMrParseFiles = async (files: FileList) => {
 
