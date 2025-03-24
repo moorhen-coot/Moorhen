@@ -862,11 +862,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             ssUsageScheme = this.m2tParams.ssUsageScheme
         }
 
-        console.log("##################################################")
-        console.log("##################################################")
-        console.log("get_molecular_representation_mesh, ssUsageScheme",ssUsageScheme)
-        console.log("##################################################")
-        console.log("##################################################")
         const response = await this.commandCentre.current.cootCommand({
             returnType: "mesh",
             command: "get_molecular_representation_mesh",
@@ -874,7 +869,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 this.parentMolecule.molNo, m2tSelection, colorStyle, m2tStyle, ssUsageScheme
             ]
         }, false) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
-        console.log(response)
 
         const ribbonBufferObjects = [response.data.result.result]
 
