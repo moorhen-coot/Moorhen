@@ -149,17 +149,16 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             if(Object.hasOwn(res,"query_stop")&&res.query_stop>maxRes){
                 maxRes = res.query_stop
             }
-            const fragments = []
+            const selectedResiduesTrackData  = []
             if(Object.hasOwn(res,"query_start")&&Object.hasOwn(res,"query_stop")){
-                fragments.push({start:res.query_start,end:res.query_stop})
+                for(let ires=res.query_start;ires<res.query_stop;ires++){
+                    selectedResiduesTrackData.push({
+                        "accession": "X",
+                        "color": "#4f3727",
+                        "locations": [{"fragments": [{start:ires,end:ires}]}]
+                    })
+                }
             }
-            const selectedResiduesTrackData  = [
-                {
-                    "accession": "X",
-                    "color": "#4f3727",
-                    "locations": [{"fragments": fragments}]
-                },
-            ]
             allSelectedResiduesTrackData.push(selectedResiduesTrackData)
         })
 
@@ -191,15 +190,25 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
 
     const handleChange = useCallback((evt) => {
         setTimeout(() => {
-            console.log("change")
+            if(evt&&evt.detail&&(evt.detail.eventtype==="mouseover"||evt.detail.eventtype==="click")){
+                if(evt.detail.feature){
+                    if(evt.detail.feature&&evt.detail.feature.locations&&evt.detail.feature.locations.length>0){
+                        if(evt.detail.feature.locations[0].fragments&&evt.detail.feature.locations[0].fragments.length>0){
+                            const frag = evt.detail.feature.locations[0].fragments[0]
+                            if(Object.hasOwn(frag,"start")&&Object.hasOwn(frag,"end")){
+                                if(frag.start===frag.end){
+                                    console.log(evt.detail.eventtype,frag.start)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }, 1)
     },[])
 
-    const handleClick = useCallback((evt) => {
-        setTimeout(() => {
-            console.log("click")
-        }, 1)
-    },[])
+    const handleClick = (evt: MouseEvent) => {
+    }
 
     const disableDoubleClick = (evt: MouseEvent) => {
         evt.preventDefault()
@@ -220,53 +229,52 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             if(Object.hasOwn(res,"query_stop")&&res.query_stop>maxRes){
                 maxRes = res.query_stop
             }
-            const v_low_fragments = []
-            const low_fragments = []
-            const confident_fragments = []
-            const high_fragments = []
             if(Object.hasOwn(res,"plddt_regions")){
+                const selectedResiduesTrackData  = []
                 if(Object.hasOwn(res.plddt_regions,"v_low")){
                     res.plddt_regions.v_low.forEach(region => {
-                        v_low_fragments.push({start:region[0],end:region[1]})
+                        for(let ires=region[0];ires<=region[1];ires++){
+                            selectedResiduesTrackData.push({
+                                "accession": "X",
+                                "color": "#FF7D45",
+                                "locations": [{"fragments": [{start:ires,end:ires}]}]
+                            })
+                        }
                     })
                 }
                 if(Object.hasOwn(res.plddt_regions,"low")){
                     res.plddt_regions.low.forEach(region => {
-                        low_fragments.push({start:region[0],end:region[1]})
+                        for(let ires=region[0];ires<=region[1];ires++){
+                            selectedResiduesTrackData.push({
+                                "accession": "X",
+                                "color": "#FFDB13",
+                                "locations": [{"fragments": [{start:ires,end:ires}]}]
+                            })
+                        }
                     })
                 }
                 if(Object.hasOwn(res.plddt_regions,"confident")){
                     res.plddt_regions.confident.forEach(region => {
-                        confident_fragments.push({start:region[0],end:region[1]})
+                        for(let ires=region[0];ires<=region[1];ires++){
+                            selectedResiduesTrackData.push({
+                                "accession": "X",
+                                "color": "#65CBF3",
+                                "locations": [{"fragments": [{start:ires,end:ires}]}]
+                            })
+                        }
                     })
                 }
                 if(Object.hasOwn(res.plddt_regions,"v_high")){
                     res.plddt_regions.v_high.forEach(region => {
-                        high_fragments.push({start:region[0],end:region[1]})
+                        for(let ires=region[0];ires<=region[1];ires++){
+                            selectedResiduesTrackData.push({
+                                "accession": "X",
+                                "color": "#0053D6",
+                                "locations": [{"fragments": [{start:ires,end:ires}]}]
+                            })
+                        }
                     })
                 }
-                const selectedResiduesTrackData  = [
-                    {
-                        "accession": "X",
-                        "color": "#FF7D45",
-                        "locations": [{"fragments": v_low_fragments}]
-                    },
-                    {
-                        "accession": "X",
-                        "color": "#FFDB13",
-                        "locations": [{"fragments": low_fragments}]
-                    },
-                    {
-                        "accession": "X",
-                        "color": "#65CBF3",
-                        "locations": [{"fragments": confident_fragments}]
-                    },
-                    {
-                        "accession": "X",
-                        "color": "#0053D6",
-                        "locations": [{"fragments": high_fragments}]
-                    },
-                ]
                 allSelectedResiduesTrackData.push(selectedResiduesTrackData)
             }
         })
