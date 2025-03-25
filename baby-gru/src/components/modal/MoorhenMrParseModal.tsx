@@ -260,7 +260,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                         if(Object.hasOwn(res.plddt_regions,"v_low")){
                             res.plddt_regions.v_low.forEach(region => {
                                 for(let ires=region[0];ires<=region[1];ires++){
-                                    if(ires===loc){
+                                    if(ires+1===loc){
                                         color = "#FF7D45"
                                         break
                                     }
@@ -270,7 +270,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                         if(!color&&Object.hasOwn(res.plddt_regions,"low")){
                             res.plddt_regions.low.forEach(region => {
                                 for(let ires=region[0];ires<=region[1];ires++){
-                                    if(ires===loc){
+                                    if(ires+1===loc){
                                         color = "#FFDB13"
                                         break
                                     }
@@ -280,7 +280,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                         if(!color&&Object.hasOwn(res.plddt_regions,"confident")){
                             res.plddt_regions.confident.forEach(region => {
                                 for(let ires=region[0];ires<=region[1];ires++){
-                                    if(ires===loc){
+                                    if(ires+1===loc){
                                         color = "#65CBF3"
                                         break
                                     }
@@ -290,7 +290,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                         if(!color&&Object.hasOwn(res.plddt_regions,"v_high")){
                             res.plddt_regions.v_high.forEach(region => {
                                 for(let ires=region[0];ires<=region[1];ires++){
-                                    if(ires===loc){
+                                    if(ires+1===loc){
                                         color = "#0053D6"
                                         break
                                     }
