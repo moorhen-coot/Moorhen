@@ -11,16 +11,16 @@ import { useSnackbar } from "notistack"
 import { addMoleculeList } from "../../store/moleculesSlice"
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings, InfoOutlined } from '@mui/icons-material'
 import { Slider,Typography } from '@mui/material'
-import { hideMolecule, showMolecule } from "../../store/moleculesSlice";
-import ProtvistaManager from "protvista-manager";
-import ProtvistaSequence from "protvista-sequence";
-import ProtvistaNavigation from "protvista-navigation";
-import ProtvistaTrack from "protvista-track";
+import { hideMolecule, showMolecule } from "../../store/moleculesSlice"
+import ProtvistaManager from "protvista-manager"
+import ProtvistaSequence from "protvista-sequence"
+import ProtvistaNavigation from "protvista-navigation"
+import ProtvistaTrack from "protvista-track"
 
-!window.customElements.get('protvista-navigation') && window.customElements.define("protvista-navigation", ProtvistaNavigation);
-!window.customElements.get('protvista-sequence') && window.customElements.define("protvista-sequence", ProtvistaSequence);
-!window.customElements.get('protvista-track') && window.customElements.define("protvista-track", ProtvistaTrack);
-!window.customElements.get('protvista-manager') && window.customElements.define("protvista-manager", ProtvistaManager);
+!window.customElements.get('protvista-navigation') && window.customElements.define("protvista-navigation", ProtvistaNavigation)
+!window.customElements.get('protvista-sequence') && window.customElements.define("protvista-sequence", ProtvistaSequence)
+!window.customElements.get('protvista-track') && window.customElements.define("protvista-track", ProtvistaTrack)
+!window.customElements.get('protvista-manager') && window.customElements.define("protvista-manager", ProtvistaManager)
 
 interface MrParsePDBModelJson  {
     chain_id : string;
@@ -100,15 +100,15 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const visibleMolecules = useSelector((state: moorhen.State) => state.molecules.visibleMolecules)
 
-    const AFManagerRef = useRef<any>(null);
+    const AFManagerRef = useRef<any>(null)
     const AFSelectedResiduesTrackRef = useRef<{}>({})
-    const AFSequenceRef = useRef<any>(null);
+    const AFSequenceRef = useRef<any>(null)
     AFSelectedResiduesTrackRef[0] = createRef()
     AFSelectedResiduesTrackRef[1] = createRef()
 
-    const HomologsManagerRef = useRef<any>(null);
+    const HomologsManagerRef = useRef<any>(null)
     const HomologsSelectedResiduesTrackRef = useRef<{}>({})
-    const HomologsSequenceRef = useRef<any>(null);
+    const HomologsSequenceRef = useRef<any>(null)
     HomologsSelectedResiduesTrackRef[0] = createRef()
     HomologsSelectedResiduesTrackRef[1] = createRef()
 
@@ -118,7 +118,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         end: 1,
         seqLength: 1,
         displaySequence: "A"
-    });
+    })
 
     const [HomologsDisplaySettings, setHomologsDisplaySettings] = useState<DisplaySettingsType>({
         rulerStart: 0,
@@ -126,7 +126,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         end: 1,
         seqLength: 1,
         displaySequence: "A"
-    });
+    })
 
     const readPdbFile = async (file: File): Promise<moorhen.Molecule> => {
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
@@ -143,6 +143,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         const allSelectedResiduesTrackData = []
 
         homologsJson.forEach(res => {
+            const foundModel = mrParseModels.find(mod => ("homologs/"+mod.name+".pdb" === res.pdb_file))
             if(Object.hasOwn(res,"query_start")&&res.query_start<minRes){
                 minRes = res.query_start
             }
@@ -150,14 +151,19 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                 maxRes = res.query_stop
             }
             const selectedResiduesTrackData  = []
-            if(Object.hasOwn(res,"query_start")&&Object.hasOwn(res,"query_stop")){
-                for(let ires=res.query_start;ires<res.query_stop;ires++){
+            if(foundModel&&Object.hasOwn(res,"query_start")&&Object.hasOwn(res,"query_stop")){
+                const seq = foundModel.sequences[0].sequence
+                let baseNum;
+                if(seq.length>0)
+                    baseNum = seq[0].resNum
+                seq.forEach((r,i) => {
                     selectedResiduesTrackData.push({
                         "accession": "X",
+                        "type": ""+r.resNum,
                         "color": "#4f3727",
-                        "locations": [{"fragments": [{start:ires,end:ires}]}]
+                        "locations": [{"fragments": [{start:r.resNum-baseNum+res.query_start+1,end:r.resNum-baseNum+res.query_start+1}]}]
                     })
-                }
+                })
             }
             allSelectedResiduesTrackData.push(selectedResiduesTrackData)
         })
@@ -175,13 +181,13 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             seqLength: seq.length,
             displaySequence: seq
         }
-        setHomologsDisplaySettings(newSequenceData);
+        setHomologsDisplaySettings(newSequenceData)
 
         homologsJson.map((el,i) => {
             if(HomologsSelectedResiduesTrackRef[i].current){
                 HomologsSelectedResiduesTrackRef[i].current.removeEventListener("click", handleClick)
-                HomologsSelectedResiduesTrackRef[i].current.removeEventListener('change', (e) => {handleChange(e,"A",el.pdb_file,el.query_start)});
-                HomologsSelectedResiduesTrackRef[i].current.removeEventListener('dblclick', disableDoubleClick, true);
+                HomologsSelectedResiduesTrackRef[i].current.removeEventListener('change', (e) => {handleChange(e,el.chain_id,el.pdb_file,el.query_start)})
+                HomologsSelectedResiduesTrackRef[i].current.removeEventListener('dblclick', disableDoubleClick, true)
                 HomologsSelectedResiduesTrackRef[i].current.data = allSelectedResiduesTrackData[i]
                 HomologsSelectedResiduesTrackRef[i].current.addEventListener("click", handleClick)
                 HomologsSelectedResiduesTrackRef[i].current.addEventListener("change", (e) => {handleChange(e,el.chain_id,el.pdb_file,el.query_start)})
@@ -200,10 +206,14 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                             const frag = evt.detail.feature.locations[0].fragments[0]
                             if(Object.hasOwn(frag,"start")&&Object.hasOwn(frag,"end")){
                                 if(frag.start===frag.end){
-                                    const foundModel = mrParseModels.find(mod => (("models/"+mod.name+".pdb" === model_id)||"homologs/"+mod.name+".pdb" === model_id));
-                                    const resNum = foundModel.sequences[0].sequence[frag.start-seq_start].resNum
-                                    if(evt.detail.eventtype==="click"&&foundModel){
-                                        foundModel.centreOn(`/*/${chain_id}/${resNum}-${resNum}/*`)
+                                    const foundModel = mrParseModels.find(mod => (("models/"+mod.name+".pdb" === model_id)||"homologs/"+mod.name+".pdb" === model_id))
+                                    if(foundModel){
+                                        if(foundModel.sequences.length>0&&foundModel.sequences[0]&&foundModel.sequences[0].sequence.length>0){
+                                            console.log(`/*/${chain_id}/${evt.detail.feature.type}-${evt.detail.feature.type}/*`)
+                                            if(evt.detail.eventtype==="click"){
+                                                foundModel.centreOn(`/*/${chain_id}/${evt.detail.feature.type}-${evt.detail.feature.type}/*`)
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -230,6 +240,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         const allSelectedResiduesTrackData = []
 
         afJson.forEach(res => {
+            const foundModel = mrParseModels.find(mod => ("models/"+mod.name+".pdb" === res.pdb_file))
             if(Object.hasOwn(res,"query_start")&&res.query_start<minRes){
                 minRes = res.query_start
             }
@@ -238,48 +249,61 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             }
             if(Object.hasOwn(res,"plddt_regions")){
                 const selectedResiduesTrackData  = []
-                if(Object.hasOwn(res.plddt_regions,"v_low")){
-                    res.plddt_regions.v_low.forEach(region => {
-                        for(let ires=region[0];ires<=region[1];ires++){
-                            selectedResiduesTrackData.push({
-                                "accession": "X",
-                                "color": "#FF7D45",
-                                "locations": [{"fragments": [{start:ires,end:ires}]}]
-                            })
+                if(foundModel){
+                    const seq = foundModel.sequences[0].sequence
+                    let baseNum;
+                    if(seq.length>0)
+                        baseNum = seq[0].resNum
+                    seq.forEach((r,i) => {
+                        const loc = r.resNum-baseNum+res.query_start+1
+                        let color = null
+                        if(Object.hasOwn(res.plddt_regions,"v_low")){
+                            res.plddt_regions.v_low.forEach(region => {
+                                for(let ires=region[0];ires<=region[1];ires++){
+                                    if(ires===loc){
+                                        color = "#FF7D45"
+                                        break
+                                    }
+                                }
+                           })
                         }
-                    })
-                }
-                if(Object.hasOwn(res.plddt_regions,"low")){
-                    res.plddt_regions.low.forEach(region => {
-                        for(let ires=region[0];ires<=region[1];ires++){
-                            selectedResiduesTrackData.push({
-                                "accession": "X",
-                                "color": "#FFDB13",
-                                "locations": [{"fragments": [{start:ires,end:ires}]}]
-                            })
+                        if(!color&&Object.hasOwn(res.plddt_regions,"low")){
+                            res.plddt_regions.low.forEach(region => {
+                                for(let ires=region[0];ires<=region[1];ires++){
+                                    if(ires===loc){
+                                        color = "#FFDB13"
+                                        break
+                                    }
+                                }
+                           })
                         }
-                    })
-                }
-                if(Object.hasOwn(res.plddt_regions,"confident")){
-                    res.plddt_regions.confident.forEach(region => {
-                        for(let ires=region[0];ires<=region[1];ires++){
-                            selectedResiduesTrackData.push({
-                                "accession": "X",
-                                "color": "#65CBF3",
-                                "locations": [{"fragments": [{start:ires,end:ires}]}]
-                            })
+                        if(!color&&Object.hasOwn(res.plddt_regions,"confident")){
+                            res.plddt_regions.confident.forEach(region => {
+                                for(let ires=region[0];ires<=region[1];ires++){
+                                    if(ires===loc){
+                                        color = "#65CBF3"
+                                        break
+                                    }
+                                }
+                           })
                         }
-                    })
-                }
-                if(Object.hasOwn(res.plddt_regions,"v_high")){
-                    res.plddt_regions.v_high.forEach(region => {
-                        for(let ires=region[0];ires<=region[1];ires++){
-                            selectedResiduesTrackData.push({
-                                "accession": "X",
-                                "color": "#0053D6",
-                                "locations": [{"fragments": [{start:ires,end:ires}]}]
-                            })
+                        if(!color&&Object.hasOwn(res.plddt_regions,"v_high")){
+                            res.plddt_regions.v_high.forEach(region => {
+                                for(let ires=region[0];ires<=region[1];ires++){
+                                    if(ires===loc){
+                                        color = "#0053D6"
+                                        break
+                                    }
+                                }
+                           })
                         }
+                        if(!color) color = "#FF0000"
+                        selectedResiduesTrackData.push({
+                                "accession": "X",
+                                "type": ""+r.resNum,
+                                "color": color,
+                                "locations": [{"fragments": [{start:loc,end:loc}]}]
+                        })
                     })
                 }
                 allSelectedResiduesTrackData.push(selectedResiduesTrackData)
@@ -299,13 +323,13 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             seqLength: seq.length,
             displaySequence: seq
         }
-        setAFDisplaySettings(newSequenceData);
+        setAFDisplaySettings(newSequenceData)
 
         afJson.map((el,i) => {
             if(AFSelectedResiduesTrackRef[i].current){
                 AFSelectedResiduesTrackRef[i].current.removeEventListener("click", handleClick)
-                AFSelectedResiduesTrackRef[i].current.removeEventListener('change', (e) => {handleChange(e,"A",el.pdb_file,el.query_start)});
-                AFSelectedResiduesTrackRef[i].current.removeEventListener('dblclick', disableDoubleClick, true);
+                AFSelectedResiduesTrackRef[i].current.removeEventListener('change', (e) => {handleChange(e,"A",el.pdb_file,el.query_start)})
+                AFSelectedResiduesTrackRef[i].current.removeEventListener('dblclick', disableDoubleClick, true)
                 AFSelectedResiduesTrackRef[i].current.data = allSelectedResiduesTrackData[i]
                 AFSelectedResiduesTrackRef[i].current.addEventListener("click", handleClick)
                 AFSelectedResiduesTrackRef[i].current.addEventListener("change", (e) => {handleChange(e,"A",el.pdb_file,el.query_start)})
@@ -322,6 +346,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         const modelFiles: string[] = []
 
         for (const file of files) {
+            //Hmm - maybe do this with input.fasta?
             if(file.name==="mrparse.html"){
                 try {
                     const regex = /"sequence":\s"/;
