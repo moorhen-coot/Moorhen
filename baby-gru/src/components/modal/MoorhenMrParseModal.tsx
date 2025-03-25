@@ -545,7 +545,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                     </Row>
                     </Container>
                     </Tab>
-                    <Tab eventKey="sequence" title="Results (in development)">
+                    <Tab eventKey="sequence" title="Results">
                     <Container>
                     PDB
                     <protvista-manager ref={HomologsManagerRef}>
