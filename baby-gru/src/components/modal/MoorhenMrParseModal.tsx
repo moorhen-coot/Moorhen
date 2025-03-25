@@ -251,11 +251,11 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                 const selectedResiduesTrackData  = []
                 if(foundModel){
                     const seq = foundModel.sequences[0].sequence
-                    let baseNum;
-                    if(seq.length>0)
-                        baseNum = seq[0].resNum
+                    const ver_range = foundModel.name.substring(res.name.length+1)
+                    const fname_base = parseInt(ver_range.substring(ver_range.indexOf("_")+1).split("-")[0])
+                    const baseNum = fname_base
                     seq.forEach((r,i) => {
-                        const loc = r.resNum-baseNum+res.query_start+1
+                        const loc = r.resNum-baseNum+res.query_start
                         let color = null
                         if(Object.hasOwn(res.plddt_regions,"v_low")){
                             res.plddt_regions.v_low.forEach(region => {
