@@ -2,6 +2,7 @@ import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen"
 import { useEffect, useRef, useState, createRef, useCallback } from "react"
 import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Tab, Tabs, Table  } from "react-bootstrap"
+import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
 import { convertRemToPx, convertViewtoPx} from '../../utils/utils'
 import { useSelector, useDispatch } from "react-redux"
 import { modalKeys } from "../../utils/enums"
@@ -536,7 +537,14 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                     </Tab>
                     <Tab eventKey="sequence" title="Results">
                     <Container>
+                    <Accordion defaultExpanded className="moorhen-accordion" disableGutters={true} elevation={0} >
+                    <AccordionSummary
+                        style={{backgroundColor: isDark ? '#adb5bd' : '#ecf0f1'}}
+                        expandIcon={<ExpandMoreOutlined />}
+                    >
                     Experimental structures from the PDB
+                    </AccordionSummary>
+                    <AccordionDetails style={{padding: '0.2rem', backgroundColor: isDark ? '#ced5d6' : 'white'}}>
                     <Table>
                         <thead>
                           <tr>
@@ -604,7 +612,16 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                        </Row>
                         ))}
                     </protvista-manager>
+                    </AccordionDetails>
+                    </Accordion>
+                    <Accordion defaultExpanded className="moorhen-accordion" disableGutters={true} elevation={0} >
+                    <AccordionSummary
+                        style={{backgroundColor: isDark ? '#adb5bd' : '#ecf0f1'}}
+                        expandIcon={<ExpandMoreOutlined />}
+                    >
                     Structure predictions from the EBI AlphaFold database
+                    </AccordionSummary>
+                    <AccordionDetails style={{padding: '0.2rem', backgroundColor: isDark ? '#ced5d6' : 'white'}}>
                     <Table>
                         <thead>
                           <tr>
@@ -666,6 +683,8 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                        </Row>
                         ))}
                         </protvista-manager>
+                    </AccordionDetails>
+                    </Accordion>
                     </Container>
                     </Tab>
                     </Tabs>
