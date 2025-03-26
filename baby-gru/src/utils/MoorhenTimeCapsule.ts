@@ -560,8 +560,10 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         if (!sessionData) {
             return -1
         } else if (!Object.hasOwn(sessionData, 'version') || timeCapsuleRef.current.version !== sessionData.version) {
-            console.warn('Outdated session backup version, wont load...')
-            return -1
+            if((timeCapsuleRef.current.version==="v23"&&((sessionData.version!=="v22")&&(sessionData.version!=="v21")))||timeCapsuleRef.current.version!=="v23"){
+                console.warn('Outdated session backup version, wont load...')
+                return -1
+            }
         }
 
         // Delete current scene
@@ -581,7 +583,9 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         // Load molecules stored in session from coords string
         const newMoleculePromises = sessionData.moleculeData?.map( async (storedMoleculeData) => {
             const newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)
-            if(sessionData.dataIsEmbedded){
+            console.log(sessionData)
+            console.log(sessionData.dataIsEmbedded)
+            if(sessionData.dataIsEmbedded||sessionData.dataIsEmbedded===undefined){
                 return newMolecule.loadToCootFromString(storedMoleculeData.coordString, storedMoleculeData.name)
             } else {
                 if (fetchExternalUrl) {
@@ -597,7 +601,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         const newMapPromises = sessionData.mapData?.map(async (storedMapData) => {
             const newMap = new MoorhenMap(commandCentre, glRef, store)
             if (sessionData.includesAdditionalMapData) {
-                if (sessionData.dataIsEmbedded) {
+                if (sessionData.dataIsEmbedded||sessionData.dataIsEmbedded===undefined) {
                     return newMap.loadToCootFromMapData(
                         storedMapData.mapData,
                         storedMapData.name,
@@ -614,7 +618,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             } else {
                 newMap.uniqueId = storedMapData.uniqueId
 
-                if (sessionData.dataIsEmbedded) {
+                if (sessionData.dataIsEmbedded||sessionData.dataIsEmbedded===undefined) {
                     return timeCapsuleRef.current.retrieveBackup(
                         JSON.stringify({
                             type: 'mapData',
