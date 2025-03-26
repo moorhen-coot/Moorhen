@@ -12,6 +12,7 @@ import { addMoleculeList } from "../../store/moleculesSlice"
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings, InfoOutlined } from '@mui/icons-material'
 import { Slider,Typography } from '@mui/material'
 import { hideMolecule, showMolecule } from "../../store/moleculesSlice"
+import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import ProtvistaManager from "protvista-manager"
 import ProtvistaSequence from "protvista-sequence"
 import ProtvistaNavigation from "protvista-navigation"
@@ -209,9 +210,11 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                                     const foundModel = mrParseModels.find(mod => (("models/"+mod.name+".pdb" === model_id)||"homologs/"+mod.name+".pdb" === model_id))
                                     if(foundModel){
                                         if(foundModel.sequences.length>0&&foundModel.sequences[0]&&foundModel.sequences[0].sequence.length>0){
-                                            console.log(`/*/${chain_id}/${evt.detail.feature.type}-${evt.detail.feature.type}/*`)
+                                            const cid = `//${chain_id}/${evt.detail.feature.type}/CA`
                                             if(evt.detail.eventtype==="click"){
-                                                foundModel.centreOn(`/*/${chain_id}/${evt.detail.feature.type}-${evt.detail.feature.type}/*`)
+                                                foundModel.centreOn(cid)
+                                            } else if (evt.detail.eventtype === "mouseover") {
+                                                dispatch( setHoveredAtom({ molecule: foundModel, cid: cid }) )
                                             }
                                         }
                                     }
