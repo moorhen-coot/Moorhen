@@ -13,6 +13,7 @@ import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined
 import { Slider,Typography } from '@mui/material'
 import { hideMolecule, showMolecule } from "../../store/moleculesSlice"
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
+import Fasta from "biojs-io-fasta"
 import ProtvistaManager from "protvista-manager"
 import ProtvistaSequence from "protvista-sequence"
 import ProtvistaNavigation from "protvista-navigation"
@@ -92,7 +93,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
 
     const dispatch = useDispatch()
     const [mrParseModels, setMrParseModels] = useState<moorhen.Molecule[]>([])
-    const [htmlSequence, setHtmlSequence] = useState<string>("")
+    const [targetSequence, setTargetSequence] = useState<string>("")
     const [afJson, setAfJson] = useState<any[]>([])
     const [esmJson, setEsmJson] = useState<any[]>([])
     const [homologsJson, setHomologsJson] = useState<any[]>([])
@@ -169,7 +170,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             allSelectedResiduesTrackData.push(selectedResiduesTrackData)
         })
 
-        const seq = htmlSequence //".".repeat(maxRes-minRes+1)
+        const seq = targetSequence //".".repeat(maxRes-minRes+1)
 
         if(HomologsSequenceRef.current){
             HomologsSequenceRef.current.sequence = seq
@@ -196,7 +197,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             }
         })
 
-    }, [homologsJson,htmlSequence,mrParseModels])
+    }, [homologsJson,targetSequence,mrParseModels])
 
     const handleChange = useCallback((evt,chain_id,model_id,seq_start) => {
         setTimeout(() => {
@@ -313,7 +314,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             }
         })
 
-        const seq = htmlSequence //".".repeat(maxRes-minRes+1)
+        const seq = targetSequence //".".repeat(maxRes-minRes+1)
 
         if( AFSequenceRef.current){
             AFSequenceRef.current.sequence = seq
@@ -339,7 +340,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                 AFSelectedResiduesTrackRef[i].current.addEventListener('dblclick', disableDoubleClick, true)
             }
         })
-    }, [afJson,htmlSequence,mrParseModels])
+    }, [afJson,targetSequence,mrParseModels])
 
     const loadMrParseFiles = async (files: FileList) => {
 
@@ -349,29 +350,14 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         const modelFiles: string[] = []
 
         for (const file of files) {
-            //Hmm - maybe do this with input.fasta?
-            if(file.name==="mrparse.html"){
+            if(file.name==="input.fasta"){
                 try {
-                    const regex = /"sequence":\s"/;
-                    const regex_q = /"/;
                     const fileContents = await readTextFile(file) as string
-                    const report_dom = new DOMParser().parseFromString(fileContents,"text/html")
-                    const script_tags = report_dom.getElementsByTagName("script")
-                    for(let i=0;i<script_tags.length;i++){
-                        const paragraph = script_tags[i].innerText
-                        const match = regex.exec(paragraph)
-                        if(match){
-                            const sub = paragraph.substring(match.index+'"sequence":'.length).trim().substring(1)
-                            const end_match = regex_q.exec(sub)
-                            const sub2 = sub.substring(0,end_match.index)
-                            console.log(sub2,end_match.index)
-                            setHtmlSequence(sub2)
-                        }
-                    }
+                    const seqs = Fasta.parse(fileContents)
+                    setTargetSequence(seqs[0].seq)
                 } catch(e) {
-                    console.log("Failed to extract sequence from HTML")
+                    console.log("Failed to extract sequence from input.fasta")
                 }
-
             }
             if(file.name==="af_models.json"){
                 setAfJson([])
