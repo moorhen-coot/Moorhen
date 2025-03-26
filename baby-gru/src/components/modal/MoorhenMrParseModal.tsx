@@ -1,7 +1,7 @@
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen"
 import { useEffect, useRef, useState, createRef, useCallback } from "react"
-import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Tab, Tabs  } from "react-bootstrap"
+import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Tab, Tabs, Table  } from "react-bootstrap"
 import { convertRemToPx, convertViewtoPx} from '../../utils/utils'
 import { useSelector, useDispatch } from "react-redux"
 import { modalKeys } from "../../utils/enums"
@@ -509,7 +509,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                 minHeight={convertViewtoPx(30, height)}
                 minWidth={convertRemToPx(37)}
                 maxHeight={convertViewtoPx(70, height)}
-                maxWidth={convertViewtoPx(50, width)}
+                maxWidth={convertViewtoPx(90, width)}
                 enforceMaxBodyDimensions={true}
                 overflowY='auto'
                 overflowX='auto'
@@ -536,7 +536,39 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                     </Tab>
                     <Tab eventKey="sequence" title="Results">
                     <Container>
-                    PDB
+                    Experimental structures from the PDB
+                    <Table>
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>PDB</th>
+                            <th>Resolution</th>
+                            <th>Region</th>
+                            <th>Range</th>
+                            <th>Length</th>
+                            <th>eLLG</th>
+                            <th>Mol. Wt.</th>
+                            <th>eRMSD</th>
+                            <th>Seq. Ident.</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                    {homologsJson.map((homEl,i) => (
+                        <tr  key={i}>
+                          <td>{homEl.name}</td>
+                          <td>{homEl.pdb_id}</td>
+                          <td>{homEl.resolution.toFixed(2)}</td>
+                          <td>{homEl.region_id}</td>
+                          <td>{homEl.range}</td>
+                          <td>{homEl.length}</td>
+                          <td>{homEl.ellg}</td>
+                          <td>{homEl.molecular_weight}</td>
+                          <td>{homEl.rmsd}</td>
+                          <td>{homEl.seq_ident.toFixed(2)}</td>
+                        </tr>
+                        ))}
+                        </tbody>
+                    </Table>
                     <protvista-manager ref={HomologsManagerRef}>
                         <Row>
                        <Col md={3}>
@@ -572,7 +604,33 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                        </Row>
                         ))}
                     </protvista-manager>
-                    AlphaFold
+                    Structure predictions from the EBI AlphaFold database
+                    <Table>
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>Date made</th>
+                            <th>Range</th>
+                            <th>Length</th>
+                            <th>Average pLDDT</th>
+                            <th>H-score</th>
+                            <th>Seq. Ident.</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                        {afJson.map((afEl,i) => (
+                           <tr key={i}>
+                              <td>{afEl.name}</td>
+                              <td>{afEl.date_made}</td>
+                              <td>{afEl.range}</td>
+                              <td>{afEl.length}</td>
+                              <td>{afEl.avg_plddt.toFixed(2)}</td>
+                              <td>{afEl.h_score}</td>
+                              <td>{afEl.seq_ident.toFixed(2)}</td>
+                           </tr>
+                        ))}
+                        </tbody>
+                    </Table>
                     <protvista-manager ref={AFManagerRef}>
                        <Row>
                        <Col md={3}>
