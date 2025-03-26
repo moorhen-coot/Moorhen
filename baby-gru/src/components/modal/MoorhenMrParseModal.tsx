@@ -128,6 +128,19 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         {key:"seq_ident", label:"Seq. Ident."}
     ]
 
+    const pdbHeaderTypes = {
+        name: "string",
+        pdb_id: "string",
+        resolution: "number",
+        region_id: "number",
+        range: "string",
+        length: "number",
+        ellg: "number",
+        molecular_weight: "number",
+        rmsd: "number",
+        seq_ident: "number",
+    }
+
     const afHeaders = [
         {key:"name", label:"Name"},
         {key:"date_made", label:"Date made"},
@@ -138,8 +151,48 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         {key:"seq_ident", label:"Seq. Ident."}
     ]
 
-    const [afSortField, setAFSortField] = useState(pdbHeaders[0].key);
-    const [homologsSortField, setHomologsSortField] = useState(afHeaders[0].key);
+    const afHeaderTypes = {
+        name: "string",
+        date_made: "string",
+        range: "string",
+        length: "number",
+        avg_plddt: "number",
+        h_score: "number",
+        seq_ident: "number",
+    }
+
+    const [afSortField, setAFSortField] = useState<string>("seq_ident");
+    const [homologsSortField, setHomologsSortField] = useState<string>("seq_ident");
+    const [afSortReversed, setAFSortReversed] = useState<boolean>(false);
+    const [homologsSortReversed, setHomologsSortReversed] = useState<boolean>(false);
+
+    const tableSort = ((a,b,key,isString,reversed) => {
+        if(isString){
+            if(reversed)
+                return String(a[key]).localeCompare(String(b[key]))
+            else
+                return String(b[key]).localeCompare(String(a[key]))
+        } else {
+            if(reversed)
+                return a[key]-b[key]
+            else
+                return b[key]-a[key]
+        }
+    })
+
+    const homologsSortFun = ((a,b) => {
+        const key = homologsSortField
+        const isString = pdbHeaderTypes[key] === "string"
+        const reversed = homologsSortReversed
+        return tableSort(a,b,key,isString,reversed)
+    })
+
+    const afSortFun = ((a,b) => {
+        const key = afSortField
+        const isString = afHeaderTypes[key] === "string"
+        const reversed = afSortReversed
+        return tableSort(a,b,key,isString,reversed)
+    })
 
     const [AFDisplaySettings, setAFDisplaySettings] = useState<DisplaySettingsType>({
         rulerStart: 0,
@@ -471,12 +524,20 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
     }
 
     const handlePDBSortingChange = (key) => {
-        console.log("PDB Sort change",key)
+        if(key===homologsSortField){
+            setHomologsSortReversed(!homologsSortReversed)
+        } else {
+            setHomologsSortReversed(false)
+        }
         setHomologsSortField(key)
     }
 
     const handleAFSortingChange = (key) => {
-        console.log("AF Sort change",key)
+        if(key===afSortField){
+            setAFSortReversed(!afSortReversed)
+        } else {
+            setAFSortReversed(false)
+        }
         setAFSortField(key)
     }
 
@@ -590,7 +651,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                           </tr>
                         </thead>
                         <tbody>
-                    {homologsJson.map((homEl,i) => (
+                    {homologsJson.toSorted(homologsSortFun).map((homEl,i) => (
                         <tr key={i}>
                           <td>{homEl.name}</td>
                           <td>{homEl.pdb_id}</td>
@@ -660,7 +721,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                           </tr>
                         </thead>
                         <tbody>
-                        {afJson.map((afEl,i) => (
+                        {afJson.toSorted(afSortFun).map((afEl,i) => (
                            <tr key={i}>
                               <td>{afEl.name}</td>
                               <td>{afEl.date_made}</td>
