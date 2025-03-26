@@ -115,6 +115,32 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
     HomologsSelectedResiduesTrackRef[0] = createRef()
     HomologsSelectedResiduesTrackRef[1] = createRef()
 
+    const pdbHeaders = [
+        {key:"name", label:"Name"},
+        {key:"pdb_id", label:"PDB"},
+        {key:"resolution", label:"Resolution"},
+        {key:"region_id", label:"Region"},
+        {key:"range", label:"Range"},
+        {key:"length", label:"Length"},
+        {key:"ellg", label:"eLLG"},
+        {key:"molecular_weight", label:"Mol. Wt."},
+        {key:"rmsd", label:"eRMSD"},
+        {key:"seq_ident", label:"Seq. Ident."}
+    ]
+
+    const afHeaders = [
+        {key:"name", label:"Name"},
+        {key:"date_made", label:"Date made"},
+        {key:"range", label:"Range"},
+        {key:"length", label:"Length"},
+        {key:"avg_plddt", label:"Average pLDDT"},
+        {key:"h_score", label:"H-score"},
+        {key:"seq_ident", label:"Seq. Ident."}
+    ]
+
+    const [afSortField, setAFSortField] = useState(pdbHeaders[0].key);
+    const [homologsSortField, setHomologsSortField] = useState(afHeaders[0].key);
+
     const [AFDisplaySettings, setAFDisplaySettings] = useState<DisplaySettingsType>({
         rulerStart: 0,
         start: 0,
@@ -444,6 +470,16 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         setMrParseModels(newMolecules)
     }
 
+    const handlePDBSortingChange = (key) => {
+        console.log("PDB Sort change",key)
+        setHomologsSortField(key)
+    }
+
+    const handleAFSortingChange = (key) => {
+        console.log("AF Sort change",key)
+        setAFSortField(key)
+    }
+
     const footerContent = <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'space-between', alignContent: 'space-between', justifyContent: 'space-between', width: '100%' }}>
         <Stack gap={2} direction='horizontal' style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
             <Form.Group style={{ width: '20rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadMrParse" className="mb-3">
@@ -548,21 +584,14 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                     <Table>
                         <thead>
                           <tr>
-                            <th>Name</th>
-                            <th>PDB</th>
-                            <th>Resolution</th>
-                            <th>Region</th>
-                            <th>Range</th>
-                            <th>Length</th>
-                            <th>eLLG</th>
-                            <th>Mol. Wt.</th>
-                            <th>eRMSD</th>
-                            <th>Seq. Ident.</th>
+                          {pdbHeaders.map((head) => (
+                            <th key={head.key} onClick={() => handlePDBSortingChange(head.key)}>{head.label}</th>
+                          ))}
                           </tr>
                         </thead>
                         <tbody>
                     {homologsJson.map((homEl,i) => (
-                        <tr  key={i}>
+                        <tr key={i}>
                           <td>{homEl.name}</td>
                           <td>{homEl.pdb_id}</td>
                           <td>{homEl.resolution.toFixed(2)}</td>
@@ -625,13 +654,9 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                     <Table>
                         <thead>
                           <tr>
-                            <th>Name</th>
-                            <th>Date made</th>
-                            <th>Range</th>
-                            <th>Length</th>
-                            <th>Average pLDDT</th>
-                            <th>H-score</th>
-                            <th>Seq. Ident.</th>
+                            {afHeaders.map((head) => (
+                              <th key={head.key} onClick={() => handleAFSortingChange(head.key)}>{head.label}</th>
+                            ))}
                           </tr>
                         </thead>
                         <tbody>
