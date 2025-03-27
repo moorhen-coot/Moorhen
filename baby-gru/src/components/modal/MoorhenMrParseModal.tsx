@@ -600,6 +600,9 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
     //console.log(esmJson)
     //console.log(homologsJson)
 
+    const pdbArrow = homologsSortReversed ?  <>&darr;</> : <>&uarr;</>
+    const afArrow = afSortReversed ?  <>&darr;</> : <>&uarr;</>
+
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.MRPARSE}
                 left={width / 6}
@@ -646,7 +649,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                         <thead>
                           <tr>
                           {pdbHeaders.map((head) => (
-                            <th key={head.key} onClick={() => handlePDBSortingChange(head.key)}>{head.label}</th>
+                            <th key={head.key} onClick={() => handlePDBSortingChange(head.key)}>{head.label} {head.key===homologsSortField ? pdbArrow : <></>}</th>
                           ))}
                           </tr>
                         </thead>
@@ -716,7 +719,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                         <thead>
                           <tr>
                             {afHeaders.map((head) => (
-                              <th key={head.key} onClick={() => handleAFSortingChange(head.key)}>{head.label}</th>
+                              <th key={head.key} onClick={() => handleAFSortingChange(head.key)}>{head.label} {head.key===afSortField ? afArrow : <></>}</th>
                             ))}
                           </tr>
                         </thead>
