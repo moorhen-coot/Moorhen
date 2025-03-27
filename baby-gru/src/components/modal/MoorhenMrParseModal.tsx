@@ -1,7 +1,7 @@
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen"
 import { useEffect, useRef, useState, createRef, useCallback } from "react"
-import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Tab, Tabs, Table  } from "react-bootstrap"
+import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Table  } from "react-bootstrap"
 import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
 import { convertRemToPx, convertViewtoPx} from '../../utils/utils'
 import { useSelector, useDispatch } from "react-redux"
@@ -550,52 +550,6 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         </Stack>
     </Stack>
 
-    const model_files = mrParseModels.map(item => {
-            const isVisible = (visibleMolecules.indexOf(item.molNo)>-1)
-            const handleDownload = async () => {
-                await item.downloadAtoms()
-            }
-            const handleCentering = () => {
-                item.centreOn()
-            }
-            const handleVisibility = (() => {
-                dispatch( isVisible ? hideMolecule(item) : showMolecule(item) )
-            })
-            return (
-                <ListGroup.Item key={'row'+item.name}>
-                <Stack gap={2} direction='horizontal'>
-                <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left'}}>
-                    {item.name}
-                </Col>
-                <Col style={{ display: 'flex', justifyContent: 'right' }}>
-                <Button key={1} size="sm" variant="outlined" onClick={handleVisibility}>
-                {isVisible ? <VisibilityOutlined /> : <VisibilityOffOutlined />}
-                </Button>
-                <Button key={2} size="sm" variant="outlined" onClick={handleCentering}>
-                <CenterFocusWeakOutlined />
-                </Button>
-                <Button key={3} size="sm" variant="outlined" onClick={handleDownload}>
-                <DownloadOutlined />
-                </Button>
-                </Col>
-                </Stack>
-                {false &&
-                <Stack gap={2} direction='horizontal'>
-                <Typography gutterBottom style={{ display: 'flex', justifyContent: 'left'}}>Variance</Typography>
-                <Slider
-                     aria-label="Small steps"
-                     defaultValue={110}
-                     step={10}
-                     marks
-                     min={10}
-                     max={110}
-                     valueLabelDisplay="auto"/>
-                </Stack>
-                }
-                </ListGroup.Item>
-            )
-    })
-
     //console.log(afJson)
     //console.log(esmJson)
     //console.log(homologsJson)
@@ -619,24 +573,6 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                 resizeNodeRef={resizeNodeRef}
                 body={
                     <>
-                    <Tabs
-                        defaultActiveKey="controls"
-                        id="uncontrolled-tab-example"
-                        className="mb-3"
-                    >
-                    <Tab eventKey="controls" title="Controls">
-                    <Container>
-                    <Row>
-                       {(mrParseModels.length>0) &&
-                    <ListGroup>
-                       {model_files}
-                    </ListGroup>
-                       }
-                    </Row>
-                    </Container>
-                    </Tab>
-                    <Tab eventKey="sequence" title="Results">
-                    <Container>
                     <Accordion defaultExpanded className="moorhen-accordion" disableGutters={true} elevation={0} >
                     <AccordionSummary
                         style={{backgroundColor: isDark ? '#adb5bd' : '#ecf0f1'}}
@@ -651,11 +587,25 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                           {pdbHeaders.map((head) => (
                             <th key={head.key} onClick={() => handlePDBSortingChange(head.key)}>{head.label} {head.key===homologsSortField ? pdbArrow : <></>}</th>
                           ))}
+                          <th><em>Tools</em></th>
                           </tr>
                         </thead>
                         <tbody>
-                    {homologsJson.toSorted(homologsSortFun).map((homEl,i) => (
-                        <tr key={i}>
+                    {homologsJson.toSorted(homologsSortFun).map((homEl,i) => {
+                        const model_id = homEl.pdb_file
+                        const foundModel = mrParseModels.find(mod => (("models/"+mod.name+".pdb" === model_id)||"homologs/"+mod.name+".pdb" === model_id))
+                        if(foundModel) {
+                        const isVisible = (visibleMolecules.indexOf(foundModel.molNo)>-1)
+                        const handleDownload = async () => {
+                            await foundModel.downloadAtoms()
+                        }
+                        const handleCentering = () => {
+                            foundModel.centreOn()
+                        }
+                        const handleVisibility = (() => {
+                            dispatch( isVisible ? hideMolecule(foundModel) : showMolecule(foundModel) )
+                        })
+                        return <tr key={i}>
                           <td>{homEl.name}</td>
                           <td>{homEl.pdb_id}</td>
                           <td>{homEl.resolution.toFixed(2)}</td>
@@ -666,8 +616,22 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                           <td>{homEl.molecular_weight}</td>
                           <td>{homEl.rmsd}</td>
                           <td>{homEl.seq_ident.toFixed(2)}</td>
+                          <td>
+                              <Button key={1} size="sm" variant="outlined" onClick={handleVisibility}>
+                              {isVisible ? <VisibilityOutlined /> : <VisibilityOffOutlined />}
+                              </Button>
+                              <Button key={2} size="sm" variant="outlined" onClick={handleCentering}>
+                              <CenterFocusWeakOutlined />
+                              </Button>
+                              <Button key={3} size="sm" variant="outlined" onClick={handleDownload}>
+                              <DownloadOutlined />
+                              </Button>
+                          </td>
                         </tr>
-                        ))}
+                        } else {
+                            return <tr key={i}></tr>
+                        }
+                        })}
                         </tbody>
                     </Table>
                     <protvista-manager ref={HomologsManagerRef}>
@@ -721,11 +685,25 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                             {afHeaders.map((head) => (
                               <th key={head.key} onClick={() => handleAFSortingChange(head.key)}>{head.label} {head.key===afSortField ? afArrow : <></>}</th>
                             ))}
+                          <th><em>Tools</em></th>
                           </tr>
                         </thead>
                         <tbody>
-                        {afJson.toSorted(afSortFun).map((afEl,i) => (
-                           <tr key={i}>
+                        {afJson.toSorted(afSortFun).map((afEl,i) => {
+                        const model_id = afEl.pdb_file
+                        const foundModel = mrParseModels.find(mod => (("models/"+mod.name+".pdb" === model_id)||"homologs/"+mod.name+".pdb" === model_id))
+                        if(foundModel){
+                        const isVisible = (visibleMolecules.indexOf(foundModel.molNo)>-1)
+                        const handleDownload = async () => {
+                            await foundModel.downloadAtoms()
+                        }
+                        const handleCentering = () => {
+                            foundModel.centreOn()
+                        }
+                        const handleVisibility = (() => {
+                            dispatch( isVisible ? hideMolecule(foundModel) : showMolecule(foundModel) )
+                        })
+                        return <tr key={i}>
                               <td>{afEl.name}</td>
                               <td>{afEl.date_made}</td>
                               <td>{afEl.range}</td>
@@ -733,8 +711,22 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                               <td>{afEl.avg_plddt.toFixed(2)}</td>
                               <td>{afEl.h_score}</td>
                               <td>{afEl.seq_ident.toFixed(2)}</td>
+                              <td>
+                                  <Button key={1} size="sm" variant="outlined" onClick={handleVisibility}>
+                                  {isVisible ? <VisibilityOutlined /> : <VisibilityOffOutlined />}
+                                  </Button>
+                                  <Button key={2} size="sm" variant="outlined" onClick={handleCentering}>
+                                  <CenterFocusWeakOutlined />
+                                  </Button>
+                                  <Button key={3} size="sm" variant="outlined" onClick={handleDownload}>
+                                  <DownloadOutlined />
+                                  </Button>
+                              </td>
                            </tr>
-                        ))}
+                        } else {
+                            return <tr key={i}></tr>
+                        }
+                        })}
                         </tbody>
                     </Table>
                     <protvista-manager ref={AFManagerRef}>
@@ -774,9 +766,6 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                         </protvista-manager>
                     </AccordionDetails>
                     </Accordion>
-                    </Container>
-                    </Tab>
-                    </Tabs>
                     </>
                 }
             />
