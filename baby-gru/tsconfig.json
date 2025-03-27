@@ -6,7 +6,7 @@
         "target": "es6",
         "rootDir": "./",
         "types": ["node", "./src/types"],
-        "lib": ["esnext", "es6", "dom", "dom.Iterable", "es2017", "WebWorker"],
+        "lib": ["ESNext.Array", "esnext", "es6", "dom", "dom.Iterable", "es2017", "WebWorker"],
         "skipLibCheck": true,
         "esModuleInterop": true,
         "jsx": "react-jsx",
