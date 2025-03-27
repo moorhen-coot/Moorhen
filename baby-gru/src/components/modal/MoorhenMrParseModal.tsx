@@ -9,10 +9,9 @@ import { modalKeys } from "../../utils/enums"
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import { readTextFile } from "../../utils/utils"
 import { useSnackbar } from "notistack"
-import { addMoleculeList } from "../../store/moleculesSlice"
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings, InfoOutlined } from '@mui/icons-material'
 import { Slider,Typography } from '@mui/material'
-import { hideMolecule, showMolecule } from "../../store/moleculesSlice"
+import { hideMolecule, showMolecule, removeMolecule, addMoleculeList } from "../../store/moleculesSlice"
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import Fasta from "biojs-io-fasta"
 import ProtvistaManager from "protvista-manager"
@@ -93,11 +92,6 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
     const { enqueueSnackbar } = useSnackbar()
 
     const dispatch = useDispatch()
-    const [mrParseModels, setMrParseModels] = useState<moorhen.Molecule[]>([])
-    const [targetSequence, setTargetSequence] = useState<string>("")
-    const [afJson, setAfJson] = useState<any[]>([])
-    const [esmJson, setEsmJson] = useState<any[]>([])
-    const [homologsJson, setHomologsJson] = useState<any[]>([])
 
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
@@ -161,10 +155,31 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         seq_ident: "number",
     }
 
+    const [mrParseModels, setMrParseModels] = useState<moorhen.Molecule[]>([])
+    const [targetSequence, setTargetSequence] = useState<string>("")
+    const [afJson, setAfJson] = useState<any[]>([])
+    const [esmJson, setEsmJson] = useState<any[]>([])
+    const [homologsJson, setHomologsJson] = useState<any[]>([])
     const [afSortField, setAFSortField] = useState<string>("seq_ident");
     const [homologsSortField, setHomologsSortField] = useState<string>("seq_ident");
     const [afSortReversed, setAFSortReversed] = useState<boolean>(false);
     const [homologsSortReversed, setHomologsSortReversed] = useState<boolean>(false);
+
+    const [AFDisplaySettings, setAFDisplaySettings] = useState<DisplaySettingsType>({
+        rulerStart: 0,
+        start: 0,
+        end: 1,
+        seqLength: 1,
+        displaySequence: "A"
+    })
+
+    const [HomologsDisplaySettings, setHomologsDisplaySettings] = useState<DisplaySettingsType>({
+        rulerStart: 0,
+        start: 0,
+        end: 1,
+        seqLength: 1,
+        displaySequence: "A"
+    })
 
     const tableSort = ((a,b,key,isString,reversed) => {
         if(isString){
@@ -194,22 +209,6 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         return tableSort(a,b,key,isString,reversed)
     })
 
-    const [AFDisplaySettings, setAFDisplaySettings] = useState<DisplaySettingsType>({
-        rulerStart: 0,
-        start: 0,
-        end: 1,
-        seqLength: 1,
-        displaySequence: "A"
-    })
-
-    const [HomologsDisplaySettings, setHomologsDisplaySettings] = useState<DisplaySettingsType>({
-        rulerStart: 0,
-        start: 0,
-        end: 1,
-        seqLength: 1,
-        displaySequence: "A"
-    })
-
     const readPdbFile = async (file: File): Promise<moorhen.Molecule> => {
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
         newMolecule.setBackgroundColour(backgroundColor)
@@ -217,6 +216,16 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         await newMolecule.loadToCootFromFile(file)
         return newMolecule
     }
+
+    useEffect(() => {
+        return () => {
+            console.log(mrParseModels)
+            mrParseModels.forEach(mol => {
+                mol.delete()
+                dispatch( removeMolecule(mol) )
+            })
+        };
+    },[mrParseModels]);
 
     useEffect(() => {
         let minRes = 0
