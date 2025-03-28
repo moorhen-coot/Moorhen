@@ -10,6 +10,7 @@ import { MoorhenDiffMapPeaksModal } from '../modal/MoorhenDiffMapPeaksModal';
 import { MoorhenValidationPlotModal } from '../modal/MoorhenValidationPlotModal';
 import { MoorhenMmrrccModal } from '../modal/MoorhenMmrrccModal';
 import { MoorhenWaterValidationModal } from '../modal/MoorhenWaterValidationModal';
+import { MoorhenJsonValidationModal } from '../modal/MoorhenJsonValidationModal';
 import { MoorhenLigandValidationModal } from '../modal/MoorhenLigandValidationModal';
 import { MoorhenCarbohydrateValidationModal } from '../modal/MoorhenCarbohydrateValidationModal';
 import { MoorhenPepFlipsModal } from '../modal/MoorhenPepFlipsModal';
@@ -45,6 +46,7 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
     const showSceneSettingsModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.SCENE_SETTINGS))
     const showLhasaModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.LHASA))
     const showQScoreModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.QSCORE))
+    const showJsonValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.JSON_VALIDATION))
 
     return <>
         <MoorhenModelsModal {...props}/>
@@ -85,6 +87,10 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
 
         {showMmrrccModal &&
             <MoorhenMmrrccModal {...props} />
+        }
+
+        {showJsonValidationModal &&
+            <MoorhenJsonValidationModal {...props} />
         }
 
         {showWaterValidationModal &&

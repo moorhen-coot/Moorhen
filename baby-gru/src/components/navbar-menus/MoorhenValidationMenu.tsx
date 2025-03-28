@@ -56,6 +56,10 @@ export const MoorhenValidationMenu = (props: MoorhenNavBarExtendedControlsInterf
                 dispatch(showModal(modalKeys.WATER_VALIDATION))
                 document.body.click()
             }}>Water validation...</MenuItem>
+            <MenuItem onClick={() => {
+                dispatch(showModal(modalKeys.JSON_VALIDATION))
+                document.body.click()
+            }}>Load JSON validation file...</MenuItem>
     </div>
 }
 
