@@ -1,7 +1,7 @@
-import { useCallback, useState } from "react"
+import { useCallback, useState, useRef } from "react"
 import { Col, Row, Form, Card, Button } from 'react-bootstrap';
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase"
-import { MoorhenSlider } from '../misc/MoorhenSlider' 
+import { MoorhenSlider } from '../misc/MoorhenSlider'
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
@@ -10,9 +10,10 @@ import { cidToSpec, sleep } from '../../utils/utils';
 import { hideModal } from "../../store/modalsSlice";
 import { useSnackbar } from "notistack";
 import { modalKeys } from "../../utils/enums";
+import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
 export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedProps: moorhen.CollectedProps}) => {
-    
+
     const props = propsIn.collectedProps
     const dispatch = useDispatch()
 
@@ -22,6 +23,8 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
     const { enqueueSnackbar } = useSnackbar()
 
     const filterMapFunction = (map: moorhen.Map) => map.isDifference
+
+    const intoMoleculeRef = useRef<HTMLSelectElement | null>(null)
 
     const flipPeptide = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string) => {
         await props.commandCentre.current.cootCommand({
@@ -37,12 +40,46 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
                 command: 'refine_residues_using_atom_cid',
                 commandArgs: [selectedMolecule.molNo, `//${chainId}/${seqNum}`, 'TRIPLE', 4000],
                 changesMolecules: [selectedMolecule.molNo]
-            }, true)    
+            }, true)
         }
 
         selectedMolecule.setAtomsDirty(true)
         await selectedMolecule.redraw()
         dispatch( triggerUpdate(selectedMolecule.molNo) )
+    }
+
+    const handleRefine = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string, method: string) => {
+        await selectedMolecule.refineResiduesUsingAtomCid(`//${chainId}/${seqNum}`, method, 4000, true)
+        selectedMolecule.setAtomsDirty(true)
+        await selectedMolecule.redraw()
+        dispatch( triggerUpdate(selectedMolecule.molNo) )
+    }
+
+    const handleTripleRefineWithRamaRestraints = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string) => {
+        //TODO - The Rama restraints!
+        await selectedMolecule.refineResiduesUsingAtomCid(`//${chainId}/${seqNum}`, 'TRIPLE', 4000, true)
+        selectedMolecule.setAtomsDirty(true)
+        await selectedMolecule.redraw()
+        dispatch( triggerUpdate(selectedMolecule.molNo) )
+    }
+
+    const handleAutoFitRotamer = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string) => {
+        await props.commandCentre.current.cootCommand({
+            returnType: "status",
+            command: "fill_partial_residue",
+            commandArgs: [
+                selectedMolecule.molNo,
+                chainId,
+                chainId,
+                insCode
+            ],
+            changesMolecules: [selectedMolecule.molNo]
+        }, true)
+
+        selectedMolecule.setAtomsDirty(true)
+        await selectedMolecule.redraw()
+        dispatch( triggerUpdate(selectedMolecule.molNo) )
+        
     }
 
     const handleFlip = (...args: [moorhen.Molecule, string, number, string]) => {
@@ -51,51 +88,87 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
         }
     }
 
+   /*
+   TODO:
+   "triple-refinement-with-rama-restraints-action"
+   */
+
     const fetchCardData = useCallback(() => {
-        const things = propsIn.validationJson.items
-        return things
-    },[propsIn])
+        let cards = []
 
-    /*
-                                <Button style={{marginRight:'0.5rem'}} onClick={() => selectedMolecule.centreAndAlignViewOn(`//${flip.chainId}/${flip.resNum}-${flip.resNum}/`, false)}>
-                                <Button style={{marginRight:'0.5rem'}} onClick={() => {
-                                    handleFlip(selectedMolecule, flip.chainId, flip.resNum, flip.insCode)
-                                }}>
-    */
-    
-    let cards = []
-    //const selectedMolecule =  molecules.find(molecule => molecule.molNo === selectedModel)
-    if(propsIn.validationJson&&propsIn.validationJson.items){
-        const things = propsIn.validationJson.items
-        console.log(things)
-        cards = things.map((flip, index) => {
-            let additionalLabel = ""
-            if(flip["position-type"]&&flip["position-type"]==="by-residue-spec"&&flip["residue-spec"])
-               additionalLabel = flip["residue-spec"][0]+"/"+flip["residue-spec"][1]
-            if(flip["position-type"]&&flip["position-type"]==="by-atom-spec-pair"&&flip["atom-1-spec"]&&flip["atom-2-spec"])
-               additionalLabel = flip["atom-1-spec"][0]+"/"+flip["atom-1-spec"][1]+"/"+flip["atom-1-spec"][3] + " <--> " +
-                                 flip["atom-2-spec"][0]+"/"+flip["atom-2-spec"][1]+"/"+flip["atom-2-spec"][3]
-            return <Card key={index} style={{marginTop: '0.5rem'}}>
-                    <Card.Body style={{padding:'0.5rem'}}>
-                         <Row>
-                            <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
-                                {flip.label} {additionalLabel}
-                            </Col>
-                            <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
-                                <Button style={{marginRight:'0.5rem'}}>
-                                    View
-                                </Button>
-                                <Button style={{marginRight:'0.5rem'}}>
-                                    Flip
-                                </Button>
-                            </Col>
-                         </Row>
-                    </Card.Body>
-                </Card>
-        })
-    }
+        let selectedMolecule
+        if(intoMoleculeRef.current)
+            selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(intoMoleculeRef.current.value))
 
+        if(propsIn.validationJson&&propsIn.validationJson.items){
+            const things = propsIn.validationJson.items
+            //console.log(things)
+            cards = things.map((issue, index) => {
+                let additionalLabel = ""
+                let chainId = ""
+                let resNum = -9999
+                let insCode = ""
+                if(issue["position-type"]&&issue["position-type"]==="by-residue-spec"&&issue["residue-spec"]){
+                   additionalLabel = issue["residue-spec"][0]+"/"+issue["residue-spec"][1]
+                   chainId = issue["residue-spec"][0]
+                   resNum = parseInt(issue["residue-spec"][1])
+                   insCode = issue["residue-spec"][2]
+                }
+                if(issue["position-type"]&&issue["position-type"]==="by-atom-spec-pair"&&issue["atom-1-spec"]&&issue["atom-2-spec"]){
+                   additionalLabel = issue["atom-1-spec"][0]+"/"+issue["atom-1-spec"][1]+"/"+issue["atom-1-spec"][3] + " <--> " +
+                                     issue["atom-2-spec"][0]+"/"+issue["atom-2-spec"][1]+"/"+issue["atom-2-spec"][3]
+                   chainId = issue["atom-1-spec"][0]
+                   resNum = parseInt(issue["atom-1-spec"][1])
+                   insCode = issue["atom-1-spec"][2]
+                }
+                return <Card key={index} style={{marginTop: '0.5rem'}}>
+                        <Card.Body style={{padding:'0.5rem'}}>
+                             <Row>
+                                <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
+                                    {issue.label} {additionalLabel}
+                                </Col>
+                                <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
+                                    {selectedMolecule && <Button style={{marginRight:'0.5rem'}} onClick={() => selectedMolecule.centreAndAlignViewOn(`//${chainId}/${resNum}-${resNum}/`, false)}>
+                                        View
+                                    </Button>}
+                                    {(selectedMolecule && issue["action"].indexOf("sphere-refinement-action")>-1) && <Button style={{marginRight:'0.5rem'}} onClick={() => {
+                                        handleRefine(selectedMolecule, chainId, resNum, insCode, "SPHERE")
+                                    }}>
+                                        Refine
+                                    </Button>}
+                                    {(selectedMolecule && issue["action"].indexOf("triple-refinement-action")>-1) && <Button style={{marginRight:'0.5rem'}} onClick={() => {
+                                        handleRefine(selectedMolecule, chainId, resNum, insCode, "TRIPLE")
+                                    }}>
+                                        Refine
+                                    </Button>}
+                                    {(selectedMolecule && issue["action"].indexOf("side-chain-flip-action")>-1) && <Button style={{marginRight:'0.5rem'}} onClick={() => {
+                                        handleFlip(selectedMolecule, chainId, resNum, insCode)
+                                    }}>
+                                        Flip
+                                    </Button>}
+                                    {(selectedMolecule && issue["action"].indexOf("auto-fit-rotamer-action")>-1) && <Button style={{marginRight:'0.5rem'}} onClick={() => {
+                                        handleAutoFitRotamer(selectedMolecule, chainId, resNum, insCode)
+                                    }}>
+                                        Auto fit
+                                    </Button>}
+                                </Col>
+                             </Row>
+                        </Card.Body>
+                    </Card>
+            })
+            return cards
+        }
+    },[propsIn,molecules])
+
+    const cards = fetchCardData()
     return <>
+                <MoorhenMoleculeSelect
+                    width=""
+                    label="Molecule"
+                    allowAny={false}
+                    molecules={molecules}
+                    ref={intoMoleculeRef}
+                    />
            {cards}
            </>
 }
