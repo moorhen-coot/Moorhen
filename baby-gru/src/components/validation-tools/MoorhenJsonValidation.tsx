@@ -1,5 +1,5 @@
 import { useCallback, useState, useRef } from "react"
-import { Col, Row, Form, Card, Button } from 'react-bootstrap';
+import { Col, Row, Form, Card } from 'react-bootstrap';
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase"
 import { MoorhenSlider } from '../misc/MoorhenSlider'
 import { libcootApi } from "../../types/libcoot";
@@ -11,6 +11,8 @@ import { hideModal } from "../../store/modalsSlice";
 import { useSnackbar } from "notistack";
 import { modalKeys } from "../../utils/enums";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
+import { Icon, Button, IconButton } from "@mui/material";
+import { CenterFocusWeakOutlined } from "@mui/icons-material";
 
 export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedProps: moorhen.CollectedProps}) => {
 
@@ -108,6 +110,29 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
         }
     }
 
+
+    const refine_svg = `${props.urlPrefix}/pixmaps/refine-1.svg`
+    const flip_svg = `${props.urlPrefix}/pixmaps/flip-peptide.svg`
+    const auto_fit_svg = `${props.urlPrefix}/pixmaps/auto-fit-rotamer.svg`
+
+    const refineSvgIcon = (
+        <Icon>
+          <img alt="Refine" src={refine_svg} style={{verticalAlign:"top", height: "100%", width: "100%"}}/>
+        </Icon>
+    )
+
+    const flipSvgIcon = (
+        <Icon>
+          <img alt="Flip peptide" src={flip_svg} style={{verticalAlign:"top", height: "100%", width: "100%"}}/>
+        </Icon>
+    )
+
+    const autoFitRotamerSvgIcon = (
+        <Icon>
+          <img alt="Auto fit rotamer" src={auto_fit_svg} style={{verticalAlign:"top", height: "100%", width: "100%"}}/>
+        </Icon>
+    )
+
     const fetchCardData = useCallback(() => {
         let cards = []
 
@@ -143,34 +168,24 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
                                     {issue.label} {additionalLabel}
                                 </Col>
                                 <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
-                                    {selectedMolecule && <Button style={{marginRight:'0.5rem'}} onClick={() => selectedMolecule.centreAndAlignViewOn(`//${chainId}/${resNum}-${resNum}/`, false)}>
-                                        View
-                                    </Button>}
-                                    {(selectedMolecule && issue["action"].indexOf("sphere-refinement-action")>-1) && <Button style={{marginRight:'0.5rem'}} onClick={() => {
+                                    {selectedMolecule && <IconButton title="Centre on" aria-label="Centre on" style={{marginRight:'0.5rem'}} onClick={() => selectedMolecule.centreAndAlignViewOn(`//${chainId}/${resNum}-${resNum}/`, false)}>
+                                        <CenterFocusWeakOutlined/>
+                                    </IconButton>}
+                                    {(selectedMolecule && issue["action"].indexOf("sphere-refinement-action")>-1) && <Button title="Sphere Refine" aria-label="Sphere Refine" sx={{ marginRight: '0.5rem', p: 0, minWidth:0 }} startIcon={refineSvgIcon} onClick={() => {
                                         handleRefine(selectedMolecule, chainId, resNum, insCode, "SPHERE", false)
-                                    }}>
-                                        Refine
-                                    </Button>}
-                                    {(selectedMolecule && issue["action"].indexOf("triple-refinement-with-rama-restraints-action")>-1) && <Button style={{marginRight:'0.5rem'}} onClick={() => {
-                                        handleRefine(selectedMolecule, chainId, resNum, insCode, "TRIPLE", true)
-                                    }}>
-                                        Refine with Ramachandran restraints
-                                    </Button>}
-                                    {(selectedMolecule && issue["action"].indexOf("triple-refinement-action")>-1) && <Button style={{marginRight:'0.5rem'}} onClick={() => {
+                                    }}/>}
+                                    {(selectedMolecule && issue["action"].indexOf("triple-refinement-with-rama-restraints-action")>-1) && <Button title="Triple Refine with Rama restraints" aria-label="Triple Refine with Rama restraints" startIcon={refineSvgIcon} sx={{ marginRight: '0.5rem', p: 0, minWidth:0 }} onClick={() => {
                                         handleRefine(selectedMolecule, chainId, resNum, insCode, "TRIPLE", false)
-                                    }}>
-                                        Refine
-                                    </Button>}
-                                    {(selectedMolecule && issue["action"].indexOf("side-chain-flip-action")>-1) && <Button style={{marginRight:'0.5rem'}} onClick={() => {
+                                    }}/>}
+                                    {(selectedMolecule && issue["action"].indexOf("triple-refinement-action")>-1) && <Button title="Triple Refine" aria-label="Triple Refine" sx={{ marginRight: '0.5rem', p: 0, minWidth:0 }} startIcon={refineSvgIcon} onClick={() => {
+                                        handleRefine(selectedMolecule, chainId, resNum, insCode, "TRIPLE", false)
+                                    }}/>}
+                                    {(selectedMolecule && issue["action"].indexOf("side-chain-flip-action")>-1) && <Button title="Flip side chain" aria-label="Flip side chain" sx={{ marginRight: '0.5rem', p: 0, minWidth:0 }} startIcon={flipSvgIcon} onClick={() => {
                                         handleFlip(selectedMolecule, chainId, resNum, insCode)
-                                    }}>
-                                        Flip
-                                    </Button>}
-                                    {(selectedMolecule && issue["action"].indexOf("auto-fit-rotamer-action")>-1) && <Button style={{marginRight:'0.5rem'}} onClick={() => {
+                                    }}/>}
+                                    {(selectedMolecule && issue["action"].indexOf("auto-fit-rotamer-action")>-1) && <Button title="Auto fit rotamer" aria-label="Auto fit rotamer" sx={{ marginRight: '0.5rem', p: 0, minWidth:0 }} startIcon={autoFitRotamerSvgIcon} onClick={() => {
                                         handleAutoFitRotamer(selectedMolecule, chainId, resNum, insCode)
-                                    }}>
-                                        Auto fit
-                                    </Button>}
+                                    }}/>}
                                 </Col>
                              </Row>
                         </Card.Body>
