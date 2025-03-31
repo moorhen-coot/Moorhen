@@ -19,6 +19,7 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
 
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
+    const useRamaRestraints = useSelector((state: moorhen.State) => state.refinementSettings.useRamaRefinementRestraints)
 
     const { enqueueSnackbar } = useSnackbar()
 
@@ -48,8 +49,27 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
         dispatch( triggerUpdate(selectedMolecule.molNo) )
     }
 
-    const handleRefine = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string, method: string) => {
+    const handleRefine = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string, method: string, tripleWithRama: boolean) => {
+
+        if(tripleWithRama){
+            await props.commandCentre.current.cootCommand({
+                command: 'set_use_rama_plot_restraints',
+                commandArgs: [true],
+                returnType: "status"
+            }, false)
+        }
+
         await selectedMolecule.refineResiduesUsingAtomCid(`//${chainId}/${seqNum}`, method, 4000, true)
+
+        if(tripleWithRama){
+            //Restore previous setting, whether true or false
+            await props.commandCentre.current.cootCommand({
+                command: 'set_use_rama_plot_restraints',
+                commandArgs: [useRamaRestraints],
+                returnType: "status"
+            }, false)
+        }
+
         selectedMolecule.setAtomsDirty(true)
         await selectedMolecule.redraw()
         dispatch( triggerUpdate(selectedMolecule.molNo) )
@@ -87,11 +107,6 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
             flipPeptide(...args)
         }
     }
-
-   /*
-   TODO:
-   "triple-refinement-with-rama-restraints-action"
-   */
 
     const fetchCardData = useCallback(() => {
         let cards = []
@@ -132,12 +147,17 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
                                         View
                                     </Button>}
                                     {(selectedMolecule && issue["action"].indexOf("sphere-refinement-action")>-1) && <Button style={{marginRight:'0.5rem'}} onClick={() => {
-                                        handleRefine(selectedMolecule, chainId, resNum, insCode, "SPHERE")
+                                        handleRefine(selectedMolecule, chainId, resNum, insCode, "SPHERE", false)
                                     }}>
                                         Refine
                                     </Button>}
+                                    {(selectedMolecule && issue["action"].indexOf("triple-refinement-with-rama-restraints-action")>-1) && <Button style={{marginRight:'0.5rem'}} onClick={() => {
+                                        handleRefine(selectedMolecule, chainId, resNum, insCode, "TRIPLE", true)
+                                    }}>
+                                        Refine with Ramachandran restraints
+                                    </Button>}
                                     {(selectedMolecule && issue["action"].indexOf("triple-refinement-action")>-1) && <Button style={{marginRight:'0.5rem'}} onClick={() => {
-                                        handleRefine(selectedMolecule, chainId, resNum, insCode, "TRIPLE")
+                                        handleRefine(selectedMolecule, chainId, resNum, insCode, "TRIPLE", false)
                                     }}>
                                         Refine
                                     </Button>}
