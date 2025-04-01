@@ -526,7 +526,32 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         return modelFiles
     }
 
-    const loadCoordinateFilesFromfileList = async (files: FileList, modelFiles: string[]) => {
+    const loadCoordinateFilesFromURL = async (url: string, modelFiles: string[]) => {
+
+        let newMolecules: moorhen.Molecule[]
+
+        const loadPromises: Promise<moorhen.Molecule>[] = []
+        for (const modelFile of modelFiles) {
+            const response = await fetch(url+"/"+modelFile)
+            if(response.ok) {
+                const contents = await response.text();
+                loadPromises.push(readPdbString(contents,modelFile.split('/').reverse()[0]))
+            }
+        }
+
+        if(loadPromises.length===0) return newMolecules
+
+        newMolecules = await Promise.all(loadPromises)
+        if (!newMolecules.every(molecule => molecule.molNo !== -1)) {
+            enqueueSnackbar("Failed to read molecule", { variant: "warning" })
+            newMolecules = newMolecules.filter(molecule =>molecule.molNo !== -1)
+        }
+
+        return newMolecules
+
+    }
+
+    const loadCoordinateFilesFromFileList = async (files: FileList, modelFiles: string[]) => {
 
         let newMolecules: moorhen.Molecule[]
 
@@ -557,7 +582,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         const json_contents = await loadMrParseJson(files)
         const modelFiles: string[] = parseJSONAndGetModelFiles(json_contents)
 
-        let newMolecules: moorhen.Molecule[] = await loadCoordinateFilesFromfileList(files,modelFiles)
+        let newMolecules: moorhen.Molecule[] = await loadCoordinateFilesFromFileList(files,modelFiles)
         let drawPromises: Promise<void>[] = []
 
         if (newMolecules.length === 0) {
