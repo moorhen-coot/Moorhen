@@ -10,6 +10,7 @@ export const MoorhenValidationMenu = (props: MoorhenNavBarExtendedControlsInterf
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     
     const dispatch = useDispatch()
+    const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
    
     return <div style={{maxHeight: convertViewtoPx(65, height), overflow: 'auto'}}>
             <MenuItem onClick={() => {
@@ -56,10 +57,10 @@ export const MoorhenValidationMenu = (props: MoorhenNavBarExtendedControlsInterf
                 dispatch(showModal(modalKeys.WATER_VALIDATION))
                 document.body.click()
             }}>Water validation...</MenuItem>
-            <MenuItem onClick={() => {
+            {devMode && <MenuItem onClick={() => {
                 dispatch(showModal(modalKeys.JSON_VALIDATION))
                 document.body.click()
-            }}>Load JSON validation file...</MenuItem>
+            }}>Load JSON validation file...</MenuItem>}
     </div>
 }
 
