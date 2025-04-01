@@ -209,6 +209,14 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         return tableSort(a,b,key,isString,reversed)
     })
 
+    const readPdbString = async (fileString: string, fileName: string): Promise<moorhen.Molecule> => {
+        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
+        newMolecule.setBackgroundColour(backgroundColor)
+        newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
+        await newMolecule.loadToCootFromString(fileString, fileName)
+        return newMolecule
+    }
+
     const readPdbFile = async (file: File): Promise<moorhen.Molecule> => {
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
         newMolecule.setBackgroundColour(backgroundColor)
@@ -219,7 +227,6 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
 
     useEffect(() => {
         return () => {
-            console.log(mrParseModels)
             mrParseModels.forEach(mol => {
                 mol.delete()
                 dispatch( removeMolecule(mol) )
@@ -431,102 +438,138 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         })
     }, [afJson,targetSequence,mrParseModels])
 
-    const loadMrParseFiles = async (files: FileList) => {
+    const loadMrParseJson = async (files: FileList) => {
 
         if(files.length===0) return
 
-        const readPromises: Promise<moorhen.Molecule>[] = []
-        const modelFiles: string[] = []
+        let fastaContents = ""
+        let afModelContents = ""
+        let esmModelContents = ""
+        let homologsContents = ""
 
         for (const file of files) {
             if(file.name==="input.fasta"){
-                try {
-                    const fileContents = await readTextFile(file) as string
-                    const seqs = Fasta.parse(fileContents)
-                    setTargetSequence(seqs[0].seq)
-                } catch(e) {
-                    console.log("Failed to extract sequence from input.fasta")
-                }
+                fastaContents = await readTextFile(file) as string
             }
             if(file.name==="af_models.json"){
-                setAfJson([])
-                const fileContents = await readTextFile(file) as string
-                const json = JSON.parse(fileContents)
-                json.map((el,i) => {
-                    AFSelectedResiduesTrackRef[i] = createRef()
-                })
-                setAfJson(json)
-                for(const iter of Object.entries(json)){
-                    const key: string = iter[0]
-                    const value: MrParseAFModelJson = iter[1] as MrParseAFModelJson
-                    const fullName = value["pdb_file"]
-                    if(fullName){
-                        const relName = fullName.substring(fullName.lastIndexOf("models/")+"models/".length)
-                        modelFiles.push(fullName)
-                    }
-                }
+                afModelContents = await readTextFile(file) as string
             }
             if(file.name==="esm_models.json"){
-                const fileContents = await readTextFile(file) as string
-                const json = JSON.parse(fileContents)
-                setEsmJson(json)
-                for(const iter of Object.entries(json)){
-                    const key: string = iter[0]
-                    const value: any = iter[1]
-                    //console.log(value)
-                }
+                esmModelContents = await readTextFile(file) as string
             }
             if(file.name==="homologs.json"){
-                const fileContents = await readTextFile(file) as string
-                const json = JSON.parse(fileContents)
-                json.map((el,i) => {
-                    HomologsSelectedResiduesTrackRef[i] = createRef()
-                })
-                setHomologsJson(json)
-                for(const iter of Object.entries(json)){
-                    const key: string = iter[0]
-                    const value: MrParsePDBModelJson = iter[1] as MrParsePDBModelJson
-                    const fullName = value["pdb_file"]
-                    if(fullName){
-                        const relName = fullName.substring(fullName.lastIndexOf("homologs/")+"homologs/".length)
-                        modelFiles.push(fullName)
-                    }
-                }
+                homologsContents = await readTextFile(file) as string
             }
         }
 
+        return {fastaContents,afModelContents,esmModelContents,homologsContents}
+    }
+
+    const parseJSONAndGetModelFiles = (json_contents) => {
+
+        const fastaContents = json_contents.fastaContents
+        const afModelContents = json_contents.afModelContents
+        const esmModelContents = json_contents.esmModelContents
+        const homologsContents = json_contents.homologsContents
+
+        const modelFiles: string[] = []
+        if(fastaContents){
+            try {
+                const seqs = Fasta.parse(fastaContents)
+                setTargetSequence(seqs[0].seq)
+            } catch(e) {
+                console.log("Failed to extract sequence from input.fasta")
+            }
+        }
+        if(afModelContents){
+            setAfJson([])
+            const json = JSON.parse(afModelContents)
+            json.map((el,i) => {
+                AFSelectedResiduesTrackRef[i] = createRef()
+            })
+            setAfJson(json)
+            for(const iter of Object.entries(json)){
+                const key: string = iter[0]
+                const value: MrParseAFModelJson = iter[1] as MrParseAFModelJson
+                const fullName = value["pdb_file"]
+                if(fullName){
+                    const relName = fullName.substring(fullName.lastIndexOf("models/")+"models/".length)
+                    modelFiles.push(fullName)
+                }
+            }
+        }
+        if(esmModelContents){
+            const json = JSON.parse(esmModelContents)
+            setEsmJson(json)
+            for(const iter of Object.entries(json)){
+                const key: string = iter[0]
+                const value: any = iter[1]
+                //console.log(value)
+            }
+        }
+        if(homologsContents){
+            const json = JSON.parse(homologsContents)
+            json.map((el,i) => {
+                HomologsSelectedResiduesTrackRef[i] = createRef()
+            })
+            setHomologsJson(json)
+            for(const iter of Object.entries(json)){
+                const key: string = iter[0]
+                const value: MrParsePDBModelJson = iter[1] as MrParsePDBModelJson
+                const fullName = value["pdb_file"]
+                if(fullName){
+                    const relName = fullName.substring(fullName.lastIndexOf("homologs/")+"homologs/".length)
+                    modelFiles.push(fullName)
+                }
+            }
+        }
+        return modelFiles
+    }
+
+    const loadCoordinateFilesFromfileList = async (files: FileList, modelFiles: string[]) => {
+
+        let newMolecules: moorhen.Molecule[]
+
+        const loadPromises: Promise<moorhen.Molecule>[] = []
         for (const file of files) {
             for (const modelFile of modelFiles) {
                 if(file.webkitRelativePath.includes(modelFile)){
-                    const fullName = file.webkitRelativePath
-                    readPromises.push(readPdbFile(file))
+                    const contents = await readTextFile(file) as string
+                    loadPromises.push(readPdbString(contents,file.name))
                 }
             }
         }
 
-        if(readPromises.length===0) return
+        if(loadPromises.length===0) return newMolecules
 
-        let newMolecules: moorhen.Molecule[] = await Promise.all(readPromises)
+        newMolecules = await Promise.all(loadPromises)
         if (!newMolecules.every(molecule => molecule.molNo !== -1)) {
             enqueueSnackbar("Failed to read molecule", { variant: "warning" })
             newMolecules = newMolecules.filter(molecule =>molecule.molNo !== -1)
-            if (newMolecules.length === 0) {
-                return
-            }
         }
 
+        return newMolecules
+
+    }
+
+    const loadMrParseFiles = async (files: FileList) => {
+
+        const json_contents = await loadMrParseJson(files)
+        const modelFiles: string[] = parseJSONAndGetModelFiles(json_contents)
+
+        let newMolecules: moorhen.Molecule[] = await loadCoordinateFilesFromfileList(files,modelFiles)
         let drawPromises: Promise<void>[] = []
-        let molecules: moorhen.Molecule[] = []
+
+        if (newMolecules.length === 0) {
+            return
+        }
 
         for (const newMolecule of newMolecules) {
-            molecules.push(newMolecule)
-            drawPromises.push(
-                newMolecule.fetchIfDirtyAndDraw('CRs')
-            )
+            drawPromises.push(newMolecule.fetchIfDirtyAndDraw('CRs'))
         }
         await Promise.all(drawPromises)
 
-        dispatch(addMoleculeList(molecules))
+        dispatch(addMoleculeList(newMolecules))
         newMolecules.at(-1).centreOn('/*/*/*/*', true)
 
         setMrParseModels(newMolecules)
