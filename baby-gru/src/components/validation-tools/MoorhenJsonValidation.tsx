@@ -112,8 +112,15 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
 
 
     const refine_svg = `${props.urlPrefix}/pixmaps/refine-1.svg`
+    const refine_rama_svg = `${props.urlPrefix}/pixmaps/refine-rama.svg`
     const flip_svg = `${props.urlPrefix}/pixmaps/flip-peptide.svg`
     const auto_fit_svg = `${props.urlPrefix}/pixmaps/auto-fit-rotamer.svg`
+
+    const refineRamaSvgIcon = (
+        <Icon>
+          <img alt="Refine" src={refine_rama_svg} style={{verticalAlign:"top", height: "100%", width: "100%"}}/>
+        </Icon>
+    )
 
     const refineSvgIcon = (
         <Icon>
@@ -174,8 +181,8 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
                                     {(selectedMolecule && issue["action"].indexOf("sphere-refinement-action")>-1) && <Button title="Sphere Refine" aria-label="Sphere Refine" sx={{ marginRight: '0.5rem', p: 0, minWidth:0 }} startIcon={refineSvgIcon} onClick={() => {
                                         handleRefine(selectedMolecule, chainId, resNum, insCode, "SPHERE", false)
                                     }}/>}
-                                    {(selectedMolecule && issue["action"].indexOf("triple-refinement-with-rama-restraints-action")>-1) && <Button title="Triple Refine with Rama restraints" aria-label="Triple Refine with Rama restraints" startIcon={refineSvgIcon} sx={{ marginRight: '0.5rem', p: 0, minWidth:0 }} onClick={() => {
-                                        handleRefine(selectedMolecule, chainId, resNum, insCode, "TRIPLE", false)
+                                    {(selectedMolecule && issue["action"].indexOf("triple-refinement-with-rama-restraints-action")>-1) && <Button title="Triple Refine with Rama restraints" aria-label="Triple Refine with Rama restraints" startIcon={refineRamaSvgIcon} sx={{ marginRight: '0.5rem', p: 0, minWidth:0 }} onClick={() => {
+                                        handleRefine(selectedMolecule, chainId, resNum, insCode, "TRIPLE", true)
                                     }}/>}
                                     {(selectedMolecule && issue["action"].indexOf("triple-refinement-action")>-1) && <Button title="Triple Refine" aria-label="Triple Refine" sx={{ marginRight: '0.5rem', p: 0, minWidth:0 }} startIcon={refineSvgIcon} onClick={() => {
                                         handleRefine(selectedMolecule, chainId, resNum, insCode, "TRIPLE", false)
