@@ -882,7 +882,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                 modalId={modalKeys.MRPARSE}
                 left={width / 6}
                 top={height / 3}
-                minHeight={convertViewtoPx(30, height)}
+                minHeight={50}
                 minWidth={convertRemToPx(37)}
                 maxHeight={convertViewtoPx(70, height)}
                 maxWidth={convertViewtoPx(90, width)}
