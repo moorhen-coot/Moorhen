@@ -526,6 +526,50 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         return modelFiles
     }
 
+    const loadMrParseJsonUrl = async (urlBase) => {
+
+        let fastaContents = ""
+        let afModelContents = ""
+        let esmModelContents = ""
+        let homologsContents = ""
+
+        let response = await fetch(urlBase+"/input.fasta")
+        if(response.ok) {
+            fastaContents = await response.text();
+        }
+        response = await fetch(urlBase+"/af_models.json")
+        if(response.ok) {
+            afModelContents = await response.text();
+        }
+        response = await fetch(urlBase+"/esm_models.json")
+        if(response.ok) {
+            esmModelContents = await response.text();
+        }
+        response = await fetch(urlBase+"/homologs.json")
+        if(response.ok) {
+            homologsContents = await response.text();
+        }
+
+        return {fastaContents,afModelContents,esmModelContents,homologsContents}
+    }
+
+    const drawModels = async (newMolecules: moorhen.Molecule[]) => {
+        let drawPromises: Promise<void>[] = []
+        if (newMolecules.length === 0) {
+            return
+        }
+
+        for (const newMolecule of newMolecules) {
+            drawPromises.push(newMolecule.fetchIfDirtyAndDraw('CRs'))
+        }
+        await Promise.all(drawPromises)
+
+        dispatch(addMoleculeList(newMolecules))
+        newMolecules.at(-1).centreOn('/*/*/*/*', true)
+
+        setMrParseModels(newMolecules)
+    }
+
     const loadCoordinateFilesFromURL = async (url: string, modelFiles: string[]) => {
 
         let newMolecules: moorhen.Molecule[]
@@ -581,23 +625,20 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
 
         const json_contents = await loadMrParseJson(files)
         const modelFiles: string[] = parseJSONAndGetModelFiles(json_contents)
-
         let newMolecules: moorhen.Molecule[] = await loadCoordinateFilesFromFileList(files,modelFiles)
-        let drawPromises: Promise<void>[] = []
 
-        if (newMolecules.length === 0) {
-            return
-        }
+        drawModels(newMolecules)
 
-        for (const newMolecule of newMolecules) {
-            drawPromises.push(newMolecule.fetchIfDirtyAndDraw('CRs'))
-        }
-        await Promise.all(drawPromises)
+    }
 
-        dispatch(addMoleculeList(newMolecules))
-        newMolecules.at(-1).centreOn('/*/*/*/*', true)
+    const loadMrParseUrl = async (urlBase) => {
 
-        setMrParseModels(newMolecules)
+        const json_contents = await loadMrParseJsonUrl(urlBase)
+        const modelFiles: string[] = parseJSONAndGetModelFiles(json_contents)
+        let newMolecules: moorhen.Molecule[] = await loadCoordinateFilesFromURL(urlBase,modelFiles)
+
+        drawModels(newMolecules)
+
     }
 
     const handlePDBSortingChange = (key) => {
@@ -618,6 +659,13 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         setAFSortField(key)
     }
 
+    const handleLoadFromUrlExample = () => {
+        //This is an example of loading a set of MrParse results on a server.
+        //In testing I just run Python simple server in an MrParse results dir.
+        const urlBase = "http://localhost:8000/"
+        loadMrParseUrl(urlBase)
+    }
+
     const footerContent = <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'space-between', alignContent: 'space-between', justifyContent: 'space-between', width: '100%' }}>
         <Stack gap={2} direction='horizontal' style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
             <Form.Group style={{ width: '20rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadMrParse" className="mb-3">
@@ -625,11 +673,8 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             <Form.Control ref={filesRef} directory="" webkitdirectory="true" type="file" multiple={true} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { loadMrParseFiles(e.target.files) }}/>
             </Form.Group>
         </Stack>
+        {false && <Button onClick={handleLoadFromUrlExample}>Load from URL example</Button>}
     </Stack>
-
-    //console.log(afJson)
-    //console.log(esmJson)
-    //console.log(homologsJson)
 
     const pdbArrow = homologsSortReversed ?  <>&darr;</> : <>&uarr;</>
     const afArrow = afSortReversed ?  <>&darr;</> : <>&uarr;</>
