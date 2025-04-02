@@ -482,7 +482,6 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             }
         }
         if(afModelContents){
-            setAfJson([])
             const json = JSON.parse(afModelContents)
             json.map((el,i) => {
                 AFSelectedResiduesTrackRef[i] = createRef()
