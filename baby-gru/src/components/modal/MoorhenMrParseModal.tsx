@@ -1,7 +1,7 @@
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen"
 import { useEffect, useRef, useState, createRef, useCallback } from "react"
-import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Table  } from "react-bootstrap"
+import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Table } from "react-bootstrap"
 import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
 import { convertRemToPx, convertViewtoPx} from '../../utils/utils'
 import { useSelector, useDispatch } from "react-redux"
@@ -679,22 +679,10 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
     const pdbArrow = homologsSortReversed ?  <>&darr;</> : <>&uarr;</>
     const afArrow = afSortReversed ?  <>&darr;</> : <>&uarr;</>
 
-    return <MoorhenDraggableModalBase
-                modalId={modalKeys.MRPARSE}
-                left={width / 6}
-                top={height / 3}
-                minHeight={convertViewtoPx(30, height)}
-                minWidth={convertRemToPx(37)}
-                maxHeight={convertViewtoPx(70, height)}
-                maxWidth={convertViewtoPx(90, width)}
-                enforceMaxBodyDimensions={true}
-                overflowY='auto'
-                overflowX='auto'
-                headerTitle='MrParse results'
-                footer={footerContent}
-                resizeNodeRef={resizeNodeRef}
-                body={
-                    <>
+    let bodyContent = <><div style={{verticalAlign:"center"}}>Use the button below to browse for an MrParse results directory</div></>
+
+    if(mrParseModels.length>0)
+        bodyContent = <>
                     <Accordion defaultExpanded className="moorhen-accordion" disableGutters={true} elevation={0} >
                     <AccordionSummary
                         style={{backgroundColor: isDark ? '#adb5bd' : '#ecf0f1'}}
@@ -889,6 +877,21 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                     </AccordionDetails>
                     </Accordion>
                     </>
-                }
+
+    return <MoorhenDraggableModalBase
+                modalId={modalKeys.MRPARSE}
+                left={width / 6}
+                top={height / 3}
+                minHeight={convertViewtoPx(30, height)}
+                minWidth={convertRemToPx(37)}
+                maxHeight={convertViewtoPx(70, height)}
+                maxWidth={convertViewtoPx(90, width)}
+                enforceMaxBodyDimensions={true}
+                overflowY='auto'
+                overflowX='auto'
+                headerTitle='MrParse results'
+                footer={footerContent}
+                resizeNodeRef={resizeNodeRef}
+                body={bodyContent}
             />
 }
