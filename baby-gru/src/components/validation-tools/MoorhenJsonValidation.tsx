@@ -12,7 +12,10 @@ import { useSnackbar } from "notistack";
 import { modalKeys } from "../../utils/enums";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { Icon, Button, IconButton } from "@mui/material";
-import { CenterFocusWeakOutlined } from "@mui/icons-material";
+import { Accordion, AccordionDetails, AccordionSummary, Typography } from '@mui/material';
+import { ExpandMoreOutlined, CenterFocusWeakOutlined } from "@mui/icons-material";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from '@mui/icons-material/Delete';
 
 export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedProps: moorhen.CollectedProps}) => {
 
@@ -28,6 +31,8 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
     const filterMapFunction = (map: moorhen.Map) => map.isDifference
 
     const intoMoleculeRef = useRef<HTMLSelectElement | null>(null)
+
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
     const flipPeptide = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string) => {
         await props.commandCentre.current.cootCommand({
@@ -142,15 +147,20 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
 
     const fetchCardData = useCallback(() => {
         let cards = []
+        let title = ""
 
         let selectedMolecule
         if(intoMoleculeRef.current)
             selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(intoMoleculeRef.current.value))
 
-        if(propsIn.validationJson&&propsIn.validationJson.items){
-            const things = propsIn.validationJson.items
-            //console.log(things)
-            cards = things.map((issue, index) => {
+        if(propsIn.validationJson&&propsIn.validationJson.sections){
+            const sections = propsIn.validationJson.sections
+            title =  propsIn.validationJson.title
+
+            cards.push(sections.map((section, section_index) => {
+                const things = section.items
+                const innerCards = []
+                innerCards.push(things.map((issue, index) => {
                 let additionalLabel = ""
                 let chainId = ""
                 let resNum = -9999
@@ -197,9 +207,27 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
                              </Row>
                         </Card.Body>
                     </Card>
-            })
-            return cards
+            }))
+                return <Accordion key={section_index} defaultExpanded className="moorhen-accordion" elevation={0} >
+                <AccordionSummary
+                    style={{backgroundColor: isDark ? '#adb5bd' : '#ecf0f1'}}
+                    expandIcon={<ExpandMoreOutlined />}
+                >
+                <Typography>
+                {section.title}
+                </Typography>
+                <Typography>
+                Sort
+                </Typography>
+                </AccordionSummary>
+                <AccordionDetails style={{padding: '0.2rem', backgroundColor: isDark ? '#ced5d6' : 'white'}}>
+                {innerCards}
+                </AccordionDetails>
+                </Accordion>
+
+            }))
         }
+        return {title,cards}
     },[propsIn,molecules])
 
     const cards = fetchCardData()
@@ -211,6 +239,7 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
                     molecules={molecules}
                     ref={intoMoleculeRef}
                     />
-           {cards}
+           <h5 className='mb-3'>{cards.title}</h5>
+           {cards.cards}
            </>
 }

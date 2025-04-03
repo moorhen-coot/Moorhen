@@ -12,6 +12,7 @@ A JavaScript molecular graphics program
 - [x] Fix 4oo8 symmetry.
 
 ### Todo
+- [ ] Do not pull whole monomer library - we never use it.
 - [ ] Fitting 5-letter ligand truncates name, e.g. A1LU6
 - [ ] Get Structure factors if no map download available.
 - [ ] Undo button on a molecule loaded from SMILES/PubChem with name > 3 letters breaks the structure.
