@@ -178,15 +178,15 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
                    resNum = parseInt(issue["atom-1-spec"][1])
                    insCode = issue["atom-1-spec"][2]
                 }
-                return <Table key={index} style={{margin: '0', padding:'0'}}>
+                return <Table key={index} style={{ backgroundColor: 'red',margin: '0', padding:'0'}}>
                         <tbody>
                              <tr>
-                                <td style={{margin: '0', padding:'0', verticalAlign:'middle', textAlign:'left'}}>
+                                <td style={{backgroundColor: isDark ? '#333' : 'white', color: isDark ? 'white' : 'black', margin: '0', padding:'0', verticalAlign:'middle', textAlign:'left'}}>
                                     {issue.label} {additionalLabel}
                                 </td>
-                                <td style={{margin: '0', padding:'0', verticalAlign:'middle', textAlign:'right'}}>
+                                <td style={{backgroundColor: isDark ? '#333' : 'white', margin: '0', padding:'0', verticalAlign:'middle', textAlign:'right'}}>
                                     {selectedMolecule && <IconButton title="Centre on" aria-label="Centre on" style={{marginRight:'0.5rem'}} onClick={() => selectedMolecule.centreAndAlignViewOn(`//${chainId}/${resNum}-${resNum}/`, false)}>
-                                        <CenterFocusWeakOutlined/>
+                                        <CenterFocusWeakOutlined style={{color: isDark ? 'white' : 'black'}}/>
                                     </IconButton>}
                                     {(selectedMolecule && issue["action"].indexOf("sphere-refinement-action")>-1) && <Button title="Sphere Refine" aria-label="Sphere Refine" sx={{ marginRight: '0.5rem', p: 0, minWidth:0 }} startIcon={refineSvgIcon} onClick={() => {
                                         handleRefine(selectedMolecule, chainId, resNum, insCode, "SPHERE", false)
