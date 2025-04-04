@@ -1,5 +1,5 @@
 import { useCallback, useState, useRef } from "react"
-import { Table } from 'react-bootstrap';
+import { Table, Container } from 'react-bootstrap';
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase"
 import { MoorhenSlider } from '../misc/MoorhenSlider'
 import { libcootApi } from "../../types/libcoot";
@@ -34,11 +34,11 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
 
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
-    const flipPeptide = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string) => {
+    const flipSide = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string) => {
         await props.commandCentre.current.cootCommand({
             returnType: "status",
-            command: "flipPeptide_cid",
-            commandArgs: [selectedMolecule.molNo, `//${chainId}/${seqNum}/C`, ''],
+            command: "side_chain_180",
+            commandArgs: [selectedMolecule.molNo, `//${chainId}/${seqNum}/C`],
             changesMolecules: [selectedMolecule.molNo]
         }, true)
 
@@ -106,19 +106,19 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
         selectedMolecule.setAtomsDirty(true)
         await selectedMolecule.redraw()
         dispatch( triggerUpdate(selectedMolecule.molNo) )
-        
+
     }
 
-    const handleFlip = (...args: [moorhen.Molecule, string, number, string]) => {
+    const handleFlipSide = (...args: [moorhen.Molecule, string, number, string]) => {
         if (args.every(arg => arg !== null)) {
-            flipPeptide(...args)
+            flipSide(...args)
         }
     }
 
 
     const refine_svg = `${props.urlPrefix}/pixmaps/refine-1.svg`
     const refine_rama_svg = `${props.urlPrefix}/pixmaps/refine-rama.svg`
-    const flip_svg = `${props.urlPrefix}/pixmaps/flip-peptide.svg`
+    const flip_side_svg = `${props.urlPrefix}/pixmaps/side-chain-180.svg`
     const auto_fit_svg = `${props.urlPrefix}/pixmaps/auto-fit-rotamer.svg`
 
     const refineRamaSvgIcon = (
@@ -133,9 +133,9 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
         </Icon>
     )
 
-    const flipSvgIcon = (
+    const flipSideSvgIcon = (
         <Icon>
-          <img alt="Flip peptide" src={flip_svg} style={{verticalAlign:"top", height: "100%", width: "100%"}}/>
+          <img alt="Flip side chain" src={flip_side_svg} style={{verticalAlign:"top", height: "100%", width: "100%"}}/>
         </Icon>
     )
 
@@ -197,8 +197,8 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
                                     {(selectedMolecule && issue["action"].indexOf("triple-refinement-action")>-1) && <Button title="Triple Refine" aria-label="Triple Refine" sx={{ marginRight: '0.5rem', p: 0, minWidth:0 }} startIcon={refineSvgIcon} onClick={() => {
                                         handleRefine(selectedMolecule, chainId, resNum, insCode, "TRIPLE", false)
                                     }}/>}
-                                    {(selectedMolecule && issue["action"].indexOf("side-chain-flip-action")>-1) && <Button title="Flip side chain" aria-label="Flip side chain" sx={{ marginRight: '0.5rem', p: 0, minWidth:0 }} startIcon={flipSvgIcon} onClick={() => {
-                                        handleFlip(selectedMolecule, chainId, resNum, insCode)
+                                    {(selectedMolecule && issue["action"].indexOf("side-chain-flip-action")>-1) && <Button title="Flip side chain" aria-label="Flip side chain" sx={{ marginRight: '0.5rem', p: 0, minWidth:0 }} startIcon={flipSideSvgIcon} onClick={() => {
+                                        handleFlipSide(selectedMolecule, chainId, resNum, insCode)
                                     }}/>}
                                     {(selectedMolecule && issue["action"].indexOf("auto-fit-rotamer-action")>-1) && <Button title="Auto fit rotamer" aria-label="Auto fit rotamer" sx={{ marginRight: '0.5rem', p: 0, minWidth:0 }} startIcon={autoFitRotamerSvgIcon} onClick={() => {
                                         handleAutoFitRotamer(selectedMolecule, chainId, resNum, insCode)
@@ -208,7 +208,13 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
                         </tbody>
                     </Table>
             }))
-                return <Accordion key={section_index} disableGutters={true} defaultExpanded className="moorhen-accordion" elevation={0} >
+                return <Container style={{ padding:'0', backgroundColor: 'red'}}>
+                <Accordion
+                    key={section_index}
+                    disableGutters={true}
+                    defaultExpanded
+                    className="moorhen-accordion"
+                    elevation={0}>
                 <AccordionSummary
                     style={{backgroundColor: isDark ? '#adb5bd' : '#ecf0f1'}}
                     expandIcon={<ExpandMoreOutlined />}
@@ -217,10 +223,10 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
                 {section.title}
                 </Typography>
                 </AccordionSummary>
-                <AccordionDetails style={{padding: '0.2rem', backgroundColor: isDark ? '#ced5d6' : 'white'}}>
+                <AccordionDetails style={{padding: '1.2rem', backgroundColor: isDark ? '#333' : 'white'}}>
                 {innerCards}
                 </AccordionDetails>
-                </Accordion>
+                </Accordion></Container>
 
             }))
         }
@@ -228,15 +234,15 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
     },[propsIn,molecules])
 
     const cards = fetchCardData()
-    return <>
+    return <Container>
                 <MoorhenMoleculeSelect
-                    width=""
                     label="Molecule"
+                    width=""
                     allowAny={false}
                     molecules={molecules}
                     ref={intoMoleculeRef}
                     />
            <h5 className='mb-3'>{cards.title}</h5>
            {cards.cards}
-           </>
+           </Container>
 }
