@@ -1,5 +1,5 @@
 import { useCallback, useState, useRef } from "react"
-import { Col, Row, Form, Card } from 'react-bootstrap';
+import { Table } from 'react-bootstrap';
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase"
 import { MoorhenSlider } from '../misc/MoorhenSlider'
 import { libcootApi } from "../../types/libcoot";
@@ -97,7 +97,7 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
             commandArgs: [
                 selectedMolecule.molNo,
                 chainId,
-                chainId,
+                seqNum,
                 insCode
             ],
             changesMolecules: [selectedMolecule.molNo]
@@ -178,13 +178,13 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
                    resNum = parseInt(issue["atom-1-spec"][1])
                    insCode = issue["atom-1-spec"][2]
                 }
-                return <Card key={index} style={{marginTop: '0.5rem'}}>
-                        <Card.Body style={{padding:'0.5rem'}}>
-                             <Row>
-                                <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
+                return <Table key={index} style={{margin: '0', padding:'0'}}>
+                        <tbody>
+                             <tr>
+                                <td style={{margin: '0', padding:'0', verticalAlign:'middle', textAlign:'left'}}>
                                     {issue.label} {additionalLabel}
-                                </Col>
-                                <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
+                                </td>
+                                <td style={{margin: '0', padding:'0', verticalAlign:'middle', textAlign:'right'}}>
                                     {selectedMolecule && <IconButton title="Centre on" aria-label="Centre on" style={{marginRight:'0.5rem'}} onClick={() => selectedMolecule.centreAndAlignViewOn(`//${chainId}/${resNum}-${resNum}/`, false)}>
                                         <CenterFocusWeakOutlined/>
                                     </IconButton>}
@@ -203,21 +203,18 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
                                     {(selectedMolecule && issue["action"].indexOf("auto-fit-rotamer-action")>-1) && <Button title="Auto fit rotamer" aria-label="Auto fit rotamer" sx={{ marginRight: '0.5rem', p: 0, minWidth:0 }} startIcon={autoFitRotamerSvgIcon} onClick={() => {
                                         handleAutoFitRotamer(selectedMolecule, chainId, resNum, insCode)
                                     }}/>}
-                                </Col>
-                             </Row>
-                        </Card.Body>
-                    </Card>
+                                </td>
+                             </tr>
+                        </tbody>
+                    </Table>
             }))
-                return <Accordion key={section_index} defaultExpanded className="moorhen-accordion" elevation={0} >
+                return <Accordion key={section_index} disableGutters={true} defaultExpanded className="moorhen-accordion" elevation={0} >
                 <AccordionSummary
                     style={{backgroundColor: isDark ? '#adb5bd' : '#ecf0f1'}}
                     expandIcon={<ExpandMoreOutlined />}
                 >
                 <Typography>
                 {section.title}
-                </Typography>
-                <Typography>
-                Sort
                 </Typography>
                 </AccordionSummary>
                 <AccordionDetails style={{padding: '0.2rem', backgroundColor: isDark ? '#ced5d6' : 'white'}}>
