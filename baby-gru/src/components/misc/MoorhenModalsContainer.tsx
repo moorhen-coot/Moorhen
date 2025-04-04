@@ -12,6 +12,8 @@ import { MoorhenMmrrccModal } from '../modal/MoorhenMmrrccModal';
 import { MoorhenWaterValidationModal } from '../modal/MoorhenWaterValidationModal';
 import { MoorhenJsonValidationModal } from '../modal/MoorhenJsonValidationModal';
 import { MoorhenLigandValidationModal } from '../modal/MoorhenLigandValidationModal';
+import { MoorhenMrBumpModal } from '../modal/MoorhenMrBumpModal';
+import { MoorhenMrParseModal } from '../modal/MoorhenMrParseModal';
 import { MoorhenCarbohydrateValidationModal } from '../modal/MoorhenCarbohydrateValidationModal';
 import { MoorhenPepFlipsModal } from '../modal/MoorhenPepFlipsModal';
 import { MoorhenUnmodelledBlobsModal } from '../modal/MoorhenUnmodelledBlobsModal';
@@ -38,6 +40,8 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
     const showWaterValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.WATER_VALIDATION))
     const showLigandValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.LIGAND_VALIDATION))
     const showFillPartialResValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.FILL_PART_RES))
+    const showMoorhenMrBumpModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.MRBUMP))
+    const showMoorhenMrParseModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.MRPARSE))
     const showPepFlipsValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.PEPTIDE_FLIPS))
     const showUnmodelledBlobsModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.UNMODELLED_BLOBS))
     const showCarbohydrateValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.CARB_VALIDATION))
@@ -52,8 +56,8 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
         <MoorhenModelsModal {...props}/>
 
         <MoorhenMapsModal {...props}/>
-            
-        {showCreateAcedrgLinkModal && 
+
+        {showCreateAcedrgLinkModal &&
             <MoorhenCreateAcedrgLinkModal width={45} {...props} />
         }
 
@@ -99,6 +103,14 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
 
         {showLigandValidationModal &&
             <MoorhenLigandValidationModal {...props} />
+        }
+
+        {showMoorhenMrBumpModal &&
+            <MoorhenMrBumpModal {...props} />
+        }
+
+        {showMoorhenMrParseModal &&
+            <MoorhenMrParseModal {...props} />
         }
 
         {showCarbohydrateValidationModal &&

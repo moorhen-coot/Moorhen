@@ -49,7 +49,7 @@ getclipper() {
         echo "Using existing clipper"
     else
         echo "Checking out clipper"
-        git clone -b patch_issue_with_emscripten_compiler https://ccp4forge.rc-harwell.ac.uk/ccp4/clipper.git
+        git clone -b gemmi https://ccp4forge.rc-harwell.ac.uk/ccp4/clipper.git
         echo
     fi
     echo
