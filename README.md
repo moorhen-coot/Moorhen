@@ -76,19 +76,14 @@ Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) 
 
 4. Build gsl, Boost, RDKIt, Coot, the CCP4 libraries and examples:  
 <br>In this branch, it is intended that you do the build in the source directory. 
-<br/>After first checkout you should run the following script to build:  
+<br/>After first checkout you should run the following to build the 32-bit and 64-bit WebAssembly versions of Moorhen:  
 `./moorhen_build.sh`  
-This should build all dependencies and then `Moorhen`. 
-\
-\
-It is also possible to build a 64-bit version of Moorhen which (currently) can address up to 8GB memory:  
-`./moorhen_build.sh --64bit`  
-Note that you need a 64-bit WASM capable web browser to use this. Most browsers are not 64-bit capable by default. Some have
-64-bit capability available as an option or in development versions.  
-See the `MEMORY64` feature at [https://webassembly.org/features/](https://webassembly.org/features/)  
-Moorhen developers have seen success with Firefox Nightly on MacOS and Linux and Chrome Canary (with `chrome://flags/#enable-experimental-webassembly-features`) on MacOS.
+`./moorhen_build.sh  --64bit`  
+This should build all dependencies and then `Moorhen`.
 
-5. To run the Moorhen molecular graphics application:  
+**It is important to build both versions at the moment.**
+
+6. To run the Moorhen molecular graphics application:  
 `cd baby-gru`  
 `npm start`  
 And then point a web browser at `http://localhost:5173/` .  
@@ -102,7 +97,7 @@ When you wish to update the application from this git repository and the `Coot` 
 4. `git pull`
 5. `cd ../..`
 6. `./moorhen_build.sh moorhen`
-7. `./moorhen_build.sh --64bit moorhen` if you want to (re-)build the 64-bit version.
+7. `./moorhen_build.sh --64bit moorhen`
 
 ![Moorhen](wasm_src_frontend/baby_gru.png)
 *The Moorhen application*
