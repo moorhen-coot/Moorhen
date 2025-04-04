@@ -25,6 +25,7 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const useRamaRestraints = useSelector((state: moorhen.State) => state.refinementSettings.useRamaRefinementRestraints)
+    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
     const { enqueueSnackbar } = useSnackbar()
 
@@ -42,14 +43,7 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
             changesMolecules: [selectedMolecule.molNo]
         }, true)
 
-        if (enableRefineAfterMod) {
-            await props.commandCentre.current.cootCommand({
-                returnType: "status",
-                command: 'refine_residues_using_atom_cid',
-                commandArgs: [selectedMolecule.molNo, `//${chainId}/${seqNum}`, 'TRIPLE', 4000],
-                changesMolecules: [selectedMolecule.molNo]
-            }, true)
-        }
+        await selectedMolecule.refineResiduesUsingAtomCidAnimated(`//${chainId}/${seqNum}`, activeMap, 2, true, false)
 
         selectedMolecule.setAtomsDirty(true)
         await selectedMolecule.redraw()
@@ -102,6 +96,8 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
             ],
             changesMolecules: [selectedMolecule.molNo]
         }, true)
+
+        await selectedMolecule.refineResiduesUsingAtomCidAnimated(`//${chainId}/${seqNum}`, activeMap, 2, true, false)
 
         selectedMolecule.setAtomsDirty(true)
         await selectedMolecule.redraw()
