@@ -118,7 +118,7 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
 
     const refine_svg = `${props.urlPrefix}/pixmaps/refine-1.svg`
     const refine_rama_svg = `${props.urlPrefix}/pixmaps/refine-rama.svg`
-    const flip_side_svg = `${props.urlPrefix}/pixmaps/side-chain-180.svg`
+    const flip_side_svg = isDark ? `${props.urlPrefix}/pixmaps/side-chain-180-dark.svg` : `${props.urlPrefix}/pixmaps/side-chain-180.svg`
     const auto_fit_svg = `${props.urlPrefix}/pixmaps/auto-fit-rotamer.svg`
 
     const refineRamaSvgIcon = (
