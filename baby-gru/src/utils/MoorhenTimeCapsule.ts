@@ -626,7 +626,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                         })
                         ).then(mapData => {
                             return newMap.loadToCootFromMapData(
-                                mapData as Uint8Array,
+                                mapData as ArrayBuffer | Uint8Array,
                                 storedMapData.name,
                                 storedMapData.isDifference
                                 )
