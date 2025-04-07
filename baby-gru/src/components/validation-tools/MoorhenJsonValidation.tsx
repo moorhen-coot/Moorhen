@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef } from "react"
+import { useEffect, useCallback, useState, useRef } from "react"
 import { Table, Container } from 'react-bootstrap';
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase"
 import { MoorhenSlider } from '../misc/MoorhenSlider'
@@ -12,10 +12,12 @@ import { useSnackbar } from "notistack";
 import { modalKeys } from "../../utils/enums";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { Icon, Button, IconButton } from "@mui/material";
-import { Accordion, AccordionDetails, AccordionSummary, Typography } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Typography, Collapse, Box, Grid, Checkbox, FormGroup, FormControlLabel} from '@mui/material';
 import { ExpandMoreOutlined, CenterFocusWeakOutlined } from "@mui/icons-material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from '@mui/icons-material/Delete';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedProps: moorhen.CollectedProps}) => {
 
@@ -34,6 +36,9 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
     const intoMoleculeRef = useRef<HTMLSelectElement | null>(null)
 
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
+
+    const [sectionOpen, setSectionOpen ] = useState({keys:[]})
+    const [sectionOrdered, setSectionOrdered ] = useState({keys:[]})
 
     const flipSide = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string) => {
         await props.commandCentre.current.cootCommand({
@@ -141,7 +146,36 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
         </Icon>
     )
 
-    const fetchCardData = useCallback(() => {
+    const toggleSection = ((e,key) => {
+        e.stopPropagation()
+        const isOpen = sectionOpen.keys[key]
+        const new_keys = sectionOpen.keys
+        new_keys[key] = !isOpen
+        setSectionOpen({keys:new_keys})
+    })
+
+    const toggleSectionOrder = ((e,key) => {
+        e.stopPropagation()
+        const isOrdered = sectionOrdered.keys[key]
+        console.log("Sort",key,isOrdered)
+        const new_keys = sectionOrdered.keys
+        new_keys[key] = !isOrdered
+        setSectionOrdered({keys:new_keys})
+    })
+
+    useEffect(() => {
+        const new_keys = []
+        const new_order_keys = []
+        if(!propsIn.validationJson.sections) return
+        propsIn.validationJson.sections.map((section, section_index) => {
+            new_keys.push(true)
+            new_order_keys.push(false)
+        })
+        setSectionOpen({...sectionOpen, keys:new_keys})
+        setSectionOrdered({...sectionOrdered, keys:new_order_keys})
+    },[propsIn.validationJson]);
+
+    const fetchCardData = (() => {
         let cards = []
         let title = ""
 
@@ -153,7 +187,11 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
             const sections = propsIn.validationJson.sections
             title =  propsIn.validationJson.title
 
+            //TODO - Put in a 'toSorted' here
             cards.push(sections.map((section, section_index) => {
+
+                const isOpen = sectionOpen.keys[section_index]
+                const isSorted = sectionOrdered.keys[section_index]
                 const things = section.items
                 const innerCards = []
                 innerCards.push(things.map((issue, index) => {
@@ -174,7 +212,7 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
                    resNum = parseInt(issue["atom-1-spec"][1])
                    insCode = issue["atom-1-spec"][2]
                 }
-                return <Table key={index} style={{ backgroundColor: 'red',margin: '0', padding:'0'}}>
+                return <Table key={index} style={{ margin: '0', padding:'0'}}>
                         <tbody>
                              <tr>
                                 <td style={{backgroundColor: isDark ? '#333' : 'white', color: isDark ? 'white' : 'black', margin: '0', padding:'0', verticalAlign:'middle', textAlign:'left'}}>
@@ -204,32 +242,37 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
                         </tbody>
                     </Table>
             }))
-                return <Container style={{ padding:'0', backgroundColor: 'red'}}>
-                <Accordion
-                    key={section_index}
-                    disableGutters={true}
-                    defaultExpanded
-                    className="moorhen-accordion"
-                    elevation={0}>
-                <AccordionSummary
-                    style={{backgroundColor: isDark ? '#adb5bd' : '#ecf0f1'}}
-                    expandIcon={<ExpandMoreOutlined />}
+                return <Container key={section_index} style={{ width:"100%", padding:'1px'}}>
+                <Grid onClick={(e) => toggleSection(e,section_index)} container spacing={2} style={{borderRadius:"4px", color:'black', backgroundColor: isDark ? '#adb5bd' : '#ecf0f1', width:"100%", verticalAlign:"middle", padding:'0px'}}>
+                <Grid style={{padding:'5px', verticalAlign:"middle", textAlign:'left'}} size={8}>
+                <span style={{margin: '0', padding:'0', verticalAlign:"middle"}}>{section.title}</span>
+                </Grid>
+                <Grid maxHeight={30} size={4} style={{padding:'0px',textAlign:'right', verticalAlign:"middle"}}>
+                {(isOpen&&false) && 
+                   <FormControlLabel onClick={(e) => e.stopPropagation()} control={<Checkbox onChange={(e) => toggleSectionOrder(e,section_index)} checked={isSorted} inputProps={{ 'aria-label': 'controlled' }}/>} label="Sort" />
+                }
+                <IconButton
+                  aria-label="expand row"
+                  size="small"
+                  onClick={(e) => toggleSection(e,section_index)}
                 >
-                <Typography>
-                {section.title}
-                </Typography>
-                </AccordionSummary>
-                <AccordionDetails style={{padding: '1.2rem', backgroundColor: isDark ? '#333' : 'white'}}>
+                  {isOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                </IconButton>
+                </Grid>
+                </Grid>
+                <Collapse in={isOpen}>
+                <Box sx={{ margin: 1 }}>
                 {innerCards}
-                </AccordionDetails>
-                </Accordion></Container>
-
+                </Box>
+                </Collapse>
+                </Container>
             }))
         }
         return {title,cards}
-    },[propsIn,molecules])
+    })
 
     const cards = fetchCardData()
+    console.log(sectionOrdered.keys)
     return <Container>
                 <MoorhenMoleculeSelect
                     label="Molecule"
