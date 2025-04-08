@@ -24,6 +24,7 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    let exponential = props.map.isEM
 
     const parseHistogramData = (histogramData: libcootApi.HistogramInfoJS) => {
         const axisLabelsFontSize = convertViewtoPx(70, height) / 60
@@ -53,7 +54,8 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
                 scales: {
                   y: {
                     max: secondHighestCount,
-                    beginAtZero: true,
+                    type: exponential ? 'logarithmic' : 'linear',
+                    beginAtZero: exponential ? false : true,
                     grid: {
                         display: true,
                         borderWidth: 0
@@ -66,7 +68,11 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
                     },
                     ticks: {
                         callback: function(val, index) {
-                          return val === secondHighestCount ? highestCount : val;
+                            if (exponential) { 
+                                return val.toExponential();
+                            } else {
+                                return val === secondHighestCount ? highestCount : val;
+                            }
                         }
                     }
                   },
@@ -89,7 +95,7 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
             data: {
                 labels: histogramData.counts.map((item, index) => {
                     const currentBinBase =  histogramData.base + histogramData.bin_width * (index + 1)
-                    return  currentBinBase.toFixed(2)
+                    return  currentBinBase.toFixed(props.map.isEM ? 4 : 2)
                 }),
                 datasets: [{
                     barPercentage: 1.0,
