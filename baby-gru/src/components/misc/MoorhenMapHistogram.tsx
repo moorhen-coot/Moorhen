@@ -42,7 +42,8 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
 
         const highestCount = Math.max(...histogramData.counts)
         const secondHighestCount = Math.max(...histogramData.counts.filter(count => count !== highestCount))
-
+        let mapLevel = props.map.getMapContourParams().contourLevel
+        let currentLevelBin = Math.round((mapLevel - histogramData.base) / histogramData.bin_width)
         return {
             type: 'bar',
             options: {
@@ -50,6 +51,18 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
                     legend: {
                         display: false
                     },
+                    annotation: {
+                        annotations: {
+                            verticalLine: {
+                                type: 'line',
+                                xMin: currentLevelBin,
+                                xMax: currentLevelBin,
+                                borderColor: 'darkgrey',
+                                borderWidth: 2,
+                            },
+                        },
+                    },
+
                 },
                 scales: {
                   y: {
