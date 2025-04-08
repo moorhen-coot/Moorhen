@@ -18,6 +18,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from '@mui/icons-material/Delete';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import { ThemeProvider } from '@mui/material/styles';
+import { rgbToHsv,hsvToRgb } from '../../utils/utils';
 
 export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedProps: moorhen.CollectedProps}) => {
 
@@ -175,6 +177,87 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
         setSectionSortable({...sectionSortable, keys:new_sortable_keys})
     },[propsIn.validationJson]);
 
+    const ColorRampBox = ((boxProps) => {
+        let startcol = "#000000"
+        let endcol = "#ffffff"
+        let width = 20
+        let height= 20
+        let col = startcol
+        let val = 0.0
+        if(boxProps.val)
+           val = boxProps.val
+        if(boxProps.startColor)
+           startcol = boxProps.startColor
+        if(boxProps.endColor)
+           endcol = boxProps.endColor
+        if(boxProps.width)
+           width = parseInt(boxProps.width)
+        if(boxProps.height)
+           height = parseInt(boxProps.height)
+
+        startcol = startcol.replace("#","")
+        endcol = endcol.replace("#","")
+
+        if(startcol.length === 3){
+            startcol = startcol.split('').map(function (hex) {
+                return hex + hex;
+            }).join('');
+        }
+        if(endcol.length === 3){
+            endcol = endcol.split('').map(function (hex) {
+                return hex + hex;
+            }).join('');
+        }
+
+        const startRGB = [parseInt(startcol.slice(0,2),16)/255.,
+                          parseInt(startcol.slice(2,4),16)/255.,
+                          parseInt(startcol.slice(4,6),16)/255.]
+        const endRGB = [parseInt(endcol.slice(0,2),16)/255.,
+                          parseInt(endcol.slice(2,4),16)/255.,
+                          parseInt(endcol.slice(4,6),16)/255.]
+
+        const startHSV = rgbToHsv(startRGB[0],startRGB[1],startRGB[2])
+        const endHSV = rgbToHsv(endRGB[0],endRGB[1],endRGB[2])
+        let valHSV = [val*endHSV[0] + (1.0-val)*startHSV[0],
+                        val*endHSV[1] + (1.0-val)*startHSV[1],
+                        val*endHSV[2] + (1.0-val)*startHSV[2]]
+
+        if(valHSV[0]<0.0) valHSV[0] += 360
+
+        const valRGB = hsvToRgb(valHSV[0],valHSV[1],valHSV[2])
+        let colR = parseInt((valRGB[0]*255).toFixed(0)).toString(16)
+        let colG = parseInt((valRGB[1]*255).toFixed(0)).toString(16)
+        let colB = parseInt((valRGB[2]*255).toFixed(0)).toString(16)
+        if(colR.length===1) colR = "0"+colR
+        if(colG.length===1) colG = "0"+colG
+        if(colB.length===1) colB = "0"+colB
+        col = "#" + colR+colG+colB
+
+        return (
+            <ThemeProvider
+                theme={{
+                  palette: {
+                    primary: {
+                      main: col,
+                      dark: col,
+                    },
+                  },
+                }}
+            >
+            <Box
+                sx={{
+                  width: width,
+                  height: height,
+                  borderRadius: 1,
+                  bgcolor: 'primary.main',
+                  display: 'inline-block'
+                }}
+                component="span"
+            />
+            </ThemeProvider>
+        );
+   })
+
     const fetchCardData = (() => {
         let cards = []
         let title = ""
@@ -217,14 +300,17 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
                    resNum = parseInt(issue["atom-1-spec"][1])
                    insCode = issue["atom-1-spec"][2]
                 }
+                //FIXME - val={issue.badness} should be val={issue.score}, badness is for testing
+                //        and same for  additionalLabel += " ("+issue.badness+")" 
                 if(sectionSortable.keys[section_index]){
                     additionalLabel += " ("+issue.badness+")"
                 }
+                console.log
                 return <Table key={index} style={{ margin: '0', padding:'0'}}>
                         <tbody>
                              <tr>
                                 <td style={{backgroundColor: isDark ? '#333' : 'white', color: isDark ? 'white' : 'black', margin: '0', padding:'0', verticalAlign:'middle', textAlign:'left'}}>
-                                    {issue.label} {additionalLabel}
+                                    {issue.label}&nbsp;{additionalLabel}&nbsp;{sectionSortable.keys[section_index]&&<ColorRampBox val={issue.badness} startColor="#f00" endColor="#00f" width="20" height="10"/>}
                                 </td>
                                 <td style={{backgroundColor: isDark ? '#333' : 'white', margin: '0', padding:'0', verticalAlign:'middle', textAlign:'right'}}>
                                     {selectedMolecule && <IconButton title="Centre on" aria-label="Centre on" style={{marginRight:'0.5rem'}} onClick={() => selectedMolecule.centreAndAlignViewOn(`//${chainId}/${resNum}-${resNum}/`, false)}>
@@ -252,12 +338,12 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
             }))
                 return <Container key={section_index} style={{ width:"100%", padding:'1px'}}>
                 <Grid onClick={(e) => toggleSection(e,section_index)} container spacing={2} style={{borderRadius:"4px", color:'black', backgroundColor: isDark ? '#adb5bd' : '#ecf0f1', width:"100%", verticalAlign:"middle", padding:'0px'}}>
-                <Grid style={{padding:'5px', verticalAlign:"middle", textAlign:'left'}} size={8}>
+                <Grid style={{padding:'5px', verticalAlign:"middle", textAlign:'left'}} size={6}>
                 <span style={{margin: '0', padding:'0', verticalAlign:"middle"}}>{section.title}</span>
                 </Grid>
-                <Grid maxHeight={30} size={4} style={{padding:'0px',textAlign:'right', verticalAlign:"middle"}}>
+                <Grid maxHeight={30} size={6} style={{padding:'0px',textAlign:'right', verticalAlign:"middle"}}>
                 {(isOpen&&sectionSortable.keys[section_index]) &&
-                   <FormControlLabel onClick={(e) => e.stopPropagation()} control={<Checkbox onChange={(e) => toggleSectionOrder(e,section_index)} checked={isSorted} inputProps={{ 'aria-label': 'controlled' }}/>} label="Sort by 'badness'" />
+                   <FormControlLabel onClick={(e) => e.stopPropagation()} control={<Checkbox onChange={(e) => toggleSectionOrder(e,section_index)} checked={isSorted} inputProps={{ 'aria-label': 'controlled' }}/>} label="Sort&nbsp;by&nbsp;'badness'" />
                 }
                 <IconButton
                   aria-label="expand row"
