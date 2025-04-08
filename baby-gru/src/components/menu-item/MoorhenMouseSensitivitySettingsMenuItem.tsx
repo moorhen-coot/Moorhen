@@ -21,7 +21,7 @@ export const MoorhenMouseSensitivitySettingsMenuItem = (props: { setPopoverIsSho
             <MoorhenSlider minVal={0.1} maxVal={9.9} logScale={false} sliderTitle="Mouse wheel zoom sensitivity" initialValue={zoomWheelSensitivityFactor} externalValue={zoomWheelSensitivityFactor} setExternalValue={(val: number) => dispatch(setZoomWheelSensitivityFactor(val))}/>
         </Form.Group>
         <Form.Group controlId="mapWheelSensitivitySlider" style={{paddingTop:'0.5rem', paddingBottom:'0rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
-            <MoorhenSlider minVal={0.01} maxVal={0.1} logScale={false} sliderTitle="Mouse wheel map contour sensitivity" initialValue={contourWheelSensitivityFactor} externalValue={contourWheelSensitivityFactor} setExternalValue={(val: number) => dispatch(setContourWheelSensitivityFactor(val))}/>
+            <MoorhenSlider minVal={0.1} maxVal={1} logScale={false} sliderTitle="Mouse wheel map contour sensitivity" initialValue={contourWheelSensitivityFactor} externalValue={contourWheelSensitivityFactor} setExternalValue={(val: number) => dispatch(setContourWheelSensitivityFactor(val))}/>
         </Form.Group>
     </>
     

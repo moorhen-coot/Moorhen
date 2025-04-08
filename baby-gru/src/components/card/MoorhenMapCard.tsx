@@ -356,11 +356,16 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         if (props.map.molNo === activeMap.molNo) {
             if (!mapIsVisible) {
                 enqueueSnackbar("Active map not displayed, cannot change contour lvl.", { variant: "warning"})
-            } else if (evt.detail.factor > 1) {
-                newMapContourLevel = mapContourLevel + contourWheelSensitivityFactor
-            } else {
-                newMapContourLevel = mapContourLevel - contourWheelSensitivityFactor
+                return
             }
+
+            let emScaling = props.map.isEM ? 0.01 : 0.1
+            if (evt.detail.factor > 1) {
+                newMapContourLevel = mapContourLevel + contourWheelSensitivityFactor * emScaling 
+            } else {
+                newMapContourLevel = mapContourLevel - contourWheelSensitivityFactor * emScaling
+            }
+
         }
         if (newMapContourLevel) {
             batch(() => {
@@ -428,54 +433,37 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
 
     }, [doContourIfDirty])
 
-    const increaseLevelButton = <IconButton 
+    const changeLevelButton = (factor: number) => {
+        return  (
+        <IconButton 
         style={{padding: 0, color: isDark ? 'white' : 'black'}}
-        onClick={() => dispatch( changeContourLevel({ molNo: props.map.molNo, factor: contourWheelSensitivityFactor }) )} 
+        onClick={() => dispatch( changeContourLevel({ molNo: props.map.molNo, factor: factor }) )} 
         onMouseDown={() => {
             intervalRef.current = setInterval(() => {
-                dispatch( changeContourLevel({ molNo: props.map.molNo, factor: contourWheelSensitivityFactor }) )
+                dispatch( changeContourLevel({ molNo: props.map.molNo, factor: factor }) )
             }, 100)
         }} onMouseUp={() => {
             clearInterval(intervalRef.current)                   
         }}>
-            <AddCircleOutline/>
-    </IconButton>
-    const decreaseLevelButton = <IconButton 
+            {factor > 0 ? <AddCircleOutline/> : <RemoveCircleOutline/> }
+    </IconButton> 
+    ); }
+
+    const changeRadiusButton = (factor: number) => {
+        return  (
+        <IconButton 
         style={{padding: 0, color: isDark ? 'white' : 'black'}}
-        onClick={() => dispatch( changeContourLevel({ molNo: props.map.molNo, factor: -contourWheelSensitivityFactor }) )} 
+        onClick={() => dispatch( changeMapRadius({ molNo: props.map.molNo, factor: factor }) )} 
         onMouseDown={() => {
             intervalRef.current = setInterval(() => {
-                dispatch( changeContourLevel({ molNo: props.map.molNo, factor: -contourWheelSensitivityFactor }) )
+                dispatch( changeMapRadius({ molNo: props.map.molNo, factor: factor }) )
             }, 100)
         }} onMouseUp={() => {
             clearInterval(intervalRef.current)                   
         }}>
-            <RemoveCircleOutline/>
-    </IconButton>
-    const increaseRadiusButton = <IconButton 
-        style={{padding: 0, color: isDark ? 'white' : 'black'}}
-        onClick={() => dispatch( changeMapRadius({ molNo: props.map.molNo, factor: 2 }) )} 
-        onMouseDown={() => {
-            intervalRef.current = setInterval(() => {
-                dispatch( changeMapRadius({ molNo: props.map.molNo, factor: 2 }) )
-            }, 100)
-        }} onMouseUp={() => {
-            clearInterval(intervalRef.current)                   
-        }}>
-            <AddCircleOutline/>
-    </IconButton>
-    const decreaseRadiusButton = <IconButton 
-        style={{padding: 0, color: isDark ? 'white' : 'black'}}
-        onClick={() => dispatch( changeMapRadius({ molNo: props.map.molNo, factor: -2 }) )}
-        onMouseDown={() => {
-            intervalRef.current = setInterval(() => {
-                dispatch( changeMapRadius({ molNo: props.map.molNo, factor: -2 }) )
-            }, 100)
-        }} onMouseUp={() => {
-            clearInterval(intervalRef.current)                   
-        }}>
-            <RemoveCircleOutline/>
-    </IconButton>
+            {factor > 0 ? <AddCircleOutline/> : <RemoveCircleOutline/> }
+            </IconButton> 
+        ); }
 
     const getMapColourSelector = () => {
         if (mapColour === null) {
@@ -622,13 +610,14 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                 </ToggleButton>
                 <Col>
                     <Form.Group controlId="contouringLevel" className="mb-3">
-                        <span>{`Lvl: ${mapContourLevel.toFixed(2)} ${props.map.mapRmsd ? '(' + (mapContourLevel / props.map.mapRmsd).toFixed(2) + ' rmsd)' : ''}`}</span>
+
+                        <span>{`Level: ${mapContourLevel.toFixed(props.map.isEM ? 4 : 2)} ${props.map.mapRmsd ? '(' + (mapContourLevel / props.map.mapRmsd).toFixed(2) + ' rmsd)' : ''}`}</span>
                         <MoorhenSlider
                             minVal={0.001}
-                            maxVal={props.map.isEM ? 15 : 5}
+                            maxVal={props.map.isEM ? 1 : 5}
                             showMinMaxVal={false}
-                            decrementButton={decreaseLevelButton}
-                            incrementButton={increaseLevelButton}
+                            decrementButton={changeLevelButton(props.map.isEM ? -0.001 : -0.1)}
+                            incrementButton={changeLevelButton(props.map.isEM ? 0.001 : 0.1)}
                             allowExternalFeedback={true}
                             logScale={true}
                             showSliderTitle={false}
@@ -643,8 +632,8 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                             minVal={0.01}
                             maxVal={100}
                             showMinMaxVal={false}
-                            decrementButton={decreaseRadiusButton} 
-                            incrementButton={increaseRadiusButton} 
+                            decrementButton={changeRadiusButton(-2)} 
+                            incrementButton={changeRadiusButton(2)} 
                             allowExternalFeedback={true} 
                             logScale={false} 
                             sliderTitle="Radius" 
