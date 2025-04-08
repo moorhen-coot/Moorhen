@@ -39,6 +39,7 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
 
     const [sectionOpen, setSectionOpen ] = useState({keys:[]})
     const [sectionOrdered, setSectionOrdered ] = useState({keys:[]})
+    const [sectionSortable, setSectionSortable ] = useState({keys:[]})
 
     const flipSide = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string) => {
         await props.commandCentre.current.cootCommand({
@@ -81,14 +82,6 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
         dispatch( triggerUpdate(selectedMolecule.molNo) )
     }
 
-    const handleTripleRefineWithRamaRestraints = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string) => {
-        //TODO - The Rama restraints!
-        await selectedMolecule.refineResiduesUsingAtomCid(`//${chainId}/${seqNum}`, 'TRIPLE', 4000, true)
-        selectedMolecule.setAtomsDirty(true)
-        await selectedMolecule.redraw()
-        dispatch( triggerUpdate(selectedMolecule.molNo) )
-    }
-
     const handleAutoFitRotamer = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string) => {
         await props.commandCentre.current.cootCommand({
             returnType: "status",
@@ -115,7 +108,6 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
             flipSide(...args)
         }
     }
-
 
     const refine_svg = `${props.urlPrefix}/pixmaps/refine-1.svg`
     const refine_rama_svg = `${props.urlPrefix}/pixmaps/refine-rama.svg`
@@ -157,7 +149,6 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
     const toggleSectionOrder = ((e,key) => {
         e.stopPropagation()
         const isOrdered = sectionOrdered.keys[key]
-        console.log("Sort",key,isOrdered)
         const new_keys = sectionOrdered.keys
         new_keys[key] = !isOrdered
         setSectionOrdered({keys:new_keys})
@@ -166,13 +157,22 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
     useEffect(() => {
         const new_keys = []
         const new_order_keys = []
+        const new_sortable_keys = []
         if(!propsIn.validationJson.sections) return
         propsIn.validationJson.sections.map((section, section_index) => {
             new_keys.push(true)
             new_order_keys.push(false)
+            let isSortable = true
+            section.items.map((issue, index) => {
+                 if(!Object.hasOwn(issue,"badness")){
+                     isSortable = false
+                 }
+            })
+            new_sortable_keys.push(isSortable)
         })
         setSectionOpen({...sectionOpen, keys:new_keys})
         setSectionOrdered({...sectionOrdered, keys:new_order_keys})
+        setSectionSortable({...sectionSortable, keys:new_sortable_keys})
     },[propsIn.validationJson]);
 
     const fetchCardData = (() => {
@@ -187,14 +187,19 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
             const sections = propsIn.validationJson.sections
             title =  propsIn.validationJson.title
 
-            //TODO - Put in a 'toSorted' here
             cards.push(sections.map((section, section_index) => {
 
                 const isOpen = sectionOpen.keys[section_index]
                 const isSorted = sectionOrdered.keys[section_index]
-                const things = section.items
+                const items = section.items
                 const innerCards = []
-                innerCards.push(things.map((issue, index) => {
+                let sortFun = undefined
+                if(sectionOrdered.keys[section_index]){
+                    sortFun = (a,b) => {
+                        return b.badness-a.badness
+                    }
+                }
+                innerCards.push(items.toSorted(sortFun).map((issue, index) => {
                 let additionalLabel = ""
                 let chainId = ""
                 let resNum = -9999
@@ -211,6 +216,9 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
                    chainId = issue["atom-1-spec"][0]
                    resNum = parseInt(issue["atom-1-spec"][1])
                    insCode = issue["atom-1-spec"][2]
+                }
+                if(sectionSortable.keys[section_index]){
+                    additionalLabel += " ("+issue.badness+")"
                 }
                 return <Table key={index} style={{ margin: '0', padding:'0'}}>
                         <tbody>
@@ -248,8 +256,8 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
                 <span style={{margin: '0', padding:'0', verticalAlign:"middle"}}>{section.title}</span>
                 </Grid>
                 <Grid maxHeight={30} size={4} style={{padding:'0px',textAlign:'right', verticalAlign:"middle"}}>
-                {(isOpen&&false) && 
-                   <FormControlLabel onClick={(e) => e.stopPropagation()} control={<Checkbox onChange={(e) => toggleSectionOrder(e,section_index)} checked={isSorted} inputProps={{ 'aria-label': 'controlled' }}/>} label="Sort" />
+                {(isOpen&&sectionSortable.keys[section_index]) &&
+                   <FormControlLabel onClick={(e) => e.stopPropagation()} control={<Checkbox onChange={(e) => toggleSectionOrder(e,section_index)} checked={isSorted} inputProps={{ 'aria-label': 'controlled' }}/>} label="Sort by 'badness'" />
                 }
                 <IconButton
                   aria-label="expand row"
@@ -272,7 +280,7 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
     })
 
     const cards = fetchCardData()
-    console.log(sectionOrdered.keys)
+
     return <Container>
                 <MoorhenMoleculeSelect
                     label="Molecule"
