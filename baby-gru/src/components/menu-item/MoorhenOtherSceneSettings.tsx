@@ -2,7 +2,7 @@ import { Form, InputGroup } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { useDispatch, useSelector } from "react-redux"
 import { moorhen } from "../../types/moorhen"
-import { setDoPerspectiveProjection, setDoSpin, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDrawScaleBar, setDrawEnvBOcc } from "../../store/sceneSettingsSlice"
+import { setDoPerspectiveProjection, setDoSpin, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDrawScaleBar, setDrawEnvBOcc, setDoAnaglyphStereo, setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView } from "../../store/sceneSettingsSlice"
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice"
 
 
@@ -17,6 +17,10 @@ export const MoorhenOtherSceneSettings = (props: { setPopoverIsShown: React.Disp
     const drawEnvBOcc = useSelector((state: moorhen.State) => state.sceneSettings.drawEnvBOcc)
     const doPerspectiveProjection = useSelector((state: moorhen.State) => state.sceneSettings.doPerspectiveProjection)
     const doSpin = useSelector((state: moorhen.State) => state.sceneSettings.doSpin)
+    const doAnaglyphStereo = useSelector((state: moorhen.State) => state.sceneSettings.doAnaglyphStereo)
+    const doCrossEyedStereo = useSelector((state: moorhen.State) => state.sceneSettings.doCrossEyedStereo)
+    const doSideBySideStereo = useSelector((state: moorhen.State) => state.sceneSettings.doSideBySideStereo)
+    const doThreeWayView = useSelector((state: moorhen.State) => state.sceneSettings.doThreeWayView)
 
     const dispatch = useDispatch()
 
@@ -88,6 +92,37 @@ export const MoorhenOtherSceneSettings = (props: { setPopoverIsShown: React.Disp
                 checked={doSpin}
                 onChange={() => {dispatch( setDoSpin(!doSpin) )}}
                 label="Spin view"/>
+        </InputGroup>
+        <InputGroup className='moorhen-input-group-check'>
+            <Form.Check
+                disabled
+                type="switch"
+                checked={doAnaglyphStereo}
+                onChange={() => {dispatch( setDoAnaglyphStereo(!doAnaglyphStereo) )}}
+                label="Anaglyph stereo"/>
+        </InputGroup>
+        <InputGroup className='moorhen-input-group-check'>
+            <Form.Check
+                disabled
+                type="switch"
+                checked={doSideBySideStereo}
+                onChange={() => {dispatch( setDoSideBySideStereo(!doSideBySideStereo) )}}
+                label="Side-by-side stereo"/>
+        </InputGroup>
+        <InputGroup className='moorhen-input-group-check'>
+            <Form.Check
+                disabled
+                type="switch"
+                checked={doCrossEyedStereo}
+                onChange={() => {dispatch( setDoCrossEyedStereo(!doCrossEyedStereo) )}}
+                label="Cross-eyed stereo"/>
+        </InputGroup>
+        <InputGroup className='moorhen-input-group-check'>
+            <Form.Check
+                type="switch"
+                checked={doThreeWayView}
+                onChange={() => {dispatch( setDoThreeWayView(!doThreeWayView) )}}
+                label="Three way view"/>
         </InputGroup>
     </div>
 

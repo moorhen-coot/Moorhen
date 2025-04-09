@@ -24,6 +24,10 @@ const initialState = {
     doShadowDepthDebug: null,
     doShadow: null,
     doSpin: null,
+    doThreeWayView: null,
+    doSideBySideStereo: null,
+    doCrossEyedStereo: null,
+    doAnaglyphStereo: null,
     doOutline: null,
     depthBlurRadius: null,
     depthBlurDepth: null,
@@ -109,6 +113,18 @@ export const sceneSettingsSlice = createSlice({
     setDoSpin: (state, action: {payload: boolean, type: string}) => {
         return {...state, doSpin: action.payload}
     },
+    setDoAnaglyphStereo: (state, action: {payload: boolean, type: string}) => {
+        return {...state, doAnaglyphStereo: action.payload}
+    },
+    setDoCrossEyedStereo: (state, action: {payload: boolean, type: string}) => {
+        return {...state, doCrossEyedStereo: action.payload}
+    },
+    setDoSideBySideStereo: (state, action: {payload: boolean, type: string}) => {
+        return {...state, doSideBySideStereo: action.payload}
+    },
+    setDoThreeWayView: (state, action: {payload: boolean, type: string}) => {
+        return {...state, doThreeWayView: action.payload}
+    },
     setDoOutline: (state, action: {payload: boolean, type: string}) => {
         return {...state, doOutline: action.payload}
     },
@@ -137,7 +153,8 @@ export const {
     setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap, resetSceneSettings, setEdgeDetectNormalScale,
     setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius, setBackgroundColor,
     setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setEdgeDetectDepthScale,
-    setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setDrawEnvBOcc
+    setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setDrawEnvBOcc, setDoAnaglyphStereo,
+    setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView
 } = sceneSettingsSlice.actions
 
 export default sceneSettingsSlice.reducer

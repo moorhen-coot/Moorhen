@@ -68,6 +68,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const doShadowDepthDebug = useSelector((state: moorhen.State) => state.sceneSettings.doShadowDepthDebug)
     const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
     const doSpin = useSelector((state: moorhen.State) => state.sceneSettings.doSpin)
+    const doAnaglyphStereo = useSelector((state: moorhen.State) => state.sceneSettings.doAnaglyphStereo)
+    const doCrossEyedStereo = useSelector((state: moorhen.State) => state.sceneSettings.doCrossEyedStereo)
+    const doSideBySideStereo = useSelector((state: moorhen.State) => state.sceneSettings.doSideBySideStereo)
+    const doThreeWayView = useSelector((state: moorhen.State) => state.sceneSettings.doThreeWayView)
     const drawEnvBOcc = useSelector((state: moorhen.State) => state.sceneSettings.drawEnvBOcc)
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline)
     const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius)
@@ -212,6 +216,34 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [drawEnvBOcc])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setDoThreeWayView(doThreeWayView)
+            glRef.current.drawScene()
+        }
+    }, [doThreeWayView])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setDoSideBySideStereo(doSideBySideStereo)
+            glRef.current.drawScene()
+        }
+    }, [doSideBySideStereo])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setDoCrossEyedStereo(doCrossEyedStereo)
+            glRef.current.drawScene()
+        }
+    }, [doCrossEyedStereo])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setDoAnaglyphStereo(doAnaglyphStereo)
+            glRef.current.drawScene()
+        }
+    }, [doAnaglyphStereo])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
