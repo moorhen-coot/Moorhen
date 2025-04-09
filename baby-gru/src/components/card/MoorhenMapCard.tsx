@@ -616,8 +616,8 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                             minVal={0.001}
                             maxVal={props.map.isEM ? 2 : 5}
                             showMinMaxVal={false}
-                            decrementButton={changeLevelButton(props.map.isEM ? -0.001 : -0.1)}
-                            incrementButton={changeLevelButton(props.map.isEM ? 0.001 : 0.1)}
+                            decrementButton={changeLevelButton(props.map.isEM ? -0.001 : -0.01)}
+                            incrementButton={changeLevelButton(props.map.isEM ? 0.001 : 0.01)}
                             allowExternalFeedback={true}
                             logScale={true}
                             showSliderTitle={false}
@@ -656,6 +656,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                         setBusy={setHistogramBusy}
                         showHistogram={true}
                         setMapContourLevel={(newVal) => dispatch( setContourLevel({molNo: props.map.molNo, contourLevel: newVal}) )} 
+                        currentContourLevel={mapContourLevel}
                         map={props.map}/>
                 </AccordionDetails>
             </Accordion>

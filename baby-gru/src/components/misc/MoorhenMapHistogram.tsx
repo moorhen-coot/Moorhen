@@ -17,6 +17,7 @@ type MapHistogramProps = {
     showHistogram: boolean;
     setMapContourLevel: (arg0: number) => void;
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
+    currentContourLevel: number;
 }
 
 export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, chartRef) => {
@@ -24,7 +25,9 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    let exponential = props.map.isEM
+    let exponential: boolean = props.map.isEM // set Y axis to logarithmic if EM map
+    const [base, setBase] = useState<number>(1)
+    const [binWidth, setBinWidth] = useState<number>(1)
 
     const parseHistogramData = (histogramData: libcootApi.HistogramInfoJS) => {
         const axisLabelsFontSize = convertViewtoPx(70, height) / 60
@@ -42,8 +45,8 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
 
         const highestCount = Math.max(...histogramData.counts)
         const secondHighestCount = Math.max(...histogramData.counts.filter(count => count !== highestCount))
-        let mapLevel = props.map.getMapContourParams().contourLevel
-        let currentLevelBin = Math.round((mapLevel - histogramData.base) / histogramData.bin_width)
+        const line_postion = Math.round((props.currentContourLevel - histogramData.base) / histogramData.bin_width) -1
+
         return {
             type: 'bar',
             options: {
@@ -55,8 +58,8 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
                         annotations: {
                             verticalLine: {
                                 type: 'line',
-                                xMin: currentLevelBin,
-                                xMax: currentLevelBin,
+                                xMin: line_postion,
+                                xMax: line_postion,
                                 borderColor: 'darkgrey',
                                 borderWidth: 2,
                             },
@@ -126,6 +129,28 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
         };
     }
 
+    const updateAnnotation = () => {
+        if (chartRef !== null && typeof chartRef !== 'function' && chartRef.current) {
+            const chart = chartRef.current;
+            const linePosition = Math.round((props.currentContourLevel - base) / binWidth) -1
+
+            chart.options.plugins.annotation.annotations['verticalLine'] = {
+                type: 'line',
+                xMin: linePosition,
+                xMax: linePosition,
+                borderColor: 'darkgrey',
+                borderWidth: 2,
+            };
+            chart.update();
+        }
+    };
+
+    useEffect(() => {
+        if (props.showHistogram) {
+            updateAnnotation();
+        } 
+    }, [props.currentContourLevel, base, binWidth, props.showHistogram]);
+
     useEffect(() => {
         const fetchHistogram = async () => {   
             props.setBusy(true)
@@ -139,6 +164,7 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
             const canvas = document.getElementById(`${props.map.molNo}-histogram`) as HTMLCanvasElement;
             const ctx = canvas.getContext("2d")
             const chartData = parseHistogramData(histogram)
+
             
             if (!chartData) {
                 return
@@ -147,6 +173,8 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
             if (chartRef !== null && typeof chartRef !== 'function') {
                 chartRef.current?.destroy()
                 chartRef.current = new Chart(ctx, chartData as any)
+                setBase(histogram.base)
+                setBinWidth(histogram.bin_width)
             }
 
             setTimeout(() => {
@@ -154,6 +182,7 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
             }, 500)
             
         }
+    
         fetchHistogram()
     }, [isDark, props.showHistogram, width, height, zoomFactor])
 
