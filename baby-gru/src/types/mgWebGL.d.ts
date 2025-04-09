@@ -166,6 +166,10 @@ export namespace webGL {
         setEdgeDetectNormalScale(normalScale: number): void;
         setOccludeDiffuse(doOccludeDiffuse: boolean): void;
         setOutlinesOn(doOutline: boolean): void;
+        setDoThreeWayView(doThreeWayView: boolean): void;
+        setDoSideBySideStereo(doSideBySideStereo: boolean): void;
+        setDoCrossEyedStereo(doCrossEyedStereo: boolean): void;
+        setDoAnaglyphStereo(doAnaglyphStereo: boolean): void;
         setDoOrderIndependentTransparency(doOrderIndependentTransparency: boolean): void;
         setDoTransparentScreenshotBackground(transparentScreenshotBackground: boolean): void;
         setSpinTestState(doSpinTest: boolean): void;
@@ -285,6 +289,10 @@ export namespace webGL {
         yPixelOffset: number;
         occludeDiffuse: boolean;
         doOrderIndependentTransparency: boolean;
+        doThreeWayView: boolean;
+        doSideBySideStereo: boolean;
+        doCrossEyedStereo: boolean;
+        doAnaglyphStereo: boolean;
         doPeel: boolean;
         doShadowDepthDebug: boolean;
         doSpin: boolean;
@@ -458,8 +466,8 @@ export namespace webGL {
         drawingGBuffers: boolean;
         initializeShaders() : void;
         axesTexture: any;
-
         hoverSize: number;
+        currentViewport: number[];
 
     }
 }

@@ -1281,6 +1281,7 @@ function initGL(canvas) {
     }
     gl.viewportWidth = canvas.width;
     gl.viewportHeight = canvas.height;
+
     if(WEBGL2){
         console.log("Max texture size:",gl.getParameter(gl.MAX_TEXTURE_SIZE))
         console.log("Max cube map texture size:",gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE))
@@ -2285,6 +2286,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         doShadowDepthDebug: boolean;
         doSpin: boolean;
         doStenciling: boolean;
+        doThreeWayView: boolean;
+        doSideBySideStereo: boolean;
+        doCrossEyedStereo: boolean;
+        doAnaglyphStereo: boolean;
         doneEvents: boolean;
         dx: number;
         dy: number;
@@ -2454,8 +2459,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         drawingGBuffers: boolean;
         axesTexture: any;
         max_elements_indices: number;
-
         hoverSize: number;
+        currentViewport: number[];
 
     resize(width: number, height: number) : void {
 
@@ -2504,6 +2509,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.depthPeelDepthTextures = [];
         this.depthPeelRenderbufferDepth = [];
         this.depthPeelRenderbufferColor = [];
+        this.currentViewport = [0,0, 400,400];
 
         setInterval(() => {
             if(!self.gl) return;
@@ -2662,6 +2668,22 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     setDoTransparentScreenshotBackground(transparentScreenshotBackground) {
         this.transparentScreenshotBackground = transparentScreenshotBackground;
+    }
+
+    setDoAnaglyphStereo(doAnaglyphStereo) {
+        this.doAnaglyphStereo = doAnaglyphStereo;
+    }
+
+    setDoCrossEyedStereo(doCrossEyedStereo) {
+        this.doCrossEyedStereo = doCrossEyedStereo;
+    }
+
+    setDoSideBySideStereo(doSideBySideStereo) {
+        this.doSideBySideStereo = doSideBySideStereo;
+    }
+
+    setDoThreeWayView(doThreeWayView) {
+        this.doThreeWayView = doThreeWayView;
     }
 
     setDoOrderIndependentTransparency(doOrderIndependentTransparency) {
@@ -2929,6 +2951,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.doSpin = false;
 
+        this.doThreeWayView = false;
+        this.doSideBySideStereo = false;
+        this.doCrossEyedStereo = false;
+        this.doAnaglyphStereo = false;
+
         this.doOrderIndependentTransparency = true;//Request OIT user/state setting
         this.doPeel = false;//Requested and required - above set and there are transparent objects.
 
@@ -3004,6 +3031,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const glc = initGL(this.canvas);
         this.gl = glc.gl;
         this.WEBGL2 = glc.WEBGL2;
+        this.currentViewport = [0,0, this.gl.viewportWidth, this.gl.viewportWidth];
         if(this.WEBGL2){
             this.max_elements_indices = this.gl.getParameter(this.gl.MAX_ELEMENTS_INDICES)
         } else {
@@ -7486,7 +7514,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
-    GLrender(calculatingShadowMap) {
+    GLrender(calculatingShadowMap,doClear=true) {
         let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
 
         if (calculatingShadowMap) {
@@ -7527,7 +7555,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebuffer);
                 let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
             }
-            this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
+            this.gl.viewport(this.currentViewport[0], this.currentViewport[1], this.currentViewport[2], this.currentViewport[3]);
         }
 
         if(this.renderSilhouettesToTexture||this.drawingGBuffers||(this.renderToTexture&&this.transparentScreenshotBackground)) {
@@ -7540,7 +7568,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
             }
         } else {
-            this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+            if(doClear) this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
         }
 
         mat4.identity(this.mvMatrix);
@@ -7644,6 +7672,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.myQuat = quat4.clone(newQuat);
         const theMatrix = quatToMat4(this.myQuat);
+
         mat4.multiply(this.mvMatrix, this.mvMatrix, theMatrix);
 
         mat4.identity(this.mvInvMatrix);
@@ -7809,6 +7838,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.uniform1i(shader.peelNumber,-1);
         })
 
+        this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
         const oldMouseDown = this.mouseDown;
 
         if ((this.doEdgeDetect||this.doSSAO)&&this.WEBGL2) {
@@ -8071,37 +8101,70 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.bindTexture(this.gl.TEXTURE_2D, null)
             this.gl.depthFunc(this.gl.LESS);
 
-            //Stencil way
-            /*
-            this.stenciling = false;
-            this.gl.stencilMask(0x00);
-            this.gl.clear(this.gl.STENCIL_BUFFER_BIT);
-            this.gl.disable(this.gl.STENCIL_TEST);
-            this.gl.enable(this.gl.DEPTH_TEST);
-            invMat = this.GLrender(false);
-
-            this.stenciling = true;
-            this.gl.stencilMask(0xFF);
-            this.gl.clearStencil(0);
-            this.gl.clear(this.gl.STENCIL_BUFFER_BIT);
-            this.gl.clear(this.gl.DEPTH_BUFFER_BIT);
-            this.gl.enable(this.gl.STENCIL_TEST);
-            this.gl.stencilFunc(this.gl.ALWAYS, 1, 0xFF);
-            this.gl.stencilOp(this.gl.KEEP, this.gl.KEEP, this.gl.REPLACE);
-            this.gl.enable(this.gl.DEPTH_TEST);
-            invMat = this.GLrender(false);
-            this.gl.stencilFunc(this.gl.NOTEQUAL, 1, 0xFF);
-            this.gl.stencilOp(this.gl.KEEP, this.gl.KEEP, this.gl.REPLACE);
-            this.stencilPass = true;
-            this.gl.disable(this.gl.DEPTH_TEST);
-            invMat = this.GLrender(false);
-            */
         } else {
             this.gl.stencilMask(0x00);
             this.gl.disable(this.gl.STENCIL_TEST);
             this.gl.enable(this.gl.DEPTH_TEST);
-            if(!this.doPeel)
-                invMat = this.GLrender(false);
+            if(!this.doPeel){
+                if(this.doThreeWayView){
+                    const newXQuat = quat4.clone(this.myQuat);
+                    const newYQuat = quat4.clone(this.myQuat);
+                    const origQuat = quat4.clone(this.myQuat);
+
+                    const xaxis = vec3.create();
+                    vec3.set(xaxis, 1.0, 0.0, 0.0)
+                    const yaxis = vec3.create();
+                    vec3.set(yaxis, 0.0, 1.0, 0.0)
+                    const angle = -Math.PI/2.;
+                    const dval3 = Math.cos(angle / 2.0);
+                    const dval0_x = xaxis[0] * Math.sin(angle / 2.0);
+                    const dval1_x = xaxis[1] * Math.sin(angle / 2.0);
+                    const dval2_x = xaxis[2] * Math.sin(angle / 2.0);
+                    const dval0_y = yaxis[0] * Math.sin(angle / 2.0);
+                    const dval1_y = yaxis[1] * Math.sin(angle / 2.0);
+                    const dval2_y = yaxis[2] * Math.sin(angle / 2.0);
+                    let rotX = quat4.create();
+                    quat4.set(rotX, dval0_x, dval1_x, dval2_x, dval3);
+                    quat4.multiply(newXQuat, newXQuat, rotX);
+                    let rotY = quat4.create();
+                    quat4.set(rotY, dval0_y, dval1_y, dval2_y, dval3);
+                    quat4.multiply(newYQuat, newYQuat, rotY);
+
+                    this.myQuat = newXQuat
+                    this.currentViewport = [0, 0, this.gl.viewportWidth/2, this.gl.viewportHeight/2]
+                    invMat = this.GLrender(false);
+                    if (this.showAxes) {
+                        this.drawAxes(invMat);
+                    }
+                    if (this.showCrosshairs) {
+                        this.drawCrosshairs(invMat);
+                    }
+                    if (this.showScaleBar) {
+                        this.drawScaleBar(invMat);
+                    }
+                    this.drawTextOverlays(invMat);
+                    this.myQuat = newYQuat
+                    this.currentViewport = [this.gl.viewportWidth/2, this.gl.viewportHeight/2,this.gl.viewportWidth/2, this.gl.viewportHeight/2]
+                    invMat = this.GLrender(false,false);
+                    if (this.showAxes) {
+                        this.drawAxes(invMat);
+                    }
+                    if (this.showCrosshairs) {
+                        this.drawCrosshairs(invMat);
+                    }
+                    if (this.showScaleBar) {
+                        this.drawScaleBar(invMat);
+                    }
+                    this.drawTextOverlays(invMat);
+
+                    this.myQuat = origQuat
+                    this.currentViewport = [0, this.gl.viewportHeight/2,this.gl.viewportWidth/2, this.gl.viewportHeight/2]
+                    invMat = this.GLrender(false,false);
+                } else {
+                    this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
+                    invMat = this.GLrender(false);
+                }
+            }
         }
 
         if(this.doPeel){//Do depth peel
@@ -8121,7 +8184,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
 
             this.gl.clear(this.gl.DEPTH_BUFFER_BIT|this.gl.COLOR_BUFFER_BIT);
-            const ratio = 1.0 //* this.gl.viewportWidth / this.gl.viewportHeight;
+            const ratio = 1.0
 
             if(this.depthPeelFramebuffers.length>0&&this.depthPeelFramebuffers[0].width>0&&this.depthPeelFramebuffers[0].height>0){
 
