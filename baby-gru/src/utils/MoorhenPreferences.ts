@@ -67,7 +67,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
         GLLabelsFontSize: 18,
         mouseSensitivity: 0.3,
         zoomWheelSensitivityFactor: 1.0,
-        contourWheelSensitivityFactor: 0.05,
+        contourWheelSensitivityFactor: 1.0,
         mapLineWidth: 0.75,
         makeBackups: true,
         showShortcutToast: true,

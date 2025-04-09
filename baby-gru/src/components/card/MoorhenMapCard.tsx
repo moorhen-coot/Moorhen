@@ -359,7 +359,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                 return
             }
 
-            let emScaling = props.map.isEM ? 0.01 : 0.1
+            let emScaling = props.map.isEM ? 0.001 : 0.01
             if (evt.detail.factor > 1) {
                 newMapContourLevel = mapContourLevel + contourWheelSensitivityFactor * emScaling 
             } else {
@@ -614,7 +614,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                         <span>{`Level: ${mapContourLevel.toFixed(props.map.isEM ? 4 : 2)} ${props.map.mapRmsd ? '(' + (mapContourLevel / props.map.mapRmsd).toFixed(2) + ' rmsd)' : ''}`}</span>
                         <MoorhenSlider
                             minVal={0.001}
-                            maxVal={props.map.isEM ? 1 : 5}
+                            maxVal={props.map.isEM ? 2 : 5}
                             showMinMaxVal={false}
                             decrementButton={changeLevelButton(props.map.isEM ? -0.001 : -0.1)}
                             incrementButton={changeLevelButton(props.map.isEM ? 0.001 : 0.1)}
