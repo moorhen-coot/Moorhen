@@ -156,6 +156,7 @@ export namespace webGL {
         set_fog_range(fogStart: number, fogEnd: number, update?: boolean) : void;
         set_clip_range(clipStart: number, clipEnd: number, update?: boolean) : void;
         resize(width: number, height: number) : void;
+        setupThreeWayTransformations() : void;
         setShadowDepthDebug(doShadowDepthDebug: boolean): void;
         setShadowsOn(doShadow: boolean): void;
         setSSAOOn(doSSAO: boolean): void;
@@ -468,6 +469,7 @@ export namespace webGL {
         axesTexture: any;
         hoverSize: number;
         currentViewport: number[];
-
+        threeWayViewports: number[][];
+        threeWayQuats: quat4[];
     }
 }

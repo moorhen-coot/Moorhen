@@ -2461,6 +2461,43 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         max_elements_indices: number;
         hoverSize: number;
         currentViewport: number[];
+        threeWayViewports: number[][];
+        threeWayQuats: quat4[];
+
+    setupThreeWayTransformations() : void {
+        this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
+        this.threeWayViewports = []
+        this.threeWayQuats = []
+        this.threeWayViewports.push([0, 0, this.gl.viewportWidth/2, this.gl.viewportHeight/2])
+        this.threeWayViewports.push([this.gl.viewportWidth/2, this.gl.viewportHeight/2,this.gl.viewportWidth/2, this.gl.viewportHeight/2])
+        this.threeWayViewports.push([0, this.gl.viewportHeight/2,this.gl.viewportWidth/2, this.gl.viewportHeight/2])
+
+        const xaxis = vec3.create();
+        vec3.set(xaxis, 1.0, 0.0, 0.0)
+        const yaxis = vec3.create();
+        vec3.set(yaxis, 0.0, -1.0, 0.0)
+        const angle = -Math.PI/2.;
+        const dval3 = Math.cos(angle / 2.0);
+        const dval0_x = xaxis[0] * Math.sin(angle / 2.0);
+        const dval1_x = xaxis[1] * Math.sin(angle / 2.0);
+        const dval2_x = xaxis[2] * Math.sin(angle / 2.0);
+        const dval0_y = yaxis[0] * Math.sin(angle / 2.0);
+        const dval1_y = yaxis[1] * Math.sin(angle / 2.0);
+        const dval2_y = yaxis[2] * Math.sin(angle / 2.0);
+
+        const rotX = quat4.create();
+        const rotY = quat4.create();
+        const rotZ = quat4.create();
+
+        quat4.set(rotZ, 0, 0, 0, -1);
+        quat4.set(rotX, dval0_x, dval1_x, dval2_x, dval3);
+        quat4.set(rotY, dval0_y, dval1_y, dval2_y, dval3);
+
+        this.threeWayQuats.push(rotX)
+        this.threeWayQuats.push(rotY)
+        this.threeWayQuats.push(rotZ)
+
+    }
 
     resize(width: number, height: number) : void {
 
@@ -2474,6 +2511,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.gl.viewportWidth = this.canvas.width;
         this.gl.viewportHeight = this.canvas.height;
+        this.setupThreeWayTransformations()
 
         if(this.useOffScreenBuffers&&this.WEBGL2){
             this.recreateOffScreeenBuffers(this.canvas.width,this.canvas.height);
@@ -2986,8 +3024,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.myQuat = quat4.create();
         quat4.set(this.myQuat, 0, 0, 0, -1);
-        //var testmat = quatToMat4(this.myQuat)
-        //alert(mat4.str(testmat))
         this.setZoom(1.0)
 
         this.gl_clipPlane0 = new Float32Array(4);
@@ -3037,6 +3073,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         } else {
             this.max_elements_indices = 65535;
         }
+
+        this.setupThreeWayTransformations()
 
         this.blurUBOBuffer = this.gl.createBuffer();
         this.axesTexture = {black:{},white:{}};
@@ -3290,6 +3328,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         self.setBlurSize(self.blurSize);
         self.drawScene();
         self.ready = true;
+        console.log(this.myQuat)
 
     }
 
@@ -8107,59 +8146,29 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.enable(this.gl.DEPTH_TEST);
             if(!this.doPeel){
                 if(this.doThreeWayView){
-                    const newXQuat = quat4.clone(this.myQuat);
-                    const newYQuat = quat4.clone(this.myQuat);
                     const origQuat = quat4.clone(this.myQuat);
 
-                    const xaxis = vec3.create();
-                    vec3.set(xaxis, 1.0, 0.0, 0.0)
-                    const yaxis = vec3.create();
-                    vec3.set(yaxis, 0.0, 1.0, 0.0)
-                    const angle = -Math.PI/2.;
-                    const dval3 = Math.cos(angle / 2.0);
-                    const dval0_x = xaxis[0] * Math.sin(angle / 2.0);
-                    const dval1_x = xaxis[1] * Math.sin(angle / 2.0);
-                    const dval2_x = xaxis[2] * Math.sin(angle / 2.0);
-                    const dval0_y = yaxis[0] * Math.sin(angle / 2.0);
-                    const dval1_y = yaxis[1] * Math.sin(angle / 2.0);
-                    const dval2_y = yaxis[2] * Math.sin(angle / 2.0);
-                    let rotX = quat4.create();
-                    quat4.set(rotX, dval0_x, dval1_x, dval2_x, dval3);
-                    quat4.multiply(newXQuat, newXQuat, rotX);
-                    let rotY = quat4.create();
-                    quat4.set(rotY, dval0_y, dval1_y, dval2_y, dval3);
-                    quat4.multiply(newYQuat, newYQuat, rotY);
+                    for(let i=0;i<3;i++){
+                        const newXQuat = quat4.clone(origQuat);
+                        quat4.multiply(newXQuat, newXQuat, this.threeWayQuats[i]);
+                        this.myQuat = newXQuat
+                        this.currentViewport = this.threeWayViewports[i]
 
-                    this.myQuat = newXQuat
-                    this.currentViewport = [0, 0, this.gl.viewportWidth/2, this.gl.viewportHeight/2]
-                    invMat = this.GLrender(false);
-                    if (this.showAxes) {
-                        this.drawAxes(invMat);
+                        const doClear = i===3 ? true : false
+                        invMat = this.GLrender(false,doClear);
+                        if(i!==2){
+                            if (this.showAxes) {
+                                this.drawAxes(invMat);
+                            }
+                            if (this.showCrosshairs) {
+                                this.drawCrosshairs(invMat);
+                            }
+                            if (this.showScaleBar) {
+                                this.drawScaleBar(invMat);
+                            }
+                            this.drawTextOverlays(invMat);
+                        }
                     }
-                    if (this.showCrosshairs) {
-                        this.drawCrosshairs(invMat);
-                    }
-                    if (this.showScaleBar) {
-                        this.drawScaleBar(invMat);
-                    }
-                    this.drawTextOverlays(invMat);
-                    this.myQuat = newYQuat
-                    this.currentViewport = [this.gl.viewportWidth/2, this.gl.viewportHeight/2,this.gl.viewportWidth/2, this.gl.viewportHeight/2]
-                    invMat = this.GLrender(false,false);
-                    if (this.showAxes) {
-                        this.drawAxes(invMat);
-                    }
-                    if (this.showCrosshairs) {
-                        this.drawCrosshairs(invMat);
-                    }
-                    if (this.showScaleBar) {
-                        this.drawScaleBar(invMat);
-                    }
-                    this.drawTextOverlays(invMat);
-
-                    this.myQuat = origQuat
-                    this.currentViewport = [0, this.gl.viewportHeight/2,this.gl.viewportWidth/2, this.gl.viewportHeight/2]
-                    invMat = this.GLrender(false,false);
                 } else {
                     this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
                     invMat = this.GLrender(false);
