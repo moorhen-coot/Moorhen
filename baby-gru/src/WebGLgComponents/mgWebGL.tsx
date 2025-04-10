@@ -10296,7 +10296,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let viewportArray = [
             0, 0, this.gl.viewportWidth, this.gl.viewportHeight
         ];
-        let mvMatrix = this.mvMatrix
+        let mvMatrix = mat4.clone(this.mvMatrix)
+        const newQuat = quat4.clone(this.myQuat);
 
         //TODO - Also get correct mvMatrix for given viewPort
         const yp = this.canvas.height - y
@@ -10305,8 +10306,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             for(let i=0;i<viewports.length;i++){
                 if(x>=viewports[i][0]&&x<(viewports[i][0]+viewports[i][2])&&
                    yp>=viewports[i][1]&&yp<(viewports[i][1]+viewports[i][3])){
-                    console.log("In sector",i)
                     viewportArray = viewports[i]
+                    const theMatrix = mat4.create()
+                    mat4.translate(theMatrix, theMatrix, [0, 0, -this.fogClipOffset]);
+                    quat4.multiply(newQuat, newQuat, this.threeWayQuats[i]);
+                    const theRotMatrix = quatToMat4(newQuat);
+                    mat4.multiply(theMatrix, theMatrix, theRotMatrix);
+                    mat4.translate(theMatrix, theMatrix, this.origin);
+                    mvMatrix = theMatrix
                 }
             }
         }
