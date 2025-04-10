@@ -7,6 +7,7 @@ import { convertViewtoPx } from "../../utils/utils";
 import { MenuItem } from "@mui/material";
 import { showModal } from "../../store/modalsSlice";
 import { MoorhenOtherSceneSettings } from "../menu-item/MoorhenOtherSceneSettings";
+import { MoorhenLayoutSettings } from "../menu-item/MoorhenLayoutSettings";
 import { modalKeys } from "../../utils/enums";
 
 export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
@@ -26,6 +27,7 @@ export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     document.body.click()
                 }}>Scene settings...</MenuItem>
                 <MoorhenOtherSceneSettings {...menuItemProps} />
+                <MoorhenLayoutSettings {...menuItemProps} />
         </div>
     </>
 }

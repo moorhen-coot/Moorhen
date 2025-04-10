@@ -2,7 +2,7 @@ import { Form, InputGroup } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { useDispatch, useSelector } from "react-redux"
 import { moorhen } from "../../types/moorhen"
-import { setDoPerspectiveProjection, setDoSpin, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDrawScaleBar, setDrawEnvBOcc, setDoAnaglyphStereo, setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView } from "../../store/sceneSettingsSlice"
+import { setDoPerspectiveProjection, setDoSpin, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDrawScaleBar, setDrawEnvBOcc } from "../../store/sceneSettingsSlice"
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice"
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 
@@ -93,41 +93,6 @@ export const MoorhenOtherSceneSettings = (props: { setPopoverIsShown: React.Disp
                 onChange={() => {dispatch( setDoSpin(!doSpin) )}}
                 label="Spin view"/>
         </InputGroup>
-        <InputGroup className='moorhen-input-group-check'>
-            <Form.Check
-                type="switch"
-                checked={doThreeWayView}
-                onChange={() => {dispatch( setDoThreeWayView(!doThreeWayView) )}}
-                label="Three way view"/>
-        </InputGroup>
-        <SimpleTreeView
-            aria-label="stereo option"
-        >
-            <TreeItem label="Stereo" itemId="stereo">
-                <InputGroup className='moorhen-input-group-check'>
-                    <Form.Check
-                        type="switch"
-                        checked={doSideBySideStereo}
-                        onChange={() => {dispatch( setDoSideBySideStereo(!doSideBySideStereo) )}}
-                        label="Side-by-side stereo"/>
-                </InputGroup>
-                <InputGroup className='moorhen-input-group-check'>
-                    <Form.Check
-                        type="switch"
-                        checked={doCrossEyedStereo}
-                        onChange={() => {dispatch( setDoCrossEyedStereo(!doCrossEyedStereo) )}}
-                        label="Cross-eyed stereo"/>
-                </InputGroup>
-                <InputGroup className='moorhen-input-group-check'>
-                    <Form.Check
-                        disabled
-                        type="switch"
-                        checked={doAnaglyphStereo}
-                        onChange={() => {dispatch( setDoAnaglyphStereo(!doAnaglyphStereo) )}}
-                        label="Anaglyph stereo"/>
-                </InputGroup>
-            </TreeItem>
-        </SimpleTreeView>
     </div>
 
     return <MoorhenBaseMenuItem
