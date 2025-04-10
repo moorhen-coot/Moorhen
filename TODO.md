@@ -6,9 +6,8 @@ A JavaScript molecular graphics program
   - [x] Basic 3-way view
   - [x] Basic Side-by-side/cross-eyed stereo
   - [x] Atom hovering, etc. working in 3-way view
-  - [ ] Atom hovering, etc. working in side-by-side, cross-eyed stereo
-  - [ ] Rotate/centre/etc. working in 3-way view
-  - [ ] Rotate/centre/etc. working in side-by-side, cross-eyed stereo
+  - [x] Atom hovering, etc. working in side-by-side, cross-eyed stereo
+  - [ ] Rotate working in 3-way view
   - [ ] Basic Anaglyph stereo
   - [ ] 'a'-clicking working in 3-way view
   - [ ] 'a'-clicking working in side-by-side, cross-eyed stereo

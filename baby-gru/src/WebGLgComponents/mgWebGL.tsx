@@ -10299,17 +10299,30 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let mvMatrix = mat4.clone(this.mvMatrix)
         const newQuat = quat4.clone(this.myQuat);
 
-        //TODO - Also get correct mvMatrix for given viewPort
         const yp = this.canvas.height - y
-        if(this.doThreeWayView){
-            const viewports = this.threeWayViewports
+
+        if(this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
+            let viewports
+            let quats
+
+            if(this.doThreeWayView){
+                quats = this.threeWayQuats
+                viewports = this.threeWayViewports
+            } else if(this.doSideBySideStereo) {
+                quats = this.stereoQuats
+                viewports = this.stereoViewports
+            } else {
+                quats = this.stereoQuats.toReversed()
+                viewports = this.stereoViewports
+            }
+
             for(let i=0;i<viewports.length;i++){
                 if(x>=viewports[i][0]&&x<(viewports[i][0]+viewports[i][2])&&
                    yp>=viewports[i][1]&&yp<(viewports[i][1]+viewports[i][3])){
                     viewportArray = viewports[i]
                     const theMatrix = mat4.create()
                     mat4.translate(theMatrix, theMatrix, [0, 0, -this.fogClipOffset]);
-                    quat4.multiply(newQuat, newQuat, this.threeWayQuats[i]);
+                    quat4.multiply(newQuat, newQuat, quats[i]);
                     const theRotMatrix = quatToMat4(newQuat);
                     mat4.multiply(theMatrix, theMatrix, theRotMatrix);
                     mat4.translate(theMatrix, theMatrix, this.origin);
