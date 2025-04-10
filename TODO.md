@@ -2,14 +2,16 @@
 A JavaScript molecular graphics program
 
 ### For 0.19.1
-- [ ] MrParse results viewing.
 - [ ] Side-by-side, cross-eyed, anaglyph stereo.
-
-### For 0.19.0
-- [x] Fix that info button on models shows nothing.
-- [x] Add a maps info button.
-- [x] Option to not embed data in session file - useful in CCPEM context.
-- [x] Fix 4oo8 symmetry.
+  - [x] Basic 3-way view
+  - [x] Basic Side-by-side/cross-eyed stereo
+  - [ ] Atom hovering, etc. working in 3-way view
+  - [ ] Atom hovering, etc. working in side-by-side, cross-eyed stereo
+  - [ ] Rotate/centre/etc. working in 3-way view
+  - [ ] Rotate/centre/etc. working in side-by-side, cross-eyed stereo
+  - [ ] Basic Anaglyph stereo
+  - [ ] 'a'-clicking working in 3-way view
+  - [ ] 'a'-clicking working in side-by-side, cross-eyed stereo
 
 ### Todo
 - [ ] Fitting 5-letter ligand truncates name, e.g. A1LU6

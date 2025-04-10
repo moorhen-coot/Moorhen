@@ -10293,9 +10293,23 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         x *= getDeviceScale();
         y *= getDeviceScale();
 
-        const viewportArray = [
+        let viewportArray = [
             0, 0, this.gl.viewportWidth, this.gl.viewportHeight
         ];
+        let mvMatrix = this.mvMatrix
+
+        //TODO - Also get correct mvMatrix for given viewPort
+        const yp = this.canvas.height - y
+        if(this.doThreeWayView){
+            const viewports = this.threeWayViewports
+            for(let i=0;i<viewports.length;i++){
+                if(x>=viewports[i][0]&&x<(viewports[i][0]+viewports[i][2])&&
+                   yp>=viewports[i][1]&&yp<(viewports[i][1]+viewports[i][3])){
+                    console.log("In sector",i)
+                    viewportArray = viewports[i]
+                }
+            }
+        }
 
         // The results of the operation will be stored in this array.
         let modelPointArrayResultsFront = [];
@@ -10307,13 +10321,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             factor = 99.9;
         }
         let success = unProject(
-                x, this.gl.viewportHeight-y, -(this.gl_clipPlane0[3]-this.fogClipOffset)/factor,
-                this.mvMatrix as unknown as number[], this.pMatrix as unknown as number[],
+                x, yp, -(this.gl_clipPlane0[3]-this.fogClipOffset)/factor,
+                mvMatrix as unknown as number[], this.pMatrix as unknown as number[],
                 viewportArray, modelPointArrayResultsFront);
 
         success = unProject(
-                x, this.gl.viewportHeight-y, -(this.gl_clipPlane1[3]-this.fogClipOffset)/factor,
-                this.mvMatrix as unknown as number[], this.pMatrix as unknown as number[],
+                x, yp, -(this.gl_clipPlane1[3]-this.fogClipOffset)/factor,
+                mvMatrix as unknown as number[], this.pMatrix as unknown as number[],
                 viewportArray, modelPointArrayResultsBack);
 
         let mindist = 100000.;
@@ -10344,7 +10358,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 let dpl = DistanceBetweenPointAndLine(modelPointArrayResultsFront, modelPointArrayResultsBack, p);
 
                 let atPosTrans = vec3Create([0, 0, 0]);
-                vec3.transformMat4(atPosTrans, p, this.mvMatrix);
+                vec3.transformMat4(atPosTrans, p, mvMatrix);
                 let azDot = this.gl_clipPlane0[3]-atPosTrans[2];
                 let bzDot = this.gl_clipPlane1[3]+atPosTrans[2];
 
@@ -10366,7 +10380,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     const p = symmat.pos;
                     const dpl = DistanceBetweenPointAndLine(modelPointArrayResultsFront, modelPointArrayResultsBack, p);
                     let atPosTrans = vec3Create([0, 0, 0]);
-                    vec3.transformMat4(atPosTrans, p, this.mvMatrix);
+                    vec3.transformMat4(atPosTrans, p, mvMatrix);
                     let azDot = this.gl_clipPlane0[3]-atPosTrans[2];
                     let bzDot = this.gl_clipPlane1[3]+atPosTrans[2];
                     if (
