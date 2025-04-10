@@ -8186,7 +8186,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.disable(this.gl.STENCIL_TEST);
             this.gl.enable(this.gl.DEPTH_TEST);
             if(!this.doPeel){
-                if(this.doThreeWayView||this.doSideBySideStereo){
+                if(this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
 
                     const origQuat = quat4.clone(this.myQuat);
 
@@ -8197,8 +8197,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     if(this.doThreeWayView){
                         quats = this.threeWayQuats
                         viewports = this.threeWayViewports
-                    } else {
+                    } else if(this.doSideBySideStereo) {
                         quats = this.stereoQuats
+                        viewports = this.stereoViewports
+                        ratioMult = 0.5
+                    } else {
+                        quats = this.stereoQuats.toReversed()
                         viewports = this.stereoViewports
                         ratioMult = 0.5
                     }
