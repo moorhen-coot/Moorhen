@@ -1,7 +1,7 @@
 # Moorhen
 A JavaScript molecular graphics program
 
-### For 0.19.1
+### For 0.19.2
 - [ ] Side-by-side, cross-eyed, anaglyph stereo.
   - [x] Basic 3-way view
   - [x] Basic Side-by-side/cross-eyed stereo
