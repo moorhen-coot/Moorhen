@@ -8217,15 +8217,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         const doClear = i===0 ? true : false
                         invMat = this.GLrender(false,doClear,ratioMult);
                         if (this.showAxes) {
-                            this.drawAxes(invMat);
+                            this.drawAxes(invMat,ratioMult);
                         }
                         if (this.showCrosshairs) {
-                            this.drawCrosshairs(invMat);
+                            this.drawCrosshairs(invMat,ratioMult);
                         }
                         if (this.showScaleBar) {
-                            this.drawScaleBar(invMat);
+                            this.drawScaleBar(invMat,ratioMult);
                         }
-                        this.drawTextOverlays(invMat);
+                        this.drawTextOverlays(invMat,ratioMult);
                     }
                     this.myQuat = origQuat
                 } else {
@@ -10907,7 +10907,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
-    drawScaleBar(invMat) {
+    drawScaleBar(invMat,ratioMult=1.0) {
         this.gl.depthFunc(this.gl.ALWAYS);
 
         //Begin copy/paste from crosshairs
@@ -10919,7 +10919,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.setMatrixUniforms(this.shaderProgramThickLines);
         let pmvMatrix = mat4.create();
         let pMatrix = mat4.create();
-        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult
 
         if(this.renderToTexture){
             if(this.gl.viewportWidth > this.gl.viewportHeight){
@@ -11061,7 +11061,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.depthFunc(this.gl.LESS)
     }
 
-    drawCrosshairs(invMat) {
+    drawCrosshairs(invMat,ratioMult=1.0) {
 
         this.gl.depthFunc(this.gl.ALWAYS);
         this.gl.useProgram(this.shaderProgramTextBackground);
@@ -11074,7 +11074,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.setMatrixUniforms(this.shaderProgramThickLines);
         let pmvMatrix = mat4.create();
         let pMatrix = mat4.create();
-        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult
         if(this.renderToTexture){
             if(this.gl.viewportWidth > this.gl.viewportHeight){
         let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
@@ -11430,7 +11430,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.depthFunc(this.gl.LESS)
     }
 
-    drawAxes(invMat) {
+    drawAxes(invMat,ratioMult=1.0) {
 
         for(let i = 0; i<16; i++)
             this.gl.disableVertexAttribArray(i);
@@ -11439,7 +11439,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.textTex);
         this.gl.depthFunc(this.gl.ALWAYS);
         let axesOffset = vec3.create();
-        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult;
         //if(this.renderToTexture) ratio = 1.0;
         vec3.set(axesOffset, 20*ratio, 18, 0);
         vec3.transformMat4(axesOffset, axesOffset, invMat);
@@ -11709,9 +11709,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
-    drawTextOverlays(invMat) {
+    drawTextOverlays(invMat,ratioMult=1.0) {
 
-        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult
 
         let textColour = "black";
         const y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
