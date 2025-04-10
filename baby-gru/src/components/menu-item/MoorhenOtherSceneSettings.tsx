@@ -106,15 +106,6 @@ export const MoorhenOtherSceneSettings = (props: { setPopoverIsShown: React.Disp
             <TreeItem label="Stereo" itemId="stereo">
                 <InputGroup className='moorhen-input-group-check'>
                     <Form.Check
-                        disabled
-                        type="switch"
-                        checked={doAnaglyphStereo}
-                        onChange={() => {dispatch( setDoAnaglyphStereo(!doAnaglyphStereo) )}}
-                        label="Anaglyph stereo"/>
-                </InputGroup>
-                <InputGroup className='moorhen-input-group-check'>
-                    <Form.Check
-                        disabled
                         type="switch"
                         checked={doSideBySideStereo}
                         onChange={() => {dispatch( setDoSideBySideStereo(!doSideBySideStereo) )}}
@@ -122,11 +113,18 @@ export const MoorhenOtherSceneSettings = (props: { setPopoverIsShown: React.Disp
                 </InputGroup>
                 <InputGroup className='moorhen-input-group-check'>
                     <Form.Check
-                        disabled
                         type="switch"
                         checked={doCrossEyedStereo}
                         onChange={() => {dispatch( setDoCrossEyedStereo(!doCrossEyedStereo) )}}
                         label="Cross-eyed stereo"/>
+                </InputGroup>
+                <InputGroup className='moorhen-input-group-check'>
+                    <Form.Check
+                        disabled
+                        type="switch"
+                        checked={doAnaglyphStereo}
+                        onChange={() => {dispatch( setDoAnaglyphStereo(!doAnaglyphStereo) )}}
+                        label="Anaglyph stereo"/>
                 </InputGroup>
             </TreeItem>
         </SimpleTreeView>

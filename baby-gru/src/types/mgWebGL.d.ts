@@ -72,7 +72,7 @@ export namespace webGL {
         drawTexturedShapes(theMatrix: mat4) : void;
         drawTransparent(theMatrix: mat4) : void;
         bindFramebufferDrawBuffers() : void;
-        GLrender(calculatingShadowMap: boolean) : mat4;
+        GLrender(calculatingShadowMap: boolean, doClear?:boolean,ratioMult?:number) : mat4;
         drawTransformMatrixInteractivePMV(transformMatrix:number[], transformOrigin:number[], buffer:any, shader:any, vertexType:number, bufferIdx:number) : any;
         drawTransformMatrixPMV(transformMatrix:number[], buffer:any, shader:any, vertexType:number, bufferIdx:number) : any;
         setupModelViewTransformMatrixInteractive(transformMatrix:number[], transformOrigin:number[], buffer: any, shader: MGWebGLShader, vertexType: number, bufferIdx: number, specialDrawBuffer: any) : void;
@@ -157,6 +157,7 @@ export namespace webGL {
         set_clip_range(clipStart: number, clipEnd: number, update?: boolean) : void;
         resize(width: number, height: number) : void;
         setupThreeWayTransformations() : void;
+        setupStereoTransformations() : void;
         setShadowDepthDebug(doShadowDepthDebug: boolean): void;
         setShadowsOn(doShadow: boolean): void;
         setSSAOOn(doSSAO: boolean): void;
@@ -470,6 +471,8 @@ export namespace webGL {
         hoverSize: number;
         currentViewport: number[];
         threeWayViewports: number[][];
+        stereoViewports: number[][];
         threeWayQuats: quat4[];
+        stereoQuats: quat4[];
     }
 }
