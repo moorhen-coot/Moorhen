@@ -10,7 +10,7 @@ import { MoorhenSetMapWeight } from "../menu-item/MoorhenSetMapWeight"
 import { MoorhenScaleMap } from "../menu-item/MoorhenScaleMap"
 import { MoorhenMapInfoCard } from "../card/MoorhenMapInfoCard"
 import { MoorhenMapHistogram } from "../misc/MoorhenMapHistogram"
-import { MoorhenSlider } from "../misc/MoorhenSlider";
+import { MoorhenSlider } from "../misc/MoorhenSlider-new";
 import { Accordion, AccordionDetails, AccordionSummary, IconButton, MenuItem, Popover, Tooltip } from "@mui/material"
 import { HexColorInput, RgbColorPicker } from "react-colorful"
 import { moorhen } from "../../types/moorhen"
@@ -435,38 +435,6 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
 
     }, [doContourIfDirty])
 
-    const changeLevelButton = (factor: number) => {
-        return  (
-        <IconButton 
-        style={{padding: 0, color: isDark ? 'white' : 'black'}}
-        onClick={() => dispatch( changeContourLevel({ molNo: props.map.molNo, factor: factor }) )} 
-        onMouseDown={() => {
-            intervalRef.current = setInterval(() => {
-                dispatch( changeContourLevel({ molNo: props.map.molNo, factor: factor }) )
-            }, 100)
-        }} onMouseUp={() => {
-            clearInterval(intervalRef.current)                   
-        }}>
-            {factor > 0 ? <AddCircleOutline/> : <RemoveCircleOutline/> }
-    </IconButton> 
-    ); }
-
-    const changeRadiusButton = (factor: number) => {
-        return  (
-        <IconButton 
-        style={{padding: 0, color: isDark ? 'white' : 'black'}}
-        onClick={() => dispatch( changeMapRadius({ molNo: props.map.molNo, factor: factor }) )} 
-        onMouseDown={() => {
-            intervalRef.current = setInterval(() => {
-                dispatch( changeMapRadius({ molNo: props.map.molNo, factor: factor }) )
-            }, 100)
-        }} onMouseUp={() => {
-            clearInterval(intervalRef.current)                   
-        }}>
-            {factor > 0 ? <AddCircleOutline/> : <RemoveCircleOutline/> }
-            </IconButton> 
-        ); }
-
     const getMapColourSelector = () => {
         if (mapColour === null) {
             return null
@@ -612,48 +580,59 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                 </ToggleButton>
                 <Col style={{justifyContent: 'center'}}>
                     <Form.Group controlId="contouringLevel" className="mb-3">
-
-                        {/* <span>{`Level: ${mapContourLevel.toFixed(props.map.isEM ? 4 : 2)} ${props.map.mapRmsd ? '(' + (mapContourLevel / props.map.mapRmsd).toFixed(2) + ' rmsd)' : ''}`}</span>
-                        */}
-                        <Box sx={{ width: '100%' }} 
+                    <Stack 
+                        direction='horizontal'
+                        gap={4}
                         style={{
-                            display: 'flex',
-                            justifyContent: 'center', // Center horizontally
-                            alignItems: 'center', // Center vertically
-                            height: '100%', // Ensure the Box has height for vertical centering
-                        }}
-                    >
-                             <MoorhenPreciseInput 
-                                onEnter = {(newVal) => dispatch( setContourLevel({molNo: props.map.molNo, contourLevel: +newVal}) )}
-                                label = {"Level:"} 
-                                setValue={mapContourLevel}
-                                decimalDigits={props.map.isEM ? 4 : 2}
-                                allowNegativeValues={true}
-                                />
-                        </Box>
-                            <MoorhenSlider
-                                minVal={0.001}
-                                maxVal={props.map.isEM ? 2 : 5}
-                                showMinMaxVal={false}
-                                decrementButton={changeLevelButton(props.map.isEM ? -0.001 : -0.01)}
-                                incrementButton={changeLevelButton(props.map.isEM ? 0.001 : 0.01)}
-                                allowExternalFeedback={true}
-                                logScale={true}
-                                showSliderTitle={false}
-                                isDisabled={!mapIsVisible}
-                                initialValue={initialContour}
-                                externalValue={mapContourLevel}
-                                setExternalValue={(newVal) => dispatch( setContourLevel({molNo: props.map.molNo, contourLevel: newVal}) )}
-                            />
+                        justifyContent: "center",
+                        alignItems: "center", 
+                        width: "100%",
+                        }}>
+
+                        <MoorhenPreciseInput 
+                            onEnter = {(newVal) => dispatch( setContourLevel({molNo: props.map.molNo, contourLevel: +newVal}) )}
+                            label = {"Level:"} 
+                            setValue={mapContourLevel}
+                            decimalDigits={props.map.isEM ? 4 : 2}
+                            allowNegativeValues={true}
+                            width= {60}
+                        />
+                        
+                        {props.map.mapRmsd && (
+                        <MoorhenPreciseInput 
+                            allowNegativeValues={true}
+                            onEnter = {(newVal) => dispatch( setContourLevel({molNo: props.map.molNo, contourLevel : +newVal * props.map.mapRmsd}) )}
+                            label = {"RMSD:"} 
+                            setValue={mapContourLevel / props.map.mapRmsd}
+                            decimalDigits={2}
+                            width= {50}
+                        /> 
+                        )}
+
+                </Stack>
+                    <MoorhenSlider
+                        minVal={0.001}
+                        maxVal={props.map.isEM ? 2 : 5}
+                        showMinMaxVal={false}
+                        factorButtons={props.map.isEM ? 0.001 : 0.01}
+                        showButtons={true}
+                        allowExternalFeedback={true}
+                        logScale={true}
+                        showSliderTitle={false}
+                        isDisabled={!mapIsVisible}
+                        initialValue={initialContour}
+                        externalValue={mapContourLevel}
+                        setExternalValue={(newVal) => dispatch( setContourLevel({molNo: props.map.molNo, contourLevel: newVal}) )}
+                    />
                         
                     </Form.Group>
                     <Form.Group controlId="contouringRadius" className="mb-3">
                         <MoorhenSlider
-                            minVal={0.01}
+                            minVal={2}
                             maxVal={100}
                             showMinMaxVal={false}
-                            decrementButton={changeRadiusButton(-2)} 
-                            incrementButton={changeRadiusButton(2)} 
+                            showButtons={true}
+                            factorButtons={2}
                             allowExternalFeedback={true} 
                             logScale={false} 
                             sliderTitle="Radius" 
@@ -662,6 +641,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                             initialValue={initialRadius} 
                             externalValue={mapRadius} 
                             setExternalValue={(newVal) => dispatch( setMapRadius({molNo: props.map.molNo, radius: newVal}) )}
+                            usePreciseInput={true}
                         />
                     </Form.Group>
                 </Col>
