@@ -17,10 +17,6 @@ export const MoorhenOtherSceneSettings = (props: { setPopoverIsShown: React.Disp
     const drawEnvBOcc = useSelector((state: moorhen.State) => state.sceneSettings.drawEnvBOcc)
     const doPerspectiveProjection = useSelector((state: moorhen.State) => state.sceneSettings.doPerspectiveProjection)
     const doSpin = useSelector((state: moorhen.State) => state.sceneSettings.doSpin)
-    const doAnaglyphStereo = useSelector((state: moorhen.State) => state.sceneSettings.doAnaglyphStereo)
-    const doCrossEyedStereo = useSelector((state: moorhen.State) => state.sceneSettings.doCrossEyedStereo)
-    const doSideBySideStereo = useSelector((state: moorhen.State) => state.sceneSettings.doSideBySideStereo)
-    const doThreeWayView = useSelector((state: moorhen.State) => state.sceneSettings.doThreeWayView)
 
     const dispatch = useDispatch()
 

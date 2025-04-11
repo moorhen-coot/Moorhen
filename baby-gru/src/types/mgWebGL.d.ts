@@ -471,6 +471,7 @@ export namespace webGL {
         axesTexture: any;
         hoverSize: number;
         currentViewport: number[];
+        currentAnaglyphColor: number[];
         threeWayViewports: number[][];
         stereoViewports: number[][];
         threeWayQuats: quat4[];

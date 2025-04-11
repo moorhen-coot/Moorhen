@@ -2468,6 +2468,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         max_elements_indices: number;
         hoverSize: number;
         currentViewport: number[];
+        currentAnaglyphColor: number[];
         threeWayViewports: number[][];
         stereoViewports: number[][];
         threeWayQuats: quat4[];
@@ -2482,7 +2483,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const yaxis = vec3.create();
         vec3.set(yaxis, 0.0, -1.0, 0.0)
 
-        const angle = 6./180.*Math.PI;
+        const angle = 3./180.*Math.PI;
 
         const dval3_p = Math.cos(angle / 2.0);
         const dval0_y_p = yaxis[0] * Math.sin(angle / 2.0);
@@ -2595,6 +2596,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.depthPeelRenderbufferDepth = [];
         this.depthPeelRenderbufferColor = [];
         this.currentViewport = [0,0, 400,400];
+        this.currentAnaglyphColor = [1.0,0.0,0.0,1.0]
 
         setInterval(() => {
             if(!self.gl) return;
@@ -3115,6 +3117,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl = glc.gl;
         this.WEBGL2 = glc.WEBGL2;
         this.currentViewport = [0,0, this.gl.viewportWidth, this.gl.viewportWidth];
+        this.currentAnaglyphColor = [1.0,0.0,0.0,1.0]
         if(this.WEBGL2){
             this.max_elements_indices = this.gl.getParameter(this.gl.MAX_ELEMENTS_INDICES)
         } else {
@@ -7286,6 +7289,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     }
                 }
                 if (this.WEBGL2) {
+                    if(this.doAnaglyphStereo) {
+                        this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
+                        this.gl.vertexAttribDivisor(theShader.vertexColourAttribute,0);
+                        this.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...this.currentAnaglyphColor)
+                    }
                     this.gl.drawElementsInstanced(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0, theBuffer.triangleInstanceOriginBuffer[j].numItems);
                 } else {
                     this.instanced_ext.drawElementsInstancedANGLE(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0, theBuffer.triangleInstanceOriginBuffer[j].numItems);
@@ -7335,6 +7343,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             } else {
                 const theShader = theShaderIn as MGWebGLShader;
                 if (this.WEBGL2) {
+                    if(this.doAnaglyphStereo) {
+                        this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
+                        this.gl.vertexAttribDivisor(theShader.vertexColourAttribute,0);
+                        this.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...this.currentAnaglyphColor)
+                    }
                     this.drawMaxElementsUInt(vertexType, drawBuffer.numItems);
                 } else {
                     this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0);
@@ -7353,6 +7366,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
                         this.applySymmetryMatrix(theShader,theBuffer.symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix)
                         if (this.WEBGL2) {
+                            if(this.doAnaglyphStereo) {
+                                this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
+                                this.gl.vertexAttribDivisor(theShader.vertexColourAttribute,0);
+                                this.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...this.currentAnaglyphColor)
+                            }
                             this.drawMaxElementsUInt(vertexType, drawBuffer.numItems);
                         } else {
                             this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0);
@@ -8240,6 +8258,20 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     invMat = this.GLrender(false);
                 }
             }
+            if(this.doAnaglyphStereo){
+                const origQuat = quat4.clone(this.myQuat);
+                const quats = this.stereoQuats
+
+                for(let i=0;i<quats.length;i++){
+                    const newXQuat = quat4.clone(origQuat);
+                    quat4.multiply(newXQuat, newXQuat, quats[i]);
+                    this.myQuat = newXQuat
+                    this.currentAnaglyphColor = i===0 ? [1.0,0.0,0.0,1.0] : [0.0,1.0,0.0,1.0]
+                    const doClear = i===0 ? true : false
+                    invMat = this.GLrender(false,doClear);
+                }
+                this.myQuat = origQuat
+            }
         }
 
         if(this.doPeel){//Do depth peel
@@ -9102,6 +9134,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.drawTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive, this.displayBuffers[idx].transformOriginInteractive, this.displayBuffers[idx], this.shaderProgram, this.gl.TRIANGLE_STRIP, j);
                     } else {
                         if (this.ext) {
+                        if(this.doAnaglyphStereo) {
+                            this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
+                            this.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...this.currentAnaglyphColor)
+                        }
                             this.gl.drawElements(this.gl.TRIANGLE_STRIP, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_INT, 0);
                         } else {
                             this.gl.drawElements(this.gl.TRIANGLE_STRIP, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_SHORT, 0);
@@ -9267,6 +9303,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                                 const hoverSize = this.hoverSize + 0.4;
                                 this.gl.vertexAttrib3f(program.sizeAttribute, hoverSize, hoverSize, hoverSize, 1.0);
                             }
+                            if(this.doAnaglyphStereo) {
+                                this.gl.disableVertexAttribArray(program.vertexColourAttribute);
+                                this.gl.vertexAttribDivisor(program.vertexColourAttribute,0);
+                                this.gl.vertexAttrib4f(program.vertexColourAttribute, ...this.currentAnaglyphColor)
+                            }
                             this.gl.drawElementsInstanced(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
                             if(program.vertexColourAttribute!=null) this.gl.vertexAttribDivisor(program.vertexColourAttribute, 0);
                             this.gl.vertexAttribDivisor(program.sizeAttribute, 0);
@@ -9311,6 +9352,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
                                 this.applySymmetryMatrix(program,this.displayBuffers[idx].symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix,false)
                                     if (this.WEBGL2) {
+                                        if(this.doAnaglyphStereo) {
+                                            this.gl.disableVertexAttribArray(program.vertexColourAttribute);
+                                            this.gl.vertexAttribDivisor(program.vertexColourAttribute,0);
+                                            this.gl.vertexAttrib4f(program.vertexColourAttribute, ...this.currentAnaglyphColor)
+                                        }
                                         this.gl.drawElementsInstanced(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
                                     } else {
                                         this.instanced_ext.drawElementsInstancedANGLE(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
@@ -9494,6 +9540,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             this.drawTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive, this.displayBuffers[idx].transformOriginInteractive, buffer, sphereProgram, this.gl.TRIANGLES, j);
                         } else {
                             if (this.ext) {
+                                if(this.doAnaglyphStereo) {
+                                    this.gl.disableVertexAttribArray(sphereProgram.vertexColourAttribute);
+                                    this.gl.vertexAttribDivisor(sphereProgram.vertexColourAttribute,0);
+                                    this.gl.vertexAttrib4f(sphereProgram.vertexColourAttribute, ...this.currentAnaglyphColor)
+                                }
                                 this.drawMaxElementsUInt(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems);
                             } else {
                                 this.gl.drawElements(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_SHORT, 0);
@@ -9514,6 +9565,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             this.drawTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive, this.displayBuffers[idx].transformOriginInteractive, buffer, sphereProgram, this.gl.TRIANGLES, j);
                         } else {
                             if (this.ext) {
+                                if(this.doAnaglyphStereo) {
+                                    this.gl.disableVertexAttribArray(sphereProgram.vertexColourAttribute);
+                                    this.gl.vertexAttribDivisor(sphereProgram.vertexColourAttribute,0);
+                                    this.gl.vertexAttrib4f(sphereProgram.vertexColourAttribute, ...this.currentAnaglyphColor)
+                                }
                                 this.drawMaxElementsUInt(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems);
                             } else {
                                 this.gl.drawElements(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_SHORT, 0);

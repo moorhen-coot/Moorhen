@@ -8,15 +8,6 @@ import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 
 export const MoorhenLayoutSettings = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> }) => {
 
-    const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering)
-    const drawScaleBar = useSelector((state: moorhen.State) => state.sceneSettings.drawScaleBar)
-    const drawCrosshairs = useSelector((state: moorhen.State) => state.sceneSettings.drawCrosshairs)
-    const drawFPS = useSelector((state: moorhen.State) => state.sceneSettings.drawFPS)
-    const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops)
-    const drawAxes = useSelector((state: moorhen.State) => state.sceneSettings.drawAxes)
-    const drawEnvBOcc = useSelector((state: moorhen.State) => state.sceneSettings.drawEnvBOcc)
-    const doPerspectiveProjection = useSelector((state: moorhen.State) => state.sceneSettings.doPerspectiveProjection)
-    const doSpin = useSelector((state: moorhen.State) => state.sceneSettings.doSpin)
     const doAnaglyphStereo = useSelector((state: moorhen.State) => state.sceneSettings.doAnaglyphStereo)
     const doCrossEyedStereo = useSelector((state: moorhen.State) => state.sceneSettings.doCrossEyedStereo)
     const doSideBySideStereo = useSelector((state: moorhen.State) => state.sceneSettings.doSideBySideStereo)
@@ -63,7 +54,6 @@ export const MoorhenLayoutSettings = (props: { setPopoverIsShown: React.Dispatch
                 </InputGroup>
                 <InputGroup className='moorhen-input-group-check'>
                     <Form.Check
-                        disabled
                         type="radio"
                         name="multiview"
                         defaultChecked={doAnaglyphStereo}
