@@ -418,7 +418,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         dispatch(setPositiveMapColours({molNo: props.map.molNo, rgb: positiveMapColour}))
         // Show map only if specified
         if (props.map.showOnLoad) {
-            dispatch(showMap(props.map))
+            dispatch(showMap(props.map)) 
         }
     }, [])
 

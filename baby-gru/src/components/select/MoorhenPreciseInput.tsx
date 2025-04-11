@@ -1,5 +1,5 @@
-import React, { forwardRef, useEffect, useState } from "react";
-import { Form } from "react-bootstrap";
+import { useEffect, useState } from "react";
+import { Form, Stack } from "react-bootstrap";
 
 type MoorhenPreciseInputPropsType = {
     onEnter?: (newVal: string) => void;
@@ -8,9 +8,7 @@ type MoorhenPreciseInputPropsType = {
     decimalDigits?: number;
     label?: string;
     disabled?: boolean;
-    width?: string;
-    margin?: string;
-    padding?: string;
+    width?: number;
 };
 
 export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
@@ -19,9 +17,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         decimalDigits: 2,
         label: "Input",
         disabled: false,
-        width: "",
-        margin: "",
-        padding: "",
+        width: 60,
     };
 
     const {
@@ -30,8 +26,6 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         label,
         disabled,
         width,
-        margin,
-        padding,
     } = {
         ...defaultProps,
         ...props,
@@ -61,51 +55,53 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         return true;
     };
 
+    const handleChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
+        setValue(evt.target.value);
+        const _isValid = checkIsValidInput(evt.target.value);
+        setIsValidInput(_isValid);
+        if (!_isValid) {
+            console.log("Invalid input");
+        }
+    }
+
+    const handleReturn = (evt: React.KeyboardEvent<HTMLInputElement>) => {
+        if (evt.key === "Enter" && isValidInput) {
+            props.onEnter?.(value);
+        }
+    }
+
     return (
-        <Form.Group
-            className="moorhen-form-group"
-            controlId="MoorhenNumberForm"
-            style={{
-                padding: 0,
-                margin: margin,
-                width: width,
-                display: "flex",
-                alignItems: "center",
-            }}
-        >
+        <Stack 
+            direction="horizontal" 
+            gap={1} 
+            >
             <Form.Label
-                style={{ color: disabled ? "grey" : "", padding: 0, margin: 0 }}
+                style={{
+                    color: disabled ? "grey" : "",
+                    padding: 0, 
+                    margin: 0,  
+                    display: "inline", 
+                }}
             >
                 {label}
             </Form.Label>
             <Form.Control
                 type="text"
-                defaultValue={currentValue}
                 disabled={disabled}
                 value={value}
                 style={{
                     color: disabled ? "grey" : "",
                     borderColor: isValidInput ? "#ced4da" : "red",
-                    borderBottom: "1px solid #ced4da",
+                    borderStyle: isValidInput ? "none" : "solid", 
+                    borderBottom: isValidInput ?"2px solid #ced4da" : "1px solid red",
                     height: 30,
-                    width: 60,
-                    padding: 5,
-                    borderStyle: isValidInput ? "none" : "solid",                 
+                    width:  width,
+                    padding: 2,
+                    margin: 0,                
                 }}
-                onChange={(evt) => {
-                    setValue(evt.target.value);
-                    const _isValid = checkIsValidInput(evt.target.value);
-                    setIsValidInput(_isValid);
-                    if (!_isValid) {
-                        console.log("Invalid input");
-                    }
-                }}
-                onKeyDown={(evt) => {
-                    if (evt.key === "Enter" && isValidInput) {
-                        props.onEnter?.(value);
-                    }
-                }}
+                onChange={handleChange}
+                onKeyDown={handleReturn}
             />
-        </Form.Group>
+        </Stack>
     );
 };
