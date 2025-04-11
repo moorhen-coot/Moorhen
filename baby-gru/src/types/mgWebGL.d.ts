@@ -202,6 +202,7 @@ export namespace webGL {
         createEdgeDetectFramebufferBuffer(width : number,height : number) : void;
         recreateOffScreeenBuffers(width: number,  height: number) : void;
         recreateDepthPeelBuffers(width: number,  height: number) : void;
+        getThreeWayMatrixAndViewPort(x:number,yp:number,quats:quat[],viewports:number[][]) : {"mat":number[],"viewport":number[],quat:quat}
         createSimpleBlurOffScreeenBuffers() : void;
         draggableMolecule: moorhen.Molecule
         activeMolecule: moorhen.Molecule

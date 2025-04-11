@@ -1836,6 +1836,13 @@ function createQuatFromDXAngle(angle_in, axis) {
     return q;
 }
 
+function createQuatFromAngle(angle_in,axis) {
+    let angle = angle_in * Math.PI / 180.0;
+    let q = quat4.create();
+    quat4.set(q, Math.sin(angle / 2.0)*axis[0], Math.sin(angle / 2.0)*axis[1], Math.sin(angle / 2.0)*axis[2], Math.cos(angle / 2.0));
+    return q;
+}
+
 function createXQuatFromDX(angle_in) {
     let angle = angle_in * Math.PI / 180.0;
     let q = quat4.create();
@@ -2495,7 +2502,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.stereoQuats.push(rotY_p)
         this.stereoQuats.push(rotY_m)
-        
+
     }
 
     setupThreeWayTransformations() : void {
@@ -10272,6 +10279,28 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.measureTextCanvasTexture.clearBigTexture()
     }
 
+    getThreeWayMatrixAndViewPort(x,yp,quats,viewports){
+        const newQuat = quat4.clone(this.myQuat);
+        let mvMatrix = []
+        let viewportArray = []
+        let theQuat
+        for(let i=0;i<viewports.length;i++){
+            if(x>=viewports[i][0]&&x<(viewports[i][0]+viewports[i][2])&&
+               yp>=viewports[i][1]&&yp<(viewports[i][1]+viewports[i][3])){
+                viewportArray = viewports[i]
+                const theMatrix = mat4.create()
+                mat4.translate(theMatrix, theMatrix, [0, 0, -this.fogClipOffset]);
+                quat4.multiply(newQuat, newQuat, quats[i]);
+                const theRotMatrix = quatToMat4(newQuat);
+                mat4.multiply(theMatrix, theMatrix, theRotMatrix);
+                mat4.translate(theMatrix, theMatrix, this.origin);
+                mvMatrix = theMatrix
+                theQuat = quats[i]
+            }
+        }
+       return {"mat":mvMatrix,"viewport":viewportArray,quat:theQuat}
+    }
+
     getAtomFomMouseXY(event, self) {
         let x;
         let y;
@@ -10297,7 +10326,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             0, 0, this.gl.viewportWidth, this.gl.viewportHeight
         ];
         let mvMatrix = mat4.clone(this.mvMatrix)
-        const newQuat = quat4.clone(this.myQuat);
 
         const yp = this.canvas.height - y
 
@@ -10316,19 +10344,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 viewports = this.stereoViewports
             }
 
-            for(let i=0;i<viewports.length;i++){
-                if(x>=viewports[i][0]&&x<(viewports[i][0]+viewports[i][2])&&
-                   yp>=viewports[i][1]&&yp<(viewports[i][1]+viewports[i][3])){
-                    viewportArray = viewports[i]
-                    const theMatrix = mat4.create()
-                    mat4.translate(theMatrix, theMatrix, [0, 0, -this.fogClipOffset]);
-                    quat4.multiply(newQuat, newQuat, quats[i]);
-                    const theRotMatrix = quatToMat4(newQuat);
-                    mat4.multiply(theMatrix, theMatrix, theRotMatrix);
-                    mat4.translate(theMatrix, theMatrix, this.origin);
-                    mvMatrix = theMatrix
-                }
-            }
+            const mVPQ = this.getThreeWayMatrixAndViewPort(x,yp,quats,viewports)
+            mvMatrix = mVPQ.mat
+            viewportArray = mVPQ.viewport
         }
 
         // The results of the operation will be stored in this array.
@@ -12104,6 +12122,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
             x -= offset.left;
             y -= offset.top;
+            x *= getDeviceScale();
+            y *= getDeviceScale();
 
             this.gl_cursorPos[0] = x;
             this.gl_cursorPos[1] = this.canvas.height - y;
@@ -12183,11 +12203,26 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             quat4.multiply(self.myQuat, self.myQuat, zQ);
 
         } else if (event.buttons === 1) {
-            let xQ = createXQuatFromDX(-self.dy);
-            let yQ = createYQuatFromDY(-self.dx);
-            //console.log(xQ);
-            //console.log(yQ);
+
+            const rot_x_axis = vec3.create()
+            const rot_y_axis = vec3.create()
+            vec3.set(rot_x_axis, 1.0, 0.0, 0.0);
+            vec3.set(rot_y_axis, 0.0, 1.0, 0.0);
+
+            if(this.doThreeWayView){
+                const quats = this.threeWayQuats
+                const viewports = this.threeWayViewports
+                const mVPQ = this.getThreeWayMatrixAndViewPort(this.gl_cursorPos[0],this.gl_cursorPos[1],quats,viewports)
+                const theRotMatrix = quatToMat4(mVPQ.quat);
+                mat4.invert(theRotMatrix,theRotMatrix)
+                vec3.transformMat4(rot_x_axis, rot_x_axis, theRotMatrix);
+                vec3.transformMat4(rot_y_axis, rot_y_axis, theRotMatrix);
+            }
+
+            let xQ = createQuatFromAngle(-self.dy,rot_x_axis);
+            let yQ = createQuatFromAngle(-self.dx,rot_y_axis);
             quat4.multiply(xQ, xQ, yQ);
+
             if (this.currentlyDraggedAtom) {
 
                 // ###############
