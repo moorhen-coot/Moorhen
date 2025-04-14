@@ -11869,28 +11869,31 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let lastPoint = null;
         let lastLastPoint = null;
 
-        this.measurePointsArray.forEach(point => {
-            if(lastPoint){
-                const dist = Math.sqrt(this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(point.x-lastPoint.x) * this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(point.x-lastPoint.x) + this.zoom*(point.y-lastPoint.y) * this.zoom*(point.y-lastPoint.y));
-                const mid_point = {x:(point.x+lastPoint.x)/2,y:(point.y+lastPoint.y)/2}
-                drawString(dist.toFixed(1)+"Å", mid_point.x*ratio, -mid_point.y, 0.0, "22px helvetica", false);
-                if(lastLastPoint){
-                    let l1 = {x:(point.x-lastPoint.x),y:(point.y-lastPoint.y)}
-                    l1.x /= dist / this.zoom;
-                    l1.y /= dist / this.zoom;
-                    const dist2 = Math.sqrt(this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(lastLastPoint.x-lastPoint.x) * this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(lastLastPoint.x-lastPoint.x) + this.zoom*(lastLastPoint.y-lastPoint.y) * this.zoom*(lastLastPoint.y-lastPoint.y));
-                    let l2 = {x:(lastLastPoint.x-lastPoint.x),y:(lastLastPoint.y-lastPoint.y)}
-                    l2.x /= dist2 / this.zoom;
-                    l2.y /= dist2 / this.zoom;
-                    const l1_dot_l2 = this.gl.viewportWidth / this.gl.viewportHeight*this.gl.viewportWidth / this.gl.viewportHeight*l1.x*l2.x + l1.y*l2.y;
-                    const angle = Math.acos(l1_dot_l2) / Math.PI * 180.;
-                    const angle_t = angle.toFixed(1)+"º";
-                    drawString(angle_t, lastPoint.x*ratio, -lastPoint.y, 0.0, "22px helvetica", false);
+        if(!this.doThreeWayView&&!this.doCrossEyedStereo&&!this.doSideBySideStereo){
+
+            this.measurePointsArray.forEach(point => {
+                if(lastPoint){
+                    const dist = Math.sqrt(this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(point.x-lastPoint.x) * this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(point.x-lastPoint.x) + this.zoom*(point.y-lastPoint.y) * this.zoom*(point.y-lastPoint.y));
+                    const mid_point = {x:(point.x+lastPoint.x)/2,y:(point.y+lastPoint.y)/2}
+                    drawString(dist.toFixed(1)+"Å", mid_point.x*ratio, -mid_point.y, 0.0, "22px helvetica", false);
+                    if(lastLastPoint){
+                        let l1 = {x:(point.x-lastPoint.x),y:(point.y-lastPoint.y)}
+                        l1.x /= dist / this.zoom;
+                        l1.y /= dist / this.zoom;
+                        const dist2 = Math.sqrt(this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(lastLastPoint.x-lastPoint.x) * this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(lastLastPoint.x-lastPoint.x) + this.zoom*(lastLastPoint.y-lastPoint.y) * this.zoom*(lastLastPoint.y-lastPoint.y));
+                        let l2 = {x:(lastLastPoint.x-lastPoint.x),y:(lastLastPoint.y-lastPoint.y)}
+                        l2.x /= dist2 / this.zoom;
+                        l2.y /= dist2 / this.zoom;
+                        const l1_dot_l2 = this.gl.viewportWidth / this.gl.viewportHeight*this.gl.viewportWidth / this.gl.viewportHeight*l1.x*l2.x + l1.y*l2.y;
+                        const angle = Math.acos(l1_dot_l2) / Math.PI * 180.;
+                        const angle_t = angle.toFixed(1)+"º";
+                        drawString(angle_t, lastPoint.x*ratio, -lastPoint.y, 0.0, "22px helvetica", false);
+                    }
+                    lastLastPoint = lastPoint;
                 }
-                lastLastPoint = lastPoint;
-            }
-            lastPoint = point;
-        })
+                lastPoint = point;
+            })
+        }
 
         if(this.showShortCutHelp) {
             const fontSize = this.gl.viewportHeight * 0.018
@@ -11995,6 +11998,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     doMouseDownMeasure(evt, self) {
+
+        if(this.doThreeWayView||this.doCrossEyedStereo||this.doSideBySideStereo){
+            return
+        }
 
         const measure_click_tol = 1.0;
 
