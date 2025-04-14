@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { MoorhenPreciseInput } from "../select/MoorhenPreciseInput";
+import { MoorhenPreciseInput } from "./MoorhenPreciseInput";
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
@@ -7,7 +7,8 @@ import { IconButton } from "@mui/material";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Slider from "@mui/material/Slider";
-import { clampValue } from "./helpers";
+import { clampValue } from "../misc/helpers";
+import './inputs.css';
 
 type MoorhenSliderProps = {
     logScale?: boolean;

@@ -10,7 +10,7 @@ import { MoorhenSetMapWeight } from "../menu-item/MoorhenSetMapWeight"
 import { MoorhenScaleMap } from "../menu-item/MoorhenScaleMap"
 import { MoorhenMapInfoCard } from "../card/MoorhenMapInfoCard"
 import { MoorhenMapHistogram } from "../misc/MoorhenMapHistogram"
-import { MoorhenSlider } from "../misc/MoorhenSlider-new";
+import { MoorhenSlider } from "../inputs/MoorhenSlider-new";
 import { Accordion, AccordionDetails, AccordionSummary, IconButton, MenuItem, Popover, Tooltip } from "@mui/material"
 import { HexColorInput, RgbColorPicker } from "react-colorful"
 import { moorhen } from "../../types/moorhen"
@@ -20,7 +20,7 @@ import { addMap } from "../../store/mapsSlice";
 import { hideMap, setContourLevel, changeContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle, setNegativeMapColours, setPositiveMapColours, showMap, changeMapRadius } from "../../store/mapContourSettingsSlice";
 import { useSnackbar } from "notistack";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
-import { MoorhenPreciseInput } from "../select/MoorhenPreciseInput";
+import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput";
 import Box from '@mui/material/Box';
 
 type ActionButtonType = {

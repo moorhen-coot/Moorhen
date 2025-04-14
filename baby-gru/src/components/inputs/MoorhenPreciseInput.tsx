@@ -58,9 +58,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         setValue(evt.target.value);
         const _isValid = checkIsValidInput(evt.target.value);
         setIsValidInput(_isValid);
-        if (!_isValid) {
-            console.log("Invalid input");
-        }
+
     }
 
     const handleReturn = (evt: React.KeyboardEvent<HTMLInputElement>) => {
@@ -86,12 +84,6 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
             style= {{alignItems: "center"}}
             >
             <Form.Label
-                style={{
-                    color: disabled ? "grey" : "",
-                    padding: 0, 
-                    margin: 0,  
-                    display: "inline", 
-                }}
             >
                 {label}
             </Form.Label>
@@ -99,20 +91,9 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
                 type="text"
                 disabled={disabled}
                 value={value}
-                style={{
-                    color: disabled ? "grey" : "",
-                    borderColor: isValidInput ? "#ced4da" : "red",
-                    borderTop: isValidInput ? "none" : "1px solid red",
-                    borderLeft: isValidInput ? "none" : "1px solid red" ,
-                    borderBottom: isValidInput ?"2px solidrgb(128, 141, 153)" : "1px solid red",
-                    height: 30,
-                    width:  width,
-                    padding: 0,
-                    paddingLeft: 4,
-                    paddingBottom: 1,
-                    marginBottom: 0,
-                    marginLeft: 2,                
-                }}
+                className={`
+                    ${isValidInput ? 'moorhen-input-valid' : 'moorhen-input-invalid'}`}
+                style = {{width: width}}
                 onChange={handleChange}
                 onKeyDown={handleReturn}
             />

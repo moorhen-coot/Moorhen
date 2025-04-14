@@ -1,0 +1,27 @@
+/* General styles for the input */
+.moorhen-input {
+    height: 30px;
+    padding: 0;
+    padding-left: 4px;
+    padding-bottom: 1px;
+    margin-bottom: 0;
+    margin-left: 2px;
+    width: 50px; /* Default width */
+    color: black;
+    border: 1px solid #ced4da; /* Default border */
+}
+
+/* Disabled input styles */
+.moorhen-input-disabled {
+    color: grey;
+}
+
+/* Valid input styles */
+.moorhen-input-valid {
+    border-color: #ced4da;
+}
+
+/* Invalid input styles */
+.moorhen-input-invalid {
+    border-color:  "red";
+}

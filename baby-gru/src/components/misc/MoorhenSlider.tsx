@@ -1,5 +1,5 @@
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { MoorhenPreciseInput } from "../select/MoorhenPreciseInput";
+import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput";
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Slider from '@mui/material/Slider';
