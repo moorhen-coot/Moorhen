@@ -12,7 +12,7 @@ A JavaScript molecular graphics program
   - [x] Atom hovering, etc. working in side-by-side, cross-eyed stereo
   - [x] Rotate working in 3-way view
   - [x] Basic Anaglyph stereo
-  - [ ] Disable 'a'-clicking in 3-way view and stereo.
+  - [x] Disable 'a'-clicking in 3-way view and stereo.
 
 ### Todo
 - [ ] Fitting 5-letter ligand truncates name, e.g. A1LU6
