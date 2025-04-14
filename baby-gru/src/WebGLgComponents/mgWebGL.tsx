@@ -2899,7 +2899,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         //console.log("############################################################");
         //console.log("ssao blockSize",blockSize);
         //console.log(this.gl.getParameter(this.gl.MAX_UNIFORM_BUFFER_BINDINGS))
-        //console.log(this.gl.getParameter(this.gl.MAX_UNIFORM_BLOCK_SIZE	))
+        //console.log(this.gl.getParameter(this.gl.MAX_UNIFORM_BLOCK_SIZE))
         //console.log("############################################################");
         this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, this.ssaoKernelBuffer);
         this.gl.bufferData(this.gl.UNIFORM_BUFFER, blockSize, this.gl.DYNAMIC_DRAW);
@@ -7650,7 +7650,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer);
             this.gl.enable(this.gl.DEPTH_TEST);
             this.gl.depthFunc(this.gl.LESS);
-            this.gl.viewport(0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height);
+            const viewport_start_x = Math.trunc(this.currentViewport[0] * this.rttFramebuffer.width  / this.gl.viewportWidth)
+            const viewport_start_y = Math.trunc(this.currentViewport[1] * this.rttFramebuffer.height / this.gl.viewportHeight)
+            const viewport_width =   Math.trunc(this.currentViewport[2] * this.rttFramebuffer.width  / this.gl.viewportWidth)
+            const viewport_height =  Math.trunc(this.currentViewport[3] * this.rttFramebuffer.height / this.gl.viewportHeight)
+            this.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
+            console.log(this.currentViewport)
+            console.log([viewport_start_x,viewport_start_y,viewport_width,viewport_height])
             let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
         } else {
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
@@ -7755,10 +7761,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 } else {
                     const f = this.gl_clipPlane0[3]+this.fogClipOffset;
                     const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
-                    if(this.gl.viewportWidth > this.gl.viewportHeight){
-                        mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, -f, b);
+                    if(this.currentViewport[2] > this.currentViewport[3]){
+                        mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24 * ratio/ratioMult, 24 * ratio/ratioMult, -f, b);
                     } else {
-                        mat4.ortho(this.pMatrix, -24, 24 , -24, 24, -f, b);
+                        mat4.ortho(this.pMatrix, -24*ratioMult, 24*ratioMult, -24, 24, -f, b);
                     }
                 }
             } else {
@@ -11031,7 +11037,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         if(this.renderToTexture){
             if(this.gl.viewportWidth > this.gl.viewportHeight){
-        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+                let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
                 mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.0);
             } else {
                 mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
@@ -11185,7 +11191,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult
         if(this.renderToTexture){
             if(this.gl.viewportWidth > this.gl.viewportHeight){
-        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+                let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
                 mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.0);
             } else {
                 mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
