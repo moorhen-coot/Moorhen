@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import { MoorhenPreciseInput } from "../select/MoorhenPreciseInput";
-import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
-import { IconButton } from "@mui/material";
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
+import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
+import { IconButton } from "@mui/material";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Slider from "@mui/material/Slider";
