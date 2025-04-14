@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from "react-redux"
 import { moorhen } from "../../types/moorhen"
 import { setDoPerspectiveProjection, setDoSpin, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDrawScaleBar, setDrawEnvBOcc } from "../../store/sceneSettingsSlice"
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice"
-import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 
 export const MoorhenOtherSceneSettings = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> }) => {
 
