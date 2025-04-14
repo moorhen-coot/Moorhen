@@ -268,6 +268,18 @@ declare module 'moorhen' {
     function setDoShadow(arg0: boolean): any;
     module.exports = setDoShadow;
 
+    function setDoThreeWayView(arg0: boolean): any;
+    module.exports = setDoThreeWayView;
+
+    function setDoAnaglyphStereo(arg0: boolean): any;
+    module.exports = setDoAnaglyphStereo;
+
+    function setDoCrossEyedStereo(arg0: boolean): any;
+    module.exports = setDoCrossEyedStereo;
+
+    function setDoSideBySideStereo(arg0: boolean): any;
+    module.exports = setDoSideBySideStereo;
+
     function setDoSpin(arg0: boolean): any;
     module.exports = setDoSpin;
 

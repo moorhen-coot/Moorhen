@@ -1014,6 +1014,10 @@ export namespace moorhen {
             edgeDetectNormalScale: number;
             doOutline: boolean;
             doSpin: boolean;
+            doThreeWayView: boolean;
+            doSideBySideStereo: boolean;
+            doCrossEyedStereo: boolean;
+            doAnaglyphStereo: boolean;
             defaultBondSmoothness: number,
             resetClippingFogging: boolean;
             clipCap: boolean;

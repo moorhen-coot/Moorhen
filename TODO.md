@@ -1,15 +1,18 @@
 # Moorhen
 A JavaScript molecular graphics program
 
-### For 0.19.1
-- [ ] MrParse results viewing.
-- [ ] Side-by-side, cross-eyed, anaglyph stereo.
+### For 0.21.0
+- [ ] Multiple views for different molecules.
 
-### For 0.19.0
-- [x] Fix that info button on models shows nothing.
-- [x] Add a maps info button.
-- [x] Option to not embed data in session file - useful in CCPEM context.
-- [x] Fix 4oo8 symmetry.
+### For 0.20.0
+- [ ] Side-by-side, cross-eyed, anaglyph stereo.
+  - [x] Basic 3-way view
+  - [x] Basic Side-by-side/cross-eyed stereo
+  - [x] Atom hovering, etc. working in 3-way view
+  - [x] Atom hovering, etc. working in side-by-side, cross-eyed stereo
+  - [x] Rotate working in 3-way view
+  - [x] Basic Anaglyph stereo
+  - [x] Disable 'a'-clicking in 3-way view and stereo.
 
 ### Todo
 - [ ] Fitting 5-letter ligand truncates name, e.g. A1LU6
