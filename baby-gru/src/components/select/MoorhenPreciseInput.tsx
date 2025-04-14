@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { Form, Stack } from "react-bootstrap";
+import { Form } from "react-bootstrap";
+import Stack from '@mui/material/Stack';
+
 
 type MoorhenPreciseInputPropsType = {
     onEnter?: (newVal: string) => void;
@@ -31,9 +33,6 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         ...props,
     };
 
-    const [currentValue, setCurrentValue] = useState<string>(
-        props.setValue.toFixed(decimalDigits)
-    );
     const [value, setValue] = useState<string>(
         props.setValue.toFixed(decimalDigits)
     );
@@ -70,10 +69,21 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         }
     }
 
+    const normalBorder  = {                    
+        borderColor:  "red",
+        borderStyle:  "solid", 
+        borderBottom: "1px solid red",}
+    
+    const errorBorder =  {                    
+        borderColor:  "red",
+        borderStyle:  "solid", 
+        borderBottom:  "1px solid red",}
+
     return (
         <Stack 
-            direction="horizontal" 
-            gap={1} 
+            direction="row" 
+            spacing={1}
+            style= {{alignItems: "center"}}
             >
             <Form.Label
                 style={{
@@ -92,12 +102,16 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
                 style={{
                     color: disabled ? "grey" : "",
                     borderColor: isValidInput ? "#ced4da" : "red",
-                    borderStyle: isValidInput ? "none" : "solid", 
-                    borderBottom: isValidInput ?"2px solid #ced4da" : "1px solid red",
+                    borderTop: isValidInput ? "none" : "1px solid red",
+                    borderLeft: isValidInput ? "none" : "1px solid red" ,
+                    borderBottom: isValidInput ?"2px solidrgb(128, 141, 153)" : "1px solid red",
                     height: 30,
                     width:  width,
-                    padding: 2,
-                    margin: 0,                
+                    padding: 0,
+                    paddingLeft: 4,
+                    paddingBottom: 1,
+                    marginBottom: 0,
+                    marginLeft: 2,                
                 }}
                 onChange={handleChange}
                 onKeyDown={handleReturn}
