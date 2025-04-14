@@ -14,6 +14,7 @@ A JavaScript molecular graphics program
   - [x] Basic Anaglyph stereo
   - [x] Disable 'a'-clicking in 3-way view and stereo.
   - [ ] Have screenshot work with multiviews.
+  - [ ] User choice on multiview layout.
 
 ### Todo
 - [ ] Fitting 5-letter ligand truncates name, e.g. A1LU6
