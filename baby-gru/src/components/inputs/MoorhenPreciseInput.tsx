@@ -59,8 +59,6 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         setValue(evt.target.value);
         const _isValid = checkIsValidInput(evt.target.value);
         setIsValidInput(_isValid);
-        console.log("Is valid input:", _isValid);
-
     }
 
     const handleReturn = (evt: React.KeyboardEvent<HTMLInputElement>) => {

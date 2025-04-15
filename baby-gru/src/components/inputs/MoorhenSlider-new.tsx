@@ -14,9 +14,9 @@ type MoorhenSliderProps = {
     logScale?: boolean;
     minVal?: number;
     maxVal?: number;
-    initialValue: number;
-    externalValue: number;
-    setExternalValue?: (arg0: number) => void;
+    externalValue: number | [number, number];              // single value or range
+    setExternalValue?: (arg0:  number) => void;           // use externalValue for single value slide
+    setExternalRange?: (arg0:  [number, number]) => void; // use externalRange for range picker *this is the best typesafe way I found
     showSliderTitle?: boolean;
     sliderTitle?: string;
     decimalPlaces?: number;
@@ -52,7 +52,6 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         minVal,
         maxVal,
         logScale,
-        initialValue,
         decimalPlaces,
         showSliderTitle,
         sliderTitle,
@@ -64,23 +63,33 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         piWidth,
     } = { ...defaultProps, ...props };
 
-    const [value, setValue] = useState<number>(initialValue); // internal value
+    const [value, setValue] = useState<number | [number, number]>(props.externalValue); // internal value
+    
     const [externalValue, setExternalValue] = useState<number>(
-        props.externalValue
+        Array.isArray(props.externalValue) ? props.externalValue[0] : props.externalValue
+    );   
+    const [externalRange, setExternalRange] = useState<[number, number]>(
+        Array.isArray(props.externalValue) ? props.externalValue : [0, 1]
     );
 
+    const isRange = Array.isArray(props.externalValue); 
     const precision = Math.pow(10, - decimalPlaces);
 
-    useEffect(() => {
+    useEffect(function propagateValueToParent(){
         if (props.externalValue !== externalValue) {
             props.setExternalValue?.(externalValue);
         }
     }, [externalValue]);
-    
+ 
+    useEffect(function propagateRangeToParent(){
+        if (props.externalValue !== externalRange) {
+            props.setExternalRange?.(externalRange);
+        }
+    }
+    , [externalRange]);
 
     const handleChange = (event: Event, newValue: number) => {
-        console.log("something");
-        setValue(newValue); // internal value is not changed for logscale
+        setValue(newValue); // internal value is not changed by logscale = it is the positon on the slider
 
         if (logScale) {
             newValue = Math.pow(10, newValue);
@@ -96,7 +105,9 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
             return (
                 <span>
                     {sliderTitle}:{" "}
-                    {props.externalValue.toFixed(decimalPlaces)}
+                    {isRange
+                        ? `${props.externalValue[0].toFixed(decimalPlaces)} - ${props.externalValue[1].toFixed(decimalPlaces)}`
+                        : typeof props.externalValue === 'number' ? props.externalValue.toFixed(decimalPlaces) : ''}
                 </span>
             );
         } else
@@ -112,7 +123,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
                     <MoorhenPreciseInput
                         allowNegativeValues={minVal < 0}
                         label={sliderTitle + ":"}
-                        setValue={props.externalValue}
+                        setValue={isRange ? props.externalValue[0] : props.externalValue}   
                         onEnter={(newVal) => setExternalValue(+newVal)}
                         decimalDigits={decimalPlaces}
                         width={piWidth?  piWidth : 2.5+ 0.6*decimalPlaces +"rem"}
@@ -122,10 +133,11 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
             );
     };
 
+    
     const changeButton = (factor: number) => {
         if (!showButtons) {
             return <></>;
-        }
+        }/*
         
         const intervalRef = useRef(null);
 
@@ -157,7 +169,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
             >
                 {factor > 0 ? <AddCircleOutline /> : <RemoveCircleOutline />}
             </IconButton>
-        );
+        );*/
     };
 
     return (

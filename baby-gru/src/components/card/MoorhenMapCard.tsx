@@ -620,9 +620,10 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                         logScale={true}
                         showSliderTitle={false}
                         isDisabled={!mapIsVisible}
-                        initialValue={initialContour}
                         externalValue={mapContourLevel}
-                        setExternalValue={(newVal) => dispatch( setContourLevel({molNo: props.map.molNo, contourLevel: newVal}) )}
+                        setExternalValue={(newVal) => {
+                        dispatch(setContourLevel({ molNo: props.map.molNo, contourLevel: newVal }));
+                        }}
                     />
                         
                     </Form.Group>
@@ -636,9 +637,10 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                             logScale={false} 
                             sliderTitle="Radius" 
                             isDisabled={!mapIsVisible} 
-                            initialValue={initialRadius} 
                             externalValue={mapRadius} 
-                            setExternalValue={(newVal) => dispatch( setMapRadius({molNo: props.map.molNo, radius: newVal}) )}
+                            setExternalValue={(newVal) => {
+                                dispatch(setMapRadius({ molNo: props.map.molNo, radius: newVal }));
+                            }}
                             usePreciseInput={true}
                             //piWidth ={"2.5rem"}
                         />
