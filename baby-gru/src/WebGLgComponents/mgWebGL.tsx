@@ -2473,6 +2473,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         stereoViewports: number[][];
         threeWayQuats: quat4[];
         stereoQuats: quat4[];
+        multiWayViewports: number[][];
+        multiWayQuats: quat4[];
+        multiWayRatio: number;
 
     setupStereoTransformations() : void {
 
@@ -2503,6 +2506,118 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.stereoQuats.push(rotY_p)
         this.stereoQuats.push(rotY_m)
+
+    }
+
+    setupMultiWayTransformations() : void {
+        //This method is not ready for use yet!
+
+        const get_grid = (n,method="NEARSQUARE") => {
+            const f = Math.floor(Math.sqrt(n))
+            const c = Math.ceil(Math.sqrt(n))
+
+            if(method==="NEARSQUARE"){
+                if(f*c >= n)
+                    return [f,c]
+                else
+                    return [c,c]
+            }
+
+            let shapes = []
+
+            for(let i=1;i<=n;i++){
+                for(let j=1;j<=n;j++){
+                    if(i*j >= n && i*j <= c*c && Math.abs(i-j)<=f){
+                        if(i*j - n < n){
+                            let rem = i*j - n
+                            if(rem != i && rem != j){
+                                shapes.push([i,j,rem])
+                                break
+                            }
+                        }
+                    }
+                }
+            }
+
+            if(shapes.length===0){
+                if(f*c >= n)
+                    return [f,c]
+                else
+                    return [c,c]
+            }
+
+            let the_shape = shapes[0]
+            let minrem = n+1
+
+            shapes.forEach( (s) => {
+                if(s[2] < minrem){
+                    the_shape = s
+                    minrem = s[2]
+                } else if(s[2] == minrem && Math.abs(s[0]-s[1]) < Math.abs(the_shape[0]-the_shape[1])){
+                    the_shape = s
+                }
+            })
+
+            return [the_shape[0],the_shape[1]]
+        }
+
+        const wh = get_grid(12)
+        console.log(wh)
+
+        this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
+        this.multiWayViewports = []
+        this.multiWayQuats = []
+        this.multiWayViewports.push([0,                         0, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
+        this.multiWayViewports.push([this.gl.viewportWidth/4,   0, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
+        this.multiWayViewports.push([this.gl.viewportWidth/2,   0, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
+        this.multiWayViewports.push([3*this.gl.viewportWidth/4, 0, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
+        this.multiWayViewports.push([0,                         this.gl.viewportHeight/3, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
+        this.multiWayViewports.push([this.gl.viewportWidth/4,   this.gl.viewportHeight/3, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
+        this.multiWayViewports.push([this.gl.viewportWidth/2,   this.gl.viewportHeight/3, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
+        this.multiWayViewports.push([3*this.gl.viewportWidth/4, this.gl.viewportHeight/3, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
+        this.multiWayViewports.push([0,                         2*this.gl.viewportHeight/3, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
+        this.multiWayViewports.push([this.gl.viewportWidth/4,   2*this.gl.viewportHeight/3, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
+        this.multiWayViewports.push([this.gl.viewportWidth/2,   2*this.gl.viewportHeight/3, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
+        this.multiWayViewports.push([3*this.gl.viewportWidth/4, 2*this.gl.viewportHeight/3, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
+
+        const xaxis = vec3.create();
+        vec3.set(xaxis, 1.0, 0.0, 0.0)
+        const yaxis = vec3.create();
+        vec3.set(yaxis, 0.0, -1.0, 0.0)
+
+        const angle = -Math.PI/2.;
+
+        const dval3 = Math.cos(angle / 2.0);
+        const dval0_x = xaxis[0] * Math.sin(angle / 2.0);
+        const dval1_x = xaxis[1] * Math.sin(angle / 2.0);
+        const dval2_x = xaxis[2] * Math.sin(angle / 2.0);
+
+        const dval0_y = yaxis[0] * Math.sin(angle / 2.0);
+        const dval1_y = yaxis[1] * Math.sin(angle / 2.0);
+        const dval2_y = yaxis[2] * Math.sin(angle / 2.0);
+
+        const rotX = quat4.create();
+        const rotY = quat4.create();
+        const rotZ = quat4.create();
+
+        quat4.set(rotZ, 0, 0, 0, -1);
+        quat4.set(rotX, dval0_x, dval1_x, dval2_x, dval3);
+        quat4.set(rotY, dval0_y, dval1_y, dval2_y, dval3);
+
+        this.multiWayQuats.push(rotX)
+        this.multiWayQuats.push(rotY)
+        this.multiWayQuats.push(rotZ)
+        this.multiWayQuats.push(rotX)
+        this.multiWayQuats.push(rotY)
+        this.multiWayQuats.push(rotZ)
+        this.multiWayQuats.push(rotX)
+        this.multiWayQuats.push(rotY)
+        this.multiWayQuats.push(rotZ)
+        this.multiWayQuats.push(rotX)
+        this.multiWayQuats.push(rotY)
+        this.multiWayQuats.push(rotZ)
+
+        this.multiWayRatio = 0.75
 
     }
 
@@ -2542,6 +2657,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.threeWayQuats.push(rotX)
         this.threeWayQuats.push(rotY)
         this.threeWayQuats.push(rotZ)
+
+        /*
+        //HACKERY
+        this.setupMultiWayTransformations()
+        this.threeWayQuats = this.multiWayQuats
+        this.threeWayViewports = this.multiWayViewports
+        */
 
     }
 
