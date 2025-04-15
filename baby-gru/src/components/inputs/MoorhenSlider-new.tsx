@@ -27,7 +27,7 @@ type MoorhenSliderProps = {
     factorButtons?: number;
     isDisabled?: boolean;
     usePreciseInput?: boolean;
-    piParameters?: { decimalDigits: number; width: number };
+    piParameters?: { decimalDigits: number; width: string | number };
 };
 
 export const MoorhenSlider = (props: MoorhenSliderProps) => {
@@ -142,7 +142,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
 
     const drawTitle = () => {
         if (!showSliderTitle) {
-            return;
+            return <></>;
         }
         if (!usePreciseInput) {
             return (
@@ -170,6 +170,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
                         onEnter={(newVal) => setExternalValue(+newVal)}
                         decimalDigits={piParameters.decimalDigits}
                         width={piParameters.width}
+                        disabled={isDisabled}
                     />
                 </Box>
             );
@@ -177,8 +178,9 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
 
     const changeButton = (factor: number) => {
         if (!showButtons) {
-            return;
+            return <></>;
         }
+        
         const intervalRef = useRef(null);
 
         const handleMouseDown = () => {
@@ -203,7 +205,6 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         return (
             <IconButton
                 style={{ padding: 0, color: isDark ? "white" : "black" }}
-                onClick={() => setExternalValue((current) => current + factor)}
                 onMouseDown={handleMouseDown}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
@@ -228,16 +229,22 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
                 sx={{ mb: 1 }}
                 alignItems="center"
             >
-                {showMinMaxVal && minVal}
-                {changeButton(-factorButtons)}
+                <Stack direction="column" spacing={1}>
+                    {changeButton(-factorButtons) }
+                    {showMinMaxVal && minVal}
+                </Stack>
+                
                 <Slider
                     disabled={isDisabled}
                     value={value}
                     onChange={handleChange}
                 />
-                {changeButton(+factorButtons)}
+                <Stack direction="column" spacing={1}>
+                {changeButton(+factorButtons) }
                 {showMinMaxVal && maxVal}
+                </Stack>
             </Stack>
+
         </Box>
     );
 };
