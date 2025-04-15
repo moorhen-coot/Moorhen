@@ -595,7 +595,6 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                             setValue={mapContourLevel}
                             decimalDigits={props.map.isEM ? 4 : 2}
                             allowNegativeValues={true}
-                            width= {props.map.isEM ? "4.5rem" : "4rem"}
                             disabled={!mapIsVisible}
                         />
                         
@@ -606,19 +605,18 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                             label = {"RMSD:"} 
                             setValue={mapContourLevel / props.map.mapRmsd}
                             decimalDigits={2}
-                            width= {"4rem"}
                             disabled={!mapIsVisible}
                         /> 
                         )}
 
-                </Stack>
+                </Stack> 
                     <MoorhenSlider
-                        minVal={0.001}
+                        minVal={props.map.isEM ? 0.001 : 0.01}
                         maxVal={props.map.isEM ? 2 : 5}
                         showMinMaxVal={false}
-                        factorButtons={props.map.isEM ? 0.001 : 0.01}
+                        stepButtons={props.map.isEM ? 0.001 : 0.01}
+                        decimalPlaces={props.map.isEM ? 4 : 3}
                         showButtons={true}
-                        allowExternalFeedback={true}
                         logScale={true}
                         showSliderTitle={false}
                         isDisabled={!mapIsVisible}
@@ -634,17 +632,15 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                             maxVal={100}
                             showMinMaxVal={false}
                             showButtons={true}
-                            factorButtons={2}
-                            allowExternalFeedback={true} 
+                            stepButtons={1}
                             logScale={false} 
                             sliderTitle="Radius" 
-                            decimalPlaces={2} 
                             isDisabled={!mapIsVisible} 
                             initialValue={initialRadius} 
                             externalValue={mapRadius} 
                             setExternalValue={(newVal) => dispatch( setMapRadius({molNo: props.map.molNo, radius: newVal}) )}
                             usePreciseInput={true}
-                            piParameters={{ decimalDigits: 0, width: "2.5rem"}}
+                            //piWidth ={"2.5rem"}
                         />
                     </Form.Group>
                 </Col>

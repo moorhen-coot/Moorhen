@@ -80,7 +80,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
                 type="text"
                 disabled={disabled}
                 value={value}
-                style = {{width: width}}
+                style = {{width: width? width : 2.5+ 0.6*decimalDigits +"rem"}}
                 className={`precise-input ${isValidInput ? "valid" : "invalid"} ${disabled ? "disabled" : ""}`}
                 onChange={handleChange}
                 onKeyDown={handleReturn}

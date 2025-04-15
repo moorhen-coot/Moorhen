@@ -17,17 +17,15 @@ type MoorhenSliderProps = {
     initialValue: number;
     externalValue: number;
     setExternalValue?: (arg0: number) => void;
-    allowExternalFeedback?: boolean;
-    allowFloats?: boolean;
     showSliderTitle?: boolean;
     sliderTitle?: string;
     decimalPlaces?: number;
     showMinMaxVal?: boolean;
     showButtons?: boolean;
-    factorButtons?: number;
+    stepButtons?: number;
     isDisabled?: boolean;
     usePreciseInput?: boolean;
-    piParameters?: { decimalDigits: number; width: string | number };
+    piWidth?: string | number;
 };
 
 export const MoorhenSlider = (props: MoorhenSliderProps) => {
@@ -42,102 +40,52 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         showMinMaxVal: true,
         incrementButton: null,
         isDisabled: false,
-        allowFloats: true,
         showSliderTitle: true,
-        decimalPlaces: 3,
+        decimalPlaces: 0,
         decrementButton: null,
         allowExternalFeedback: true,
         usePreciseInput: false,
         showButtons: true,
-        factorButtons: 1,
-        piParameters: { decimalDigits: 2, width: 60 },
     };
 
     const {
-        logScale,
         minVal,
         maxVal,
+        logScale,
         initialValue,
-        allowExternalFeedback,
-        allowFloats,
+        decimalPlaces,
         showSliderTitle,
         sliderTitle,
-        decimalPlaces,
         showMinMaxVal,
         isDisabled,
         usePreciseInput,
         showButtons,
-        factorButtons,
-        piParameters,
+        stepButtons,
+        piWidth,
     } = { ...defaultProps, ...props };
 
-    const convertValueToScale = (
-        logScale: boolean,
-        minVal: number,
-        maxVal: number,
-        value: number
-    ) => {
-        if (logScale) {
-            return (
-                100 *
-                ((Math.log10(value) - Math.log10(minVal)) /
-                    (Math.log10(maxVal) - Math.log10(minVal)))
-            );
-        } else {
-            return (100 * (value - minVal)) / (maxVal - minVal);
-        }
-    };
-
-    const initValue = convertValueToScale(
-        logScale,
-        minVal,
-        maxVal,
-        initialValue
-    );
-    const [value, setValue] = useState<number>(initValue);
+    const [value, setValue] = useState<number>(initialValue); // internal value
     const [externalValue, setExternalValue] = useState<number>(
         props.externalValue
     );
+
+    const precision = Math.pow(10, - decimalPlaces);
 
     useEffect(() => {
         if (props.externalValue !== externalValue) {
             props.setExternalValue?.(externalValue);
         }
     }, [externalValue]);
-
-    /**
-     * This hook is necessary if we want the slider position to update when the value changes due to external
-     * components. However this can slow down things so better not to use it unless this is expected.
-     */
-    useEffect(() => {
-        if (allowExternalFeedback) {
-            setValue(
-                convertValueToScale(logScale, minVal, maxVal, externalValue)
-            );
-        }
-    }, [props.externalValue]);
+    
 
     const handleChange = (event: Event, newValue: number) => {
         console.log("something");
+        setValue(newValue); // internal value is not changed for logscale
 
-        setValue(allowFloats ? newValue : Math.round(newValue));
-
-        let newVal: number;
         if (logScale) {
-            const log10MaxVal = Math.log10(maxVal);
-            const log10MinVal = Math.log10(Math.max(minVal, 0.00000001));
-            const log10NewVal =
-                log10MinVal + (newValue / 100) * (log10MaxVal - log10MinVal);
-            newVal = Math.pow(10, log10NewVal);
-            if (!allowFloats) {
-                newVal = Math.round(newVal);
-            }
-        } else if (allowFloats) {
-            newVal = minVal + (newValue / 100) * (maxVal - minVal);
-        } else {
-            newVal = Math.round(minVal + (newValue / 100) * (maxVal - minVal));
+            newValue = Math.pow(10, newValue);
         }
-        setExternalValue(newVal);
+        setExternalValue(newValue);
     };
 
     const drawTitle = () => {
@@ -148,9 +96,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
             return (
                 <span>
                     {sliderTitle}:{" "}
-                    {allowFloats
-                        ? props.externalValue.toFixed(decimalPlaces)
-                        : props.externalValue}
+                    {props.externalValue.toFixed(decimalPlaces)}
                 </span>
             );
         } else
@@ -168,8 +114,8 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
                         label={sliderTitle + ":"}
                         setValue={props.externalValue}
                         onEnter={(newVal) => setExternalValue(+newVal)}
-                        decimalDigits={piParameters.decimalDigits}
-                        width={piParameters.width}
+                        decimalDigits={decimalPlaces}
+                        width={piWidth?  piWidth : 2.5+ 0.6*decimalPlaces +"rem"}
                         disabled={isDisabled}
                     />
                 </Box>
@@ -230,7 +176,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
                 alignItems="center"
             >
                 <Stack direction="column" spacing={1}>
-                    {changeButton(-factorButtons) }
+                    {changeButton( stepButtons ? -stepButtons :  -precision) }
                     {showMinMaxVal && minVal}
                 </Stack>
                 
@@ -238,9 +184,13 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
                     disabled={isDisabled}
                     value={value}
                     onChange={handleChange}
+                    min={logScale ? Math.log10(minVal) : minVal}
+                    max={logScale ? Math.log10(maxVal) : maxVal}
+                    step={precision}
                 />
+
                 <Stack direction="column" spacing={1}>
-                {changeButton(+factorButtons) }
+                {changeButton( stepButtons ? +stepButtons :  +precision) }
                 {showMinMaxVal && maxVal}
                 </Stack>
             </Stack>
