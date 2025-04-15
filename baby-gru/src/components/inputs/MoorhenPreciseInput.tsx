@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Form } from "react-bootstrap";
 import Stack from '@mui/material/Stack';
+import './inputs.css'
 
 
 type MoorhenPreciseInputPropsType = {
@@ -10,7 +11,7 @@ type MoorhenPreciseInputPropsType = {
     decimalDigits?: number;
     label?: string;
     disabled?: boolean;
-    width?: number;
+    width?: string | number;
 };
 
 export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
@@ -58,6 +59,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         setValue(evt.target.value);
         const _isValid = checkIsValidInput(evt.target.value);
         setIsValidInput(_isValid);
+        console.log("Is valid input:", _isValid);
 
     }
 
@@ -67,33 +69,19 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         }
     }
 
-    const normalBorder  = {                    
-        borderColor:  "red",
-        borderStyle:  "solid", 
-        borderBottom: "1px solid red",}
-    
-    const errorBorder =  {                    
-        borderColor:  "red",
-        borderStyle:  "solid", 
-        borderBottom:  "1px solid red",}
-
     return (
         <Stack 
             direction="row" 
             spacing={1}
             style= {{alignItems: "center"}}
             >
-            <Form.Label
-            >
-                {label}
-            </Form.Label>
+            {label}
             <Form.Control
                 type="text"
                 disabled={disabled}
                 value={value}
-                className={`
-                    ${isValidInput ? 'moorhen-input-valid' : 'moorhen-input-invalid'}`}
                 style = {{width: width}}
+                className={`precise-input ${isValidInput ? "valid" : "invalid"} ${disabled ? "disabled" : ""}`}
                 onChange={handleChange}
                 onKeyDown={handleReturn}
             />

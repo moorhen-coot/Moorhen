@@ -1,27 +1,37 @@
 /* General styles for the input */
-.moorhen-input {
-    height: 30px;
-    padding: 0;
-    padding-left: 4px;
-    padding-bottom: 1px;
-    margin-bottom: 0;
-    margin-left: 2px;
-    width: 50px; /* Default width */
-    color: black;
+.form-control.precise-input {
+    height: 2rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    margin: 0; 
+    box-sizing: border-box; /* Ensure padding and border are included in the width */
+    width: 100%; /* Ensure the input fits its container */
     border: 1px solid #ced4da; /* Default border */
 }
 
-/* Disabled input styles */
-.moorhen-input-disabled {
-    color: grey;
+.precise-input:focus {
+    outline: none; 
+    box-shadow: none; 
+    border-color: red;
 }
 
-/* Valid input styles */
-.moorhen-input-valid {
+.precise-input.valid {
     border-color: #ced4da;
+    border-top: none;
+    border-left: none;
+    border-bottom: 1px solid rgb(128, 141, 153);
 }
 
-/* Invalid input styles */
-.moorhen-input-invalid {
-    border-color:  "red";
+.precise-input.invalid {
+    border-color: red;
+    border-bottom: 1px solid red;
+}
+
+.precise-input.invalid:focus {
+    border-color: red; 
+    border-bottom: 1px solid red;
+}
+
+.precise-input.disabled {
+    color: grey;
 }

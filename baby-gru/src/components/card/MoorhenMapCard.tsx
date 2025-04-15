@@ -595,7 +595,8 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                             setValue={mapContourLevel}
                             decimalDigits={props.map.isEM ? 4 : 2}
                             allowNegativeValues={true}
-                            width= {60}
+                            width= {props.map.isEM ? "4.5rem" : "4rem"}
+                            disabled={!mapIsVisible}
                         />
                         
                         {props.map.mapRmsd && (
@@ -605,7 +606,8 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                             label = {"RMSD:"} 
                             setValue={mapContourLevel / props.map.mapRmsd}
                             decimalDigits={2}
-                            width= {50}
+                            width= {"4rem"}
+                            disabled={!mapIsVisible}
                         /> 
                         )}
 
@@ -642,6 +644,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                             externalValue={mapRadius} 
                             setExternalValue={(newVal) => dispatch( setMapRadius({molNo: props.map.molNo, radius: newVal}) )}
                             usePreciseInput={true}
+                            piParameters={{ decimalDigits: 0, width: "2.5rem"}}
                         />
                     </Form.Group>
                 </Col>
