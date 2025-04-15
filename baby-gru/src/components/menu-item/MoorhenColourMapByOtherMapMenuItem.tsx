@@ -6,6 +6,9 @@ import { webGL } from "../../types/mgWebGL";
 import { useSelector } from 'react-redux';
 import { Slider } from "@mui/material";
 import { Button } from "react-bootstrap";
+import { Checkbox } from "@mui/material";
+import { Stack } from "@mui/material";
+import  RangeSlider from "../inputs/MoorhenRangeSlider";
 
 export const MoorhenColourMapByOtherMapMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
@@ -19,6 +22,7 @@ export const MoorhenColourMapByOtherMapMenuItem = (props: {
     const minMaxValueRef = useRef<[number, number]>([27.5, 72.5])
 
     const [minMaxValue, setMinMaxValue]  = useState<[number, number]>([27.5, 72.5])
+    const [locRes, setLocRes] = useState<boolean>(false)
 
     const convertValue = (percentage: number, min: number = -2.0, max: number = 2.0) => {
         const value = (percentage / 100) * (max - min) + min
@@ -70,37 +74,45 @@ export const MoorhenColourMapByOtherMapMenuItem = (props: {
     const panelContent = <>
         <MoorhenMapSelect maps={maps} ref={mapSelectRef_1} label="Colour this map..." />
         <MoorhenMapSelect maps={maps} ref={mapSelectRef_2} label="By this map..."/>
-        <span style={{margin: '0.5rem'}}>Min/Max values</span>
-        <Slider
-            getAriaLabel={() => 'Min-Max values'}
-            value={minMaxValue}
-            onChange={handleMinMaxChange}
-            getAriaValueText={(value) => `${convertValue(value)}`}
-            valueLabelFormat={(value) => `${convertValue(value)}`}
-            valueLabelDisplay="on"
-            sx={{
-                marginTop: '1.5rem',
-                marginBottom: '1.2rem',
-                '& .MuiSlider-thumb[data-index="1"]': {
-                    '& .MuiSlider-valueLabel': {
-                        top: -1,
-                        fontSize: 14,
-                        fontWeight: 'bold',
-                        color: 'grey',
-                        backgroundColor: 'unset',
+        <Checkbox 
+        checked={locRes}
+        onChange = {(evt) => setLocRes(evt.target.checked)}       
+        /> 
+        <span style={{margin: '0.5rem'}}>Local resolution map</span>
+        <Stack direction="column" spacing={1} style={{alignItems: "center"}}>        
+            <span style={{margin: '0.5rem'}}>Min/Max values</span>
+            {/*<Slider
+                getAriaLabel={() => 'Min-Max values'}
+                value={minMaxValue}
+                onChange={handleMinMaxChange}
+                getAriaValueText={(value) => `${convertValue(value)}`}
+                valueLabelFormat={(value) => `${convertValue(value)}`}
+                valueLabelDisplay="on"
+                sx={{
+                    marginTop: '1.5rem',
+                    marginBottom: '1.2rem',
+                    '& .MuiSlider-thumb[data-index="1"]': {
+                        '& .MuiSlider-valueLabel': {
+                            top: -1,
+                            fontSize: 14,
+                            fontWeight: 'bold',
+                            color: 'grey',
+                            backgroundColor: 'unset',
+                        },
                     },
-                },
-                '& .MuiSlider-thumb[data-index="0"]': {
-                    '& .MuiSlider-valueLabel': {
-                        top:'3rem',
-                        fontSize: 14,
-                        fontWeight: 'bold',
-                        color: 'grey',
-                        backgroundColor: 'unset',
-                    },
-                }
-            }}
-        />
+                    '& .MuiSlider-thumb[data-index="0"]': {
+                        '& .MuiSlider-valueLabel': {
+                            top:'3rem',
+                            fontSize: 14,
+                            fontWeight: 'bold',
+                            color: 'grey',
+                            backgroundColor: 'unset',
+                        },
+                    }
+                }}
+            /> */}
+            <RangeSlider />
+        </Stack>
         <Button variant="primary" onClick={handleApply}>
             Apply
         </Button>
