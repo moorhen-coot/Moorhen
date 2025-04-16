@@ -157,7 +157,7 @@ export namespace webGL {
         set_clip_range(clipStart: number, clipEnd: number, update?: boolean) : void;
         resize(width: number, height: number) : void;
         setupThreeWayTransformations() : void;
-        setupMultiWayTransformations() : void;
+        setupMultiWayTransformations(nmols:number) : void;
         setupStereoTransformations() : void;
         setShadowDepthDebug(doShadowDepthDebug: boolean): void;
         setShadowsOn(doShadow: boolean): void;

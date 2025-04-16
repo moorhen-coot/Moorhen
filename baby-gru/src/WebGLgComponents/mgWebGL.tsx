@@ -2509,8 +2509,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
-    setupMultiWayTransformations() : void {
-        //This method is not ready for use yet!
+    setupMultiWayTransformations(nmols:number) : void {
 
         const get_grid = (n,method="NEARSQUARE") => {
             const f = Math.floor(Math.sqrt(n))
@@ -2561,63 +2560,25 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             return [the_shape[0],the_shape[1]]
         }
 
-        const wh = get_grid(12)
-        console.log(wh)
+        const wh = get_grid(nmols)
 
         this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
         this.multiWayViewports = []
         this.multiWayQuats = []
-        this.multiWayViewports.push([0,                         0, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
-        this.multiWayViewports.push([this.gl.viewportWidth/4,   0, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
-        this.multiWayViewports.push([this.gl.viewportWidth/2,   0, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
-        this.multiWayViewports.push([3*this.gl.viewportWidth/4, 0, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
-        this.multiWayViewports.push([0,                         this.gl.viewportHeight/3, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
-        this.multiWayViewports.push([this.gl.viewportWidth/4,   this.gl.viewportHeight/3, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
-        this.multiWayViewports.push([this.gl.viewportWidth/2,   this.gl.viewportHeight/3, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
-        this.multiWayViewports.push([3*this.gl.viewportWidth/4, this.gl.viewportHeight/3, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
-        this.multiWayViewports.push([0,                         2*this.gl.viewportHeight/3, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
-        this.multiWayViewports.push([this.gl.viewportWidth/4,   2*this.gl.viewportHeight/3, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
-        this.multiWayViewports.push([this.gl.viewportWidth/2,   2*this.gl.viewportHeight/3, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
-        this.multiWayViewports.push([3*this.gl.viewportWidth/4, 2*this.gl.viewportHeight/3, this.gl.viewportWidth/4, this.gl.viewportHeight/3])
 
-        const xaxis = vec3.create();
-        vec3.set(xaxis, 1.0, 0.0, 0.0)
-        const yaxis = vec3.create();
-        vec3.set(yaxis, 0.0, -1.0, 0.0)
-
-        const angle = -Math.PI/2.;
-
-        const dval3 = Math.cos(angle / 2.0);
-        const dval0_x = xaxis[0] * Math.sin(angle / 2.0);
-        const dval1_x = xaxis[1] * Math.sin(angle / 2.0);
-        const dval2_x = xaxis[2] * Math.sin(angle / 2.0);
-
-        const dval0_y = yaxis[0] * Math.sin(angle / 2.0);
-        const dval1_y = yaxis[1] * Math.sin(angle / 2.0);
-        const dval2_y = yaxis[2] * Math.sin(angle / 2.0);
-
-        const rotX = quat4.create();
-        const rotY = quat4.create();
         const rotZ = quat4.create();
-
         quat4.set(rotZ, 0, 0, 0, -1);
-        quat4.set(rotX, dval0_x, dval1_x, dval2_x, dval3);
-        quat4.set(rotY, dval0_y, dval1_y, dval2_y, dval3);
 
-        this.multiWayQuats.push(rotX)
-        this.multiWayQuats.push(rotY)
-        this.multiWayQuats.push(rotZ)
-        this.multiWayQuats.push(rotX)
-        this.multiWayQuats.push(rotY)
-        this.multiWayQuats.push(rotZ)
-        this.multiWayQuats.push(rotX)
-        this.multiWayQuats.push(rotY)
-        this.multiWayQuats.push(rotZ)
-        this.multiWayQuats.push(rotX)
-        this.multiWayQuats.push(rotY)
-        this.multiWayQuats.push(rotZ)
-
-        this.multiWayRatio = 0.75
+        for(let i=0;i<wh[0];i++){
+            for(let j=0;j<wh[1];j++){
+                console.log(i/wh[0],j/wh[1])
+                const frac_i = i/wh[0]
+                const frac_j = j/wh[1]
+                this.multiWayViewports.push([frac_i*this.gl.viewportWidth,frac_j*this.gl.viewportHeight, this.gl.viewportWidth/wh[0], this.gl.viewportHeight/wh[1]])
+                this.multiWayQuats.push(rotZ)
+            }
+        }
+        this.multiWayRatio = wh[1]/wh[0]
 
     }
 
@@ -2657,13 +2618,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.threeWayQuats.push(rotX)
         this.threeWayQuats.push(rotY)
         this.threeWayQuats.push(rotZ)
-
-        /*
-        //HACKERY
-        this.setupMultiWayTransformations()
-        this.threeWayQuats = this.multiWayQuats
-        this.threeWayViewports = this.multiWayViewports
-        */
 
     }
 
