@@ -20,7 +20,6 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         decimalDigits: 2,
         label: "Input",
         disabled: false,
-        width: 60,
     };
 
     const {
