@@ -7,7 +7,6 @@ import { useSelector } from 'react-redux';
 import { Button } from "react-bootstrap";
 import { Checkbox } from "@mui/material";
 import { Stack } from "@mui/material";
-import { MoorhenRangeSlider } from "../inputs/MoorhenRangeSlider";
 import { MoorhenSlider } from "../inputs/MoorhenSlider-new";
 
 export const MoorhenColourMapByOtherMapMenuItem = (props: {
@@ -78,14 +77,11 @@ export const MoorhenColourMapByOtherMapMenuItem = (props: {
             <span style={{margin: '0.5rem'}}>Min/Max values</span>
             <MoorhenSlider
                 externalValue={minMaxValue}
-                minVal={-2.0}
-                maxVal={2.0}
-                setExternalRange={(value) => {
-                    if (Array.isArray(value)) {
-                        setMinMaxValue(value as [number, number]);
-                    }
-                }}
-                sliderTitle= {"Min/Max"}
+                minVal={-4.0}
+                maxVal={4.0}
+                decimalPlaces={2}
+                setExternalValue={(value) => {setMinMaxValue(value as [number, number])}}
+                sliderTitle= {"Levels"}
                 usePreciseInput={true}
             />
         </Stack>

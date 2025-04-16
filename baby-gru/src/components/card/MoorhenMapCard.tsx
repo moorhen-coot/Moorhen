@@ -11,17 +11,21 @@ import { MoorhenScaleMap } from "../menu-item/MoorhenScaleMap"
 import { MoorhenMapInfoCard } from "../card/MoorhenMapInfoCard"
 import { MoorhenMapHistogram } from "../misc/MoorhenMapHistogram"
 import { MoorhenSlider } from "../inputs/MoorhenSlider-new";
-import { Accordion, AccordionDetails, AccordionSummary, IconButton, MenuItem, Popover, Tooltip } from "@mui/material"
+import { Accordion, AccordionDetails, AccordionSummary, MenuItem, Popover, Tooltip } from "@mui/material"
 import { HexColorInput, RgbColorPicker } from "react-colorful"
 import { moorhen } from "../../types/moorhen"
 import { useSelector, useDispatch, batch } from 'react-redux';
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMap } from "../../store/mapsSlice";
-import { hideMap, setContourLevel, changeContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle, setNegativeMapColours, setPositiveMapColours, showMap, changeMapRadius } from "../../store/mapContourSettingsSlice";
+import { hideMap, setContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle, setNegativeMapColours, setPositiveMapColours, showMap, changeMapRadius } from "../../store/mapContourSettingsSlice";
 import { useSnackbar } from "notistack";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput";
+import { getFirstNonZeroDigitIndex } from "../misc/helpers";
 import Box from '@mui/material/Box';
+
+
+
 
 type ActionButtonType = {
     label: string;
@@ -43,6 +47,8 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     }
 
     const { initialContour, initialRadius } = {...defaultProps, ...props}
+
+    const rmsdBasedPrecision = getFirstNonZeroDigitIndex(props.map.mapRmsd) -1
 
     const mapRadius = useSelector((state: moorhen.State) => {
         const map = state.mapContourSettings.mapRadii.find(item => item.molNo === props.map.molNo)
@@ -361,7 +367,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                 return
             }
 
-            let emScaling = props.map.isEM ? 0.001 : 0.01
+            let emScaling = props.map.isEM ? 10**-rmsdBasedPrecision : 0.01
             if (evt.detail.factor > 1) {
                 newMapContourLevel = mapContourLevel + contourWheelSensitivityFactor * emScaling 
             } else {
@@ -552,6 +558,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                 </OverlayTrigger>
     }
 
+
     return <Card ref={cardRef} className="px-0" style={{ display: 'flex', minWidth: convertRemToPx(28), marginBottom: '0.5rem', padding: '0' }} key={props.map.molNo}>
         <Card.Header style={{ padding: '0.1rem' }}>
             <Stack gap={2} direction='horizontal'>
@@ -593,7 +600,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                             onEnter = {(newVal) => dispatch( setContourLevel({molNo: props.map.molNo, contourLevel: +newVal}) )}
                             label = {"Level:"} 
                             setValue={mapContourLevel}
-                            decimalDigits={props.map.isEM ? 4 : 2}
+                            decimalDigits={props.map.isEM ? rmsdBasedPrecision +1 : 2}
                             allowNegativeValues={true}
                             disabled={!mapIsVisible}
                         />
@@ -611,11 +618,10 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
 
                 </Stack> 
                     <MoorhenSlider
-                        minVal={props.map.isEM ? 0.001 : 0.01}
-                        maxVal={props.map.isEM ? 2 : 5}
-                        showMinMaxVal={false}
-                        stepButtons={props.map.isEM ? 0.001 : 0.01}
-                        decimalPlaces={props.map.isEM ? 4 : 3}
+                        minVal={props.map.isEM ? 1 * props.map.mapRmsd : 0.01}
+                        maxVal={props.map.isEM ? 20 * props.map.mapRmsd : 5}
+                        showMinMaxVal={false}           
+                        decimalPlaces={props.map.isEM ? rmsdBasedPrecision : 3}
                         showButtons={true}
                         logScale={true}
                         showSliderTitle={false}
@@ -633,7 +639,6 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                             maxVal={100}
                             showMinMaxVal={false}
                             showButtons={true}
-                            stepButtons={1}
                             logScale={false} 
                             sliderTitle="Radius" 
                             isDisabled={!mapIsVisible} 
@@ -642,7 +647,6 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                                 dispatch(setMapRadius({ molNo: props.map.molNo, radius: newVal }));
                             }}
                             usePreciseInput={true}
-                            //piWidth ={"2.5rem"}
                         />
                     </Form.Group>
                 </Col>
