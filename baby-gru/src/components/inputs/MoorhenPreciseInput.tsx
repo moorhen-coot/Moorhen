@@ -18,7 +18,6 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
     const defaultProps = {
         allowNegativeValues: false,
         decimalDigits: 2,
-        label: "Input",
         disabled: false,
     };
 
@@ -72,12 +71,12 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
             spacing={1}
             style= {{alignItems: "center"}}
             >
-            {label}
+            {label? label : ""}
             <Form.Control
                 type="text"
                 disabled={disabled}
                 value={value}
-                style = {{width: width? width : 2.5+ 0.6*decimalDigits +"rem"}}
+                style = {{width: width? width : 2.5+ 0.6*decimalDigits +"rem", marginLeft: "0.2rem"}}
                 className={`precise-input ${isValidInput ? "valid" : "invalid"} ${disabled ? "disabled" : ""}`}
                 onChange={handleChange}
                 onKeyDown={handleReturn}

@@ -621,10 +621,9 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                         minVal={props.map.isEM ? 1 * props.map.mapRmsd : 0.01}
                         maxVal={props.map.isEM ? 20 * props.map.mapRmsd : 5}
                         showMinMaxVal={false}           
-                        decimalPlaces={props.map.isEM ? rmsdBasedPrecision : 3}
+                        decimalPlaces={props.map.isEM ? rmsdBasedPrecision +1 : 3}
                         showButtons={true}
                         logScale={true}
-                        showSliderTitle={false}
                         isDisabled={!mapIsVisible}
                         externalValue={mapContourLevel}
                         setExternalValue={(newVal) => {
@@ -640,11 +639,11 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                             showMinMaxVal={false}
                             showButtons={true}
                             logScale={false} 
-                            sliderTitle="Radius" 
+                            sliderTitle="Radius:" 
                             isDisabled={!mapIsVisible} 
                             externalValue={mapRadius} 
                             setExternalValue={(newVal) => {
-                                dispatch(setMapRadius({ molNo: props.map.molNo, radius: newVal }));
+                            dispatch(setMapRadius({ molNo: props.map.molNo, radius: newVal }));
                             }}
                             usePreciseInput={true}
                         />

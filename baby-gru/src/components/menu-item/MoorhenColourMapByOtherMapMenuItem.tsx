@@ -73,18 +73,17 @@ export const MoorhenColourMapByOtherMapMenuItem = (props: {
         onChange = {(evt) => setLocRes(evt.target.checked)}       
         /> 
         <span style={{margin: '0.5rem'}}>Local resolution map</span>
-        <Stack direction="column" spacing={1} style={{alignItems: "center"}}>        
-            <span style={{margin: '0.5rem'}}>Min/Max values</span>
-            <MoorhenSlider
-                externalValue={minMaxValue}
-                minVal={-4.0}
-                maxVal={4.0}
-                decimalPlaces={2}
-                setExternalValue={(value) => {setMinMaxValue(value as [number, number])}}
-                sliderTitle= {"Levels"}
-                usePreciseInput={true}
-            />
-        </Stack>
+
+        <MoorhenSlider
+            externalValue={minMaxValue}
+            minVal={-4.0}
+            maxVal={4.0}
+            decimalPlaces={2}
+            setExternalValue={(value) => {setMinMaxValue(value as [number, number])}}
+            sliderTitle= {"Levels"}
+            usePreciseInput={true}
+            
+        />
         <Button variant="primary" onClick={handleApply}>
             Apply
         </Button>
