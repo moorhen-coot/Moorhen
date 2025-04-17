@@ -651,7 +651,19 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                 </Col>
             </Stack>
             <Accordion className="moorhen-accordion" disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }}>
-                <AccordionSummary style={{backgroundColor: isDark ? '#adb5bd' : '#ecf0f1'}} expandIcon={histogramBusy ? <Spinner animation='border'/> : <ExpandMoreOutlined />} >
+                <AccordionSummary
+                    sx={{
+                        backgroundColor: isDark ? '#adb5bd' : '#ecf0f1',
+                        minHeight: '30px', // Set the minimum height
+                        '&.Mui-expanded': {
+                            minHeight: '30px', // Ensure height remains consistent when expanded
+                        },
+                        '.MuiAccordionSummary-content': {
+                            margin: 0, // Adjust content margin
+                        },
+                    }}
+                    expandIcon={histogramBusy ? <Spinner animation='border' /> : <ExpandMoreOutlined />}
+                >
                     Histogram
                 </AccordionSummary>
                 <AccordionDetails style={{padding: '0.2rem', backgroundColor: isDark ? '#ced5d6' : 'white'}}>
