@@ -223,7 +223,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
             <Stack
                 direction="column"
                 spacing={isRange ? 0 : 1}
-                sx={{ position: "relative", top: isRange ? "6px" : "-6px" }}
+                sx={{ position: "relative", top: isRange ? "6px" : "-6px", left : side === "L" ? "0.5rem" : "-0.5rem", }}
             >
                 {buttons}
             </Stack>
