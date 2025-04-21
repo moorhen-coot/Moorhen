@@ -543,6 +543,7 @@ export namespace moorhen {
         isEM: boolean;
         suggestedContourLevel: number;
         suggestedRadius: number;
+        levelRange: [number, number];
         mapCentre: [number, number, number];
         type: string;
         name: string;

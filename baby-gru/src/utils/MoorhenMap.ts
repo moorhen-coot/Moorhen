@@ -58,6 +58,7 @@ export class MoorhenMap implements moorhen.Map {
     mapCentre: [number, number, number]
     suggestedContourLevel: number
     suggestedRadius: number
+    levelRange: [number, number]
     webMGContour: boolean
     showOnLoad: boolean
     displayObjects: any
@@ -84,6 +85,7 @@ export class MoorhenMap implements moorhen.Map {
         this.commandCentre = commandCentre
         this.glRef = glRef
         this.store = store
+        this.levelRange = null 
         this.webMGContour = false
         this.showOnLoad = true
         this.displayObjects = { Coot: [] }
@@ -947,6 +949,18 @@ export class MoorhenMap implements moorhen.Map {
         return result.data.result.result
     }
 
+    async guessMapRange(): Promise<[number, number]> 
+    {
+        const n_bins = 400
+        const histogram = await this.getHistogram(n_bins, 1)
+        const maxRange = histogram.bin_width * n_bins - histogram.base
+        const precison = Math.pow(10, - Math.abs(Math.floor(Math.log10(maxRange / 200))))
+        this.levelRange = [precison, maxRange]
+        console.log('Map range', this.levelRange)
+        console.log('Histogram', histogram)
+        return [precison, maxRange]
+    }
+
     /**
      * Get the suggested map centre for this map instance (it will also fetch suggested level for EM maps)
      * @returns {number[]} The map centre
@@ -1000,7 +1014,8 @@ export class MoorhenMap implements moorhen.Map {
             this.fetchMapCentre(),
             this.setDefaultColour(),
             this.fetchMapMean(),
-            !this.isEM && this.fetchSuggestedLevel()
+            !this.isEM && this.fetchSuggestedLevel(),
+            this.guessMapRange()
         ])
     }
 
