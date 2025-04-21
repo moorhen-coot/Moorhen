@@ -55,6 +55,8 @@ export class MoorhenMap implements moorhen.Map {
     store: ToolkitStore
     commandCentre: React.RefObject<moorhen.CommandCentre>
     glRef: React.RefObject<webGL.MGWebGL>
+    isOriginLocked: boolean
+    reContour: boolean
     mapCentre: [number, number, number]
     suggestedContourLevel: number
     suggestedRadius: number
@@ -100,11 +102,14 @@ export class MoorhenMap implements moorhen.Map {
         this.suggestedContourLevel = null
         this.suggestedRadius = null
         this.mapCentre = null
+        this.isOriginLocked = true
+        this.reContour = true
         this.otherMapForColouring = null
         this.diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] }
         this.defaultMapColour = _DEFAULT_MAP_COLOUR
         this.defaultPositiveMapColour = _DEFAULT_POSITIVE_MAP_COLOUR
         this.defaultNegativeMapColour = _DEFAULT_NEGATIVE_MAP_COLOUR
+
     }
 
     /**
@@ -673,6 +678,16 @@ export class MoorhenMap implements moorhen.Map {
             returnType = "lines_mesh"
         }
 
+        if (!this.reContour) {
+            return
+        }
+        if (this.isOriginLocked)    {
+
+            x = Math.abs(this.mapCentre[0])
+            y = Math.abs(this.mapCentre[1])
+            z = Math.abs(this.mapCentre[2])
+        }
+
         let response: moorhen.WorkerResponse<any>
         if (this.otherMapForColouring !== null) {
             response = await this.commandCentre.current.cootCommand({
@@ -681,6 +696,7 @@ export class MoorhenMap implements moorhen.Map {
                 commandArgs: [this.molNo, this.otherMapForColouring.molNo, x, y, z, radius, contourLevel, this.otherMapForColouring.min, this.otherMapForColouring.max, false]
             }, false)
         } else {
+
             response = await this.commandCentre.current.cootCommand({
                 returnType: returnType,
                 command: "get_map_contours_mesh",
@@ -690,6 +706,7 @@ export class MoorhenMap implements moorhen.Map {
 
         const objects = [response.data.result.result]
         this.setupContourBuffers(objects, this.otherMapForColouring !== null)
+        this.toggleRecontour(false)
     }
 
     /**
@@ -956,8 +973,6 @@ export class MoorhenMap implements moorhen.Map {
         const maxRange = histogram.bin_width * n_bins - histogram.base
         const precison = Math.pow(10, - Math.abs(Math.floor(Math.log10(maxRange / 200))))
         this.levelRange = [precison, maxRange]
-        console.log('Map range', this.levelRange)
-        console.log('Histogram', histogram)
         return [precison, maxRange]
     }
 
@@ -1165,5 +1180,13 @@ export class MoorhenMap implements moorhen.Map {
         headerInfo.resolution = resol.data.result.result
 
         return headerInfo
+    }
+
+    toggleOriginLock(val: boolean = !this.isOriginLocked): void {
+        this.isOriginLocked = val
+    }
+    
+    toggleRecontour(val: boolean = !this.reContour): void {
+        this.reContour = val
     }
 }

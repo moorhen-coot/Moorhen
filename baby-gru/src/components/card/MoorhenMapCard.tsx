@@ -447,6 +447,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         const currentTime = Date.now();
         if (lastExecutionTimeRef.current && currentTime - lastExecutionTimeRef.current < 500) {  
             if (mapRadius > radiusThresold) {
+                props.map.toggleOriginLock(false)
                 setLastRadius(mapRadius)
                 dispatch(setMapRadius({ molNo: props.map.molNo, radius: radiusThresold })); }
             
@@ -456,6 +457,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             }
 
             radiusResetTimeoutRef.current = setTimeout(() => {
+                props.map.toggleOriginLock(true);
                 dispatch(setMapRadius({ molNo: props.map.molNo, radius: lastRadius }));
                 }, 500);
         }
