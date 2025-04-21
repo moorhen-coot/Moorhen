@@ -373,7 +373,8 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         }
         if (newMapContourLevel) {
             batch(() => {
-                dispatch( setContourLevel({ molNo: props.map.molNo, contourLevel: newMapContourLevel }) )
+                //dispatch( setContourLevel({ molNo: props.map.molNo, contourLevel: newMapContourLevel }) )
+                fastMapContourLevel(newMapContourLevel)
                 enqueueSnackbar(`map-${props.map.molNo}-contour-lvl-change`, {
                     variant: "mapContourLevel",
                     persist: true,
@@ -437,6 +438,31 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         }
 
     }, [doContourIfDirty])
+
+    const lastExecutionTimeRef = useRef<number | null>(null);
+    const radiusResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const [lastRadius, setLastRadius] = useState<number> (null) 
+    function fastMapContourLevel(newContourLevel: number, radiusThresold: number = 25) {
+
+        const currentTime = Date.now();
+        if (lastExecutionTimeRef.current && currentTime - lastExecutionTimeRef.current < 500) {  
+            if (mapRadius > radiusThresold) {
+                setLastRadius(mapRadius)
+                dispatch(setMapRadius({ molNo: props.map.molNo, radius: radiusThresold })); }
+            
+            if (radiusResetTimeoutRef.current) {
+                clearTimeout(radiusResetTimeoutRef.current);
+                console.log("cleared")
+            }
+
+            radiusResetTimeoutRef.current = setTimeout(() => {
+                dispatch(setMapRadius({ molNo: props.map.molNo, radius: lastRadius }));
+                }, 500);
+        }
+    
+        lastExecutionTimeRef.current = currentTime;  
+        dispatch(setContourLevel({ molNo: props.map.molNo, contourLevel: newContourLevel }));
+    }
 
 
     const getMapColourSelector = () => {
@@ -624,9 +650,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                         logScale={true}
                         isDisabled={!mapIsVisible}
                         externalValue={mapContourLevel}
-                        setExternalValue={(newVal) => {
-                        dispatch(setContourLevel({ molNo: props.map.molNo, contourLevel: newVal }));
-                        }}
+                        setExternalValue={(newVal) => {fastMapContourLevel(newVal)}}
                     />
                         
                     </Form.Group>
