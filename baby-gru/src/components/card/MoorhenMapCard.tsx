@@ -22,7 +22,6 @@ import { useSnackbar } from "notistack";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput";
 import { getFirstNonZeroDigitIndex } from "../misc/helpers";
-import Box from '@mui/material/Box';
 
 
 
@@ -47,8 +46,6 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     }
 
     const { initialContour, initialRadius } = {...defaultProps, ...props}
-
-    const rmsdBasedPrecision = getFirstNonZeroDigitIndex(props.map.mapRmsd) -1
 
     const mapRadius = useSelector((state: moorhen.State) => {
         const map = state.mapContourSettings.mapRadii.find(item => item.molNo === props.map.molNo)
@@ -82,7 +79,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             return 1.0
         }
     })
-    
+
     // Need to stringify to ensure the selector is stable... (dont want to return a new obj reference)
     const mapColourString = useSelector((state: moorhen.State) => {
         const map = state.mapContourSettings.mapColours.find(item => item.molNo === props.map.molNo)
@@ -167,17 +164,14 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const busyContouring = useRef<boolean>(false)
     const isDirty = useRef<boolean>(false)
     const histogramRef = useRef(null)
-    const intervalRef = useRef(null)
 
     const dispatch = useDispatch()
-
-    const anchorEl = useRef(null)
-
     const { enqueueSnackbar } = useSnackbar()
 
     useImperativeHandle(cardRef, () => ({
         forceIsCollapsed: (value: boolean) => { 
             setIsCollapsed(value)
+            console
          }
     }), 
     [setIsCollapsed])
@@ -359,6 +353,8 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         }
     }, [doContourIfDirty])
 
+
+
     const handleWheelContourLevelCallback = useCallback((evt: moorhen.WheelContourLevelEvent) => {
         let newMapContourLevel: number
         if (props.map.molNo === activeMap.molNo) {
@@ -367,11 +363,11 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                 return
             }
 
-            let emScaling = props.map.isEM ? 10**-rmsdBasedPrecision : 0.01
+            let scaling = props.map.isEM ? props.map.levelRange[0] : 0.01
             if (evt.detail.factor > 1) {
-                newMapContourLevel = mapContourLevel + contourWheelSensitivityFactor * emScaling 
+                newMapContourLevel = mapContourLevel + contourWheelSensitivityFactor * scaling 
             } else {
-                newMapContourLevel = mapContourLevel - contourWheelSensitivityFactor * emScaling
+                newMapContourLevel = mapContourLevel - contourWheelSensitivityFactor * scaling
             }
 
         }
@@ -381,7 +377,8 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                 enqueueSnackbar(`map-${props.map.molNo}-contour-lvl-change`, {
                     variant: "mapContourLevel",
                     persist: true,
-                    mapMolNo: props.map.molNo
+                    mapMolNo: props.map.molNo,
+                    mapPrecision: props.map.levelRange[0] ,
                 })
             })
         }
@@ -440,6 +437,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         }
 
     }, [doContourIfDirty])
+
 
     const getMapColourSelector = () => {
         if (mapColour === null) {
@@ -600,7 +598,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                             onEnter = {(newVal) => dispatch( setContourLevel({molNo: props.map.molNo, contourLevel: +newVal}) )}
                             label = {"Level:"} 
                             setValue={mapContourLevel}
-                            decimalDigits={props.map.isEM ? rmsdBasedPrecision +1 : 2}
+                            decimalDigits={props.map.isEM ? Math.abs(Math.floor(Math.log10(props.map.levelRange[0]))) : 2}
                             allowNegativeValues={true}
                             disabled={!mapIsVisible}
                         />
@@ -618,10 +616,10 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
 
                 </Stack> 
                     <MoorhenSlider
-                        minVal={props.map.isEM ? 1 * props.map.mapRmsd : 0.01}
-                        maxVal={props.map.isEM ? 20 * props.map.mapRmsd : 5}
+                        minVal={props.map.isEM ? props.map.levelRange[0] *10  : 0.01}
+                        maxVal={props.map.levelRange[1] }
                         showMinMaxVal={false}           
-                        decimalPlaces={props.map.isEM ? rmsdBasedPrecision +1 : 3}
+                        decimalPlaces={props.map.isEM ? Math.abs(Math.floor(Math.log10(props.map.levelRange[0]))): 2}
                         showButtons={true}
                         logScale={true}
                         isDisabled={!mapIsVisible}

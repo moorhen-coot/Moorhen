@@ -212,20 +212,16 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
     };
 
     function drawSidePanels(side: string) {
-        const buttons = isRange
-            ? [
-                changeButton(+stepButtons, side === "L" ? 0 : 1),
-                changeButton(-stepButtons, side === "L" ? 0 : 1),
-            ]
-            : [changeButton(side === "L" ? -stepButtons : +stepButtons)];
-
         return (
             <Stack
                 direction="column"
                 spacing={isRange ? 0 : 1}
                 sx={{ position: "relative", top: isRange ? "6px" : "-6px", left : side === "L" ? "0.5rem" : "-0.5rem", }}
             >
-                {buttons}
+                {isRange?
+                (changeButton(+stepButtons, side === "L" ? 0 : 1),
+                changeButton(-stepButtons, side === "L" ? 0 : 1) )
+                : (changeButton(side === "L" ? -stepButtons : +stepButtons))}
             </Stack>
         );
     }

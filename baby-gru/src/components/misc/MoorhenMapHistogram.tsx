@@ -159,8 +159,7 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
                 return
             }
 
-            const histogram = await props.map.getHistogram(200, zoomFactor)
-            
+            const histogram = await props.map.getHistogram(200, zoomFactor)      
             const canvas = document.getElementById(`${props.map.molNo}-histogram`) as HTMLCanvasElement;
             const ctx = canvas.getContext("2d")
             const chartData = parseHistogramData(histogram)
@@ -175,6 +174,7 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
                 chartRef.current = new Chart(ctx, chartData as any)
                 setBase(histogram.base)
                 setBinWidth(histogram.bin_width)
+                console.log('histogram', histogram)
             }
 
             setTimeout(() => {

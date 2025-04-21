@@ -8,6 +8,7 @@ export const MoorhenMapContourLevelSnackBar = forwardRef<
     HTMLDivElement,
     {
         mapMolNo: number;
+        mapPrecision: number;
         id: string;
     }
 >((props, ref) => {
@@ -42,6 +43,6 @@ export const MoorhenMapContourLevelSnackBar = forwardRef<
     }, [contourLevel])
 
     return <SnackbarContent ref={ref} className="moorhen-notification-div" style={{ backgroundColor: isDark ? 'grey' : 'white', color: isDark ? 'white' : 'grey' }}>
-        {`Level: ${contourLevel?.toFixed(selectedMap?.isEM ? 4 : 2)} ${selectedMap?.mapRmsd ? '(' + (contourLevel / selectedMap?.mapRmsd).toFixed(2) + ' rmsd)' : ''}`}
+        {`Level: ${contourLevel?.toFixed(selectedMap?.isEM ? Math.abs(Math.floor(Math.log10(props.mapPrecision))) : 2)} ${selectedMap?.mapRmsd ? '(' + (contourLevel / selectedMap?.mapRmsd).toFixed(2) + ' rmsd)' : ''}`}
     </SnackbarContent>
 })
