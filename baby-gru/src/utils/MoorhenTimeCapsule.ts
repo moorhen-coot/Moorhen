@@ -830,7 +830,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
     ): Promise<number> {
         timeCapsuleRef.current.setBusy(true)
         const bytes = new Uint8Array(sessionArrayBuffer)
-        const sessionMessage = moorhensession.Session.decode(bytes)
+        const sessionMessage = moorhensession.Session.decode(bytes,undefined,undefined)
         const status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(sessionMessage, monomerLibraryPath, molecules, maps, commandCentre, timeCapsuleRef, glRef, store,  dispatch)
         timeCapsuleRef.current.setBusy(false)
         return status

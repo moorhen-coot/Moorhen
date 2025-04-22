@@ -113,7 +113,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         try {
             const arrayBuffer = await readDataFile(e.target.files[0])
             const bytes = new Uint8Array(arrayBuffer)
-            const sessionMessage = moorhensession.Session.decode(bytes)
+            const sessionMessage = moorhensession.Session.decode(bytes,undefined,undefined)
             await loadSession(sessionMessage)
         } catch (err) {
             console.log(err)
