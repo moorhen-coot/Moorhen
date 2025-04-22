@@ -78,6 +78,8 @@ export namespace moorhen {
         symmetryMatrices: any;
         updateSymmetryAtoms(): void;
         changeColourWithSymmetry: boolean;
+        atoms: any[];
+        origin: number[];
         [attr: string]: any;
     }
 

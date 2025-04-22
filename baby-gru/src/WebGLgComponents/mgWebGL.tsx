@@ -2851,7 +2851,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     setDoMultiView(doMultiView) {
-        console.log(this,"setDoMultiView")
         this.doMultiView = doMultiView;
     }
 
@@ -8334,7 +8333,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
 
                     let multiViewGroupsKeys = []
+                    const multiviewOrigins = []
                     const origQuat = quat4.clone(this.myQuat);
+                    const origOrigin = this.origin
 
                     let quats
                     let viewports
@@ -8351,13 +8352,17 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                                 if(Object.hasOwn(this.displayBuffers[idx], "isHoverBuffer")&&!this.displayBuffers[idx].isHoverBuffer){
                                     if(!(this.displayBuffers[idx].multiViewGroup in multiViewGroups)){
                                         multiViewGroups[this.displayBuffers[idx].multiViewGroup] = this.displayBuffers[idx].multiViewGroup
+                                        multiviewOrigins.push(this.displayBuffers[idx].origin)
                                     }
                                 }
                             }
                         }
                         multiViewGroupsKeys = Object.keys(multiViewGroups)
-                        if(this.multiWayViewports.length!==multiViewGroupsKeys.length&&multiViewGroupsKeys.length>0)
+                        if(this.multiWayViewports.length!==multiViewGroupsKeys.length&&multiViewGroupsKeys.length>0){
+                            //FIXME - This is not quite right - we may have a view grid of 20 for 19 molecules
+                            console.log(this.multiWayViewports.length,"!==",multiViewGroupsKeys.length)
                             this.setupMultiWayTransformations(multiViewGroupsKeys.length)
+                        }
 
                         quats = this.multiWayQuats
                         viewports = this.multiWayViewports
@@ -8377,6 +8382,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         if(this.doMultiView){
                             if(multiViewGroupsKeys.length>0){
                                 this.currentMultiViewGroup = parseInt(multiViewGroupsKeys[i])
+                                if(i<multiviewOrigins.length&& multiviewOrigins[i]&& multiviewOrigins[i].length===3)
+                                    this.origin = multiviewOrigins[i]
                             } else {
                                 continue
                             }
@@ -8405,6 +8412,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
                         invMat = this.GLrender(false);
                     }
+                    this.origin = origOrigin
                 } else {
                     this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
                     invMat = this.GLrender(false);

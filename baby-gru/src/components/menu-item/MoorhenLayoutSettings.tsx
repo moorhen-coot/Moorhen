@@ -79,7 +79,6 @@ export const MoorhenLayoutSettings = (props: { setPopoverIsShown: React.Dispatch
                     <Form.Check
                         type="radio"
                         className="custom-control-input"
-                        disabled
                         name="multiview"
                         defaultChecked={doMultiView}
                         onChange={(e) => {handleChange(e,"multiview")}}
