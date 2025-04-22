@@ -2476,6 +2476,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         threeWayQuats: quat4[];
         stereoQuats: quat4[];
         multiWayViewports: number[][];
+        multiViewOrigins: number[][];
         multiWayQuats: quat4[];
         multiWayRatio: number;
         currentMultiViewGroup: number;
@@ -8333,7 +8334,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
 
                     let multiViewGroupsKeys = []
-                    const multiviewOrigins = []
+                    const multiViewOrigins = []
                     const origQuat = quat4.clone(this.myQuat);
                     const origOrigin = this.origin
 
@@ -8352,11 +8353,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                                 if(Object.hasOwn(this.displayBuffers[idx], "isHoverBuffer")&&!this.displayBuffers[idx].isHoverBuffer){
                                     if(!(this.displayBuffers[idx].multiViewGroup in multiViewGroups)){
                                         multiViewGroups[this.displayBuffers[idx].multiViewGroup] = this.displayBuffers[idx].multiViewGroup
-                                        multiviewOrigins.push(this.displayBuffers[idx].origin)
+                                        multiViewOrigins.push(this.displayBuffers[idx].origin)
                                     }
                                 }
                             }
                         }
+                        this.multiViewOrigins = multiViewOrigins
                         multiViewGroupsKeys = Object.keys(multiViewGroups)
                         if(this.multiWayViewports.length!==multiViewGroupsKeys.length&&multiViewGroupsKeys.length>0){
                             //FIXME - This is not quite right - we may have a view grid of 20 for 19 molecules (or 4 for 3)
@@ -8381,8 +8383,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         if(this.doMultiView){
                             if(multiViewGroupsKeys.length>0){
                                 this.currentMultiViewGroup = parseInt(multiViewGroupsKeys[i])
-                                if(i<multiviewOrigins.length&& multiviewOrigins[i]&& multiviewOrigins[i].length===3)
-                                    this.origin = multiviewOrigins[i]
+                                if(i<multiViewOrigins.length&& multiViewOrigins[i]&& multiViewOrigins[i].length===3)
+                                    this.origin = multiViewOrigins[i]
                             } else {
                                 continue
                             }
@@ -10516,7 +10518,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 quat4.multiply(newQuat, newQuat, quats[i]);
                 const theRotMatrix = quatToMat4(newQuat);
                 mat4.multiply(theMatrix, theMatrix, theRotMatrix);
-                mat4.translate(theMatrix, theMatrix, this.origin);
+                if(this.doMultiView&&i<=this.multiViewOrigins.length)
+                    mat4.translate(theMatrix, theMatrix, this.multiViewOrigins[i])
+                else
+                    mat4.translate(theMatrix, theMatrix, this.origin)
                 mvMatrix = theMatrix
                 theQuat = quats[i]
             }

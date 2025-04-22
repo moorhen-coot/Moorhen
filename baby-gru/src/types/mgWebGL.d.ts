@@ -480,6 +480,7 @@ export namespace webGL {
         threeWayQuats: quat4[];
         stereoQuats: quat4[];
         multiWayViewports: number[][];
+        multiViewOrigins: number[][];
         multiWayQuats: quat4[];
         multiWayRatio: number;
         currentMultiViewGroup: number;
