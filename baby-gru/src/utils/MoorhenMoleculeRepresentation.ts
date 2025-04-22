@@ -305,6 +305,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             })
             this.glRef.current.buildBuffers()
         }
+        this.buffers.forEach(buf => {
+            buf.multiViewGroup = this.parentMolecule.molNo
+        })
         this.glRef.current.drawScene()
     }
 

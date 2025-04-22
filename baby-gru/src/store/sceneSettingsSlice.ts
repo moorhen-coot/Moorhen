@@ -26,6 +26,7 @@ const initialState = {
     doSpin: null,
     doThreeWayView: null,
     doSideBySideStereo: null,
+    doMultiView: null,
     doCrossEyedStereo: null,
     doAnaglyphStereo: null,
     doOutline: null,
@@ -122,6 +123,9 @@ export const sceneSettingsSlice = createSlice({
     setDoSideBySideStereo: (state, action: {payload: boolean, type: string}) => {
         return {...state, doSideBySideStereo: action.payload}
     },
+    setDoMultiView: (state, action: {payload: boolean, type: string}) => {
+        return {...state, doMultiView: action.payload}
+    },
     setDoThreeWayView: (state, action: {payload: boolean, type: string}) => {
         return {...state, doThreeWayView: action.payload}
     },
@@ -154,7 +158,7 @@ export const {
     setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius, setBackgroundColor,
     setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setEdgeDetectDepthScale,
     setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setDrawEnvBOcc, setDoAnaglyphStereo,
-    setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView
+    setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView, setDoMultiView
 } = sceneSettingsSlice.actions
 
 export default sceneSettingsSlice.reducer

@@ -1016,6 +1016,7 @@ export namespace moorhen {
             doSpin: boolean;
             doThreeWayView: boolean;
             doSideBySideStereo: boolean;
+            doMultiView: boolean;
             doCrossEyedStereo: boolean;
             doAnaglyphStereo: boolean;
             defaultBondSmoothness: number,

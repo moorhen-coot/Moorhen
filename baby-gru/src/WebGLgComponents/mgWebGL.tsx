@@ -1724,6 +1724,7 @@ class DisplayBuffer {
     textColours: number[];
     isHoverBuffer: boolean;
     id: string;
+    multiViewGroup: number;
 
     constructor() {
         this.visible = true;
@@ -2293,6 +2294,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         doShadowDepthDebug: boolean;
         doSpin: boolean;
         doStenciling: boolean;
+        doMultiView: boolean;
         doThreeWayView: boolean;
         doSideBySideStereo: boolean;
         doCrossEyedStereo: boolean;
@@ -2476,6 +2478,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         multiWayViewports: number[][];
         multiWayQuats: quat4[];
         multiWayRatio: number;
+        currentMultiViewGroup: number;
 
     setupStereoTransformations() : void {
 
@@ -2579,6 +2582,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
         }
         this.multiWayRatio = wh[1]/wh[0]
+        this.currentMultiViewGroup = 0
 
     }
 
@@ -2636,6 +2640,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.setupThreeWayTransformations()
         this.setupStereoTransformations()
+        this.multiWayViewports = []
 
         if(this.useOffScreenBuffers&&this.WEBGL2){
             this.recreateOffScreeenBuffers(this.canvas.width,this.canvas.height);
@@ -2843,6 +2848,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     setDoSideBySideStereo(doSideBySideStereo) {
         this.doSideBySideStereo = doSideBySideStereo;
+    }
+
+    setDoMultiView(doMultiView) {
+        console.log(this,"setDoMultiView")
+        this.doMultiView = doMultiView;
     }
 
     setDoThreeWayView(doThreeWayView) {
@@ -3456,6 +3466,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         self.drawScene();
         self.ready = true;
 
+        this.multiWayViewports = []
     }
 
     initializeShaders() : void {
@@ -8320,8 +8331,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.disable(this.gl.STENCIL_TEST);
             this.gl.enable(this.gl.DEPTH_TEST);
             if(!this.doPeel){
-                if(this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
+                if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
 
+                    let multiViewGroupsKeys = []
                     const origQuat = quat4.clone(this.myQuat);
 
                     let quats
@@ -8331,6 +8343,25 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     if(this.doThreeWayView){
                         quats = this.threeWayQuats
                         viewports = this.threeWayViewports
+                    } else if(this.doMultiView) {
+
+                        let multiViewGroups = {}
+                        for (let idx = 0; idx < this.displayBuffers.length; idx++) {
+                            if(this.displayBuffers[idx].atoms&&this.displayBuffers[idx].atoms.length>0){
+                                if(Object.hasOwn(this.displayBuffers[idx], "isHoverBuffer")&&!this.displayBuffers[idx].isHoverBuffer){
+                                    if(!(this.displayBuffers[idx].multiViewGroup in multiViewGroups)){
+                                        multiViewGroups[this.displayBuffers[idx].multiViewGroup] = this.displayBuffers[idx].multiViewGroup
+                                    }
+                                }
+                            }
+                        }
+                        multiViewGroupsKeys = Object.keys(multiViewGroups)
+                        if(this.multiWayViewports.length!==multiViewGroupsKeys.length&&multiViewGroupsKeys.length>0)
+                            this.setupMultiWayTransformations(multiViewGroupsKeys.length)
+
+                        quats = this.multiWayQuats
+                        viewports = this.multiWayViewports
+                        ratioMult = this.multiWayRatio
                     } else if(this.doSideBySideStereo) {
                         quats = this.stereoQuats
                         viewports = this.stereoViewports
@@ -8342,6 +8373,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     }
 
                     for(let i=0;i<viewports.length;i++){
+
+                        if(this.doMultiView){
+                            if(multiViewGroupsKeys.length>0){
+                                this.currentMultiViewGroup = parseInt(multiViewGroupsKeys[i])
+                            } else {
+                                continue
+                            }
+                        }
 
                         const newXQuat = quat4.clone(origQuat);
                         quat4.multiply(newXQuat, newXQuat, quats[i]);
@@ -8362,6 +8401,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.drawTextOverlays(invMat,ratioMult);
                     }
                     this.myQuat = origQuat
+                    if(this.doMultiView&&multiViewGroupsKeys.length===0){
+                        this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
+                        invMat = this.GLrender(false);
+                    }
                 } else {
                     this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
                     invMat = this.GLrender(false);
@@ -8517,7 +8560,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.drawFPSMeter();
         }
 
-        if(!this.doThreeWayView&&!this.doSideBySideStereo&&!this.doCrossEyedStereo){
+        if(!this.doMultiView&&!this.doThreeWayView&&!this.doSideBySideStereo&&!this.doCrossEyedStereo){
             if(!(this.useOffScreenBuffers&&this.offScreenReady)){
                 if (this.showAxes) {
                     this.drawAxes(invMat);
@@ -9074,6 +9117,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 }
                 if (!this.stenciling&&this.displayBuffers[idx].doStencil){
                     continue;
+                }
+            }
+
+            if(this.doMultiView&&this.displayBuffers[idx].atoms&&this.displayBuffers[idx].atoms.length>0){
+                if(Object.hasOwn(this.displayBuffers[idx], "isHoverBuffer")&&!this.displayBuffers[idx].isHoverBuffer){
+                    if(this.displayBuffers[idx].multiViewGroup!==this.currentMultiViewGroup){
+                        continue
+                    }
                 }
             }
 
@@ -10501,6 +10552,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             if(this.doThreeWayView){
                 quats = this.threeWayQuats
                 viewports = this.threeWayViewports
+            } else if(this.doMultiView) {
+                quats = this.multiWayQuats
+                viewports = this.multiWayViewports
             } else if(this.doSideBySideStereo) {
                 quats = this.stereoQuats
                 viewports = this.stereoViewports

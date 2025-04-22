@@ -169,6 +169,7 @@ export namespace webGL {
         setEdgeDetectNormalScale(normalScale: number): void;
         setOccludeDiffuse(doOccludeDiffuse: boolean): void;
         setOutlinesOn(doOutline: boolean): void;
+        setDoMultiView(doMultiView: boolean): void;
         setDoThreeWayView(doThreeWayView: boolean): void;
         setDoSideBySideStereo(doSideBySideStereo: boolean): void;
         setDoCrossEyedStereo(doCrossEyedStereo: boolean): void;
@@ -293,6 +294,7 @@ export namespace webGL {
         yPixelOffset: number;
         occludeDiffuse: boolean;
         doOrderIndependentTransparency: boolean;
+        doMultiView: boolean;
         doThreeWayView: boolean;
         doSideBySideStereo: boolean;
         doCrossEyedStereo: boolean;
@@ -480,5 +482,6 @@ export namespace webGL {
         multiWayViewports: number[][];
         multiWayQuats: quat4[];
         multiWayRatio: number;
+        currentMultiViewGroup: number;
     }
 }
