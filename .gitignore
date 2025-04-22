@@ -77,7 +77,6 @@ coot/test-chem-feat.js
 coot/test-geometry.js
 coot/test-ligand.js
 coot/test-srs-standalone.js
-baby-gru/package-lock.json
 baby-gru/tsDist/
 baby-gru/tsDist/*
 baby-gru/out/Moorhen-darwin-x64/LICENSE
