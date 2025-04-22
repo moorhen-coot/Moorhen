@@ -56,7 +56,7 @@ export class MoorhenMap implements moorhen.Map {
     commandCentre: React.RefObject<moorhen.CommandCentre>
     glRef: React.RefObject<webGL.MGWebGL>
     isOriginLocked: boolean
-    reContour: boolean
+    drawLock: boolean
     mapCentre: [number, number, number]
     suggestedContourLevel: number
     suggestedRadius: number
@@ -103,7 +103,7 @@ export class MoorhenMap implements moorhen.Map {
         this.suggestedRadius = null
         this.mapCentre = null
         this.isOriginLocked = true
-        this.reContour = true
+        this.drawLock = false
         this.otherMapForColouring = null
         this.diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] }
         this.defaultMapColour = _DEFAULT_MAP_COLOUR
@@ -504,6 +504,7 @@ export class MoorhenMap implements moorhen.Map {
      * Contour the map with parameters from the redux store
      */
     drawMapContour(): Promise<void> {
+        this.toggleDrawLock(false)
         const { mapRadius, contourLevel, mapStyle } = this.getMapContourParams()
         return this.doCootContour(...this.glRef.current.origin.map(coord => -coord) as [number, number, number], mapRadius, contourLevel, mapStyle)
     }
@@ -669,6 +670,10 @@ export class MoorhenMap implements moorhen.Map {
      */
     async doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number, style: "solid" | "lines" | "lit-lines"): Promise<void> {
 
+        if (this.drawLock) {
+            return
+        }
+
         let returnType: string
         if (style === 'solid') {
             returnType = "mesh_perm"
@@ -678,9 +683,6 @@ export class MoorhenMap implements moorhen.Map {
             returnType = "lines_mesh"
         }
 
-        if (!this.reContour) {
-            return
-        }
         if (this.isOriginLocked)    {
 
             x = Math.abs(this.mapCentre[0])
@@ -695,6 +697,7 @@ export class MoorhenMap implements moorhen.Map {
                 command: "get_map_contours_mesh_using_other_map_for_colours",
                 commandArgs: [this.molNo, this.otherMapForColouring.molNo, x, y, z, radius, contourLevel, this.otherMapForColouring.min, this.otherMapForColouring.max, false]
             }, false)
+
         } else {
 
             response = await this.commandCentre.current.cootCommand({
@@ -706,7 +709,7 @@ export class MoorhenMap implements moorhen.Map {
 
         const objects = [response.data.result.result]
         this.setupContourBuffers(objects, this.otherMapForColouring !== null)
-        this.toggleRecontour(false)
+        this.toggleDrawLock(true)
     }
 
     /**
@@ -1186,7 +1189,7 @@ export class MoorhenMap implements moorhen.Map {
         this.isOriginLocked = val
     }
     
-    toggleRecontour(val: boolean = !this.reContour): void {
-        this.reContour = val
+    toggleDrawLock(val: boolean = !this.drawLock): void {
+        this.drawLock = val
     }
 }

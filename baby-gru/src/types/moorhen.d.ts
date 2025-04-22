@@ -500,6 +500,7 @@ export namespace moorhen {
 
     interface Map {
         toggleOriginLock(val?: boolean): void;
+        toggleDrawLock(val?: boolean): void;
         getHistogram(nBins?: number, zoomFactor?: number): Promise<libcootApi.HistogramInfoJS>;
         setMapWeight(weight?: number): Promise<WorkerResponse>;
         scaleMap(scale: number): Promise<WorkerResponse>;

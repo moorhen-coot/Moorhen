@@ -442,13 +442,15 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const lastExecutionTimeRef = useRef<number | null>(null);
     const radiusResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [lastRadius, setLastRadius] = useState<number> (null) 
-    function fastMapContourLevel(newContourLevel: number, radiusThresold: number = 25) {
 
+    function fastMapContourLevel(newContourLevel: number, radiusThresold: number = 25) {
+        props.map.toggleDrawLock(false)
         const currentTime = Date.now();
         if (lastExecutionTimeRef.current && currentTime - lastExecutionTimeRef.current < 500) {  
             if (mapRadius > radiusThresold) {
-                props.map.toggleOriginLock(false)
+                props.map.toggleOriginLock(false);
                 setLastRadius(mapRadius)
+                props.map.toggleOriginLock
                 dispatch(setMapRadius({ molNo: props.map.molNo, radius: radiusThresold })); }
             
             if (radiusResetTimeoutRef.current) {
@@ -458,6 +460,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
 
             radiusResetTimeoutRef.current = setTimeout(() => {
                 props.map.toggleOriginLock(true);
+                props.map.toggleDrawLock(false)
                 dispatch(setMapRadius({ molNo: props.map.molNo, radius: lastRadius }));
                 }, 500);
         }
@@ -466,6 +469,11 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         dispatch(setContourLevel({ molNo: props.map.molNo, contourLevel: newContourLevel }));
     }
 
+    function unlockBeforeRadiusChange(newVal) {
+        props.map.toggleDrawLock(false)
+        dispatch(setMapRadius({ molNo: props.map.molNo, radius: newVal }));
+    }
+        
 
     const getMapColourSelector = () => {
         if (mapColour === null) {
@@ -584,7 +592,6 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                 </OverlayTrigger>
     }
 
-
     return <Card ref={cardRef} className="px-0" style={{ display: 'flex', minWidth: convertRemToPx(28), marginBottom: '0.5rem', padding: '0' }} key={props.map.molNo}>
         <Card.Header style={{ padding: '0.1rem' }}>
             <Stack gap={2} direction='horizontal'>
@@ -623,7 +630,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                         }}>
 
                         <MoorhenPreciseInput 
-                            onEnter = {(newVal) => dispatch( setContourLevel({molNo: props.map.molNo, contourLevel: +newVal}) )}
+                            onEnter = {(newVal) => {fastMapContourLevel(+newVal)}}
                             label = {"Level:"} 
                             setValue={mapContourLevel}
                             decimalDigits={props.map.isEM ? Math.abs(Math.floor(Math.log10(props.map.levelRange[0]))) : 2}
@@ -634,7 +641,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                         {props.map.mapRmsd && (
                         <MoorhenPreciseInput 
                             allowNegativeValues={true}
-                            onEnter = {(newVal) => dispatch( setContourLevel({molNo: props.map.molNo, contourLevel : +newVal * props.map.mapRmsd}) )}
+                            onEnter = {(newVal) => {fastMapContourLevel(+newVal* props.map.mapRmsd) } }
                             label = {"RMSD:"} 
                             setValue={mapContourLevel / props.map.mapRmsd}
                             decimalDigits={2}
@@ -659,16 +666,14 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                     <Form.Group controlId="contouringRadius" className="mb-3">
                         <MoorhenSlider
                             minVal={2}
-                            maxVal={100}
+                            maxVal={props.map.isEM ? Math.ceil((380 * 1.72) /2) : 40}
                             showMinMaxVal={false}
                             showButtons={true}
                             logScale={false} 
                             sliderTitle="Radius:" 
                             isDisabled={!mapIsVisible} 
                             externalValue={mapRadius} 
-                            setExternalValue={(newVal) => {
-                            dispatch(setMapRadius({ molNo: props.map.molNo, radius: newVal }));
-                            }}
+                            setExternalValue={(newVal) => {unlockBeforeRadiusChange(newVal)}}
                             usePreciseInput={true}
                         />
                     </Form.Group>
@@ -695,7 +700,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                         ref={histogramRef}
                         setBusy={setHistogramBusy}
                         showHistogram={true}
-                        setMapContourLevel={(newVal) => dispatch( setContourLevel({molNo: props.map.molNo, contourLevel: newVal}) )} 
+                        setMapContourLevel={(newVal) => {fastMapContourLevel(newVal)}}
                         currentContourLevel={mapContourLevel}
                         map={props.map}/>
                 </AccordionDetails>
