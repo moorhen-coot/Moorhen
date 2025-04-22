@@ -271,8 +271,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     setAtomBuffers(atomBuffers: moorhen.AtomInfo[]) {
         if (atomBuffers?.length > 0 && this.buffers?.length > 0) {
             this.buffers[0].atoms = atomBuffers
-            let selectionCentre = centreOnGemmiAtoms(atomBuffers)
-            this.buffers[0].origin = selectionCentre
         }
     }
 
@@ -321,10 +319,14 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         await this.applyColourRules()
         const objects = await this.getBufferObjects()
         this.buildBuffers(objects)
+        let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? '/*/*/*/*' : this.cid, true)
         if (this.styleHasAtomBuffers) {
-            let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? '/*/*/*/*' : this.cid, true)
             this.setAtomBuffers(atomBuffers)
         }
+        let selectionCentre = centreOnGemmiAtoms(atomBuffers)
+        this.buffers.forEach(buf => {
+            buf.origin = selectionCentre
+        })
     }
 
     /**
@@ -336,10 +338,14 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         const objects = await this.getBufferObjects()
         this.deleteBuffers()
         this.buildBuffers(objects)
+        let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? '/*/*/*/*' : this.cid, true)
         if (this.styleHasAtomBuffers) {
-            let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? '/*/*/*/*' : this.cid, true)
             this.setAtomBuffers(atomBuffers)
         }
+        let selectionCentre = centreOnGemmiAtoms(atomBuffers)
+        this.buffers.forEach(buf => {
+            buf.origin = selectionCentre
+        })
     }
 
     /**

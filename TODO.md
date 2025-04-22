@@ -11,8 +11,9 @@ A JavaScript molecular graphics program
   - [x] Basic Anaglyph stereo
   - [x] Disable 'a'-clicking in 3-way view and stereo.
   - [x] Have screenshot work with multiviews.
-  - [ ] Fix axes in screenshot with multiviews.
   - [ ] Multiple views for different molecules.
+    - [ ] Atom hovering in this mode.
+  - [ ] Fix axes in screenshot with multiviews.
   - [ ] User choice on multiview layout.
 
 ### Todo
