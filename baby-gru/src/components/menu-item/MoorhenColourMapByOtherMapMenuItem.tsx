@@ -22,12 +22,6 @@ export const MoorhenColourMapByOtherMapMenuItem = (props: {
     const [minMaxValue, setMinMaxValue]  = useState<[number, number]>([-1, 1])
     const [locRes, setLocRes] = useState<boolean>(false)
 
-    useEffect(() => {
-        console.log('minMaxValue', minMaxValue)
-    }, [minMaxValue])
-
-
-
     const handleCancel = (_evt) => {
         document.body.click()
     }
@@ -47,7 +41,7 @@ export const MoorhenColourMapByOtherMapMenuItem = (props: {
         referenceMap.drawMapContour()
     }
 
-    const handleApply = useCallback(async (_evt) => {
+    const handleApply = () => {
         if (!mapSelectRef_1.current.value || !mapSelectRef_2.current.value) {
             return
         }
@@ -61,9 +55,10 @@ export const MoorhenColourMapByOtherMapMenuItem = (props: {
         }
 
         referenceMap.setOtherMapForColouring(colouringMap.molNo, minMaxValue[0], minMaxValue[1])
+        console.log('colouringMap args:', colouringMap.molNo, minMaxValue[0], minMaxValue[1])
         referenceMap.drawMapContour()
 
-    }, [maps, props.glRef])
+    }
 
     const panelContent = <>
         <MoorhenMapSelect maps={maps} ref={mapSelectRef_1} label="Colour this map..." />
