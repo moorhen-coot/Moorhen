@@ -11738,7 +11738,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let pMatrix = mat4.create();
         if(this.renderToTexture){
             if(this.gl.viewportWidth > this.gl.viewportHeight){
-                mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.0);
+               if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
+                   mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24, 24, 0.1, 1000.0);
+               } else {
+                    mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.0);
+               }
             } else {
                 mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
             }
