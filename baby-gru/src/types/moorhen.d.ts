@@ -78,6 +78,8 @@ export namespace moorhen {
         symmetryMatrices: any;
         updateSymmetryAtoms(): void;
         changeColourWithSymmetry: boolean;
+        atoms: any[];
+        origin: number[];
         [attr: string]: any;
     }
 
@@ -1016,6 +1018,7 @@ export namespace moorhen {
             doSpin: boolean;
             doThreeWayView: boolean;
             doSideBySideStereo: boolean;
+            doMultiView: boolean;
             doCrossEyedStereo: boolean;
             doAnaglyphStereo: boolean;
             defaultBondSmoothness: number,

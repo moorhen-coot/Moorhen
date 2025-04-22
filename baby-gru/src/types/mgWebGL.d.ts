@@ -157,6 +157,7 @@ export namespace webGL {
         set_clip_range(clipStart: number, clipEnd: number, update?: boolean) : void;
         resize(width: number, height: number) : void;
         setupThreeWayTransformations() : void;
+        setupMultiWayTransformations(nmols:number) : void;
         setupStereoTransformations() : void;
         setShadowDepthDebug(doShadowDepthDebug: boolean): void;
         setShadowsOn(doShadow: boolean): void;
@@ -168,6 +169,7 @@ export namespace webGL {
         setEdgeDetectNormalScale(normalScale: number): void;
         setOccludeDiffuse(doOccludeDiffuse: boolean): void;
         setOutlinesOn(doOutline: boolean): void;
+        setDoMultiView(doMultiView: boolean): void;
         setDoThreeWayView(doThreeWayView: boolean): void;
         setDoSideBySideStereo(doSideBySideStereo: boolean): void;
         setDoCrossEyedStereo(doCrossEyedStereo: boolean): void;
@@ -292,6 +294,7 @@ export namespace webGL {
         yPixelOffset: number;
         occludeDiffuse: boolean;
         doOrderIndependentTransparency: boolean;
+        doMultiView: boolean;
         doThreeWayView: boolean;
         doSideBySideStereo: boolean;
         doCrossEyedStereo: boolean;
@@ -476,5 +479,10 @@ export namespace webGL {
         stereoViewports: number[][];
         threeWayQuats: quat4[];
         stereoQuats: quat4[];
+        multiWayViewports: number[][];
+        multiViewOrigins: number[][];
+        multiWayQuats: quat4[];
+        multiWayRatio: number;
+        currentMultiViewGroup: number;
     }
 }

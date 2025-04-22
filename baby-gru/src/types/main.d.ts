@@ -280,6 +280,9 @@ declare module 'moorhen' {
     function setDoSideBySideStereo(arg0: boolean): any;
     module.exports = setDoSideBySideStereo;
 
+    function setDoMultiView(arg0: boolean): any;
+    module.exports = setDoMultiView;
+
     function setDoSpin(arg0: boolean): any;
     module.exports = setDoSpin;
 

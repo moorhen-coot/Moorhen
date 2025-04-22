@@ -1724,6 +1724,7 @@ class DisplayBuffer {
     textColours: number[];
     isHoverBuffer: boolean;
     id: string;
+    multiViewGroup: number;
 
     constructor() {
         this.visible = true;
@@ -2293,6 +2294,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         doShadowDepthDebug: boolean;
         doSpin: boolean;
         doStenciling: boolean;
+        doMultiView: boolean;
         doThreeWayView: boolean;
         doSideBySideStereo: boolean;
         doCrossEyedStereo: boolean;
@@ -2473,6 +2475,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         stereoViewports: number[][];
         threeWayQuats: quat4[];
         stereoQuats: quat4[];
+        multiWayViewports: number[][];
+        multiViewOrigins: number[][];
+        multiWayQuats: quat4[];
+        multiWayRatio: number;
+        currentMultiViewGroup: number;
 
     setupStereoTransformations() : void {
 
@@ -2503,6 +2510,79 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.stereoQuats.push(rotY_p)
         this.stereoQuats.push(rotY_m)
+
+    }
+
+    setupMultiWayTransformations(nmols:number) : void {
+
+        const get_grid = (n,method="NEARSQUARE") => {
+            const f = Math.floor(Math.sqrt(n))
+            const c = Math.ceil(Math.sqrt(n))
+
+            if(method==="NEARSQUARE"){
+                if(f*c >= n)
+                    return [f,c]
+                else
+                    return [c,c]
+            }
+
+            let shapes = []
+
+            for(let i=1;i<=n;i++){
+                for(let j=1;j<=n;j++){
+                    if(i*j >= n && i*j <= c*c && Math.abs(i-j)<=f){
+                        if(i*j - n < n){
+                            let rem = i*j - n
+                            if(rem != i && rem != j){
+                                shapes.push([i,j,rem])
+                                break
+                            }
+                        }
+                    }
+                }
+            }
+
+            if(shapes.length===0){
+                if(f*c >= n)
+                    return [f,c]
+                else
+                    return [c,c]
+            }
+
+            let the_shape = shapes[0]
+            let minrem = n+1
+
+            shapes.forEach( (s) => {
+                if(s[2] < minrem){
+                    the_shape = s
+                    minrem = s[2]
+                } else if(s[2] == minrem && Math.abs(s[0]-s[1]) < Math.abs(the_shape[0]-the_shape[1])){
+                    the_shape = s
+                }
+            })
+
+            return [the_shape[0],the_shape[1]]
+        }
+
+        const wh = get_grid(nmols)
+
+        this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
+        this.multiWayViewports = []
+        this.multiWayQuats = []
+
+        const rotZ = quat4.create();
+        quat4.set(rotZ, 0, 0, 0, -1);
+
+        for(let i=0;i<wh[0];i++){
+            for(let j=0;j<wh[1];j++){
+                const frac_i = i/wh[0]
+                const frac_j = j/wh[1]
+                this.multiWayViewports.push([frac_i*this.gl.viewportWidth,frac_j*this.gl.viewportHeight, this.gl.viewportWidth/wh[0], this.gl.viewportHeight/wh[1]])
+                this.multiWayQuats.push(rotZ)
+            }
+        }
+        this.multiWayRatio = wh[1]/wh[0]
+        this.currentMultiViewGroup = 0
 
     }
 
@@ -2560,6 +2640,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.setupThreeWayTransformations()
         this.setupStereoTransformations()
+        this.multiWayViewports = []
 
         if(this.useOffScreenBuffers&&this.WEBGL2){
             this.recreateOffScreeenBuffers(this.canvas.width,this.canvas.height);
@@ -2769,6 +2850,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.doSideBySideStereo = doSideBySideStereo;
     }
 
+    setDoMultiView(doMultiView) {
+        this.doMultiView = doMultiView;
+    }
+
     setDoThreeWayView(doThreeWayView) {
         this.doThreeWayView = doThreeWayView;
     }
@@ -2899,7 +2984,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         //console.log("############################################################");
         //console.log("ssao blockSize",blockSize);
         //console.log(this.gl.getParameter(this.gl.MAX_UNIFORM_BUFFER_BINDINGS))
-        //console.log(this.gl.getParameter(this.gl.MAX_UNIFORM_BLOCK_SIZE	))
+        //console.log(this.gl.getParameter(this.gl.MAX_UNIFORM_BLOCK_SIZE))
         //console.log("############################################################");
         this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, this.ssaoKernelBuffer);
         this.gl.bufferData(this.gl.UNIFORM_BUFFER, blockSize, this.gl.DYNAMIC_DRAW);
@@ -3040,6 +3125,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.doThreeWayView = false;
         this.doSideBySideStereo = false;
+        this.doMultiView = false;
         this.doCrossEyedStereo = false;
         this.doAnaglyphStereo = false;
 
@@ -3379,8 +3465,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         self.setBlurSize(self.blurSize);
         self.drawScene();
         self.ready = true;
-        console.log(this.myQuat)
 
+        this.multiWayViewports = []
     }
 
     initializeShaders() : void {
@@ -7622,6 +7708,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     GLrender(calculatingShadowMap,doClear=true,ratioMult=1.0) {
         let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult;
 
+        let fb_scale = 1.0
+
         if (calculatingShadowMap) {
             if(!this.offScreenReady)
                 this.recreateOffScreeenBuffers(this.canvas.width,this.canvas.height);
@@ -7650,7 +7738,34 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer);
             this.gl.enable(this.gl.DEPTH_TEST);
             this.gl.depthFunc(this.gl.LESS);
-            this.gl.viewport(0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height);
+            let viewport_start_x = Math.trunc(this.currentViewport[0] * this.rttFramebuffer.width  / this.gl.viewportWidth)
+            let viewport_start_y = Math.trunc(this.currentViewport[1] * this.rttFramebuffer.height / this.gl.viewportHeight)
+            let viewport_width =   Math.trunc(this.currentViewport[2] * this.rttFramebuffer.width  / this.gl.viewportWidth)
+            let viewport_height =  Math.trunc(this.currentViewport[3] * this.rttFramebuffer.height / this.gl.viewportHeight)
+            this.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
+            if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
+            if(this.gl.viewportWidth>this.gl.viewportHeight){
+                fb_scale = this.gl.viewportWidth/this.gl.viewportHeight
+                const hp = this.gl.viewportHeight/this.gl.viewportWidth * this.rttFramebuffer.width
+                const b = 0.5*(this.rttFramebuffer.height - hp)
+                const vh = this.currentViewport[3] * this.rttFramebuffer.width  / this.gl.viewportWidth
+                const bp = this.currentViewport[1] * this.rttFramebuffer.width  / this.gl.viewportWidth
+                viewport_height = vh
+                viewport_start_y = bp + b
+            } else {
+                fb_scale = this.gl.viewportWidth/this.gl.viewportHeight
+                const wp = this.gl.viewportWidth/this.gl.viewportHeight * this.rttFramebuffer.height
+                const b = 0.5*(this.rttFramebuffer.width - wp)
+                const vw = this.currentViewport[2] * this.rttFramebuffer.width  / this.gl.viewportHeight
+                const bp = this.currentViewport[0] * this.rttFramebuffer.width  / this.gl.viewportHeight
+                console.log(wp,b,viewport_height,vw)
+                viewport_width = vw
+                viewport_start_x =  bp + b
+            }
+            this.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
+            } else {
+                this.gl.viewport(0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height);
+            }
             let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
         } else {
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
@@ -7751,14 +7866,19 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             if(this.renderToTexture){
                 //FIXME - drawingGBuffers stanza?
                 if(this.doPerspectiveProjection){
+                    //FIXME - with  multiviews
                     mat4.perspective(this.pMatrix, 1.0, 1.0, 100., 1270.0);
                 } else {
                     const f = this.gl_clipPlane0[3]+this.fogClipOffset;
                     const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
-                    if(this.gl.viewportWidth > this.gl.viewportHeight){
-                        mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, -f, b);
+                    if(this.currentViewport[2] > this.currentViewport[3]){
+                        if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
+                            mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, -f, b);
+                        } else {
+                            mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, -f, b);
+                        }
                     } else {
-                        mat4.ortho(this.pMatrix, -24, 24 , -24, 24, -f, b);
+                        mat4.ortho(this.pMatrix, -24*ratioMult*fb_scale, 24*ratioMult*fb_scale, -24, 24, -f, b);
                     }
                 }
             } else {
@@ -8211,9 +8331,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.disable(this.gl.STENCIL_TEST);
             this.gl.enable(this.gl.DEPTH_TEST);
             if(!this.doPeel){
-                if(this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
+                if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
 
+                    let multiViewGroupsKeys = []
+                    const multiViewOrigins = []
                     const origQuat = quat4.clone(this.myQuat);
+                    const origOrigin = this.origin
 
                     let quats
                     let viewports
@@ -8222,6 +8345,29 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     if(this.doThreeWayView){
                         quats = this.threeWayQuats
                         viewports = this.threeWayViewports
+                    } else if(this.doMultiView) {
+
+                        let multiViewGroups = {}
+                        for (let idx = 0; idx < this.displayBuffers.length; idx++) {
+                            if(this.displayBuffers[idx].origin&&this.displayBuffers[idx].origin.length===3){
+                                if(Object.hasOwn(this.displayBuffers[idx], "isHoverBuffer")&&!this.displayBuffers[idx].isHoverBuffer){
+                                    if(!(this.displayBuffers[idx].multiViewGroup in multiViewGroups)){
+                                        multiViewGroups[this.displayBuffers[idx].multiViewGroup] = this.displayBuffers[idx].multiViewGroup
+                                        multiViewOrigins.push(this.displayBuffers[idx].origin)
+                                    }
+                                }
+                            }
+                        }
+                        this.multiViewOrigins = multiViewOrigins
+                        multiViewGroupsKeys = Object.keys(multiViewGroups)
+                        if(this.multiWayViewports.length!==multiViewGroupsKeys.length&&multiViewGroupsKeys.length>0){
+                            //FIXME - This is not quite right - we may have a view grid of 20 for 19 molecules (or 4 for 3)
+                            this.setupMultiWayTransformations(multiViewGroupsKeys.length)
+                        }
+
+                        quats = this.multiWayQuats
+                        viewports = this.multiWayViewports
+                        ratioMult = this.multiWayRatio
                     } else if(this.doSideBySideStereo) {
                         quats = this.stereoQuats
                         viewports = this.stereoViewports
@@ -8233,6 +8379,16 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     }
 
                     for(let i=0;i<viewports.length;i++){
+
+                        if(this.doMultiView){
+                            if(multiViewGroupsKeys.length>0){
+                                this.currentMultiViewGroup = parseInt(multiViewGroupsKeys[i])
+                                if(i<multiViewOrigins.length&& multiViewOrigins[i]&& multiViewOrigins[i].length===3)
+                                    this.origin = multiViewOrigins[i]
+                            } else {
+                                continue
+                            }
+                        }
 
                         const newXQuat = quat4.clone(origQuat);
                         quat4.multiply(newXQuat, newXQuat, quats[i]);
@@ -8253,6 +8409,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.drawTextOverlays(invMat,ratioMult);
                     }
                     this.myQuat = origQuat
+                    if(this.doMultiView&&multiViewGroupsKeys.length===0){
+                        this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
+                        invMat = this.GLrender(false);
+                    }
+                    this.origin = origOrigin
                 } else {
                     this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
                     invMat = this.GLrender(false);
@@ -8408,7 +8569,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.drawFPSMeter();
         }
 
-        if(!this.doThreeWayView&&!this.doSideBySideStereo&&!this.doCrossEyedStereo){
+        if(!this.doMultiView&&!this.doThreeWayView&&!this.doSideBySideStereo&&!this.doCrossEyedStereo){
             if(!(this.useOffScreenBuffers&&this.offScreenReady)){
                 if (this.showAxes) {
                     this.drawAxes(invMat);
@@ -8965,6 +9126,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 }
                 if (!this.stenciling&&this.displayBuffers[idx].doStencil){
                     continue;
+                }
+            }
+
+            if(this.doMultiView&&this.displayBuffers[idx].origin&&this.displayBuffers[idx].origin.length===3){
+                if(Object.hasOwn(this.displayBuffers[idx], "isHoverBuffer")&&!this.displayBuffers[idx].isHoverBuffer){
+                    if(this.displayBuffers[idx].multiViewGroup!==this.currentMultiViewGroup){
+                        continue
+                    }
                 }
             }
 
@@ -10339,7 +10508,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const newQuat = quat4.clone(this.myQuat);
         let mvMatrix = []
         let viewportArray = []
-        let theQuat
+        let theQuat = null
         for(let i=0;i<viewports.length;i++){
             if(x>=viewports[i][0]&&x<(viewports[i][0]+viewports[i][2])&&
                yp>=viewports[i][1]&&yp<(viewports[i][1]+viewports[i][3])){
@@ -10349,7 +10518,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 quat4.multiply(newQuat, newQuat, quats[i]);
                 const theRotMatrix = quatToMat4(newQuat);
                 mat4.multiply(theMatrix, theMatrix, theRotMatrix);
-                mat4.translate(theMatrix, theMatrix, this.origin);
+                if(this.doMultiView&&i<=this.multiViewOrigins.length)
+                    mat4.translate(theMatrix, theMatrix, this.multiViewOrigins[i])
+                else
+                    mat4.translate(theMatrix, theMatrix, this.origin)
                 mvMatrix = theMatrix
                 theQuat = quats[i]
             }
@@ -10385,13 +10557,16 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         const yp = this.canvas.height - y
 
-        if(this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
+        if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
             let viewports
             let quats
 
             if(this.doThreeWayView){
                 quats = this.threeWayQuats
                 viewports = this.threeWayViewports
+            } else if(this.doMultiView) {
+                quats = this.multiWayQuats
+                viewports = this.multiWayViewports
             } else if(this.doSideBySideStereo) {
                 quats = this.stereoQuats
                 viewports = this.stereoViewports
@@ -10401,8 +10576,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
 
             const mVPQ = this.getThreeWayMatrixAndViewPort(x,yp,quats,viewports)
-            mvMatrix = mVPQ.mat
-            viewportArray = mVPQ.viewport
+            if(mVPQ.mat.length>0&& mVPQ.viewport.length>0) {
+                mvMatrix = mVPQ.mat
+                viewportArray = mVPQ.viewport
+            }
         }
 
         // The results of the operation will be stored in this array.
@@ -11031,7 +11208,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         if(this.renderToTexture){
             if(this.gl.viewportWidth > this.gl.viewportHeight){
-        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+                let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
                 mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.0);
             } else {
                 mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
@@ -11185,7 +11362,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult
         if(this.renderToTexture){
             if(this.gl.viewportWidth > this.gl.viewportHeight){
-        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+                let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
                 mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.0);
             } else {
                 mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
@@ -11566,7 +11743,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let pMatrix = mat4.create();
         if(this.renderToTexture){
             if(this.gl.viewportWidth > this.gl.viewportHeight){
-                mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.0);
+               if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
+                   mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24, 24, 0.1, 1000.0);
+               } else {
+                    mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.0);
+               }
             } else {
                 mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
             }
@@ -11869,7 +12050,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let lastPoint = null;
         let lastLastPoint = null;
 
-        if(!this.doThreeWayView&&!this.doCrossEyedStereo&&!this.doSideBySideStereo){
+        if(!this.doMultiView&&!this.doThreeWayView&&!this.doCrossEyedStereo&&!this.doSideBySideStereo){
 
             this.measurePointsArray.forEach(point => {
                 if(lastPoint){
@@ -12276,10 +12457,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 const quats = this.threeWayQuats
                 const viewports = this.threeWayViewports
                 const mVPQ = this.getThreeWayMatrixAndViewPort(this.gl_cursorPos[0],this.gl_cursorPos[1],quats,viewports)
-                const theRotMatrix = quatToMat4(mVPQ.quat);
-                mat4.invert(theRotMatrix,theRotMatrix)
-                vec3.transformMat4(rot_x_axis, rot_x_axis, theRotMatrix);
-                vec3.transformMat4(rot_y_axis, rot_y_axis, theRotMatrix);
+                if(mVPQ.quat) {
+                    const theRotMatrix = quatToMat4(mVPQ.quat);
+                    mat4.invert(theRotMatrix,theRotMatrix)
+                    vec3.transformMat4(rot_x_axis, rot_x_axis, theRotMatrix);
+                    vec3.transformMat4(rot_y_axis, rot_y_axis, theRotMatrix);
+                }
             }
 
             let xQ = createQuatFromAngle(-self.dy,rot_x_axis);

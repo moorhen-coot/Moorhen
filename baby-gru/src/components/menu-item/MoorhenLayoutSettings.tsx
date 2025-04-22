@@ -2,7 +2,7 @@ import { Form, InputGroup } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { useDispatch, useSelector } from "react-redux"
 import { moorhen } from "../../types/moorhen"
-import { setDoAnaglyphStereo, setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView } from "../../store/sceneSettingsSlice"
+import { setDoAnaglyphStereo, setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView, setDoMultiView } from "../../store/sceneSettingsSlice"
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice"
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 
@@ -12,6 +12,7 @@ export const MoorhenLayoutSettings = (props: { setPopoverIsShown: React.Dispatch
     const doCrossEyedStereo = useSelector((state: moorhen.State) => state.sceneSettings.doCrossEyedStereo)
     const doSideBySideStereo = useSelector((state: moorhen.State) => state.sceneSettings.doSideBySideStereo)
     const doThreeWayView = useSelector((state: moorhen.State) => state.sceneSettings.doThreeWayView)
+    const doMultiView = useSelector((state: moorhen.State) => state.sceneSettings.doMultiView)
 
     const dispatch = useDispatch()
 
@@ -21,6 +22,7 @@ export const MoorhenLayoutSettings = (props: { setPopoverIsShown: React.Dispatch
         dispatch(setDoCrossEyedStereo(false))
         dispatch(setDoAnaglyphStereo(false))
         dispatch(setDoThreeWayView(false))
+        dispatch(setDoMultiView(false))
         if(type==="threeway"){
             dispatch(setDoThreeWayView(true))
         } else if(type==="sidebyside"){
@@ -29,11 +31,13 @@ export const MoorhenLayoutSettings = (props: { setPopoverIsShown: React.Dispatch
             dispatch(setDoCrossEyedStereo(true))
         } else if(type==="anaglyph"){
             dispatch(setDoAnaglyphStereo(true))
+        } else if(type==="multiview"){
+            dispatch(setDoMultiView(true))
         }
     })
 
     let normal = false
-    if((!doSideBySideStereo)&&(!doCrossEyedStereo)&&(!doAnaglyphStereo)&&(!doThreeWayView))
+    if((!doMultiView)&&(!doSideBySideStereo)&&(!doCrossEyedStereo)&&(!doAnaglyphStereo)&&(!doThreeWayView))
         normal = true
     const panelContent = <div style={{width: '18rem'}}>
                 <InputGroup className='moorhen-input-group-check'>
@@ -69,6 +73,16 @@ export const MoorhenLayoutSettings = (props: { setPopoverIsShown: React.Dispatch
                         defaultChecked={doThreeWayView}
                         onChange={(e) => {handleChange(e,"threeway")}}
                         label="Three way view"/>
+                </InputGroup>
+                <hr/>
+                <InputGroup className='moorhen-input-group-check'>
+                    <Form.Check
+                        type="radio"
+                        className="custom-control-input"
+                        name="multiview"
+                        defaultChecked={doMultiView}
+                        onChange={(e) => {handleChange(e,"multiview")}}
+                        label="One view per molecule"/>
                 </InputGroup>
                 <hr/>
                 <InputGroup className='moorhen-input-group-check'>

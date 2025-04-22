@@ -1,6 +1,6 @@
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
-import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, countResiduesInSelection, copyStructureSelection } from './utils';
+import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, countResiduesInSelection, copyStructureSelection, centreOnGemmiAtoms } from './utils';
 import { libcootApi } from '../types/libcoot';
 import { MoorhenColourRule } from './MoorhenColourRule';
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums"
@@ -305,6 +305,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             })
             this.glRef.current.buildBuffers()
         }
+        this.buffers.forEach(buf => {
+            buf.multiViewGroup = this.parentMolecule.molNo
+        })
         this.glRef.current.drawScene()
     }
 
@@ -316,10 +319,14 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         await this.applyColourRules()
         const objects = await this.getBufferObjects()
         this.buildBuffers(objects)
+        let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? '/*/*/*/*' : this.cid, true)
         if (this.styleHasAtomBuffers) {
-            let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? '/*/*/*/*' : this.cid, true)
             this.setAtomBuffers(atomBuffers)
         }
+        let selectionCentre = centreOnGemmiAtoms(atomBuffers)
+        this.buffers.forEach(buf => {
+            buf.origin = selectionCentre
+        })
     }
 
     /**
@@ -331,10 +338,14 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         const objects = await this.getBufferObjects()
         this.deleteBuffers()
         this.buildBuffers(objects)
+        let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? '/*/*/*/*' : this.cid, true)
         if (this.styleHasAtomBuffers) {
-            let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? '/*/*/*/*' : this.cid, true)
             this.setAtomBuffers(atomBuffers)
         }
+        let selectionCentre = centreOnGemmiAtoms(atomBuffers)
+        this.buffers.forEach(buf => {
+            buf.origin = selectionCentre
+        })
     }
 
     /**

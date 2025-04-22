@@ -1,8 +1,9 @@
 # Moorhen
 A JavaScript molecular graphics program
 
-### For 0.21.0
-- [ ] Multiple views for different molecules.
+### For 0.20.1
+  - [ ] User choice on multiview layout.
+  - [ ] Ability to set origin/zoom/individual rotation in "Multiple views for different molecules".
 
 ### For 0.20.0
 - [ ] Side-by-side, cross-eyed, anaglyph stereo.
@@ -13,7 +14,9 @@ A JavaScript molecular graphics program
   - [x] Rotate working in 3-way view
   - [x] Basic Anaglyph stereo
   - [x] Disable 'a'-clicking in 3-way view and stereo.
-  - [ ] Have screenshot work with multiviews.
+  - [x] Have screenshot work with multiviews.
+  - [x] Fix axes in screenshot with multiviews.
+  - [x] Multiple views for different molecules.
 
 ### Todo
 - [ ] Fitting 5-letter ligand truncates name, e.g. A1LU6
