@@ -500,7 +500,7 @@ export namespace moorhen {
 
     interface Map {
         toggleOriginLock(val?: boolean): void;
-        toggleDrawLock(val?: boolean): void;
+        isOriginLocked: boolean;
         getHistogram(nBins?: number, zoomFactor?: number): Promise<libcootApi.HistogramInfoJS>;
         setMapWeight(weight?: number): Promise<WorkerResponse>;
         scaleMap(scale: number): Promise<WorkerResponse>;
@@ -568,6 +568,7 @@ export namespace moorhen {
         defaultPositiveMapColour: {r: number, g: number, b: number};
         defaultNegativeMapColour: {r: number, g: number, b: number};
         fetchHeaderInfo(): Promise<mapHeaderInfo>;
+        headerInfo: mapHeaderInfo;
     }
 
     interface backupKey {
