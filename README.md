@@ -15,11 +15,11 @@ The sources of CCP4, Coot, Privateer, FFTW, and GSL are not included. They are d
 
 The following libraries/programs are compiled to Web Assembly:
 * libccp4 (8.0.0)
-* clipper (20240123)
+* clipper ('gemmi' branch)
 * ssm (1.4.0)
 * mmdb2 (2.0.22)
 * gemmi 0.7.0
-* Coot 1.0
+* Coot 1.1.15
 * fftw 2.1.5
 * gsl 2.7.1
 * Boost 1.86.0
