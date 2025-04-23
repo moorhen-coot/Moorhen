@@ -119,10 +119,9 @@ export const MoorhenSlider = forwardRef<number, MoorhenSliderProps>((props, ref)
                 <MoorhenPreciseInput 
                     allowNegativeValues={minVal < 0}
                     label = {sliderTitle + ":"}
-                    setValue={props.externalValue}
-                    onEnter={(newVal) => setExternalValue(+newVal)}
-                    decimalDigits={piParameters.decimalDigits}
-                    width= {piParameters.width}              
+                    value={props.externalValue}
+                    setValue={(newVal) => setExternalValue(+newVal)}
+                    decimalDigits={piParameters.decimalDigits}        
             />
             </Box>
             ) }
