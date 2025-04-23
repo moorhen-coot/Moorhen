@@ -3,11 +3,11 @@ import { Form } from "react-bootstrap";
 import Stack from '@mui/material/Stack';
 import './inputs.css'
 
-
 type MoorhenPreciseInputPropsType = {
-    onEnter?: (newVal: string) => void;
+    value: number | null | undefined;
+    setValue: (newVal: string) => void;
+    waitReturn?: boolean;
     allowNegativeValues?: boolean;
-    setValue: number;
     decimalDigits?: number;
     label?: string;
     disabled?: boolean;
@@ -15,71 +15,86 @@ type MoorhenPreciseInputPropsType = {
 };
 
 export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
-    const defaultProps = {
-        allowNegativeValues: false,
-        decimalDigits: 2,
-        disabled: false,
-    };
 
     const {
-        allowNegativeValues,
-        decimalDigits,
-        label,
-        disabled,
+        allowNegativeValues = true,
+        decimalDigits = 2,
+        label = "",
+        disabled = false,
         width,
-    } = {
-        ...defaultProps,
-        ...props,
-    };
-
-    const [value, setValue] = useState<string>(
-        props.setValue.toFixed(decimalDigits)
-    );
-
-    useEffect(() => {
-        setValue(props.setValue.toFixed(decimalDigits));
-    }, [props.setValue]);
+        waitReturn = false,
+    } = props;
 
     const [isValidInput, setIsValidInput] = useState<boolean>(true);
+    const [internalValue, setInternalValue] = useState<string>("");
+    const [isUserInteracting, setIsUserInteracting] = useState<boolean>(false);
+
+    useEffect(() => {
+        if (!isUserInteracting) {
+            if (props.value === undefined || props.value === null) {
+                setInternalValue("");
+                setIsValidInput(false);
+            } else {
+                setInternalValue(Number(props.value).toFixed(decimalDigits));
+                setIsValidInput(true);
+            }
+        }
+    }, [props.value, isUserInteracting]);
 
     const checkIsValidInput = (input: string) => {
-        if (isNaN(+input)) {
+        const value = parseFloat(input);
+        if (isNaN(value)) {
             return false;
-        } else if (parseInt(input) === Infinity) {
+        } else if (!isFinite(value)) {
             return false;
-        } else if (!allowNegativeValues && parseInt(input) < 0) {
+        } else if (!allowNegativeValues && value < 0) {
             return false;
         }
         return true;
     };
 
     const handleChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
-        setValue(evt.target.value);
+        setIsUserInteracting(true); // Mark user as interacting
+        setInternalValue(evt.target.value);
         const _isValid = checkIsValidInput(evt.target.value);
         setIsValidInput(_isValid);
-    }
+        if (_isValid && !waitReturn) {
+            props.setValue?.(evt.target.value);
+        }
+    };
 
     const handleReturn = (evt: React.KeyboardEvent<HTMLInputElement>) => {
-        if (evt.key === "Enter" && isValidInput) {
-            props.onEnter?.(value);
+        if (evt.key === "Enter") {
+            evt.preventDefault();
+            if (isValidInput) {
+                props.setValue?.(internalValue);
+            }
+            setIsUserInteracting(false); 
         }
-    }
+    };
+
+    const handleBlur = () => {
+        setIsUserInteracting(false); 
+    };
+
+    const inputWidth = width ? width : `${2.5 + 0.6 * decimalDigits}rem`;
 
     return (
         <Stack 
             direction="row" 
             spacing={1}
-            style= {{alignItems: "center"}}
-            >
-            {label? label : ""}
+            style={{ alignItems: "center" }}
+        >
+            {label && label}
             <Form.Control
                 type="text"
                 disabled={disabled}
-                value={value}
-                style = {{width: width? width : 2.5+ 0.6*decimalDigits +"rem", marginLeft: "0.2rem"}}
+                value={internalValue}
+                style={{ width: inputWidth, marginLeft: "0.2rem" }}
                 className={`precise-input ${isValidInput ? "valid" : "invalid"} ${disabled ? "disabled" : ""}`}
                 onChange={handleChange}
                 onKeyDown={handleReturn}
+                onBlur={handleBlur} // Handle blur to reset interaction state
             />
         </Stack>
     );

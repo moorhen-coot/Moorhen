@@ -26,6 +26,7 @@ type MoorhenSliderProps<T extends number | [number, number]> = {
     isDisabled?: boolean;
     usePreciseInput?: boolean;
     piWidth?: string | number;
+    piWaitReturn?: boolean;
 };
 
 export const MoorhenSlider = <T extends number | [number, number]>(props: MoorhenSliderProps<T>) => {
@@ -44,6 +45,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
         usePreciseInput = false,
         showButtons = true,
         piWidth,
+        piWaitReturn = false,
     } = props;
 
     const precision = Math.pow(10, - decimalPlaces);
@@ -65,7 +67,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
         }
     }
 
-    const [value, setValue] = useState<T>(logScale ? log10ofT(props.externalValue) : props.externalValue); // internal value
+    const [internalValue, setInternalValue] = useState<T>(logScale ? log10ofT(props.externalValue) : props.externalValue); // internal value
     const [externalValue, setExternalValue] = useState<T>(props.externalValue); 
     const isRange = Array.isArray(props.externalValue); 
 
@@ -82,9 +84,9 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
 
     useEffect(function propagateValueToSlider(){
         if (logScale) {
-            setValue(log10ofT(props.externalValue));
+            setInternalValue(log10ofT(props.externalValue));
         } else {
-            setValue(props.externalValue);
+            setInternalValue(props.externalValue);
         }
     }, [props.externalValue]);
 
@@ -109,8 +111,9 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                     <MoorhenPreciseInput
                         allowNegativeValues={minVal < 0}
                         label={sliderTitle}
-                        setValue={props.externalValue as number}   
-                        onEnter={(newVal) => setExternalValue((+newVal as T))}
+                        value={props.externalValue as number}   
+                        setValue={(newVal) => setExternalValue((+newVal as T))}
+                        waitReturn={piWaitReturn}
                         decimalDigits={decimalPlaces}
                         width={piWidth?  piWidth : 2.5+ 0.6*decimalPlaces +"rem"}
                         disabled={isDisabled}
@@ -128,8 +131,9 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                 >
                     <MoorhenPreciseInput
                         allowNegativeValues={minVal < 0}
-                        setValue={props.externalValue[0]}   
-                        onEnter={(newVal) => setExternalValue(([+newVal, externalValue[1]] as T))}
+                        value={props.externalValue[0]}   
+                        setValue={(newVal) => setExternalValue(([+newVal, externalValue[1]] as T))}
+                        waitReturn={piWaitReturn}
                         decimalDigits={decimalPlaces}
                         width={piWidth?  piWidth : 2.5+ 0.6*decimalPlaces +"rem"}
                         disabled={isDisabled}
@@ -137,8 +141,9 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                     <span style={{ margin: "0 5px" }}>{sliderTitle}:</span>
                     <MoorhenPreciseInput
                         allowNegativeValues={minVal < 0}
-                        setValue={props.externalValue[1]}   
-                        onEnter={(newVal) => setExternalValue(([externalValue[0], +newVal ] as T))}
+                        value={props.externalValue[1]}   
+                        setValue={(newVal) => setExternalValue(([externalValue[0], +newVal ] as T))}
+                        waitReturn={piWaitReturn}
                         decimalDigits={decimalPlaces}
                         width={piWidth?  piWidth : 2.5+ 0.6*decimalPlaces +"rem"}
                         disabled={isDisabled}
@@ -243,7 +248,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                 {drawTitle()}
                 <Slider
                     disabled={isDisabled}
-                    value={value}
+                    value={internalValue}
                     onChange={handleChange}
                     min={logScale ? Math.log10(minVal) : minVal}
                     max={logScale ? Math.log10(maxVal) : maxVal}
