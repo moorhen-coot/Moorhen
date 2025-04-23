@@ -2,7 +2,7 @@ import { forwardRef, useImperativeHandle, useEffect, useState, useRef, useCallba
 import { Card, Form, Button, Col, DropdownButton, Stack, OverlayTrigger, ToggleButton, Spinner } from "react-bootstrap"
 import { convertRemToPx, doDownload, rgbToHex } from '../../utils/utils'
 import { getNameLabel } from "./cardUtils"
-import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings, FileCopyOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined, AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
+import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings, FileCopyOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined, AddCircleOutline, RemoveCircleOutline, LockOutline, LockOpen } from '@mui/icons-material';
 import { MoorhenMapSettingsMenuItem } from "../menu-item/MoorhenMapSettingsMenuItem";
 import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem"
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
@@ -21,7 +21,6 @@ import { hideMap, setContourLevel, setMapAlpha, setMapColours, setMapRadius, set
 import { useSnackbar } from "notistack";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput";
-import { getFirstNonZeroDigitIndex } from "../misc/helpers";
 
 
 
@@ -347,10 +346,24 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
 
     const handleOriginUpdate = useCallback((evt: moorhen.OriginUpdateEvent) => {
         nextOrigin.current = [...evt.detail.origin.map((coord: number) => -coord)]
+        if (!props.map.isOriginLocked) {           
         isDirty.current = true
         if (mapIsVisible && !busyContouring.current) {
                 doContourIfDirty()
+        }}
+    }, [doContourIfDirty])
+
+    useEffect(() => {
+        if (mapIsVisible) {
+            nextOrigin.current = props.glRef.current.origin.map(coord => -coord)
+            isDirty.current = true
+            if (!busyContouring.current) {
+                doContourIfDirty()
+            }
+        } else {
+            props.map.hideMapContour()
         }
+
     }, [doContourIfDirty])
 
 
@@ -426,54 +439,58 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         }
     }, [])
 
-    useEffect(() => {
-        if (mapIsVisible) {
-            nextOrigin.current = props.glRef.current.origin.map(coord => -coord)
-            isDirty.current = true
-            if (!busyContouring.current) {
-                doContourIfDirty()
-            }
-        } else {
-            props.map.hideMapContour()
-        }
-
-    }, [doContourIfDirty])
 
     const lastExecutionTimeRef = useRef<number | null>(null);
     const radiusResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const [lastRadius, setLastRadius] = useState<number> (null) 
+    const [lastRadius, setLastRadius] = useState<number> (25)
+    const [wasOriginLocked, setWasOriginLocked,] = useState<boolean> (null) 
+    const startResetTimeout = () => {       
+        radiusResetTimeoutRef.current = setTimeout(() => {
+            props.map.toggleOriginLock(wasOriginLocked);
+            dispatch(setMapRadius({ molNo: props.map.molNo, radius: lastRadius }));
+            }, 500);
+    }
 
     function fastMapContourLevel(newContourLevel: number, radiusThresold: number = 25) {
-        props.map.toggleDrawLock(false)
+        
         const currentTime = Date.now();
+
         if (lastExecutionTimeRef.current && currentTime - lastExecutionTimeRef.current < 500) {  
             if (mapRadius > radiusThresold) {
+                setWasOriginLocked(props.map.isOriginLocked)
                 props.map.toggleOriginLock(false);
                 setLastRadius(mapRadius)
-                props.map.toggleOriginLock
-                dispatch(setMapRadius({ molNo: props.map.molNo, radius: radiusThresold })); }
+                dispatch(setMapRadius({ molNo: props.map.molNo, radius: radiusThresold }));
+                startResetTimeout()
+            }
             
             if (radiusResetTimeoutRef.current) {
                 clearTimeout(radiusResetTimeoutRef.current);
-                console.log("cleared")
-            }
+                startResetTimeout()         
+        }}
 
-            radiusResetTimeoutRef.current = setTimeout(() => {
-                props.map.toggleOriginLock(true);
-                props.map.toggleDrawLock(false)
-                dispatch(setMapRadius({ molNo: props.map.molNo, radius: lastRadius }));
-                }, 500);
-        }
-    
         lastExecutionTimeRef.current = currentTime;  
         dispatch(setContourLevel({ molNo: props.map.molNo, contourLevel: newContourLevel }));
     }
+       
+    const maxRadius = useMemo(() => {
+        if (props.map.isEM) {
+            if (props.map.headerInfo === null) {
+                return 100
+            }
+            let side = props.map.headerInfo.cell.a? props.map.headerInfo.cell.a : 120
+            //    return Math.ceil((side  * 1.732) /2) 
+            return Math.ceil(side/2)
+        }
+        else {
+            return 25
+        }}, [props.map.headerInfo, props.map.isEM])
+    
 
-    function unlockBeforeRadiusChange(newVal) {
-        props.map.toggleDrawLock(false)
-        dispatch(setMapRadius({ molNo: props.map.molNo, radius: newVal }));
+    const handleOriginLockClick = () => {
+        props.map.toggleOriginLock(!props.map.isOriginLocked)
+        props.map.drawMapContour()
     }
-        
 
     const getMapColourSelector = () => {
         if (mapColour === null) {
@@ -607,17 +624,32 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         <Card.Body style={{ display: isCollapsed ? 'none' : '', padding: '0.5rem' }}>
             <Stack direction="vertical" gap={1}>
             <Stack direction='horizontal' gap={4}>
-                <ToggleButton
-                    id={`active-map-toggle-${props.map.molNo}`}
-                    type="checkbox"
-                    variant={isDark ? "outline-light" : "outline-primary"}
-                    checked={props.map === activeMap}
-                    style={{ marginLeft: '0.1rem', marginRight: '0.5rem', justifyContent: 'space-betweeen', display: 'flex' }}
-                    onClick={() => dispatch( setActiveMap(props.map) )}
-                    value={""}                >
-                    {props.map === activeMap ? <RadioButtonCheckedOutlined/> : <RadioButtonUncheckedOutlined/>}
-                    <span style={{marginLeft: '0.5rem'}}>Active</span>
-                </ToggleButton>
+                <Stack direction="vertical" gap={4}>
+                    <ToggleButton
+                        id={`active-map-toggle-${props.map.molNo}`}
+                        type="checkbox"
+                        variant={isDark ? "outline-light" : "outline-primary"}
+                        checked={props.map === activeMap}
+                        style={{ marginLeft: '0.1rem', marginRight: '0.5rem', justifyContent: 'space-betweeen', display: 'flex' }}
+                        onClick={() => dispatch( setActiveMap(props.map) )}
+                        value={""}                >
+                        {props.map === activeMap ? <RadioButtonCheckedOutlined/> : <RadioButtonUncheckedOutlined/>}
+                        <span style={{marginLeft: '0.5rem'}}>Active</span>
+                    </ToggleButton>
+                    <ToggleButton
+                        id={`lock-origin-toggle-${props.map.molNo}`}
+                        type="checkbox"
+                        variant={isDark ? "outline-light" : "outline-primary"}
+                        checked={props.map.isOriginLocked}
+                        style={{ marginLeft: '0.1rem', marginRight: '0.5rem', justifyContent: 'space-betweeen', display: 'flex' }}
+                        onClick={() => {
+                            handleOriginLockClick()
+                        }}
+                        value={""}                >
+                        {props.map.isOriginLocked ?  <LockOutline/> : <LockOpen/>}
+                        <span style={{marginLeft: '0.5rem'}}>Lock Origin</span>
+                    </ToggleButton>
+                </Stack>
                 <Col style={{justifyContent: 'center'}}>
                     <Form.Group controlId="contouringLevel" className="mb-3">
                     <Stack 
@@ -630,22 +662,24 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                         }}>
 
                         <MoorhenPreciseInput 
-                            onEnter = {(newVal) => {fastMapContourLevel(+newVal)}}
+                            value={mapContourLevel}
+                            setValue = {(newVal) => {fastMapContourLevel(+newVal)}}
                             label = {"Level:"} 
-                            setValue={mapContourLevel}
                             decimalDigits={props.map.isEM ? Math.abs(Math.floor(Math.log10(props.map.levelRange[0]))) : 2}
                             allowNegativeValues={true}
                             disabled={!mapIsVisible}
+                            waitReturn={true}
                         />
                         
                         {props.map.mapRmsd && (
                         <MoorhenPreciseInput 
                             allowNegativeValues={true}
-                            onEnter = {(newVal) => {fastMapContourLevel(+newVal* props.map.mapRmsd) } }
-                            label = {"RMSD:"} 
-                            setValue={mapContourLevel / props.map.mapRmsd}
+                            value={mapContourLevel / props.map.mapRmsd}
+                            setValue = {(newVal) => {fastMapContourLevel(+newVal* props.map.mapRmsd) } }
+                            label = {"RMSD:"}                            
                             decimalDigits={2}
                             disabled={!mapIsVisible}
+                            waitReturn={true}
                         /> 
                         )}
 
@@ -660,21 +694,23 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                         isDisabled={!mapIsVisible}
                         externalValue={mapContourLevel}
                         setExternalValue={(newVal) => {fastMapContourLevel(newVal)}}
+                        piWaitReturn={true}
                     />
                         
                     </Form.Group>
                     <Form.Group controlId="contouringRadius" className="mb-3">
                         <MoorhenSlider
                             minVal={2}
-                            maxVal={props.map.isEM ? Math.ceil((380 * 1.72) /2) : 40}
+                            maxVal={maxRadius}
                             showMinMaxVal={false}
                             showButtons={true}
                             logScale={false} 
                             sliderTitle="Radius:" 
                             isDisabled={!mapIsVisible} 
                             externalValue={mapRadius} 
-                            setExternalValue={(newVal) => {unlockBeforeRadiusChange(newVal)}}
+                            setExternalValue={(newVal) => {dispatch(setMapRadius({ molNo: props.map.molNo, radius: newVal }))}}
                             usePreciseInput={true}
+                            piWidth={"3rem"}
                         />
                     </Form.Group>
                 </Col>

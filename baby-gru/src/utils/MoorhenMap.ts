@@ -50,13 +50,13 @@ export class MoorhenMap implements moorhen.Map {
     
     type: string
     name: string
+    headerInfo: moorhen.mapHeaderInfo
     isEM: boolean
     molNo: number
     store: ToolkitStore
     commandCentre: React.RefObject<moorhen.CommandCentre>
     glRef: React.RefObject<webGL.MGWebGL>
     isOriginLocked: boolean
-    drawLock: boolean
     mapCentre: [number, number, number]
     suggestedContourLevel: number
     suggestedRadius: number
@@ -82,6 +82,7 @@ export class MoorhenMap implements moorhen.Map {
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore = MoorhenReduxStore) {
         this.type = 'map'
         this.name = "unnamed"
+        this.headerInfo = null
         this.isEM = false
         this.molNo = null
         this.commandCentre = commandCentre
@@ -102,8 +103,7 @@ export class MoorhenMap implements moorhen.Map {
         this.suggestedContourLevel = null
         this.suggestedRadius = null
         this.mapCentre = null
-        this.isOriginLocked = true
-        this.drawLock = false
+        this.isOriginLocked = false
         this.otherMapForColouring = null
         this.diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] }
         this.defaultMapColour = _DEFAULT_MAP_COLOUR
@@ -504,7 +504,6 @@ export class MoorhenMap implements moorhen.Map {
      * Contour the map with parameters from the redux store
      */
     drawMapContour(): Promise<void> {
-        this.toggleDrawLock(false)
         const { mapRadius, contourLevel, mapStyle } = this.getMapContourParams()
         return this.doCootContour(...this.glRef.current.origin.map(coord => -coord) as [number, number, number], mapRadius, contourLevel, mapStyle)
     }
@@ -670,9 +669,14 @@ export class MoorhenMap implements moorhen.Map {
      */
     async doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number, style: "solid" | "lines" | "lit-lines"): Promise<void> {
 
-        if (this.drawLock) {
-            return
+        if (this.isOriginLocked)    {
+
+            x = Math.abs(this.mapCentre[0])
+            y = Math.abs(this.mapCentre[1])
+            z = Math.abs(this.mapCentre[2])
         }
+
+
 
         let returnType: string
         if (style === 'solid') {
@@ -683,12 +687,6 @@ export class MoorhenMap implements moorhen.Map {
             returnType = "lines_mesh"
         }
 
-        if (this.isOriginLocked)    {
-
-            x = Math.abs(this.mapCentre[0])
-            y = Math.abs(this.mapCentre[1])
-            z = Math.abs(this.mapCentre[2])
-        }
 
         let response: moorhen.WorkerResponse<any>
         if (this.otherMapForColouring !== null) {
@@ -709,7 +707,7 @@ export class MoorhenMap implements moorhen.Map {
 
         const objects = [response.data.result.result]
         this.setupContourBuffers(objects, this.otherMapForColouring !== null)
-        this.toggleDrawLock(true)
+
     }
 
     /**
@@ -995,6 +993,7 @@ export class MoorhenMap implements moorhen.Map {
             if (this.isEM) {
                 this.suggestedContourLevel = response.data.result.result.suggested_contour_level
                 this.suggestedRadius = response.data.result.result.suggested_radius
+                this.isOriginLocked = true
             }
         } else {
             console.log('Problem finding map centre')
@@ -1033,7 +1032,8 @@ export class MoorhenMap implements moorhen.Map {
             this.setDefaultColour(),
             this.fetchMapMean(),
             !this.isEM && this.fetchSuggestedLevel(),
-            this.guessMapRange()
+            this.guessMapRange(),
+            this.fetchHeaderInfo()
         ])
     }
 
@@ -1182,6 +1182,8 @@ export class MoorhenMap implements moorhen.Map {
         }, false) as moorhen.WorkerResponse<number>
         headerInfo.resolution = resol.data.result.result
 
+        this.headerInfo = headerInfo
+
         return headerInfo
     }
 
@@ -1189,7 +1191,4 @@ export class MoorhenMap implements moorhen.Map {
         this.isOriginLocked = val
     }
     
-    toggleDrawLock(val: boolean = !this.drawLock): void {
-        this.drawLock = val
-    }
 }
