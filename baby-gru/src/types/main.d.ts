@@ -268,6 +268,15 @@ declare module 'moorhen' {
     function setDoShadow(arg0: boolean): any;
     module.exports = setDoShadow;
 
+    function setMultiViewRows(arg0: boolean): any;
+    module.exports = setMultiViewRows;
+
+    function setMultiViewColumns(arg0: boolean): any;
+    module.exports = setMultiViewColumns;
+
+    function setSpecifyMultiViewRowsColumns(arg0: boolean): any;
+    module.exports = setSpecifyMultiViewRowsColumns;
+
     function setDoThreeWayView(arg0: boolean): any;
     module.exports = setDoThreeWayView;
 

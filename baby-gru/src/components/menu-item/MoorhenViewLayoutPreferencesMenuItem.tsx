@@ -3,6 +3,7 @@ import { Form, FormSelect, Row, Col, InputGroup } from "react-bootstrap";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { useSelector, useDispatch } from "react-redux";
 import { moorhen } from "../../types/moorhen";
+import { setMultiViewRows, setMultiViewColumns, setSpecifyMultiViewRowsColumns } from "../../store/sceneSettingsSlice"
 
 export const MoorhenViewLayoutPreferencesMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>; 
@@ -14,11 +15,9 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
     const dispatch = useDispatch()
     const canvasRef = useRef(null)
 
-    //FIXME - These need to be "global"
-    const [multiViewRows, setMultiViewRows] = useState<number>(1);
-    const [multiViewColumns, setMultiViewColumns] = useState<number>(1);
-    const [specifyMultiViewRowsColumns, setSpecifyMultiViewRowsColumns] = useState<boolean>(false);
-
+    const multiViewRows = useSelector((state: moorhen.State) => state.sceneSettings.multiViewRows)
+    const multiViewColumns = useSelector((state: moorhen.State) => state.sceneSettings.multiViewColumns)
+    const specifyMultiViewRowsColumns = useSelector((state: moorhen.State) => state.sceneSettings.specifyMultiViewRowsColumns)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const onCompleted = () => {}
@@ -112,15 +111,23 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
             return [the_shape[0],the_shape[1]]
         }
 
+    useEffect(() => {
+        if(!specifyMultiViewRowsColumns){
+            console.log("Recalculate....")
+            const wh = get_grid(molecules.length)
+            dispatch(setMultiViewRows(wh[0]))
+            dispatch(setMultiViewColumns(wh[1]))
+        }
+    }, [molecules])
 
     const handleChange = ((event,type) => {
         if(type==="specify"){
-            setSpecifyMultiViewRowsColumns(true)
+            dispatch(setSpecifyMultiViewRowsColumns(true))
         } else {
-            setSpecifyMultiViewRowsColumns(false)
+            dispatch(setSpecifyMultiViewRowsColumns(false))
             const wh = get_grid(molecules.length)
-            setMultiViewRows(wh[0])
-            setMultiViewColumns(wh[1])
+            dispatch(setMultiViewRows(wh[0]))
+            dispatch(setMultiViewColumns(wh[1]))
         }
     })
 
@@ -149,7 +156,7 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
             <Form.Label>Columns</Form.Label>
             </Col>
             <Col width="12">
-            <Form.Control min="1" step="1" type="number" value={multiViewColumns} onChange={(e) => setMultiViewColumns(parseInt(e.target.value))}/>
+            <Form.Control min="1" step="1" type="number" value={multiViewColumns} onChange={(e) => dispatch(setMultiViewColumns(parseInt(e.target.value)))}/>
             </Col>
             </Form.Group>
             <Form.Group as={Row} className="mb-3" controlId="MoorhenLayoutRowsPref">
@@ -157,7 +164,7 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
             <Form.Label>Rows</Form.Label>
             </Col>
             <Col width="12">
-            <Form.Control min="1" step="1" type="number" value={multiViewRows} onChange={(e) => setMultiViewRows(parseInt(e.target.value))}/>
+            <Form.Control min="1" step="1" type="number" value={multiViewRows} onChange={(e) => dispatch(setMultiViewRows(parseInt(e.target.value)))}/>
             </Col>
             </Form.Group>
             </fieldset>

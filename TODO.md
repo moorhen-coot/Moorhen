@@ -2,7 +2,7 @@
 A JavaScript molecular graphics program
 
 ### For 0.20.1
-  - [ ] Fix 64-bit test in CootWorker, it looks a bit dodgy.
+  - [x] Fix 64-bit test in CootWorker, it looks a bit dodgy.
   - [ ] User choice on multiview layout.
   - [ ] Ability to set origin/zoom/individual rotation in "Multiple views for different molecules".
 

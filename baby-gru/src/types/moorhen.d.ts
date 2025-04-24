@@ -1017,6 +1017,9 @@ export namespace moorhen {
             doOutline: boolean;
             doSpin: boolean;
             doThreeWayView: boolean;
+            multiViewRows: number;
+            multiViewColumns: number;
+            specifyMultiViewRowsColumns: boolean;
             doSideBySideStereo: boolean;
             doMultiView: boolean;
             doCrossEyedStereo: boolean;

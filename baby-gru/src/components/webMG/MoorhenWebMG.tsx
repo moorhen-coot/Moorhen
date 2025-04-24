@@ -72,6 +72,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const doCrossEyedStereo = useSelector((state: moorhen.State) => state.sceneSettings.doCrossEyedStereo)
     const doSideBySideStereo = useSelector((state: moorhen.State) => state.sceneSettings.doSideBySideStereo)
     const doThreeWayView = useSelector((state: moorhen.State) => state.sceneSettings.doThreeWayView)
+    const multiViewRows = useSelector((state: moorhen.State) => state.sceneSettings.multiViewRows)
+    const multiViewColumns = useSelector((state: moorhen.State) => state.sceneSettings.multiViewColumns)
+    const specifyMultiViewRowsColumns = useSelector((state: moorhen.State) => state.sceneSettings.specifyMultiViewRowsColumns)
     const doMultiView = useSelector((state: moorhen.State) => state.sceneSettings.doMultiView)
     const drawEnvBOcc = useSelector((state: moorhen.State) => state.sceneSettings.drawEnvBOcc)
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline)
@@ -217,6 +220,14 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [drawEnvBOcc])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setMultiViewRowsColumns([multiViewRows,multiViewColumns])
+            glRef.current.setSpecifyMultiViewRowsColumns(specifyMultiViewRowsColumns)
+            glRef.current.drawScene()
+        }
+    }, [multiViewRows,multiViewColumns,specifyMultiViewRowsColumns])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
