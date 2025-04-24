@@ -19,15 +19,8 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: 18
-
-    - name: Cache npm cache
-      id: cache-npm
-      uses: actions/cache@v4
-      with:
-        path: ~/.npm
-        key: npm-cache-${{ hashFiles('baby-gru/package-lock.json') }}
-        restore-keys: |
-          npm-cache-
+        cache: 'npm'
+        cache-dependency-path: baby-gru/package-lock.json
 
     - name: Install dependencies
       working-directory: baby-gru
