@@ -20,40 +20,27 @@ jobs:
       with:
         node-version: 18
 
-    - name: Install dependencies 
-      working-directory: /home/runner/work/Moorhen/
-      run: | 
-        sudo apt-get update -y   
-        sudo apt-get install -y npm
-
-    - name: Restore cache node18 modules
-      id: cache-node16-modules-load
+    - name: Cache node modules
+      id: cache-node-modules
       uses: actions/cache@v4
       with:
-        path: /home/runner/work/Moorhen/Moorhen/baby-gru/node_modules
-        key: node16-modules-cache
+        path: baby-gru/node_modules
+        key: node-modules-${{ hashFiles('baby-gru/package.json') }}
+        restore-keys: |
+          node-modules-
 
-    - name: Install npm modules
-      working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
-      if: steps.cache-node16-modules-load.outputs.cache-hit != 'true'
+    - name: Install dependencies
+      working-directory: baby-gru
       run: npm install
 
-    - name: Save node modules cache
-      id: cache-node16-modules-save
-      if: steps.cache-node16-modules-load.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
-      with: 
-        path: /home/runner/work/Moorhen/Moorhen/baby-gru/node_modules
-        key: node16-modules-cache 
-
     - name: Test typescript transpilation
-      working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
-      run: |             
+      working-directory: baby-gru
+      run: |
         npm run create-version
-        npm run transpile-protobuf 
+        npm run transpile-protobuf
         npx graphql-codegen
         npx tsc
         
     - name: Run react tests
-      working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
+      working-directory: baby-gru
       run: npm run test-react
