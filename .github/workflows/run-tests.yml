@@ -25,7 +25,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: baby-gru/node_modules
-        key: node-modules-${{ hashFiles('baby-gru/package.json') }}
+        key: node-modules-${{ hashFiles('baby-gru/package-lock.json') }}
         restore-keys: |
           node-modules-
 
