@@ -77,6 +77,14 @@ extern "C" {
 void untar(FILE *a, const char *path);
 }
 
+bool is64bit(){
+#ifdef _MOORHEN_MEMORY64_
+     return true;
+#else
+     return false;
+#endif
+}
+
 namespace moorhen {
     inline void ltrim_inplace(std::string &s, const char cht='\0') {
         s.erase(s.begin(), std::find_if(s.begin(), s.end(), [cht](unsigned char ch) {
@@ -2435,5 +2443,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
 
     function("get_mtz_columns",&get_mtz_columns);
     function("get_coord_header_info",&get_coord_header_info);
+    function("is64bit",&is64bit);
 
 }

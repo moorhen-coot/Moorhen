@@ -1207,6 +1207,9 @@ const doCootCommand = (messageData: {
             case "SmallMoleculeCifToMMCif":
                 cootResult = cootModule.SmallMoleculeCifToMMCif(...commandArgs as [string])
                 break
+            case "is64bit":
+                cootResult = cootModule.is64bit()
+                break
             case "get_coord_header_info":
                 cootResult = cootModule.get_coord_header_info(...commandArgs as [string,string])
                 break
@@ -1381,9 +1384,18 @@ onmessage = function (e) {
                 scriptName = "moorhen64.js"
                 console.log("Successfully loaded 64-bit libcoot in worker thread")
             } catch (e) {
+                if(e.name === 'NetworkError'){
+                   console.log('There was a NetworkError loading 64-bit WebAssembly module.')
+                   console.log('A retry *should* be attempted...');
+                   return
+                }
                 console.error(e)
                 console.log("Failed to load 64-bit libcoot in worker thread. Falling back to 32-bit.")
                 memory64 = false
+                importScripts('./moorhen.js')
+                mod = createCootModule
+                scriptName = "moorhen.js"
+                console.log("Successfully loaded 32-bit libcoot in worker thread")
             }
         } else {
             importScripts('./moorhen.js')
@@ -1399,6 +1411,8 @@ onmessage = function (e) {
         })
             .then((returnedModule) => {
                 postMessage({ consoleMessage: 'Initialized molecules_container', message: e.data.message, messageId: e.data.messageId })
+
+                console.log("Loaded",scriptName,". Is 64-bit:",memory64)
 
                 cootModule = returnedModule;
 
