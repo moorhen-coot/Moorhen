@@ -426,13 +426,14 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
 
     useEffect(() => {
         // This looks stupid but it is important otherwise the map is first drawn with the default contour and radius. Probably there's a problem somewhere...
+        batch(() => {
         dispatch(setMapAlpha({molNo: props.map.molNo, alpha: mapOpacity}))
         dispatch(setMapStyle({molNo: props.map.molNo, style: mapStyle}))
         dispatch(setMapRadius({molNo: props.map.molNo, radius: mapRadius}))
         dispatch(setContourLevel({molNo: props.map.molNo, contourLevel: mapContourLevel}))
         dispatch(setMapColours({molNo: props.map.molNo, rgb: mapColour}))
         dispatch(setNegativeMapColours({molNo: props.map.molNo, rgb: negativeMapColour}))
-        dispatch(setPositiveMapColours({molNo: props.map.molNo, rgb: positiveMapColour}))
+        dispatch(setPositiveMapColours({molNo: props.map.molNo, rgb: positiveMapColour}))})
         // Show map only if specified
         if (props.map.showOnLoad) {
             dispatch(showMap(props.map)) 

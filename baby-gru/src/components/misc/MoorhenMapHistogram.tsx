@@ -8,6 +8,7 @@ import { Row, Stack } from "react-bootstrap";
 import { IconButton } from "@mui/material";
 import { ZoomInOutlined, ZoomOutOutlined } from "@mui/icons-material";
 import { useSelector } from "react-redux";
+import { Checkbox } from "@mui/material";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
@@ -25,7 +26,7 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    let exponential: boolean = props.map.isEM // set Y axis to logarithmic if EM map
+    const [exponential, setExponential] =  useState<boolean> (props.map.isEM) // set Y axis to logarithmic if EM map
     const [base, setBase] = useState<number>(1)
     const [binWidth, setBinWidth] = useState<number>(1)
 
@@ -174,7 +175,6 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
                 chartRef.current = new Chart(ctx, chartData as any)
                 setBase(histogram.base)
                 setBinWidth(histogram.bin_width)
-                console.log('histogram', histogram)
             }
 
             setTimeout(() => {
@@ -184,9 +184,9 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
         }
     
         fetchHistogram()
-    }, [isDark, props.showHistogram, width, height, zoomFactor])
+    }, [isDark, props.showHistogram, width, height, zoomFactor, exponential])
 
-    return <Row>
+    return (<>
         <Stack style={{display: 'flex', marginTop: '0.5rem'}} gap={1} direction="horizontal">
             <div className="histogram-plot-div" style={{width: '95%'}}>
                 <canvas id={`${props.map.molNo}-histogram`}></canvas>
@@ -211,5 +211,14 @@ export const MoorhenMapHistogram = forwardRef<Chart, MapHistogramProps>((props, 
                 </IconButton>
             </Stack>
         </Stack>
-    </Row>
+        <Stack style={{display: 'flex', margin: 0, padding: 0, height:0, position: "relative", top: -15}} gap={1} direction="horizontal">
+        <Checkbox 
+                checked={exponential}
+                onChange = {(evt) => setExponential(evt.target.checked)} 
+                size = "small"      
+                /> 
+                <span style={{margin: '0.0rem', fontSize: "0.8rem"}}>Log<sub>10</sub>(Y)</span>
+        </Stack>
+        </>
+    )
 })
