@@ -20,14 +20,14 @@ jobs:
       with:
         node-version: 18
 
-    - name: Cache node modules
-      id: cache-node-modules
+    - name: Cache npm cache
+      id: cache-npm
       uses: actions/cache@v4
       with:
-        path: baby-gru/node_modules
-        key: node-modules-${{ hashFiles('baby-gru/package-lock.json') }}
+        path: ~/.npm
+        key: npm-cache-${{ hashFiles('baby-gru/package-lock.json') }}
         restore-keys: |
-          node-modules-
+          npm-cache-
 
     - name: Install dependencies
       working-directory: baby-gru
