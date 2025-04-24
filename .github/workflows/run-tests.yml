@@ -31,7 +31,7 @@ jobs:
 
     - name: Install dependencies
       working-directory: baby-gru
-      run: npm install
+      run: npm ci
 
     - name: Test typescript transpilation
       working-directory: baby-gru
