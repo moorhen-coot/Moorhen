@@ -71,8 +71,8 @@ export const MoorhenColourMapByOtherMapMenuItem = (props: {
 
         <MoorhenSlider
             externalValue={minMaxValue}
-            minVal={-4.0}
-            maxVal={4.0}
+            minVal={locRes? 0.5 : -4.0}
+            maxVal={locRes? 8.0 : 4.0}
             decimalPlaces={2}
             setExternalValue={(value) => {setMinMaxValue(value as [number, number])}}
             sliderTitle= {"Levels"}
