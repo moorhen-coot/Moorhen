@@ -1386,8 +1386,7 @@ onmessage = function (e) {
             } catch (e) {
                 if(e.name === 'NetworkError'){
                    console.log('There was a NetworkError loading 64-bit WebAssembly module.')
-                   console.log('A retry *should* be attempted...');
-                   return
+                   console.log('A retry *should* be attempted, errors below may not be real.');
                 }
                 console.error(e)
                 console.log("Failed to load 64-bit libcoot in worker thread. Falling back to 32-bit.")
