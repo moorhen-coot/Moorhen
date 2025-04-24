@@ -439,38 +439,55 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         }
     }, [])
 
-
-    const lastExecutionTimeRef = useRef<number | null>(null);
-    const radiusResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    // This work by delaying the initial contour draw if the radius is > thresolds, 
+    // and then start the contour drawing with the small raidus routin
+    const fastContourResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const fastContourInitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [lastRadius, setLastRadius] = useState<number> (25)
     const [wasOriginLocked, setWasOriginLocked,] = useState<boolean> (null) 
-    const startResetTimeout = () => {       
-        radiusResetTimeoutRef.current = setTimeout(() => {
+    
+    const startFinishTimeout = () => {      
+        fastContourResetTimeoutRef.current = setTimeout(() => {
             props.map.toggleOriginLock(wasOriginLocked);
+            fastContourInitTimeoutRef.current = null;
             dispatch(setMapRadius({ molNo: props.map.molNo, radius: lastRadius }));
             }, 500);
     }
 
-    function fastMapContourLevel(newContourLevel: number, radiusThresold: number = 25) {
-        
-        const currentTime = Date.now();
+    const fastContourInitTimeout = (contourLevel: number) => {       
+        fastContourInitTimeoutRef.current = setTimeout(() => {
+            fastContourInitTimeoutRef.current = null;
+            dispatch(setContourLevel({ molNo: props.map.molNo, contourLevel: contourLevel }));
+            }, 200);
+    }
 
-        if (lastExecutionTimeRef.current && currentTime - lastExecutionTimeRef.current < 500) {  
-            if (mapRadius > radiusThresold) {
-                setWasOriginLocked(props.map.isOriginLocked)
-                props.map.toggleOriginLock(false);
-                setLastRadius(mapRadius)
-                dispatch(setMapRadius({ molNo: props.map.molNo, radius: radiusThresold }));
-                startResetTimeout()
-            }
-            
-            if (radiusResetTimeoutRef.current) {
-                clearTimeout(radiusResetTimeoutRef.current);
-                startResetTimeout()         
+    function fastMapContourLevel(newContourLevel: number, radiusThresold: number = 25
+    ) {
+        
+        if (!fastContourInitTimeoutRef.current) {
+            if (mapRadius > radiusThresold){
+                fastContourInitTimeout(newContourLevel)
+                return
+            }}
+     
+        else {    
+        clearTimeout(fastContourInitTimeoutRef.current);
+
+        if (mapRadius > radiusThresold) {
+            setWasOriginLocked(props.map.isOriginLocked)
+            props.map.toggleOriginLock(false);
+            setLastRadius(mapRadius)
+            dispatch(setMapRadius({ molNo: props.map.molNo, radius: radiusThresold }));
+            startFinishTimeout()
+        }
+
+        if (fastContourResetTimeoutRef.current) {
+            clearTimeout(fastContourResetTimeoutRef.current);
+            startFinishTimeout()         
         }}
 
-        lastExecutionTimeRef.current = currentTime;  
-        dispatch(setContourLevel({ molNo: props.map.molNo, contourLevel: newContourLevel }));
+        dispatch(setContourLevel({ molNo: props.map.molNo, contourLevel: newContourLevel }));     
+        
     }
        
     const maxRadius = useMemo(() => {
@@ -487,8 +504,10 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         }}, [props.map.headerInfo, props.map.isEM])
     
 
+    const [isOriginLocked, setIsOriginLocked] = useState<boolean> (props.map.isOriginLocked)
     const handleOriginLockClick = () => {
         props.map.toggleOriginLock(!props.map.isOriginLocked)
+        setIsOriginLocked(!props.map.isOriginLocked)
         props.map.drawMapContour()
     }
 
@@ -640,7 +659,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                         id={`lock-origin-toggle-${props.map.molNo}`}
                         type="checkbox"
                         variant={isDark ? "outline-light" : "outline-primary"}
-                        checked={props.map.isOriginLocked}
+                        checked={isOriginLocked}
                         style={{ marginLeft: '0.1rem', marginRight: '0.5rem', justifyContent: 'space-betweeen', display: 'flex' }}
                         onClick={() => {
                             handleOriginLockClick()

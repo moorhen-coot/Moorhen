@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Form } from "react-bootstrap";
 import Stack from '@mui/material/Stack';
 import './inputs.css'
+import { number } from "prop-types";
 
 type MoorhenPreciseInputPropsType = {
     value: number | null | undefined;
@@ -12,6 +13,7 @@ type MoorhenPreciseInputPropsType = {
     label?: string;
     disabled?: boolean;
     width?: string | number;
+    minMax?: [number, number] 
 };
 
 export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
@@ -23,6 +25,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         disabled = false,
         width,
         waitReturn = false,
+        minMax = null
     } = props;
 
     const [isValidInput, setIsValidInput] = useState<boolean>(true);
@@ -49,7 +52,10 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
             return false;
         } else if (!allowNegativeValues && value < 0) {
             return false;
-        }
+        } else if (minMax != null) {
+            if (value < minMax[0] || value > minMax[1]) {
+                return false
+            }}   
         return true;
     };
 

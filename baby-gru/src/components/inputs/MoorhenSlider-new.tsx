@@ -27,6 +27,7 @@ type MoorhenSliderProps<T extends number | [number, number]> = {
     usePreciseInput?: boolean;
     piWidth?: string | number;
     piWaitReturn?: boolean;
+    piMinMax?: [number, number]
 };
 
 export const MoorhenSlider = <T extends number | [number, number]>(props: MoorhenSliderProps<T>) => {
@@ -46,6 +47,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
         showButtons = true,
         piWidth,
         piWaitReturn = false,
+        piMinMax = [minVal, maxVal]
     } = props;
 
     const precision = Math.pow(10, - decimalPlaces);
@@ -117,6 +119,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                         decimalDigits={decimalPlaces}
                         width={piWidth?  piWidth : 2.5+ 0.6*decimalPlaces +"rem"}
                         disabled={isDisabled}
+                        minMax={piMinMax}
                     />
                 </Box>
                 );
@@ -137,6 +140,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                         decimalDigits={decimalPlaces}
                         width={piWidth?  piWidth : 2.5+ 0.6*decimalPlaces +"rem"}
                         disabled={isDisabled}
+                        minMax={piMinMax}
                     />
                     <span style={{ margin: "0 5px" }}>{sliderTitle}:</span>
                     <MoorhenPreciseInput
@@ -147,6 +151,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                         decimalDigits={decimalPlaces}
                         width={piWidth?  piWidth : 2.5+ 0.6*decimalPlaces +"rem"}
                         disabled={isDisabled}
+                        minMax={piMinMax}
                     />
                     </Stack>
                 );
