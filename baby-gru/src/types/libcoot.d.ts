@@ -562,6 +562,7 @@ export namespace libcootApi {
         MapIntFloat3: { new(): emscriptem.map<[number, number, number], number>};
         MapIntFloat4: { new(): emscriptem.map<[number, number, number, number], number>};
         VectorStringUInt_pair: { new(): emscriptem.vector<{ first: string, second: number }>};
+        is64bit(): boolean;
     }
     interface MoleculesContainerJS {
         delete(): void;
