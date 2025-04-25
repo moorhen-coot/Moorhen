@@ -2632,9 +2632,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const yaxis = vec3.create();
         vec3.set(yaxis, 0.0, -1.0, 0.0)
 
+        const zaxis = vec3.create();
+        vec3.set(zaxis, 0.0, 0.0, 1.0)
+
         const angle = -Math.PI/2.;
 
         const dval3 = Math.cos(angle / 2.0);
+
         const dval0_x = xaxis[0] * Math.sin(angle / 2.0);
         const dval1_x = xaxis[1] * Math.sin(angle / 2.0);
         const dval2_x = xaxis[2] * Math.sin(angle / 2.0);
@@ -2643,13 +2647,31 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const dval1_y = yaxis[1] * Math.sin(angle / 2.0);
         const dval2_y = yaxis[2] * Math.sin(angle / 2.0);
 
+        const dval0_z_p = zaxis[0] * Math.sin(angle / 2.0);
+        const dval1_z_p = zaxis[1] * Math.sin(angle / 2.0);
+        const dval2_z_p = zaxis[2] * Math.sin(angle / 2.0);
+        const dval3_z_p = Math.cos(angle / 2.0);
+
+        const dval0_z_m = zaxis[0] * Math.sin(-angle / 2.0);
+        const dval1_z_m = zaxis[1] * Math.sin(-angle / 2.0);
+        const dval2_z_m = zaxis[2] * Math.sin(-angle / 2.0);
+        const dval3_z_m = Math.cos(-angle / 2.0);
+
         const yForward = quat4.create();
         const xForward = quat4.create();
         const zForward = quat4.create();
+        const zPlus = quat4.create();
+        const zMinus = quat4.create();
 
         quat4.set(zForward, 0, 0, 0, -1);
         quat4.set(yForward, dval0_x, dval1_x, dval2_x, dval3);
         quat4.set(xForward, dval0_y, dval1_y, dval2_y, dval3);
+
+        quat4.set(zPlus, dval0_z_p, dval1_z_p, dval2_z_p, dval3_z_p);
+        quat4.set(zMinus, dval0_z_m, dval1_z_m, dval2_z_m, dval3_z_p);
+
+        quat4.multiply(xForward, xForward, zMinus);
+        quat4.multiply(yForward, yForward, zPlus);
 
         if(this.threeWayViewOrder&&this.threeWayViewOrder.length===4){
 
@@ -3197,7 +3219,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.doMultiView = false;
         this.doCrossEyedStereo = false;
         this.doAnaglyphStereo = false;
-        
+
         this.specifyMultiViewRowsColumns = false;
         this.threeWayViewOrder = "";
         this.multiViewRowsColumns = [1,1];

@@ -255,6 +255,7 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
             <canvas ref={canvasRef}/>
           </Tab>
           <Tab eventKey="threeway" title="Three-way view">
+          <div>Drag the axes picture around to rearrange the 3-way view</div>
               <TilesContainer
                 data={tiles}
                 columns={2}
