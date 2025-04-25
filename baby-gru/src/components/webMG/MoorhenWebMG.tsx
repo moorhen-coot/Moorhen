@@ -225,6 +225,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
             glRef.current.setThreeWayViewOrder(threeWayViewOrder)
+            glRef.current.setupThreeWayTransformations()
             glRef.current.drawScene()
         }
     }, [threeWayViewOrder])

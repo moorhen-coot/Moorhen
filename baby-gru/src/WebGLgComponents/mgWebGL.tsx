@@ -2597,9 +2597,35 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
         this.threeWayViewports = []
         this.threeWayQuats = []
-        this.threeWayViewports.push([0, 0, this.gl.viewportWidth/2, this.gl.viewportHeight/2])
-        this.threeWayViewports.push([this.gl.viewportWidth/2, this.gl.viewportHeight/2,this.gl.viewportWidth/2, this.gl.viewportHeight/2])
-        this.threeWayViewports.push([0, this.gl.viewportHeight/2,this.gl.viewportWidth/2, this.gl.viewportHeight/2])
+
+        const BL = [0, 0, this.gl.viewportWidth/2, this.gl.viewportHeight/2]
+        const BR = [this.gl.viewportWidth/2, 0, this.gl.viewportWidth/2, this.gl.viewportHeight/2]
+        const TR = [this.gl.viewportWidth/2, this.gl.viewportHeight/2,this.gl.viewportWidth/2, this.gl.viewportHeight/2]
+        const TL = [0, this.gl.viewportHeight/2,this.gl.viewportWidth/2, this.gl.viewportHeight/2]
+
+        if(this.threeWayViewOrder&&this.threeWayViewOrder.length===4){
+            if(this.threeWayViewOrder.indexOf(" ")===0){
+                this.threeWayViewports.push(BL)
+                this.threeWayViewports.push(BR)
+                this.threeWayViewports.push(TR)
+            } else if(this.threeWayViewOrder.indexOf(" ")===1){
+                this.threeWayViewports.push(BL)
+                this.threeWayViewports.push(BR)
+                this.threeWayViewports.push(TL)
+            } else if(this.threeWayViewOrder.indexOf(" ")===2){
+                this.threeWayViewports.push(BR)
+                this.threeWayViewports.push(TL)
+                this.threeWayViewports.push(TR)
+            } else if(this.threeWayViewOrder.indexOf(" ")===3){
+                this.threeWayViewports.push(BL)
+                this.threeWayViewports.push(TL)
+                this.threeWayViewports.push(TR)
+            }
+        } else {
+            this.threeWayViewports.push(BL)
+            this.threeWayViewports.push(TL)
+            this.threeWayViewports.push(TR)
+        }
 
         const xaxis = vec3.create();
         vec3.set(xaxis, 1.0, 0.0, 0.0)
@@ -2617,17 +2643,40 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const dval1_y = yaxis[1] * Math.sin(angle / 2.0);
         const dval2_y = yaxis[2] * Math.sin(angle / 2.0);
 
-        const rotX = quat4.create();
-        const rotY = quat4.create();
-        const rotZ = quat4.create();
+        const yForward = quat4.create();
+        const xForward = quat4.create();
+        const zForward = quat4.create();
 
-        quat4.set(rotZ, 0, 0, 0, -1);
-        quat4.set(rotX, dval0_x, dval1_x, dval2_x, dval3);
-        quat4.set(rotY, dval0_y, dval1_y, dval2_y, dval3);
+        quat4.set(zForward, 0, 0, 0, -1);
+        quat4.set(yForward, dval0_x, dval1_x, dval2_x, dval3);
+        quat4.set(xForward, dval0_y, dval1_y, dval2_y, dval3);
 
-        this.threeWayQuats.push(rotX)
-        this.threeWayQuats.push(rotY)
-        this.threeWayQuats.push(rotZ)
+        if(this.threeWayViewOrder&&this.threeWayViewOrder.length===4){
+
+            const top = this.threeWayViewOrder.substring(0,2)
+            const bottom = this.threeWayViewOrder.substring(2,4)
+
+            for(let c of bottom.trim()) {
+                if(c==="X")
+                    this.threeWayQuats.push(xForward)
+                if(c==="Y")
+                    this.threeWayQuats.push(yForward)
+                if(c==="Z")
+                    this.threeWayQuats.push(zForward)
+            }
+            for(let c of top.trim()) {
+                if(c==="X")
+                    this.threeWayQuats.push(xForward)
+                if(c==="Y")
+                    this.threeWayQuats.push(yForward)
+                if(c==="Z")
+                    this.threeWayQuats.push(zForward)
+            }
+        } else {
+            this.threeWayQuats.push(yForward)
+            this.threeWayQuats.push(zForward)
+            this.threeWayQuats.push(xForward)
+        }
 
     }
 
@@ -2861,7 +2910,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     setThreeWayViewOrder(threeWayViewOrder: string){
-        console.log(threeWayViewOrder)
         this.threeWayViewOrder = threeWayViewOrder
     }
 

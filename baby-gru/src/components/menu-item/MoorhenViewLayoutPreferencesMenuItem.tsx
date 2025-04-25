@@ -254,7 +254,7 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
             </Form>
             <canvas ref={canvasRef}/>
           </Tab>
-          <Tab disabled eventKey="threeway" title="Three-way view (disabled)">
+          <Tab eventKey="threeway" title="Three-way view">
               <TilesContainer
                 data={tiles}
                 columns={2}
