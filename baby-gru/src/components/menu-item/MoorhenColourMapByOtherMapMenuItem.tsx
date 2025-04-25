@@ -14,6 +14,7 @@ export const MoorhenColourMapByOtherMapMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
+    
     const maps = useSelector((state: moorhen.State) => state.maps)
 
     const mapSelectRef_1 = useRef<null | HTMLSelectElement>(null)
@@ -55,14 +56,40 @@ export const MoorhenColourMapByOtherMapMenuItem = (props: {
         }
 
         referenceMap.setOtherMapForColouring(colouringMap.molNo, minMaxValue[0], minMaxValue[1])
-        console.log('colouringMap args:', colouringMap.molNo, minMaxValue[0], minMaxValue[1])
         referenceMap.drawMapContour()
 
     }
 
+    const handleSelectorChange = () => {
+        const guessValues = async () => {
+            if (!mapSelectRef_2.current.value) {
+                return;
+            }
+            const colouringMap = maps.find(map => map.molNo === parseInt(mapSelectRef_2.current.value));
+            if (!colouringMap) {
+                return;
+            }
+            const histogram = await colouringMap.getHistogram(400, 1);
+            const secondNonZeroIndex = histogram.counts.findIndex((value, index, array) => {
+                if (value !== 0) {
+                    const firstNonZeroIndex = array.findIndex(v => v !== 0);
+                    return index > firstNonZeroIndex && value !== 0;
+                }
+                return false;
+            });
+            const suggestedMinVal = secondNonZeroIndex * histogram.bin_width;
+            if (locRes) {
+                setMinMaxValue([suggestedMinVal, suggestedMinVal +1])
+            }
+        };
+        guessValues();
+    };
+
+    useEffect(handleSelectorChange, [locRes])
+
     const panelContent = <>
         <MoorhenMapSelect maps={maps} ref={mapSelectRef_1} label="Colour this map..." />
-        <MoorhenMapSelect maps={maps} ref={mapSelectRef_2} label="By this map..."/>
+        <MoorhenMapSelect maps={maps} ref={mapSelectRef_2} label="By this map..." onChange={handleSelectorChange}/>
         <Checkbox 
         checked={locRes}
         onChange = {(evt) => setLocRes(evt.target.checked)}       
@@ -71,12 +98,13 @@ export const MoorhenColourMapByOtherMapMenuItem = (props: {
 
         <MoorhenSlider
             externalValue={minMaxValue}
-            minVal={locRes? 0.5 : -4.0}
+            minVal={locRes? 1.0 : -4.0}
             maxVal={locRes? 8.0 : 4.0}
             decimalPlaces={2}
             setExternalValue={(value) => {setMinMaxValue(value as [number, number])}}
             sliderTitle= {"Levels"}
             usePreciseInput={true}
+            piMinMax={null}
             
         />
         <Button variant="primary" onClick={handleApply}>
