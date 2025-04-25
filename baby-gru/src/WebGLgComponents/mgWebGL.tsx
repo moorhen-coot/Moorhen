@@ -10536,7 +10536,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 quat4.multiply(newQuat, newQuat, quats[i]);
                 const theRotMatrix = quatToMat4(newQuat);
                 mat4.multiply(theMatrix, theMatrix, theRotMatrix);
-                if(this.doMultiView&&i<=this.multiViewOrigins.length)
+                if(this.doMultiView&&i<=this.multiViewOrigins.length&&this.multiViewOrigins.length>0)
                     mat4.translate(theMatrix, theMatrix, this.multiViewOrigins[i])
                 else
                     mat4.translate(theMatrix, theMatrix, this.origin)
@@ -12471,7 +12471,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             vec3.set(rot_x_axis, 1.0, 0.0, 0.0);
             vec3.set(rot_y_axis, 0.0, 1.0, 0.0);
 
-            if(this.doThreeWayView){
+            if(this.doThreeWayView&&this.threeWayViewports.length>0){
                 const quats = this.threeWayQuats
                 const viewports = this.threeWayViewports
                 const mVPQ = this.getThreeWayMatrixAndViewPort(this.gl_cursorPos[0],this.gl_cursorPos[1],quats,viewports)
