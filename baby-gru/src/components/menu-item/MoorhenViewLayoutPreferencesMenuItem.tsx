@@ -1,9 +1,11 @@
 import { useRef,useEffect,useState } from "react";
-import { Form, FormSelect, Row, Col, InputGroup } from "react-bootstrap";
+import { Form, FormSelect, Row, Col, InputGroup, Tab, Tabs } from "react-bootstrap";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { useSelector, useDispatch } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { setMultiViewRows, setMultiViewColumns, setSpecifyMultiViewRowsColumns } from "../../store/sceneSettingsSlice"
+import { TilesContainer, RenderTileFunction } from "react-tiles-dnd";
+import "../../../node_modules/react-tiles-dnd/esm/index.css";
 
 export const MoorhenViewLayoutPreferencesMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
@@ -29,6 +31,22 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
     imageRefMolDimer.current = imgMolDimer;
 
     const onCompleted = () => {}
+
+    const render: RenderTileFunction<typeof tiles[0]> = ({ data, isDragging }) => (
+      <div style={{ padding: "1rem", width: "100%" }}>
+        <div
+          className={`tile ${isDragging ? "dragging" : ""}`}
+          style={{ width: "100%", height: "100%" }}
+        >
+          {(data.text === "Z" && !isDark) && <img draggable="false" width="75" src={`${props.urlPrefix}/pixmaps/axes_xyz.svg`}></img>}
+          {(data.text === "Y" && !isDark) && <img draggable="false" width="75" src={`${props.urlPrefix}/pixmaps/axes_zxy.svg`}></img>}
+          {(data.text === "X" && !isDark) && <img draggable="false" width="75" src={`${props.urlPrefix}/pixmaps/axes_yzx.svg`}></img>}
+          {(data.text === "Z" && isDark) && <img draggable="false" width="75" src={`${props.urlPrefix}/pixmaps/axes_xyz_dark.svg`}></img>}
+          {(data.text === "Y" && isDark) && <img draggable="false" width="75" src={`${props.urlPrefix}/pixmaps/axes_zxy_dark.svg`}></img>}
+          {(data.text === "X" && isDark) && <img draggable="false" width="75" src={`${props.urlPrefix}/pixmaps/axes_yzx_dark.svg`}></img>}
+        </div>
+      </div>
+    );
 
     const draw = (ctx,w,h) => {
         console.log(imageRefMolDimer.current)
@@ -145,6 +163,22 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
         }
     }, [molecules])
 
+    const tiles = [
+      { text: "Z", cols: 1, rows: 1 },
+      { text: "X", cols: 1, rows: 1 },
+      { text: "Y", cols: 1, rows: 1 },
+      { text: " ", cols: 1, rows: 1 },
+    ];
+
+    const tileSize = (tile: typeof tiles[0]) => ({
+      colSpan: tile.cols,
+      rowSpan: tile.rows
+    });
+
+    const onReorderTiles = ((reorderedData: any[]) => {
+        console.log(reorderedData)
+    })
+
     const handleChange = ((event,type) => {
         if(type==="specify"){
             dispatch(setSpecifyMultiViewRowsColumns(true))
@@ -158,6 +192,8 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
 
     const panelContent =
         <>
+        <Tabs defaultActiveKey="onepermol">
+          <Tab eventKey="onepermol" title="One view per molecule">
             <InputGroup className='moorhen-input-group-check'>
                 <Form.Check
                     type="radio"
@@ -205,6 +241,20 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
             }
             </Form>
             <canvas ref={canvasRef}/>
+          </Tab>
+          <Tab disabled eventKey="threeway" title="Three-way view">
+              <TilesContainer
+                data={tiles}
+                columns={2}
+                renderTile={render}
+                tileSize={tileSize}
+                forceTileWidth={150}
+                forceTileHeight={150}
+                activeBorderSize={75}
+                onReorderTiles={onReorderTiles}
+              ></TilesContainer>
+          </Tab>
+        </Tabs>
         </>
 
     return <MoorhenBaseMenuItem
