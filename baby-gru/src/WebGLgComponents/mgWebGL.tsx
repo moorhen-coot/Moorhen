@@ -2297,6 +2297,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         doMultiView: boolean;
         multiViewRowsColumns: number[];
         specifyMultiViewRowsColumns: boolean;
+        threeWayViewOrder: string;
         doThreeWayView: boolean;
         doSideBySideStereo: boolean;
         doCrossEyedStereo: boolean;
@@ -2859,6 +2860,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.doMultiView = doMultiView;
     }
 
+    setThreeWayViewOrder(threeWayViewOrder: string){
+        console.log(threeWayViewOrder)
+        this.threeWayViewOrder = threeWayViewOrder
+    }
+
     setSpecifyMultiViewRowsColumns(specifyMultiViewRowsColumns: boolean){
         this.specifyMultiViewRowsColumns = specifyMultiViewRowsColumns
         this.multiWayViewports = []
@@ -3145,6 +3151,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.doAnaglyphStereo = false;
         
         this.specifyMultiViewRowsColumns = false;
+        this.threeWayViewOrder = "";
         this.multiViewRowsColumns = [1,1];
 
         this.doOrderIndependentTransparency = true;//Request OIT user/state setting

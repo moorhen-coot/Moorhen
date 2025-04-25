@@ -74,6 +74,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const doThreeWayView = useSelector((state: moorhen.State) => state.sceneSettings.doThreeWayView)
     const multiViewRows = useSelector((state: moorhen.State) => state.sceneSettings.multiViewRows)
     const multiViewColumns = useSelector((state: moorhen.State) => state.sceneSettings.multiViewColumns)
+    const threeWayViewOrder = useSelector((state: moorhen.State) => state.sceneSettings.threeWayViewOrder)
     const specifyMultiViewRowsColumns = useSelector((state: moorhen.State) => state.sceneSettings.specifyMultiViewRowsColumns)
     const doMultiView = useSelector((state: moorhen.State) => state.sceneSettings.doMultiView)
     const drawEnvBOcc = useSelector((state: moorhen.State) => state.sceneSettings.drawEnvBOcc)
@@ -220,6 +221,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [drawEnvBOcc])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setThreeWayViewOrder(threeWayViewOrder)
+            glRef.current.drawScene()
+        }
+    }, [threeWayViewOrder])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {

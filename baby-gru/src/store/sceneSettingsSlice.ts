@@ -138,6 +138,9 @@ export const sceneSettingsSlice = createSlice({
     setMultiViewColumns: (state, action: {payload: number, type: string}) => {
         return {...state, multiViewColumns: action.payload}
     },
+    setThreeWayViewOrder: (state, action: {payload: string, type: string}) => {
+        return {...state, threeWayViewOrder: action.payload}
+    },
     setDoOutline: (state, action: {payload: boolean, type: string}) => {
         return {...state, doOutline: action.payload}
     },
@@ -168,7 +171,7 @@ export const {
     setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setEdgeDetectDepthScale,
     setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setDrawEnvBOcc, setDoAnaglyphStereo,
     setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView, setDoMultiView, setMultiViewRows, setMultiViewColumns,
-    setSpecifyMultiViewRowsColumns
+    setSpecifyMultiViewRowsColumns, setThreeWayViewOrder
 } = sceneSettingsSlice.actions
 
 export default sceneSettingsSlice.reducer

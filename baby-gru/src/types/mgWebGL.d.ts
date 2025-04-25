@@ -173,6 +173,7 @@ export namespace webGL {
         setDoThreeWayView(doThreeWayView: boolean): void;
         setMultiViewRowsColumns(multiViewRowsColumns: number[]): void;
         setSpecifyMultiViewRowsColumns(specifyMultiViewRowsColumns: boolean): void;
+        setThreeWayViewOrder(threeWayViewOrder: string): void;
         setDoSideBySideStereo(doSideBySideStereo: boolean): void;
         setDoCrossEyedStereo(doCrossEyedStereo: boolean): void;
         setDoAnaglyphStereo(doAnaglyphStereo: boolean): void;
@@ -300,6 +301,7 @@ export namespace webGL {
         doThreeWayView: boolean;
         multiViewRowsColumns: number[];
         specifyMultiViewRowsColumns: boolean;
+        threeWayViewOrder: string;
         doSideBySideStereo: boolean;
         doCrossEyedStereo: boolean;
         doAnaglyphStereo: boolean;

@@ -3,7 +3,7 @@ import { Form, FormSelect, Row, Col, InputGroup, Tab, Tabs } from "react-bootstr
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { useSelector, useDispatch } from "react-redux";
 import { moorhen } from "../../types/moorhen";
-import { setMultiViewRows, setMultiViewColumns, setSpecifyMultiViewRowsColumns } from "../../store/sceneSettingsSlice"
+import { setMultiViewRows, setMultiViewColumns, setSpecifyMultiViewRowsColumns, setThreeWayViewOrder } from "../../store/sceneSettingsSlice"
 import { TilesContainer, RenderTileFunction } from "react-tiles-dnd";
 import "../../../node_modules/react-tiles-dnd/esm/index.css";
 
@@ -22,6 +22,7 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
 
     const multiViewRows = useSelector((state: moorhen.State) => state.sceneSettings.multiViewRows)
     const multiViewColumns = useSelector((state: moorhen.State) => state.sceneSettings.multiViewColumns)
+    const threeWayViewOrder = useSelector((state: moorhen.State) => state.sceneSettings.threeWayViewOrder)
     const specifyMultiViewRowsColumns = useSelector((state: moorhen.State) => state.sceneSettings.specifyMultiViewRowsColumns)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
@@ -49,7 +50,6 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
     );
 
     const draw = (ctx,w,h) => {
-        console.log(imageRefMolDimer.current)
         ctx.clearRect(0, 0, w, h);
         if(isDark)
             ctx.strokeStyle = '#ffffff'
@@ -79,7 +79,6 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
         if(imageRefMolDimer.current){
             const cellWidth = drawWidth / multiViewColumns
             const cellHeight = drawHeight / multiViewRows
-            console.log(cellWidth,cellHeight)
             const imgSize = Math.min(cellWidth,cellHeight)
             let imol = 0
             for(let i=0;i<multiViewColumns;i++){
@@ -156,19 +155,27 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
 
     useEffect(() => {
         if(!specifyMultiViewRowsColumns){
-            console.log("Recalculate....")
             const wh = get_grid(molecules.length)
             dispatch(setMultiViewRows(wh[0]))
             dispatch(setMultiViewColumns(wh[1]))
         }
     }, [molecules])
 
-    const tiles = [
-      { text: "Z", cols: 1, rows: 1 },
-      { text: "X", cols: 1, rows: 1 },
-      { text: "Y", cols: 1, rows: 1 },
-      { text: " ", cols: 1, rows: 1 },
+    const X =  { text: "X", cols: 1, rows: 1 }
+    const Y =  { text: "Y", cols: 1, rows: 1 }
+    const Z =  { text: "Z", cols: 1, rows: 1 }
+    const B =  { text: " ", cols: 1, rows: 1 }
+
+    let tiles = [
+     Z, X, Y, B,
     ];
+
+    if(threeWayViewOrder&&threeWayViewOrder.length===4){
+        tiles[threeWayViewOrder.indexOf(" ")] = B
+        tiles[threeWayViewOrder.indexOf("X")] = X
+        tiles[threeWayViewOrder.indexOf("Y")] = Y
+        tiles[threeWayViewOrder.indexOf("Z")] = Z
+    }
 
     const tileSize = (tile: typeof tiles[0]) => ({
       colSpan: tile.cols,
@@ -176,7 +183,12 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
     });
 
     const onReorderTiles = ((reorderedData: any[]) => {
-        console.log(reorderedData)
+        const initialValue = "";
+        const newThreeWayViewOrder = reorderedData.reduce(
+          (accumulator, currentValue) => accumulator + currentValue.text,
+          initialValue,
+        );
+        dispatch(setThreeWayViewOrder(newThreeWayViewOrder))
     })
 
     const handleChange = ((event,type) => {
@@ -242,7 +254,7 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
             </Form>
             <canvas ref={canvasRef}/>
           </Tab>
-          <Tab disabled eventKey="threeway" title="Three-way view">
+          <Tab disabled eventKey="threeway" title="Three-way view (disabled)">
               <TilesContainer
                 data={tiles}
                 columns={2}

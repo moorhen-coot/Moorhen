@@ -22,7 +22,7 @@ import { setDefaultBackgroundColor, setDrawCrosshairs, setDrawFPS, setDrawMissin
     setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setBackgroundColor, 
     setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setDoAnaglyphStereo,
     setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView, setDoMultiView,
-    setMultiViewColumns, setMultiViewRows, setSpecifyMultiViewRowsColumns} from './store/sceneSettingsSlice';
+    setMultiViewColumns, setMultiViewRows, setSpecifyMultiViewRowsColumns, setThreeWayViewOrder} from './store/sceneSettingsSlice';
 import { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold, resetBackupSettings } from './store/backupSettingsSlice';
 import { 
     setActiveMap, setCootInitialized, setAppTittle, setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut,
@@ -92,5 +92,5 @@ export {
     resetGeneralStates, resetHoveringStates, resetLabelSettings, resetMapContourSettings, resetMoleculeMapUpdates,
     resetRefinementSettings, resetShortcutSettings, resetActiveModals, focusOnModal, setBFactorThreshold, 
     setClusteringType, setMoleculeBfactors, setMoleculeMaxBfactor, resetSliceNDiceSlice, setMoleculeMinBfactor, 
-    setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType, setPAEFileContents, getMultiColourRuleArgs, setUseGemmi, setDoAnaglyphStereo, setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView, setDoMultiView, setMultiViewColumns, setMultiViewRows, setSpecifyMultiViewRowsColumns
+    setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType, setPAEFileContents, getMultiColourRuleArgs, setUseGemmi, setDoAnaglyphStereo, setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView, setDoMultiView, setMultiViewColumns, setMultiViewRows, setSpecifyMultiViewRowsColumns, setThreeWayViewOrder
 };

@@ -1019,6 +1019,7 @@ export namespace moorhen {
             doThreeWayView: boolean;
             multiViewRows: number;
             multiViewColumns: number;
+            threeWayViewOrder: string;
             specifyMultiViewRowsColumns: boolean;
             doSideBySideStereo: boolean;
             doMultiView: boolean;

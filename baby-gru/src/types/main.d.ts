@@ -271,6 +271,9 @@ declare module 'moorhen' {
     function setMultiViewRows(arg0: boolean): any;
     module.exports = setMultiViewRows;
 
+    function setThreeWayViewOrder(arg0: boolean): any;
+    module.exports = setThreeWayViewOrder;
+
     function setMultiViewColumns(arg0: boolean): any;
     module.exports = setMultiViewColumns;
 
