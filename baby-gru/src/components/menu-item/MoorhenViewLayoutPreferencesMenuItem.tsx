@@ -6,11 +6,14 @@ import { moorhen } from "../../types/moorhen";
 import { setMultiViewRows, setMultiViewColumns, setSpecifyMultiViewRowsColumns } from "../../store/sceneSettingsSlice"
 
 export const MoorhenViewLayoutPreferencesMenuItem = (props: {
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>; 
+    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     popoverPlacement?: "left" | "right";
+    urlPrefix: string;
 }) => {
-    
+
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
+
+    const imageRefMolDimer = useRef<null | HTMLImageElement>(null);
 
     const dispatch = useDispatch()
     const canvasRef = useRef(null)
@@ -20,9 +23,15 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
     const specifyMultiViewRowsColumns = useSelector((state: moorhen.State) => state.sceneSettings.specifyMultiViewRowsColumns)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
+    const imgMolDimer = new window.Image();
+    imgMolDimer.src = `${props.urlPrefix}/pixmaps/molecule_dimer.svg`;
+    imgMolDimer.crossOrigin = "Anonymous";
+    imageRefMolDimer.current = imgMolDimer;
+
     const onCompleted = () => {}
 
     const draw = (ctx,w,h) => {
+        console.log(imageRefMolDimer.current)
         ctx.clearRect(0, 0, w, h);
         if(isDark)
             ctx.strokeStyle = '#ffffff'
@@ -49,10 +58,26 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
             ctx.lineTo(i*drawWidth/multiViewColumns+10,h-10)
             ctx.stroke()
         }
+        if(imageRefMolDimer.current){
+            const cellWidth = drawWidth / multiViewColumns
+            const cellHeight = drawHeight / multiViewRows
+            console.log(cellWidth,cellHeight)
+            const imgSize = Math.min(cellWidth,cellHeight)
+            let imol = 0
+            for(let i=0;i<multiViewColumns;i++){
+                for(let j=0;j<multiViewRows;j++){
+                    const x = i*cellWidth + 10 + (cellWidth-imgSize)/2
+                    const y = (multiViewRows-j-1)*cellHeight + 10  + (cellHeight-imgSize)/2
+                    if(imol<molecules.length)
+                        ctx.drawImage(imageRefMolDimer.current, x+2, y+2, imgSize-4,imgSize-4)
+                    imol++
+                }
+            }
+        }
     }
 
     useEffect(() => {
-    
+
         const canvas = canvasRef.current
         if(canvas){
             const w = canvas.width
@@ -168,14 +193,14 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
             </Col>
             </Form.Group>
             </fieldset>
-            {molecules.length === 1 && 
+            {molecules.length === 1 &&
             <Form.Label>There is 1 molecule loaded
             </Form.Label>
             }
-            { (molecules.length !== 1 && multiViewRows*multiViewColumns>=molecules.length) && 
+            { (molecules.length !== 1 && multiViewRows*multiViewColumns>=molecules.length) &&
             <Form.Label>There are {molecules.length} molecules loaded</Form.Label>
             }
-            { (molecules.length !== 1 && multiViewRows*multiViewColumns<molecules.length) && 
+            { (molecules.length !== 1 && multiViewRows*multiViewColumns<molecules.length) &&
             <Form.Label>There are {molecules.length} molecules loaded (specified grid is too small)</Form.Label>
             }
             </Form>

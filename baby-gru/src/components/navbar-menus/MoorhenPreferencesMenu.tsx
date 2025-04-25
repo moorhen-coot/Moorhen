@@ -113,6 +113,7 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
                     />
                     <MoorhenViewLayoutPreferencesMenuItem
                         setPopoverIsShown={setPopoverIsShown}
+                        urlPrefix={props.urlPrefix}
                     />
                     <MapContourSettingsMenuItem
                         commandCentre={props.commandCentre}
