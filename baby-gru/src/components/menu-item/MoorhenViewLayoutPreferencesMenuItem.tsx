@@ -4,8 +4,69 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { useSelector, useDispatch } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { setMultiViewRows, setMultiViewColumns, setSpecifyMultiViewRowsColumns, setThreeWayViewOrder } from "../../store/sceneSettingsSlice"
-import { TilesContainer, RenderTileFunction } from "react-tiles-dnd";
-import "../../../node_modules/react-tiles-dnd/esm/index.css";
+
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  useSortable,
+  sortableKeyboardCoordinates,
+  arrayMove,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
+import {CSS} from '@dnd-kit/utilities';
+
+function SortableItem(props) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({id: props.id});
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+          {(props.id === "Z" && !isDark) && <img draggable="false" width="75" src={`${props.urlPrefix}/pixmaps/axes_xyz.svg`}></img>}
+          {(props.id === "Y" && !isDark) && <img draggable="false" width="75" src={`${props.urlPrefix}/pixmaps/axes_zxy.svg`}></img>}
+          {(props.id === "X" && !isDark) && <img draggable="false" width="75" src={`${props.urlPrefix}/pixmaps/axes_yzx.svg`}></img>}
+          {(props.id === "Z" && isDark) && <img draggable="false" width="75" src={`${props.urlPrefix}/pixmaps/axes_xyz_dark.svg`}></img>}
+          {(props.id === "Y" && isDark) && <img draggable="false" width="75" src={`${props.urlPrefix}/pixmaps/axes_zxy_dark.svg`}></img>}
+          {(props.id === "X" && isDark) && <img draggable="false" width="75" src={`${props.urlPrefix}/pixmaps/axes_yzx_dark.svg`}></img>}
+    </div>
+  );
+}
+
+export function Grid({ children, columns }) {
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: `repeat(${columns}, 1fr)`,
+        gridAutoRows: `90px`,
+        gridGap: 10,
+        padding: 10,
+        gridAutoFlow: "row dense"
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 
 export const MoorhenViewLayoutPreferencesMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
@@ -26,6 +87,16 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
     const specifyMultiViewRowsColumns = useSelector((state: moorhen.State) => state.sceneSettings.specifyMultiViewRowsColumns)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
+    let theTiles = ["Z","X","Y"," "]
+    if(threeWayViewOrder&&threeWayViewOrder.length===4)
+        theTiles = threeWayViewOrder.split("")
+    const [items, setItems] = useState(theTiles);
+    const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }))
+
     const imgMolDimer = new window.Image();
     imgMolDimer.src = `${props.urlPrefix}/pixmaps/molecule_dimer.svg`;
     imgMolDimer.crossOrigin = "Anonymous";
@@ -33,21 +104,22 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
 
     const onCompleted = () => {}
 
-    const render: RenderTileFunction<typeof tiles[0]> = ({ data, isDragging }) => (
-      <div style={{ padding: "1rem", width: "100%" }}>
-        <div
-          className={`tile ${isDragging ? "dragging" : ""}`}
-          style={{ width: "100%", height: "100%" }}
-        >
-          {(data.text === "Z" && !isDark) && <img draggable="false" width="75" src={`${props.urlPrefix}/pixmaps/axes_xyz.svg`}></img>}
-          {(data.text === "Y" && !isDark) && <img draggable="false" width="75" src={`${props.urlPrefix}/pixmaps/axes_zxy.svg`}></img>}
-          {(data.text === "X" && !isDark) && <img draggable="false" width="75" src={`${props.urlPrefix}/pixmaps/axes_yzx.svg`}></img>}
-          {(data.text === "Z" && isDark) && <img draggable="false" width="75" src={`${props.urlPrefix}/pixmaps/axes_xyz_dark.svg`}></img>}
-          {(data.text === "Y" && isDark) && <img draggable="false" width="75" src={`${props.urlPrefix}/pixmaps/axes_zxy_dark.svg`}></img>}
-          {(data.text === "X" && isDark) && <img draggable="false" width="75" src={`${props.urlPrefix}/pixmaps/axes_yzx_dark.svg`}></img>}
-        </div>
-      </div>
-    );
+  function handleDragEnd(event) {
+    const {active, over} = event;
+
+    if (active.id !== over.id) {
+        const oldIndex = items.indexOf(active.id);
+        const newIndex = items.indexOf(over.id);
+        const newItems =  arrayMove(items, oldIndex, newIndex);
+        setItems(newItems);
+        const initialValue = "";
+        const newThreeWayViewOrder = newItems.reduce(
+          (accumulator, currentValue) => accumulator + currentValue,
+          initialValue,
+        );
+        dispatch(setThreeWayViewOrder(newThreeWayViewOrder))
+    }
+  }
 
     const draw = (ctx,w,h) => {
         ctx.clearRect(0, 0, w, h);
@@ -161,36 +233,6 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
         }
     }, [molecules])
 
-    const X =  { text: "X", cols: 1, rows: 1 }
-    const Y =  { text: "Y", cols: 1, rows: 1 }
-    const Z =  { text: "Z", cols: 1, rows: 1 }
-    const B =  { text: " ", cols: 1, rows: 1 }
-
-    let tiles = [
-     Z, X, Y, B,
-    ];
-
-    if(threeWayViewOrder&&threeWayViewOrder.length===4){
-        tiles[threeWayViewOrder.indexOf(" ")] = B
-        tiles[threeWayViewOrder.indexOf("X")] = X
-        tiles[threeWayViewOrder.indexOf("Y")] = Y
-        tiles[threeWayViewOrder.indexOf("Z")] = Z
-    }
-
-    const tileSize = (tile: typeof tiles[0]) => ({
-      colSpan: tile.cols,
-      rowSpan: tile.rows
-    });
-
-    const onReorderTiles = ((reorderedData: any[]) => {
-        const initialValue = "";
-        const newThreeWayViewOrder = reorderedData.reduce(
-          (accumulator, currentValue) => accumulator + currentValue.text,
-          initialValue,
-        );
-        dispatch(setThreeWayViewOrder(newThreeWayViewOrder))
-    })
-
     const handleChange = ((event,type) => {
         if(type==="specify"){
             dispatch(setSpecifyMultiViewRowsColumns(true))
@@ -256,16 +298,16 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
           </Tab>
           <Tab eventKey="threeway" title="Three-way view">
           <div>Drag the axes picture around to rearrange the 3-way view</div>
-              <TilesContainer
-                data={tiles}
-                columns={2}
-                renderTile={render}
-                tileSize={tileSize}
-                forceTileWidth={150}
-                forceTileHeight={150}
-                activeBorderSize={75}
-                onReorderTiles={onReorderTiles}
-              ></TilesContainer>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext
+              items={items}
+              strategy={rectSortingStrategy}
+            >
+            <Grid columns={2}>
+              {items.map(id => <SortableItem urlPrefix={props.urlPrefix} key={id} id={id} />)}
+              </Grid>
+            </SortableContext>
+          </DndContext>
           </Tab>
         </Tabs>
         </>
