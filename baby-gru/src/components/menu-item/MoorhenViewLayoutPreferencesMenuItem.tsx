@@ -17,8 +17,8 @@ import {
   SortableContext,
   useSortable,
   sortableKeyboardCoordinates,
-  arrayMove,
-  rectSortingStrategy,
+  arraySwap,
+  rectSwappingStrategy,
 } from '@dnd-kit/sortable';
 import {CSS} from '@dnd-kit/utilities';
 
@@ -104,22 +104,22 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
 
     const onCompleted = () => {}
 
-  function handleDragEnd(event) {
-    const {active, over} = event;
+    function handleDragEnd(event) {
+      const {active, over} = event;
 
-    if (active.id !== over.id) {
-        const oldIndex = items.indexOf(active.id);
-        const newIndex = items.indexOf(over.id);
-        const newItems =  arrayMove(items, oldIndex, newIndex);
-        setItems(newItems);
-        const initialValue = "";
-        const newThreeWayViewOrder = newItems.reduce(
-          (accumulator, currentValue) => accumulator + currentValue,
-          initialValue,
-        );
-        dispatch(setThreeWayViewOrder(newThreeWayViewOrder))
+      if (active.id !== over.id) {
+          const oldIndex = items.indexOf(active.id);
+          const newIndex = items.indexOf(over.id);
+          const newItems =  arraySwap(items, oldIndex, newIndex);
+          setItems(newItems);
+          const initialValue = "";
+          const newThreeWayViewOrder = newItems.reduce(
+            (accumulator, currentValue) => accumulator + currentValue,
+            initialValue,
+          );
+          dispatch(setThreeWayViewOrder(newThreeWayViewOrder))
+      }
     }
-  }
 
     const draw = (ctx,w,h) => {
         ctx.clearRect(0, 0, w, h);
@@ -301,7 +301,7 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext
               items={items}
-              strategy={rectSortingStrategy}
+              strategy={rectSwappingStrategy}
             >
             <Grid columns={2}>
               {items.map(id => <SortableItem urlPrefix={props.urlPrefix} key={id} id={id} />)}
