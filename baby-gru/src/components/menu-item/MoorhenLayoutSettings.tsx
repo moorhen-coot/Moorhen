@@ -17,7 +17,6 @@ export const MoorhenLayoutSettings = (props: { setPopoverIsShown: React.Dispatch
     const dispatch = useDispatch()
 
     const handleChange = ((event,type) => {
-        console.log(type)
         dispatch(setDoSideBySideStereo(false))
         dispatch(setDoCrossEyedStereo(false))
         dispatch(setDoAnaglyphStereo(false))

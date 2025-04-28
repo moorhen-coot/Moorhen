@@ -2295,6 +2295,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         doSpin: boolean;
         doStenciling: boolean;
         doMultiView: boolean;
+        multiViewRowsColumns: number[];
+        specifyMultiViewRowsColumns: boolean;
+        threeWayViewOrder: string;
         doThreeWayView: boolean;
         doSideBySideStereo: boolean;
         doCrossEyedStereo: boolean;
@@ -2564,7 +2567,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             return [the_shape[0],the_shape[1]]
         }
 
-        const wh = get_grid(nmols)
+        let wh : number[] = get_grid(nmols)
+        if(this.specifyMultiViewRowsColumns){
+           wh = this.multiViewRowsColumns
+        }
 
         this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
         this.multiWayViewports = []
@@ -2573,15 +2579,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const rotZ = quat4.create();
         quat4.set(rotZ, 0, 0, 0, -1);
 
-        for(let i=0;i<wh[0];i++){
-            for(let j=0;j<wh[1];j++){
-                const frac_i = i/wh[0]
-                const frac_j = j/wh[1]
-                this.multiWayViewports.push([frac_i*this.gl.viewportWidth,frac_j*this.gl.viewportHeight, this.gl.viewportWidth/wh[0], this.gl.viewportHeight/wh[1]])
+        for(let i=0;i<wh[1];i++){
+            for(let j=0;j<wh[0];j++){
+                const frac_i = i/wh[1]
+                const frac_j = j/wh[0]
+                this.multiWayViewports.push([frac_i*this.gl.viewportWidth,frac_j*this.gl.viewportHeight, this.gl.viewportWidth/wh[1], this.gl.viewportHeight/wh[0]])
                 this.multiWayQuats.push(rotZ)
             }
         }
-        this.multiWayRatio = wh[1]/wh[0]
+        this.multiWayRatio = wh[0]/wh[1]
         this.currentMultiViewGroup = 0
 
     }
@@ -2591,18 +2597,48 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
         this.threeWayViewports = []
         this.threeWayQuats = []
-        this.threeWayViewports.push([0, 0, this.gl.viewportWidth/2, this.gl.viewportHeight/2])
-        this.threeWayViewports.push([this.gl.viewportWidth/2, this.gl.viewportHeight/2,this.gl.viewportWidth/2, this.gl.viewportHeight/2])
-        this.threeWayViewports.push([0, this.gl.viewportHeight/2,this.gl.viewportWidth/2, this.gl.viewportHeight/2])
+
+        const BL = [0, 0, this.gl.viewportWidth/2, this.gl.viewportHeight/2]
+        const BR = [this.gl.viewportWidth/2, 0, this.gl.viewportWidth/2, this.gl.viewportHeight/2]
+        const TR = [this.gl.viewportWidth/2, this.gl.viewportHeight/2,this.gl.viewportWidth/2, this.gl.viewportHeight/2]
+        const TL = [0, this.gl.viewportHeight/2,this.gl.viewportWidth/2, this.gl.viewportHeight/2]
+
+        if(this.threeWayViewOrder&&this.threeWayViewOrder.length===4){
+            if(this.threeWayViewOrder.indexOf(" ")===0){
+                this.threeWayViewports.push(BL)
+                this.threeWayViewports.push(BR)
+                this.threeWayViewports.push(TR)
+            } else if(this.threeWayViewOrder.indexOf(" ")===1){
+                this.threeWayViewports.push(BL)
+                this.threeWayViewports.push(BR)
+                this.threeWayViewports.push(TL)
+            } else if(this.threeWayViewOrder.indexOf(" ")===2){
+                this.threeWayViewports.push(BR)
+                this.threeWayViewports.push(TL)
+                this.threeWayViewports.push(TR)
+            } else if(this.threeWayViewOrder.indexOf(" ")===3){
+                this.threeWayViewports.push(BL)
+                this.threeWayViewports.push(TL)
+                this.threeWayViewports.push(TR)
+            }
+        } else {
+            this.threeWayViewports.push(BL)
+            this.threeWayViewports.push(TL)
+            this.threeWayViewports.push(TR)
+        }
 
         const xaxis = vec3.create();
         vec3.set(xaxis, 1.0, 0.0, 0.0)
         const yaxis = vec3.create();
         vec3.set(yaxis, 0.0, -1.0, 0.0)
 
+        const zaxis = vec3.create();
+        vec3.set(zaxis, 0.0, 0.0, 1.0)
+
         const angle = -Math.PI/2.;
 
         const dval3 = Math.cos(angle / 2.0);
+
         const dval0_x = xaxis[0] * Math.sin(angle / 2.0);
         const dval1_x = xaxis[1] * Math.sin(angle / 2.0);
         const dval2_x = xaxis[2] * Math.sin(angle / 2.0);
@@ -2611,17 +2647,58 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const dval1_y = yaxis[1] * Math.sin(angle / 2.0);
         const dval2_y = yaxis[2] * Math.sin(angle / 2.0);
 
-        const rotX = quat4.create();
-        const rotY = quat4.create();
-        const rotZ = quat4.create();
+        const dval0_z_p = zaxis[0] * Math.sin(angle / 2.0);
+        const dval1_z_p = zaxis[1] * Math.sin(angle / 2.0);
+        const dval2_z_p = zaxis[2] * Math.sin(angle / 2.0);
+        const dval3_z_p = Math.cos(angle / 2.0);
 
-        quat4.set(rotZ, 0, 0, 0, -1);
-        quat4.set(rotX, dval0_x, dval1_x, dval2_x, dval3);
-        quat4.set(rotY, dval0_y, dval1_y, dval2_y, dval3);
+        const dval0_z_m = zaxis[0] * Math.sin(-angle / 2.0);
+        const dval1_z_m = zaxis[1] * Math.sin(-angle / 2.0);
+        const dval2_z_m = zaxis[2] * Math.sin(-angle / 2.0);
+        const dval3_z_m = Math.cos(-angle / 2.0);
 
-        this.threeWayQuats.push(rotX)
-        this.threeWayQuats.push(rotY)
-        this.threeWayQuats.push(rotZ)
+        const yForward = quat4.create();
+        const xForward = quat4.create();
+        const zForward = quat4.create();
+        const zPlus = quat4.create();
+        const zMinus = quat4.create();
+
+        quat4.set(zForward, 0, 0, 0, -1);
+        quat4.set(yForward, dval0_x, dval1_x, dval2_x, dval3);
+        quat4.set(xForward, dval0_y, dval1_y, dval2_y, dval3);
+
+        quat4.set(zPlus, dval0_z_p, dval1_z_p, dval2_z_p, dval3_z_p);
+        quat4.set(zMinus, dval0_z_m, dval1_z_m, dval2_z_m, dval3_z_p);
+
+        quat4.multiply(xForward, xForward, zMinus);
+        quat4.multiply(yForward, yForward, zPlus);
+
+        if(this.threeWayViewOrder&&this.threeWayViewOrder.length===4){
+
+            const top = this.threeWayViewOrder.substring(0,2)
+            const bottom = this.threeWayViewOrder.substring(2,4)
+
+            for(let c of bottom.trim()) {
+                if(c==="X")
+                    this.threeWayQuats.push(xForward)
+                if(c==="Y")
+                    this.threeWayQuats.push(yForward)
+                if(c==="Z")
+                    this.threeWayQuats.push(zForward)
+            }
+            for(let c of top.trim()) {
+                if(c==="X")
+                    this.threeWayQuats.push(xForward)
+                if(c==="Y")
+                    this.threeWayQuats.push(yForward)
+                if(c==="Z")
+                    this.threeWayQuats.push(zForward)
+            }
+        } else {
+            this.threeWayQuats.push(yForward)
+            this.threeWayQuats.push(zForward)
+            this.threeWayQuats.push(xForward)
+        }
 
     }
 
@@ -2852,6 +2929,20 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     setDoMultiView(doMultiView) {
         this.doMultiView = doMultiView;
+    }
+
+    setThreeWayViewOrder(threeWayViewOrder: string){
+        this.threeWayViewOrder = threeWayViewOrder
+    }
+
+    setSpecifyMultiViewRowsColumns(specifyMultiViewRowsColumns: boolean){
+        this.specifyMultiViewRowsColumns = specifyMultiViewRowsColumns
+        this.multiWayViewports = []
+    }
+
+    setMultiViewRowsColumns(multiViewRowsColumns: number[]){
+        this.multiViewRowsColumns = multiViewRowsColumns
+        this.multiWayViewports = []
     }
 
     setDoThreeWayView(doThreeWayView) {
@@ -3128,6 +3219,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.doMultiView = false;
         this.doCrossEyedStereo = false;
         this.doAnaglyphStereo = false;
+
+        this.specifyMultiViewRowsColumns = false;
+        this.threeWayViewOrder = "";
+        this.multiViewRowsColumns = [1,1];
 
         this.doOrderIndependentTransparency = true;//Request OIT user/state setting
         this.doPeel = false;//Requested and required - above set and there are transparent objects.
@@ -10518,7 +10613,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 quat4.multiply(newQuat, newQuat, quats[i]);
                 const theRotMatrix = quatToMat4(newQuat);
                 mat4.multiply(theMatrix, theMatrix, theRotMatrix);
-                if(this.doMultiView&&i<=this.multiViewOrigins.length)
+                if(this.doMultiView&&i<=this.multiViewOrigins.length&&this.multiViewOrigins.length>0)
                     mat4.translate(theMatrix, theMatrix, this.multiViewOrigins[i])
                 else
                     mat4.translate(theMatrix, theMatrix, this.origin)
@@ -12453,7 +12548,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             vec3.set(rot_x_axis, 1.0, 0.0, 0.0);
             vec3.set(rot_y_axis, 0.0, 1.0, 0.0);
 
-            if(this.doThreeWayView){
+            if(this.doThreeWayView&&this.threeWayViewports.length>0){
                 const quats = this.threeWayQuats
                 const viewports = this.threeWayViewports
                 const mVPQ = this.getThreeWayMatrixAndViewPort(this.gl_cursorPos[0],this.gl_cursorPos[1],quats,viewports)

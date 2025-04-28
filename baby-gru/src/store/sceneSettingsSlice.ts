@@ -129,6 +129,18 @@ export const sceneSettingsSlice = createSlice({
     setDoThreeWayView: (state, action: {payload: boolean, type: string}) => {
         return {...state, doThreeWayView: action.payload}
     },
+    setSpecifyMultiViewRowsColumns: (state, action: {payload: boolean, type: string}) => {
+        return {...state, specifyMultiViewRowsColumns: action.payload}
+    },
+    setMultiViewRows: (state, action: {payload: number, type: string}) => {
+        return {...state, multiViewRows: action.payload}
+    },
+    setMultiViewColumns: (state, action: {payload: number, type: string}) => {
+        return {...state, multiViewColumns: action.payload}
+    },
+    setThreeWayViewOrder: (state, action: {payload: string, type: string}) => {
+        return {...state, threeWayViewOrder: action.payload}
+    },
     setDoOutline: (state, action: {payload: boolean, type: string}) => {
         return {...state, doOutline: action.payload}
     },
@@ -158,7 +170,8 @@ export const {
     setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius, setBackgroundColor,
     setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setEdgeDetectDepthScale,
     setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setDrawEnvBOcc, setDoAnaglyphStereo,
-    setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView, setDoMultiView
+    setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView, setDoMultiView, setMultiViewRows, setMultiViewColumns,
+    setSpecifyMultiViewRowsColumns, setThreeWayViewOrder
 } = sceneSettingsSlice.actions
 
 export default sceneSettingsSlice.reducer
