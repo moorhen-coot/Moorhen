@@ -62,7 +62,7 @@ export const MoorhenColourMapByOtherMapMenuItem = (props: {
 
     const handleSelectorChange = () => {
         const guessValues = async () => {
-            if (!mapSelectRef_2.current.value) {
+            if (!mapSelectRef_2 || !mapSelectRef_1.current) {
                 return;
             }
             const colouringMap = maps.find(map => map.molNo === parseInt(mapSelectRef_2.current.value));
