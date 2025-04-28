@@ -1,0 +1,187 @@
+import { useState } from "react";
+import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
+import { Stack } from "react-bootstrap";
+import { ExpandMoreOutlined, LockOutline, LockOpen } from "@mui/icons-material";
+import { ToggleButton, Form } from "react-bootstrap";
+import { MoorhenSlider } from "../../inputs/MoorhenSlider-new";
+import { moorhen } from "../../../types/moorhen";
+import { setMapAlpha, setMapRadius, setMapStyle } from "../../../store/mapContourSettingsSlice";
+import { useDispatch, useSelector } from "react-redux";
+
+interface MoorhenMapCardSettings {
+    map: moorhen.Map;
+    mapIsVisible: boolean;
+    mapStyle: string;
+    maxRadius: number;
+    mapRadius: number;
+    mapOpacity: number;
+}
+
+export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
+    const dispatch = useDispatch();
+    const [isOriginLocked, setIsOriginLocked] = useState<boolean>(props.map.isOriginLocked);
+    const handleOriginLockClick = () => {
+        const currentStatus = props.map.isOriginLocked;
+        props.map.toggleOriginLock(!currentStatus);
+        setIsOriginLocked(!currentStatus);
+        props.map.drawMapContour();
+    };
+
+    return (
+        <Accordion className="moorhen-accordion" disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }}>
+            <AccordionSummary
+                sx={{
+                    backgroundColor: isDark ? "#adb5bd" : "#ecf0f1",
+                    minHeight: "30px", // Set the minimum height
+                    "&.Mui-expanded": {
+                        minHeight: "30px", // Ensure height remains consistent when expanded
+                    },
+                    ".MuiAccordionSummary-content": {
+                        margin: 0, // Adjust content margin
+                    },
+                }}
+                expandIcon={<ExpandMoreOutlined />}
+            >
+                Draw Settings
+            </AccordionSummary>
+            <AccordionDetails
+                style={{
+                    padding: "0.2rem",
+                    backgroundColor: isDark ? "#ced5d6" : "white",
+                }}
+            >
+                <Stack direction="vertical" gap={1}>
+                    <Stack direction="horizontal" gap={4}>
+                        <Stack direction="vertical" gap={2}>
+                            <ToggleButton
+                                id={`lock-origin-toggle-${props.map.molNo}`}
+                                type="checkbox"
+                                variant={isDark ? "outline-light" : "outline-primary"}
+                                checked={isOriginLocked}
+                                style={{
+                                    marginLeft: "0.1rem",
+                                    marginRight: "0.5rem",
+                                    justifyContent: "space-betweeen",
+                                    display: "flex",
+                                    width: "10rem",
+                                }}
+                                onClick={() => {
+                                    handleOriginLockClick();
+                                }}
+                                value={""}
+                                disabled={!props.mapIsVisible}
+                            >
+                                {props.map.isOriginLocked ? <LockOutline /> : <LockOpen />}
+                                <span
+                                    style={{
+                                        marginLeft: "0.5rem",
+                                    }}
+                                >
+                                    {props.map.isOriginLocked ? "Unlock" : "Lock"} Origin
+                                </span>
+                            </ToggleButton>
+
+                            <Stack
+                                direction="vertical"
+                                gap={1}
+                                style={{
+                                    justifyContent: "flex-start",
+                                    alignItems: "flex-start",
+                                }}
+                            >
+                                <Form.Check
+                                    type="switch"
+                                    checked={props.mapStyle === "lines"}
+                                    onChange={() => {
+                                        dispatch(
+                                            setMapStyle({
+                                                molNo: props.map.molNo,
+                                                style: "lines",
+                                            })
+                                        );
+                                    }}
+                                    label="Draw as mesh"
+                                />
+                                <Form.Check
+                                    type="switch"
+                                    checked={props.mapStyle === "solid"}
+                                    onChange={() => {
+                                        dispatch(
+                                            setMapStyle({
+                                                molNo: props.map.molNo,
+                                                style: props.mapStyle === "solid" ? "lines" : "solid",
+                                            })
+                                        );
+                                    }}
+                                    label="Draw as a surface"
+                                />
+                                <Form.Check
+                                    type="switch"
+                                    checked={props.mapStyle === "lit-lines"}
+                                    onChange={() => {
+                                        dispatch(
+                                            setMapStyle({
+                                                molNo: props.map.molNo,
+                                                style: props.mapStyle === "lit-lines" ? "lines" : "lit-lines",
+                                            })
+                                        );
+                                    }}
+                                    label="Draw as lit lines"
+                                />
+                            </Stack>
+                            <Stack
+                                direction="vertical"
+                                gap={1}
+                                style={{
+                                    justifyContent: "center",
+                                }}
+                            ></Stack>
+                        </Stack>
+                        <Stack direction="vertical" style={{ width: "100%" }}>
+                            <MoorhenSlider
+                                minVal={2}
+                                maxVal={props.maxRadius}
+                                showMinMaxVal={false}
+                                showButtons={true}
+                                logScale={false}
+                                sliderTitle="Radius:"
+                                isDisabled={!props.mapIsVisible}
+                                externalValue={props.mapRadius}
+                                setExternalValue={(newVal) => {
+                                    dispatch(
+                                        setMapRadius({
+                                            molNo: props.map.molNo,
+                                            radius: newVal,
+                                        })
+                                    );
+                                }}
+                                usePreciseInput={true}
+                                piWidth={"3rem"}
+                            />
+                            <MoorhenSlider
+                                minVal={0.0}
+                                maxVal={1.0}
+                                logScale={false}
+                                sliderTitle="Opacity"
+                                isDisabled={!props.mapIsVisible}
+                                usePreciseInput={true}
+                                showMinMaxVal={false}
+                                externalValue={props.mapOpacity}
+                                setExternalValue={(newVal: number) =>
+                                    dispatch(
+                                        setMapAlpha({
+                                            molNo: props.map.molNo,
+                                            alpha: newVal,
+                                        })
+                                    )
+                                }
+                                decimalPlaces={2}
+                            />
+                        </Stack>
+                    </Stack>
+                </Stack>
+            </AccordionDetails>
+        </Accordion>
+    );
+};
