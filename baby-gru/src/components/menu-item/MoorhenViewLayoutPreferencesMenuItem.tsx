@@ -31,12 +31,25 @@ function SortableItem(props) {
     transition,
   } = useSortable({id: props.id});
 
-  const style = {
+  const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
+
+  let bgcolor
+  if(isDark) bgcolor = "#5C5C5C"
+  else bgcolor = "#ECECEC"
+
+  let style
+
+  if(props.id===" ")
+  style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
-
-  const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
+  else
+  style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    background:bgcolor
+  };
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
