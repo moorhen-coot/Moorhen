@@ -1,33 +1,18 @@
-import { forwardRef, useImperativeHandle, useEffect, useState, useRef, useCallback, useMemo, Fragment, SetStateAction } from "react";
-import { Card, Button, Col, DropdownButton, Stack, ToggleButton, Spinner } from "react-bootstrap";
-import { convertRemToPx, doDownload} from "../../utils/utils";
+import { forwardRef, useImperativeHandle, useEffect, useState, useRef, useCallback, useMemo, Fragment} from "react";
+import { Card, Col, Stack, ToggleButton} from "react-bootstrap";
+import { convertRemToPx } from "../../utils/utils";
 import { getNameLabel } from "./cardUtils";
 import {
-    VisibilityOffOutlined,
-    VisibilityOutlined,
-    ExpandMoreOutlined,
-    ExpandLessOutlined,
-    DownloadOutlined,
-    Settings,
-    FileCopyOutlined,
     RadioButtonCheckedOutlined,
     RadioButtonUncheckedOutlined,
 } from "@mui/icons-material";
-import { MoorhenMapSettingsMenuItem } from "../menu-item/MoorhenMapSettingsMenuItem";
-import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem";
-import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem";
-import { MoorhenSetMapWeight } from "../menu-item/MoorhenSetMapWeight";
-import { MoorhenScaleMap } from "../menu-item/MoorhenScaleMap";
-import { MoorhenMapInfoCard } from "../card/MoorhenMapInfoCard";
 import { MapHistogramAccordion } from "./MapCardResources/MapHistogramAccordion";
 import { MoorhenSlider } from "../inputs/MoorhenSlider-new";
-import { MenuItem } from "@mui/material";
+
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch, batch } from "react-redux";
 import { setActiveMap } from "../../store/generalStatesSlice";
-import { addMap } from "../../store/mapsSlice";
 import {
-    hideMap,
     setContourLevel,
     setMapAlpha,
     setMapRadius,
@@ -38,12 +23,8 @@ import { useSnackbar } from "notistack";
 import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput";
 import { MapSettingsAccordion } from "./MapCardResources/MapSettingsAccordion";
 import { MapColourSelector } from "./MapCardResources/MapColourSelector";
+import { MapCardActionButtons } from "./MapCardResources/MapCardActionButtons";
 
-type ActionButtonType = {
-    label: string;
-    compressed: () => JSX.Element;
-    expanded: null | (() => JSX.Element);
-};
 
 interface MoorhenMapCardPropsInterface extends moorhen.CollectedProps {
     map: moorhen.Map;
@@ -95,17 +76,13 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         }
     });
 
-
-
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const contourWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.contourWheelSensitivityFactor);
     const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.generalStates.defaultExpandDisplayCards);
     const mapIsVisible = useSelector((state: moorhen.State) => state.mapContourSettings.visibleMaps.includes(props.map.molNo));
-
     const [isCollapsed, setIsCollapsed] = useState<boolean>(!defaultExpandDisplayCards);
     const [currentName, setCurrentName] = useState<string>(props.map.name);
-    const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false);
     const nextOrigin = useRef<number[]>([]);
     const busyContouring = useRef<boolean>(false);
     const isDirty = useRef<boolean>(false);
@@ -124,189 +101,6 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         [setIsCollapsed]
     );
 
-
-    const mapSettingsProps = {
-        setPopoverIsShown,
-        mapOpacity,
-        mapStyle,
-        glRef: props.glRef,
-        map: props.map,
-    };
-
-    const handleDownload = async () => {
-        let response = await props.map.getMap();
-        doDownload([response.data.result.mapData], `${props.map.name.replace(".mtz", ".map")}`);
-        props.setCurrentDropdownMolNo(-1);
-    };
-
-    const handleVisibility = useCallback(() => {
-        dispatch(mapIsVisible ? hideMap(props.map) : showMap(props.map));
-        props.setCurrentDropdownMolNo(-1);
-    }, [mapIsVisible]);
-
-    const handleCopyMap = async () => {
-        const newMap = await props.map.copyMap();
-        dispatch(addMap(newMap));
-    };
-
-    const actionButtons: { [key: number]: ActionButtonType } = {
-        1: {
-            label: mapIsVisible ? "Hide map" : "Show map",
-            compressed: () => {
-                return (
-                    <MenuItem key="hide-show-map" onClick={handleVisibility}>
-                        {mapIsVisible ? "Hide map" : "Show map"}
-                    </MenuItem>
-                );
-            },
-            expanded: () => {
-                return (
-                    <Button key="hide-show-map" size="sm" variant="outlined" onClick={handleVisibility}>
-                        {mapIsVisible ? <VisibilityOutlined /> : <VisibilityOffOutlined />}
-                    </Button>
-                );
-            },
-        },
-        2: {
-            label: "Download Map",
-            compressed: () => {
-                return (
-                    <MenuItem key="donwload-map" onClick={handleDownload}>
-                        Download map
-                    </MenuItem>
-                );
-            },
-            expanded: () => {
-                return (
-                    <Button key="donwload-map" size="sm" variant="outlined" onClick={handleDownload}>
-                        <DownloadOutlined />
-                    </Button>
-                );
-            },
-        },
-        3: {
-            label: "Rename map",
-            compressed: () => {
-                return (
-                    <MoorhenRenameDisplayObjectMenuItem
-                        key="rename-map"
-                        setPopoverIsShown={setPopoverIsShown}
-                        setCurrentName={setCurrentName}
-                        item={props.map}
-                    />
-                );
-            },
-            expanded: null,
-        },
-        4: {
-            label: "Map draw settings",
-            compressed: () => {
-                return <MoorhenMapSettingsMenuItem key="map-draw-settings" disabled={!mapIsVisible} {...mapSettingsProps} />;
-            },
-            expanded: null,
-        },
-        5: {
-            label: "Copy map",
-            compressed: () => {
-                return (
-                    <MenuItem key="copy-map" onClick={handleCopyMap}>
-                        Copy map
-                    </MenuItem>
-                );
-            },
-            expanded: () => {
-                return (
-                    <Button key="copy-map" size="sm" variant="outlined" onClick={handleCopyMap}>
-                        <FileCopyOutlined />
-                    </Button>
-                );
-            },
-        },
-        6: {
-            label: "Centre on map",
-            compressed: () => {
-                return (
-                    <MenuItem key="centre-on-map" onClick={() => props.map.centreOnMap()}>
-                        Centre on map
-                    </MenuItem>
-                );
-            },
-            expanded: null,
-        },
-        7: {
-            label: "Set map weight...",
-            compressed: () => {
-                return <MoorhenSetMapWeight key="set-map-weight" disabled={!mapIsVisible} map={props.map} setPopoverIsShown={setPopoverIsShown} />;
-            },
-            expanded: null,
-        },
-        8: {
-            label: "Set map scale...",
-            compressed: () => {
-                return <MoorhenScaleMap key="scale-map" disabled={!mapIsVisible} map={props.map} setPopoverIsShown={setPopoverIsShown} />;
-            },
-            expanded: null,
-        },
-        9: {
-            label: "Map information...",
-            compressed: () => {
-                return <MoorhenMapInfoCard key="info-map" disabled={!mapIsVisible} map={props.map} setPopoverIsShown={setPopoverIsShown} />;
-            },
-            expanded: null,
-        },
-    };
-
-    const getButtonBar = () => {
-        const minWidth = convertRemToPx(28);
-        const maximumAllowedWidth = minWidth * 0.55;
-        let currentlyUsedWidth = 0;
-        let expandedButtons: JSX.Element[] = [];
-        let compressedButtons: JSX.Element[] = [];
-
-        Object.keys(actionButtons).forEach((key) => {
-            if (actionButtons[key].expanded === null) {
-                compressedButtons.push(actionButtons[key].compressed());
-            } else {
-                currentlyUsedWidth += 60;
-                if (currentlyUsedWidth < maximumAllowedWidth) {
-                    expandedButtons.push(actionButtons[key].expanded());
-                } else {
-                    compressedButtons.push(actionButtons[key].compressed());
-                }
-            }
-        });
-
-        compressedButtons.push(
-            <MoorhenDeleteDisplayObjectMenuItem key="delete-map" setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} item={props.map} />
-        );
-
-        return (
-            <Fragment>
-                {expandedButtons}
-                <DropdownButton
-                    title={<Settings />}
-                    size="sm"
-                    variant="outlined"
-                    autoClose={popoverIsShown ? false : "outside"}
-                    show={props.currentDropdownMolNo === props.map.molNo}
-                    onToggle={() => {
-                        props.map.molNo !== props.currentDropdownMolNo ? props.setCurrentDropdownMolNo(props.map.molNo) : props.setCurrentDropdownMolNo(-1);
-                    }}
-                >
-                    {compressedButtons}
-                </DropdownButton>
-                <Button
-                    size="sm"
-                    variant="outlined"
-                    onClick={() => {
-                        setIsCollapsed(!isCollapsed);
-                    }}
-                >
-                    {isCollapsed ? <ExpandMoreOutlined /> : <ExpandLessOutlined />}
-                </Button>
-            </Fragment>
-        );
-    };
 
     const doContourIfDirty = useCallback(() => {
         if (isDirty.current) {
@@ -525,7 +319,17 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                             mapIsVisible={mapIsVisible} 
                         />
                     </Col>
-                    <Col style={{ display: "flex", justifyContent: "right" }}>{getButtonBar()}</Col>
+                    <Col style={{ display: "flex", justifyContent: "right" }}>
+                    <MapCardActionButtons
+                        map={props.map}
+                        mapIsVisible={mapIsVisible}
+                        setCurrentName={setCurrentName}
+                        isCollapsed={isCollapsed}
+                        setIsCollapsed={setIsCollapsed}
+                        currentDropdownMolNo={props.currentDropdownMolNo}
+                        setCurrentDropdownMolNo={props.setCurrentDropdownMolNo}
+                        glRef={props.glRef}/>
+                    </Col>
                 </Stack>
             </Card.Header>
             <Card.Body
