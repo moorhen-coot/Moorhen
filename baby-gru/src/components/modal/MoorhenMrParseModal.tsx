@@ -682,15 +682,19 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
 
     if(mrParseModels.length>0)
         bodyContent = <>
-                    <Accordion defaultExpanded className="moorhen-accordion" disableGutters={true} elevation={0} >
+                    <Accordion defaultExpanded className="moorhen-accordion" disableGutters={true} elevation={0}
+                    style={{padding: '0.2rem', backgroundColor: isDark ? '#333333' : 'white'}}
+                    >
                     <AccordionSummary
                         style={{backgroundColor: isDark ? '#adb5bd' : '#ecf0f1'}}
                         expandIcon={<ExpandMoreOutlined />}
                     >
                     Experimental structures from the PDB
                     </AccordionSummary>
-                    <AccordionDetails style={{padding: '0.2rem', backgroundColor: isDark ? '#ced5d6' : 'white'}}>
-                    <Table>
+                    <AccordionDetails style={{padding: '0.2rem', backgroundColor: isDark ? '#333333' : 'white'}}>
+                    <Table
+                        style={{backgroundColor: isDark ? '#3d3d3d' : 'white'}}
+                    >
                         <thead>
                           <tr>
                           {pdbHeaders.map((head) => (
@@ -743,6 +747,9 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                         })}
                         </tbody>
                     </Table>
+                    <Container
+                        style={{backgroundColor: isDark ? '#7d7d7d' : 'white',color: isDark ? 'white' : 'black'}}
+                        >
                     <protvista-manager ref={HomologsManagerRef}>
                         <Row>
                        <Col md={3}>
@@ -778,17 +785,22 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                        </Row>
                         ))}
                     </protvista-manager>
+                    </Container>
                     </AccordionDetails>
                     </Accordion>
-                    <Accordion defaultExpanded className="moorhen-accordion" disableGutters={true} elevation={0} >
+                    <Accordion defaultExpanded className="moorhen-accordion" disableGutters={true} elevation={0}
+                    style={{padding: '0.2rem', backgroundColor: isDark ? '#333333' : 'white'}}
+                    >
                     <AccordionSummary
                         style={{backgroundColor: isDark ? '#adb5bd' : '#ecf0f1'}}
                         expandIcon={<ExpandMoreOutlined />}
                     >
                     Structure predictions from the EBI AlphaFold database
                     </AccordionSummary>
-                    <AccordionDetails style={{padding: '0.2rem', backgroundColor: isDark ? '#ced5d6' : 'white'}}>
-                    <Table>
+                    <AccordionDetails style={{padding: '0.2rem', backgroundColor: isDark ? '#333333' : 'white'}}>
+                    <Table
+                        style={{backgroundColor: isDark ? '#3d3d3d' : 'white'}}
+                    >
                         <thead>
                           <tr>
                             {afHeaders.map((head) => (
@@ -838,6 +850,9 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                         })}
                         </tbody>
                     </Table>
+                    <Container
+                        style={{backgroundColor: isDark ? '#7d7d7d' : 'white',color: isDark ? 'white' : 'black'}}
+                        >
                     <protvista-manager ref={AFManagerRef}>
                        <Row>
                        <Col md={3}>
@@ -873,6 +888,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                        </Row>
                         ))}
                         </protvista-manager>
+                        </Container>
                     </AccordionDetails>
                     </Accordion>
                     </>
