@@ -46,8 +46,8 @@ function SortableItem(props) {
   };
   else
   style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0) rotate(3deg)` : `rotate(0deg)`,
+    borderRadius: 8,
     background:bgcolor
   };
 
@@ -310,7 +310,7 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
             <canvas ref={canvasRef}/>
           </Tab>
           <Tab eventKey="threeway" title="Three-way view">
-          <div>Drag the axes picture around to rearrange the 3-way view</div>
+          <div>Drag the axes pictures around to rearrange the 3-way view</div>
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext
               items={items}
