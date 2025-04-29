@@ -9,6 +9,14 @@ A JavaScript molecular graphics program
 - [x] User choice on multiview layout.
 - [x] Fix MrParse UI in dark mode.
 - [x] Speed up one-view-per molecule.
+- [ ] Drag and drop file load.
+  - [x] PDB/MMCIF
+  - [ ] Mtz/map
+  - [ ] Session data
+  - [ ] Json validation
+  - [ ] MrParse results
+  - [ ] Only accept supported types
+  - [ ] Put loading from async [File] into utility function
 
 ### Todo
 - [ ] Fitting 5-letter ligand truncates name, e.g. A1LU6
