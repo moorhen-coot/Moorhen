@@ -11,12 +11,12 @@ A JavaScript molecular graphics program
 - [x] Speed up one-view-per molecule.
 - [ ] Drag and drop file load.
   - [x] PDB/MMCIF
+  - [ ] Put loading from async [File] into utility function
+  - [ ] Only accept supported types
   - [ ] Mtz/map
   - [ ] Session data
   - [ ] Json validation
   - [ ] MrParse results
-  - [ ] Only accept supported types
-  - [ ] Put loading from async [File] into utility function
 
 ### Todo
 - [ ] Fitting 5-letter ligand truncates name, e.g. A1LU6
