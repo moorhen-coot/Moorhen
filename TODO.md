@@ -1,12 +1,14 @@
 # Moorhen
 A JavaScript molecular graphics program
 
+### For 0.20.2
+- [ ] Ability to set origin/zoom/individual rotation in "Multiple views for different molecules".
+
 ### For 0.20.1
-  - [x] Fix 64-bit test in CootWorker, it looks a bit dodgy.
-  - [x] User choice on multiview layout.
-  - [x] Fix MrParse UI in dark mode.
-  - [x] Speed up one-view-per molecule.
-  - [ ] Ability to set origin/zoom/individual rotation in "Multiple views for different molecules".
+- [x] Fix 64-bit test in CootWorker, it looks a bit dodgy.
+- [x] User choice on multiview layout.
+- [x] Fix MrParse UI in dark mode.
+- [x] Speed up one-view-per molecule.
 
 ### Todo
 - [ ] Fitting 5-letter ligand truncates name, e.g. A1LU6

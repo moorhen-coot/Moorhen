@@ -1,6 +1,6 @@
 {
   "name": "moorhen",
-  "version": "0.20.1-alpha.0",
+  "version": "0.20.1-alpha.1",
   "private": false,
   "main": "moorhen.js",
   "types": "./types/main.d.ts",
@@ -220,6 +220,5 @@
     "y-websocket": "^1.5.3",
     "yjs": "^13.6.12"
   },
-  "dependencies": {
-  }
+  "dependencies": {}
 }
