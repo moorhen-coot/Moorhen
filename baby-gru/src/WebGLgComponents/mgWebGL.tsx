@@ -8456,7 +8456,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.multiViewOrigins = multiViewOrigins
                         multiViewGroupsKeys = Object.keys(multiViewGroups)
                         if(this.multiWayViewports.length!==multiViewGroupsKeys.length&&multiViewGroupsKeys.length>0){
-                            //FIXME - This is not quite right - we may have a view grid of 20 for 19 molecules (or 4 for 3)
                             this.setupMultiWayTransformations(multiViewGroupsKeys.length)
                         }
 
