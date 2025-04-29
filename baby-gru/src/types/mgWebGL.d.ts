@@ -33,7 +33,7 @@ export namespace webGL {
         makeTextCanvas(text:string, width:number, height:number, textColour:string, font?:string)  : [number,CanvasRenderingContext2D];
         calculate3DVectorFrom2DVector(inp: number[]) : vec3;
         mouseMoveAnimateTrack(force: boolean,count: number) : void;
-        drawTextOverlays(invMat: number[],ratioMult?:number) : void;
+        drawTextOverlays(invMat: number[],ratioMult?:number, scale?:number) : void;
         drawAxes(invMat: number[],ratioMult?:number) : void;
         drawScaleBar(invMat: number[],ratioMult?:number) : void;
         drawLineMeasures(invMat: number[]) : void;

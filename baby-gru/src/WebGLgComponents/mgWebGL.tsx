@@ -3542,7 +3542,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         self.buildBuffers();
 
-        this.measureText2DCanvasTexture = new TextCanvasTexture(this,512,2048);
+        this.measureText2DCanvasTexture = new TextCanvasTexture(this,768,2048);
         this.measureTextCanvasTexture = new TextCanvasTexture(this,1024,2048);
         this.labelsTextCanvasTexture = new TextCanvasTexture(this,128,2048);
         this.texturedShapes = [];
@@ -8501,7 +8501,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         if (this.showScaleBar) {
                             this.drawScaleBar(invMat,ratioMult);
                         }
-                        this.drawTextOverlays(invMat,ratioMult);
+                        if(invMat&&i==0) this.drawTextOverlays(invMat,ratioMult, Math.sqrt(this.gl.viewportHeight /this.currentViewport[3]));
+                        if (this.showFPS&&i==0) {
+                            this.drawFPSMeter();
+                        }
                     }
                     this.myQuat = origQuat
                     if(this.doMultiView&&multiViewGroupsKeys.length===0){
@@ -8660,11 +8663,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         //console.log(this.screenZ);
         //console.log(invMat);
 
-        if (this.showFPS) {
-            this.drawFPSMeter();
-        }
-
         if(!this.doMultiView&&!this.doThreeWayView&&!this.doSideBySideStereo&&!this.doCrossEyedStereo){
+
+            if (this.showFPS) {
+                this.drawFPSMeter();
+            }
+
             if(!(this.useOffScreenBuffers&&this.offScreenReady)){
                 if (this.showAxes) {
                     this.drawAxes(invMat);
@@ -12093,7 +12097,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
-    drawTextOverlays(invMat,ratioMult=1.0) {
+    drawTextOverlays(invMat,ratioMult=1.0,font_scale=1.0) {
 
         let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult
 
@@ -12125,7 +12129,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 let ypos = label.y * 48.0 -24.;
                 drawString(label.text,xpos,ypos, 0.0, label.font, false);
         });
-        if(this.showFPS) drawString(this.fpsText, -23.5*ratio, -23.5, 0.0, "20px helvetica", false);
+
+        if(this.showFPS) drawString(this.fpsText, -23.5*ratio, -23.5, 0.0, (20 * font_scale).toFixed(0)+"px helvetica", false);
 
         const scale_fac = 10.0*this.zoom* this.gl.viewportWidth / this.gl.viewportHeight;
         let scale_pow = Math.pow(10,Math.floor(Math.log(scale_fac)/Math.log(10)))

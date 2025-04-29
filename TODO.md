@@ -4,8 +4,8 @@ A JavaScript molecular graphics program
 ### For 0.20.1
   - [x] Fix 64-bit test in CootWorker, it looks a bit dodgy.
   - [x] User choice on multiview layout.
-  - [ ] Speed up one-view-per molecule.
-  - [ ] Fix MrParse UI in dark mode.
+  - [x] Fix MrParse UI in dark mode.
+  - [x] Speed up one-view-per molecule.
   - [ ] Ability to set origin/zoom/individual rotation in "Multiple views for different molecules".
 
 ### Todo
