@@ -39,9 +39,16 @@ export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {
         setCollapseAll(null)          
     }, [maps])
 
+    useEffect(() => {
+        // Your effect logic here
+        console.log("A map name has changed:", maps.map(map => map.name));
+        setReset(!reset)
+    }, [maps.map(map => map.name).join(",")]);
+
     const sortedDisplayData =  useMemo(() => {
         return [...displayData].sort((a, b) => (a.props.index > b.props.index) ? 1 : ((b.props.index > a.props.index) ? -1 : 0));
     }, [maps, displayData]);
+
 
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.MAPS}

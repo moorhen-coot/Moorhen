@@ -1,5 +1,5 @@
 import { doDownload } from "../../../utils/utils";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useMemo } from "react";
 import { useDispatch } from "react-redux";
 import { hideMap, showMap } from "../../../store/mapContourSettingsSlice";
 import { addMap } from "../../../store/mapsSlice";
@@ -27,9 +27,9 @@ import { webGL } from "../../../types/mgWebGL";
 interface ActionButtonPropsType {
     map: moorhen.Map;
     mapIsVisible?: boolean;
-    setCurrentName: React.Dispatch<React.SetStateAction<string>>;
     isCollapsed: boolean;
     setIsCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
+    setCurrentName: React.Dispatch<React.SetStateAction<string>>;
     glRef: React.MutableRefObject<null | webGL.MGWebGL>;
 }
 
@@ -39,11 +39,10 @@ type ActionButtonType = {
     expanded: null | (() => JSX.Element);
 };
 
+
 export const MapCardActionButtons = (props: ActionButtonPropsType) => {
     const dispatch = useDispatch();
     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false);
-
-    
     const handleDownload = async () => {
         let response = await props.map.getMap();
         doDownload([response.data.result.mapData], `${props.map.name.replace(".mtz", ".map")}`);

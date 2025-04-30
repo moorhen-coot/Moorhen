@@ -1,30 +1,20 @@
-import { forwardRef, useImperativeHandle, useEffect, useState, useRef, useCallback, useMemo, Fragment} from "react";
-import { Card, Col, Stack, ToggleButton} from "react-bootstrap";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { Card, Col, Stack, ToggleButton } from "react-bootstrap";
 import { convertRemToPx } from "../../utils/utils";
 import { getNameLabel } from "./cardUtils";
-import {
-    RadioButtonCheckedOutlined,
-    RadioButtonUncheckedOutlined,
-} from "@mui/icons-material";
+import { RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined } from "@mui/icons-material";
 import { MapHistogramAccordion } from "./MapCardResources/MapHistogramAccordion";
 import { MoorhenSlider } from "../inputs/MoorhenSlider-new";
 
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch, batch } from "react-redux";
 import { setActiveMap } from "../../store/generalStatesSlice";
-import {
-    setContourLevel,
-    setMapAlpha,
-    setMapRadius,
-    setMapStyle,
-    showMap,
-} from "../../store/mapContourSettingsSlice";
+import { setContourLevel, setMapAlpha, setMapRadius, setMapStyle, showMap } from "../../store/mapContourSettingsSlice";
 import { useSnackbar } from "notistack";
 import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput";
 import { MapSettingsAccordion } from "./MapCardResources/MapSettingsAccordion";
 import { MapColourSelector } from "./MapCardResources/MapColourSelector";
 import { MapCardActionButtons } from "./MapCardResources/MapCardActionButtons";
-
 
 interface MoorhenMapCardPropsInterface extends moorhen.CollectedProps {
     map: moorhen.Map;
@@ -33,13 +23,8 @@ interface MoorhenMapCardPropsInterface extends moorhen.CollectedProps {
     collapseAllRequest?: boolean;
 }
 
-export const MoorhenMapCard = (props:MoorhenMapCardPropsInterface) => {
-    const defaultProps = {
-        initialContour: 0.8,
-        initialRadius: 13,
-    };
-
-    const { initialContour, initialRadius } = { ...defaultProps, ...props };
+export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
+    const { initialContour = 0.8, initialRadius = 13 } = props;
 
     const mapRadius = useSelector((state: moorhen.State) => {
         const map = state.mapContourSettings.mapRadii.find((item) => item.molNo === props.map.molNo);
@@ -66,6 +51,7 @@ export const MoorhenMapCard = (props:MoorhenMapCardPropsInterface) => {
             return state.mapContourSettings.defaultMapSurface ? "solid" : state.mapContourSettings.defaultMapLitLines ? "lit-lines" : "lines";
         }
     });
+
     const mapOpacity = useSelector((state: moorhen.State) => {
         const map = state.mapContourSettings.mapAlpha.find((item) => item.molNo === props.map.molNo);
         if (map) {
@@ -79,21 +65,17 @@ export const MoorhenMapCard = (props:MoorhenMapCardPropsInterface) => {
     const [isCollapsed, setIsCollapsed] = useState<boolean>(!defaultExpandDisplayCards);
     useEffect(() => {
         if (props.collapseAllRequest !== null) {
-        setIsCollapsed(props.collapseAllRequest)}
-    },[props.collapseAllRequest])
+            setIsCollapsed(props.collapseAllRequest);
+        }
+    }, [props.collapseAllRequest]);
 
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const contourWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.contourWheelSensitivityFactor);
     const mapIsVisible = useSelector((state: moorhen.State) => state.mapContourSettings.visibleMaps.includes(props.map.molNo));
-
-
-    const [currentName, setCurrentName] = useState<string>(props.map.name);
     const nextOrigin = useRef<number[]>([]);
     const busyContouring = useRef<boolean>(false);
     const isDirty = useRef<boolean>(false);
-;
-
     const dispatch = useDispatch();
     const { enqueueSnackbar } = useSnackbar();
 
@@ -165,13 +147,6 @@ export const MoorhenMapCard = (props:MoorhenMapCardPropsInterface) => {
         [mapContourLevel, mapRadius, activeMap?.molNo, props.map.molNo, mapIsVisible]
     );
 
-    useMemo(() => {
-        if (currentName === "") {
-            return;
-        }
-        props.map.name = currentName;
-    }, [currentName]);
-
     useEffect(() => {
         document.addEventListener("originUpdate", handleOriginUpdate);
         return () => {
@@ -202,7 +177,6 @@ export const MoorhenMapCard = (props:MoorhenMapCardPropsInterface) => {
                     contourLevel: mapContourLevel,
                 })
             );
-
         });
         // Show map only if specified
         if (props.map.showOnLoad) {
@@ -274,6 +248,14 @@ export const MoorhenMapCard = (props:MoorhenMapCardPropsInterface) => {
         );
     }
 
+    const [currentName, setCurrentName] = useState<string>(props.map.name);
+
+    useEffect(() => {
+        if (currentName !== "") {
+            props.map.name = currentName;
+        }
+    }, [currentName]);
+
     return (
         <Card
             className="px-0"
@@ -296,19 +278,17 @@ export const MoorhenMapCard = (props:MoorhenMapCardPropsInterface) => {
                         }}
                     >
                         {getNameLabel(props.map)}
-                        <MapColourSelector 
-                            map={props.map} 
-                            mapIsVisible={mapIsVisible} 
-                        />
+                        <MapColourSelector map={props.map} mapIsVisible={mapIsVisible} />
                     </Col>
                     <Col style={{ display: "flex", justifyContent: "right" }}>
-                    <MapCardActionButtons
-                        map={props.map}
-                        mapIsVisible={mapIsVisible}
-                        setCurrentName={setCurrentName}
-                        isCollapsed={isCollapsed}
-                        setIsCollapsed={setIsCollapsed}
-                        glRef={props.glRef}/>
+                        <MapCardActionButtons
+                            map={props.map}
+                            mapIsVisible={mapIsVisible}
+                            isCollapsed={isCollapsed}
+                            setIsCollapsed={setIsCollapsed}
+                            setCurrentName={setCurrentName}
+                            glRef={props.glRef}
+                        />
                     </Col>
                 </Stack>
             </Card.Header>
@@ -390,13 +370,7 @@ export const MoorhenMapCard = (props:MoorhenMapCardPropsInterface) => {
                         </Stack>
                     </Stack>
                     <MapHistogramAccordion map={props.map} currentContourLevel={mapContourLevel} />
-                    <MapSettingsAccordion 
-                    map= {props.map}
-                    mapIsVisible = {mapIsVisible}
-                    mapStyle={mapStyle}
-                    mapRadius={mapRadius}
-                    mapOpacity={mapOpacity}
-                    />
+                    <MapSettingsAccordion map={props.map} mapIsVisible={mapIsVisible} mapStyle={mapStyle} mapRadius={mapRadius} mapOpacity={mapOpacity} />
                 </Stack>
             </Card.Body>
         </Card>
