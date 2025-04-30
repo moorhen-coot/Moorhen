@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import { Stack } from "react-bootstrap";
 import { ExpandMoreOutlined, LockOutline, LockOpen } from "@mui/icons-material";
@@ -39,6 +39,45 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
         }
     }, [props.map.headerInfo, props.map.isEM]);
 
+    const [meshAlpha, setMeshAlpha] = useState<number>(props.mapOpacity);
+    const [surfaceAlpha, setSurfaceAlpha] = useState<number>(props.mapOpacity);
+    const [litAlpha, setLitAlpha] = useState<number>(props.mapOpacity);
+
+    const opacitySlider = (
+        <MoorhenSlider
+        minVal={0.01}
+        maxVal={1.0}
+        logScale={false}
+        sliderTitle="Opacity"
+        isDisabled={!props.mapIsVisible}
+        usePreciseInput={true}
+        showMinMaxVal={false}
+        externalValue={
+            props.mapStyle === "solid" ? surfaceAlpha : 
+            props.mapStyle === "lines" ? meshAlpha :
+            litAlpha
+        }
+        setExternalValue={
+            props.mapStyle === "solid" ? (value) => setSurfaceAlpha(value) :
+            props.mapStyle === "lines" ? (value) => setMeshAlpha(value) :
+            (value) => setLitAlpha(value)
+        }               
+        decimalPlaces={2}
+    />
+    )
+    useEffect(() => {
+        let newValue: number;
+        if (props.mapStyle === "lines") {
+            newValue = meshAlpha;
+        } else if (props.mapStyle === "solid") {
+            newValue = surfaceAlpha;
+        } else if (props.mapStyle === "lit-lines") {
+            newValue = litAlpha;
+        }
+        dispatch(setMapAlpha({molNo: props.map.molNo, alpha:newValue}));
+    }
+    , [meshAlpha, surfaceAlpha, litAlpha, props.mapStyle]);
+
 
 
     return (
@@ -60,13 +99,14 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
             </AccordionSummary>
             <AccordionDetails
                 style={{
+                    paddingTop: "0.4rem",
                     padding: "0.2rem",
                     backgroundColor: isDark ? "#ced5d6" : "white",
                 }}
             >
                 <Stack direction="vertical" gap={1}>
                     <Stack direction="horizontal" gap={4}>
-                        <Stack direction="vertical" gap={2}>
+                        <Stack direction="vertical" gap={2} style={{ paddingTop: "0.6rem" }}>
                             <ToggleButton
                                 id={`lock-origin-toggle-${props.map.molNo}`}
                                 type="checkbox"
@@ -123,7 +163,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                                         dispatch(
                                             setMapStyle({
                                                 molNo: props.map.molNo,
-                                                style: props.mapStyle === "solid" ? "lines" : "solid",
+                                                style: "solid",
                                             })
                                         );
                                     }}
@@ -136,7 +176,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                                         dispatch(
                                             setMapStyle({
                                                 molNo: props.map.molNo,
-                                                style: props.mapStyle === "lit-lines" ? "lines" : "lit-lines",
+                                                style: "lit-lines",
                                             })
                                         );
                                     }}
@@ -172,25 +212,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                                 usePreciseInput={true}
                                 piWidth={"3rem"}
                             />
-                            <MoorhenSlider
-                                minVal={0.0}
-                                maxVal={1.0}
-                                logScale={false}
-                                sliderTitle="Opacity"
-                                isDisabled={!props.mapIsVisible}
-                                usePreciseInput={true}
-                                showMinMaxVal={false}
-                                externalValue={props.mapOpacity}
-                                setExternalValue={(newVal: number) =>
-                                    dispatch(
-                                        setMapAlpha({
-                                            molNo: props.map.molNo,
-                                            alpha: newVal,
-                                        })
-                                    )
-                                }
-                                decimalPlaces={2}
-                            />
+                        {opacitySlider}
                         </Stack>
                     </Stack>
                 </Stack>
