@@ -50,14 +50,17 @@ export class MoorhenMap implements moorhen.Map {
     
     type: string
     name: string
+    headerInfo: moorhen.mapHeaderInfo
     isEM: boolean
     molNo: number
     store: ToolkitStore
     commandCentre: React.RefObject<moorhen.CommandCentre>
     glRef: React.RefObject<webGL.MGWebGL>
+    isOriginLocked: boolean
     mapCentre: [number, number, number]
     suggestedContourLevel: number
     suggestedRadius: number
+    levelRange: [number, number]
     webMGContour: boolean
     showOnLoad: boolean
     displayObjects: any
@@ -79,11 +82,13 @@ export class MoorhenMap implements moorhen.Map {
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore = MoorhenReduxStore) {
         this.type = 'map'
         this.name = "unnamed"
+        this.headerInfo = null
         this.isEM = false
         this.molNo = null
         this.commandCentre = commandCentre
         this.glRef = glRef
         this.store = store
+        this.levelRange = null 
         this.webMGContour = false
         this.showOnLoad = true
         this.displayObjects = { Coot: [] }
@@ -98,11 +103,13 @@ export class MoorhenMap implements moorhen.Map {
         this.suggestedContourLevel = null
         this.suggestedRadius = null
         this.mapCentre = null
+        this.isOriginLocked = false
         this.otherMapForColouring = null
         this.diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] }
         this.defaultMapColour = _DEFAULT_MAP_COLOUR
         this.defaultPositiveMapColour = _DEFAULT_POSITIVE_MAP_COLOUR
         this.defaultNegativeMapColour = _DEFAULT_NEGATIVE_MAP_COLOUR
+
     }
 
     /**
@@ -662,6 +669,15 @@ export class MoorhenMap implements moorhen.Map {
      */
     async doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number, style: "solid" | "lines" | "lit-lines"): Promise<void> {
 
+        if (this.isOriginLocked)    {
+
+            x = Math.abs(this.mapCentre[0])
+            y = Math.abs(this.mapCentre[1])
+            z = Math.abs(this.mapCentre[2])
+        }
+
+
+
         let returnType: string
         if (style === 'solid') {
             returnType = "mesh_perm"
@@ -671,6 +687,7 @@ export class MoorhenMap implements moorhen.Map {
             returnType = "lines_mesh"
         }
 
+
         let response: moorhen.WorkerResponse<any>
         if (this.otherMapForColouring !== null) {
             response = await this.commandCentre.current.cootCommand({
@@ -678,7 +695,9 @@ export class MoorhenMap implements moorhen.Map {
                 command: "get_map_contours_mesh_using_other_map_for_colours",
                 commandArgs: [this.molNo, this.otherMapForColouring.molNo, x, y, z, radius, contourLevel, this.otherMapForColouring.min, this.otherMapForColouring.max, false]
             }, false)
+
         } else {
+
             response = await this.commandCentre.current.cootCommand({
                 returnType: returnType,
                 command: "get_map_contours_mesh",
@@ -688,6 +707,7 @@ export class MoorhenMap implements moorhen.Map {
 
         const objects = [response.data.result.result]
         this.setupContourBuffers(objects, this.otherMapForColouring !== null)
+
     }
 
     /**
@@ -947,6 +967,16 @@ export class MoorhenMap implements moorhen.Map {
         return result.data.result.result
     }
 
+    async guessMapRange(): Promise<[number, number]> 
+    {
+        const n_bins = 400
+        const histogram = await this.getHistogram(n_bins, 1)
+        const maxRange = histogram.bin_width * n_bins - histogram.base
+        const precison = Math.pow(10, - Math.abs(Math.floor(Math.log10(maxRange / 200))))
+        this.levelRange = [precison, maxRange]
+        return [precison, maxRange]
+    }
+
     /**
      * Get the suggested map centre for this map instance (it will also fetch suggested level for EM maps)
      * @returns {number[]} The map centre
@@ -963,6 +993,7 @@ export class MoorhenMap implements moorhen.Map {
             if (this.isEM) {
                 this.suggestedContourLevel = response.data.result.result.suggested_contour_level
                 this.suggestedRadius = response.data.result.result.suggested_radius
+                this.isOriginLocked = true
             }
         } else {
             console.log('Problem finding map centre')
@@ -1000,7 +1031,9 @@ export class MoorhenMap implements moorhen.Map {
             this.fetchMapCentre(),
             this.setDefaultColour(),
             this.fetchMapMean(),
-            !this.isEM && this.fetchSuggestedLevel()
+            !this.isEM && this.fetchSuggestedLevel(),
+            this.guessMapRange(),
+            this.fetchCellInfo()
         ])
     }
 
@@ -1141,7 +1174,7 @@ export class MoorhenMap implements moorhen.Map {
             returnType: 'clipper_spacegroup',
         }, false) as moorhen.WorkerResponse<string>
         headerInfo.spacegroup = sg.data.result.result
-
+        
         const resol = await this.commandCentre.current.cootCommand({
             command: 'get_map_data_resolution',
             commandArgs: [ this.molNo ],
@@ -1151,4 +1184,35 @@ export class MoorhenMap implements moorhen.Map {
 
         return headerInfo
     }
+
+    // This is a duplicate of fetchHeaderInfo, but fetching map_resolution at the laoding time of the map seem to cause an error.
+    // This is needed to calculate max radius of the EM map
+    async fetchCellInfo(): Promise<moorhen.mapHeaderInfo> {
+        const headerInfo: moorhen.mapHeaderInfo = {
+            spacegroup: "",
+            cell: {a:-1,b:-1,c:-1,alpha:-1,beta:-1,gamma:-1},
+            resolution: -1,
+        }
+        const cell = await this.commandCentre.current.cootCommand({
+            command: 'get_map_cell',
+            commandArgs: [ this.molNo ],
+            returnType: 'map_cell_info_t',
+        }, false) as moorhen.WorkerResponse<libcootApi.mapCellJS>
+
+        headerInfo.cell.a = cell.data.result.result.a
+        headerInfo.cell.b = cell.data.result.result.b
+        headerInfo.cell.c = cell.data.result.result.c
+        headerInfo.cell.alpha = cell.data.result.result.alpha
+        headerInfo.cell.beta = cell.data.result.result.beta
+        headerInfo.cell.gamma = cell.data.result.result.gamma
+        
+        this.headerInfo = headerInfo
+
+        return headerInfo
+    }
+
+    toggleOriginLock(val: boolean = !this.isOriginLocked): void {
+        this.isOriginLocked = val
+    }
+    
 }

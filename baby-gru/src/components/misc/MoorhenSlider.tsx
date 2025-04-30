@@ -1,4 +1,5 @@
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput";
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Slider from '@mui/material/Slider';
@@ -18,23 +19,27 @@ type MoorhenSliderProps = {
     showMinMaxVal?: boolean;
     decrementButton?: JSX.Element;
     isDisabled?: boolean;
-    incrementButton?: JSX.Element; 
+    incrementButton?: JSX.Element;
+    usePreciseInput?: boolean;
+    piParameters?: {decimalDigits: number, width:number, }
+
 }
 
 export const MoorhenSlider = forwardRef<number, MoorhenSliderProps>((props, ref) => {
+    
 
     const defaultProps ={
         minVal: 0, maxVal: 100, logScale: false, showMinMaxVal: true, incrementButton: null,
         isDisabled: false, allowFloats: true, showSliderTitle: true, decimalPlaces: 3, 
-        decrementButton: null, allowExternalFeedback: true,
+        decrementButton: null, allowExternalFeedback: true, usePreciseInput: false, piParameters: {decimalDigits:2, width:60}
     }
 
     const { 
         logScale, minVal, maxVal, initialValue, allowExternalFeedback,
         allowFloats, showSliderTitle, sliderTitle, decimalPlaces,
-        showMinMaxVal, decrementButton, isDisabled, incrementButton 
+        showMinMaxVal, decrementButton, isDisabled, incrementButton, usePreciseInput, piParameters
     } = { ...defaultProps, ...props }
-
+    
     const convertValueToScale = (logScale: boolean, minVal: number, maxVal: number, value: number) => {
         if (logScale) {
             return 100 * ((Math.log10(value) - Math.log10(minVal)) / ((Math.log10(maxVal) - Math.log10(minVal))));
@@ -93,11 +98,38 @@ export const MoorhenSlider = forwardRef<number, MoorhenSliderProps>((props, ref)
 
     }, [allowFloats, logScale, minVal, maxVal])
 
+    const title = () => {
+        if (!showSliderTitle)
+        {
+            return
+        }
+        if (!usePreciseInput) {
+            return <span>{sliderTitle}: {allowFloats ? props.externalValue.toFixed(decimalPlaces) : props.externalValue}</span>        
+        }
+        else
+            return (
+                <Box
+                sx={{
+                    display: "flex",
+                    justifyContent: "center", // Center horizontally
+                    alignItems: "center", // Center vertically
+                    width: "100%", // Ensure it spans the full width of the container
+                }}
+            >
+                <MoorhenPreciseInput 
+                    allowNegativeValues={minVal < 0}
+                    label = {sliderTitle + ":"}
+                    value={props.externalValue}
+                    setValue={(newVal) => setExternalValue(+newVal)}
+                    decimalDigits={piParameters.decimalDigits}        
+            />
+            </Box>
+            ) }
+            
+
     return (
-        <Box sx={{ width: '100%' }}>
-            {showSliderTitle && 
-            <span>{sliderTitle}: {allowFloats ? props.externalValue.toFixed(decimalPlaces) : props.externalValue}</span>        
-            }
+        <Box sx={{alignItems: "center", justifyContent: "center", width: '100%' }}>
+            {title()}
             <Stack spacing={2} direction="row" sx={{ mb: 1 }} alignItems="center">
                 {showMinMaxVal && minVal}
                 {decrementButton}

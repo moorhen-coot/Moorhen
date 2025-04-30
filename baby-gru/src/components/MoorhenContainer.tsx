@@ -103,6 +103,7 @@ declare module "notistack" {
         };
         mapContourLevel: {
             mapMolNo: number;
+            mapPrecision: number
         };
         rotamerChange: {
             moleculeMolNo: number;
