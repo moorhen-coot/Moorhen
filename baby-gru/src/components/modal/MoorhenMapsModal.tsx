@@ -8,8 +8,7 @@ import { Button } from 'react-bootstrap';
 import { useSelector } from "react-redux";
 import { modalKeys } from "../../utils/enums";
 
-export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {    
-    
+export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {       
     
     const [collapseAll, setCollapseAll,] = useState<boolean>(null)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
@@ -38,13 +37,7 @@ export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {
             setReset(!reset)} //switch that force reset if collapse all is not going to change state
         setCollapseAll(null)          
     }, [maps])
-
-    useEffect(() => {
-        // Your effect logic here
-        console.log("A map name has changed:", maps.map(map => map.name));
-        setReset(!reset)
-    }, [maps.map(map => map.name).join(",")]);
-
+    
     const sortedDisplayData =  useMemo(() => {
         return [...displayData].sort((a, b) => (a.props.index > b.props.index) ? 1 : ((b.props.index > a.props.index) ? -1 : 0));
     }, [maps, displayData]);
