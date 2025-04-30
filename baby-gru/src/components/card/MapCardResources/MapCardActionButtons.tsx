@@ -30,8 +30,6 @@ interface ActionButtonPropsType {
     setCurrentName: React.Dispatch<React.SetStateAction<string>>;
     isCollapsed: boolean;
     setIsCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
-    currentDropdownMolNo: number;
-    setCurrentDropdownMolNo: React.Dispatch<React.SetStateAction<number>>;
     glRef: React.MutableRefObject<null | webGL.MGWebGL>;
 }
 
@@ -45,15 +43,14 @@ export const MapCardActionButtons = (props: ActionButtonPropsType) => {
     const dispatch = useDispatch();
     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false);
 
+    
     const handleDownload = async () => {
         let response = await props.map.getMap();
         doDownload([response.data.result.mapData], `${props.map.name.replace(".mtz", ".map")}`);
-        props.setCurrentDropdownMolNo(-1);
     };
 
     const handleVisibility = useCallback(() => {
         dispatch(props.mapIsVisible ? hideMap(props.map) : showMap(props.map));
-        props.setCurrentDropdownMolNo(-1);
     }, [props.mapIsVisible]);
 
     const handleCopyMap = async () => {
@@ -189,7 +186,6 @@ export const MapCardActionButtons = (props: ActionButtonPropsType) => {
     });
 
     compressedButtons.push(<MoorhenDeleteDisplayObjectMenuItem key="delete-map" setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} item={props.map} />);
-
     return (
         <>
             {expandedButtons}
@@ -198,10 +194,6 @@ export const MapCardActionButtons = (props: ActionButtonPropsType) => {
                 size="sm"
                 variant="outlined"
                 autoClose={popoverIsShown ? false : "outside"}
-                show={props.currentDropdownMolNo === props.map.molNo}
-                onToggle={() => {
-                    props.map.molNo !== props.currentDropdownMolNo ? props.setCurrentDropdownMolNo(props.map.molNo) : props.setCurrentDropdownMolNo(-1);
-                }}
             >
                 {compressedButtons}
             </DropdownButton>

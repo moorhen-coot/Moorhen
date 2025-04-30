@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useMemo,useRef, useCallback, useEffect } from "react";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { MoorhenMapCard } from "../card/MoorhenMapCard";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
@@ -10,37 +10,38 @@ import { modalKeys } from "../../utils/enums";
 
 export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {    
     
-    const cardListRef = useRef([])
-
-    const [currentDropdownMolNo, setCurrentDropdownMolNo] = useState<number>(-1)
-
+    
+    const [collapseAll, setCollapseAll,] = useState<boolean>(null)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const maps = useSelector((state: moorhen.State) => state.maps)
+    const [reset, setReset] = useState<boolean>(false)
+    const handleCollapseAll = () => {
+        setCollapseAll(!collapseAll)
+        }
 
-    useEffect(() => {
-        cardListRef.current = cardListRef.current.slice(0, maps.length);
-    }, [maps]); 
- 
-    const handleCollapseAll = useCallback(() => {
-        cardListRef.current.forEach(card => {
-            card.forceIsCollapsed(true)
-        })
-    }, [cardListRef.current, cardListRef])
+    const displayData = useMemo(() => {
+        return maps.map((map, index) => (
+            <MoorhenMapCard
+                key={map.molNo}
+                map={map}
+                initialContour={map.suggestedContourLevel ? map.suggestedContourLevel : 0.8}
+                initialRadius={map.suggestedRadius ? map.suggestedRadius : 13}
+                collapseAllRequest={collapseAll}
+                {...props}
+            />
+        ));
+    }, [collapseAll, reset]);
 
-    let displayData = maps.map((map, index) => {
-        return <MoorhenMapCard
-            ref={el => cardListRef.current[index] = el}
-            key={map.molNo}
-            map={map}
-            initialContour={map.suggestedContourLevel ? map.suggestedContourLevel : 0.8}
-            initialRadius={map.suggestedRadius ? map.suggestedRadius : 13}
-            currentDropdownMolNo={currentDropdownMolNo}
-            setCurrentDropdownMolNo={setCurrentDropdownMolNo}
-            {...props} />
-    })
+    useEffect(function redrawNewMap() {
+        if (collapseAll === null) {
+            setReset(!reset)} //switch that force reset if collapse all is not going to change state
+        setCollapseAll(null)          
+    }, [maps])
 
-    displayData.sort((a, b) => (a.props.index > b.props.index) ? 1 : ((b.props.index > a.props.index) ? -1 : 0))
+    const sortedDisplayData =  useMemo(() => {
+        return [...displayData].sort((a, b) => (a.props.index > b.props.index) ? 1 : ((b.props.index > a.props.index) ? -1 : 0));
+    }, [maps, displayData]);
 
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.MAPS}
@@ -57,7 +58,7 @@ export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {
                     </Button>
                 ]}
                 body={
-                    maps.length === 0 ? <span>No maps loaded</span> : displayData
+                    maps.length === 0 ? <span>No maps loaded</span> : sortedDisplayData
                 }
                 footer={null}
             />

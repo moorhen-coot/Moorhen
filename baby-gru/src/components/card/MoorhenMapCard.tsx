@@ -30,11 +30,10 @@ interface MoorhenMapCardPropsInterface extends moorhen.CollectedProps {
     map: moorhen.Map;
     initialContour?: number;
     initialRadius?: number;
-    currentDropdownMolNo: number;
-    setCurrentDropdownMolNo: React.Dispatch<React.SetStateAction<number>>;
+    collapseAllRequest?: boolean;
 }
 
-export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((props, cardRef) => {
+export const MoorhenMapCard = (props:MoorhenMapCardPropsInterface) => {
     const defaultProps = {
         initialContour: 0.8,
         initialRadius: 13,
@@ -76,31 +75,27 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         }
     });
 
+    const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.generalStates.defaultExpandDisplayCards);
+    const [isCollapsed, setIsCollapsed] = useState<boolean>(!defaultExpandDisplayCards);
+    useEffect(() => {
+        if (props.collapseAllRequest !== null) {
+        setIsCollapsed(props.collapseAllRequest)}
+    },[props.collapseAllRequest])
+
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const contourWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.contourWheelSensitivityFactor);
-    const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.generalStates.defaultExpandDisplayCards);
     const mapIsVisible = useSelector((state: moorhen.State) => state.mapContourSettings.visibleMaps.includes(props.map.molNo));
-    const [isCollapsed, setIsCollapsed] = useState<boolean>(!defaultExpandDisplayCards);
+
+
     const [currentName, setCurrentName] = useState<string>(props.map.name);
     const nextOrigin = useRef<number[]>([]);
     const busyContouring = useRef<boolean>(false);
     const isDirty = useRef<boolean>(false);
+;
 
     const dispatch = useDispatch();
     const { enqueueSnackbar } = useSnackbar();
-
-    useImperativeHandle(
-        cardRef,
-        () => ({
-            forceIsCollapsed: (value: boolean) => {
-                setIsCollapsed(value);
-                console;
-            },
-        }),
-        [setIsCollapsed]
-    );
-
 
     const doContourIfDirty = useCallback(() => {
         if (isDirty.current) {
@@ -215,6 +210,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         }
     }, []);
 
+    // Fast contour level:
     // This work by delaying the initial contour draw if the radius is > thresolds,
     // and then start the contour drawing with the small raidus routin
     const fastContourResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -278,22 +274,8 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         );
     }
 
-    const maxRadius = useMemo(() => {
-        if (props.map.isEM) {
-            if (props.map.headerInfo === null) {
-                return 100;
-            }
-            let side = props.map.headerInfo.cell.a ? props.map.headerInfo.cell.a : 120;
-            //    return Math.ceil((side  * 1.732) /2)
-            return Math.ceil(side / 2);
-        } else {
-            return 25;
-        }
-    }, [props.map.headerInfo, props.map.isEM]);
-
     return (
         <Card
-            ref={cardRef}
             className="px-0"
             style={{
                 display: "flex",
@@ -326,8 +308,6 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                         setCurrentName={setCurrentName}
                         isCollapsed={isCollapsed}
                         setIsCollapsed={setIsCollapsed}
-                        currentDropdownMolNo={props.currentDropdownMolNo}
-                        setCurrentDropdownMolNo={props.setCurrentDropdownMolNo}
                         glRef={props.glRef}/>
                     </Col>
                 </Stack>
@@ -414,7 +394,6 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                     map= {props.map}
                     mapIsVisible = {mapIsVisible}
                     mapStyle={mapStyle}
-                    maxRadius={maxRadius}
                     mapRadius={mapRadius}
                     mapOpacity={mapOpacity}
                     />
@@ -422,4 +401,4 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             </Card.Body>
         </Card>
     );
-});
+};

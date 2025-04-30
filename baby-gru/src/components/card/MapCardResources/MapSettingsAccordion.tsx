@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import { Stack } from "react-bootstrap";
 import { ExpandMoreOutlined, LockOutline, LockOpen } from "@mui/icons-material";
@@ -12,7 +12,6 @@ interface MoorhenMapCardSettings {
     map: moorhen.Map;
     mapIsVisible: boolean;
     mapStyle: string;
-    maxRadius: number;
     mapRadius: number;
     mapOpacity: number;
 }
@@ -25,8 +24,22 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
         const currentStatus = props.map.isOriginLocked;
         props.map.toggleOriginLock(!currentStatus);
         setIsOriginLocked(!currentStatus);
-        props.map.drawMapContour();
-    };
+        props.map.drawMapContour(); };
+    
+    const maxRadius = useMemo(() => {
+        if (props.map.isEM) {
+            if (props.map.headerInfo === null) {
+                return 100;
+            }
+            let side = props.map.headerInfo.cell.a ? props.map.headerInfo.cell.a : 120;
+            //    return Math.ceil((side  * 1.732) /2)
+            return Math.ceil(side / 2);
+        } else {
+            return 25;
+        }
+    }, [props.map.headerInfo, props.map.isEM]);
+
+
 
     return (
         <Accordion className="moorhen-accordion" disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }}>
@@ -141,7 +154,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                         <Stack direction="vertical" style={{ width: "100%" }}>
                             <MoorhenSlider
                                 minVal={2}
-                                maxVal={props.maxRadius}
+                                maxVal={maxRadius}
                                 showMinMaxVal={false}
                                 showButtons={true}
                                 logScale={false}
