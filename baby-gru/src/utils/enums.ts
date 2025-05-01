@@ -22,6 +22,7 @@ export const modalKeys = Object.freeze({
     SCENE_SETTINGS: "scene-settings",
     LHASA: "lhasa",
     QSCORE: "qscore",
+    JSON_VALIDATION: "json-validation",
     MRBUMP: "mrbump",
     MRPARSE: "mrparse"
 })
