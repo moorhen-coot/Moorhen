@@ -36,10 +36,10 @@ import { MoorhenScreenshotSnackBar } from './snack-bar/MoorhenScreenshotSnackBar
 import { MoorhenSideBar } from './snack-bar/MoorhenSideBar';
 import { MoorhenAtomInfoSnackBar } from './snack-bar/MoorhenAtomInfoSnackBar';
 import {useDropzone} from 'react-dropzone';
-import { readTextFile } from "../utils/utils"
 import { MoorhenMolecule } from "../utils/MoorhenMolecule"
 import { useSnackbar } from "notistack"
-import { hideMolecule, showMolecule, removeMolecule, addMoleculeList } from "../store/moleculesSlice"
+import { addMoleculeList } from "../store/moleculesSlice"
+import { drawModels,loadFiles } from "../utils/MoorhenFileLoading"
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -180,46 +180,20 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const visibleMolecules = useSelector((state: moorhen.State) => state.molecules.visibleMolecules)
     const { enqueueSnackbar } = useSnackbar()
 
-    const readPdbString = async (fileString: string, fileName: string): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
-        newMolecule.setBackgroundColour(backgroundColor)
-        newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
-        await newMolecule.loadToCootFromString(fileString, fileName)
-        return newMolecule
-    }
-
-    const drawModels = async (newMolecules: moorhen.Molecule[]) => {
-        let drawPromises: Promise<void>[] = []
-        if (newMolecules.length === 0) {
-            return
-        }
-
-        for (const newMolecule of newMolecules) {
-            drawPromises.push(newMolecule.fetchIfDirtyAndDraw('CRs'))
-        }
-        await Promise.all(drawPromises)
-
-        dispatch(addMoleculeList(newMolecules))
-        newMolecules.at(-1).centreOn('/*/*/*/*', true)
-
-    }
-
     const {getRootProps} = useDropzone({
         onDrop: async files => {
-            const loadPromises: Promise<moorhen.Molecule>[] = []
-            for(const file of files) {
-                const contents = await readTextFile(file) as string
-                loadPromises.push(readPdbString(contents,file.name))
-            }
+            const loadPromises: Promise<moorhen.Molecule>[] = await loadFiles(files, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, visibleMolecules)
             let newMolecules: moorhen.Molecule[]
             newMolecules = await Promise.all(loadPromises)
 
-            if(loadPromises.length>0){
+            if(newMolecules.length>0){
                 if (!newMolecules.every(molecule => molecule.molNo !== -1)) {
                     enqueueSnackbar("Failed to read molecule", { variant: "warning" })
                     newMolecules = newMolecules.filter(molecule =>molecule.molNo !== -1)
                 }
-                drawModels(newMolecules)
+                await drawModels(newMolecules)
+                dispatch(addMoleculeList(newMolecules))
+                newMolecules.at(-1).centreOn('/*/*/*/*', true)
             }
         }
     });

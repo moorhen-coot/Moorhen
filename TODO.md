@@ -11,7 +11,7 @@ A JavaScript molecular graphics program
 - [x] Speed up one-view-per molecule.
 - [ ] Drag and drop file load.
   - [x] PDB/MMCIF
-  - [ ] Put loading from async [File] into utility function
+  - [x] Put loading from async [File] into utility function
   - [ ] Only accept supported types
   - [ ] Mtz/map
   - [ ] Session data
