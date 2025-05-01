@@ -35,7 +35,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
             //    return Math.ceil((side  * 1.732) /2)
             return Math.ceil(side / 2);
         } else {
-            return 25;
+            return 100;
         }
     }, [props.map.headerInfo, props.map.isEM]);
 
