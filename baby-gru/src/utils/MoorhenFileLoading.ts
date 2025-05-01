@@ -3,8 +3,10 @@ import { readTextFile } from "./utils"
 import { MoorhenMolecule } from "./MoorhenMolecule"
 import { useSnackbar } from "notistack"
 import { hideMolecule, showMolecule, removeMolecule, addMoleculeList } from "../store/moleculesSlice"
+import { webGL } from "../types/mgWebGL"
+import { ToolkitStore } from '@reduxjs/toolkit/dist/configureStore';
 
-const readCoordsString = async (fileString: string, fileName: string, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, visibleMolecules): Promise<moorhen.Molecule> => {
+const readCoordsString = async (fileString: string, fileName: string, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore, monomerLibraryPath, backgroundColor: [number,number,number,number], defaultBondSmoothness: number|null): Promise<moorhen.Molecule> => {
     const newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)
     newMolecule.setBackgroundColour(backgroundColor)
     newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
@@ -25,11 +27,13 @@ export const drawModels = async (newMolecules: moorhen.Molecule[]) => {
 
 }
 
-export  const loadFiles = async(files, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, visibleMolecules): Promise<Promise<moorhen.Molecule>[]> => {
+export  const loadCoordFiles = async(files, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore, monomerLibraryPath, backgroundColor: [number,number,number,number], defaultBondSmoothness: number|null): Promise<Promise<moorhen.Molecule>[]> => {
     const loadPromises: Promise<moorhen.Molecule>[] = []
     for(const file of files) {
-        const contents = await readTextFile(file) as string
-        loadPromises.push(readCoordsString(contents,file.name, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, visibleMolecules))
+        if(file.name.endsWith(".pdb")||file.name.endsWith(".ent")||file.name.endsWith(".cif")||file.name.endsWith(".mmcif")){
+            const contents = await readTextFile(file) as string
+            loadPromises.push(readCoordsString(contents,file.name, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness))
+        }
     }
     return loadPromises
 

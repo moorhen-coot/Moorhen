@@ -37,9 +37,12 @@ import { MoorhenSideBar } from './snack-bar/MoorhenSideBar';
 import { MoorhenAtomInfoSnackBar } from './snack-bar/MoorhenAtomInfoSnackBar';
 import {useDropzone} from 'react-dropzone';
 import { MoorhenMolecule } from "../utils/MoorhenMolecule"
+import { MoorhenMap} from "../utils/MoorhenMap"
 import { useSnackbar } from "notistack"
 import { addMoleculeList } from "../store/moleculesSlice"
-import { drawModels,loadFiles } from "../utils/MoorhenFileLoading"
+import { drawModels,loadCoordFiles } from "../utils/MoorhenFileLoading"
+import { setActiveMap } from "../store/generalStatesSlice"
+import { addMapList } from "../store/mapsSlice"
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -177,12 +180,11 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
-    const visibleMolecules = useSelector((state: moorhen.State) => state.molecules.visibleMolecules)
     const { enqueueSnackbar } = useSnackbar()
 
     const {getRootProps} = useDropzone({
         onDrop: async files => {
-            const loadPromises: Promise<moorhen.Molecule>[] = await loadFiles(files, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, visibleMolecules)
+            const loadPromises: Promise<moorhen.Molecule>[] = await loadCoordFiles(files, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness)
             let newMolecules: moorhen.Molecule[]
             newMolecules = await Promise.all(loadPromises)
 
@@ -194,6 +196,17 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 await drawModels(newMolecules)
                 dispatch(addMoleculeList(newMolecules))
                 newMolecules.at(-1).centreOn('/*/*/*/*', true)
+            }
+            for(const file of files) {
+                if(file.name.endsWith(".mtz")){
+                    const newMaps = await MoorhenMap.autoReadMtz(file, props.commandCentre, props.glRef, props.store)
+                    if (newMaps.length === 0) {
+                        enqueueSnackbar('Error reading mtz file', {variant: "error"})
+                    } else {
+                        dispatch( addMapList(newMaps) )
+                        dispatch( setActiveMap(newMaps[0]) )
+                    }
+                }
             }
         }
     });

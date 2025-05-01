@@ -12,8 +12,8 @@ A JavaScript molecular graphics program
 - [ ] Drag and drop file load.
   - [x] PDB/MMCIF
   - [x] Put loading from async [File] into utility function
-  - [ ] Only accept supported types
-  - [ ] Mtz/map
+  - [x] Only accept supported types
+  - [x] Auto Mtz
   - [ ] Session data
   - [ ] Json validation
   - [ ] MrParse results
