@@ -14,9 +14,10 @@ A JavaScript molecular graphics program
   - [x] Put loading from async [File] into utility function
   - [x] Only accept supported types
   - [x] Auto Mtz
-  - [ ] Session data
-  - [ ] Json validation
+  - [x] Session data
   - [ ] MrParse results
+  - [ ] Json validation
+  - [ ] Work out why enqueueSnackbar does not work inside useDropzone
 
 ### Todo
 - [ ] Fitting 5-letter ligand truncates name, e.g. A1LU6

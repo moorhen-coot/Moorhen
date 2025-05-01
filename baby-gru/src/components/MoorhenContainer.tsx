@@ -40,7 +40,7 @@ import { MoorhenMolecule } from "../utils/MoorhenMolecule"
 import { MoorhenMap} from "../utils/MoorhenMap"
 import { useSnackbar } from "notistack"
 import { addMoleculeList } from "../store/moleculesSlice"
-import { drawModels,loadCoordFiles } from "../utils/MoorhenFileLoading"
+import { drawModels,loadCoordFiles,handleSessionUpload } from "../utils/MoorhenFileLoading"
 import { setActiveMap } from "../store/generalStatesSlice"
 import { addMapList } from "../store/mapsSlice"
 
@@ -180,6 +180,10 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
+    const maps = useSelector((state: moorhen.State) => state.maps)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
+    const dispatch = useDispatch()
+
     const { enqueueSnackbar } = useSnackbar()
 
     const {getRootProps} = useDropzone({
@@ -190,7 +194,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
             if(newMolecules.length>0){
                 if (!newMolecules.every(molecule => molecule.molNo !== -1)) {
-                    enqueueSnackbar("Failed to read molecule", { variant: "warning" })
+                    alert("Failed to read molecule")
                     newMolecules = newMolecules.filter(molecule =>molecule.molNo !== -1)
                 }
                 await drawModels(newMolecules)
@@ -201,11 +205,21 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 if(file.name.endsWith(".mtz")){
                     const newMaps = await MoorhenMap.autoReadMtz(file, props.commandCentre, props.glRef, props.store)
                     if (newMaps.length === 0) {
-                        enqueueSnackbar('Error reading mtz file', {variant: "error"})
+                        alert('Error reading mtz file')
                     } else {
                         dispatch( addMapList(newMaps) )
                         dispatch( setActiveMap(newMaps[0]) )
                     }
+                }
+            }
+            for(const file of files) {
+                if(file.name.endsWith(".pb")){
+                    try {
+                         await handleSessionUpload(file, props.commandCentre, props.glRef, props.store, monomerLibraryPath, molecules, maps, props.timeCapsuleRef,dispatch)
+                    } catch(e) {
+                        alert("Error loading the session")
+                    }
+                    break //We only load the first session.
                 }
             }
         }
@@ -220,8 +234,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const innerActiveMapRef = useRef<null | moorhen.Map>(null)
     const innerlastHoveredAtomRef = useRef<null | moorhen.HoveredAtom>(null)
 
-    const maps = useSelector((state: moorhen.State) => state.maps)
-    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const cursorStyle = useSelector((state: moorhen.State) => state.hoveringStates.cursorStyle)
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const cootInitialized = useSelector((state: moorhen.State) => state.generalStates.cootInitialized)
@@ -238,8 +250,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const modificationCountBackupThreshold = useSelector((state: moorhen.State) => state.backupSettings.modificationCountBackupThreshold)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi)
-
-    const dispatch = useDispatch()
 
     const innerRefsMap: moorhen.ContainerRefs = {
         glRef: innerGlRef, timeCapsuleRef: innerTimeCapsuleRef, commandCentre: innnerCommandCentre,
