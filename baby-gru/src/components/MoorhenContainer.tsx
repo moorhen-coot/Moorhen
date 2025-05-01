@@ -35,14 +35,7 @@ import { MoorhenRotamerChangeSnackBar } from './snack-bar/MoorhenRotamerChangeSn
 import { MoorhenScreenshotSnackBar } from './snack-bar/MoorhenScreenshotSnackBar';
 import { MoorhenSideBar } from './snack-bar/MoorhenSideBar';
 import { MoorhenAtomInfoSnackBar } from './snack-bar/MoorhenAtomInfoSnackBar';
-import {useDropzone} from 'react-dropzone';
-import { MoorhenMolecule } from "../utils/MoorhenMolecule"
-import { MoorhenMap} from "../utils/MoorhenMap"
-import { useSnackbar } from "notistack"
-import { addMoleculeList } from "../store/moleculesSlice"
-import { drawModels,loadCoordFiles,handleSessionUpload } from "../utils/MoorhenFileLoading"
-import { setActiveMap } from "../store/generalStatesSlice"
-import { addMapList } from "../store/mapsSlice"
+import { MoorhenDroppable } from './MoorhenDroppable';
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -178,53 +171,6 @@ declare module "notistack" {
  */
 export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
-    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
-    const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
-    const maps = useSelector((state: moorhen.State) => state.maps)
-    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-    const dispatch = useDispatch()
-
-    const { enqueueSnackbar } = useSnackbar()
-
-    const {getRootProps} = useDropzone({
-        onDrop: async files => {
-            const loadPromises: Promise<moorhen.Molecule>[] = await loadCoordFiles(files, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness)
-            let newMolecules: moorhen.Molecule[]
-            newMolecules = await Promise.all(loadPromises)
-
-            if(newMolecules.length>0){
-                if (!newMolecules.every(molecule => molecule.molNo !== -1)) {
-                    alert("Failed to read molecule")
-                    newMolecules = newMolecules.filter(molecule =>molecule.molNo !== -1)
-                }
-                await drawModels(newMolecules)
-                dispatch(addMoleculeList(newMolecules))
-                newMolecules.at(-1).centreOn('/*/*/*/*', true)
-            }
-            for(const file of files) {
-                if(file.name.endsWith(".mtz")){
-                    const newMaps = await MoorhenMap.autoReadMtz(file, props.commandCentre, props.glRef, props.store)
-                    if (newMaps.length === 0) {
-                        alert('Error reading mtz file')
-                    } else {
-                        dispatch( addMapList(newMaps) )
-                        dispatch( setActiveMap(newMaps[0]) )
-                    }
-                }
-            }
-            for(const file of files) {
-                if(file.name.endsWith(".pb")){
-                    try {
-                         await handleSessionUpload(file, props.commandCentre, props.glRef, props.store, monomerLibraryPath, molecules, maps, props.timeCapsuleRef,dispatch)
-                    } catch(e) {
-                        alert("Error loading the session")
-                    }
-                    break //We only load the first session.
-                }
-            }
-        }
-    });
-
     const innerGlRef = useRef<null | webGL.MGWebGL>(null)
     const innerVideoRecorderRef = useRef<null | moorhen.ScreenRecorder>(null);
     const innerTimeCapsuleRef = useRef<null | moorhen.TimeCapsule>(null);
@@ -234,10 +180,13 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const innerActiveMapRef = useRef<null | moorhen.Map>(null)
     const innerlastHoveredAtomRef = useRef<null | moorhen.HoveredAtom>(null)
 
+    const maps = useSelector((state: moorhen.State) => state.maps)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const cursorStyle = useSelector((state: moorhen.State) => state.hoveringStates.cursorStyle)
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
     const cootInitialized = useSelector((state: moorhen.State) => state.generalStates.cootInitialized)
     const theme = useSelector((state: moorhen.State) => state.generalStates.theme)
+    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
@@ -250,6 +199,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const modificationCountBackupThreshold = useSelector((state: moorhen.State) => state.backupSettings.modificationCountBackupThreshold)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi)
+
+    const dispatch = useDispatch()
 
     const innerRefsMap: moorhen.ContainerRefs = {
         glRef: innerGlRef, timeCapsuleRef: innerTimeCapsuleRef, commandCentre: innnerCommandCentre,
@@ -584,9 +535,16 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     */}
 
     <Container fluid className={`baby-gru ${theme}`}>
+        <MoorhenDroppable
+                        glRef={glRef}
+                        monomerLibraryPath={monomerLibraryPath}
+                        timeCapsuleRef={timeCapsuleRef}
+                        commandCentre={commandCentre}
+                        store={store}
+        >
         <Row>
             <Col style={{ paddingLeft: '0', paddingRight: '0' }}>
-                <div  {...getRootProps({className: 'dropzone'})}
+                <div
                     id="moorhen-canvas-background"
                     style={{
                         backgroundColor: `rgba(
@@ -609,6 +567,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 </div>
             </Col>
         </Row>
+        </MoorhenDroppable>
     </Container>
     </SnackbarProvider>
 }
