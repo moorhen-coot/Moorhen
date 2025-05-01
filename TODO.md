@@ -15,9 +15,9 @@ A JavaScript molecular graphics program
   - [x] Only accept supported types
   - [x] Auto Mtz
   - [x] Session data
+  - [x] Work out why enqueueSnackbar does not work inside useDropzone
   - [ ] MrParse results
   - [ ] Json validation
-  - [ ] Work out why enqueueSnackbar does not work inside useDropzone
 
 ### Todo
 - [ ] Fitting 5-letter ligand truncates name, e.g. A1LU6
