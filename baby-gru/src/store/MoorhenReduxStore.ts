@@ -15,6 +15,7 @@ import sharedSessionReducer from './sharedSessionSlice'
 import refinementSettingsReducer from './refinementSettingsSlice'
 import sliceNDiceReducer from './sliceNDiceSlice'
 import lhasaReducer from './lhasaSlice'
+import jsonValidationReducer from './jsonValidation'
 
 export default configureStore({
     reducer: {
@@ -34,6 +35,7 @@ export default configureStore({
         refinementSettings: refinementSettingsReducer,
         lhasa: lhasaReducer,
         sliceNDice: sliceNDiceReducer,
+        jsonValidation: jsonValidationReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

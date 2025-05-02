@@ -1,26 +1,28 @@
+import { useDispatch, useSelector } from "react-redux"
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen";
 import { useRef, useState } from "react";
 import { MoorhenJsonValidation } from "../validation-tools/MoorhenJsonValidation"
 import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
-import { useSelector } from "react-redux";
 import { modalKeys } from "../../utils/enums";
 import { readTextFile } from "../../utils/utils"
 import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Table  } from "react-bootstrap"
+import { setValidationJson } from "../../store/jsonValidation"
 
 export const MoorhenJsonValidationModal = (props: moorhen.CollectedProps) => {        
+
+    const dispatch = useDispatch()
+    
     const resizeNodeRef = useRef<HTMLDivElement>();
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
-    const [validationJson, setValidationJson] = useState<any>({})
-
     const loadJsonFiles = async (files: FileList) => {
         for(const file of files) {
             const fileContents = await readTextFile(file) as string
             const json = JSON.parse(fileContents)
-            setValidationJson(json)
+            dispatch(setValidationJson(json))
         }
     }
 
@@ -32,7 +34,7 @@ export const MoorhenJsonValidationModal = (props: moorhen.CollectedProps) => {
         </Stack>
     </Stack>
 
-    const collectedProps = {validationJson:validationJson, collectedProps:props}
+    const collectedProps = {collectedProps:props}
 
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.JSON_VALIDATION}
@@ -51,7 +53,7 @@ export const MoorhenJsonValidationModal = (props: moorhen.CollectedProps) => {
                 body={
                     <div style={{height: '100%'}} >
                         <Row className={"small-validation-tool-container-row"}>
-                            <MoorhenJsonValidation {...collectedProps} />
+                            <MoorhenJsonValidation {...props} />
                         </Row>
                     </div>
                 }

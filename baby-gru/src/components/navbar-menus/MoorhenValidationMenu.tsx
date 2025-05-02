@@ -60,7 +60,7 @@ export const MoorhenValidationMenu = (props: MoorhenNavBarExtendedControlsInterf
             {devMode && <MenuItem onClick={() => {
                 dispatch(showModal(modalKeys.JSON_VALIDATION))
                 document.body.click()
-            }}>Load JSON validation file...</MenuItem>}
+            }}>Interesting bits JSON validation...</MenuItem>}
     </div>
 }
 
