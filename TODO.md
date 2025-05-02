@@ -3,7 +3,6 @@ A JavaScript molecular graphics program
 
 ### For 0.20.2
 - [ ] Ability to set origin/zoom/individual rotation in "Multiple views for different molecules".
-- [ ] Drag and drop MrParse results
 
 ### For 0.20.1
 - [x] Fix 64-bit test in CootWorker, it looks a bit dodgy.
@@ -18,6 +17,9 @@ A JavaScript molecular graphics program
   - [x] Session data
   - [x] Work out why enqueueSnackbar does not work inside useDropzone
   - [x] Drag and drop JSON validation
+  - [ ] Drag and drop MrParse results
+    - [ ] Move MrParse state into reducer
+    - [ ] Drag and drop directory of MrParse results
 
 ### Todo
 - [ ] Do not pull whole monomer library - we never use it.
