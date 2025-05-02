@@ -18,7 +18,7 @@ A JavaScript molecular graphics program
   - [x] Work out why enqueueSnackbar does not work inside useDropzone
   - [x] Drag and drop JSON validation
   - [ ] Drag and drop MrParse results
-    - [ ] Move MrParse state into reducer
+    - [x] Move MrParse state into reducer
     - [ ] Drag and drop directory of MrParse results
 
 ### Todo
