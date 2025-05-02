@@ -13,6 +13,10 @@ import { setActiveMap } from "../store/generalStatesSlice"
 import { addMapList } from "../store/mapsSlice"
 import { moorhen } from '../types/moorhen';
 import { webGL } from "../types/mgWebGL";
+import { readTextFile } from "../utils/utils"
+import { setValidationJson } from "../store/jsonValidation"
+import { modalKeys } from "../utils/enums";
+import { showModal } from "../store/modalsSlice";
 
 interface MoorhenDroppablePropsInterface {
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -67,6 +71,18 @@ export const MoorhenDroppable = (props: MoorhenDroppablePropsInterface) => {
                         enqueueSnackbar("Error loading the session", { variant: "warning" })
                     }
                     break //We only load the first session.
+                }
+            }
+            for(const file of files) {
+                if(file.name.endsWith(".json")){
+                    try {
+                        const fileContents = await readTextFile(file) as string
+                        const json = JSON.parse(fileContents)
+                        dispatch(setValidationJson(json))
+                        dispatch(showModal(modalKeys.JSON_VALIDATION))
+                    } catch(e) {
+                        enqueueSnackbar("Error loading json validation", { variant: "warning" })
+                    }
                 }
             }
         }
