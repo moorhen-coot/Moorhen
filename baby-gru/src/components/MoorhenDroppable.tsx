@@ -39,6 +39,16 @@ export const MoorhenDroppable = (props: MoorhenDroppablePropsInterface) => {
 
     const {getRootProps} = useDropzone({
         onDrop: async files => {
+            let isMrParse = false
+            for(const file of files) {
+               if(file.name.endsWith("input.fasta")){
+                   isMrParse = true
+               }
+            }
+            if(isMrParse){
+                console.log("I think this is an MrParse directory....")
+                return
+            }
             const loadPromises: Promise<moorhen.Molecule>[] = await loadCoordFiles(files, props.commandCentre, props.glRef, props.store, props.monomerLibraryPath, backgroundColor, defaultBondSmoothness)
             let newMolecules: moorhen.Molecule[]
             newMolecules = await Promise.all(loadPromises)
