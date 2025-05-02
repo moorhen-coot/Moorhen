@@ -140,8 +140,6 @@ export const handleSessionUpload = async (file: File, commandCentre: React.RefOb
 
 const parseJSONAndGetModelFiles = (json_contents, dispatch) => {
 
-    console.log(dispatch)
-
     const fastaContents = json_contents.fastaContents
     const afModelContents = json_contents.afModelContents
     const esmModelContents = json_contents.esmModelContents
@@ -163,6 +161,7 @@ const parseJSONAndGetModelFiles = (json_contents, dispatch) => {
             const key: string = iter[0]
             const value: MrParseAFModelJson = iter[1] as MrParseAFModelJson
             const fullName = value["pdb_file"]
+            console.log(fullName)
             if(fullName){
                 const relName = fullName.substring(fullName.lastIndexOf("models/")+"models/".length)
                 modelFiles.push(fullName)
@@ -194,7 +193,7 @@ const parseJSONAndGetModelFiles = (json_contents, dispatch) => {
     return modelFiles
 }
 
-const loadMrParseJson = async (files: FileList) => {
+const loadMrParseJson = async (files: File[]) => {
 
     if(files.length===0) return
 
@@ -221,14 +220,14 @@ const loadMrParseJson = async (files: FileList) => {
     return {fastaContents,afModelContents,esmModelContents,homologsContents}
 }
 
-const loadCoordinateFilesFromFileList = async (files: FileList, modelFiles: string[], commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness) => {
+const loadCoordinateFilesFromFileList = async (files: File[], modelFiles: string[], commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness) => {
 
-    let newMolecules: moorhen.Molecule[]
+    let newMolecules: moorhen.Molecule[] = []
 
     const loadPromises: Promise<moorhen.Molecule>[] = []
     for (const file of files) {
         for (const modelFile of modelFiles) {
-            if(file.webkitRelativePath.includes(modelFile)){
+            if(file.webkitRelativePath.includes(modelFile)||(file.webkitRelativePath.length===0&&modelFile.includes(file.name))){
                 const contents = await readTextFile(file) as string
                 loadPromises.push(readCoordsString(contents, file.name, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness))
             }
@@ -240,6 +239,7 @@ const loadCoordinateFilesFromFileList = async (files: FileList, modelFiles: stri
     newMolecules = await Promise.all(loadPromises)
     if (!newMolecules.every(molecule => molecule.molNo !== -1)) {
         //enqueueSnackbar("Failed to read molecule", { variant: "warning" })
+        console.log("Failed to read molecule")
         newMolecules = newMolecules.filter(molecule =>molecule.molNo !== -1)
     }
 
@@ -247,7 +247,7 @@ const loadCoordinateFilesFromFileList = async (files: FileList, modelFiles: stri
 
 }
 
-export const loadMrParseFiles = async (files: FileList, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, dispatch) => {
+export const loadMrParseFiles = async (files: File[], commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, dispatch) => {
 
     const json_contents = await loadMrParseJson(files)
     const modelFiles: string[] = parseJSONAndGetModelFiles(json_contents, dispatch)
