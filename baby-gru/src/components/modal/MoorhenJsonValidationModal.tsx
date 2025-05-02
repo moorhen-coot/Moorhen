@@ -9,7 +9,6 @@ import { readTextFile } from "../../utils/utils"
 import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Table  } from "react-bootstrap"
 import { setValidationJson } from "../../store/jsonValidation"
 
-
 export const MoorhenJsonValidationModal = (props: moorhen.CollectedProps) => {        
 
     const dispatch = useDispatch()
