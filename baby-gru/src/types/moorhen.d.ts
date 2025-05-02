@@ -1124,7 +1124,20 @@ export namespace moorhen {
         };
         jsonValidation: {
             validationJson: { sections: any, title:string};
-        }
+        };
+        mrParse: {
+            mrParseModels: Molecule[];
+            targetSequence: string;
+            afJson: any[];
+            esmJson: any[];
+            homologsJson: any[];
+            afSortField: string;
+            homologsSortField: string;
+            afSortReversed: boolean;
+            homologsSortReversed: boolean;
+            AFDisplaySettings: any;
+            HomologsDisplaySettings: any;
+        };
     }
 
     type actionButtonSettings = {

@@ -1,6 +1,6 @@
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen"
-import { useEffect, useRef, useState, createRef, useCallback } from "react"
+import { useEffect, useRef, createRef, useCallback } from "react"
 import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Table } from "react-bootstrap"
 import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
 import { convertRemToPx, convertViewtoPx} from '../../utils/utils'
@@ -18,6 +18,12 @@ import ProtvistaManager from "protvista-manager"
 import ProtvistaSequence from "protvista-sequence"
 import ProtvistaNavigation from "protvista-navigation"
 import ProtvistaTrack from "protvista-track"
+import {
+    setMrParseModels, setTargetSequence, setAfJson, setEsmJson,
+    setHomologsJson, setAfSortField, setHomologsSortField, setAfSortReversed,
+    setHomologsSortReversed, setAFDisplaySettings, setHomologsDisplaySettings
+ } from "../../store/mrParseSlice"
+import { loadMrParseFiles, loadMrParseUrl } from "../../utils/MoorhenFileLoading"
 
 !window.customElements.get('protvista-navigation') && window.customElements.define("protvista-navigation", ProtvistaNavigation)
 !window.customElements.get('protvista-sequence') && window.customElements.define("protvista-sequence", ProtvistaSequence)
@@ -155,31 +161,17 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         seq_ident: "number",
     }
 
-    const [mrParseModels, setMrParseModels] = useState<moorhen.Molecule[]>([])
-    const [targetSequence, setTargetSequence] = useState<string>("")
-    const [afJson, setAfJson] = useState<any[]>([])
-    const [esmJson, setEsmJson] = useState<any[]>([])
-    const [homologsJson, setHomologsJson] = useState<any[]>([])
-    const [afSortField, setAFSortField] = useState<string>("seq_ident");
-    const [homologsSortField, setHomologsSortField] = useState<string>("seq_ident");
-    const [afSortReversed, setAFSortReversed] = useState<boolean>(false);
-    const [homologsSortReversed, setHomologsSortReversed] = useState<boolean>(false);
-
-    const [AFDisplaySettings, setAFDisplaySettings] = useState<DisplaySettingsType>({
-        rulerStart: 0,
-        start: 0,
-        end: 1,
-        seqLength: 1,
-        displaySequence: "A"
-    })
-
-    const [HomologsDisplaySettings, setHomologsDisplaySettings] = useState<DisplaySettingsType>({
-        rulerStart: 0,
-        start: 0,
-        end: 1,
-        seqLength: 1,
-        displaySequence: "A"
-    })
+    const mrParseModels = useSelector((state: moorhen.State) => state.mrParse.mrParseModels)
+    const targetSequence = useSelector((state: moorhen.State) => state.mrParse.targetSequence)
+    const afJson = useSelector((state: moorhen.State) => state.mrParse.afJson)
+    const esmJson = useSelector((state: moorhen.State) => state.mrParse.esmJson)
+    const homologsJson = useSelector((state: moorhen.State) => state.mrParse.homologsJson)
+    const afSortField = useSelector((state: moorhen.State) => state.mrParse.afSortField)
+    const homologsSortField = useSelector((state: moorhen.State) => state.mrParse.homologsSortField)
+    const afSortReversed = useSelector((state: moorhen.State) => state.mrParse.afSortReversed)
+    const homologsSortReversed = useSelector((state: moorhen.State) => state.mrParse.homologsSortReversed)
+    const AFDisplaySettings = useSelector((state: moorhen.State) => state.mrParse.AFDisplaySettings)
+    const HomologsDisplaySettings = useSelector((state: moorhen.State) => state.mrParse.HomologsDisplaySettings)
 
     const tableSort = ((a,b,key,isString,reversed) => {
         if(isString){
@@ -227,10 +219,6 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
 
     useEffect(() => {
         return () => {
-            mrParseModels.forEach(mol => {
-                mol.delete()
-                dispatch( removeMolecule(mol) )
-            })
         };
     },[mrParseModels]);
 
@@ -279,9 +267,12 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             seqLength: seq.length,
             displaySequence: seq
         }
-        setHomologsDisplaySettings(newSequenceData)
+        dispatch(setHomologsDisplaySettings(newSequenceData))
 
         homologsJson.map((el,i) => {
+            if(!HomologsSelectedResiduesTrackRef[i]){
+                HomologsSelectedResiduesTrackRef[i] = createRef()
+            }
             if(HomologsSelectedResiduesTrackRef[i].current){
                 HomologsSelectedResiduesTrackRef[i].current.removeEventListener("click", handleClick)
                 HomologsSelectedResiduesTrackRef[i].current.removeEventListener('change', (e) => {handleChange(e,el.chain_id,el.pdb_file,el.query_start)})
@@ -423,9 +414,12 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             seqLength: seq.length,
             displaySequence: seq
         }
-        setAFDisplaySettings(newSequenceData)
+        dispatch(setAFDisplaySettings(newSequenceData))
 
         afJson.map((el,i) => {
+            if(!AFSelectedResiduesTrackRef[i]){
+                AFSelectedResiduesTrackRef[i] = createRef()
+            }
             if(AFSelectedResiduesTrackRef[i].current){
                 AFSelectedResiduesTrackRef[i].current.removeEventListener("click", handleClick)
                 AFSelectedResiduesTrackRef[i].current.removeEventListener('change', (e) => {handleChange(e,"A",el.pdb_file,el.query_start)})
@@ -476,7 +470,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         if(fastaContents){
             try {
                 const seqs = Fasta.parse(fastaContents)
-                setTargetSequence(seqs[0].seq)
+                dispatch(setTargetSequence(seqs[0].seq))
             } catch(e) {
                 console.log("Failed to extract sequence from input.fasta")
             }
@@ -486,7 +480,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             json.map((el,i) => {
                 AFSelectedResiduesTrackRef[i] = createRef()
             })
-            setAfJson(json)
+            dispatch(setAfJson(json))
             for(const iter of Object.entries(json)){
                 const key: string = iter[0]
                 const value: MrParseAFModelJson = iter[1] as MrParseAFModelJson
@@ -499,7 +493,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         }
         if(esmModelContents){
             const json = JSON.parse(esmModelContents)
-            setEsmJson(json)
+            dispatch(setEsmJson(json))
             for(const iter of Object.entries(json)){
                 const key: string = iter[0]
                 const value: any = iter[1]
@@ -511,7 +505,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             json.map((el,i) => {
                 HomologsSelectedResiduesTrackRef[i] = createRef()
             })
-            setHomologsJson(json)
+            dispatch(setHomologsJson(json))
             for(const iter of Object.entries(json)){
                 const key: string = iter[0]
                 const value: MrParsePDBModelJson = iter[1] as MrParsePDBModelJson
@@ -552,124 +546,36 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         return {fastaContents,afModelContents,esmModelContents,homologsContents}
     }
 
-    const drawModels = async (newMolecules: moorhen.Molecule[]) => {
-        let drawPromises: Promise<void>[] = []
-        if (newMolecules.length === 0) {
-            return
-        }
-
-        for (const newMolecule of newMolecules) {
-            drawPromises.push(newMolecule.fetchIfDirtyAndDraw('CRs'))
-        }
-        await Promise.all(drawPromises)
-
-        dispatch(addMoleculeList(newMolecules))
-        newMolecules.at(-1).centreOn('/*/*/*/*', true)
-
-        setMrParseModels(newMolecules)
-    }
-
-    const loadCoordinateFilesFromURL = async (url: string, modelFiles: string[]) => {
-
-        let newMolecules: moorhen.Molecule[]
-
-        const loadPromises: Promise<moorhen.Molecule>[] = []
-        for (const modelFile of modelFiles) {
-            const response = await fetch(url+"/"+modelFile)
-            if(response.ok) {
-                const contents = await response.text();
-                loadPromises.push(readPdbString(contents,modelFile.split('/').reverse()[0]))
-            }
-        }
-
-        if(loadPromises.length===0) return newMolecules
-
-        newMolecules = await Promise.all(loadPromises)
-        if (!newMolecules.every(molecule => molecule.molNo !== -1)) {
-            enqueueSnackbar("Failed to read molecule", { variant: "warning" })
-            newMolecules = newMolecules.filter(molecule =>molecule.molNo !== -1)
-        }
-
-        return newMolecules
-
-    }
-
-    const loadCoordinateFilesFromFileList = async (files: FileList, modelFiles: string[]) => {
-
-        let newMolecules: moorhen.Molecule[]
-
-        const loadPromises: Promise<moorhen.Molecule>[] = []
-        for (const file of files) {
-            for (const modelFile of modelFiles) {
-                if(file.webkitRelativePath.includes(modelFile)){
-                    const contents = await readTextFile(file) as string
-                    loadPromises.push(readPdbString(contents,file.name))
-                }
-            }
-        }
-
-        if(loadPromises.length===0) return newMolecules
-
-        newMolecules = await Promise.all(loadPromises)
-        if (!newMolecules.every(molecule => molecule.molNo !== -1)) {
-            enqueueSnackbar("Failed to read molecule", { variant: "warning" })
-            newMolecules = newMolecules.filter(molecule =>molecule.molNo !== -1)
-        }
-
-        return newMolecules
-
-    }
-
-    const loadMrParseFiles = async (files: FileList) => {
-
-        const json_contents = await loadMrParseJson(files)
-        const modelFiles: string[] = parseJSONAndGetModelFiles(json_contents)
-        let newMolecules: moorhen.Molecule[] = await loadCoordinateFilesFromFileList(files,modelFiles)
-
-        drawModels(newMolecules)
-
-    }
-
-    const loadMrParseUrl = async (urlBase) => {
-
-        const json_contents = await loadMrParseJsonUrl(urlBase)
-        const modelFiles: string[] = parseJSONAndGetModelFiles(json_contents)
-        let newMolecules: moorhen.Molecule[] = await loadCoordinateFilesFromURL(urlBase,modelFiles)
-
-        drawModels(newMolecules)
-
-    }
-
     const handlePDBSortingChange = (key) => {
         if(key===homologsSortField){
-            setHomologsSortReversed(!homologsSortReversed)
+            dispatch(setHomologsSortReversed(!homologsSortReversed))
         } else {
-            setHomologsSortReversed(false)
+            dispatch(setHomologsSortReversed(false))
         }
-        setHomologsSortField(key)
+        dispatch(setHomologsSortField(key))
     }
 
     const handleAFSortingChange = (key) => {
         if(key===afSortField){
-            setAFSortReversed(!afSortReversed)
+            dispatch(setAfSortReversed(!afSortReversed))
         } else {
-            setAFSortReversed(false)
+            dispatch(setAfSortReversed(false))
         }
-        setAFSortField(key)
+        dispatch(setAfSortField(key))
     }
 
     const handleLoadFromUrlExample = () => {
         //This is an example of loading a set of MrParse results on a server.
         //In testing I just run Python simple server in an MrParse results dir.
         const urlBase = "http://localhost:8000/"
-        loadMrParseUrl(urlBase)
+        loadMrParseUrl(urlBase, props.commandCentre, props.glRef, props.store, props.monomerLibraryPath, backgroundColor, defaultBondSmoothness, dispatch)
     }
 
     const footerContent = <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'space-between', alignContent: 'space-between', justifyContent: 'space-between', width: '100%' }}>
         <Stack gap={2} direction='horizontal' style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
             <Form.Group style={{ width: '20rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadMrParse" className="mb-3">
             {/* @ts-expect-error */}
-            <Form.Control ref={filesRef} directory="" webkitdirectory="true" type="file" multiple={true} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { loadMrParseFiles(e.target.files) }}/>
+            <Form.Control ref={filesRef} directory="" webkitdirectory="true" type="file" multiple={true} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { loadMrParseFiles(e.target.files, props.commandCentre, props.glRef, props.store, props.monomerLibraryPath, backgroundColor, defaultBondSmoothness, dispatch) }}/>
             </Form.Group>
         </Stack>
         {false && <Button onClick={handleLoadFromUrlExample}>Load from URL example</Button>}
@@ -773,7 +679,11 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                        </Col>
                        <Col md={9}>
                         <protvista-track
-                            ref={el => HomologsSelectedResiduesTrackRef[i].current = el}
+                            ref={el => {
+                                if(!HomologsSelectedResiduesTrackRef[i])
+                                    HomologsSelectedResiduesTrackRef[i] = createRef()
+                                HomologsSelectedResiduesTrackRef[i].current = el
+                                }}
                             length={HomologsDisplaySettings.seqLength}
                             displaystart={HomologsDisplaySettings.start}
                             displayend={HomologsDisplaySettings.end}
@@ -876,7 +786,11 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                        </Col>
                        <Col md={9}>
                         <protvista-track
-                            ref={el => AFSelectedResiduesTrackRef[i].current = el}
+                            ref={el => {
+                                if(!AFSelectedResiduesTrackRef[i])
+                                    AFSelectedResiduesTrackRef[i] = createRef()
+                                AFSelectedResiduesTrackRef[i].current = el
+                            }}
                             length={AFDisplaySettings.seqLength}
                             displaystart={AFDisplaySettings.start}
                             displayend={AFDisplaySettings.end}

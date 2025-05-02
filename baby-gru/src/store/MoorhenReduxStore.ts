@@ -16,6 +16,7 @@ import refinementSettingsReducer from './refinementSettingsSlice'
 import sliceNDiceReducer from './sliceNDiceSlice'
 import lhasaReducer from './lhasaSlice'
 import jsonValidationReducer from './jsonValidation'
+import mrParseSliceReducer from './mrParseSlice'
 
 export default configureStore({
     reducer: {
@@ -36,6 +37,7 @@ export default configureStore({
         lhasa: lhasaReducer,
         sliceNDice: sliceNDiceReducer,
         jsonValidation: jsonValidationReducer,
+        mrParse: mrParseSliceReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({
