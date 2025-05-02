@@ -1122,6 +1122,9 @@ export namespace moorhen {
             slicingResults: Molecule[];
             paeFileContents: { fileContents: string; fileName: string }[];
         };
+        jsonValidation: {
+            validationJson: { sections: any, title:string};
+        }
     }
 
     type actionButtonSettings = {

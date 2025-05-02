@@ -21,9 +21,8 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { ThemeProvider } from '@mui/material/styles';
 import { rgbToHsv,hsvToRgb } from '../../utils/utils';
 
-export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedProps: moorhen.CollectedProps}) => {
+export const MoorhenJsonValidation = (props: moorhen.CollectedProps) => {
 
-    const props = propsIn.collectedProps
     const dispatch = useDispatch()
 
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod)
@@ -42,6 +41,8 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
     const [sectionOpen, setSectionOpen ] = useState({keys:[]})
     const [sectionOrdered, setSectionOrdered ] = useState({keys:[]})
     const [sectionSortable, setSectionSortable ] = useState({keys:[]})
+
+    const validationJson = useSelector((state: moorhen.State) => state.jsonValidation.validationJson)
 
     const flipSide = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string) => {
         await props.commandCentre.current.cootCommand({
@@ -160,8 +161,8 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
         const new_keys = []
         const new_order_keys = []
         const new_sortable_keys = []
-        if(!propsIn.validationJson.sections) return
-        propsIn.validationJson.sections.map((section, section_index) => {
+        if(!validationJson.sections) return
+        validationJson.sections.map((section, section_index) => {
             new_keys.push(true)
             new_order_keys.push(false)
             let isSortable = true
@@ -175,7 +176,7 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
         setSectionOpen({...sectionOpen, keys:new_keys})
         setSectionOrdered({...sectionOrdered, keys:new_order_keys})
         setSectionSortable({...sectionSortable, keys:new_sortable_keys})
-    },[propsIn.validationJson]);
+    },[validationJson]);
 
     const ColorRampBox = ((boxProps) => {
         let startcol = "#000000"
@@ -266,9 +267,9 @@ export const MoorhenJsonValidation = (propsIn: {validationJson:any, collectedPro
         if(intoMoleculeRef.current)
             selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(intoMoleculeRef.current.value))
 
-        if(propsIn.validationJson&&propsIn.validationJson.sections){
-            const sections = propsIn.validationJson.sections
-            title =  propsIn.validationJson.title
+        if(validationJson&&validationJson.sections){
+            const sections = validationJson.sections
+            title =  validationJson.title
 
             cards.push(sections.map((section, section_index) => {
 
