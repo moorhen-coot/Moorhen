@@ -5,7 +5,7 @@
   "main": "moorhen.js",
   "types": "./types/main.d.ts",
   "homepage": "./",
-  "author": "Paul Emsley, Filomeno Sanchez Rodriguez, Martin Noble, Stuart McNicholas",
+  "author": "Paul Emsley, Filomeno Sanchez Rodriguez, Martin Noble, Jordan Dialpuri, Jakub Smulski, Lucrezia Catapano, Paul Bond, Clément Dugat, Stuart McNicholas",
   "description": "Moorhen molecular graphics",
   "license": "BSD-3-Clause",
   "repository": {

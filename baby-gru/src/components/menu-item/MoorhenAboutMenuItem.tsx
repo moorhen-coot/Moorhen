@@ -27,7 +27,10 @@ export const MoorhenAboutMenuItem = (props: { setPopoverIsShown: React.Dispatch<
             <li>Martin Noble</li>
             <li>Stuart McNicholas</li>
             <li>Lucrezia Catapano</li>
+            <li>Paul Bond</li>
+            <li>Jordan Dialpuri</li>
             <li>Jakub Smulski</li>
+            <li>Clément Dugat</li>
         </ul>
         <p>This is Moorhen v{version} ({is64Bit ? "64" : "32"}-bit)</p>
         <p><a href={`https://github.com/moorhen-coot/Moorhen`}>Source code</a></p>
