@@ -6,6 +6,6 @@
 * Lucrezia Catapano
 * Martin Noble
 * Paul Bond
-* ClémentDugat
+* Clément Dugat
 * Paul Emsley
 * Stuart McNicholas
