@@ -1,10 +1,21 @@
 import { createSlice } from '@reduxjs/toolkit'
 
+interface FracPath {
+    path:[number,number][]
+    fillStyle?: string
+    strokeStyle?: string
+    drawStyle?: string
+    gradientBoundary?: [number,number,number,number]
+    gradientStops?: [number,string][]
+}
+
 interface SvgPath {
     path: string
     fillStyle?: string
     strokeStyle?: string
-    fillOrStroke?: string
+    drawStyle?: string
+    gradientBoundary?: [number,number,number,number]
+    gradientStops?: [number,string][]
 }
 
 interface TextFrac {
@@ -14,7 +25,7 @@ interface TextFrac {
     font: string
     fillStyle?: string
     strokeStyle?: string
-    fillOrStroke?: string
+    drawStyle?: string
 }
 
 interface ImageSrcFrac {
@@ -28,7 +39,8 @@ interface ImageSrcFrac {
 const initialState = {
     imageOverlayList: [],
     textOverlayList: [],
-    pathOverlayList: [],
+    svgPathOverlayList: [],
+    fracPathOverlayList: [],
 }
 
 export const overlaysSlice = createSlice({
@@ -43,8 +55,12 @@ export const overlaysSlice = createSlice({
       state = { ...state, textOverlayList: [...state.textOverlayList, action.payload] }
       return state
     },
-    addPathOverlay: (state, action: {payload: SvgPath, type: string}) => {
-      state = { ...state, pathOverlayList: [...state.pathOverlayList, action.payload] }
+    addSvgPathOverlay: (state, action: {payload: SvgPath, type: string}) => {
+      state = { ...state, svgPathOverlayList: [...state.svgPathOverlayList, action.payload] }
+      return state
+    },
+    addFracPathOverlay: (state, action: {payload: FracPath, type: string}) => {
+      state = { ...state, fracPathOverlayList: [...state.fracPathOverlayList, action.payload] }
       return state
     },
     emptyOverlays: (state) => {
@@ -53,7 +69,7 @@ export const overlaysSlice = createSlice({
 }})
 
 export const {
-    addImageOverlay, addTextOverlay, addPathOverlay, emptyOverlays
+    addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays
 } = overlaysSlice.actions
 
 export default overlaysSlice.reducer

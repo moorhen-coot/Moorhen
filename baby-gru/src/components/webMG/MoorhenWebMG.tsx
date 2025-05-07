@@ -8,7 +8,7 @@ import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from 'react-redux';
 import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
 import { useSnackbar } from 'notistack';
-import { addImageOverlay, addTextOverlay, addPathOverlay, emptyOverlays } from "../../store/overlaysSlice";
+import { addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays } from "../../store/overlaysSlice";
 
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
@@ -97,7 +97,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     const imageOverlays = useSelector((state: moorhen.State) => state.overlays.imageOverlayList)
     const textOverlays = useSelector((state: moorhen.State) => state.overlays.textOverlayList)
-    const pathOverlays = useSelector((state: moorhen.State) => state.overlays.pathOverlayList)
+    const svgPathOverlays = useSelector((state: moorhen.State) => state.overlays.svgPathOverlayList)
+    const fracPathOverlays = useSelector((state: moorhen.State) => state.overlays.fracPathOverlayList)
 
     const canvas2DRef = useRef<HTMLCanvasElement>(null);
     let canvas2D_ctx = null
@@ -132,9 +133,21 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/axes_xyz.svg`,x:0.25,y:0.25,width:100,height:100}))
         dispatch(addTextOverlay({text:"Red text",x:0.15,y:0.5,font:"108px serif",fillStyle:"red"}))
         dispatch(addTextOverlay({text:"Text",x:0.15,y:0.75,font:"48px serif"}))
-        dispatch(addTextOverlay({text:"Stroke text",x:0.65,y:0.75,font:"48px serif",fillOrStroke:"stroke",strokeStyle:"blue"}))
-        dispatch(addPathOverlay({path:"M10 10 h 80 v 80 h -80 Z",fillOrStroke:"stroke",strokeStyle:"magenta"}))
-        dispatch(addPathOverlay({path:"M100 10 h 80 v 80 h -80 Z",fillOrStroke:"fill",fillStyle:"orange"}))
+        dispatch(addTextOverlay({text:"Stroke text",x:0.65,y:0.75,font:"48px serif",drawStyle:"stroke",strokeStyle:"blue"}))
+        dispatch(addSvgPathOverlay({path:"M10 10 h 80 v 80 h -80 Z",drawStyle:"stroke",strokeStyle:"magenta"}))
+        dispatch(addSvgPathOverlay({path:"M100 10 h 80 v 80 h -80 Z",drawStyle:"fill",fillStyle:"orange"}))
+        dispatch(addFracPathOverlay({path:[[0.7,0.5],[0.8,0.9],[0.6,0.7],[0.7,0.5]],drawStyle:"fill",fillStyle:"#00ffff77"}))
+        const gradientStops = []
+        gradientStops.push([0, "red"]);
+        gradientStops.push([0.35, "yellow"]);
+        gradientStops.push([0.5, "green"]);
+        gradientStops.push([0.65, "cyan"]);
+        gradientStops.push([0.8, "blue"]);
+        gradientStops.push([1.0, "purple"]);
+        dispatch(addSvgPathOverlay({path:"M190 10 h 480 v 80 h -480 Z",gradientStops,gradientBoundary:[190,0,670,0],drawStyle:"gradient"}))
+        dispatch(addSvgPathOverlay({path:"M10 100 v 480 h 80 v -480 Z",gradientStops,gradientBoundary:[0,100,0,580],drawStyle:"gradient"}))
+        dispatch(addFracPathOverlay({path:[[0.0,0.0],[1.0,1.0]],drawStyle:"stroke"}))
+        dispatch(addFracPathOverlay({path:[[0.2,0.5],[0.3,0.9],[0.1,0.7],[0.2,0.5]],gradientStops,gradientBoundary:[0,100,0,580],drawStyle:"gradient"}))
     }, [])
 
     const setClipFogByZoom = (): void => {
@@ -148,7 +161,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }
 
     const draw2D = () => {
-        console.log("draw2D")
         let canvas2D_ctx = canvas2DRef.current.getContext("2d", { alpha: true });
         if(!canvas2DRef.current) return
         canvas2DRef.current.width = width
@@ -156,18 +168,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
         canvas2D_ctx.clearRect(0,0,canvas2DRef.current.width,canvas2DRef.current.height)
 
-        canvas2D_ctx.strokeStyle = "black"
-        canvas2D_ctx.fillStyle = "black"
-
-        canvas2D_ctx.beginPath()
-        canvas2D_ctx.moveTo(0,0)
-        canvas2D_ctx.lineTo(canvas2DRef.current.width,canvas2DRef.current.height)
-        canvas2D_ctx.stroke()
-
         const bright_y = backgroundColor[0] * 0.299 + backgroundColor[1] * 0.587 + backgroundColor[2] * 0.114;
         textOverlays.forEach(t => {
             canvas2D_ctx.font = t.font;
-            if(t.fillOrStroke==="stroke"){
+            if(t.drawStyle==="stroke"){
                 if(t.strokeStyle){
                     canvas2D_ctx.strokeStyle = t.strokeStyle
                 } else {
@@ -190,9 +194,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             }
         })
 
-        pathOverlays.forEach(t => {
+        svgPathOverlays.forEach(t => {
             let p = new Path2D(t.path);
-            if(t.fillOrStroke==="stroke"){
+            if(t.drawStyle==="stroke"){
                 if(t.strokeStyle){
                     canvas2D_ctx.strokeStyle = t.strokeStyle
                 } else {
@@ -203,8 +207,18 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 }
                 canvas2D_ctx.stroke(p)
             } else {
-                if(t.fillStyle){
+                if(t.fillStyle&&t.drawStyle!=="gradient"){
                     canvas2D_ctx.fillStyle = t.fillStyle
+                } else if(t.drawStyle==="gradient"){
+                    const grad_x0 = t.gradientBoundary[0]
+                    const grad_y0 = t.gradientBoundary[1]
+                    const grad_x1 = t.gradientBoundary[2]
+                    const grad_y1 = t.gradientBoundary[3]
+                    const grad=canvas2D_ctx.createLinearGradient(grad_x0,grad_y0,grad_x1,grad_y1);
+                    t.gradientStops.forEach(stop => {
+                        grad.addColorStop(stop[0], stop[1]);
+                    })
+                    canvas2D_ctx.fillStyle = grad
                 } else {
                     if(bright_y<0.5)
                         canvas2D_ctx.fillStyle = "white"
@@ -217,6 +231,48 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         images.forEach(img => {
             if(img.img){
                canvas2D_ctx.drawImage(img.img,canvas2DRef.current.width*img.x,canvas2DRef.current.height*img.y,img.width,img.height)
+            }
+        })
+
+        fracPathOverlays.forEach(t => {
+            canvas2D_ctx.beginPath()
+            if(t.drawStyle==="stroke"){
+                if(t.strokeStyle){
+                    canvas2D_ctx.strokeStyle = t.strokeStyle
+                } else {
+                    if(bright_y<0.5)
+                        canvas2D_ctx.strokeStyle = "white"
+                    else
+                        canvas2D_ctx.strokeStyle = "black"
+                }
+            } else {
+                if(t.fillStyle&&t.drawStyle!=="gradient"){
+                    canvas2D_ctx.fillStyle = t.fillStyle
+                } else if(t.drawStyle==="gradient"){
+                    const grad_x0 = t.gradientBoundary[0]
+                    const grad_y0 = t.gradientBoundary[1]
+                    const grad_x1 = t.gradientBoundary[2]
+                    const grad_y1 = t.gradientBoundary[3]
+                    const grad=canvas2D_ctx.createLinearGradient(grad_x0,grad_y0,grad_x1,grad_y1);
+                    t.gradientStops.forEach(stop => {
+                        grad.addColorStop(stop[0], stop[1]);
+                    })
+                    canvas2D_ctx.fillStyle = grad
+                } else {
+                    if(bright_y<0.5)
+                        canvas2D_ctx.fillStyle = "white"
+                    else
+                        canvas2D_ctx.fillStyle = "black"
+                }
+            }
+            canvas2D_ctx.moveTo(canvas2DRef.current.width*t.path[0][0],canvas2DRef.current.height*t.path[0][1])
+            for(let i=0;i<t.path.length;i++){
+                canvas2D_ctx.lineTo(canvas2DRef.current.width*t.path[i][0],canvas2DRef.current.height*t.path[i][1])
+            }
+            if(t.drawStyle==="stroke"){
+                canvas2D_ctx.stroke()
+            } else {
+                canvas2D_ctx.fill()
             }
         })
     }

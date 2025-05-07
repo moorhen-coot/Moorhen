@@ -1141,7 +1141,8 @@ export namespace moorhen {
         overlays: {
             imageOverlayList: any[]
             textOverlayList: any[]
-            pathOverlayList: any[]
+            svgPathOverlayList: any[]
+            fracPathOverlayList: any[]
         }
     }
 
