@@ -1138,6 +1138,11 @@ export namespace moorhen {
             AFDisplaySettings: any;
             HomologsDisplaySettings: any;
         };
+        overlays: {
+            imageOverlayList: any[]
+            textOverlayList: any[]
+            pathOverlayList: any[]
+        }
     }
 
     type actionButtonSettings = {

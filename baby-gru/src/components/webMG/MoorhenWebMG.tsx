@@ -1,4 +1,4 @@
-import { useEffect, useCallback, forwardRef, useState, useReducer } from 'react';
+import { useEffect, useCallback, forwardRef, useState, useReducer, useRef, createRef } from 'react';
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
 import { cidToSpec } from '../../utils/utils';
@@ -8,6 +8,7 @@ import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from 'react-redux';
 import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
 import { useSnackbar } from 'notistack';
+import { addImageOverlay, addTextOverlay, addPathOverlay, emptyOverlays } from "../../store/overlaysSlice";
 
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
@@ -94,14 +95,130 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
+    const imageOverlays = useSelector((state: moorhen.State) => state.overlays.imageOverlayList)
+    const textOverlays = useSelector((state: moorhen.State) => state.overlays.textOverlayList)
+    const pathOverlays = useSelector((state: moorhen.State) => state.overlays.pathOverlayList)
+
+    const canvas2DRef = useRef<HTMLCanvasElement>(null);
+    let canvas2D_ctx = null
+
+    const [images, setImages] = useState<ImageFrac2D[]>([]);
+
+    interface ImageFrac2D {
+        x: number
+        y: number
+        width: number
+        height: number
+        img: HTMLImageElement
+    }
+
+    useEffect(() => {
+        const new_images = []
+        imageOverlays.forEach(imgSrc => {
+            const img = new window.Image()
+            img.src = imgSrc.src
+            img.crossOrigin = "Anonymous";
+            const img_frac:ImageFrac2D = {x:imgSrc.x,y:imgSrc.y,img,width:imgSrc.width,height:imgSrc.height}
+            new_images.push(img_frac)
+        })
+        setImages(new_images)
+        
+    }, [imageOverlays])
+
+    useEffect(() => {
+        dispatch(emptyOverlays())
+        canvas2D_ctx = canvas2DRef.current.getContext("2d", { alpha: true });
+        dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/axes_xyz.svg`,x:0.25,y:0.75,width:100,height:100}))
+        dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/axes_xyz.svg`,x:0.25,y:0.25,width:100,height:100}))
+        dispatch(addTextOverlay({text:"Red text",x:0.15,y:0.5,font:"108px serif",fillStyle:"red"}))
+        dispatch(addTextOverlay({text:"Text",x:0.15,y:0.75,font:"48px serif"}))
+        dispatch(addTextOverlay({text:"Stroke text",x:0.65,y:0.75,font:"48px serif",fillOrStroke:"stroke",strokeStyle:"blue"}))
+        dispatch(addPathOverlay({path:"M10 10 h 80 v 80 h -80 Z",fillOrStroke:"stroke",strokeStyle:"magenta"}))
+        dispatch(addPathOverlay({path:"M100 10 h 80 v 80 h -80 Z",fillOrStroke:"fill",fillStyle:"orange"}))
+    }, [])
+
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
         const fieldDepthBack: number = 21;
-        if (glRef !== null && typeof glRef !== 'function') { 
+        if (glRef !== null && typeof glRef !== 'function') {
             glRef.current.set_fog_range(glRef.current.fogClipOffset - (glRef.current.zoom * fieldDepthFront), glRef.current.fogClipOffset + (glRef.current.zoom * fieldDepthBack))
             glRef.current.set_clip_range(0 - (glRef.current.zoom * fieldDepthFront), 0 + (glRef.current.zoom * fieldDepthBack))
-            glRef.current.doDrawClickedAtomLines = false    
+            glRef.current.doDrawClickedAtomLines = false
         }
+    }
+
+    const draw2D = () => {
+        console.log("draw2D")
+        let canvas2D_ctx = canvas2DRef.current.getContext("2d", { alpha: true });
+        if(!canvas2DRef.current) return
+        canvas2DRef.current.width = width
+        canvas2DRef.current.height = height
+
+        canvas2D_ctx.clearRect(0,0,canvas2DRef.current.width,canvas2DRef.current.height)
+
+        canvas2D_ctx.strokeStyle = "black"
+        canvas2D_ctx.fillStyle = "black"
+
+        canvas2D_ctx.beginPath()
+        canvas2D_ctx.moveTo(0,0)
+        canvas2D_ctx.lineTo(canvas2DRef.current.width,canvas2DRef.current.height)
+        canvas2D_ctx.stroke()
+
+        const bright_y = backgroundColor[0] * 0.299 + backgroundColor[1] * 0.587 + backgroundColor[2] * 0.114;
+        textOverlays.forEach(t => {
+            canvas2D_ctx.font = t.font;
+            if(t.fillOrStroke==="stroke"){
+                if(t.strokeStyle){
+                    canvas2D_ctx.strokeStyle = t.strokeStyle
+                } else {
+                    if(bright_y<0.5)
+                        canvas2D_ctx.strokeStyle = "white"
+                    else
+                        canvas2D_ctx.strokeStyle = "black"
+                }
+                canvas2D_ctx.strokeText(t.text,t.x*canvas2DRef.current.width,t.y*canvas2DRef.current.height)
+            } else {
+                if(t.fillStyle){
+                    canvas2D_ctx.fillStyle = t.fillStyle
+                } else {
+                    if(bright_y<0.5)
+                        canvas2D_ctx.fillStyle = "white"
+                    else
+                        canvas2D_ctx.fillStyle = "black"
+                }
+                canvas2D_ctx.fillText(t.text,t.x*canvas2DRef.current.width,t.y*canvas2DRef.current.height)
+            }
+        })
+
+        pathOverlays.forEach(t => {
+            let p = new Path2D(t.path);
+            if(t.fillOrStroke==="stroke"){
+                if(t.strokeStyle){
+                    canvas2D_ctx.strokeStyle = t.strokeStyle
+                } else {
+                    if(bright_y<0.5)
+                        canvas2D_ctx.strokeStyle = "white"
+                    else
+                        canvas2D_ctx.strokeStyle = "black"
+                }
+                canvas2D_ctx.stroke(p)
+            } else {
+                if(t.fillStyle){
+                    canvas2D_ctx.fillStyle = t.fillStyle
+                } else {
+                    if(bright_y<0.5)
+                        canvas2D_ctx.fillStyle = "white"
+                    else
+                        canvas2D_ctx.fillStyle = "black"
+                }
+                canvas2D_ctx.fill(p)
+            }
+        })
+        images.forEach(img => {
+            if(img.img){
+               canvas2D_ctx.drawImage(img.img,canvas2DRef.current.width*img.x,canvas2DRef.current.height*img.y,img.width,img.height)
+            }
+        })
     }
 
     const handleZoomChanged = useCallback(evt => {
@@ -147,7 +264,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         if(glRef !== null && typeof glRef !== 'function') {
             glRef.current.doPerspectiveProjection = doPerspectiveProjection
             glRef.current.clearTextPositionBuffers()
-            glRef.current.drawScene()    
+            glRef.current.drawScene()
         }
     }, [doPerspectiveProjection])
 
@@ -321,13 +438,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 setClipFogByZoom()
             }
             glRef.current.resize(width, height)
-            glRef.current.drawScene()    
+            glRef.current.drawScene()
         }
     }, [glRef, width, height])
 
     const handleRightClick = useCallback((e: moorhen.AtomRightClickEvent) => {
         if (!isRotatingAtoms && !isChangingRotamers && !isDraggingAtoms && !residueSelection.molecule) {
-            setShowContextMenu({ ...e.detail })            
+            setShowContextMenu({ ...e.detail })
         }
     }, [isRotatingAtoms, isChangingRotamers, isDraggingAtoms, residueSelection])
 
@@ -342,6 +459,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [])
+
+    useEffect(() => {
+        draw2D()
+    }, [glRef,draw2D,textOverlays,imageOverlays])
 
     useEffect(() => {
         document.addEventListener("goToBlobDoubleClick", handleGoToBlobDoubleClick);
@@ -432,6 +553,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
 
     return  <>
+                <figure style={{position: "relative"}}>
                 <MGWebGL
                     ref={glRef}
                     onAtomHovered={(enableAtomHovering && !isRotatingAtoms && !isDraggingAtoms && !isChangingRotamers) ? props.onAtomHovered : null}
@@ -446,9 +568,11 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     showFPS={drawFPS}
                     mapLineWidth={innerMapLineWidth}
                     reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp}/>
+                    <canvas style={{pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef} height={width} width={height} />;
+                    </figure>
 
                 {showContextMenu &&
-                <MoorhenContextMenu 
+                <MoorhenContextMenu
                     glRef={glRef as React.RefObject<webGL.MGWebGL>}
                     monomerLibraryPath={props.monomerLibraryPath}
                     viewOnly={props.viewOnly}
