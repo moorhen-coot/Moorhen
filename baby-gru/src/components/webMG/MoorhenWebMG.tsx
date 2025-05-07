@@ -126,38 +126,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         
     }, [imageOverlays])
 
-    // This is a bunch of examples of adding images (bitmap or svg), legends, paths in fractional coords on
-    // a canvas layed over the top of the GL widget. SVG Paths are also supported, these are in absolute rather
-    // fractional coords.
-    const drawExampleOverlays = () => {
-        dispatch(emptyOverlays())
-        canvas2D_ctx = canvas2DRef.current.getContext("2d", { alpha: true });
-        dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/axes_xyz.svg`,x:0.25,y:0.75,width:100,height:100}))
-        dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/axes_xyz.svg`,x:0.25,y:0.25,width:100,height:100}))
-        dispatch(addTextOverlay({text:"Red text",x:0.15,y:0.5,font:"108px serif",fillStyle:"red"}))
-        dispatch(addTextOverlay({text:"Text",x:0.15,y:0.75,font:"48px serif"}))
-        dispatch(addTextOverlay({text:"Stroke text",x:0.65,y:0.75,font:"48px serif",drawStyle:"stroke",strokeStyle:"blue"}))
-        dispatch(addSvgPathOverlay({path:"M10 10 h 80 v 80 h -80 Z",drawStyle:"stroke",strokeStyle:"magenta"}))
-        dispatch(addSvgPathOverlay({path:"M100 10 h 80 v 80 h -80 Z",drawStyle:"fill",fillStyle:"orange"}))
-        dispatch(addFracPathOverlay({path:[[0.7,0.5],[0.8,0.9],[0.6,0.7],[0.7,0.5]],drawStyle:"fill",fillStyle:"#00ffff77"}))
-        const gradientStops = []
-        gradientStops.push([0, "red"]);
-        gradientStops.push([0.35, "yellow"]);
-        gradientStops.push([0.5, "green"]);
-        gradientStops.push([0.65, "cyan"]);
-        gradientStops.push([0.8, "blue"]);
-        gradientStops.push([1.0, "purple"]);
-        dispatch(addSvgPathOverlay({path:"M190 10 h 480 v 80 h -480 Z",gradientStops,gradientBoundary:[190,0,670,0],drawStyle:"gradient"}))
-        dispatch(addSvgPathOverlay({path:"M10 100 v 480 h 80 v -480 Z",gradientStops,gradientBoundary:[0,100,0,580],drawStyle:"gradient"}))
-        dispatch(addFracPathOverlay({path:[[0.0,0.0],[1.0,1.0]],drawStyle:"stroke"}))
-        dispatch(addFracPathOverlay({path:[[0.2,0.5],[0.3,0.9],[0.1,0.7],[0.2,0.5]],gradientStops,gradientBoundary:[0.1,0,0.3,0],drawStyle:"gradient"}))
-    }
-
-   /*
     useEffect(() => {
-        drawExampleOverlays()
+        canvas2D_ctx = canvas2DRef.current.getContext("2d", { alpha: true });
     }, [])
-    */
 
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
