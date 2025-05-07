@@ -110,10 +110,12 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: {
       coordinateGetter: sortableKeyboardCoordinates,
     }))
 
-    const imgMolDimer = new window.Image();
-    imgMolDimer.src = `${props.urlPrefix}/pixmaps/molecule_dimer.svg`;
-    imgMolDimer.crossOrigin = "Anonymous";
-    imageRefMolDimer.current = imgMolDimer;
+    useEffect(() => {
+        const imgMolDimer = new window.Image();
+        imgMolDimer.src = `${props.urlPrefix}/pixmaps/molecule_dimer.svg`;
+        imgMolDimer.crossOrigin = "Anonymous";
+        imageRefMolDimer.current = imgMolDimer;
+    }, [])
 
     const onCompleted = () => {}
 
