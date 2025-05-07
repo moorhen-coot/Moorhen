@@ -126,7 +126,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         
     }, [imageOverlays])
 
-    useEffect(() => {
+    // This is a bunch of examples of adding images (bitmap or svg), legends, paths in fractional coords on
+    // a canvas layed over the top of the GL widget. SVG Paths are also supported, these are in absolute rather
+    // fractional coords.
+    const drawExampleOverlays = () => {
         dispatch(emptyOverlays())
         canvas2D_ctx = canvas2DRef.current.getContext("2d", { alpha: true });
         dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/axes_xyz.svg`,x:0.25,y:0.75,width:100,height:100}))
@@ -148,7 +151,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         dispatch(addSvgPathOverlay({path:"M10 100 v 480 h 80 v -480 Z",gradientStops,gradientBoundary:[0,100,0,580],drawStyle:"gradient"}))
         dispatch(addFracPathOverlay({path:[[0.0,0.0],[1.0,1.0]],drawStyle:"stroke"}))
         dispatch(addFracPathOverlay({path:[[0.2,0.5],[0.3,0.9],[0.1,0.7],[0.2,0.5]],gradientStops,gradientBoundary:[0.1,0,0.3,0],drawStyle:"gradient"}))
+    }
+
+   /*
+    useEffect(() => {
+        drawExampleOverlays()
     }, [])
+    */
 
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
