@@ -147,7 +147,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         dispatch(addSvgPathOverlay({path:"M190 10 h 480 v 80 h -480 Z",gradientStops,gradientBoundary:[190,0,670,0],drawStyle:"gradient"}))
         dispatch(addSvgPathOverlay({path:"M10 100 v 480 h 80 v -480 Z",gradientStops,gradientBoundary:[0,100,0,580],drawStyle:"gradient"}))
         dispatch(addFracPathOverlay({path:[[0.0,0.0],[1.0,1.0]],drawStyle:"stroke"}))
-        dispatch(addFracPathOverlay({path:[[0.2,0.5],[0.3,0.9],[0.1,0.7],[0.2,0.5]],gradientStops,gradientBoundary:[0,100,0,580],drawStyle:"gradient"}))
+        dispatch(addFracPathOverlay({path:[[0.2,0.5],[0.3,0.9],[0.1,0.7],[0.2,0.5]],gradientStops,gradientBoundary:[0.1,0,0.3,0],drawStyle:"gradient"}))
     }, [])
 
     const setClipFogByZoom = (): void => {
@@ -249,10 +249,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 if(t.fillStyle&&t.drawStyle!=="gradient"){
                     canvas2D_ctx.fillStyle = t.fillStyle
                 } else if(t.drawStyle==="gradient"){
-                    const grad_x0 = t.gradientBoundary[0]
-                    const grad_y0 = t.gradientBoundary[1]
-                    const grad_x1 = t.gradientBoundary[2]
-                    const grad_y1 = t.gradientBoundary[3]
+                    const grad_x0 = canvas2DRef.current.width*t.gradientBoundary[0]
+                    const grad_y0 = canvas2DRef.current.height*t.gradientBoundary[1]
+                    const grad_x1 = canvas2DRef.current.width*t.gradientBoundary[2]
+                    const grad_y1 = canvas2DRef.current.height*t.gradientBoundary[3]
                     const grad=canvas2D_ctx.createLinearGradient(grad_x0,grad_y0,grad_x1,grad_y1);
                     t.gradientStops.forEach(stop => {
                         grad.addColorStop(stop[0], stop[1]);
