@@ -7,7 +7,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { setDoOutline } from "../../store/sceneSettingsSlice";
 import { useSnackbar } from "notistack";
 import { setUseGemmi } from "../../store/generalStatesSlice";
-import { addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays } from "../../store/overlaysSlice";
+import { addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays, addCallback } from "../../store/overlaysSlice";
 
 export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
 
@@ -29,6 +29,21 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
     // This is a bunch of examples of adding images (bitmap or svg), legends, paths in fractional coords on
     // a canvas layed over the top of the GL widget. SVG Paths are also supported, these are in absolute rather
     // fractional coords.
+
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+
+    const exampleCallBack = (ctx,backgroundColor) => {
+        const bright_y = backgroundColor[0] * 0.299 + backgroundColor[1] * 0.587 + backgroundColor[2] * 0.114
+        if(bright_y<0.5){
+            ctx.fillStyle = "white"
+        } else {
+            ctx.fillStyle = "black"
+        }
+        ctx.font = "20px Arial"
+        ctx.fillText("I am written by a callback",0.5*width,0.5*height)
+        console.log("I am written by a callback",0.5*width,0.5*height)
+    }
 
     const loadExampleOverlays = (evt) => {
         dispatch(emptyOverlays())
@@ -53,6 +68,7 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
             dispatch(addSvgPathOverlay({path:"M10 100 v 480 h 80 v -480 Z",gradientStops,gradientBoundary:[0,100,0,580],drawStyle:"gradient"}))
             dispatch(addFracPathOverlay({path:[[0.0,0.0],[1.0,1.0]],drawStyle:"stroke"}))
             dispatch(addFracPathOverlay({path:[[0.2,0.5],[0.3,0.9],[0.1,0.7],[0.2,0.5]],gradientStops,gradientBoundary:[0.1,0,0.3,0],drawStyle:"gradient"}))
+            dispatch(addCallback(exampleCallBack))
         }
     }
 

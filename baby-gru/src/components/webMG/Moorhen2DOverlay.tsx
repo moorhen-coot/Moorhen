@@ -15,6 +15,7 @@ export const Moorhen2DOverlay = ((props) => {
     const textOverlays = useSelector((state: moorhen.State) => state.overlays.textOverlayList)
     const svgPathOverlays = useSelector((state: moorhen.State) => state.overlays.svgPathOverlayList)
     const fracPathOverlays = useSelector((state: moorhen.State) => state.overlays.fracPathOverlayList)
+    const callbacks = useSelector((state: moorhen.State) => state.overlays.callBacks)
 
     const canvas2DRef = useRef<HTMLCanvasElement>(null)
 
@@ -161,11 +162,14 @@ export const Moorhen2DOverlay = ((props) => {
                 canvas2D_ctx.fill()
             }
         })
+        callbacks.forEach(f => {
+            f(canvas2D_ctx,backgroundColor)
+        })
     }
 
     useEffect(() => {
         draw2D()
-    }, [draw2D,textOverlays,imageOverlays])
+    }, [draw2D,textOverlays,imageOverlays,svgPathOverlays,fracPathOverlays,callbacks])
 
     return  <>
            <canvas style={{pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef} height={width} width={height} />

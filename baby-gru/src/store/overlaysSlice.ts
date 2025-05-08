@@ -41,6 +41,7 @@ const initialState = {
     textOverlayList: [],
     svgPathOverlayList: [],
     fracPathOverlayList: [],
+    callBacks: [],
 }
 
 export const overlaysSlice = createSlice({
@@ -63,13 +64,17 @@ export const overlaysSlice = createSlice({
       state = { ...state, fracPathOverlayList: [...state.fracPathOverlayList, action.payload] }
       return state
     },
+    addCallback: (state, action: {payload: Function, type: string}) => {
+      state = { ...state, callBacks: [...state.callBacks, action.payload] }
+      return state
+    },
     emptyOverlays: (state) => {
       return initialState
     },
 }})
 
 export const {
-    addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays
+    addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays, addCallback
 } = overlaysSlice.actions
 
 export default overlaysSlice.reducer
