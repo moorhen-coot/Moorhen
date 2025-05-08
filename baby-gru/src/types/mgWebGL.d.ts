@@ -590,8 +590,6 @@ interface MGWebGLPropsInterface {
         normalThreshold: number;
         scaleDepth: number;
         scaleNormal: number;
-        xPixelOffset: number;
-        yPixelOffset: number;
         occludeDiffuse: boolean;
         doOrderIndependentTransparency: boolean;
         doMultiView: boolean;
@@ -627,7 +625,6 @@ interface MGWebGLPropsInterface {
         hitchometerIndexBuffer: WebGLBuffer;
         hitchometerNormalBuffer: WebGLBuffer;
         hitchometerPositionBuffer: WebGLBuffer;
-        ids: string[];
         imageBuffer: DisplayBuffer;
         imageVertices: number[];
         init_x: number;
@@ -745,7 +742,6 @@ interface MGWebGLPropsInterface {
         silhouetteTexture: WebGLTexture;
         sphereBuffer: DisplayBuffer;
         state:  {width: number, height: number };
-        statusChangedEvent: Event;
         stencilPass: boolean;
         stenciling: boolean;
         textHeightScaling: number;
@@ -755,7 +751,6 @@ interface MGWebGLPropsInterface {
         ssaoKernelBuffer: WebGLBuffer;
         ssaoKernel: number[];
         trackMouse: boolean;
-        viewChangedEvent: Event;
         props: MGWebGLPropsInterface;
         extraFontCtxs: Dictionary<HTMLCanvasElement>;
         mouseDownButton: number;

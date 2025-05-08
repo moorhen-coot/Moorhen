@@ -199,6 +199,10 @@ export function getDeviceScale() {
 
 export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
+        //Props
+        props: webGL.MGWebGLPropsInterface;
+
+        //Things that might need to be accessed externally
         draggableMolecule: moorhen.Molecule
         activeMolecule: moorhen.Molecule
         specularPower: number;
@@ -222,32 +226,73 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         background_colour: [number, number, number, number];
         origin: [number, number, number];
         drawEnvBOcc: boolean;
-        environmentRadius: number;
         environmentAtoms: webGL.clickAtom[][];
         labelledAtoms: webGL.clickAtom[][];
         measuredAtoms: webGL.clickAtom[][];
         pixel_data: Uint8Array;
         screenshotBuffersReady: boolean;
-        edgeDetectFramebufferSize : number;
-        gBuffersFramebufferSize : number;
         save_pixel_data: boolean;
         renderToTexture: boolean;
         transparentScreenshotBackground: boolean;
-        doDepthPeelPass: boolean;
         showShortCutHelp: string[];
         WEBGL2: boolean;
-        doRedraw: boolean;
-        circleCanvasInitialized: boolean;
-        textCanvasInitialized: boolean;
         currentlyDraggedAtom: null | {atom: moorhen.AtomInfo; buffer: DisplayBuffer};
-        gl_cursorPos: Float32Array;
-        textCtx: CanvasRenderingContext2D;
-        circleCtx: CanvasRenderingContext2D;
         canvas: HTMLCanvasElement;
         rttFramebuffer: webGL.MGWebGLFrameBuffer;
         doPerspectiveProjection: boolean;
         labelsTextCanvasTexture: TextCanvasTexture;
         texturedShapes: any[];
+        circleTex: WebGLTexture;
+        clipChangedEvent: Event;
+        context2d: CanvasRenderingContext2D;
+        doShadow: boolean;
+        doSSAO: boolean;
+        doEdgeDetect: boolean;
+        depthThreshold: number;
+        normalThreshold: number;
+        scaleDepth: number;
+        scaleNormal: number;
+        occludeDiffuse: boolean;
+        doPeel: boolean;
+        doShadowDepthDebug: boolean;
+        doSpin: boolean;
+        doStenciling: boolean;
+        doMultiView: boolean;
+        multiViewRowsColumns: number[];
+        specifyMultiViewRowsColumns: boolean;
+        threeWayViewOrder: string;
+        doThreeWayView: boolean;
+        doSideBySideStereo: boolean;
+        doCrossEyedStereo: boolean;
+        doAnaglyphStereo: boolean;
+        doneEvents: boolean;
+        fpsText: string;
+        measurePointsArray: any[];
+        mspfArray: number[];
+        ssaoRadius: number;
+        ssaoBias: number;
+        radius: number;
+        reContourMapOnlyOnMouseUp: boolean;
+        showAxes: boolean;
+        showCrosshairs: boolean;
+        showScaleBar: boolean;
+        showFPS: boolean;
+        state:  {width: number, height: number };
+        displayBuffers: any[];
+        gl:  any;
+        canvasRef: any;
+
+        //Internal
+        doDepthPeelPass: boolean;
+        environmentRadius: number;
+        edgeDetectFramebufferSize : number;
+        gBuffersFramebufferSize : number;
+        doRedraw: boolean;
+        circleCanvasInitialized: boolean;
+        textCanvasInitialized: boolean;
+        gl_cursorPos: Float32Array;
+        textCtx: CanvasRenderingContext2D;
+        circleCtx: CanvasRenderingContext2D;
         currentBufferIdx: number;
         atom_span: number;
         axesColourBuffer: WebGLBuffer;
@@ -266,39 +311,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         simpleBlurYTexture: WebGLTexture;
         calculatingShadowMap: boolean;
         cancelMouseTrack: boolean;
-        circleTex: WebGLTexture;
-        clipChangedEvent: Event;
-        context2d: CanvasRenderingContext2D;
         diskBuffer: DisplayBuffer;
         diskVertices: number[];
-        doShadow: boolean;
-        doSSAO: boolean;
-        doEdgeDetect: boolean;
-        depthThreshold: number;
-        normalThreshold: number;
-        scaleDepth: number;
-        scaleNormal: number;
-        xPixelOffset: number;
-        yPixelOffset: number;
-        occludeDiffuse: boolean;
-        doOrderIndependentTransparency: boolean;
-        doPeel: boolean;
-        doShadowDepthDebug: boolean;
-        doSpin: boolean;
-        doStenciling: boolean;
-        doMultiView: boolean;
-        multiViewRowsColumns: number[];
-        specifyMultiViewRowsColumns: boolean;
-        threeWayViewOrder: string;
-        doThreeWayView: boolean;
-        doSideBySideStereo: boolean;
-        doCrossEyedStereo: boolean;
-        doAnaglyphStereo: boolean;
-        doneEvents: boolean;
         dx: number;
         dy: number;
         fogChangedEvent: Event;
-        fpsText: string;
         framebufferDrawBuffersReady: boolean;
         framebufferDrawIndexesBuffer: WebGLBuffer;
         framebufferDrawPositionBuffer: WebGLBuffer;
@@ -315,8 +332,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         hitchometerIndexBuffer: WebGLBuffer;
         hitchometerNormalBuffer: WebGLBuffer;
         hitchometerPositionBuffer: WebGLBuffer;
-        ids: string[];
-        imageBuffer: DisplayBuffer;
+        doOrderIndependentTransparency: boolean;
         imageVertices: number[];
         init_x: number;
         init_y: number;
@@ -325,8 +341,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         measureTextCanvasTexture: TextCanvasTexture;
         measureText2DCanvasTexture: TextCanvasTexture;
         mouseDown: boolean;
-        measurePointsArray: any[];
         measureHit: any;
+        imageBuffer: DisplayBuffer;
         measureButton: number;
         measureDownPos: any;
         mouseDown_x: number;
@@ -339,7 +355,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         mouseTrackPoints: number[][];
         mouseTrackPositionBuffer: WebGLBuffer;
         moveFactor: number;
-        mspfArray: number[];
         pointsArray: number[];
         mvInvMatrix: Float32Array;
         mvMatrix: Float32Array;
@@ -361,8 +376,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         gBufferNormalTexture: WebGLTexture;
         ssaoTexture: WebGLTexture;
         edgeDetectTexture: WebGLTexture;
-        ssaoRadius: number;
-        ssaoBias: number;
         offScreenFramebufferBlurX: webGL.MGWebGLFrameBuffer;
         offScreenFramebufferBlurY: webGL.MGWebGLFrameBuffer;
         offScreenFramebufferSimpleBlurX: webGL.MGWebGLFrameBuffer;
@@ -377,8 +390,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         pMatrix: Float32Array;
         pmvMatrix: Float32Array;
         prevTime: number;
-        radius: number;
-        reContourMapOnlyOnMouseUp: boolean;
         ready: boolean;
         renderSilhouettesToTexture: boolean;
         rttFramebufferColor: webGL.MGWebGLFrameBuffer;
@@ -421,10 +432,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         shaderProgramTwoDShapes: webGL.ShaderTwodShapes;
         shaderDepthShadowProgramPerfectSpheres: webGL.ShaderPerfectSpheres;
         shinyBack: boolean;
-        showAxes: boolean;
-        showCrosshairs: boolean;
-        showScaleBar: boolean;
-        showFPS: boolean;
         silhouetteBufferReady: boolean;
         silhouetteDepthTexture: WebGLTexture;
         silhouetteFramebuffer: webGL.MGWebGLFrameBuffer;
@@ -432,8 +439,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         silhouetteRenderbufferDepth: WebGLRenderbuffer;
         silhouetteTexture: WebGLTexture;
         sphereBuffer: DisplayBuffer;
-        state:  {width: number, height: number };
-        statusChangedEvent: Event;
         stencilPass: boolean;
         stenciling: boolean;
         textHeightScaling: number;
@@ -443,25 +448,19 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         ssaoKernelBuffer: WebGLBuffer;
         ssaoKernel: number[];
         trackMouse: boolean;
-        viewChangedEvent: Event;
-        props: webGL.MGWebGLPropsInterface;
         extraFontCtxs: webGL.Dictionary<HTMLCanvasElement>;
         mouseDownButton: number;
         keysDown: webGL.Dictionary<number>;
-
         textLegends: any;
         textureMatrix: mat4;
-        displayBuffers: any[];
-        gl:  any;
-        canvasRef: any;
         depth_texture: any;
         frag_depth_ext: any;
         drawBuffersExt: any;
         instanced_ext: any;
         ext: any;
         newTextLabels: any;
-        drawingGBuffers: boolean;
         axesTexture: any;
+        drawingGBuffers: boolean;
         max_elements_indices: number;
         hoverSize: number;
         currentViewport: number[];
@@ -1195,8 +1194,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.normalThreshold = 0.5;
         this.scaleDepth = 2.0;
         this.scaleNormal = 1.0;
-        this.xPixelOffset = 1.0 / 1024.0;
-        this.yPixelOffset = 1.0 / 1024.0;
 
         this.doSpin = false;
 
@@ -1264,7 +1261,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.environmentAtoms = [];
         this.labelledAtoms = [];
         this.measuredAtoms = [];
-        this.ids = [];
 
         this.gl_cursorPos = new Float32Array(2);
         this.gl_cursorPos[0] = this.canvas.width / 2.;
@@ -5009,8 +5005,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         this.mouseDown = oldMouseDown;
-
-        //this.div.dispatchEvent(this.viewChangedEvent);
 
         if(this.doShadowDepthDebug&&this.doShadow){
             this.gl.clearColor(1.0,1.0,0.0,1.0);
