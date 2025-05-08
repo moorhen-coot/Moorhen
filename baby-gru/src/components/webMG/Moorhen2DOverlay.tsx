@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { moorhen } from "../../types/moorhen"
 import { useDispatch, useSelector } from 'react-redux'
 import { addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays } from "../../store/overlaysSlice"
@@ -17,7 +17,6 @@ export const Moorhen2DOverlay = ((props) => {
     const fracPathOverlays = useSelector((state: moorhen.State) => state.overlays.fracPathOverlayList)
 
     const canvas2DRef = useRef<HTMLCanvasElement>(null)
-    let canvas2D_ctx = null
 
     const [images, setImages] = useState<ImageFrac2D[]>([])
 
@@ -39,16 +38,17 @@ export const Moorhen2DOverlay = ((props) => {
             new_images.push(img_frac)
         })
         setImages(new_images)
-        
     }, [imageOverlays])
 
-    useEffect(() => {
-        canvas2D_ctx = canvas2DRef.current.getContext("2d", { alpha: true })
-    }, [])
+    const getContext = useCallback(() => {
+        const context = canvas2DRef.current.getContext('2d', { alpha: true });
+        return context
+    }, [canvas2DRef])
 
     const draw2D = () => {
-        let canvas2D_ctx = canvas2DRef.current.getContext("2d", { alpha: true })
         if(!canvas2DRef.current) return
+        const canvas2D_ctx = getContext()
+        if(!canvas2D_ctx) return
         canvas2DRef.current.width = width
         canvas2DRef.current.height = height
 
