@@ -4452,6 +4452,16 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     drawScene() : void {
 
+        let dirty = false
+        const thisdisplayBufferslength = this.displayBuffers.length;
+        for (let idx = 0; idx < thisdisplayBufferslength; idx++) {
+            if (!this.displayBuffers[idx].isDirty) {
+                dirty = true;
+                break
+            }
+        }
+        if(dirty) this.buildBuffers()
+
         const theShaders = [
             this.shaderProgram,
             this.shaderProgramInstanced,

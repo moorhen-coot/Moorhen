@@ -20,6 +20,7 @@ import { libcootApi } from '../types/libcoot';
 import { privateer } from '../types/privateer';
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
 import { ToolkitStore } from '@reduxjs/toolkit/dist/configureStore';
+import { setRequestDrawScene } from "../store/glRefSlice"
 
 /**
  * Represents a molecule
@@ -553,7 +554,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.selectionRepresentation?.deleteBuffers()
         this.adaptativeBondsRepresentation?.deleteBuffers()
         this.representations.forEach(representation => representation.deleteBuffers())
-        this.glRef.current.drawScene()
+        this.store.dispatch(setRequestDrawScene(true))
         const response = await this.commandCentre.current.cootCommand({
             returnType: "status",
             command: popBackImol ? 'pop_back' : 'close_molecule',

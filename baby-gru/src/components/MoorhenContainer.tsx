@@ -36,6 +36,7 @@ import { MoorhenScreenshotSnackBar } from './snack-bar/MoorhenScreenshotSnackBar
 import { MoorhenSideBar } from './snack-bar/MoorhenSideBar';
 import { MoorhenAtomInfoSnackBar } from './snack-bar/MoorhenAtomInfoSnackBar';
 import { MoorhenDroppable } from './MoorhenDroppable';
+import { setRequestDrawScene } from "../store/glRefSlice"
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -469,7 +470,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     useEffect(() => {
         glRef.current.resize(width, height)
-        glRef.current.drawScene()
+        dispatch(setRequestDrawScene(true))
     }, [width, height])
 
     useEffect(() => {

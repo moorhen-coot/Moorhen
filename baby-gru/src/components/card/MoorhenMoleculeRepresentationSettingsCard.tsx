@@ -5,7 +5,8 @@ import { MoorhenSlider } from '../misc/MoorhenSlider';
 import { AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
 import { moorhen } from "../../types/moorhen";
 import { webGL } from '../../types/mgWebGL';
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { setRequestDrawScene } from "../../store/glRefSlice"
 
 const SliderButton = (props: {
     stateSetter: React.Dispatch<React.SetStateAction<number>>;
@@ -198,11 +199,13 @@ const SymmetrySettingsPanel = (props: {
     setSymmetryRadius: React.Dispatch<React.SetStateAction<number>>;
     molecule: moorhen.Molecule;
     glRef: React.RefObject<webGL.MGWebGL>;
+
 }) => {
 
     const [symmetryOn, setSymmetryOn] = useState<boolean>(props.molecule.symmetryOn)
     const [biomolOn, setBiomolOn] = useState<boolean>(props.molecule.biomolOn)
     const [showUnitCell, setShowUnitCell] = useState<boolean>(props.molecule.unitCellRepresentation?.visible)
+    const dispatch = useDispatch()
 
     const {
         symmetryRadius, setSymmetryRadius
@@ -225,7 +228,7 @@ const SymmetrySettingsPanel = (props: {
             props.molecule.drawUnitCell()
         } else {
             props.molecule.clearBuffersOfStyle('unitCell')
-            props.glRef.current.drawScene()
+            dispatch(setRequestDrawScene(true))
         }
     }, [showUnitCell])
 

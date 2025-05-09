@@ -8,6 +8,7 @@ import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from 'react-redux';
 import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
 import { useSnackbar } from 'notistack';
+import { setOrigin, setRequestDrawScene, setRequestBuildBuffers } from "../../store/glRefSlice"
 
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
@@ -93,6 +94,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
+    const requestDrawScene = useSelector((state: moorhen.State) => state.glRef.requestDrawScene)
+    const requestBuildBuffers = useSelector((state: moorhen.State) => state.glRef.requestBuildBuffers)
+    const originState = useSelector((state: moorhen.State) => state.glRef.origin)
 
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
@@ -164,6 +168,21 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [doOutline])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.drawScene()
+        }
+        dispatch(setRequestDrawScene(false))
+    }, [requestDrawScene])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.buildBuffers()
+            glRef.current.drawScene()
+        }
+        dispatch(setRequestBuildBuffers(false))
+    }, [requestBuildBuffers])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {

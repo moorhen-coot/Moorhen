@@ -4,6 +4,7 @@ import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInf
 import { libcootApi } from '../types/libcoot';
 import { MoorhenColourRule } from './MoorhenColourRule';
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums"
+import { setOrigin, setRequestDrawScene, setRequestBuildBuffers } from "../store/glRefSlice"
 
 /**
  * Represents a molecule representation
@@ -149,8 +150,8 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 buffer.isDirty = true;
                 buffer.alphaChanged = true;
             })
-            this.glRef.current.buildBuffers();
-            this.glRef.current.drawScene();
+            this.parentMolecule.store.dispatch(setRequestBuildBuffers(true))
+            this.parentMolecule.store.dispatch(setRequestDrawScene(true))
         }
     }
 
@@ -303,12 +304,12 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                     this.buffers = a
                 }
             })
-            this.glRef.current.buildBuffers()
+            this.parentMolecule.store.dispatch(setRequestBuildBuffers(true))
         }
         this.buffers.forEach(buf => {
             buf.multiViewGroup = this.parentMolecule.molNo
         })
-        this.glRef.current.drawScene()
+        this.parentMolecule.store.dispatch(setRequestDrawScene(true))
     }
 
     /**
@@ -363,8 +364,8 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                     this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels, buffer.uuid)
                 }
             })
-            this.glRef.current.buildBuffers()
-            this.glRef.current.drawScene()
+            this.parentMolecule.store.dispatch(setRequestBuildBuffers(true))
+            this.parentMolecule.store.dispatch(setRequestDrawScene(true))
             this.buffers = []
         }
     }
@@ -385,7 +386,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                         this.glRef.current.labelsTextCanvasTexture.recreateBigTextureBuffers()
                     }
                 })
-                this.glRef.current.drawScene()
+                this.parentMolecule.store.dispatch(setRequestDrawScene(true))
             } else {
                 await this.draw()
             }
@@ -407,7 +408,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                  }
                  this.glRef.current.labelsTextCanvasTexture.recreateBigTextureBuffers()
             })
-            this.glRef.current.drawScene()
+            this.parentMolecule.store.dispatch(setRequestDrawScene(true))
         } catch (err) {
             console.log(err)
         }

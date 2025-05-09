@@ -1138,6 +1138,11 @@ export namespace moorhen {
             AFDisplaySettings: any;
             HomologsDisplaySettings: any;
         };
+        glRef: {
+            origin: [number,number,number];
+            requestDrawScene: boolean;
+            requestBuildBuffers: boolean;
+        };
     }
 
     type actionButtonSettings = {

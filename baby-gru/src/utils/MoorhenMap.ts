@@ -6,6 +6,7 @@ import pako from "pako"
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
+import { setRequestDrawScene, setRequestBuildBuffers } from "../store/glRefSlice"
 
 const _DEFAULT_CONTOUR_LEVEL = 0.8
 const _DEFAULT_RADIUS = 13
@@ -134,7 +135,7 @@ export class MoorhenMap implements moorhen.Map {
         Object.getOwnPropertyNames(this.displayObjects).forEach(displayObject => {
             if (this.displayObjects[displayObject].length > 0) { this.clearBuffersOfStyle(displayObject) }
         })
-        this.glRef.current.drawScene()
+        this.store.dispatch(setRequestDrawScene(true))
         const promises = [
             this.commandCentre.current.cootCommand({
                 returnType: "status",
@@ -513,8 +514,8 @@ export class MoorhenMap implements moorhen.Map {
      */
     hideMapContour(): void {
         this.clearBuffersOfStyle('Coot')
-        this.glRef.current.buildBuffers();
-        this.glRef.current.drawScene();
+        this.store.dispatch(setRequestBuildBuffers(true))
+        this.store.dispatch(setRequestDrawScene(true))
     }
 
     /**
@@ -646,10 +647,10 @@ export class MoorhenMap implements moorhen.Map {
                 }
             })
             if(print_timing) console.log("Start buildBuffers");
-            this.glRef.current.buildBuffers();
+            this.store.dispatch(setRequestBuildBuffers(true))
             const tb = performance.now();
             if(print_timing) console.log("End buildBuffers",tb-t1);
-            this.glRef.current.drawScene();
+            this.store.dispatch(setRequestDrawScene(true))
             const ts = performance.now();
             if(print_timing) console.log("After drawScene",ts-t1);
         } catch(err) {
@@ -765,10 +766,10 @@ export class MoorhenMap implements moorhen.Map {
         }
         
         if (mapAlpha < 0.99) {
-            this.glRef.current.buildBuffers();
+            this.store.dispatch(setRequestBuildBuffers(true))
         }
 
-        this.glRef.current.drawScene();
+        this.store.dispatch(setRequestDrawScene(true))
     }
 
     /**
@@ -806,10 +807,10 @@ export class MoorhenMap implements moorhen.Map {
         })
 
         if (mapAlpha < 0.99) {
-            this.glRef.current.buildBuffers();
+            this.store.dispatch(setRequestBuildBuffers(true))
         }
 
-        this.glRef.current.drawScene();
+        this.store.dispatch(setRequestDrawScene(true))
     }
 
     /**
@@ -850,8 +851,8 @@ export class MoorhenMap implements moorhen.Map {
                 }
             }
         })
-        this.glRef.current.buildBuffers();
-        this.glRef.current.drawScene();
+        this.store.dispatch(setRequestBuildBuffers(true))
+        this.store.dispatch(setRequestDrawScene(true))
     }
 
     /**

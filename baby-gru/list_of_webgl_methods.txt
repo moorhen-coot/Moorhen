@@ -1,7 +1,6 @@
 #List of WebGL methods called outside of MGWebGL or MoorhenWebMG
 
-glRef.current.drawScene                           src/utils/MoorhenMap.ts src/utils/MoorhenKeyboardPress.ts src/utils/MoorhenMoleculeRepresentation.ts src/utils/MoorhenMolecule.ts src/utils/MoorhenScreenRecorder.ts src/components/card/MoorhenMoleculeRepresentationSettingsCard.tsx src/components/MoorhenContainer.tsx src/components/menu-item/MoorhenScenePresetMenuItem.tsx src/components/modal/MoorhenSceneSettingsModal.tsx
-glRef.current.buildBuffers                        src/utils/MoorhenMap.ts src/utils/MoorhenMoleculeRepresentation.ts src/components/snack-bar/MoorhenModelTrajectorySnackBar.tsx
+glRef.current.drawScene                           src/utils/MoorhenScreenRecorder.ts
 glRef.current.appendOtherData                     src/utils/MoorhenMap.ts src/utils/MoorhenMoleculeRepresentation.ts src/components/snack-bar/MoorhenTomogramSnackBar.tsx
 glRef.current.displayBuffers                      src/utils/MoorhenMap.ts src/utils/MoorhenMoleculeRepresentation.ts
 glRef.current.getFrontAndBackPos                  src/utils/MoorhenKeyboardPress.ts

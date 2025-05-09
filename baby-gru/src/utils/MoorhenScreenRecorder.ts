@@ -3,6 +3,7 @@ import * as quat4 from 'gl-matrix/quat';
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4.js';
 import { webGL } from "../types/mgWebGL.js";
 import { moorhen } from '../types/moorhen.js';
+import { setOrigin, setRequestDrawScene, setRequestBuildBuffers } from "../store/glRefSlice"
 
 export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
 
@@ -124,6 +125,7 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
                     this.glRef.current.origin[2] += this.glRef.current.zoom * right[2] * 24.0 * x_off + this.glRef.current.zoom * up[2] * 24.0 * y_off;
 
                     this.glRef.current.save_pixel_data = true;
+                    //FIXME Now this does not seem to lend itself obviously to using react state - the pixels are needed synchronously
                     this.glRef.current.drawScene();
                     pixels = this.glRef.current.pixel_data;
 

@@ -20,6 +20,7 @@ import { LastPageOutlined } from "@mui/icons-material";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { hideModal } from "../../store/modalsSlice";
+import { setRequestDrawScene } from "../../store/glRefSlice"
 
 const EdgeDetectPanel = (props: {}) => {
     const dispatch = useDispatch()
@@ -242,7 +243,7 @@ const ClipFogPanel = (props: {
             externalValue={zclipFront}
             setExternalValue={(newValue: number) => {
                 props.glRef.current.gl_clipPlane0[3] = newValue - props.glRef.current.fogClipOffset
-                props.glRef.current.drawScene()
+                dispatch(setRequestDrawScene(true))
                 setZclipFront(newValue)
             }} />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
@@ -251,7 +252,7 @@ const ClipFogPanel = (props: {
             externalValue={zclipBack}
             setExternalValue={(newValue: number) => {
                 props.glRef.current.gl_clipPlane1[3] = props.glRef.current.fogClipOffset + newValue
-                props.glRef.current.drawScene()
+                dispatch(setRequestDrawScene(true))
                 setZclipBack(newValue)
             }} />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
@@ -260,7 +261,7 @@ const ClipFogPanel = (props: {
             externalValue={zfogFront}
             setExternalValue={(newValue: number) => {
                 props.glRef.current.gl_fog_start = props.glRef.current.fogClipOffset - newValue
-                props.glRef.current.drawScene()
+                dispatch(setRequestDrawScene(true))
                 setZfogFront(newValue)
             }} />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
@@ -269,7 +270,7 @@ const ClipFogPanel = (props: {
             initialValue={props.glRef.current.gl_fog_end - props.glRef.current.fogClipOffset}
             setExternalValue={(newValue: number) => {
                 props.glRef.current.gl_fog_end = newValue + props.glRef.current.fogClipOffset
-                props.glRef.current.drawScene()
+                dispatch(setRequestDrawScene(true))
                 setZfogBack(newValue)
             }} />
         <InputGroup style={{ paddingLeft: '0.1rem', paddingBottom: '0.5rem' }}>
@@ -314,7 +315,7 @@ const LightingPanel = (props: {
             busyLighting.current = true
             isSetLightPosIsDirty.current = false
             props.glRef.current.setLightPosition(newLightPosition.current[0], -newLightPosition.current[1], newLightPosition.current[2])
-            props.glRef.current.drawScene()
+            dispatch(setRequestDrawScene(true))
             busyLighting.current = false
             setLightingPositionIfDirty()
         }
@@ -337,7 +338,7 @@ const LightingPanel = (props: {
             externalValue={props.glRef.current.light_colours_diffuse[0]}
             setExternalValue={(newValue: number) => {
                 props.glRef.current.light_colours_diffuse = [newValue, newValue, newValue, 1.0]
-                props.glRef.current.drawScene()
+                dispatch(setRequestDrawScene(true))
                 setDiffuse([newValue, newValue, newValue, 1.0])
             }} />
         <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
@@ -346,7 +347,7 @@ const LightingPanel = (props: {
             externalValue={props.glRef.current.light_colours_specular[0]}
             setExternalValue={(newValue: number) => {
                 props.glRef.current.light_colours_specular = [newValue, newValue, newValue, 1.0]
-                props.glRef.current.drawScene()
+                dispatch(setRequestDrawScene(true))
                 setSpecular([newValue, newValue, newValue, 1.0])
             }} />
         <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
@@ -355,7 +356,7 @@ const LightingPanel = (props: {
             externalValue={props.glRef.current.light_colours_ambient[0]}
             setExternalValue={(newValue: number) => {
                 props.glRef.current.light_colours_ambient = [newValue, newValue, newValue, 1.0]
-                props.glRef.current.drawScene()
+                dispatch(setRequestDrawScene(true))
                 setAmbient([newValue, newValue, newValue, 1.0])
             }} />
         <MoorhenSlider minVal={1.0} maxVal={600.0} logScale={false}
@@ -364,7 +365,7 @@ const LightingPanel = (props: {
             externalValue={props.glRef.current.specularPower}
             setExternalValue={(newValue: number) => {
                 props.glRef.current.specularPower = newValue
-                props.glRef.current.drawScene()
+                dispatch(setRequestDrawScene(true))
                 setSpecularPower(newValue)
             }} />
         <MoorhenLightPosition

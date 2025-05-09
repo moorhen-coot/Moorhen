@@ -11,7 +11,9 @@ import { AnyAction } from "@reduxjs/toolkit";
 import { setHoveredAtom } from "../store/hoveringStatesSlice";
 import { changeMapRadius } from "../store/mapContourSettingsSlice";
 import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
+import { setRequestDrawScene } from "../store/glRefSlice";
 import { EnqueueSnackbar, closeSnackbar } from "notistack";
+import store from '../store/MoorhenReduxStore'
 
 const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, dispatch: Dispatch<AnyAction>) => {
     molecule.setAtomsDirty(true)
@@ -242,7 +244,7 @@ export const moorhenKeyPress = (
         glRef.current.measuredAtoms = []
         glRef.current.measurePointsArray = []
         glRef.current.clearMeasureCylinderBuffers()
-        glRef.current.drawScene()
+        store.dispatch(setRequestDrawScene(true))
         molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
         showShortcutToast && enqueueSnackbar("Clear labels", { variant: "info"})
     }
@@ -303,7 +305,7 @@ export const moorhenKeyPress = (
         glRef.current.measuredAtoms = []
         glRef.current.measurePointsArray = []
         glRef.current.clearMeasureCylinderBuffers()
-        glRef.current.drawScene()
+        store.dispatch(setRequestDrawScene(true))
     }
 
     else if (action === 'increase_map_radius' || action === 'decrease_map_radius') {
@@ -336,10 +338,10 @@ export const moorhenKeyPress = (
             glRef.current.showShortCutHelp.push(`<Shift> Rotate View`)
             glRef.current.showShortCutHelp.push(`Double click go to blob`)
             glRef.current.showShortCutHelp.push(`<Ctrl><Scroll> Change active map contour lvl.`)
-            glRef.current.drawScene()
+            store.dispatch(setRequestDrawScene(true))
         } else  {
             glRef.current.showShortCutHelp = null
-            glRef.current.drawScene()
+            store.dispatch(setRequestDrawScene(true))
         }
         showShortcutToast && enqueueSnackbar(glRef.current.showShortCutHelp ? 'Show help' : 'Hide help', { variant: "info"})
         return false
@@ -381,28 +383,28 @@ export const moorhenKeyPress = (
 
     else if (action === 'decrease_front_clip') {
         glRef.current.gl_clipPlane0[3] = glRef.current.gl_clipPlane0[3] - 0.5
-        glRef.current.drawScene()
+        store.dispatch(setRequestDrawScene(true))
         showShortcutToast && enqueueSnackbar("Front clip down", { variant: "info"})
         return false
     }
 
     else if (action === 'increase_front_clip') {
         glRef.current.gl_clipPlane0[3] = glRef.current.gl_clipPlane0[3] + 0.5
-        glRef.current.drawScene()
+        store.dispatch(setRequestDrawScene(true))
         showShortcutToast && enqueueSnackbar("Front clip up", { variant: "info"})
         return false
     }
 
     else if (action === 'decrease_back_clip') {
         glRef.current.gl_clipPlane1[3] = glRef.current.gl_clipPlane1[3] - 0.5
-        glRef.current.drawScene()
+        store.dispatch(setRequestDrawScene(true))
         showShortcutToast && enqueueSnackbar("Back clip down", { variant: "info"})
         return false
     }
 
     else if (action === 'increase_back_clip') {
         glRef.current.gl_clipPlane1[3] = glRef.current.gl_clipPlane1[3] + 0.5
-        glRef.current.drawScene()
+        store.dispatch(setRequestDrawScene(true))
         showShortcutToast && enqueueSnackbar("Back clip up", { variant: "info"})
         return false
     }
