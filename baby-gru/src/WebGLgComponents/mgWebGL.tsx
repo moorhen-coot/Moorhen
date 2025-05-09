@@ -10,6 +10,8 @@ import * as mat3 from 'gl-matrix/mat3';
 //import {vec3,mat4,mat3} from 'gl-matrix/esm';
 //import {quat as quat4} from 'gl-matrix/esm';
 import  { unProject } from './GLU.js';
+import store from '../store/MoorhenReduxStore'
+import {  setOrigin } from "../store/glRefSlice"
 
 //WebGL2 shaders
 import { depth_peel_accum_vertex_shader_source as depth_peel_accum_vertex_shader_source_webgl2 } from './webgl-2/depth-peel-accum-vertex-shader.js';
@@ -2178,6 +2180,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     handleOriginUpdated(doDispatch: boolean) {
         if(doDispatch){
+            //FIXME - This might have to go ...
             const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
             document.dispatchEvent(originUpdateEvent);
         }
@@ -8817,7 +8820,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 const newOrigin = self.origin.map((coord, coordIndex) => {
                     return coord + (self.zoom * xshift[coordIndex] / 8.) - (self.zoom * yshift[coordIndex] / 8.)
                 })
-                self.setOrigin(newOrigin, false, !this.reContourMapOnlyOnMouseUp)
+                //self.setOrigin(newOrigin, false, !this.reContourMapOnlyOnMouseUp)
+                store.dispatch(setOrigin(newOrigin))
             } else {
                 const newOrigin = this.activeMolecule.displayObjectsTransformation.origin.map((coord, coordIndex) => {
                     return coord + (self.zoom * xshift[coordIndex] / 8.) - (self.zoom * yshift[coordIndex] / 8.)

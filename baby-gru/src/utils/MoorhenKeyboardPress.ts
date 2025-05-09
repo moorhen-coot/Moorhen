@@ -8,10 +8,11 @@ import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { Dispatch, createRef } from "react";
 import { AnyAction } from "@reduxjs/toolkit";
+import { useSelector } from 'react-redux';
 import { setHoveredAtom } from "../store/hoveringStatesSlice";
 import { changeMapRadius } from "../store/mapContourSettingsSlice";
 import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
-import { setRequestDrawScene } from "../store/glRefSlice";
+import { setOrigin, setRequestDrawScene } from "../store/glRefSlice";
 import { EnqueueSnackbar, closeSnackbar } from "notistack";
 import store from '../store/MoorhenReduxStore'
 
@@ -44,6 +45,8 @@ export const moorhenKeyPress = (
         hoveredAtom, commandCentre, activeMap, glRef, molecules, 
         viewOnly, videoRecorderRef, enqueueSnackbar, dispatch
     } = collectedProps;
+
+    const originState = store.getState().glRef.origin
 
     const doAtomInfo = async (): Promise<boolean> => {
         if (hoveredAtom.molecule) {
@@ -234,7 +237,7 @@ export const moorhenKeyPress = (
         .then(response => {
             let newOrigin = response.data.result.result;
             if (newOrigin.length === 3) {
-                glRef.current.setOriginAnimated([-newOrigin[0], -newOrigin[1], -newOrigin[2]])
+                dispatch(setOrigin([-newOrigin[0], -newOrigin[1], -newOrigin[2]]))
             }
         })
     }
@@ -244,7 +247,7 @@ export const moorhenKeyPress = (
         glRef.current.measuredAtoms = []
         glRef.current.measurePointsArray = []
         glRef.current.clearMeasureCylinderBuffers()
-        store.dispatch(setRequestDrawScene(true))
+        dispatch(setRequestDrawScene(true))
         molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
         showShortcutToast && enqueueSnackbar("Clear labels", { variant: "info"})
     }
@@ -255,10 +258,10 @@ export const moorhenKeyPress = (
         const theMatrix = quatToMat4(invQuat);
         const yshift = vec3Create([0, 4. / getDeviceScale(), 0]);
         vec3.transformMat4(yshift, yshift, theMatrix);
-        const x = glRef.current.origin[0] + (yshift[0] / 8. * glRef.current.zoom)
-        const y = glRef.current.origin[1] + (yshift[1] / 8. * glRef.current.zoom)
-        const z = glRef.current.origin[2] + (yshift[2] / 8. * glRef.current.zoom)
-        glRef.current.setOrigin([x, y, z], true, true)
+        const x = originState[0] + (yshift[0] / 8. * glRef.current.zoom)
+        const y = originState[1] + (yshift[1] / 8. * glRef.current.zoom)
+        const z = originState[2] + (yshift[2] / 8. * glRef.current.zoom)
+        dispatch(setOrigin([x, y, z]))
     }
 
     else if (action === 'move_down') {
@@ -267,10 +270,10 @@ export const moorhenKeyPress = (
         const theMatrix = quatToMat4(invQuat);
         const yshift = vec3Create([0, -4. / getDeviceScale(), 0]);
         vec3.transformMat4(yshift, yshift, theMatrix);
-        const x = glRef.current.origin[0] + (yshift[0] / 8. * glRef.current.zoom);
-        const y = glRef.current.origin[1] + (yshift[1] / 8. * glRef.current.zoom);
-        const z = glRef.current.origin[2] + (yshift[2] / 8. * glRef.current.zoom);
-        glRef.current.setOrigin([x, y, z], true, true)
+        const x = originState[0] + (yshift[0] / 8. * glRef.current.zoom);
+        const y = originState[1] + (yshift[1] / 8. * glRef.current.zoom);
+        const z = originState[2] + (yshift[2] / 8. * glRef.current.zoom);
+        dispatch(setOrigin([x, y, z]))
     }
 
     else if (action === 'move_left') {
@@ -279,10 +282,10 @@ export const moorhenKeyPress = (
         const theMatrix = quatToMat4(invQuat);
         const xshift = vec3Create([-4. / getDeviceScale(), 0, 0]);
         vec3.transformMat4(xshift, xshift, theMatrix);
-        const x = glRef.current.origin[0] + (xshift[0] / 8. * glRef.current.zoom)
-        const y = glRef.current.origin[1] + (xshift[1] / 8. * glRef.current.zoom)
-        const z = glRef.current.origin[2] + (xshift[2] / 8. * glRef.current.zoom)
-        glRef.current.setOrigin([x, y, z], true, true)
+        const x = originState[0] + (xshift[0] / 8. * glRef.current.zoom)
+        const y = originState[1] + (xshift[1] / 8. * glRef.current.zoom)
+        const z = originState[2] + (xshift[2] / 8. * glRef.current.zoom)
+        dispatch(setOrigin([x, y, z]))
     }
 
     else if (action === 'move_right') {
@@ -291,10 +294,10 @@ export const moorhenKeyPress = (
         const theMatrix = quatToMat4(invQuat);
         const xshift = vec3Create([4. / getDeviceScale(), 0, 0]);
         vec3.transformMat4(xshift, xshift, theMatrix);
-        const x = glRef.current.origin[0] + (xshift[0] / 8. * glRef.current.zoom)
-        const y = glRef.current.origin[1] + (xshift[1] / 8. * glRef.current.zoom)
-        const z = glRef.current.origin[2] + (xshift[2] / 8. * glRef.current.zoom)
-        glRef.current.setOrigin([x, y, z], true, true)
+        const x = originState[0] + (xshift[0] / 8. * glRef.current.zoom)
+        const y = originState[1] + (xshift[1] / 8. * glRef.current.zoom)
+        const z = originState[2] + (xshift[2] / 8. * glRef.current.zoom)
+        dispatch(setOrigin([x, y, z]))
     }
 
     else if (action === 'restore_scene') {
@@ -305,7 +308,7 @@ export const moorhenKeyPress = (
         glRef.current.measuredAtoms = []
         glRef.current.measurePointsArray = []
         glRef.current.clearMeasureCylinderBuffers()
-        store.dispatch(setRequestDrawScene(true))
+        dispatch(setRequestDrawScene(true))
     }
 
     else if (action === 'increase_map_radius' || action === 'decrease_map_radius') {
@@ -338,10 +341,10 @@ export const moorhenKeyPress = (
             glRef.current.showShortCutHelp.push(`<Shift> Rotate View`)
             glRef.current.showShortCutHelp.push(`Double click go to blob`)
             glRef.current.showShortCutHelp.push(`<Ctrl><Scroll> Change active map contour lvl.`)
-            store.dispatch(setRequestDrawScene(true))
+            dispatch(setRequestDrawScene(true))
         } else  {
             glRef.current.showShortCutHelp = null
-            store.dispatch(setRequestDrawScene(true))
+            dispatch(setRequestDrawScene(true))
         }
         showShortcutToast && enqueueSnackbar(glRef.current.showShortCutHelp ? 'Show help' : 'Hide help', { variant: "info"})
         return false
@@ -383,28 +386,28 @@ export const moorhenKeyPress = (
 
     else if (action === 'decrease_front_clip') {
         glRef.current.gl_clipPlane0[3] = glRef.current.gl_clipPlane0[3] - 0.5
-        store.dispatch(setRequestDrawScene(true))
+        dispatch(setRequestDrawScene(true))
         showShortcutToast && enqueueSnackbar("Front clip down", { variant: "info"})
         return false
     }
 
     else if (action === 'increase_front_clip') {
         glRef.current.gl_clipPlane0[3] = glRef.current.gl_clipPlane0[3] + 0.5
-        store.dispatch(setRequestDrawScene(true))
+        dispatch(setRequestDrawScene(true))
         showShortcutToast && enqueueSnackbar("Front clip up", { variant: "info"})
         return false
     }
 
     else if (action === 'decrease_back_clip') {
         glRef.current.gl_clipPlane1[3] = glRef.current.gl_clipPlane1[3] - 0.5
-        store.dispatch(setRequestDrawScene(true))
+        dispatch(setRequestDrawScene(true))
         showShortcutToast && enqueueSnackbar("Back clip down", { variant: "info"})
         return false
     }
 
     else if (action === 'increase_back_clip') {
         glRef.current.gl_clipPlane1[3] = glRef.current.gl_clipPlane1[3] + 0.5
-        store.dispatch(setRequestDrawScene(true))
+        dispatch(setRequestDrawScene(true))
         showShortcutToast && enqueueSnackbar("Back clip up", { variant: "info"})
         return false
     }

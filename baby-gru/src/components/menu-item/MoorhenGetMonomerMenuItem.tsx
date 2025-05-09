@@ -80,6 +80,8 @@ export const MoorhenGetMonomerMenuItem = (props: {
 
     const dispatch = useDispatch()
 
+    const originState = useSelector((state: moorhen.State) => state.glRef.origin)
+
     const { enqueueSnackbar } = useSnackbar()
 
     const filterOptions = useMemo(() => createFilterOptions({
@@ -121,7 +123,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
             returnType: 'status',
             command: 'get_monomer_and_position_at',
             commandArgs: [tlc, fromMolNo,
-                ...props.glRef.current.origin.map(coord => -coord)
+                ...originState.map(coord => -coord)
             ]
         }, true) as Promise<moorhen.WorkerResponse<number>>
     }, [])

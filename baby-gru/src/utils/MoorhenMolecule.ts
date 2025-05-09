@@ -20,7 +20,7 @@ import { libcootApi } from '../types/libcoot';
 import { privateer } from '../types/privateer';
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
 import { ToolkitStore } from '@reduxjs/toolkit/dist/configureStore';
-import { setRequestDrawScene } from "../store/glRefSlice"
+import { setRequestDrawScene, setOrigin } from "../store/glRefSlice"
 
 /**
  * Represents a molecule
@@ -1166,6 +1166,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         let selectionCentre = centreOnGemmiAtoms(selectionAtomsCentre)
         if (newQuat) {
+            this.store.dispatch(setOrigin(selectionCentre))
             this.glRef.current.setOriginOrientationAndZoomAnimated(selectionCentre, newQuat, zoomLevel);
         } else {
             await this.centreOn(selectionCid, true, true)
@@ -1201,14 +1202,18 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         let selectionCentre = centreOnGemmiAtoms(selectionAtoms)
         if (animate && setZoom) {
+            this.store.dispatch(setOrigin(selectionCentre))
+            //FIXME
             this.glRef.current.setOriginAndZoomAnimated(selectionCentre, zoomLevel)
         } else if (animate) {
+            this.store.dispatch(setOrigin(selectionCentre))
+            //FIXME
             this.glRef.current.setOriginAnimated(selectionCentre)
         } else if (setZoom) {
-            this.glRef.current.setOrigin(selectionCentre)
+            this.store.dispatch(setOrigin(selectionCentre))
             this.glRef.current.setZoom(zoomLevel)
         } else {
-            this.glRef.current.setOrigin(selectionCentre)
+            this.store.dispatch(setOrigin(selectionCentre))
         }
     }
 

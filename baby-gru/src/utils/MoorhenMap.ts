@@ -6,7 +6,7 @@ import pako from "pako"
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
-import { setRequestDrawScene, setRequestBuildBuffers } from "../store/glRefSlice"
+import { setOrigin, setRequestDrawScene, setRequestBuildBuffers } from "../store/glRefSlice"
 
 const _DEFAULT_CONTOUR_LEVEL = 0.8
 const _DEFAULT_RADIUS = 13
@@ -1064,7 +1064,8 @@ export class MoorhenMap implements moorhen.Map {
                 return
             }
         }
-        this.glRef.current.setOriginAnimated(this.mapCentre)
+        //this.glRef.current.setOriginAnimated(this.mapCentre)
+        this.store.dispatch(setOrigin(this.mapCentre))
     }
 
     /**

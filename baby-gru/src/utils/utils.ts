@@ -6,6 +6,7 @@ import { moorhen } from "../types/moorhen";
 import { gemmi } from "../types/gemmi";
 import { webGL } from "../types/mgWebGL";
 import { libcootApi } from "../types/libcoot";
+import store from '../store/MoorhenReduxStore'
 
 export const parseAtomInfoLabel = (atomInfo: moorhen.AtomInfo) => {
     return `/${atomInfo.mol_name}/${atomInfo.chain_id}/${atomInfo.res_no}(${atomInfo.res_name})/${atomInfo.name}${atomInfo.has_altloc ? `:${atomInfo.alt_loc}` : ""}`
@@ -13,13 +14,14 @@ export const parseAtomInfoLabel = (atomInfo: moorhen.AtomInfo) => {
 
 export const getCentreAtom = async (molecules: moorhen.Molecule[], commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>): Promise<[moorhen.Molecule, string]> => {
     const visibleMolecules: moorhen.Molecule[] = molecules.filter((molecule: moorhen.Molecule) => molecule.isVisible())
+    const originState = store.getState().glRef.origin
     if (visibleMolecules.length === 0) {
         return [null, null]
     }
     const response = await commandCentre.current.cootCommand({
         returnType: "int_string_pair",
         command: "get_active_atom",
-        commandArgs: [...glRef.current.origin.map(coord => coord * -1), visibleMolecules.map(molecule => molecule.molNo).join(':')]
+        commandArgs: [...originState.map(coord => coord * -1), visibleMolecules.map(molecule => molecule.molNo).join(':')]
     }, false) as moorhen.WorkerResponse<libcootApi.PairType<number, string>>
     const moleculeMolNo: number = response.data.result.result.first
     const residueCid: string = response.data.result.result.second
