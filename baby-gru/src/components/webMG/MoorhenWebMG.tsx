@@ -170,7 +170,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [doOutline])
 
     useEffect(() => {
-        console.log(originState)
         if(glRef !== null && typeof glRef !== 'function') {
             glRef.current.setOrigin(originState,true,true)
         }

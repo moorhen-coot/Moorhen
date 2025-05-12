@@ -505,8 +505,9 @@ export class MoorhenMap implements moorhen.Map {
      * Contour the map with parameters from the redux store
      */
     drawMapContour(): Promise<void> {
+        const originState = this.store.getState().glRef.origin
         const { mapRadius, contourLevel, mapStyle } = this.getMapContourParams()
-        return this.doCootContour(...this.glRef.current.origin.map(coord => -coord) as [number, number, number], mapRadius, contourLevel, mapStyle)
+        return this.doCootContour(...originState.map(coord => -coord) as [number, number, number], mapRadius, contourLevel, mapStyle)
     }
 
     /**
@@ -1140,11 +1141,12 @@ export class MoorhenMap implements moorhen.Map {
      * @returns {ArrayBuffer} - The contents of the gltf file (binary format)
      */
     async exportAsGltf(): Promise<ArrayBuffer> {
+        const originState = this.store.getState().glRef.origin
         const { mapRadius, contourLevel } = this.getMapContourParams()
         const result = await this.commandCentre.current.cootCommand({
             returnType: "arrayBuffer",
             command: 'shim_export_map_as_gltf',
-            commandArgs: [ this.molNo, ...this.glRef.current.origin.map(coord => -coord), mapRadius, contourLevel ],
+            commandArgs: [ this.molNo, ...originState.map(coord => -coord), mapRadius, contourLevel ],
             changesMolecules: [ ]
         }, false) as moorhen.WorkerResponse<ArrayBuffer>
         return result.data.result.result

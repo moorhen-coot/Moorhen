@@ -18,6 +18,7 @@ import {
 } from "../store/sceneSettingsSlice";
 import { moorhensession } from "../protobuf/MoorhenSession";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { setOrigin } from "../store/glRefSlice"
 
 /**
  * Represents a time capsule with session backups
@@ -321,7 +322,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         })
 
         const viewData: moorhen.viewDataSession = {
-            origin: this.glRef.current.origin,
+            origin: this.store.getState().glRef.origin,
             backgroundColor: this.glRef.current.background_colour,
             ambientLight: Array.from(this.glRef.current.light_colours_ambient) as [number, number, number, number],
             diffuseLight: Array.from(this.glRef.current.light_colours_diffuse) as [number, number, number, number],
@@ -750,7 +751,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         glRef.current.set_fog_range(sessionData.viewData.fogStart, sessionData.viewData.fogEnd, false)
         glRef.current.set_clip_range(sessionData.viewData.clipStart, sessionData.viewData.clipEnd, false)
         glRef.current.doDrawClickedAtomLines = sessionData.viewData.doDrawClickedAtomLines
-        glRef.current.setOrigin(sessionData.viewData.origin, false)
+        dispatch(setOrigin(sessionData.viewData.origin))
         glRef.current.setQuat(sessionData.viewData.quat4)
         glRef.current.specularPower = sessionData.viewData.specularPower
         batch(() => {

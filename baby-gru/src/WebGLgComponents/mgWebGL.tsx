@@ -697,8 +697,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     resize(width: number, height: number) : void {
 
+        console.trace()
         let theWidth = width;
-        let theHeight = height; //Keep it square for now
+        let theHeight = height;
 
         this.canvas.style.width = Math.floor(theWidth) + "px";
         this.canvas.style.height = Math.floor(theHeight) + "px";

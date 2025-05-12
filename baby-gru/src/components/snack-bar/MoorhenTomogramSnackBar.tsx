@@ -7,6 +7,7 @@ import { Stack } from "react-bootstrap";
 import { IconButton, LinearProgress, Slider } from "@mui/material";
 import { KeyboardArrowLeftOutlined, KeyboardArrowRightOutlined, KeyboardDoubleArrowLeftOutlined, KeyboardDoubleArrowRightOutlined } from "@mui/icons-material";
 import { setIsShowingTomograms } from "../../store/generalStatesSlice";
+import { setOrigin } from "../../store/glRefSlice"
 
 export const MoorhenTomogramSnackBar = forwardRef<
     HTMLDivElement,
@@ -113,7 +114,7 @@ export const MoorhenTomogramSnackBar = forwardRef<
         const obj = props.glRef.current.appendOtherData(frameData, true)
         const shape = obj[0].texturedShapes
         
-        props.glRef.current.setOrigin(shape.getOrigin())
+        dispatch(setOrigin(shape.getOrigin()))
         props.glRef.current.setZoom(300, true)
     }, [props.mapMolNo])
 

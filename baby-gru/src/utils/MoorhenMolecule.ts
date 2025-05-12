@@ -371,7 +371,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if (!this.symmetryOn) {
             this.symmetryMatrices = []
         } else {
-            const selectionCentre: number[] = this.glRef.current.origin.map(coord => -coord)
+            const originState = this.store.getState().glRef.origin
+            const selectionCentre: number[] = originState.map(coord => -coord)
             const response = await this.commandCentre.current.cootCommand({
                 returnType: "symmetry",
                 command: 'get_symmetry_with_matrices',
@@ -1545,6 +1546,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             }
             const chains = model.chains
             const chainsSize = chains.size()
+            const originState = this.store.getState().glRef.origin
             for (let chainIndex = 0; chainIndex < chainsSize; chainIndex++) {
                 const chain = chains.get(chainIndex)
                 if (!selection.matches_chain(chain)) {
@@ -1577,9 +1579,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
                         const atomElementString: string = window.CCP4Module.getElementNameAsString(atomElement)
                         const atomName = atomElementString.length === 2 ? (atom.name).padEnd(4, " ") : (" " + atom.name).padEnd(4, " ")
                         const diff = this.displayObjectsTransformation.centre
-                        let x = gemmiAtomPos.x + this.glRef.current.origin[0] - diff[0]
-                        let y = gemmiAtomPos.y + this.glRef.current.origin[1] - diff[1]
-                        let z = gemmiAtomPos.z + this.glRef.current.origin[2] - diff[2]
+                        let x = gemmiAtomPos.x + originState[0] - diff[0]
+                        let y = gemmiAtomPos.y + originState[1] - diff[1]
+                        let z = gemmiAtomPos.z + originState[2] - diff[2]
                         const origin = this.displayObjectsTransformation.origin
                         const quat = this.displayObjectsTransformation.quat
                         if (quat) {
@@ -1602,9 +1604,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
                                 tempFactor: atom.b_iso,
                                 charge: atom.charge,
                                 occupancy: atom.occ,
-                                x: transPos[0] - this.glRef.current.origin[0] + diff[0],
-                                y: transPos[1] - this.glRef.current.origin[1] + diff[1],
-                                z: transPos[2] - this.glRef.current.origin[2] + diff[2],
+                                x: transPos[0] - originState[0] + diff[0],
+                                y: transPos[1] - originState[1] + diff[1],
+                                z: transPos[2] - originState[2] + diff[2],
                                 serial: atomSerial,
                                 has_altloc: atomHasAltLoc,
                                 alt_loc: atomHasAltLoc ? String.fromCharCode(atomAltLoc) : '',
@@ -1724,12 +1726,13 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {number} [fromMolNo=-999999] - Indicate the molecule number to which the ligand dictionary was associated (use -999999 for "any")
      */
     async addLigandOfType(resType: string, fromMolNo: number = -999999): Promise<moorhen.WorkerResponse> {
+        const originState = this.store.getState().glRef.origin
         const getMonomer = () => {
             return this.commandCentre.current.cootCommand({
                 returnType: 'status',
                 command: 'get_monomer_and_position_at',
                 commandArgs: [resType.toUpperCase(), fromMolNo,
-                ...this.glRef.current.origin.map(coord => -coord)
+                ...originState.map(coord => -coord)
                 ]
             }, true) as Promise<moorhen.WorkerResponse<number>>
         }
@@ -2224,13 +2227,14 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {Promise<moorhen.Molecule[]>} - A list of fitted ligands
      */
     async fitLigand(mapMolNo: number, ligandMolNo: number, fitRightHere: boolean = true, redraw: boolean = false, useConformers: boolean = false, conformerCount: number = 0): Promise<moorhen.Molecule[]> {
+        const originState = this.store.getState().glRef.origin
         let newMolecules: moorhen.Molecule[] = []
         const command = fitRightHere ? 'fit_ligand_right_here' : 'fit_ligand'
         const returnType = fitRightHere ? 'int_array' : 'fit_ligand_info_array'
 
         const commandArgs = fitRightHere ? [
             this.molNo, mapMolNo, ligandMolNo,
-            ...this.glRef.current.origin.map(coord => -coord),
+            ...originState.map(coord => -coord),
             1., useConformers, conformerCount
         ] : [
             this.molNo, mapMolNo, ligandMolNo,
