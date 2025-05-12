@@ -406,7 +406,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                  if ("labels" in buffer) {
                     this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels, buffer.uuid)
                  }
-                 this.glRef.current.labelsTextCanvasTexture.recreateBigTextureBuffers()
             })
             this.parentMolecule.store.dispatch(setRequestDrawScene(true))
         } catch (err) {

@@ -97,6 +97,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const requestDrawScene = useSelector((state: moorhen.State) => state.glRef.requestDrawScene)
     const requestBuildBuffers = useSelector((state: moorhen.State) => state.glRef.requestBuildBuffers)
     const originState = useSelector((state: moorhen.State) => state.glRef.origin)
+    const activeMolecule = useSelector((state: moorhen.State) => state.glRef.activeMolecule)
 
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
@@ -368,6 +369,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             console.log(width,height)
         }
     }, [])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setActiveMolecule(activeMolecule)
+            glRef.current.drawScene()
+        }
+    }, [activeMolecule])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function') {

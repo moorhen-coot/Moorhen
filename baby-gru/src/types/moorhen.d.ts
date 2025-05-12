@@ -1143,6 +1143,7 @@ export namespace moorhen {
             requestDrawScene: boolean;
             requestBuildBuffers: boolean;
             isWebGL2: boolean;
+            activeMolecule: Molecule;
         };
     }
 

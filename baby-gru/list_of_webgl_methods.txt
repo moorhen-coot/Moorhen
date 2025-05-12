@@ -16,7 +16,6 @@ glRef.current.setZoom                             src/utils/MoorhenKeyboardPress
 glRef.current.labelsTextCanvasTexture             src/utils/MoorhenMoleculeRepresentation.ts
 
 glRef.current.initTextureFramebuffer              src/utils/MoorhenScreenRecorder.ts
-glRef.current.setActiveMolecule                   src/components/snack-bar/MoorhenAcceptRejectRotateTranslateSnackBar.tsx
 glRef.current.setAmbientLightNoUpdate             src/utils/MoorhenTimeCapsule.ts
 glRef.current.setDiffuseLightNoUpdate             src/utils/MoorhenTimeCapsule.ts
 glRef.current.setSpecularLightNoUpdate            src/utils/MoorhenTimeCapsule.ts
@@ -34,7 +33,6 @@ glRef.current.light_colours_ambient               src/utils/MoorhenTimeCapsule.t
 glRef.current.light_colours_specular              src/utils/MoorhenTimeCapsule.ts src/components/modal/MoorhenSceneSettingsModal.tsx
 glRef.current.light_positions                     src/utils/MoorhenTimeCapsule.ts src/components/modal/MoorhenSceneSettingsModal.tsx
 
-glRef.current.activeMolecule                      src/components/snack-bar/MoorhenAcceptRejectRotateTranslateSnackBar.tsx
 glRef.current.background_colour                   src/utils/MoorhenTimeCapsule.ts src/utils/MoorhenMolecule.ts src/components/menu-item/MoorhenGetMonomerMenuItem.tsx
 glRef.current.blurDepth                           src/utils/MoorhenTimeCapsule.ts
 glRef.current.blurSize                            src/utils/MoorhenTimeCapsule.ts
