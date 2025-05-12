@@ -365,8 +365,16 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             setClipFogByZoom()
             glRef.current.resize(width, height)
             glRef.current.drawScene()
+            console.log(width,height)
         }
     }, [])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function') {
+            glRef.current.resize(width, height)
+            glRef.current.drawScene()
+        }
+    }, [width,height])
 
     useEffect(() => {
         document.addEventListener("goToBlobDoubleClick", handleGoToBlobDoubleClick);

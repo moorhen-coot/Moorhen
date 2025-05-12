@@ -1142,6 +1142,7 @@ export namespace moorhen {
             origin: [number,number,number];
             requestDrawScene: boolean;
             requestBuildBuffers: boolean;
+            isWebGL2: boolean;
         };
     }
 

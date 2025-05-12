@@ -11,7 +11,7 @@ import * as mat3 from 'gl-matrix/mat3';
 //import {quat as quat4} from 'gl-matrix/esm';
 import  { unProject } from './GLU.js';
 import store from '../store/MoorhenReduxStore'
-import {  setOrigin } from "../store/glRefSlice"
+import { setOrigin, setIsWebGL2 } from "../store/glRefSlice"
 
 //WebGL2 shaders
 import { depth_peel_accum_vertex_shader_source as depth_peel_accum_vertex_shader_source_webgl2 } from './webgl-2/depth-peel-accum-vertex-shader.js';
@@ -697,7 +697,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     resize(width: number, height: number) : void {
 
-        console.trace()
         let theWidth = width;
         let theHeight = height;
 
@@ -1282,6 +1281,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const glc = initGL(this.canvas);
         this.gl = glc.gl;
         this.WEBGL2 = glc.WEBGL2;
+        store.dispatch(setIsWebGL2(this.WEBGL2))
         this.currentViewport = [0,0, this.gl.viewportWidth, this.gl.viewportWidth];
         this.currentAnaglyphColor = [1.0,0.0,0.0,1.0]
         if(this.WEBGL2){

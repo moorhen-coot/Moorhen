@@ -3,7 +3,8 @@ import { createSlice } from '@reduxjs/toolkit'
 const initialState = {
     origin: [0,0,0],
     requestDrawScene: false,
-    requestBuildBuffers: false
+    requestBuildBuffers: false,
+    isWebGL2: false
 }
 
 export const glRefSlice = createSlice({
@@ -19,10 +20,13 @@ export const glRefSlice = createSlice({
     setRequestBuildBuffers: (state, action: {payload: boolean, type: string}) => {
         return { ...state, requestBuildBuffers: action.payload }
     },
+    setIsWebGL2: (state, action: {payload: boolean, type: string}) => {
+        return { ...state, isWebGL2: action.payload }
+    },
 }})
 
 export const {
-    setOrigin, setRequestDrawScene, setRequestBuildBuffers
+    setOrigin, setRequestDrawScene, setRequestBuildBuffers, setIsWebGL2
 } = glRefSlice.actions
 
 export default glRefSlice.reducer

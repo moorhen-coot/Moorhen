@@ -469,7 +469,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     }, [hoveredAtom])
 
     useEffect(() => {
-        glRef.current.resize(width, height)
         dispatch(setRequestDrawScene(true))
     }, [width, height])
 

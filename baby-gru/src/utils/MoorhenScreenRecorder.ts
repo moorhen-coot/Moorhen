@@ -3,6 +3,7 @@ import * as quat4 from 'gl-matrix/quat';
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4.js';
 import { webGL } from "../types/mgWebGL.js";
 import { moorhen } from '../types/moorhen.js';
+import store from '../store/MoorhenReduxStore'
 import { setOrigin, setRequestDrawScene, setRequestBuildBuffers } from "../store/glRefSlice"
 
 export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
@@ -99,7 +100,9 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
         let pixels: Uint8Array;
         let ctx: CanvasRenderingContext2D;
 
-        if(!this.glRef.current.WEBGL2){
+        const isWebGL2 = store.getState().glRef.isWebGL2
+
+        if(!isWebGL2){
             const mag = 1; //FIXME This doesn't work for mag>1
 
             const ncells_x = mag;
