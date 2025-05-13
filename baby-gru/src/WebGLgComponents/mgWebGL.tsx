@@ -1093,6 +1093,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
+    setFogClipOffset(fogClipOffset: number) {
+        this.fogClipOffset = fogClipOffset
+    }
+
     componentDidMount() {
         this.canvas = this.canvasRef.current;
         const self = this;

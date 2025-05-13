@@ -106,6 +106,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const specularPower = useSelector((state: moorhen.State) => state.glRef.specularPower)
     const zoom = useSelector((state: moorhen.State) => state.glRef.zoom)
     const quat = useSelector((state: moorhen.State) => state.glRef.quat)
+    const fogClipOffset = useSelector((state: moorhen.State) => state.glRef.fogClipOffset)
 
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
@@ -491,6 +492,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [clipCap, glRef])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.setFogClipOffset(fogClipOffset)
+            glRef.current.drawScene()
+        }
+    }, [fogClipOffset, glRef])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {

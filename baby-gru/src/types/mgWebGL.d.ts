@@ -440,6 +440,7 @@ interface MGWebGLPropsInterface {
         stopSpinTest(): void;
         doSpinTestFrame(): void;
         componentDidUpdate(oldProps:any) : void;
+        setFogClipOffset(fogClipOffset: number) : void;
         componentDidMount() : void;
         setSpinTestState(doSpin:boolean): void;
         setDrawEnvBOcc(drawEnvBOcc:boolean): void;

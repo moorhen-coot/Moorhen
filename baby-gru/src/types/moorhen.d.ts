@@ -1151,6 +1151,7 @@ export namespace moorhen {
             specularPower: number,
             zoom: number,
             quat: any[],
+            fogClipOffset: number,
         };
     }
 

@@ -329,6 +329,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         const specularPower = this.store.getState().glRef.specularPower
         const zoom = this.store.getState().glRef.zoom
         const quat = this.store.getState().glRef.quat
+        const fogClipOffset = this.store.getState().glRef.fogClipOffset
 
         const doShadow = this.store.getState().sceneSettings.doShadow
         const doSSAO = this.store.getState().sceneSettings.doSSAO
@@ -357,8 +358,8 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             fogEnd: this.glRef.current.gl_fog_end,
             zoom: zoom,
             doDrawClickedAtomLines: this.glRef.current.doDrawClickedAtomLines,
-            clipStart: (this.glRef.current.gl_clipPlane0[3] + this.glRef.current.fogClipOffset) * -1,
-            clipEnd: this.glRef.current.gl_clipPlane1[3] - this.glRef.current.fogClipOffset,
+            clipStart: (this.glRef.current.gl_clipPlane0[3] + fogClipOffset) * -1,
+            clipEnd: this.glRef.current.gl_clipPlane1[3] - fogClipOffset,
             quat4: [quat[0], quat[1], quat[2], quat[3]],
             doPerspectiveProjection: doPerspectiveProjection,
             edgeDetection: {

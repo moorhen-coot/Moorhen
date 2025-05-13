@@ -2,7 +2,6 @@
 
 glRef.current.set_clip_range                      src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx
 glRef.current.set_fog_range                       src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx
-glRef.current.fogClipOffset                       src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx src/components/modal/MoorhenSceneSettingsModal.tsx
 glRef.current.gl_fog_end                          src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx src/components/modal/MoorhenSceneSettingsModal.tsx
 glRef.current.gl_fog_start                        src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx src/components/modal/MoorhenSceneSettingsModal.tsx
 glRef.current.gl_clipPlane0                       src/utils/MoorhenKeyboardPress.ts src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx src/components/modal/MoorhenSceneSettingsModal.tsx

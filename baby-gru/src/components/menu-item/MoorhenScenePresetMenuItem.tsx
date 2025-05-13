@@ -15,6 +15,8 @@ export const MoorhenScenePresetMenuItem = (props: {
     const dispatch = useDispatch()
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const zoom = useSelector((state: moorhen.State) => state.glRef.zoom)
+    const fogClipOffset = useSelector((state: moorhen.State) => state.glRef.fogClipOffset)
+
     const [presetValue, setPresetValue] = useState<string | null>(null)
 
     useEffect(() => {
@@ -25,7 +27,7 @@ export const MoorhenScenePresetMenuItem = (props: {
                 const fieldDepthFront: number = 8;
                 const fieldDepthBack: number = 21;
                 if (props.glRef !== null && typeof props.glRef !== 'function') { 
-                    props.glRef.current.set_fog_range(props.glRef.current.fogClipOffset - (zoom * fieldDepthFront), props.glRef.current.fogClipOffset + (zoom * fieldDepthBack))
+                    props.glRef.current.set_fog_range(fogClipOffset - (zoom * fieldDepthFront), fogClipOffset + (zoom * fieldDepthBack))
                     props.glRef.current.set_clip_range(0 - (zoom * fieldDepthFront), 0 + (zoom * fieldDepthBack))
                     props.glRef.current.doDrawClickedAtomLines = false    
                 }
@@ -34,10 +36,10 @@ export const MoorhenScenePresetMenuItem = (props: {
             
             case "figure-making":
                 dispatch( setResetClippingFogging(false) )
-                props.glRef.current.gl_clipPlane0[3] = 40 - props.glRef.current.fogClipOffset
-                props.glRef.current.gl_clipPlane1[3] = props.glRef.current.fogClipOffset + 40
-                props.glRef.current.gl_fog_start = props.glRef.current.fogClipOffset - 2
-                props.glRef.current.gl_fog_end = 120 + props.glRef.current.fogClipOffset
+                props.glRef.current.gl_clipPlane0[3] = 40 - fogClipOffset
+                props.glRef.current.gl_clipPlane1[3] = fogClipOffset + 40
+                props.glRef.current.gl_fog_start = fogClipOffset - 2
+                props.glRef.current.gl_fog_end = 120 + fogClipOffset
                 dispatch(setRequestDrawScene(true))
                 break
             
