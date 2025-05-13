@@ -6,7 +6,12 @@ const initialState = {
     requestDrawScene: false,
     requestBuildBuffers: false,
     isWebGL2: false,
-    activeMolecule: null
+    activeMolecule: null,
+    lightPosition: [10.0, 10.0, 60.0, 1.0],
+    ambient: [0.2, 0.2, 0.2, 1.0],
+    specular: [0.6, 0.6, 0.6, 1.0],
+    diffuse: [1.0, 1.0, 1.0, 1.0],
+    specularPower: 64.0
 }
 
 export const glRefSlice = createSlice({
@@ -28,10 +33,26 @@ export const glRefSlice = createSlice({
     setActiveMolecule: (state, action: {payload: moorhen.Molecule, type: string}) => {
         return { ...state, activeMolecule: action.payload }
     },
+    setLightPosition: (state, action: {payload: [number,number,number,number], type: string}) => {
+        return { ...state, lightPosition: action.payload }
+    },
+    setAmbient: (state, action: {payload: [number,number,number,number], type: string}) => {
+        return { ...state, ambient: action.payload }
+    },
+    setSpecular: (state, action: {payload: [number,number,number,number], type: string}) => {
+        return { ...state, specular: action.payload }
+    },
+    setDiffuse: (state, action: {payload: [number,number,number,number], type: string}) => {
+        return { ...state, diffuse: action.payload }
+    },
+    setSpecularPower: (state, action: {payload: number, type: string}) => {
+        return { ...state, specularPower: action.payload }
+    },
 }})
 
-export const {
-    setOrigin, setRequestDrawScene, setRequestBuildBuffers, setIsWebGL2, setActiveMolecule
+export const { 
+    setOrigin, setRequestDrawScene, setRequestBuildBuffers, setIsWebGL2, setActiveMolecule,
+    setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower
 } = glRefSlice.actions
 
 export default glRefSlice.reducer

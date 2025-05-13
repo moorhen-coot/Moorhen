@@ -20,7 +20,7 @@ import { LastPageOutlined } from "@mui/icons-material";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { hideModal } from "../../store/modalsSlice";
-import { setRequestDrawScene } from "../../store/glRefSlice"
+import { setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower } from "../../store/glRefSlice"
 
 const EdgeDetectPanel = (props: {}) => {
     const dispatch = useDispatch()
@@ -243,7 +243,6 @@ const ClipFogPanel = (props: {
             externalValue={zclipFront}
             setExternalValue={(newValue: number) => {
                 props.glRef.current.gl_clipPlane0[3] = newValue - props.glRef.current.fogClipOffset
-                dispatch(setRequestDrawScene(true))
                 setZclipFront(newValue)
             }} />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
@@ -252,7 +251,6 @@ const ClipFogPanel = (props: {
             externalValue={zclipBack}
             setExternalValue={(newValue: number) => {
                 props.glRef.current.gl_clipPlane1[3] = props.glRef.current.fogClipOffset + newValue
-                dispatch(setRequestDrawScene(true))
                 setZclipBack(newValue)
             }} />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
@@ -261,7 +259,6 @@ const ClipFogPanel = (props: {
             externalValue={zfogFront}
             setExternalValue={(newValue: number) => {
                 props.glRef.current.gl_fog_start = props.glRef.current.fogClipOffset - newValue
-                dispatch(setRequestDrawScene(true))
                 setZfogFront(newValue)
             }} />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
@@ -270,7 +267,6 @@ const ClipFogPanel = (props: {
             initialValue={props.glRef.current.gl_fog_end - props.glRef.current.fogClipOffset}
             setExternalValue={(newValue: number) => {
                 props.glRef.current.gl_fog_end = newValue + props.glRef.current.fogClipOffset
-                dispatch(setRequestDrawScene(true))
                 setZfogBack(newValue)
             }} />
         <InputGroup style={{ paddingLeft: '0.1rem', paddingBottom: '0.5rem' }}>
@@ -301,82 +297,50 @@ const LightingPanel = (props: {
     const busyLighting = useRef<boolean>(false)
     const newLightPosition = useRef<[number, number, number]>()
     const isSetLightPosIsDirty = useRef<boolean>(false)
-    const [diffuse, setDiffuse] = useState<[number, number, number, number]>(props.glRef.current.light_colours_diffuse)
-    const [specular, setSpecular] = useState<[number, number, number, number]>(props.glRef.current.light_colours_specular)
-    const [ambient, setAmbient] = useState<[number, number, number, number]>(props.glRef.current.light_colours_ambient)
-    const [specularPower, setSpecularPower] = useState<number>(props.glRef.current.specularPower)
-    const [position, setPosition] = useState<[number, number, number]>([props.glRef.current.light_positions[0], props.glRef.current.light_positions[1], props.glRef.current.light_positions[2]])
+
+    const lightPosition = useSelector((state: moorhen.State) => state.glRef.lightPosition)
+    const ambient = useSelector((state: moorhen.State) => state.glRef.ambient)
+    const specular = useSelector((state: moorhen.State) => state.glRef.specular)
+    const diffuse = useSelector((state: moorhen.State) => state.glRef.diffuse)
+    const specularPower = useSelector((state: moorhen.State) => state.glRef.specularPower)
+
     const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
 
     const dispatch = useDispatch()
 
-    const setLightingPositionIfDirty = () => {
-        if (isSetLightPosIsDirty.current) {
-            busyLighting.current = true
-            isSetLightPosIsDirty.current = false
-            props.glRef.current.setLightPosition(newLightPosition.current[0], -newLightPosition.current[1], newLightPosition.current[2])
-            dispatch(setRequestDrawScene(true))
-            busyLighting.current = false
-            setLightingPositionIfDirty()
-        }
-    }
-
-    useEffect(() => {
-        if (props.glRef.current && props.glRef.current.light_colours_diffuse) {
-            setDiffuse(props.glRef.current.light_colours_diffuse)
-            setSpecular(props.glRef.current.light_colours_specular)
-            setAmbient(props.glRef.current.light_colours_ambient)
-            setSpecularPower(props.glRef.current.specularPower)
-            setPosition([props.glRef.current.light_positions[0], props.glRef.current.light_positions[1], props.glRef.current.light_positions[2]])
-        }
-    }, [props.glRef.current.specularPower, props.glRef.current.light_positions, props.glRef.current.light_colours_diffuse, props.glRef.current.light_colours_specular, props.glRef.current.light_colours_ambient])
-
     return <div className="scene-settings-panel">
         <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
             sliderTitle="Diffuse"
-            initialValue={props.glRef.current.light_colours_diffuse[0]}
-            externalValue={props.glRef.current.light_colours_diffuse[0]}
+            initialValue={diffuse[0]}
+            externalValue={diffuse[0]}
             setExternalValue={(newValue: number) => {
-                props.glRef.current.light_colours_diffuse = [newValue, newValue, newValue, 1.0]
-                dispatch(setRequestDrawScene(true))
-                setDiffuse([newValue, newValue, newValue, 1.0])
+                dispatch(setDiffuse([newValue, newValue, newValue, 1.0]))
             }} />
         <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
             sliderTitle="Specular"
-            initialValue={props.glRef.current.light_colours_specular[0]}
-            externalValue={props.glRef.current.light_colours_specular[0]}
+            initialValue={specular[0]}
+            externalValue={specular[0]}
             setExternalValue={(newValue: number) => {
-                props.glRef.current.light_colours_specular = [newValue, newValue, newValue, 1.0]
-                dispatch(setRequestDrawScene(true))
-                setSpecular([newValue, newValue, newValue, 1.0])
+                dispatch(setSpecular([newValue, newValue, newValue, 1.0]))
             }} />
         <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
             sliderTitle="Ambient"
-            initialValue={props.glRef.current.light_colours_ambient[0]}
-            externalValue={props.glRef.current.light_colours_ambient[0]}
+            initialValue={ambient[0]}
+            externalValue={ambient[0]}
             setExternalValue={(newValue: number) => {
-                props.glRef.current.light_colours_ambient = [newValue, newValue, newValue, 1.0]
-                dispatch(setRequestDrawScene(true))
-                setAmbient([newValue, newValue, newValue, 1.0])
+                dispatch(setAmbient([newValue, newValue, newValue, 1.0]))
             }} />
         <MoorhenSlider minVal={1.0} maxVal={600.0} logScale={false}
             sliderTitle="Specular power"
-            initialValue={props.glRef.current.specularPower}
-            externalValue={props.glRef.current.specularPower}
+            initialValue={specularPower}
+            externalValue={specularPower}
             setExternalValue={(newValue: number) => {
-                props.glRef.current.specularPower = newValue
-                dispatch(setRequestDrawScene(true))
-                setSpecularPower(newValue)
+                dispatch(setSpecularPower(newValue))
             }} />
         <MoorhenLightPosition
-            initialValue={props.glRef.current.light_positions}
-            externalValue={props.glRef.current.light_positions}
+            initialValue={lightPosition}
             setExternalValue={(newValues: [number, number, number]) => {
-                newLightPosition.current = newValues
-                isSetLightPosIsDirty.current = true
-                if (!busyLighting.current) {
-                    setLightingPositionIfDirty()
-                }
+                dispatch(setLightPosition([newValues[0], -newValues[1], newValues[2],1.0]))
             }}
         />
         <InputGroup className='moorhen-input-group-check'>

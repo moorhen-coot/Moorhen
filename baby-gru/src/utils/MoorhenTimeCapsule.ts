@@ -18,7 +18,7 @@ import {
 } from "../store/sceneSettingsSlice";
 import { moorhensession } from "../protobuf/MoorhenSession";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
-import { setOrigin } from "../store/glRefSlice"
+import { setOrigin, setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower } from "../store/glRefSlice"
 
 /**
  * Represents a time capsule with session backups
@@ -321,14 +321,20 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             }
         })
 
+        const lightPosition = this.store.getState().glRef.lightPosition
+        const ambient = this.store.getState().glRef.ambient
+        const specular = this.store.getState().glRef.specular
+        const diffuse = this.store.getState().glRef.diffuse
+        const specularPower = this.store.getState().glRef.specularPower
+
         const viewData: moorhen.viewDataSession = {
             origin: this.store.getState().glRef.origin,
             backgroundColor: this.glRef.current.background_colour,
-            ambientLight: Array.from(this.glRef.current.light_colours_ambient) as [number, number, number, number],
-            diffuseLight: Array.from(this.glRef.current.light_colours_diffuse) as [number, number, number, number],
-            lightPosition: Array.from(this.glRef.current.light_positions) as [number, number, number, number],
-            specularLight: Array.from(this.glRef.current.light_colours_specular) as [number, number, number, number],
-            specularPower: this.glRef.current.specularPower,
+            ambientLight: ambient,
+            diffuseLight: diffuse,
+            lightPosition: lightPosition,
+            specularLight: specular,
+            specularPower: specularPower,
             fogStart: this.glRef.current.gl_fog_start,
             fogEnd: this.glRef.current.gl_fog_end,
             zoom: this.glRef.current.zoom,
@@ -743,17 +749,17 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         }
 
         // Set camera details
-        glRef.current.setAmbientLightNoUpdate(...Object.values(sessionData.viewData.ambientLight) as [number, number, number])
-        glRef.current.setSpecularLightNoUpdate(...Object.values(sessionData.viewData.specularLight) as [number, number, number])
-        glRef.current.setDiffuseLightNoUpdate(...Object.values(sessionData.viewData.diffuseLight) as [number, number, number])
-        glRef.current.setLightPositionNoUpdate(...Object.values(sessionData.viewData.lightPosition) as [number, number, number])
+        dispatch(setOrigin(sessionData.viewData.origin))
+        dispatch(setAmbient(sessionData.viewData.ambientLight))
+        dispatch(setSpecular(sessionData.viewData.specularLight))
+        dispatch(setDiffuse(sessionData.viewData.diffuseLight))
+        dispatch(setLightPosition(sessionData.viewData.lightPosition))
+        dispatch(setSpecularPower(sessionData.viewData.specularPower))
         glRef.current.setZoom(sessionData.viewData.zoom, false)
         glRef.current.set_fog_range(sessionData.viewData.fogStart, sessionData.viewData.fogEnd, false)
         glRef.current.set_clip_range(sessionData.viewData.clipStart, sessionData.viewData.clipEnd, false)
         glRef.current.doDrawClickedAtomLines = sessionData.viewData.doDrawClickedAtomLines
-        dispatch(setOrigin(sessionData.viewData.origin))
         glRef.current.setQuat(sessionData.viewData.quat4)
-        glRef.current.specularPower = sessionData.viewData.specularPower
         batch(() => {
             dispatch(setBackgroundColor(sessionData.viewData.backgroundColor))
             dispatch(setEdgeDetectDepthScale(sessionData.viewData.edgeDetection.depthScale))

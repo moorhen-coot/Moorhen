@@ -57,7 +57,7 @@ export const MoorhenLightPosition = (props) => {
     useEffect(() => {
         const ctx = canvasRef.current.getContext('2d');
         draw(ctx);
-    }, [draw])
+    }, [])
 
     return (
             <canvas

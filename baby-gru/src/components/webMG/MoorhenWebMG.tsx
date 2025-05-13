@@ -99,6 +99,12 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const originState = useSelector((state: moorhen.State) => state.glRef.origin)
     const activeMolecule = useSelector((state: moorhen.State) => state.glRef.activeMolecule)
 
+    const lightPosition = useSelector((state: moorhen.State) => state.glRef.lightPosition)
+    const ambient = useSelector((state: moorhen.State) => state.glRef.ambient)
+    const specular = useSelector((state: moorhen.State) => state.glRef.specular)
+    const diffuse = useSelector((state: moorhen.State) => state.glRef.diffuse)
+    const specularPower = useSelector((state: moorhen.State) => state.glRef.specularPower)
+
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
         const fieldDepthBack: number = 21;
@@ -177,6 +183,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [originState])
 
     useEffect(() => {
+        console.log("requestDrawScene")
         if(glRef !== null && typeof glRef !== 'function') {
             glRef.current.drawScene()
         }
@@ -359,16 +366,51 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setAmbientLightNoUpdate(0.2, 0.2, 0.2)
-            glRef.current.setSpecularLightNoUpdate(0.6, 0.6, 0.6)
-            glRef.current.setDiffuseLight(1., 1., 1.)
-            glRef.current.setLightPositionNoUpdate(10., 10., 60.)
+            glRef.current.setAmbientLightNoUpdate(ambient[0],ambient[1],ambient[2])
+            glRef.current.setSpecularLightNoUpdate(specular[0],specular[1],specular[2])
+            glRef.current.setDiffuseLightNoUpdate(diffuse[0],diffuse[1],diffuse[2])
+            glRef.current.setLightPositionNoUpdate(lightPosition[0],lightPosition[1],lightPosition[2])
+            glRef.current.setSpecularPowerNoUpdate(specularPower)
             setClipFogByZoom()
             glRef.current.resize(width, height)
             glRef.current.drawScene()
-            console.log(width,height)
         }
     }, [])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setLightPositionNoUpdate(lightPosition[0],lightPosition[1],lightPosition[2])
+            glRef.current.drawScene()
+        }
+    }, [lightPosition])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setAmbientLightNoUpdate(ambient[0],ambient[1],ambient[2])
+            glRef.current.drawScene()
+        }
+    }, [ambient])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setSpecularLightNoUpdate(specular[0],specular[1],specular[2])
+            glRef.current.drawScene()
+        }
+    }, [specular])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setDiffuseLightNoUpdate(diffuse[0],diffuse[1],diffuse[2])
+            glRef.current.drawScene()
+        }
+    }, [diffuse])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setSpecularPowerNoUpdate(specularPower)
+            glRef.current.drawScene()
+        }
+    }, [specularPower])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function') {
