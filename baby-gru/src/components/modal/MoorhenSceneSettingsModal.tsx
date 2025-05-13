@@ -23,12 +23,15 @@ import { hideModal } from "../../store/modalsSlice";
 import { setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower } from "../../store/glRefSlice"
 
 const EdgeDetectPanel = (props: {}) => {
+
     const dispatch = useDispatch()
+
     const doEdgeDetect = useSelector((state: moorhen.State) => state.sceneSettings.doEdgeDetect)
     const edgeDetectDepthThreshold = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectDepthThreshold)
     const edgeDetectNormalThreshold = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectNormalThreshold)
     const edgeDetectDepthScale = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectDepthScale)
     const edgeDetectNormalScale = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectNormalScale)
+
     return <div className="scene-settings-panel-flex-between">
         <InputGroup className='moorhen-input-group-check'>
             <Form.Check 
@@ -46,8 +49,8 @@ const EdgeDetectPanel = (props: {}) => {
                 allowFloats={false}
                 logScale={false}
                 sliderTitle="Depth scale"
-                initialValue={edgeDetectDepthScale}
-                externalValue={edgeDetectDepthScale}
+                initialValue={edgeDetectDepthScale==null ? 2.0 : edgeDetectDepthScale}
+                externalValue={edgeDetectDepthScale==null ? 2.0 : edgeDetectDepthScale}
                 setExternalValue={(val: number) => dispatch(setEdgeDetectDepthScale(val))}/>
         <MoorhenSlider
                 isDisabled={!doEdgeDetect}
@@ -56,8 +59,8 @@ const EdgeDetectPanel = (props: {}) => {
                 allowFloats={false}
                 logScale={false}
                 sliderTitle="Normal scale"
-                initialValue={edgeDetectNormalScale}
-                externalValue={edgeDetectNormalScale}
+                initialValue={edgeDetectNormalScale==null ? 1.0 : edgeDetectNormalScale}
+                externalValue={edgeDetectNormalScale==null ? 1.0 : edgeDetectNormalScale}
                 setExternalValue={(val: number) => dispatch(setEdgeDetectNormalScale(val))}/>
         <MoorhenSlider
                 isDisabled={!doEdgeDetect}
@@ -65,8 +68,8 @@ const EdgeDetectPanel = (props: {}) => {
                 maxVal={4.0}
                 logScale={false}
                 sliderTitle="Depth threshold"
-                initialValue={edgeDetectDepthThreshold}
-                externalValue={edgeDetectDepthThreshold}
+                initialValue={edgeDetectDepthThreshold==null ? 1.4 : edgeDetectDepthThreshold}
+                externalValue={edgeDetectDepthThreshold==null ? 1.4 : edgeDetectDepthThreshold}
                 setExternalValue={(val: number) => dispatch(setEdgeDetectDepthThreshold(val))}/>
         <MoorhenSlider
                 isDisabled={!doEdgeDetect}
@@ -74,8 +77,8 @@ const EdgeDetectPanel = (props: {}) => {
                 maxVal={1.0}
                 logScale={false}
                 sliderTitle="Normal threshold"
-                initialValue={edgeDetectNormalThreshold}
-                externalValue={edgeDetectNormalThreshold}
+                initialValue={edgeDetectNormalThreshold==null ? 0.5 : edgeDetectNormalThreshold}
+                externalValue={edgeDetectNormalThreshold==null ? 0.5 : edgeDetectNormalThreshold}
                 setExternalValue={(val: number) => dispatch(setEdgeDetectNormalThreshold(val))}/>
     </div>
 }
@@ -99,14 +102,14 @@ const OcclusionPanel = (props: {}) => {
         <MoorhenSlider minVal={0.0} maxVal={2.0} logScale={false}
             isDisabled={!doSSAO}
             sliderTitle="Occlusion radius"
-            initialValue={ssaoRadius}
-            externalValue={ssaoRadius}
+            initialValue={ssaoRadius==null ? 0.4 : ssaoRadius}
+            externalValue={ssaoRadius==null ? 0.4 : ssaoRadius}
             setExternalValue={(val: number) => dispatch(setSsaoRadius(val))} />
         <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
             isDisabled={!doSSAO}
             sliderTitle="Occlusion effect"
-            initialValue={ssaoBias}
-            externalValue={ssaoBias}
+            initialValue={ssaoBias==null ? 1.0 : ssaoRadius}
+            externalValue={ssaoBias==null ? 1.0 : ssaoRadius}
             setExternalValue={(val: number) => dispatch(setSsaoBias(val))} />
     </div>
 }
@@ -199,8 +202,8 @@ const DepthBlurPanel = (props: {
                 maxVal={0.6}
                 logScale={false}
                 sliderTitle="Blur depth"
-                initialValue={depthBlurDepth}
-                externalValue={depthBlurDepth}
+                initialValue={depthBlurDepth==null ? 0.2 : depthBlurDepth}
+                externalValue={depthBlurDepth==null ? 0.2 : depthBlurDepth}
                 setExternalValue={(val: number) => dispatch(setDepthBlurDepth(val))}/>
             <MoorhenSlider
                 isDisabled={!useOffScreenBuffers}
@@ -208,8 +211,8 @@ const DepthBlurPanel = (props: {
                 maxVal={16}
                 logScale={false}
                 sliderTitle="Blur radius"
-                initialValue={depthBlurRadius}
-                externalValue={depthBlurRadius}
+                initialValue={depthBlurRadius==null ? 3 : depthBlurRadius}
+                externalValue={depthBlurRadius==null ? 3 : depthBlurRadius}
                 allowFloats={false}
                 setExternalValue={(val: number) => dispatch(setDepthBlurRadius(val))}/>
     </div>

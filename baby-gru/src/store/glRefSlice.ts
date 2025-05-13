@@ -7,11 +7,19 @@ const initialState = {
     requestBuildBuffers: false,
     isWebGL2: false,
     activeMolecule: null,
+    // These should probably be in sceneSettings slice. 
+    // We'll move them in due course.
     lightPosition: [10.0, 10.0, 60.0, 1.0],
     ambient: [0.2, 0.2, 0.2, 1.0],
     specular: [0.6, 0.6, 0.6, 1.0],
     diffuse: [1.0, 1.0, 1.0, 1.0],
     specularPower: 64.0
+    //TODO
+    // zoom
+    // bgcolour
+    // quat
+    // fog
+    // clip
 }
 
 export const glRefSlice = createSlice({

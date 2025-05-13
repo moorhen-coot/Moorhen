@@ -1,74 +1,53 @@
 #List of WebGL methods called outside of MGWebGL or MoorhenWebMG
 
+glRef.current.set_clip_range                      src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx
+glRef.current.set_fog_range                       src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx
+glRef.current.fogClipOffset                       src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx src/components/modal/MoorhenSceneSettingsModal.tsx
+glRef.current.gl_fog_end                          src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx src/components/modal/MoorhenSceneSettingsModal.tsx
+glRef.current.gl_fog_start                        src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx src/components/modal/MoorhenSceneSettingsModal.tsx
+glRef.current.gl_clipPlane0                       src/utils/MoorhenKeyboardPress.ts src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx src/components/modal/MoorhenSceneSettingsModal.tsx
+glRef.current.gl_clipPlane1                       src/utils/MoorhenKeyboardPress.ts src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx src/components/modal/MoorhenSceneSettingsModal.tsx
+glRef.current.myQuat                              src/utils/MoorhenKeyboardPress.ts src/utils/MoorhenFleetManager.tsx src/utils/MoorhenScreenRecorder.ts
+glRef.current.setQuat                             src/utils/MoorhenTimeCapsule.ts
+glRef.current.zoom                                src/utils/MoorhenKeyboardPress.ts src/utils/MoorhenTimeCapsule.ts src/utils/MoorhenFleetManager.tsx src/utils/MoorhenScreenRecorder.ts src/components/d3-components/feature-viewer-react.js src/components/menu-item/MoorhenScenePresetMenuItem.tsx
+glRef.current.setZoom                             src/utils/MoorhenKeyboardPress.ts src/utils/MoorhenTimeCapsule.ts src/utils/MoorhenMolecule.ts src/utils/MoorhenScreenRecorder.ts src/components/snack-bar/MoorhenTomogramSnackBar.tsx
+glRef.current.background_colour                   src/utils/MoorhenTimeCapsule.ts src/utils/MoorhenMolecule.ts src/components/menu-item/MoorhenGetMonomerMenuItem.tsx
+
 glRef.current.drawScene                           src/utils/MoorhenScreenRecorder.ts
 glRef.current.appendOtherData                     src/utils/MoorhenMap.ts src/utils/MoorhenMoleculeRepresentation.ts src/components/snack-bar/MoorhenTomogramSnackBar.tsx
 glRef.current.displayBuffers                      src/utils/MoorhenMap.ts src/utils/MoorhenMoleculeRepresentation.ts
 glRef.current.getFrontAndBackPos                  src/utils/MoorhenKeyboardPress.ts
 glRef.current.setOriginOrientationAndZoomAnimated src/utils/MoorhenMolecule.ts
 glRef.current.origin                              src/utils/MoorhenFleetManager.tsx src/utils/MoorhenScreenRecorder.ts src/components/modal/MoorhenLhasaModal.tsx
-glRef.current.setOrigin                           src/utils/MoorhenKeyboardPress.ts src/utils/MoorhenTimeCapsule.ts src/utils/MoorhenMolecule.ts src/components/snack-bar/MoorhenTomogramSnackBar.tsx
+glRef.current.setOrigin                           src/utils/MoorhenKeyboardPress.ts src/utils/MoorhenMolecule.ts src/components/snack-bar/MoorhenTomogramSnackBar.tsx
 glRef.current.setOriginAnimated                   src/utils/MoorhenMap.ts src/utils/MoorhenMolecule.ts src/utils/MoorhenKeyboardPress.ts src/components/validation-tools/MoorhenUnmodelledBlobs.tsx src/components/validation-tools/MoorhenDifferenceMapPeaks.tsx
-glRef.current.myQuat                              src/utils/MoorhenKeyboardPress.ts src/utils/MoorhenFleetManager.tsx src/utils/MoorhenScreenRecorder.ts
-glRef.current.setQuat                             src/utils/MoorhenTimeCapsule.ts
-glRef.current.zoom                                src/utils/MoorhenKeyboardPress.ts src/utils/MoorhenTimeCapsule.ts src/utils/MoorhenFleetManager.tsx src/utils/MoorhenScreenRecorder.ts src/components/d3-components/feature-viewer-react.js src/components/menu-item/MoorhenScenePresetMenuItem.tsx
-glRef.current.setZoom                             src/utils/MoorhenKeyboardPress.ts src/utils/MoorhenTimeCapsule.ts src/utils/MoorhenMolecule.ts src/utils/MoorhenScreenRecorder.ts src/components/snack-bar/MoorhenTomogramSnackBar.tsx
 
 glRef.current.labelsTextCanvasTexture             src/utils/MoorhenMoleculeRepresentation.ts
 
 glRef.current.initTextureFramebuffer              src/utils/MoorhenScreenRecorder.ts
-glRef.current.setAmbientLightNoUpdate             src/utils/MoorhenTimeCapsule.ts
-glRef.current.setDiffuseLightNoUpdate             src/utils/MoorhenTimeCapsule.ts
-glRef.current.setSpecularLightNoUpdate            src/utils/MoorhenTimeCapsule.ts
-glRef.current.setLightPositionNoUpdate            src/utils/MoorhenTimeCapsule.ts
 glRef.current.setTextFont                         src/components/card/MoorhenMoleculeCard.tsx
 
-glRef.current.set_clip_range                      src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx
-glRef.current.set_fog_range                       src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx
 glRef.current.showShortCutHelp                    src/utils/MoorhenKeyboardPress.ts
 glRef.current.draggableMolecule                   src/components/snack-bar/MoorhenAcceptRejectDragAtomsSnackBar.tsx
-glRef.current.gl_clipPlane0                       src/utils/MoorhenKeyboardPress.ts src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx src/components/modal/MoorhenSceneSettingsModal.tsx
-glRef.current.gl_clipPlane1                       src/utils/MoorhenKeyboardPress.ts src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx src/components/modal/MoorhenSceneSettingsModal.tsx
-glRef.current.light_colours_diffuse               src/utils/MoorhenTimeCapsule.ts src/components/modal/MoorhenSceneSettingsModal.tsx
-glRef.current.light_colours_ambient               src/utils/MoorhenTimeCapsule.ts src/components/modal/MoorhenSceneSettingsModal.tsx
-glRef.current.light_colours_specular              src/utils/MoorhenTimeCapsule.ts src/components/modal/MoorhenSceneSettingsModal.tsx
-glRef.current.light_positions                     src/utils/MoorhenTimeCapsule.ts src/components/modal/MoorhenSceneSettingsModal.tsx
 
-glRef.current.background_colour                   src/utils/MoorhenTimeCapsule.ts src/utils/MoorhenMolecule.ts src/components/menu-item/MoorhenGetMonomerMenuItem.tsx
-glRef.current.blurDepth                           src/utils/MoorhenTimeCapsule.ts
-glRef.current.blurSize                            src/utils/MoorhenTimeCapsule.ts
 glRef.current.canvas.height                       src/utils/MoorhenScreenRecorder.ts
 glRef.current.canvas.width                        src/utils/MoorhenScreenRecorder.ts
 glRef.current.canvasRef                           src/utils/MoorhenScreenRecorder.ts
 glRef.current.clearMeasureCylinderBuffers         src/utils/MoorhenKeyboardPress.ts
 
-glRef.current.depthThreshold                      src/utils/MoorhenTimeCapsule.ts
 glRef.current.doDrawClickedAtomLines              src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx
-glRef.current.doEdgeDetect                        src/utils/MoorhenTimeCapsule.ts
-glRef.current.doPerspectiveProjection             src/utils/MoorhenTimeCapsule.ts
-glRef.current.doSSAO                              src/utils/MoorhenTimeCapsule.ts
-glRef.current.doShadow                            src/utils/MoorhenTimeCapsule.ts
-glRef.current.fogClipOffset                       src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx src/components/modal/MoorhenSceneSettingsModal.tsx
 glRef.current.gl.viewportWidth                    src/utils/MoorhenScreenRecorder.ts
 glRef.current.gl.viewportHeight                   src/utils/MoorhenScreenRecorder.ts
-glRef.current.gl_fog_end                          src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx src/components/modal/MoorhenSceneSettingsModal.tsx
 
-glRef.current.gl_fog_start                        src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx src/components/modal/MoorhenSceneSettingsModal.tsx
 glRef.current.handleOriginUpdated                 src/components/menu-item/MoorhenMultiplyBfactorMenuItem.tsx src/components/menu-item/MoorhenSetOccupancyMenuItem.tsx
 glRef.current.labelledAtoms                       src/utils/MoorhenKeyboardPress.ts
 glRef.current.measurePointsArray                  src/utils/MoorhenKeyboardPress.ts
 glRef.current.measuredAtoms                       src/utils/MoorhenKeyboardPress.ts
-glRef.current.normalThreshold                     src/utils/MoorhenTimeCapsule.ts
 glRef.current.pixel_data                          src/utils/MoorhenScreenRecorder.ts
 glRef.current.renderToTexture                     src/utils/MoorhenScreenRecorder.ts
 glRef.current.rttFramebuffer.height               src/utils/MoorhenScreenRecorder.ts
 glRef.current.rttFramebuffer.width                src/utils/MoorhenScreenRecorder.ts
 
 glRef.current.save_pixel_data                     src/utils/MoorhenScreenRecorder.ts
-glRef.current.scaleDepth                          src/utils/MoorhenTimeCapsule.ts
-glRef.current.scaleNormal                         src/utils/MoorhenTimeCapsule.ts
 glRef.current.screenshotBuffersReady              src/utils/MoorhenScreenRecorder.ts
-glRef.current.specularPower                       src/utils/MoorhenTimeCapsule.ts src/components/modal/MoorhenSceneSettingsModal.tsx
-glRef.current.ssaoBias                            src/utils/MoorhenTimeCapsule.ts
-glRef.current.ssaoRadius                          src/utils/MoorhenTimeCapsule.ts
 glRef.current.texturedShapes                      src/components/snack-bar/MoorhenTomogramSnackBar.tsx
-glRef.current.useOffScreenBuffers                 src/utils/MoorhenTimeCapsule.ts
