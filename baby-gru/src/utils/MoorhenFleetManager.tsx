@@ -206,7 +206,7 @@ export class MoorhenFleetManager {
         this.view.set(this.clientId, {
             zoom: MoorhenReduxStore.getState().glRef.zoom,
             origin: MoorhenReduxStore.getState().glRef.origin,
-            quat4: this.glRef.current.myQuat
+            quat4: MoorhenReduxStore.getState().glRef.quat
         })
     }
 

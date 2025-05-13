@@ -12,7 +12,7 @@ import { useSelector } from 'react-redux';
 import { setHoveredAtom } from "../store/hoveringStatesSlice";
 import { changeMapRadius } from "../store/mapContourSettingsSlice";
 import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
-import { setOrigin, setRequestDrawScene, setZoom } from "../store/glRefSlice";
+import { setOrigin, setRequestDrawScene, setZoom, setQuat } from "../store/glRefSlice";
 import { EnqueueSnackbar, closeSnackbar } from "notistack";
 import store from '../store/MoorhenReduxStore'
 
@@ -48,6 +48,7 @@ export const moorhenKeyPress = (
 
     const originState = store.getState().glRef.origin
     const zoom = store.getState().glRef.zoom
+    const myQuat = store.getState().glRef.quat
 
     const doAtomInfo = async (): Promise<boolean> => {
         if (hoveredAtom.molecule) {
@@ -255,7 +256,7 @@ export const moorhenKeyPress = (
 
     else if (action === 'move_up') {
         const invQuat = quat4.create();
-        quat4Inverse(glRef.current.myQuat, invQuat);
+        quat4Inverse(myQuat, invQuat);
         const theMatrix = quatToMat4(invQuat);
         const yshift = vec3Create([0, 4. / getDeviceScale(), 0]);
         vec3.transformMat4(yshift, yshift, theMatrix);
@@ -267,7 +268,7 @@ export const moorhenKeyPress = (
 
     else if (action === 'move_down') {
         const invQuat = quat4.create();
-        quat4Inverse(glRef.current.myQuat, invQuat);
+        quat4Inverse(myQuat, invQuat);
         const theMatrix = quatToMat4(invQuat);
         const yshift = vec3Create([0, -4. / getDeviceScale(), 0]);
         vec3.transformMat4(yshift, yshift, theMatrix);
@@ -279,7 +280,7 @@ export const moorhenKeyPress = (
 
     else if (action === 'move_left') {
         const invQuat = quat4.create();
-        quat4Inverse(glRef.current.myQuat, invQuat);
+        quat4Inverse(myQuat, invQuat);
         const theMatrix = quatToMat4(invQuat);
         const xshift = vec3Create([-4. / getDeviceScale(), 0, 0]);
         vec3.transformMat4(xshift, xshift, theMatrix);
@@ -291,7 +292,7 @@ export const moorhenKeyPress = (
 
     else if (action === 'move_right') {
         const invQuat = quat4.create();
-        quat4Inverse(glRef.current.myQuat, invQuat);
+        quat4Inverse(myQuat, invQuat);
         const theMatrix = quatToMat4(invQuat);
         const xshift = vec3Create([4. / getDeviceScale(), 0, 0]);
         vec3.transformMat4(xshift, xshift, theMatrix);
@@ -302,9 +303,10 @@ export const moorhenKeyPress = (
     }
 
     else if (action === 'restore_scene') {
-        glRef.current.myQuat = quat4.create()
-        quat4.set(glRef.current.myQuat, 0, 0, 0, -1)
+        const newQuat = quat4.create()
+        quat4.set(newQuat, 0, 0, 0, -1)
         dispatch(setZoom(1.0))
+        dispatch(setQuat(newQuat))
         glRef.current.labelledAtoms = []
         glRef.current.measuredAtoms = []
         glRef.current.measurePointsArray = []

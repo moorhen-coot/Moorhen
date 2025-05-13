@@ -1150,6 +1150,7 @@ export namespace moorhen {
             diffuse: [number,number,number,number],
             specularPower: number,
             zoom: number,
+            quat: any[],
         };
     }
 

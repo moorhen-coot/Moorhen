@@ -8,7 +8,7 @@ import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from 'react-redux';
 import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
 import { useSnackbar } from 'notistack';
-import { setOrigin, setRequestDrawScene, setRequestBuildBuffers } from "../../store/glRefSlice"
+import { setQuat, setOrigin, setRequestDrawScene, setRequestBuildBuffers, setZoom } from "../../store/glRefSlice"
 
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
@@ -105,6 +105,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const diffuse = useSelector((state: moorhen.State) => state.glRef.diffuse)
     const specularPower = useSelector((state: moorhen.State) => state.glRef.specularPower)
     const zoom = useSelector((state: moorhen.State) => state.glRef.zoom)
+    const quat = useSelector((state: moorhen.State) => state.glRef.quat)
 
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
@@ -165,8 +166,19 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setZoom(zoom)
-            glRef.current.drawScene()
+            if(Math.abs(quat[0]-glRef.current.myQuat[0])>1e-5||Math.abs(quat[1]-glRef.current.myQuat[1])>1e-5||Math.abs(quat[2]-glRef.current.myQuat[2])>1e-5||Math.abs(quat[3]-glRef.current.myQuat[3])>1e-5){
+                glRef.current.setQuat(quat)
+                glRef.current.drawScene()
+            }
+        }
+    }, [quat])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            if(Math.abs(zoom-glRef.current.zoom)>1e-5){
+                glRef.current.setZoom(zoom)
+                glRef.current.drawScene()
+            }
         }
     }, [zoom])
 
@@ -186,12 +198,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setOrigin(originState,true,true)
+            if(Math.abs(originState[0]-glRef.current.origin[0])>1e-5||Math.abs(originState[1]-glRef.current.origin[1])>1e-5||Math.abs(originState[2]-glRef.current.origin[2])>1e-5){
+                glRef.current.setOrigin(originState,true,true)
+            }
         }
     }, [originState])
 
     useEffect(() => {
-        console.log("requestDrawScene")
         if(glRef !== null && typeof glRef !== 'function') {
             glRef.current.drawScene()
         }
@@ -522,11 +535,26 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [molecules, activeMap, hoveredAtom, props.viewOnly, shortCuts, showShortcutToast, shortcutOnHoveredAtom, isChangingRotamers, isRotatingAtoms, isDraggingAtoms])
 
 
+    const onZoomChanged = (newZoom => {
+        dispatch(setZoom(newZoom))
+    })
+
+    const onOriginChanged = (newOrigin => {
+        dispatch(setOrigin(newOrigin))
+    })
+
+    const onQuatChanged = (newQuat => {
+        dispatch(setQuat(newQuat))
+    })
+
     return  <>
                 <MGWebGL
                     ref={glRef}
                     onAtomHovered={(enableAtomHovering && !isRotatingAtoms && !isDraggingAtoms && !isChangingRotamers) ? props.onAtomHovered : null}
                     onKeyPress={onKeyPress}
+                    onZoomChanged={onZoomChanged}
+                    onOriginChanged={onOriginChanged}
+                    onQuatChanged={onQuatChanged}
                     messageChanged={(d) => { }}
                     mouseSensitivityFactor={mouseSensitivity}
                     zoomWheelSensitivityFactor={zoomWheelSensitivityFactor}

@@ -7,11 +7,9 @@ import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import * as mat4 from 'gl-matrix/mat4';
 import * as mat3 from 'gl-matrix/mat3';
-//import {vec3,mat4,mat3} from 'gl-matrix/esm';
-//import {quat as quat4} from 'gl-matrix/esm';
 import  { unProject } from './GLU.js';
 import store from '../store/MoorhenReduxStore'
-import { setOrigin, setIsWebGL2 } from "../store/glRefSlice"
+import { setIsWebGL2 } from "../store/glRefSlice"
 
 //WebGL2 shaders
 import { depth_peel_accum_vertex_shader_source as depth_peel_accum_vertex_shader_source_webgl2 } from './webgl-2/depth-peel-accum-vertex-shader.js';
@@ -2307,6 +2305,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             requestAnimationFrame(this.drawOriginFrame.bind(this,oo,d,iframe+1))
         } else {
             this.handleOriginUpdated(true)
+            this.props.onOriginChanged(this.origin)
         }
     }
 
@@ -2317,6 +2316,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.drawScene();
         }
         this.handleOriginUpdated(dispatchEvent)
+        this.props.onOriginChanged(o)
     }
 
     setAmbientLightNoUpdate(r:number, g:number, b:number) : void {
@@ -2413,6 +2413,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
         });
         document.dispatchEvent(zoomChanged);
+        this.props.onZoomChanged(z)
 
         if (drawScene) this.drawScene();
     }
@@ -4465,6 +4466,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
         }
         if(dirty) this.buildBuffers()
+        this.props.onQuatChanged(this.myQuat)
 
         const theShaders = [
             this.shaderProgram,
@@ -8821,8 +8823,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 const newOrigin = self.origin.map((coord, coordIndex) => {
                     return coord + (self.zoom * xshift[coordIndex] / 8.) - (self.zoom * yshift[coordIndex] / 8.)
                 })
-                //self.setOrigin(newOrigin, false, !this.reContourMapOnlyOnMouseUp)
-                store.dispatch(setOrigin(newOrigin))
+                self.setOrigin(newOrigin, false, !this.reContourMapOnlyOnMouseUp)
             } else {
                 const newOrigin = this.activeMolecule.displayObjectsTransformation.origin.map((coord, coordIndex) => {
                     return coord + (self.zoom * xshift[coordIndex] / 8.) - (self.zoom * yshift[coordIndex] / 8.)

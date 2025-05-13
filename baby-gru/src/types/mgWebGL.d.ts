@@ -329,6 +329,9 @@ interface MGWebGLPropsInterface {
                     reContourMapOnlyOnMouseUp: boolean | null;
                     onAtomHovered : (identifier: { buffer: { id: string; }; atom: moorhen.AtomInfo; }) => void;
                     onKeyPress : (event: KeyboardEvent) =>  boolean | Promise<boolean>;
+                    onZoomChanged : (newZoom: number) =>  void;
+                    onOriginChanged : (newOrigin: [number,number,number]) =>  void;
+                    onQuatChanged : (newQuat: [number,number,number,number]) =>  void;
                     messageChanged : ((d:Dictionary<string>) => void);
                     mouseSensitivityFactor :  number | null;
                     zoomWheelSensitivityFactor :  number | null;

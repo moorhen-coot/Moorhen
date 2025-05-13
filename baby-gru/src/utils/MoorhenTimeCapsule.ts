@@ -18,7 +18,8 @@ import {
 } from "../store/sceneSettingsSlice";
 import { moorhensession } from "../protobuf/MoorhenSession";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
-import { setOrigin, setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setZoom } from "../store/glRefSlice"
+import { setOrigin, setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setZoom,
+     setQuat } from "../store/glRefSlice"
 
 /**
  * Represents a time capsule with session backups
@@ -327,6 +328,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         const diffuse = this.store.getState().glRef.diffuse
         const specularPower = this.store.getState().glRef.specularPower
         const zoom = this.store.getState().glRef.zoom
+        const quat = this.store.getState().glRef.quat
 
         const doShadow = this.store.getState().sceneSettings.doShadow
         const doSSAO = this.store.getState().sceneSettings.doSSAO
@@ -357,7 +359,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             doDrawClickedAtomLines: this.glRef.current.doDrawClickedAtomLines,
             clipStart: (this.glRef.current.gl_clipPlane0[3] + this.glRef.current.fogClipOffset) * -1,
             clipEnd: this.glRef.current.gl_clipPlane1[3] - this.glRef.current.fogClipOffset,
-            quat4: Array.from(this.glRef.current.myQuat),
+            quat4: [quat[0], quat[1], quat[2], quat[3]],
             doPerspectiveProjection: doPerspectiveProjection,
             edgeDetection: {
                 enabled: doEdgeDetect,
@@ -775,7 +777,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         glRef.current.set_fog_range(sessionData.viewData.fogStart, sessionData.viewData.fogEnd, false)
         glRef.current.set_clip_range(sessionData.viewData.clipStart, sessionData.viewData.clipEnd, false)
         glRef.current.doDrawClickedAtomLines = sessionData.viewData.doDrawClickedAtomLines
-        glRef.current.setQuat(sessionData.viewData.quat4)
+        dispatch(setQuat(sessionData.viewData.quat4))
         batch(() => {
             dispatch(setBackgroundColor(sessionData.viewData.backgroundColor))
             dispatch(setEdgeDetectDepthScale(sessionData.viewData.edgeDetection.depthScale))
