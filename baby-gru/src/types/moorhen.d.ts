@@ -1152,6 +1152,8 @@ export namespace moorhen {
             zoom: number,
             quat: any[],
             fogClipOffset: number,
+            fogStart: number,
+            fogEnd: number,
         };
     }
 

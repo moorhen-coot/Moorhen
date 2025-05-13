@@ -16,9 +16,10 @@ const initialState = {
     specularPower: 64.0,
     zoom: 1.0,
     quat: [0.0,0.0,0.0,-1.0],
-    fogClipOffset: 250
+    fogClipOffset: 250,
+    fogStart: 250,
+    fogEnd: 1250
     //TODO
-    // fog
     // clip
 }
 
@@ -65,12 +66,18 @@ export const glRefSlice = createSlice({
     setFogClipOffset: (state, action: {payload: number, type: string}) => {
         return { ...state, fogClipOffset: action.payload }
     },
+    setFogStart: (state, action: {payload: number, type: string}) => {
+        return { ...state, fogStart: action.payload }
+    },
+    setFogEnd: (state, action: {payload: number, type: string}) => {
+        return { ...state, fogEnd: action.payload }
+    },
 }})
 
 export const { 
     setOrigin, setRequestDrawScene, setRequestBuildBuffers, setIsWebGL2, setActiveMolecule,
     setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setZoom,
-    setQuat, setFogClipOffset
+    setQuat, setFogClipOffset, setFogStart, setFogEnd
 } = glRefSlice.actions
 
 export default glRefSlice.reducer

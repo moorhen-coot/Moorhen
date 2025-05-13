@@ -8,7 +8,7 @@ import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from 'react-redux';
 import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
 import { useSnackbar } from 'notistack';
-import { setQuat, setOrigin, setRequestDrawScene, setRequestBuildBuffers, setZoom } from "../../store/glRefSlice"
+import { setQuat, setOrigin, setRequestDrawScene, setRequestBuildBuffers, setZoom, setFogStart, setFogEnd } from "../../store/glRefSlice"
 
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
@@ -107,12 +107,15 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const zoom = useSelector((state: moorhen.State) => state.glRef.zoom)
     const quat = useSelector((state: moorhen.State) => state.glRef.quat)
     const fogClipOffset = useSelector((state: moorhen.State) => state.glRef.fogClipOffset)
+    const fogStart = useSelector((state: moorhen.State) => state.glRef.fogStart)
+    const fogEnd = useSelector((state: moorhen.State) => state.glRef.fogEnd)
 
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
         const fieldDepthBack: number = 21;
         if (glRef !== null && typeof glRef !== 'function') { 
-            glRef.current.set_fog_range(glRef.current.fogClipOffset - (glRef.current.zoom * fieldDepthFront), glRef.current.fogClipOffset + (glRef.current.zoom * fieldDepthBack))
+            dispatch(setFogStart(glRef.current.fogClipOffset - (glRef.current.zoom * fieldDepthFront)))
+            dispatch(setFogEnd(glRef.current.fogClipOffset + (glRef.current.zoom * fieldDepthBack)))
             glRef.current.set_clip_range(0 - (glRef.current.zoom * fieldDepthFront), 0 + (glRef.current.zoom * fieldDepthBack))
             glRef.current.doDrawClickedAtomLines = false    
         }
@@ -492,6 +495,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [clipCap, glRef])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.set_fog_range(fogStart, fogEnd)
+            glRef.current.drawScene()
+        }
+    }, [fogStart, fogEnd, glRef])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {

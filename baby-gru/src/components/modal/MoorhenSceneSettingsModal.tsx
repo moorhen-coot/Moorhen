@@ -20,7 +20,8 @@ import { LastPageOutlined } from "@mui/icons-material";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { hideModal } from "../../store/modalsSlice";
-import { setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower } from "../../store/glRefSlice"
+import { setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower,
+         setFogStart, setFogEnd } from "../../store/glRefSlice"
 
 const EdgeDetectPanel = (props: {}) => {
 
@@ -224,11 +225,13 @@ const ClipFogPanel = (props: {
 
     const dispatch = useDispatch()
     const fogClipOffset = useSelector((state: moorhen.State) => state.glRef.fogClipOffset)
+    const gl_fog_start = useSelector((state: moorhen.State) => state.glRef.fogStart)
+    const gl_fog_end = useSelector((state: moorhen.State) => state.glRef.fogEnd)
 
     const [zclipFront, setZclipFront] = useState<number>(fogClipOffset + props.glRef.current.gl_clipPlane0[3])
     const [zclipBack, setZclipBack] = useState<number>(props.glRef.current.gl_clipPlane1[3] - fogClipOffset)
-    const [zfogFront, setZfogFront] = useState<number>(fogClipOffset - props.glRef.current.gl_fog_start)
-    const [zfogBack, setZfogBack] = useState<number>(props.glRef.current.gl_fog_end - fogClipOffset)
+    const [zfogFront, setZfogFront] = useState<number>(fogClipOffset - gl_fog_start)
+    const [zfogBack, setZfogBack] = useState<number>(gl_fog_end - fogClipOffset)
     const clipCap = useSelector((state: moorhen.State) => state.sceneSettings.clipCap)
     const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging)
 
@@ -236,10 +239,10 @@ const ClipFogPanel = (props: {
         if (props.glRef.current && props.glRef.current.gl_clipPlane0 && props.glRef.current.gl_clipPlane1) {
             setZclipFront(fogClipOffset + props.glRef.current.gl_clipPlane0[3])
             setZclipBack(props.glRef.current.gl_clipPlane1[3] - fogClipOffset)
-            setZfogFront(fogClipOffset - props.glRef.current.gl_fog_start)
-            setZfogBack(props.glRef.current.gl_fog_end - fogClipOffset)
+            setZfogFront(fogClipOffset - gl_fog_start)
+            setZfogBack(gl_fog_end - fogClipOffset)
         }
-    }, [props.glRef.current.gl_clipPlane1[3], props.glRef.current.gl_clipPlane0[3], props.glRef.current.gl_fog_start, props.glRef.current.gl_fog_end])
+    }, [props.glRef.current.gl_clipPlane1[3], props.glRef.current.gl_clipPlane0[3], gl_fog_start, gl_fog_end])
 
     return <div className="scene-settings-panel-flex-between">
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
@@ -260,18 +263,18 @@ const ClipFogPanel = (props: {
             }} />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Front zFog"
-            initialValue={fogClipOffset - props.glRef.current.gl_fog_start}
+            initialValue={fogClipOffset - gl_fog_start}
             externalValue={zfogFront}
             setExternalValue={(newValue: number) => {
-                props.glRef.current.gl_fog_start = fogClipOffset - newValue
+                dispatch(setFogStart(fogClipOffset - newValue))
                 setZfogFront(newValue)
             }} />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Back zFog"
             externalValue={zfogBack}
-            initialValue={props.glRef.current.gl_fog_end - fogClipOffset}
+            initialValue={gl_fog_end - fogClipOffset}
             setExternalValue={(newValue: number) => {
-                props.glRef.current.gl_fog_end = newValue + fogClipOffset
+                dispatch(setFogEnd(newValue + fogClipOffset))
                 setZfogBack(newValue)
             }} />
         <InputGroup style={{ paddingLeft: '0.1rem', paddingBottom: '0.5rem' }}>
