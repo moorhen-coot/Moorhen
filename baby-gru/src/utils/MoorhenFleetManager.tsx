@@ -2,7 +2,8 @@ import * as Y from 'yjs'
 import { webGL } from "../types/mgWebGL";
 import { moorhen } from "../types/moorhen";
 import { WebsocketProvider } from 'y-websocket'
-import { guid, railSpecies } from './MoorhenUtils';
+import { railSpecies } from './enums';
+import { guid } from './utils';
 import { MoorhenMoleculeRepresentation } from './MoorhenMoleculeRepresentation';
 import { hexToRgb } from '@mui/material';
 import { setIsInSharedSession } from '../store/sharedSessionSlice';
@@ -203,8 +204,8 @@ export class MoorhenFleetManager {
 
     pushViewUpdate() {
         this.view.set(this.clientId, {
-            zoom: this.glRef.current.zoom,
-            origin: this.glRef.current.origin,
+            zoom: MoorhenReduxStore.getState().glRef.zoom,
+            origin: MoorhenReduxStore.getState().glRef.origin,
             quat4: this.glRef.current.myQuat
         })
     }

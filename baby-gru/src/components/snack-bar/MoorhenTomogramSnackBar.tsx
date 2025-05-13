@@ -7,7 +7,7 @@ import { Stack } from "react-bootstrap";
 import { IconButton, LinearProgress, Slider } from "@mui/material";
 import { KeyboardArrowLeftOutlined, KeyboardArrowRightOutlined, KeyboardDoubleArrowLeftOutlined, KeyboardDoubleArrowRightOutlined } from "@mui/icons-material";
 import { setIsShowingTomograms } from "../../store/generalStatesSlice";
-import { setOrigin } from "../../store/glRefSlice"
+import { setOrigin, setZoom } from "../../store/glRefSlice"
 
 export const MoorhenTomogramSnackBar = forwardRef<
     HTMLDivElement,
@@ -115,7 +115,7 @@ export const MoorhenTomogramSnackBar = forwardRef<
         const shape = obj[0].texturedShapes
         
         dispatch(setOrigin(shape.getOrigin()))
-        props.glRef.current.setZoom(300, true)
+        dispatch(setZoom(300))
     }, [props.mapMolNo])
 
     return <SnackbarContent ref={ref} className="moorhen-notification-div" style={{ backgroundColor: isDark ? 'grey' : 'white', color: isDark ? 'white' : 'grey' }}>

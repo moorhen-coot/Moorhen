@@ -14,6 +14,7 @@ export const MoorhenScenePresetMenuItem = (props: {
 
     const dispatch = useDispatch()
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
+    const zoom = useSelector((state: moorhen.State) => state.glRef.zoom)
     const [presetValue, setPresetValue] = useState<string | null>(null)
 
     useEffect(() => {
@@ -24,8 +25,8 @@ export const MoorhenScenePresetMenuItem = (props: {
                 const fieldDepthFront: number = 8;
                 const fieldDepthBack: number = 21;
                 if (props.glRef !== null && typeof props.glRef !== 'function') { 
-                    props.glRef.current.set_fog_range(props.glRef.current.fogClipOffset - (props.glRef.current.zoom * fieldDepthFront), props.glRef.current.fogClipOffset + (props.glRef.current.zoom * fieldDepthBack))
-                    props.glRef.current.set_clip_range(0 - (props.glRef.current.zoom * fieldDepthFront), 0 + (props.glRef.current.zoom * fieldDepthBack))
+                    props.glRef.current.set_fog_range(props.glRef.current.fogClipOffset - (zoom * fieldDepthFront), props.glRef.current.fogClipOffset + (zoom * fieldDepthBack))
+                    props.glRef.current.set_clip_range(0 - (zoom * fieldDepthFront), 0 + (zoom * fieldDepthBack))
                     props.glRef.current.doDrawClickedAtomLines = false    
                 }
                 dispatch(setRequestDrawScene(true))

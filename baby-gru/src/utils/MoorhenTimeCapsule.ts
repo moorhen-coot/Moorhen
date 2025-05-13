@@ -18,7 +18,7 @@ import {
 } from "../store/sceneSettingsSlice";
 import { moorhensession } from "../protobuf/MoorhenSession";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
-import { setOrigin, setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower } from "../store/glRefSlice"
+import { setOrigin, setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setZoom } from "../store/glRefSlice"
 
 /**
  * Represents a time capsule with session backups
@@ -326,6 +326,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         const specular = this.store.getState().glRef.specular
         const diffuse = this.store.getState().glRef.diffuse
         const specularPower = this.store.getState().glRef.specularPower
+        const zoom = this.store.getState().glRef.zoom
 
         const doShadow = this.store.getState().sceneSettings.doShadow
         const doSSAO = this.store.getState().sceneSettings.doSSAO
@@ -352,7 +353,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             specularPower: specularPower,
             fogStart: this.glRef.current.gl_fog_start,
             fogEnd: this.glRef.current.gl_fog_end,
-            zoom: this.glRef.current.zoom,
+            zoom: zoom,
             doDrawClickedAtomLines: this.glRef.current.doDrawClickedAtomLines,
             clipStart: (this.glRef.current.gl_clipPlane0[3] + this.glRef.current.fogClipOffset) * -1,
             clipEnd: this.glRef.current.gl_clipPlane1[3] - this.glRef.current.fogClipOffset,
@@ -770,7 +771,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         dispatch(setDiffuse(sessionData.viewData.diffuseLight))
         dispatch(setLightPosition(sessionData.viewData.lightPosition))
         dispatch(setSpecularPower(sessionData.viewData.specularPower))
-        glRef.current.setZoom(sessionData.viewData.zoom, false)
+        dispatch(setZoom(sessionData.viewData.zoom))
         glRef.current.set_fog_range(sessionData.viewData.fogStart, sessionData.viewData.fogEnd, false)
         glRef.current.set_clip_range(sessionData.viewData.clipStart, sessionData.viewData.clipEnd, false)
         glRef.current.doDrawClickedAtomLines = sessionData.viewData.doDrawClickedAtomLines

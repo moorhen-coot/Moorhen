@@ -104,6 +104,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const specular = useSelector((state: moorhen.State) => state.glRef.specular)
     const diffuse = useSelector((state: moorhen.State) => state.glRef.diffuse)
     const specularPower = useSelector((state: moorhen.State) => state.glRef.specularPower)
+    const zoom = useSelector((state: moorhen.State) => state.glRef.zoom)
 
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
@@ -161,6 +162,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()    
         }
     }, [doPerspectiveProjection])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setZoom(zoom)
+            glRef.current.drawScene()
+        }
+    }, [zoom])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {

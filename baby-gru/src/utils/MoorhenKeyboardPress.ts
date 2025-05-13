@@ -12,7 +12,7 @@ import { useSelector } from 'react-redux';
 import { setHoveredAtom } from "../store/hoveringStatesSlice";
 import { changeMapRadius } from "../store/mapContourSettingsSlice";
 import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
-import { setOrigin, setRequestDrawScene } from "../store/glRefSlice";
+import { setOrigin, setRequestDrawScene, setZoom } from "../store/glRefSlice";
 import { EnqueueSnackbar, closeSnackbar } from "notistack";
 import store from '../store/MoorhenReduxStore'
 
@@ -47,6 +47,7 @@ export const moorhenKeyPress = (
     } = collectedProps;
 
     const originState = store.getState().glRef.origin
+    const zoom = store.getState().glRef.zoom
 
     const doAtomInfo = async (): Promise<boolean> => {
         if (hoveredAtom.molecule) {
@@ -258,9 +259,9 @@ export const moorhenKeyPress = (
         const theMatrix = quatToMat4(invQuat);
         const yshift = vec3Create([0, 4. / getDeviceScale(), 0]);
         vec3.transformMat4(yshift, yshift, theMatrix);
-        const x = originState[0] + (yshift[0] / 8. * glRef.current.zoom)
-        const y = originState[1] + (yshift[1] / 8. * glRef.current.zoom)
-        const z = originState[2] + (yshift[2] / 8. * glRef.current.zoom)
+        const x = originState[0] + (yshift[0] / 8. * zoom)
+        const y = originState[1] + (yshift[1] / 8. * zoom)
+        const z = originState[2] + (yshift[2] / 8. * zoom)
         dispatch(setOrigin([x, y, z]))
     }
 
@@ -270,9 +271,9 @@ export const moorhenKeyPress = (
         const theMatrix = quatToMat4(invQuat);
         const yshift = vec3Create([0, -4. / getDeviceScale(), 0]);
         vec3.transformMat4(yshift, yshift, theMatrix);
-        const x = originState[0] + (yshift[0] / 8. * glRef.current.zoom);
-        const y = originState[1] + (yshift[1] / 8. * glRef.current.zoom);
-        const z = originState[2] + (yshift[2] / 8. * glRef.current.zoom);
+        const x = originState[0] + (yshift[0] / 8. * zoom);
+        const y = originState[1] + (yshift[1] / 8. * zoom);
+        const z = originState[2] + (yshift[2] / 8. * zoom);
         dispatch(setOrigin([x, y, z]))
     }
 
@@ -282,9 +283,9 @@ export const moorhenKeyPress = (
         const theMatrix = quatToMat4(invQuat);
         const xshift = vec3Create([-4. / getDeviceScale(), 0, 0]);
         vec3.transformMat4(xshift, xshift, theMatrix);
-        const x = originState[0] + (xshift[0] / 8. * glRef.current.zoom)
-        const y = originState[1] + (xshift[1] / 8. * glRef.current.zoom)
-        const z = originState[2] + (xshift[2] / 8. * glRef.current.zoom)
+        const x = originState[0] + (xshift[0] / 8. * zoom)
+        const y = originState[1] + (xshift[1] / 8. * zoom)
+        const z = originState[2] + (xshift[2] / 8. * zoom)
         dispatch(setOrigin([x, y, z]))
     }
 
@@ -294,16 +295,16 @@ export const moorhenKeyPress = (
         const theMatrix = quatToMat4(invQuat);
         const xshift = vec3Create([4. / getDeviceScale(), 0, 0]);
         vec3.transformMat4(xshift, xshift, theMatrix);
-        const x = originState[0] + (xshift[0] / 8. * glRef.current.zoom)
-        const y = originState[1] + (xshift[1] / 8. * glRef.current.zoom)
-        const z = originState[2] + (xshift[2] / 8. * glRef.current.zoom)
+        const x = originState[0] + (xshift[0] / 8. * zoom)
+        const y = originState[1] + (xshift[1] / 8. * zoom)
+        const z = originState[2] + (xshift[2] / 8. * zoom)
         dispatch(setOrigin([x, y, z]))
     }
 
     else if (action === 'restore_scene') {
         glRef.current.myQuat = quat4.create()
         quat4.set(glRef.current.myQuat, 0, 0, 0, -1)
-        glRef.current.setZoom(1.0)
+        dispatch(setZoom(1.0))
         glRef.current.labelledAtoms = []
         glRef.current.measuredAtoms = []
         glRef.current.measurePointsArray = []

@@ -20,7 +20,7 @@ import { libcootApi } from '../types/libcoot';
 import { privateer } from '../types/privateer';
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
 import { ToolkitStore } from '@reduxjs/toolkit/dist/configureStore';
-import { setRequestDrawScene, setOrigin } from "../store/glRefSlice"
+import { setRequestDrawScene, setOrigin, setZoom } from "../store/glRefSlice"
 
 /**
  * Represents a molecule
@@ -1179,7 +1179,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} selectionCid - CID selection for the residue to centre the view on
      * @param {boolean} [animate=true] - Indicates whether the change will be animated
      */
-    async centreOn(selectionCid: string = '/*/*/*/*', animate: boolean = true, setZoom: boolean = true): Promise<void> {
+    async centreOn(selectionCid: string = '/*/*/*/*', animate: boolean = true, doSetZoom: boolean = true): Promise<void> {
         if (this.atomsDirty) {
             await this.updateAtoms()
         }
@@ -1202,7 +1202,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
 
         let selectionCentre = centreOnGemmiAtoms(selectionAtoms)
-        if (animate && setZoom) {
+        if (animate && doSetZoom) {
             this.store.dispatch(setOrigin(selectionCentre))
             //FIXME
             this.glRef.current.setOriginAndZoomAnimated(selectionCentre, zoomLevel)
@@ -1210,9 +1210,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
             this.store.dispatch(setOrigin(selectionCentre))
             //FIXME
             this.glRef.current.setOriginAnimated(selectionCentre)
-        } else if (setZoom) {
+        } else if (doSetZoom) {
             this.store.dispatch(setOrigin(selectionCentre))
-            this.glRef.current.setZoom(zoomLevel)
+            this.store.dispatch(setZoom(zoomLevel))
         } else {
             this.store.dispatch(setOrigin(selectionCentre))
         }

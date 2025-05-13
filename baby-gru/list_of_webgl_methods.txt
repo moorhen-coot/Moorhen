@@ -9,15 +9,15 @@ glRef.current.gl_clipPlane0                       src/utils/MoorhenKeyboardPress
 glRef.current.gl_clipPlane1                       src/utils/MoorhenKeyboardPress.ts src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx src/components/modal/MoorhenSceneSettingsModal.tsx
 glRef.current.myQuat                              src/utils/MoorhenKeyboardPress.ts src/utils/MoorhenFleetManager.tsx src/utils/MoorhenScreenRecorder.ts
 glRef.current.setQuat                             src/utils/MoorhenTimeCapsule.ts
-glRef.current.zoom                                src/utils/MoorhenKeyboardPress.ts src/utils/MoorhenTimeCapsule.ts src/utils/MoorhenFleetManager.tsx src/utils/MoorhenScreenRecorder.ts src/components/d3-components/feature-viewer-react.js src/components/menu-item/MoorhenScenePresetMenuItem.tsx
-glRef.current.setZoom                             src/utils/MoorhenKeyboardPress.ts src/utils/MoorhenTimeCapsule.ts src/utils/MoorhenMolecule.ts src/utils/MoorhenScreenRecorder.ts src/components/snack-bar/MoorhenTomogramSnackBar.tsx
+glRef.current.zoom                                src/utils/MoorhenScreenRecorder.ts
+glRef.current.setZoom                             src/utils/MoorhenScreenRecorder.ts
 
 glRef.current.drawScene                           src/utils/MoorhenScreenRecorder.ts
 glRef.current.appendOtherData                     src/utils/MoorhenMap.ts src/utils/MoorhenMoleculeRepresentation.ts src/components/snack-bar/MoorhenTomogramSnackBar.tsx
 glRef.current.displayBuffers                      src/utils/MoorhenMap.ts src/utils/MoorhenMoleculeRepresentation.ts
 glRef.current.getFrontAndBackPos                  src/utils/MoorhenKeyboardPress.ts
 glRef.current.setOriginOrientationAndZoomAnimated src/utils/MoorhenMolecule.ts
-glRef.current.origin                              src/utils/MoorhenFleetManager.tsx src/utils/MoorhenScreenRecorder.ts src/components/modal/MoorhenLhasaModal.tsx
+glRef.current.origin                              src/utils/MoorhenScreenRecorder.ts src/components/modal/MoorhenLhasaModal.tsx
 glRef.current.setOrigin                           src/utils/MoorhenKeyboardPress.ts src/utils/MoorhenMolecule.ts src/components/snack-bar/MoorhenTomogramSnackBar.tsx
 glRef.current.setOriginAnimated                   src/utils/MoorhenMap.ts src/utils/MoorhenMolecule.ts src/utils/MoorhenKeyboardPress.ts src/components/validation-tools/MoorhenUnmodelledBlobs.tsx src/components/validation-tools/MoorhenDifferenceMapPeaks.tsx
 
@@ -50,3 +50,4 @@ glRef.current.rttFramebuffer.width                src/utils/MoorhenScreenRecorde
 glRef.current.save_pixel_data                     src/utils/MoorhenScreenRecorder.ts
 glRef.current.screenshotBuffersReady              src/utils/MoorhenScreenRecorder.ts
 glRef.current.texturedShapes                      src/components/snack-bar/MoorhenTomogramSnackBar.tsx
+glRef.current.setViewAnimated                     src/utils/MoorhenFleetManager.ts
