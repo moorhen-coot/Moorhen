@@ -36,10 +36,8 @@ export const MoorhenScenePresetMenuItem = (props: {
             
             case "figure-making":
                 dispatch( setResetClippingFogging(false) )
-                props.glRef.current.gl_clipPlane0[3] = 40 - fogClipOffset
-                props.glRef.current.gl_clipPlane1[3] = fogClipOffset + 40
-                props.glRef.current.gl_fog_start = fogClipOffset - 2
-                props.glRef.current.gl_fog_end = 120 + fogClipOffset
+                props.glRef.current.set_clip_range(-40,40)
+                props.glRef.current.set_fog_range(fogClipOffset - 2,fogClipOffset + 120)
                 dispatch(setRequestDrawScene(true))
                 break
             
