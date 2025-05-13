@@ -63,6 +63,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
+    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
     const tlcRef = useRef<HTMLInputElement>()
@@ -132,7 +133,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
         newMolecule.molNo = molNo
         newMolecule.name = tlc
-        newMolecule.setBackgroundColour(props.glRef.current.background_colour)
+        newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         newMolecule.coordsFormat = 'mmcif'
         if (ligandDict) {

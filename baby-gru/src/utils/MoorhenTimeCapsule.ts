@@ -340,10 +340,11 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         const normalScale = this.store.getState().sceneSettings.normalScale
         const normalThreshold = this.store.getState().sceneSettings.normalThreshold
         const doPerspectiveProjection = this.store.getState().sceneSettings.doPerspectiveProjection
+        const backgroundColor = this.store.getState().sceneSettings.backgroundColor
 
         const viewData: moorhen.viewDataSession = {
             origin: this.store.getState().glRef.origin,
-            backgroundColor: this.glRef.current.background_colour,
+            backgroundColor: backgroundColor,
             ambientLight: ambient,
             diffuseLight: diffuse,
             lightPosition: lightPosition,

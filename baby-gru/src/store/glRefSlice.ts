@@ -16,7 +16,6 @@ const initialState = {
     specularPower: 64.0
     //TODO
     // zoom
-    // bgcolour
     // quat
     // fog
     // clip
