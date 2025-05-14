@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setResetClippingFogging } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
-import { setRequestDrawScene, setFogStart, setFogEnd } from "../../store/glRefSlice"
+import { setRequestDrawScene, setFogStart, setFogEnd, setClipStart, setClipEnd } from "../../store/glRefSlice"
 
 export const MoorhenScenePresetMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -29,7 +29,8 @@ export const MoorhenScenePresetMenuItem = (props: {
                 if (props.glRef !== null && typeof props.glRef !== 'function') { 
                     dispatch(setFogStart(fogClipOffset - (zoom * fieldDepthFront)))
                     dispatch(setFogEnd(fogClipOffset + (zoom * fieldDepthBack)))
-                    props.glRef.current.set_clip_range(0 - (zoom * fieldDepthFront), 0 + (zoom * fieldDepthBack))
+                    dispatch(setClipStart(zoom * fieldDepthFront))
+                    dispatch(setClipEnd(zoom * fieldDepthBack))
                     props.glRef.current.doDrawClickedAtomLines = false    
                 }
                 dispatch(setRequestDrawScene(true))
@@ -37,7 +38,8 @@ export const MoorhenScenePresetMenuItem = (props: {
             
             case "figure-making":
                 dispatch( setResetClippingFogging(false) )
-                props.glRef.current.set_clip_range(-40,40)
+                dispatch(setClipStart(40))
+                dispatch(setClipEnd(40))
                 dispatch(setFogStart(fogClipOffset - 2))
                 dispatch(setFogEnd(fogClipOffset + 120))
                 dispatch(setRequestDrawScene(true))

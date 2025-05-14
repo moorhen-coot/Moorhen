@@ -1154,6 +1154,8 @@ export namespace moorhen {
             fogClipOffset: number,
             fogStart: number,
             fogEnd: number,
+            clipStart: number,
+            clipEnd: number,
         };
     }
 

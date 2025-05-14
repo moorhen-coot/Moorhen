@@ -12,7 +12,8 @@ import { useSelector } from 'react-redux';
 import { setHoveredAtom } from "../store/hoveringStatesSlice";
 import { changeMapRadius } from "../store/mapContourSettingsSlice";
 import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
-import { setOrigin, setRequestDrawScene, setZoom, setQuat } from "../store/glRefSlice";
+import { setOrigin, setRequestDrawScene, setZoom, setQuat,
+         setClipStart, setClipEnd, setFogStart, setFogEnd } from "../store/glRefSlice";
 import { EnqueueSnackbar, closeSnackbar } from "notistack";
 import store from '../store/MoorhenReduxStore'
 
@@ -49,6 +50,10 @@ export const moorhenKeyPress = (
     const originState = store.getState().glRef.origin
     const zoom = store.getState().glRef.zoom
     const myQuat = store.getState().glRef.quat
+    const fogStart = store.getState().glRef.fogStart
+    const fogEnd = store.getState().glRef.fogEnd
+    const clipStart = store.getState().glRef.clipStart
+    const clipEnd = store.getState().glRef.clipEnd
 
     const doAtomInfo = async (): Promise<boolean> => {
         if (hoveredAtom.molecule) {
@@ -388,29 +393,25 @@ export const moorhenKeyPress = (
     }
 
     else if (action === 'decrease_front_clip') {
-        glRef.current.gl_clipPlane0[3] = glRef.current.gl_clipPlane0[3] - 0.5
-        dispatch(setRequestDrawScene(true))
+        dispatch(setClipStart(clipStart-0.5))
         showShortcutToast && enqueueSnackbar("Front clip down", { variant: "info"})
         return false
     }
 
     else if (action === 'increase_front_clip') {
-        glRef.current.gl_clipPlane0[3] = glRef.current.gl_clipPlane0[3] + 0.5
-        dispatch(setRequestDrawScene(true))
+        dispatch(setClipStart(clipStart+0.5))
         showShortcutToast && enqueueSnackbar("Front clip up", { variant: "info"})
         return false
     }
 
     else if (action === 'decrease_back_clip') {
-        glRef.current.gl_clipPlane1[3] = glRef.current.gl_clipPlane1[3] - 0.5
-        dispatch(setRequestDrawScene(true))
+        dispatch(setClipEnd(clipEnd-0.5))
         showShortcutToast && enqueueSnackbar("Back clip down", { variant: "info"})
         return false
     }
 
     else if (action === 'increase_back_clip') {
-        glRef.current.gl_clipPlane1[3] = glRef.current.gl_clipPlane1[3] + 0.5
-        dispatch(setRequestDrawScene(true))
+        dispatch(setClipEnd(clipEnd+0.5))
         showShortcutToast && enqueueSnackbar("Back clip up", { variant: "info"})
         return false
     }

@@ -8,7 +8,8 @@ import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from 'react-redux';
 import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
 import { useSnackbar } from 'notistack';
-import { setQuat, setOrigin, setRequestDrawScene, setRequestBuildBuffers, setZoom, setFogStart, setFogEnd } from "../../store/glRefSlice"
+import { setQuat, setOrigin, setRequestDrawScene, setRequestBuildBuffers, setZoom,
+         setClipStart, setClipEnd, setFogStart, setFogEnd } from "../../store/glRefSlice"
 
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
@@ -109,6 +110,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const fogClipOffset = useSelector((state: moorhen.State) => state.glRef.fogClipOffset)
     const fogStart = useSelector((state: moorhen.State) => state.glRef.fogStart)
     const fogEnd = useSelector((state: moorhen.State) => state.glRef.fogEnd)
+    const clipStart = useSelector((state: moorhen.State) => state.glRef.clipStart)
+    const clipEnd = useSelector((state: moorhen.State) => state.glRef.clipEnd)
 
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
@@ -116,7 +119,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         if (glRef !== null && typeof glRef !== 'function') { 
             dispatch(setFogStart(glRef.current.fogClipOffset - (glRef.current.zoom * fieldDepthFront)))
             dispatch(setFogEnd(glRef.current.fogClipOffset + (glRef.current.zoom * fieldDepthBack)))
-            glRef.current.set_clip_range(0 - (glRef.current.zoom * fieldDepthFront), 0 + (glRef.current.zoom * fieldDepthBack))
+            dispatch(setClipStart(glRef.current.zoom * fieldDepthFront))
+            dispatch(setClipEnd(glRef.current.zoom * fieldDepthBack))
             glRef.current.doDrawClickedAtomLines = false    
         }
     }
@@ -495,6 +499,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [clipCap, glRef])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.set_clip_range(-clipStart, clipEnd)
+            glRef.current.drawScene()
+        }
+    }, [clipStart, clipEnd, glRef])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {

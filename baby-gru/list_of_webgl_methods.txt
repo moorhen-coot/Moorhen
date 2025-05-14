@@ -1,9 +1,5 @@
 #List of WebGL methods called outside of MGWebGL or MoorhenWebMG
 
-glRef.current.set_clip_range                      src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx
-glRef.current.gl_clipPlane0                       src/utils/MoorhenKeyboardPress.ts src/utils/MoorhenTimeCapsule.ts src/components/modal/MoorhenSceneSettingsModal.tsx
-glRef.current.gl_clipPlane1                       src/utils/MoorhenKeyboardPress.ts src/utils/MoorhenTimeCapsule.ts src/components/modal/MoorhenSceneSettingsModal.tsx
-
 glRef.current.myQuat                              src/utils/MoorhenScreenRecorder.ts
 glRef.current.zoom                                src/utils/MoorhenScreenRecorder.ts
 glRef.current.setZoom                             src/utils/MoorhenScreenRecorder.ts

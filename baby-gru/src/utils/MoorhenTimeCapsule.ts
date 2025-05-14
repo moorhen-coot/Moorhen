@@ -19,7 +19,7 @@ import {
 import { moorhensession } from "../protobuf/MoorhenSession";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 import { setOrigin, setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setZoom,
-     setQuat, setFogStart, setFogEnd } from "../store/glRefSlice"
+     setQuat, setFogStart, setFogEnd, setClipStart, setClipEnd } from "../store/glRefSlice"
 
 /**
  * Represents a time capsule with session backups
@@ -332,6 +332,8 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         const fogClipOffset = this.store.getState().glRef.fogClipOffset
         const fogStart = this.store.getState().glRef.fogStart
         const fogEnd = this.store.getState().glRef.fogEnd
+        const clipStart = this.store.getState().glRef.clipStart
+        const clipEnd = this.store.getState().glRef.clipEnd
 
         const doShadow = this.store.getState().sceneSettings.doShadow
         const doSSAO = this.store.getState().sceneSettings.doSSAO
@@ -360,8 +362,8 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             fogEnd: fogEnd,
             zoom: zoom,
             doDrawClickedAtomLines: this.glRef.current.doDrawClickedAtomLines,
-            clipStart: (this.glRef.current.gl_clipPlane0[3] + fogClipOffset) * -1,
-            clipEnd: this.glRef.current.gl_clipPlane1[3] - fogClipOffset,
+            clipStart: clipStart,
+            clipEnd: clipEnd,
             quat4: [quat[0], quat[1], quat[2], quat[3]],
             doPerspectiveProjection: doPerspectiveProjection,
             edgeDetection: {
@@ -779,7 +781,8 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         dispatch(setZoom(sessionData.viewData.zoom))
         dispatch(setFogStart(sessionData.viewData.fogStart))
         dispatch(setFogEnd(sessionData.viewData.fogEnd))
-        glRef.current.set_clip_range(sessionData.viewData.clipStart, sessionData.viewData.clipEnd, false)
+        dispatch(setClipStart(sessionData.viewData.clipStart))
+        dispatch(setClipEnd(sessionData.viewData.clipEnd))
         glRef.current.doDrawClickedAtomLines = sessionData.viewData.doDrawClickedAtomLines
         dispatch(setQuat(sessionData.viewData.quat4))
         batch(() => {
