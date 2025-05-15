@@ -13,7 +13,7 @@ import { setHoveredAtom } from "../store/hoveringStatesSlice";
 import { changeMapRadius } from "../store/mapContourSettingsSlice";
 import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
 import { setOrigin, setRequestDrawScene, setZoom, setQuat, setShortCutHelp,
-         setClipStart, setClipEnd, setFogStart, setFogEnd } from "../store/glRefSlice";
+         setClipStart, setClipEnd, setFogStart, setFogEnd, triggerClearLabels } from "../store/glRefSlice";
 import { EnqueueSnackbar, closeSnackbar } from "notistack";
 import store from '../store/MoorhenReduxStore'
 
@@ -278,11 +278,7 @@ export const moorhenKeyPress = (
     }
 
     else if (action === 'clear_labels') {
-        glRef.current.labelledAtoms = []
-        glRef.current.measuredAtoms = []
-        glRef.current.measurePointsArray = []
-        glRef.current.clearMeasureCylinderBuffers()
-        dispatch(setRequestDrawScene(true))
+        dispatch(triggerClearLabels(true))
         molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
         showShortcutToast && enqueueSnackbar("Clear labels", { variant: "info"})
     }
@@ -340,11 +336,7 @@ export const moorhenKeyPress = (
         quat4.set(newQuat, 0, 0, 0, -1)
         dispatch(setZoom(1.0))
         dispatch(setQuat(newQuat))
-        glRef.current.labelledAtoms = []
-        glRef.current.measuredAtoms = []
-        glRef.current.measurePointsArray = []
-        glRef.current.clearMeasureCylinderBuffers()
-        dispatch(setRequestDrawScene(true))
+        dispatch(triggerClearLabels(true))
     }
 
     else if (action === 'increase_map_radius' || action === 'decrease_map_radius') {

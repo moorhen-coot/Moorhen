@@ -115,6 +115,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const clipStart = useSelector((state: moorhen.State) => state.glRef.clipStart)
     const clipEnd = useSelector((state: moorhen.State) => state.glRef.clipEnd)
     const updateSwitch = useSelector((state: moorhen.State) => state.glRef.envUpdate.switch)
+    const clearLabelsSwitch = useSelector((state: moorhen.State) => state.glRef.clearLabels.switch)
+
+    const GLLabelsFontFamily = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontFamily)
+    const GLLabelsFontSize = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontSize)
 
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
@@ -535,6 +539,23 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.setBackground(backgroundColor)
         }
     }, [backgroundColor, glRef])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.labelledAtoms = []
+            glRef.current.measuredAtoms = []
+            glRef.current.measurePointsArray = []
+            glRef.current.clearMeasureCylinderBuffers()
+            glRef.current.drawScene()
+        }
+    }, [clearLabelsSwitch])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.setTextFont(GLLabelsFontFamily, GLLabelsFontSize)
+            glRef.current.drawScene()
+        }
+    }, [GLLabelsFontSize, GLLabelsFontFamily])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {

@@ -18,13 +18,7 @@ glRef.current.save_pixel_data                     src/utils/MoorhenScreenRecorde
 glRef.current.screenshotBuffersReady              src/utils/MoorhenScreenRecorder.ts
 glRef.current.origin                              src/utils/MoorhenScreenRecorder.ts src/components/modal/MoorhenLhasaModal.tsx
 
-glRef.current.clearMeasureCylinderBuffers         src/utils/MoorhenKeyboardPress.ts
-glRef.current.labelledAtoms                       src/utils/MoorhenKeyboardPress.ts
-glRef.current.measurePointsArray                  src/utils/MoorhenKeyboardPress.ts
-glRef.current.measuredAtoms                       src/utils/MoorhenKeyboardPress.ts
-
 glRef.current.appendOtherData                     src/utils/MoorhenMap.ts src/utils/MoorhenMoleculeRepresentation.ts src/components/snack-bar/MoorhenTomogramSnackBar.tsx
 glRef.current.displayBuffers                      src/utils/MoorhenMap.ts src/utils/MoorhenMoleculeRepresentation.ts
 glRef.current.labelsTextCanvasTexture             src/utils/MoorhenMoleculeRepresentation.ts
-glRef.current.setTextFont                         src/components/card/MoorhenMoleculeCard.tsx
 glRef.current.texturedShapes                      src/components/snack-bar/MoorhenTomogramSnackBar.tsx

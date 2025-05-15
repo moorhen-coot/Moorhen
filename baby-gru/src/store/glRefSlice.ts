@@ -24,7 +24,8 @@ const initialState = {
     cursorPosition: [0,0],
     shortCutHelp: [],
     draggableMolecule: null,
-    envUpdate: { switch: false }
+    envUpdate: { switch: false },
+    clearLabels: { switch: false }
     //TODO
     // clip
 }
@@ -100,13 +101,20 @@ export const glRefSlice = createSlice({
             }
         }
     },
+    triggerClearLabels: (state, action: {payload: boolean, type: string}) => {
+        return { ...state,
+            clearLabels: {
+                switch: !state.clearLabels.switch
+            }
+        }
+    },
 }})
 
 export const { 
     setOrigin, setRequestDrawScene, setRequestBuildBuffers, setIsWebGL2, setActiveMolecule,
     setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setZoom,
     setQuat, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd, setCursorPosition,
-    setShortCutHelp, setDraggableMolecule, triggerRedrawEnv
+    setShortCutHelp, setDraggableMolecule, triggerRedrawEnv, triggerClearLabels
 } = glRefSlice.actions
 
 export default glRefSlice.reducer
