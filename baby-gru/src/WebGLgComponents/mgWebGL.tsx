@@ -8905,10 +8905,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.draggableMolecule.displayObjectsTransformation.quat = quat4.create();
                     quat4.set(this.draggableMolecule.displayObjectsTransformation.quat, 0, 0, 0, -1);
                 }
-                theMatrix = quatToMat4(this.draggableMolecule.displayObjectsTransformation.quat);
-                theMatrix[12] = this.draggableMolecule.displayObjectsTransformation.origin[0];
-                theMatrix[13] = this.draggableMolecule.displayObjectsTransformation.origin[1];
-                theMatrix[14] = this.draggableMolecule.displayObjectsTransformation.origin[2];
 
                 // ###############
 

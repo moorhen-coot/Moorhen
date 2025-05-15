@@ -100,6 +100,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const requestBuildBuffers = useSelector((state: moorhen.State) => state.glRef.requestBuildBuffers)
     const originState = useSelector((state: moorhen.State) => state.glRef.origin)
     const activeMolecule = useSelector((state: moorhen.State) => state.glRef.activeMolecule)
+    const draggableMolecule = useSelector((state: moorhen.State) => state.glRef.draggableMolecule)
 
     const lightPosition = useSelector((state: moorhen.State) => state.glRef.lightPosition)
     const ambient = useSelector((state: moorhen.State) => state.glRef.ambient)
@@ -441,6 +442,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [specularPower])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setDraggableMolecule(draggableMolecule)
+            glRef.current.drawScene()
+        }
+    }, [draggableMolecule])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function') {

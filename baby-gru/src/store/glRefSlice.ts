@@ -22,7 +22,8 @@ const initialState = {
     clipStart: 0,
     clipEnd: 1000,
     cursorPosition: [0,0],
-    shortCutHelp: []
+    shortCutHelp: [],
+    draggableMolecule: null
     //TODO
     // clip
 }
@@ -45,6 +46,9 @@ export const glRefSlice = createSlice({
     },
     setActiveMolecule: (state, action: {payload: moorhen.Molecule, type: string}) => {
         return { ...state, activeMolecule: action.payload }
+    },
+    setDraggableMolecule: (state, action: {payload: moorhen.Molecule, type: string}) => {
+        return { ...state, draggableMolecule: action.payload }
     },
     setLightPosition: (state, action: {payload: [number,number,number,number], type: string}) => {
         return { ...state, lightPosition: action.payload }
@@ -94,7 +98,7 @@ export const {
     setOrigin, setRequestDrawScene, setRequestBuildBuffers, setIsWebGL2, setActiveMolecule,
     setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setZoom,
     setQuat, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd, setCursorPosition,
-    setShortCutHelp
+    setShortCutHelp, setDraggableMolecule
 } = glRefSlice.actions
 
 export default glRefSlice.reducer

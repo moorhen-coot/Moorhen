@@ -23,12 +23,12 @@ glRef.current.labelledAtoms                       src/utils/MoorhenKeyboardPress
 glRef.current.measurePointsArray                  src/utils/MoorhenKeyboardPress.ts
 glRef.current.measuredAtoms                       src/utils/MoorhenKeyboardPress.ts
 
-glRef.current.appendOtherData                     src/utils/MoorhenMap.ts src/utils/MoorhenMoleculeRepresentation.ts src/components/snack-bar/MoorhenTomogramSnackBar.tsx
-glRef.current.displayBuffers                      src/utils/MoorhenMap.ts src/utils/MoorhenMoleculeRepresentation.ts
 glRef.current.setOriginOrientationAndZoomAnimated src/utils/MoorhenMolecule.ts
 glRef.current.setOriginAnimated                   src/utils/MoorhenMap.ts src/utils/MoorhenMolecule.ts src/utils/MoorhenKeyboardPress.ts src/components/validation-tools/MoorhenUnmodelledBlobs.tsx src/components/validation-tools/MoorhenDifferenceMapPeaks.tsx
+glRef.current.handleOriginUpdated                 src/components/menu-item/MoorhenMultiplyBfactorMenuItem.tsx src/components/menu-item/MoorhenSetOccupancyMenuItem.tsx
+
+glRef.current.appendOtherData                     src/utils/MoorhenMap.ts src/utils/MoorhenMoleculeRepresentation.ts src/components/snack-bar/MoorhenTomogramSnackBar.tsx
+glRef.current.displayBuffers                      src/utils/MoorhenMap.ts src/utils/MoorhenMoleculeRepresentation.ts
 glRef.current.labelsTextCanvasTexture             src/utils/MoorhenMoleculeRepresentation.ts
 glRef.current.setTextFont                         src/components/card/MoorhenMoleculeCard.tsx
-glRef.current.draggableMolecule                   src/components/snack-bar/MoorhenAcceptRejectDragAtomsSnackBar.tsx
-glRef.current.handleOriginUpdated                 src/components/menu-item/MoorhenMultiplyBfactorMenuItem.tsx src/components/menu-item/MoorhenSetOccupancyMenuItem.tsx
 glRef.current.texturedShapes                      src/components/snack-bar/MoorhenTomogramSnackBar.tsx

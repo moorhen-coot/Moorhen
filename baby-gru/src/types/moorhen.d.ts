@@ -1144,6 +1144,7 @@ export namespace moorhen {
             requestBuildBuffers: boolean;
             isWebGL2: boolean;
             activeMolecule: Molecule;
+            draggableMolecule: Molecule;
             lightPosition: [number,number,number,number],
             ambient: [number,number,number,number],
             specular: [number,number,number,number],
