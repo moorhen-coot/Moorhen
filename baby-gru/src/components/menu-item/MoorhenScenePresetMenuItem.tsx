@@ -31,7 +31,6 @@ export const MoorhenScenePresetMenuItem = (props: {
                     dispatch(setFogEnd(fogClipOffset + (zoom * fieldDepthBack)))
                     dispatch(setClipStart(zoom * fieldDepthFront))
                     dispatch(setClipEnd(zoom * fieldDepthBack))
-                    props.glRef.current.doDrawClickedAtomLines = false    
                 }
                 dispatch(setRequestDrawScene(true))
                 break

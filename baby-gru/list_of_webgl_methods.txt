@@ -19,6 +19,7 @@ glRef.current.screenshotBuffersReady              src/utils/MoorhenScreenRecorde
 glRef.current.origin                              src/utils/MoorhenScreenRecorder.ts src/components/modal/MoorhenLhasaModal.tsx
 
 glRef.current.showShortCutHelp                    src/utils/MoorhenKeyboardPress.ts
+
 glRef.current.clearMeasureCylinderBuffers         src/utils/MoorhenKeyboardPress.ts
 glRef.current.labelledAtoms                       src/utils/MoorhenKeyboardPress.ts
 glRef.current.measurePointsArray                  src/utils/MoorhenKeyboardPress.ts
@@ -31,7 +32,6 @@ glRef.current.setOriginAnimated                   src/utils/MoorhenMap.ts src/ut
 glRef.current.labelsTextCanvasTexture             src/utils/MoorhenMoleculeRepresentation.ts
 glRef.current.setTextFont                         src/components/card/MoorhenMoleculeCard.tsx
 glRef.current.draggableMolecule                   src/components/snack-bar/MoorhenAcceptRejectDragAtomsSnackBar.tsx
-glRef.current.doDrawClickedAtomLines              src/utils/MoorhenTimeCapsule.ts src/components/menu-item/MoorhenScenePresetMenuItem.tsx
 glRef.current.handleOriginUpdated                 src/components/menu-item/MoorhenMultiplyBfactorMenuItem.tsx src/components/menu-item/MoorhenSetOccupancyMenuItem.tsx
 glRef.current.texturedShapes                      src/components/snack-bar/MoorhenTomogramSnackBar.tsx
 glRef.current.setViewAnimated                     src/utils/MoorhenFleetManager.ts

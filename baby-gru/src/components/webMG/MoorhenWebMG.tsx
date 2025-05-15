@@ -121,7 +121,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             dispatch(setFogEnd(glRef.current.fogClipOffset + (glRef.current.zoom * fieldDepthBack)))
             dispatch(setClipStart(glRef.current.zoom * fieldDepthFront))
             dispatch(setClipEnd(glRef.current.zoom * fieldDepthBack))
-            glRef.current.doDrawClickedAtomLines = false    
         }
     }
 

@@ -361,7 +361,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             fogStart: fogStart,
             fogEnd: fogEnd,
             zoom: zoom,
-            doDrawClickedAtomLines: this.glRef.current.doDrawClickedAtomLines,
+            doDrawClickedAtomLines: false, // This is unused as far as I can tell
             clipStart: clipStart,
             clipEnd: clipEnd,
             quat4: [quat[0], quat[1], quat[2], quat[3]],
@@ -783,7 +783,6 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         dispatch(setFogEnd(sessionData.viewData.fogEnd))
         dispatch(setClipStart(sessionData.viewData.clipStart))
         dispatch(setClipEnd(sessionData.viewData.clipEnd))
-        glRef.current.doDrawClickedAtomLines = sessionData.viewData.doDrawClickedAtomLines
         dispatch(setQuat(sessionData.viewData.quat4))
         batch(() => {
             dispatch(setBackgroundColor(sessionData.viewData.backgroundColor))
