@@ -9,6 +9,7 @@ import { Button, Form, FormSelect } from "react-bootstrap"
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect"
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect"
 import { Slider } from "@mui/material"
+import { triggerRedrawEnv } from "../../store/glRefSlice"
 
 export const MoorhenMultiplyBfactorMenuItem = (props) => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
@@ -111,7 +112,7 @@ export const MoorhenMultiplyBfactorMenuItem = (props) => {
             props.setPopoverIsShown(false)
             selectedMolecule.setAtomsDirty(true)
             await selectedMolecule.redraw()
-            selectedMolecule.glRef.current.handleOriginUpdated(false)
+            dispatch(triggerRedrawEnv(true))
             document.body.click()    
         } else {
             if (ruleSelectRef.current.value === 'cid') setInvalidCid(true)

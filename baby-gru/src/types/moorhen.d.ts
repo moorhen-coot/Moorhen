@@ -1159,6 +1159,7 @@ export namespace moorhen {
             clipEnd: number,
             cursorPosition: [number,number],
             shortCutHelp: string[],
+            envUpdate: {switch: boolean }
         };
         overlays: {
             imageOverlayList: any[]

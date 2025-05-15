@@ -114,7 +114,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const fogEnd = useSelector((state: moorhen.State) => state.glRef.fogEnd)
     const clipStart = useSelector((state: moorhen.State) => state.glRef.clipStart)
     const clipEnd = useSelector((state: moorhen.State) => state.glRef.clipEnd)
-
+    const updateSwitch = useSelector((state: moorhen.State) => state.glRef.envUpdate.switch)
 
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
@@ -535,6 +535,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.setBackground(backgroundColor)
         }
     }, [backgroundColor, glRef])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.handleOriginUpdated(false)
+            glRef.current.drawScene()
+        }
+    }, [updateSwitch])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
