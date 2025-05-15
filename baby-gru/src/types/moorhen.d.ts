@@ -1156,6 +1156,7 @@ export namespace moorhen {
             fogEnd: number,
             clipStart: number,
             clipEnd: number,
+            cursorPosition: [number,number],
         };
     }
 

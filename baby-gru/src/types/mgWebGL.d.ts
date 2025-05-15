@@ -332,6 +332,7 @@ interface MGWebGLPropsInterface {
                     onZoomChanged : (newZoom: number) =>  void;
                     onOriginChanged : (newOrigin: [number,number,number]) =>  void;
                     onQuatChanged : (newQuat: [number,number,number,number]) =>  void;
+                    cursorPositionChanged : (x: number, y: number) =>  void;
                     messageChanged : ((d:Dictionary<string>) => void);
                     mouseSensitivityFactor :  number | null;
                     zoomWheelSensitivityFactor :  number | null;

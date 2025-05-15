@@ -18,7 +18,6 @@ glRef.current.save_pixel_data                     src/utils/MoorhenScreenRecorde
 glRef.current.screenshotBuffersReady              src/utils/MoorhenScreenRecorder.ts
 glRef.current.origin                              src/utils/MoorhenScreenRecorder.ts src/components/modal/MoorhenLhasaModal.tsx
 
-glRef.current.getFrontAndBackPos                  src/utils/MoorhenKeyboardPress.ts
 glRef.current.showShortCutHelp                    src/utils/MoorhenKeyboardPress.ts
 glRef.current.clearMeasureCylinderBuffers         src/utils/MoorhenKeyboardPress.ts
 glRef.current.labelledAtoms                       src/utils/MoorhenKeyboardPress.ts

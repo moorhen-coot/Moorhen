@@ -20,7 +20,8 @@ const initialState = {
     fogStart: 250,
     fogEnd: 1250,
     clipStart: 0,
-    clipEnd: 1000
+    clipEnd: 1000,
+    cursorPosition: [0,0]
     //TODO
     // clip
 }
@@ -80,12 +81,15 @@ export const glRefSlice = createSlice({
     setClipEnd: (state, action: {payload: number, type: string}) => {
         return { ...state, clipEnd: action.payload }
     },
+    setCursorPosition: (state, action: {payload: [number,number], type: string}) => {
+        return { ...state, cursorPosition: action.payload }
+    },
 }})
 
 export const { 
     setOrigin, setRequestDrawScene, setRequestBuildBuffers, setIsWebGL2, setActiveMolecule,
     setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setZoom,
-    setQuat, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd
+    setQuat, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd, setCursorPosition
 } = glRefSlice.actions
 
 export default glRefSlice.reducer

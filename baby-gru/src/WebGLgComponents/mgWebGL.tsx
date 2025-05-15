@@ -6708,10 +6708,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const self = this;
         let x = this.gl_cursorPos[0];
         let y = this.canvas.height - this.gl_cursorPos[1];
-        x *= getDeviceScale();
-        y *= getDeviceScale();
-
-        //document.getElementById("info").innerHTML="Click: "+event.x+" "+event.y;
         let invQuat = quat4.create();
         quat4Inverse(self.myQuat, invQuat);
         const theMatrix = quatToMat4(invQuat);
@@ -8798,6 +8794,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
             this.gl_cursorPos[0] = x;
             this.gl_cursorPos[1] = this.canvas.height - y;
+            this.props.cursorPositionChanged(x/getDeviceScale(),y/getDeviceScale()) //I am updating this in real window coords
         }
         if (!self.mouseDown) {
             self.init_x = event.pageX;

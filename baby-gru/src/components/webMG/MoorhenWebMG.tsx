@@ -9,7 +9,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
 import { useSnackbar } from 'notistack';
 import { setQuat, setOrigin, setRequestDrawScene, setRequestBuildBuffers, setZoom,
-         setClipStart, setClipEnd, setFogStart, setFogEnd } from "../../store/glRefSlice"
+         setClipStart, setClipEnd, setFogStart, setFogEnd, setCursorPosition } from "../../store/glRefSlice"
 
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
@@ -576,6 +576,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         dispatch(setQuat(newQuat))
     })
 
+    const cursorPositionChanged = ((x,y) => {
+        dispatch(setCursorPosition([x,y]))
+    })
+
     return  <>
                 <MGWebGL
                     ref={glRef}
@@ -584,6 +588,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     onZoomChanged={onZoomChanged}
                     onOriginChanged={onOriginChanged}
                     onQuatChanged={onQuatChanged}
+                    cursorPositionChanged={cursorPositionChanged}
                     messageChanged={(d) => { }}
                     mouseSensitivityFactor={mouseSensitivity}
                     zoomWheelSensitivityFactor={zoomWheelSensitivityFactor}

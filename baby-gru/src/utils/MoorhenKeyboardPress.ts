@@ -54,6 +54,33 @@ export const moorhenKeyPress = (
     const fogEnd = store.getState().glRef.fogEnd
     const clipStart = store.getState().glRef.clipStart
     const clipEnd = store.getState().glRef.clipEnd
+    const width = store.getState().sceneSettings.width
+    const height = store.getState().sceneSettings.height
+    const cursorPosition = store.getState().glRef.cursorPosition
+
+    const getFrontAndBackPos = () : [number[], number[], number, number] =>  {
+        let x = cursorPosition[0];
+        let y = cursorPosition[1];
+        let invQuat = quat4.create();
+        quat4Inverse(myQuat, invQuat);
+        const theMatrix = quatToMat4(invQuat);
+        const ratio = width / height;
+        const minX = (-24. * ratio * zoom);
+        const maxX = (24. * ratio * zoom);
+        const minY = (-24. * zoom);
+        const maxY = (24. * zoom);
+        const fracX = 1.0 * x / width
+        const fracY = 1.0 * (y) / height
+        const theX = minX + fracX * (maxX - minX);
+        const theY = maxY - fracY * (maxY - minY);
+        let frontPos = vec3Create([theX, theY, -clipStart]); // Maybe should be -clipStart
+        let backPos = vec3Create([theX, theY, clipEnd]);
+        vec3.transformMat4(frontPos, frontPos, theMatrix);
+        vec3.transformMat4(backPos, backPos, theMatrix);
+        vec3.subtract(frontPos, frontPos, originState);
+        vec3.subtract(backPos, backPos, originState);
+        return [frontPos, backPos, x*getDeviceScale(), y*getDeviceScale()];
+    }
 
     const doAtomInfo = async (): Promise<boolean> => {
         if (hoveredAtom.molecule) {
@@ -228,7 +255,7 @@ export const moorhenKeyPress = (
 
     else if (action === 'go_to_blob' && activeMap && !viewOnly) {
         showShortcutToast && enqueueSnackbar("Go to blob", { variant: "info"})
-        const frontAndBack: [number[], number[], number, number] = glRef.current.getFrontAndBackPos(event);
+        const frontAndBack: [number[], number[], number, number] = getFrontAndBackPos()
         const goToBlobEvent = {
             back: [frontAndBack[0][0], frontAndBack[0][1], frontAndBack[0][2]],
             front: [frontAndBack[1][0], frontAndBack[1][1], frontAndBack[1][2]],
