@@ -1065,7 +1065,6 @@ export class MoorhenMap implements moorhen.Map {
                 return
             }
         }
-        //this.glRef.current.setOriginAnimated(this.mapCentre)
         this.store.dispatch(setOrigin(this.mapCentre))
     }
 

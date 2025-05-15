@@ -20,7 +20,7 @@ import { libcootApi } from '../types/libcoot';
 import { privateer } from '../types/privateer';
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
 import { ToolkitStore } from '@reduxjs/toolkit/dist/configureStore';
-import { setRequestDrawScene, setOrigin, setZoom } from "../store/glRefSlice"
+import { setRequestDrawScene, setOrigin, setZoom, setQuat } from "../store/glRefSlice"
 
 /**
  * Represents a molecule
@@ -302,7 +302,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 const generators = assembly.generators
                 const n_gen = generators.size()
                 console.log("n_gen",n_gen)
-                for (let i_gen=0; i_gen < n_gen; i_gen++) { 
+                for (let i_gen=0; i_gen < n_gen; i_gen++) {
                     const gen = generators.get(i_gen)
                     const operators = gen.operators
                     const n_op = operators.size()
@@ -1168,7 +1168,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
         let selectionCentre = centreOnGemmiAtoms(selectionAtomsCentre)
         if (newQuat) {
             this.store.dispatch(setOrigin(selectionCentre))
-            this.glRef.current.setOriginOrientationAndZoomAnimated(selectionCentre, newQuat, zoomLevel);
+            this.store.dispatch(setQuat(newQuat))
+            this.store.dispatch(setZoom(zoomLevel))
+
         } else {
             await this.centreOn(selectionCid, true, true)
         }
@@ -1202,15 +1204,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
 
         let selectionCentre = centreOnGemmiAtoms(selectionAtoms)
-        if (animate && doSetZoom) {
-            this.store.dispatch(setOrigin(selectionCentre))
-            //FIXME
-            this.glRef.current.setOriginAndZoomAnimated(selectionCentre, zoomLevel)
-        } else if (animate) {
-            this.store.dispatch(setOrigin(selectionCentre))
-            //FIXME
-            this.glRef.current.setOriginAnimated(selectionCentre)
-        } else if (doSetZoom) {
+        if (doSetZoom) {
             this.store.dispatch(setOrigin(selectionCentre))
             this.store.dispatch(setZoom(zoomLevel))
         } else {
@@ -2650,13 +2644,13 @@ export class MoorhenMolecule implements moorhen.Molecule {
                     command: 'get_coord_header_info',
                     commandArgs: [docString,dummy_name],
                     returnType: 'header_info_gemmi_t'
-                }, true) as moorhen.WorkerResponse<libcootApi.headerInfoGemmiJS> : 
+                }, true) as moorhen.WorkerResponse<libcootApi.headerInfoGemmiJS> :
                 await this.commandCentre.current.cootCommand({
                     command: 'get_coord_header_info',
                     commandArgs: [coordString,dummy_name],
                     returnType: 'header_info_gemmi_t'
                 }, true) as moorhen.WorkerResponse<libcootApi.headerInfoGemmiJS>
-        
+
         if (useCache && this.headerInfo !== null) {
             return this.headerInfo
         }
