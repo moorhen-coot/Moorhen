@@ -18,6 +18,7 @@ import lhasaReducer from './lhasaSlice'
 import jsonValidationReducer from './jsonValidation'
 import mrParseSliceReducer from './mrParseSlice'
 import glRefSliceReducer from './glRefSlice'
+import overlaysSliceReducer from './overlaysSlice'
 
 export default configureStore({
     reducer: {
@@ -40,6 +41,7 @@ export default configureStore({
         jsonValidation: jsonValidationReducer,
         mrParse: mrParseSliceReducer,
         glRef: glRefSliceReducer,
+        overlays: overlaysSliceReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

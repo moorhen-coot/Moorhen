@@ -1158,6 +1158,13 @@ export namespace moorhen {
             clipEnd: number,
             cursorPosition: [number,number],
         };
+        overlays: {
+            imageOverlayList: any[]
+            textOverlayList: any[]
+            svgPathOverlayList: any[]
+            fracPathOverlayList: any[]
+            callBacks: any[]
+        }
     }
 
     type actionButtonSettings = {
