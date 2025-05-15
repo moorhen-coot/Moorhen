@@ -1,8 +1,14 @@
 # Moorhen
 A JavaScript molecular graphics program
 
-### For 0.21.1
+### For 0.23.0
 - [ ] Ability to set origin/zoom/individual rotation in "Multiple views for different molecules".
+
+### For 0.22.0
+- [ ] Remove glRef method usage.
+   - [ ] Reduce list of glRef usage in to zero entries.
+   - [ ] Fix map recontouring when alt-click centering.
+   - [ ] Restore animated zooming.
 
 ### For 0.21.0
 - [x] Fix 64-bit test in CootWorker, it looks a bit dodgy.
