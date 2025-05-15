@@ -111,6 +111,6 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                             onChange={(evt) => { loadExampleOverlays(evt) }}
                             label="Load example 2D overlays"/>
                     </InputGroup>
-                    
+
         </>
     }

@@ -17,9 +17,13 @@ export const Moorhen2DOverlay = ((props) => {
     const fracPathOverlays = useSelector((state: moorhen.State) => state.overlays.fracPathOverlayList)
     const callbacks = useSelector((state: moorhen.State) => state.overlays.callBacks)
 
+    const helpText = useSelector((state: moorhen.State) => state.glRef.shortCutHelp)
+
     const canvas2DRef = useRef<HTMLCanvasElement>(null)
 
     const [images, setImages] = useState<ImageFrac2D[]>([])
+
+    const ratio = Math.ceil(window.devicePixelRatio);
 
     interface ImageFrac2D {
         x: number
@@ -50,12 +54,30 @@ export const Moorhen2DOverlay = ((props) => {
         if(!canvas2DRef.current) return
         const canvas2D_ctx = getContext()
         if(!canvas2D_ctx) return
-        canvas2DRef.current.width = width
-        canvas2DRef.current.height = height
+        canvas2DRef.current.width = width * ratio
+        canvas2DRef.current.height = height * ratio
+        canvas2DRef.current.style.width = `${width}px`
+        canvas2DRef.current.style.height = `${height}px`
 
+        canvas2D_ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
         canvas2D_ctx.clearRect(0,0,canvas2DRef.current.width,canvas2DRef.current.height)
 
         const bright_y = backgroundColor[0] * 0.299 + backgroundColor[1] * 0.587 + backgroundColor[2] * 0.114
+
+        let help_y = 90 // This is a bit bigger than the bird hopefully
+        canvas2D_ctx.font = "12px helvetica"
+        const textMetric = canvas2D_ctx.measureText("Mgq!^(){}|'\"~`√∫Å");
+        const actualHeight = textMetric.fontBoundingBoxAscent + textMetric.fontBoundingBoxDescent;
+
+        helpText.toReversed().forEach(t => {
+            if(bright_y<0.5)
+               canvas2D_ctx.fillStyle = "white"
+            else
+               canvas2D_ctx.fillStyle = "black"
+            canvas2D_ctx.fillText(t,10,help_y)
+            help_y += actualHeight
+        })
+
         textOverlays.forEach(t => {
             canvas2D_ctx.font = t.font
             if(t.drawStyle==="stroke"){
@@ -67,7 +89,7 @@ export const Moorhen2DOverlay = ((props) => {
                     else
                         canvas2D_ctx.strokeStyle = "black"
                 }
-                canvas2D_ctx.strokeText(t.text,t.x*canvas2DRef.current.width,t.y*canvas2DRef.current.height)
+                canvas2D_ctx.strokeText(t.text,t.x*canvas2DRef.current.width/ratio,t.y*canvas2DRef.current.height/ratio)
             } else {
                 if(t.fillStyle){
                     canvas2D_ctx.fillStyle = t.fillStyle
@@ -77,7 +99,7 @@ export const Moorhen2DOverlay = ((props) => {
                     else
                         canvas2D_ctx.fillStyle = "black"
                 }
-                canvas2D_ctx.fillText(t.text,t.x*canvas2DRef.current.width,t.y*canvas2DRef.current.height)
+                canvas2D_ctx.fillText(t.text,t.x*canvas2DRef.current.width/ratio,t.y*canvas2DRef.current.height/ratio)
             }
         })
 
@@ -117,7 +139,7 @@ export const Moorhen2DOverlay = ((props) => {
         })
         images.forEach(img => {
             if(img.img){
-               canvas2D_ctx.drawImage(img.img,canvas2DRef.current.width*img.x,canvas2DRef.current.height*img.y,img.width,img.height)
+               canvas2D_ctx.drawImage(img.img,canvas2DRef.current.width/ratio*img.x,canvas2DRef.current.height/ratio*img.y,img.width,img.height)
             }
         })
 
@@ -136,10 +158,10 @@ export const Moorhen2DOverlay = ((props) => {
                 if(t.fillStyle&&t.drawStyle!=="gradient"){
                     canvas2D_ctx.fillStyle = t.fillStyle
                 } else if(t.drawStyle==="gradient"){
-                    const grad_x0 = canvas2DRef.current.width*t.gradientBoundary[0]
-                    const grad_y0 = canvas2DRef.current.height*t.gradientBoundary[1]
-                    const grad_x1 = canvas2DRef.current.width*t.gradientBoundary[2]
-                    const grad_y1 = canvas2DRef.current.height*t.gradientBoundary[3]
+                    const grad_x0 = canvas2DRef.current.width/ratio*t.gradientBoundary[0]
+                    const grad_y0 = canvas2DRef.current.height/ratio*t.gradientBoundary[1]
+                    const grad_x1 = canvas2DRef.current.width/ratio*t.gradientBoundary[2]
+                    const grad_y1 = canvas2DRef.current.height/ratio*t.gradientBoundary[3]
                     const grad=canvas2D_ctx.createLinearGradient(grad_x0,grad_y0,grad_x1,grad_y1)
                     t.gradientStops.forEach(stop => {
                         grad.addColorStop(stop[0], stop[1])
@@ -152,9 +174,9 @@ export const Moorhen2DOverlay = ((props) => {
                         canvas2D_ctx.fillStyle = "black"
                 }
             }
-            canvas2D_ctx.moveTo(canvas2DRef.current.width*t.path[0][0],canvas2DRef.current.height*t.path[0][1])
+            canvas2D_ctx.moveTo(canvas2DRef.current.width/ratio*t.path[0][0],canvas2DRef.current.height/ratio*t.path[0][1])
             for(let i=0;i<t.path.length;i++){
-                canvas2D_ctx.lineTo(canvas2DRef.current.width*t.path[i][0],canvas2DRef.current.height*t.path[i][1])
+                canvas2D_ctx.lineTo(canvas2DRef.current.width/ratio*t.path[i][0],canvas2DRef.current.height/ratio*t.path[i][1])
             }
             if(t.drawStyle==="stroke"){
                 canvas2D_ctx.stroke()

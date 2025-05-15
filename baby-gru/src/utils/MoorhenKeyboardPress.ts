@@ -12,7 +12,7 @@ import { useSelector } from 'react-redux';
 import { setHoveredAtom } from "../store/hoveringStatesSlice";
 import { changeMapRadius } from "../store/mapContourSettingsSlice";
 import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
-import { setOrigin, setRequestDrawScene, setZoom, setQuat,
+import { setOrigin, setRequestDrawScene, setZoom, setQuat, setShortCutHelp,
          setClipStart, setClipEnd, setFogStart, setFogEnd } from "../store/glRefSlice";
 import { EnqueueSnackbar, closeSnackbar } from "notistack";
 import store from '../store/MoorhenReduxStore'
@@ -57,6 +57,7 @@ export const moorhenKeyPress = (
     const width = store.getState().sceneSettings.width
     const height = store.getState().sceneSettings.height
     const cursorPosition = store.getState().glRef.cursorPosition
+    const shortCutHelp = store.getState().glRef.shortCutHelp
 
     const getFrontAndBackPos = () : [number[], number[], number, number] =>  {
         let x = cursorPosition[0];
@@ -362,8 +363,10 @@ export const moorhenKeyPress = (
     }
 
     else if (action === 'show_shortcuts') {
-        if (!glRef.current.showShortCutHelp) {
-            glRef.current.showShortCutHelp = Object.keys(shortCuts).filter(key => !viewOnly || shortCuts[key].viewOnly).map(key => {
+        let showShortCutHelp: string[] = [];
+
+        if(shortCutHelp.length===0){
+            showShortCutHelp = Object.keys(shortCuts).filter(key => !viewOnly || shortCuts[key].viewOnly).map(key => {
                 let modifiers = []
                 if (shortCuts[key].modifiers.includes('shiftKey')) modifiers.push("<Shift>")
                 if (shortCuts[key].modifiers.includes('ctrlKey')) modifiers.push("<Ctrl>")
@@ -372,16 +375,15 @@ export const moorhenKeyPress = (
                 if (shortCuts[key].keyPress === " ") modifiers.push("<Space>")
                 return `${modifiers.join("-")} ${shortCuts[key].keyPress} ${shortCuts[key].label}`
             })
-            glRef.current.showShortCutHelp.push(`<Shift><Alt> Translate View`)
-            glRef.current.showShortCutHelp.push(`<Shift> Rotate View`)
-            glRef.current.showShortCutHelp.push(`Double click go to blob`)
-            glRef.current.showShortCutHelp.push(`<Ctrl><Scroll> Change active map contour lvl.`)
-            dispatch(setRequestDrawScene(true))
+            showShortCutHelp.push(`<Shift><Alt> Translate View`)
+            showShortCutHelp.push(`<Shift> Rotate View`)
+            showShortCutHelp.push(`Double click go to blob`)
+            showShortCutHelp.push(`<Ctrl><Scroll> Change active map contour lvl.`)
         } else  {
-            glRef.current.showShortCutHelp = null
-            dispatch(setRequestDrawScene(true))
+            showShortCutHelp = []
         }
-        showShortcutToast && enqueueSnackbar(glRef.current.showShortCutHelp ? 'Show help' : 'Hide help', { variant: "info"})
+        dispatch(setShortCutHelp(showShortCutHelp))
+        showShortcutToast && enqueueSnackbar((showShortCutHelp.length>0) ? 'Show help' : 'Hide help', { variant: "info"})
         return false
     }
 
