@@ -32,4 +32,3 @@ glRef.current.setTextFont                         src/components/card/MoorhenMol
 glRef.current.draggableMolecule                   src/components/snack-bar/MoorhenAcceptRejectDragAtomsSnackBar.tsx
 glRef.current.handleOriginUpdated                 src/components/menu-item/MoorhenMultiplyBfactorMenuItem.tsx src/components/menu-item/MoorhenSetOccupancyMenuItem.tsx
 glRef.current.texturedShapes                      src/components/snack-bar/MoorhenTomogramSnackBar.tsx
-glRef.current.setViewAnimated                     src/utils/MoorhenFleetManager.ts
