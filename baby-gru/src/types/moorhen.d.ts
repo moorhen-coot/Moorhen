@@ -1138,6 +1138,9 @@ export namespace moorhen {
             AFDisplaySettings: any;
             HomologsDisplaySettings: any;
         };
+        menus: {
+            settings: Record<string, Record<string, any>>;
+        }
     }
 
     type actionButtonSettings = {
