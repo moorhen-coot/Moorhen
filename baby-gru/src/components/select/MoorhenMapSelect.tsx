@@ -9,6 +9,7 @@ type MoorhenMapSelectPropsType = {
     maps: moorhen.Map[];
     filterFunction?: (arg0: moorhen.Map) => boolean;
     onChange?: (arg0: React.ChangeEvent<HTMLSelectElement>) => void;
+    defaultValue?: number;
 }
 
 /**
@@ -19,6 +20,7 @@ type MoorhenMapSelectPropsType = {
  * @property {moorhen.Map[]} maps List of maps displayed in the selector options
  * @property {function} filterFunction A function that takes a moorhen.Map as input and returns a boolean: true if the map is to be included in the options.
  * @property {function} onChange A function that is called when the user changes the selector option
+ * @property {number} [defaultValue=-999999] The default value of the selector
  * @example
  * import { MoorhenMapSelect } from "moorhen";
  * import { useRef } from "react";
@@ -62,7 +64,7 @@ export const MoorhenMapSelect = forwardRef<HTMLSelectElement, MoorhenMapSelectPr
 
     return <Form.Group style={{ width: width, margin: '0.5rem', height:height }}>
         <Form.Label>{label}</Form.Label>
-        <FormSelect size="sm" ref={selectRef} defaultValue={-999999} onChange={handleChange}>
+        <FormSelect size="sm" ref={selectRef} defaultValue={props.defaultValue || -999999} onChange={handleChange}>
             {getMapOptions()}
         </FormSelect>
     </Form.Group>
