@@ -734,7 +734,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.nPrevFrames = 0;
         this.prevTime = performance.now();
         this.fpsText = "";
-        this.showShortCutHelp = null;
         this.mspfArray = [];
         this.pointsArray = [];
         this.mouseTrackPoints = [];
@@ -8497,16 +8496,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 }
                 lastPoint = point;
             })
-        }
-
-        if(this.showShortCutHelp) {
-            const fontSize = this.gl.viewportHeight * 0.018
-            const font = `${fontSize > 16 ? 16 : fontSize}px helvetica`
-            this.showShortCutHelp.forEach((shortcut, index) => {
-                const xpos = -23.5 * ratio
-                const ypos = -21.5 + index
-                drawString(shortcut, xpos, ypos, 0.0, font, false)
-            });
         }
 
         //Do we ever have any newTextLabels?
