@@ -10,7 +10,8 @@ type MoorhenMapSelectPropsType = {
     filterFunction?: (arg0: moorhen.Map) => boolean;
     onChange?: (arg0: React.ChangeEvent<HTMLSelectElement>) => void;
     defaultValue?: number;
-}
+    selectRef?: React.Ref<HTMLSelectElement>;
+};
 
 /**
  * A map selector react component
@@ -24,49 +25,57 @@ type MoorhenMapSelectPropsType = {
  * @example
  * import { MoorhenMapSelect } from "moorhen";
  * import { useRef } from "react";
- * 
+ *
  * const mapSelectRef = useRef(null);
- * 
+ *
  * const handleMapChange = (evt) => {
  *  const selectedMap = parseInt(evt.target.value)
  *  console.log(`New selected map is ${selectedMap}`)
  * }
- * 
+ *
  * return (
  *  <MoorhenMapSelect ref={mapSelectRef} filterFunction={(map) => !map.hasReflectionData} width='100%' label='Select a map' onChange={handleMapChange} />
  * )
  */
 export const MoorhenMapSelect = forwardRef<HTMLSelectElement, MoorhenMapSelectPropsType>((props, selectRef) => {
-
-    const defaultProps = { height: '4rem', width: '20rem', maps: null, label: "Map", filterFunction: () => true }
-
-    const {
-        height, width, maps, label, filterFunction
-    } = { ...defaultProps, ...props }
+    
+    const { 
+        height = "4rem",
+        width = "20rem",
+        maps = null,
+        label = "Map",
+        filterFunction = () => true,
+        defaultValue = -999999
+    } = props;
 
     const handleChange = (evt: ChangeEvent<HTMLSelectElement>) => {
-        props.onChange?.(evt)
-    }
+        props.onChange?.(evt);
+    };
 
     const getMapOptions = () => {
-        let mapOptions: JSX.Element[] = []
-        
+        let mapOptions: JSX.Element[] = [];
+
         if (maps) {
-            maps.forEach(map => {
-                if(filterFunction(map)){
-                    mapOptions.push(<option key={map.molNo} value={map.molNo}>{map.molNo}: {map.name}</option>)
+            maps.forEach((map) => {
+                if (filterFunction(map)) {
+                    mapOptions.push(
+                        <option key={map.molNo} value={map.molNo}>
+                            {map.molNo}: {map.name}
+                        </option>
+                    );
                 }
-            })
+            });
         }
 
-        return mapOptions.length > 0 ? mapOptions : null
-    }
+        return mapOptions.length > 0 ? mapOptions : null;
+    };
 
-    return <Form.Group style={{ width: width, margin: '0.5rem', height:height }}>
-        <Form.Label>{label}</Form.Label>
-        <FormSelect size="sm" ref={selectRef} defaultValue={props.defaultValue || -999999} onChange={handleChange}>
-            {getMapOptions()}
-        </FormSelect>
-    </Form.Group>
-})
-
+    return (
+        <Form.Group style={{ width: width, margin: "0.5rem", height: height }}>
+            <Form.Label>{label}</Form.Label>
+            <FormSelect size="sm" ref={selectRef} defaultValue={defaultValue || -999999} onChange={handleChange}>
+                {getMapOptions()}
+            </FormSelect>
+        </Form.Group>
+    );
+});

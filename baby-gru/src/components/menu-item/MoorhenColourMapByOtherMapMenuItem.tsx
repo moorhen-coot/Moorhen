@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
-import { useDispatch, useSelector, batch } from 'react-redux';
-import { setMenuSetting } from '../../store/menusSlice'; 
+import { useEffect, useRef } from "react";
+import { useDispatch, useSelector } from 'react-redux';
+import { useMenuMemory, useMenuStateMemory, dispatchMenuMemory } from '../../store/menusSlice'; 
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
@@ -9,25 +9,24 @@ import { Button } from "react-bootstrap";
 import { Checkbox } from "@mui/material";
 import { Stack } from "@mui/material";
 import { MoorhenSlider } from "../inputs/MoorhenSlider-new";
+import { get } from "http";
 
 export const MoorhenColourMapByOtherMapMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
     glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
-    const menu = 'colourMapByOtherMap';
     const dispatch = useDispatch();
+    const menu ='colour-map-by-other-map-menu-item';
     const maps = useSelector((state: moorhen.State) => state.maps);
 
-    const storedMinMaxValue: [number, number] = useSelector((state: moorhen.State) => state.menus.settings[menu]?.['minMaxValue']);
-
-    const storedMap1: number = useSelector((state: moorhen.State) => state.menus.settings[menu]?.['map1']);
-    const storedMap2: number = useSelector((state: moorhen.State) => state.menus.settings[menu]?.['map2']);
+    const [minMaxValue, setMinMaxValue] = useMenuStateMemory<[number, number]>(menu, 'minMaxValue', [-1, 1]);
+    const map1 = useMenuMemory<number>(menu, 'map1', -999999);
+    const map2 = useMenuMemory<number>(menu, 'map2', -999999);
 
     const mapSelectRef_1 = useRef<null | HTMLSelectElement>(null);
     const mapSelectRef_2 = useRef<null | HTMLSelectElement>(null);
-
-    const [minMaxValue, setMinMaxValue] = useState<[number, number]>(storedMinMaxValue || [-1, 1]);
-    const [locRes, setLocRes] = useState<boolean>(false);
+   
+    const [locRes, setLocRes] = useMenuStateMemory<boolean>(menu, 'locRes', false, dispatch);
 
     const handleCancel = (_evt) => {
         document.body.click();
@@ -48,11 +47,12 @@ export const MoorhenColourMapByOtherMapMenuItem = (props: {
     };
 
     const handleApply = () => {
-        batch(() => {
-            dispatch(setMenuSetting({ menu: menu, key: 'minMaxValue', value: minMaxValue }));
-            dispatch(setMenuSetting({ menu: menu, key: 'map1', value: mapSelectRef_1.current.value }));
-            dispatch(setMenuSetting({ menu: menu, key: 'map2', value: mapSelectRef_2.current.value }));
-        });
+
+        dispatchMenuMemory(dispatch, menu, [
+            { key: 'minMaxValue', value: minMaxValue },
+            { key: 'map1', value: mapSelectRef_1.current.value },
+            { key: 'map2', value: mapSelectRef_2.current.value }
+        ]);
 
         if (!mapSelectRef_1.current.value || !mapSelectRef_2.current.value) {
             return;
@@ -102,8 +102,8 @@ export const MoorhenColourMapByOtherMapMenuItem = (props: {
     }, [locRes]);
 
     const panelContent = <>
-        <MoorhenMapSelect maps={maps} ref={mapSelectRef_1} label="Colour this map..." defaultValue={storedMap1 || null} />
-        <MoorhenMapSelect maps={maps} ref={mapSelectRef_2} label="By this map..." defaultValue={storedMap2 || null} onChange={handleSelectorChange} />
+        <MoorhenMapSelect maps={maps} ref={mapSelectRef_1} label="Colour this map..." defaultValue={map1 || null} />
+        <MoorhenMapSelect maps={maps} ref={mapSelectRef_2} label="By this map..." defaultValue={map2 || null} onChange={handleSelectorChange} />
         <Checkbox
             checked={locRes}
             onChange={(evt) => setLocRes(evt.target.checked)}
