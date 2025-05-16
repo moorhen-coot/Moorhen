@@ -118,6 +118,7 @@ import { TexturedShape } from './texturedShape'
 import { TextCanvasTexture } from './textCanvasTexture'
 import { DisplayBuffer } from './displayBuffer'
 import { createQuatFromDXAngle, createQuatFromAngle, createXQuatFromDX, createYQuatFromDY, createZQuatFromDX, quatSlerp } from './quatUtils'
+import { createWebGLBuffers } from './createWebGLBuffers'
 
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShadowShaders, initPointSpheresShaders } from './mgWebGLShaders'
 
@@ -293,7 +294,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         gl_cursorPos: Float32Array;
         textCtx: CanvasRenderingContext2D;
         circleCtx: CanvasRenderingContext2D;
-        currentBufferIdx: number;
         atom_span: number;
         axesColourBuffer: WebGLBuffer;
         axesIndexBuffer: WebGLBuffer;
@@ -1160,7 +1160,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl_clipPlane7 = null;
 
         this.displayBuffers = [];
-        this.currentBufferIdx = -1;
 
         this.save_pixel_data = false;
         this.renderToTexture = false;
@@ -1773,19 +1772,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     appendOtherData(jsondata: any, skipRebuild?: boolean, name?: string) : any {
-        //console.log("**************************************************");
-        //console.log("appendOtherData");
-        //console.log(jsondata);
-        //console.log("**************************************************");
-        //This can be used to *add* arbitrary triangles to a scene. Not much luck with replacing scene by this, yet.
-        //This currently deals with actual numbers rather than the uuencoded stuff we get from server, but it will
-        //be changed to handle both.
-
-        //Might also be nice to use this as a test-bed for creating more abstract primitives: circles, squares, stars, etc.
 
         const self = this;
 
-        var theseBuffers = [];
+        const theseBuffers = [];
 
         if(jsondata.image_data){
             if(jsondata.width && jsondata.height && jsondata.x_size && jsondata.y_size){
@@ -1802,6 +1792,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             self.drawScene();
             return theseBuffers;
         }
+
         for (let idat = 0; idat < jsondata.norm_tri.length; idat++) {
             if(jsondata.prim_types){
                 if(jsondata.prim_types[idat].length>0){
@@ -1827,239 +1818,37 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 }
             }
 
-            //self.currentBufferIdx = idat;
-            self.currentBufferIdx = self.displayBuffers.length;
-            self.displayBuffers.push(new DisplayBuffer());
-            theseBuffers.push(self.displayBuffers[self.currentBufferIdx]);
+            const theBuffer = createWebGLBuffers(jsondata,idat,this.gl)
 
-            let rssentries = jsondata.norm_tri[idat];
-            const norms = rssentries;
-            for (let i = 0; i < norms.length; i++) {
-                self.createNormalBuffer(norms[i]);
-            }
+            self.displayBuffers.push(theBuffer);
+            theseBuffers.push(theBuffer);
 
-            if (jsondata.instance_origins) {
-                rssentries = jsondata.instance_origins[idat];
-                if(rssentries){
-                    let instance_origins = rssentries;
-                    for (let i = 0; i < instance_origins.length; i++) {
-                        self.createInstanceOriginsBuffer(instance_origins[i]);
-                    }
-                }
-            }
-
-            if (jsondata.instance_sizes) {
-                rssentries = jsondata.instance_sizes[idat];
-                if(rssentries){
-                    let instance_sizes = rssentries;
-                    for (let i = 0; i < instance_sizes.length; i++) {
-                        self.createInstanceSizesBuffer(instance_sizes[i]);
-                    }
-                }
-            }
-
-            if (jsondata.instance_orientations) {
-                rssentries = jsondata.instance_orientations[idat];
-                if(rssentries){
-                    let instance_orientations = rssentries;
-                    for (let i = 0; i < instance_orientations.length; i++) {
-                        self.createInstanceOrientationsBuffer(instance_orientations[i]);
-                    }
-                }
-            }
-
-            if (jsondata.additional_norm_tri) {
-                rssentries = jsondata.additional_norm_tri[idat];
-                let add_norms = rssentries;
-                for (let i = 0; i < add_norms.length; i++) {
-                    self.createRealNormalBuffer(add_norms[i]); //This is dummy data. It will be blatted.
-                }
-            }
-
-            rssentries = jsondata.vert_tri[idat];
-            const tris = rssentries;
-            //console.log(rssentries);
-
-            for (let i = 0; i < tris.length; i++) {
-                self.createVertexBuffer(tris[i]);
-            }
-
-            rssentries = jsondata.idx_tri[idat];
-            var idxs = rssentries;
-            //console.log(rssentries);
-
-            for (let i = 0; i < idxs.length; i++) {
-                for (var j = 0; j < idxs[i].length; j++) {
-                }
-                self.createIndexBuffer(idxs[i]);
-            }
-
-            if (typeof (jsondata.instance_use_colors) !== "undefined") {
-                if (typeof (jsondata.instance_use_colors[idat]) !== "undefined") {
-                    rssentries = jsondata.instance_use_colors[idat];
-                    if(rssentries){
-                        for (let i = 0; i < rssentries.length; i++) {
-                            self.addSupplementaryInfo(rssentries[i], "instance_use_colors");
+            if(jsondata.isHoverBuffer){
+                theBuffer.isHoverBuffer = jsondata.isHoverBuffer;
+                let maxSize = 0.27;
+                for (let idx = 0; idx < this.displayBuffers.length; idx++) {
+                    if (this.displayBuffers[idx].atoms.length > 0) {
+                        for(let ibuf2=0;ibuf2<this.displayBuffers[idx].bufferTypes.length;ibuf2++){
+                            if(this.displayBuffers[idx].bufferTypes[ibuf2]==="PERFECT_SPHERES"){
+                                if(this.displayBuffers[idx].triangleInstanceSizes[ibuf2][0]>0.27&&!this.displayBuffers[idx].isHoverBuffer&&this.displayBuffers[idx].visible){
+                                    let nhits = 0
+                                    theseBuffers[0].atoms.forEach(bufatom => {
+                                        this.displayBuffers[idx].atoms.forEach(atom => {
+                                            if(Math.abs(bufatom.x-atom.x)<1e-4&&Math.abs(bufatom.y-atom.y)<1e-4&&Math.abs(bufatom.z-atom.z)<1e-4){
+                                                nhits++;
+                                            }
+                                        })
+                                    })
+                                    if(theseBuffers[0].atoms.length===nhits){
+                                        maxSize = Math.max(this.displayBuffers[idx].triangleInstanceSizes[ibuf2][0],maxSize);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
+                this.hoverSize = maxSize;
             }
-
-            if (typeof (jsondata.useIndices) !== "undefined") {
-                if (typeof (jsondata.useIndices[idat]) !== "undefined") {
-                    rssentries = getEncodedData(jsondata.useIndices[idat]);
-                    for (let i = 0; i < rssentries.length; i++) {
-                        self.addSupplementaryInfo(rssentries[i], "useIndices");
-                    }
-                }
-            }
-
-            if (typeof (jsondata.radii) !== "undefined") {
-                if (typeof (jsondata.radii[idat]) !== "undefined") {
-                    rssentries = jsondata.radii[idat];
-                    for (let i = 0; i < rssentries.length; i++) {
-                        self.addSupplementaryInfo(rssentries[i], "radii");
-                    }
-                }
-            }
-
-            if (typeof (jsondata.scale_matrices) !== "undefined") {
-                if (typeof (jsondata.scale_matrices[idat]) !== "undefined") {
-                    rssentries = jsondata.scale_matrices[idat];
-                    for (let i = 0; i < rssentries.length; i++) {
-                        self.addSupplementaryInfo(rssentries[i], "scale_matrices");
-                    }
-                }
-            }
-
-            if (typeof (jsondata.customSplineNormals) !== "undefined") {
-                if (typeof (jsondata.customSplineNormals[idat]) !== "undefined") {
-                    rssentries = jsondata.customSplineNormals[idat];
-                    for (let i = 0; i < rssentries.length; i++) {
-                        self.addSupplementaryInfo(rssentries[i], "customSplineNormals");
-                    }
-                }
-            }
-
-            if (typeof (jsondata.spline_accu) !== "undefined") {
-                if (typeof (jsondata.spline_accu[idat]) !== "undefined") {
-                    rssentries = jsondata.spline_accu[idat];
-                    for (let i = 0; i < rssentries.length; i++) {
-                        self.addSupplementaryInfo(rssentries[i], "spline_accu");
-                    }
-                }
-            }
-
-            if (typeof (jsondata.accu) !== "undefined") {
-                if (typeof (jsondata.accu[idat]) !== "undefined") {
-                    rssentries = jsondata.accu[idat];
-                    for (let i = 0; i < rssentries.length; i++) {
-                        self.addSupplementaryInfo(rssentries[i], "accu");
-                    }
-                }
-            }
-
-            if (typeof (jsondata.arrow) !== "undefined") {
-                if (typeof (jsondata.arrow[idat]) !== "undefined") {
-                    rssentries = jsondata.arrow[idat];
-                    for (let i = 0; i < rssentries.length; i++) {
-                        self.addSupplementaryInfo(rssentries[i], "arrow");
-                    }
-                }
-            }
-
-            if (typeof (jsondata.vert_tri_2d) !== "undefined") {
-                if (typeof (jsondata.vert_tri_2d[idat]) !== "undefined") {
-                    rssentries = jsondata.vert_tri_2d[idat];
-                    for (let i = 0; i < rssentries.length; i++) {
-                        self.addSupplementaryInfo(rssentries[i], "vert_tri_2d");
-                    }
-                }
-            }
-
-            if (typeof (jsondata.font) !== "undefined") {
-                if (typeof (jsondata.font[idat]) !== "undefined") {
-                    rssentries = jsondata.font[idat];
-                    for (let i = 0; i < rssentries.length; i++) {
-                        self.addSupplementaryInfo(rssentries[i], "font");
-                    }
-                }
-            }
-
-            if (typeof (jsondata.imgsrc) !== "undefined") {
-                if (typeof (jsondata.imgsrc[idat]) !== "undefined") {
-                    rssentries = jsondata.imgsrc[idat];
-                    for (let i = 0; i < rssentries.length; i++) {
-                        self.addSupplementaryInfo(rssentries[i], "imgsrc");
-                    }
-                }
-            }
-
-            if (typeof (jsondata.sizes) !== "undefined") {
-                if (typeof (jsondata.sizes[idat]) !== "undefined") {
-                    //rssentries = getEncodedData(jsondata.sizes[idat]);
-                    rssentries = jsondata.sizes[idat];
-                    for (let i = 0; i < rssentries.length; i++) {
-                        self.createSizeBuffer(rssentries[i]);
-                    }
-                }
-            }
-
-            if (typeof (jsondata.vertices2d) !== "undefined") {
-                if (typeof (jsondata.vertices2d[idat]) !== "undefined") {
-                    rssentries = getEncodedData(jsondata.vertices2d[idat]);
-                    for (let i = 0; i < rssentries.length; i++) {
-                        self.addSupplementaryInfo(rssentries[i], "vertices2d");
-                    }
-                }
-            }
-
-            rssentries = jsondata.col_tri[idat];
-            let colours = rssentries;
-            //console.log(rssentries);
-
-            for (let i = 0; i < colours.length; i++) {
-                self.createColourBuffer(colours[i]);
-            }
-
-            rssentries = jsondata.prim_types[idat];
-            //console.log(rssentries);
-            for (let i = 0; i < rssentries.length; i++) {
-                self.displayBuffers[self.currentBufferIdx].bufferTypes.push(rssentries[i]);
-            }
-
-            //console.log(jsondata);
-            if (typeof (jsondata.visibility) !== "undefined") {
-                if (typeof (jsondata.visibility[idat]) !== "undefined") {
-                    const thisVis = jsondata.visibility[idat];
-                    self.displayBuffers[self.currentBufferIdx].visible = thisVis;
-                }
-            } else {
-                // Don't know when this can be triggered ...
-                const thisVis = true;
-                if (!thisVis) {
-                    self.displayBuffers[self.currentBufferIdx].visible = false;
-                }
-            }
-
-            //var thisName = jsondata.names[idat];
-            self.displayBuffers[self.currentBufferIdx].name_label = "foo";
-            self.displayBuffers[self.currentBufferIdx].id = guid();
-
-            //var atoms = jsondata.atoms[idat];
-            if (typeof (jsondata.atoms) !== "undefined") {
-                self.displayBuffers[self.currentBufferIdx].atoms = jsondata.atoms[idat][0];
-            } else {
-                self.displayBuffers[self.currentBufferIdx].atoms = [];
-            }
-
-            if(jsondata.clickTol){
-                self.displayBuffers[self.currentBufferIdx].clickTol = jsondata.clickTol;
-            }
-            if(jsondata.doStencil){
-                self.displayBuffers[self.currentBufferIdx].doStencil = jsondata.doStencil;
-            }
-
         }
 
         theseBuffers.forEach(buffer => {
@@ -2071,34 +1860,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 }
             }
         })
-
-        if(jsondata.isHoverBuffer){
-            self.displayBuffers[self.currentBufferIdx].isHoverBuffer = jsondata.isHoverBuffer;
-            let maxSize = 0.27;
-            for (let idx = 0; idx < this.displayBuffers.length; idx++) {
-                if (this.displayBuffers[idx].atoms.length > 0) {
-                    for(let ibuf2=0;ibuf2<this.displayBuffers[idx].bufferTypes.length;ibuf2++){
-                        if(this.displayBuffers[idx].bufferTypes[ibuf2]==="PERFECT_SPHERES"){
-                            if(this.displayBuffers[idx].triangleInstanceSizes[ibuf2][0]>0.27&&!this.displayBuffers[idx].isHoverBuffer&&this.displayBuffers[idx].visible){
-                                let nhits = 0
-                                theseBuffers[0].atoms.forEach(bufatom => {
-                                    this.displayBuffers[idx].atoms.forEach(atom => {
-                                        if(Math.abs(bufatom.x-atom.x)<1e-4&&Math.abs(bufatom.y-atom.y)<1e-4&&Math.abs(bufatom.z-atom.z)<1e-4){
-                                            nhits++;
-                                        }
-                                    })
-                                })
-                                if(theseBuffers[0].atoms.length===nhits){
-                                    maxSize = Math.max(this.displayBuffers[idx].triangleInstanceSizes[ibuf2][0],maxSize);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            this.hoverSize = maxSize;
-        }
-
 
         if (typeof (skipRebuild) !== "undefined" && skipRebuild) {
             return theseBuffers;
@@ -9093,103 +8854,4 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         return [textMetric.actualBoundingBoxRight / width,this.textCtx];
     }
 
-    createInstanceOriginsBuffer(tri) {
-        this.displayBuffers[this.currentBufferIdx].triangleInstanceOriginBuffer.push(this.gl.createBuffer());
-        this.displayBuffers[this.currentBufferIdx].triangleInstanceOriginBuffer[this.displayBuffers[this.currentBufferIdx].triangleInstanceOriginBuffer.length - 1].numItems = 0;
-        this.displayBuffers[this.currentBufferIdx].triangleInstanceOrigins.push([]);
-        for (var j = 0; j < tri.length; j++) {
-            this.displayBuffers[this.currentBufferIdx].triangleInstanceOrigins[this.displayBuffers[this.currentBufferIdx].triangleInstanceOrigins.length - 1].push(parseFloat(tri[j]));
-            this.displayBuffers[this.currentBufferIdx].triangleInstanceOriginBuffer[this.displayBuffers[this.currentBufferIdx].triangleInstanceOriginBuffer.length - 1].numItems++;
-        }
-        this.displayBuffers[this.currentBufferIdx].triangleInstanceOriginBuffer[this.displayBuffers[this.currentBufferIdx].triangleInstanceOriginBuffer.length - 1].numItems /= 3;
-    }
-
-    createInstanceOrientationsBuffer(tri) {
-        this.displayBuffers[this.currentBufferIdx].triangleInstanceOrientationBuffer.push(this.gl.createBuffer());
-        this.displayBuffers[this.currentBufferIdx].triangleInstanceOrientationBuffer[this.displayBuffers[this.currentBufferIdx].triangleInstanceOrientationBuffer.length - 1].numItems = 0;
-        this.displayBuffers[this.currentBufferIdx].triangleInstanceOrientations.push([]);
-        for (var j = 0; j < tri.length; j++) {
-            this.displayBuffers[this.currentBufferIdx].triangleInstanceOrientations[this.displayBuffers[this.currentBufferIdx].triangleInstanceOrientations.length - 1].push(parseFloat(tri[j]));
-            this.displayBuffers[this.currentBufferIdx].triangleInstanceOrientationBuffer[this.displayBuffers[this.currentBufferIdx].triangleInstanceOrientationBuffer.length - 1].numItems++;
-        }
-        this.displayBuffers[this.currentBufferIdx].triangleInstanceOrientationBuffer[this.displayBuffers[this.currentBufferIdx].triangleInstanceOrientationBuffer.length - 1].numItems /= 16;
-    }
-
-    createInstanceSizesBuffer(tri) {
-        this.displayBuffers[this.currentBufferIdx].triangleInstanceSizeBuffer.push(this.gl.createBuffer());
-        this.displayBuffers[this.currentBufferIdx].triangleInstanceSizeBuffer[this.displayBuffers[this.currentBufferIdx].triangleInstanceSizeBuffer.length - 1].numItems = 0;
-        this.displayBuffers[this.currentBufferIdx].triangleInstanceSizes.push([]);
-        for (var j = 0; j < tri.length; j++) {
-            this.displayBuffers[this.currentBufferIdx].triangleInstanceSizes[this.displayBuffers[this.currentBufferIdx].triangleInstanceSizes.length - 1].push(parseFloat(tri[j]));
-            this.displayBuffers[this.currentBufferIdx].triangleInstanceSizeBuffer[this.displayBuffers[this.currentBufferIdx].triangleInstanceSizeBuffer.length - 1].numItems++;
-        }
-        this.displayBuffers[this.currentBufferIdx].triangleInstanceSizeBuffer[this.displayBuffers[this.currentBufferIdx].triangleInstanceSizeBuffer.length - 1].numItems /= 3;
-    }
-
-    createVertexBuffer(tri) {
-        this.displayBuffers[this.currentBufferIdx].triangleVertexPositionBuffer.push(this.gl.createBuffer());
-        this.displayBuffers[this.currentBufferIdx].triangleVertexPositionBuffer[this.displayBuffers[this.currentBufferIdx].triangleVertexPositionBuffer.length - 1].numItems = 0;
-        this.displayBuffers[this.currentBufferIdx].triangleVertices.push([]);
-        for (var j = 0; j < tri.length; j++) {
-            this.displayBuffers[this.currentBufferIdx].triangleVertices[this.displayBuffers[this.currentBufferIdx].triangleVertices.length - 1].push(parseFloat(tri[j]));
-            this.displayBuffers[this.currentBufferIdx].triangleVertexPositionBuffer[this.displayBuffers[this.currentBufferIdx].triangleVertexPositionBuffer.length - 1].numItems++;
-        }
-        this.displayBuffers[this.currentBufferIdx].triangleVertexPositionBuffer[this.displayBuffers[this.currentBufferIdx].triangleVertexPositionBuffer.length - 1].numItems /= 3;
-    }
-
-    createRealNormalBuffer(norm) { //Where "Real" is open to intepretation ...
-        this.displayBuffers[this.currentBufferIdx].triangleVertexRealNormalBuffer.push(this.gl.createBuffer());
-        this.displayBuffers[this.currentBufferIdx].triangleVertexRealNormalBuffer[this.displayBuffers[this.currentBufferIdx].triangleVertexRealNormalBuffer.length - 1].numItems = 0;
-    }
-
-    createNormalBuffer(norm) {
-        this.displayBuffers[this.currentBufferIdx].triangleNormals.push([]);
-        this.displayBuffers[this.currentBufferIdx].triangleVertexNormalBuffer.push(this.gl.createBuffer());
-        this.displayBuffers[this.currentBufferIdx].triangleVertexNormalBuffer[this.displayBuffers[this.currentBufferIdx].triangleVertexNormalBuffer.length - 1].numItems = 0;
-        for (var j = 0; j < norm.length; j++) {
-            this.displayBuffers[this.currentBufferIdx].triangleNormals[this.displayBuffers[this.currentBufferIdx].triangleNormals.length - 1].push(parseFloat(norm[j]));
-            this.displayBuffers[this.currentBufferIdx].triangleVertexNormalBuffer[this.displayBuffers[this.currentBufferIdx].triangleVertexNormalBuffer.length - 1].numItems++;
-        }
-        this.displayBuffers[this.currentBufferIdx].triangleVertexNormalBuffer[this.displayBuffers[this.currentBufferIdx].triangleVertexNormalBuffer.length - 1].numItems /= 3;
-    }
-
-    createColourBuffer(colour) {
-        this.displayBuffers[this.currentBufferIdx].triangleColourBuffer.push(this.gl.createBuffer());
-        this.displayBuffers[this.currentBufferIdx].triangleColourBuffer[this.displayBuffers[this.currentBufferIdx].triangleColourBuffer.length - 1].numItems = 0;
-        this.displayBuffers[this.currentBufferIdx].triangleColours.push([]);
-        if (Math.abs(parseFloat(colour[3])) < 0.99) {
-            //console.log("This is transparent");
-            this.displayBuffers[this.currentBufferIdx].transparent = true;
-        }
-        for (var j = 0; j < colour.length; j++) {
-            this.displayBuffers[this.currentBufferIdx].triangleColours[this.displayBuffers[this.currentBufferIdx].triangleColours.length - 1].push(parseFloat(colour[j]));
-            this.displayBuffers[this.currentBufferIdx].triangleColourBuffer[this.displayBuffers[this.currentBufferIdx].triangleColourBuffer.length - 1].numItems++;
-        }
-        this.displayBuffers[this.currentBufferIdx].triangleColourBuffer[this.displayBuffers[this.currentBufferIdx].triangleColourBuffer.length - 1].numItems /= 4;
-    }
-
-    addSupplementaryInfo(info, name) {
-        if (typeof (this.displayBuffers[this.currentBufferIdx].supplementary[name]) === "undefined") {
-            this.displayBuffers[this.currentBufferIdx].supplementary[name] = [info];
-        } else {
-            this.displayBuffers[this.currentBufferIdx].supplementary[name].push(info);
-        }
-    }
-
-    createIndexBuffer(idx) {
-        this.displayBuffers[this.currentBufferIdx].triangleVertexIndexBuffer.push(this.gl.createBuffer());
-        this.displayBuffers[this.currentBufferIdx].triangleVertexIndexBuffer[this.displayBuffers[this.currentBufferIdx].triangleVertexIndexBuffer.length - 1].numItems = 0;
-        this.displayBuffers[this.currentBufferIdx].triangleIndexs.push([]);
-        for (var j = 0; j < idx.length; j++) {
-            this.displayBuffers[this.currentBufferIdx].triangleIndexs[this.displayBuffers[this.currentBufferIdx].triangleIndexs.length - 1].push(parseFloat(idx[j]));
-            this.displayBuffers[this.currentBufferIdx].triangleVertexIndexBuffer[this.displayBuffers[this.currentBufferIdx].triangleVertexIndexBuffer.length - 1].numItems++;
-        }
-    }
-
-    createSizeBuffer(idx) {
-        this.displayBuffers[this.currentBufferIdx].primitiveSizes.push([]);
-        for (var j = 0; j < idx.length; j++) {
-            this.displayBuffers[this.currentBufferIdx].primitiveSizes[this.displayBuffers[this.currentBufferIdx].primitiveSizes.length - 1].push(parseFloat(idx[j]));
-        }
-    }
 }

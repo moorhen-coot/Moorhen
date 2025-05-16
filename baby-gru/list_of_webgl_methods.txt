@@ -20,5 +20,6 @@ glRef.current.origin                              src/utils/MoorhenScreenRecorde
 
 glRef.current.appendOtherData                     src/utils/MoorhenMap.ts src/utils/MoorhenMoleculeRepresentation.ts src/components/snack-bar/MoorhenTomogramSnackBar.tsx
 glRef.current.displayBuffers                      src/utils/MoorhenMap.ts src/utils/MoorhenMoleculeRepresentation.ts
+
 glRef.current.labelsTextCanvasTexture             src/utils/MoorhenMoleculeRepresentation.ts
 glRef.current.texturedShapes                      src/components/snack-bar/MoorhenTomogramSnackBar.tsx

@@ -57,6 +57,8 @@ export class DisplayBuffer {
     isHoverBuffer: boolean;
     id: string;
     multiViewGroup: number;
+    clickTol: number;
+    doStencil: boolean;
 
     constructor() {
         this.visible = true;
@@ -154,6 +156,8 @@ export class DisplayBuffer {
         this.textNormals = [];
         this.textColours = [];
         this.atoms = [];
+        this.clickTol = null;
+        this.doStencil = false;
     }
 
     setTransformMatrix(transformMatrix) {
