@@ -24,7 +24,7 @@ export const MoorhenColourMapByOtherMapMenuItem = (props: {
     const mapSelectRef_1 = useRef<null | HTMLSelectElement>(null);
     const mapSelectRef_2 = useRef<null | HTMLSelectElement>(null);
    
-    const [locRes, setLocRes] = useMenuStateMemory<boolean>(menu, 'locRes', false, dispatch);
+    const [locRes, setLocRes] = useMenuStateMemory<boolean>(menu, 'locRes', false, );
 
     const handleCancel = (_evt) => {
         document.body.click();
