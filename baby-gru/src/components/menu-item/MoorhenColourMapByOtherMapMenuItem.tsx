@@ -7,9 +7,7 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { webGL } from "../../types/mgWebGL";
 import { Button } from "react-bootstrap";
 import { Checkbox } from "@mui/material";
-import { Stack } from "@mui/material";
 import { MoorhenSlider } from "../inputs/MoorhenSlider-new";
-import { get } from "http";
 
 export const MoorhenColourMapByOtherMapMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
