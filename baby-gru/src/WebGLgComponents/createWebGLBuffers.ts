@@ -1,5 +1,6 @@
 import { guid } from '../utils/utils';
 import { DisplayBuffer } from './displayBuffer'
+import { getEncodedData } from './encodedData'
 
 const createInstanceOriginsBuffer = (tri,theBuffer,gl) => {
     theBuffer.triangleInstanceOriginBuffer.push(gl.createBuffer());
@@ -170,6 +171,15 @@ export const createWebGLBuffers = (jsondata: any, idat: number, gl: any): Displa
                 for (let i = 0; i < rssentries.length; i++) {
                     addSupplementaryInfo(rssentries[i], "instance_use_colors",theBuffer);
                 }
+            }
+        }
+    }
+
+    if (typeof (jsondata.useIndices) !== "undefined") {
+        if (typeof (jsondata.useIndices[idat]) !== "undefined") {
+            const rssentries = getEncodedData(jsondata.useIndices[idat]);
+            for (let i = 0; i < rssentries.length; i++) {
+                addSupplementaryInfo(rssentries[i], "useIndices",theBuffer);
             }
         }
     }
