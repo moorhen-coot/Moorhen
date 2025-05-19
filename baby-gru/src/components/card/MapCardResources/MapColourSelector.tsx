@@ -108,23 +108,6 @@ export const MapColourSelector = (props: MoorhenMapColorSelector) => {
         return null;
     }
 
-    /* This looks stupid but it is important otherwise the map is first drawn with the default contour and radius. Probably there's a problem somewhere...
-    doesn't seem usefull for the color bits, commented for now can be deleted later
-    useEffect(() => {
-            batch(() => {
-    dispatch(setMapColours({ molNo: props.map.molNo, rgb: mapColour }));
-    dispatch(
-        setNegativeMapColours({
-            molNo: props.map.molNo,
-            rgb: negativeMapColour,
-        })
-    );
-    dispatch(
-        setPositiveMapColours({
-            molNo: props.map.molNo,
-            rgb: positiveMapColour,
-        }));});}, []); */
-
     const handlePositiveMapColorChange = (color: { r: number; g: number; b: number }) => {
         try {
             dispatch(

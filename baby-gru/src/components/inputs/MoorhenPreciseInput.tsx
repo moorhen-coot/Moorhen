@@ -14,6 +14,7 @@ type MoorhenPreciseInputPropsType = {
     disabled?: boolean;
     width?: string | number;
     minMax?: [number, number] 
+    type?: string;
 };
 
 export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
@@ -25,7 +26,8 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         disabled = false,
         width,
         waitReturn = false,
-        minMax = null
+        minMax = null,
+        type = "text"
     } = props;
 
     const [isValidInput, setIsValidInput] = useState<boolean>(true);
@@ -83,7 +85,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         setIsUserInteracting(false); 
     };
 
-    const inputWidth = width ? width : `${2.5 + 0.6 * decimalDigits}rem`;
+    const inputWidth = width ? width : `${2.5 + 0.6 * decimalDigits + (type === "text" ? 0 : 1.1)}rem`;
 
     return (
         <Stack 
@@ -93,7 +95,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         >
             {label && label}
             <Form.Control
-                type="text"
+                type={type}
                 disabled={disabled}
                 value={internalValue}
                 style={{ width: inputWidth, marginLeft: "0.2rem" }}
