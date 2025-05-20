@@ -96,6 +96,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
             {label && label}
             <Form.Control
                 type={type}
+                step={Math.pow(10, -decimalDigits)}
                 disabled={disabled}
                 value={internalValue}
                 style={{ width: inputWidth, marginLeft: "0.2rem" }}
