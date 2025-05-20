@@ -3633,7 +3633,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 break
             }
         }
-        console.log("isDirty",dirty)
         if(dirty) this.buildBuffers()
         this.props.onQuatChanged(this.myQuat)
 

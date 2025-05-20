@@ -664,14 +664,7 @@ export class MoorhenMap implements moorhen.Map {
                     buildBuffers(a)
                 }
             })
-            this.glRef.current.buildBuffers()
             this.glRef.current.drawScene()
-            //Requests below are broken
-            if(print_timing) console.log("Start _buildBuffers");
-            //this.store.dispatch(setRequestBuildBuffers(true))
-            const tb = performance.now();
-            if(print_timing) console.log("End _buildBuffers",tb-t1);
-            //this.store.dispatch(setRequestDrawScene(true))
             const ts = performance.now();
             if(print_timing) console.log("After _drawScene",ts-t1);
         } catch(err) {
