@@ -6,7 +6,7 @@ import pako from "pako"
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
-import { setOrigin, setRequestDrawScene, setRequestBuildBuffers } from "../store/glRefSlice"
+import { setOrigin, setRequestDrawScene, setRequestBuildBuffers, setDisplayBuffers } from "../store/glRefSlice"
 import { buildBuffers } from '../WebGLgComponents/buildBuffers'
 
 const _DEFAULT_CONTOUR_LEVEL = 0.8
@@ -524,19 +524,26 @@ export class MoorhenMap implements moorhen.Map {
      * Clear MGWebGL buffers of a given style for this map
      * @param {string} style - The map style that will be cleared
      */
-    clearBuffersOfStyle(style: string): void {
+    clearBuffersOfStyle(style: string): any[] {
+        const displayBuffers = this.store.getState().glRef.displayBuffers
         //Empty existing buffers of this type
+        let newBuffers = displayBuffers
         this.displayObjects[style].forEach((buffer) => {
             buffer.clearBuffers()
-            this.glRef.current.displayBuffers = this.glRef.current.displayBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
+            newBuffers = newBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
         })
         this.displayObjects[style] = []
+        return newBuffers
     }
 
     setupContourBuffers(objects: any[], keepCootColours: boolean = false) {
+        const displayBuffers = this.store.getState().glRef.displayBuffers
         const { mapAlpha, mapColour, positiveMapColour, negativeMapColour } = this.getMapContourParams()
         const print_timing = false;
         const t1 = performance.now();
+        const oldBuffers = this.clearBuffersOfStyle("Coot")
+        let newBuffers = []
+
         try {
             const diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] }
             objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
@@ -602,21 +609,15 @@ export class MoorhenMap implements moorhen.Map {
                     if(print_timing) console.log("End loop",tl-t1)
                 }
                 if (this.isDifference) {
-                    this.clearBuffersOfStyle("Coot")
                     let a = this.glRef.current.appendOtherData(object_positive, true);
                     let b = this.glRef.current.appendOtherData(object_negative, true);
                     if(mapAlpha<0.99){
                         a[0].transparent = true;
                         b[0].transparent = true;
                     }
-                    a.forEach(buf => {
-                        this.glRef.current.displayBuffers.push(buf)
-                    })
-                    b.forEach(buf => {
-                        this.glRef.current.displayBuffers.push(buf)
-                    })
                     buildBuffers(a)
                     buildBuffers(b)
+                    newBuffers = [...newBuffers,...a,...b]
                     const ta = performance.now();
                     if(print_timing) console.log("End _appendOtherData",ta-t1);
                     this.diffMapColourBuffers.positiveDiffColour = this.diffMapColourBuffers.positiveDiffColour.concat(diffMapColourBuffers.positiveDiffColour);
@@ -637,16 +638,13 @@ export class MoorhenMap implements moorhen.Map {
                         this.displayObjects["Coot"][0].triangleIndexs[0] = object.idx_tri[0][0]
                         this.displayObjects["Coot"][0].isDirty = true
                     } else {
-                       this.clearBuffersOfStyle("Coot")
                        let a = this.glRef.current.appendOtherData(object, true);
                        if(mapAlpha>0.98){
                            a[0].setCustomColour([mapColour.r,mapColour.g,mapColour.b,1.0])
                        }
                        this.displayObjects['Coot'] = this.displayObjects['Coot'].concat(a);
-                       a.forEach(buf => {
-                           this.glRef.current.displayBuffers.push(buf)
-                       })
                        buildBuffers(a)
+                       newBuffers = [...newBuffers,...a]
                     }
 
                     const ta = performance.now();
@@ -655,13 +653,10 @@ export class MoorhenMap implements moorhen.Map {
                     this.diffMapColourBuffers.negativeDiffColour = this.diffMapColourBuffers.negativeDiffColour.concat(diffMapColourBuffers.negativeDiffColour);
                 } else {
                     //console.log("MOORHEN MAP do what keepCootColours wants")
-                    this.clearBuffersOfStyle("Coot")
                     let a = this.glRef.current.appendOtherData(object, true);
                     this.displayObjects['Coot'] = this.displayObjects['Coot'].concat(a);
-                    a.forEach(buf => {
-                        this.glRef.current.displayBuffers.push(buf)
-                    })
                     buildBuffers(a)
+                    newBuffers = [...newBuffers,...a]
                 }
             })
             this.glRef.current.drawScene()
@@ -672,6 +667,7 @@ export class MoorhenMap implements moorhen.Map {
         } 
         const t2 = performance.now();
         if(print_timing) console.log("Finished setupContourBuffers",t2-t1)
+        this.store.dispatch(setDisplayBuffers([...oldBuffers,...newBuffers]))
     }
 
     /**

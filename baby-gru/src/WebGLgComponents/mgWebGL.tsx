@@ -3624,11 +3624,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawScene() : void {
+        
+        const displayBuffers = store.getState().glRef.displayBuffers
+        //const displayBuffers = this.displayBuffers
 
         let dirty = false
-        const thisdisplayBufferslength = this.displayBuffers.length;
+        const thisdisplayBufferslength = displayBuffers.length;
+
         for (let idx = 0; idx < thisdisplayBufferslength; idx++) {
-            if (this.displayBuffers[idx].isDirty) {
+            if (displayBuffers[idx].isDirty) {
                 dirty = true;
                 break
             }
@@ -3640,10 +3644,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.shaderProgram,
             this.shaderProgramInstanced,
             this.shaderProgramThickLinesNormal,
-            /*
-            this.shaderProgramThickLines,
-            this.shaderProgramLines,
-            */
             this.shaderProgramPerfectSpheres
         ];
 
@@ -3683,11 +3683,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.doPeel = false;
         if(this.doOrderIndependentTransparency){
-            for (let idx = 0; idx < this.displayBuffers.length && !this.doPeel; idx++) {
-                if (this.displayBuffers[idx].visible) {
-                    let triangleVertexIndexBuffer = this.displayBuffers[idx].triangleVertexIndexBuffer;
+            for (let idx = 0; idx < displayBuffers.length && !this.doPeel; idx++) {
+                if (displayBuffers[idx].visible) {
+                    let triangleVertexIndexBuffer = displayBuffers[idx].triangleVertexIndexBuffer;
                     for (let j = 0; j < triangleVertexIndexBuffer.length&& !this.doPeel; j++) {
-                        if (this.displayBuffers[idx].transparent&&!this.displayBuffers[idx].isHoverBuffer) {
+                        if (displayBuffers[idx].transparent&&!displayBuffers[idx].isHoverBuffer) {
                             this.doPeel = true;
                         }
                     }
@@ -3937,12 +3937,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     } else if(this.doMultiView) {
 
                         let multiViewGroups = {}
-                        for (let idx = 0; idx < this.displayBuffers.length; idx++) {
-                            if(this.displayBuffers[idx].origin&&this.displayBuffers[idx].origin.length===3){
-                                if(Object.hasOwn(this.displayBuffers[idx], "isHoverBuffer")&&!this.displayBuffers[idx].isHoverBuffer){
-                                    if(!(this.displayBuffers[idx].multiViewGroup in multiViewGroups)){
-                                        multiViewGroups[this.displayBuffers[idx].multiViewGroup] = this.displayBuffers[idx].multiViewGroup
-                                        multiViewOrigins.push(this.displayBuffers[idx].origin)
+                        for (let idx = 0; idx < displayBuffers.length; idx++) {
+                            if(displayBuffers[idx].origin&&displayBuffers[idx].origin.length===3){
+                                if(Object.hasOwn(displayBuffers[idx], "isHoverBuffer")&&!displayBuffers[idx].isHoverBuffer){
+                                    if(!(displayBuffers[idx].multiViewGroup in multiViewGroups)){
+                                        multiViewGroups[displayBuffers[idx].multiViewGroup] = displayBuffers[idx].multiViewGroup
+                                        multiViewOrigins.push(displayBuffers[idx].origin)
                                     }
                                 }
                             }
@@ -4693,6 +4693,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     drawTriangles(calculatingShadowMap, invMat) {
 
+        const displayBuffers = store.getState().glRef.displayBuffers
+        //const displayBuffers = this.displayBuffers
+
         let symmetries = [];
         let symms = [];
         const bright_y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
@@ -4702,46 +4705,46 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTextureDepth);
         }
 
-        for (let idx = 0; idx < this.displayBuffers.length; idx++) {
+        for (let idx = 0; idx < displayBuffers.length; idx++) {
 
-            if (!this.displayBuffers[idx].visible) {
+            if (!displayBuffers[idx].visible) {
                 continue;
             }
             if(this.doStenciling){
-                if(this.stencilPass&&!this.displayBuffers[idx].doStencil){
+                if(this.stencilPass&&!displayBuffers[idx].doStencil){
                     continue;
                 }
-                if(this.stenciling&&!this.displayBuffers[idx].doStencil){
+                if(this.stenciling&&!displayBuffers[idx].doStencil){
                     continue;
                 }
-                if (!this.stenciling&&this.displayBuffers[idx].doStencil){
+                if (!this.stenciling&&displayBuffers[idx].doStencil){
                     continue;
                 }
             }
 
-            if(this.doMultiView&&this.displayBuffers[idx].origin&&this.displayBuffers[idx].origin.length===3){
-                if(Object.hasOwn(this.displayBuffers[idx], "isHoverBuffer")&&!this.displayBuffers[idx].isHoverBuffer){
-                    if(this.displayBuffers[idx].multiViewGroup!==this.currentMultiViewGroup){
+            if(this.doMultiView&&displayBuffers[idx].origin&&displayBuffers[idx].origin.length===3){
+                if(Object.hasOwn(displayBuffers[idx], "isHoverBuffer")&&!displayBuffers[idx].isHoverBuffer){
+                    if(displayBuffers[idx].multiViewGroup!==this.currentMultiViewGroup){
                         continue
                     }
                 }
             }
 
-            let bufferTypes = this.displayBuffers[idx].bufferTypes;
+            let bufferTypes = displayBuffers[idx].bufferTypes;
 
-            let triangleVertexNormalBuffer = this.displayBuffers[idx].triangleVertexNormalBuffer;
-            let triangleVertexRealNormalBuffer = this.displayBuffers[idx].triangleVertexRealNormalBuffer;
-            let triangleVertexPositionBuffer = this.displayBuffers[idx].triangleVertexPositionBuffer;
-            let triangleVertexIndexBuffer = this.displayBuffers[idx].triangleVertexIndexBuffer;
-            let triangleColourBuffer = this.displayBuffers[idx].triangleColourBuffer;
+            let triangleVertexNormalBuffer = displayBuffers[idx].triangleVertexNormalBuffer;
+            let triangleVertexRealNormalBuffer = displayBuffers[idx].triangleVertexRealNormalBuffer;
+            let triangleVertexPositionBuffer = displayBuffers[idx].triangleVertexPositionBuffer;
+            let triangleVertexIndexBuffer = displayBuffers[idx].triangleVertexIndexBuffer;
+            let triangleColourBuffer = displayBuffers[idx].triangleColourBuffer;
 
-            let triangleVertices = this.displayBuffers[idx].triangleVertices;
-            let triangleColours = this.displayBuffers[idx].triangleColours;
+            let triangleVertices = displayBuffers[idx].triangleVertices;
+            let triangleColours = displayBuffers[idx].triangleColours;
 
-            let primitiveSizes = this.displayBuffers[idx].primitiveSizes;
+            let primitiveSizes = displayBuffers[idx].primitiveSizes;
 
             for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
-                if (this.displayBuffers[idx].transparent&&!this.drawingGBuffers) {
+                if (displayBuffers[idx].transparent&&!this.drawingGBuffers) {
                     //console.log("Not doing normal drawing way ....");
                     if(!this.doPeel)
                         continue;
@@ -4749,7 +4752,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 let theShader;
                 let scaleZ = false;
 
-                if(this.displayBuffers[idx].triangleInstanceOriginBuffer[j]){
+                if(displayBuffers[idx].triangleInstanceOriginBuffer[j]){
                     if(this.drawingGBuffers){
                         theShader = this.shaderProgramGBuffersInstanced;
                     } else {
@@ -4847,9 +4850,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         let outlineSize = vec3.create();
                         vec3.set(outlineSize, 0.0, 0.0, 0.0);
                         this.gl.uniform3fv(theShader.outlineSize, outlineSize);
-                        if(this.displayBuffers[idx].customColour&&this.displayBuffers[idx].customColour.length==4){
+                        if(displayBuffers[idx].customColour&&displayBuffers[idx].customColour.length==4){
                             this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
-                            this.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...this.displayBuffers[idx].customColour)
+                            this.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...displayBuffers[idx].customColour)
                         } else {
                             this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
                             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleColourBuffer[j]);
@@ -4858,9 +4861,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     }
                 }
                 if (bufferTypes[j] === "TRIANGLES") {
-                    if (this.displayBuffers[idx].transformMatrix) {
-                        this.drawTransformMatrix(this.displayBuffers[idx].transformMatrix, this.displayBuffers[idx], theShader, this.gl.TRIANGLES, j);
-                    } else if (this.displayBuffers[idx].transformMatrixInteractive) {
+                    if (displayBuffers[idx].transformMatrix) {
+                        this.drawTransformMatrix(displayBuffers[idx].transformMatrix, displayBuffers[idx], theShader, this.gl.TRIANGLES, j);
+                    } else if (displayBuffers[idx].transformMatrixInteractive) {
                         //And this is based on time...
                         const t = Date.now()
                         const tdiff = (Math.round(t/1000) - t/1000)
@@ -4871,7 +4874,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             sfrac = Math.sin(tdiff*Math.PI)
                         }
                         this.gl.uniform4fv(theShader.light_colours_ambient, [sfrac,sfrac,sfrac,1.0]);
-                        this.drawTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive, this.displayBuffers[idx].transformOriginInteractive, this.displayBuffers[idx], theShader, this.gl.TRIANGLES, j);
+                        this.drawTransformMatrixInteractive(displayBuffers[idx].transformMatrixInteractive, displayBuffers[idx].transformOriginInteractive, displayBuffers[idx], theShader, this.gl.TRIANGLES, j);
                         this.gl.uniform4fv(theShader.light_colours_ambient, this.light_colours_ambient);
                     } else {
                         this.gl.uniform3fv(theShader.screenZ, this.screenZ);
@@ -4880,17 +4883,17 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             for(let i=0;i<10;i++){
                                 vec3.set(outlineSize, 0.01*i, 0.01*i, 0.01*i);
                                 this.gl.uniform3fv(theShader.outlineSize, outlineSize);
-                                this.drawBuffer(this.displayBuffers[idx],theShader,j,this.gl.TRIANGLES);
+                                this.drawBuffer(displayBuffers[idx],theShader,j,this.gl.TRIANGLES);
                             }
                         } else {
-                            this.drawBuffer(this.displayBuffers[idx],theShader,j,this.gl.TRIANGLES);
+                            this.drawBuffer(displayBuffers[idx],theShader,j,this.gl.TRIANGLES);
                         }
                     }
                 } else if (bufferTypes[j] === "TRIANGLE_STRIP") {
-                    if (this.displayBuffers[idx].transformMatrix) {
-                        this.drawTransformMatrix(this.displayBuffers[idx].transformMatrix, this.displayBuffers[idx], this.shaderProgram, this.gl.TRIANGLE_STRIP, j);
-                    } else if (this.displayBuffers[idx].transformMatrixInteractive) {
-                        this.drawTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive, this.displayBuffers[idx].transformOriginInteractive, this.displayBuffers[idx], this.shaderProgram, this.gl.TRIANGLE_STRIP, j);
+                    if (displayBuffers[idx].transformMatrix) {
+                        this.drawTransformMatrix(displayBuffers[idx].transformMatrix, displayBuffers[idx], this.shaderProgram, this.gl.TRIANGLE_STRIP, j);
+                    } else if (displayBuffers[idx].transformMatrixInteractive) {
+                        this.drawTransformMatrixInteractive(displayBuffers[idx].transformMatrixInteractive, displayBuffers[idx].transformOriginInteractive, displayBuffers[idx], this.shaderProgram, this.gl.TRIANGLE_STRIP, j);
                     } else {
                         if (this.ext) {
                         if(this.doAnaglyphStereo) {
@@ -5015,7 +5018,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         //Instanced colour
                         //Instanced size
                         //Instanced offset
-                        if (this.displayBuffers[idx].transformMatrixInteractive) {
+                        if (displayBuffers[idx].transformMatrixInteractive) {
                             const t = Date.now();
                             const tdiff = (Math.round(t/1000) - t/1000);
                             let sfrac;
@@ -5026,24 +5029,24 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             }
                             this.gl.uniform4fv(program.light_colours_ambient, [sfrac,sfrac,sfrac,1.0]);
                             //FIXME - Looks like several unused arguments in this function.
-                            this.setupModelViewTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive, this.displayBuffers[idx].transformOriginInteractive, null, program, null, null, null);
+                            this.setupModelViewTransformMatrixInteractive(displayBuffers[idx].transformMatrixInteractive, displayBuffers[idx].transformOriginInteractive, null, program, null, null, null);
                             let invsymt2 = mat4.create();
-                            mat4.invert(invsymt2, this.displayBuffers[idx].transformMatrixInteractive);
+                            mat4.invert(invsymt2, displayBuffers[idx].transformMatrixInteractive);
                             invsymt2[12] = 0.0;
                             invsymt2[13] = 0.0;
                             invsymt2[14] = 0.0;
                             this.gl.uniformMatrix4fv(program.invSymMatrixUniform, false, invsymt2);
                         }
                         this.gl.enableVertexAttribArray(program.offsetAttribute);
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceOriginBuffer[j]);
-                        this.gl.vertexAttribPointer(program.offsetAttribute, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, displayBuffers[idx].triangleInstanceOriginBuffer[j]);
+                        this.gl.vertexAttribPointer(program.offsetAttribute, displayBuffers[idx].triangleInstanceOriginBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
                         this.gl.enableVertexAttribArray(program.sizeAttribute);
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceSizeBuffer[j]);
-                        this.gl.vertexAttribPointer(program.sizeAttribute, this.displayBuffers[idx].triangleInstanceSizeBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, displayBuffers[idx].triangleInstanceSizeBuffer[j]);
+                        this.gl.vertexAttribPointer(program.sizeAttribute, displayBuffers[idx].triangleInstanceSizeBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
                         if(program.vertexColourAttribute!=null&&program.vertexColourAttribute>-1){
                             this.gl.enableVertexAttribArray(program.vertexColourAttribute);
-                            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
-                            this.gl.vertexAttribPointer(program.vertexColourAttribute, this.displayBuffers[idx].triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, displayBuffers[idx].triangleColourBuffer[j]);
+                            this.gl.vertexAttribPointer(program.vertexColourAttribute, displayBuffers[idx].triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
                         }
                         if(this.stencilPass){
                             this.gl.disableVertexAttribArray(program.vertexColourAttribute);
@@ -5056,7 +5059,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             if(program.vertexColourAttribute!=null) this.gl.vertexAttribDivisor(program.vertexColourAttribute, 1);
                             this.gl.vertexAttribDivisor(program.sizeAttribute, 1);
                             this.gl.vertexAttribDivisor(program.offsetAttribute, 1);
-                            if(this.displayBuffers[idx].isHoverBuffer&&this.hoverSize>0.27){
+                            if(displayBuffers[idx].isHoverBuffer&&this.hoverSize>0.27){
                                 this.gl.disableVertexAttribArray(program.sizeAttribute);
                                 this.gl.vertexAttribDivisor(program.sizeAttribute, 0);
                                 const hoverSize = this.hoverSize + 0.4;
@@ -5067,7 +5070,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                                 this.gl.vertexAttribDivisor(program.vertexColourAttribute,0);
                                 this.gl.vertexAttrib4f(program.vertexColourAttribute, ...this.currentAnaglyphColor)
                             }
-                            this.gl.drawElementsInstanced(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
+                            this.gl.drawElementsInstanced(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
                             if(program.vertexColourAttribute!=null) this.gl.vertexAttribDivisor(program.vertexColourAttribute, 0);
                             this.gl.vertexAttribDivisor(program.sizeAttribute, 0);
                             this.gl.vertexAttribDivisor(program.offsetAttribute, 0);
@@ -5075,20 +5078,20 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             if(program.vertexColourAttribute!=null) this.instanced_ext.vertexAttribDivisorANGLE(program.vertexColourAttribute, 1);
                             this.instanced_ext.vertexAttribDivisorANGLE(program.sizeAttribute, 1);
                             this.instanced_ext.vertexAttribDivisorANGLE(program.offsetAttribute, 1);
-                            this.instanced_ext.drawElementsInstancedANGLE(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
+                            this.instanced_ext.drawElementsInstancedANGLE(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
                             this.instanced_ext.vertexAttribDivisorANGLE(program.vertexColourAttribute, 0);
                             this.instanced_ext.vertexAttribDivisorANGLE(program.sizeAttribute, 0);
                             this.instanced_ext.vertexAttribDivisorANGLE(program.offsetAttribute, 0);
                         }
-                        if (this.displayBuffers[idx].transformMatrixInteractive) {
+                        if (displayBuffers[idx].transformMatrixInteractive) {
                             this.gl.uniform4fv(program.light_colours_ambient, this.light_colours_ambient);
                             this.gl.uniformMatrix4fv(program.mvMatrixUniform, false, this.mvMatrix);
                             this.gl.uniformMatrix4fv(program.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
                             this.gl.uniformMatrix4fv(program.invSymMatrixUniform, false, invsymt);
                         }
 
-                        if(this.displayBuffers[idx].symmetryMatrices.length>0){
-                            if(program.vertexColourAttribute>-1&&this.displayBuffers[idx].changeColourWithSymmetry){
+                        if(displayBuffers[idx].symmetryMatrices.length>0){
+                            if(program.vertexColourAttribute>-1&&displayBuffers[idx].changeColourWithSymmetry){
                                 this.gl.disableVertexAttribArray(program.vertexColourAttribute);
                                 if(bright_y>0.5)
                                     this.gl.vertexAttrib4f(program.vertexColourAttribute, 0.3, 0.3, 0.3, 1.0);
@@ -5107,18 +5110,18 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                                 this.instanced_ext.vertexAttribDivisorANGLE(program.sizeAttribute, 1);
                                 this.instanced_ext.vertexAttribDivisorANGLE(program.offsetAttribute, 1);
                             }
-                            for (let isym = 0; isym < this.displayBuffers[idx].symmetryMatrices.length; isym++) {
+                            for (let isym = 0; isym < displayBuffers[idx].symmetryMatrices.length; isym++) {
 
-                                this.applySymmetryMatrix(program,this.displayBuffers[idx].symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix,false)
+                                this.applySymmetryMatrix(program,displayBuffers[idx].symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix,false)
                                     if (this.WEBGL2) {
                                         if(this.doAnaglyphStereo) {
                                             this.gl.disableVertexAttribArray(program.vertexColourAttribute);
                                             this.gl.vertexAttribDivisor(program.vertexColourAttribute,0);
                                             this.gl.vertexAttrib4f(program.vertexColourAttribute, ...this.currentAnaglyphColor)
                                         }
-                                        this.gl.drawElementsInstanced(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
+                                        this.gl.drawElementsInstanced(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
                                     } else {
-                                        this.instanced_ext.drawElementsInstancedANGLE(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
+                                        this.instanced_ext.drawElementsInstancedANGLE(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
                                     }
 
                             }
@@ -5194,8 +5197,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     continue;
                 }
                 // FIXME ? We assume all are the same size. Anything else is a little tricky for now.
-                if (typeof (this.displayBuffers[idx].primitiveSizes) !== "undefined" && typeof (this.displayBuffers[idx].primitiveSizes[j]) !== "undefined" && typeof (this.displayBuffers[idx].primitiveSizes[j][0]) !== "undefined") {
-                    this.gl.uniform1f(shaderProgramThickLinesNormal.pixelZoom, this.displayBuffers[idx].primitiveSizes[j][0] * 0.04 * this.zoom);
+                if (typeof (displayBuffers[idx].primitiveSizes) !== "undefined" && typeof (displayBuffers[idx].primitiveSizes[j]) !== "undefined" && typeof (displayBuffers[idx].primitiveSizes[j][0]) !== "undefined") {
+                    this.gl.uniform1f(shaderProgramThickLinesNormal.pixelZoom, displayBuffers[idx].primitiveSizes[j][0] * 0.04 * this.zoom);
                 } else {
                     this.gl.uniform1f(shaderProgramThickLinesNormal.pixelZoom, 1.0 * 0.04 * this.zoom);
                 }
@@ -5205,17 +5208,17 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.vertexAttribPointer(shaderProgramThickLinesNormal.vertexRealNormalAttribute, triangleVertexRealNormalBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexPositionBuffer[j]);
                 this.gl.vertexAttribPointer(shaderProgramThickLinesNormal.vertexPositionAttribute, triangleVertexPositionBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
-                if(this.displayBuffers[idx].customColour&&this.displayBuffers[idx].customColour.length==4){
+                if(displayBuffers[idx].customColour&&displayBuffers[idx].customColour.length==4){
                     this.gl.disableVertexAttribArray(this.shaderProgramThickLinesNormal.vertexColourAttribute);
-                    this.gl.vertexAttrib4f(this.shaderProgramThickLinesNormal.vertexColourAttribute, ...this.displayBuffers[idx].customColour)
+                    this.gl.vertexAttrib4f(this.shaderProgramThickLinesNormal.vertexColourAttribute, ...displayBuffers[idx].customColour)
                 } else {
                     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleColourBuffer[j]);
                     this.gl.vertexAttribPointer(shaderProgramThickLinesNormal.vertexColourAttribute, triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
                 }
                 this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, triangleVertexIndexBuffer[j]);
 
-                if (this.displayBuffers[idx].transformMatrix) {
-                    this.drawTransformMatrixPMV(this.displayBuffers[idx].transformMatrix, this.displayBuffers[idx], shaderProgramThickLinesNormal, this.gl.TRIANGLES, j);
+                if (displayBuffers[idx].transformMatrix) {
+                    this.drawTransformMatrixPMV(displayBuffers[idx].transformMatrix, displayBuffers[idx], shaderProgramThickLinesNormal, this.gl.TRIANGLES, j);
                 } else {
                     if (this.ext) {
                         this.drawMaxElementsUInt(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems);
@@ -5253,7 +5256,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.enableVertexAttribArray(sphereProgram.vertexPositionAttribute);
             this.gl.enableVertexAttribArray(sphereProgram.vertexNormalAttribute);
 
-            let scaleMatrices = this.displayBuffers[idx].supplementary["scale_matrices"];
+            let scaleMatrices = displayBuffers[idx].supplementary["scale_matrices"];
             this.gl.disableVertexAttribArray(sphereProgram.vertexColourAttribute);
 
             for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
@@ -5293,10 +5296,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.gl.vertexAttrib4f(sphereProgram.vertexColourAttribute, triangleColours[j][isphere * 4], triangleColours[j][isphere * 4 + 1], triangleColours[j][isphere * 4 + 2], triangleColours[j][isphere * 4 + 3]);
                         this.gl.uniform3fv(sphereProgram.offset, theOffSet);
                         this.gl.uniform1f(sphereProgram.size, primitiveSizes[j][isphere] * radMult);
-                        if (this.displayBuffers[idx].transformMatrix) {
-                            this.drawTransformMatrix(this.displayBuffers[idx].transformMatrix, buffer, sphereProgram, this.gl.TRIANGLES, j);
-                        } else if (this.displayBuffers[idx].transformMatrixInteractive) {
-                            this.drawTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive, this.displayBuffers[idx].transformOriginInteractive, buffer, sphereProgram, this.gl.TRIANGLES, j);
+                        if (displayBuffers[idx].transformMatrix) {
+                            this.drawTransformMatrix(displayBuffers[idx].transformMatrix, buffer, sphereProgram, this.gl.TRIANGLES, j);
+                        } else if (displayBuffers[idx].transformMatrixInteractive) {
+                            this.drawTransformMatrixInteractive(displayBuffers[idx].transformMatrixInteractive, displayBuffers[idx].transformOriginInteractive, buffer, sphereProgram, this.gl.TRIANGLES, j);
                         } else {
                             if (this.ext) {
                                 if(this.doAnaglyphStereo) {
@@ -5318,10 +5321,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.gl.vertexAttrib4f(sphereProgram.vertexColourAttribute, triangleColours[j][isphere * 4], triangleColours[j][isphere * 4 + 1], triangleColours[j][isphere * 4 + 2], triangleColours[j][isphere * 4 + 3]);
                         this.gl.uniform3fv(sphereProgram.offset, theOffSet);
                         this.gl.uniform1f(sphereProgram.size, primitiveSizes[j][isphere] * radMult);
-                        if (this.displayBuffers[idx].transformMatrix) {
-                            this.drawTransformMatrix(this.displayBuffers[idx].transformMatrix, buffer, sphereProgram, this.gl.TRIANGLES, j);
-                        } else if (this.displayBuffers[idx].transformMatrixInteractive) {
-                            this.drawTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive, this.displayBuffers[idx].transformOriginInteractive, buffer, sphereProgram, this.gl.TRIANGLES, j);
+                        if (displayBuffers[idx].transformMatrix) {
+                            this.drawTransformMatrix(displayBuffers[idx].transformMatrix, buffer, sphereProgram, this.gl.TRIANGLES, j);
+                        } else if (displayBuffers[idx].transformMatrixInteractive) {
+                            this.drawTransformMatrixInteractive(displayBuffers[idx].transformMatrixInteractive, displayBuffers[idx].transformOriginInteractive, buffer, sphereProgram, this.gl.TRIANGLES, j);
                         } else {
                             if (this.ext) {
                                 if(this.doAnaglyphStereo) {
@@ -5373,9 +5376,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 if (bufferTypes[j] === "POINTS") {
                     const buffer = this.diskBuffer;
                     let scaleImage = true;
-                    if (typeof (this.gl, this.displayBuffers[idx].supplementary["vert_tri_2d"]) !== "undefined") {
+                    if (typeof (this.gl, displayBuffers[idx].supplementary["vert_tri_2d"]) !== "undefined") {
                         let tempMVMatrix = mat4.create();
-                        mat4.set(tempMVMatrix, this.mvMatrix[0], this.mvMatrix[1], this.mvMatrix[2], this.mvMatrix[3], this.mvMatrix[4], this.mvMatrix[5], this.mvMatrix[6], this.mvMatrix[7], this.mvMatrix[8], this.mvMatrix[9], this.mvMatrix[10], this.mvMatrix[11], (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][0] * 48.0) * this.zoom, (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][1] * 48.0) * this.zoom, -this.fogClipOffset, 1.0);
+                        mat4.set(tempMVMatrix, this.mvMatrix[0], this.mvMatrix[1], this.mvMatrix[2], this.mvMatrix[3], this.mvMatrix[4], this.mvMatrix[5], this.mvMatrix[6], this.mvMatrix[7], this.mvMatrix[8], this.mvMatrix[9], this.mvMatrix[10], this.mvMatrix[11], (-24.0 + displayBuffers[idx].supplementary["vert_tri_2d"][0][0] * 48.0) * this.zoom, (-24.0 + displayBuffers[idx].supplementary["vert_tri_2d"][0][1] * 48.0) * this.zoom, -this.fogClipOffset, 1.0);
                         this.gl.uniformMatrix4fv(this.shaderProgramTwoDShapes.mvMatrixUniform, false, tempMVMatrix);
                         scaleImage = false;
                     }
@@ -5406,7 +5409,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             this.gl.drawElements(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_SHORT, 0);
                         }
                     }
-                    if (typeof (this.gl, this.displayBuffers[idx].supplementary["vert_tri_2d"]) !== "undefined") {
+                    if (typeof (this.gl, displayBuffers[idx].supplementary["vert_tri_2d"]) !== "undefined") {
                         this.setMatrixUniforms(this.shaderProgramTwoDShapes);
                     }
                 }
@@ -5454,8 +5457,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     continue;
                 }
                 // FIXME ? We assume all are the same size. Anything else is a little tricky for now.
-                if (typeof (this.displayBuffers[idx].primitiveSizes) !== "undefined" && typeof (this.displayBuffers[idx].primitiveSizes[j]) !== "undefined" && typeof (this.displayBuffers[idx].primitiveSizes[j][0]) !== "undefined") {
-                    this.gl.uniform1f(this.shaderProgramThickLines.pixelZoom, this.displayBuffers[idx].primitiveSizes[j][0] * 0.04 * this.zoom);
+                if (typeof (displayBuffers[idx].primitiveSizes) !== "undefined" && typeof (displayBuffers[idx].primitiveSizes[j]) !== "undefined" && typeof (displayBuffers[idx].primitiveSizes[j][0]) !== "undefined") {
+                    this.gl.uniform1f(this.shaderProgramThickLines.pixelZoom, displayBuffers[idx].primitiveSizes[j][0] * 0.04 * this.zoom);
                 } else {
                     this.gl.uniform1f(this.shaderProgramThickLines.pixelZoom, 1.0 * 0.04 * this.zoom);
                 }
@@ -5464,19 +5467,19 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexPositionBuffer[j]);
                 this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexPositionAttribute, triangleVertexPositionBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleColourBuffer[j]);
-                if(this.displayBuffers[idx].customColour&&this.displayBuffers[idx].customColour.length==4){
+                if(displayBuffers[idx].customColour&&displayBuffers[idx].customColour.length==4){
                     this.gl.disableVertexAttribArray(this.shaderProgramThickLines.vertexColourAttribute);
-                    this.gl.vertexAttrib4f(this.shaderProgramThickLines.vertexColourAttribute, ...this.displayBuffers[idx].customColour)
+                    this.gl.vertexAttrib4f(this.shaderProgramThickLines.vertexColourAttribute, ...displayBuffers[idx].customColour)
                 } else {
                     this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexColourAttribute);
                     this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexColourAttribute, triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
                 }
                 this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, triangleVertexIndexBuffer[j]);
 
-                if (this.displayBuffers[idx].transformMatrix) {
-                    this.drawTransformMatrixPMV(this.displayBuffers[idx].transformMatrix, this.displayBuffers[idx], this.shaderProgramThickLines, this.gl.TRIANGLES, j);
-                } else if (this.displayBuffers[idx].transformMatrixInteractive) {
-                    this.drawTransformMatrixInteractivePMV(this.displayBuffers[idx].transformMatrixInteractive, this.displayBuffers[idx].transformOriginInteractive, this.displayBuffers[idx], this.shaderProgramThickLines, this.gl.TRIANGLES, j);
+                if (displayBuffers[idx].transformMatrix) {
+                    this.drawTransformMatrixPMV(displayBuffers[idx].transformMatrix, displayBuffers[idx], this.shaderProgramThickLines, this.gl.TRIANGLES, j);
+                } else if (displayBuffers[idx].transformMatrixInteractive) {
+                    this.drawTransformMatrixInteractivePMV(displayBuffers[idx].transformMatrixInteractive, displayBuffers[idx].transformOriginInteractive, displayBuffers[idx], this.shaderProgramThickLines, this.gl.TRIANGLES, j);
                 } else {
                     if (this.ext) {
                         this.drawMaxElementsUInt(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems);

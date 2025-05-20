@@ -4,7 +4,7 @@ import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInf
 import { libcootApi } from '../types/libcoot';
 import { MoorhenColourRule } from './MoorhenColourRule';
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums"
-import { setOrigin, setRequestDrawScene, setRequestBuildBuffers } from "../store/glRefSlice"
+import { setOrigin, setRequestDrawScene, setRequestBuildBuffers, setDisplayBuffers } from "../store/glRefSlice"
 import { buildBuffers } from '../WebGLgComponents/buildBuffers'
 
 /**
@@ -296,27 +296,24 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
      * @param {moorhen.DisplayObject[]} objects - The display objects for this representation
      */
     buildBuffers(objects: moorhen.DisplayObject[]) {
+        const displayBuffers = this.parentMolecule.store.getState().glRef.displayBuffers
         if (objects.length > 0 && !this.parentMolecule.gemmiStructure?.isDeleted()) {
             objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
                 const a = this.glRef.current.appendOtherData(object, true)
+                this.parentMolecule.store.dispatch(setDisplayBuffers([...displayBuffers,...a]))
                 buildBuffers(a)
                 if (this.buffers) {
                     this.buffers = this.buffers.concat(a)
                 } else {
                     this.buffers = a
                 }
-                a.forEach(buf => {
-                    this.glRef.current.displayBuffers.push(buf)
-                })
                 this.glRef.current.drawScene()
 
             })
-            this.parentMolecule.store.dispatch(setRequestBuildBuffers(true))
         }
         this.buffers.forEach(buf => {
             buf.multiViewGroup = this.parentMolecule.molNo
         })
-        this.parentMolecule.store.dispatch(setRequestDrawScene(true))
     }
 
     /**
@@ -360,19 +357,18 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
      * Delete the current representation buffers
      */
     deleteBuffers() {
+        const displayBuffers = this.parentMolecule.store.getState().glRef.displayBuffers
         if (this.buffers?.length > 0) {
             this.buffers.forEach(buffer => {
                 if ("clearBuffers" in buffer) {
                     buffer.clearBuffers()
-                    if (this.glRef.current.displayBuffers) {
-                        this.glRef.current.displayBuffers = this.glRef.current.displayBuffers.filter(glBuffer => glBuffer !== buffer)
+                    if (displayBuffers) {
+                        this.parentMolecule.store.dispatch(setDisplayBuffers(displayBuffers.filter(glBuffer => glBuffer !== buffer)))
                     }
                 } else if ("labels" in buffer) {
                     this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels, buffer.uuid)
                 }
             })
-            this.parentMolecule.store.dispatch(setRequestBuildBuffers(true))
-            this.parentMolecule.store.dispatch(setRequestDrawScene(true))
             this.buffers = []
         }
     }

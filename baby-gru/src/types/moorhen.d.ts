@@ -1144,6 +1144,7 @@ export namespace moorhen {
             requestBuildBuffers: boolean;
             isWebGL2: boolean;
             glCtx: any;
+            displayBuffers: DisplayBuffer[];
             activeMolecule: Molecule;
             draggableMolecule: Molecule;
             lightPosition: [number,number,number,number],

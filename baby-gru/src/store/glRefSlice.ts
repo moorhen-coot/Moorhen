@@ -1,5 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { moorhen } from "../types/moorhen"
+import { DisplayBuffer } from '../WebGLgComponents/displayBuffer'
 
 const initialState = {
     origin: [0,0,0],
@@ -8,6 +9,10 @@ const initialState = {
     isWebGL2: false,
     glCtx: null,
     activeMolecule: null,
+    draggableMolecule: null,
+    envUpdate: { switch: false },
+    clearLabels: { switch: false },
+    displayBuffers: [],
     // These should probably be in sceneSettings slice. 
     // We'll move them in due course.
     lightPosition: [10.0, 10.0, 60.0, 1.0],
@@ -24,11 +29,6 @@ const initialState = {
     clipEnd: 1000,
     cursorPosition: [0,0],
     shortCutHelp: [],
-    draggableMolecule: null,
-    envUpdate: { switch: false },
-    clearLabels: { switch: false }
-    //TODO
-    // clip
 }
 
 export const glRefSlice = createSlice({
@@ -98,6 +98,9 @@ export const glRefSlice = createSlice({
     setShortCutHelp: (state, action: {payload: string[], type: string}) => {
         return { ...state, shortCutHelp: action.payload }
     },
+    setDisplayBuffers: (state, action: {payload: DisplayBuffer[], type: string}) => {
+        return { ...state, displayBuffers: action.payload }
+    },
     triggerRedrawEnv: (state, action: {payload: boolean, type: string}) => {
         return { ...state,
             envUpdate: {
@@ -118,7 +121,8 @@ export const {
     setOrigin, setRequestDrawScene, setRequestBuildBuffers, setIsWebGL2, setActiveMolecule,
     setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setZoom,
     setQuat, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd, setCursorPosition,
-    setShortCutHelp, setDraggableMolecule, triggerRedrawEnv, triggerClearLabels, setGLCtx
+    setShortCutHelp, setDraggableMolecule, triggerRedrawEnv, triggerClearLabels, setGLCtx,
+    setDisplayBuffers
 } = glRefSlice.actions
 
 export default glRefSlice.reducer
