@@ -1,6 +1,7 @@
 import { guid } from '../utils/utils';
 import { DisplayBuffer } from './displayBuffer'
 import { getEncodedData } from './encodedData'
+import store from '../store/MoorhenReduxStore'
 
 const createInstanceOriginsBuffer = (tri,theBuffer,gl) => {
     theBuffer.triangleInstanceOriginBuffer.push(gl.createBuffer());
@@ -102,9 +103,10 @@ const createSizeBuffer = (idx,theBuffer) => {
     }
 }
 
-export const createWebGLBuffers = (jsondata: any, idat: number, gl: any): DisplayBuffer => {
+export const createWebGLBuffers = (jsondata: any, idat: number): DisplayBuffer => {
 
     const theBuffer = new DisplayBuffer()
+    const gl = store.getState().glRef.glCtx
 
     if (jsondata.instance_origins) {
         const rssentries = jsondata.instance_origins[idat];

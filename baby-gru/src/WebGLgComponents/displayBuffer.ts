@@ -10,6 +10,7 @@ interface MGWebGLBuffer {
 }
 
 export class DisplayBuffer {
+    origin: number[];
     visible: boolean;
     name_label: string;
     display_class: string;
@@ -27,15 +28,15 @@ export class DisplayBuffer {
     triangleInstanceOriginBuffer: MGWebGLBuffer[];
     triangleInstanceOrientationBuffer: MGWebGLBuffer[];
     triangleInstanceSizeBuffer: MGWebGLBuffer[];
-    triangleColourBuffer: number[];
-    triangleIndexs: number[];
-    triangleVertices: number[];
-    triangleInstanceOrigins: number[];
-    triangleInstanceSizes: number[];
-    triangleInstanceOrientations: number[];
-    triangleColours: number[];
-    triangleNormals: number[];
-    primitiveSizes: number[];
+    triangleColourBuffer: MGWebGLBuffer[];
+    triangleIndexs: number[][];
+    triangleVertices: number[][];
+    triangleInstanceOrigins: number[][];
+    triangleInstanceSizes: number[][];
+    triangleInstanceOrientations: number[][];
+    triangleColours: number[][];
+    triangleNormals: number[][];
+    primitiveSizes: number[][];
     bufferTypes: string[];
     customColour: [number,number,number,number] | null;
     transformMatrix: number[];

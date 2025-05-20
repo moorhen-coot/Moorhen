@@ -6,6 +6,7 @@ const initialState = {
     requestDrawScene: false,
     requestBuildBuffers: false,
     isWebGL2: false,
+    glCtx: null,
     activeMolecule: null,
     // These should probably be in sceneSettings slice. 
     // We'll move them in due course.
@@ -45,6 +46,9 @@ export const glRefSlice = createSlice({
     },
     setIsWebGL2: (state, action: {payload: boolean, type: string}) => {
         return { ...state, isWebGL2: action.payload }
+    },
+    setGLCtx: (state, action: {payload: any, type: string}) => {
+        return { ...state, glCtx: action.payload }
     },
     setActiveMolecule: (state, action: {payload: moorhen.Molecule, type: string}) => {
         return { ...state, activeMolecule: action.payload }
@@ -114,7 +118,7 @@ export const {
     setOrigin, setRequestDrawScene, setRequestBuildBuffers, setIsWebGL2, setActiveMolecule,
     setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setZoom,
     setQuat, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd, setCursorPosition,
-    setShortCutHelp, setDraggableMolecule, triggerRedrawEnv, triggerClearLabels
+    setShortCutHelp, setDraggableMolecule, triggerRedrawEnv, triggerClearLabels, setGLCtx
 } = glRefSlice.actions
 
 export default glRefSlice.reducer

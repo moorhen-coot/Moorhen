@@ -9,7 +9,7 @@ import * as mat4 from 'gl-matrix/mat4';
 import * as mat3 from 'gl-matrix/mat3';
 import  { unProject } from './GLU.js';
 import store from '../store/MoorhenReduxStore'
-import { setIsWebGL2 } from "../store/glRefSlice"
+import { setIsWebGL2, setGLCtx } from "../store/glRefSlice"
 
 //WebGL2 shaders
 import { depth_peel_accum_vertex_shader_source as depth_peel_accum_vertex_shader_source_webgl2 } from './webgl-2/depth-peel-accum-vertex-shader.js';
@@ -119,6 +119,7 @@ import { TextCanvasTexture } from './textCanvasTexture'
 import { DisplayBuffer } from './displayBuffer'
 import { createQuatFromDXAngle, createQuatFromAngle, createXQuatFromDX, createYQuatFromDY, createZQuatFromDX, quatSlerp } from './quatUtils'
 import { createWebGLBuffers } from './createWebGLBuffers'
+import { buildBuffers } from './buildBuffers'
 
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShadowShaders, initPointSpheresShaders } from './mgWebGLShaders'
 
@@ -1282,6 +1283,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl = glc.gl;
         this.WEBGL2 = glc.WEBGL2;
         store.dispatch(setIsWebGL2(this.WEBGL2))
+        store.dispatch(setGLCtx(this.gl))
         this.currentViewport = [0,0, this.gl.viewportWidth, this.gl.viewportWidth];
         this.currentAnaglyphColor = [1.0,0.0,0.0,1.0]
         if(this.WEBGL2){
@@ -1773,23 +1775,19 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     appendOtherData(jsondata: any, skipRebuild?: boolean, name?: string) : any {
 
-        const self = this;
-
         const theseBuffers = [];
 
         if(jsondata.image_data){
             if(jsondata.width && jsondata.height && jsondata.x_size && jsondata.y_size){
                 const uuid =  guid();
                 const texturedShape = new TexturedShape(jsondata,this.gl,uuid);
-                this.texturedShapes.push(texturedShape)
+                //this.texturedShapes.push(texturedShape)
                 theseBuffers.push({texturedShapes:texturedShape,uuid:uuid});
             }
             console.log("Probably textureAsFloatsJS, ignore for now!");
             if (typeof (skipRebuild) !== "undefined" && skipRebuild) {
                 return theseBuffers;
             }
-            self.buildBuffers();
-            self.drawScene();
             return theseBuffers;
         }
 
@@ -1803,9 +1801,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             const x = jsondata.vert_tri[idat][ilabel*3];
                             const y = jsondata.vert_tri[idat][ilabel*3+1];
                             const z = jsondata.vert_tri[idat][ilabel*3+2];
-                            const label = {font:self.glTextFont,x:x,y:y,z:z,text:t};
+                            const label = {font:this.glTextFont,x:x,y:y,z:z,text:t};
                             labels.push(label);
                         }
+                        /*
                         const uuid =  guid();
                         labels.forEach(label => {
                             this.labelsTextCanvasTexture.addBigTextureTextImage({font:label.font,text:label.text,x:label.x,y:label.y,z:label.z},uuid)
@@ -1813,17 +1812,19 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         theseBuffers.push({labels:labels,uuid:uuid});
                         this.labelsTextCanvasTexture.recreateBigTextureBuffers();
                         this.buildBuffers();
+                        */
                         continue
                     }
                 }
             }
 
-            const theBuffer = createWebGLBuffers(jsondata,idat,this.gl)
+            const theBuffer = createWebGLBuffers(jsondata,idat)
 
-            self.displayBuffers.push(theBuffer);
+            //console.log(theBuffer)
+            //this.displayBuffers.push(theBuffer);
             theseBuffers.push(theBuffer);
 
-            if(jsondata.isHoverBuffer){
+            if(false&&jsondata.isHoverBuffer){
                 theBuffer.isHoverBuffer = jsondata.isHoverBuffer;
                 let maxSize = 0.27;
                 for (let idx = 0; idx < this.displayBuffers.length; idx++) {
@@ -1861,12 +1862,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
         })
 
-        if (typeof (skipRebuild) !== "undefined" && skipRebuild) {
-            return theseBuffers;
-        }
-
-        self.buildBuffers();
-        self.drawScene();
         return theseBuffers;
     }
 
@@ -2780,651 +2775,60 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     buildBuffers() : void {
-        const print_timing = false
-
-        const tbb1 = performance.now()
-        let xaxis = vec3Create([1.0, 0.0, 0.0]);
-        let yaxis = vec3Create([0.0, 1.0, 0.0]);
-        let zaxis = vec3Create([0.0, 0.0, 1.0]);
-        let Q = vec3.create();
-        let R = vec3.create();
-
-        // FIXME - These need to be global preferences or properties of primitive.
-        // spline_accu = 4 is OK for 5kcr on QtWebKit, 8 runs out of memory.
-        let accuStep = 20;
-
-        const thisdisplayBufferslength = this.displayBuffers.length;
-        //console.log(thisdisplayBufferslength+" buffers to build");
-
-        for (let idx = 0; idx < thisdisplayBufferslength; idx++) {
-            if (!this.displayBuffers[idx].isDirty) {
-                continue;
+        if (typeof (this.imageBuffer) === "undefined") {
+            let diskIndices = [];
+            let diskNormals = [];
+            const imageVertices = [];
+            const accuStep = 90;
+            let diskIdx = 0;
+            imageVertices.push(0.0);
+            imageVertices.push(0.0);
+            imageVertices.push(0.0);
+            diskNormals.push(0.0);
+            diskNormals.push(0.0);
+            diskNormals.push(-1.0);
+            diskIndices.push(diskIdx++);
+            for (let theta = 45; theta <= 405; theta += accuStep) {
+                let theta1 = Math.PI * (theta) / 180.0;
+                let x1 = Math.cos(theta1);
+                let y1 = Math.sin(theta1);
+                imageVertices.push(x1);
+                imageVertices.push(-y1);
+                imageVertices.push(0.0);
+                diskNormals.push(0.0);
+                diskNormals.push(0.0);
+                diskNormals.push(-1.0);
+                diskIndices.push(diskIdx++);
             }
-            for (let j = 0; j < this.displayBuffers[idx].triangleVertexIndexBuffer.length; j++) {
-                this.displayBuffers[idx].isDirty = false;
-                if (this.displayBuffers[idx].bufferTypes[j] === "PERFECT_SPHERES" || this.displayBuffers[idx].bufferTypes[j] === "IMAGES" || this.displayBuffers[idx].bufferTypes[j] === "TEXT") {
-                    if (typeof (this.imageBuffer) === "undefined") {
-                        let diskIndices = [];
-                        let diskNormals = [];
-                        this.imageVertices = [];
-                        accuStep = 90;
-                        let diskIdx = 0;
-                        this.imageVertices.push(0.0);
-                        this.imageVertices.push(0.0);
-                        this.imageVertices.push(0.0);
-                        diskNormals.push(0.0);
-                        diskNormals.push(0.0);
-                        diskNormals.push(-1.0);
-                        diskIndices.push(diskIdx++);
-                        for (let theta = 45; theta <= 405; theta += accuStep) {
-                            let theta1 = Math.PI * (theta) / 180.0;
-                            let x1 = Math.cos(theta1);
-                            let y1 = Math.sin(theta1);
-                            this.imageVertices.push(x1);
-                            this.imageVertices.push(-y1);
-                            this.imageVertices.push(0.0);
-                            diskNormals.push(0.0);
-                            diskNormals.push(0.0);
-                            diskNormals.push(-1.0);
-                            diskIndices.push(diskIdx++);
-                        }
-                        this.imageBuffer = new DisplayBuffer();
-                        this.imageBuffer.triangleVertexNormalBuffer.push(this.gl.createBuffer());
-                        this.imageBuffer.triangleVertexPositionBuffer.push(this.gl.createBuffer());
-                        this.imageBuffer.triangleVertexIndexBuffer.push(this.gl.createBuffer());
-                        this.imageBuffer.triangleVertexTextureBuffer.push(this.gl.createBuffer());
-                        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.imageBuffer.triangleVertexIndexBuffer[0]);
-                        this.imageBuffer.triangleVertexIndexBuffer[0].itemSize = 1;
-                        this.imageBuffer.triangleVertexIndexBuffer[0].numItems = diskIndices.length;
-                        if (this.ext) {
-                            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(diskIndices), this.gl.STATIC_DRAW);
-                        } else {
-                            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(diskIndices), this.gl.STATIC_DRAW);
-                        }
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.imageBuffer.triangleVertexNormalBuffer[0]);
-                        this.imageBuffer.triangleVertexNormalBuffer[0].itemSize = 3;
-                        this.imageBuffer.triangleVertexNormalBuffer[0].numItems = diskNormals.length / 3;
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(diskNormals), this.gl.STATIC_DRAW);
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.imageBuffer.triangleVertexPositionBuffer[0]);
-                        this.imageBuffer.triangleVertexPositionBuffer[0].itemSize = 3;
-                        this.imageBuffer.triangleVertexPositionBuffer[0].numItems = this.imageVertices.length / 3;
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.imageVertices), this.gl.DYNAMIC_DRAW);
-
-                        let imageTextures = [0.5, 0.5, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0];
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.imageBuffer.triangleVertexTextureBuffer[0]);
-                        this.imageBuffer.triangleVertexTextureBuffer[0].itemSize = 2;
-                        this.imageBuffer.triangleVertexTextureBuffer[0].numItems = imageTextures.length / 2;
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(imageTextures), this.gl.STATIC_DRAW);
-                    }
-                    if(this.displayBuffers[idx].triangleInstanceOriginBuffer[j]){
-                        this.displayBuffers[idx].triangleInstanceOriginBuffer[j].itemSize = 3;
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceOriginBuffer[j]);
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleInstanceOrigins[j]), this.gl.STATIC_DRAW);
-                    }
-                    if(this.displayBuffers[idx].triangleInstanceSizeBuffer[j]){
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceSizeBuffer[j]);
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleInstanceSizes[j]), this.gl.STATIC_DRAW);
-                        this.displayBuffers[idx].triangleInstanceSizeBuffer[j].itemSize = 3;
-                    }
-                    if(!this.displayBuffers[idx].customColour || this.displayBuffers[idx].customColour.length!==4){
-                        if(this.displayBuffers[idx].triangleColourBuffer[j]){
-                            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
-                            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleColours[j]), this.gl.STATIC_DRAW);
-                            this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
-                        }
-                    }
-
-                } else if (this.displayBuffers[idx].bufferTypes[j] === "POINTS") {
-                    if (typeof (this.diskBuffer) === "undefined") {
-                        let diskIndices = [];
-                        let diskNormals = [];
-                        this.diskVertices = [];
-                        accuStep = 10;
-                        let diskIdx = 0;
-                        this.diskVertices.push(0.0);
-                        this.diskVertices.push(0.0);
-                        this.diskVertices.push(0.0);
-                        diskNormals.push(0.0);
-                        diskNormals.push(0.0);
-                        diskNormals.push(-1.0);
-                        diskIndices.push(diskIdx++);
-                        for (let theta = 0; theta <= 360; theta += accuStep) {
-                            let theta1 = Math.PI * (theta) / 180.0;
-                            let y1 = Math.cos(theta1);
-                            let x1 = Math.sin(theta1);
-                            this.diskVertices.push(x1);
-                            this.diskVertices.push(y1);
-                            this.diskVertices.push(0.0);
-                            diskNormals.push(0.0);
-                            diskNormals.push(0.0);
-                            diskNormals.push(-1.0);
-                            diskIndices.push(diskIdx++);
-                        }
-                        this.diskBuffer = new DisplayBuffer();
-                        this.diskBuffer.triangleVertexNormalBuffer.push(this.gl.createBuffer());
-                        this.diskBuffer.triangleVertexPositionBuffer.push(this.gl.createBuffer());
-                        this.diskBuffer.triangleVertexIndexBuffer.push(this.gl.createBuffer());
-                        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.diskBuffer.triangleVertexIndexBuffer[0]);
-                        this.diskBuffer.triangleVertexIndexBuffer[0].itemSize = 1;
-                        this.diskBuffer.triangleVertexIndexBuffer[0].numItems = diskIndices.length;
-                        if (this.ext) {
-                            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(diskIndices), this.gl.STATIC_DRAW);
-                        } else {
-                            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(diskIndices), this.gl.STATIC_DRAW);
-                        }
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.diskBuffer.triangleVertexNormalBuffer[0]);
-                        this.diskBuffer.triangleVertexNormalBuffer[0].itemSize = 3;
-                        this.diskBuffer.triangleVertexNormalBuffer[0].numItems = diskNormals.length / 3;
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(diskNormals), this.gl.STATIC_DRAW);
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.diskBuffer.triangleVertexPositionBuffer[0]);
-                        this.diskBuffer.triangleVertexPositionBuffer[0].itemSize = 3;
-                        this.diskBuffer.triangleVertexPositionBuffer[0].numItems = this.diskVertices.length / 3;
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.diskVertices), this.gl.DYNAMIC_DRAW);
-                    }
-                } else if (this.displayBuffers[idx].bufferTypes[j] === "CIRCLES2") {
-                    console.log("Not implemented, do nothing yet ...");
-                    console.log(this.displayBuffers[idx]);
-                    let circ_idx = 0;
-                    let triangleNormals = [];
-                    let triangleVertices = [];
-                    for (let k = 0; k < this.displayBuffers[idx].triangleVertices[j].length; k += 3, circ_idx++) {
-                        let x = this.displayBuffers[idx].triangleVertices[j][k];
-                        let y = this.displayBuffers[idx].triangleVertices[j][k + 1];
-                        let z = this.displayBuffers[idx].triangleVertices[j][k + 2];
-                        let tSizeX = 0.5; //FIXME - Depends on size
-                        let tSizeY = 0.5; //FIXME - Depends on size
-                        let up = [0, 1, 0];
-                        let right = [1, 0, 0];
-                        //FIXME - Aargh! Cannot do this need up and right to be uniform in shader ...
-                        triangleVertices.push(x - tSizeY * up[0] - tSizeX * right[0]); triangleVertices.push(y - tSizeY * up[1] - tSizeX * right[1]); triangleVertices.push(z - tSizeY * up[2] - tSizeX * right[2]);
-                        triangleVertices.push(x - tSizeY * up[0] + tSizeX * right[0]); triangleVertices.push(y - tSizeY * up[1] + tSizeX * right[1]); triangleVertices.push(z - tSizeY * up[2] + tSizeX * right[2]);
-                        triangleVertices.push(x + tSizeY * up[0] + tSizeX * right[0]); triangleVertices.push(y + tSizeY * up[1] + tSizeX * right[1]); triangleVertices.push(z + tSizeY * up[2] + tSizeX * right[2]);
-
-                        triangleVertices.push(x - tSizeY * up[0] - tSizeX * right[0]); triangleVertices.push(y - tSizeY * up[1] - tSizeX * right[1]); triangleVertices.push(z - tSizeY * up[2] - tSizeX * right[2]);
-                        triangleVertices.push(x + tSizeY * up[0] + tSizeX * right[0]); triangleVertices.push(y + tSizeY * up[1] + tSizeX * right[1]); triangleVertices.push(z + tSizeY * up[2] + tSizeX * right[2]);
-                        triangleVertices.push(x + tSizeY * up[0] - tSizeX * right[0]); triangleVertices.push(y + tSizeY * up[1] - tSizeX * right[1]); triangleVertices.push(z + tSizeY * up[2] - tSizeX * right[2]);
-
-                        triangleNormals.push(0.0); triangleNormals.push(0.0); triangleNormals.push(1.0);
-                        triangleNormals.push(0.0); triangleNormals.push(0.0); triangleNormals.push(1.0);
-                        triangleNormals.push(0.0); triangleNormals.push(0.0); triangleNormals.push(1.0);
-                        triangleNormals.push(0.0); triangleNormals.push(0.0); triangleNormals.push(1.0);
-                        triangleNormals.push(0.0); triangleNormals.push(0.0); triangleNormals.push(1.0);
-                        triangleNormals.push(0.0); triangleNormals.push(0.0); triangleNormals.push(1.0);
-
-                    }
-                } else if (this.displayBuffers[idx].bufferTypes[j] === "CIRCLES") {
-                    let PIBY2 = Math.PI * 2;
-                    let triangleIndexs = [];
-                    let triangleVertices = [];
-                    let triangleColours = [];
-                    let torusIdx = 0;
-                    let icol = 0;
-                    let tor_idx = 0;
-                    for (let k = 0; k < this.displayBuffers[idx].triangleVertices[j].length; k += 3, icol += 4, tor_idx++) {
-                        let torusOrigin = vec3Create([this.displayBuffers[idx].triangleVertices[j][k], this.displayBuffers[idx].triangleVertices[j][k + 1], this.displayBuffers[idx].triangleVertices[j][k + 2]]);
-                        let torusNormal = vec3Create([this.displayBuffers[idx].triangleNormals[j][k], this.displayBuffers[idx].triangleNormals[j][k + 1], this.displayBuffers[idx].triangleNormals[j][k + 2]]);
-                        let torusColour = [this.displayBuffers[idx].triangleColours[j][icol], this.displayBuffers[idx].triangleColours[j][icol + 1], this.displayBuffers[idx].triangleColours[j][icol + 2], this.displayBuffers[idx].triangleColours[j][icol + 3]];
-                        NormalizeVec3(torusNormal);
-                        vec3Cross(xaxis, torusNormal, Q);
-                        if (vec3.length(Q) > 1e-5) {
-                            NormalizeVec3(Q);
-                            vec3Cross(torusNormal, Q, R);
-                        } else {
-                            vec3Cross(yaxis, torusNormal, Q);
-                            if (vec3.length(Q) > 1e-5) {
-                                NormalizeVec3(Q);
-                                vec3Cross(torusNormal, Q, R);
-                            } else {
-                                vec3Cross(zaxis, torusNormal, Q);
-                                if (vec3.length(Q) > 1e-5) {
-                                    NormalizeVec3(Q);
-                                    vec3Cross(torusNormal, Q, R);
-                                }
-                            }
-                        }
-                        let mat = mat4.create();
-                        mat4.set(mat, R[0], R[1], R[2], 0.0, Q[0], Q[1], Q[2], 0.0, torusNormal[0], torusNormal[1], torusNormal[2], 0.0, 0.0, 0.0, 0.0, 1.0);
-                        let nsectors = 180;
-                        let startAngle = 0.0;
-                        let sweepAngle = 360.0;
-                        let sa;
-                        let ea;
-                        if (sweepAngle > 0) {
-                            sa = startAngle;
-                            ea = startAngle + sweepAngle;
-                        } else {
-                            sa = startAngle + sweepAngle;
-                            ea = startAngle;
-                        }
-                        let iloop = 0;
-                        let radius = this.displayBuffers[idx].supplementary["radii"][j][tor_idx];
-                        let majorRadius = radius;
-                        for (let jtor = sa; jtor < ea; jtor = jtor + 360 / nsectors, iloop++) {
-                            let phi = 1.0 * jtor / 360.0 * PIBY2;
-                            let phi2 = 1.0 * (jtor + 360.0 / nsectors) / 360.0 * PIBY2;
-                            if (sweepAngle > 0 && jtor + 360.0 / nsectors > startAngle + sweepAngle) phi2 = 1.0 * (startAngle + sweepAngle) / 360.0 * PIBY2;
-                            if (sweepAngle < 0 && jtor + 360.0 / nsectors > startAngle) phi2 = 1.0 * (startAngle) / 360.0 * PIBY2;
-
-                            let x = (majorRadius) * Math.cos(phi);
-                            let y = (majorRadius) * Math.sin(phi);
-                            let z = 0.0;
-
-                            let x2 = (majorRadius) * Math.cos(phi2);
-                            let y2 = (majorRadius) * Math.sin(phi2);
-                            let z2 = 0.0;
-
-                            let p1 = vec3Create([x, y, z]);
-                            let p2 = vec3Create([x2, y2, z2]);
-
-                            vec3.transformMat4(p1, p1, mat);
-                            vec3.transformMat4(p2, p2, mat);
-
-                            x = p1[0]; y = p1[1]; z = p1[2];
-                            x2 = p2[0]; y2 = p2[1]; z2 = p2[2];
-
-                            triangleVertices.push(torusOrigin[0] + x2); triangleVertices.push(torusOrigin[1] + y2); triangleVertices.push(torusOrigin[2] + z2);
-                            triangleColours.push(torusColour[0]); triangleColours.push(torusColour[1]); triangleColours.push(torusColour[2]); triangleColours.push(torusColour[3]);
-                            triangleColours.push(torusColour[0]); triangleColours.push(torusColour[1]); triangleColours.push(torusColour[2]); triangleColours.push(torusColour[3]);
-                            triangleIndexs.push(torusIdx++);
-                            triangleIndexs.push(torusIdx++);
-                        }
-                    }
-
-                    // Try thick lines
-                    let size = 1.0;
-                    let thickLines = this.linesToThickLines(triangleVertices, triangleColours, size);
-                    let Normals_new = thickLines["normals"];
-                    let Vertices_new = thickLines["vertices"];
-                    let Colours_new = thickLines["colours"];
-                    let Indexs_new = thickLines["indices"];
-                    //console.log("Buffering "+Normals_new.length/3+" normals");
-                    //console.log("Buffering "+Vertices_new.length/3+" vertices");
-                    //console.log("Buffering "+Colours_new.length/4+" colours");
-                    //console.log("Buffering "+Indexs_new.length+" indices");
-                    this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexIndexBuffer[j]);
-                    if (this.ext) {
-                        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(Indexs_new), this.gl.STATIC_DRAW);
-                    } else {
-                        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(Indexs_new), this.gl.STATIC_DRAW);
-                    }
-                    this.displayBuffers[idx].triangleVertexIndexBuffer[j].itemSize = 1;
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexNormalBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(Normals_new), this.gl.STATIC_DRAW);
-                    this.displayBuffers[idx].triangleVertexNormalBuffer[j].itemSize = 3;
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexPositionBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(Vertices_new), this.gl.STATIC_DRAW);
-                    this.displayBuffers[idx].triangleVertexPositionBuffer[j].itemSize = 3;
-                    if(!this.displayBuffers[idx].customColour || this.displayBuffers[idx].customColour.length!==4){
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(Colours_new), this.gl.STATIC_DRAW);
-                        this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
-                        this.displayBuffers[idx].triangleColourBuffer[j].numItems = Colours_new.length / 4;
-                    }
-
-                    this.displayBuffers[idx].triangleVertexIndexBuffer[j].numItems = Indexs_new.length;
-                    this.displayBuffers[idx].triangleVertexNormalBuffer[j].numItems = Normals_new.length / 3;
-                    this.displayBuffers[idx].triangleVertexPositionBuffer[j].numItems = Vertices_new.length / 3;
-
-                } else if (this.displayBuffers[idx].bufferTypes[j] === "TORUSES") {
-                    let PIBY2 = Math.PI * 2;
-                    let primitiveSizes = this.displayBuffers[idx].primitiveSizes[j];
-                    let triangleIndexs = [];
-                    let triangleNormals = [];
-                    let triangleVertices = [];
-                    let triangleColours = [];
-                    let torusIdx = 0;
-                    let icol = 0;
-                    let tor_idx = 0;
-                    for (let k = 0; k < this.displayBuffers[idx].triangleVertices[j].length; k += 3, icol += 4, tor_idx++) {
-                        let torusOrigin = vec3Create([this.displayBuffers[idx].triangleVertices[j][k], this.displayBuffers[idx].triangleVertices[j][k + 1], this.displayBuffers[idx].triangleVertices[j][k + 2]]);
-                        let torusNormal = vec3Create([this.displayBuffers[idx].triangleNormals[j][k], this.displayBuffers[idx].triangleNormals[j][k + 1], this.displayBuffers[idx].triangleNormals[j][k + 2]]);
-                        let torusColour = [this.displayBuffers[idx].triangleColours[j][icol], this.displayBuffers[idx].triangleColours[j][icol + 1], this.displayBuffers[idx].triangleColours[j][icol + 2], this.displayBuffers[idx].triangleColours[j][icol + 3]];
-                        NormalizeVec3(torusNormal);
-                        vec3Cross(xaxis, torusNormal, Q);
-                        if (vec3.length(Q) > 1e-5) {
-                            NormalizeVec3(Q);
-                            vec3Cross(torusNormal, Q, R);
-                        } else {
-                            vec3Cross(yaxis, torusNormal, Q);
-                            if (vec3.length(Q) > 1e-5) {
-                                NormalizeVec3(Q);
-                                vec3Cross(torusNormal, Q, R);
-                            } else {
-                                vec3Cross(zaxis, torusNormal, Q);
-                                if (vec3.length(Q) > 1e-5) {
-                                    NormalizeVec3(Q);
-                                    vec3Cross(torusNormal, Q, R);
-                                }
-                            }
-                        }
-                        let mat = mat4.create();
-                        mat4.set(mat, R[0], R[1], R[2], 0.0, Q[0], Q[1], Q[2], 0.0, torusNormal[0], torusNormal[1], torusNormal[2], 0.0, 0.0, 0.0, 0.0, 1.0);
-                        let nsectors = 36;
-                        let startAngle = 0.0;
-                        let sweepAngle = 360.0;
-                        let sa;
-                        let ea;
-                        if (sweepAngle > 0) {
-                            sa = startAngle;
-                            ea = startAngle + sweepAngle;
-                        } else {
-                            sa = startAngle + sweepAngle;
-                            ea = startAngle;
-                        }
-                        var iloop = 0;
-                        var radius = this.displayBuffers[idx].supplementary["radii"][j][tor_idx];
-                        var majorRadius = radius;
-                        var minorRadius = primitiveSizes[tor_idx];
-                        for (var jtor = sa; jtor < ea; jtor = jtor + 360 / nsectors, iloop++) {
-                            var phi = 1.0 * jtor / 360.0 * PIBY2;
-                            var phi2 = 1.0 * (jtor + 360.0 / nsectors) / 360.0 * PIBY2;
-                            if (sweepAngle > 0 && jtor + 360.0 / nsectors > startAngle + sweepAngle) phi2 = 1.0 * (startAngle + sweepAngle) / 360.0 * PIBY2;
-                            if (sweepAngle < 0 && jtor + 360.0 / nsectors > startAngle) phi2 = 1.0 * (startAngle) / 360.0 * PIBY2;
-                            for (var itor = 0; itor <= 360; itor = itor + 360 / nsectors) {
-                                var theta = 1.0 * itor / 360.0 * PIBY2;
-                                var theta2 = (1.0 * itor + 360.0 / nsectors) / 360.0 * PIBY2;
-
-                                var x = (majorRadius + minorRadius * Math.cos(theta)) * Math.cos(phi);
-                                var y = (majorRadius + minorRadius * Math.cos(theta)) * Math.sin(phi);
-                                var z = minorRadius * Math.sin(theta);
-                                var norm_x = Math.cos(theta) * Math.cos(phi);
-                                var norm_y = Math.cos(theta) * Math.sin(phi);
-                                var norm_z = Math.sin(theta);
-
-                                var x2 = (majorRadius + minorRadius * Math.cos(theta)) * Math.cos(phi2);
-                                var y2 = (majorRadius + minorRadius * Math.cos(theta)) * Math.sin(phi2);
-                                var z2 = minorRadius * Math.sin(theta);
-                                var norm_x2 = Math.cos(theta) * Math.cos(phi2);
-                                var norm_y2 = Math.cos(theta) * Math.sin(phi2);
-                                var norm_z2 = Math.sin(theta);
-
-                                var x3 = (majorRadius + minorRadius * Math.cos(theta2)) * Math.cos(phi);
-                                var y3 = (majorRadius + minorRadius * Math.cos(theta2)) * Math.sin(phi);
-                                var z3 = minorRadius * Math.sin(theta2);
-                                var norm_x3 = Math.cos(theta2) * Math.cos(phi);
-                                var norm_y3 = Math.cos(theta2) * Math.sin(phi);
-                                var norm_z3 = Math.sin(theta2);
-
-                                var x4 = (majorRadius + minorRadius * Math.cos(theta2)) * Math.cos(phi2);
-                                var y4 = (majorRadius + minorRadius * Math.cos(theta2)) * Math.sin(phi2);
-                                var z4 = minorRadius * Math.sin(theta2);
-                                var norm_x4 = Math.cos(theta2) * Math.cos(phi2);
-                                var norm_y4 = Math.cos(theta2) * Math.sin(phi2);
-                                var norm_z4 = Math.sin(theta2);
-
-                                var p1 = vec3Create([x, y, z]);
-                                var p2 = vec3Create([x2, y2, z2]);
-                                var p3 = vec3Create([x3, y3, z3]);
-                                var p4 = vec3Create([x4, y4, z4]);
-
-                                var n1 = vec3Create([norm_x, norm_y, norm_z]);
-                                var n2 = vec3Create([norm_x2, norm_y2, norm_z2]);
-                                var n3 = vec3Create([norm_x3, norm_y3, norm_z3]);
-                                var n4 = vec3Create([norm_x4, norm_y4, norm_z4]);
-
-                                vec3.transformMat4(p1, p1, mat);
-                                vec3.transformMat4(p2, p2, mat);
-                                vec3.transformMat4(p3, p3, mat);
-                                vec3.transformMat4(p4, p4, mat);
-                                vec3.transformMat4(n1, n1, mat);
-                                vec3.transformMat4(n2, n2, mat);
-                                vec3.transformMat4(n3, n3, mat);
-                                vec3.transformMat4(n4, n4, mat);
-
-                                x = p1[0]; y = p1[1]; z = p1[2];
-                                x2 = p2[0]; y2 = p2[1]; z2 = p2[2];
-                                x3 = p3[0]; y3 = p3[1]; z3 = p3[2];
-                                x4 = p4[0]; y4 = p4[1]; z4 = p4[2];
-                                norm_x = n1[0]; norm_y = n1[1]; norm_z = n1[2];
-                                norm_x2 = n2[0]; norm_y2 = n2[1]; norm_z2 = n2[2];
-                                norm_x3 = n3[0]; norm_y3 = n3[1]; norm_z3 = n3[2];
-                                norm_x4 = n4[0]; norm_y4 = n4[1]; norm_z4 = n4[2];
-
-                                triangleVertices.push(torusOrigin[0] + x2); triangleVertices.push(torusOrigin[1] + y2); triangleVertices.push(torusOrigin[2] + z2);
-                                triangleVertices.push(torusOrigin[0] + x); triangleVertices.push(torusOrigin[1] + y); triangleVertices.push(torusOrigin[2] + z);
-                                triangleVertices.push(torusOrigin[0] + x3); triangleVertices.push(torusOrigin[1] + y3); triangleVertices.push(torusOrigin[2] + z3);
-                                triangleNormals.push(norm_x2); triangleNormals.push(norm_y2); triangleNormals.push(norm_z2);
-                                triangleNormals.push(norm_x); triangleNormals.push(norm_y); triangleNormals.push(norm_z);
-                                triangleNormals.push(norm_x3); triangleNormals.push(norm_y3); triangleNormals.push(norm_z3);
-                                triangleColours.push(torusColour[0]); triangleColours.push(torusColour[1]); triangleColours.push(torusColour[2]); triangleColours.push(torusColour[3]);
-                                triangleColours.push(torusColour[0]); triangleColours.push(torusColour[1]); triangleColours.push(torusColour[2]); triangleColours.push(torusColour[3]);
-                                triangleColours.push(torusColour[0]); triangleColours.push(torusColour[1]); triangleColours.push(torusColour[2]); triangleColours.push(torusColour[3]);
-                                triangleIndexs.push(torusIdx++);
-                                triangleIndexs.push(torusIdx++);
-                                triangleIndexs.push(torusIdx++);
-
-                                triangleVertices.push(torusOrigin[0] + x4); triangleVertices.push(torusOrigin[1] + y4); triangleVertices.push(torusOrigin[2] + z4);
-                                triangleVertices.push(torusOrigin[0] + x2); triangleVertices.push(torusOrigin[1] + y2); triangleVertices.push(torusOrigin[2] + z2);
-                                triangleVertices.push(torusOrigin[0] + x3); triangleVertices.push(torusOrigin[1] + y3); triangleVertices.push(torusOrigin[2] + z3);
-                                triangleNormals.push(norm_x4); triangleNormals.push(norm_y4); triangleNormals.push(norm_z4);
-                                triangleNormals.push(norm_x2); triangleNormals.push(norm_y2); triangleNormals.push(norm_z2);
-                                triangleNormals.push(norm_x3); triangleNormals.push(norm_y3); triangleNormals.push(norm_z3);
-                                triangleColours.push(torusColour[0]); triangleColours.push(torusColour[1]); triangleColours.push(torusColour[2]); triangleColours.push(torusColour[3]);
-                                triangleColours.push(torusColour[0]); triangleColours.push(torusColour[1]); triangleColours.push(torusColour[2]); triangleColours.push(torusColour[3]);
-                                triangleColours.push(torusColour[0]); triangleColours.push(torusColour[1]); triangleColours.push(torusColour[2]); triangleColours.push(torusColour[3]);
-                                triangleIndexs.push(torusIdx++);
-                                triangleIndexs.push(torusIdx++);
-                                triangleIndexs.push(torusIdx++);
-                            }
-                        }
-                    }
-
-                    this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexIndexBuffer[j]);
-                    if (this.ext) {
-                        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(triangleIndexs), this.gl.STATIC_DRAW);
-                    } else {
-                        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(triangleIndexs), this.gl.STATIC_DRAW);
-                    }
-
-                    this.displayBuffers[idx].triangleVertexNormalBuffer[j].numItems = triangleNormals.length / 3;
-                    this.displayBuffers[idx].triangleVertexPositionBuffer[j].numItems = triangleNormals.length / 3;
-                    this.displayBuffers[idx].triangleColourBuffer[j].numItems = triangleColours.length / 4;
-                    this.displayBuffers[idx].triangleVertexIndexBuffer[j].numItems = triangleIndexs.length;
-
-                    this.displayBuffers[idx].triangleVertexIndexBuffer[j].itemSize = 1;
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexNormalBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(triangleNormals), this.gl.STATIC_DRAW);
-                    this.displayBuffers[idx].triangleVertexNormalBuffer[j].itemSize = 3;
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexPositionBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(triangleVertices), this.gl.STATIC_DRAW);
-                    this.displayBuffers[idx].triangleVertexPositionBuffer[j].itemSize = 3;
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(triangleColours), this.gl.STATIC_DRAW);
-                    this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
-
-                } else if (this.displayBuffers[idx].bufferTypes[j] === "NORMALLINES") {
-                    const size = this.mapLineWidth;//1.0;
-                    const useIndices = this.displayBuffers[idx].supplementary["useIndices"];
-                    let thickLines;
-                    const t1 = performance.now()
-                    let doColour = false;
-                    if(!this.displayBuffers[idx].customColour || this.displayBuffers[idx].customColour.length!==4){
-                        doColour = true;
-                    }
-                    if (useIndices) {
-                        thickLines = this.linesToThickLinesWithIndicesAndNormals(this.displayBuffers[idx].triangleVertices[j], this.displayBuffers[idx].triangleNormals[j], this.displayBuffers[idx].triangleColours[j], this.displayBuffers[idx].triangleIndexs[j], size, doColour);
-                    } else {
-                        console.log("************************************************************");
-                        console.log("************************************************************");
-                        console.log("RETURNING BECAUSE NO INDICES");
-                        console.log("************************************************************");
-                        console.log("************************************************************");
-                        return;
-                    }
-                    const t2 = performance.now()
-                    if(print_timing) console.log("linesToThickLines",t2-t1)
-                    const Normals_new = thickLines["normals"];
-                    const RealNormals_new = thickLines["realNormals"];
-                    const Vertices_new = thickLines["vertices"];
-                    const Colours_new = thickLines["colours"];
-                    const Indexs_new = thickLines["indices"];
-                    const tsa = performance.now()
-                    const RealNormals_new_array =  RealNormals_new
-                    const Normals_new_array =  Normals_new
-                    const Vertices_new_array =  Vertices_new
-                    const Colours_new_array =  Colours_new
-                    const Indexs_new_array = Indexs_new
-                    const tea = performance.now()
-                    this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexIndexBuffer[j]);
-                    this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, Indexs_new_array, this.gl.DYNAMIC_DRAW);
-                    this.displayBuffers[idx].triangleVertexIndexBuffer[j].itemSize = 1;
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexRealNormalBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, RealNormals_new_array, this.gl.DYNAMIC_DRAW);
-                    this.displayBuffers[idx].triangleVertexRealNormalBuffer[j].itemSize = 3;
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexNormalBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, Normals_new_array, this.gl.DYNAMIC_DRAW);
-                    this.displayBuffers[idx].triangleVertexNormalBuffer[j].itemSize = 3;
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexPositionBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, Vertices_new_array, this.gl.DYNAMIC_DRAW);
-                    this.displayBuffers[idx].triangleVertexPositionBuffer[j].itemSize = 3;
-                    if(doColour){
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, Colours_new_array, this.gl.STATIC_DRAW);
-                        this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
-                        this.displayBuffers[idx].triangleColourBuffer[j].numItems = Colours_new.length / 4;
-                    }
-                    const teb = performance.now()
-                    if(print_timing) console.log("make typed arrays",tea-tsa)
-                    if(print_timing) console.log("buffer arrays",teb-tea)
-
-                    this.displayBuffers[idx].triangleVertexIndexBuffer[j].numItems = Indexs_new.length;
-                    this.displayBuffers[idx].triangleVertexNormalBuffer[j].numItems = Normals_new.length / 3;
-                    this.displayBuffers[idx].triangleVertexRealNormalBuffer[j].numItems = RealNormals_new.length / 3;
-                    this.displayBuffers[idx].triangleVertexPositionBuffer[j].numItems = Vertices_new.length / 3;
-                    const t3 = performance.now()
-                    if(print_timing) console.log("buffering",t3-t2,j)
-
-                } else if (this.displayBuffers[idx].bufferTypes[j] === "LINES") {
-                    let size = this.mapLineWidth;
-                    const useIndices = this.displayBuffers[idx].supplementary["useIndices"][0];
-                    let thickLines;
-
-                    let doColour = false;
-                    if(!this.displayBuffers[idx].customColour || this.displayBuffers[idx].customColour.length!==4){
-                        doColour = true;
-                    }
-
-                    const t1 = performance.now()
-                    if (useIndices) {
-                        thickLines = this.linesToThickLinesWithIndices(this.displayBuffers[idx].triangleVertices[j], this.displayBuffers[idx].triangleColours[j], this.displayBuffers[idx].triangleIndexs[j], size, null, doColour);
-                    } else {
-                        thickLines = this.linesToThickLines(this.displayBuffers[idx].triangleVertices[j], this.displayBuffers[idx].triangleColours[j], size);
-                    }
-                    const t2 = performance.now()
-                    if(print_timing) console.log("linesToThickLines",t2-t1)
-
-                    let Normals_new = thickLines["normals"];
-                    let Vertices_new = thickLines["vertices"];
-                    let Colours_new = thickLines["colours"];
-                    let Indexs_new = thickLines["indices"];
-
-                    this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexIndexBuffer[j]);
-                    this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, Indexs_new, this.gl.STATIC_DRAW);
-                    this.displayBuffers[idx].triangleVertexIndexBuffer[j].itemSize = 1;
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexNormalBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, Normals_new, this.gl.STATIC_DRAW);
-                    this.displayBuffers[idx].triangleVertexNormalBuffer[j].itemSize = 3;
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexPositionBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, Vertices_new, this.gl.STATIC_DRAW);
-                    this.displayBuffers[idx].triangleVertexPositionBuffer[j].itemSize = 3;
-                    if(doColour){
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, Colours_new, this.gl.STATIC_DRAW);
-                        this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
-                        this.displayBuffers[idx].triangleColourBuffer[j].numItems = Colours_new.length / 4;
-                    }
-
-                    this.displayBuffers[idx].triangleVertexIndexBuffer[j].numItems = Indexs_new.length;
-                    this.displayBuffers[idx].triangleVertexNormalBuffer[j].numItems = Normals_new.length / 3;
-                    this.displayBuffers[idx].triangleVertexPositionBuffer[j].numItems = Vertices_new.length / 3;
-
-                } else {
-
-                    let triangleNormals
-                    let triangleColours
-                    let triangleVertices
-                    let triangleIndexs
-
-                    let doColour = false;
-                    if(!this.displayBuffers[idx].customColour || this.displayBuffers[idx].customColour.length!==4){
-                        doColour = true;
-                    }
-                    //console.log("DEBUG: buildBuffers normals", this.displayBuffers[idx].triangleNormals[j])
-                    //console.log("DEBUG: buildBuffers colours", this.displayBuffers[idx].triangleColours[j])
-                    //console.log("DEBUG: buildBuffers positions", this.displayBuffers[idx].triangleVertices[j])
-                    //console.log("DEBUG: buildBuffers indices", this.displayBuffers[idx].triangleIndexs[j])
-                    //console.log("DEBUG: buildBuffers doColour", doColour,this.displayBuffers[idx].customColour)
-
-                    if(ArrayBuffer.isView(this.displayBuffers[idx].triangleNormals[j])){
-                        triangleNormals = this.displayBuffers[idx].triangleNormals[j]
-                    } else {
-                        triangleNormals = new Float32Array(this.displayBuffers[idx].triangleNormals[j])
-                    }
-                    if(ArrayBuffer.isView(this.displayBuffers[idx].triangleVertices[j])){
-                        triangleVertices = this.displayBuffers[idx].triangleVertices[j]
-                    } else {
-                        triangleVertices = new Float32Array(this.displayBuffers[idx].triangleVertices[j])
-                    }
-                    if(ArrayBuffer.isView(this.displayBuffers[idx].triangleColours[j])){
-                        triangleColours = this.displayBuffers[idx].triangleColours[j]
-                    } else if(doColour) {
-                        triangleColours = new Float32Array(this.displayBuffers[idx].triangleColours[j])
-                    }
-                    if(ArrayBuffer.isView(this.displayBuffers[idx].triangleIndexs[j])){
-                        triangleIndexs = this.displayBuffers[idx].triangleIndexs[j]
-                    } else {
-                        triangleIndexs = new Uint32Array(this.displayBuffers[idx].triangleIndexs[j])
-                    }
-
-                    this.displayBuffers[idx].triangleVertexNormalBuffer[j].numItems = triangleNormals.length / 3;
-                    this.displayBuffers[idx].triangleVertexPositionBuffer[j].numItems = triangleVertices.length / 3;
-                    this.displayBuffers[idx].triangleColourBuffer[j].numItems = this.displayBuffers[idx].triangleColours[j].length / 4;
-                    this.displayBuffers[idx].triangleVertexIndexBuffer[j].numItems = triangleIndexs.length;
-
-                    this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexIndexBuffer[j]);
-                    if (this.ext) {
-                        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, triangleIndexs, this.gl.STATIC_DRAW);
-                    } else {
-                        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.displayBuffers[idx].triangleIndexs[j]), this.gl.STATIC_DRAW);
-                    }
-                    this.displayBuffers[idx].triangleVertexIndexBuffer[j].itemSize = 1;
-                    if (this.displayBuffers[idx].bufferTypes[j] !== "NORMALLINES" && this.displayBuffers[idx].bufferTypes[j] !== "LINES" && this.displayBuffers[idx].bufferTypes[j] !== "LINE_LOOP" && this.displayBuffers[idx].bufferTypes[j] !== "LINE_STRIP" && this.displayBuffers[idx].bufferTypes[j] !== "POINTS" && this.displayBuffers[idx].bufferTypes[j] !== "POINTS_SPHERES" && this.displayBuffers[idx].bufferTypes[j] !== "CAPCYLINDERS" && this.displayBuffers[idx].bufferTypes[j] !== "SPHEROIDS" && this.displayBuffers[idx].bufferTypes[j] !== "TORUSES" && this.displayBuffers[idx].bufferTypes[j] !== "CIRCLES") {
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexNormalBuffer[j]);
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, triangleNormals, this.gl.STATIC_DRAW);
-                        this.displayBuffers[idx].triangleVertexNormalBuffer[j].itemSize = 3;
-                    }
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexPositionBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, triangleVertices, this.gl.STATIC_DRAW);
-                    this.displayBuffers[idx].triangleVertexPositionBuffer[j].itemSize = 3;
-                    if(doColour){
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, triangleColours, this.gl.STATIC_DRAW);
-                        this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
-                    }
-                    if(this.displayBuffers[idx].triangleInstanceSizeBuffer[j]){
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceSizeBuffer[j]);
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleInstanceSizes[j]), this.gl.STATIC_DRAW);
-                        this.displayBuffers[idx].triangleInstanceSizeBuffer[j].itemSize = 3;
-                    }
-                    if(this.displayBuffers[idx].triangleInstanceOriginBuffer[j]){
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceOriginBuffer[j]);
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleInstanceOrigins[j]), this.gl.STATIC_DRAW);
-                        this.displayBuffers[idx].triangleInstanceOriginBuffer[j].itemSize = 3;
-                    }
-                    if(this.displayBuffers[idx].triangleInstanceOrientationBuffer[j]){
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceOrientationBuffer[j]);
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleInstanceOrientations[j]), this.gl.STATIC_DRAW);
-                        this.displayBuffers[idx].triangleInstanceOrientationBuffer[j].itemSize = 16;
-                    }
-                }
+            this.imageBuffer = new DisplayBuffer();
+            this.imageBuffer.triangleVertexNormalBuffer.push(this.gl.createBuffer());
+            this.imageBuffer.triangleVertexPositionBuffer.push(this.gl.createBuffer());
+            this.imageBuffer.triangleVertexIndexBuffer.push(this.gl.createBuffer());
+            this.imageBuffer.triangleVertexTextureBuffer.push(this.gl.createBuffer());
+            this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.imageBuffer.triangleVertexIndexBuffer[0]);
+            this.imageBuffer.triangleVertexIndexBuffer[0].itemSize = 1;
+            this.imageBuffer.triangleVertexIndexBuffer[0].numItems = diskIndices.length;
+            if (this.isWebGL2) {
+                this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(diskIndices), this.gl.STATIC_DRAW);
+            } else {
+                this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(diskIndices), this.gl.STATIC_DRAW);
             }
-            const tl = performance.now()
-            if(print_timing) console.log("Time at end of loop",tl-tbb1);
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.imageBuffer.triangleVertexNormalBuffer[0]);
+            this.imageBuffer.triangleVertexNormalBuffer[0].itemSize = 3;
+            this.imageBuffer.triangleVertexNormalBuffer[0].numItems = diskNormals.length / 3;
+            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(diskNormals), this.gl.STATIC_DRAW);
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.imageBuffer.triangleVertexPositionBuffer[0]);
+            this.imageBuffer.triangleVertexPositionBuffer[0].itemSize = 3;
+            this.imageBuffer.triangleVertexPositionBuffer[0].numItems = imageVertices.length / 3;
+            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(imageVertices), this.gl.DYNAMIC_DRAW);
+
+            let imageTextures = [0.5, 0.5, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0];
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.imageBuffer.triangleVertexTextureBuffer[0]);
+            this.imageBuffer.triangleVertexTextureBuffer[0].itemSize = 2;
+            this.imageBuffer.triangleVertexTextureBuffer[0].numItems = imageTextures.length / 2;
+            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(imageTextures), this.gl.STATIC_DRAW);
         }
-        //console.log("Time to build buffers: "+(new Date().getTime()-start));
-
-        const tbb2 = performance.now()
-        if(print_timing) console.log("Time in buidBuffers",tbb2-tbb1)
+        buildBuffers(this.displayBuffers)
     }
 
     drawTransformMatrixInteractive(transformMatrix:number[], transformOrigin:number[], buffer:any, shader:webGL.MGWebGLShader, vertexType:number, bufferIdx:number, specialDrawBuffer?:number) {
@@ -4224,11 +3628,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let dirty = false
         const thisdisplayBufferslength = this.displayBuffers.length;
         for (let idx = 0; idx < thisdisplayBufferslength; idx++) {
-            if (!this.displayBuffers[idx].isDirty) {
+            if (this.displayBuffers[idx].isDirty) {
                 dirty = true;
                 break
             }
         }
+        console.log("isDirty",dirty)
         if(dirty) this.buildBuffers()
         this.props.onQuatChanged(this.myQuat)
 

@@ -213,11 +213,12 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
             if(Math.abs(originState[0]-glRef.current.origin[0])>1e-5||Math.abs(originState[1]-glRef.current.origin[1])>1e-5||Math.abs(originState[2]-glRef.current.origin[2])>1e-5){
-                glRef.current.setOrigin(originState,true,true)
+                glRef.current.setOrigin(originState,false,true)
             }
         }
     }, [originState])
 
+    /*
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
             glRef.current.drawScene()
@@ -232,6 +233,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }
         dispatch(setRequestBuildBuffers(false))
     }, [requestBuildBuffers])
+    */
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
