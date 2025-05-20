@@ -2778,12 +2778,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if (typeof (this.imageBuffer) === "undefined") {
             let diskIndices = [];
             let diskNormals = [];
-            const imageVertices = [];
+            this.imageVertices = [];
             const accuStep = 90;
             let diskIdx = 0;
-            imageVertices.push(0.0);
-            imageVertices.push(0.0);
-            imageVertices.push(0.0);
+            this.imageVertices.push(0.0);
+            this.imageVertices.push(0.0);
+            this.imageVertices.push(0.0);
             diskNormals.push(0.0);
             diskNormals.push(0.0);
             diskNormals.push(-1.0);
@@ -2792,9 +2792,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 let theta1 = Math.PI * (theta) / 180.0;
                 let x1 = Math.cos(theta1);
                 let y1 = Math.sin(theta1);
-                imageVertices.push(x1);
-                imageVertices.push(-y1);
-                imageVertices.push(0.0);
+                this.imageVertices.push(x1);
+                this.imageVertices.push(-y1);
+                this.imageVertices.push(0.0);
                 diskNormals.push(0.0);
                 diskNormals.push(0.0);
                 diskNormals.push(-1.0);
@@ -2819,8 +2819,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(diskNormals), this.gl.STATIC_DRAW);
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.imageBuffer.triangleVertexPositionBuffer[0]);
             this.imageBuffer.triangleVertexPositionBuffer[0].itemSize = 3;
-            this.imageBuffer.triangleVertexPositionBuffer[0].numItems = imageVertices.length / 3;
-            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(imageVertices), this.gl.DYNAMIC_DRAW);
+            this.imageBuffer.triangleVertexPositionBuffer[0].numItems = this.imageVertices.length / 3;
+            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.imageVertices), this.gl.DYNAMIC_DRAW);
 
             let imageTextures = [0.5, 0.5, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0];
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.imageBuffer.triangleVertexTextureBuffer[0]);
