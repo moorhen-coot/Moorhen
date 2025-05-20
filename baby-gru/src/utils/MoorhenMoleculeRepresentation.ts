@@ -5,7 +5,7 @@ import { libcootApi } from '../types/libcoot';
 import { MoorhenColourRule } from './MoorhenColourRule';
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums"
 import { setOrigin, setRequestDrawScene, setRequestBuildBuffers, setDisplayBuffers } from "../store/glRefSlice"
-import { buildBuffers } from '../WebGLgComponents/buildBuffers'
+import { buildBuffers, appendOtherData } from '../WebGLgComponents/buildBuffers'
 
 /**
  * Represents a molecule representation
@@ -300,7 +300,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         let newBuffers = []
         if (objects.length > 0 && !this.parentMolecule.gemmiStructure?.isDeleted()) {
             objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
-                const a = this.glRef.current.appendOtherData(object, true)
+                const a = appendOtherData(object, true)
                 newBuffers = [...newBuffers,...a]
                 buildBuffers(a)
                 if (this.buffers) {

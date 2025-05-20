@@ -1162,7 +1162,8 @@ export namespace moorhen {
             cursorPosition: [number,number],
             shortCutHelp: string[],
             envUpdate: {switch: boolean },
-            clearLabels: {switch: boolean }
+            clearLabels: {switch: boolean },
+            hoverSize: number,
         };
         overlays: {
             imageOverlayList: any[]

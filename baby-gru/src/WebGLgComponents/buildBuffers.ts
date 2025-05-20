@@ -2,6 +2,106 @@ import * as vec3 from 'gl-matrix/vec3';
 import { NormalizeVec3, vec3Cross, vec3Create  } from './mgMaths.js';
 import { DisplayBuffer } from './displayBuffer'
 import store from '../store/MoorhenReduxStore'
+import { TexturedShape } from './texturedShape'
+import { guid } from '../utils/utils';
+import { createWebGLBuffers } from './createWebGLBuffers'
+import { setHoverSize } from "../store/glRefSlice"
+
+export const appendOtherData = (jsondata: any, skipRebuild?: boolean, name?: string) : any => {
+
+        const theseBuffers = [];
+        const gl = store.getState().glRef.glCtx
+        const GLLabelsFontFamily = store.getState().labelSettings.GLLabelsFontFamily
+        const GLLabelsFontSize = store.getState().labelSettings.GLLabelsFontSize
+
+        const glTextFont = ""+GLLabelsFontSize+"px "+GLLabelsFontFamily;
+
+        if(jsondata.image_data){
+            if(jsondata.width && jsondata.height && jsondata.x_size && jsondata.y_size){
+                const uuid =  guid();
+                const texturedShape = new TexturedShape(jsondata,gl,uuid);
+                //this.texturedShapes.push(texturedShape)
+                theseBuffers.push({texturedShapes:texturedShape,uuid:uuid});
+            }
+            console.log("Probably textureAsFloatsJS, ignore for now!");
+            if (typeof (skipRebuild) !== "undefined" && skipRebuild) {
+                return theseBuffers;
+            }
+            return theseBuffers;
+        }
+
+        for (let idat = 0; idat < jsondata.norm_tri.length; idat++) {
+            if(jsondata.prim_types){
+                if(jsondata.prim_types[idat].length>0){
+                    if(jsondata.prim_types[idat][0]==="TEXTLABELS"){
+                        let labels = []
+                        for(let ilabel=0;ilabel<jsondata.idx_tri[idat].length;ilabel++){
+                            const t = jsondata.label_tri[idat][ilabel];
+                            const x = jsondata.vert_tri[idat][ilabel*3];
+                            const y = jsondata.vert_tri[idat][ilabel*3+1];
+                            const z = jsondata.vert_tri[idat][ilabel*3+2];
+                            const label = {font:glTextFont,x:x,y:y,z:z,text:t};
+                            labels.push(label);
+                        }
+                        /*
+                        const uuid =  guid();
+                        labels.forEach(label => {
+                            this.labelsTextCanvasTexture.addBigTextureTextImage({font:label.font,text:label.text,x:label.x,y:label.y,z:label.z},uuid)
+                        })
+                        theseBuffers.push({labels:labels,uuid:uuid});
+                        this.labelsTextCanvasTexture.recreateBigTextureBuffers();
+                        this.buildBuffers();
+                        */
+                        continue
+                    }
+                }
+            }
+
+            const theBuffer = createWebGLBuffers(jsondata,idat)
+            theseBuffers.push(theBuffer);
+
+            const displayBuffers = store.getState().glRef.displayBuffers
+            if(jsondata.isHoverBuffer){
+                theBuffer.isHoverBuffer = jsondata.isHoverBuffer;
+                let maxSize = 0.27;
+                for (let idx = 0; idx < displayBuffers.length; idx++) {
+                    if (displayBuffers[idx].atoms.length > 0) {
+                        for(let ibuf2=0;ibuf2<displayBuffers[idx].bufferTypes.length;ibuf2++){
+                            if(displayBuffers[idx].bufferTypes[ibuf2]==="PERFECT_SPHERES"){
+                                if(displayBuffers[idx].triangleInstanceSizes[ibuf2][0]>0.27&&!displayBuffers[idx].isHoverBuffer&&displayBuffers[idx].visible){
+                                    let nhits = 0
+                                    theseBuffers[0].atoms.forEach(bufatom => {
+                                        displayBuffers[idx].atoms.forEach(atom => {
+                                            if(Math.abs(bufatom.x-atom.x)<1e-4&&Math.abs(bufatom.y-atom.y)<1e-4&&Math.abs(bufatom.z-atom.z)<1e-4){
+                                                nhits++;
+                                            }
+                                        })
+                                    })
+                                    if(theseBuffers[0].atoms.length===nhits){
+                                        maxSize = Math.max(displayBuffers[idx].triangleInstanceSizes[ibuf2][0],maxSize);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                setHoverSize(maxSize)
+            }
+        }
+
+        theseBuffers.forEach(buffer => {
+            if("bufferTypes" in buffer){
+                for(let ibuf=0;ibuf<buffer.bufferTypes.length;ibuf++){
+                    if(buffer.bufferTypes[ibuf]==="PERFECT_SPHERES"&&!jsondata.clickTol){
+                        buffer.clickTol = 2.0 * buffer.triangleInstanceSizes[ibuf][0] + 0.45;
+                    }
+                }
+            }
+        })
+
+        return theseBuffers;
+}
+
 
 const linesToThickLinesWithIndicesAndNormals = (axesVertices, axesNormals, axesColours, axesIndices, size, doColour, isWebGL2) => {
         return linesToThickLinesWithIndices(axesVertices, axesColours, axesIndices, size, axesNormals, doColour, isWebGL2)

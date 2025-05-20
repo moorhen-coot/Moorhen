@@ -7,7 +7,7 @@ import MoorhenReduxStore from "../store/MoorhenReduxStore";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
 import { setOrigin, setRequestDrawScene, setRequestBuildBuffers, setDisplayBuffers } from "../store/glRefSlice"
-import { buildBuffers } from '../WebGLgComponents/buildBuffers'
+import { buildBuffers, appendOtherData } from '../WebGLgComponents/buildBuffers'
 
 const _DEFAULT_CONTOUR_LEVEL = 0.8
 const _DEFAULT_RADIUS = 13
@@ -613,8 +613,8 @@ export class MoorhenMap implements moorhen.Map {
                     if(print_timing) console.log("End loop",tl-t1)
                 }
                 if (this.isDifference) {
-                    let a = this.glRef.current.appendOtherData(object_positive, true);
-                    let b = this.glRef.current.appendOtherData(object_negative, true);
+                    let a = appendOtherData(object_positive, true);
+                    let b = appendOtherData(object_negative, true);
                     if(mapAlpha<0.99){
                         a[0].transparent = true;
                         b[0].transparent = true;
@@ -642,7 +642,7 @@ export class MoorhenMap implements moorhen.Map {
                         this.displayObjects["Coot"][0].triangleIndexs[0] = object.idx_tri[0][0]
                         this.displayObjects["Coot"][0].isDirty = true
                     } else {
-                       let a = this.glRef.current.appendOtherData(object, true);
+                       let a = appendOtherData(object, true);
                        if(mapAlpha>0.98){
                            a[0].setCustomColour([mapColour.r,mapColour.g,mapColour.b,1.0])
                        }
@@ -657,7 +657,7 @@ export class MoorhenMap implements moorhen.Map {
                     this.diffMapColourBuffers.negativeDiffColour = this.diffMapColourBuffers.negativeDiffColour.concat(diffMapColourBuffers.negativeDiffColour);
                 } else {
                     //console.log("MOORHEN MAP do what keepCootColours wants")
-                    let a = this.glRef.current.appendOtherData(object, true);
+                    let a = appendOtherData(object, true);
                     this.displayObjects['Coot'] = this.displayObjects['Coot'].concat(a);
                     buildBuffers(a)
                     newBuffers = [...newBuffers,...a]

@@ -13,6 +13,7 @@ const initialState = {
     envUpdate: { switch: false },
     clearLabels: { switch: false },
     displayBuffers: [],
+    hoverSize: 0.27,
     // These should probably be in sceneSettings slice. 
     // We'll move them in due course.
     lightPosition: [10.0, 10.0, 60.0, 1.0],
@@ -92,6 +93,9 @@ export const glRefSlice = createSlice({
     setClipEnd: (state, action: {payload: number, type: string}) => {
         return { ...state, clipEnd: action.payload }
     },
+    setHoverSize: (state, action: {payload: number, type: string}) => {
+        return { ...state, hoverSize: action.payload }
+    },
     setCursorPosition: (state, action: {payload: [number,number], type: string}) => {
         return { ...state, cursorPosition: action.payload }
     },
@@ -122,7 +126,7 @@ export const {
     setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setZoom,
     setQuat, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd, setCursorPosition,
     setShortCutHelp, setDraggableMolecule, triggerRedrawEnv, triggerClearLabels, setGLCtx,
-    setDisplayBuffers
+    setDisplayBuffers, setHoverSize
 } = glRefSlice.actions
 
 export default glRefSlice.reducer

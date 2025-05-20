@@ -119,7 +119,7 @@ import { TextCanvasTexture } from './textCanvasTexture'
 import { DisplayBuffer } from './displayBuffer'
 import { createQuatFromDXAngle, createQuatFromAngle, createXQuatFromDX, createYQuatFromDY, createZQuatFromDX, quatSlerp } from './quatUtils'
 import { createWebGLBuffers } from './createWebGLBuffers'
-import { buildBuffers } from './buildBuffers'
+import { buildBuffers, appendOtherData } from './buildBuffers'
 
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShadowShaders, initPointSpheresShaders } from './mgWebGLShaders'
 
@@ -4695,7 +4695,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     drawTriangles(calculatingShadowMap, invMat) {
 
         const displayBuffers = store.getState().glRef.displayBuffers
-        //const displayBuffers = this.displayBuffers
+        const hoverSize = store.getState().glRef.hoverSize
 
         let symmetries = [];
         let symms = [];
@@ -6061,7 +6061,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             gemmiAtomPairsToCylindersInfo(atomPairs, 0.07, atomColours, false, 0.01, 1000.)
         ]
         objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
-            const a = self.appendOtherData(object, true);
+            const a = appendOtherData(object, true);
             self.measureCylinderBuffers = self.measureCylinderBuffers.concat(a)
         })
         self.measuredAtoms.forEach(atoms => {
