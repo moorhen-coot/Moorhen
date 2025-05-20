@@ -307,8 +307,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 } else {
                     this.buffers = a
                 }
-                this.glRef.current.drawScene()
-
             })
         }
         this.buffers.forEach(buf => {
@@ -910,14 +908,14 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         if (this.useDefaultBondOptions) {
             bondSettings.push(
                 (name === 'ligands' || name === 'CAs') ? this.parentMolecule.defaultBondOptions.width * 1.5 : this.parentMolecule.defaultBondOptions.width,
-                (name === 'ligands' || name === 'CAs') ? this.parentMolecule.defaultBondOptions.atomRadiusBondRatio * 1.5 : this.parentMolecule.defaultBondOptions.atomRadiusBondRatio, 
+                (name === 'ligands' || name === 'CAs') ? this.parentMolecule.defaultBondOptions.atomRadiusBondRatio * 1.5 : this.parentMolecule.defaultBondOptions.atomRadiusBondRatio,
                 this.parentMolecule.defaultBondOptions.showAniso, this.parentMolecule.defaultBondOptions.showOrtep, this.parentMolecule.defaultBondOptions.showHs,
                 this.parentMolecule.defaultBondOptions.smoothness
             )
         } else {
             bondSettings.push(
                 (name === 'ligands' || name === 'CAs') ? this.bondOptions.width * 1.5 : this.bondOptions.width,
-                (name === 'ligands' || name === 'CAs') ? this.bondOptions.atomRadiusBondRatio * 1.5 : this.bondOptions.atomRadiusBondRatio, 
+                (name === 'ligands' || name === 'CAs') ? this.bondOptions.atomRadiusBondRatio * 1.5 : this.bondOptions.atomRadiusBondRatio,
                 this.bondOptions.showAniso, this.bondOptions.showOrtep, this.bondOptions.showHs,
                 this.bondOptions.smoothness
             )

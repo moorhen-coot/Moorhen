@@ -1,6 +1,6 @@
 #List of WebGL methods called outside of MGWebGL or MoorhenWebMG
 
-glRef.current.drawScene                           src/utils/MoorhenScreenRecorder.ts, src/WebGLgComponents/buildBuffers.ts
+glRef.current.drawScene                           src/utils/MoorhenScreenRecorder.ts
 glRef.current.myQuat                              src/utils/MoorhenScreenRecorder.ts
 glRef.current.zoom                                src/utils/MoorhenScreenRecorder.ts
 glRef.current.setZoom                             src/utils/MoorhenScreenRecorder.ts
