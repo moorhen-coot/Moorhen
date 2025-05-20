@@ -297,10 +297,11 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
      */
     buildBuffers(objects: moorhen.DisplayObject[]) {
         const displayBuffers = this.parentMolecule.store.getState().glRef.displayBuffers
+        let newBuffers = []
         if (objects.length > 0 && !this.parentMolecule.gemmiStructure?.isDeleted()) {
             objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
                 const a = this.glRef.current.appendOtherData(object, true)
-                this.parentMolecule.store.dispatch(setDisplayBuffers([...displayBuffers,...a]))
+                newBuffers = [...newBuffers,...a]
                 buildBuffers(a)
                 if (this.buffers) {
                     this.buffers = this.buffers.concat(a)
@@ -312,6 +313,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.buffers.forEach(buf => {
             buf.multiViewGroup = this.parentMolecule.molNo
         })
+        this.parentMolecule.store.dispatch(setDisplayBuffers([...displayBuffers,...newBuffers]))
     }
 
     /**

@@ -8,7 +8,8 @@ A JavaScript molecular graphics program
 - [ ] Remove glRef method usage.
    - [ ] Reduce list of glRef usage in to zero entries.
    - [ ] Fix map recontouring when alt-click centering.
-   - [ ] Fix completely broken atom hovering.
+   - [x] Fix completely broken atom hovering.
+   - [ ] Fix spheres being flat and not facing camera properly.
    - [ ] Fix distance lines not being drawn.
    - [ ] Restore animated zooming.
 

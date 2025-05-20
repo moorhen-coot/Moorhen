@@ -1819,29 +1819,27 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
 
             const theBuffer = createWebGLBuffers(jsondata,idat)
-
-            //console.log(theBuffer)
-            //this.displayBuffers.push(theBuffer);
             theseBuffers.push(theBuffer);
 
-            if(false&&jsondata.isHoverBuffer){
+            const displayBuffers = store.getState().glRef.displayBuffers
+            if(jsondata.isHoverBuffer){
                 theBuffer.isHoverBuffer = jsondata.isHoverBuffer;
                 let maxSize = 0.27;
-                for (let idx = 0; idx < this.displayBuffers.length; idx++) {
-                    if (this.displayBuffers[idx].atoms.length > 0) {
-                        for(let ibuf2=0;ibuf2<this.displayBuffers[idx].bufferTypes.length;ibuf2++){
-                            if(this.displayBuffers[idx].bufferTypes[ibuf2]==="PERFECT_SPHERES"){
-                                if(this.displayBuffers[idx].triangleInstanceSizes[ibuf2][0]>0.27&&!this.displayBuffers[idx].isHoverBuffer&&this.displayBuffers[idx].visible){
+                for (let idx = 0; idx < displayBuffers.length; idx++) {
+                    if (displayBuffers[idx].atoms.length > 0) {
+                        for(let ibuf2=0;ibuf2<displayBuffers[idx].bufferTypes.length;ibuf2++){
+                            if(displayBuffers[idx].bufferTypes[ibuf2]==="PERFECT_SPHERES"){
+                                if(displayBuffers[idx].triangleInstanceSizes[ibuf2][0]>0.27&&!displayBuffers[idx].isHoverBuffer&&displayBuffers[idx].visible){
                                     let nhits = 0
                                     theseBuffers[0].atoms.forEach(bufatom => {
-                                        this.displayBuffers[idx].atoms.forEach(atom => {
+                                        displayBuffers[idx].atoms.forEach(atom => {
                                             if(Math.abs(bufatom.x-atom.x)<1e-4&&Math.abs(bufatom.y-atom.y)<1e-4&&Math.abs(bufatom.z-atom.z)<1e-4){
                                                 nhits++;
                                             }
                                         })
                                     })
                                     if(theseBuffers[0].atoms.length===nhits){
-                                        maxSize = Math.max(this.displayBuffers[idx].triangleInstanceSizes[ibuf2][0],maxSize);
+                                        maxSize = Math.max(displayBuffers[idx].triangleInstanceSizes[ibuf2][0],maxSize);
                                     }
                                 }
                             }
@@ -1937,6 +1935,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     handleOriginUpdated(doDispatch: boolean) {
+        const displayBuffers = store.getState().glRef.displayBuffers
         if(doDispatch){
             //FIXME - This might have to go ...
             const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
@@ -1944,7 +1943,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
         if(this.drawEnvBOcc) {
             let near_atoms = []
-            this.displayBuffers.forEach(buffer => {
+            displayBuffers.forEach(buffer => {
                 if (buffer.visible) {
                     buffer.atoms.forEach(atom => {
                         const ax = atom.x
@@ -2657,19 +2656,20 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     centreOn(idx) {
+        const displayBuffers = store.getState().glRef.displayBuffers
         var self = this;
-        if (self.displayBuffers[idx].atoms.length > 0) {
+        if (displayBuffers[idx].atoms.length > 0) {
             var xtot = 0;
             var ytot = 0;
             var ztot = 0;
-            for (var j = 0; j < self.displayBuffers[idx].atoms.length; j++) {
-                xtot += self.displayBuffers[idx].atoms[j].x;
-                ytot += self.displayBuffers[idx].atoms[j].y;
-                ztot += self.displayBuffers[idx].atoms[j].z;
+            for (var j = 0; j < displayBuffers[idx].atoms.length; j++) {
+                xtot += displayBuffers[idx].atoms[j].x;
+                ytot += displayBuffers[idx].atoms[j].y;
+                ztot += displayBuffers[idx].atoms[j].z;
             }
-            xtot /= self.displayBuffers[idx].atoms.length;
-            ytot /= self.displayBuffers[idx].atoms.length;
-            ztot /= self.displayBuffers[idx].atoms.length;
+            xtot /= displayBuffers[idx].atoms.length;
+            ytot /= displayBuffers[idx].atoms.length;
+            ztot /= displayBuffers[idx].atoms.length;
 
             var new_origin = [-xtot, -ytot, -ztot];
             var old_origin = [self.origin[0], self.origin[1], self.origin[2]];
@@ -3284,6 +3284,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     GLrender(calculatingShadowMap,doClear=true,ratioMult=1.0) {
+        const displayBuffers = store.getState().glRef.displayBuffers
         let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult;
 
         let fb_scale = 1.0
@@ -3383,7 +3384,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             let min_z =  1e5;
             let max_z = -1e5;
 
-            this.displayBuffers.forEach(buffer => {
+            displayBuffers.forEach(buffer => {
                 if (buffer.visible) {
                     buffer.atoms.forEach(atom => {
                         if(atom.x>max_x) max_x = atom.x;
@@ -5623,6 +5624,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawImagesAndText(invMat) {
+        const displayBuffers = store.getState().glRef.displayBuffers
+        //FIXME Not drawing images/text
+        return
         // Now the "see-through" primitives: images and text.
         for (let idx = 0; idx < this.displayBuffers.length; idx++) {
 
@@ -5900,13 +5904,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     doRightClick(event, self) {
+        const displayBuffers = store.getState().glRef.displayBuffers
         if (self.activeMolecule === null) {
 
             const [minidx,minj,mindist,minsym,minx,miny,minz] = self.getAtomFomMouseXY(event,self);
             let rightClick: moorhen.AtomRightClickEvent = new CustomEvent("rightClick", {
             "detail": {
-                atom: minidx > -1 ? self.displayBuffers[minidx].atoms[minj] : null,
-                buffer: minidx > -1 ? self.displayBuffers[minidx] : null,
+                atom: minidx > -1 ? displayBuffers[minidx].atoms[minj] : null,
+                buffer: minidx > -1 ? displayBuffers[minidx] : null,
                 coords: "",
                 pageX: event.pageX,
                 pageY: event.pageY,
@@ -5917,6 +5922,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     doClick(event, self) {
+        const displayBuffers = store.getState().glRef.displayBuffers
         if (this.activeMolecule == null) {
             document.body.click()
         }
@@ -5926,26 +5932,26 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             //console.log(npass+" "+npass0+" "+npass1+" "+ntest);
             const [minidx,minj,mindist,minsym,minx,miny,minz] = self.getAtomFomMouseXY(event,self);
             if (minidx > -1) {
-                const atomLabel = parseAtomInfoLabel(self.displayBuffers[minidx].atoms[minj]);
+                const atomLabel = parseAtomInfoLabel(displayBuffers[minidx].atoms[minj]);
                 let theAtom : webGL.clickAtom = {
-                   ...self.displayBuffers[minidx].atoms[minj],
+                   ...displayBuffers[minidx].atoms[minj],
                    label: atomLabel,
-                   displayBuffer: self.displayBuffers[minidx]
+                   displayBuffer: displayBuffers[minidx]
                 };
                 let atomClicked: moorhen.AtomClickedEvent = new CustomEvent("atomClicked", {
                     "detail": {
-                        atom: self.displayBuffers[minidx].atoms[minj],
-                        buffer: self.displayBuffers[minidx],
+                        atom: displayBuffers[minidx].atoms[minj],
+                        buffer: displayBuffers[minidx],
                         isResidueSelection: self.keysDown['residue_selection']
                     }
                 });
                 document.dispatchEvent(atomClicked);
-                if (this.draggableMolecule != null && this.draggableMolecule.representations.length > 0 && this.draggableMolecule.buffersInclude(self.displayBuffers[minidx])) {
-                    this.currentlyDraggedAtom = { atom: self.displayBuffers[minidx].atoms[minj], buffer: self.displayBuffers[minidx] }
+                if (this.draggableMolecule != null && this.draggableMolecule.representations.length > 0 && this.draggableMolecule.buffersInclude(displayBuffers[minidx])) {
+                    this.currentlyDraggedAtom = { atom: displayBuffers[minidx].atoms[minj], buffer: displayBuffers[minidx] }
                 }
                 if (self.keysDown['label_atom']) {
                     if(self.drawEnvBOcc) {
-                        theAtom.label = self.displayBuffers[minidx].atoms[minj].tempFactor.toFixed(2) + " " + self.displayBuffers[minidx].atoms[minj].occupancy.toFixed(2) + " " + atomLabel
+                        theAtom.label = displayBuffers[minidx].atoms[minj].tempFactor.toFixed(2) + " " + displayBuffers[minidx].atoms[minj].occupancy.toFixed(2) + " " + atomLabel
                     }
                     updateLabels = true
                     if (self.labelledAtoms.length === 0 || (self.labelledAtoms[self.labelledAtoms.length - 1].length > 1)) {
@@ -6119,6 +6125,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     getAtomFomMouseXY(event, self) {
+        const displayBuffers = store.getState().glRef.displayBuffers
         let x;
         let y;
         let e = event;
@@ -6200,19 +6207,19 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         let minsym = -1;
 
-        for (let idx = 0; idx < self.displayBuffers.length; idx++) {
+        for (let idx = 0; idx < displayBuffers.length; idx++) {
             let clickTol = 3.65 * this.zoom;
-            if (!self.displayBuffers[idx].visible) {
+            if (!displayBuffers[idx].visible) {
                 continue;
             }
-            if(self.displayBuffers[idx].clickTol){
-                clickTol = self.displayBuffers[idx].clickTol;
+            if(displayBuffers[idx].clickTol){
+                clickTol = displayBuffers[idx].clickTol;
             }
-            for (let j = 0; j < self.displayBuffers[idx].atoms.length; j++) {
+            for (let j = 0; j < displayBuffers[idx].atoms.length; j++) {
 
-                let atx = self.displayBuffers[idx].atoms[j].x;
-                let aty = self.displayBuffers[idx].atoms[j].y;
-                let atz = self.displayBuffers[idx].atoms[j].z;
+                let atx = displayBuffers[idx].atoms[j].x;
+                let aty = displayBuffers[idx].atoms[j].y;
+                let atz = displayBuffers[idx].atoms[j].z;
                 let p = vec3Create([atx, aty, atz]);
 
                 let dpl = DistanceBetweenPointAndLine(modelPointArrayResultsFront, modelPointArrayResultsBack, p);
@@ -6234,7 +6241,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 }
             }
             let isym = 0;
-            this.displayBuffers[idx].symmetryAtoms.forEach(symmats => {
+            displayBuffers[idx].symmetryAtoms.forEach(symmats => {
                 let j = 0;
                 symmats.forEach(symmat => {
                     const p = symmat.pos;
@@ -6268,10 +6275,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     doHover(event, self) {
+        const displayBuffers = store.getState().glRef.displayBuffers
         if (this.props.onAtomHovered) {
             const [minidx,minj,mindist,minsym,minx,miny,minz] = self.getAtomFomMouseXY(event,self);
             if (minidx > -1) {
-                this.props.onAtomHovered({ atom: self.displayBuffers[minidx].atoms[minj], buffer: self.displayBuffers[minidx] });
+                this.props.onAtomHovered({ atom: displayBuffers[minidx].atoms[minj], buffer: displayBuffers[minidx] });
             }
             else {
                 this.props.onAtomHovered(null)
@@ -7794,18 +7802,19 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     doMouseUp(event, self) {
+        const displayBuffers = store.getState().glRef.displayBuffers
         const event_x = event.pageX;
         const event_y = event.pageY;
         self.init_y = event.pageY;
         this.currentlyDraggedAtom = null
         if (self.keysDown['center_atom'] || event.which===2) {
             if(Math.abs(event_x-self.mouseDown_x)<5 && Math.abs(event_y-self.mouseDown_y)<5){
-                if(self.displayBuffers.length>0){
+                if(displayBuffers.length>0){
                     const [minidx,minj,mindist,minsym,minx,miny,minz] = self.getAtomFomMouseXY(event,self);
-                    if(self.displayBuffers[minidx] && self.displayBuffers[minidx].atoms) {
-                        let atx = self.displayBuffers[minidx].atoms[minj].x;
-                        let aty = self.displayBuffers[minidx].atoms[minj].y;
-                        let atz = self.displayBuffers[minidx].atoms[minj].z;
+                    if(displayBuffers[minidx] && displayBuffers[minidx].atoms) {
+                        let atx = displayBuffers[minidx].atoms[minj].x;
+                        let aty = displayBuffers[minidx].atoms[minj].y;
+                        let atz = displayBuffers[minidx].atoms[minj].z;
                         if(minsym>-1){
                             self.setOriginAnimated([-minx, -miny, -minz], true);
                         } else {
