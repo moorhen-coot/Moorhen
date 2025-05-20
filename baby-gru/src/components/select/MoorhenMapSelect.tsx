@@ -9,7 +9,7 @@ type MoorhenMapSelectPropsType = {
     maps: moorhen.Map[];
     filterFunction?: (arg0: moorhen.Map) => boolean;
     onChange?: (arg0: React.ChangeEvent<HTMLSelectElement>) => void;
-    defaultValue?: number;
+    defaultValue?: number | null;
     selectRef?: React.Ref<HTMLSelectElement>;
 };
 
