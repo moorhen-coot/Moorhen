@@ -5,12 +5,14 @@ import store from '../store/MoorhenReduxStore'
 import { TexturedShape } from './texturedShape'
 import { guid } from '../utils/utils';
 import { createWebGLBuffers } from './createWebGLBuffers'
-import { setHoverSize } from "../store/glRefSlice"
+import { setHoverSize, setLabelBuffers } from "../store/glRefSlice"
 
 export const appendOtherData = (jsondata: any, skipRebuild?: boolean, name?: string) : any => {
 
         const theseBuffers = [];
+        const theseLabelBuffers = [];
         const gl = store.getState().glRef.glCtx
+        const labelBuffers = store.getState().glRef.labelBuffers
         const GLLabelsFontFamily = store.getState().labelSettings.GLLabelsFontFamily
         const GLLabelsFontSize = store.getState().labelSettings.GLLabelsFontSize
 
@@ -20,6 +22,7 @@ export const appendOtherData = (jsondata: any, skipRebuild?: boolean, name?: str
             if(jsondata.width && jsondata.height && jsondata.x_size && jsondata.y_size){
                 const uuid =  guid();
                 const texturedShape = new TexturedShape(jsondata,gl,uuid);
+                //FIXME - Presumably, I need this ...
                 //this.texturedShapes.push(texturedShape)
                 theseBuffers.push({texturedShapes:texturedShape,uuid:uuid});
             }
@@ -43,15 +46,11 @@ export const appendOtherData = (jsondata: any, skipRebuild?: boolean, name?: str
                             const label = {font:glTextFont,x:x,y:y,z:z,text:t};
                             labels.push(label);
                         }
-                        /*
                         const uuid =  guid();
                         labels.forEach(label => {
-                            this.labelsTextCanvasTexture.addBigTextureTextImage({font:label.font,text:label.text,x:label.x,y:label.y,z:label.z},uuid)
+                            theseLabelBuffers.push({label:{font:label.font,text:label.text,x:label.x,y:label.y,z:label.z},uuid:uuid})
                         })
                         theseBuffers.push({labels:labels,uuid:uuid});
-                        this.labelsTextCanvasTexture.recreateBigTextureBuffers();
-                        this.buildBuffers();
-                        */
                         continue
                     }
                 }
@@ -65,7 +64,7 @@ export const appendOtherData = (jsondata: any, skipRebuild?: boolean, name?: str
                 theBuffer.isHoverBuffer = jsondata.isHoverBuffer;
                 let maxSize = 0.27;
                 for (let idx = 0; idx < displayBuffers.length; idx++) {
-                    if (displayBuffers[idx].atoms.length > 0) {
+                    if (displayBuffers[idx].hasOwnProperty("atoms") && displayBuffers[idx].atoms.length > 0) {
                         for(let ibuf2=0;ibuf2<displayBuffers[idx].bufferTypes.length;ibuf2++){
                             if(displayBuffers[idx].bufferTypes[ibuf2]==="PERFECT_SPHERES"){
                                 if(displayBuffers[idx].triangleInstanceSizes[ibuf2][0]>0.27&&!displayBuffers[idx].isHoverBuffer&&displayBuffers[idx].visible){
@@ -98,6 +97,9 @@ export const appendOtherData = (jsondata: any, skipRebuild?: boolean, name?: str
                 }
             }
         })
+
+        //Could, maybe should do same with displayBuffers ...
+        store.dispatch(setLabelBuffers([...labelBuffers,...theseLabelBuffers]))
 
         return theseBuffers;
 }

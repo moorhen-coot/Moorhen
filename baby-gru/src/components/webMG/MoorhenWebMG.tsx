@@ -116,6 +116,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const clipEnd = useSelector((state: moorhen.State) => state.glRef.clipEnd)
     const updateSwitch = useSelector((state: moorhen.State) => state.glRef.envUpdate.switch)
     const clearLabelsSwitch = useSelector((state: moorhen.State) => state.glRef.clearLabels.switch)
+    const labelBuffers = useSelector((state: moorhen.State) => state.glRef.labelBuffers)
 
     const GLLabelsFontFamily = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontFamily)
     const GLLabelsFontSize = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontSize)
@@ -514,6 +515,17 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [clipCap, glRef])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+             glRef.current.labelsTextCanvasTexture.clearBigTexture()
+            labelBuffers.forEach(lab => {
+                glRef.current.labelsTextCanvasTexture.addBigTextureTextImage(lab.label,lab.uuid)
+            })
+            glRef.current.labelsTextCanvasTexture.recreateBigTextureBuffers()
+            glRef.current.drawScene()
+        }
+    }, [labelBuffers, glRef])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {

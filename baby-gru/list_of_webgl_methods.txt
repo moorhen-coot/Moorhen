@@ -18,7 +18,5 @@ glRef.current.save_pixel_data                     src/utils/MoorhenScreenRecorde
 glRef.current.screenshotBuffersReady              src/utils/MoorhenScreenRecorder.ts
 glRef.current.origin                              src/utils/MoorhenScreenRecorder.ts
 
-glRef.current.labelsTextCanvasTexture             src/utils/MoorhenMoleculeRepresentation.ts
-
 glRef.current.appendOtherData                     src/components/snack-bar/MoorhenTomogramSnackBar.tsx
 glRef.current.texturedShapes                      src/components/snack-bar/MoorhenTomogramSnackBar.tsx

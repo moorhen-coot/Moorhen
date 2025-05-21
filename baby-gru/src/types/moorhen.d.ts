@@ -1164,6 +1164,7 @@ export namespace moorhen {
             envUpdate: {switch: boolean },
             clearLabels: {switch: boolean },
             hoverSize: number,
+            labelBuffers: any
         };
         overlays: {
             imageOverlayList: any[]

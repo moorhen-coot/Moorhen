@@ -4,7 +4,7 @@ import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInf
 import { libcootApi } from '../types/libcoot';
 import { MoorhenColourRule } from './MoorhenColourRule';
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums"
-import { setOrigin, setRequestDrawScene, setRequestBuildBuffers, setDisplayBuffers } from "../store/glRefSlice"
+import { setOrigin, setRequestDrawScene, setRequestBuildBuffers, setDisplayBuffers, setLabelBuffers } from "../store/glRefSlice"
 import { buildBuffers, appendOtherData } from '../WebGLgComponents/buildBuffers'
 
 /**
@@ -349,7 +349,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         }
         let selectionCentre = centreOnGemmiAtoms(atomBuffers)
         this.buffers.forEach(buf => {
-            buf.origin = selectionCentre
+            if (buf.hasOwnProperty("origin")) {
+                buf.origin = selectionCentre
+            }
         })
     }
 
@@ -357,26 +359,32 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
      * Delete the current representation buffers
      */
     deleteBuffers() {
+        const labelBuffers = this.parentMolecule.store.getState().glRef.labelBuffers
+        let newLabelBuffers = labelBuffers
         const displayBuffers = this.parentMolecule.store.getState().glRef.displayBuffers
         if (this.buffers?.length > 0) {
             this.buffers.forEach(buffer => {
                 if ("clearBuffers" in buffer) {
                     buffer.clearBuffers()
                     if (displayBuffers) {
+                        //FIXME - the dispatch needs to be outside the loop I think.
                         this.parentMolecule.store.dispatch(setDisplayBuffers(displayBuffers.filter(glBuffer => glBuffer !== buffer)))
                     }
                 } else if ("labels" in buffer) {
-                    this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels, buffer.uuid)
+                    newLabelBuffers = newLabelBuffers.filter(buf => buf.uuid !== buffer.uuid)
                 }
             })
             this.buffers = []
         }
+        this.parentMolecule.store.dispatch(setLabelBuffers([...newLabelBuffers]))
     }
 
     /**
      * Make the representation visible
      */
     async show() {
+        const labelBuffers = this.parentMolecule.store.getState().glRef.labelBuffers
+        let newLabelBuffers = []
         try {
             this.visible = true
             if (this.buffers && this.buffers.length > 0) {
@@ -384,9 +392,8 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                     buffer.visible = true
                     if ("labels" in buffer) {
                         buffer.labels.forEach(label => {
-                            this.glRef.current.labelsTextCanvasTexture.addBigTextureTextImage(label, buffer.uuid)
+                            newLabelBuffers.push({label:label,uuid:buffer.uuid})
                         })
-                        this.glRef.current.labelsTextCanvasTexture.recreateBigTextureBuffers()
                     }
                 })
                 this.parentMolecule.store.dispatch(setRequestDrawScene(true))
@@ -396,24 +403,29 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         } catch (err) {
             console.log(err)
         }
+        this.parentMolecule.store.dispatch(setLabelBuffers([...labelBuffers,...newLabelBuffers]))
     }
 
     /**
      * Make the representation not visible
      */
     hide() {
+        const labelBuffers = this.parentMolecule.store.getState().glRef.labelBuffers
+        let newLabelBuffers = labelBuffers
         try {
             this.visible = false
             this.buffers.forEach(buffer => {
-                 buffer.visible = false
+                 if (buffer.hasOwnProperty("visible")) {
+                     buffer.visible = false
+                 }
                  if ("labels" in buffer) {
-                    this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels, buffer.uuid)
+                    newLabelBuffers = newLabelBuffers.filter(buf => buf.uuid !== buffer.uuid)
                  }
             })
-            this.parentMolecule.store.dispatch(setRequestDrawScene(true))
         } catch (err) {
             console.log(err)
         }
+        this.parentMolecule.store.dispatch(setLabelBuffers([...newLabelBuffers]))
     }
 
     /**
