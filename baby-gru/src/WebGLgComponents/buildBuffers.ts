@@ -5,14 +5,16 @@ import store from '../store/MoorhenReduxStore'
 import { TexturedShape } from './texturedShape'
 import { guid } from '../utils/utils';
 import { createWebGLBuffers } from './createWebGLBuffers'
-import { setHoverSize, setLabelBuffers } from "../store/glRefSlice"
+import { setHoverSize, setLabelBuffers, setTexturedShapes } from "../store/glRefSlice"
 
 export const appendOtherData = (jsondata: any, skipRebuild?: boolean, name?: string) : any => {
 
         const theseBuffers = [];
+        const theseTexturedShapes = [];
         const theseLabelBuffers = [];
         const gl = store.getState().glRef.glCtx
         const labelBuffers = store.getState().glRef.labelBuffers
+        const texturedShapes = store.getState().glRef.texturedShapes
         const GLLabelsFontFamily = store.getState().labelSettings.GLLabelsFontFamily
         const GLLabelsFontSize = store.getState().labelSettings.GLLabelsFontSize
 
@@ -22,8 +24,7 @@ export const appendOtherData = (jsondata: any, skipRebuild?: boolean, name?: str
             if(jsondata.width && jsondata.height && jsondata.x_size && jsondata.y_size){
                 const uuid =  guid();
                 const texturedShape = new TexturedShape(jsondata,gl,uuid);
-                //FIXME - Presumably, I need this ...
-                //this.texturedShapes.push(texturedShape)
+                theseTexturedShapes.push(texturedShape)
                 theseBuffers.push({texturedShapes:texturedShape,uuid:uuid});
             }
             console.log("Probably textureAsFloatsJS, ignore for now!");
@@ -100,6 +101,7 @@ export const appendOtherData = (jsondata: any, skipRebuild?: boolean, name?: str
 
         //Could, maybe should do same with displayBuffers ...
         store.dispatch(setLabelBuffers([...labelBuffers,...theseLabelBuffers]))
+        store.dispatch(setTexturedShapes([...texturedShapes,...theseTexturedShapes]))
 
         return theseBuffers;
 }

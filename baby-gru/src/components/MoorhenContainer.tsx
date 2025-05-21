@@ -5,7 +5,7 @@ import { createLocalStorageInstance, parseAtomInfoLabel } from '../utils/utils';
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre";
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
 import { Backdrop } from "@mui/material";
-import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
+import { isDarkBackground } from '../WebGLgComponents/webGLUtils'
 import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
 import { MoorhenModalsContainer } from './misc/MoorhenModalsContainer';
 import { moorhen } from '../types/moorhen';

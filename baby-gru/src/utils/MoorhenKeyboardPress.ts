@@ -2,7 +2,7 @@ import { cidToSpec, getCentreAtom } from "./utils"
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4';
-import { getDeviceScale } from '../WebGLgComponents/mgWebGL';
+import { getDeviceScale } from '../WebGLgComponents/webGLUtils';
 import { vec3Create } from '../WebGLgComponents/mgMaths';
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";

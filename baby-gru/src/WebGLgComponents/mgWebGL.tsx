@@ -120,16 +120,9 @@ import { DisplayBuffer } from './displayBuffer'
 import { createQuatFromDXAngle, createQuatFromAngle, createXQuatFromDX, createYQuatFromDY, createZQuatFromDX, quatSlerp } from './quatUtils'
 import { createWebGLBuffers } from './createWebGLBuffers'
 import { buildBuffers, appendOtherData } from './buildBuffers'
+import { getDeviceScale} from './webGLUtils'
 
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShadowShaders, initPointSpheresShaders } from './mgWebGLShaders'
-
-export function isDarkBackground(r, g, b, a) {
-    const brightness = r * 0.299 + g * 0.587 + b * 0.114
-    if (brightness >= 0.5) {
-        return false
-    }
-    return true
-}
 
 function getOffsetRect(elem) {
     let box = elem.getBoundingClientRect();
@@ -191,12 +184,6 @@ function SortThing(proj, id1, id2, id3) {
     this.id1 = id1;
     this.id2 = id2;
     this.id3 = id3;
-}
-
-export function getDeviceScale() {
-    let deviceScale = 1.0;
-    if(window.devicePixelRatio) deviceScale = window.devicePixelRatio
-    return deviceScale;
 }
 
 export class MGWebGL extends React.Component implements webGL.MGWebGL {
@@ -5701,6 +5688,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawTexturedShapes(invMat) {
+        const texturedShapes = store.getState().glRef.texturedShapes
         const theShader = this.shaderProgramTextured;
         this.gl.useProgram(theShader);
         this.setMatrixUniforms(theShader);
@@ -5714,7 +5702,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         //this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 1.0, 0.3, 0.4, 1.0);
         //this.gl.vertexAttrib3f(theShader.vertexNormalAttribute, 0.0, 0.0, 1.0);
 
-        this.texturedShapes.forEach(shape => {
+        texturedShapes.forEach(shape => {
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, shape.vertexBuffer);
             this.gl.vertexAttribPointer(theShader.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, shape.texCoordBuffer);

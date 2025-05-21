@@ -13,6 +13,7 @@ const initialState = {
     envUpdate: { switch: false },
     clearLabels: { switch: false },
     displayBuffers: [],
+    texturedShapes: [],
     labelBuffers: [],
     hoverSize: 0.27,
     // These should probably be in sceneSettings slice. 
@@ -106,6 +107,9 @@ export const glRefSlice = createSlice({
     setDisplayBuffers: (state, action: {payload: DisplayBuffer[], type: string}) => {
         return { ...state, displayBuffers: action.payload }
     },
+    setTexturedShapes: (state, action: {payload: any[], type: string}) => {
+        return { ...state, texturedShapes: action.payload }
+    },
     setLabelBuffers: (state, action: {payload: any[], type: string}) => {
         return { ...state, labelBuffers: action.payload }
     },
@@ -130,7 +134,7 @@ export const {
     setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setZoom,
     setQuat, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd, setCursorPosition,
     setShortCutHelp, setDraggableMolecule, triggerRedrawEnv, triggerClearLabels, setGLCtx,
-    setDisplayBuffers, setHoverSize, setLabelBuffers
+    setDisplayBuffers, setHoverSize, setLabelBuffers, setTexturedShapes
 } = glRefSlice.actions
 
 export default glRefSlice.reducer

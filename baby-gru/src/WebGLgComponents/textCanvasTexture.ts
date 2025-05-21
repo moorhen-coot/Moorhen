@@ -1,4 +1,4 @@
-import { MGWebGL } from '../WebGLgComponents/mgWebGL';
+import { webGL } from '../types/mgWebGL';
 
 interface Dictionary<T> {
     [Key: string]: T;
@@ -7,7 +7,7 @@ interface Dictionary<T> {
 export class TextCanvasTexture {
     gl: WebGL2RenderingContext;
     ext: any;
-    glRef: MGWebGL;
+    glRef: webGL.MGWebGL;
     nBigTextures: number;
     nBigTexturesInt: number;
     refI: Dictionary<number>;

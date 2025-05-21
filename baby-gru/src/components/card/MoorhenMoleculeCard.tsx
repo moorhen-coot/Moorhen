@@ -3,7 +3,7 @@ import { Card, Row, Col, Stack, Button, Spinner } from "react-bootstrap";
 import { Accordion, AccordionDetails, AccordionSummary, Box, CircularProgress, LinearProgress } from '@mui/material';
 import { convertRemToPx, convertViewtoPx, getCentreAtom } from '../../utils/utils';
 import { representationLabelMapping } from '../../utils/enums';
-import { isDarkBackground } from '../../WebGLgComponents/mgWebGL';
+import { isDarkBackground } from '../../WebGLgComponents/webGLUtils';
 import { MoorhenSequenceList } from "../list/MoorhenSequenceList";
 import { MoorhenMoleculeCardButtonBar } from "../button-bar/MoorhenMoleculeCardButtonBar";
 import { MoorhenLigandList } from "../list/MoorhenLigandList";

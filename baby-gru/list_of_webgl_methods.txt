@@ -1,4 +1,4 @@
-#List of WebGL methods called outside of MGWebGL or MoorhenWebMG
+#List of WebGL methods/properties accessed outside of MGWebGL or MoorhenWebMG (or textCanvasTexture).
 
 glRef.current.drawScene                           src/utils/MoorhenScreenRecorder.ts
 glRef.current.myQuat                              src/utils/MoorhenScreenRecorder.ts
@@ -17,6 +17,3 @@ glRef.current.rttFramebuffer.width                src/utils/MoorhenScreenRecorde
 glRef.current.save_pixel_data                     src/utils/MoorhenScreenRecorder.ts
 glRef.current.screenshotBuffersReady              src/utils/MoorhenScreenRecorder.ts
 glRef.current.origin                              src/utils/MoorhenScreenRecorder.ts
-
-glRef.current.appendOtherData                     src/components/snack-bar/MoorhenTomogramSnackBar.tsx
-glRef.current.texturedShapes                      src/components/snack-bar/MoorhenTomogramSnackBar.tsx
