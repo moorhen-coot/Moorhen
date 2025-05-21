@@ -27,6 +27,7 @@ const LhasaWrapper = (props: {
     const rdkitMoleculePickleList = useSelector((state: moorhen.State) => state.lhasa.rdkitMoleculePickleList)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
+    const originState = useSelector((state: moorhen.State) => state.glRef.origin)
 
     const [isCootAttached, setCootAttached] = useState(window.cootModule !== undefined)
 
@@ -81,7 +82,7 @@ const LhasaWrapper = (props: {
             const getMonomerResult = await props.commandCentre.current.cootCommand({
                 returnType: 'status',
                 command: 'get_monomer_and_position_at',
-                commandArgs: [ligandName, -999999, ...props.glRef.current.origin.map(coord => -coord)]
+                commandArgs: [ligandName, -999999, ...originState.map(coord => -coord)]
             }, true) as moorhen.WorkerResponse<number> 
     
             if (getMonomerResult.data.result.result === -1) {

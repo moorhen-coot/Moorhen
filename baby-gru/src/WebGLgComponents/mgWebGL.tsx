@@ -6088,7 +6088,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         self.measureTextCanvasTexture.recreateBigTextureBuffers();
         store.dispatch(setDisplayBuffers([...displayBuffers,...newBuffers]))
-        self.buildBuffers();
     }
 
     clearMeasureCylinderBuffers() : void {

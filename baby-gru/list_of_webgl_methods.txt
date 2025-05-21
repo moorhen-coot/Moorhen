@@ -16,7 +16,7 @@ glRef.current.rttFramebuffer.height               src/utils/MoorhenScreenRecorde
 glRef.current.rttFramebuffer.width                src/utils/MoorhenScreenRecorder.ts
 glRef.current.save_pixel_data                     src/utils/MoorhenScreenRecorder.ts
 glRef.current.screenshotBuffersReady              src/utils/MoorhenScreenRecorder.ts
-glRef.current.origin                              src/utils/MoorhenScreenRecorder.ts src/components/modal/MoorhenLhasaModal.tsx
+glRef.current.origin                              src/utils/MoorhenScreenRecorder.ts
 
 glRef.current.labelsTextCanvasTexture             src/utils/MoorhenMoleculeRepresentation.ts
 
