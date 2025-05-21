@@ -7725,8 +7725,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         let atz = displayBuffers[minidx].atoms[minj].z;
                         if(minsym>-1){
                             self.setOriginAnimated([-minx, -miny, -minz], true);
+                            self.props.onOriginChanged([-minx, -miny, -minz])
                         } else {
                             self.setOriginAnimated([-atx, -aty, -atz], true);
+                            self.props.onOriginChanged([-atx, -aty, -atz])
                         }
                     }
                 }
