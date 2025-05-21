@@ -4976,11 +4976,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             if(program.vertexColourAttribute!=null) this.gl.vertexAttribDivisor(program.vertexColourAttribute, 1);
                             this.gl.vertexAttribDivisor(program.sizeAttribute, 1);
                             this.gl.vertexAttribDivisor(program.offsetAttribute, 1);
-                            if(displayBuffers[idx].isHoverBuffer&&this.hoverSize>0.27){
+                            if(displayBuffers[idx].isHoverBuffer&&hoverSize>0.27){
                                 this.gl.disableVertexAttribArray(program.sizeAttribute);
                                 this.gl.vertexAttribDivisor(program.sizeAttribute, 0);
-                                const hoverSize = this.hoverSize + 0.4;
-                                this.gl.vertexAttrib3f(program.sizeAttribute, hoverSize, hoverSize, hoverSize, 1.0);
+                                const adjustedHoverSize = hoverSize + 0.4;
+                                this.gl.vertexAttrib3f(program.sizeAttribute, adjustedHoverSize, adjustedHoverSize, adjustedHoverSize, 1.0);
                             }
                             if(this.doAnaglyphStereo) {
                                 this.gl.disableVertexAttribArray(program.vertexColourAttribute);

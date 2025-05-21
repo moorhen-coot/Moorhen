@@ -84,7 +84,7 @@ export const appendOtherData = (jsondata: any, skipRebuild?: boolean, name?: str
                         }
                     }
                 }
-                setHoverSize(maxSize)
+                store.dispatch(setHoverSize(maxSize))
             }
         }
 

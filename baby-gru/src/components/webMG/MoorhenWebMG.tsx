@@ -518,7 +518,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
-             glRef.current.labelsTextCanvasTexture.clearBigTexture()
+            glRef.current.labelsTextCanvasTexture.clearBigTexture()
             labelBuffers.forEach(lab => {
                 glRef.current.labelsTextCanvasTexture.addBigTextureTextImage(lab.label,lab.uuid)
             })
