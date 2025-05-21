@@ -663,7 +663,6 @@ export class MoorhenMap implements moorhen.Map {
                     newBuffers = [...newBuffers,...a]
                 }
             })
-            this.glRef.current.drawScene()
             const ts = performance.now();
             if(print_timing) console.log("After _drawScene",ts-t1);
         } catch(err) {

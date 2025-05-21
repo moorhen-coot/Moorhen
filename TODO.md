@@ -10,7 +10,8 @@ A JavaScript molecular graphics program
    - [ ] Fix map recontouring when alt-click centering.
    - [x] Fix completely broken atom hovering.
    - [x] Fix spheres being flat and not facing camera properly.
-   - [ ] Fix distance lines not being drawn.
+   - [x] Fix atom dragging not being animated.
+   - [x] Fix distance lines not being drawn.
    - [ ] Fix wrong size spheres when atom hovering.
    - [ ] Restore animated zooming.
 

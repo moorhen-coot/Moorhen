@@ -9,7 +9,7 @@ import * as mat4 from 'gl-matrix/mat4';
 import * as mat3 from 'gl-matrix/mat3';
 import  { unProject } from './GLU.js';
 import store from '../store/MoorhenReduxStore'
-import { setIsWebGL2, setGLCtx } from "../store/glRefSlice"
+import { setIsWebGL2, setGLCtx, setDisplayBuffers } from "../store/glRefSlice"
 
 //WebGL2 shaders
 import { depth_peel_accum_vertex_shader_source as depth_peel_accum_vertex_shader_source_webgl2 } from './webgl-2/depth-peel-accum-vertex-shader.js';
@@ -5973,6 +5973,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     updateLabels(){
+        const displayBuffers = store.getState().glRef.displayBuffers
+        let newBuffers = []
         const self = this;
         self.clearMeasureCylinderBuffers()
         let atomPairs = []
@@ -6062,6 +6064,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         ]
         objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
             const a = appendOtherData(object, true);
+            newBuffers = [...newBuffers,...a]
+            buildBuffers(a)
             self.measureCylinderBuffers = self.measureCylinderBuffers.concat(a)
         })
         self.measuredAtoms.forEach(atoms => {
@@ -6083,6 +6087,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         })
 
         self.measureTextCanvasTexture.recreateBigTextureBuffers();
+        store.dispatch(setDisplayBuffers([...displayBuffers,...newBuffers]))
         self.buildBuffers();
     }
 
