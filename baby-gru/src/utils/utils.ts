@@ -556,6 +556,14 @@ export const hexToHsl = (hex: string): [number, number, number] => {
     return [h, s, l];
 }
 
+export const hexToRGB = (hex: string): [number, number, number] => {
+    const hexWithoutHash = hex.replace('#', '');
+    const r = parseInt(hexWithoutHash.slice(0, 2), 16);
+    const g = parseInt(hexWithoutHash.slice(2, 4), 16);
+    const b = parseInt(hexWithoutHash.slice(4, 6), 16);
+    return [r, g, b];
+}
+
 export const createLocalStorageInstance = (name: string, empty: boolean = false): moorhen.LocalStorageInstance => {
     const instance = localforage.createInstance({
         driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
