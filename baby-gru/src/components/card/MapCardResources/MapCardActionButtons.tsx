@@ -25,7 +25,6 @@ import { moorhen } from "../../../types/moorhen";
 import { webGL } from "../../../types/mgWebGL";
 import Tooltip from "@mui/material/Tooltip";
 
-
 interface ActionButtonPropsType {
     map: moorhen.Map;
     mapIsVisible?: boolean;
@@ -48,7 +47,6 @@ type MenuItemType = {
     key: string;
     menuItem?: JSX.Element;
 };
-
 
 export const MapCardActionButtons = (props: ActionButtonPropsType) => {
     const dispatch = useDispatch();
@@ -74,39 +72,47 @@ export const MapCardActionButtons = (props: ActionButtonPropsType) => {
             action: handleVisibility,
             icon: props.mapIsVisible ? <VisibilityOutlined /> : <VisibilityOffOutlined />,
             disabled: false,
-
         },
 
         2: {
             label: "Centre on map",
             key: "centre-on-map",
-            action: () => {props.map.centreOnMap();},
+            action: () => {
+                props.map.centreOnMap();
+            },
             icon: <FilterTiltShiftOutlined />,
             disabled: !props.mapIsVisible,
-            },
+        },
         3: {
-                label: "Rename map",
-                key: "Rename-map",
-                menuItem: <MoorhenRenameDisplayObjectMenuItem key="rename-map" setPopoverIsShown={setPopoverIsShown} item={props.map} setCurrentName={props.setCurrentName} />
-            },
+            label: "Rename map",
+            key: "Rename-map",
+            menuItem: (
+                <MoorhenRenameDisplayObjectMenuItem
+                    key="rename-map"
+                    setPopoverIsShown={setPopoverIsShown}
+                    item={props.map}
+                    setCurrentName={props.setCurrentName}
+                />
+            ),
+        },
 
-            4: {
-                label: "Copy map",
-                key: "copy-map",
-                action: handleCopyMap,
-                icon: <FileCopyOutlined />,
-            },
-            5: {
-                label: "Download Map",
-                key: "download-map",
-                action: handleDownload,
-                icon: <DownloadOutlined />,
-            },
-                
+        4: {
+            label: "Copy map",
+            key: "copy-map",
+            action: handleCopyMap,
+            icon: <FileCopyOutlined />,
+        },
+        5: {
+            label: "Download Map",
+            key: "download-map",
+            action: handleDownload,
+            icon: <DownloadOutlined />,
+        },
+
         6: {
             label: "Set map weight...",
             key: "set-map-weight",
-            menuItem : <MoorhenSetMapWeight key="set-map-weight" disabled={!props.mapIsVisible} map={props.map} setPopoverIsShown={setPopoverIsShown} />
+            menuItem: <MoorhenSetMapWeight key="set-map-weight" disabled={!props.mapIsVisible} map={props.map} setPopoverIsShown={setPopoverIsShown} />,
         },
         7: {
             label: "Set map scale...",
@@ -121,7 +127,7 @@ export const MapCardActionButtons = (props: ActionButtonPropsType) => {
         99: {
             label: "Delete map",
             key: "delete-map",
-            menuItem: <MoorhenDeleteDisplayObjectMenuItem key="delete-map" setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} item={props.map}/>,
+            menuItem: <MoorhenDeleteDisplayObjectMenuItem key="delete-map" setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} item={props.map} />,
         },
     };
 
@@ -132,48 +138,48 @@ export const MapCardActionButtons = (props: ActionButtonPropsType) => {
     let compressedButtons: JSX.Element[] = [];
 
     Object.keys(actionButtons).forEach((key) => {
-        if ('menuItem' in actionButtons[key]) {
+        if ("menuItem" in actionButtons[key]) {
             compressedButtons.push(actionButtons[key].menuItem as JSX.Element);
-        }
-        else if ('icon' in actionButtons[key] && currentlyUsedWidth < maximumAllowedWidth) {
+        } else if ("icon" in actionButtons[key] && currentlyUsedWidth < maximumAllowedWidth) {
             currentlyUsedWidth += 60;
-        const button = (
-            <Tooltip key={`tooltip-${key}`} title={actionButtons[key].label} placement="top">
-                <Button key={`button-${key}`} 
-                size="sm" 
-                variant="outlined" 
-                onClick={() => {actionButtons[key].action?.() }} 
-                disabled={actionButtons[key].disabled}
-                >
-                {actionButtons[key].icon}
-                </Button>
-            </Tooltip>)
-        expandedButtons.push(button as JSX.Element);
-        }
-
-        else {
+            const button = (
+                <Tooltip key={`tooltip-${key}`} title={actionButtons[key].label} placement="top">
+                    <Button
+                        key={`button-${key}`}
+                        size="sm"
+                        variant="outlined"
+                        onClick={() => {
+                            actionButtons[key].action?.();
+                        }}
+                        disabled={actionButtons[key].disabled}
+                    >
+                        {actionButtons[key].icon}
+                    </Button>
+                </Tooltip>
+            );
+            expandedButtons.push(button as JSX.Element);
+        } else {
             const menuItem = (
-                <MenuItem key={`menu-${key}`} onClick={() => { actionButtons[key].action?.() }}>
+                <MenuItem
+                    key={`menu-${key}`}
+                    onClick={() => {
+                        actionButtons[key].action?.();
+                    }}
+                >
                     {actionButtons[key].label}
                 </MenuItem>
-            )
+            );
             compressedButtons.push(menuItem as JSX.Element);
         }
-
     });
+    
     return (
         <>
             {expandedButtons}
-            <Tooltip title="More options" placement="top">
-            <DropdownButton
-                title={<Settings />}
-                size="sm"
-                variant="outlined"
-                autoClose={popoverIsShown ? false : "outside"}
-            >
+            <DropdownButton title={<Settings />} size="sm" variant="outlined" autoClose={popoverIsShown ? false : "outside"}>
                 {compressedButtons}
             </DropdownButton>
-            </Tooltip>
+
             <Button
                 size="sm"
                 variant="outlined"

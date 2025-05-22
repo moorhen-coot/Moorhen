@@ -15,6 +15,8 @@ import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput";
 import { MapSettingsAccordion } from "./MapCardResources/MapSettingsAccordion";
 import { MapColourSelector } from "./MapCardResources/MapColourSelector";
 import { MapCardActionButtons } from "./MapCardResources/MapCardActionButtons";
+import tooltip from "@mui/material/Tooltip";
+import Tooltip from "@mui/material/Tooltip";
 
 interface MoorhenMapCardPropsInterface extends moorhen.CollectedProps {
     map: moorhen.Map;
@@ -300,22 +302,23 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
             >
                 <Stack direction="vertical" gap={1}>
                     <Stack direction="horizontal" gap={4}>
-                        <ToggleButton
-                            id={`active-map-toggle-${props.map.molNo}`}
-                            type="checkbox"
-                            variant={isDark ? "outline-light" : "outline-primary"}
-                            checked={props.map === activeMap}
-                            style={{
-                                marginLeft: "0.1rem",
-                                marginRight: "0.5rem",
-                                justifyContent: "space-betweeen",
-                                display: "flex",
+                            <ToggleButton
+                                id={`active-map-toggle-${props.map.molNo}`}
+                                type="checkbox"
+                                variant={isDark ? "outline-light" : "outline-primary"}
+                                checked={props.map === activeMap}
+                                style={{
+                                    marginLeft: "0.1rem",
+                                    marginRight: "0.5rem",
+                                    justifyContent: "space-betweeen",
+                                    display: "flex",
+                                    width: "8rem",
                             }}
                             onClick={() => dispatch(setActiveMap(props.map))}
                             value={""}
                         >
                             {props.map === activeMap ? <RadioButtonCheckedOutlined /> : <RadioButtonUncheckedOutlined />}
-                            <span style={{ marginLeft: "0.5rem" }}>Active</span>
+                            <span style={{ marginLeft: "0.5rem" }}>{props.map === activeMap ? "Active" : "Inactive"}</span>
                         </ToggleButton>
                         <Stack direction="vertical" style={{ justifyContent: "center" }}>
                             <Stack
