@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react"
+import { useCallback, useRef, useState } from "react"
 import { Button, Col, Form, Row } from "react-bootstrap"
 import { MoorhenMap } from "../../utils/MoorhenMap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
@@ -23,11 +23,13 @@ export const MoorhenImportMapMenuItem = (props: {
     const maps = useSelector((state: moorhen.State) => state.maps)
     const filesRef = useRef<null | HTMLInputElement>(null)
     const isDiffRef = useRef<undefined | HTMLInputElement>()
+    const [isActiveButton, setIsActiveButton] = useState(true)
 
     const { enqueueSnackbar } = useSnackbar()
 
     const readMaps = useCallback(async () => {
         if (filesRef.current.files.length > 0) {
+            setIsActiveButton(false)
             const files = Array.from(filesRef.current.files);
             const newMaps = [];
             try {
@@ -85,7 +87,7 @@ export const MoorhenImportMapMenuItem = (props: {
                 <Form.Check label={'is diff map'} name={`isDifference`} type="checkbox" ref={isDiffRef} />
             </Col>
         </Row>
-        <Button variant="primary" onClick={readMaps}>
+        <Button variant="primary" onClick={readMaps} disabled={!isActiveButton}>
             OK
         </Button>
     </>

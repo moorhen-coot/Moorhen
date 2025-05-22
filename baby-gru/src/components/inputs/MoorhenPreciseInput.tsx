@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Form } from "react-bootstrap";
 import Stack from '@mui/material/Stack';
 import './inputs.css'
-import { number } from "prop-types";
 
 type MoorhenPreciseInputPropsType = {
     value: number | null | undefined;
