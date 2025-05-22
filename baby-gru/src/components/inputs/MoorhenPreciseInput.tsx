@@ -48,6 +48,9 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
+        if (type !== "number") {
+            return;
+        }
         function handleClickOutside(event: MouseEvent) {
             if (inputRef.current && !inputRef.current.contains(event.target as Node)) {
                 setIsUserInteracting(false);
