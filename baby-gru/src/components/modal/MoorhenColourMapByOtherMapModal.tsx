@@ -152,7 +152,7 @@ export const MoorhenColourMapByOtherMapModal = (props: {
                 setColourTable={setColourTable}
                 menu={menu}
             />
-            <Stack Stack direction="row"  gap={1} alignItems="center" justifyContent="space-between" style={{ marginTop: "-1rem" }}>
+            <Stack direction="row"  gap={1} alignItems="center" justifyContent="space-between" style={{ marginTop: "-1rem" }}>
                 <MoorhenPreciseInput
                     value={minMaxValue[0]}
                     decimalDigits={2}

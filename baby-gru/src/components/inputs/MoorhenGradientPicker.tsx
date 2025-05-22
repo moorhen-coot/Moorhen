@@ -5,6 +5,7 @@ import Stack from '@mui/material/Stack';
 import { MoorhenPreciseInput } from "./MoorhenPreciseInput";
 import MoorhenColourPicker from "./MoorhenColourPicker";
 import FlipCameraAndroidIcon from '@mui/icons-material/FlipCameraAndroid';
+import { gradientPresets } from "./gradientPresets";
 
 type MoorhenGradientPickerType = {
     colourTable: [number, [number, number, number]][];
@@ -86,6 +87,7 @@ export default function MoorhenGradientPicker(props: MoorhenGradientPickerType) 
                         handleColorChange({ r: colour[0], g: colour[1], b: colour[2] });                        
                     }}
                     onClose={updateExternalColourTable}
+                    key={index}
                 />
             );
         };
@@ -105,7 +107,7 @@ export default function MoorhenGradientPicker(props: MoorhenGradientPickerType) 
                 <Stack direction="row" gap={1} alignItems="center" justifyContent="Center">
                 <MoorhenPreciseInput
                     value={nOfPoints}
-                    minMax={[3, 7]}
+                    minMax={[2, 7]}
                     decimalDigits={0}
                     type="number"
                     setValue={(newVal) => {
@@ -157,42 +159,3 @@ export default function MoorhenGradientPicker(props: MoorhenGradientPickerType) 
             </Stack>
         );
     };
-
-const gradientPresets = {
-    "Red White Blue": [
-        [0.0, [254, 39, 18]],
-        [0.5, [250, 250, 250]],
-        [1.0, [23, 90, 206]],
-    ],
-    "Red White Green": [
-        [0.0, [254, 39, 18]],
-        [0.5, [255, 255, 255]],
-        [1.0, [102, 176, 50]],
-    ],
-    "Green White Blue": [
-        [0.0, [0, 255, 0]],
-        [0.5, [255, 255, 255]],
-        [1.0, [0, 0, 255]],
-    ],
-    "Pool Party": [
-        [0.0, [52,77,144]],
-        [0.33, [92,197,239]],
-        [0.67, [255,183,69]],
-        [1.0, [231,85,44]],
-    ],
-    "Heatmap": [
-        [0.0,   [73, 60, 158]],
-        [0.25,   [64, 112, 211]],
-        [0.5,   [250, 224, 0]],
-        [0.75,   [240, 156, 10]],
-        [1.0,   [234, 47, 134]],
-    ],
-    "Rainbow": [
-        [0.0,   [73, 60, 158]],
-        [0.2,   [64, 112, 211]],
-        [0.4,   [147, 226, 35]],
-        [0.6,   [250, 224, 0]],
-        [0.8,   [240, 156, 10]],
-        [1.0,   [234, 47, 134]],
-    ],
-};
