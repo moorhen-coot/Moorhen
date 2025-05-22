@@ -12,6 +12,7 @@ import {
     setNegativeMapColours,
     setPositiveMapColours,
 } from "../../../store/mapContourSettingsSlice";
+import MoorhenColourPicker from "../../inputs/MoorhenColourPicker";
 
 
 interface MoorhenMapColorSelector {
@@ -146,166 +147,31 @@ export const MapColourSelector = (props: MoorhenMapColorSelector) => {
     };
 
     let dropdown: JSX.Element;
-    if (props.map.isDifference) {
+    if (!props.map.isDifference) {
         dropdown = (
-            <>
-                <div
-                    ref={colourSwatchRef}
-                    onClick={() => setShowColourPicker(true)}
-                    style={{
-                        marginLeft: "0.5rem",
-                        width: "25px",
-                        height: "25px",
-                        borderRadius: "8px",
-                        border: "3px solid #fff",
-                        boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(0, 0, 0, 0.1)",
-                        cursor: "pointer",
-                        background: `linear-gradient( -45deg, rgba(${positiveMapColour.r},${positiveMapColour.g},${positiveMapColour.b}), rgba(${positiveMapColour.r},${positiveMapColour.g},${positiveMapColour.b}) 49%, white 49%, white 51%, rgba(${negativeMapColour.r},${negativeMapColour.g},${negativeMapColour.b}) 51% )`,
-                    }}
-                />
-                <Popover
-                    anchorOrigin={{
-                        vertical: "bottom",
-                        horizontal: "left",
-                    }}
-                    transformOrigin={{
-                        vertical: "top",
-                        horizontal: "left",
-                    }}
-                    open={showColourPicker}
-                    onClose={() => setShowColourPicker(false)}
-                    anchorEl={colourSwatchRef.current}
-                    sx={{
-                        "& .MuiPaper-root": {
-                            overflowY: "hidden",
-                            borderRadius: "8px",
-                            padding: "0.5rem",
-                            background: isDark ? "grey" : "white",
-                        },
-                    }}
-                >
-                    <Stack gap={3} direction="horizontal">
-                        <div
-                            style={{
-                                width: "100%",
-                                textAlign: "center",
-                            }}
-                        >
-                            <span>Positive</span>
-                            <RgbColorPicker color={positiveMapColour} onChange={handlePositiveMapColorChange} />
-                            <div
-                                style={{
-                                    width: "100%",
-                                    display: "flex",
-                                    justifyContent: "center",
-                                }}
-                            >
-                                <div className="moorhen-hex-input-decorator">#</div>
-                                <HexColorInput
-                                    className="moorhen-hex-input"
-                                    color={positiveMapColourHex}
-                                    onChange={(hex) => {
-                                        const [r, g, b] = MoorhenColourRule.parseHexToRgba(hex);
-                                        handlePositiveMapColorChange({
-                                            r,
-                                            g,
-                                            b,
-                                        });
-                                    }}
-                                />
-                            </div>
-                        </div>
-                        <div
-                            style={{
-                                width: "100%",
-                                textAlign: "center",
-                            }}
-                        >
-                            <span>Negative</span>
-                            <RgbColorPicker color={negativeMapColour} onChange={handleNegativeMapColorChange} />
-                            <div
-                                style={{
-                                    width: "100%",
-                                    display: "flex",
-                                    justifyContent: "center",
-                                }}
-                            >
-                                <div className="moorhen-hex-input-decorator">#</div>
-                                <HexColorInput
-                                    className="moorhen-hex-input"
-                                    color={negativeMapColourHex}
-                                    onChange={(hex) => {
-                                        const [r, g, b] = MoorhenColourRule.parseHexToRgba(hex);
-                                        handleNegativeMapColorChange({
-                                            r,
-                                            g,
-                                            b,
-                                        });
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    </Stack>
-                </Popover>
-            </>
+            <MoorhenColourPicker
+                colour={[mapColour.r, mapColour.g, mapColour.b]}
+                setColour={(color => {
+                    handleColorChange({ r: color[0], g: color[1], b: color[2] });
+                })}
+                position="bottom"
+            />          
         );
     } else {
         dropdown = (
-            <>
-                <div
-                    ref={colourSwatchRef}
-                    onClick={() => setShowColourPicker(true)}
-                    style={{
-                        marginLeft: "0.5rem",
-                        width: "25px",
-                        height: "25px",
-                        borderRadius: "8px",
-                        border: "3px solid #fff",
-                        boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(0, 0, 0, 0.1)",
-                        cursor: "pointer",
-                        backgroundColor: `rgb(${mapColour.r},${mapColour.g},${mapColour.b})`,
-                    }}
-                />
-                <Popover
-                    anchorOrigin={{
-                        vertical: "bottom",
-                        horizontal: "left",
-                    }}
-                    transformOrigin={{
-                        vertical: "top",
-                        horizontal: "left",
-                    }}
-                    open={showColourPicker}
-                    onClose={() => setShowColourPicker(false)}
-                    anchorEl={colourSwatchRef.current}
-                    sx={{
-                        "& .MuiPaper-root": {
-                            overflowY: "hidden",
-                            borderRadius: "8px",
-                        },
-                    }}
-                >
-                    <RgbColorPicker color={mapColour} onChange={handleColorChange} />
-                    <div
-                        style={{
-                            width: "100%",
-                            display: "flex",
-                            justifyContent: "center",
-                            marginBottom: "0.1rem",
-                        }}
-                    >
-                        <div className="moorhen-hex-input-decorator">#</div>
-                        <HexColorInput
-                            className="moorhen-hex-input"
-                            color={mapColourHex}
-                            onChange={(hex) => {
-                                const [r, g, b, a] = MoorhenColourRule.parseHexToRgba(hex);
-                                handleColorChange({ r, g, b });
-                            }}
-                        />
-                    </div>
-                </Popover>
-            </>
+            <MoorhenColourPicker
+                colour={[positiveMapColour.r, positiveMapColour.g, positiveMapColour.b]}
+                setColour={(color => {
+                    handlePositiveMapColorChange({ r: color[0], g: color[1], b: color[2] });
+                })}
+                position="bottom"
+                colour2={[negativeMapColour.r, negativeMapColour.g, negativeMapColour.b]}
+                setColour2={(color => {
+                    handleNegativeMapColorChange({ r: color[0], g: color[1], b: color[2] });
+                })}
+                label="Positive"
+                label2="Negative"
+            />
         );
     }
 
