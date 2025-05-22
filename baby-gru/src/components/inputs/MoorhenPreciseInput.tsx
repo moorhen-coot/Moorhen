@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Form } from "react-bootstrap";
 import Stack from '@mui/material/Stack';
 import './inputs.css'
@@ -44,6 +44,20 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
             }
         }
     }, [props.value, isUserInteracting]);
+
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (inputRef.current && !inputRef.current.contains(event.target as Node)) {
+                setIsUserInteracting(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     const checkIsValidInput = (input: string) => {
         const value = parseFloat(input);
@@ -94,6 +108,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         >
             {label && label}
             <Form.Control
+                ref={inputRef}
                 type={type}
                 step={Math.pow(10, -decimalDigits)}
                 disabled={disabled}
@@ -102,7 +117,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
                 className={`precise-input ${isValidInput ? "valid" : "invalid"} ${disabled ? "disabled" : ""}`}
                 onChange={handleChange}
                 onKeyDown={handleReturn}
-                onBlur={handleBlur} // Handle blur to reset interaction state
+                onBlur={handleBlur}               
             />
         </Stack>
     );
