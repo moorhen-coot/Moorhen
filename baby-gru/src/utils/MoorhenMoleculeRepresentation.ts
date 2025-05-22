@@ -6,6 +6,7 @@ import { MoorhenColourRule } from './MoorhenColourRule';
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums"
 import { setOrigin, setRequestDrawScene, setRequestBuildBuffers, setDisplayBuffers, setLabelBuffers } from "../store/glRefSlice"
 import { buildBuffers, appendOtherData } from '../WebGLgComponents/buildBuffers'
+import { batch } from 'react-redux'
 
 /**
  * Represents a molecule representation
@@ -151,8 +152,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 buffer.isDirty = true;
                 buffer.alphaChanged = true;
             })
-            this.parentMolecule.store.dispatch(setRequestBuildBuffers(true))
-            this.parentMolecule.store.dispatch(setRequestDrawScene(true))
         }
     }
 
@@ -362,21 +361,24 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         const labelBuffers = this.parentMolecule.store.getState().glRef.labelBuffers
         let newLabelBuffers = labelBuffers
         const displayBuffers = this.parentMolecule.store.getState().glRef.displayBuffers
+        let newBuffers = displayBuffers
+        if(displayBuffers){
+            newBuffers = displayBuffers
+        }
         if (this.buffers?.length > 0) {
             this.buffers.forEach(buffer => {
                 if ("clearBuffers" in buffer) {
-                    buffer.clearBuffers()
-                    if (displayBuffers) {
-                        //FIXME - the dispatch needs to be outside the loop I think.
-                        this.parentMolecule.store.dispatch(setDisplayBuffers(displayBuffers.filter(glBuffer => glBuffer !== buffer)))
-                    }
+                    newBuffers = newBuffers.filter(glBuffer => glBuffer !== buffer)
                 } else if ("labels" in buffer) {
                     newLabelBuffers = newLabelBuffers.filter(buf => buf.uuid !== buffer.uuid)
                 }
             })
             this.buffers = []
         }
-        this.parentMolecule.store.dispatch(setLabelBuffers([...newLabelBuffers]))
+        batch(() => {
+            this.parentMolecule.store.dispatch(setDisplayBuffers(newBuffers))
+            this.parentMolecule.store.dispatch(setLabelBuffers(newLabelBuffers))
+        })
     }
 
     /**
@@ -396,7 +398,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                         })
                     }
                 })
-                this.parentMolecule.store.dispatch(setRequestDrawScene(true))
             } else {
                 await this.draw()
             }

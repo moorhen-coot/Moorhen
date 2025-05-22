@@ -150,6 +150,8 @@ export const moorhenKeyPress = (
 
     let action: null | string = null;
 
+    console.log("Hello")
+
     for (const key of Object.keys(shortCuts)) {
         if (event.key && shortCuts[key].keyPress === event.key.toLowerCase() && shortCuts[key].modifiers.every(modifier => event[modifier]) && eventModifiersCodes.every(modifier => shortCuts[key].modifiers.includes(modifier))) {
             action = key
@@ -334,6 +336,7 @@ export const moorhenKeyPress = (
     else if (action === 'restore_scene') {
         const newQuat = quat4.create()
         quat4.set(newQuat, 0, 0, 0, -1)
+        console.log(newQuat)
         dispatch(setZoom(1.0))
         dispatch(setQuat(newQuat))
         dispatch(triggerClearLabels(true))

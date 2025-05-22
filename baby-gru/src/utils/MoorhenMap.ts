@@ -140,7 +140,6 @@ export class MoorhenMap implements moorhen.Map {
                 newBuffers = this.clearBuffersOfStyle(displayObject,newBuffers)
             }
         })
-        this.store.dispatch(setRequestDrawScene(true))
         const promises = [
             this.commandCentre.current.cootCommand({
                 returnType: "status",
@@ -777,12 +776,6 @@ export class MoorhenMap implements moorhen.Map {
                 }
             }
         }
-
-        if (mapAlpha < 0.99) {
-            this.store.dispatch(setRequestBuildBuffers(true))
-        }
-
-        this.store.dispatch(setRequestDrawScene(true))
     }
 
     /**
@@ -818,12 +811,6 @@ export class MoorhenMap implements moorhen.Map {
                 buffer.transparent = false
             }
         })
-
-        if (mapAlpha < 0.99) {
-            this.store.dispatch(setRequestBuildBuffers(true))
-        }
-
-        this.store.dispatch(setRequestDrawScene(true))
     }
 
     /**
@@ -864,8 +851,6 @@ export class MoorhenMap implements moorhen.Map {
                 }
             }
         })
-        this.store.dispatch(setRequestBuildBuffers(true))
-        this.store.dispatch(setRequestDrawScene(true))
     }
 
     /**

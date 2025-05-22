@@ -41,6 +41,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     const { enqueueSnackbar } = useSnackbar()
 
+    const [busyAnimatingScene, setBusyAnimatingScene] = useState<boolean>(false)
+
     const [innerMapLineWidth, setInnerMapLineWidth] = useState<number>(0.75)
     const [showContextMenu, setShowContextMenu] = useState<false | moorhen.AtomRightClickEventInfo>(false)
     const [defaultActionButtonSettings, setDefaultActionButtonSettings] = useReducer(actionButtonSettingsReducer, intialDefaultActionButtonSettings)
@@ -181,6 +183,29 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setShadowDepthDebug(doShadowDepthDebug)
+            glRef.current.drawScene()
+        }
+    }, [doShadowDepthDebug])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setOutlinesOn(doOutline)
+            glRef.current.drawScene()
+        }
+    }, [doOutline])
+
+    /*
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            if(Math.abs(originState[0]-glRef.current.origin[0])>1e-5||Math.abs(originState[1]-glRef.current.origin[1])>1e-5||Math.abs(originState[2]-glRef.current.origin[2])>1e-5){
+                glRef.current.setOrigin(originState,false,true)
+            }
+        }
+    }, [originState])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
             if(Math.abs(quat[0]-glRef.current.myQuat[0])>1e-5||Math.abs(quat[1]-glRef.current.myQuat[1])>1e-5||Math.abs(quat[2]-glRef.current.myQuat[2])>1e-5||Math.abs(quat[3]-glRef.current.myQuat[3])>1e-5){
                 glRef.current.setQuat(quat)
                 glRef.current.drawScene()
@@ -196,44 +221,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             }
         }
     }, [zoom])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setShadowDepthDebug(doShadowDepthDebug)
-            glRef.current.drawScene()
-        }
-    }, [doShadowDepthDebug])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setOutlinesOn(doOutline)
-            glRef.current.drawScene()
-        }
-    }, [doOutline])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            if(Math.abs(originState[0]-glRef.current.origin[0])>1e-5||Math.abs(originState[1]-glRef.current.origin[1])>1e-5||Math.abs(originState[2]-glRef.current.origin[2])>1e-5){
-                glRef.current.setOrigin(originState,false,true)
-            }
-        }
-    }, [originState])
-
-    /*
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.drawScene()
-        }
-        dispatch(setRequestDrawScene(false))
-    }, [requestDrawScene])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.buildBuffers()
-            glRef.current.drawScene()
-        }
-        dispatch(setRequestBuildBuffers(false))
-    }, [requestBuildBuffers])
     */
 
     useEffect(() => {
@@ -624,12 +611,46 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     })
 
     const onQuatChanged = (newQuat => {
+        if(isNaN(newQuat[0])||isNaN(newQuat[1])||isNaN(newQuat[2])||isNaN(newQuat[3])){
+            console.log(newQuat)
+        }
         dispatch(setQuat(newQuat))
     })
 
     const cursorPositionChanged = ((x,y) => {
         dispatch(setCursorPosition([x,y]))
     })
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            let doOrigin = false
+            let doQuat = false
+            let doZoom = false
+            if(Math.abs(originState[0]-glRef.current.origin[0])>1e-5||Math.abs(originState[1]-glRef.current.origin[1])>1e-5||Math.abs(originState[2]-glRef.current.origin[2])>1e-5){
+                doOrigin = true
+            }
+            if(Math.abs(quat[0]-glRef.current.myQuat[0])>1e-5||Math.abs(quat[1]-glRef.current.myQuat[1])>1e-5||Math.abs(quat[2]-glRef.current.myQuat[2])>1e-5||Math.abs(quat[3]-glRef.current.myQuat[3])>1e-5){
+                doQuat = true
+            }
+            if(Math.abs(zoom-glRef.current.zoom)>1e-5){
+                doZoom = true
+            }
+            if(isNaN(quat[0])||isNaN(quat[1])||isNaN(quat[2])||isNaN(quat[3])){
+                console.log(quat)
+                console.log(originState)
+                console.log(zoom)
+            }
+            if(doOrigin||doQuat||doZoom){
+                glRef.current.setOriginOrientationAndZoomAnimated(originState,quat,zoom)
+                /*
+                glRef.current.origin = originState
+                glRef.current.zoom = zoom
+                glRef.current.myQuat = quat
+                glRef.current.drawScene()
+                */
+            }
+        }
+    }, [zoom,quat,originState])
 
     return  <>
                 <figure style={{position: "relative"}}>

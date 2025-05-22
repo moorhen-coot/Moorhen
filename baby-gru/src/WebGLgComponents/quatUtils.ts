@@ -41,7 +41,7 @@ export function quatDotProduct(q1,q2){
 
 export function quatSlerp(q1,q2,h) {
     let cosw = quatDotProduct(q1,q2);
-    if(Math.abs(cosw-1.0)<1e-5) return q1;
+    if(Math.abs(Math.abs(cosw)-1.0)<1e-3) return q1;
     if(cosw>1.0) cosw = 1.0;
     if(cosw<-1.0) cosw = -1.0;
     const omega = Math.acos(cosw);
@@ -53,6 +53,16 @@ export function quatSlerp(q1,q2,h) {
     const newQuat2 = (q1Mult * q1[2] + q2Mult * q2[2]) / Math.sin(omega)
     const newQuat3 = (q1Mult * q1[3] + q2Mult * q2[3]) / Math.sin(omega)
     quat4.set(newQuat,newQuat0,newQuat1,newQuat2,newQuat3)
+    if(isNaN(newQuat[0])||isNaN(newQuat[1])||isNaN(newQuat[2])||isNaN(newQuat[3])){
+        console.log(h)
+        console.log(cosw)
+        console.log(omega)
+        console.log(q1Mult)
+        console.log(q2Mult)
+        console.log((Math.abs(cosw-1.0)))
+        console.log((Math.abs(cosw-1.0)<1e-5))
+        return q1
+    }
     return newQuat
 }
 

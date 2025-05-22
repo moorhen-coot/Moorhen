@@ -7,8 +7,9 @@ A JavaScript molecular graphics program
 ### For 0.22.0
 - [ ] Remove glRef method usage.
    - [ ] Eliminate glRef usage.
-   - [ ] Restore animated zooming.
+   - [ ] Fix orientation not being correct if doing fast repeat of "space" next residue.
    - [ ] Fix env. labels flickering.
+   - [x] Restore animated zooming.
    - [x] Fix map recontouring when alt-click centering.
    - [x] Fix atom dragging not being animated.
    - [x] Fix wrong size spheres when atom hovering.

@@ -270,6 +270,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         displayBuffers: any[];
         gl:  any;
         canvasRef: any;
+        animating: boolean;
 
         //Internal
         doDepthPeelPass: boolean;
@@ -745,6 +746,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         //Set to false to use WebGL 1
         this.WEBGL2 = false;
         this.state = { width: this.props.width, height: this.props.height };
+        this.animating = false
         this.canvasRef = React.createRef();
         this.keysDown = {};
         this.atomLabelDepthMode = false;
@@ -1536,6 +1538,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         self.ready = true;
 
         this.multiWayViewports = []
+
     }
 
     initializeShaders() : void {
@@ -1881,6 +1884,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     setOriginOrientationAndZoomFrame(oo,d,qOld, qNew, oldZoom, zoomDelta, iframe) {
         const frac = iframe / this.nAnimationFrames;
         const newQuat = quatSlerp(qOld, qNew,frac)
+        if(isNaN(newQuat[0])||isNaN(newQuat[1])||isNaN(newQuat[2])||isNaN(newQuat[3])){
+            console.log("Something's gone wrong!!!!!!!!!!!!!")
+            console.log(newQuat)
+            console.log(qOld)
+            console.log(qNew)
+            console.log(frac)
+        }
         quat4.set(this.myQuat,newQuat[0],newQuat[1],newQuat[2],newQuat[3])
         this.setZoom(oldZoom + iframe * zoomDelta)
         this.origin = [oo[0]+iframe*d[0],oo[1]+iframe*d[1],oo[2]+iframe*d[2]];
@@ -1889,6 +1899,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             requestAnimationFrame(this.setOriginOrientationAndZoomFrame.bind(this,oo,d,qOld,qNew,oldZoom,zoomDelta,iframe+1))
             return
         }
+        this.animating = false
         this.handleOriginUpdated(true)
     }
 
@@ -1897,6 +1908,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     setOriginOrientationAndZoomAnimated(o: number[],q: quat4,z: number) : void {
+        if(this.animating) return
         this.nAnimationFrames = 15;
         const old_x = this.origin[0]
         const old_y = this.origin[1]
@@ -1914,6 +1926,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let oldZoom = this.zoom;
         const zoomDelta = (z - this.zoom) / this.nAnimationFrames
         quat4.set(oldQuat,this.myQuat[0],this.myQuat[1],this.myQuat[2],this.myQuat[3])
+
+        this.animating = true
         requestAnimationFrame(this.setOriginOrientationAndZoomFrame.bind(this,[old_x,old_y,old_z],[dx,dy,dz],oldQuat,q,oldZoom,zoomDelta,1))
     }
 
@@ -2604,15 +2618,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     initTextBuffers() {
-        this.displayBuffers[0].textNormalBuffer = this.gl.createBuffer();
-        this.displayBuffers[0].textPositionBuffer = this.gl.createBuffer();
-        this.displayBuffers[0].textColourBuffer = this.gl.createBuffer();
-        this.displayBuffers[0].textTexCoordBuffer = this.gl.createBuffer();
-        this.displayBuffers[0].textIndexesBuffer = this.gl.createBuffer();
-
-        this.displayBuffers[0].clickLinePositionBuffer = this.gl.createBuffer();
-        this.displayBuffers[0].clickLineColourBuffer = this.gl.createBuffer();
-        this.displayBuffers[0].clickLineIndexesBuffer = this.gl.createBuffer();
     }
 
     set_clip_range(clipStart: number, clipEnd: number, update?: boolean) : void {
@@ -3511,8 +3516,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         if(!calculatingShadowMap){
             this.drawImagesAndText(invMat);
-            if(!this.doPeel)
-                this.drawTransparent(theMatrix);
             this.drawDistancesAndLabels(up, right);
             this.drawTextLabels(up, right);
             if(this.WEBGL2){
@@ -3528,7 +3531,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawScene() : void {
-        
+
         const displayBuffers = store.getState().glRef.displayBuffers
         //const displayBuffers = this.displayBuffers
 
@@ -3542,6 +3545,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
         }
         if(dirty) this.buildBuffers()
+        if(isNaN(this.myQuat[0])||isNaN(this.myQuat[1])||isNaN(this.myQuat[2])||isNaN(this.myQuat[3])){
+            console.log("Something's gone wrong!!!!!!!!!!!!!")
+            console.log(this.myQuat)
+        }
         this.props.onQuatChanged(this.myQuat)
 
         const theShaders = [
@@ -5396,290 +5403,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawTransparent(theMatrix) {
-
-        if(this.drawingGBuffers) return;
-
-        for (let idx = 0; idx < this.displayBuffers.length; idx++) {
-
-            if (!this.displayBuffers[idx].visible) {
-                continue;
-            }
-
-            let triangleVertexIndexBuffer = this.displayBuffers[idx].triangleVertexIndexBuffer;
-
-            let triangleIndexs = this.displayBuffers[idx].triangleIndexs;
-            let triangleVertices = this.displayBuffers[idx].triangleVertices;
-            let triangleColours = this.displayBuffers[idx].triangleColours;
-            let triangleNormals = this.displayBuffers[idx].triangleNormals;
-
-            let bufferTypes = this.displayBuffers[idx].bufferTypes;
-
-            if (this.displayBuffers[idx].transparent) {
-                //console.log(idx+" is transparent ;-) "+bufferTypes[0]);
-
-                if (bufferTypes[0] === "TRIANGLES") {
-                    if (typeof this.displayBuffers[idx].allVertices === "undefined"||this.displayBuffers[idx].alphaChanged) {
-                        this.displayBuffers[idx].allVertices = [];
-                        this.displayBuffers[idx].allNormals = [];
-                        this.displayBuffers[idx].allColours = [];
-                        this.displayBuffers[idx].allIndexs = [];
-                        this.displayBuffers[idx].allTriangleVertexNormalBuffer = this.gl.createBuffer();
-                        this.displayBuffers[idx].allTriangleVertexPositionBuffer = this.gl.createBuffer();
-                        this.displayBuffers[idx].allTriangleVertexColourBuffer = this.gl.createBuffer();
-                        this.displayBuffers[idx].allIndexsBuffer = this.gl.createBuffer();
-                        let bufferOffset = 0;
-                        //console.log("Concatenating "+triangleVertexIndexBuffer.length+" buffers...");
-                        for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
-                            //console.log("Concatenating "+triangleVertices[j].length/3+" triangles");
-                            this.displayBuffers[idx].allVertices = this.displayBuffers[idx].allVertices.concat(triangleVertices[j]);
-                            //console.log("Concatenating "+triangleNormals[j].length/3+" normals");
-                            this.displayBuffers[idx].allNormals = this.displayBuffers[idx].allNormals.concat(triangleNormals[j]);
-                            //console.log("total this.displayBuffers[idx].allNormals.length: "+this.displayBuffers[idx].allNormals.length);
-                            //console.log("Concatenating "+triangleColours[j].length/4+" colours");
-                            this.displayBuffers[idx].allColours = this.displayBuffers[idx].allColours.concat(triangleColours[j]);
-                            //console.log("Pushing "+triangleIndexs[j].length+" indices");
-                            for (let i = 0; i < triangleIndexs[j].length; i++) {
-                                this.displayBuffers[idx].allIndexs.push(triangleIndexs[j][i] + bufferOffset);
-                            }
-                            bufferOffset += triangleVertices[j].length / 3;
-                        }
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].allTriangleVertexNormalBuffer);
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].allNormals), this.gl.STATIC_DRAW);
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].allTriangleVertexPositionBuffer);
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].allVertices), this.gl.STATIC_DRAW);
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].allTriangleVertexColourBuffer);
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].allColours), this.gl.STATIC_DRAW);
-                        this.displayBuffers[idx].alphaChanged = false;
-                    }
-                    let sortThings = [];
-                    //console.log("Big thing is of size "+this.displayBuffers[idx].allIndexs.length);
-                    for (let j = 0; j < this.displayBuffers[idx].allIndexs.length; j += 3) {
-                        let x1 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j]];
-                        let y1 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j] + 1];
-                        let z1 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j] + 2];
-                        let x2 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j + 1]];
-                        let y2 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j + 1] + 1];
-                        let z2 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j + 1] + 2];
-                        let x3 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j + 2]];
-                        let y3 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j + 2] + 1];
-                        let z3 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j + 2] + 2];
-                        let mid_x = (x1 + x2 + x3) / 3.0;
-                        let mid_y = (y1 + y2 + y3) / 3.0;
-                        let mid_z = (z1 + z2 + z3) / 3.0;
-                        //let proj = mid_z; // FIXME - Need to calculate a projection along camera z-axis.
-                        let projP = vec3Create([mid_x, mid_y, mid_z]);
-                        vec3.transformMat4(projP, projP, theMatrix);
-                        sortThings.push(new SortThing(projP[2], this.displayBuffers[idx].allIndexs[j], this.displayBuffers[idx].allIndexs[j + 1], this.displayBuffers[idx].allIndexs[j + 2]));
-                    }
-                    sortThings.sort(sortIndicesByProj);
-                    let allIndexs = [];
-                    let maxInd = 0;
-                    for (let j = 0; j < sortThings.length; j++) {
-                        allIndexs.push(sortThings[j].id1);
-                        allIndexs.push(sortThings[j].id2);
-                        allIndexs.push(sortThings[j].id3);
-                        if (sortThings[j].id1 > maxInd) maxInd = sortThings[j].id1;
-                        if (sortThings[j].id2 > maxInd) maxInd = sortThings[j].id2;
-                        if (sortThings[j].id3 > maxInd) maxInd = sortThings[j].id3;
-                    }
-                    //console.log("maxInd: "+maxInd);
-                    //console.log("this.displayBuffers[idx].allNormals.length: "+this.displayBuffers[idx].allNormals.length/3);
-                    //console.log("this.displayBuffers[idx].allVertices.length: "+this.displayBuffers[idx].allVertices.length/3);
-                    //console.log("this.displayBuffers[idx].allColours.length: "+this.displayBuffers[idx].allColours.length/3);
-                    this.gl.useProgram(this.shaderProgram);
-
-                    if(this.WEBGL2&&this.shaderProgram.doSSAO){
-                        this.gl.uniform1i(this.shaderProgram.SSAOMap, 1);
-                        this.gl.activeTexture(this.gl.TEXTURE1);
-                        this.gl.bindTexture(this.gl.TEXTURE_2D, this.simpleBlurYTexture);
-                        this.gl.activeTexture(this.gl.TEXTURE0);
-                        if(!this.doDepthPeelPass){
-                            if(this.renderToTexture){
-                                this.gl.uniform1f(this.shaderProgram.xSSAOScaling, 1.0/this.rttFramebuffer.width );
-                                this.gl.uniform1f(this.shaderProgram.ySSAOScaling, 1.0/this.rttFramebuffer.height );
-                            } else {
-                                this.gl.uniform1f(this.shaderProgram.xSSAOScaling, 1.0/this.gl.viewportWidth );
-                                this.gl.uniform1f(this.shaderProgram.ySSAOScaling, 1.0/this.gl.viewportHeight );
-                            }
-                        }
-                    }
-
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].allTriangleVertexNormalBuffer);
-                    this.gl.vertexAttribPointer(this.shaderProgram.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].allTriangleVertexPositionBuffer);
-                    this.gl.vertexAttribPointer(this.shaderProgram.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].allTriangleVertexColourBuffer);
-                    this.gl.vertexAttribPointer(this.shaderProgram.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
-                    this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.displayBuffers[idx].allIndexsBuffer);
-                    // FIXME - hmm, one is /3, the other is not ....
-                    if (this.ext) {
-                        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(allIndexs), this.gl.STATIC_DRAW);
-                        this.drawMaxElementsUInt(this.gl.TRIANGLES, allIndexs.length);
-                    } else {
-                        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(allIndexs), this.gl.STATIC_DRAW);
-                        this.gl.drawElements(this.gl.TRIANGLES, allIndexs.length / 3, this.gl.UNSIGNED_SHORT, 0);
-                    }
-                }
-            }
-        }
     }
 
     drawImagesAndText(invMat) {
-        const displayBuffers = store.getState().glRef.displayBuffers
-        //FIXME Not drawing images/text
-        return
-        // Now the "see-through" primitives: images and text.
-        for (let idx = 0; idx < this.displayBuffers.length; idx++) {
-
-            if (!this.displayBuffers[idx].visible) {
-                continue;
-            }
-
-            const bufferTypes = this.displayBuffers[idx].bufferTypes;
-
-            const triangleVertexIndexBuffer = this.displayBuffers[idx].triangleVertexIndexBuffer;
-
-            const triangleVertices = this.displayBuffers[idx].triangleVertices;
-            const triangleColours = this.displayBuffers[idx].triangleColours;
-
-            const primitiveSizes = this.displayBuffers[idx].primitiveSizes;
-
-            this.gl.useProgram(this.shaderProgramImages);
-            this.gl.depthFunc(this.gl.ALWAYS);
-            this.setMatrixUniforms(this.shaderProgramImages);
-
-            this.gl.enableVertexAttribArray(this.shaderProgramImages.vertexTextureAttribute);
-            //this.gl.disableVertexAttribArray(this.shaderProgramImages.vertexColourAttribute);
-            //this.gl.vertexAttrib4f(this.shaderProgramImages.vertexColourAttribute, 1.0, 1.0, 0.0, 1.0);
-
-            for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
-                if (bufferTypes[j] === "IMAGES") {
-                    let buffer;
-                    buffer = this.imageBuffer;
-
-                    if (!(this.displayBuffers[idx].texture)) {
-                        this.displayBuffers[idx].texture = initTextures(this.gl, this.displayBuffers[idx].supplementary["imgsrc"][0]);
-                    }
-                    let scaleImage = true;
-                    if (typeof (this.gl, this.displayBuffers[idx].supplementary["vert_tri_2d"]) !== "undefined") {
-                        let tempMVMatrix = mat4.create();
-                        mat4.set(tempMVMatrix, this.mvMatrix[0], this.mvMatrix[1], this.mvMatrix[2], this.mvMatrix[3], this.mvMatrix[4], this.mvMatrix[5], this.mvMatrix[6], this.mvMatrix[7], this.mvMatrix[8], this.mvMatrix[9], this.mvMatrix[10], this.mvMatrix[11], (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][0] * 48.0) * this.zoom, (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][1] * 48.0) * this.zoom, -this.fogClipOffset, 1.0);
-                        this.gl.uniformMatrix4fv(this.shaderProgramImages.mvMatrixUniform, false, tempMVMatrix);
-                        scaleImage = false;
-                    }
-
-                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.displayBuffers[idx].texture);
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexTextureBuffer[0]);
-                    this.gl.vertexAttribPointer(this.shaderProgramImages.vertexTextureAttribute, buffer.triangleVertexTextureBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexNormalBuffer[0]);
-                    this.gl.vertexAttribPointer(this.shaderProgramImages.vertexNormalAttribute, buffer.triangleVertexNormalBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexPositionBuffer[0]);
-                    this.gl.vertexAttribPointer(this.shaderProgramImages.vertexPositionAttribute, buffer.triangleVertexPositionBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
-                    this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer.triangleVertexIndexBuffer[0]);
-                    // FIXME - And loop here
-                    let theOffSet = new Float32Array(3);
-                    for (let ishape = 0; ishape < triangleVertices[j].length / 3; ishape++) {
-                        theOffSet[0] = triangleVertices[j][ishape * 3];
-                        theOffSet[1] = triangleVertices[j][ishape * 3 + 1];
-                        theOffSet[2] = triangleVertices[j][ishape * 3 + 2];
-                        this.gl.uniform3fv(this.shaderProgramImages.offset, theOffSet);
-                        if (scaleImage) {
-                            this.gl.uniform1f(this.shaderProgramImages.size, primitiveSizes[j][ishape]);
-                        } else {
-                            this.gl.uniform1f(this.shaderProgramImages.size, primitiveSizes[j][ishape] * this.zoom);
-                        }
-
-                        this.gl.vertexAttrib4f(this.shaderProgramImages.vertexColourAttribute, triangleColours[j][ishape * 4], triangleColours[j][ishape * 4 + 1], triangleColours[j][ishape * 4 + 2], triangleColours[j][ishape * 4 + 3]);
-
-                        if (this.ext) {
-                            this.gl.drawElements(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0);
-                        } else {
-                            this.gl.drawElements(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_SHORT, 0);
-                        }
-                    }
-                    if (typeof (this.gl, this.displayBuffers[idx].supplementary["vert_tri_2d"]) !== "undefined") {
-                        this.setMatrixUniforms(this.shaderProgramImages);
-                    }
-                }
-            }
-
-            for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
-                if (bufferTypes[j] === "TEXT") {
-                    let buffer;
-                    buffer = this.imageBuffer;
-
-                    const font = this.displayBuffers[idx].supplementary["font"][0][0];
-                    const fnsize = font.match(/^\d+|\d+\b|\d+(?=\w)/g)[0];
-                    if (!(this.displayBuffers[idx].texture)) {
-                        //this.displayBuffers[idx].texture = initStringTextures(this.gl,"Hello World !!!!");
-                        console.log(this.displayBuffers[idx].supplementary["imgsrc"][0][0]);
-                        let tex_size = {};
-                        console.log(font);
-                        this.displayBuffers[idx].texture = initStringTextures(this.gl, this.displayBuffers[idx].supplementary["imgsrc"][0][0], tex_size, font);
-                        console.log(tex_size);
-                        this.displayBuffers[idx].tex_size = tex_size;
-                    }
-                    let imageVertices = [];
-                    for (let iv = 0; iv < this.imageVertices.length; iv += 3) {
-                        let vold = vec3Create([this.imageVertices[iv] * this.displayBuffers[idx].tex_size["width"] / this.displayBuffers[idx].tex_size["height"], this.imageVertices[iv + 1], this.imageVertices[iv + 2]]);
-                        let vnew = vec3.create();
-                        vec3.transformMat4(vnew, vold, invMat);
-                        imageVertices[iv] = vnew[0];
-                        imageVertices[iv + 1] = vnew[1];
-                        imageVertices[iv + 2] = vnew[2];
-                    }
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.imageBuffer.triangleVertexPositionBuffer[0]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(imageVertices), this.gl.DYNAMIC_DRAW);
-                    let scaleImage = false;
-                    if (typeof (this.gl, this.displayBuffers[idx].supplementary["vert_tri_2d"]) !== "undefined") {
-                        let tempMVMatrix = mat4.create();
-                        mat4.set(tempMVMatrix, this.mvMatrix[0], this.mvMatrix[1], this.mvMatrix[2], this.mvMatrix[3], this.mvMatrix[4], this.mvMatrix[5], this.mvMatrix[6], this.mvMatrix[7], this.mvMatrix[8], this.mvMatrix[9], this.mvMatrix[10], this.mvMatrix[11], (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][0] * 48.0) * this.zoom, (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][1] * 48.0) * this.zoom, -this.fogClipOffset, 1.0);
-                        this.gl.uniformMatrix4fv(this.shaderProgramImages.mvMatrixUniform, false, tempMVMatrix);
-                        scaleImage = false;
-                    }
-
-                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.displayBuffers[idx].texture);
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexTextureBuffer[0]);
-                    this.gl.vertexAttribPointer(this.shaderProgramImages.vertexTextureAttribute, buffer.triangleVertexTextureBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexNormalBuffer[0]);
-                    this.gl.vertexAttribPointer(this.shaderProgramImages.vertexNormalAttribute, buffer.triangleVertexNormalBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexPositionBuffer[0]);
-                    this.gl.vertexAttribPointer(this.shaderProgramImages.vertexPositionAttribute, buffer.triangleVertexPositionBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
-                    this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer.triangleVertexIndexBuffer[0]);
-                    // FIXME - And loop here ?!?
-                    let theOffSet = new Float32Array(3);
-                    for (let ishape = 0; ishape < triangleVertices[j].length / 3; ishape++) {
-                        theOffSet[0] = triangleVertices[j][ishape * 3];
-                        theOffSet[1] = triangleVertices[j][ishape * 3 + 1];
-                        theOffSet[2] = triangleVertices[j][ishape * 3 + 2];
-                        this.gl.uniform3fv(this.shaderProgramImages.offset, theOffSet);
-                        if (scaleImage) {
-                            this.gl.uniform1f(this.shaderProgramImages.size, primitiveSizes[j][ishape]);
-                        } else {
-                            this.gl.uniform1f(this.shaderProgramImages.size, primitiveSizes[j][ishape] * this.zoom * fnsize / this.canvas.height * 48 * getDeviceScale());
-                        }
-
-                        this.gl.vertexAttrib4f(this.shaderProgramImages.vertexColourAttribute, triangleColours[j][ishape * 4], triangleColours[j][ishape * 4 + 1], triangleColours[j][ishape * 4 + 2], triangleColours[j][ishape * 4 + 3]);
-
-                        if (this.ext) {
-                            this.gl.drawElements(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0);
-                        } else {
-                            this.gl.drawElements(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_SHORT, 0);
-                        }
-                    }
-                    if (typeof (this.gl, this.displayBuffers[idx].supplementary["vert_tri_2d"]) !== "undefined") {
-                        this.setMatrixUniforms(this.shaderProgramImages);
-                    }
-                }
-            }
-
-            this.gl.disableVertexAttribArray(this.shaderProgramImages.vertexTextureAttribute);
-            //this.gl.enableVertexAttribArray(this.shaderProgramImages.vertexColourAttribute);
-            this.gl.depthFunc(this.gl.LESS);
-
-        }
     }
 
     clearTextPositionBuffers() {
@@ -7261,6 +6987,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
         mat4.scale(pMatrix, pMatrix, [1. / this.zoom, 1. / this.zoom, 1.0]);
         mat4.multiply(pmvMatrix, pMatrix, this.mvMatrix);
+        console.log(this.mvMatrix)
+        console.log(this.myQuat)
+        console.log(this.origin)
+        console.log(pmvMatrix)
 
         this.gl.uniformMatrix4fv(this.shaderProgramThickLines.pMatrixUniform, false, pmvMatrix);
 
@@ -7724,10 +7454,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         let aty = displayBuffers[minidx].atoms[minj].y;
                         let atz = displayBuffers[minidx].atoms[minj].z;
                         if(minsym>-1){
-                            self.setOriginAnimated([-minx, -miny, -minz], true);
+                            //self.setOriginAnimated([-minx, -miny, -minz], true);
                             self.props.onOriginChanged([-minx, -miny, -minz])
                         } else {
-                            self.setOriginAnimated([-atx, -aty, -atz], true);
+                            //self.setOriginAnimated([-atx, -aty, -atz], true);
                             self.props.onOriginChanged([-atx, -aty, -atz])
                         }
                     }

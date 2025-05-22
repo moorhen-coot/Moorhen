@@ -755,6 +755,7 @@ interface MGWebGLPropsInterface {
         displayBuffers: any[];
         gl:  any;
         canvasRef: any;
+        animating: boolean;
         depth_texture: any;
         frag_depth_ext: any;
         drawBuffersExt: any;
