@@ -1,5 +1,5 @@
 import { doDownload } from "../../../utils/utils";
-import { useCallback, useState, useMemo } from "react";
+import { useCallback, useState } from "react";
 import { useDispatch } from "react-redux";
 import { hideMap, showMap } from "../../../store/mapContourSettingsSlice";
 import { addMap } from "../../../store/mapsSlice";
@@ -23,6 +23,8 @@ import {
 import { convertRemToPx } from "../../../utils/utils";
 import { moorhen } from "../../../types/moorhen";
 import { webGL } from "../../../types/mgWebGL";
+import Tooltip from "@mui/material/Tooltip";
+
 
 interface ActionButtonPropsType {
     map: moorhen.Map;
@@ -35,8 +37,16 @@ interface ActionButtonPropsType {
 
 type ActionButtonType = {
     label: string;
-    compressed: () => JSX.Element;
-    expanded: null | (() => JSX.Element);
+    key: string;
+    action: () => void;
+    icon?: JSX.Element;
+    disabled: boolean;
+};
+
+type MenuItemType = {
+    label: string;
+    key: string;
+    menuItem?: JSX.Element;
 };
 
 
@@ -57,111 +67,61 @@ export const MapCardActionButtons = (props: ActionButtonPropsType) => {
         dispatch(addMap(newMap));
     };
 
-    const actionButtons: { [key: number]: ActionButtonType } = {
+    const actionButtons: { [key: number]: ActionButtonType | MenuItemType } = {
         1: {
             label: props.mapIsVisible ? "Hide map" : "Show map",
-            compressed: () => {
-                return (
-                    <MenuItem key="hide-show-map" onClick={handleVisibility}>
-                        {props.mapIsVisible ? "Hide map" : "Show map"}
-                    </MenuItem>
-                );
-            },
-            expanded: () => {
-                return (
-                    <Button key="hide-show-map" size="sm" variant="outlined" onClick={handleVisibility}>
-                        {props.mapIsVisible ? <VisibilityOutlined /> : <VisibilityOffOutlined />}
-                    </Button>
-                );
-            },
+            key: "hide-show-map",
+            action: handleVisibility,
+            icon: props.mapIsVisible ? <VisibilityOutlined /> : <VisibilityOffOutlined />,
+            disabled: false,
+
         },
 
         2: {
             label: "Centre on map",
-            compressed: () => {
-                return (
-                    <MenuItem key="centre-on-map" onClick={() => props.map.centreOnMap()}>
-                        Centre on map
-                    </MenuItem>
-                );
+            key: "centre-on-map",
+            action: () => {props.map.centreOnMap();},
+            icon: <FilterTiltShiftOutlined />,
+            disabled: !props.mapIsVisible,
             },
-            expanded: () => {
-                return (
-                    <Button key="centre-on-map" size="sm" variant="outlined" onClick={() => props.map.centreOnMap()} disabled={!props.mapIsVisible}>                
-                        <FilterTiltShiftOutlined />
-                    </Button>
-                );
-            },
-        },
-            3: {
+        3: {
                 label: "Rename map",
-                compressed: () => {
-                    return (
-                        <MoorhenRenameDisplayObjectMenuItem
-                            key="rename-map"
-                            setPopoverIsShown={setPopoverIsShown}
-                            setCurrentName={props.setCurrentName}
-                            item={props.map}
-                        />
-                    );
-                },
-                expanded: null,
+                key: "Rename-map",
+                menuItem: <MoorhenRenameDisplayObjectMenuItem key="rename-map" setPopoverIsShown={setPopoverIsShown} item={props.map} setCurrentName={props.setCurrentName} />
             },
 
             4: {
                 label: "Copy map",
-                compressed: () => {
-                    return (
-                        <MenuItem key="copy-map" onClick={handleCopyMap}>
-                            Copy map
-                        </MenuItem>
-                    );
-                },
-                expanded: () => {
-                    return (
-                        <Button key="copy-map" size="sm" variant="outlined" onClick={handleCopyMap}>
-                            <FileCopyOutlined />
-                        </Button>
-                    );
-                },
+                key: "copy-map",
+                action: handleCopyMap,
+                icon: <FileCopyOutlined />,
             },
             5: {
                 label: "Download Map",
-                compressed: () => {
-                    return (
-                        <MenuItem key="donwload-map" onClick={handleDownload}>
-                            Download map
-                        </MenuItem>
-                    );
-                },
-                expanded: () => {
-                    return (
-                        <Button key="donwload-map" size="sm" variant="outlined" onClick={handleDownload}>
-                            <DownloadOutlined />
-                        </Button>
-                    );
-                },
+                key: "download-map",
+                action: handleDownload,
+                icon: <DownloadOutlined />,
             },
+                
         6: {
             label: "Set map weight...",
-            compressed: () => {
-                return <MoorhenSetMapWeight key="set-map-weight" disabled={!props.mapIsVisible} map={props.map} setPopoverIsShown={setPopoverIsShown} />;
-            },
-            expanded: null,
+            key: "set-map-weight",
+            menuItem : <MoorhenSetMapWeight key="set-map-weight" disabled={!props.mapIsVisible} map={props.map} setPopoverIsShown={setPopoverIsShown} />
         },
         7: {
             label: "Set map scale...",
-            compressed: () => {
-                return <MoorhenScaleMap key="scale-map" disabled={!props.mapIsVisible} map={props.map} setPopoverIsShown={setPopoverIsShown} />;
-            },
-            expanded: null,
+            key: "scale-map",
+            menuItem: <MoorhenScaleMap key="scale-map" disabled={!props.mapIsVisible} map={props.map} setPopoverIsShown={setPopoverIsShown} />,
         },
         8: {
             label: "Map information...",
-            compressed: () => {
-                return <MoorhenMapInfoCard key="info-map" disabled={!props.mapIsVisible} map={props.map} setPopoverIsShown={setPopoverIsShown} />;
-            },
-            expanded: null,
+            key: "info-map",
+            menuItem: <MoorhenMapInfoCard key="info-map" disabled={!props.mapIsVisible} map={props.map} setPopoverIsShown={setPopoverIsShown} />,
+        },
+        99: {
+            label: "Delete map",
+            key: "delete-map",
+            menuItem: <MoorhenDeleteDisplayObjectMenuItem key="delete-map" setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} item={props.map}/>,
         },
     };
 
@@ -172,22 +132,39 @@ export const MapCardActionButtons = (props: ActionButtonPropsType) => {
     let compressedButtons: JSX.Element[] = [];
 
     Object.keys(actionButtons).forEach((key) => {
-        if (actionButtons[key].expanded === null) {
-            compressedButtons.push(actionButtons[key].compressed());
-        } else {
-            currentlyUsedWidth += 60;
-            if (currentlyUsedWidth < maximumAllowedWidth) {
-                expandedButtons.push(actionButtons[key].expanded());
-            } else {
-                compressedButtons.push(actionButtons[key].compressed());
-            }
+        if ('menuItem' in actionButtons[key]) {
+            compressedButtons.push(actionButtons[key].menuItem as JSX.Element);
         }
-    });
+        else if ('icon' in actionButtons[key] && currentlyUsedWidth < maximumAllowedWidth) {
+            currentlyUsedWidth += 60;
+        const button = (
+            <Tooltip key={`tooltip-${key}`} title={actionButtons[key].label} placement="top">
+                <Button key={`button-${key}`} 
+                size="sm" 
+                variant="outlined" 
+                onClick={() => {actionButtons[key].action?.() }} 
+                disabled={actionButtons[key].disabled}
+                >
+                {actionButtons[key].icon}
+                </Button>
+            </Tooltip>)
+        expandedButtons.push(button as JSX.Element);
+        }
 
-    compressedButtons.push(<MoorhenDeleteDisplayObjectMenuItem key="delete-map" setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} item={props.map} />);
+        else {
+            const menuItem = (
+                <MenuItem key={`menu-${key}`} onClick={() => { actionButtons[key].action?.() }}>
+                    {actionButtons[key].label}
+                </MenuItem>
+            )
+            compressedButtons.push(menuItem as JSX.Element);
+        }
+
+    });
     return (
         <>
             {expandedButtons}
+            <Tooltip title="More options" placement="top">
             <DropdownButton
                 title={<Settings />}
                 size="sm"
@@ -196,6 +173,7 @@ export const MapCardActionButtons = (props: ActionButtonPropsType) => {
             >
                 {compressedButtons}
             </DropdownButton>
+            </Tooltip>
             <Button
                 size="sm"
                 variant="outlined"
