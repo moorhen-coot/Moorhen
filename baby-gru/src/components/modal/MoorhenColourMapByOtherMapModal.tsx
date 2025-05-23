@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useMenuMemory, useMenuStateMemory, dispatchMenuMemory } from "../../store/menusSlice";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
@@ -11,8 +11,10 @@ import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import MoorhenGradientPicker from "../inputs/MoorhenGradientPicker";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from '../../utils/utils';
+import { Chart, registerables } from "chart.js";
+import { gradientPresets } from "../inputs/gradientPresets";
 
-
+Chart.register(...registerables);
 
 const menu = "colour-map-by-other-map-menu-item";
 
@@ -21,7 +23,9 @@ export const MoorhenColourMapByOtherMapModal = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {
     const dispatch = useDispatch();    
+    const chartRef = useRef<Chart | null>(null);
     const maps = useSelector((state: moorhen.State) => state.maps);
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
@@ -33,11 +37,7 @@ export const MoorhenColourMapByOtherMapModal = (props: {
     const [colourTable, setColourTable] = useMenuStateMemory<[number, [number, number, number]][]>(
         menu,
         "colourTable",
-        [
-            [0.0, [255, 0, 0]],
-            [0.5, [255, 255, 255]],
-            [1.0, [0, 0, 255]],
-        ],
+        (gradientPresets["Red White Blue"] as [number, [number, number, number]][]),
         true
     );
 
@@ -117,14 +117,109 @@ export const MoorhenColourMapByOtherMapModal = (props: {
         setMinMaxValue([min, max]);
     };
 
-    const getHistogram = async () => {
-        const colouringMap = maps.find((map) => map.molNo === parseInt(mapSelectRef_2.current.value))
-
-    }
-
     const defaultValues = () => {
         setMinMaxValue(locRes ? [2, 6] : [-4, 4]);
     };
+
+    const getHistogram = async () => {
+            const canvas = document.getElementById(`histogram`) as HTMLCanvasElement;
+            const ctx = canvas.getContext("2d");
+            const chartData = await parseHistogramData();
+
+            if (chartRef !== null && typeof chartRef !== "function") {
+                chartRef.current?.destroy();
+                chartRef.current = new Chart(ctx, chartData as any);
+            }
+
+    }
+
+    const parseHistogramData = async () => {
+        const axisLabelsFontSize = convertViewtoPx(70, height) / 60;
+
+        if (!mapSelectRef_2 || !mapSelectRef_1.current) {
+            return;
+        }
+        const colouringMap = maps.find((map) => map.molNo === parseInt(mapSelectRef_2.current.value));
+        if (!colouringMap) {
+            return;
+        }
+        const colouredMap = maps.find((map) => map.molNo === parseInt(mapSelectRef_1.current.value))
+        const histogram = await colouredMap.getVerticesHistogram(parseInt(mapSelectRef_2.current.value), 500)
+        function movingAverage(data: number[], windowSize: number): number[] {
+            const result = [];
+            for (let i = 0; i < data.length; i++) {
+                let start = Math.max(0, i - Math.floor(windowSize / 2));
+                let end = Math.min(data.length, i + Math.ceil(windowSize / 2));
+                let window = data.slice(start, end);
+                let avg = window.reduce((sum, val) => sum + val, 0) / window.length;
+                result.push(avg);
+            }
+            return result;
+}
+
+
+        return {
+            type: "line",
+            options: {
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    },
+                scales: {
+                    y: {
+
+                        type: "linear",
+                        beginAtZero: true,
+                        grid: {
+                            display: true,
+                            borderWidth: 0,
+                        },
+                        title: {
+                            display: true,
+                            font: { size: axisLabelsFontSize, family: "Helvetica", weight: 800 },
+                            text: "Counts",
+                            color: "black",
+                        },
+
+                    },
+                    x: {
+                        beginAtZero: true,
+                        grid: {
+                            display: false,
+                            borderWidth: 0,
+                        },
+                        title: {
+                            display: true,
+                            font: { size: axisLabelsFontSize, family: "Helvetica", weight: 800 },
+                            text: "Density value",
+                            color: "black",
+                        },
+                    },
+                },
+            },
+            data: {
+                labels: histogram.counts.map((item, index) => {
+                    const currentBinBase = histogram.base + histogram.bin_width * (index + 1);
+                    return currentBinBase.toFixed(2);
+                }),
+                datasets: [
+                    {
+                        barPercentage: 1.0,
+                        categoryPercentage: 1.0,
+                        label: "Counts",
+                        data: movingAverage(histogram.counts, 5),
+                        backgroundColor: [isDark ? "rgba(100, 100, 100, 0.7)" : "rgba(204, 204, 204, 0.7)"],
+                        borderColor: [isDark ? "rgba(100, 100, 100, 0.7)" : "rgba(204, 204, 204, 0.7)"],
+                        fill: true,
+                        pointRadius: 0,
+                        
+                    },
+                ],
+            },
+        };
+    };
+
 
     const panelContent = (
         <Stack direction="column" style={{ margin: "0.5rem" }} gap={1}>
@@ -194,9 +289,12 @@ export const MoorhenColourMapByOtherMapModal = (props: {
                     Guess Values
                 </Button>
                 <Button variant="secondary" onClick={getHistogram} style={{ marginLeft: "0.5rem" }}>
-                    Histogram
-                </Button>
+                    Draw Histogram
+                </Button>               
             </Stack>
+            <div className="histogram-plot-div" style={{ width: "95%" }}>
+                <canvas id={`histogram`}></canvas>
+            </div>
         </Stack>
     );
 
@@ -209,7 +307,7 @@ export const MoorhenColourMapByOtherMapModal = (props: {
             top={height / 6}
             minHeight={convertViewtoPx(15, height)}
             minWidth={convertViewtoPx(25, width)}
-            maxHeight={convertViewtoPx(50, height)}
+            maxHeight={convertViewtoPx(60, height)}
             maxWidth={convertViewtoPx(50, width)}
         />
     );
