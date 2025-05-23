@@ -20,7 +20,7 @@ authors:
 - family-names: "McNicholas"
   given-names: "Stuart"
 title: "Moorhen"
-version: 0.17.1
+version: 0.21.1
 doi: 10.5281/zenodo.15494869
 date-released: 2025-05-23
 url: "https://github.com/moorhen-coot/Moorhen"
