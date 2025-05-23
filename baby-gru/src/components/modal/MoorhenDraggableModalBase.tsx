@@ -213,7 +213,7 @@ export const MoorhenDraggableModalBase = (props: {
                 <Card.Header className={handleClassName} style={{ minWidth: minWidth, justifyContent: 'space-between', display: 'flex', cursor: 'move', alignItems:'center'}}>
                     {props.headerTitle}
                     <Stack gap={2} direction="horizontal">
-                        {additionalHeaderButtons?.map(button => button)}
+                        {collapse ? null : additionalHeaderButtons?.map(button => button)}
                         <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => setCollapse(!collapse)}>
                             {collapse ? <AddOutlined/> : <RemoveOutlined/>}
                         </Button>
