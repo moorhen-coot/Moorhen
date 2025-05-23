@@ -200,6 +200,10 @@ export function convertRemToPx(rem: number): number {
     return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
 }
 
+export function convertPxToRem(px: number): number {
+    return +(px / parseFloat(getComputedStyle(document.documentElement).fontSize)).toPrecision(2);
+}
+
 export function convertViewtoPx(input: number, height: number): number {
     return height * (input / 100)
 }

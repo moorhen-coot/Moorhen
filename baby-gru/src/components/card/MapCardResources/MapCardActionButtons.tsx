@@ -29,9 +29,10 @@ interface ActionButtonPropsType {
     map: moorhen.Map;
     mapIsVisible?: boolean;
     isCollapsed: boolean;
-    setIsCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
+    onCollapseToggle?: () => void;
     setCurrentName: React.Dispatch<React.SetStateAction<string>>;
     glRef: React.MutableRefObject<null | webGL.MGWebGL>;
+    maxWidth: number;
 }
 
 type ActionButtonType = {
@@ -131,8 +132,7 @@ export const MapCardActionButtons = (props: ActionButtonPropsType) => {
         },
     };
 
-    const minWidth = convertRemToPx(28);
-    const maximumAllowedWidth = minWidth * 0.55;
+    const maximumAllowedWidth = props.maxWidth;
     let currentlyUsedWidth = 0;
     let expandedButtons: JSX.Element[] = [];
     let compressedButtons: JSX.Element[] = [];
@@ -184,7 +184,7 @@ export const MapCardActionButtons = (props: ActionButtonPropsType) => {
                 size="sm"
                 variant="outlined"
                 onClick={() => {
-                    props.setIsCollapsed(!props.isCollapsed);
+                    props.onCollapseToggle();
                 }}
             >
                 {props.isCollapsed ? <ExpandMoreOutlined /> : <ExpandLessOutlined />}

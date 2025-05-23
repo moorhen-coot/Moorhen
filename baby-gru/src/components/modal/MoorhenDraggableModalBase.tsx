@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useLayoutEffect } from "react";
 import { Button, Card, Stack } from "react-bootstrap";
 import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
 import { AddOutlined, CloseOutlined, RemoveOutlined, SquareFootOutlined } from "@mui/icons-material";
@@ -7,7 +7,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { Resizable } from "re-resizable";
 import { setEnableAtomHovering } from "../../store/hoveringStatesSlice";
 import { hideModal, focusOnModal, unFocusModal } from "../../store/modalsSlice";
-
 /**
  * The base component used to create draggable modals.
  * @property {string} headerTitle - The title displayed on the modal header
@@ -84,6 +83,8 @@ export const MoorhenDraggableModalBase = (props: {
     enableResize?: false | {[key: string]: boolean};
     onResizeStop?: (evt: MouseEvent | TouchEvent, direction: 'top' | 'right' | 'bottom' | 'left' | 'topRight' | 'bottomRight' | 'bottomLeft' | 'topLeft', ref: HTMLDivElement, delta: {width: number, height: number}) => void;
     onClose?: () => (void | Promise<void>);
+    onResize?: (evt: MouseEvent | TouchEvent, direction: 'top' | 'right' | 'bottom' | 'left' | 'topRight' | 'bottomRight' | 'bottomLeft' | 'topLeft', ref: HTMLDivElement, delta: {width: number, height: number}, width:number) => void;
+
 }) => {
 
     const defaultProps = { 
@@ -190,7 +191,15 @@ export const MoorhenDraggableModalBase = (props: {
         await props.onClose?.()
         dispatch( hideModal(props.modalId) )
     }, [props.onClose])
+
+    const handleResize = (evt: MouseEvent | TouchEvent, direction: 'top' | 'right' | 'bottom' | 'left' | 'topRight' | 'bottomRight' | 'bottomLeft' | 'topLeft', ref: HTMLDivElement, delta: {width: number, height: number}) => {
+            if (props.onResize) {
+                const width = draggableNodeRef.current?.clientWidth
+                props.onResize(evt, direction, ref, delta, width);
+            }
         
+    }
+
     return <Draggable
                 nodeRef={draggableNodeRef}
                 handle={`.${handleClassName}`}
@@ -226,6 +235,7 @@ export const MoorhenDraggableModalBase = (props: {
                 </Card.Header>
                 <Card.Body style={{display: collapse ? 'none' : 'flex', justifyContent: 'center', flexDirection: 'column'}}>
                     <Resizable
+                    
                     maxWidth={maxWidth}
                     maxHeight={maxHeight}
                     minWidth={minWidth}
@@ -237,6 +247,7 @@ export const MoorhenDraggableModalBase = (props: {
                     handleComponent={{bottomRight: enableResize ? <SquareFootOutlined style={{transform: 'rotate(270deg)'}}/> : <></>}}
                     onResizeStop={handleResizeStop}
                     onResizeStart={handleStart}
+                    onResize={handleResize}
                     >
                     <div ref={props.resizeNodeRef ?? resizeNodeRef}
                         style={{
