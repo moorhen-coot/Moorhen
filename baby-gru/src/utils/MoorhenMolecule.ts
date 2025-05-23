@@ -21,7 +21,6 @@ import { privateer } from '../types/privateer';
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
 import { ToolkitStore } from '@reduxjs/toolkit/dist/configureStore';
 import { setRequestDrawScene, setOrigin, setZoom, setQuat } from "../store/glRefSlice"
-import { batch } from 'react-redux'
 
 /**
  * Represents a molecule
@@ -1168,11 +1167,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         let selectionCentre = centreOnGemmiAtoms(selectionAtomsCentre)
         if (newQuat) {
-            batch(() => {
-                this.store.dispatch(setOrigin(selectionCentre))
-                this.store.dispatch(setQuat(newQuat))
-                this.store.dispatch(setZoom(zoomLevel))
-            })
+            this.store.dispatch(setOrigin(selectionCentre))
+            this.store.dispatch(setQuat(newQuat))
+            this.store.dispatch(setZoom(zoomLevel))
         } else {
             await this.centreOn(selectionCid, true, true)
         }
@@ -1207,10 +1204,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         let selectionCentre = centreOnGemmiAtoms(selectionAtoms)
         if (doSetZoom) {
-            batch(() => {
-                this.store.dispatch(setOrigin(selectionCentre))
-                this.store.dispatch(setZoom(zoomLevel))
-            })
+            this.store.dispatch(setOrigin(selectionCentre))
+            this.store.dispatch(setZoom(zoomLevel))
         } else {
             this.store.dispatch(setOrigin(selectionCentre))
         }
