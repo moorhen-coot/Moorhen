@@ -13,6 +13,7 @@ export const appendOtherData = (jsondata: any, skipRebuild?: boolean, name?: str
         const theseTexturedShapes = [];
         const theseLabelBuffers = [];
         const gl = store.getState().glRef.glCtx
+        if(!gl) return theseBuffers
         const labelBuffers = store.getState().glRef.labelBuffers
         const texturedShapes = store.getState().glRef.texturedShapes
         const GLLabelsFontFamily = store.getState().labelSettings.GLLabelsFontFamily
