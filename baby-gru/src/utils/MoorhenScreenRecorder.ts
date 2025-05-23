@@ -72,7 +72,6 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
 
     takeScreenShot = (filename: string, doTransparentBackground: boolean = false) => {
         this.glRef.current.setDoTransparentScreenshotBackground(doTransparentBackground)
-        const oldOrigin = [this.glRef.current.origin[0], this.glRef.current.origin[1], this.glRef.current.origin[2]];
 
         // Getting up and right for doing tiling (in future?)
         const invQuat = quat4.create();
@@ -105,62 +104,29 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
         let pixels: Uint8Array;
         let ctx: CanvasRenderingContext2D;
 
+        ctx = saveCanvas.getContext("2d");
+
         const isWebGL2 = store.getState().glRef.isWebGL2
 
         if(!isWebGL2){
-            const mag = 1; //FIXME This doesn't work for mag>1
+            saveCanvas.width = this.glRef.current.canvas.width
+            saveCanvas.height = this.glRef.current.canvas.height
 
-            const ncells_x = mag;
-            const ncells_y = mag;
-            saveCanvas.width = this.glRef.current.canvas.width * ncells_x;
-            saveCanvas.height = this.glRef.current.canvas.height * ncells_y;
-            ctx = saveCanvas.getContext("2d");
-
-            let newZoom = this.glRef.current.zoom / ncells_x;
-            this.glRef.current.setZoom(newZoom);
-
-            const ratio = 1.0 * this.glRef.current.gl.viewportWidth / this.glRef.current.gl.viewportHeight;
-            let jj = 0;
-            for (let j = Math.floor(-ncells_y / 2); j < Math.floor(ncells_y / 2); j++) {
-                let ii = 0;
-                for (let i = Math.floor(-ncells_x / 2); i < Math.floor(ncells_x / 2); i++) {
-                    const x_off = ratio * (2.0 * i + 1 + ncells_x % 2);
-                    const y_off = (2.0 * j + 1 + ncells_y % 2);
-
-                    this.glRef.current.origin = [oldOrigin[0], oldOrigin[1], oldOrigin[2]];
-                    this.glRef.current.origin[0] += this.glRef.current.zoom * right[0] * 24.0 * x_off + this.glRef.current.zoom * up[0] * 24.0 * y_off;
-                    this.glRef.current.origin[1] += this.glRef.current.zoom * right[1] * 24.0 * x_off + this.glRef.current.zoom * up[1] * 24.0 * y_off;
-                    this.glRef.current.origin[2] += this.glRef.current.zoom * right[2] * 24.0 * x_off + this.glRef.current.zoom * up[2] * 24.0 * y_off;
-
-                    this.glRef.current.save_pixel_data = true;
-                    //FIXME Now this does not seem to lend itself obviously to using react state - the pixels are needed synchronously
-                    this.glRef.current.drawScene();
-                    pixels = this.glRef.current.pixel_data;
-
-                    imgData = ctx.createImageData(this.glRef.current.canvas.width, this.glRef.current.canvas.height);
-                    const data = imgData.data;
-
-                    for (let pixi = 0; pixi < this.glRef.current.canvas.height; pixi++) {
-                        for (let pixj = 0; pixj < this.glRef.current.canvas.width * 4; pixj++) {
-                            data[(this.glRef.current.canvas.height - pixi - 1) * this.glRef.current.canvas.width * 4 + pixj] = pixels[pixi * this.glRef.current.canvas.width * 4 + pixj];
-                        }
-                    }
-                    ctx.putImageData(imgData, (ncells_x - ii - 1) * this.glRef.current.canvas.width, jj * this.glRef.current.canvas.height);
-                    ii++;
-                }
-                jj++;
-            }
-
-            newZoom = this.glRef.current.zoom * ncells_x;
-            this.glRef.current.setZoom(newZoom);
-
-            this.glRef.current.origin = [oldOrigin[0], oldOrigin[1], oldOrigin[2]];
-            this.glRef.current.save_pixel_data = false;
+            this.glRef.current.save_pixel_data = true;
             this.glRef.current.drawScene();
-            target_w = w;
-            target_h = h;
-            target_xoff = 0;
-            target_yoff = 0;
+            pixels = this.glRef.current.pixel_data;
+
+            imgData = ctx.createImageData(this.glRef.current.canvas.width, this.glRef.current.canvas.height);
+            const data = imgData.data;
+
+            for (let pixi = 0; pixi < this.glRef.current.canvas.height; pixi++) {
+                for (let pixj = 0; pixj < this.glRef.current.canvas.width * 4; pixj++) {
+                    data[(this.glRef.current.canvas.height - pixi - 1) * this.glRef.current.canvas.width * 4 + pixj] = pixels[pixi * this.glRef.current.canvas.width * 4 + pixj];
+                }
+            }
+            ctx.putImageData(imgData, 0,0);
+
+            this.glRef.current.save_pixel_data = false;
         } else {
 
             this.glRef.current.renderToTexture = true;
@@ -181,14 +147,9 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
             saveCanvas.width = target_w;
             saveCanvas.height = target_h;
 
-            ctx = saveCanvas.getContext("2d");
             pixels = this.glRef.current.pixel_data;
 
-            if(this.glRef.current.gl.viewportWidth>this.glRef.current.gl.viewportHeight){
-                imgData = ctx.createImageData(saveCanvas.width,saveCanvas.height);
-            } else {
-                imgData = ctx.createImageData(saveCanvas.width,saveCanvas.height);
-            }
+            imgData = ctx.createImageData(saveCanvas.width,saveCanvas.height);
 
             const data = imgData.data;
             for (let pixi = 0; pixi < saveCanvas.height; pixi++) {
@@ -200,6 +161,7 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
             this.glRef.current.renderToTexture = false;
         }
 
+        this.glRef.current.drawScene();
 
         let link: any = document.getElementById('download_image_link');
         if (!link) {
