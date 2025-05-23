@@ -32,6 +32,8 @@ const initialState = {
     clipEnd: 1000,
     cursorPosition: [0,0],
     shortCutHelp: [],
+    canvasSize: [0,0],
+    rttFramebufferSize: [0,0],
 }
 
 export const glRefSlice = createSlice({
@@ -113,6 +115,12 @@ export const glRefSlice = createSlice({
     setLabelBuffers: (state, action: {payload: any[], type: string}) => {
         return { ...state, labelBuffers: action.payload }
     },
+    setRttFramebufferSize: (state, action: {payload: [number,number], type: string}) => {
+        return { ...state, rttFramebufferSize: action.payload }
+    },
+    setCanvasSize: (state, action: {payload: [number,number], type: string}) => {
+        return { ...state, canvasSize: action.payload }
+    },
     triggerRedrawEnv: (state, action: {payload: boolean, type: string}) => {
         return { ...state,
             envUpdate: {
@@ -134,7 +142,8 @@ export const {
     setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setZoom,
     setQuat, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd, setCursorPosition,
     setShortCutHelp, setDraggableMolecule, triggerRedrawEnv, triggerClearLabels, setGLCtx,
-    setDisplayBuffers, setHoverSize, setLabelBuffers, setTexturedShapes
+    setDisplayBuffers, setHoverSize, setLabelBuffers, setTexturedShapes,
+    setRttFramebufferSize, setCanvasSize
 } = glRefSlice.actions
 
 export default glRefSlice.reducer

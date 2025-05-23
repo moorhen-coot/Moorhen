@@ -87,8 +87,9 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
 
         const isWebGL2 = store.getState().glRef.isWebGL2
 
-        const canvasWidth = this.glRef.current.canvas.width
-        const canvasHeight = this.glRef.current.canvas.height
+        const canvasSize = store.getState().glRef.canvasSize
+        const canvasWidth = canvasSize[0]
+        const canvasHeight = canvasSize[1]
 
         if(!isWebGL2){
             saveCanvas.width = canvasWidth
@@ -116,8 +117,9 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
             this.glRef.current.renderToTexture = true;
             this.glRef.current.drawScene();
 
-            const w = this.glRef.current.rttFramebuffer.width;
-            const h = this.glRef.current.rttFramebuffer.height;
+            const fbSize = store.getState().glRef.rttFramebufferSize
+            const w = fbSize[0]
+            const h = fbSize[1]
 
             const ratio = 1.0 * canvasWidth / canvasHeight;
 

@@ -9,7 +9,7 @@ import * as mat4 from 'gl-matrix/mat4';
 import * as mat3 from 'gl-matrix/mat3';
 import  { unProject } from './GLU.js';
 import store from '../store/MoorhenReduxStore'
-import { setIsWebGL2, setGLCtx, setDisplayBuffers } from "../store/glRefSlice"
+import { setIsWebGL2, setGLCtx, setDisplayBuffers, setCanvasSize, setRttFramebufferSize } from "../store/glRefSlice"
 
 //WebGL2 shaders
 import { depth_peel_accum_vertex_shader_source as depth_peel_accum_vertex_shader_source_webgl2 } from './webgl-2/depth-peel-accum-vertex-shader.js';
@@ -692,6 +692,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.canvas.width = Math.floor(getDeviceScale() * Math.floor(theWidth));
         this.canvas.height = Math.floor(getDeviceScale() * Math.floor(theHeight));
 
+        store.dispatch(setCanvasSize([this.canvas.width,this.canvas.height]))
         this.gl.viewportWidth = this.canvas.width;
         this.gl.viewportHeight = this.canvas.height;
 
@@ -2490,6 +2491,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.rttFramebuffer.width = Math.min(this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE),this.gl.getParameter(this.gl.MAX_RENDERBUFFER_SIZE),4096);
         this.rttFramebuffer.height = this.rttFramebuffer.width;
+        store.dispatch(setRttFramebufferSize([this.rttFramebuffer.width,this.rttFramebuffer.height]))
 
         this.rttTexture = this.gl.createTexture();
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTexture);

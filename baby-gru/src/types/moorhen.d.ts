@@ -1165,7 +1165,9 @@ export namespace moorhen {
             clearLabels: {switch: boolean },
             hoverSize: number,
             labelBuffers: any[],
-            texturedShapes: any[]
+            texturedShapes: any[],
+            canvasSize: [number,number],
+            rttFramebufferSize: [number,number],
         };
         overlays: {
             imageOverlayList: any[]
