@@ -2,10 +2,10 @@
 
 glRef.current.canvasRef                            src/utils/MoorhenScreenRecorder.ts
 
-glRef.current.save_pixel_data                      src/utils/MoorhenScreenRecorder.ts
-glRef.current.pixel_data                           src/utils/MoorhenScreenRecorder.ts
-
 glRef.current.drawScene                            src/utils/MoorhenScreenRecorder.ts
 
+glRef.current.save_pixel_data                      src/utils/MoorhenScreenRecorder.ts
 glRef.current.renderToTexture                      src/utils/MoorhenScreenRecorder.ts
+glRef.current.pixel_data                           src/utils/MoorhenScreenRecorder.ts
+
 glRef.current.setDoTransparentScreenshotBackground src/utils/MoorhenScreenRecorder.ts
