@@ -45,7 +45,7 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
         if (this._isRecording) {
             console.warn('Screen recording already taking place!')
             return
-        } 
+        }
         this.chunks = [];
         this.rec.ondataavailable = (e) => {
             this.chunks.push(e.data);
@@ -71,22 +71,6 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
     }
 
     takeScreenShot = (filename: string, doTransparentBackground: boolean = false) => {
-        this.glRef.current.setDoTransparentScreenshotBackground(doTransparentBackground)
-
-        // Getting up and right for doing tiling (in future?)
-        const invQuat = quat4.create();
-        quat4Inverse(this.glRef.current.myQuat, invQuat);
-
-        const invMat = quatToMat4(invQuat);
-
-        const right = vec3.create();
-        vec3.set(right, 1.0, 0.0, 0.0);
-        const up = vec3.create();
-        vec3.set(up, 0.0, 1.0, 0.0);
-
-        vec3.transformMat4(up, up, invMat);
-        vec3.transformMat4(right, right, invMat);
-
 
         let target_w: number;
         let target_h: number;
@@ -95,11 +79,6 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
 
         const saveCanvas = document.createElement("canvas");
 
-        if(!this.glRef.current.screenshotBuffersReady)
-            this.glRef.current.initTextureFramebuffer();
-        const w = this.glRef.current.rttFramebuffer.width;
-        const h = this.glRef.current.rttFramebuffer.height;
-        
         let imgData: ImageData;
         let pixels: Uint8Array;
         let ctx: CanvasRenderingContext2D;
@@ -108,20 +87,23 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
 
         const isWebGL2 = store.getState().glRef.isWebGL2
 
+        const canvasWidth = this.glRef.current.canvas.width
+        const canvasHeight = this.glRef.current.canvas.height
+
         if(!isWebGL2){
-            saveCanvas.width = this.glRef.current.canvas.width
-            saveCanvas.height = this.glRef.current.canvas.height
+            saveCanvas.width = canvasWidth
+            saveCanvas.height = canvasHeight
 
             this.glRef.current.save_pixel_data = true;
             this.glRef.current.drawScene();
             pixels = this.glRef.current.pixel_data;
 
-            imgData = ctx.createImageData(this.glRef.current.canvas.width, this.glRef.current.canvas.height);
+            imgData = ctx.createImageData(canvasWidth, canvasHeight);
             const data = imgData.data;
 
-            for (let pixi = 0; pixi < this.glRef.current.canvas.height; pixi++) {
-                for (let pixj = 0; pixj < this.glRef.current.canvas.width * 4; pixj++) {
-                    data[(this.glRef.current.canvas.height - pixi - 1) * this.glRef.current.canvas.width * 4 + pixj] = pixels[pixi * this.glRef.current.canvas.width * 4 + pixj];
+            for (let pixi = 0; pixi < canvasHeight; pixi++) {
+                for (let pixj = 0; pixj < canvasWidth * 4; pixj++) {
+                    data[(canvasHeight - pixi - 1) * canvasWidth * 4 + pixj] = pixels[pixi * canvasWidth * 4 + pixj];
                 }
             }
             ctx.putImageData(imgData, 0,0);
@@ -129,19 +111,25 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
             this.glRef.current.save_pixel_data = false;
         } else {
 
+            this.glRef.current.setDoTransparentScreenshotBackground(doTransparentBackground)
+
             this.glRef.current.renderToTexture = true;
             this.glRef.current.drawScene();
-            const ratio = 1.0 * this.glRef.current.gl.viewportWidth / this.glRef.current.gl.viewportHeight;
 
-            if(this.glRef.current.gl.viewportWidth>this.glRef.current.gl.viewportHeight){
+            const w = this.glRef.current.rttFramebuffer.width;
+            const h = this.glRef.current.rttFramebuffer.height;
+
+            const ratio = 1.0 * canvasWidth / canvasHeight;
+
+            if(canvasWidth>canvasHeight){
                 target_w = w;
                 target_h = Math.floor(h / ratio);
                 target_xoff = 0;
-                target_yoff = Math.floor(0.5*this.glRef.current.rttFramebuffer.height - 0.5 / ratio * this.glRef.current.rttFramebuffer.height);
+                target_yoff = Math.floor(0.5*h - 0.5 / ratio * h);
             } else {
                 target_w = Math.floor(w * ratio);
                 target_h = h;
-                target_xoff = Math.floor(0.5*this.glRef.current.rttFramebuffer.width - 0.5 * ratio * this.glRef.current.rttFramebuffer.width);
+                target_xoff = Math.floor(0.5*w - 0.5 * ratio * w);
                 target_yoff = 0;
             }
             saveCanvas.width = target_w;

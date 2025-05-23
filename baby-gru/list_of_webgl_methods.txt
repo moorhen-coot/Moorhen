@@ -1,16 +1,16 @@
 #List of WebGL methods/properties accessed outside of MGWebGL or MoorhenWebMG (or textCanvasTexture).
 
-glRef.current.canvasRef                           src/utils/MoorhenScreenRecorder.ts
-glRef.current.drawScene                           src/utils/MoorhenScreenRecorder.ts
-glRef.current.myQuat                              src/utils/MoorhenScreenRecorder.ts
-glRef.current.initTextureFramebuffer              src/utils/MoorhenScreenRecorder.ts
-glRef.current.canvas.height                       src/utils/MoorhenScreenRecorder.ts
-glRef.current.canvas.width                        src/utils/MoorhenScreenRecorder.ts
-glRef.current.gl.viewportWidth                    src/utils/MoorhenScreenRecorder.ts
-glRef.current.gl.viewportHeight                   src/utils/MoorhenScreenRecorder.ts
-glRef.current.save_pixel_data                     src/utils/MoorhenScreenRecorder.ts
-glRef.current.pixel_data                          src/utils/MoorhenScreenRecorder.ts
-glRef.current.renderToTexture                     src/utils/MoorhenScreenRecorder.ts
-glRef.current.rttFramebuffer.height               src/utils/MoorhenScreenRecorder.ts
-glRef.current.rttFramebuffer.width                src/utils/MoorhenScreenRecorder.ts
-glRef.current.screenshotBuffersReady              src/utils/MoorhenScreenRecorder.ts
+glRef.current.canvasRef                            src/utils/MoorhenScreenRecorder.ts
+
+glRef.current.canvas.height                        src/utils/MoorhenScreenRecorder.ts
+glRef.current.canvas.width                         src/utils/MoorhenScreenRecorder.ts
+
+glRef.current.save_pixel_data                      src/utils/MoorhenScreenRecorder.ts
+glRef.current.pixel_data                           src/utils/MoorhenScreenRecorder.ts
+
+glRef.current.drawScene                            src/utils/MoorhenScreenRecorder.ts
+
+glRef.current.renderToTexture                      src/utils/MoorhenScreenRecorder.ts
+glRef.current.rttFramebuffer.height                src/utils/MoorhenScreenRecorder.ts
+glRef.current.rttFramebuffer.width                 src/utils/MoorhenScreenRecorder.ts
+glRef.current.setDoTransparentScreenshotBackground src/utils/MoorhenScreenRecorder.ts
