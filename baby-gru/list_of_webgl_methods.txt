@@ -1,4 +1,4 @@
-#List of WebGL methods/properties accessed outside of MGWebGL or MoorhenWebMG (or textCanvasTexture).
+#List of WebGL methods/properties accessed outside of MGWebGL or MoorhenWebMG.
 
 glRef.current.getCanvasRef                         src/utils/MoorhenScreenRecorder.ts
 glRef.current.getPixelData                         src/utils/MoorhenScreenRecorder.ts

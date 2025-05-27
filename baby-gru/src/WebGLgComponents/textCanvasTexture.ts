@@ -1,4 +1,5 @@
 import { webGL } from '../types/mgWebGL';
+import store from '../store/MoorhenReduxStore'
 
 interface Dictionary<T> {
     [Key: string]: T;
@@ -7,7 +8,6 @@ interface Dictionary<T> {
 export class TextCanvasTexture {
     gl: WebGL2RenderingContext;
     ext: any;
-    glRef: webGL.MGWebGL;
     nBigTextures: number;
     nBigTexturesInt: number;
     refI: Dictionary<number>;
@@ -26,11 +26,12 @@ export class TextCanvasTexture {
     bigTextureTextPositionBuffer: WebGLBuffer;
     bigTextureTextIndexesBuffer: WebGLBuffer;
     textureCache: Dictionary<Dictionary<Dictionary<number[]>>>;
+    shader: webGL.ShaderTextInstanced;
 
-    constructor(glRef,width=1024,height=4096) {
-        this.gl = glRef.gl
-        this.ext = glRef.ext
-        this.glRef = glRef
+    constructor(gl,ext,shader,width=1024,height=4096) {
+        this.gl = gl
+        this.ext = ext
+        this.shader = shader
         this.nBigTextures = 0;
         this.nBigTexturesInt = 0;
         this.refI = {};
@@ -60,44 +61,48 @@ export class TextCanvasTexture {
     }
 
     draw() {
+        const zoom = store.getState().glRef.zoom
+        const canvasHeight = store.getState().glRef.canvasSize[1]
+        const isWebGL2 = store.getState().glRef.isWebGL2
+
         this.gl.activeTexture(this.gl.TEXTURE0);
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.bigTextTex);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
 
-        this.gl.enableVertexAttribArray(this.glRef.shaderProgramTextInstanced.vertexTextureAttribute);
+        this.gl.enableVertexAttribArray(this.shader.vertexTextureAttribute);
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.bigTextureTextTexCoordBuffer);
-        this.gl.vertexAttribPointer(this.glRef.shaderProgramTextInstanced.vertexTextureAttribute, 2, this.gl.FLOAT, false, 0, 0);
+        this.gl.vertexAttribPointer(this.shader.vertexTextureAttribute, 2, this.gl.FLOAT, false, 0, 0);
 
-        this.gl.enableVertexAttribArray(this.glRef.shaderProgramTextInstanced.vertexPositionAttribute);
+        this.gl.enableVertexAttribArray(this.shader.vertexPositionAttribute);
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.bigTextureTextPositionBuffer);
-        this.gl.vertexAttribPointer(this.glRef.shaderProgramTextInstanced.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
+        this.gl.vertexAttribPointer(this.shader.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
 
-        this.gl.enableVertexAttribArray(this.glRef.shaderProgramTextInstanced.offsetAttribute);
+        this.gl.enableVertexAttribArray(this.shader.offsetAttribute);
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.bigTextureTextInstanceOriginBuffer);
-        this.gl.vertexAttribPointer(this.glRef.shaderProgramTextInstanced.offsetAttribute, 3, this.gl.FLOAT, false, 0, 0);
+        this.gl.vertexAttribPointer(this.shader.offsetAttribute, 3, this.gl.FLOAT, false, 0, 0);
 
-        this.gl.enableVertexAttribArray(this.glRef.shaderProgramTextInstanced.sizeAttribute);
+        this.gl.enableVertexAttribArray(this.shader.sizeAttribute);
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.bigTextureTextInstanceSizeBuffer);
-        this.gl.vertexAttribPointer(this.glRef.shaderProgramTextInstanced.sizeAttribute, 3, this.gl.FLOAT, false, 0, 0);
+        this.gl.vertexAttribPointer(this.shader.sizeAttribute, 3, this.gl.FLOAT, false, 0, 0);
 
-        this.gl.enableVertexAttribArray(this.glRef.shaderProgramTextInstanced.textureOffsetAttribute);
+        this.gl.enableVertexAttribArray(this.shader.textureOffsetAttribute);
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.bigTextureTexOffsetsBuffer);
-        this.gl.vertexAttribPointer(this.glRef.shaderProgramTextInstanced.textureOffsetAttribute, 4, this.gl.FLOAT, false, 0, 0);
+        this.gl.vertexAttribPointer(this.shader.textureOffsetAttribute, 4, this.gl.FLOAT, false, 0, 0);
 
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.bigTextureTextIndexesBuffer);
 
-        this.gl.uniform1f(this.glRef.shaderProgramTextInstanced.pixelZoom,this.glRef.zoom*this.contextBig.canvas.height/this.glRef.canvas.height);
+        this.gl.uniform1f(this.shader.pixelZoom,zoom*this.contextBig.canvas.height/canvasHeight);
 
-        if (this.glRef.WEBGL2) {
-            this.gl.vertexAttribDivisor(this.glRef.shaderProgramTextInstanced.sizeAttribute, 1);
-            this.gl.vertexAttribDivisor(this.glRef.shaderProgramTextInstanced.offsetAttribute, 1);
-            this.gl.vertexAttribDivisor(this.glRef.shaderProgramTextInstanced.textureOffsetAttribute, 1);
+        if (isWebGL2) {
+            this.gl.vertexAttribDivisor(this.shader.sizeAttribute, 1);
+            this.gl.vertexAttribDivisor(this.shader.offsetAttribute, 1);
+            this.gl.vertexAttribDivisor(this.shader.textureOffsetAttribute, 1);
             this.gl.drawElementsInstanced(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0, this.nBigTextures);
-            this.gl.vertexAttribDivisor(this.glRef.shaderProgramTextInstanced.sizeAttribute, 0);
-            this.gl.vertexAttribDivisor(this.glRef.shaderProgramTextInstanced.offsetAttribute, 0);
-            this.gl.vertexAttribDivisor(this.glRef.shaderProgramTextInstanced.textureOffsetAttribute, 0);
+            this.gl.vertexAttribDivisor(this.shader.sizeAttribute, 0);
+            this.gl.vertexAttribDivisor(this.shader.offsetAttribute, 0);
+            this.gl.vertexAttribDivisor(this.shader.textureOffsetAttribute, 0);
         }
     }
 
@@ -206,6 +211,9 @@ export class TextCanvasTexture {
     }
 
     addBigTextureTextImage(textObject,uuid=null) {
+
+        const background_colour = store.getState().sceneSettings.backgroundColor
+
         let key = textObject.text+"_"+textObject.x+"_"+textObject.y+"_"+textObject.z+"_"+textObject.font
         if(uuid) key += "-"+uuid;
 
@@ -216,7 +224,7 @@ export class TextCanvasTexture {
         const o = [x,y,z];
 
         let colour;
-        const bright_y = this.glRef.background_colour[0] * 0.299 + this.glRef.background_colour[1] * 0.587 + this.glRef.background_colour[2] * 0.114;
+        const bright_y = background_colour[0] * 0.299 + background_colour[1] * 0.587 + background_colour[2] * 0.114;
         if(bright_y<0.5)
             colour = "white";
         else
