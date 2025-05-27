@@ -17,7 +17,7 @@ import sliceNDiceReducer from './sliceNDiceSlice'
 import lhasaReducer from './lhasaSlice'
 import jsonValidationReducer from './jsonValidation'
 import mrParseSliceReducer from './mrParseSlice'
-import menusReducer from './menusSlice'
+import overlaysSliceReducer from './overlaysSlice'
 
 export default configureStore({
     reducer: {
@@ -39,7 +39,7 @@ export default configureStore({
         sliceNDice: sliceNDiceReducer,
         jsonValidation: jsonValidationReducer,
         mrParse: mrParseSliceReducer,
-        menus: menusReducer,
+        overlays: overlaysSliceReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

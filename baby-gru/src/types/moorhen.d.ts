@@ -1140,8 +1140,12 @@ export namespace moorhen {
             AFDisplaySettings: any;
             HomologsDisplaySettings: any;
         };
-        menus: {
-            settings: Record<string, Record<string, any>>;
+        overlays: {
+            imageOverlayList: any[]
+            textOverlayList: any[]
+            svgPathOverlayList: any[]
+            fracPathOverlayList: any[]
+            callBacks: any[]
         }
     }
 
