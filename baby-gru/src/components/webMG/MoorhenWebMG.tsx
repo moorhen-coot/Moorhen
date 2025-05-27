@@ -1,4 +1,4 @@
-import { useEffect, useCallback, forwardRef, useState, useReducer } from 'react';
+import { useEffect, useCallback, forwardRef, useState, useReducer,useRef } from 'react';
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { Moorhen2DOverlay } from './Moorhen2DOverlay';
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
@@ -36,7 +36,10 @@ const actionButtonSettingsReducer = (defaultSettings: moorhen.actionButtonSettin
     return defaultSettings
 }
 
-export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface>((props, glRef) => {
+export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface>((props, OldglRef) => {
+
+    const glRef = useRef<MGWebGL>(null);
+
     const dispatch = useDispatch()
 
     const { enqueueSnackbar } = useSnackbar()
@@ -675,7 +678,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
                 {showContextMenu &&
                 <MoorhenContextMenu
-                    glRef={glRef as React.RefObject<webGL.MGWebGL>}
+                    glRef={glRef}
                     monomerLibraryPath={props.monomerLibraryPath}
                     viewOnly={props.viewOnly}
                     urlPrefix={props.urlPrefix}

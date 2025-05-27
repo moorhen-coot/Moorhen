@@ -191,7 +191,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         //Props
         props: webGL.MGWebGLPropsInterface;
 
-        //Things that might need to be accessed externally
+        //Other stuff
         draggableMolecule: moorhen.Molecule
         activeMolecule: moorhen.Molecule
         specularPower: number;
@@ -271,8 +271,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         gl:  any;
         canvasRef: any;
         animating: boolean;
-
-        //Internal
         doDepthPeelPass: boolean;
         environmentRadius: number;
         edgeDetectFramebufferSize : number;
@@ -496,11 +494,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
-    getCanvasRef(){
+    getCanvasRef() : React.RefObject<HTMLCanvasElement>{
         return this.canvasRef
     }
 
-    getPixelData(doTransparentBackground=false){
+    getPixelData(doTransparentBackground=false) : Uint8Array {
 
         let pixels: Uint8Array = null
 
@@ -930,7 +928,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.doCrossEyedStereo = doCrossEyedStereo;
     }
 
-    setDoSideBySideStereo(doSideBySideStereo) {
+    setDoSideBySideStereo(doSideBySideStereo:boolean) {
         this.doSideBySideStereo = doSideBySideStereo;
     }
 
@@ -972,11 +970,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.doSSAO = doSSAO;
     }
 
-    setEdgeDetectDepthThreshold(depthThreshold) {
+    setEdgeDetectDepthThreshold(depthThreshold:number) {
         this.depthThreshold = depthThreshold;
     }
 
-    setEdgeDetectNormalThreshold(normalThreshold) {
+    setEdgeDetectNormalThreshold(normalThreshold:number) {
         this.normalThreshold = normalThreshold;
     }
 
