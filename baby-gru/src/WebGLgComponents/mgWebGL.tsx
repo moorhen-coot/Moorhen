@@ -496,6 +496,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
+    getCanvasRef(){
+        return this.canvasRef
+    }
+
     getPixelData(doTransparentBackground=false){
 
         let pixels: Uint8Array = null

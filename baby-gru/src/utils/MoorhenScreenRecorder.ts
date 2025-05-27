@@ -17,7 +17,7 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
     constructor(glRef: React.RefObject<webGL.MGWebGL>){
         this.glRef = glRef
         this.chunks = [];
-        this.canvasRef = this.glRef.current.canvasRef
+        this.canvasRef = this.glRef.current.getCanvasRef()
         const stream = this.canvasRef.current.captureStream(30)
 
         let options = {
@@ -91,25 +91,23 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
         const canvasWidth = canvasSize[0]
         const canvasHeight = canvasSize[1]
 
+        //Transparent backgound currently only works with WebGL2
+        pixels = this.glRef.current.getPixelData(doTransparentBackground)
+
         if(!isWebGL2){
+
             saveCanvas.width = canvasWidth
             saveCanvas.height = canvasHeight
 
-            pixels = this.glRef.current.getPixelData()
+            imgData = ctx.createImageData(canvasWidth,canvasHeight);
 
-            imgData = ctx.createImageData(canvasWidth, canvasHeight);
             const data = imgData.data;
-
             for (let pixi = 0; pixi < canvasHeight; pixi++) {
                 for (let pixj = 0; pixj < canvasWidth * 4; pixj++) {
                     data[(canvasHeight - pixi - 1) * canvasWidth * 4 + pixj] = pixels[pixi * canvasWidth * 4 + pixj];
                 }
             }
-            ctx.putImageData(imgData, 0,0);
-
         } else {
-
-            pixels = this.glRef.current.getPixelData(doTransparentBackground)
 
             const fbSize = store.getState().glRef.rttFramebufferSize
             const w = fbSize[0]
@@ -139,8 +137,9 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
                     data[(saveCanvas.height - pixi - 1) * saveCanvas.width * 4 + pixj] = pixels[(pixi+target_yoff) * w * 4 + pixj+target_xoff*4];
                 }
             }
-            ctx.putImageData(imgData, 0,0);
         }
+
+        ctx.putImageData(imgData, 0,0);
 
         let link: any = document.getElementById('download_image_link');
         if (!link) {
