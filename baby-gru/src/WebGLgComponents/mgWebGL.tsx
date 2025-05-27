@@ -496,6 +496,28 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
+    getPixelData(doTransparentBackground=false){
+
+        let pixels: Uint8Array = null
+
+        if(this.isWebGL2()){
+            this.setDoTransparentScreenshotBackground(doTransparentBackground)
+            this.renderToTexture = true;
+            this.drawScene();
+            pixels = this.pixel_data;
+            this.renderToTexture = false;
+        } else {
+            this.save_pixel_data = true;
+            this.drawScene();
+            pixels = this.pixel_data;
+            this.save_pixel_data = false;
+        }
+
+        this.drawScene();
+
+        return pixels
+    }
+
     setupMultiWayTransformations(nmols:number) : void {
 
         const get_grid = (n,method="NEARSQUARE") => {

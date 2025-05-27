@@ -95,9 +95,7 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
             saveCanvas.width = canvasWidth
             saveCanvas.height = canvasHeight
 
-            this.glRef.current.save_pixel_data = true;
-            this.glRef.current.drawScene();
-            pixels = this.glRef.current.pixel_data;
+            pixels = this.glRef.current.getPixelData()
 
             imgData = ctx.createImageData(canvasWidth, canvasHeight);
             const data = imgData.data;
@@ -109,13 +107,9 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
             }
             ctx.putImageData(imgData, 0,0);
 
-            this.glRef.current.save_pixel_data = false;
         } else {
 
-            this.glRef.current.setDoTransparentScreenshotBackground(doTransparentBackground)
-
-            this.glRef.current.renderToTexture = true;
-            this.glRef.current.drawScene();
+            pixels = this.glRef.current.getPixelData(doTransparentBackground)
 
             const fbSize = store.getState().glRef.rttFramebufferSize
             const w = fbSize[0]
@@ -137,8 +131,6 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
             saveCanvas.width = target_w;
             saveCanvas.height = target_h;
 
-            pixels = this.glRef.current.pixel_data;
-
             imgData = ctx.createImageData(saveCanvas.width,saveCanvas.height);
 
             const data = imgData.data;
@@ -148,10 +140,7 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
                 }
             }
             ctx.putImageData(imgData, 0,0);
-            this.glRef.current.renderToTexture = false;
         }
-
-        this.glRef.current.drawScene();
 
         let link: any = document.getElementById('download_image_link');
         if (!link) {

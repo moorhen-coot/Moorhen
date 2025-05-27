@@ -7,9 +7,10 @@ A JavaScript molecular graphics program
 ### For 0.22.0
 - [ ] Remove glRef method usage.
    - [ ] Eliminate glRef usage.
-   - [ ] Add a getPixels method to gl widget and use this in screenshot.
+   - [ ] Fix completely broken rendering on WebGL1.
    - [ ] Fix orientation not being correct if doing fast repeat of "space" next residue.
    - [ ] Fix env. labels flickering.
+   - [x] Add a getPixels method to gl widget and use this in screenshot.
    - [x] Restore animated zooming.
    - [x] Fix map recontouring when alt-click centering.
    - [x] Fix atom dragging not being animated.

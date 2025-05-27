@@ -347,6 +347,7 @@ interface MGWebGLPropsInterface {
 }
     interface MGWebGL extends React.Component  {
         isWebGL2() : boolean;
+        getPixelData(doTransparentBackground?:boolean) : Uint8Array;
         lerp(a:number, b:number, f:number) : number;
         initializeSSAOBuffers() : void;
         bindSSAOBuffers() : void;
