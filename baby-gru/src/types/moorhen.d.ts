@@ -1147,6 +1147,9 @@ export namespace moorhen {
             fracPathOverlayList: any[]
             callBacks: any[]
         }
+        menus: {
+            settings: Record<string, Record<string, any>>
+        }
     }
 
     type actionButtonSettings = {
