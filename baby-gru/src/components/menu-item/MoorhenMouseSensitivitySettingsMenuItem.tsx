@@ -53,7 +53,6 @@ export const MoorhenMouseSensitivitySettingsMenuItem = (props: { setPopoverIsSho
                     maxVal={10}
                     logScale={true}
                     sliderTitle="Mouse wheel map contour sensitivity"
-                    stepButtons={0.1}
                     externalValue={contourWheelSensitivityFactor}
                     setExternalValue={(value) => dispatch(setContourWheelSensitivityFactor(value))}
                     decimalPlaces={2}

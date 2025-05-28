@@ -257,7 +257,6 @@ const ClipFogPanel = (props: {
                 props.glRef.current.drawScene()
                 setZclipFront(newValue)
             }}
-            stepButtons={1}
             decimalPlaces={1}
             />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
@@ -268,7 +267,6 @@ const ClipFogPanel = (props: {
                 props.glRef.current.drawScene()
                 setZclipBack(newValue)
             }}
-            stepButtons={1}
             decimalPlaces={1}
             />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
@@ -279,7 +277,6 @@ const ClipFogPanel = (props: {
                 props.glRef.current.drawScene()
                 setZfogFront(newValue)
             }}
-            stepButtons={1}
             decimalPlaces={1}
             />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
@@ -290,7 +287,6 @@ const ClipFogPanel = (props: {
                 props.glRef.current.drawScene()
                 setZfogBack(newValue)
             }}
-            stepButtons={1}
             decimalPlaces={1}
             />
         <InputGroup style={{ paddingLeft: '0.1rem', paddingBottom: '0.5rem' }}>
