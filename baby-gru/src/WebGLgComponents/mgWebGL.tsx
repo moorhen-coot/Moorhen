@@ -4916,7 +4916,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     quatSlerp(q1,q2,h) {
         let cosw = this.quatDotProduct(q1,q2);
-        if(Math.abs(cosw-1.0)<1e-5) return q1;
+        if(Math.abs(Math.abs(cosw)-1.0)<1e-3) return q1;
         if(cosw>1.0) cosw = 1.0;
         if(cosw<-1.0) cosw = -1.0;
         const omega = Math.acos(cosw);

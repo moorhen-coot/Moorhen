@@ -1,5 +1,6 @@
 import { useEffect, useCallback, forwardRef, useState, useReducer } from 'react';
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
+import { Moorhen2DOverlay } from './Moorhen2DOverlay';
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
 import { cidToSpec } from '../../utils/utils';
 import { MoorhenScreenRecorder } from "../../utils/MoorhenScreenRecorder"
@@ -94,13 +95,14 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
+
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
         const fieldDepthBack: number = 21;
-        if (glRef !== null && typeof glRef !== 'function') { 
+        if (glRef !== null && typeof glRef !== 'function') {
             glRef.current.set_fog_range(glRef.current.fogClipOffset - (glRef.current.zoom * fieldDepthFront), glRef.current.fogClipOffset + (glRef.current.zoom * fieldDepthBack))
             glRef.current.set_clip_range(0 - (glRef.current.zoom * fieldDepthFront), 0 + (glRef.current.zoom * fieldDepthBack))
-            glRef.current.doDrawClickedAtomLines = false    
+            glRef.current.doDrawClickedAtomLines = false
         }
     }
 
@@ -147,7 +149,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         if(glRef !== null && typeof glRef !== 'function') {
             glRef.current.doPerspectiveProjection = doPerspectiveProjection
             glRef.current.clearTextPositionBuffers()
-            glRef.current.drawScene()    
+            glRef.current.drawScene()
         }
     }, [doPerspectiveProjection])
 
@@ -321,13 +323,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 setClipFogByZoom()
             }
             glRef.current.resize(width, height)
-            glRef.current.drawScene()    
+            glRef.current.drawScene()
         }
     }, [glRef, width, height])
 
     const handleRightClick = useCallback((e: moorhen.AtomRightClickEvent) => {
         if (!isRotatingAtoms && !isChangingRotamers && !isDraggingAtoms && !residueSelection.molecule) {
-            setShowContextMenu({ ...e.detail })            
+            setShowContextMenu({ ...e.detail })
         }
     }, [isRotatingAtoms, isChangingRotamers, isDraggingAtoms, residueSelection])
 
@@ -432,6 +434,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
 
     return  <>
+                <figure style={{position: "relative"}}>
                 <MGWebGL
                     ref={glRef}
                     onAtomHovered={(enableAtomHovering && !isRotatingAtoms && !isDraggingAtoms && !isChangingRotamers) ? props.onAtomHovered : null}
@@ -446,9 +449,11 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     showFPS={drawFPS}
                     mapLineWidth={innerMapLineWidth}
                     reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp}/>
+                    <Moorhen2DOverlay/>;
+                </figure>
 
                 {showContextMenu &&
-                <MoorhenContextMenu 
+                <MoorhenContextMenu
                     glRef={glRef as React.RefObject<webGL.MGWebGL>}
                     monomerLibraryPath={props.monomerLibraryPath}
                     viewOnly={props.viewOnly}
