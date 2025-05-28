@@ -8,6 +8,7 @@ import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Slider from "@mui/material/Slider";
 import { clampValue } from "../misc/helpers";
+import { toFixedNoZero } from "../misc/helpers";
 import './inputs.css';
 
 
@@ -270,10 +271,10 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                             width: "100%", height: "0.2rem", }}
                     >
                         <span>
-                            {minVal.toFixed(decimalPlaces)}
+                            {toFixedNoZero(minVal, decimalPlaces)}
                         </span>
                         <span>
-                            {maxVal.toFixed(decimalPlaces)}
+                            {toFixedNoZero(maxVal, decimalPlaces)}
                         </span>
                     </Stack>
                 ) : (

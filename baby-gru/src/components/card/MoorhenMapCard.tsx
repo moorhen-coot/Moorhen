@@ -4,7 +4,7 @@ import { convertRemToPx, convertPxToRem } from "../../utils/utils";
 import { getNameLabel } from "./cardUtils";
 import { RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined } from "@mui/icons-material";
 import { MapHistogramAccordion } from "./MapCardResources/MapHistogramAccordion";
-import { MoorhenSlider } from "../inputs/MoorhenSlider-new";
+import { MoorhenSlider } from "../inputs/MoorhenSlider";
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch, batch } from "react-redux";
 import { setActiveMap } from "../../store/generalStatesSlice";
