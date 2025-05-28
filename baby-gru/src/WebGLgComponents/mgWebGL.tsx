@@ -7013,10 +7013,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
         mat4.scale(pMatrix, pMatrix, [1. / this.zoom, 1. / this.zoom, 1.0]);
         mat4.multiply(pmvMatrix, pMatrix, this.mvMatrix);
-        console.log(this.mvMatrix)
-        console.log(this.myQuat)
-        console.log(this.origin)
-        console.log(pmvMatrix)
 
         this.gl.uniformMatrix4fv(this.shaderProgramThickLines.pMatrixUniform, false, pmvMatrix);
 
