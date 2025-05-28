@@ -3,6 +3,44 @@ import { Form } from "react-bootstrap";
 import Stack from '@mui/material/Stack';
 import './inputs.css'
 
+/**
+ * MoorhenPreciseInput component props
+ *
+ * @prop {number | null | undefined} value
+ *   The current value of the input. Can be a number, null, or undefined.
+ *
+ * @prop {(newVal: string) => void} setValue
+ *   Callback to update the value in the parent component. Receives the new value as a string.
+ *
+ * @prop {boolean} [waitReturn=false]
+ *   If true, only updates value when the user presses Enter. Otherwise, updates on every valid change.
+ *
+ * @prop {boolean} [allowNegativeValues=true]
+ *   If false, negative values are not allowed.
+ *
+ * @prop {number} [decimalDigits=2]
+ *   Number of decimal digits to display and allow for input.
+ *
+ * @prop {string} [label]
+ *   Optional label to display next to the input.
+ *
+ * @prop {boolean} [disabled=false]
+ *   If true, disables the input.
+ *
+ * @prop {string | number} [width]
+ *   Width of the input field (e.g., "4rem" or 100).
+ *
+ * @prop {[number, number]} [minMax]
+ *   Minimum and maximum allowed values for the input.
+ *
+ * @prop {string} [type="text"]
+ *   This is something of a misnomer, as it is always a number input, but it can be set to number to get the clicky arrows next to the input.
+ *   this might be changed for a future version, with the same button as sliders and same step behaviour.  
+ * 
+ * @returns {JSX.Element}
+ *   A React component that renders a precise input field with validation and optional label.
+ */
+
 type MoorhenPreciseInputPropsType = {
     value: number | null | undefined;
     setValue: (newVal: string) => void;
