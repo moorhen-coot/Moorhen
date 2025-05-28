@@ -112,7 +112,7 @@ const linesToThickLinesWithIndicesAndNormals = (axesVertices, axesNormals, axesC
         return linesToThickLinesWithIndices(axesVertices, axesColours, axesIndices, size, axesNormals, doColour, isWebGL2)
     }
 
-const linesToThickLinesWithIndices = (axesVertices: number[], axesColours: number[], axesIndices: number[], size: number, axesNormals_old? : number[], doColour=false, isWebGL=true) => {
+const linesToThickLinesWithIndices = (axesVertices: number[], axesColours: number[], axesIndices: number[], size: number, axesNormals_old? : number[], doColour=false, isWebGL2=true) => {
 
         //FIXME - This could all be pushed upstairs into the C++ -> JS mesh conversions
         const print_timing = false;
@@ -127,10 +127,13 @@ const linesToThickLinesWithIndices = (axesVertices: number[], axesColours: numbe
         let axesVertices_new = new Float32Array(index_length * 9);
         let axesColours_new;
         let axesIndexs_new;
-        if (isWebGL) {
+        if (isWebGL2) {
              axesIndexs_new =  new Uint32Array(index_length * 3)
         } else {
-             axesIndexs_new =  new Uint16Array(index_length * 3)
+             //FIXME - major problem here. The test should be for Uint32 indices
+             //      - not WebGL2. But we are using C++/emscripten  trickery
+             //      - to always return Float32 and Uint32 types
+             axesIndexs_new =  new Uint32Array(index_length * 3)
         }
         const t2 = performance.now()
         if(print_timing) console.log("create buffer in linesToThickLines",t2-t1)
@@ -644,6 +647,9 @@ export const buildBuffers = (displayBuffers:DisplayBuffer[]) : void => {
                     if (isWebGL2) {
                         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, triangleIndexs, gl.STATIC_DRAW);
                     } else {
+                        //FIXME - major problem here. The test should be for Uint32 indices
+                        //      - not WebGL2. But we are using C++/emscripten  trickery
+                        //      - to always return Float32 and Uint32 types
                         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, triangleIndexs, gl.STATIC_DRAW);
                     }
                     displayBuffers[idx].triangleVertexIndexBuffer[j].itemSize = 1;
