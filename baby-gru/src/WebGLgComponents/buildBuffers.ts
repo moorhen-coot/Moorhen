@@ -644,7 +644,7 @@ export const buildBuffers = (displayBuffers:DisplayBuffer[]) : void => {
                     if (isWebGL2) {
                         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, triangleIndexs, gl.STATIC_DRAW);
                     } else {
-                        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(displayBuffers[idx].triangleIndexs[j]), gl.STATIC_DRAW);
+                        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, triangleIndexs, gl.STATIC_DRAW);
                     }
                     displayBuffers[idx].triangleVertexIndexBuffer[j].itemSize = 1;
                     if (displayBuffers[idx].bufferTypes[j] !== "NORMALLINES" && displayBuffers[idx].bufferTypes[j] !== "LINES" && displayBuffers[idx].bufferTypes[j] !== "LINE_LOOP" && displayBuffers[idx].bufferTypes[j] !== "LINE_STRIP" && displayBuffers[idx].bufferTypes[j] !== "POINTS" && displayBuffers[idx].bufferTypes[j] !== "POINTS_SPHERES" && displayBuffers[idx].bufferTypes[j] !== "CAPCYLINDERS" && displayBuffers[idx].bufferTypes[j] !== "SPHEROIDS" && displayBuffers[idx].bufferTypes[j] !== "TORUSES" && displayBuffers[idx].bufferTypes[j] !== "CIRCLES") {
