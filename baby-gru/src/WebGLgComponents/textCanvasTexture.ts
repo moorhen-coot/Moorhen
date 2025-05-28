@@ -8,6 +8,7 @@ interface Dictionary<T> {
 export class TextCanvasTexture {
     gl: WebGL2RenderingContext;
     ext: any;
+    instanced_ext: any;
     nBigTextures: number;
     nBigTexturesInt: number;
     refI: Dictionary<number>;
@@ -28,9 +29,10 @@ export class TextCanvasTexture {
     textureCache: Dictionary<Dictionary<Dictionary<number[]>>>;
     shader: webGL.ShaderTextInstanced;
 
-    constructor(gl,ext,shader,width=1024,height=4096) {
+    constructor(gl,ext,instanced_ext,shader,width=1024,height=4096) {
         this.gl = gl
         this.ext = ext
+        this.instanced_ext = instanced_ext
         this.shader = shader
         this.nBigTextures = 0;
         this.nBigTexturesInt = 0;
@@ -103,6 +105,14 @@ export class TextCanvasTexture {
             this.gl.vertexAttribDivisor(this.shader.sizeAttribute, 0);
             this.gl.vertexAttribDivisor(this.shader.offsetAttribute, 0);
             this.gl.vertexAttribDivisor(this.shader.textureOffsetAttribute, 0);
+        } else {
+            this.instanced_ext.vertexAttribDivisorANGLE(this.shader.sizeAttribute, 1);
+            this.instanced_ext.vertexAttribDivisorANGLE(this.shader.offsetAttribute, 1);
+            this.instanced_ext.vertexAttribDivisorANGLE(this.shader.textureOffsetAttribute, 1);
+            this.instanced_ext.drawElementsInstancedANGLE(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0, this.nBigTextures);
+            this.instanced_ext.vertexAttribDivisorANGLE(this.shader.sizeAttribute, 0);
+            this.instanced_ext.vertexAttribDivisorANGLE(this.shader.offsetAttribute, 0);
+            this.instanced_ext.vertexAttribDivisorANGLE(this.shader.textureOffsetAttribute, 0);
         }
     }
 
