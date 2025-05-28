@@ -7,6 +7,7 @@ A JavaScript molecular graphics program
 ### For 0.22.0
 - [ ] Remove glRef method usage.
    - [ ] Eliminate glRef usage.
+   - [ ] Fix map drawing broken on WebGL1.
    - [ ] Fix no text on WebGL1.
    - [ ] Fix orientation not being correct if doing fast repeat of "space" next residue.
    - [ ] Fix env. labels flickering.
