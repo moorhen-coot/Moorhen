@@ -119,7 +119,7 @@ import { TextCanvasTexture } from './textCanvasTexture'
 import { DisplayBuffer } from './displayBuffer'
 import { createQuatFromDXAngle, createQuatFromAngle, createXQuatFromDX, createYQuatFromDY, createZQuatFromDX, quatSlerp } from './quatUtils'
 import { createWebGLBuffers } from './createWebGLBuffers'
-import { buildBuffers, appendOtherData } from './buildBuffers'
+import { buildBuffers, appendOtherData,linesToThickLines } from './buildBuffers'
 import { getDeviceScale} from './webGLUtils'
 
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShadowShaders, initPointSpheresShaders } from './mgWebGLShaders'
@@ -5969,344 +5969,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
-    linesToThickLinesWithIndicesAndNormals(axesVertices, axesNormals, axesColours, axesIndices, size, doColour) {
-        return this.linesToThickLinesWithIndices(axesVertices, axesColours, axesIndices, size, axesNormals, doColour)
-    }
-
-    linesToThickLinesWithIndices(axesVertices: number[], axesColours: number[], axesIndices: number[], size: number, axesNormals_old? : number[], doColour=false) {
-
-        //FIXME - This could all be pushed upstairs into the C++ -> JS mesh conversions
-        const print_timing = false;
-        const index_length = axesIndices.length;
-
-        const t1 = performance.now()
-        let axesNormals = new Float32Array(index_length * 9);
-        let axesNormals_new;
-        if (axesNormals_old) {
-            axesNormals_new = new Float32Array(index_length * 9);
-        }
-        let axesVertices_new = new Float32Array(index_length * 9);
-        let axesColours_new;
-        let axesIndexs_new;
-        if (this.ext) {
-             axesIndexs_new =  new Uint32Array(index_length * 3)
-        } else {
-             axesIndexs_new =  new Uint16Array(index_length * 3)
-        }
-        const t2 = performance.now()
-        if(print_timing) console.log("create buffer in linesToThickLines",t2-t1)
-
-        if(doColour){
-            axesColours_new = new Float32Array(index_length * 12);
-            for (let idx = 0; idx < index_length; idx += 2) {
-
-                const il = 3 * axesIndices[idx];
-                const idx12 = idx*12;
-                const il43 = il*4/3;
-
-                const r = axesColours[il43]
-                const g = axesColours[il43 + 1]
-                const b = axesColours[il43 + 2]
-                const a = axesColours[il43 + 3]
-
-                axesColours_new[idx12]     = r
-                axesColours_new[idx12 + 1] = g
-                axesColours_new[idx12 + 2] = b
-                axesColours_new[idx12 + 3] = a
-
-                axesColours_new[idx12 + 4] = r
-                axesColours_new[idx12 + 5] = g
-                axesColours_new[idx12 + 6] = b
-                axesColours_new[idx12 + 7] = a
-
-                axesColours_new[idx12 + 8]  = r
-                axesColours_new[idx12 + 9]  = g
-                axesColours_new[idx12 + 10] = b
-                axesColours_new[idx12 + 11] = a
-
-                axesColours_new[idx12 + 12] = r
-                axesColours_new[idx12 + 13] = g
-                axesColours_new[idx12 + 14] = b
-                axesColours_new[idx12 + 15] = a
-
-                axesColours_new[idx12 + 16] = r
-                axesColours_new[idx12 + 17] = g
-                axesColours_new[idx12 + 18] = b
-                axesColours_new[idx12 + 19] = a
-
-                axesColours_new[idx12 + 20] = r
-                axesColours_new[idx12 + 21] = g
-                axesColours_new[idx12 + 22] = b
-                axesColours_new[idx12 + 23] = a
-
-            }
-        }
-
-        const t3 = performance.now()
-        if(print_timing) console.log("do colours in linesToThickLines",t3-t2)
-
-        for (let idx = 0; idx < index_length; idx += 2) {
-
-            const il = 3 * axesIndices[idx];
-            const il2 = 3 * axesIndices[idx + 1];
-
-            const idx9 = idx*9;
-
-            const x = axesVertices[il]
-            const y = axesVertices[il+1]
-            const z = axesVertices[il+2]
-
-            const x2 = axesVertices[il2]
-            const y2 = axesVertices[il2+1]
-            const z2 = axesVertices[il2+2]
-
-            axesVertices_new[idx9]     = x
-            axesVertices_new[idx9 + 1] = y
-            axesVertices_new[idx9 + 2] = z
-
-            axesVertices_new[idx9 + 3] = x
-            axesVertices_new[idx9 + 4] = y
-            axesVertices_new[idx9 + 5] = z
-
-            axesVertices_new[idx9 + 6] = x2
-            axesVertices_new[idx9 + 7] = y2
-            axesVertices_new[idx9 + 8] = z2
-
-            axesVertices_new[idx9 + 9]  = x
-            axesVertices_new[idx9 + 10] = y
-            axesVertices_new[idx9 + 11] = z
-
-            axesVertices_new[idx9 + 12] = x2
-            axesVertices_new[idx9 + 13] = y2
-            axesVertices_new[idx9 + 14] = z2
-
-            axesVertices_new[idx9 + 15] = x2
-            axesVertices_new[idx9 + 16] = y2
-            axesVertices_new[idx9 + 17] = z2
-
-            if (axesNormals_old) {
-                const nx = axesNormals_old[il]
-                const ny = axesNormals_old[il+1]
-                const nz = axesNormals_old[il+2]
-
-                const nx2 = axesNormals_old[il2]
-                const ny2 = axesNormals_old[il2+1]
-                const nz2 = axesNormals_old[il2+2]
-
-                axesNormals_new[idx9]     = nx
-                axesNormals_new[idx9 + 1] = ny
-                axesNormals_new[idx9 + 2] = nz
-
-                axesNormals_new[idx9 + 3] = nx
-                axesNormals_new[idx9 + 4] = ny
-                axesNormals_new[idx9 + 5] = nz
-
-                axesNormals_new[idx9 + 6] = nx2
-                axesNormals_new[idx9 + 7] = ny2
-                axesNormals_new[idx9 + 8] = nz2
-
-                axesNormals_new[idx9 + 9]  = nx
-                axesNormals_new[idx9 + 10] = ny
-                axesNormals_new[idx9 + 11] = nz
-
-                axesNormals_new[idx9 + 12] = nx2
-                axesNormals_new[idx9 + 13] = ny2
-                axesNormals_new[idx9 + 14] = nz2
-
-                axesNormals_new[idx9 + 15] = nx2
-                axesNormals_new[idx9 + 16] = ny2
-                axesNormals_new[idx9 + 17] = nz2
-
-            }
-
-            let dx = x2 - x
-            let dy = y2 - y
-            let dz = z2 - z
-
-            let d = Math.sqrt(dx*dx + dy*dy + dz*dz);
-            if (d > 1e-8) {
-                dx *= size/d
-                dy *= size/d
-                dz *= size/d
-            }
-
-            axesNormals[idx9]     = dx
-            axesNormals[idx9 + 1] = dy
-            axesNormals[idx9 + 2] = dz
-
-            axesNormals[idx9 + 3] = -dx
-            axesNormals[idx9 + 4] = -dy
-            axesNormals[idx9 + 5] = -dz
-
-            axesNormals[idx9 + 6] = -dx
-            axesNormals[idx9 + 7] = -dy
-            axesNormals[idx9 + 8] = -dz
-
-            axesNormals[idx9 + 9]  = dx
-            axesNormals[idx9 + 10] = dy
-            axesNormals[idx9 + 11] = dz
-
-            axesNormals[idx9 + 12] = dx
-            axesNormals[idx9 + 13] = dy
-            axesNormals[idx9 + 14] = dz
-
-            axesNormals[idx9 + 15] = -dx
-            axesNormals[idx9 + 16] = -dy
-            axesNormals[idx9 + 17] = -dz
-
-        }
-
-        const t4 = performance.now()
-        if(print_timing) console.log("do main loop in linesToThickLines",t4-t3)
-
-        let axesIdx_new = 0;
-        for (let idx = 0; idx < index_length; idx += 2) {
-            let axesIdx_old = axesIdx_new;
-            const idx3 = idx*3;
-            axesIndexs_new[idx3]     = axesIdx_old;
-            axesIndexs_new[idx3 +1 ] = axesIdx_old+2;
-            axesIndexs_new[idx3 +2 ] = axesIdx_old+1;
-            axesIndexs_new[idx3 +3 ] = axesIdx_old+3;
-            axesIndexs_new[idx3 +4 ] = axesIdx_old+4;
-            axesIndexs_new[idx3 +5 ] = axesIdx_old+5;
-            axesIdx_new += 6;
-        }
-
-        const t5 = performance.now()
-        if(print_timing) console.log("do index loop in linesToThickLines",t5-t4)
-
-        let ret = {};
-        ret["vertices"] = axesVertices_new;
-        ret["indices"] = axesIndexs_new;
-        ret["normals"] = axesNormals;
-        ret["colours"] = axesColours_new;
-        ret["realNormals"] = axesNormals_new;
-
-        const t6 = performance.now()
-        if(print_timing) console.log("make object in linesToThickLines",t6-t5)
-
-        return ret;
-
-    }
-
-    linesToThickLines(axesVertices, axesColours, size) {
-        let axesNormals = [];
-        let axesVertices_new = [];
-        let axesColours_new = [];
-        let axesIndexs_new = [];
-        let axesIdx_new = 0;
-
-        for (let il = 0; il < axesVertices.length; il += 6) {
-            axesColours_new.push(axesColours[4 * il / 3]);
-            axesColours_new.push(axesColours[4 * il / 3 + 1]);
-            axesColours_new.push(axesColours[4 * il / 3 + 2]);
-            axesColours_new.push(axesColours[4 * il / 3 + 3]);
-            axesColours_new.push(axesColours[4 * il / 3]);
-            axesColours_new.push(axesColours[4 * il / 3 + 1]);
-            axesColours_new.push(axesColours[4 * il / 3 + 2]);
-            axesColours_new.push(axesColours[4 * il / 3 + 3]);
-            axesColours_new.push(axesColours[4 * il / 3 + 4]);
-            axesColours_new.push(axesColours[4 * il / 3 + 5]);
-            axesColours_new.push(axesColours[4 * il / 3 + 6]);
-            axesColours_new.push(axesColours[4 * il / 3 + 7]);
-            axesColours_new.push(axesColours[4 * il / 3]);
-            axesColours_new.push(axesColours[4 * il / 3 + 1]);
-            axesColours_new.push(axesColours[4 * il / 3 + 2]);
-            axesColours_new.push(axesColours[4 * il / 3 + 3]);
-            axesColours_new.push(axesColours[4 * il / 3 + 4]);
-            axesColours_new.push(axesColours[4 * il / 3 + 5]);
-            axesColours_new.push(axesColours[4 * il / 3 + 6]);
-            axesColours_new.push(axesColours[4 * il / 3 + 7]);
-            axesColours_new.push(axesColours[4 * il / 3 + 4]);
-            axesColours_new.push(axesColours[4 * il / 3 + 5]);
-            axesColours_new.push(axesColours[4 * il / 3 + 6]);
-            axesColours_new.push(axesColours[4 * il / 3 + 7]);
-
-            axesVertices_new.push(axesVertices[il]);
-            axesVertices_new.push(axesVertices[il + 1]);
-            axesVertices_new.push(axesVertices[il + 2]);
-            axesVertices_new.push(axesVertices[il]);
-            axesVertices_new.push(axesVertices[il + 1]);
-            axesVertices_new.push(axesVertices[il + 2]);
-            axesVertices_new.push(axesVertices[il + 3]);
-            axesVertices_new.push(axesVertices[il + 4]);
-            axesVertices_new.push(axesVertices[il + 5]);
-            axesNormals.push(axesVertices[il + 3] - axesVertices[il]);
-            axesNormals.push(axesVertices[il + 4] - axesVertices[il + 1]);
-            axesNormals.push(axesVertices[il + 5] - axesVertices[il + 2]);
-            let d = Math.sqrt(axesNormals[axesNormals.length - 1 - 2] * axesNormals[axesNormals.length - 1 - 2] + axesNormals[axesNormals.length - 1 - 1] * axesNormals[axesNormals.length - 1 - 1] + axesNormals[axesNormals.length - 1 - 0] * axesNormals[axesNormals.length - 1 - 0]);
-            if (d > 1e-8) {
-                axesNormals[axesNormals.length - 1 - 2] *= size / d;
-                axesNormals[axesNormals.length - 1 - 1] *= size / d;
-                axesNormals[axesNormals.length - 1] *= size / d;
-            }
-
-            axesNormals.push(-(axesVertices[il + 3] - axesVertices[il]));
-            axesNormals.push(-(axesVertices[il + 4] - axesVertices[il + 1]));
-            axesNormals.push(-(axesVertices[il + 5] - axesVertices[il + 2]));
-            if (d > 1e-8) {
-                axesNormals[axesNormals.length - 1 - 2] *= size / d;
-                axesNormals[axesNormals.length - 1 - 1] *= size / d;
-                axesNormals[axesNormals.length - 1] *= size / d;
-            }
-            axesNormals.push(-(axesVertices[il + 3] - axesVertices[il]));
-            axesNormals.push(-(axesVertices[il + 4] - axesVertices[il + 1]));
-            axesNormals.push(-(axesVertices[il + 5] - axesVertices[il + 2]));
-            if (d > 1e-8) {
-                axesNormals[axesNormals.length - 1 - 2] *= size / d;
-                axesNormals[axesNormals.length - 1 - 1] *= size / d;
-                axesNormals[axesNormals.length - 1] *= size / d;
-            }
-            axesVertices_new.push(axesVertices[il]);
-            axesVertices_new.push(axesVertices[il + 1]);
-            axesVertices_new.push(axesVertices[il + 2]);
-            axesVertices_new.push(axesVertices[il + 3]);
-            axesVertices_new.push(axesVertices[il + 4]);
-            axesVertices_new.push(axesVertices[il + 5]);
-            axesVertices_new.push(axesVertices[il + 3]);
-            axesVertices_new.push(axesVertices[il + 4]);
-            axesVertices_new.push(axesVertices[il + 5]);
-            axesNormals.push(axesVertices[il + 3] - axesVertices[il]);
-            axesNormals.push(axesVertices[il + 4] - axesVertices[il + 1]);
-            axesNormals.push(axesVertices[il + 5] - axesVertices[il + 2]);
-            if (d > 1e-8) {
-                axesNormals[axesNormals.length - 1 - 2] *= size / d;
-                axesNormals[axesNormals.length - 1 - 1] *= size / d;
-                axesNormals[axesNormals.length - 1] *= size / d;
-            }
-            axesNormals.push(axesVertices[il + 3] - axesVertices[il]);
-            axesNormals.push(axesVertices[il + 4] - axesVertices[il + 1]);
-            axesNormals.push(axesVertices[il + 5] - axesVertices[il + 2]);
-            if (d > 1e-8) {
-                axesNormals[axesNormals.length - 1 - 2] *= size / d;
-                axesNormals[axesNormals.length - 1 - 1] *= size / d;
-                axesNormals[axesNormals.length - 1] *= size / d;
-            }
-            axesNormals.push(-(axesVertices[il + 3] - axesVertices[il]));
-            axesNormals.push(-(axesVertices[il + 4] - axesVertices[il + 1]));
-            axesNormals.push(-(axesVertices[il + 5] - axesVertices[il + 2]));
-            if (d > 1e-8) {
-                axesNormals[axesNormals.length - 1 - 2] *= size / d;
-                axesNormals[axesNormals.length - 1 - 1] *= size / d;
-                axesNormals[axesNormals.length - 1] *= size / d;
-            }
-            axesIndexs_new.push(axesIdx_new++);
-            axesIndexs_new.push(axesIdx_new++);
-            axesIndexs_new.push(axesIdx_new++);
-            axesIndexs_new.push(axesIdx_new++);
-            axesIndexs_new.push(axesIdx_new++);
-            axesIndexs_new.push(axesIdx_new++);
-        }
-
-        let ret = {};
-        ret["vertices"] = axesVertices_new;
-        ret["indices"] = axesIndexs_new;
-        ret["normals"] = axesNormals;
-        ret["colours"] = axesColours_new;
-        return ret;
-
-    }
-
     drawLineMeasures(invMat) {
         if(this.measurePointsArray.length<1) return;
 
@@ -6408,7 +6070,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         })
 
         let size = 1.5;
-        const thickLines = this.linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
+        const thickLines = linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
         let axesNormals = thickLines["normals"];
         let axesVertices_new = thickLines["vertices"];
         let axesColours_new = thickLines["colours"];
@@ -6560,7 +6222,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         )
 
         let size = 1.5;
-        const thickLines = this.linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
+        const thickLines = linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
         let axesNormals = thickLines["normals"];
         let axesVertices_new = thickLines["vertices"];
         let axesColours_new = thickLines["colours"];
@@ -6693,7 +6355,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         )
 
         let size = 1.0;
-        const thickLines = this.linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
+        const thickLines = linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
         let axesNormals = thickLines["normals"];
         let axesVertices_new = thickLines["vertices"];
         let axesColours_new = thickLines["colours"];
@@ -6933,7 +6595,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
         }
 
-        const thickLines = this.linesToThickLines(hitchometerVertices, hitchometerColours, size);
+        const thickLines = linesToThickLines(hitchometerVertices, hitchometerColours, size);
         let hitchometerNormals = thickLines["normals"];
         let hitchometerVertices_new = thickLines["vertices"];
         let hitchometerColours_new = thickLines["colours"];
@@ -7128,7 +6790,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         )
 
         let size = 1.5;
-        let thickLines = this.linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
+        let thickLines = linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
         let axesNormals = thickLines["normals"];
         let axesVertices_new = thickLines["vertices"];
         let axesColours_new = thickLines["colours"];

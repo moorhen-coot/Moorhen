@@ -331,7 +331,7 @@ const linesToThickLinesWithIndices = (axesVertices: number[], axesColours: numbe
 
     }
 
-const linesToThickLines = (axesVertices, axesColours, size) => {
+export const linesToThickLines = (axesVertices, axesColours, size) => {
         let axesNormals = [];
         let axesVertices_new = [];
         let axesColours_new = [];
