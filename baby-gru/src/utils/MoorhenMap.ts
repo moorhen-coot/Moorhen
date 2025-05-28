@@ -630,6 +630,7 @@ export class MoorhenMap implements moorhen.Map {
                 } else if (!keepCootColours) {
                     //console.log("DEBUG: Old buffers?", object.vert_tri[0][0],object.norm_tri[0][0])
                     if(this.displayObjects["Coot"].length>0 && (object.prim_types[0][0]===this.displayObjects["Coot"][0].bufferTypes[0])){
+                        //This may be broken!!!
                         this.displayObjects["Coot"][0].triangleVertices[0] = object.vert_tri[0][0]
                         this.displayObjects["Coot"][0].triangleNormals[0] = object.norm_tri[0][0]
                         if(mapAlpha>0.98){
@@ -640,6 +641,8 @@ export class MoorhenMap implements moorhen.Map {
                         }
                         this.displayObjects["Coot"][0].triangleIndexs[0] = object.idx_tri[0][0]
                         this.displayObjects["Coot"][0].isDirty = true
+                        buildBuffers(this.displayObjects["Coot"])
+                        newBuffers = [...newBuffers,...this.displayObjects["Coot"]]
                     } else {
                        let a = appendOtherData(object, true);
                        if(mapAlpha>0.98){
@@ -665,7 +668,7 @@ export class MoorhenMap implements moorhen.Map {
             const ts = performance.now();
             if(print_timing) console.log("After _drawScene",ts-t1);
         } catch(err) {
-            //console.log(err)
+            console.log(err)
         }
         const t2 = performance.now();
         if(print_timing) console.log("Finished setupContourBuffers",t2-t1)

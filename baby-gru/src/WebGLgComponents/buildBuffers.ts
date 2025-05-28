@@ -637,7 +637,7 @@ export const buildBuffers = (displayBuffers:DisplayBuffer[]) : void => {
 
                     displayBuffers[idx].triangleVertexNormalBuffer[j].numItems = triangleNormals.length / 3;
                     displayBuffers[idx].triangleVertexPositionBuffer[j].numItems = triangleVertices.length / 3;
-                    displayBuffers[idx].triangleColourBuffer[j].numItems = triangleColours.length / 4;
+                    if(doColour) displayBuffers[idx].triangleColourBuffer[j].numItems = triangleColours.length / 4;
                     displayBuffers[idx].triangleVertexIndexBuffer[j].numItems = triangleIndexs.length;
 
                     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, displayBuffers[idx].triangleVertexIndexBuffer[j]);
