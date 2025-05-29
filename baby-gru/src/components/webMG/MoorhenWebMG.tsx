@@ -38,7 +38,7 @@ const actionButtonSettingsReducer = (defaultSettings: moorhen.actionButtonSettin
 
 export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface>((props, OldglRef) => {
 
-    const glRef = useRef<MGWebGL>(null);
+    const glRef = OldglRef as React.Ref<MGWebGL>
 
     const dispatch = useDispatch()
 
@@ -683,7 +683,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
                 {showContextMenu &&
                 <MoorhenContextMenu
-                    glRef={glRef}
+                    glRef={glRef as React.RefObject<webGL.MGWebGL>}
                     monomerLibraryPath={props.monomerLibraryPath}
                     viewOnly={props.viewOnly}
                     urlPrefix={props.urlPrefix}
