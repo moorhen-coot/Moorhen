@@ -1140,8 +1140,6 @@ export namespace moorhen {
         };
         glRef: {
             origin: [number,number,number];
-            requestDrawScene: boolean;
-            requestBuildBuffers: boolean;
             isWebGL2: boolean;
             glCtx: any;
             displayBuffers: DisplayBuffer[];
@@ -1161,6 +1159,7 @@ export namespace moorhen {
             clipEnd: number,
             cursorPosition: [number,number],
             shortCutHelp: string[],
+            requestDrawScene:  {switch: boolean },
             envUpdate: {switch: boolean },
             clearLabels: {switch: boolean },
             hoverSize: number,

@@ -4,7 +4,7 @@ import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4.js';
 import { webGL } from "../types/mgWebGL.js";
 import { moorhen } from '../types/moorhen.js';
 import store from '../store/MoorhenReduxStore'
-import { setOrigin, setRequestDrawScene, setRequestBuildBuffers } from "../store/glRefSlice"
+import { setOrigin } from "../store/glRefSlice"
 
 export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
 

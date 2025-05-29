@@ -4,7 +4,7 @@ import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInf
 import { libcootApi } from '../types/libcoot';
 import { MoorhenColourRule } from './MoorhenColourRule';
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums"
-import { setOrigin, setRequestDrawScene, setRequestBuildBuffers, setDisplayBuffers, setLabelBuffers } from "../store/glRefSlice"
+import { setOrigin, setDisplayBuffers, setLabelBuffers } from "../store/glRefSlice"
 import { buildBuffers, appendOtherData } from '../WebGLgComponents/buildBuffers'
 import { batch } from 'react-redux'
 

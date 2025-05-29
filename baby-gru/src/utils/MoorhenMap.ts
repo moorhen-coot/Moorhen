@@ -6,7 +6,7 @@ import pako from "pako"
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
-import { setOrigin, setRequestDrawScene, setRequestBuildBuffers, setDisplayBuffers } from "../store/glRefSlice"
+import { setOrigin, setRequestDrawScene, setDisplayBuffers } from "../store/glRefSlice"
 import { buildBuffers, appendOtherData } from '../WebGLgComponents/buildBuffers'
 
 const _DEFAULT_CONTOUR_LEVEL = 0.8
@@ -854,6 +854,8 @@ export class MoorhenMap implements moorhen.Map {
                 }
             }
         })
+        buildBuffers(this.displayObjects['Coot'])
+        this.store.dispatch(setRequestDrawScene(true))
     }
 
     /**

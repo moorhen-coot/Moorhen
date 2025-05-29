@@ -9,7 +9,7 @@ import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from 'react-redux';
 import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
 import { useSnackbar } from 'notistack';
-import { setQuat, setOrigin, setRequestDrawScene, setRequestBuildBuffers, setZoom,
+import { setQuat, setOrigin, setRequestDrawScene, setZoom,
          setClipStart, setClipEnd, setFogStart, setFogEnd, setCursorPosition } from "../../store/glRefSlice"
 
 interface MoorhenWebMGPropsInterface {
@@ -99,8 +99,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
-    const requestDrawScene = useSelector((state: moorhen.State) => state.glRef.requestDrawScene)
-    const requestBuildBuffers = useSelector((state: moorhen.State) => state.glRef.requestBuildBuffers)
     const originState = useSelector((state: moorhen.State) => state.glRef.origin)
     const activeMolecule = useSelector((state: moorhen.State) => state.glRef.activeMolecule)
     const draggableMolecule = useSelector((state: moorhen.State) => state.glRef.draggableMolecule)
@@ -119,6 +117,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const clipEnd = useSelector((state: moorhen.State) => state.glRef.clipEnd)
     const updateSwitch = useSelector((state: moorhen.State) => state.glRef.envUpdate.switch)
     const clearLabelsSwitch = useSelector((state: moorhen.State) => state.glRef.clearLabels.switch)
+    const requestDrawSceneSwitch = useSelector((state: moorhen.State) => state.glRef.requestDrawScene.switch)
     const labelBuffers = useSelector((state: moorhen.State) => state.glRef.labelBuffers)
 
     const GLLabelsFontFamily = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontFamily)
@@ -541,6 +540,12 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.setBackground(backgroundColor)
         }
     }, [backgroundColor, glRef])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.drawScene()
+        }
+    }, [requestDrawSceneSwitch])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {

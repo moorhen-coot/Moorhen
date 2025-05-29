@@ -4,14 +4,13 @@ import { DisplayBuffer } from '../WebGLgComponents/displayBuffer'
 
 const initialState = {
     origin: [0,0,0],
-    requestDrawScene: false,
-    requestBuildBuffers: false,
     isWebGL2: false,
     glCtx: null,
     activeMolecule: null,
     draggableMolecule: null,
     envUpdate: { switch: false },
     clearLabels: { switch: false },
+    requestDrawScene: { switch: false },
     displayBuffers: [],
     texturedShapes: [],
     labelBuffers: [],
@@ -42,12 +41,6 @@ export const glRefSlice = createSlice({
   reducers: {
     setOrigin: (state, action: {payload: [number,number,number], type: string}) => {
         return { ...state, origin: action.payload }
-    },
-    setRequestDrawScene: (state, action: {payload: boolean, type: string}) => {
-        return { ...state, requestDrawScene: action.payload }
-    },
-    setRequestBuildBuffers: (state, action: {payload: boolean, type: string}) => {
-        return { ...state, requestBuildBuffers: action.payload }
     },
     setIsWebGL2: (state, action: {payload: boolean, type: string}) => {
         return { ...state, isWebGL2: action.payload }
@@ -135,10 +128,17 @@ export const glRefSlice = createSlice({
             }
         }
     },
+    setRequestDrawScene: (state, action: {payload: boolean, type: string}) => {
+        return { ...state,
+            requestDrawScene: {
+                switch: !state.requestDrawScene.switch
+            }
+        }
+    },
 }})
 
 export const { 
-    setOrigin, setRequestDrawScene, setRequestBuildBuffers, setIsWebGL2, setActiveMolecule,
+    setOrigin, setRequestDrawScene, setIsWebGL2, setActiveMolecule,
     setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setZoom,
     setQuat, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd, setCursorPosition,
     setShortCutHelp, setDraggableMolecule, triggerRedrawEnv, triggerClearLabels, setGLCtx,
