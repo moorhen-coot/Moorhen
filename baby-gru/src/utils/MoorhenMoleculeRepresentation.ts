@@ -4,7 +4,7 @@ import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInf
 import { libcootApi } from '../types/libcoot';
 import { MoorhenColourRule } from './MoorhenColourRule';
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums"
-import { setOrigin, setDisplayBuffers, setLabelBuffers } from "../store/glRefSlice"
+import { setOrigin, setDisplayBuffers, setLabelBuffers, setRequestDrawScene } from "../store/glRefSlice"
 import { buildBuffers, appendOtherData } from '../WebGLgComponents/buildBuffers'
 import { batch } from 'react-redux'
 
@@ -39,7 +39,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     uniqueId: string;
     style: moorhen.RepresentationStyles;
     cid: string;
-    buffers: moorhen.DisplayObject[];
+    buffers: any;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>
     parentMolecule: moorhen.Molecule;
@@ -152,7 +152,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 buffer.isDirty = true;
                 buffer.alphaChanged = true;
             })
+            buildBuffers(this.buffers)
         }
+        this.parentMolecule.store.dispatch(setRequestDrawScene(true))
     }
 
     /**
