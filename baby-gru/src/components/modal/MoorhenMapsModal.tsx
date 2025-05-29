@@ -79,8 +79,8 @@ export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {
                 minWidth={convertRemToPx(28)}
                 maxHeight={!collapseAll ? convertViewtoPx(90, height) : maps.length*40}
                 maxWidth={convertRemToPx(55)}
-                onResize={(evt, ref, direction, delta, width) => {
-                    setModalWidth(width)
+                onResize={(evt, ref, direction, delta, size) => {
+                    setModalWidth(size.width)
                 }}
                 headerTitle={'Maps'}
                 additionalHeaderButtons={[

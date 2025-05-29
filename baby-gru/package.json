@@ -221,5 +221,7 @@
     "y-websocket": "^1.5.3",
     "yjs": "^13.6.12"
   },
-  "dependencies": {}
+  "dependencies": {
+    "react-resizable": "^3.0.5"
+  }
 }

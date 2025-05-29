@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState, useLayoutEffect } from "react";
+import { useCallback, useEffect, useRef, useState, useLayoutEffect, useMemo } from "react";
 import { Button, Card, Stack } from "react-bootstrap";
 import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
 import { AddOutlined, CloseOutlined, RemoveOutlined, SquareFootOutlined } from "@mui/icons-material";
 import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
-import { Resizable } from "re-resizable";
+//import { Resizable } from "re-resizable";
+import { ResizableBox } from "react-resizable";
 import { setEnableAtomHovering } from "../../store/hoveringStatesSlice";
 import { hideModal, focusOnModal, unFocusModal } from "../../store/modalsSlice";
 /**
@@ -13,7 +14,7 @@ import { hideModal, focusOnModal, unFocusModal } from "../../store/modalsSlice";
  * @property {boolean} show - Indicates if the modal is to be displayed
  * @property {function} setShow - Setter function for props.show
  * @property {JSX.Element} body - Element rendered as the modal body
- * @property {string} modalId - The id assigned to the modal used to keep track of the focused modal and the z-index. 
+ * @property {string} modalId - The id assigned to the modal used to keep track of the focused modal and the z-index.
  * @property {number} [width=35] - The width of the modal measured in wh
  * @property {number} [height=45] - The height of the modal measured in vh
  * @property {number} [top=500] - The intial top location of the modal
@@ -23,11 +24,11 @@ import { hideModal, focusOnModal, unFocusModal } from "../../store/modalsSlice";
  * @property {string} [overflowY="scroll"] - Indicates how to handle content overflow on vertical axis
  * @property {string} [handleClassName="handle"] - The css class name for the draggable handle
  * @property {JSX.Element} [footer=null] - Element rendered as the modal footer
- * @example 
+ * @example
  * import { MoorhenDraggableModalBase } from "moorhen";
- * 
+ *
  * const example = () => {
- *   return <MoorhenDraggableModalBase 
+ *   return <MoorhenDraggableModalBase
  *                modalId="example-modal-id"
  *                headerTitle="Create covalent link"
  *                additionalChildren={
@@ -58,14 +59,16 @@ import { hideModal, focusOnModal, unFocusModal } from "../../store/modalsSlice";
  *                }
  *            />
  * }
- * 
+ *
  */
-export const MoorhenDraggableModalBase = (props: {
+type MoorhenDraggableModalBaseProps = {
     headerTitle: string | JSX.Element;
     body: JSX.Element | JSX.Element[];
     modalId: string;
     enforceMaxBodyDimensions?: boolean;
     resizeNodeRef?: null | React.RefObject<HTMLDivElement>;
+    initialWidth?: number;
+    initialHeight?: number;
     maxWidth?: number;
     maxHeight?: number;
     minWidth?: number;
@@ -75,206 +78,259 @@ export const MoorhenDraggableModalBase = (props: {
     additionalHeaderButtons?: JSX.Element[];
     footer?: JSX.Element;
     additionalChildren?: JSX.Element;
-    overflowY?: 'visible' | 'hidden' | 'clip' | 'scroll' | 'auto';
-    overflowX?: 'visible' | 'hidden' | 'clip' | 'scroll' | 'auto';
+    overflowY?: "visible" | "hidden" | "clip" | "scroll" | "auto";
+    overflowX?: "visible" | "hidden" | "clip" | "scroll" | "auto";
     handleClassName?: string;
     showCloseButton?: boolean;
     lockAspectRatio?: boolean;
-    enableResize?: false | {[key: string]: boolean};
-    onResizeStop?: (evt: MouseEvent | TouchEvent, direction: 'top' | 'right' | 'bottom' | 'left' | 'topRight' | 'bottomRight' | 'bottomLeft' | 'topLeft', ref: HTMLDivElement, delta: {width: number, height: number}) => void;
-    onClose?: () => (void | Promise<void>);
-    onResize?: (evt: MouseEvent | TouchEvent, direction: 'top' | 'right' | 'bottom' | 'left' | 'topRight' | 'bottomRight' | 'bottomLeft' | 'topLeft', ref: HTMLDivElement, delta: {width: number, height: number}, width:number) => void;
+    enableResize?: false | { [key: string]: boolean };
+    onResizeStop?: (
+        evt: MouseEvent | TouchEvent,
+        direction: "top" | "right" | "bottom" | "left" | "topRight" | "bottomRight" | "bottomLeft" | "topLeft",
+        ref: HTMLDivElement,
+        delta: { width: number; height: number }
+    ) => void;
+    onClose?: () => void | Promise<void>;
+    onResize?: (
+        evt: MouseEvent | TouchEvent,
+        direction: "top" | "right" | "bottom" | "left" | "topRight" | "bottomRight" | "bottomLeft" | "topLeft",
+        ref: HTMLDivElement,
+        delta: { width: number; height: number },
+        size: { width: number; height: number }
+    ) => void;
+}
 
-}) => {
+export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps) => {
+   const {
+        showCloseButton= true,
+        handleClassName= "handle",
+        additionalHeaderButtons= null,
+        additionalChildren= null,
+        enableResize= { top: false, right: true, bottom: true, left: false, topRight: false, bottomRight: true, bottomLeft: true, topLeft: false },
+        top= 500,
+        left= 500,
+        overflowY= "auto",
+        overflowX= "hidden",
+        lockAspectRatio= false,
+        maxHeight= 100,
+        maxWidth= 100,
+        minHeight= 100,
+        minWidth= 100,
+        enforceMaxBodyDimensions= true,
+    } = {...props};
 
-    const defaultProps = { 
-        showCloseButton: true, handleClassName: 'handle', additionalHeaderButtons:null, additionalChildren: null, 
-        enableResize: { top: false, right: true, bottom: true, left: false, topRight: false, bottomRight: true, bottomLeft: true, topLeft: false },
-        top: 500, left: 500, overflowY: 'auto', overflowX: 'hidden', lockAspectRatio: false, maxHeight: 100, maxWidth: 100, 
-        minHeight: 100, minWidth: 100, enforceMaxBodyDimensions: true,
-    }
-    
-    const {
-        showCloseButton, handleClassName, additionalHeaderButtons, additionalChildren, 
-        enableResize, top, left, overflowY, overflowX, lockAspectRatio, maxHeight, maxWidth, 
-        minHeight, minWidth, enforceMaxBodyDimensions
-    } = {...defaultProps, ...props}
+    const [resizableSize, setResizableSize] = useState<{ width: number; height: number }>({
+        width: props.initialWidth || 300,
+        height: props.initialHeight || 200,
+    });
 
-    const dispatch = useDispatch()
-    
-    const focusHierarchy = useSelector((state: moorhen.State) => state.modals.focusHierarchy)
-    const windowWidth = useSelector((state: moorhen.State) => state.sceneSettings.width)
-    const windowHeight = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.generalStates.transparentModalsOnMouseOut)
-    const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering)
-    const show = useSelector((state: moorhen.State) => state.modals.activeModals.includes(props.modalId))
-    
-    const [currentZIndex, setCurrentZIndex] = useState<number>(999)
-    const [opacity, setOpacity] = useState<number>(1.0)
-    const [collapse, setCollapse] = useState<boolean>(false)
-    const [position, setPosition] = useState<{x: number, y: number}>({x: left, y: top})
+    const dispatch = useDispatch();
+    const focusHierarchy = useSelector((state: moorhen.State) => state.modals.focusHierarchy);
+    const windowWidth = useSelector((state: moorhen.State) => state.sceneSettings.width);
+    const windowHeight = useSelector((state: moorhen.State) => state.sceneSettings.height);
+    const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.generalStates.transparentModalsOnMouseOut);
+    const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering);
+    const show = useSelector((state: moorhen.State) => state.modals.activeModals.includes(props.modalId));
+
+    const [currentZIndex, setCurrentZIndex] = useState<number>(999);
+    const [opacity, setOpacity] = useState<number>(1.0);
+    const [collapse, setCollapse] = useState<boolean>(false);
+    const [position, setPosition] = useState<{ x: number; y: number }>({ x: left, y: top });
 
     const draggableNodeRef = useRef<HTMLDivElement>();
-    const resizeNodeRef = useRef<HTMLDivElement>();
     const cachedEnableAtomHovering = useRef<boolean>(false);
     const modalIdRef = useRef<string>(props.modalId);
 
     useEffect(() => {
-        const focusIndex = focusHierarchy.findIndex(item => item === modalIdRef.current)
-        setCurrentZIndex(999 - focusIndex)
-    }, [focusHierarchy])
+        const focusIndex = focusHierarchy.findIndex((item) => item === modalIdRef.current);
+        setCurrentZIndex(999 - focusIndex);
+    }, [focusHierarchy]);
 
     useEffect(() => {
         return () => {
-            dispatch(unFocusModal(modalIdRef.current))
-        }
-    }, [])
+            dispatch(unFocusModal(modalIdRef.current));
+        };
+    }, []);
 
     useEffect(() => {
         if (show) {
-            dispatch(focusOnModal(modalIdRef.current))
+            dispatch(focusOnModal(modalIdRef.current));
         } else {
-            dispatch(unFocusModal(modalIdRef.current))
+            dispatch(unFocusModal(modalIdRef.current));
         }
-    }, [show])
+    }, [show]);
 
     useEffect(() => {
         setPosition({
-            x: left, y: top
-        })
-    }, [windowWidth, windowHeight])
+            x: left,
+            y: top,
+        });
+    }, [windowWidth, windowHeight]);
 
     const handleDrag = (evt: DraggableEvent, data: DraggableData) => {
         setPosition((prev) => {
-            return { x: prev.x + data.deltaX, y: prev.y + data.deltaY }
-        })
-    }
+            return { x: prev.x + data.deltaX, y: prev.y + data.deltaY };
+        });
+    };
 
     const handleStart = useCallback(() => {
         if (enableAtomHovering) {
-            dispatch( setEnableAtomHovering(false) )
-            cachedEnableAtomHovering.current = true
+            dispatch(setEnableAtomHovering(false));
+            cachedEnableAtomHovering.current = true;
         } else {
-            cachedEnableAtomHovering.current = false
+            cachedEnableAtomHovering.current = false;
         }
-    }, [enableAtomHovering])
+    }, [enableAtomHovering]);
 
     const handleDragStop = useCallback(() => {
         setPosition((prev) => {
-            let x = prev.x
-            let y = prev.y
+            let x = prev.x;
+            let y = prev.y;
             if (x < 0) {
-                x = 0
+                x = 0;
             } else if (x > windowWidth - 100) {
-                x = windowWidth - 100
+                x = windowWidth - 100;
             }
             if (y < 0) {
-                y = 0
+                y = 0;
             } else if (y > windowHeight - 100) {
-                y = windowHeight - 100
+                y = windowHeight - 100;
             }
-            return { x, y }
-        })
+            return { x, y };
+        });
         if (cachedEnableAtomHovering.current) {
-            dispatch( setEnableAtomHovering(true) )
+            dispatch(setEnableAtomHovering(true));
         }
-    }, [windowWidth, windowHeight])
+    }, [windowWidth, windowHeight]);
 
-    const handleResizeStop = (evt: MouseEvent | TouchEvent, direction: 'top' | 'right' | 'bottom' | 'left' | 'topRight' | 'bottomRight' | 'bottomLeft' | 'topLeft', ref: HTMLDivElement, delta: {width: number, height: number}) => {
+    const handleResizeStop = (
+        evt: MouseEvent | TouchEvent,
+        direction: "top" | "right" | "bottom" | "left" | "topRight" | "bottomRight" | "bottomLeft" | "topLeft",
+        ref: HTMLDivElement,
+        delta: { width: number; height: number }
+    ) => {
         if (cachedEnableAtomHovering.current) {
-            dispatch( setEnableAtomHovering(true) )
+            dispatch(setEnableAtomHovering(true));
         }
-        props.onResizeStop?.(evt, direction, ref, delta)
-    }
+        props.onResizeStop?.(evt, direction, ref, delta);
+    };
 
     const handleClose = useCallback(async () => {
-        await props.onClose?.()
-        dispatch( hideModal(props.modalId) )
-    }, [props.onClose])
+        await props.onClose?.();
+        dispatch(hideModal(props.modalId));
+    }, [props.onClose]);
 
-    const handleResize = (evt: MouseEvent | TouchEvent, direction: 'top' | 'right' | 'bottom' | 'left' | 'topRight' | 'bottomRight' | 'bottomLeft' | 'topLeft', ref: HTMLDivElement, delta: {width: number, height: number}) => {
-            if (props.onResize) {
-                const width = draggableNodeRef.current?.clientWidth
-                props.onResize(evt, direction, ref, delta, width);
-            }
-        
-    }
+    const handleResize = (
+        evt: MouseEvent | TouchEvent,
+        direction: "top" | "right" | "bottom" | "left" | "topRight" | "bottomRight" | "bottomLeft" | "topLeft",
+        ref: HTMLDivElement,
+        delta: { width: number; height: number }
+    ) => {
+        if (props.onResize) {
+            const width = draggableNodeRef.current?.clientWidth;
+            const height = draggableNodeRef.current?.clientHeight;
+            props.onResize(evt, direction, ref, delta, {width, height});
+        }
+    };
 
-    return <Draggable
-                nodeRef={draggableNodeRef}
-                handle={`.${handleClassName}`}
-                position={position}
-                onDrag={handleDrag}
-                onStop={handleDragStop}
-                onStart={handleStart}
-                >
+    return (
+        <Draggable
+            nodeRef={draggableNodeRef}
+            handle={`.${handleClassName}`}
+            position={position}
+            onDrag={handleDrag}
+            onStop={handleDragStop}
+            onStart={handleStart}
+        >
             <Card
                 id={modalIdRef.current}
                 onClick={() => dispatch(focusOnModal(modalIdRef.current))}
-                className={`moorhen-draggable-card${focusHierarchy[0] === modalIdRef.current ? '-focused' : ''}`}
+                className={`moorhen-draggable-card${focusHierarchy[0] === modalIdRef.current ? "-focused" : ""}`}
                 ref={draggableNodeRef}
-                style={{ display: show ? 'block' : 'none', position: 'absolute', opacity: opacity, zIndex: currentZIndex}}
+                style={{ display: show ? "block" : "none", position: "absolute", opacity: opacity, zIndex: currentZIndex }}
                 onMouseOver={() => setOpacity(1.0)}
                 onMouseOut={() => {
-                    if(transparentModalsOnMouseOut) setOpacity(0.5)
+                    if (transparentModalsOnMouseOut) setOpacity(0.5);
                 }}
             >
-                <Card.Header className={handleClassName} style={{ minWidth: minWidth, justifyContent: 'space-between', display: 'flex', cursor: 'move', alignItems:'center'}}>
+                <Card.Header
+                    className={handleClassName}
+                    style={{ minWidth: minWidth, justifyContent: "space-between", display: "flex", cursor: "move", alignItems: "center" }}
+                >
                     {props.headerTitle}
                     <Stack gap={2} direction="horizontal">
-                        {collapse ? null : additionalHeaderButtons?.map(button => button)}
-                        <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => setCollapse(!collapse)}>
-                            {collapse ? <AddOutlined/> : <RemoveOutlined/>}
+                        {collapse ? null : additionalHeaderButtons?.map((button) => button)}
+                        <Button variant="white" style={{ margin: "0.1rem", padding: "0.1rem" }} onClick={() => setCollapse(!collapse)}>
+                            {collapse ? <AddOutlined /> : <RemoveOutlined />}
                         </Button>
-                        {showCloseButton &&
-                        <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={handleClose}>
-                            <CloseOutlined/>
-                        </Button>                    
-                        }
+                        {showCloseButton && (
+                            <Button variant="white" style={{ margin: "0.1rem", padding: "0.1rem" }} onClick={handleClose}>
+                                <CloseOutlined />
+                            </Button>
+                        )}
                     </Stack>
                 </Card.Header>
-                <Card.Body style={{display: collapse ? 'none' : 'flex', justifyContent: 'center', flexDirection: 'column'}}>
-                    <Resizable
-                    
-                    maxWidth={maxWidth}
-                    maxHeight={maxHeight}
-                    minWidth={minWidth}
-                    minHeight={minHeight}
-                    bounds={'window'}
-                    resizeRatio={1.3}
-                    lockAspectRatio={lockAspectRatio}
-                    enable={enableResize}
-                    handleComponent={{bottomRight: enableResize ? <SquareFootOutlined style={{transform: 'rotate(270deg)'}}/> : <></>}}
-                    onResizeStop={handleResizeStop}
-                    onResizeStart={handleStart}
-                    onResize={handleResize}
-                    >
-                    <div ref={props.resizeNodeRef ?? resizeNodeRef}
-                        style={{
-                            overflowY: overflowY as 'visible' | 'hidden' | 'clip' | 'scroll' | 'auto',
-                            overflowX: overflowX as 'visible' | 'hidden' | 'clip' | 'scroll' | 'auto',
-                            height: '100%',
-                            width: '100%',
-                            display: 'block',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                            }}>
-                        {enforceMaxBodyDimensions ? 
-                        <div style={enforceMaxBodyDimensions ? {maxHeight: maxHeight, maxWidth: maxWidth} : {}}>
-                            {props.body}
-                        </div>
-                        : 
-                        props.body
+                <Card.Body style={{ display: collapse ? "none" : "flex", justifyContent: "center", flexDirection: "column" }}>
+                    <ResizableBox
+                        width={resizableSize.width}
+                        height={resizableSize.height}
+                        minConstraints={[minWidth, minHeight]}
+                        maxConstraints={[maxWidth, maxHeight]}
+                        lockAspectRatio={lockAspectRatio}
+                        resizeHandles={["se"]}
+                        onResizeStop={(e, data) => {
+                            handleResizeStop(e as unknown as MouseEvent | TouchEvent, data.handle as any, data.node as HTMLDivElement, {
+                                width: data.size.width,
+                                height: data.size.height,
+                            });
+                        }}
+                        onResizeStart={(e) => handleStart()}
+                        onResize={(e, data) => {
+                            handleResize(e as unknown as MouseEvent | TouchEvent, data.handle as any, data.node as HTMLDivElement, {
+                                width: data.size.width,
+                                height: data.size.height,
+                            });
+                        }}
+                        handle={
+                            enableResize && typeof enableResize === "object" && enableResize.bottomRight ? (
+                                <span className="react-resizable-handle react-resizable-handle-se">
+                                    <SquareFootOutlined
+                                        style={{
+                                            position: "absolute",
+                                            right: 0,
+                                            bottom: 0,
+                                            cursor: "se-resize",
+                                            transform: "rotate(270deg)",
+                                        }}
+                                    />
+                                </span>
+                            ) : undefined
                         }
-                    </div>
-                    </Resizable>
+                    >
+                        <div
+                            style={{
+                                overflowY: overflowY as "visible" | "hidden" | "clip" | "scroll" | "auto",
+                                overflowX: overflowX as "visible" | "hidden" | "clip" | "scroll" | "auto",
+                                height: "100%",
+                                width: "100%",
+                                display: "block",
+                                alignItems: "center",
+                                justifyContent: "center",
+                            }}
+                        >
+                            {enforceMaxBodyDimensions ? (
+                                <div style={enforceMaxBodyDimensions ? { maxHeight: maxHeight, maxWidth: maxWidth } : {}}>{props.body}</div>
+                            ) : (
+                                props.body
+                            )}
+                        </div>
+                    </ResizableBox>
                 </Card.Body>
-                {props.footer && 
-                <Card.Footer style={{display: collapse ? 'none' : 'flex', alignItems: 'center', justifyContent: 'right'}}>
-                    {props.footer}
-                </Card.Footer>
-                }
+                {props.footer && (
+                    <Card.Footer style={{ display: collapse ? "none" : "flex", alignItems: "center", justifyContent: "right" }}>{props.footer}</Card.Footer>
+                )}
                 {additionalChildren}
             </Card>
         </Draggable>
-}
+    );
+};
