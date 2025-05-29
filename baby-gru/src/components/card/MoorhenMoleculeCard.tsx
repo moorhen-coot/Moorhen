@@ -220,7 +220,6 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                     if (props.molecule.adaptativeBondsEnabled) {
                         await props.molecule.redrawAdaptativeBonds(cid)
                     }
-                    props.molecule.clearBuffersOfStyle('environment')
                     if (drawInteractions) {
                         await props.molecule.drawEnvironment(cid)
                     }
