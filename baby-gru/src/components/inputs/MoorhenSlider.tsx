@@ -11,7 +11,23 @@ import { clampValue } from "../misc/helpers";
 import { toFixedNoZero } from "../misc/helpers";
 import './inputs.css';
 
-
+type MoorhenSliderProps<T extends number | [number, number]> = {
+    externalValue: T;   // value passed from parent
+    setExternalValue: (arg0:  T) => void; // function to set value in parent
+    logScale?: boolean;
+    minVal?: number;
+    maxVal?: number;
+    sliderTitle?: string; 
+    decimalPlaces?: number;
+    showMinMaxVal?: boolean;
+    showButtons?: boolean;
+    stepButtons?: number;
+    isDisabled?: boolean;
+    usePreciseInput?: boolean;
+    piWidth?: string | number;
+    piWaitReturn?: boolean;
+    piMinMax?: [number, number]
+};
 
 /**
  * MoorhenSlider component props
@@ -65,23 +81,6 @@ import './inputs.css';
  * @prop {[number, number]} [piMinMax]
  *   Min and max values for the precise input field. Defaults to [minVal, maxVal].
  */
-type MoorhenSliderProps<T extends number | [number, number]> = {
-    externalValue: T;   // value passed from parent
-    setExternalValue: (arg0:  T) => void; // function to set value in parent
-    logScale?: boolean;
-    minVal?: number;
-    maxVal?: number;
-    sliderTitle?: string; 
-    decimalPlaces?: number;
-    showMinMaxVal?: boolean;
-    showButtons?: boolean;
-    stepButtons?: number;
-    isDisabled?: boolean;
-    usePreciseInput?: boolean;
-    piWidth?: string | number;
-    piWaitReturn?: boolean;
-    piMinMax?: [number, number]
-};
 
 export const MoorhenSlider = <T extends number | [number, number]>(props: MoorhenSliderProps<T>) => {
     const isDark = useSelector(

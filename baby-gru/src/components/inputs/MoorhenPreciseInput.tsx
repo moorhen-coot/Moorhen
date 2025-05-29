@@ -3,6 +3,19 @@ import { Form } from "react-bootstrap";
 import Stack from '@mui/material/Stack';
 import './inputs.css'
 
+type MoorhenPreciseInputPropsType = {
+    value: number | null | undefined;
+    setValue: (newVal: string) => void;
+    waitReturn?: boolean;
+    allowNegativeValues?: boolean;
+    decimalDigits?: number;
+    label?: string;
+    disabled?: boolean;
+    width?: string | number;
+    minMax?: [number, number] 
+    type?: string;
+};
+
 /**
  * MoorhenPreciseInput component props
  *
@@ -40,20 +53,6 @@ import './inputs.css'
  * @returns {JSX.Element}
  *   A React component that renders a precise input field with validation and optional label.
  */
-
-type MoorhenPreciseInputPropsType = {
-    value: number | null | undefined;
-    setValue: (newVal: string) => void;
-    waitReturn?: boolean;
-    allowNegativeValues?: boolean;
-    decimalDigits?: number;
-    label?: string;
-    disabled?: boolean;
-    width?: string | number;
-    minMax?: [number, number] 
-    type?: string;
-};
-
 export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
 
     const {
