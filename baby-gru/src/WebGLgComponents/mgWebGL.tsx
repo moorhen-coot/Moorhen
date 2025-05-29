@@ -1917,7 +1917,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             console.log(frac)
         }
         quat4.set(this.myQuat,newQuat[0],newQuat[1],newQuat[2],newQuat[3])
-        this.setZoom(oldZoom + iframe * zoomDelta)
+        this.zoom = oldZoom + iframe * zoomDelta
         this.origin = [oo[0]+iframe*d[0],oo[1]+iframe*d[1],oo[2]+iframe*d[2]];
         this.drawScene()
         if(iframe<this.nAnimationFrames){
@@ -1926,6 +1926,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
         this.animating = false
         this.handleOriginUpdated(true)
+        const zoomChanged = new CustomEvent("zoomChanged", { detail: { oldZoom, newZoom: this.zoom } })
+        document.dispatchEvent(zoomChanged)
     }
 
     setViewAnimated(o,q,z) {
@@ -1951,7 +1953,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let oldZoom = this.zoom;
         const zoomDelta = (z - this.zoom) / this.nAnimationFrames
         quat4.set(oldQuat,this.myQuat[0],this.myQuat[1],this.myQuat[2],this.myQuat[3])
-
         this.animating = true
         requestAnimationFrame(this.setOriginOrientationAndZoomFrame.bind(this,[old_x,old_y,old_z],[dx,dy,dz],oldQuat,q,oldZoom,zoomDelta,1))
     }
@@ -3559,7 +3560,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     drawScene() : void {
 
         const displayBuffers = store.getState().glRef.displayBuffers
-        //const displayBuffers = this.displayBuffers
 
         let dirty = false
         const thisdisplayBufferslength = displayBuffers.length;
@@ -3575,7 +3575,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             console.log("Something's gone wrong!!!!!!!!!!!!!")
             console.log(this.myQuat)
         }
-        this.props.onQuatChanged(this.myQuat)
+
+        if(!this.animating) this.props.onQuatChanged(this.myQuat)
 
         const theShaders = [
             this.shaderProgram,
