@@ -73,7 +73,7 @@ export const MoorhenMapSelect = forwardRef<HTMLSelectElement, MoorhenMapSelectPr
     return (
         <Form.Group style={{ width: width, margin: "0.5rem", height: height }}>
             <Form.Label>{label}</Form.Label>
-            <FormSelect size="sm" ref={selectRef} defaultValue={defaultValue || -999999} onChange={handleChange}>
+            <FormSelect size="sm" ref={selectRef} defaultValue={defaultValue} onChange={handleChange}>
                 {getMapOptions()}
             </FormSelect>
         </Form.Group>

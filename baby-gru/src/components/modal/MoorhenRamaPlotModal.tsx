@@ -10,7 +10,7 @@ import { useSnackbar } from "notistack";
 import { Tooltip } from "@mui/material";
 import { modalKeys } from "../../utils/enums";
 import { hideModal } from "../../store/modalsSlice";
-import { dispatchMenuMemory, useMenuStateMemory } from "../../store/menusSlice";
+import { dispatchPersistentStates, usePersistentState } from "../../store/menusSlice";
 
 export const MoorhenRamaPlotModal = (props: moorhen.CollectedProps) => {     
     const menu = 'moorhenRamaPlotModal'   
@@ -18,17 +18,13 @@ export const MoorhenRamaPlotModal = (props: moorhen.CollectedProps) => {
     
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-
-    const [modalSize, setModalSize] = useMenuStateMemory<{ width: number; height: number }>(
+    const [modalSize, setModalSize] = usePersistentState<{ width: number; height: number }>(
         menu,
         'modalSize',{
         width: 600,
         height: 700
     })
-
-
-    
-
+ 
     const { enqueueSnackbar } = useSnackbar()
 
     return <MoorhenDraggableModalBase
@@ -50,7 +46,7 @@ export const MoorhenRamaPlotModal = (props: moorhen.CollectedProps) => {
                 overflowX='auto'
                 headerTitle='Ramachandran Plot'
                 footer={null}
-                onResizeStop={() => dispatchMenuMemory(
+                onResizeStop={() => dispatchPersistentStates(
                     dispatch,
                     menu,
                     [{key: 'modalSize', value: modalSize}],

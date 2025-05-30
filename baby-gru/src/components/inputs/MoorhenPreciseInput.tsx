@@ -12,8 +12,9 @@ type MoorhenPreciseInputPropsType = {
     label?: string;
     disabled?: boolean;
     width?: string | number;
-    minMax?: [number, number] 
+    minMax?: [number, number];
     type?: string;
+    labelPosition?: string;
 };
 
 /**
@@ -46,7 +47,7 @@ type MoorhenPreciseInputPropsType = {
  * @prop {[number, number]} [minMax]
  *   Minimum and maximum allowed values for the input.
  *
- * @prop {string} [type="text"]
+ * @prop {string} [type="standard" | "number" | "numberForm"]
  *   This is something of a misnomer, as it is always a number input, but it can be set to number to get the clicky arrows next to the input.
  *   this might be changed for a future version, with the same button as sliders and same step behaviour.  
  * 
@@ -63,7 +64,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         width,
         waitReturn = false,
         minMax = null,
-        type = "text"
+        type = "standard"
     } = props;
 
     const [isValidInput, setIsValidInput] = useState<boolean>(true);
@@ -100,8 +101,12 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
     }, []);
 
     const checkIsValidInput = (input: string) => {
-        const value = parseFloat(input);
-        if (isNaN(value)) {
+       
+        if (input === "") {
+            return false;
+        }
+        const value = Number(input);
+        if (isNaN(value)){
             return false;
         } else if (!isFinite(value)) {
             return false;
@@ -115,7 +120,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
     };
 
     const handleChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
-        setIsUserInteracting(true); // Mark user as interacting
+        setIsUserInteracting(true); 
         setInternalValue(evt.target.value);
         const _isValid = checkIsValidInput(evt.target.value);
         setIsValidInput(_isValid);
@@ -139,22 +144,24 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
     };
 
     const inputWidth = width ? width : `${2.5 + 0.6 * decimalDigits + (type === "text" ? 0 : 1.1)}rem`;
+    const formType = type === "number" ? "number" 
+    : type === "numberForm" ? "number" 
+    : "text";
 
     return (
         <Stack 
-            direction="row" 
-            spacing={1}
+            direction={props.labelPosition === "top" ? "column" : "row"} 
             style={{ alignItems: "center" }}
         >
             {label && label}
             <Form.Control
                 ref={inputRef}
-                type={type}
+                type={formType}
                 step={Math.pow(10, -decimalDigits)}
                 disabled={disabled}
                 value={internalValue}
                 style={{ width: inputWidth, marginLeft: "0.2rem" }}
-                className={`precise-input ${isValidInput ? "valid" : "invalid"} ${disabled ? "disabled" : ""}`}
+                className={`precise-input ${type === "numberForm" ? "number-form" : "compact"} ${isValidInput ? "valid" : "invalid"} ${disabled ? "disabled" : ""}`}
                 onChange={handleChange}
                 onKeyDown={handleReturn}
                 onBlur={handleBlur}               

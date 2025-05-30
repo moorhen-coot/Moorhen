@@ -10,10 +10,11 @@ import { cidToSpec, sleep } from "../../utils/utils";
 import { hideModal } from "../../store/modalsSlice";
 import { useSnackbar } from "notistack";
 import { modalKeys } from "../../utils/enums";
+import { usePersistentState } from "../../store/menusSlice";
 
 export const MoorhenPepflipsDifferenceMap = (props: moorhen.CollectedProps) => {
-    const [selectedRmsd, setSelectedRmsd] = useState<number>(4.5);
-
+    const modalId = modalKeys.PEPTIDE_FLIPS;
+    const [selectedRmsd, setSelectedRmsd] = usePersistentState<number>(modalId, "selectedRmsd", 3.5, true);
     const dispatch = useDispatch();
 
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod);
@@ -160,6 +161,7 @@ export const MoorhenPepflipsDifferenceMap = (props: moorhen.CollectedProps) => {
             fetchData={fetchCardData}
             getCards={getCards}
             extraControlFormValue={selectedRmsd}
+            menuId="PEPTIDE_FLIPS"
             extraControlForm={
                 <Col style={{ justifyContent: "center", alignContent: "center", alignItems: "center", display: "flex" }}>
                     <Form.Group controlId="rmsdSlider" style={{ margin: "0.5rem", width: "100%" }}>
@@ -168,6 +170,8 @@ export const MoorhenPepflipsDifferenceMap = (props: moorhen.CollectedProps) => {
                             maxVal={7.0}
                             logScale={false}
                             sliderTitle="RMSD"
+                            stepButtons={0.5}
+                            decimalPlaces={1}
                             externalValue={selectedRmsd}
                             setExternalValue={(value) => setSelectedRmsd(value)}
                         />

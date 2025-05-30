@@ -103,6 +103,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
     } = props;
 
     const precision = Math.pow(10, - decimalPlaces);
+    
     const getStepButtons = () => {
         if (props.stepButtons) {
             if (logScale) {
@@ -115,7 +116,9 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
             if (logScale) {
                 return (Math.log10(maxVal) - Math.log10(minVal)) / 100;
             } else {
-                return (maxVal - minVal) / 100;
+                const hundredStep = (maxVal - minVal) / 100;
+                return hundredStep < precision ? precision : hundredStep;
+
             }
         }
     }

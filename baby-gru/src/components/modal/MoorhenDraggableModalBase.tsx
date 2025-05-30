@@ -112,16 +112,16 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         overflowY= "auto",
         overflowX= "hidden",
         lockAspectRatio= false,
-        maxHeight= 100,
-        maxWidth= 100,
+        maxHeight= 600,
+        maxWidth= 600,
         minHeight= 100,
         minWidth= 100,
         enforceMaxBodyDimensions= true,
     } = {...props};
 
     const [resizableSize, setResizableSize] = useState<{ width: number; height: number }>({
-        width: props.initialWidth || 300,
-        height: props.initialHeight || 200,
+        width: props.initialWidth || minWidth,
+        height: props.initialHeight || 400,
     });
 
     const dispatch = useDispatch();
@@ -230,6 +230,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
             const width = draggableNodeRef.current?.clientWidth;
             const height = draggableNodeRef.current?.clientHeight;
             props.onResize(evt, direction, ref, delta, {width, height});
+            console.log("resizing", width, height);
         }
     };
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Form, Button } from "react-bootstrap";
-import { useMenuStateMemory } from "../../store/menusSlice";
+import { usePersistentState } from "../../store/menusSlice";
 import Stack from '@mui/material/Stack';
 import { MoorhenPreciseInput } from "./MoorhenPreciseInput";
 import MoorhenColourPicker from "./MoorhenColourPicker";
@@ -18,7 +18,7 @@ export default function MoorhenGradientPicker(props: MoorhenGradientPickerType) 
 
     const [nOfPoints, setnOfPoints] = useState<number>(colourTable.length);
         const [internalColourTable, setInternalColourTable] = useState<[number, [number, number, number]][]>(colourTable);
-        const [selectedPreset, setSelectedPreset] = useMenuStateMemory(menu, "gradientPresets", "red-white-blue", true);
+        const [selectedPreset, setSelectedPreset] = usePersistentState(menu, "gradientPresets", "red-white-blue", true);
         
         const updateExternalColourTable = () => {
             if (internalColourTable !== colourTable) {

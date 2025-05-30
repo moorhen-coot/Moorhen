@@ -8,6 +8,7 @@ import annotationPlugin from 'chartjs-plugin-annotation'
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
 import { convertViewtoPx } from "../../utils/utils";
+import { usePersistentState } from "../../store/menusSlice";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
@@ -23,21 +24,25 @@ type ValidationChartProps = {
 }
 
 export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChartProps>((props, chartRef) => {
-    const defaultProps = {
-        filterMapFunction: (arg0: moorhen.Map) => {return true}, extraControlForm: null, extraControlFormValue: null, enableChainSelect: true
-    }
+
     const {
-        filterMapFunction, extraControlForm, extraControlFormValue, enableChainSelect
-    } = { ...defaultProps, ...props }
+        filterMapFunction = (arg0: moorhen.Map) => {return true}, 
+        extraControlForm = null, 
+        extraControlFormValue = null,
+        enableChainSelect = true,
+        chartId
+    } =  props
 
     const chainSelectRef = useRef<null | HTMLSelectElement>(null);
     const mapSelectRef = useRef<null | HTMLSelectElement>(null);
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
 
     const [plotData, setPlotData] = useState(null)
-    const [selectedModel, setSelectedModel] = useState<number | null>(null)
-    const [selectedMap, setSelectedMap] = useState<number | null>(null)
-    const [selectedChain, setSelectedChain] = useState<string | null>(null)
+
+    
+    const [selectedModel, setSelectedModel] = usePersistentState<number | null>(chartId, 'selectedModel', -99999, true)
+    const [selectedMap, setSelectedMap] = usePersistentState<number | null>(chartId, 'selectedMap', -99999, true)
+    const [selectedChain, setSelectedChain] = usePersistentState<string | null>(chartId, 'selectedChain', null, true)
 
     const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo)
     const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch)
@@ -126,15 +131,15 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
                     <Form.Group>
                         <Row style={{ padding:'0', margin: '0' }}>
                             <Col>
-                                <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef}/>
+                                <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef} defaultValue={selectedModel}/>
                             </Col>
                             {enableChainSelect &&
                             <Col>
-                                <MoorhenChainSelect width="" onChange={handleChainChange} molecules={molecules} selectedCoordMolNo={selectedModel} allowedTypes={[1, 2]} ref={chainSelectRef}/>
+                                <MoorhenChainSelect width="" onChange={handleChainChange} molecules={molecules} selectedCoordMolNo={selectedModel} allowedTypes={[1, 2]} ref={chainSelectRef} defaultValue={selectedChain}/>
                             </Col>
                             }
                             <Col>
-                                <MoorhenMapSelect width="" onChange={handleMapChange} maps={maps} ref={mapSelectRef} filterFunction={filterMapFunction}/>
+                                <MoorhenMapSelect width="" onChange={handleMapChange} maps={maps} ref={mapSelectRef} filterFunction={filterMapFunction} defaultValue={selectedMap}/>
                             </Col>
                             {extraControlForm}
                         </Row>

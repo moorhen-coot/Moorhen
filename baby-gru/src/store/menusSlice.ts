@@ -40,7 +40,7 @@ const menusSlice = createSlice({
  * @param defaultValue - The default value if the setting is not found in the Redux store.
  * @returns The value of the setting from the Redux store or the default value.
  */
-export const useMenuMemory = <T>(menu: string, key: string, defaultValue: T) => {
+export const usePersistent = <T>(menu: string, key: string, defaultValue: T) => {
     const storedValue: T = useSelector((state: moorhen.State) => state.menus.settings[menu]?.[key]) ?? defaultValue;
     return storedValue as T;
 };
@@ -53,9 +53,9 @@ export const useMenuMemory = <T>(menu: string, key: string, defaultValue: T) => 
  * @param autoUpdate - If true, the Redux store will be updated automatically when the value changes.
  * @returns A tuple containing the current value and a function to update it.
  */
-export const useMenuStateMemory = <T>(menu: string, key: string, defaultValue: T, autoUpdate: boolean = false) => {
+export const usePersistentState = <T>(menu: string, key: string, defaultValue: T, autoUpdate: boolean = false) => {
     const dispatch = useDispatch();
-    const storeValue: T = useMenuMemory(menu, key, defaultValue);
+    const storeValue: T = usePersistent(menu, key, defaultValue);
     
     const [value, setValue] = useState<T>(storeValue);   
     const setStoreValue = (newValue: T) => {
@@ -75,7 +75,7 @@ export const useMenuStateMemory = <T>(menu: string, key: string, defaultValue: T
  * @param menu - The name of the menu.
  * @param data - An array of key-value pairs to be stored.
  */
-export const dispatchMenuMemory = (dispatch: Dispatch<any>, menu: string, data: { key: string; value: any }[]) => {
+export const dispatchPersistentStates = (dispatch: Dispatch<any>, menu: string, data: { key: string; value: any }[]) => {
     data.forEach(item => {
         dispatch(setMenuSetting({ menu, key: item.key, value: item.value }));
     });

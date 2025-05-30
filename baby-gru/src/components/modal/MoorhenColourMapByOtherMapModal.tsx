@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useMenuMemory, useMenuStateMemory, dispatchMenuMemory } from "../../store/menusSlice";
+import { usePersistent, usePersistentState, dispatchPersistentStates } from "../../store/menusSlice";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
@@ -30,11 +30,11 @@ export const MoorhenColourMapByOtherMapModal = (props: {
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
-    const [minMaxValue, setMinMaxValue] = useMenuStateMemory<[number, number]>(menu, "minMaxValue", [-1, 1]);
-    const map1 = useMenuMemory<number>(menu, "map1", -999999);
-    const map2 = useMenuMemory<number>(menu, "map2", -999999);
+    const [minMaxValue, setMinMaxValue] = usePersistentState<[number, number]>(menu, "minMaxValue", [-1, 1]);
+    const map1 = usePersistent<number>(menu, "map1", -999999);
+    const map2 = usePersistent<number>(menu, "map2", -999999);
 
-    const [colourTable, setColourTable] = useMenuStateMemory<[number, [number, number, number]][]>(
+    const [colourTable, setColourTable] = usePersistentState<[number, [number, number, number]][]>(
         menu,
         "colourTable",
         (gradientPresets["Red White Blue"] as [number, [number, number, number]][]),
@@ -44,7 +44,7 @@ export const MoorhenColourMapByOtherMapModal = (props: {
     const mapSelectRef_1 = useRef<null | HTMLSelectElement>(null);
     const mapSelectRef_2 = useRef<null | HTMLSelectElement>(null);
 
-    const [locRes, setLocRes] = useMenuStateMemory<boolean>(menu, "locRes", false, true);
+    const [locRes, setLocRes] = usePersistentState<boolean>(menu, "locRes", false, true);
 
     const handleDefaultColour = (_evt) => {
         if (!mapSelectRef_1.current || !mapSelectRef_1.current.value) {
@@ -62,7 +62,7 @@ export const MoorhenColourMapByOtherMapModal = (props: {
     };
 
     const handleApply = () => {
-        dispatchMenuMemory(dispatch, menu, [
+        dispatchPersistentStates(dispatch, menu, [
             { key: "minMaxValue", value: minMaxValue },
             { key: "map1", value: mapSelectRef_1.current.value },
             { key: "map2", value: mapSelectRef_2.current.value },
