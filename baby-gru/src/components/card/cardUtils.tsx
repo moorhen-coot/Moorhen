@@ -15,11 +15,11 @@ export const getNameLabel = (item: moorhen.Molecule | moorhen.Map, maxLength: nu
                 }
                 >
                 <div>
-                    {`#${item.molNo} ${item.name.slice(0,maxLength)}...`}
+                    {`#${item.molNo}\u00A0${item.name.slice(0,maxLength)}...`}
                 </div>
                 </OverlayTrigger>
     }
-    return `#${item.molNo} ${item.name}`
+    return `#${item.molNo}\u00A0${item.name}`
 }
 
 

@@ -260,19 +260,18 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
         const labelLength = props.map.name.length;
 
         if (props.modalWidth < (buttonToShow*50 + convertRemToPx(18) +120) && labelLength > 16) {
-            labelSpace = convertRemToPx(15);
+            labelSpace = convertRemToPx(18);
             actionButtonSpace = props.modalWidth - labelSpace -120;
         }
         else {
             actionButtonSpace = buttonToShow * 50;
-            labelSpace = props.modalWidth - actionButtonSpace -120;
+            labelSpace = props.modalWidth - actionButtonSpace - 100;
         }
 
         labelSpace = convertPxToRem(labelSpace)*1.25;
         return [labelSpace, actionButtonSpace];
     }
     const [labelSpace, actionButtonSpace] = getLabelAndActionButtonSpace();
-
     
     return (
         <Card
