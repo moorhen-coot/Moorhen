@@ -7,7 +7,6 @@ A JavaScript molecular graphics program
 ### For 0.22.0
 - [ ] Remove glRef method usage.
    - [ ] Eliminate glRef usage.
-   - [ ] Fix that glRef seems not to be being passed to outside app any more, or maybe is not valid at all outside of MoorhenWebMG?
    - [x] Fix custom object opacity not working.
    - [x] Fix env. labels flickering.
    - [x] Fix orientation not being correct if doing fast repeat of "space" next residue.
