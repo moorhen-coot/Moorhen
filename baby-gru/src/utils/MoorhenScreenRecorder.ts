@@ -5,6 +5,7 @@ import { webGL } from "../types/mgWebGL.js";
 import { moorhen } from '../types/moorhen.js';
 import store from '../store/MoorhenReduxStore'
 import { setOrigin } from "../store/glRefSlice"
+import { drawOn2DContext } from "../components/webMG/Moorhen2DOverlay"
 
 export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
 
@@ -140,6 +141,7 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
         }
 
         ctx.putImageData(imgData, 0,0);
+        drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,[],[])
 
         let link: any = document.getElementById('download_image_link');
         if (!link) {
