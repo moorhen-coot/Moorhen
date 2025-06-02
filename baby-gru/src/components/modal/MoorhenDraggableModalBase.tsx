@@ -119,10 +119,27 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         enforceMaxBodyDimensions= true,
     } = {...props};
 
-    const [resizableSize, setResizableSize] = useState<{ width: number; height: number }>({
-        width: props.initialWidth || minWidth,
-        height: props.initialHeight || 400,
-    });
+// Measure the body size to set the initial size of the modal
+    const bodyRef = useRef<HTMLDivElement>(null);
+    const [bodySize, setBodySize] = useState<{width: number, height: number}>({width: 0, height: 0});
+    const [measured, setMeasured] = useState((props.initialWidth && props.initialHeight)? true : false);
+    useLayoutEffect(() => {
+    if (bodyRef.current) {
+        setBodySize({
+            width: bodyRef.current.offsetWidth,
+            height: bodyRef.current.offsetHeight,
+        });
+        setMeasured(true);
+        console.log("measured body size", bodyRef.current.offsetWidth, bodyRef.current.offsetHeight);
+    }
+    }, [measured, props.body]);
+
+    const resizableSize ={
+        width: props.initialWidth || bodySize.width > minWidth ? bodySize.width < maxWidth ? bodySize.width : maxWidth : minWidth,
+        height: props.initialHeight || bodySize.height > minHeight ? bodySize.height < maxHeight ? bodySize.height : maxHeight :minHeight,
+    };
+
+    
 
     const dispatch = useDispatch();
     const focusHierarchy = useSelector((state: moorhen.State) => state.modals.focusHierarchy);
@@ -230,11 +247,30 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
             const width = draggableNodeRef.current?.clientWidth;
             const height = draggableNodeRef.current?.clientHeight;
             props.onResize(evt, direction, ref, delta, {width, height});
-            console.log("resizing", width, height);
         }
     };
 
+    if (!measured) {
     return (
+        <div
+            ref={bodyRef}
+            style={{
+                visibility: "hidden",
+                position: "absolute",
+                left: -9999,
+                top: 0,
+                height: "auto",
+                width: "auto",
+                pointerEvents: "none",
+                zIndex: -1,
+            }}
+        >
+            {props.body}
+        </div> 
+        ) }
+    
+    else {
+        return (
         <Draggable
             nodeRef={draggableNodeRef}
             handle={`.${handleClassName}`}
@@ -322,7 +358,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                             {enforceMaxBodyDimensions ? (
                                 <div style={enforceMaxBodyDimensions ? { maxHeight: maxHeight, maxWidth: maxWidth } : {}}>{props.body}</div>
                             ) : (
-                                props.body
+                            props.body
                             )}
                         </div>
                     </ResizableBox>
@@ -334,4 +370,4 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
             </Card>
         </Draggable>
     );
-};
+}};

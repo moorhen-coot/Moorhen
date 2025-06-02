@@ -14,7 +14,6 @@ export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const maps = useSelector((state: moorhen.State) => state.maps)
-    const [reset, setReset] = useState<boolean>(false)
     
     const [collapsedCards, setCollapsedCards] = useState<number[]>([])
 
@@ -57,14 +56,8 @@ export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {
                 {...props}
             />
         ));
-    }, [reset, modalWidth, collapsedCards, collapseAll, maps]);
+    }, [modalWidth, collapsedCards, collapseAll, maps]);
 
-
-    useEffect(function redrawNewMap() {
-        if (collapseAll === false) {
-            setReset(!reset)} //switch that force reset if collapse all is not going to change state
-        setCollapseAll(false)          
-    }, [maps])
     
     const sortedDisplayData =  useMemo(() => {
         return [...displayData].sort((a, b) => (a.props.index > b.props.index) ? 1 : ((b.props.index > a.props.index) ? -1 : 0));
@@ -73,11 +66,13 @@ export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {
 
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.MAPS}
-                left={width - (convertRemToPx(55) + 100)}
-                top={height / 2}
+                left={width - (convertRemToPx(55))}
+                top={height - (convertViewtoPx(90, height))}
+                initialHeight={convertViewtoPx(90, height)}
+                initialWidth={convertRemToPx(55)}
                 minHeight={convertViewtoPx(10, height)}
                 minWidth={convertRemToPx(28)}
-                maxHeight={!collapseAll ? convertViewtoPx(90, height) : maps.length*40}
+                maxHeight={!collapseAll ? convertViewtoPx(90, height) : maps.length*50}
                 maxWidth={convertRemToPx(55)}
                 onResize={(evt, ref, direction, delta, size) => {
                     setModalWidth(size.width)
