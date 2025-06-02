@@ -30,7 +30,9 @@ export const MoorhenColourMapByOtherMapModal = (props: {
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
+    //const [minMaxValue, setMinMaxValue] = useState<number> ([-1, 1])
     const [minMaxValue, setMinMaxValue] = usePersistentState<[number, number]>(menu, "minMaxValue", [-1, 1]);
+
     const map1 = usePersistent<number>(menu, "map1", -999999);
     const map2 = usePersistent<number>(menu, "map2", -999999);
 
@@ -43,8 +45,6 @@ export const MoorhenColourMapByOtherMapModal = (props: {
 
     const mapSelectRef_1 = useRef<null | HTMLSelectElement>(null);
     const mapSelectRef_2 = useRef<null | HTMLSelectElement>(null);
-
-    const [locRes, setLocRes] = usePersistentState<boolean>(menu, "locRes", false, true);
 
     const handleDefaultColour = (_evt) => {
         if (!mapSelectRef_1.current || !mapSelectRef_1.current.value) {
@@ -115,10 +115,6 @@ export const MoorhenColourMapByOtherMapModal = (props: {
         const max = Number((histogram.base + histogram.bin_width * histogram.counts.length).toPrecision(3));
         console.log("min", min, "max", max);
         setMinMaxValue([min, max]);
-    };
-
-    const defaultValues = () => {
-        setMinMaxValue(locRes ? [2, 6] : [-4, 4]);
     };
 
     const getHistogram = async () => {
@@ -226,15 +222,6 @@ export const MoorhenColourMapByOtherMapModal = (props: {
             <Stack direction="column" style={{ margin: "0.5rem" }} gap={0}>
                 <MoorhenMapSelect maps={maps} ref={mapSelectRef_1} label="Colour this map..." defaultValue={map1 || null} />                
                     <MoorhenMapSelect maps={maps} ref={mapSelectRef_2} label="By this map..." defaultValue={map2 || null} />
-                    <span style={{ marginTop: "0rem", alignItems: "center", display: "flex" }}>
-                    <Checkbox
-                        checked={locRes}
-                        onChange={(evt) => {
-                            setLocRes(evt.target.checked);
-                        }}
-                    />
-                    Local Resolution
-                </span>
             </Stack>
 
             <Button variant="secondary" onClick={handleDefaultColour} style={{ marginLeft: "0.5rem" }}>
@@ -268,7 +255,7 @@ export const MoorhenColourMapByOtherMapModal = (props: {
                 })}
                 <MoorhenPreciseInput
                     value={minMaxValue[1]}
-                    minMax={locRes ? [1.0, 8.0] : [-4.0, 4.0]}
+                    minMax={[-10.0, 10.0]}
                     decimalDigits={2}
                     type="number"
                     setValue={(newVal) => {
@@ -282,7 +269,7 @@ export const MoorhenColourMapByOtherMapModal = (props: {
                     Apply Colour Gradient
                 </Button>
             <Stack direction="row" justifyContent="center" style={{ marginTop: "0.5rem" }}>
-                <Button variant="secondary" onClick={defaultValues} style={{ marginLeft: "0.5rem" }}>
+                <Button variant="secondary" onClick={() => setMinMaxValue([-1,1])} style={{ marginLeft: "0.5rem" }}>
                     Default values
                 </Button>
                 <Button variant="secondary" onClick={guessValues} style={{ marginLeft: "0.5rem" }}>
