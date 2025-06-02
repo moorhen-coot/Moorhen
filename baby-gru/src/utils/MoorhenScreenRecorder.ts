@@ -14,10 +14,10 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
     canvasRef: React.RefObject<HTMLCanvasElement>;
     _isRecording: boolean;
 
-    constructor(glRef: React.RefObject<webGL.MGWebGL>){
+    constructor(glRef: React.RefObject<webGL.MGWebGL>, canvasRef:React.RefObject<HTMLCanvasElement>){
         this.glRef = glRef
         this.chunks = [];
-        this.canvasRef = this.glRef.current.getCanvasRef()
+        this.canvasRef = canvasRef
         const stream = this.canvasRef.current.captureStream(30)
 
         let options = {

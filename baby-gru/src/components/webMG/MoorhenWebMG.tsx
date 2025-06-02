@@ -169,7 +169,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function') {
-            props.videoRecorderRef.current = new MoorhenScreenRecorder(glRef)
+            props.videoRecorderRef.current = new MoorhenScreenRecorder(glRef, getCanvasRef())
         }
     }, [])
 
@@ -607,6 +607,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         )
     }, [molecules, activeMap, hoveredAtom, props.viewOnly, shortCuts, showShortcutToast, shortcutOnHoveredAtom, isChangingRotamers, isRotatingAtoms, isDraggingAtoms])
 
+
+    const getCanvasRef = (() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            return glRef.current.getCanvasRef()
+        }
+        return null
+    })
 
     const onZoomChanged = (newZoom => {
         dispatch(setZoom(newZoom))
