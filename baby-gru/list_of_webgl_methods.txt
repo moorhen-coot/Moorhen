@@ -2,7 +2,3 @@
 
 glRef.current.getCanvasRef                         src/utils/MoorhenScreenRecorder.ts
 glRef.current.getPixelData                         src/utils/MoorhenScreenRecorder.ts
-
-#And these are used in MoorhenVercelBuild
-glRef.current.origin
-glRef.current.background_colour
