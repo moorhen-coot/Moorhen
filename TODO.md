@@ -7,6 +7,7 @@ A JavaScript molecular graphics program
 ### For 0.22.0
 - [ ] Remove glRef method usage.
    - [ ] Eliminate glRef usage.
+   - [ ] MrParse sequences do not redraw if component closed and re-opened.
    - [x] Fix custom object opacity not working.
    - [x] Fix env. labels flickering.
    - [x] Fix orientation not being correct if doing fast repeat of "space" next residue.
