@@ -501,6 +501,8 @@ export namespace moorhen {
     }
 
     interface Map {
+        getVerticesHistogram(map2:number, nBins?: number): Promise<libcootApi.HistogramInfoJS>;
+        setMapWeight(weight?: number): Promise<WorkerResponse>;
         toggleOriginLock(val?: boolean): void;
         isOriginLocked: boolean;
         getHistogram(nBins?: number, zoomFactor?: number): Promise<libcootApi.HistogramInfoJS>;
@@ -1144,6 +1146,9 @@ export namespace moorhen {
             svgPathOverlayList: any[]
             fracPathOverlayList: any[]
             callBacks: any[]
+        }
+        menus: {
+            settings: Record<string, Record<string, any>>
         }
     }
 

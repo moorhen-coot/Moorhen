@@ -7,7 +7,7 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect";
-import { MoorhenSlider } from "../misc/MoorhenSlider";
+import { MoorhenSlider } from "../inputs/MoorhenSlider";
 
 export const MoorhenMinimizeEnergyMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
@@ -132,52 +132,42 @@ export const MoorhenMinimizeEnergyMenuItem = (props: {
         </InputGroup>
         <div style={{display: useRamaRestraints ? "" : "none"}}>
         <MoorhenSlider
-            ref={ramaWeightSliderRef}
             isDisabled={!useRamaRestraints}
             sliderTitle="Ramachandran restraints weight"
             minVal={0.1}
             maxVal={100}
             decimalPlaces={2}
             logScale={true}
-            allowFloats={true}
-            initialValue={ramaWeight}
             externalValue={ramaWeight}
-            setExternalValue={setRamaWeight}/>
+            setExternalValue={(value) => setRamaWeight(value)}/>
         </div>
         <div style={{display: useTorsionRestraints ? "" : "none"}}>
         <MoorhenSlider
-            ref={torsionWeightSliderRef}
             isDisabled={!useTorsionRestraints}
             sliderTitle="Torsion restraints weight"
             minVal={0.1}
             maxVal={10}
             decimalPlaces={2}
             logScale={true}
-            allowFloats={true}
-            initialValue={torsionWeight}
             externalValue={torsionWeight}
-            setExternalValue={setTorsionWeight}/>            
+            setExternalValue={(value) => setTorsionWeight(value)}/>            
         </div>
         <MoorhenSlider
-            ref={nIterationsSliderRef}
             sliderTitle="Number of iterations"
             minVal={1}
             maxVal={100}
             logScale={false}
-            allowFloats={false}
-            initialValue={nIterations}
+            decimalPlaces={0}
             externalValue={nIterations}
-            setExternalValue={setNIterations}/>
+            setExternalValue={(value) => setNIterations(value)}/>
         <MoorhenSlider
-            ref={ncycSliderRef}
             sliderTitle="Number of cycles"
             minVal={1}
             maxVal={100}
             logScale={false}
-            allowFloats={false}
-            initialValue={ncyc}
+            decimalPlaces={0}
             externalValue={ncyc}
-            setExternalValue={setNcyc}/>
+            setExternalValue={(value) => setNcyc(value)}/>
         <Button variant="primary" onClick={minimizeEnergy}>
             OK
         </Button>

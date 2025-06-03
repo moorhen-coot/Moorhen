@@ -36,5 +36,6 @@ export const MoorhenLigandValidation = (props: moorhen.CollectedProps) => {
                 enableMapSelect={false}
                 fetchData={fetchCardData}
                 getCards={getCards}
+                menuId="ligand-validation"
             />
 }
