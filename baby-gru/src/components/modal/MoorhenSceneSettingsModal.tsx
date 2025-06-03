@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 import { useDispatch, useSelector } from "react-redux";
 import { convertRemToPx, convertViewtoPx, rgbToHex } from "../../utils/utils";
-import { MoorhenSlider } from "../misc/MoorhenSlider";
+import { MoorhenSlider } from "../inputs/MoorhenSlider";
 import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
 import { Button, Form, InputGroup, Stack } from "react-bootstrap";
 import { 
@@ -42,40 +42,46 @@ const EdgeDetectPanel = (props: {}) => {
                 isDisabled={!doEdgeDetect}
                 minVal={0}
                 maxVal={4}
-                allowFloats={false}
                 logScale={false}
                 sliderTitle="Depth scale"
-                initialValue={edgeDetectDepthScale}
                 externalValue={edgeDetectDepthScale}
-                setExternalValue={(val: number) => dispatch(setEdgeDetectDepthScale(val))}/>
+                setExternalValue={(val) => dispatch(setEdgeDetectDepthScale(val))}
+                stepButtons={1}
+                decimalPlaces={0}
+                />
         <MoorhenSlider
                 isDisabled={!doEdgeDetect}
                 minVal={0}
                 maxVal={4}
-                allowFloats={false}
                 logScale={false}
                 sliderTitle="Normal scale"
-                initialValue={edgeDetectNormalScale}
                 externalValue={edgeDetectNormalScale}
-                setExternalValue={(val: number) => dispatch(setEdgeDetectNormalScale(val))}/>
+                setExternalValue={(val) => dispatch(setEdgeDetectNormalScale(val))}
+                stepButtons={1}
+                decimalPlaces={0}
+                />
         <MoorhenSlider
                 isDisabled={!doEdgeDetect}
                 minVal={0.1}
                 maxVal={4.0}
                 logScale={false}
                 sliderTitle="Depth threshold"
-                initialValue={edgeDetectDepthThreshold}
                 externalValue={edgeDetectDepthThreshold}
-                setExternalValue={(val: number) => dispatch(setEdgeDetectDepthThreshold(val))}/>
+                setExternalValue={(val) => dispatch(setEdgeDetectDepthThreshold(val))}
+                stepButtons={0.1}
+                decimalPlaces={1}
+                />
         <MoorhenSlider
                 isDisabled={!doEdgeDetect}
                 minVal={0.1}
                 maxVal={1.0}
                 logScale={false}
                 sliderTitle="Normal threshold"
-                initialValue={edgeDetectNormalThreshold}
                 externalValue={edgeDetectNormalThreshold}
-                setExternalValue={(val: number) => dispatch(setEdgeDetectNormalThreshold(val))}/>
+                setExternalValue={(val) => dispatch(setEdgeDetectNormalThreshold(val))}
+                stepButtons={0.1}
+                decimalPlaces={1}
+                />
     </div>
 }
 
@@ -98,15 +104,19 @@ const OcclusionPanel = (props: {}) => {
         <MoorhenSlider minVal={0.0} maxVal={2.0} logScale={false}
             isDisabled={!doSSAO}
             sliderTitle="Occlusion radius"
-            initialValue={ssaoRadius}
             externalValue={ssaoRadius}
-            setExternalValue={(val: number) => dispatch(setSsaoRadius(val))} />
+            setExternalValue={(val) => dispatch(setSsaoRadius(val))}
+            stepButtons={0.1}
+            decimalPlaces={1}
+            />
         <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
             isDisabled={!doSSAO}
             sliderTitle="Occlusion effect"
-            initialValue={ssaoBias}
             externalValue={ssaoBias}
-            setExternalValue={(val: number) => dispatch(setSsaoBias(val))} />
+            setExternalValue={(val) => dispatch(setSsaoBias(val))}
+            stepButtons={0.1}
+            decimalPlaces={1}
+            />
     </div>
 }
 
@@ -198,19 +208,22 @@ const DepthBlurPanel = (props: {
                 maxVal={0.6}
                 logScale={false}
                 sliderTitle="Blur depth"
-                initialValue={depthBlurDepth}
                 externalValue={depthBlurDepth}
-                setExternalValue={(val: number) => dispatch(setDepthBlurDepth(val))}/>
+                setExternalValue={(val) => dispatch(setDepthBlurDepth(val))}
+                stepButtons={0.01}
+                decimalPlaces={3}
+                />
             <MoorhenSlider
                 isDisabled={!useOffScreenBuffers}
                 minVal={2}
                 maxVal={16}
                 logScale={false}
                 sliderTitle="Blur radius"
-                initialValue={depthBlurRadius}
                 externalValue={depthBlurRadius}
-                allowFloats={false}
-                setExternalValue={(val: number) => dispatch(setDepthBlurRadius(val))}/>
+                setExternalValue={(val) => dispatch(setDepthBlurRadius(val))}
+                stepButtons={1}
+                decimalPlaces={0}
+                />
     </div>
 }
 
@@ -238,40 +251,44 @@ const ClipFogPanel = (props: {
     return <div className="scene-settings-panel-flex-between">
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Front clip"
-            initialValue={props.glRef.current.fogClipOffset + props.glRef.current.gl_clipPlane0[3]}
             externalValue={zclipFront}
-            setExternalValue={(newValue: number) => {
+            setExternalValue={(newValue) => {
                 props.glRef.current.gl_clipPlane0[3] = newValue - props.glRef.current.fogClipOffset
                 props.glRef.current.drawScene()
                 setZclipFront(newValue)
-            }} />
+            }}
+            decimalPlaces={1}
+            />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Back clip"
-            initialValue={props.glRef.current.gl_clipPlane1[3] - props.glRef.current.fogClipOffset}
             externalValue={zclipBack}
-            setExternalValue={(newValue: number) => {
+            setExternalValue={(newValue) => {
                 props.glRef.current.gl_clipPlane1[3] = props.glRef.current.fogClipOffset + newValue
                 props.glRef.current.drawScene()
                 setZclipBack(newValue)
-            }} />
+            }}
+            decimalPlaces={1}
+            />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Front zFog"
-            initialValue={props.glRef.current.fogClipOffset - props.glRef.current.gl_fog_start}
             externalValue={zfogFront}
-            setExternalValue={(newValue: number) => {
+            setExternalValue={(newValue) => {
                 props.glRef.current.gl_fog_start = props.glRef.current.fogClipOffset - newValue
                 props.glRef.current.drawScene()
                 setZfogFront(newValue)
-            }} />
+            }}
+            decimalPlaces={1}
+            />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Back zFog"
             externalValue={zfogBack}
-            initialValue={props.glRef.current.gl_fog_end - props.glRef.current.fogClipOffset}
-            setExternalValue={(newValue: number) => {
+            setExternalValue={(newValue) => {
                 props.glRef.current.gl_fog_end = newValue + props.glRef.current.fogClipOffset
                 props.glRef.current.drawScene()
                 setZfogBack(newValue)
-            }} />
+            }}
+            decimalPlaces={1}
+            />
         <InputGroup style={{ paddingLeft: '0.1rem', paddingBottom: '0.5rem' }}>
             <Form.Check
                 type="switch"
@@ -333,40 +350,48 @@ const LightingPanel = (props: {
     return <div className="scene-settings-panel">
         <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
             sliderTitle="Diffuse"
-            initialValue={props.glRef.current.light_colours_diffuse[0]}
             externalValue={props.glRef.current.light_colours_diffuse[0]}
-            setExternalValue={(newValue: number) => {
+            setExternalValue={(newValue) => {
                 props.glRef.current.light_colours_diffuse = [newValue, newValue, newValue, 1.0]
                 props.glRef.current.drawScene()
                 setDiffuse([newValue, newValue, newValue, 1.0])
-            }} />
+            }}
+            stepButtons={0.01}
+            decimalPlaces={2}
+            />
         <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
             sliderTitle="Specular"
-            initialValue={props.glRef.current.light_colours_specular[0]}
             externalValue={props.glRef.current.light_colours_specular[0]}
-            setExternalValue={(newValue: number) => {
+            setExternalValue={(newValue) => {
                 props.glRef.current.light_colours_specular = [newValue, newValue, newValue, 1.0]
                 props.glRef.current.drawScene()
                 setSpecular([newValue, newValue, newValue, 1.0])
-            }} />
+            }}
+            stepButtons={0.01}
+            decimalPlaces={2}
+            />
         <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
             sliderTitle="Ambient"
-            initialValue={props.glRef.current.light_colours_ambient[0]}
             externalValue={props.glRef.current.light_colours_ambient[0]}
-            setExternalValue={(newValue: number) => {
+            setExternalValue={(newValue) => {
                 props.glRef.current.light_colours_ambient = [newValue, newValue, newValue, 1.0]
                 props.glRef.current.drawScene()
                 setAmbient([newValue, newValue, newValue, 1.0])
-            }} />
+            }}
+            stepButtons={0.01}
+            decimalPlaces={2}
+            />
         <MoorhenSlider minVal={1.0} maxVal={600.0} logScale={false}
             sliderTitle="Specular power"
-            initialValue={props.glRef.current.specularPower}
             externalValue={props.glRef.current.specularPower}
-            setExternalValue={(newValue: number) => {
+            setExternalValue={(newValue) => {
                 props.glRef.current.specularPower = newValue
                 props.glRef.current.drawScene()
                 setSpecularPower(newValue)
-            }} />
+            }}
+            stepButtons={1}
+            decimalPlaces={0}
+            />
         <MoorhenLightPosition
             initialValue={props.glRef.current.light_positions}
             externalValue={props.glRef.current.light_positions}

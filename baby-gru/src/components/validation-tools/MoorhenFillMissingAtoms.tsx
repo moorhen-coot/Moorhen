@@ -130,5 +130,6 @@ export const MoorhenFillMissingAtoms = (props: moorhen.CollectedProps) => {
                 enableMapSelect={false}
                 fetchData={fetchCardData}
                 getCards={getCards}
+                menuId='fill-missing-atoms-validation'
             />
 }

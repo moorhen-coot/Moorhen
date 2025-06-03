@@ -24,7 +24,8 @@ export const modalKeys = Object.freeze({
     QSCORE: "qscore",
     JSON_VALIDATION: "json-validation",
     MRBUMP: "mrbump",
-    MRPARSE: "mrparse"
+    MRPARSE: "mrparse",
+    COLOR_MAP_BY_MAP : "colour-map-by-map",
 })
 
 export const representationLabelMapping = Object.freeze({

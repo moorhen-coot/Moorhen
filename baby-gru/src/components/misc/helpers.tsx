@@ -12,3 +12,14 @@ export const getFirstNonZeroDigitIndex = (num: number): number | null => {
     }
     return null; 
 };
+
+export function toFixedNoZero(value: number, decimalPlaces: number): string {
+    let str = value.toFixed(decimalPlaces);
+    while (decimalPlaces > 0 && str.endsWith('0')) {
+        decimalPlaces--;
+        str = value.toFixed(decimalPlaces);
+    }
+    // Remove trailing decimal point if present (e.g., "5.")
+    if (str.endsWith('.')) str = str.slice(0, -1);
+    return str;
+}

@@ -562,10 +562,17 @@ export namespace libcootApi {
         MapIntFloat3: { new(): emscriptem.map<[number, number, number], number>};
         MapIntFloat4: { new(): emscriptem.map<[number, number, number, number], number>};
         VectorStringUInt_pair: { new(): emscriptem.vector<{ first: string, second: number }>};
+        vector_pair_double_vector_double: { new(): emscriptem.vector<{ first: double, second: emscriptem.vector<double> }>};
+        VectorDouble: { new(): emscriptem.vector<double>};
         is64bit(): boolean;
+    }
+    interface DoublePairDoubleJS {
+      first: number;
+      second: any;
     }
     interface MoleculesContainerJS {
         delete(): void;
+        set_colour_map_for_map_coloured_by_other_map(arg0: any): void;
         set_refinement_is_verbose(arg0: boolean): void;
         set_use_gemmi(arg0: boolean): void;
         get_use_gemmi(): boolean;

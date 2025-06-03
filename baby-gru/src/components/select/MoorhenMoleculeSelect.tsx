@@ -12,6 +12,7 @@ type MoorhenMoleculeSelectPropsType = {
     molecules: moorhen.Molecule[];
     onChange?: (arg0: React.ChangeEvent<HTMLSelectElement>) => void;
     filterFunction?: (arg0: moorhen.Molecule) => boolean;
+    defaultValue?: number;
 }
 
 /**
@@ -24,6 +25,7 @@ type MoorhenMoleculeSelectPropsType = {
  * @property {moorhen.Molecule[]} molecules List of molecules displayed in the selector options
  * @property {function} onChange A function that is called when the user changes the selector option
  * @property {function} filterFunction A function that takes a moorhen.Molecule as input and returns a boolean: true if the molecule is to be included in the options.
+ * @property {number} [defaultValue=-999999] The default value of the selector
  * @example
  * import { MoorhenMoleculeSelect } from "moorhen";
  * import { useRef } from "react";
@@ -41,12 +43,17 @@ type MoorhenMoleculeSelectPropsType = {
  */
 export const MoorhenMoleculeSelect = forwardRef<HTMLSelectElement, MoorhenMoleculeSelectPropsType>((props, selectRef) => {
 
-    const defaultProps = { disabled: false, height: '4rem', width: '20rem', allowAny: false, label: "Molecule", margin: '0.5rem', filterFunction: () => true }
-
     const {
-        disabled, height, width, allowAny, label, margin, filterFunction
-    } = { ...defaultProps, ...props }
-
+        disabled = false, 
+        height = '4rem', 
+        width = '20rem', 
+        allowAny = false, 
+        label = "Molecule", 
+        margin = '0.5rem', 
+        filterFunction = () => true, 
+        defaultValue = -999999
+    } = props
+    
     const getMoleculeOptions = () => {
         let moleculeOptions: JSX.Element[] = []
         
@@ -69,7 +76,7 @@ export const MoorhenMoleculeSelect = forwardRef<HTMLSelectElement, MoorhenMolecu
 
     return <Form.Group style={{ width: width, margin: margin, height:height }}>
         <Form.Label>{label}</Form.Label>
-        <FormSelect size="sm" ref={selectRef} defaultValue={-999999} disabled={disabled} onChange={(evt) => {
+        <FormSelect size="sm" ref={selectRef} defaultValue={defaultValue} disabled={disabled} onChange={(evt) => {
             props.onChange?.(evt)
             if (selectRef !== null && typeof selectRef !== 'function') {
                 selectRef.current.value = evt.target.value

@@ -1,7 +1,6 @@
 import { useEffect, useCallback, useState, useRef } from "react"
 import { Table, Container } from 'react-bootstrap';
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase"
-import { MoorhenSlider } from '../misc/MoorhenSlider'
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";

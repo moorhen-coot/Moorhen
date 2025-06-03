@@ -8,9 +8,8 @@ import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Slider from "@mui/material/Slider";
 import { clampValue } from "../misc/helpers";
+import { toFixedNoZero } from "../misc/helpers";
 import './inputs.css';
-
-
 
 type MoorhenSliderProps<T extends number | [number, number]> = {
     externalValue: T;   // value passed from parent
@@ -29,6 +28,59 @@ type MoorhenSliderProps<T extends number | [number, number]> = {
     piWaitReturn?: boolean;
     piMinMax?: [number, number]
 };
+
+/**
+ * MoorhenSlider component props
+ *
+ * @template T - The value type, either number or [number, number] for range sliders.
+ *
+ * @prop {T} externalValue
+ *   The current value of the slider, controlled by the parent. Can be a single number or a tuple for range sliders.
+ *
+ * @prop {(arg0: T) => void} setExternalValue
+ *   Callback to update the value in the parent component. Receives the new value as argument.
+ *
+ * @prop {boolean} [logScale=false]
+ *   If true, the slider operates on a logarithmic scale.
+ *
+ * @prop {number} [minVal=0]
+ *   The minimum value of the slider.
+ *
+ * @prop {number} [maxVal=100]
+ *   The maximum value of the slider.
+ *
+ * @prop {string} [sliderTitle=""]
+ *   The label/title displayed for the slider.
+ *
+ * @prop {number} [decimalPlaces=0]
+ *   Number of decimal places to display for the value.
+ *
+ * @prop {boolean} [showMinMaxVal=true]
+ *   Whether to display the min and max values below the slider.
+ *
+ * @prop {boolean} [showButtons=true]
+ *   Whether to show increment/decrement buttons next to the slider.
+ *
+ * @prop {number} [stepButtons]
+ *   If the slider is linear :The step size for the increment/decrement buttons.
+ *   If the slider is logarithmic, this is the number of steps between min and max.
+ *   If not provided, a default is calculated. so that the slider is divided into 100 steps.
+ *
+ * @prop {boolean} [isDisabled=false]
+ *   If true, disables the slider and its controls.
+ *
+ * @prop {boolean} [usePreciseInput=false]
+ *   If true, shows a precise numeric input instead of the value as text.
+ *
+ * @prop {string | number} [piWidth]
+ *   Width of the precise input field (if enabled).
+ *
+ * @prop {boolean} [piWaitReturn=false]
+ *   If true, only updates value on pressing Enter in precise input.
+ *
+ * @prop {[number, number]} [piMinMax]
+ *   Min and max values for the precise input field. Defaults to [minVal, maxVal].
+ */
 
 export const MoorhenSlider = <T extends number | [number, number]>(props: MoorhenSliderProps<T>) => {
     const isDark = useSelector(
@@ -51,7 +103,26 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
     } = props;
 
     const precision = Math.pow(10, - decimalPlaces);
-    const stepButtons = props.stepButtons ? props.stepButtons : precision
+    
+    const getStepButtons = () => {
+        if (props.stepButtons) {
+            if (logScale) {
+                return (Math.log10(maxVal) - Math.log10(minVal)) / props.stepButtons;
+            }
+            else {
+                return props.stepButtons;
+            }
+        } else {
+            if (logScale) {
+                return (Math.log10(maxVal) - Math.log10(minVal)) / 100;
+            } else {
+                const hundredStep = (maxVal - minVal) / 100;
+                return hundredStep < precision ? precision : hundredStep;
+
+            }
+        }
+    }
+    const stepButtons = getStepButtons();
 
     const log10ofT = (val: T) => { // log 10 for value of type T
         if (Array.isArray(val)) {
@@ -179,15 +250,20 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
             return <></>;
         }
 
-        const handleButton = (factor: number, currentValue: T, idx?:number): T => { //this calculate the effect of button depending on type of value
-            if (Array.isArray(currentValue)) {
-                return idx === 0
-                    ? [clampValue(currentValue[0] + factor, minVal, maxVal), currentValue[1]] as T
-                    : [currentValue[0], clampValue(currentValue[1] + factor, minVal, maxVal)] as T;
+        const handleButton = (factor: number, currentValue: T, idx?:number): T => { 
+            const linearValue = logScale ? log10ofT(currentValue) : currentValue;
+            
+            if (Array.isArray(linearValue)) {
+                if (idx === 0) {
+                    return [clampValue( logScale ? Math.pow(10, linearValue[0] + factor) : linearValue[0] + factor, minVal, maxVal), currentValue[1]] as T
+                } else {
+                    return [currentValue[0], clampValue(logScale ? Math.pow(10, linearValue[1] + factor) : linearValue[1] + factor, minVal, maxVal)] as T;
+                }
             }
 
-            return clampValue(currentValue as number + factor, minVal, maxVal) as T;
-        }
+            else if (typeof linearValue === 'number') {
+                return clampValue(logScale ? Math.pow(10, linearValue + factor) : linearValue + factor, minVal, maxVal) as T;
+        }}
         
         const buttonEffect = () => {
             setExternalValue((current) => handleButton(factor, current, idx));
@@ -270,10 +346,10 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                             width: "100%", height: "0.2rem", }}
                     >
                         <span>
-                            {minVal.toFixed(decimalPlaces)}
+                            {toFixedNoZero(minVal, decimalPlaces)}
                         </span>
                         <span>
-                            {maxVal.toFixed(decimalPlaces)}
+                            {toFixedNoZero(maxVal, decimalPlaces)}
                         </span>
                     </Stack>
                 ) : (

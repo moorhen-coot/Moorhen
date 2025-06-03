@@ -12,7 +12,6 @@ import { useSnackbar } from "notistack";
 import { InfoOutlined, LastPageOutlined } from "@mui/icons-material";
 
 export const MoorhenCarbohydrateValidationModal = (props: moorhen.CollectedProps) => {        
-    const resizeNodeRef = useRef<HTMLDivElement>();
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
@@ -51,7 +50,6 @@ export const MoorhenCarbohydrateValidationModal = (props: moorhen.CollectedProps
                 overflowX='auto'
                 headerTitle={header("Carbohydrate validation with Privateer")}
                 footer={null}
-                resizeNodeRef={resizeNodeRef}
                 body={ body({ height: '100%' }) }
                 additionalHeaderButtons={[
                     <Tooltip title={"Move to side panel"}  key={2}>

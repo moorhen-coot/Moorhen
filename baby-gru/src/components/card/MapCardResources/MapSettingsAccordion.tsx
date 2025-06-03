@@ -3,7 +3,7 @@ import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import { Stack } from "react-bootstrap";
 import { ExpandMoreOutlined, LockOutline, LockOpen } from "@mui/icons-material";
 import { ToggleButton, Form } from "react-bootstrap";
-import { MoorhenSlider } from "../../inputs/MoorhenSlider-new";
+import { MoorhenSlider } from "../../inputs/MoorhenSlider";
 import { moorhen } from "../../../types/moorhen";
 import { setMapAlpha, setMapRadius, setMapStyle } from "../../../store/mapContourSettingsSlice";
 import { useDispatch, useSelector } from "react-redux";

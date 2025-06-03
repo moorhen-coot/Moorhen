@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { MoorhenSlider } from "../misc/MoorhenSlider"
+import { MoorhenSlider } from "../inputs/MoorhenSlider"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { Form, FormSelect, InputGroup, OverlayTrigger, Tooltip } from "react-bootstrap"
 import { moorhen } from "../../types/moorhen"
@@ -146,29 +146,23 @@ export const MoorhenRefinementSettingsMenuItem = (props: {
         </InputGroup>
         <hr></hr>
         <MoorhenSlider
-            ref={ramaWeightSliderRef}
             isDisabled={!useRamaRestraints}
             sliderTitle="Ramachandran restraints weight"
             minVal={0.1}
             maxVal={100}
             decimalPlaces={2}
             logScale={true}
-            allowFloats={true}
-            initialValue={ramaWeight}
             externalValue={ramaWeight}
-            setExternalValue={setRamaWeight}/>
+            setExternalValue={(value)=> setRamaWeight(value)}/>
         <MoorhenSlider
-            ref={torsionWeightSliderRef}
             isDisabled={!useTorsionRestraints}
             sliderTitle="Torsion restraints weight"
             minVal={0.1}
             maxVal={10}
             decimalPlaces={2}
             logScale={true}
-            allowFloats={true}
-            initialValue={torsionWeight}
             externalValue={torsionWeight}
-            setExternalValue={setTorsionWeight}/>
+            setExternalValue={(value)=> setTorsionWeight(value)}/>
     </>
     : <span>Please wait</span>
     

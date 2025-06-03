@@ -200,6 +200,10 @@ export function convertRemToPx(rem: number): number {
     return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
 }
 
+export function convertPxToRem(px: number): number {
+    return +(px / parseFloat(getComputedStyle(document.documentElement).fontSize)).toPrecision(2);
+}
+
 export function convertViewtoPx(input: number, height: number): number {
     return height * (input / 100)
 }
@@ -554,6 +558,14 @@ export const hexToHsl = (hex: string): [number, number, number] => {
     }
 
     return [h, s, l];
+}
+
+export const hexToRGB = (hex: string): [number, number, number] => {
+    const hexWithoutHash = hex.replace('#', '');
+    const r = parseInt(hexWithoutHash.slice(0, 2), 16);
+    const g = parseInt(hexWithoutHash.slice(2, 4), 16);
+    const b = parseInt(hexWithoutHash.slice(4, 6), 16);
+    return [r, g, b];
 }
 
 export const createLocalStorageInstance = (name: string, empty: boolean = false): moorhen.LocalStorageInstance => {
