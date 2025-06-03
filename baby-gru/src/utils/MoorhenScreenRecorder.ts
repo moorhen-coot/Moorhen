@@ -17,7 +17,12 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
         this.chunks = [];
         this.canvasRef = this.glRef.current.canvasRef
         const stream = this.canvasRef.current.captureStream(30)
-        this.rec = new MediaRecorder(stream)
+
+        let options = {
+          videoBitsPerSecond: 25000000000 // 2.5Mbps
+        }
+
+        this.rec = new MediaRecorder(stream,options)
         this._isRecording = false;
     }
 

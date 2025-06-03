@@ -1,6 +1,7 @@
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from 'react-redux';
-import { Card, Col, Row } from "react-bootstrap";
+import { Button, Card, Col, Row } from "react-bootstrap";
+import { DownloadOutlined } from "@mui/icons-material";
 import { useCallback } from "react";
 import { guid } from "../../utils/utils";
 import { privateer } from "../../types/privateer";
@@ -36,6 +37,23 @@ export const MoorhenCarbohydrateCard = (props: {
                                 __html: carbohydrate.svg,
                             }}
                             />
+                            <Button variant="secondary" style={{width: '25%', marginRight:'0.5rem', display: 'flex', justifyContent: 'left'}}
+                             onClick={() => {
+                             let link: any = document.getElementById('download_svg_link');
+                             if (!link) {
+                                 link = document.createElement('a');
+                                 link.id = 'download_svg_link';
+                                 document.body.appendChild(link);
+                             }
+                             //I think this is a bug in the privateer SVG (perhaps)
+                             const file = new Blob([carbohydrate.svg.replace('width=100%','width="100%"')], { type: 'image/svg+xml' });
+                             link.href = URL.createObjectURL(file);
+                             console.log(carbohydrate)
+                             link.download = carbohydrate.id.replace(/\//g, '_') + ".svg";
+                             link.click()
+                            }}>
+                            <DownloadOutlined/>Download image (svg)
+                            </Button>
                         </div>
                     </Col>
                 </Row>

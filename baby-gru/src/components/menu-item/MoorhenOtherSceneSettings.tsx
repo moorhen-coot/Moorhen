@@ -5,7 +5,6 @@ import { moorhen } from "../../types/moorhen"
 import { setDoPerspectiveProjection, setDoSpin, setDrawAxes, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDrawScaleBar, setDrawEnvBOcc } from "../../store/sceneSettingsSlice"
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice"
 
-
 export const MoorhenOtherSceneSettings = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> }) => {
 
     const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering)

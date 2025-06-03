@@ -11,15 +11,22 @@ type MoorhenChainSelectPropsType = {
     molecules: moorhen.Molecule[];
     selectedCoordMolNo: number;
     onChange?: (arg0: React.ChangeEvent<HTMLSelectElement>) => void;
+    defaultValue?: string;
 }
 
 export const MoorhenChainSelect = forwardRef<HTMLSelectElement, MoorhenChainSelectPropsType>((props, selectRef) => {
 
     // props.allowedTypes refers to gemmi::PolymerType member values -> https://project-gemmi.github.io/python-api/gemmi.html#PolymerType
-    const defaultProps = { allowedTypes: [1, 2, 3, 4, 5], height: '4rem', width: '20rem', label: "Chain", margin: '0.5rem' }
+    // 1: PeptideL, 2: PeptideD, 3: DNA, 4: RNA, 5: DNARNA hybrid
+    const { 
+        allowedTypes = [1, 2, 3, 4, 5],
+        height = '4rem',
+        width = '20rem',
+        label = "Chain",
+        margin = '0.5rem',
+        defaultValue = -99999,
+    } = props
 
-    const { allowedTypes, height, width, label, margin } = { ...defaultProps, ...props }
-    
     const handleChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         props.onChange?.(evt)
         if(selectRef !== null && typeof selectRef !== 'function') selectRef.current.value = evt.target.value
@@ -35,7 +42,7 @@ export const MoorhenChainSelect = forwardRef<HTMLSelectElement, MoorhenChainSele
 
     return <Form.Group style={{ width: width, margin: margin, height: height }}>
         <Form.Label>{label}</Form.Label>
-        <FormSelect size="sm" ref={selectRef} defaultValue={''} onChange={handleChange}>
+        <FormSelect size="sm" ref={selectRef} defaultValue={defaultValue} onChange={handleChange}>
             {props.selectedCoordMolNo !== null ? getChainOptions(props.selectedCoordMolNo) :  null}
         </FormSelect>
     </Form.Group>

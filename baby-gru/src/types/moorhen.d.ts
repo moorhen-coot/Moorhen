@@ -1,6 +1,7 @@
 import React from "react"
 import { emscriptem } from "./emscriptem";
 import { gemmi } from "./gemmi";
+import { libcootApi } from "./libcoot";
 import { webGL } from "./mgWebGL";
 import { MoorhenMolecule } from "../moorhen";
 import { Store } from "@reduxjs/toolkit";
@@ -31,6 +32,7 @@ export namespace moorhen {
         modelName: string;
         cid: string;
         svg?: string;
+        flev_svg?: string;
         smiles?: string;
         chem_comp_info?: {first: string; second: string}[];
     }
@@ -76,6 +78,8 @@ export namespace moorhen {
         symmetryMatrices: any;
         updateSymmetryAtoms(): void;
         changeColourWithSymmetry: boolean;
+        atoms: any[];
+        origin: number[];
         [attr: string]: any;
     }
 
@@ -247,6 +251,7 @@ export namespace moorhen {
         redrawRepresentation: (id: string) => Promise<void>;
         getPrivateerValidation(useCache?: boolean): Promise<privateer.ResultsEntry[]>;
         getLigandSVG(resName: string, useCache?: boolean): Promise<string>;
+        getFLEVSVG(cid: string): Promise<string>;
         isValidSelection(cid: string): Promise<boolean>;
         fetchHeaderInfo(useCache?: boolean): Promise<libcootApi.headerInfoJS>;
         calculateQscore(activeMap: Map, cid?: string): Promise<libcootApi.ValidationInformationJS[]>;
@@ -489,9 +494,20 @@ export namespace moorhen {
         takeScreenShot: (fileName: string, doTransparentBackground?: boolean) => void;
     }
 
+    type mapHeaderInfo = {
+        spacegroup: string;
+        cell: libcootApi.mapCellJS;
+        resolution: number;
+    }
+
     interface Map {
+        getVerticesHistogram(map2:number, nBins?: number): Promise<libcootApi.HistogramInfoJS>;
+        setMapWeight(weight?: number): Promise<WorkerResponse>;
+        toggleOriginLock(val?: boolean): void;
+        isOriginLocked: boolean;
         getHistogram(nBins?: number, zoomFactor?: number): Promise<libcootApi.HistogramInfoJS>;
         setMapWeight(weight?: number): Promise<WorkerResponse>;
+        scaleMap(scale: number): Promise<WorkerResponse>;
         estimateMapWeight(): Promise<void>;
         fetchMapAlphaAndRedraw(): Promise<void>;
         centreOnMap(): Promise<void>;
@@ -533,6 +549,7 @@ export namespace moorhen {
         isEM: boolean;
         suggestedContourLevel: number;
         suggestedRadius: number;
+        levelRange: [number, number];
         mapCentre: [number, number, number];
         type: string;
         name: string;
@@ -554,6 +571,8 @@ export namespace moorhen {
         defaultMapColour: {r: number, g: number, b: number};
         defaultPositiveMapColour: {r: number, g: number, b: number};
         defaultNegativeMapColour: {r: number, g: number, b: number};
+        fetchHeaderInfo(): Promise<mapHeaderInfo>;
+        headerInfo: mapHeaderInfo;
     }
 
     interface backupKey {
@@ -591,6 +610,7 @@ export namespace moorhen {
         symmetryOn: boolean;
         biomolOn: boolean;
         symmetryRadius: number;
+        uniqueId: string;
     }
 
     type mapDataSession = {
@@ -650,6 +670,7 @@ export namespace moorhen {
         mapData: mapDataSession[];
         viewData: viewDataSession;
         activeMapIndex: number;
+        dataIsEmbedded: boolean;
     }
 
     interface TimeCapsule {
@@ -660,7 +681,7 @@ export namespace moorhen {
         removeBackup(key: string): Promise<void>;
         updateDataFiles(): Promise<(string | void)[]>;
         createBackup(keyString: string, sessionString: string): Promise<string>;
-        fetchSession(includeAdditionalMapData: boolean): Promise<backupSession>;
+        fetchSession(includeAdditionalMapData: boolean, embedData: boolean=true): Promise<backupSession>;
         toggleDisableBackups(): void;
         addModification: () =>  Promise<string>;
         init: () => Promise<void>;
@@ -674,8 +695,9 @@ export namespace moorhen {
             commandCentre: React.RefObject<CommandCentre>,
             timeCapsuleRef: React.RefObject<TimeCapsule>,
             glRef: React.RefObject<webGL.MGWebGL>,
-            store: Store,
-            dispatch: Dispatch<AnyAction>
+            store: ToolkitStore,
+            dispatch: Dispatch<AnyAction>,
+            fetchExternalUrl?: (uniqueId: string) => Promise<string>
         ): Promise<number>;
         static loadSessionFromArrayBuffer(
             sessionArrayBuffer: ArrayBuffer,
@@ -810,6 +832,7 @@ export namespace moorhen {
         setMakeBackups: React.Dispatch<React.SetStateAction<boolean>>;
         setContourWheelSensitivityFactor: React.Dispatch<React.SetStateAction<number>>;
         setDevMode: React.Dispatch<React.SetStateAction<boolean>>;
+        setUseGemmi: React.Dispatch<React.SetStateAction<boolean>>;
         setEnableTimeCapsule: React.Dispatch<React.SetStateAction<boolean>>;
         setShowScoresToast: React.Dispatch<React.SetStateAction<boolean>>;
         setDefaultMapSurface: React.Dispatch<React.SetStateAction<boolean>>;
@@ -881,6 +904,7 @@ export namespace moorhen {
         modificationCountBackupThreshold: number;
         animateRefine: boolean;
         devMode: boolean;
+        useGemmi: boolean;
         shortCuts: string | {
             [label: string]: Shortcut;
         };
@@ -998,6 +1022,15 @@ export namespace moorhen {
             edgeDetectNormalScale: number;
             doOutline: boolean;
             doSpin: boolean;
+            doThreeWayView: boolean;
+            multiViewRows: number;
+            multiViewColumns: number;
+            threeWayViewOrder: string;
+            specifyMultiViewRowsColumns: boolean;
+            doSideBySideStereo: boolean;
+            doMultiView: boolean;
+            doCrossEyedStereo: boolean;
+            doAnaglyphStereo: boolean;
             defaultBondSmoothness: number,
             resetClippingFogging: boolean;
             clipCap: boolean;
@@ -1008,6 +1041,7 @@ export namespace moorhen {
         };
         generalStates: {
             devMode: boolean;
+            useGemmi: boolean;
             userPreferencesMounted: boolean;
             appTitle: string;
             cootInitialized: boolean;
@@ -1090,6 +1124,32 @@ export namespace moorhen {
             slicingResults: Molecule[];
             paeFileContents: { fileContents: string; fileName: string }[];
         };
+        jsonValidation: {
+            validationJson: { sections: any, title:string};
+        };
+        mrParse: {
+            mrParseModels: Molecule[];
+            targetSequence: string;
+            afJson: any[];
+            esmJson: any[];
+            homologsJson: any[];
+            afSortField: string;
+            homologsSortField: string;
+            afSortReversed: boolean;
+            homologsSortReversed: boolean;
+            AFDisplaySettings: any;
+            HomologsDisplaySettings: any;
+        };
+        overlays: {
+            imageOverlayList: any[]
+            textOverlayList: any[]
+            svgPathOverlayList: any[]
+            fracPathOverlayList: any[]
+            callBacks: any[]
+        }
+        menus: {
+            settings: Record<string, Record<string, any>>
+        }
     }
 
     type actionButtonSettings = {

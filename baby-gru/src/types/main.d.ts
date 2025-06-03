@@ -34,19 +34,19 @@ declare module 'moorhen' {
 
     let hoveringStatesReducer: any;
     module.exports = hoveringStatesReducer
-    
+
     let modalsReducer: any;
     module.exports = modalsReducer
 
     let mapContourSettingsReducer: any;
     module.exports = mapContourSettingsReducer
-    
+
     let moleculeMapUpdateReducer: any;
     module.exports = moleculeMapUpdateReducer
-    
+
     let sharedSessionReducer: any;
     module.exports = sharedSessionReducer
-    
+
     let refinementSettingsReducer: any;
     module.exports = refinementSettingsReducer
 
@@ -55,6 +55,9 @@ declare module 'moorhen' {
 
     let sliceNDiceReducer: any;
     module.exports = sliceNDiceReducer
+
+    let overlaysReducer: any;
+    module.exports = overlaysReducer
 
     let MoorhenReduxStore: any;
     module.exports = MoorhenReduxStore
@@ -97,7 +100,7 @@ declare module 'moorhen' {
         constructor(ruleType: string, cid: string, color: string, commandCentre: React.RefObject<_moorhen.CommandCentre>, isMultiColourRule?: boolean, applyColourToNonCarbonAtoms?: boolean)
         static initFromString: (stringifiedObject: string, commandCentre: React.RefObject<_moorhen.CommandCentre>, molecule: _moorhen.Molecule) => _moorhen.ColourRule;
         static initFromDataObject: (data: _moorhen.ColourRuleObject, commandCentre: React.RefObject<_moorhen.CommandCentre>, molecule: _moorhen.Molecule) => _moorhen.ColourRule;
-        static parseHexToRgba: (hex: string) => [number, number, number, number];    
+        static parseHexToRgba: (hex: string) => [number, number, number, number];
     }
     module.exports.MoorhenColourRule = MoorhenColourRule
 
@@ -120,7 +123,8 @@ declare module 'moorhen' {
             timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule>,
             glRef: React.RefObject<webGL.MGWebGL>,
             store: any,
-            dispatch: any
+            dispatch: any,
+            fetchExternalUrl?: (uniqueId: string) => Promise<string>
         ): Promise<number>;
         static loadSessionFromArrayBuffer(
             sessionArrayBuffer: ArrayBuffer,
@@ -163,7 +167,7 @@ declare module 'moorhen' {
         constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store?: any, monomerLibrary?: string)
     }
     module.exports.MoorhenMolecule = MoorhenMolecule
-    
+
     interface MoorhenMap extends _moorhen.Map { }
     class MoorhenMap implements MoorhenMap {
         constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store?: any)
@@ -176,10 +180,10 @@ declare module 'moorhen' {
 
     function setPositiveMapColours(arg0: {molNo: number, rgb: {r: number; g: number; b: number}}): any;
     module.exports = setPositiveMapColours;
-    
+
     function setNegativeMapColours(arg0: {molNo: number, rgb: {r: number; g: number; b: number}}): any;
     module.exports = setNegativeMapColours;
-    
+
     function setMapColours(arg0: {molNo: number, rgb: {r: number; g: number; b: number}}): any;
     module.exports = setMapColours;
 
@@ -200,7 +204,7 @@ declare module 'moorhen' {
 
     function hideMolecule(arg0: {molNo: number}): any;
     module.exports = hideMolecule;
-    
+
     function setMapStyle(arg0: {molNo: number, style: "lines" | "solid" | "lit-lines"}): any;
     module.exports = setMapStyle;
 
@@ -209,28 +213,28 @@ declare module 'moorhen' {
 
     function setDefaultBackgroundColor(arg0: [number, number, number, number]): any;
     module.exports = setDefaultBackgroundColor;
-    
+
     function setDrawScaleBar(arg0: boolean): any;
     module.exports = setDrawScaleBar;
-    
+
     function setDrawCrosshairs(arg0: boolean): any;
     module.exports = setDrawCrosshairs;
-    
+
     function setDrawFPS(arg0: boolean): any;
     module.exports = setDrawFPS;
-    
+
     function setDrawMissingLoops(arg0: boolean): any;
     module.exports = setDrawMissingLoops;
-    
+
     function setDefaultBondSmoothness(arg0: number): any;
     module.exports = setDefaultBondSmoothness;
-    
+
     function setDrawInteractions(arg0: boolean): any;
     module.exports = setDrawInteractions;
-    
+
     function setDoSSAO(arg0: boolean): any;
     module.exports = setDoSSAO;
-    
+
     function setDoEdgeDetect(arg0: boolean): any;
     module.exports = setDoEdgeDetect;
 
@@ -248,40 +252,67 @@ declare module 'moorhen' {
 
     function setSsaoRadius(arg0: number): any;
     module.exports = setSsaoRadius;
-    
+
     function setSsaoBias(arg0: number): any;
     module.exports = setSsaoBias;
-    
+
     function setResetClippingFogging(arg0: boolean): any;
     module.exports = setResetClippingFogging;
-    
+
     function setClipCap(arg0: boolean): any;
     module.exports = setClipCap;
-    
+
     function setUseOffScreenBuffers(arg0: boolean): any;
     module.exports = setUseOffScreenBuffers;
-    
+
     function setDoShadowDepthDebug(arg0: boolean): any;
     module.exports = setDoShadowDepthDebug;
-    
+
     function setDoShadow(arg0: boolean): any;
     module.exports = setDoShadow;
-    
+
+    function setMultiViewRows(arg0: boolean): any;
+    module.exports = setMultiViewRows;
+
+    function setThreeWayViewOrder(arg0: boolean): any;
+    module.exports = setThreeWayViewOrder;
+
+    function setMultiViewColumns(arg0: boolean): any;
+    module.exports = setMultiViewColumns;
+
+    function setSpecifyMultiViewRowsColumns(arg0: boolean): any;
+    module.exports = setSpecifyMultiViewRowsColumns;
+
+    function setDoThreeWayView(arg0: boolean): any;
+    module.exports = setDoThreeWayView;
+
+    function setDoAnaglyphStereo(arg0: boolean): any;
+    module.exports = setDoAnaglyphStereo;
+
+    function setDoCrossEyedStereo(arg0: boolean): any;
+    module.exports = setDoCrossEyedStereo;
+
+    function setDoSideBySideStereo(arg0: boolean): any;
+    module.exports = setDoSideBySideStereo;
+
+    function setDoMultiView(arg0: boolean): any;
+    module.exports = setDoMultiView;
+
     function setDoSpin(arg0: boolean): any;
     module.exports = setDoSpin;
-    
+
     function setDoOutline(arg0: boolean): any;
     module.exports = setDoOutline;
-    
+
     function setDepthBlurRadius(arg0: number): any;
     module.exports = setDepthBlurRadius;
-    
+
     function setDepthBlurDepth(arg0: number): any;
     module.exports = setDepthBlurDepth;
-    
+
     function setDrawAxes(arg0: boolean): any;
     module.exports = setDrawAxes;
-    
+
     function setDoPerspectiveProjection(arg0: boolean): any;
     module.exports = setDoPerspectiveProjection;
 
@@ -323,6 +354,9 @@ declare module 'moorhen' {
 
     function setDevMode(arg0: boolean): any;
     module.exports = setDevMode;
+
+    function setUseGemmi(arg0: boolean): any;
+    module.exports = setUseGemmi;
 
     function setTheme(arg0: string): any;
     module.exports = setTheme;
@@ -431,49 +465,49 @@ declare module 'moorhen' {
 
     function setPAEFileContents(arg0: { fileContents: string; fileName: string }[]): any;
     module.exports = setPAEFileContents;
-    
+
     function resetSliceNDiceSlice(): any;
     module.exports = resetSliceNDiceSlice;
 
     function resetBackupSettings(): any;
     module.exports = resetBackupSettings;
-    
+
     function resetDefaultMouseSettings(): any;
     module.exports = resetDefaultMouseSettings;
-    
+
     function resetGeneralStates(): any;
     module.exports = resetGeneralStates;
-    
+
     function resetHoveringStates(): any;
     module.exports = resetHoveringStates;
-    
+
     function resetLabelSettings(): any;
     module.exports = resetLabelSettings;
-    
+
     function resetMapContourSettings(): any;
     module.exports = resetMapContourSettings;
-    
+
     function resetMiscAppSettings(): any;
     module.exports = resetMiscAppSettings;
-    
+
     function resetMoleculeMapUpdates(): any;
     module.exports = resetMoleculeMapUpdates;
-    
+
     function resetRefinementSettings(): any;
     module.exports = resetRefinementSettings;
-    
+
     function resetShortcutSettings(): any;
     module.exports = resetShortcutSettings;
-    
+
     function resetActiveModals(): any;
     module.exports = resetActiveModals;
-    
+
     function focusOnModal(): any;
     module.exports = focusOnModal;
-    
+
     function unFocusModal(): any;
     module.exports = unFocusModal;
-    
+
     function resetSharedSession(): any;
     module.exports = resetSharedSession;
 }

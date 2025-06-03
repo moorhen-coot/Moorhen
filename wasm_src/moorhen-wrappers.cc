@@ -24,6 +24,11 @@
 #include <utility>
 #include <cctype>
 #include <gemmi/mmdb.hpp>
+#include <gemmi/mmcif.hpp>
+#include <gemmi/to_mmcif.hpp>
+#include <gemmi/to_cif.hpp>
+#include <gemmi/read_cif.hpp>
+
 
 #include "slicendice_cpp/kmeans.h"
 #include "slicendice_cpp/agglomerative.h"
@@ -72,6 +77,60 @@ extern "C" {
 void untar(FILE *a, const char *path);
 }
 
+bool is64bit(){
+#ifdef _MOORHEN_MEMORY64_
+     return true;
+#else
+     return false;
+#endif
+}
+
+namespace moorhen {
+    inline void ltrim_inplace(std::string &s, const char cht='\0') {
+        s.erase(s.begin(), std::find_if(s.begin(), s.end(), [cht](unsigned char ch) {
+            if(cht!='\0') {
+                return ch != cht;
+            } else {
+                return !std::isspace(ch);
+            }
+        }));
+    }
+    inline void rtrim_inplace(std::string &s, const char cht='\0') {
+        s.erase(std::find_if(s.rbegin(), s.rend(), [cht](unsigned char ch) {
+            if(cht!='\0') {
+                return ch != cht;
+            } else {
+                return !std::isspace(ch);
+            }
+        }).base(), s.end());
+    }
+    inline std::string ltrim(const std::string &s, const char cht='\0'){
+        std::string s_copy = s;
+        ltrim_inplace(s_copy,cht);
+        return s_copy;
+    }
+    inline std::string rtrim(const std::string &s, const char cht='\0'){
+        std::string s_copy = s;
+        rtrim_inplace(s_copy,cht);
+        return s_copy;
+    }
+    static bool ends_with(std::string_view str, std::string_view suffix) {
+        return str.size() >= suffix.size() && str.compare(str.size()-suffix.size(), suffix.size(), suffix) == 0;
+    }
+
+    static bool starts_with(std::string_view str, std::string_view prefix) {
+        return str.size() >= prefix.size() && str.compare(0, prefix.size(), prefix) == 0;
+    }
+}
+
+struct CoordinateHeaderInfo {
+    std::string title;
+    std::map<std::string,std::vector<std::string>> author;
+    std::map<std::string,std::vector<std::string>> journal;
+    std::string software;
+    std::string compound;
+};
+
 struct RamachandranInfo {
     std::string chainId;
     int seqNum;
@@ -102,6 +161,10 @@ std::vector<std::string>  get_mtz_columns(const std::string& mtz_file_name){
     }
     return shortTypes;
 
+}
+
+std::string clipperStringAsString(const clipper::String &s){
+    return static_cast<std::string>(s);
 }
 
 std::vector<coot::residue_spec_t> getSecondaryStructure(mmdb::Manager *m, int imodel=1){
@@ -136,6 +199,144 @@ std::vector<coot::residue_spec_t> getSecondaryStructure(mmdb::Manager *m, int im
     delete [] resTable;
     return v;
 }
+
+CoordinateHeaderInfo get_coord_header_info(const std::string& docData, const std::string& path){
+
+    CoordinateHeaderInfo header_info;
+
+    char *c_data = (char *)docData.c_str();
+    const size_t size = docData.length();
+    auto c_path = path.c_str();
+
+    const auto st = gemmi::read_structure_from_char_array(c_data,size,path);
+
+    header_info.author["primary"] = st.meta.authors;
+    header_info.journal["primary"] = std::vector<std::string>();
+
+    std::vector<std::string> soft_strings;
+    for(const auto& soft : st.meta.software){
+        std::string soft_str = soft.name;
+        if((soft.version.length()>0)||(soft.date.length()>0)){
+            soft_str += " (";
+            if((soft.version.length()>0)){
+                soft_str += soft.version;
+            }
+            if((soft.version.length()>0)&&(soft.date.length()>0)){
+                soft_str += ", ";
+            }
+            if((soft.date.length()>0)){
+                soft_str += soft.date;
+            }
+            soft_str += ")";
+        }
+        soft_strings.push_back(soft_str);
+    }
+
+    if(soft_strings.size()>0){
+        header_info.software = std::accumulate(++soft_strings.begin(), soft_strings.end(), soft_strings[0],
+                     [](const std::string& a, const std::string& b){
+                           return a + ", " + b;
+                     });
+    }
+
+    auto have_compound_card = false;
+
+    for(const auto& rem : st.raw_remarks){
+        if (rem.rfind("REMARK 400", 0) == 0) {
+            const auto rem_copy = moorhen::rtrim(rem);
+            const auto len = std::string("REMARK 400").length();
+            if((!have_compound_card) && (rem_copy.length()==len)){
+                continue;
+            }
+            if(rem_copy==std::string("REMARK 400 COMPOUND")){
+                have_compound_card = true;
+                continue;
+            }
+            header_info.compound += moorhen::ltrim(rem_copy.substr(len))+"\n";
+        }
+    }
+
+    for(const auto& kv : st.info){
+        if(kv.first=="_struct.title"){
+            header_info.title = kv.second;
+            break;
+        }
+    }
+
+    if(moorhen::ends_with(path,"cif")){
+        auto doc = gemmi::cif::read_string(docData);
+        for (gemmi::cif::Block& block : doc.blocks){
+
+            if(block.find_loop_item("_citation_author.citation_id")){
+                header_info.author.clear();
+                auto& loop = block.find_loop_item("_citation_author.citation_id")->loop;
+                for(const auto& row : block.find_mmcif_category("_citation_author.")){
+                    if(row.size()==loop.tags.size()){
+                        auto id_pos = std::find(loop.tags.begin(), loop.tags.end(), "_citation_author.citation_id");
+                        auto name_pos = std::find(loop.tags.begin(), loop.tags.end(), "_citation_author.name");
+                        if(id_pos != loop.tags.end() && name_pos != loop.tags.end()){
+                            auto pos_index = std::distance(loop.tags.begin(), id_pos);
+                            //if(row[pos_index]=="primary"){
+                            if(header_info.author.count(row[pos_index])==0)
+                                header_info.author[row[pos_index]] = std::vector<std::string>();
+                            auto name_index = std::distance(loop.tags.begin(), name_pos);
+                            header_info.author[row[pos_index]].push_back(moorhen::rtrim(moorhen::ltrim(row[name_index],'\''),'\''));
+                            //}
+                        }
+                    }
+                }
+            }
+
+            if(block.find_loop_item("_citation.id")){
+                auto& loop = block.find_loop_item("_citation.id")->loop;
+                for(const auto& row : block.find_mmcif_category("_citation.")){
+                    if(row.size()==loop.tags.size()){
+                        auto pos = std::find(loop.tags.begin(), loop.tags.end(), "_citation.id");
+                        if(pos != loop.tags.end()){
+                            auto index = std::distance(loop.tags.begin(), pos);
+                            //if(row[index]=="primary"){
+                            if(header_info.journal.count(row[index])==0)
+                                header_info.journal[row[index]] = std::vector<std::string>();
+                            int ipos=0;
+                            for(const auto& s : row){
+                                if(s!="?"){
+                                    header_info.journal[row[index]].push_back(loop.tags[ipos].substr(std::string("_citation.").length())+":"+std::string((40-loop.tags[ipos].length()),' ')+moorhen::rtrim(moorhen::ltrim(s,'\''),'\''));
+                                }
+                                ipos++;
+                            }
+                            //}
+                        }
+                    }
+                }
+            } else {
+                header_info.journal["primary"] = std::vector<std::string>();
+                for(const auto& item : block.items){
+                    if (item.type == gemmi::cif::ItemType::Pair){
+                        if(moorhen::starts_with(item.pair[0],"_citation.")){
+                            if(item.pair[1]!="?"){
+                                header_info.journal["primary"].push_back(item.pair[0].substr(std::string("_citation.").length())+":"+std::string((40-item.pair[0].length()),' ')+moorhen::rtrim(moorhen::ltrim(item.pair[1],'\''),'\''));
+                            }
+                        }
+                    }
+                }
+            }
+            for(const auto& item : block.items){
+                if (item.type == gemmi::cif::ItemType::Pair){
+                    if(item.pair[0]=="_pdbx_entry_details.compound_details"){
+                        const auto trimmed = moorhen::rtrim(moorhen::ltrim(item.pair[1],'\''),'\'');
+                        if(trimmed != "?"){
+                            header_info.compound += trimmed;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return header_info;
+
+}
+
 
 std::map<std::string,std::vector<coot::simple_rotamer> > getRotamersMap(){
 
@@ -210,6 +411,16 @@ bool isSugar(const std::string &resName);
 class molecules_container_js : public molecules_container_t {
     public:
         explicit molecules_container_js(bool verbose=true) : molecules_container_t(verbose) {
+        }
+
+        std::string molecule_to_mmCIF_string_with_gemmi(int imol){
+            mmdb::Manager *mol = get_mol(imol);
+            auto st = gemmi::copy_from_mmdb(mol);
+            std::ostringstream os;
+            gemmi::cif::write_cif_to_stream(os, gemmi::make_mmcif_document(st));
+            os.flush();
+            std::string s = os.str();
+            return s;
         }
 
         std::vector<std::pair<std::string,int>> slicendice_slice(int imol, int nclusters, const std::string &clustering_method, const std::string &pae_contents_string){
@@ -642,6 +853,39 @@ class molecules_container_js : public molecules_container_t {
                 o.push_back(pp.second.z());
             }
             return o;
+        }
+
+        clipper::Spacegroup get_map_spacegroup(int imol){
+            clipper::Spacegroup sg;
+            if(is_valid_map_molecule(imol)){
+                auto xMap = (*this)[imol].xmap;
+                sg = xMap.spacegroup();
+            }
+            return sg;
+        }
+
+        double get_map_data_resolution(int imol){
+            /* This can only work if associate_data_mtz_file_with_map has be called. */
+            if(is_valid_map_molecule(imol)){
+                try {
+                    (*this)[imol].fill_fobs_sigfobs();
+                    auto fobs = (*this)[imol].get_original_fobs_sigfobs();
+                    auto reso = fobs->resolution();
+                    return reso.limit();
+                } catch(std::exception e){
+                    //Presumably we do not have original fobs.
+                }
+            }
+            return -1.0;
+        }
+
+        clipper::Cell get_map_cell(int imol){
+            clipper::Cell cell;
+            if(is_valid_map_molecule(imol)){
+                auto xMap = (*this)[imol].xmap;
+                cell = xMap.cell();
+            }
+            return cell;
         }
 };
 
@@ -1143,6 +1387,15 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .field("suggested_radius", &coot::util::map_molecule_centre_info_t::suggested_radius)
     .field("suggested_contour_level", &coot::util::map_molecule_centre_info_t::suggested_contour_level)
     ;
+    class_<clipper::Spgr_descr>("Spgr_descr")
+    .function("spacegroup_number", &clipper::Spgr_descr::spacegroup_number)
+    .function("symbol_hall", &clipper::Spgr_descr::symbol_hall)
+    .function("symbol_hm", &clipper::Spgr_descr::symbol_hm)
+    .function("symbol_xhm", &clipper::Spgr_descr::symbol_xhm)
+    .function("symbol_hm_ext", &clipper::Spgr_descr::symbol_hm_ext)
+    ;
+    class_<clipper::Spacegroup, base<clipper::Spgr_descr>>("Spacegroup")
+    ;
     class_<clipper::Cell_descr>("Cell_descr")
     .constructor<const clipper::ftype&, const clipper::ftype&, const clipper::ftype&, const clipper::ftype&, const clipper::ftype&, const clipper::ftype&>()
     .function("a", &clipper::Cell_descr::a)
@@ -1175,6 +1428,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<clipper::String>("Clipper_String")
     .constructor()
     .constructor<const std::string>()
+    .function("as_string", &clipperStringAsString)
     ;
     class_<clipper::Xmap<float>, base<clipper::Xmap_base>>("Xmap_float")
     .constructor()
@@ -1415,6 +1669,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("set_colour_map_for_map_coloured_by_other_map",&molecules_container_t::set_colour_map_for_map_coloured_by_other_map)
     .function("get_mutation_info",&molecules_container_t::get_mutation_info)
     .function("get_ligand_validation_vs_dictionary",&molecules_container_t::get_ligand_validation_vs_dictionary)
     .function("get_validation_vs_dictionary_for_selection",&molecules_container_t::get_validation_vs_dictionary_for_selection)
@@ -1488,6 +1743,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("set_max_number_of_threads", &molecules_container_t::set_max_number_of_threads)
     .function("set_map_is_contoured_with_thread_pool", &molecules_container_t::set_map_is_contoured_with_thread_pool)
     .function("is_EM_map",&molecules_container_t::is_EM_map)
+    .function("scale_map",&molecules_container_t::scale_map)
     .function("set_map_sampling_rate",&molecules_container_t::set_map_sampling_rate)
     .function("get_mesh_for_ligand_validation_vs_dictionary",&molecules_container_t::get_mesh_for_ligand_validation_vs_dictionary)
     .function("molecule_to_mmCIF_string", &molecules_container_t::molecule_to_mmCIF_string)
@@ -1558,6 +1814,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("fit_ligand",&molecules_container_t::fit_ligand)
     .function("fit_to_map_by_random_jiggle",&molecules_container_t::fit_to_map_by_random_jiggle)
     .function("get_svg_for_residue_type",&molecules_container_t::get_svg_for_residue_type)
+    .function("get_svg_for_2d_ligand_environment_view",&molecules_container_t::get_svg_for_2d_ligand_environment_view)
     .function("is_valid_model_molecule",&molecules_container_t::is_valid_model_molecule)
     .function("is_valid_map_molecule",&molecules_container_t::is_valid_map_molecule)
     .function("read_pdb",&molecules_container_t::read_pdb)
@@ -1666,6 +1923,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("set_refinement_geman_mcclure_alpha",&molecules_container_t::set_refinement_geman_mcclure_alpha)
     .function("get_geman_mcclure_alpha",&molecules_container_t::get_geman_mcclure_alpha)
     .function("get_map_histogram",&molecules_container_t::get_map_histogram)
+    .function("get_map_vertices_histogram",&molecules_container_t::get_map_vertices_histogram)
     .function("sharpen_blur_map_with_resample",&molecules_container_t::sharpen_blur_map_with_resample)
     .function("find_water_baddies",&molecules_container_t::find_water_baddies)
     .function("get_gphl_chem_comp_info",&molecules_container_t::get_gphl_chem_comp_info)
@@ -1686,6 +1944,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("writePDBASCII",&molecules_container_js::writePDBASCII)
     .function("writeCIFASCII",&molecules_container_js::writeCIFASCII)
     .function("writeCCP4Map",&molecules_container_js::writeCCP4Map)
+    .function("get_map_data_resolution",&molecules_container_js::get_map_data_resolution)
+    .function("get_map_cell",&molecules_container_js::get_map_cell)
+    .function("get_map_spacegroup",&molecules_container_js::get_map_spacegroup)
     .function("count_simple_mesh_vertices",&molecules_container_js::count_simple_mesh_vertices)
     .function("go_to_blob_array",&molecules_container_js::go_to_blob_array)
     .function("add",&molecules_container_js::add)
@@ -1705,6 +1966,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("replace_molecule_by_model_from_string", &molecules_container_js::replace_molecule_by_model_from_string)
     .function("read_dictionary_string", &molecules_container_js::read_dictionary_string)
     .function("slicendice_slice", &molecules_container_js::slicendice_slice)
+    .function("molecule_to_mmCIF_string_with_gemmi", &molecules_container_js::molecule_to_mmCIF_string_with_gemmi)
     ;
     value_object<texture_as_floats_t>("texture_as_floats_t")
     .field("width", &texture_as_floats_t::width)
@@ -1949,6 +2211,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<std::vector<coot::CartesianPair>>("VectorVectorCootCartesianPair");
     register_vector<coot::Cartesian>("VectorCootCartesian");
     register_vector<std::vector<coot::Cartesian>>("VectorVectorCootCartesian");
+    register_map<std::string,std::vector<std::string>>("MapStringVectorString");
     register_map<unsigned int, std::array<float, 3>>("MapIntFloat3");
     register_map<unsigned int, std::array<float, 4>>("MapIntFloat4");
     register_map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>("Map_residue_spec_t_density_correlation_stats_info_t");
@@ -2006,6 +2269,10 @@ EMSCRIPTEN_BINDINGS(my_module) {
     value_object<std::pair<bool, float>>("pair_bool_float")
         .field("first",&std::pair<bool, float>::first)
         .field("second",&std::pair<bool, float>::second)
+    ;
+    value_object<std::pair<double, std::vector<double> > >("pair_double_vector_double")
+        .field("first",&std::pair<double, std::vector<double>>::first)
+        .field("second",&std::pair<double, std::vector<double>>::second)
     ;
     value_object<std::pair<clipper::Coord_orth, float>>("pair_clipper_coord_orth_float")
         .field("first",&std::pair<clipper::Coord_orth, float>::first)
@@ -2104,6 +2371,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
 
     register_vector<moorhen::helix_t>("vector_helix_t");
+    register_vector<std::pair<double, std::vector<double>>>("vector_pair_double_vector_double");
 
     value_object<moorhen_hbond>("moorhen_hbond")
       .field("hb_hydrogen",&moorhen_hbond::hb_hydrogen)
@@ -2145,6 +2413,14 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("second",&std::pair<int,coot::instanced_mesh_t>::second)
     ;
 
+    value_object<CoordinateHeaderInfo>("CoordinateHeaderInfo")
+        .field("title",&CoordinateHeaderInfo::title)
+        .field("author",&CoordinateHeaderInfo::author)
+        .field("journal",&CoordinateHeaderInfo::journal)
+        .field("software",&CoordinateHeaderInfo::software)
+        .field("compound",&CoordinateHeaderInfo::compound)
+    ;
+
     value_array<glm::mat4>("array_mat4")
         .element(emscripten::index<0>())
         .element(emscripten::index<1>())
@@ -2172,10 +2448,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
 
     function("SmallMoleculeCifToMMCif",&SmallMoleculeCifToMMCif);
 
-    //For testing
-    //function("TakeColourMap",&TakeColourMap);
-    //function("TakeStringIntPairVector",&TakeStringIntPairVector);
     function("get_mtz_columns",&get_mtz_columns);
-
+    function("get_coord_header_info",&get_coord_header_info);
+    function("is64bit",&is64bit);
 
 }

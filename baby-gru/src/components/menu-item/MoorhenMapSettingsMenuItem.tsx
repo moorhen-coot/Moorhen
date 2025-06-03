@@ -1,6 +1,6 @@
 import { Form } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { MoorhenSlider } from "../misc/MoorhenSlider";
+import { MoorhenSlider } from "../inputs/MoorhenSlider";
 import { moorhen } from "../../types/moorhen";
 import { useDispatch } from "react-redux";
 import { setMapAlpha, setMapStyle } from "../../store/mapContourSettingsSlice";
@@ -35,9 +35,9 @@ export const MoorhenMapSettingsMenuItem = (props: {
                 <MoorhenSlider
                     minVal={0.0}
                     maxVal={1.0}
+                    decimalPlaces={2}
                     logScale={false}
                     sliderTitle="Opacity"
-                    initialValue={props.mapOpacity}
                     externalValue={props.mapOpacity}
                     setExternalValue={(newVal: number) => dispatch( setMapAlpha({molNo: props.map.molNo, alpha: newVal}) )} />
             </Form.Group>

@@ -21,7 +21,11 @@ export const modalKeys = Object.freeze({
     SUPERPOSE_MODELS: "superpose",
     SCENE_SETTINGS: "scene-settings",
     LHASA: "lhasa",
-    QSCORE: "qscore"
+    QSCORE: "qscore",
+    JSON_VALIDATION: "json-validation",
+    MRBUMP: "mrbump",
+    MRPARSE: "mrparse",
+    COLOR_MAP_BY_MAP : "colour-map-by-map",
 })
 
 export const representationLabelMapping = Object.freeze({

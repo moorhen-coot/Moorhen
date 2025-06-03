@@ -7,6 +7,7 @@ import { MoorhenGLFontMenuItem } from '../menu-item/MoorhenGLFontMenuItem'
 import { MoorhenScoresToastPreferencesMenuItem } from "../menu-item/MoorhenScoresToastPreferencesMenuItem"
 import { MoorhenBackupPreferencesMenuItem } from "../menu-item/MoorhenBackupPreferencesMenuItem"
 import { MoorhenDefaultBondSmoothnessPreferencesMenuItem } from "../menu-item/MoorhenDefaultBondSmoothnessPreferencesMenuItem"
+import { MoorhenViewLayoutPreferencesMenuItem } from "../menu-item/MoorhenViewLayoutPreferencesMenuItem"
 import { MapContourSettingsMenuItem } from "../menu-item/MoorhenMapContourSettingsMenuItem"
 import { MoorhenRefinementSettingsMenuItem } from "../menu-item/MoorhenRefinementSettingsMenuItem"
 import { MoorhenMouseSensitivitySettingsMenuItem } from "../menu-item/MoorhenMouseSensitivitySettingsMenuItem"
@@ -109,6 +110,10 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
                     />
                     <MoorhenDefaultBondSmoothnessPreferencesMenuItem
                         setPopoverIsShown={setPopoverIsShown}
+                    />
+                    <MoorhenViewLayoutPreferencesMenuItem
+                        setPopoverIsShown={setPopoverIsShown}
+                        urlPrefix={props.urlPrefix}
                     />
                     <MapContourSettingsMenuItem
                         commandCentre={props.commandCentre}

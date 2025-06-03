@@ -1,0 +1,43 @@
+/* General styles for the input */
+.form-control.precise-input {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;  
+    margin-top: 0.25rem;
+    box-sizing: border-box; /* Ensure padding and border are included in the width */
+    width: 100%; /* Ensure the input fits its container */
+    border: 1px solid #ced4da; /* Default border */
+}
+
+.precise-input.number-form{
+    height: 2.5rem;
+}
+
+.precise-input.compact{
+    height: 2rem;
+    border-top: none;
+    border-left: none;
+    border-bottom: 1px solid rgb(91, 105, 119); 
+}
+
+.precise-input.compact:focus {
+    box-shadow: 2px 2px 4px 1px #c0cad6 !important;
+}
+
+.precise-input.number-form:focus {
+    box-shadow: 2px 2px 4px 1px #c0cad6 !important;
+}
+.precise-input.valid {
+    border-color: #ced4da;
+}
+
+.precise-input.invalid {
+    border-color: red !important;
+    border-top: 1px solid red;
+    border-left: 1px solid red;
+    border-bottom: 1px solid red;
+}
+
+
+.precise-input.disabled {
+    color: grey;
+}

@@ -36,7 +36,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
         reContourMapOnlyOnMouseUp: false,
         transparentModalsOnMouseOut: false,
         defaultBackgroundColor: [1, 1, 1, 1],
-        atomLabelDepthMode: true,
+        atomLabelDepthMode: false,
         enableTimeCapsule: true,
         defaultExpandDisplayCards: true,
         defaultMapLitLines: false,
@@ -67,7 +67,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
         GLLabelsFontSize: 18,
         mouseSensitivity: 0.3,
         zoomWheelSensitivityFactor: 1.0,
-        contourWheelSensitivityFactor: 0.05,
+        contourWheelSensitivityFactor: 1.0,
         mapLineWidth: 0.75,
         makeBackups: true,
         showShortcutToast: true,
@@ -82,6 +82,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
         modificationCountBackupThreshold: 5,
         animateRefine: true,
         devMode: false,
+        useGemmi: false,
         shortCuts: {
             "decrease_front_clip": {
                 modifiers: [],

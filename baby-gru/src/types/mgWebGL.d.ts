@@ -33,11 +33,11 @@ export namespace webGL {
         makeTextCanvas(text:string, width:number, height:number, textColour:string, font?:string)  : [number,CanvasRenderingContext2D];
         calculate3DVectorFrom2DVector(inp: number[]) : vec3;
         mouseMoveAnimateTrack(force: boolean,count: number) : void;
-        drawTextOverlays(invMat: number[]) : void;
-        drawAxes(invMat: number[]) : void;
-        drawScaleBar(invMat: number[]) : void;
+        drawTextOverlays(invMat: number[],ratioMult?:number, scale?:number) : void;
+        drawAxes(invMat: number[],ratioMult?:number) : void;
+        drawScaleBar(invMat: number[],ratioMult?:number) : void;
         drawLineMeasures(invMat: number[]) : void;
-        drawCrosshairs(invMat: number[]) : void;
+        drawCrosshairs(invMat: number[],ratioMult?:number) : void;
         drawMouseTrack() : void;
         reContourMaps() : void;
         drawSceneDirty() : void;
@@ -72,7 +72,7 @@ export namespace webGL {
         drawTexturedShapes(theMatrix: mat4) : void;
         drawTransparent(theMatrix: mat4) : void;
         bindFramebufferDrawBuffers() : void;
-        GLrender(calculatingShadowMap: boolean) : mat4;
+        GLrender(calculatingShadowMap: boolean, doClear?:boolean,ratioMult?:number) : mat4;
         drawTransformMatrixInteractivePMV(transformMatrix:number[], transformOrigin:number[], buffer:any, shader:any, vertexType:number, bufferIdx:number) : any;
         drawTransformMatrixPMV(transformMatrix:number[], buffer:any, shader:any, vertexType:number, bufferIdx:number) : any;
         setupModelViewTransformMatrixInteractive(transformMatrix:number[], transformOrigin:number[], buffer: any, shader: MGWebGLShader, vertexType: number, bufferIdx: number, specialDrawBuffer: any) : void;
@@ -156,6 +156,9 @@ export namespace webGL {
         set_fog_range(fogStart: number, fogEnd: number, update?: boolean) : void;
         set_clip_range(clipStart: number, clipEnd: number, update?: boolean) : void;
         resize(width: number, height: number) : void;
+        setupThreeWayTransformations() : void;
+        setupMultiWayTransformations(nmols:number) : void;
+        setupStereoTransformations() : void;
         setShadowDepthDebug(doShadowDepthDebug: boolean): void;
         setShadowsOn(doShadow: boolean): void;
         setSSAOOn(doSSAO: boolean): void;
@@ -166,6 +169,14 @@ export namespace webGL {
         setEdgeDetectNormalScale(normalScale: number): void;
         setOccludeDiffuse(doOccludeDiffuse: boolean): void;
         setOutlinesOn(doOutline: boolean): void;
+        setDoMultiView(doMultiView: boolean): void;
+        setDoThreeWayView(doThreeWayView: boolean): void;
+        setMultiViewRowsColumns(multiViewRowsColumns: number[]): void;
+        setSpecifyMultiViewRowsColumns(specifyMultiViewRowsColumns: boolean): void;
+        setThreeWayViewOrder(threeWayViewOrder: string): void;
+        setDoSideBySideStereo(doSideBySideStereo: boolean): void;
+        setDoCrossEyedStereo(doCrossEyedStereo: boolean): void;
+        setDoAnaglyphStereo(doAnaglyphStereo: boolean): void;
         setDoOrderIndependentTransparency(doOrderIndependentTransparency: boolean): void;
         setDoTransparentScreenshotBackground(transparentScreenshotBackground: boolean): void;
         setSpinTestState(doSpinTest: boolean): void;
@@ -196,6 +207,7 @@ export namespace webGL {
         createEdgeDetectFramebufferBuffer(width : number,height : number) : void;
         recreateOffScreeenBuffers(width: number,  height: number) : void;
         recreateDepthPeelBuffers(width: number,  height: number) : void;
+        getThreeWayMatrixAndViewPort(x:number,yp:number,quats:quat[],viewports:number[][]) : {"mat":number[],"viewport":number[],quat:quat}
         createSimpleBlurOffScreeenBuffers() : void;
         draggableMolecule: moorhen.Molecule
         activeMolecule: moorhen.Molecule
@@ -285,6 +297,14 @@ export namespace webGL {
         yPixelOffset: number;
         occludeDiffuse: boolean;
         doOrderIndependentTransparency: boolean;
+        doMultiView: boolean;
+        doThreeWayView: boolean;
+        multiViewRowsColumns: number[];
+        specifyMultiViewRowsColumns: boolean;
+        threeWayViewOrder: string;
+        doSideBySideStereo: boolean;
+        doCrossEyedStereo: boolean;
+        doAnaglyphStereo: boolean;
         doPeel: boolean;
         doShadowDepthDebug: boolean;
         doSpin: boolean;
@@ -458,8 +478,17 @@ export namespace webGL {
         drawingGBuffers: boolean;
         initializeShaders() : void;
         axesTexture: any;
-
         hoverSize: number;
-
+        currentViewport: number[];
+        currentAnaglyphColor: number[];
+        threeWayViewports: number[][];
+        stereoViewports: number[][];
+        threeWayQuats: quat4[];
+        stereoQuats: quat4[];
+        multiWayViewports: number[][];
+        multiViewOrigins: number[][];
+        multiWayQuats: quat4[];
+        multiWayRatio: number;
+        currentMultiViewGroup: number;
     }
 }

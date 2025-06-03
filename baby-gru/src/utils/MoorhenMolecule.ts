@@ -1,7 +1,8 @@
 import 'pako';
 import {
     guid, readTextFile, readGemmiStructure, centreOnGemmiAtoms,
-    getRandomMoleculeColour, doDownload, formatLigandSVG, getCentreAtom, parseAtomInfoLabel
+    getRandomMoleculeColour, doDownload, formatLigandSVG, getCentreAtom, parseAtomInfoLabel,
+    readGemmiCifDocument
  } from './utils'
 import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation"
 import { MoorhenColourRule } from "./MoorhenColourRule"
@@ -28,6 +29,7 @@ import { Store } from "@reduxjs/toolkit";
  * @property {boolean} symmetryOn - Whether the symmetry is currently being displayed
  * @property {object} sequences - List of sequences present in the molecule
  * @property {object} gemmiStructure - Object representation of the cached gemmi structure for this molecule
+ * @property {object} gemmiDocument - Object representation of the cached gemmi document for this molecule
  * @property {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
  * @property {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance
  * @property {string} monomerLibraryPath - A string with the path to the monomer library, relative to the root of the app
@@ -67,6 +69,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     name: string;
     molNo: number | null
     gemmiStructure: gemmi.Structure;
+    gemmiDocument: gemmi.cifDocument;
     sequences: moorhen.Sequence[];
     representations: moorhen.MoleculeRepresentation[];
     ligands: moorhen.LigandInfo[];
@@ -116,6 +119,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.molNo = null
         this.coordsFormat = null
         this.gemmiStructure = null
+        this.gemmiDocument = null
         this.sequences = []
         this.headerInfo = null
         this.cachedGemmiAtoms = null
@@ -439,6 +443,14 @@ export class MoorhenMolecule implements moorhen.Molecule {
         window.CCP4Module.gemmi_add_entity_types(this.gemmiStructure, this.coordsFormat === 'mmcif')
         this.parseSequences()
         this.updateLigands()
+        try {
+            //Only do this with original cif file - we (probably) want original header info.
+            if(!this.gemmiDocument){
+                this.gemmiDocument = readGemmiCifDocument(coordString as string)
+            }
+        } catch(e) {
+            this.gemmiDocument = null
+        }
     }
 
     /**
@@ -592,6 +604,13 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {moorhen.Molecule} New molecule instance
      */
     async copyMolecule(doRedraw: boolean = true): Promise<moorhen.Molecule> {
+        const state = this.store.getState()
+        const useGemmi = state.generalStates.useGemmi
+        const use_gemmi_response = await this.commandCentre.current.cootCommand({
+            returnType: "status",
+            command: 'set_use_gemmi',
+            commandArgs: [useGemmi],
+        }, true)
         let coordString = await this.getAtoms()
         let newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.store, this.monomerLibraryPath)
         newMolecule.name = `${this.name}-copy`
@@ -738,6 +757,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {Promise<moorhen.Molecule>} The new molecule
      */
     async loadToCootFromURL(url: RequestInfo | URL, molName: string, options?: RequestInit): Promise<moorhen.Molecule> {
+        console.log(url)
         const response = await fetch(url, options)
         try {
             if (response.ok) {
@@ -851,6 +871,13 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.name = name.replace(pdbRegex, "").replace(entRegex, "").replace(cifRegex, "").replace(mmcifRegex, "");
 
         try {
+            const state = this.store.getState()
+            const useGemmi = state.generalStates.useGemmi
+            const use_gemmi_response = await this.commandCentre.current.cootCommand({
+                returnType: "status",
+                command: 'set_use_gemmi',
+                commandArgs: [useGemmi],
+            }, true)
             this.updateGemmiStructure(coordData as string)
             this.atomsDirty = false
             const response = await this.commandCentre.current.cootCommand({
@@ -962,12 +989,16 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {string}  A string representation file contents
      */
     async getAtoms(format?: moorhen.coorFormats): Promise<string> {
+        const state = this.store.getState()
+        const useGemmi = state.generalStates.useGemmi
         let cootCommand = 'molecule_to_PDB_string'
         if (format) {
             cootCommand = format === 'mmcif' ? 'molecule_to_mmCIF_string' : 'molecule_to_PDB_string'
         } else if (this.coordsFormat) {
             cootCommand = this.coordsFormat === 'mmcif' ? 'molecule_to_mmCIF_string' : 'molecule_to_PDB_string'
         }
+        if(useGemmi && cootCommand === 'molecule_to_mmCIF_string')
+            cootCommand = 'molecule_to_mmCIF_string_with_gemmi'
         const response = await this.commandCentre.current.cootCommand({
             returnType: "string",
             command: cootCommand,
@@ -2402,6 +2433,32 @@ export class MoorhenMolecule implements moorhen.Molecule {
     }
 
     /**
+     * Get SVG descriptions for the ligand environment
+     * @param {string} cid - The selection string of the ligand to get SVG descriptions for
+     */
+    async getFLEVSVG(cid: string): Promise<string> {
+
+        if(window.CCP4Module.has_hydrogen(this.gemmiStructure.first_model())){
+            const flev_result = await this.commandCentre.current.cootCommand({
+                returnType: "string",
+                command: 'get_svg_for_2d_ligand_environment_view',
+                commandArgs: [this.molNo, cid, true]
+            }, false) as moorhen.WorkerResponse<string>
+            const ligandSVG = flev_result.data.result.result
+            return ligandSVG
+        } else {
+
+            const placeHolderSVG = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="-12.000000 -2.000000 22.000000 2.000000" width="100%" height="100%">
+<!-- Substitution Contour -->
+   <text x="-9." y="-1.1" text-anchor="middle" font-family="Helvetica, sans-serif" font-size="0.055000em" fill="slategrey">You must add hydrogen atoms to the model </text>
+   <text x="-9." y="-0.4" text-anchor="middle" font-family="Helvetica, sans-serif" font-size="0.055000em" fill="slategrey">before ligand environment can be shown correctly</text>
+</svg>`
+
+            return placeHolderSVG
+        }
+    }
+
+    /**
      * Get SVG descriptions for the ligands in this molecule instance
      * @param {string} resName - The name of the ligand to get SVG descriptions for
      * @param {boolean} useCache - Whether to use the cached results or not
@@ -2420,7 +2477,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         else
             coot_bg_type = "dark-bonds/transparent-bg"
 
-        const use_rdkit = false
+        const use_rdkit = true
 
         const result = await this.commandCentre.current.cootCommand({
                 returnType: "string",
@@ -2570,6 +2627,26 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {Promise<libcootApi.headerInfoJS>} Object containing header information
      */
     async fetchHeaderInfo(useCache: boolean = true): Promise<libcootApi.headerInfoJS> {
+
+        let coordString = await this.gemmiStructure.as_string()
+        let docString = ""
+        if(this.gemmiDocument){
+            docString = await this.gemmiDocument.as_string()
+        }
+
+        const dummy_name = (this.gemmiDocument) ? "dummy.cif" :  "dummy.pdb"
+
+        const headerInfoGemmi = (this.gemmiDocument) ? await this.commandCentre.current.cootCommand({
+                    command: 'get_coord_header_info',
+                    commandArgs: [docString,dummy_name],
+                    returnType: 'header_info_gemmi_t'
+                }, true) as moorhen.WorkerResponse<libcootApi.headerInfoGemmiJS> : 
+                await this.commandCentre.current.cootCommand({
+                    command: 'get_coord_header_info',
+                    commandArgs: [coordString,dummy_name],
+                    returnType: 'header_info_gemmi_t'
+                }, true) as moorhen.WorkerResponse<libcootApi.headerInfoGemmiJS>
+        
         if (useCache && this.headerInfo !== null) {
             return this.headerInfo
         }
@@ -2582,6 +2659,19 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         if (useCache) {
             this.headerInfo = headerInfo.data.result.result
+            if(this.gemmiDocument&&headerInfoGemmi.data.result.status==="Completed") {
+                this.headerInfo.title = headerInfoGemmi.data.result.result.title
+                this.headerInfo.author_journal = headerInfoGemmi.data.result.result.author_journal
+                this.headerInfo.compound_lines = headerInfoGemmi.data.result.result.compound.split("\n")
+            } else {
+                if(headerInfoGemmi.data.result.result.title.length>headerInfo.data.result.result.title.length){
+                    this.headerInfo.title = headerInfoGemmi.data.result.result.title
+                } else {
+                    this.headerInfo.title = headerInfo.data.result.result.title
+                }
+                this.headerInfo.author_journal = headerInfo.data.result.result.author_journal
+                this.headerInfo.compound_lines = headerInfo.data.result.result.compound_lines
+            }
         }
 
         return headerInfo.data.result.result

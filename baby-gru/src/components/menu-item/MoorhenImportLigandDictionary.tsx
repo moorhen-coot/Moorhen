@@ -368,7 +368,9 @@ export const MoorhenImportDictionaryMenuItem = (props: {
         const compIdsVectorSize = compIdsVector.size()
         for (let i = 0; i < compIdsVectorSize; i++) {
             const ligandInfo = compIdsVector.get(i)
-            result.push({ ...ligandInfo })
+            if(ligandInfo.comp_id.length>0){
+                result.push({ ...ligandInfo })
+            }
         }
         compIdsVector.delete()
         return result
@@ -392,7 +394,6 @@ export const MoorhenImportDictionaryMenuItem = (props: {
             <Form.Control ref={filesRef} type="file" accept={".cif, .dict, .mmcif"} multiple={false} style={{borderColor: validDictFile ?  '#c2c2c2' : 'red', borderWidth: validDictFile ? '0.1rem' : '0.15rem'}}/>
             {!validDictFile && <span>Unable to parse</span>}
         </Form.Group>
-        {createInstance &&
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} className="mb-3">
         <Form.Label>Monomer identifier</Form.Label>
             <Form.Select ref={tlcSelectRef} value={tlc} onChange={(newVal) => {
@@ -402,7 +403,6 @@ export const MoorhenImportDictionaryMenuItem = (props: {
                 {tlcsOfFile.map(tlcOfFile => <option key={tlcOfFile.comp_id} value={tlcOfFile.comp_id}>{tlcOfFile.comp_id}</option>)}
             </Form.Select>
         </Form.Group>
-        }
     </>
 
     const fetchLigandDict = async (): Promise<string> => {

@@ -148,29 +148,33 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
     let showAssemblies = false
 
     if(props.molecule.gemmiStructure){
-        const assemblies = props.molecule.gemmiStructure.assemblies
-        for(let i=0; i<assemblies.size(); i++){
-            const assembly = assemblies.get(i)
-            const generators = assembly.generators
-            const n_gen = generators.size()
-            let n_tot_op = 0
-            for (let i_gen=0; i_gen < n_gen; i_gen++) {
-                const gen = generators.get(i_gen)
-                const operators = gen.operators
-                const n_op = operators.size()
-                n_tot_op += n_op
-                gen.delete()
-                operators.delete()
-            }
-            assembly.delete()
-            generators.delete()
+        try {
+            const assemblies = props.molecule.gemmiStructure.assemblies
+            for(let i=0; i<assemblies.size(); i++){
+                const assembly = assemblies.get(i)
+                const generators = assembly.generators
+                const n_gen = generators.size()
+                let n_tot_op = 0
+                for (let i_gen=0; i_gen < n_gen; i_gen++) {
+                    const gen = generators.get(i_gen)
+                    const operators = gen.operators
+                    const n_op = operators.size()
+                    n_tot_op += n_op
+                    gen.delete()
+                    operators.delete()
+                }
+                assembly.delete()
+                generators.delete()
 
-            if(n_tot_op!==60&&n_tot_op!==1){
-                showAssemblies = true
-                break
+                if(n_tot_op!==60&&n_tot_op!==1){
+                    showAssemblies = true
+                    break
+                }
             }
+            assemblies.delete()
+        } catch(e) {
+            console.log("Some problem getting assembly info")
         }
-        assemblies.delete()
     }
 
     if(showAssemblies){

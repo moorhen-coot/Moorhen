@@ -27,26 +27,28 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const dispatch = useDispatch()
 
     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
-        
+
     const maps = useSelector((state: moorhen.State) => state.maps)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const enableTimeCapsule = useSelector((state: moorhen.State) => state.backupSettings.enableTimeCapsule)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
+    const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
 
     const { enqueueSnackbar } = useSnackbar()
 
     const { commandCentre, glRef, monomerLibraryPath, setBusy, store } = props;
 
     const menuItemProps = { setPopoverIsShown, ...props }
+    const mrBumpenuItemProps = { monomerLibraryPath, setPopoverIsShown, ...props }
 
     const loadPdbFiles = async (files: FileList) => {
         let readPromises: Promise<moorhen.Molecule>[] = []
         Array.from(files).forEach(file => {
             readPromises.push(readPdbFile(file))
         })
-        
+
         let newMolecules: moorhen.Molecule[] = await Promise.all(readPromises)
         if (!newMolecules.every(molecule => molecule.molNo !== -1)) {
             enqueueSnackbar("Failed to read molecule", { variant: "warning" })
@@ -72,8 +74,18 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         const newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)
         newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
-        await newMolecule.loadToCootFromFile(file)        
-        return newMolecule        
+        await newMolecule.loadToCootFromFile(file)
+        return newMolecule
+    }
+
+    const handleLoadMrBump = async () => {
+        dispatch(showModal(modalKeys.MRBUMP))
+        document.body.click()
+    }
+
+    const handleLoadMrParse = async () => {
+        dispatch(showModal(modalKeys.MRPARSE))
+        document.body.click()
     }
 
     const handleExportGltf = async () => {
@@ -101,8 +113,8 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         try {
             const arrayBuffer = await readDataFile(e.target.files[0])
             const bytes = new Uint8Array(arrayBuffer)
-            const sessionMessage = moorhensession.Session.decode(bytes)
-            await loadSession(sessionMessage) 
+            const sessionMessage = moorhensession.Session.decode(bytes,undefined,undefined)
+            await loadSession(sessionMessage)
         } catch (err) {
             console.log(err)
             enqueueSnackbar("Error loading the session", {variant: "error"})
@@ -117,7 +129,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                 status = await MoorhenTimeCapsule.loadSessionFromJsonString(
                     session as string,
                     props.monomerLibraryPath,
-                    molecules, 
+                    molecules,
                     maps,
                     props.commandCentre,
                     props.timeCapsuleRef,
@@ -129,7 +141,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                 status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(
                     session,
                     props.monomerLibraryPath,
-                    molecules, 
+                    molecules,
                     maps,
                     props.commandCentre,
                     props.timeCapsuleRef,
@@ -147,7 +159,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         }
     }
 
-    const getSession = async () => {        
+    const getSession = async () => {
         const sessionData = await props.timeCapsuleRef.current.fetchSession(true)
         const sessionMessage = moorhensession.Session.fromObject(sessionData)
         const sessionBytes = moorhensession.Session.encode(sessionMessage).finish()
@@ -189,21 +201,21 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
 
     return <>
                 <div style={{maxHeight: convertViewtoPx(65, height), overflow: 'auto'}}>
-                    
-                    {!props.disableFileUploads && 
+
+                    {!props.disableFileUploads &&
                     <Form.Group className='moorhen-form-group' controlId="upload-coordinates-form">
                         <Form.Label>Coordinates</Form.Label>
                         <Form.Control type="file" accept=".pdb, .mmcif, .cif, .ent, .mol" multiple={true} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { loadPdbFiles(e.target.files) }}/>
                     </Form.Group>}
-                    
+
                     <MoorhenFetchOnlineSourcesForm commandCentre={commandCentre} glRef={glRef} setBusy={setBusy} monomerLibraryPath={monomerLibraryPath} store={store} />
-                    
-                    {!props.disableFileUploads && 
+
+                    {!props.disableFileUploads &&
                     <Form.Group className='moorhen-form-group' controlId="upload-session-form">
                         <Form.Label>Load from stored session</Form.Label>
                         <Form.Control type="file" accept=".pb," multiple={false} onChange={handleSessionUpload}/>
                     </Form.Group>}
-                    
+
                     <hr></hr>
 
                     <MenuItem id='query-online-services-sequence' onClick={() => {
@@ -213,14 +225,14 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                         Query online services with a sequence...
                     </MenuItem>
 
-                    {!props.disableFileUploads && 
+                    {!props.disableFileUploads &&
                     <>
                         <MoorhenAssociateReflectionsToMap {...menuItemProps} />
                         <MoorhenAutoOpenMtzMenuItem {...menuItemProps} />
                         <MoorhenImportMapCoefficientsMenuItem {...menuItemProps} />
                         <MoorhenImportMapMenuItem {...menuItemProps} />
                     </>}
-                    
+
                     <MoorhenImportFSigFMenuItem {...menuItemProps} />
 
                     <MoorhenLoadTutorialDataMenuItem {...menuItemProps} />
@@ -232,7 +244,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     <MenuItem id='save-session-menu-item' onClick={createBackup} disabled={!enableTimeCapsule}>
                         Save backup
                     </MenuItem>
-                    
+
                     <MoorhenBackupsMenuItem {...menuItemProps} disabled={!enableTimeCapsule} loadSession={loadSession} />
 
                     <MenuItem id='screenshot-menu-item' onClick={() =>  {
@@ -240,7 +252,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                             variant: "screenshot",
                             persist: true,
                             glRef: props.glRef,
-                            videoRecorderRef: props.videoRecorderRef 
+                            videoRecorderRef: props.videoRecorderRef
                         })
                         document.body.click()
                     }}>
@@ -255,8 +267,20 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                         Record a video
                     </MenuItem>
 
+                    {(!props.disableFileUploads && devMode && false) &&
+                    <MenuItem id='load-mrbump-menu-item' onClick={handleLoadMrBump}>
+                    MrBump results...
+                    </MenuItem>
+                    }
+
+                    {(!props.disableFileUploads && devMode) &&
+                    <MenuItem id='load-mrparse-menu-item' onClick={handleLoadMrParse}>
+                    MrParse results...
+                    </MenuItem>
+                    }
+
                     {props.extraFileMenuItems && props.extraFileMenuItems.map( menu => menu)}
-                    
+
                     <hr></hr>
 
                     <MoorhenDeleteEverythingMenuItem {...menuItemProps} />

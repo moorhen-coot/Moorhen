@@ -49,12 +49,8 @@ getclipper() {
         echo "Using existing clipper"
     else
         echo "Checking out clipper"
-        curl -L https://ccp4forge.rc-harwell.ac.uk/ccp4/clipper/-/archive/gemmi/clipper-gemmi.tar.gz -o clipper-gemmi.tar.gz
+        git clone -b gemmi https://ccp4forge.rc-harwell.ac.uk/ccp4/clipper.git
         echo
-        echo "Unpacking clipper source"
-        tar xf clipper-gemmi.tar.gz
-        mv clipper-gemmi clipper
-        patch -p0 < ../patches/clipper-fftw3-scaling.patch 
     fi
     echo
 }

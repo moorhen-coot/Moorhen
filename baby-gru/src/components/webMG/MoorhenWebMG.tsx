@@ -1,5 +1,6 @@
 import { useEffect, useCallback, forwardRef, useState, useReducer } from 'react';
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
+import { Moorhen2DOverlay } from './Moorhen2DOverlay';
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
 import { cidToSpec } from '../../utils/utils';
 import { MoorhenScreenRecorder } from "../../utils/MoorhenScreenRecorder"
@@ -68,6 +69,15 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const doShadowDepthDebug = useSelector((state: moorhen.State) => state.sceneSettings.doShadowDepthDebug)
     const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
     const doSpin = useSelector((state: moorhen.State) => state.sceneSettings.doSpin)
+    const doAnaglyphStereo = useSelector((state: moorhen.State) => state.sceneSettings.doAnaglyphStereo)
+    const doCrossEyedStereo = useSelector((state: moorhen.State) => state.sceneSettings.doCrossEyedStereo)
+    const doSideBySideStereo = useSelector((state: moorhen.State) => state.sceneSettings.doSideBySideStereo)
+    const doThreeWayView = useSelector((state: moorhen.State) => state.sceneSettings.doThreeWayView)
+    const multiViewRows = useSelector((state: moorhen.State) => state.sceneSettings.multiViewRows)
+    const multiViewColumns = useSelector((state: moorhen.State) => state.sceneSettings.multiViewColumns)
+    const threeWayViewOrder = useSelector((state: moorhen.State) => state.sceneSettings.threeWayViewOrder)
+    const specifyMultiViewRowsColumns = useSelector((state: moorhen.State) => state.sceneSettings.specifyMultiViewRowsColumns)
+    const doMultiView = useSelector((state: moorhen.State) => state.sceneSettings.doMultiView)
     const drawEnvBOcc = useSelector((state: moorhen.State) => state.sceneSettings.drawEnvBOcc)
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline)
     const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius)
@@ -85,13 +95,14 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
+
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
         const fieldDepthBack: number = 21;
-        if (glRef !== null && typeof glRef !== 'function') { 
+        if (glRef !== null && typeof glRef !== 'function') {
             glRef.current.set_fog_range(glRef.current.fogClipOffset - (glRef.current.zoom * fieldDepthFront), glRef.current.fogClipOffset + (glRef.current.zoom * fieldDepthBack))
             glRef.current.set_clip_range(0 - (glRef.current.zoom * fieldDepthFront), 0 + (glRef.current.zoom * fieldDepthBack))
-            glRef.current.doDrawClickedAtomLines = false    
+            glRef.current.doDrawClickedAtomLines = false
         }
     }
 
@@ -138,7 +149,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         if(glRef !== null && typeof glRef !== 'function') {
             glRef.current.doPerspectiveProjection = doPerspectiveProjection
             glRef.current.clearTextPositionBuffers()
-            glRef.current.drawScene()    
+            glRef.current.drawScene()
         }
     }, [doPerspectiveProjection])
 
@@ -215,6 +226,57 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setThreeWayViewOrder(threeWayViewOrder)
+            glRef.current.setupThreeWayTransformations()
+            glRef.current.drawScene()
+        }
+    }, [threeWayViewOrder])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setMultiViewRowsColumns([multiViewRows,multiViewColumns])
+            glRef.current.setSpecifyMultiViewRowsColumns(specifyMultiViewRowsColumns)
+            glRef.current.drawScene()
+        }
+    }, [multiViewRows,multiViewColumns,specifyMultiViewRowsColumns])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setDoThreeWayView(doThreeWayView)
+            glRef.current.drawScene()
+        }
+    }, [doThreeWayView])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setDoSideBySideStereo(doSideBySideStereo)
+            glRef.current.drawScene()
+        }
+    }, [doSideBySideStereo])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setDoMultiView(doMultiView)
+            glRef.current.drawScene()
+        }
+    }, [doMultiView])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setDoCrossEyedStereo(doCrossEyedStereo)
+            glRef.current.drawScene()
+        }
+    }, [doCrossEyedStereo])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setDoAnaglyphStereo(doAnaglyphStereo)
+            glRef.current.drawScene()
+        }
+    }, [doAnaglyphStereo])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
             glRef.current.setSpinTestState(doSpin)
             glRef.current.drawScene()
         }
@@ -261,13 +323,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 setClipFogByZoom()
             }
             glRef.current.resize(width, height)
-            glRef.current.drawScene()    
+            glRef.current.drawScene()
         }
     }, [glRef, width, height])
 
     const handleRightClick = useCallback((e: moorhen.AtomRightClickEvent) => {
         if (!isRotatingAtoms && !isChangingRotamers && !isDraggingAtoms && !residueSelection.molecule) {
-            setShowContextMenu({ ...e.detail })            
+            setShowContextMenu({ ...e.detail })
         }
     }, [isRotatingAtoms, isChangingRotamers, isDraggingAtoms, residueSelection])
 
@@ -372,6 +434,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
 
     return  <>
+                <figure style={{position: "relative"}}>
                 <MGWebGL
                     ref={glRef}
                     onAtomHovered={(enableAtomHovering && !isRotatingAtoms && !isDraggingAtoms && !isChangingRotamers) ? props.onAtomHovered : null}
@@ -386,9 +449,11 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     showFPS={drawFPS}
                     mapLineWidth={innerMapLineWidth}
                     reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp}/>
+                    <Moorhen2DOverlay/>;
+                </figure>
 
                 {showContextMenu &&
-                <MoorhenContextMenu 
+                <MoorhenContextMenu
                     glRef={glRef as React.RefObject<webGL.MGWebGL>}
                     monomerLibraryPath={props.monomerLibraryPath}
                     viewOnly={props.viewOnly}

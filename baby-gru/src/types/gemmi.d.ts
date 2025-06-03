@@ -30,6 +30,7 @@ export namespace gemmi {
     }
     interface cifDocument extends emscriptem.instance<Fractional> {
         blocks: emscriptem.vector<cifBlock>;
+        as_string: () => string;
     }
     interface cifBlock extends emscriptem.instance<cifBlock> {
         name: string;

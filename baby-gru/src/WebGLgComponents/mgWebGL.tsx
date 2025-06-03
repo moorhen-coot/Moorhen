@@ -1281,6 +1281,7 @@ function initGL(canvas) {
     }
     gl.viewportWidth = canvas.width;
     gl.viewportHeight = canvas.height;
+
     if(WEBGL2){
         console.log("Max texture size:",gl.getParameter(gl.MAX_TEXTURE_SIZE))
         console.log("Max cube map texture size:",gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE))
@@ -1723,6 +1724,7 @@ class DisplayBuffer {
     textColours: number[];
     isHoverBuffer: boolean;
     id: string;
+    multiViewGroup: number;
 
     constructor() {
         this.visible = true;
@@ -1832,6 +1834,13 @@ function createQuatFromDXAngle(angle_in, axis) {
     let angle = angle_in * Math.PI / 180.0;
     let q = quat4.create();
     quat4.set(q, Math.sin(angle / 2.0) * axis[0], Math.sin(angle / 2.0) * axis[1], Math.sin(angle / 2.0) * axis[2], Math.cos(angle / 2.0));
+    return q;
+}
+
+function createQuatFromAngle(angle_in,axis) {
+    let angle = angle_in * Math.PI / 180.0;
+    let q = quat4.create();
+    quat4.set(q, Math.sin(angle / 2.0)*axis[0], Math.sin(angle / 2.0)*axis[1], Math.sin(angle / 2.0)*axis[2], Math.cos(angle / 2.0));
     return q;
 }
 
@@ -2285,6 +2294,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         doShadowDepthDebug: boolean;
         doSpin: boolean;
         doStenciling: boolean;
+        doMultiView: boolean;
+        multiViewRowsColumns: number[];
+        specifyMultiViewRowsColumns: boolean;
+        threeWayViewOrder: string;
+        doThreeWayView: boolean;
+        doSideBySideStereo: boolean;
+        doCrossEyedStereo: boolean;
+        doAnaglyphStereo: boolean;
         doneEvents: boolean;
         dx: number;
         dy: number;
@@ -2454,8 +2471,236 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         drawingGBuffers: boolean;
         axesTexture: any;
         max_elements_indices: number;
-
         hoverSize: number;
+        currentViewport: number[];
+        currentAnaglyphColor: number[];
+        threeWayViewports: number[][];
+        stereoViewports: number[][];
+        threeWayQuats: quat4[];
+        stereoQuats: quat4[];
+        multiWayViewports: number[][];
+        multiViewOrigins: number[][];
+        multiWayQuats: quat4[];
+        multiWayRatio: number;
+        currentMultiViewGroup: number;
+
+    setupStereoTransformations() : void {
+
+        this.stereoViewports = []
+        this.stereoQuats = []
+        this.stereoViewports.push([0, 0, this.gl.viewportWidth/2, this.gl.viewportHeight])
+        this.stereoViewports.push([this.gl.viewportWidth/2, 0, this.gl.viewportWidth/2, this.gl.viewportHeight])
+        const yaxis = vec3.create();
+        vec3.set(yaxis, 0.0, -1.0, 0.0)
+
+        const angle = 3./180.*Math.PI;
+
+        const dval3_p = Math.cos(angle / 2.0);
+        const dval0_y_p = yaxis[0] * Math.sin(angle / 2.0);
+        const dval1_y_p = yaxis[1] * Math.sin(angle / 2.0);
+        const dval2_y_p = yaxis[2] * Math.sin(angle / 2.0);
+
+        const dval3_m = Math.cos(-angle / 2.0);
+        const dval0_y_m = yaxis[0] * Math.sin(-angle / 2.0);
+        const dval1_y_m = yaxis[1] * Math.sin(-angle / 2.0);
+        const dval2_y_m = yaxis[2] * Math.sin(-angle / 2.0);
+
+        const rotY_p = quat4.create();
+        const rotY_m = quat4.create();
+
+        quat4.set(rotY_p, dval0_y_p, dval1_y_p, dval2_y_p, dval3_p);
+        quat4.set(rotY_m, dval0_y_m, dval1_y_m, dval2_y_m, dval3_m);
+
+        this.stereoQuats.push(rotY_p)
+        this.stereoQuats.push(rotY_m)
+
+    }
+
+    setupMultiWayTransformations(nmols:number) : void {
+
+        const get_grid = (n,method="NEARSQUARE") => {
+            const f = Math.floor(Math.sqrt(n))
+            const c = Math.ceil(Math.sqrt(n))
+
+            if(method==="NEARSQUARE"){
+                if(f*c >= n)
+                    return [f,c]
+                else
+                    return [c,c]
+            }
+
+            let shapes = []
+
+            for(let i=1;i<=n;i++){
+                for(let j=1;j<=n;j++){
+                    if(i*j >= n && i*j <= c*c && Math.abs(i-j)<=f){
+                        if(i*j - n < n){
+                            let rem = i*j - n
+                            if(rem != i && rem != j){
+                                shapes.push([i,j,rem])
+                                break
+                            }
+                        }
+                    }
+                }
+            }
+
+            if(shapes.length===0){
+                if(f*c >= n)
+                    return [f,c]
+                else
+                    return [c,c]
+            }
+
+            let the_shape = shapes[0]
+            let minrem = n+1
+
+            shapes.forEach( (s) => {
+                if(s[2] < minrem){
+                    the_shape = s
+                    minrem = s[2]
+                } else if(s[2] == minrem && Math.abs(s[0]-s[1]) < Math.abs(the_shape[0]-the_shape[1])){
+                    the_shape = s
+                }
+            })
+
+            return [the_shape[0],the_shape[1]]
+        }
+
+        let wh : number[] = get_grid(nmols)
+        if(this.specifyMultiViewRowsColumns){
+           wh = this.multiViewRowsColumns
+        }
+
+        this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
+        this.multiWayViewports = []
+        this.multiWayQuats = []
+
+        const rotZ = quat4.create();
+        quat4.set(rotZ, 0, 0, 0, -1);
+
+        for(let i=0;i<wh[1];i++){
+            for(let j=0;j<wh[0];j++){
+                const frac_i = i/wh[1]
+                const frac_j = j/wh[0]
+                this.multiWayViewports.push([frac_i*this.gl.viewportWidth,frac_j*this.gl.viewportHeight, this.gl.viewportWidth/wh[1], this.gl.viewportHeight/wh[0]])
+                this.multiWayQuats.push(rotZ)
+            }
+        }
+        this.multiWayRatio = wh[0]/wh[1]
+        this.currentMultiViewGroup = 0
+
+    }
+
+    setupThreeWayTransformations() : void {
+
+        this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
+        this.threeWayViewports = []
+        this.threeWayQuats = []
+
+        const BL = [0, 0, this.gl.viewportWidth/2, this.gl.viewportHeight/2]
+        const BR = [this.gl.viewportWidth/2, 0, this.gl.viewportWidth/2, this.gl.viewportHeight/2]
+        const TR = [this.gl.viewportWidth/2, this.gl.viewportHeight/2,this.gl.viewportWidth/2, this.gl.viewportHeight/2]
+        const TL = [0, this.gl.viewportHeight/2,this.gl.viewportWidth/2, this.gl.viewportHeight/2]
+
+        if(this.threeWayViewOrder&&this.threeWayViewOrder.length===4){
+            if(this.threeWayViewOrder.indexOf(" ")===0){
+                this.threeWayViewports.push(BL)
+                this.threeWayViewports.push(BR)
+                this.threeWayViewports.push(TR)
+            } else if(this.threeWayViewOrder.indexOf(" ")===1){
+                this.threeWayViewports.push(BL)
+                this.threeWayViewports.push(BR)
+                this.threeWayViewports.push(TL)
+            } else if(this.threeWayViewOrder.indexOf(" ")===2){
+                this.threeWayViewports.push(BR)
+                this.threeWayViewports.push(TL)
+                this.threeWayViewports.push(TR)
+            } else if(this.threeWayViewOrder.indexOf(" ")===3){
+                this.threeWayViewports.push(BL)
+                this.threeWayViewports.push(TL)
+                this.threeWayViewports.push(TR)
+            }
+        } else {
+            this.threeWayViewports.push(BL)
+            this.threeWayViewports.push(TL)
+            this.threeWayViewports.push(TR)
+        }
+
+        const xaxis = vec3.create();
+        vec3.set(xaxis, 1.0, 0.0, 0.0)
+        const yaxis = vec3.create();
+        vec3.set(yaxis, 0.0, -1.0, 0.0)
+
+        const zaxis = vec3.create();
+        vec3.set(zaxis, 0.0, 0.0, 1.0)
+
+        const angle = -Math.PI/2.;
+
+        const dval3 = Math.cos(angle / 2.0);
+
+        const dval0_x = xaxis[0] * Math.sin(angle / 2.0);
+        const dval1_x = xaxis[1] * Math.sin(angle / 2.0);
+        const dval2_x = xaxis[2] * Math.sin(angle / 2.0);
+
+        const dval0_y = yaxis[0] * Math.sin(angle / 2.0);
+        const dval1_y = yaxis[1] * Math.sin(angle / 2.0);
+        const dval2_y = yaxis[2] * Math.sin(angle / 2.0);
+
+        const dval0_z_p = zaxis[0] * Math.sin(angle / 2.0);
+        const dval1_z_p = zaxis[1] * Math.sin(angle / 2.0);
+        const dval2_z_p = zaxis[2] * Math.sin(angle / 2.0);
+        const dval3_z_p = Math.cos(angle / 2.0);
+
+        const dval0_z_m = zaxis[0] * Math.sin(-angle / 2.0);
+        const dval1_z_m = zaxis[1] * Math.sin(-angle / 2.0);
+        const dval2_z_m = zaxis[2] * Math.sin(-angle / 2.0);
+        const dval3_z_m = Math.cos(-angle / 2.0);
+
+        const yForward = quat4.create();
+        const xForward = quat4.create();
+        const zForward = quat4.create();
+        const zPlus = quat4.create();
+        const zMinus = quat4.create();
+
+        quat4.set(zForward, 0, 0, 0, -1);
+        quat4.set(yForward, dval0_x, dval1_x, dval2_x, dval3);
+        quat4.set(xForward, dval0_y, dval1_y, dval2_y, dval3);
+
+        quat4.set(zPlus, dval0_z_p, dval1_z_p, dval2_z_p, dval3_z_p);
+        quat4.set(zMinus, dval0_z_m, dval1_z_m, dval2_z_m, dval3_z_p);
+
+        quat4.multiply(xForward, xForward, zMinus);
+        quat4.multiply(yForward, yForward, zPlus);
+
+        if(this.threeWayViewOrder&&this.threeWayViewOrder.length===4){
+
+            const top = this.threeWayViewOrder.substring(0,2)
+            const bottom = this.threeWayViewOrder.substring(2,4)
+
+            for(let c of bottom.trim()) {
+                if(c==="X")
+                    this.threeWayQuats.push(xForward)
+                if(c==="Y")
+                    this.threeWayQuats.push(yForward)
+                if(c==="Z")
+                    this.threeWayQuats.push(zForward)
+            }
+            for(let c of top.trim()) {
+                if(c==="X")
+                    this.threeWayQuats.push(xForward)
+                if(c==="Y")
+                    this.threeWayQuats.push(yForward)
+                if(c==="Z")
+                    this.threeWayQuats.push(zForward)
+            }
+        } else {
+            this.threeWayQuats.push(yForward)
+            this.threeWayQuats.push(zForward)
+            this.threeWayQuats.push(xForward)
+        }
+
+    }
 
     resize(width: number, height: number) : void {
 
@@ -2469,6 +2714,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.gl.viewportWidth = this.canvas.width;
         this.gl.viewportHeight = this.canvas.height;
+
+        this.setupThreeWayTransformations()
+        this.setupStereoTransformations()
+        this.multiWayViewports = []
 
         if(this.useOffScreenBuffers&&this.WEBGL2){
             this.recreateOffScreeenBuffers(this.canvas.width,this.canvas.height);
@@ -2504,6 +2753,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.depthPeelDepthTextures = [];
         this.depthPeelRenderbufferDepth = [];
         this.depthPeelRenderbufferColor = [];
+        this.currentViewport = [0,0, 400,400];
+        this.currentAnaglyphColor = [1.0,0.0,0.0,1.0]
 
         setInterval(() => {
             if(!self.gl) return;
@@ -2518,7 +2769,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.state = { width: this.props.width, height: this.props.height };
         this.canvasRef = React.createRef();
         this.keysDown = {};
-        this.atomLabelDepthMode = true;
+        this.atomLabelDepthMode = false;
         this.showScaleBar = false
         this.showCrosshairs = false
         this.trackMouse = false
@@ -2664,6 +2915,40 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.transparentScreenshotBackground = transparentScreenshotBackground;
     }
 
+    setDoAnaglyphStereo(doAnaglyphStereo) {
+        this.doAnaglyphStereo = doAnaglyphStereo;
+    }
+
+    setDoCrossEyedStereo(doCrossEyedStereo) {
+        this.doCrossEyedStereo = doCrossEyedStereo;
+    }
+
+    setDoSideBySideStereo(doSideBySideStereo) {
+        this.doSideBySideStereo = doSideBySideStereo;
+    }
+
+    setDoMultiView(doMultiView) {
+        this.doMultiView = doMultiView;
+    }
+
+    setThreeWayViewOrder(threeWayViewOrder: string){
+        this.threeWayViewOrder = threeWayViewOrder
+    }
+
+    setSpecifyMultiViewRowsColumns(specifyMultiViewRowsColumns: boolean){
+        this.specifyMultiViewRowsColumns = specifyMultiViewRowsColumns
+        this.multiWayViewports = []
+    }
+
+    setMultiViewRowsColumns(multiViewRowsColumns: number[]){
+        this.multiViewRowsColumns = multiViewRowsColumns
+        this.multiWayViewports = []
+    }
+
+    setDoThreeWayView(doThreeWayView) {
+        this.doThreeWayView = doThreeWayView;
+    }
+
     setDoOrderIndependentTransparency(doOrderIndependentTransparency) {
         this.doOrderIndependentTransparency = doOrderIndependentTransparency;
     }
@@ -2790,7 +3075,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         //console.log("############################################################");
         //console.log("ssao blockSize",blockSize);
         //console.log(this.gl.getParameter(this.gl.MAX_UNIFORM_BUFFER_BINDINGS))
-        //console.log(this.gl.getParameter(this.gl.MAX_UNIFORM_BLOCK_SIZE	))
+        //console.log(this.gl.getParameter(this.gl.MAX_UNIFORM_BLOCK_SIZE))
         //console.log("############################################################");
         this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, this.ssaoKernelBuffer);
         this.gl.bufferData(this.gl.UNIFORM_BUFFER, blockSize, this.gl.DYNAMIC_DRAW);
@@ -2929,6 +3214,16 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.doSpin = false;
 
+        this.doThreeWayView = false;
+        this.doSideBySideStereo = false;
+        this.doMultiView = false;
+        this.doCrossEyedStereo = false;
+        this.doAnaglyphStereo = false;
+
+        this.specifyMultiViewRowsColumns = false;
+        this.threeWayViewOrder = "";
+        this.multiViewRowsColumns = [1,1];
+
         this.doOrderIndependentTransparency = true;//Request OIT user/state setting
         this.doPeel = false;//Requested and required - above set and there are transparent objects.
 
@@ -2959,8 +3254,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.myQuat = quat4.create();
         quat4.set(this.myQuat, 0, 0, 0, -1);
-        //var testmat = quatToMat4(this.myQuat)
-        //alert(mat4.str(testmat))
         this.setZoom(1.0)
 
         this.gl_clipPlane0 = new Float32Array(4);
@@ -3004,11 +3297,16 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const glc = initGL(this.canvas);
         this.gl = glc.gl;
         this.WEBGL2 = glc.WEBGL2;
+        this.currentViewport = [0,0, this.gl.viewportWidth, this.gl.viewportWidth];
+        this.currentAnaglyphColor = [1.0,0.0,0.0,1.0]
         if(this.WEBGL2){
             this.max_elements_indices = this.gl.getParameter(this.gl.MAX_ELEMENTS_INDICES)
         } else {
             this.max_elements_indices = 65535;
         }
+
+        this.setupThreeWayTransformations()
+        this.setupStereoTransformations()
 
         this.blurUBOBuffer = this.gl.createBuffer();
         this.axesTexture = {black:{},white:{}};
@@ -3244,7 +3542,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         self.buildBuffers();
 
-        this.measureText2DCanvasTexture = new TextCanvasTexture(this,512,2048);
+        this.measureText2DCanvasTexture = new TextCanvasTexture(this,768,2048);
         this.measureTextCanvasTexture = new TextCanvasTexture(this,1024,2048);
         this.labelsTextCanvasTexture = new TextCanvasTexture(this,128,2048);
         this.texturedShapes = [];
@@ -3263,6 +3561,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         self.drawScene();
         self.ready = true;
 
+        this.multiWayViewports = []
     }
 
     initializeShaders() : void {
@@ -4617,7 +4916,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     quatSlerp(q1,q2,h) {
         let cosw = this.quatDotProduct(q1,q2);
-        if(Math.abs(cosw-1.0)<1e-5) return q1;
+        if(Math.abs(Math.abs(cosw)-1.0)<1e-3) return q1;
         if(cosw>1.0) cosw = 1.0;
         if(cosw<-1.0) cosw = -1.0;
         const omega = Math.acos(cosw);
@@ -7171,6 +7470,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     }
                 }
                 if (this.WEBGL2) {
+                    if(this.doAnaglyphStereo) {
+                        this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
+                        this.gl.vertexAttribDivisor(theShader.vertexColourAttribute,0);
+                        this.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...this.currentAnaglyphColor)
+                    }
                     this.gl.drawElementsInstanced(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0, theBuffer.triangleInstanceOriginBuffer[j].numItems);
                 } else {
                     this.instanced_ext.drawElementsInstancedANGLE(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0, theBuffer.triangleInstanceOriginBuffer[j].numItems);
@@ -7220,6 +7524,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             } else {
                 const theShader = theShaderIn as MGWebGLShader;
                 if (this.WEBGL2) {
+                    if(this.doAnaglyphStereo) {
+                        this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
+                        this.gl.vertexAttribDivisor(theShader.vertexColourAttribute,0);
+                        this.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...this.currentAnaglyphColor)
+                    }
                     this.drawMaxElementsUInt(vertexType, drawBuffer.numItems);
                 } else {
                     this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0);
@@ -7238,6 +7547,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
                         this.applySymmetryMatrix(theShader,theBuffer.symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix)
                         if (this.WEBGL2) {
+                            if(this.doAnaglyphStereo) {
+                                this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
+                                this.gl.vertexAttribDivisor(theShader.vertexColourAttribute,0);
+                                this.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...this.currentAnaglyphColor)
+                            }
                             this.drawMaxElementsUInt(vertexType, drawBuffer.numItems);
                         } else {
                             this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0);
@@ -7486,8 +7800,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
-    GLrender(calculatingShadowMap) {
-        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+    GLrender(calculatingShadowMap,doClear=true,ratioMult=1.0) {
+        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult;
+
+        let fb_scale = 1.0
 
         if (calculatingShadowMap) {
             if(!this.offScreenReady)
@@ -7517,7 +7833,34 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer);
             this.gl.enable(this.gl.DEPTH_TEST);
             this.gl.depthFunc(this.gl.LESS);
-            this.gl.viewport(0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height);
+            let viewport_start_x = Math.trunc(this.currentViewport[0] * this.rttFramebuffer.width  / this.gl.viewportWidth)
+            let viewport_start_y = Math.trunc(this.currentViewport[1] * this.rttFramebuffer.height / this.gl.viewportHeight)
+            let viewport_width =   Math.trunc(this.currentViewport[2] * this.rttFramebuffer.width  / this.gl.viewportWidth)
+            let viewport_height =  Math.trunc(this.currentViewport[3] * this.rttFramebuffer.height / this.gl.viewportHeight)
+            this.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
+            if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
+            if(this.gl.viewportWidth>this.gl.viewportHeight){
+                fb_scale = this.gl.viewportWidth/this.gl.viewportHeight
+                const hp = this.gl.viewportHeight/this.gl.viewportWidth * this.rttFramebuffer.width
+                const b = 0.5*(this.rttFramebuffer.height - hp)
+                const vh = this.currentViewport[3] * this.rttFramebuffer.width  / this.gl.viewportWidth
+                const bp = this.currentViewport[1] * this.rttFramebuffer.width  / this.gl.viewportWidth
+                viewport_height = vh
+                viewport_start_y = bp + b
+            } else {
+                fb_scale = this.gl.viewportWidth/this.gl.viewportHeight
+                const wp = this.gl.viewportWidth/this.gl.viewportHeight * this.rttFramebuffer.height
+                const b = 0.5*(this.rttFramebuffer.width - wp)
+                const vw = this.currentViewport[2] * this.rttFramebuffer.width  / this.gl.viewportHeight
+                const bp = this.currentViewport[0] * this.rttFramebuffer.width  / this.gl.viewportHeight
+                console.log(wp,b,viewport_height,vw)
+                viewport_width = vw
+                viewport_start_x =  bp + b
+            }
+            this.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
+            } else {
+                this.gl.viewport(0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height);
+            }
             let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
         } else {
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
@@ -7527,7 +7870,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebuffer);
                 let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
             }
-            this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
+            this.gl.viewport(this.currentViewport[0], this.currentViewport[1], this.currentViewport[2], this.currentViewport[3]);
         }
 
         if(this.renderSilhouettesToTexture||this.drawingGBuffers||(this.renderToTexture&&this.transparentScreenshotBackground)) {
@@ -7540,7 +7883,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
             }
         } else {
-            this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+            if(doClear) this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
         }
 
         mat4.identity(this.mvMatrix);
@@ -7618,14 +7961,19 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             if(this.renderToTexture){
                 //FIXME - drawingGBuffers stanza?
                 if(this.doPerspectiveProjection){
+                    //FIXME - with  multiviews
                     mat4.perspective(this.pMatrix, 1.0, 1.0, 100., 1270.0);
                 } else {
                     const f = this.gl_clipPlane0[3]+this.fogClipOffset;
                     const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
-                    if(this.gl.viewportWidth > this.gl.viewportHeight){
-                        mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, -f, b);
+                    if(this.currentViewport[2] > this.currentViewport[3]){
+                        if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
+                            mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, -f, b);
+                        } else {
+                            mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, -f, b);
+                        }
                     } else {
-                        mat4.ortho(this.pMatrix, -24, 24 , -24, 24, -f, b);
+                        mat4.ortho(this.pMatrix, -24*ratioMult*fb_scale, 24*ratioMult*fb_scale, -24, 24, -f, b);
                     }
                 }
             } else {
@@ -7644,6 +7992,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.myQuat = quat4.clone(newQuat);
         const theMatrix = quatToMat4(this.myQuat);
+
         mat4.multiply(this.mvMatrix, this.mvMatrix, theMatrix);
 
         mat4.identity(this.mvInvMatrix);
@@ -7809,6 +8158,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.uniform1i(shader.peelNumber,-1);
         })
 
+        this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
         const oldMouseDown = this.mouseDown;
 
         if ((this.doEdgeDetect||this.doSSAO)&&this.WEBGL2) {
@@ -8071,37 +8421,115 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.bindTexture(this.gl.TEXTURE_2D, null)
             this.gl.depthFunc(this.gl.LESS);
 
-            //Stencil way
-            /*
-            this.stenciling = false;
-            this.gl.stencilMask(0x00);
-            this.gl.clear(this.gl.STENCIL_BUFFER_BIT);
-            this.gl.disable(this.gl.STENCIL_TEST);
-            this.gl.enable(this.gl.DEPTH_TEST);
-            invMat = this.GLrender(false);
-
-            this.stenciling = true;
-            this.gl.stencilMask(0xFF);
-            this.gl.clearStencil(0);
-            this.gl.clear(this.gl.STENCIL_BUFFER_BIT);
-            this.gl.clear(this.gl.DEPTH_BUFFER_BIT);
-            this.gl.enable(this.gl.STENCIL_TEST);
-            this.gl.stencilFunc(this.gl.ALWAYS, 1, 0xFF);
-            this.gl.stencilOp(this.gl.KEEP, this.gl.KEEP, this.gl.REPLACE);
-            this.gl.enable(this.gl.DEPTH_TEST);
-            invMat = this.GLrender(false);
-            this.gl.stencilFunc(this.gl.NOTEQUAL, 1, 0xFF);
-            this.gl.stencilOp(this.gl.KEEP, this.gl.KEEP, this.gl.REPLACE);
-            this.stencilPass = true;
-            this.gl.disable(this.gl.DEPTH_TEST);
-            invMat = this.GLrender(false);
-            */
         } else {
             this.gl.stencilMask(0x00);
             this.gl.disable(this.gl.STENCIL_TEST);
             this.gl.enable(this.gl.DEPTH_TEST);
-            if(!this.doPeel)
-                invMat = this.GLrender(false);
+            if(!this.doPeel){
+                if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
+
+                    let multiViewGroupsKeys = []
+                    const multiViewOrigins = []
+                    const origQuat = quat4.clone(this.myQuat);
+                    const origOrigin = this.origin
+
+                    let quats
+                    let viewports
+                    let ratioMult = 1.0
+
+                    if(this.doThreeWayView){
+                        quats = this.threeWayQuats
+                        viewports = this.threeWayViewports
+                    } else if(this.doMultiView) {
+
+                        let multiViewGroups = {}
+                        for (let idx = 0; idx < this.displayBuffers.length; idx++) {
+                            if(this.displayBuffers[idx].origin&&this.displayBuffers[idx].origin.length===3){
+                                if(Object.hasOwn(this.displayBuffers[idx], "isHoverBuffer")&&!this.displayBuffers[idx].isHoverBuffer){
+                                    if(!(this.displayBuffers[idx].multiViewGroup in multiViewGroups)){
+                                        multiViewGroups[this.displayBuffers[idx].multiViewGroup] = this.displayBuffers[idx].multiViewGroup
+                                        multiViewOrigins.push(this.displayBuffers[idx].origin)
+                                    }
+                                }
+                            }
+                        }
+                        this.multiViewOrigins = multiViewOrigins
+                        multiViewGroupsKeys = Object.keys(multiViewGroups)
+                        if(this.multiWayViewports.length!==multiViewGroupsKeys.length&&multiViewGroupsKeys.length>0){
+                            this.setupMultiWayTransformations(multiViewGroupsKeys.length)
+                        }
+
+                        quats = this.multiWayQuats
+                        viewports = this.multiWayViewports
+                        ratioMult = this.multiWayRatio
+                    } else if(this.doSideBySideStereo) {
+                        quats = this.stereoQuats
+                        viewports = this.stereoViewports
+                        ratioMult = 0.5
+                    } else {
+                        quats = this.stereoQuats.toReversed()
+                        viewports = this.stereoViewports
+                        ratioMult = 0.5
+                    }
+
+                    for(let i=0;i<viewports.length;i++){
+
+                        if(this.doMultiView){
+                            if(multiViewGroupsKeys.length>0){
+                                this.currentMultiViewGroup = parseInt(multiViewGroupsKeys[i])
+                                if(i<multiViewOrigins.length&& multiViewOrigins[i]&& multiViewOrigins[i].length===3)
+                                    this.origin = multiViewOrigins[i]
+                            } else {
+                                continue
+                            }
+                        }
+
+                        const newXQuat = quat4.clone(origQuat);
+                        quat4.multiply(newXQuat, newXQuat, quats[i]);
+                        this.myQuat = newXQuat
+                        this.currentViewport = viewports[i]
+
+                        const doClear = i===0 ? true : false
+                        invMat = this.GLrender(false,doClear,ratioMult);
+                        if (this.showAxes) {
+                            this.drawAxes(invMat,ratioMult);
+                        }
+                        if (this.showCrosshairs) {
+                            this.drawCrosshairs(invMat,ratioMult);
+                        }
+                        if (this.showScaleBar) {
+                            this.drawScaleBar(invMat,ratioMult);
+                        }
+                        if(invMat&&i==0) this.drawTextOverlays(invMat,ratioMult, Math.sqrt(this.gl.viewportHeight /this.currentViewport[3]));
+                        if (this.showFPS&&i==0) {
+                            this.drawFPSMeter();
+                        }
+                    }
+                    this.myQuat = origQuat
+                    if(this.doMultiView&&multiViewGroupsKeys.length===0){
+                        this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
+                        invMat = this.GLrender(false);
+                    }
+                    this.origin = origOrigin
+                } else {
+                    this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
+                    invMat = this.GLrender(false);
+                }
+            }
+            if(this.doAnaglyphStereo){
+                const origQuat = quat4.clone(this.myQuat);
+                const quats = this.stereoQuats
+
+                for(let i=0;i<quats.length;i++){
+                    const newXQuat = quat4.clone(origQuat);
+                    quat4.multiply(newXQuat, newXQuat, quats[i]);
+                    this.myQuat = newXQuat
+                    this.currentAnaglyphColor = i===0 ? [1.0,0.0,0.0,1.0] : [0.0,1.0,0.0,1.0]
+                    const doClear = i===0 ? true : false
+                    invMat = this.GLrender(false,doClear);
+                }
+                this.myQuat = origQuat
+            }
         }
 
         if(this.doPeel){//Do depth peel
@@ -8121,7 +8549,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
 
             this.gl.clear(this.gl.DEPTH_BUFFER_BIT|this.gl.COLOR_BUFFER_BIT);
-            const ratio = 1.0 //* this.gl.viewportWidth / this.gl.viewportHeight;
+            const ratio = 1.0
 
             if(this.depthPeelFramebuffers.length>0&&this.depthPeelFramebuffers[0].width>0&&this.depthPeelFramebuffers[0].height>0){
 
@@ -8234,29 +8662,32 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         //console.log(this.screenZ);
         //console.log(invMat);
 
-        if (this.showFPS) {
-            this.drawFPSMeter();
-        }
+        if(!this.doMultiView&&!this.doThreeWayView&&!this.doSideBySideStereo&&!this.doCrossEyedStereo){
 
-        if(!(this.useOffScreenBuffers&&this.offScreenReady)){
-            if (this.showAxes) {
-                this.drawAxes(invMat);
+            if (this.showFPS) {
+                this.drawFPSMeter();
             }
-        }
 
-        if (this.showCrosshairs) {
-            this.drawCrosshairs(invMat);
-        }
-
-        if(!(this.useOffScreenBuffers&&this.offScreenReady)){
-            if (this.showScaleBar) {
-                this.drawScaleBar(invMat);
+            if(!(this.useOffScreenBuffers&&this.offScreenReady)){
+                if (this.showAxes) {
+                    this.drawAxes(invMat);
+                }
             }
-        }
 
-        if(!(this.useOffScreenBuffers&&this.offScreenReady)){
-            this.drawLineMeasures(invMat);
-            this.drawTextOverlays(invMat);
+            if (this.showCrosshairs) {
+                this.drawCrosshairs(invMat);
+            }
+
+            if(!(this.useOffScreenBuffers&&this.offScreenReady)){
+                if (this.showScaleBar) {
+                    this.drawScaleBar(invMat);
+                }
+            }
+
+            if(!(this.useOffScreenBuffers&&this.offScreenReady)){
+                this.drawLineMeasures(invMat);
+                this.drawTextOverlays(invMat);
+            }
         }
 
         if(this.trackMouse&&!this.renderToTexture){
@@ -8796,6 +9227,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 }
             }
 
+            if(this.doMultiView&&this.displayBuffers[idx].origin&&this.displayBuffers[idx].origin.length===3){
+                if(Object.hasOwn(this.displayBuffers[idx], "isHoverBuffer")&&!this.displayBuffers[idx].isHoverBuffer){
+                    if(this.displayBuffers[idx].multiViewGroup!==this.currentMultiViewGroup){
+                        continue
+                    }
+                }
+            }
+
             let bufferTypes = this.displayBuffers[idx].bufferTypes;
 
             let triangleVertexNormalBuffer = this.displayBuffers[idx].triangleVertexNormalBuffer;
@@ -8962,6 +9401,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.drawTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive, this.displayBuffers[idx].transformOriginInteractive, this.displayBuffers[idx], this.shaderProgram, this.gl.TRIANGLE_STRIP, j);
                     } else {
                         if (this.ext) {
+                        if(this.doAnaglyphStereo) {
+                            this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
+                            this.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...this.currentAnaglyphColor)
+                        }
                             this.gl.drawElements(this.gl.TRIANGLE_STRIP, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_INT, 0);
                         } else {
                             this.gl.drawElements(this.gl.TRIANGLE_STRIP, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_SHORT, 0);
@@ -9127,6 +9570,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                                 const hoverSize = this.hoverSize + 0.4;
                                 this.gl.vertexAttrib3f(program.sizeAttribute, hoverSize, hoverSize, hoverSize, 1.0);
                             }
+                            if(this.doAnaglyphStereo) {
+                                this.gl.disableVertexAttribArray(program.vertexColourAttribute);
+                                this.gl.vertexAttribDivisor(program.vertexColourAttribute,0);
+                                this.gl.vertexAttrib4f(program.vertexColourAttribute, ...this.currentAnaglyphColor)
+                            }
                             this.gl.drawElementsInstanced(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
                             if(program.vertexColourAttribute!=null) this.gl.vertexAttribDivisor(program.vertexColourAttribute, 0);
                             this.gl.vertexAttribDivisor(program.sizeAttribute, 0);
@@ -9171,6 +9619,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
                                 this.applySymmetryMatrix(program,this.displayBuffers[idx].symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix,false)
                                     if (this.WEBGL2) {
+                                        if(this.doAnaglyphStereo) {
+                                            this.gl.disableVertexAttribArray(program.vertexColourAttribute);
+                                            this.gl.vertexAttribDivisor(program.vertexColourAttribute,0);
+                                            this.gl.vertexAttrib4f(program.vertexColourAttribute, ...this.currentAnaglyphColor)
+                                        }
                                         this.gl.drawElementsInstanced(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
                                     } else {
                                         this.instanced_ext.drawElementsInstancedANGLE(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
@@ -9354,6 +9807,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             this.drawTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive, this.displayBuffers[idx].transformOriginInteractive, buffer, sphereProgram, this.gl.TRIANGLES, j);
                         } else {
                             if (this.ext) {
+                                if(this.doAnaglyphStereo) {
+                                    this.gl.disableVertexAttribArray(sphereProgram.vertexColourAttribute);
+                                    this.gl.vertexAttribDivisor(sphereProgram.vertexColourAttribute,0);
+                                    this.gl.vertexAttrib4f(sphereProgram.vertexColourAttribute, ...this.currentAnaglyphColor)
+                                }
                                 this.drawMaxElementsUInt(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems);
                             } else {
                                 this.gl.drawElements(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_SHORT, 0);
@@ -9374,6 +9832,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             this.drawTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive, this.displayBuffers[idx].transformOriginInteractive, buffer, sphereProgram, this.gl.TRIANGLES, j);
                         } else {
                             if (this.ext) {
+                                if(this.doAnaglyphStereo) {
+                                    this.gl.disableVertexAttribArray(sphereProgram.vertexColourAttribute);
+                                    this.gl.vertexAttribDivisor(sphereProgram.vertexColourAttribute,0);
+                                    this.gl.vertexAttrib4f(sphereProgram.vertexColourAttribute, ...this.currentAnaglyphColor)
+                                }
                                 this.drawMaxElementsUInt(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems);
                             } else {
                                 this.gl.drawElements(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_SHORT, 0);
@@ -10139,6 +10602,31 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.measureTextCanvasTexture.clearBigTexture()
     }
 
+    getThreeWayMatrixAndViewPort(x,yp,quats,viewports){
+        const newQuat = quat4.clone(this.myQuat);
+        let mvMatrix = []
+        let viewportArray = []
+        let theQuat = null
+        for(let i=0;i<viewports.length;i++){
+            if(x>=viewports[i][0]&&x<(viewports[i][0]+viewports[i][2])&&
+               yp>=viewports[i][1]&&yp<(viewports[i][1]+viewports[i][3])){
+                viewportArray = viewports[i]
+                const theMatrix = mat4.create()
+                mat4.translate(theMatrix, theMatrix, [0, 0, -this.fogClipOffset]);
+                quat4.multiply(newQuat, newQuat, quats[i]);
+                const theRotMatrix = quatToMat4(newQuat);
+                mat4.multiply(theMatrix, theMatrix, theRotMatrix);
+                if(this.doMultiView&&i<=this.multiViewOrigins.length&&this.multiViewOrigins.length>0)
+                    mat4.translate(theMatrix, theMatrix, this.multiViewOrigins[i])
+                else
+                    mat4.translate(theMatrix, theMatrix, this.origin)
+                mvMatrix = theMatrix
+                theQuat = quats[i]
+            }
+        }
+       return {"mat":mvMatrix,"viewport":viewportArray,quat:theQuat}
+    }
+
     getAtomFomMouseXY(event, self) {
         let x;
         let y;
@@ -10160,9 +10648,37 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         x *= getDeviceScale();
         y *= getDeviceScale();
 
-        const viewportArray = [
+        let viewportArray = [
             0, 0, this.gl.viewportWidth, this.gl.viewportHeight
         ];
+        let mvMatrix = mat4.clone(this.mvMatrix)
+
+        const yp = this.canvas.height - y
+
+        if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
+            let viewports
+            let quats
+
+            if(this.doThreeWayView){
+                quats = this.threeWayQuats
+                viewports = this.threeWayViewports
+            } else if(this.doMultiView) {
+                quats = this.multiWayQuats
+                viewports = this.multiWayViewports
+            } else if(this.doSideBySideStereo) {
+                quats = this.stereoQuats
+                viewports = this.stereoViewports
+            } else {
+                quats = this.stereoQuats.toReversed()
+                viewports = this.stereoViewports
+            }
+
+            const mVPQ = this.getThreeWayMatrixAndViewPort(x,yp,quats,viewports)
+            if(mVPQ.mat.length>0&& mVPQ.viewport.length>0) {
+                mvMatrix = mVPQ.mat
+                viewportArray = mVPQ.viewport
+            }
+        }
 
         // The results of the operation will be stored in this array.
         let modelPointArrayResultsFront = [];
@@ -10174,13 +10690,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             factor = 99.9;
         }
         let success = unProject(
-                x, this.gl.viewportHeight-y, -(this.gl_clipPlane0[3]-this.fogClipOffset)/factor,
-                this.mvMatrix as unknown as number[], this.pMatrix as unknown as number[],
+                x, yp, -(this.gl_clipPlane0[3]-this.fogClipOffset)/factor,
+                mvMatrix as unknown as number[], this.pMatrix as unknown as number[],
                 viewportArray, modelPointArrayResultsFront);
 
         success = unProject(
-                x, this.gl.viewportHeight-y, -(this.gl_clipPlane1[3]-this.fogClipOffset)/factor,
-                this.mvMatrix as unknown as number[], this.pMatrix as unknown as number[],
+                x, yp, -(this.gl_clipPlane1[3]-this.fogClipOffset)/factor,
+                mvMatrix as unknown as number[], this.pMatrix as unknown as number[],
                 viewportArray, modelPointArrayResultsBack);
 
         let mindist = 100000.;
@@ -10211,7 +10727,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 let dpl = DistanceBetweenPointAndLine(modelPointArrayResultsFront, modelPointArrayResultsBack, p);
 
                 let atPosTrans = vec3Create([0, 0, 0]);
-                vec3.transformMat4(atPosTrans, p, this.mvMatrix);
+                vec3.transformMat4(atPosTrans, p, mvMatrix);
                 let azDot = this.gl_clipPlane0[3]-atPosTrans[2];
                 let bzDot = this.gl_clipPlane1[3]+atPosTrans[2];
 
@@ -10233,7 +10749,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     const p = symmat.pos;
                     const dpl = DistanceBetweenPointAndLine(modelPointArrayResultsFront, modelPointArrayResultsBack, p);
                     let atPosTrans = vec3Create([0, 0, 0]);
-                    vec3.transformMat4(atPosTrans, p, this.mvMatrix);
+                    vec3.transformMat4(atPosTrans, p, mvMatrix);
                     let azDot = this.gl_clipPlane0[3]-atPosTrans[2];
                     let bzDot = this.gl_clipPlane1[3]+atPosTrans[2];
                     if (
@@ -10774,7 +11290,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
-    drawScaleBar(invMat) {
+    drawScaleBar(invMat,ratioMult=1.0) {
         this.gl.depthFunc(this.gl.ALWAYS);
 
         //Begin copy/paste from crosshairs
@@ -10786,11 +11302,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.setMatrixUniforms(this.shaderProgramThickLines);
         let pmvMatrix = mat4.create();
         let pMatrix = mat4.create();
-        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult
 
         if(this.renderToTexture){
             if(this.gl.viewportWidth > this.gl.viewportHeight){
-        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+                let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
                 mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.0);
             } else {
                 mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
@@ -10928,7 +11444,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.depthFunc(this.gl.LESS)
     }
 
-    drawCrosshairs(invMat) {
+    drawCrosshairs(invMat,ratioMult=1.0) {
 
         this.gl.depthFunc(this.gl.ALWAYS);
         this.gl.useProgram(this.shaderProgramTextBackground);
@@ -10941,10 +11457,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.setMatrixUniforms(this.shaderProgramThickLines);
         let pmvMatrix = mat4.create();
         let pMatrix = mat4.create();
-        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult
         if(this.renderToTexture){
             if(this.gl.viewportWidth > this.gl.viewportHeight){
-        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+                let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
                 mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.0);
             } else {
                 mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
@@ -11297,7 +11813,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.depthFunc(this.gl.LESS)
     }
 
-    drawAxes(invMat) {
+    drawAxes(invMat,ratioMult=1.0) {
 
         for(let i = 0; i<16; i++)
             this.gl.disableVertexAttribArray(i);
@@ -11306,7 +11822,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.textTex);
         this.gl.depthFunc(this.gl.ALWAYS);
         let axesOffset = vec3.create();
-        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult;
         //if(this.renderToTexture) ratio = 1.0;
         vec3.set(axesOffset, 20*ratio, 18, 0);
         vec3.transformMat4(axesOffset, axesOffset, invMat);
@@ -11325,7 +11841,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let pMatrix = mat4.create();
         if(this.renderToTexture){
             if(this.gl.viewportWidth > this.gl.viewportHeight){
-                mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.0);
+               if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
+                   mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24, 24, 0.1, 1000.0);
+               } else {
+                    mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.0);
+               }
             } else {
                 mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
             }
@@ -11576,9 +12096,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
-    drawTextOverlays(invMat) {
+    drawTextOverlays(invMat,ratioMult=1.0,font_scale=1.0) {
 
-        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult
 
         let textColour = "black";
         const y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
@@ -11608,7 +12128,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 let ypos = label.y * 48.0 -24.;
                 drawString(label.text,xpos,ypos, 0.0, label.font, false);
         });
-        if(this.showFPS) drawString(this.fpsText, -23.5*ratio, -23.5, 0.0, "20px helvetica", false);
+
+        if(this.showFPS) drawString(this.fpsText, -23.5*ratio, -23.5, 0.0, (20 * font_scale).toFixed(0)+"px helvetica", false);
 
         const scale_fac = 10.0*this.zoom* this.gl.viewportWidth / this.gl.viewportHeight;
         let scale_pow = Math.pow(10,Math.floor(Math.log(scale_fac)/Math.log(10)))
@@ -11628,28 +12149,31 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let lastPoint = null;
         let lastLastPoint = null;
 
-        this.measurePointsArray.forEach(point => {
-            if(lastPoint){
-                const dist = Math.sqrt(this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(point.x-lastPoint.x) * this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(point.x-lastPoint.x) + this.zoom*(point.y-lastPoint.y) * this.zoom*(point.y-lastPoint.y));
-                const mid_point = {x:(point.x+lastPoint.x)/2,y:(point.y+lastPoint.y)/2}
-                drawString(dist.toFixed(1)+"Å", mid_point.x*ratio, -mid_point.y, 0.0, "22px helvetica", false);
-                if(lastLastPoint){
-                    let l1 = {x:(point.x-lastPoint.x),y:(point.y-lastPoint.y)}
-                    l1.x /= dist / this.zoom;
-                    l1.y /= dist / this.zoom;
-                    const dist2 = Math.sqrt(this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(lastLastPoint.x-lastPoint.x) * this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(lastLastPoint.x-lastPoint.x) + this.zoom*(lastLastPoint.y-lastPoint.y) * this.zoom*(lastLastPoint.y-lastPoint.y));
-                    let l2 = {x:(lastLastPoint.x-lastPoint.x),y:(lastLastPoint.y-lastPoint.y)}
-                    l2.x /= dist2 / this.zoom;
-                    l2.y /= dist2 / this.zoom;
-                    const l1_dot_l2 = this.gl.viewportWidth / this.gl.viewportHeight*this.gl.viewportWidth / this.gl.viewportHeight*l1.x*l2.x + l1.y*l2.y;
-                    const angle = Math.acos(l1_dot_l2) / Math.PI * 180.;
-                    const angle_t = angle.toFixed(1)+"º";
-                    drawString(angle_t, lastPoint.x*ratio, -lastPoint.y, 0.0, "22px helvetica", false);
+        if(!this.doMultiView&&!this.doThreeWayView&&!this.doCrossEyedStereo&&!this.doSideBySideStereo){
+
+            this.measurePointsArray.forEach(point => {
+                if(lastPoint){
+                    const dist = Math.sqrt(this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(point.x-lastPoint.x) * this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(point.x-lastPoint.x) + this.zoom*(point.y-lastPoint.y) * this.zoom*(point.y-lastPoint.y));
+                    const mid_point = {x:(point.x+lastPoint.x)/2,y:(point.y+lastPoint.y)/2}
+                    drawString(dist.toFixed(1)+"Å", mid_point.x*ratio, -mid_point.y, 0.0, "22px helvetica", false);
+                    if(lastLastPoint){
+                        let l1 = {x:(point.x-lastPoint.x),y:(point.y-lastPoint.y)}
+                        l1.x /= dist / this.zoom;
+                        l1.y /= dist / this.zoom;
+                        const dist2 = Math.sqrt(this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(lastLastPoint.x-lastPoint.x) * this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(lastLastPoint.x-lastPoint.x) + this.zoom*(lastLastPoint.y-lastPoint.y) * this.zoom*(lastLastPoint.y-lastPoint.y));
+                        let l2 = {x:(lastLastPoint.x-lastPoint.x),y:(lastLastPoint.y-lastPoint.y)}
+                        l2.x /= dist2 / this.zoom;
+                        l2.y /= dist2 / this.zoom;
+                        const l1_dot_l2 = this.gl.viewportWidth / this.gl.viewportHeight*this.gl.viewportWidth / this.gl.viewportHeight*l1.x*l2.x + l1.y*l2.y;
+                        const angle = Math.acos(l1_dot_l2) / Math.PI * 180.;
+                        const angle_t = angle.toFixed(1)+"º";
+                        drawString(angle_t, lastPoint.x*ratio, -lastPoint.y, 0.0, "22px helvetica", false);
+                    }
+                    lastLastPoint = lastPoint;
                 }
-                lastLastPoint = lastPoint;
-            }
-            lastPoint = point;
-        })
+                lastPoint = point;
+            })
+        }
 
         if(this.showShortCutHelp) {
             const fontSize = this.gl.viewportHeight * 0.018
@@ -11754,6 +12278,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     doMouseDownMeasure(evt, self) {
+
+        if(this.doThreeWayView||this.doCrossEyedStereo||this.doSideBySideStereo){
+            return
+        }
 
         const measure_click_tol = 1.0;
 
@@ -11937,6 +12465,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
             x -= offset.left;
             y -= offset.top;
+            x *= getDeviceScale();
+            y *= getDeviceScale();
 
             this.gl_cursorPos[0] = x;
             this.gl_cursorPos[1] = this.canvas.height - y;
@@ -12016,11 +12546,28 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             quat4.multiply(self.myQuat, self.myQuat, zQ);
 
         } else if (event.buttons === 1) {
-            let xQ = createXQuatFromDX(-self.dy);
-            let yQ = createYQuatFromDY(-self.dx);
-            //console.log(xQ);
-            //console.log(yQ);
+
+            const rot_x_axis = vec3.create()
+            const rot_y_axis = vec3.create()
+            vec3.set(rot_x_axis, 1.0, 0.0, 0.0);
+            vec3.set(rot_y_axis, 0.0, 1.0, 0.0);
+
+            if(this.doThreeWayView&&this.threeWayViewports.length>0){
+                const quats = this.threeWayQuats
+                const viewports = this.threeWayViewports
+                const mVPQ = this.getThreeWayMatrixAndViewPort(this.gl_cursorPos[0],this.gl_cursorPos[1],quats,viewports)
+                if(mVPQ.quat) {
+                    const theRotMatrix = quatToMat4(mVPQ.quat);
+                    mat4.invert(theRotMatrix,theRotMatrix)
+                    vec3.transformMat4(rot_x_axis, rot_x_axis, theRotMatrix);
+                    vec3.transformMat4(rot_y_axis, rot_y_axis, theRotMatrix);
+                }
+            }
+
+            let xQ = createQuatFromAngle(-self.dy,rot_x_axis);
+            let yQ = createQuatFromAngle(-self.dx,rot_y_axis);
             quat4.multiply(xQ, xQ, yQ);
+
             if (this.currentlyDraggedAtom) {
 
                 // ###############

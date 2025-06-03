@@ -2,9 +2,7 @@ import { useCallback, useRef, useState, useEffect } from "react";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
-import { MoorhenSlider } from "../misc/MoorhenSlider";
-import { IconButton } from "@mui/material";
-import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
+import { MoorhenSlider } from "../inputs/MoorhenSlider";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
@@ -59,103 +57,57 @@ export const MoorhenRandomJiggleBlurMenuItem = (props: {
         } 
     }
 
-    const increaseBfactorButton =  <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey'}} onClick={() => {
-                                        const newVal = bFactor + 25
-                                        setBFactor(newVal)
-                                        bFactorSliderRef.current = newVal
-                                    }}>
-                                        <AddCircleOutline/>
-                                    </IconButton>
-    const decreaseBfactorButton =  <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey'}} onClick={() => {
-                                        const newVal = bFactor - 25
-                                        setBFactor(newVal)
-                                        bFactorSliderRef.current = newVal
-                                    }}>
-                                        <RemoveCircleOutline/>
-                                    </IconButton>
-
-    const increaseNoTrialsButton =  <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey'}} onClick={() => {
-                                        const newVal = noTrials + 100
-                                        setNoTrials(newVal)
-                                        noTrialsSliderRef.current = newVal
-                                    }}>
-                                        <AddCircleOutline/>
-                                    </IconButton>
-    const decreaseNoTrialsButton =  <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey'}} onClick={() => {
-                                        const newVal = noTrials - 100
-                                        setNoTrials(newVal)
-                                        noTrialsSliderRef.current = newVal
-                                    }}>
-                                        <RemoveCircleOutline/>
-                                    </IconButton>
-
-    const increaseScaleFactorButton =  <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey'}} onClick={() => {
-                                            const newVal = scaleFactor + 1
-                                            setScaleFactor(newVal)
-                                            scaleFactorSliderRef.current = newVal
-                                        }}>
-                                            <AddCircleOutline/>
-                                        </IconButton>
-    const decreaseScaleFactorButton =  <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey'}} onClick={() => {
-                                            const newVal = scaleFactor - 1
-                                            setScaleFactor(newVal)
-                                            scaleFactorSliderRef.current = newVal
-                                        }}>
-                                            <RemoveCircleOutline/>
-                                        </IconButton>
-
     const panelContent = <>
         <MoorhenMoleculeSelect
             ref={moleculeSelectRef}
             molecules={molecules}
-            onChange={handleModelChange}/>
+            onChange={handleModelChange}
+        />
         <MoorhenMapSelect
             ref={mapSelectRef}
             maps={maps}
-            onChange={handleMapChange}/>
+            onChange={handleMapChange}
+        />
         <MoorhenCidInputForm
             ref={cidSelectRef}
             margin="0.5rem"
             onChange={(evt) => setCid(evt.target.value)}
             allowUseCurrentSelection={true}
-            placeholder={cidSelectRef.current ? "" : "Input custom selection e.g. //A,B"}/>
+            placeholder={cidSelectRef.current ? "" : "Input custom selection e.g. //A,B"}
+        />
         <MoorhenSlider
-            ref={bFactorSliderRef}
             sliderTitle="B-Factor"
-            decrementButton={decreaseBfactorButton}
-            incrementButton={increaseBfactorButton}
             minVal={10}
             maxVal={400}
             showMinMaxVal={false}
             logScale={false}
-            initialValue={bFactor}
+            stepButtons= {25}
             externalValue={bFactor}
-            setExternalValue={setBFactor}/>
+            setExternalValue={(value) => setBFactor(value)}
+            decimalPlaces={0}
+        />
         <MoorhenSlider
-            ref={noTrialsSliderRef}
             sliderTitle="No. of trials"
-            decrementButton={decreaseNoTrialsButton}
-            incrementButton={increaseNoTrialsButton}
             minVal={10}
             maxVal={5000}
             showMinMaxVal={false}
             logScale={false}
-            allowFloats={false}
-            initialValue={noTrials}
+            stepButtons={100}
             externalValue={noTrials}
-            setExternalValue={setNoTrials}/>
+            setExternalValue={(value) => setNoTrials(value)}
+            decimalPlaces={0}
+        />
         <MoorhenSlider
-            ref={scaleFactorSliderRef}
             sliderTitle="Scale factor"
-            decrementButton={decreaseScaleFactorButton}
-            incrementButton={increaseScaleFactorButton}
             minVal={1}
             maxVal={6}
             showMinMaxVal={false}
             logScale={false}
-            initialValue={scaleFactor}
+            stepButtons={1}
             externalValue={scaleFactor}
-            setExternalValue={setScaleFactor}/>
+            setExternalValue={(value) => setScaleFactor(value)}
+            decimalPlaces={0}
+        />
     </>
 
     const onCompleted = useCallback(async () => {

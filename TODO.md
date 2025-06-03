@@ -1,18 +1,31 @@
 # Moorhen
 A JavaScript molecular graphics program
 
-### For 0.16.4
-- [x] SMILES string is white on dark background.
-- [x] Print out molecule info - B-factors, etc. This could be hover info, atom label, full print
-      of ATOM cards, context menu option. Environment of temp factors.
-- [x] Edit occupancy should be reflected in atom info card above. It only seems to work after some other edit.
-- [x] Fix that updateLabels increases number of buffers.
-- [x] Fix that turning on additional representations slows down panning, even if they are subsequently turned off.
+### For 0.21.1
+- [ ] Ability to set origin/zoom/individual rotation in "Multiple views for different molecules".
+
+### For 0.21.0
+- [x] Fix 64-bit test in CootWorker, it looks a bit dodgy.
+- [x] User choice on multiview layout.
+- [x] Fix MrParse UI in dark mode.
+- [x] Speed up one-view-per molecule.
+- [x] Drag and drop file load.
+  - [x] PDB/MMCIF
+  - [x] Put loading from async [File] into utility function
+  - [x] Only accept supported types
+  - [x] Auto Mtz
+  - [x] Session data
+  - [x] Work out why enqueueSnackbar does not work inside useDropzone
+  - [x] Drag and drop JSON validation
+  - [x] Drag and drop MrParse results
+
+### Todo
+- [ ] Do not pull whole monomer library - we never use it.
+- [ ] Fitting 5-letter ligand truncates name, e.g. A1LU6
+- [ ] Get Structure factors if no map download available.
 - [ ] Undo button on a molecule loaded from SMILES/PubChem with name > 3 letters breaks the structure.
 - [ ] "Somehow" determine PLDDT vs B-factor in SliceNDice
 - [ ] Add Zoom to "Show controls"
-
-### Todo
 - [ ] Prosmart (this is complicated because of the subprocess model).
   - [ ] Results parsing for starters.
 - [ ] CCP4MG/MrBump. As above results parsing would be good start.

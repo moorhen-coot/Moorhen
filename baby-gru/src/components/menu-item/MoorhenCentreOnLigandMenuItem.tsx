@@ -2,7 +2,7 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { ChevronRightOutlined, ExpandMoreOutlined } from "@mui/icons-material";
-import { TreeView, TreeItem } from '@mui/x-tree-view';
+import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import { useSelector } from 'react-redux';
 import { convertViewtoPx } from "../../utils/utils";
 
@@ -20,7 +20,7 @@ export const MoorhenCentreOnLigandMenuItem = (props: {
             popoverContent={
                 molecules.some(molecule => molecule.ligands.length > 0) ?
                 <div style={{overflowY: 'auto', maxHeight: convertViewtoPx(30, height)}}>
-                <TreeView
+                <SimpleTreeView
                 aria-label="file system navigator"
                 >
                     {molecules.filter(molecule => molecule.ligands.length > 0).map(molecule => {
@@ -44,7 +44,7 @@ export const MoorhenCentreOnLigandMenuItem = (props: {
                             })}
                         </TreeItem>
                     })}
-                </TreeView>
+                </SimpleTreeView>
                 </div>
                 :
                 <span>No ligands...</span>

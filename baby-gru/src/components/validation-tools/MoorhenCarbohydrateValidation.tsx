@@ -32,6 +32,7 @@ export const MoorhenCarbohydrateValidation = (props: moorhen.CollectedProps) => 
         enableMapSelect={false}
         fetchData={fetchCardData}
         getCards={getCards}
+        menuId="carbohydrate-validation"
     />
 
 }

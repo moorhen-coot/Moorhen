@@ -28,11 +28,13 @@ const calculateDisplayStartAndEnd = (rulerStart: number, sequenceLength: number)
     }
     let middleIndex = Math.round((sequenceLength) / 2)
     return [middleIndex - 20 + rulerStart, middleIndex + 20 + rulerStart]
+    return [middleIndex - 20 + rulerStart, middleIndex + 20 + rulerStart]
 }
 
 const parseSequenceData = (sequence: moorhen.ResidueInfo[]): [number, number, string, number, number]=> {
     let rulerStart = sequence[0].resNum
     let finalSequence: string[] = Array(sequence[sequence.length-1].resNum).fill('-')
+    let seqLength = sequence[sequence.length-1].resNum - rulerStart + 1
     let seqLength = sequence[sequence.length-1].resNum - rulerStart + 1
 
     sequence.forEach(residue => {
@@ -40,12 +42,14 @@ const parseSequenceData = (sequence: moorhen.ResidueInfo[]): [number, number, st
     })
 
     return [rulerStart, seqLength, finalSequence.join(''), ...calculateDisplayStartAndEnd(rulerStart, seqLength)]
+    return [rulerStart, seqLength, finalSequence.join(''), ...calculateDisplayStartAndEnd(rulerStart, seqLength)]
 }
 
 type DisplaySettingsType = {
     rulerStart: number;
     start: number;
     end: number;
+    seqLength: number;
     seqLength: number;
     displaySequence: string;
 }
@@ -71,14 +75,19 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
 
     const [initialRulerStart, initialSeqLength, initialDisplaySequence, intialStart, initialEnd] = parseSequenceData(props.sequence.sequence)
 
+
+    const [initialRulerStart, initialSeqLength, initialDisplaySequence, intialStart, initialEnd] = parseSequenceData(props.sequence.sequence)
+
     const [message, setMessage] = useState<string>("");
     const [displaySettings, setDisplaySettings] = useState<DisplaySettingsType>({
         rulerStart: initialRulerStart,
         start: intialStart,
         end: initialEnd,
         seqLength: initialSeqLength,
+        seqLength: initialSeqLength,
         displaySequence: initialDisplaySequence
     });
+
 
     const dispatch = useDispatch()
     const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo)
@@ -114,7 +123,9 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
         selectedResiduesTrackRef.current.data = dummyData
     }
 
+
     /**
+     * Sets a range of highlighted residues in the sequence viewer
      * Sets a range of highlighted residues in the sequence viewer
      * @param {Number} start The first residues of the range
      * @param {Number} end The last residue of the range
@@ -149,10 +160,12 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
             }
         ]
 
+
         selectedResiduesTrackRef.current.data = selectedResiduesTrackData
     }
 
     /**
+     * Sets a highlighted residue in the sequence viewer
      * Sets a highlighted residue in the sequence viewer
      */
     const setHighlight = (resNum: string) => {
@@ -176,11 +189,14 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
             return
         }
 
+
         const resNum = resInfo.split('(')[0]
+
 
         if (!resNum) {
             return
         }
+
 
         setMessage(hoveredAtom.cid)
         setHighlight(resNum)
@@ -216,6 +232,7 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
         }
     }, [residueSelection])
 
+
     /**
      * Callback to handle changes in the nightingale component
      */
@@ -250,6 +267,7 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
             } else if (evt.detail.eventType === "mouseout") {
                 setMessage("")
             }
+            }
         }, 1)
     }, [clickedResidue, sequence, selectedResidues, molecule, setSelectedResidues, setClickedResidue])
 
@@ -272,6 +290,7 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
             shiftKey.current = evt.shiftKey
         }
 
+
         sequenceRef.current.addEventListener("click", handleClick)
         sequenceRef.current.addEventListener("change", handleChange)
         sequenceRef.current.addEventListener('dblclick', disableDoubleClick, true)
@@ -283,6 +302,9 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                 sequenceRef.current.removeEventListener('dblclick', disableDoubleClick, true);
             }
         };
+
+    }, [handleChange]);
+
 
     }, [handleChange]);
 
@@ -322,6 +344,9 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
 
         const [newRulerStart, newSeqLength, newDisplaySequence, newStart, newEnd] = parseSequenceData(newSequence)
 
+
+        const [newRulerStart, newSeqLength, newDisplaySequence, newStart, newEnd] = parseSequenceData(newSequence)
+
         if (newDisplaySequence !== displaySettings.displaySequence) {
             if(sequenceRef && customElements.whenDefined("nightingale-sequence")) {
                 sequenceRef.current.sequence = newDisplaySequence
@@ -338,6 +363,7 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
         }
 
     }, [updateSwitch])
+
 
     /**
      * Hook used to clear the current selection if user selects residue from different chain
@@ -382,6 +408,7 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                         ref={sequenceRef}
                         sequence={displaySettings.displaySequence}
                         length={displaySettings.seqLength}
+                        length={displaySettings.seqLength}
                         numberofticks="10"
                         display-start={displaySettings.start}
                         display-end={displaySettings.end}
@@ -399,6 +426,7 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                 </nightingale-manager>
             </div>
         </div>
+    )
     )
 }
 

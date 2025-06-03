@@ -1,25 +1,12 @@
 import { useEffect, useState } from "react"
 import { Form, FormSelect, InputGroup, Stack } from "react-bootstrap";
 import { IconButton, Popover, Slider } from '@mui/material';
-import { MoorhenSlider } from '../misc/MoorhenSlider';
+import { MoorhenSlider } from '../inputs/MoorhenSlider';
 import { AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
 import { moorhen } from "../../types/moorhen";
 import { webGL } from '../../types/mgWebGL';
 import { useSelector } from "react-redux";
 
-const SliderButton = (props: {
-    stateSetter: React.Dispatch<React.SetStateAction<number>>;
-    step: number
-}) => {
-
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
-
-    const { stateSetter, step } = props
-
-    return <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey'}} onClick={() => stateSetter((prev) => { return prev + step})} >
-                {step > 0 ? <AddCircleOutline/> : <RemoveCircleOutline/>}
-            </IconButton>
-}
 
 export const BondSettingsPanel = (props: {
     bondWidth: number;
@@ -45,26 +32,26 @@ export const BondSettingsPanel = (props: {
     return <div style={{paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', borderStyle: 'solid', borderWidth: '1px', borderColor: 'grey', borderRadius: '1.5rem'}}>
         <MoorhenSlider
             sliderTitle="Bond width"
-            initialValue={bondWidth}
             externalValue={bondWidth}
-            setExternalValue={setBondWidth}
+            setExternalValue={(value) => setBondWidth(value)}
             showMinMaxVal={false}
-            decrementButton={<SliderButton stateSetter={setBondWidth} step={-0.1}/>}
-            incrementButton={<SliderButton stateSetter={setBondWidth} step={0.1}/>}
+            stepButtons={0.1}
             minVal={0.05}
             maxVal={0.5}
-            logScale={false}/>
+            logScale={false}
+            decimalPlaces={2}
+        />
         <MoorhenSlider
             sliderTitle="Radius-Bond ratio"
-            initialValue={atomRadiusBondRatio}
             externalValue={atomRadiusBondRatio}
-            setExternalValue={setAtomRadiusBondRatio} 
+            setExternalValue={(value) => setAtomRadiusBondRatio(value)}
             showMinMaxVal={false}
-            decrementButton={<SliderButton stateSetter={setAtomRadiusBondRatio} step={-0.1}/>}
-            incrementButton={<SliderButton stateSetter={setAtomRadiusBondRatio} step={0.1}/>}
+            stepButtons={0.1}
             minVal={1.0}
             maxVal={3.5}
-            logScale={false}/>
+            logScale={false}
+            decimalPlaces={2}
+        />
         <Form.Check 
             type="switch"
             checked={showAniso}
@@ -137,59 +124,59 @@ const SurfaceSettingsPanel = (props: {
     return <div style={{paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', borderStyle: 'solid', borderWidth: '1px', borderColor: 'grey', borderRadius: '1.5rem'}}>
         <MoorhenSlider
             sliderTitle="Gauss. Surf. Sigma"
-            initialValue={surfaceSigma}
             externalValue={surfaceSigma}
-            setExternalValue={setSurfaceSigma}
+            setExternalValue={(value) => setSurfaceSigma(value)}
             showMinMaxVal={false}
-            decrementButton={<SliderButton stateSetter={setSurfaceSigma} step={-1}/>}
-            incrementButton={<SliderButton stateSetter={setSurfaceSigma} step={1}/>}
+            stepButtons={1}
             minVal={0.01}
             maxVal={10}
-            logScale={false}/>
+            logScale={false}
+            decimalPlaces={0}
+        />
         <MoorhenSlider
             sliderTitle="Gauss. Surf. Contour Level"
-            initialValue={surfaceLevel}
             externalValue={surfaceLevel}
-            setExternalValue={setSurfaceLevel} 
+            setExternalValue={(value) => setSurfaceLevel(value)}
             showMinMaxVal={false}
-            decrementButton={<SliderButton stateSetter={setSurfaceLevel} step={-1}/>}
-            incrementButton={<SliderButton stateSetter={setSurfaceLevel} step={1}/>}
+            stepButtons={1}
             minVal={0.01}
             maxVal={10}
-            logScale={false}/>
+            logScale={false}
+            decimalPlaces={0}
+        />
         <MoorhenSlider
             sliderTitle="Gauss. Surf. Box Radius"
-            initialValue={surfaceRadius}
             externalValue={surfaceRadius}
-            setExternalValue={setSurfaceRadius} 
+            setExternalValue={(value) => setSurfaceRadius(value)}
             showMinMaxVal={false}
-            decrementButton={<SliderButton stateSetter={setSurfaceRadius} step={-1}/>}
-            incrementButton={<SliderButton stateSetter={setSurfaceRadius} step={1}/>}
+            stepButtons={1}
             minVal={0.01}
             maxVal={10}
-            logScale={false}/>
+            logScale={false}
+            decimalPlaces={0}
+        />
         <MoorhenSlider 
             sliderTitle="Gauss. Surf. Grid Scale"
-            initialValue={surfaceGridScale}
             externalValue={surfaceGridScale}
-            setExternalValue={setSurfaceGridScale} 
+            setExternalValue={(value) => setSurfaceGridScale(value)}
             showMinMaxVal={false}
-            decrementButton={<SliderButton stateSetter={setSurfaceGridScale} step={-0.1}/>}
-            incrementButton={<SliderButton stateSetter={setSurfaceGridScale} step={0.1}/>}
+            stepButtons={0.1}
             minVal={0.01}
             maxVal={1.5}
-            logScale={false}/>
+            logScale={false}
+            decimalPlaces={2}
+        />
         <MoorhenSlider 
             sliderTitle="Gauss. Surf. B-Factor"
-            initialValue={surfaceBFactor}
             externalValue={surfaceBFactor}
-            setExternalValue={setSurfaceBFactor} 
+            setExternalValue={(value) => setSurfaceBFactor(value)}
             showMinMaxVal={false}
-            decrementButton={<SliderButton stateSetter={setSurfaceBFactor} step={-10}/>}
-            incrementButton={<SliderButton stateSetter={setSurfaceBFactor} step={10}/>}
+            stepButtons={10}
             minVal={0}
             maxVal={100}
-            logScale={false}/>
+            logScale={false}
+            decimalPlaces={0}
+        />
     </div>
 }
 
@@ -280,15 +267,15 @@ const SymmetrySettingsPanel = (props: {
         <MoorhenSlider
             isDisabled={!symmetryOn}
             sliderTitle="Symmetry Radius"
-            initialValue={symmetryRadius}
             externalValue={symmetryRadius}
-            setExternalValue={setSymmetryRadius}
+            setExternalValue={(value) => setSymmetryRadius(value)}
             showMinMaxVal={false}
-            decrementButton={<SliderButton stateSetter={setSymmetryRadius} step={-5}/>}
-            incrementButton={<SliderButton stateSetter={setSymmetryRadius} step={5}/>}
+            stepButtons={5}
             minVal={0.01}
             maxVal={100}
-            logScale={false}/>
+            logScale={false}
+            decimalPlaces={0}
+        />
     </div>
 }
 
@@ -325,83 +312,81 @@ export const RibbonSettingsPanel = (props: {
     return <div style={{paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', borderStyle: 'solid', borderWidth: '1px', borderColor: 'grey', borderRadius: '1.5rem'}}>
         <MoorhenSlider
             sliderTitle="Ribbon Coil Thickness"
-            initialValue={ribbonCoilThickness}
             externalValue={ribbonCoilThickness}
-            setExternalValue={setRibbonCoilThickness}
+            setExternalValue={(value) => setRibbonCoilThickness(value)}
             showMinMaxVal={false}
-            decrementButton={<SliderButton stateSetter={setRibbonCoilThickness} step={-0.1}/>}
-            incrementButton={<SliderButton stateSetter={setRibbonCoilThickness} step={0.1}/>}
+            stepButtons={0.1}
             minVal={0.01}
             maxVal={2}
-            logScale={false}/>
+            logScale={false}
+            decimalPlaces={2}
+        />
         <MoorhenSlider
             sliderTitle="Ribbon Helix Width"
-            initialValue={ribbonHelixWidth}
             externalValue={ribbonHelixWidth}
-            setExternalValue={setRibbonHelixWidth}
+            setExternalValue={(value) => setRibbonHelixWidth(value)}
             showMinMaxVal={false}
-            decrementButton={<SliderButton stateSetter={setRibbonHelixWidth} step={-0.1}/>}
-            incrementButton={<SliderButton stateSetter={setRibbonHelixWidth} step={0.1}/>}
+            stepButtons={0.1}
             minVal={0.01}
             maxVal={3}
-            logScale={false}/>
+            logScale={false}
+            decimalPlaces={2}
+        />
         <MoorhenSlider
             sliderTitle="Ribbon Strand Width"
-            initialValue={ribbonStrandWidth}
             externalValue={ribbonStrandWidth}
-            setExternalValue={setRibbonStrandWidth}
+            setExternalValue={(value) => setRibbonStrandWidth(value)}
             showMinMaxVal={false}
-            decrementButton={<SliderButton stateSetter={setRibbonStrandWidth} step={-0.1}/>}
-            incrementButton={<SliderButton stateSetter={setRibbonStrandWidth} step={0.1}/>}
+            stepButtons={0.1}
             minVal={0.01}
             maxVal={3}
-            logScale={false}/>
+            logScale={false}
+            decimalPlaces={2}
+        />
         <MoorhenSlider
             sliderTitle="Ribbon Arrow Width"
-            initialValue={ribbonArrowWidth}
             externalValue={ribbonArrowWidth}
-            setExternalValue={setRibbonArrowWidth}
+            setExternalValue={(value) => setRibbonArrowWidth(value)}
             showMinMaxVal={false}
-            decrementButton={<SliderButton stateSetter={setRibbonArrowWidth} step={-0.1}/>}
-            incrementButton={<SliderButton stateSetter={setRibbonArrowWidth} step={0.1}/>}
+            stepButtons={0.1}
             minVal={0.01}
             maxVal={3}
-            logScale={false}/>
+            logScale={false}
+            decimalPlaces={2}
+        />
         <MoorhenSlider
             sliderTitle="Ribbon Nucleotides Width"
-            initialValue={ribbonDNARNAWidth}
             externalValue={ribbonDNARNAWidth}
-            setExternalValue={setRibbonDNARNAWidth}
+            setExternalValue={(value) => setRibbonDNARNAWidth(value)}
             showMinMaxVal={false}
-            decrementButton={<SliderButton stateSetter={setRibbonDNARNAWidth} step={-0.1}/>}
-            incrementButton={<SliderButton stateSetter={setRibbonDNARNAWidth} step={0.1}/>}
+            stepButtons={0.1}
             minVal={0.01}
             maxVal={3}
-            logScale={false}/>
+            logScale={false}
+            decimalPlaces={2}
+        />
         <MoorhenSlider
             sliderTitle="Ribbon Axial Sampling"
-            initialValue={ribbonAxialSampling}
             externalValue={ribbonAxialSampling}
-            setExternalValue={setRibbonAxialSampling}
+            setExternalValue={(value) => setRibbonAxialSampling(value)}
             showMinMaxVal={false}
-            decrementButton={<SliderButton stateSetter={setRibbonAxialSampling} step={-1}/>}
-            incrementButton={<SliderButton stateSetter={setRibbonAxialSampling} step={1}/>}
+            stepButtons={1}
             minVal={0}
             maxVal={15}
-            allowFloats={false}
-            logScale={false}/>
+            logScale={false}
+            decimalPlaces={0}
+        />
         <MoorhenSlider
             sliderTitle="Nucl. Dish Angular Sampling"
-            initialValue={dishStyleAngularSampling}
             externalValue={dishStyleAngularSampling}
-            setExternalValue={setDishStyleAngularSampling}
+            setExternalValue={(value) => setDishStyleAngularSampling(value)}
             showMinMaxVal={false}
-            decrementButton={<SliderButton stateSetter={setDishStyleAngularSampling} step={-1}/>}
-            incrementButton={<SliderButton stateSetter={setDishStyleAngularSampling} step={1}/>}
+            stepButtons={1}
             minVal={1}
             maxVal={64}
-            allowFloats={false}
-            logScale={false}/>
+            logScale={false}
+            decimalPlaces={0}
+        />
         <Form.Group style={{ margin: '0px', width: '100%' }}>
             <Form.Label>Secondary structure method</Form.Label>
             <FormSelect size="sm" value={ssUsageScheme} onChange={(evt) => setSsUsageScheme(parseInt(evt.target.value))}>
@@ -435,26 +420,26 @@ export const MolSurfSettingsPanel = (props: {
     return <div style={{paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', borderStyle: 'solid', borderWidth: '1px', borderColor: 'grey', borderRadius: '1.5rem'}}>
         <MoorhenSlider
             sliderTitle="Mol. Surf. Probe Radius"
-            initialValue={surfaceStyleProbeRadius}
             externalValue={surfaceStyleProbeRadius}
-            setExternalValue={setSurfaceStyleProbeRadius}
+            setExternalValue={(value) => setSurfaceStyleProbeRadius(value)}
             showMinMaxVal={false}
-            decrementButton={<SliderButton stateSetter={setSurfaceStyleProbeRadius} step={-0.1}/>}
-            incrementButton={<SliderButton stateSetter={setSurfaceStyleProbeRadius} step={0.1}/>}
+            stepButtons={0.1}
             minVal={0.01}
             maxVal={3}
-            logScale={false}/>
+            logScale={false}
+            decimalPlaces={2}
+        />
         <MoorhenSlider
             sliderTitle="Mol. Surf. Radius Multiplier"
-            initialValue={ballsStyleRadiusMultiplier}
             externalValue={ballsStyleRadiusMultiplier}
-            setExternalValue={setBallsStyleRadiusMultiplier}
+            setExternalValue={(value) => setBallsStyleRadiusMultiplier(value)}
             showMinMaxVal={false}
-            decrementButton={<SliderButton stateSetter={setBallsStyleRadiusMultiplier} step={-0.1}/>}
-            incrementButton={<SliderButton stateSetter={setBallsStyleRadiusMultiplier} step={0.1}/>}
+            stepButtons={0.1}
             minVal={0.01}
             maxVal={3}
-            logScale={false}/>
+            logScale={false}
+            decimalPlaces={2}
+        />
     </div>
 }
 
@@ -475,38 +460,37 @@ const CylinderSettingsPanel = (props: {
     return <div style={{paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', borderStyle: 'solid', borderWidth: '1px', borderColor: 'grey', borderRadius: '1.5rem'}}>
         <MoorhenSlider
             sliderTitle="Cylinder Angular Sampling"
-            initialValue={cylindersStyleAngularSampling}
             externalValue={cylindersStyleAngularSampling}
-            setExternalValue={setCylindersStyleAngularSampling}
+            setExternalValue={(value) => setCylindersStyleAngularSampling(value)}
             showMinMaxVal={false}
-            decrementButton={<SliderButton stateSetter={setCylindersStyleAngularSampling} step={-1}/>}
-            incrementButton={<SliderButton stateSetter={setCylindersStyleAngularSampling} step={1}/>}
+            stepButtons={1}
             minVal={0.01}
             maxVal={10}
-            allowFloats={false}
-            logScale={false}/>
+            logScale={false}
+            decimalPlaces={0}
+        />
         <MoorhenSlider
             sliderTitle="Cylinder Radius"
-            initialValue={cylindersStyleCylinderRadius}
             externalValue={cylindersStyleCylinderRadius}
-            setExternalValue={setCylindersStyleCylinderRadius}
+            setExternalValue={(value) => setCylindersStyleCylinderRadius(value)}
             showMinMaxVal={false}
-            decrementButton={<SliderButton stateSetter={setCylindersStyleCylinderRadius} step={-0.1}/>}
-            incrementButton={<SliderButton stateSetter={setCylindersStyleCylinderRadius} step={0.1}/>}
+            stepButtons={0.1}
             minVal={0.01}
             maxVal={3}
-            logScale={false}/>
+            logScale={false}
+            decimalPlaces={2}
+        />
         <MoorhenSlider
             sliderTitle="Cylinder Ball Radius"
-            initialValue={cylindersStyleBallRadius}
             externalValue={cylindersStyleBallRadius}
-            setExternalValue={setCylindersStyleBallRadius}
+            setExternalValue={(value) => setCylindersStyleBallRadius(value)}
             showMinMaxVal={false}
-            decrementButton={<SliderButton stateSetter={setCylindersStyleBallRadius} step={-0.1}/>}
-            incrementButton={<SliderButton stateSetter={setCylindersStyleBallRadius} step={0.1}/>}
+            stepButtons={0.1}
             minVal={0.01}
             maxVal={3}
-            logScale={false}/>
+            logScale={false}
+            decimalPlaces={2}
+        />
     </div>
 }
 
@@ -541,15 +525,15 @@ export const ResidueEnvironmentSettingsPanel = (props: {
                     label="Show contacts"/>
                 <MoorhenSlider
                     sliderTitle="Neighbouring Res. Dist."
-                    initialValue={maxDist}
                     externalValue={maxDist}
-                    setExternalValue={setMaxDist}
+                    setExternalValue={(value) => setMaxDist(value)}
                     showMinMaxVal={false}
-                    decrementButton={<SliderButton stateSetter={setMaxDist} step={-0.5}/>}
-                    incrementButton={<SliderButton stateSetter={setMaxDist} step={0.5}/>}
+                    stepButtons={0.5}
                     minVal={1}
                     maxVal={15}
-                    logScale={false}/>
+                    logScale={false}
+                    decimalPlaces={2}
+                />
             </div> 
 }
 
