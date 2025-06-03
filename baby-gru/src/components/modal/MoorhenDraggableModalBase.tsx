@@ -8,8 +8,51 @@ import { useDispatch, useSelector } from "react-redux";
 import { ResizableBox } from "react-resizable";
 import { setEnableAtomHovering } from "../../store/hoveringStatesSlice";
 import { hideModal, focusOnModal, unFocusModal } from "../../store/modalsSlice";
+
+type MoorhenDraggableModalBaseProps = {
+    headerTitle: string | JSX.Element;
+    body: JSX.Element | JSX.Element[];
+    modalId: string;
+    enforceMaxBodyDimensions?: boolean;
+    resizeNodeRef?: null | React.RefObject<HTMLDivElement>;
+    initialWidth?: number;
+    initialHeight?: number;
+    maxWidth?: number;
+    maxHeight?: number;
+    minWidth?: number;
+    minHeight?: number;
+    top?: number;
+    left?: number;
+    additionalHeaderButtons?: JSX.Element[];
+    footer?: JSX.Element;
+    additionalChildren?: JSX.Element;
+    overflowY?: "visible" | "hidden" | "clip" | "scroll" | "auto";
+    overflowX?: "visible" | "hidden" | "clip" | "scroll" | "auto";
+    handleClassName?: string;
+    showCloseButton?: boolean;
+    lockAspectRatio?: boolean;
+    enableResize?: false | { [key: string]: boolean };
+    onResizeStop?: (
+        evt: MouseEvent | TouchEvent,
+        direction: "top" | "right" | "bottom" | "left" | "topRight" | "bottomRight" | "bottomLeft" | "topLeft",
+        ref: HTMLDivElement,
+        delta: { width: number; height: number }
+    ) => void;
+    onClose?: () => void | Promise<void>;
+    onResize?: (
+        evt: MouseEvent | TouchEvent,
+        direction: "top" | "right" | "bottom" | "left" | "topRight" | "bottomRight" | "bottomLeft" | "topLeft",
+        ref: HTMLDivElement,
+        delta: { width: number; height: number },
+        size: { width: number; height: number }
+    ) => void;
+};
+
 /**
  * The base component used to create draggable modals.
+ * It autoscale to the content if initialWidth and initialHeight are not provided. 
+ * This scaling need to draw the content first off screen, so of the content is not ready yet, the modal will not be displayed or might be slow to display. 
+ * In that case provide initialWidth and initialHeight.
  * @property {string} headerTitle - The title displayed on the modal header
  * @property {boolean} show - Indicates if the modal is to be displayed
  * @property {function} setShow - Setter function for props.show
@@ -61,85 +104,46 @@ import { hideModal, focusOnModal, unFocusModal } from "../../store/modalsSlice";
  * }
  *
  */
-type MoorhenDraggableModalBaseProps = {
-    headerTitle: string | JSX.Element;
-    body: JSX.Element | JSX.Element[];
-    modalId: string;
-    enforceMaxBodyDimensions?: boolean;
-    resizeNodeRef?: null | React.RefObject<HTMLDivElement>;
-    initialWidth?: number;
-    initialHeight?: number;
-    maxWidth?: number;
-    maxHeight?: number;
-    minWidth?: number;
-    minHeight?: number;
-    top?: number;
-    left?: number;
-    additionalHeaderButtons?: JSX.Element[];
-    footer?: JSX.Element;
-    additionalChildren?: JSX.Element;
-    overflowY?: "visible" | "hidden" | "clip" | "scroll" | "auto";
-    overflowX?: "visible" | "hidden" | "clip" | "scroll" | "auto";
-    handleClassName?: string;
-    showCloseButton?: boolean;
-    lockAspectRatio?: boolean;
-    enableResize?: false | { [key: string]: boolean };
-    onResizeStop?: (
-        evt: MouseEvent | TouchEvent,
-        direction: "top" | "right" | "bottom" | "left" | "topRight" | "bottomRight" | "bottomLeft" | "topLeft",
-        ref: HTMLDivElement,
-        delta: { width: number; height: number }
-    ) => void;
-    onClose?: () => void | Promise<void>;
-    onResize?: (
-        evt: MouseEvent | TouchEvent,
-        direction: "top" | "right" | "bottom" | "left" | "topRight" | "bottomRight" | "bottomLeft" | "topLeft",
-        ref: HTMLDivElement,
-        delta: { width: number; height: number },
-        size: { width: number; height: number }
-    ) => void;
-}
-
 export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps) => {
-   const {
-        showCloseButton= true,
-        handleClassName= "handle",
-        additionalHeaderButtons= null,
-        additionalChildren= null,
-        enableResize= { top: false, right: true, bottom: true, left: false, topRight: false, bottomRight: true, bottomLeft: true, topLeft: false },
-        top= 500,
-        left= 500,
-        overflowY= "auto",
-        overflowX= "hidden",
-        lockAspectRatio= false,
-        maxHeight= 600,
-        maxWidth= 600,
-        minHeight= 100,
-        minWidth= 100,
-        enforceMaxBodyDimensions= true,
-    } = {...props};
+    const {
+        showCloseButton = true,
+        handleClassName = "handle",
+        additionalHeaderButtons = null,
+        additionalChildren = null,
+        enableResize = { top: false, right: true, bottom: true, left: false, topRight: false, bottomRight: true, bottomLeft: true, topLeft: false },
+        top = 500,
+        left = 500,
+        overflowY = "auto",
+        overflowX = "hidden",
+        lockAspectRatio = false,
+        initialHeight = null,
+        initialWidth = null,
+        maxHeight = 600,
+        maxWidth = 600,
+        minHeight = 100,
+        minWidth = 100,
+        enforceMaxBodyDimensions = true,
+    } = { ...props };
 
-// Measure the body size to set the initial size of the modal
+    // Measure the body size to set the initial size of the modal
     const bodyRef = useRef<HTMLDivElement>(null);
-    const [bodySize, setBodySize] = useState<{width: number, height: number}>({width: 0, height: 0});
-    const [measured, setMeasured] = useState((props.initialWidth && props.initialHeight)? true : false);
+    const [bodySize, setBodySize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
+    const [measured, setMeasured] = useState(props.initialWidth && props.initialHeight ? true : false);
     useLayoutEffect(() => {
-    if (bodyRef.current) {
-        setBodySize({
-            width: bodyRef.current.offsetWidth,
-            height: bodyRef.current.offsetHeight,
-        });
-        setMeasured(true);
-        console.log("measured body size", bodyRef.current.offsetWidth, bodyRef.current.offsetHeight);
-    }
+        if (bodyRef.current) {
+            setBodySize({
+                width: bodyRef.current.offsetWidth,
+                height: bodyRef.current.offsetHeight,
+            });
+            setMeasured(true);
+            console.log("measured body size", bodyRef.current.offsetWidth, bodyRef.current.offsetHeight);
+        }
     }, [measured, props.body]);
 
-    const resizableSize ={
-        width: props.initialWidth || bodySize.width > minWidth ? bodySize.width < maxWidth ? bodySize.width : maxWidth : minWidth,
-        height: props.initialHeight || bodySize.height > minHeight ? bodySize.height < maxHeight ? bodySize.height : maxHeight :minHeight,
+    const resizableSize = {
+        width: initialWidth ? (bodySize.width > minWidth ? (bodySize.width < maxWidth ? bodySize.width : maxWidth) : minWidth) : initialWidth,
+        height: initialHeight ? (bodySize.height > minHeight ? (bodySize.height < maxHeight ? bodySize.height : maxHeight) : minHeight) : initialHeight,
     };
-
-    
 
     const dispatch = useDispatch();
     const focusHierarchy = useSelector((state: moorhen.State) => state.modals.focusHierarchy);
@@ -246,128 +250,128 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         if (props.onResize) {
             const width = draggableNodeRef.current?.clientWidth;
             const height = draggableNodeRef.current?.clientHeight;
-            props.onResize(evt, direction, ref, delta, {width, height});
+            props.onResize(evt, direction, ref, delta, { width, height });
         }
     };
 
     if (!measured) {
-    return (
-        <div
-            ref={bodyRef}
-            style={{
-                visibility: "hidden",
-                position: "absolute",
-                left: -9999,
-                top: 0,
-                height: "auto",
-                width: "auto",
-                pointerEvents: "none",
-                zIndex: -1,
-            }}
-        >
-            {props.body}
-        </div> 
-        ) }
-    
-    else {
-        return (
-        <Draggable
-            nodeRef={draggableNodeRef}
-            handle={`.${handleClassName}`}
-            position={position}
-            onDrag={handleDrag}
-            onStop={handleDragStop}
-            onStart={handleStart}
-        >
-            <Card
-                id={modalIdRef.current}
-                onClick={() => dispatch(focusOnModal(modalIdRef.current))}
-                className={`moorhen-draggable-card${focusHierarchy[0] === modalIdRef.current ? "-focused" : ""}`}
-                ref={draggableNodeRef}
-                style={{ display: show ? "block" : "none", position: "absolute", opacity: opacity, zIndex: currentZIndex }}
-                onMouseOver={() => setOpacity(1.0)}
-                onMouseOut={() => {
-                    if (transparentModalsOnMouseOut) setOpacity(0.5);
+        return ( // Render a hidden div to measure the body size
+            <div
+                ref={bodyRef}
+                style={{
+                    visibility: "hidden",
+                    position: "absolute",
+                    left: -9999,
+                    top: 0,
+                    height: "auto",
+                    width: "auto",
+                    pointerEvents: "none",
+                    zIndex: -1,
                 }}
             >
-                <Card.Header
-                    className={handleClassName}
-                    style={{ minWidth: minWidth, justifyContent: "space-between", display: "flex", cursor: "move", alignItems: "center" }}
+                {props.body}
+            </div>
+        );
+    } else {
+        return (
+            <Draggable
+                nodeRef={draggableNodeRef}
+                handle={`.${handleClassName}`}
+                position={position}
+                onDrag={handleDrag}
+                onStop={handleDragStop}
+                onStart={handleStart}
+            >
+                <Card
+                    id={modalIdRef.current}
+                    onClick={() => dispatch(focusOnModal(modalIdRef.current))}
+                    className={`moorhen-draggable-card${focusHierarchy[0] === modalIdRef.current ? "-focused" : ""}`}
+                    ref={draggableNodeRef}
+                    style={{ display: show ? "block" : "none", position: "absolute", opacity: opacity, zIndex: currentZIndex }}
+                    onMouseOver={() => setOpacity(1.0)}
+                    onMouseOut={() => {
+                        if (transparentModalsOnMouseOut) setOpacity(0.5);
+                    }}
                 >
-                    {props.headerTitle}
-                    <Stack gap={2} direction="horizontal">
-                        {collapse ? null : additionalHeaderButtons?.map((button) => button)}
-                        <Button variant="white" style={{ margin: "0.1rem", padding: "0.1rem" }} onClick={() => setCollapse(!collapse)}>
-                            {collapse ? <AddOutlined /> : <RemoveOutlined />}
-                        </Button>
-                        {showCloseButton && (
-                            <Button variant="white" style={{ margin: "0.1rem", padding: "0.1rem" }} onClick={handleClose}>
-                                <CloseOutlined />
-                            </Button>
-                        )}
-                    </Stack>
-                </Card.Header>
-                <Card.Body style={{ display: collapse ? "none" : "flex", justifyContent: "center", flexDirection: "column" }}>
-                    <ResizableBox
-                        width={resizableSize.width}
-                        height={resizableSize.height}
-                        minConstraints={[minWidth, minHeight]}
-                        maxConstraints={[maxWidth, maxHeight]}
-                        lockAspectRatio={lockAspectRatio}
-                        resizeHandles={["se"]}
-                        onResizeStop={(e, data) => {
-                            handleResizeStop(e as unknown as MouseEvent | TouchEvent, data.handle as any, data.node as HTMLDivElement, {
-                                width: data.size.width,
-                                height: data.size.height,
-                            });
-                        }}
-                        onResizeStart={(e) => handleStart()}
-                        onResize={(e, data) => {
-                            handleResize(e as unknown as MouseEvent | TouchEvent, data.handle as any, data.node as HTMLDivElement, {
-                                width: data.size.width,
-                                height: data.size.height,
-                            });
-                        }}
-                        handle={
-                            enableResize && typeof enableResize === "object" && enableResize.bottomRight ? (
-                                <span className="react-resizable-handle react-resizable-handle-se">
-                                    <SquareFootOutlined
-                                        style={{
-                                            position: "absolute",
-                                            right: 0,
-                                            bottom: 0,
-                                            cursor: "se-resize",
-                                            transform: "rotate(270deg)",
-                                        }}
-                                    />
-                                </span>
-                            ) : undefined
-                        }
+                    <Card.Header
+                        className={handleClassName}
+                        style={{ minWidth: minWidth, justifyContent: "space-between", display: "flex", cursor: "move", alignItems: "center" }}
                     >
-                        <div
-                            style={{
-                                overflowY: overflowY as "visible" | "hidden" | "clip" | "scroll" | "auto",
-                                overflowX: overflowX as "visible" | "hidden" | "clip" | "scroll" | "auto",
-                                height: "100%",
-                                width: "100%",
-                                display: "block",
-                                alignItems: "center",
-                                justifyContent: "center",
-                            }}
-                        >
-                            {enforceMaxBodyDimensions ? (
-                                <div style={enforceMaxBodyDimensions ? { maxHeight: maxHeight, maxWidth: maxWidth } : {}}>{props.body}</div>
-                            ) : (
-                            props.body
+                        {props.headerTitle}
+                        <Stack gap={2} direction="horizontal">
+                            {collapse ? null : additionalHeaderButtons?.map((button) => button)}
+                            <Button variant="white" style={{ margin: "0.1rem", padding: "0.1rem" }} onClick={() => setCollapse(!collapse)}>
+                                {collapse ? <AddOutlined /> : <RemoveOutlined />}
+                            </Button>
+                            {showCloseButton && (
+                                <Button variant="white" style={{ margin: "0.1rem", padding: "0.1rem" }} onClick={handleClose}>
+                                    <CloseOutlined />
+                                </Button>
                             )}
-                        </div>
-                    </ResizableBox>
-                </Card.Body>
-                {props.footer && (
-                    <Card.Footer style={{ display: collapse ? "none" : "flex", alignItems: "center", justifyContent: "right" }}>{props.footer}</Card.Footer>
-                )}
-                {additionalChildren}
-            </Card>
-        </Draggable>
-    );
-}};
+                        </Stack>
+                    </Card.Header>
+                    <Card.Body style={{ display: collapse ? "none" : "flex", justifyContent: "center", flexDirection: "column" }}>
+                        <ResizableBox
+                            width={resizableSize.width}
+                            height={resizableSize.height}
+                            minConstraints={[minWidth, minHeight]}
+                            maxConstraints={[maxWidth, maxHeight]}
+                            lockAspectRatio={lockAspectRatio}
+                            resizeHandles={["se"]}
+                            onResizeStop={(e, data) => {
+                                handleResizeStop(e as unknown as MouseEvent | TouchEvent, data.handle as any, data.node as HTMLDivElement, {
+                                    width: data.size.width,
+                                    height: data.size.height,
+                                });
+                            }}
+                            onResizeStart={(e) => handleStart()}
+                            onResize={(e, data) => {
+                                handleResize(e as unknown as MouseEvent | TouchEvent, data.handle as any, data.node as HTMLDivElement, {
+                                    width: data.size.width,
+                                    height: data.size.height,
+                                });
+                            }}
+                            handle={
+                                enableResize && typeof enableResize === "object" && enableResize.bottomRight ? (
+                                    <span className="react-resizable-handle react-resizable-handle-se">
+                                        <SquareFootOutlined
+                                            style={{
+                                                position: "absolute",
+                                                right: 0,
+                                                bottom: 0,
+                                                cursor: "se-resize",
+                                                transform: "rotate(270deg)",
+                                            }}
+                                        />
+                                    </span>
+                                ) : undefined
+                            }
+                        >
+                            <div
+                                style={{
+                                    overflowY: overflowY as "visible" | "hidden" | "clip" | "scroll" | "auto",
+                                    overflowX: overflowX as "visible" | "hidden" | "clip" | "scroll" | "auto",
+                                    height: "100%",
+                                    width: "100%",
+                                    display: "block",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                }}
+                            >
+                                {enforceMaxBodyDimensions ? (
+                                    <div style={enforceMaxBodyDimensions ? { maxHeight: maxHeight, maxWidth: maxWidth } : {}}>{props.body}</div>
+                                ) : (
+                                    props.body
+                                )}
+                            </div>
+                        </ResizableBox>
+                    </Card.Body>
+                    {props.footer && (
+                        <Card.Footer style={{ display: collapse ? "none" : "flex", alignItems: "center", justifyContent: "right" }}>{props.footer}</Card.Footer>
+                    )}
+                    {additionalChildren}
+                </Card>
+            </Draggable>
+        );
+    }
+};

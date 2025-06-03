@@ -68,11 +68,11 @@ export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {
                 modalId={modalKeys.MAPS}
                 left={width - (convertRemToPx(55))}
                 top={height - (convertViewtoPx(90, height))}
-                initialHeight={convertViewtoPx(90, height)}
+                initialHeight={convertViewtoPx(60, height)}
                 initialWidth={convertRemToPx(55)}
                 minHeight={convertViewtoPx(10, height)}
                 minWidth={convertRemToPx(28)}
-                maxHeight={!collapseAll ? convertViewtoPx(90, height) : maps.length*50}
+                maxHeight={convertViewtoPx(90, height)}
                 maxWidth={convertRemToPx(55)}
                 onResize={(evt, ref, direction, delta, size) => {
                     setModalWidth(size.width)
