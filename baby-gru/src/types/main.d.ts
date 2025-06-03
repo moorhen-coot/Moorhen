@@ -59,6 +59,9 @@ declare module 'moorhen' {
     let overlaysReducer: any;
     module.exports = overlaysReducer
 
+    let menusReducer: any;
+    module.exports = menusReducer
+
     let MoorhenReduxStore: any;
     module.exports = MoorhenReduxStore
 
