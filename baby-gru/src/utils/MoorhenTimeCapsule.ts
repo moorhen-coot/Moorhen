@@ -552,7 +552,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         commandCentre: React.RefObject<moorhen.CommandCentre>,
         timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
         glRef: React.RefObject<webGL.MGWebGL>,
-        store: ToolkitStore,
+        store: Store,
         dispatch: Dispatch<AnyAction>,
         fetchExternalUrl?: (uniqueId: string) => Promise<string>
     ): Promise<number> {

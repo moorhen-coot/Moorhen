@@ -113,7 +113,7 @@ export const MoorhenPepflipsDifferenceMap = (props: moorhen.CollectedProps) => {
     );
 
     const getCards = useCallback(
-        (selectedModel: number, selectedMap: number, newPepflips: libcootApi.InterestingPlaceDataJS[]): JSX.Element[] => {
+        (selectedModel: number, selectedMap: number, newPepflips: libcootApi.InterestingPlaceDataJS[]):React.JSX.Element[] => {
             const selectedMolecule = molecules.find((molecule) => molecule.molNo === selectedModel);
             let cards = newPepflips.map((flip, index) => {
                 return (

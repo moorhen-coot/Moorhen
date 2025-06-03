@@ -39,14 +39,14 @@ type ActionButtonType = {
     label: string;
     key: string;
     action: () => void;
-    icon?: JSX.Element;
+    icon?: React.JSX.Element;
     disabled: boolean;
 };
 
 type MenuItemType = {
     label: string;
     key: string;
-    menuItem?: JSX.Element;
+    menuItem?: React.JSX.Element;
 };
 
 export const MapCardActionButtons = (props: ActionButtonPropsType) => {
@@ -134,12 +134,12 @@ export const MapCardActionButtons = (props: ActionButtonPropsType) => {
 
     const maximumAllowedWidth = props.maxWidth;
     let currentlyUsedWidth = 0;
-    let expandedButtons: JSX.Element[] = [];
-    let compressedButtons: JSX.Element[] = [];
+    let expandedButtons:React.JSX.Element[] = [];
+    let compressedButtons:React.JSX.Element[] = [];
 
     Object.keys(actionButtons).forEach((key) => {
         if ("menuItem" in actionButtons[key]) {
-            compressedButtons.push(actionButtons[key].menuItem as JSX.Element);
+            compressedButtons.push(actionButtons[key].menuItem as React.JSX.Element);
         } else if ("icon" in actionButtons[key] && currentlyUsedWidth < maximumAllowedWidth) {
             currentlyUsedWidth += 60;
             const button = (
@@ -157,7 +157,7 @@ export const MapCardActionButtons = (props: ActionButtonPropsType) => {
                     </Button>
                 </Tooltip>
             );
-            expandedButtons.push(button as JSX.Element);
+            expandedButtons.push(button as React.JSX.Element);
         } else {
             const menuItem = (
                 <MenuItem
@@ -169,7 +169,7 @@ export const MapCardActionButtons = (props: ActionButtonPropsType) => {
                     {actionButtons[key].label}
                 </MenuItem>
             );
-            compressedButtons.push(menuItem as JSX.Element);
+            compressedButtons.push(menuItem as React.JSX.Element);
         }
     });
     

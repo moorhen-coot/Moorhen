@@ -25,6 +25,17 @@ import {
  } from "../../store/mrParseSlice"
 import { loadMrParseFiles, loadMrParseUrl } from "../../utils/MoorhenFileLoading"
 
+
+declare module "react" {
+    namespace JSX {
+        interface IntrinsicElements {
+            'protvista-manager': any;
+            'protvista-sequence': any;
+            'protvista-track': any;
+        }
+    }
+}
+
 !window.customElements.get('protvista-navigation') && window.customElements.define("protvista-navigation", ProtvistaNavigation)
 !window.customElements.get('protvista-sequence') && window.customElements.define("protvista-sequence", ProtvistaSequence)
 !window.customElements.get('protvista-track') && window.customElements.define("protvista-track", ProtvistaTrack)
@@ -87,7 +98,7 @@ type DisplaySettingsType = {
 }
 
 export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
-    const resizeNodeRef = useRef<HTMLDivElement>()
+    const resizeNodeRef = useRef<HTMLDivElement>(null)
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)

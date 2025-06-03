@@ -22,7 +22,7 @@ export const MoorhenImportMapMenuItem = (props: {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const maps = useSelector((state: moorhen.State) => state.maps)
     const filesRef = useRef<null | HTMLInputElement>(null)
-    const isDiffRef = useRef<undefined | HTMLInputElement>()
+    const isDiffRef = useRef<undefined | HTMLInputElement>(null)
     const [isActiveButton, setIsActiveButton] = useState(true)
 
     const { enqueueSnackbar } = useSnackbar()

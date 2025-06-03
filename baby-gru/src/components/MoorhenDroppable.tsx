@@ -1,6 +1,6 @@
 import { forwardRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { Store } from 'redux';
 import { Container } from 'react-bootstrap';
 import { MoorhenAtomInfoSnackBar } from './snack-bar/MoorhenAtomInfoSnackBar';
 import { useDropzone } from 'react-dropzone';
@@ -23,7 +23,7 @@ interface MoorhenDroppablePropsInterface {
     monomerLibraryPath: string;
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    store: ToolkitStore;
+    store: Store;
     children?: React.ReactNode;
 }
 

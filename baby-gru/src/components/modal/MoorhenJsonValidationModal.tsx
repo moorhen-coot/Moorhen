@@ -13,7 +13,7 @@ export const MoorhenJsonValidationModal = (props: moorhen.CollectedProps) => {
 
     const dispatch = useDispatch()
     
-    const resizeNodeRef = useRef<HTMLDivElement>();
+    const resizeNodeRef = useRef<HTMLDivElement>(null);
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)

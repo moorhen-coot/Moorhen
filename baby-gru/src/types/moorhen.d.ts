@@ -695,7 +695,7 @@ export namespace moorhen {
             commandCentre: React.RefObject<CommandCentre>,
             timeCapsuleRef: React.RefObject<TimeCapsule>,
             glRef: React.RefObject<webGL.MGWebGL>,
-            store: ToolkitStore,
+            store: Store,
             dispatch: Dispatch<AnyAction>,
             fetchExternalUrl?: (uniqueId: string) => Promise<string>
         ): Promise<number>;

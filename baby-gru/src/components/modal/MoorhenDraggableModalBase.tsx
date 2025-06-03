@@ -4,15 +4,14 @@ import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
 import { AddOutlined, CloseOutlined, RemoveOutlined, SquareFootOutlined } from "@mui/icons-material";
 import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
-//import { Resizable } from "re-resizable";
 import { ResizableBox } from "react-resizable";
 import { setEnableAtomHovering } from "../../store/hoveringStatesSlice";
 import { hideModal, focusOnModal, unFocusModal } from "../../store/modalsSlice";
 import { get } from "http";
 
 type MoorhenDraggableModalBaseProps = {
-    headerTitle: string | JSX.Element;
-    body: JSX.Element | JSX.Element[];
+    headerTitle: string |React.JSX.Element;
+    body:React.JSX.Element |React.JSX.Element[];
     modalId: string;
     enforceMaxBodyDimensions?: boolean;
     resizeNodeRef?: null | React.RefObject<HTMLDivElement>;
@@ -24,9 +23,9 @@ type MoorhenDraggableModalBaseProps = {
     minHeight?: number;
     top?: number;
     left?: number;
-    additionalHeaderButtons?: JSX.Element[];
-    footer?: JSX.Element;
-    additionalChildren?: JSX.Element;
+    additionalHeaderButtons?:React.JSX.Element[];
+    footer?:React.JSX.Element;
+    additionalChildren?:React.JSX.Element;
     overflowY?: "visible" | "hidden" | "clip" | "scroll" | "auto";
     overflowX?: "visible" | "hidden" | "clip" | "scroll" | "auto";
     handleClassName?: string;
@@ -174,7 +173,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
     const [collapse, setCollapse] = useState<boolean>(false);
     const [position, setPosition] = useState<{ x: number; y: number }>({ x: left, y: top });
 
-    const draggableNodeRef = useRef<HTMLDivElement>();
+    const draggableNodeRef = useRef<HTMLDivElement>(null);
     const cachedEnableAtomHovering = useRef<boolean>(false);
     const modalIdRef = useRef<string>(props.modalId);
 
