@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { ResizableBox } from "react-resizable";
 import { setEnableAtomHovering } from "../../store/hoveringStatesSlice";
 import { hideModal, focusOnModal, unFocusModal } from "../../store/modalsSlice";
+import { get } from "http";
 
 type MoorhenDraggableModalBaseProps = {
     headerTitle: string | JSX.Element;
@@ -140,10 +141,25 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         }
     }, [measured, props.body]);
 
-    const resizableSize = {
-        width: initialWidth ? (bodySize.width > minWidth ? (bodySize.width < maxWidth ? bodySize.width : maxWidth) : minWidth) : initialWidth,
-        height: initialHeight ? (bodySize.height > minHeight ? (bodySize.height < maxHeight ? bodySize.height : maxHeight) : minHeight) : initialHeight,
+    const getResizableSize = (): { width: number; height: number } => {
+        if (initialWidth && initialHeight) {
+            return {
+                width: initialWidth,
+                height: initialHeight,
+            };
+        } else if (measured) {
+            return {
+                width: bodySize.width > minWidth ? (bodySize.width < maxWidth ? bodySize.width : maxWidth) : minWidth,
+                height: bodySize.height > minHeight ? (bodySize.height < maxHeight ? bodySize.height : maxHeight) : minHeight,
+            };
+        } else {
+            return {
+                width: minWidth,
+                height: minHeight,
+            };
+        }
     };
+    const resizableSize = getResizableSize();
 
     const dispatch = useDispatch();
     const focusHierarchy = useSelector((state: moorhen.State) => state.modals.focusHierarchy);
@@ -317,6 +333,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                             minConstraints={[minWidth, minHeight]}
                             maxConstraints={[maxWidth, maxHeight]}
                             lockAspectRatio={lockAspectRatio}
+                            ref={props.resizeNodeRef ? props.resizeNodeRef : null}
                             resizeHandles={["se"]}
                             onResizeStop={(e, data) => {
                                 handleResizeStop(e as unknown as MouseEvent | TouchEvent, data.handle as any, data.node as HTMLDivElement, {
