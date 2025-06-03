@@ -33,16 +33,16 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
-    const exampleCallBack = (ctx,backgroundColor) => {
+    const exampleCallBack = (ctx,backgroundColor,cbWidth,cbHeight,scale) => {
         const bright_y = backgroundColor[0] * 0.299 + backgroundColor[1] * 0.587 + backgroundColor[2] * 0.114
         if(bright_y<0.5){
             ctx.fillStyle = "white"
         } else {
             ctx.fillStyle = "black"
         }
-        ctx.font = "20px Arial"
-        ctx.fillText("I am written by a callback",0.5*width,0.5*height)
-        console.log("I am written by a callback",0.5*width,0.5*height)
+        ctx.font = 20*scale+"px Arial"
+        ctx.fillText("I am written by a callback",0.5*cbWidth,0.5*cbHeight)
+        console.log("I am written by a callback",0.5*cbWidth,0.5*cbHeight)
     }
 
     const loadExampleOverlays = (evt) => {
@@ -51,9 +51,9 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
         if(evt.target.checked){
             dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/axes_xyz.svg`,x:0.25,y:0.75,width:100,height:100}))
             dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/axes_xyz.svg`,x:0.25,y:0.25,width:100,height:100}))
-            dispatch(addTextOverlay({text:"Red text",x:0.15,y:0.5,font:"108px serif",fillStyle:"red"}))
-            dispatch(addTextOverlay({text:"Text",x:0.15,y:0.75,font:"48px serif"}))
-            dispatch(addTextOverlay({text:"Stroke text",x:0.65,y:0.75,font:"48px serif",drawStyle:"stroke",strokeStyle:"blue"}))
+            dispatch(addTextOverlay({text:"Red text",x:0.15,y:0.5,fontFamily:"serif",fontPixelSize:108,fillStyle:"red"}))
+            dispatch(addTextOverlay({text:"Text",x:0.15,y:0.75,fontFamily:"serif",fontPixelSize:48}))
+            dispatch(addTextOverlay({text:"Stroke text",x:0.65,y:0.75,fontFamily:"serif",fontPixelSize:48,drawStyle:"stroke",strokeStyle:"blue"}))
             dispatch(addSvgPathOverlay({path:"M10 10 h 80 v 80 h -80 Z",drawStyle:"stroke",strokeStyle:"magenta"}))
             dispatch(addSvgPathOverlay({path:"M100 10 h 80 v 80 h -80 Z",drawStyle:"fill",fillStyle:"orange"}))
             dispatch(addFracPathOverlay({path:[[0.7,0.5],[0.8,0.9],[0.6,0.7],[0.7,0.5]],drawStyle:"fill",fillStyle:"#00ffff77"}))

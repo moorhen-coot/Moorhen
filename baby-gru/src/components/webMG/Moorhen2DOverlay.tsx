@@ -12,7 +12,7 @@ interface ImageFrac2D {
     img: HTMLImageElement
 }
 
-export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: number, height: number, helpText: string[], images: ImageFrac2D[]) => {
+export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: number, height: number, scale: number, helpText: string[], images: ImageFrac2D[]) => {
 
     if(!canvas2D_ctx) return
 
@@ -31,6 +31,8 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
     const textMetric = canvas2D_ctx.measureText("Mgq!^(){}|'\"~`√∫Å");
     const actualHeight = textMetric.fontBoundingBoxAscent + textMetric.fontBoundingBoxDescent;
 
+    canvas2D_ctx.lineWidth = scale
+
     helpText.toReversed().forEach(t => {
         if(bright_y<0.5)
            canvas2D_ctx.fillStyle = "white"
@@ -41,7 +43,8 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
     })
 
     textOverlays.forEach(t => {
-        canvas2D_ctx.font = t.font
+        if(t.lineWidth) canvas2D_ctx.lineWidth = t.lineWidth * scale
+        canvas2D_ctx.font = Math.floor(t.fontPixelSize*scale) +"px "+t.fontFamily
         if(t.drawStyle==="stroke"){
             if(t.strokeStyle){
                 canvas2D_ctx.strokeStyle = t.strokeStyle
@@ -64,6 +67,9 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
             canvas2D_ctx.fillText(t.text,t.x*width,t.y*height)
         }
     })
+
+    canvas2D_ctx.lineWidth = 1.0
+    canvas2D_ctx.scale(scale, scale);
 
     svgPathOverlays.forEach(t => {
         let p = new Path2D(t.path)
@@ -99,11 +105,15 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
             canvas2D_ctx.fill(p)
         }
     })
+    canvas2D_ctx.scale(1.0/scale, 1.0/scale);
+
     images.forEach(img => {
         if(img.img){
            canvas2D_ctx.drawImage(img.img,width*img.x,height*img.y,img.width,img.height)
         }
     })
+
+    canvas2D_ctx.lineWidth = scale
 
     fracPathOverlays.forEach(t => {
         canvas2D_ctx.beginPath()
@@ -147,7 +157,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
         }
     })
     callbacks.forEach(f => {
-        f(canvas2D_ctx,backgroundColor)
+        f(canvas2D_ctx,backgroundColor,width,height,scale)
     })
 }
 
@@ -171,7 +181,8 @@ export const Moorhen2DOverlay = ((props) => {
 
     const [images, setImages] = useState<ImageFrac2D[]>([])
 
-    const ratio = Math.ceil(window.devicePixelRatio);
+    let ratio = 1.0
+    if(window.devicePixelRatio) ratio = Math.ceil(window.devicePixelRatio);
 
     useEffect(() => {
         const new_images = []
@@ -205,7 +216,7 @@ export const Moorhen2DOverlay = ((props) => {
         canvas2D_ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
         canvas2D_ctx.clearRect(0,0,width,height)
 
-        drawOn2DContext(canvas2D_ctx, width, height, helpText, images)
+        drawOn2DContext(canvas2D_ctx, width, height, 1.0, helpText, images)
     }
 
     useEffect(() => {

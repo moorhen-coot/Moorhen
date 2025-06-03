@@ -141,7 +141,7 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
         }
 
         ctx.putImageData(imgData, 0,0);
-        drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,[],[])
+        drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],[])
 
         let link: any = document.getElementById('download_image_link');
         if (!link) {
