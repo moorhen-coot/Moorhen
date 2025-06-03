@@ -42,7 +42,6 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
         }
         ctx.font = 20*scale+"px Arial"
         ctx.fillText("I am written by a callback",0.5*cbWidth,0.5*cbHeight)
-        console.log("I am written by a callback",0.5*cbWidth,0.5*cbHeight)
     }
 
     const loadExampleOverlays = (evt) => {

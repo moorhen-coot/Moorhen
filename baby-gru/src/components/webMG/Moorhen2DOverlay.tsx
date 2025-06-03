@@ -109,7 +109,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
 
     images.forEach(img => {
         if(img.img){
-           canvas2D_ctx.drawImage(img.img,width*img.x,height*img.y,img.width,img.height)
+           canvas2D_ctx.drawImage(img.img,width*img.x,height*img.y,img.width*scale,img.height*scale)
         }
     })
 
