@@ -1669,6 +1669,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("set_colour_map_for_map_coloured_by_other_map",&molecules_container_t::set_colour_map_for_map_coloured_by_other_map)
     .function("get_mutation_info",&molecules_container_t::get_mutation_info)
     .function("get_ligand_validation_vs_dictionary",&molecules_container_t::get_ligand_validation_vs_dictionary)
     .function("get_validation_vs_dictionary_for_selection",&molecules_container_t::get_validation_vs_dictionary_for_selection)
@@ -1922,6 +1923,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("set_refinement_geman_mcclure_alpha",&molecules_container_t::set_refinement_geman_mcclure_alpha)
     .function("get_geman_mcclure_alpha",&molecules_container_t::get_geman_mcclure_alpha)
     .function("get_map_histogram",&molecules_container_t::get_map_histogram)
+    .function("get_map_vertices_histogram",&molecules_container_t::get_map_vertices_histogram)
     .function("sharpen_blur_map_with_resample",&molecules_container_t::sharpen_blur_map_with_resample)
     .function("find_water_baddies",&molecules_container_t::find_water_baddies)
     .function("get_gphl_chem_comp_info",&molecules_container_t::get_gphl_chem_comp_info)
@@ -2268,6 +2270,10 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("first",&std::pair<bool, float>::first)
         .field("second",&std::pair<bool, float>::second)
     ;
+    value_object<std::pair<double, std::vector<double> > >("pair_double_vector_double")
+        .field("first",&std::pair<double, std::vector<double>>::first)
+        .field("second",&std::pair<double, std::vector<double>>::second)
+    ;
     value_object<std::pair<clipper::Coord_orth, float>>("pair_clipper_coord_orth_float")
         .field("first",&std::pair<clipper::Coord_orth, float>::first)
         .field("second",&std::pair<clipper::Coord_orth, float>::second)
@@ -2365,6 +2371,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
 
     register_vector<moorhen::helix_t>("vector_helix_t");
+    register_vector<std::pair<double, std::vector<double>>>("vector_pair_double_vector_double");
 
     value_object<moorhen_hbond>("moorhen_hbond")
       .field("hb_hydrogen",&moorhen_hbond::hb_hydrogen)

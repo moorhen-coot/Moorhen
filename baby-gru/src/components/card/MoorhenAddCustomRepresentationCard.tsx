@@ -14,7 +14,7 @@ import { MoorhenCidInputForm } from '../form/MoorhenCidInputForm';
 import { addCustomRepresentation } from '../../store/moleculesSlice';
 import { MoorhenColourRule } from '../../utils/MoorhenColourRule';
 import { NcsColourSwatch } from './MoorhenColourRuleCard';
-import { MoorhenSlider } from "../misc/MoorhenSlider";
+import { MoorhenSlider } from "../inputs/MoorhenSlider";
 import { BondSettingsPanel, MolSurfSettingsPanel, ResidueEnvironmentSettingsPanel, RibbonSettingsPanel } from './MoorhenMoleculeRepresentationSettingsCard';
 import { useSnackbar } from 'notistack';
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../../utils/enums"
@@ -23,7 +23,8 @@ const customRepresentations = [ 'CBs', 'CAs', 'CRs', 'gaussian', 'MolecularSurfa
 
 export const MoorhenAddCustomRepresentationCard = (props: {
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
-    show: boolean; anchorEl: React.RefObject<HTMLDivElement>;
+    show: boolean; 
+    anchorEl: React.RefObject<HTMLDivElement>;
     molecule: moorhen.Molecule;
     urlPrefix: string;
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -502,12 +503,12 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 >
                              <Form.Group style={{paddingLeft: '0.5rem', paddingRight: '0.5rem', width:'100px'}} controlId="MoorhenMoleculeNonCustomAlphaSlider">
                                <MoorhenSlider
-                                   ref={nonCustomOpacitySliderRef}
                                    minVal={0.0}
                                    maxVal={1.0}
+                                   showButtons={false}
+                                   decimalPlaces={2}
                                    logScale={false}
                                    sliderTitle="Opacity"
-                                   initialValue={nonCustomOpacity}
                                    externalValue={nonCustomOpacity}
                                    setExternalValue={(newVal: number) => handleOpacityChange(newVal) } />
                              </Form.Group>

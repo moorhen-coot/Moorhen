@@ -1,11 +1,10 @@
-import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Card, Col, Stack, ToggleButton } from "react-bootstrap";
-import { convertRemToPx } from "../../utils/utils";
+import { convertRemToPx, convertPxToRem } from "../../utils/utils";
 import { getNameLabel } from "./cardUtils";
 import { RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined } from "@mui/icons-material";
 import { MapHistogramAccordion } from "./MapCardResources/MapHistogramAccordion";
-import { MoorhenSlider } from "../inputs/MoorhenSlider-new";
-
+import { MoorhenSlider } from "../inputs/MoorhenSlider";
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch, batch } from "react-redux";
 import { setActiveMap } from "../../store/generalStatesSlice";
@@ -16,11 +15,14 @@ import { MapSettingsAccordion } from "./MapCardResources/MapSettingsAccordion";
 import { MapColourSelector } from "./MapCardResources/MapColourSelector";
 import { MapCardActionButtons } from "./MapCardResources/MapCardActionButtons";
 
+
 interface MoorhenMapCardPropsInterface extends moorhen.CollectedProps {
     map: moorhen.Map;
     initialContour?: number;
     initialRadius?: number;
-    collapseAllRequest?: boolean;
+    modalWidth?: number;
+    isCollapsed?: boolean;
+    onCollapseToggle?: (key: number) => void;
 }
 
 export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
@@ -63,12 +65,13 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     });
 
     const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.generalStates.defaultExpandDisplayCards);
-    const [isCollapsed, setIsCollapsed] = useState<boolean>(!defaultExpandDisplayCards);
-    useEffect(() => {
-        if (props.collapseAllRequest !== null) {
-            setIsCollapsed(props.collapseAllRequest);
+    
+
+    const handleCollapseToggle = () => {    
+        if (props.onCollapseToggle) {
+            props.onCollapseToggle(props.map.molNo);
         }
-    }, [props.collapseAllRequest]);
+    };
 
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
@@ -251,12 +254,26 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
 
     const [currentName, setCurrentName] = useState<string>(props.map.name);
 
-    useEffect(() => {
-        if (currentName !== "") {
-            props.map.name = currentName;
-        }
-    }, [currentName]);
+    const getLabelAndActionButtonSpace = () => {
+        const buttonToShow = 4;   
+        let labelSpace = 0;
+        let actionButtonSpace = 120;
+        const labelLength = props.map.name.length;
 
+        if (props.modalWidth < (buttonToShow*50 + convertRemToPx(18) +120) && labelLength > 16) {
+            labelSpace = convertRemToPx(18);
+            actionButtonSpace = props.modalWidth - labelSpace -120;
+        }
+        else {
+            actionButtonSpace = buttonToShow * 50;
+            labelSpace = props.modalWidth - actionButtonSpace - 100;
+        }
+
+        labelSpace = convertPxToRem(labelSpace)*1.25;
+        return [labelSpace, actionButtonSpace];
+    }
+    const [labelSpace, actionButtonSpace] = getLabelAndActionButtonSpace();
+    
     return (
         <Card
             className="px-0"
@@ -278,45 +295,47 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                             color: isDark ? "white" : "black",
                         }}
                     >
-                        {getNameLabel(props.map)}
+                        {getNameLabel(props.map, labelSpace)}
                         <MapColourSelector map={props.map} mapIsVisible={mapIsVisible} />
                     </Col>
                     <Col style={{ display: "flex", justifyContent: "right" }}>
                         <MapCardActionButtons
                             map={props.map}
                             mapIsVisible={mapIsVisible}
-                            isCollapsed={isCollapsed}
-                            setIsCollapsed={setIsCollapsed}
+                            isCollapsed={props.isCollapsed}
+                            onCollapseToggle={handleCollapseToggle}
                             setCurrentName={setCurrentName}
                             glRef={props.glRef}
+                            maxWidth={actionButtonSpace}
                         />
                     </Col>
                 </Stack>
             </Card.Header>
             <Card.Body
                 style={{
-                    display: isCollapsed ? "none" : "",
+                    display: props.isCollapsed ? "none" : "",
                     padding: "0.5rem",
                 }}
             >
                 <Stack direction="vertical" gap={1}>
                     <Stack direction="horizontal" gap={4}>
-                        <ToggleButton
-                            id={`active-map-toggle-${props.map.molNo}`}
-                            type="checkbox"
-                            variant={isDark ? "outline-light" : "outline-primary"}
-                            checked={props.map === activeMap}
-                            style={{
-                                marginLeft: "0.1rem",
-                                marginRight: "0.5rem",
-                                justifyContent: "space-betweeen",
-                                display: "flex",
+                            <ToggleButton
+                                id={`active-map-toggle-${props.map.molNo}`}
+                                type="checkbox"
+                                variant={isDark ? "outline-light" : "outline-primary"}
+                                checked={props.map === activeMap}
+                                style={{
+                                    marginLeft: "0.1rem",
+                                    marginRight: "0.5rem",
+                                    justifyContent: "space-betweeen",
+                                    display: "flex",
+                                    width: "8rem",
                             }}
                             onClick={() => dispatch(setActiveMap(props.map))}
                             value={""}
                         >
                             {props.map === activeMap ? <RadioButtonCheckedOutlined /> : <RadioButtonUncheckedOutlined />}
-                            <span style={{ marginLeft: "0.5rem" }}>Active</span>
+                            <span style={{ marginLeft: "0.5rem" }}>{props.map === activeMap ? "Active" : "Inactive"}</span>
                         </ToggleButton>
                         <Stack direction="vertical" style={{ justifyContent: "center" }}>
                             <Stack

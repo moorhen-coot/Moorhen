@@ -686,13 +686,10 @@ export class MoorhenMap implements moorhen.Map {
     async doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number, style: "solid" | "lines" | "lit-lines"): Promise<void> {
 
         if (this.isOriginLocked)    {
-
             x = Math.abs(this.mapCentre[0])
             y = Math.abs(this.mapCentre[1])
             z = Math.abs(this.mapCentre[2])
         }
-
-
 
         let returnType: string
         if (style === 'solid') {
@@ -1078,6 +1075,26 @@ export class MoorhenMap implements moorhen.Map {
         const response = await this.commandCentre.current.cootCommand({
             command: 'get_map_histogram',
             commandArgs: [this.molNo, nBins, zoomFactor],
+            returnType: "histogram_info_t"
+        }, false) as moorhen.WorkerResponse<any>
+        return response.data.result.result
+    }
+
+    async getVerticesHistogram(map2:number, nBins: number = 200): Promise<libcootApi.HistogramInfoJS> {
+        let posX:Number, posY:number, posZ : number
+        if (this.isOriginLocked)    {
+            posX = Math.abs(this.mapCentre[0])
+            posY = Math.abs(this.mapCentre[1])
+            posZ = Math.abs(this.mapCentre[2])
+        }
+        else {
+           [posX, posY, posZ] = this.glRef.current.origin.map(coord => -coord) as [number, number, number]
+        }
+
+        const { mapRadius, contourLevel, mapStyle } = this.getMapContourParams()
+        const response = await this.commandCentre.current.cootCommand({
+            command: 'get_map_vertices_histogram',
+            commandArgs: [this.molNo, map2, posX, posY, posZ, mapRadius, contourLevel, nBins],
             returnType: "histogram_info_t"
         }, false) as moorhen.WorkerResponse<any>
         return response.data.result.result

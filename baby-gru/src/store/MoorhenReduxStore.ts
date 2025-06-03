@@ -19,6 +19,7 @@ import jsonValidationReducer from './jsonValidation'
 import mrParseSliceReducer from './mrParseSlice'
 import glRefSliceReducer from './glRefSlice'
 import overlaysSliceReducer from './overlaysSlice'
+import menusReducer from './menusSlice'
 
 export default configureStore({
     reducer: {
@@ -42,6 +43,7 @@ export default configureStore({
         mrParse: mrParseSliceReducer,
         glRef: glRefSliceReducer,
         overlays: overlaysSliceReducer,
+        menus: menusReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

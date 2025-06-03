@@ -6,6 +6,7 @@ import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
+import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput";
 
 export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
 
@@ -131,6 +132,17 @@ export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
     const extraControls = <>
     <Row>
         <Col style={{justifyContent:'center', alignContent:'center', alignItems:'center', display:'flex'}}>
+            <MoorhenPreciseInput
+                label="B-Factor"
+                labelPosition="top"
+                value={60}
+                decimalDigits={1}
+                type='numberForm'
+                setValue={(newVal: string) => {
+                    setBFactorLim(+newVal)
+                    isDirty.current = true
+                    handleControlFormChange()
+                }}/>
             <MoorhenNumberForm
                 label="B-Factor"
                 defaultValue={60}
@@ -202,5 +214,6 @@ export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
                 getCards={getCards}
                 extraControlFormValue={triggerDataFetch}
                 extraControlForm={extraControls}
+                menuId='water-validation'
             />
 }

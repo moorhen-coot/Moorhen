@@ -1,5 +1,5 @@
 import { Form } from "react-bootstrap";
-import { MoorhenSlider } from "../misc/MoorhenSlider";
+import { MoorhenSlider } from "../inputs/MoorhenSlider";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { useSelector, useDispatch } from "react-redux";
 import { moorhen } from "../../types/moorhen";
@@ -27,10 +27,10 @@ export const MoorhenBackupPreferencesMenuItem = (props: {
             </Form.Group>
             <hr></hr>
             <Form.Group className="mb-3" style={{ width: '18rem', margin: '0' }} controlId="MoorhenMaxBackupCount">
-                <MoorhenSlider isDisabled={!enableTimeCapsule} minVal={1} maxVal={30} allowFloats={false} logScale={false} sliderTitle="Max. number of stored backups" initialValue={maxBackupCount} externalValue={maxBackupCount} setExternalValue={(val: number) => dispatch(setMaxBackupCount(val))} />
+                <MoorhenSlider isDisabled={!enableTimeCapsule} minVal={1} maxVal={30} decimalPlaces={0} logScale={false} sliderTitle="Max. number of stored backups" externalValue={maxBackupCount} setExternalValue={(val: number) => dispatch(setMaxBackupCount(val))} />
             </Form.Group>
             <Form.Group className="mb-3" style={{ width: '18rem', margin: '0' }} controlId="MoorhenModifThresholdBackup">
-                <MoorhenSlider isDisabled={!enableTimeCapsule} minVal={1} maxVal={30} allowFloats={false} logScale={false} sliderTitle="No. of modifications to trigger backup" initialValue={modificationCountBackupThreshold} externalValue={modificationCountBackupThreshold} setExternalValue={(val: number) => dispatch(setModificationCountBackupThreshold(val))} />
+                <MoorhenSlider isDisabled={!enableTimeCapsule} minVal={1} maxVal={30} decimalPlaces={0} logScale={false} sliderTitle="No. of modifications to trigger backup"  externalValue={modificationCountBackupThreshold} setExternalValue={(val: number) => dispatch(setModificationCountBackupThreshold(val))} />
             </Form.Group>
         </>
 

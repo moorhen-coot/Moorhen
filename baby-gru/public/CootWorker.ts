@@ -1164,10 +1164,25 @@ const doCootCommand = (messageData: {
 
     const { returnType, command, commandArgs, messageId, myTimeStamp, message } = messageData
 
+
     try {
 
         let cootResult
         switch (command) {
+            case 'shim_set_colour_map_for_map_coloured_by_other_map':
+                const theVector = new cootModule.vector_pair_double_vector_double()
+                console.log(commandArgs)
+                commandArgs.forEach((cp) => {
+                    const thePair: libcootApi.DoublePairDoubleJS = {first:0,second:null}
+                    thePair.first = cp[0]
+                    thePair.second = new cootModule.VectorDouble()
+                    thePair.second.push_back(cp[1][0]/256)
+                    thePair.second.push_back(cp[1][1]/256)
+                    thePair.second.push_back(cp[1][2]/256)
+                    theVector.push_back(thePair)
+                })
+                cootResult = molecules_container.set_colour_map_for_map_coloured_by_other_map(theVector)
+                break
             case 'shim_generate_assembly':
                 cootResult = generate_assembly(...commandArgs as [string, string, string])
                 break

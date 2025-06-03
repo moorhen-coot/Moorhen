@@ -47,5 +47,6 @@ export const MoorhenUnmodelledBlobs = (props: moorhen.CollectedProps) => {
     return <MoorhenValidationListWidgetBase 
                 fetchData={fetchCardData}
                 getCards={getCards}
+                menuId='unmodelled-blobs-validation'
             />
 }
