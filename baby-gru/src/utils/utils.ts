@@ -943,3 +943,52 @@ export const copyStructureSelection = (gemmiStructure: gemmi.Structure, cidSelec
     selection.delete()
     return newStruct
 }
+
+export const get_grid = (n,method="NEARSQUARE") => {
+    const f = Math.floor(Math.sqrt(n))
+    const c = Math.ceil(Math.sqrt(n))
+
+    if(method==="NEARSQUARE"){
+        if(f*c >= n)
+            return [f,c]
+        else
+            return [c,c]
+    }
+
+    let shapes = []
+
+    for(let i=1;i<=n;i++){
+        for(let j=1;j<=n;j++){
+            if(i*j >= n && i*j <= c*c && Math.abs(i-j)<=f){
+                if(i*j - n < n){
+                    let rem = i*j - n
+                    if(rem != i && rem != j){
+                        shapes.push([i,j,rem])
+                        break
+                    }
+                }
+            }
+        }
+    }
+
+    if(shapes.length===0){
+        if(f*c >= n)
+            return [f,c]
+        else
+            return [c,c]
+    }
+
+    let the_shape = shapes[0]
+    let minrem = n+1
+
+    shapes.forEach( (s) => {
+        if(s[2] < minrem){
+            the_shape = s
+            minrem = s[2]
+        } else if(s[2] == minrem && Math.abs(s[0]-s[1]) < Math.abs(the_shape[0]-the_shape[1])){
+            the_shape = s
+        }
+    })
+
+    return [the_shape[0],the_shape[1]]
+}

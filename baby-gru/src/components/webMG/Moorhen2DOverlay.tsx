@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { moorhen } from "../../types/moorhen"
+import { get_grid } from "../../utils/utils"
 import store from '../../store/MoorhenReduxStore'
 import { useDispatch, useSelector } from 'react-redux'
 import { addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays } from "../../store/overlaysSlice"
@@ -23,6 +24,13 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
     const svgPathOverlays = store.getState().overlays.svgPathOverlayList
     const fracPathOverlays = store.getState().overlays.fracPathOverlayList
     const callbacks = store.getState().overlays.callBacks
+    const zoom = store.getState().glRef.zoom
+    const drawScaleBar = store.getState().sceneSettings.drawScaleBar
+    const doThreeWayView = store.getState().sceneSettings.doThreeWayView
+    const multiViewColumns = store.getState().sceneSettings.multiViewColumns
+    const specifyMultiViewRowsColumns = store.getState().sceneSettings.specifyMultiViewRowsColumns
+    const doMultiView = store.getState().sceneSettings.doMultiView
+    const molecules = store.getState().molecules.moleculeList
 
     const bright_y = backgroundColor[0] * 0.299 + backgroundColor[1] * 0.587 + backgroundColor[2] * 0.114
 
@@ -159,6 +167,57 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
     callbacks.forEach(f => {
         f(canvas2D_ctx,backgroundColor,width,height,scale)
     })
+
+    if(drawScaleBar) {
+        let viewMult = 1.0
+        if(doThreeWayView) viewMult = 2.0
+
+        if(doMultiView) {
+            if(specifyMultiViewRowsColumns){
+                viewMult = multiViewColumns
+            } else {
+                const grid = get_grid(molecules.length)
+                viewMult = grid[1]
+            }
+        }
+
+        const scale_fac = 10*zoom* width / height *viewMult
+        let scale_pow = Math.pow(10,Math.floor(Math.log(scale_fac)/Math.log(10)))
+
+        let scale_length_fac = scale_pow / scale_fac
+        if(scale_length_fac<0.5) {scale_length_fac *=2; scale_pow *= 2}
+        if(scale_length_fac<0.5) {scale_length_fac *=2.5; scale_pow *= 2.5}
+
+        if(bright_y<0.5) {
+            canvas2D_ctx.strokeStyle = "white"
+            canvas2D_ctx.fillStyle = "white"
+        } else {
+            canvas2D_ctx.strokeStyle = "black"
+            canvas2D_ctx.fillStyle = "black"
+        }
+
+        canvas2D_ctx.lineWidth = Math.floor(2*scale)
+
+        const end = width - 60*scale
+
+        let wh_ratio = 1.0 * width / height
+        const l = 0.21 * width
+
+        const vpos = 30*scale
+
+        canvas2D_ctx.moveTo(end,height-vpos)
+        canvas2D_ctx.lineTo(end-l*scale_length_fac,height-vpos)
+        canvas2D_ctx.stroke()
+        canvas2D_ctx.moveTo(end,height-vpos-8*scale)
+        canvas2D_ctx.lineTo(end,height-vpos+8*scale)
+        canvas2D_ctx.stroke()
+        canvas2D_ctx.moveTo(end-l*scale_length_fac,height-vpos-8*scale)
+        canvas2D_ctx.lineTo(end-l*scale_length_fac,height-vpos+8*scale)
+        canvas2D_ctx.stroke()
+
+        canvas2D_ctx.font =  Math.floor(22*scale) + "px helvetica"
+        canvas2D_ctx.fillText(scale_pow+"Å",end+4*scale,height-vpos+8*scale)
+    }
 }
 
 export const Moorhen2DOverlay = ((props) => {

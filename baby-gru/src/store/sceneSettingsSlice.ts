@@ -36,6 +36,10 @@ const initialState = {
     width: 0,
     isDark: false,
     backgroundColor: [1, 1, 1, 1],
+    multiViewRows: 1,
+    multiViewColumns: 1,
+    threeWayViewOrder: "",
+    specifyMultiViewRowsColumns: false,
 }
 
 export const sceneSettingsSlice = createSlice({

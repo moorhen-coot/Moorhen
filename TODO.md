@@ -7,6 +7,7 @@ A JavaScript molecular graphics program
 
 ### For 0.22.0
 - [ ] Fix multiview with transparency.
+- [x] Get scale bar useful with multiviews.
 - [x] Fix atom info toast gets rid of clipper points widget.
 - [x] Fix MrParse sequences not redrawing if component closed and re-opened.
 - [x] Deprecate glRef method usage.
