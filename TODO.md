@@ -6,8 +6,8 @@ A JavaScript molecular graphics program
 - [ ] Remove glRef from all component props and class constructor args.
 
 ### For 0.22.0
-- [ ] Fix atom info toast gets rid of clipper points widget.
 - [ ] Fix multiview with transparency.
+- [x] Fix atom info toast gets rid of clipper points widget.
 - [x] Fix MrParse sequences not redrawing if component closed and re-opened.
 - [x] Deprecate glRef method usage.
    - [x] Eliminate glRef usage outside of MoorhenWebMG.

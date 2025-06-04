@@ -2,7 +2,6 @@ import { forwardRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 import { Container } from 'react-bootstrap';
-import { MoorhenAtomInfoSnackBar } from './snack-bar/MoorhenAtomInfoSnackBar';
 import { useDropzone } from 'react-dropzone';
 import { MoorhenMolecule } from "../utils/MoorhenMolecule"
 import { MoorhenMap} from "../utils/MoorhenMap"

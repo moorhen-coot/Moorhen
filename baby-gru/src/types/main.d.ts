@@ -59,6 +59,9 @@ declare module 'moorhen' {
     let glRefSliceReducer: any;
     module.exports = glRefSliceReducer
 
+    let atomInfoCardsReducer: any;
+    module.exports = atomInfoCardsReducer
+
     let overlaysReducer: any;
     module.exports = overlaysReducer
 

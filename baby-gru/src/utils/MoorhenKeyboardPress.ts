@@ -6,12 +6,13 @@ import { getDeviceScale } from '../WebGLgComponents/webGLUtils';
 import { vec3Create } from '../WebGLgComponents/mgMaths';
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
-import { Dispatch, createRef } from "react";
+import { Dispatch, createRef, useState } from "react";
 import { AnyAction } from "@reduxjs/toolkit";
 import { useSelector } from 'react-redux';
 import { setHoveredAtom } from "../store/hoveringStatesSlice";
 import { changeMapRadius } from "../store/mapContourSettingsSlice";
 import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
+import { setAtomInfoIds } from "../store/atomInfoCardsSlice";
 import { setOrigin, setZoom, setQuat, setShortCutHelp,
          setClipStart, setClipEnd, setFogStart, setFogEnd, triggerClearLabels } from "../store/glRefSlice";
 import { EnqueueSnackbar, closeSnackbar } from "notistack";
@@ -58,6 +59,7 @@ export const moorhenKeyPress = (
     const height = store.getState().sceneSettings.height
     const cursorPosition = store.getState().glRef.cursorPosition
     const shortCutHelp = store.getState().glRef.shortCutHelp
+    const atomInfoIds = store.getState().atomInfoCards.atomInfoIds
 
     const getFrontAndBackPos = () : [number[], number[], number, number] =>  {
         let x = cursorPosition[0];
@@ -89,16 +91,20 @@ export const moorhenKeyPress = (
             chosenAtom = cidToSpec(hoveredAtom.cid)
             const fragmentCid = chosenAtom.cid
             const chosenMolecule = hoveredAtom.molecule
-            await closeSnackbar()
-            showShortcutToast && await enqueueSnackbar("atoms-info_"+chosenMolecule.molNo+"_"+fragmentCid, {
-                variant: "atomInformation",
-                monomerLibraryPath: hoveredAtom.molecule.monomerLibraryPath,
-                commandCentre: commandCentre,
-                cidRef: fragmentCid,
-                glRef: glRef,
-                moleculeRef: chosenMolecule,
-                persist: true
-            })
+            for(let i_id=0;i_id<atomInfoIds.length;i_id++)
+                await closeSnackbar(atomInfoIds[i_id])
+            if(showShortcutToast) {
+                const newId = await enqueueSnackbar("atoms-info_"+chosenMolecule.molNo+"_"+fragmentCid, {
+                    variant: "atomInformation",
+                    monomerLibraryPath: hoveredAtom.molecule.monomerLibraryPath,
+                    commandCentre: commandCentre,
+                    cidRef: fragmentCid,
+                    glRef: glRef,
+                    moleculeRef: chosenMolecule,
+                    persist: true
+                })
+                collectedProps.dispatch(setAtomInfoIds([newId]))
+            }
             return false
         }
     }

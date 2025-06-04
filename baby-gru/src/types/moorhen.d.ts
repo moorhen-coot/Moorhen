@@ -1180,6 +1180,9 @@ export namespace moorhen {
         menus: {
             settings: Record<string, Record<string, any>>
         }
+        atomInfoCards: {
+            atomInfoIds: any[]
+        }
     }
 
     type actionButtonSettings = {
