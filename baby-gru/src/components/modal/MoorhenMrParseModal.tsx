@@ -1,6 +1,6 @@
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen"
-import { useEffect, useRef, createRef, useCallback } from "react"
+import { useEffect, useRef, createRef, useCallback, useState } from "react"
 import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Table } from "react-bootstrap"
 import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
 import { convertRemToPx, convertViewtoPx} from '../../utils/utils'
@@ -106,14 +106,13 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
     const AFManagerRef = useRef<any>(null)
     const AFSelectedResiduesTrackRef = useRef<{}>({})
     const AFSequenceRef = useRef<any>(null)
-    AFSelectedResiduesTrackRef[0] = createRef()
-    AFSelectedResiduesTrackRef[1] = createRef()
 
     const HomologsManagerRef = useRef<any>(null)
     const HomologsSelectedResiduesTrackRef = useRef<{}>({})
     const HomologsSequenceRef = useRef<any>(null)
-    HomologsSelectedResiduesTrackRef[0] = createRef()
-    HomologsSelectedResiduesTrackRef[1] = createRef()
+
+    const [homologsTrackData,setHomologsTrackData] = useState<any[]>()
+    const [afTrackData,setAFTrackData] = useState<any[]>()
 
     const pdbHeaders = [
         {key:"name", label:"Name"},
@@ -253,6 +252,8 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             }
             allSelectedResiduesTrackData.push(selectedResiduesTrackData)
         })
+
+        setHomologsTrackData(allSelectedResiduesTrackData)
 
         const seq = targetSequence //".".repeat(maxRes-minRes+1)
 
@@ -400,6 +401,8 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                 allSelectedResiduesTrackData.push(selectedResiduesTrackData)
             }
         })
+
+        setAFTrackData(allSelectedResiduesTrackData)
 
         const seq = targetSequence //".".repeat(maxRes-minRes+1)
 
@@ -585,6 +588,24 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
     const afArrow = afSortReversed ?  <>&darr;</> : <>&uarr;</>
 
     let bodyContent = <><div style={{verticalAlign:"center"}}>Use the button below to browse for an MrParse results directory</div></>
+
+    homologsJson.forEach((el,i) => {
+        if(HomologsSelectedResiduesTrackRef[i]&&HomologsSelectedResiduesTrackRef[i].current&&homologsTrackData&&homologsTrackData[i]&&!HomologsSelectedResiduesTrackRef[i].current._data){
+            HomologsSelectedResiduesTrackRef[i].current.data = homologsTrackData[i]
+            HomologsSelectedResiduesTrackRef[i].current.addEventListener("click", handleClick)
+            HomologsSelectedResiduesTrackRef[i].current.addEventListener("change", (e) => {handleChange(e,el.chain_id,el.pdb_file,el.query_start)})
+            HomologsSelectedResiduesTrackRef[i].current.addEventListener('dblclick', disableDoubleClick, true)
+        }
+    })
+
+    afJson.forEach((el,i) => {
+        if(AFSelectedResiduesTrackRef[i]&&AFSelectedResiduesTrackRef[i].current&&afTrackData&&afTrackData[i]&&!AFSelectedResiduesTrackRef[i].current._data){
+            AFSelectedResiduesTrackRef[i].current.data = afTrackData[i]
+            AFSelectedResiduesTrackRef[i].current.addEventListener("click", handleClick)
+            AFSelectedResiduesTrackRef[i].current.addEventListener("change", (e) => {handleChange(e,"A",el.pdb_file,el.query_start)})
+            AFSelectedResiduesTrackRef[i].current.addEventListener('dblclick', disableDoubleClick, true)
+        }
+    })
 
     if(mrParseModels.length>0)
         bodyContent = <>

@@ -3,11 +3,12 @@ A JavaScript molecular graphics program
 
 ### For 0.23.0
 - [ ] Ability to set origin/zoom/individual rotation in "Multiple views for different molecules".
+- [ ] Remove glRef from all component props and class constructor args.
 
 ### For 0.22.0
-- [ ] Remove glRef method usage.
-   - [ ] Eliminate glRef usage.
-   - [ ] MrParse sequences do not redraw if component closed and re-opened.
+- [x] Deprecate glRef method usage.
+   - [x] Eliminate glRef usage outside of MoorhenWebMG.
+   - [x] Fix MrParse sequences not redrawing if component closed and re-opened.
    - [x] Fix custom object opacity not working.
    - [x] Fix env. labels flickering.
    - [x] Fix orientation not being correct if doing fast repeat of "space" next residue.
