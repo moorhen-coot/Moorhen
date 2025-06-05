@@ -3196,7 +3196,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
             this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
         } else if(this.doDepthPeelPass) {
-            this.gl.viewport(0, 0, this.depthPeelFramebuffers[0].width, this.depthPeelFramebuffers[0].height);
+            let viewport_start_x = Math.trunc(this.currentViewport[0] * this.depthPeelFramebuffers[0].width  / this.gl.viewportWidth)
+            let viewport_start_y = Math.trunc(this.currentViewport[1] * this.depthPeelFramebuffers[0].height / this.gl.viewportHeight)
+            let viewport_width =   Math.trunc(this.currentViewport[2] * this.depthPeelFramebuffers[0].width  / this.gl.viewportWidth)
+            let viewport_height =  Math.trunc(this.currentViewport[3] * this.depthPeelFramebuffers[0].height / this.gl.viewportHeight)
+            this.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
         } else if(this.renderToTexture) {
             if(!this.screenshotBuffersReady)
                 this.initTextureFramebuffer();
@@ -3508,6 +3512,134 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
+    drawPeel(theShaders,doClear=true,ratioMult=1.0){
+        let invMat
+            if(this.renderToTexture) {
+                console.log("Delete the normal peel buffers")
+                for(let i=0;i<this.depthPeelFramebuffers.length;i++){
+                    this.gl.deleteFramebuffer(this.depthPeelFramebuffers[i]);
+                    this.gl.deleteRenderbuffer(this.depthPeelRenderbufferDepth[i]);
+                    this.gl.deleteRenderbuffer(this.depthPeelRenderbufferColor[i]);
+                    this.gl.deleteTexture(this.depthPeelColorTextures[i]);
+                    this.gl.deleteTexture(this.depthPeelDepthTextures[i]);
+                }
+                this.depthPeelFramebuffers = [];
+                this.recreateDepthPeelBuffers(4096,4096);
+            } else {
+                this.recreateDepthPeelBuffers(2048,2048);
+            }
+
+            this.gl.clear(this.gl.DEPTH_BUFFER_BIT|this.gl.COLOR_BUFFER_BIT);
+            const ratio = 1.0
+
+            if(this.depthPeelFramebuffers.length>0&&this.depthPeelFramebuffers[0].width>0&&this.depthPeelFramebuffers[0].height>0){
+
+                this.gl.enable(this.gl.DEPTH_TEST);
+                const depthPeelSampler0 = 3;
+
+                theShaders.forEach(shader => {
+                        this.gl.useProgram(shader);
+                        this.gl.uniform1f(shader.xSSAOScaling, 1.0/this.depthPeelFramebuffers[0].width );
+                        this.gl.uniform1f(shader.ySSAOScaling, 1.0/this.depthPeelFramebuffers[0].height );
+                        this.gl.uniform1i(shader.depthPeelSamplers, depthPeelSampler0);
+                        })
+                this.doDepthPeelPass = true;
+                this.gl.disable(this.gl.BLEND);
+                this.gl.enable(this.gl.DEPTH_TEST);
+                for(let ipeel=0;ipeel<4;ipeel++){
+                    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.depthPeelFramebuffers[ipeel]);
+                    this.gl.activeTexture(this.gl.TEXTURE0+depthPeelSampler0);
+                    if(ipeel>0){
+                        this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthPeelDepthTextures[ipeel-1]);
+                    } else {
+                        this.gl.bindTexture(this.gl.TEXTURE_2D, null)
+                    }
+                    theShaders.forEach(shader => {
+                            this.gl.useProgram(shader);
+                            this.gl.uniform1i(shader.peelNumber,ipeel);
+                            })
+                    invMat = this.GLrender(false,doClear,ratioMult);
+                    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+                }
+
+                this.doDepthPeelPass = false;
+                theShaders.forEach(shader => {
+                        this.gl.useProgram(shader);
+                        this.gl.uniform1i(shader.peelNumber,-1);
+                        })
+
+                // And now accumulate onto one fullscreen quad
+
+                const theShader = this.shaderProgramDepthPeelAccum;
+                this.gl.useProgram(theShader);
+                for(let i = 0; i<16; i++)
+                    this.gl.disableVertexAttribArray(i);
+                this.gl.enableVertexAttribArray(theShader.vertexPositionAttribute);
+                this.gl.enableVertexAttribArray(theShader.vertexTextureAttribute);
+                this.bindFramebufferDrawBuffers();
+
+                let paintPMatrix = mat4.create();
+                if(this.renderToTexture) {
+                    if(!this.screenshotBuffersReady)
+                        this.initTextureFramebuffer();
+                    console.log("Binding rttFramebuffer in depth peel accumulate",this.rttFramebuffer);
+                    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer);
+                    this.gl.viewport(0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height);
+                    this.gl.uniform1f(theShader.xSSAOScaling, 1.0/this.rttFramebuffer.width );
+                    this.gl.uniform1f(theShader.ySSAOScaling, 1.0/this.rttFramebuffer.height );
+                } else {
+                    if(this.useOffScreenBuffers&&this.WEBGL2){
+                        if(!this.offScreenReady)
+                            this.recreateOffScreeenBuffers(this.canvas.width,this.canvas.height);
+                        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebuffer);
+                        let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
+                    }
+                    this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
+                    this.gl.uniform1f(theShader.xSSAOScaling, 1.0/this.gl.viewportWidth );
+                    this.gl.uniform1f(theShader.ySSAOScaling, 1.0/this.gl.viewportHeight );
+                }
+                mat4.ortho(paintPMatrix, -1.0/ratio , 1.0/ratio , -1.0, 1.0, 0.1, 1000.0);
+                this.gl.uniformMatrix4fv(theShader.pMatrixUniform, false, paintPMatrix);
+
+                this.gl.enable(this.gl.BLEND);
+                this.gl.disable(this.gl.DEPTH_TEST);
+                if(this.renderToTexture&&this.transparentScreenshotBackground) {
+                    this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], 0.0);
+                } else{
+                    this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], this.background_colour[3]);
+                }
+                this.gl.clear(this.gl.DEPTH_BUFFER_BIT|this.gl.COLOR_BUFFER_BIT)
+                this.gl.uniform1i(theShader.depthPeelSamplers, 0);
+                this.gl.uniform1i(theShader.colorPeelSamplers, 1);
+                for(let ipeel=3;ipeel>=0;ipeel--){
+                    this.gl.activeTexture(this.gl.TEXTURE0);
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthPeelDepthTextures[ipeel]);
+                    this.gl.activeTexture(this.gl.TEXTURE1);
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthPeelColorTextures[ipeel]);
+                    this.gl.uniform1i(theShader.peelNumber,ipeel);
+                    if (this.ext) {
+                        this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0);
+                    } else {
+                        this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
+                    }
+                }
+            }
+            this.gl.activeTexture(this.gl.TEXTURE0);
+            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+            if(this.renderToTexture) {
+                console.log("Delete screenshot peel buffers")
+                for(let i=0;i<this.depthPeelFramebuffers.length;i++){
+                    this.gl.deleteFramebuffer(this.depthPeelFramebuffers[i]);
+                    this.gl.deleteRenderbuffer(this.depthPeelRenderbufferDepth[i]);
+                    this.gl.deleteRenderbuffer(this.depthPeelRenderbufferColor[i]);
+                    this.gl.deleteTexture(this.depthPeelColorTextures[i]);
+                    this.gl.deleteTexture(this.depthPeelDepthTextures[i]);
+                }
+                this.depthPeelFramebuffers = [];
+            }
+        return invMat
+    }
+
     drawScene() : void {
 
         const displayBuffers = store.getState().glRef.displayBuffers
@@ -3808,13 +3940,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.stencilMask(0x00);
             this.gl.disable(this.gl.STENCIL_TEST);
             this.gl.enable(this.gl.DEPTH_TEST);
-            if(!this.doPeel){
                 if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
 
                     let multiViewGroupsKeys = []
-                    const multiViewOrigins = []
                     const origQuat = quat4.clone(this.myQuat);
                     const origOrigin = this.origin
+                    const multiViewOrigins = []
 
                     let quats
                     let viewports
@@ -3827,15 +3958,17 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
                         let multiViewGroups = {}
                         for (let idx = 0; idx < displayBuffers.length; idx++) {
-                            if(displayBuffers[idx].origin&&displayBuffers[idx].origin.length===3){
+                            if(displayBuffers[idx].multiViewGroup!==undefined&&displayBuffers[idx].origin&&displayBuffers[idx].origin.length===3){
+                                console.log(idx,displayBuffers[idx].multiViewGroup)
                                 if(Object.hasOwn(displayBuffers[idx], "isHoverBuffer")&&!displayBuffers[idx].isHoverBuffer){
                                     if(!(displayBuffers[idx].multiViewGroup in multiViewGroups)){
                                         multiViewGroups[displayBuffers[idx].multiViewGroup] = displayBuffers[idx].multiViewGroup
-                                        multiViewOrigins.push(displayBuffers[idx].origin)
+                                        multiViewOrigins[displayBuffers[idx].multiViewGroup] = displayBuffers[idx].origin
                                     }
                                 }
                             }
                         }
+                        console.log(multiViewGroups)
                         this.multiViewOrigins = multiViewOrigins
                         multiViewGroupsKeys = Object.keys(multiViewGroups)
                         if(this.multiWayViewports.length!==multiViewGroupsKeys.length&&multiViewGroupsKeys.length>0){
@@ -3855,6 +3988,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         ratioMult = 0.5
                     }
 
+                    console.log(multiViewOrigins)
+                    //console.log(viewports)
                     for(let i=0;i<viewports.length;i++){
 
                         if(this.doMultiView){
@@ -3873,7 +4008,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.currentViewport = viewports[i]
 
                         const doClear = i===0 ? true : false
-                        invMat = this.GLrender(false,doClear,ratioMult);
+                        if(this.doPeel){//Do depth peel
+                            invMat = this.drawPeel(theShaders,doClear,ratioMult)
+                        } else {
+                            invMat = this.GLrender(false,doClear,ratioMult);
+                        }
                         if (this.showAxes) {
                             this.drawAxes(invMat,ratioMult);
                         }
@@ -3887,15 +4026,22 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     }
                     this.myQuat = origQuat
                     if(this.doMultiView&&multiViewGroupsKeys.length===0){
-                        this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
-                        invMat = this.GLrender(false);
+                        if(this.doPeel){//Do depth peel
+                            invMat = this.drawPeel(theShaders)
+                        } else {
+                            invMat = this.GLrender(false);
+                        }
                     }
                     this.origin = origOrigin
                 } else {
                     this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
-                    invMat = this.GLrender(false);
+                    if(this.doPeel){//Do depth peel
+                        invMat = this.drawPeel(theShaders)
+                    } else {
+                        invMat = this.GLrender(false);
+                    }
                 }
-            }
+
             if(this.doAnaglyphStereo){
                 const origQuat = quat4.clone(this.myQuat);
                 const quats = this.stereoQuats
@@ -3909,130 +4055,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     invMat = this.GLrender(false,doClear);
                 }
                 this.myQuat = origQuat
-            }
-        }
-
-        if(this.doPeel){//Do depth peel
-            if(this.renderToTexture) {
-                console.log("Delete the normal peel buffers")
-                for(let i=0;i<this.depthPeelFramebuffers.length;i++){
-                    this.gl.deleteFramebuffer(this.depthPeelFramebuffers[i]);
-                    this.gl.deleteRenderbuffer(this.depthPeelRenderbufferDepth[i]);
-                    this.gl.deleteRenderbuffer(this.depthPeelRenderbufferColor[i]);
-                    this.gl.deleteTexture(this.depthPeelColorTextures[i]);
-                    this.gl.deleteTexture(this.depthPeelDepthTextures[i]);
-                }
-                this.depthPeelFramebuffers = [];
-                this.recreateDepthPeelBuffers(4096,4096);
-            } else {
-                this.recreateDepthPeelBuffers(2048,2048);
-            }
-
-            this.gl.clear(this.gl.DEPTH_BUFFER_BIT|this.gl.COLOR_BUFFER_BIT);
-            const ratio = 1.0
-
-            if(this.depthPeelFramebuffers.length>0&&this.depthPeelFramebuffers[0].width>0&&this.depthPeelFramebuffers[0].height>0){
-
-                this.gl.enable(this.gl.DEPTH_TEST);
-                const depthPeelSampler0 = 3;
-
-                theShaders.forEach(shader => {
-                        this.gl.useProgram(shader);
-                        this.gl.uniform1f(shader.xSSAOScaling, 1.0/this.depthPeelFramebuffers[0].width );
-                        this.gl.uniform1f(shader.ySSAOScaling, 1.0/this.depthPeelFramebuffers[0].height );
-                        this.gl.uniform1i(shader.depthPeelSamplers, depthPeelSampler0);
-                        })
-                this.doDepthPeelPass = true;
-                this.gl.disable(this.gl.BLEND);
-                this.gl.enable(this.gl.DEPTH_TEST);
-                for(let ipeel=0;ipeel<4;ipeel++){
-                    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.depthPeelFramebuffers[ipeel]);
-                    this.gl.activeTexture(this.gl.TEXTURE0+depthPeelSampler0);
-                    if(ipeel>0){
-                        this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthPeelDepthTextures[ipeel-1]);
-                    } else {
-                        this.gl.bindTexture(this.gl.TEXTURE_2D, null)
-                    }
-                    theShaders.forEach(shader => {
-                            this.gl.useProgram(shader);
-                            this.gl.uniform1i(shader.peelNumber,ipeel);
-                            })
-                    invMat = this.GLrender(false);
-                    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-                }
-
-                this.doDepthPeelPass = false;
-                theShaders.forEach(shader => {
-                        this.gl.useProgram(shader);
-                        this.gl.uniform1i(shader.peelNumber,-1);
-                        })
-
-                // And now accumulate onto one fullscreen quad
-
-                const theShader = this.shaderProgramDepthPeelAccum;
-                this.gl.useProgram(theShader);
-                for(let i = 0; i<16; i++)
-                    this.gl.disableVertexAttribArray(i);
-                this.gl.enableVertexAttribArray(theShader.vertexPositionAttribute);
-                this.gl.enableVertexAttribArray(theShader.vertexTextureAttribute);
-                this.bindFramebufferDrawBuffers();
-
-                let paintPMatrix = mat4.create();
-                if(this.renderToTexture) {
-                    console.log("Binding rttFramebuffer in depth peel accumulate");
-                    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer);
-                    this.gl.viewport(0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height);
-                    this.gl.uniform1f(theShader.xSSAOScaling, 1.0/this.rttFramebuffer.width );
-                    this.gl.uniform1f(theShader.ySSAOScaling, 1.0/this.rttFramebuffer.height );
-                } else {
-                    if(this.useOffScreenBuffers&&this.WEBGL2){
-                        if(!this.offScreenReady)
-                            this.recreateOffScreeenBuffers(this.canvas.width,this.canvas.height);
-                        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebuffer);
-                        let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
-                    }
-                    this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
-                    this.gl.uniform1f(theShader.xSSAOScaling, 1.0/this.gl.viewportWidth );
-                    this.gl.uniform1f(theShader.ySSAOScaling, 1.0/this.gl.viewportHeight );
-                }
-                mat4.ortho(paintPMatrix, -1.0/ratio , 1.0/ratio , -1.0, 1.0, 0.1, 1000.0);
-                this.gl.uniformMatrix4fv(theShader.pMatrixUniform, false, paintPMatrix);
-
-                this.gl.enable(this.gl.BLEND);
-                this.gl.disable(this.gl.DEPTH_TEST);
-                if(this.renderToTexture&&this.transparentScreenshotBackground) {
-                    this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], 0.0);
-                } else{
-                    this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], this.background_colour[3]);
-                }
-                this.gl.clear(this.gl.DEPTH_BUFFER_BIT|this.gl.COLOR_BUFFER_BIT)
-                this.gl.uniform1i(theShader.depthPeelSamplers, 0);
-                this.gl.uniform1i(theShader.colorPeelSamplers, 1);
-                for(let ipeel=3;ipeel>=0;ipeel--){
-                    this.gl.activeTexture(this.gl.TEXTURE0);
-                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthPeelDepthTextures[ipeel]);
-                    this.gl.activeTexture(this.gl.TEXTURE1);
-                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthPeelColorTextures[ipeel]);
-                    this.gl.uniform1i(theShader.peelNumber,ipeel);
-                    if (this.ext) {
-                        this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0);
-                    } else {
-                        this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
-                    }
-                }
-            }
-            this.gl.activeTexture(this.gl.TEXTURE0);
-            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-            if(this.renderToTexture) {
-                console.log("Delete screenshot peel buffers")
-                for(let i=0;i<this.depthPeelFramebuffers.length;i++){
-                    this.gl.deleteFramebuffer(this.depthPeelFramebuffers[i]);
-                    this.gl.deleteRenderbuffer(this.depthPeelRenderbufferDepth[i]);
-                    this.gl.deleteRenderbuffer(this.depthPeelRenderbufferColor[i]);
-                    this.gl.deleteTexture(this.depthPeelColorTextures[i]);
-                    this.gl.deleteTexture(this.depthPeelDepthTextures[i]);
-                }
-                this.depthPeelFramebuffers = [];
             }
         }
 

@@ -4,9 +4,18 @@ A JavaScript molecular graphics program
 ### For 0.23.0
 - [ ] Ability to set origin/zoom/individual rotation in "Multiple views for different molecules".
 - [ ] Remove glRef from all component props and class constructor args.
+- [ ] Fix SSAO.
+- [ ] Fix multiview with depth blur.
+- [ ] Fix multiview with SSAO.
+- [ ] Fix multiview with edge detect.
 
 ### For 0.22.0
+- [x] Fix multiview origins only sometimes correct.
 - [ ] Fix multiview with transparency.
+  - [x] Get multiview and transparent basic rendering correct.
+  - [x] Fix transparency messing up one-view-per-molecule.
+  - [ ] Fix screenshots with transparent multiviews.
+  - [ ] Fix axes and cross hairs with transparent multiviews.
 - [x] Get scale bar useful with multiviews.
 - [x] Fix atom info toast gets rid of clipper points widget.
 - [x] Fix MrParse sequences not redrawing if component closed and re-opened.
