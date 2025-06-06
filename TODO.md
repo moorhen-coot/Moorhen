@@ -2,12 +2,12 @@
 A JavaScript molecular graphics program
 
 ### For 0.23.0
-- [ ] Ability to set origin/zoom/individual rotation in "Multiple views for different molecules".
-- [ ] Remove glRef from all component props and class constructor args.
 - [ ] Fix SSAO.
 - [ ] Fix multiview with depth blur.
 - [ ] Fix multiview with SSAO.
 - [ ] Fix multiview with edge detect.
+- [ ] Ability to set origin/zoom/individual rotation in "Multiple views for different molecules".
+- [ ] Remove glRef from all component props and class constructor args.
 
 ### For 0.22.0
 - [x] Fix multiview origins only sometimes correct.
