@@ -3195,6 +3195,30 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.silhouetteFramebuffer);
             let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
             this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
+        } else if(this.doDepthPeelPass&&this.renderToTexture&&(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo)) {
+            if(!this.screenshotBuffersReady)
+                this.initTextureFramebuffer();
+            let viewport_start_x = Math.trunc(this.currentViewport[0] * this.rttFramebuffer.width  / this.gl.viewportWidth)
+            let viewport_start_y = Math.trunc(this.currentViewport[1] * this.rttFramebuffer.height / this.gl.viewportHeight)
+            let viewport_width =   Math.trunc(this.currentViewport[2] * this.rttFramebuffer.width  / this.gl.viewportWidth)
+            let viewport_height =  Math.trunc(this.currentViewport[3] * this.rttFramebuffer.height / this.gl.viewportHeight)
+            this.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
+            if(this.gl.viewportWidth>this.gl.viewportHeight){
+                const hp = this.gl.viewportHeight/this.gl.viewportWidth * this.rttFramebuffer.width
+                const b = 0.5*(this.rttFramebuffer.height - hp)
+                const vh = this.currentViewport[3] * this.rttFramebuffer.width  / this.gl.viewportWidth
+                const bp = this.currentViewport[1] * this.rttFramebuffer.width  / this.gl.viewportWidth
+                viewport_height = vh
+                viewport_start_y = bp + b
+            } else {
+                const wp = this.gl.viewportWidth/this.gl.viewportHeight * this.rttFramebuffer.height
+                const b = 0.5*(this.rttFramebuffer.width - wp)
+                const vw = this.currentViewport[2] * this.rttFramebuffer.width  / this.gl.viewportHeight
+                const bp = this.currentViewport[0] * this.rttFramebuffer.width  / this.gl.viewportHeight
+                viewport_width = vw
+                viewport_start_x =  bp + b
+            }
+            this.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
         } else if(this.doDepthPeelPass) {
             let viewport_start_x = Math.trunc(this.currentViewport[0] * this.depthPeelFramebuffers[0].width  / this.gl.viewportWidth)
             let viewport_start_y = Math.trunc(this.currentViewport[1] * this.depthPeelFramebuffers[0].height / this.gl.viewportHeight)
@@ -3202,8 +3226,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             let viewport_height =  Math.trunc(this.currentViewport[3] * this.depthPeelFramebuffers[0].height / this.gl.viewportHeight)
             this.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
         } else if(this.renderToTexture) {
-            if(!this.screenshotBuffersReady)
-                this.initTextureFramebuffer();
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer);
             this.gl.enable(this.gl.DEPTH_TEST);
             this.gl.depthFunc(this.gl.LESS);
@@ -3213,25 +3235,22 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             let viewport_height =  Math.trunc(this.currentViewport[3] * this.rttFramebuffer.height / this.gl.viewportHeight)
             this.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
             if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
-            if(this.gl.viewportWidth>this.gl.viewportHeight){
-                fb_scale = this.gl.viewportWidth/this.gl.viewportHeight
-                const hp = this.gl.viewportHeight/this.gl.viewportWidth * this.rttFramebuffer.width
-                const b = 0.5*(this.rttFramebuffer.height - hp)
-                const vh = this.currentViewport[3] * this.rttFramebuffer.width  / this.gl.viewportWidth
-                const bp = this.currentViewport[1] * this.rttFramebuffer.width  / this.gl.viewportWidth
-                viewport_height = vh
-                viewport_start_y = bp + b
-            } else {
-                fb_scale = this.gl.viewportWidth/this.gl.viewportHeight
-                const wp = this.gl.viewportWidth/this.gl.viewportHeight * this.rttFramebuffer.height
-                const b = 0.5*(this.rttFramebuffer.width - wp)
-                const vw = this.currentViewport[2] * this.rttFramebuffer.width  / this.gl.viewportHeight
-                const bp = this.currentViewport[0] * this.rttFramebuffer.width  / this.gl.viewportHeight
-                console.log(wp,b,viewport_height,vw)
-                viewport_width = vw
-                viewport_start_x =  bp + b
-            }
-            this.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
+                if(this.gl.viewportWidth>this.gl.viewportHeight){
+                    const hp = this.gl.viewportHeight/this.gl.viewportWidth * this.rttFramebuffer.width
+                    const b = 0.5*(this.rttFramebuffer.height - hp)
+                    const vh = this.currentViewport[3] * this.rttFramebuffer.width  / this.gl.viewportWidth
+                    const bp = this.currentViewport[1] * this.rttFramebuffer.width  / this.gl.viewportWidth
+                    viewport_height = vh
+                    viewport_start_y = bp + b
+                } else {
+                    const wp = this.gl.viewportWidth/this.gl.viewportHeight * this.rttFramebuffer.height
+                    const b = 0.5*(this.rttFramebuffer.width - wp)
+                    const vw = this.currentViewport[2] * this.rttFramebuffer.width  / this.gl.viewportHeight
+                    const bp = this.currentViewport[0] * this.rttFramebuffer.width  / this.gl.viewportHeight
+                    viewport_width = vw
+                    viewport_start_x =  bp + b
+                }
+                this.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
             } else {
                 this.gl.viewport(0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height);
             }
@@ -3347,7 +3366,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, -f, b);
                         }
                     } else {
-                        mat4.ortho(this.pMatrix, -24*ratioMult*fb_scale, 24*ratioMult*fb_scale, -24, 24, -f, b);
+                        if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo)
+                            fb_scale = this.currentViewport[2]/this.currentViewport[3]
+                        mat4.ortho(this.pMatrix, -24*fb_scale, 24*fb_scale, -24, 24, -f, b);
                     }
                 }
             } else {
@@ -3529,7 +3550,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.recreateDepthPeelBuffers(2048,2048);
             }
 
-            this.gl.clear(this.gl.DEPTH_BUFFER_BIT|this.gl.COLOR_BUFFER_BIT);
+            if(doClear) this.gl.clear(this.gl.DEPTH_BUFFER_BIT|this.gl.COLOR_BUFFER_BIT);
             const ratio = 1.0
 
             if(this.depthPeelFramebuffers.length>0&&this.depthPeelFramebuffers[0].width>0&&this.depthPeelFramebuffers[0].height>0){
@@ -3608,7 +3629,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 } else{
                     this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], this.background_colour[3]);
                 }
-                this.gl.clear(this.gl.DEPTH_BUFFER_BIT|this.gl.COLOR_BUFFER_BIT)
+                if(doClear) this.gl.clear(this.gl.DEPTH_BUFFER_BIT|this.gl.COLOR_BUFFER_BIT)
                 this.gl.uniform1i(theShader.depthPeelSamplers, 0);
                 this.gl.uniform1i(theShader.colorPeelSamplers, 1);
                 for(let ipeel=3;ipeel>=0;ipeel--){
@@ -3641,6 +3662,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawScene() : void {
+
+        if(this.renderToTexture&&(!this.screenshotBuffersReady))
+            this.initTextureFramebuffer();
 
         const displayBuffers = store.getState().glRef.displayBuffers
 
@@ -3959,7 +3983,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         let multiViewGroups = {}
                         for (let idx = 0; idx < displayBuffers.length; idx++) {
                             if(displayBuffers[idx].multiViewGroup!==undefined&&displayBuffers[idx].origin&&displayBuffers[idx].origin.length===3){
-                                console.log(idx,displayBuffers[idx].multiViewGroup)
+                                //console.log(idx,displayBuffers[idx].multiViewGroup)
                                 if(Object.hasOwn(displayBuffers[idx], "isHoverBuffer")&&!displayBuffers[idx].isHoverBuffer){
                                     if(!(displayBuffers[idx].multiViewGroup in multiViewGroups)){
                                         multiViewGroups[displayBuffers[idx].multiViewGroup] = displayBuffers[idx].multiViewGroup
@@ -3968,7 +3992,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                                 }
                             }
                         }
-                        console.log(multiViewGroups)
+                        //console.log(multiViewGroups)
                         this.multiViewOrigins = multiViewOrigins
                         multiViewGroupsKeys = Object.keys(multiViewGroups)
                         if(this.multiWayViewports.length!==multiViewGroupsKeys.length&&multiViewGroupsKeys.length>0){
@@ -3988,7 +4012,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         ratioMult = 0.5
                     }
 
-                    console.log(multiViewOrigins)
+                    //console.log(multiViewOrigins)
                     //console.log(viewports)
                     for(let i=0;i<viewports.length;i++){
 
