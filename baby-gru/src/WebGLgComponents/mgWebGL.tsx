@@ -4037,11 +4037,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         } else {
                             invMat = this.GLrender(false,doClear,ratioMult);
                         }
-                        if (this.showAxes) {
+                        if (this.showAxes&&!this.doPeel) {
                             this.drawAxes(invMat,ratioMult);
-                        }
-                        if (this.showCrosshairs) {
-                            this.drawCrosshairs(invMat,ratioMult);
+                        } else if(this.doPeel) {
+                            this.gl.activeTexture(this.gl.TEXTURE0);
+                            this.gl.bindTexture(this.gl.TEXTURE_2D, this.textTex);
                         }
                         if(invMat&&i==0) this.drawTextOverlays(invMat,ratioMult, Math.sqrt(this.gl.viewportHeight /this.currentViewport[3]));
                         if (this.showFPS&&i==0) {
@@ -4098,10 +4098,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 if (this.showAxes) {
                     this.drawAxes(invMat);
                 }
-            }
-
-            if (this.showCrosshairs) {
-                this.drawCrosshairs(invMat);
             }
 
             if(!(this.useOffScreenBuffers&&this.offScreenReady)){

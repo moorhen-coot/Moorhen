@@ -26,10 +26,15 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
     const callbacks = store.getState().overlays.callBacks
     const zoom = store.getState().glRef.zoom
     const drawScaleBar = store.getState().sceneSettings.drawScaleBar
+    const drawCrosshairs = store.getState().sceneSettings.drawCrosshairs
+    const doSideBySideStereo = store.getState().sceneSettings.doSideBySideStereo
+    const threeWayViewOrder = store.getState().sceneSettings.threeWayViewOrder
+    const doCrossEyedStereo = store.getState().sceneSettings.doCrossEyedStereo
     const doThreeWayView = store.getState().sceneSettings.doThreeWayView
-    const multiViewColumns = store.getState().sceneSettings.multiViewColumns
-    const specifyMultiViewRowsColumns = store.getState().sceneSettings.specifyMultiViewRowsColumns
     const doMultiView = store.getState().sceneSettings.doMultiView
+    const specifyMultiViewRowsColumns = store.getState().sceneSettings.specifyMultiViewRowsColumns
+    const multiViewRows = store.getState().sceneSettings.multiViewRows
+    const multiViewColumns = store.getState().sceneSettings.multiViewColumns
     const molecules = store.getState().molecules.moleculeList
 
     const bright_y = backgroundColor[0] * 0.299 + backgroundColor[1] * 0.587 + backgroundColor[2] * 0.114
@@ -168,6 +173,18 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
         f(canvas2D_ctx,backgroundColor,width,height,scale)
     })
 
+    if(drawScaleBar||drawCrosshairs){
+        if(bright_y<0.5) {
+            canvas2D_ctx.strokeStyle = "white"
+            canvas2D_ctx.fillStyle = "white"
+        } else {
+            canvas2D_ctx.strokeStyle = "black"
+            canvas2D_ctx.fillStyle = "black"
+        }
+
+        canvas2D_ctx.lineWidth = Math.floor(2*scale)
+    }
+
     if(drawScaleBar) {
         let viewMult = 1.0
         if(doThreeWayView) viewMult = 2.0
@@ -217,6 +234,113 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
 
         canvas2D_ctx.font =  Math.floor(22*scale) + "px helvetica"
         canvas2D_ctx.fillText(scale_pow+"Å",end+4*scale,height-vpos+8*scale)
+
+    }
+
+    if(drawCrosshairs){
+        canvas2D_ctx.lineWidth = 1
+        if(!doThreeWayView&&!doCrossEyedStereo&&!doSideBySideStereo&&!doMultiView){
+            canvas2D_ctx.moveTo(width*.5-5,height*.5)
+            canvas2D_ctx.lineTo(width*.5+5,height*.5)
+            canvas2D_ctx.stroke()
+            canvas2D_ctx.moveTo(width*.5,height*.5-5)
+            canvas2D_ctx.lineTo(width*.5,height*.5+5)
+            canvas2D_ctx.stroke()
+        }
+        if(doCrossEyedStereo||doSideBySideStereo){
+            canvas2D_ctx.moveTo(width*.25-5,height*.5)
+            canvas2D_ctx.lineTo(width*.25+5,height*.5)
+            canvas2D_ctx.stroke()
+            canvas2D_ctx.moveTo(width*.25,height*.5-5)
+            canvas2D_ctx.lineTo(width*.25,height*.5+5)
+            canvas2D_ctx.stroke()
+            canvas2D_ctx.moveTo(width*.75-5,height*.5)
+            canvas2D_ctx.lineTo(width*.75+5,height*.5)
+            canvas2D_ctx.stroke()
+            canvas2D_ctx.moveTo(width*.75,height*.5-5)
+            canvas2D_ctx.lineTo(width*.75,height*.5+5)
+            canvas2D_ctx.stroke()
+        }
+        if(doThreeWayView){
+            if(threeWayViewOrder.length==0){
+                canvas2D_ctx.moveTo(width*.25-5,height*.25)
+                canvas2D_ctx.lineTo(width*.25+5,height*.25)
+                canvas2D_ctx.stroke()
+                canvas2D_ctx.moveTo(width*.25,height*.25-5)
+                canvas2D_ctx.lineTo(width*.25,height*.25+5)
+                canvas2D_ctx.stroke()
+                canvas2D_ctx.moveTo(width*.75-5,height*.25)
+                canvas2D_ctx.lineTo(width*.75+5,height*.25)
+                canvas2D_ctx.stroke()
+                canvas2D_ctx.moveTo(width*.75,height*.25-5)
+                canvas2D_ctx.lineTo(width*.75,height*.25+5)
+                canvas2D_ctx.stroke()
+                canvas2D_ctx.moveTo(width*.25-5,height*.75)
+                canvas2D_ctx.lineTo(width*.25+5,height*.75)
+                canvas2D_ctx.stroke()
+                canvas2D_ctx.moveTo(width*.25,height*.75-5)
+                canvas2D_ctx.lineTo(width*.25,height*.75+5)
+                canvas2D_ctx.stroke()
+            }
+            if(threeWayViewOrder.length===4){
+                if(threeWayViewOrder[0]!==" "){
+                    canvas2D_ctx.moveTo(width*.25-5,height*.25)
+                    canvas2D_ctx.lineTo(width*.25+5,height*.25)
+                    canvas2D_ctx.stroke()
+                    canvas2D_ctx.moveTo(width*.25,height*.25-5)
+                    canvas2D_ctx.lineTo(width*.25,height*.25+5)
+                    canvas2D_ctx.stroke()
+                }
+                if(threeWayViewOrder[1]!==" "){
+                    canvas2D_ctx.moveTo(width*.75-5,height*.25)
+                    canvas2D_ctx.lineTo(width*.75+5,height*.25)
+                    canvas2D_ctx.stroke()
+                    canvas2D_ctx.moveTo(width*.75,height*.25-5)
+                    canvas2D_ctx.lineTo(width*.75,height*.25+5)
+                    canvas2D_ctx.stroke()
+                }
+                if(threeWayViewOrder[2]!==" "){
+                    canvas2D_ctx.moveTo(width*.25-5,height*.75)
+                    canvas2D_ctx.lineTo(width*.25+5,height*.75)
+                    canvas2D_ctx.stroke()
+                    canvas2D_ctx.moveTo(width*.25,height*.75-5)
+                    canvas2D_ctx.lineTo(width*.25,height*.75+5)
+                    canvas2D_ctx.stroke()
+                }
+                if(threeWayViewOrder[3]!==" "){
+                    canvas2D_ctx.moveTo(width*.75-5,height*.75)
+                    canvas2D_ctx.lineTo(width*.75+5,height*.75)
+                    canvas2D_ctx.stroke()
+                    canvas2D_ctx.moveTo(width*.75,height*.75-5)
+                    canvas2D_ctx.lineTo(width*.75,height*.75+5)
+                    canvas2D_ctx.stroke()
+                }
+            }
+        }
+        if(doMultiView){
+            let rows
+            let columns
+            if(specifyMultiViewRowsColumns){
+                rows = multiViewRows
+                columns = multiViewColumns
+            } else {
+                const grid = get_grid(molecules.length)
+                rows = grid[0]
+                columns = grid[1]
+            }
+            for(let irow=0;irow<rows;irow++){
+                const row_frac = irow/rows + 0.5/rows
+                for(let icol=0;icol<columns;icol++){
+                    const col_frac = icol/columns + 0.5/columns
+                    canvas2D_ctx.moveTo(width*col_frac-5,height*row_frac)
+                    canvas2D_ctx.lineTo(width*col_frac+5,height*row_frac)
+                    canvas2D_ctx.stroke()
+                    canvas2D_ctx.moveTo(width*col_frac,height*row_frac-5)
+                    canvas2D_ctx.lineTo(width*col_frac,height*row_frac+5)
+                    canvas2D_ctx.stroke()
+                }
+            }
+        }
     }
 }
 
