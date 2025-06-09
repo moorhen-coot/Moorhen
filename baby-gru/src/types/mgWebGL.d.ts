@@ -344,6 +344,7 @@ export namespace webGL {
         mapLineWidth : number;
         width? : number;
         height? : number;
+        setDrawQuat : (q: quat4) =>  void;
     }
 
     interface MGWebGL extends React.Component  {

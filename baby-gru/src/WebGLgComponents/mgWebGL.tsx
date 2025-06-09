@@ -3684,6 +3684,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         if(!this.animating) this.props.onQuatChanged(this.myQuat)
+        this.props.setDrawQuat(this.myQuat)
 
         const theShaders = [
             this.shaderProgram,
@@ -4037,9 +4038,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         } else {
                             invMat = this.GLrender(false,doClear,ratioMult);
                         }
-                        if (this.showAxes&&!this.doPeel) {
-                            this.drawAxes(invMat,ratioMult);
-                        } else if(this.doPeel) {
+                        if (this.doPeel) {
                             this.gl.activeTexture(this.gl.TEXTURE0);
                             this.gl.bindTexture(this.gl.TEXTURE_2D, this.textTex);
                         }
@@ -4092,12 +4091,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
             if (this.showFPS) {
                 this.drawFPSMeter();
-            }
-
-            if(!(this.useOffScreenBuffers&&this.offScreenReady)){
-                if (this.showAxes) {
-                    this.drawAxes(invMat);
-                }
             }
 
             if(!(this.useOffScreenBuffers&&this.offScreenReady)){
@@ -4450,10 +4443,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0);
         } else {
             this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
-        }
-
-        if (this.showAxes) {
-            this.drawAxes(invMat)
         }
 
         this.drawLineMeasures(invMat);
@@ -6460,289 +6449,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         this.gl.depthFunc(this.gl.LESS)
-    }
-
-    drawAxes(invMat,ratioMult=1.0) {
-
-        for(let i = 0; i<16; i++)
-            this.gl.disableVertexAttribArray(i);
-
-        this.gl.activeTexture(this.gl.TEXTURE0);
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.textTex);
-        this.gl.depthFunc(this.gl.ALWAYS);
-        let axesOffset = vec3.create();
-        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult;
-        //if(this.renderToTexture) ratio = 1.0;
-        vec3.set(axesOffset, 20*ratio, 18, 0);
-        vec3.transformMat4(axesOffset, axesOffset, invMat);
-        let right = vec3.create();
-        vec3.set(right, 1.0, 0.0, 0.0);
-        let up = vec3.create();
-        vec3.set(up, 0.0, 1.0, 0.0);
-        vec3.transformMat4(up, up, invMat);
-        vec3.transformMat4(right, right, invMat);
-        const xyzOff = this.origin.map((coord, iCoord) => -coord + this.zoom * axesOffset[iCoord])
-        //console.log("offset",xoff,yoff,zoff);
-        this.gl.useProgram(this.shaderProgramThickLines);
-        this.setMatrixUniforms(this.shaderProgramThickLines);
-
-        let pmvMatrix = mat4.create();
-        let pMatrix = mat4.create();
-        if(this.renderToTexture){
-            if(this.gl.viewportWidth > this.gl.viewportHeight){
-               if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
-                   mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24, 24, 0.1, 1000.0);
-               } else {
-                    mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.0);
-               }
-            } else {
-                mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
-            }
-        } else {
-            mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24, 24, 0.1, 1000.0);
-        }
-        mat4.scale(pMatrix, pMatrix, [1. / this.zoom, 1. / this.zoom, 1.0]);
-        mat4.multiply(pmvMatrix, pMatrix, this.mvMatrix);
-
-        this.gl.uniformMatrix4fv(this.shaderProgramThickLines.pMatrixUniform, false, pmvMatrix);
-
-        this.gl.uniform3fv(this.shaderProgramThickLines.screenZ, this.screenZ);
-        this.gl.uniform1f(this.shaderProgramThickLines.pixelZoom, 0.04 * this.zoom);
-
-        if (typeof (this.axesPositionBuffer) === "undefined") {
-            this.axesPositionBuffer = this.gl.createBuffer();
-            this.axesColourBuffer = this.gl.createBuffer();
-            this.axesIndexBuffer = this.gl.createBuffer();
-            this.axesNormalBuffer = this.gl.createBuffer();
-            this.axesTextNormalBuffer = this.gl.createBuffer();
-            this.axesTextColourBuffer = this.gl.createBuffer();
-            this.axesTextPositionBuffer = this.gl.createBuffer();
-            this.axesTextTexCoordBuffer = this.gl.createBuffer();
-            this.axesTextIndexesBuffer = this.gl.createBuffer();
-        }
-        const renderArrays = {
-            axesVertices: [],
-            axesColours: [],
-            axesIdx: []
-        }
-        const addSegment = (renderArrays, point1, point2, colour1, colour2) => {
-            renderArrays.axesIdx.push(renderArrays.axesVertices.length)
-            renderArrays.axesVertices = renderArrays.axesVertices.concat(point1)
-            renderArrays.axesIdx.push(renderArrays.axesVertices.length)
-            renderArrays.axesVertices = renderArrays.axesVertices.concat(point2)
-            renderArrays.axesColours = renderArrays.axesColours.concat([...colour1, ...colour2])
-        }
-
-        // Actual axes
-        let xyz1 = [0.0, 0.0, 0.0];
-        let xyz2 = [this.zoom * 3.0, 0., 0.];
-
-        addSegment(renderArrays,
-            xyz1.map((coord, iCoord) => coord + xyzOff[iCoord]),
-            xyz2.map((coord, iCoord) => coord + xyzOff[iCoord]),
-            [1., 0., 0., 1.],
-            [1., 0., 0., 1.],
-        )
-
-        xyz1 = [0.0, 0.0, 0.0];
-        xyz2 = [0.0, this.zoom * 3.0, 0.0]
-        addSegment(renderArrays,
-            xyz1.map((coord, iCoord) => coord + xyzOff[iCoord]),
-            xyz2.map((coord, iCoord) => coord + xyzOff[iCoord]),
-            [0., 1., 0., 1.],
-            [0., 1., 0., 1.],
-        )
-
-        xyz1 = [0.0, 0.0, 0.0];
-        xyz2 = [0.0, 0.0, this.zoom * 3.0]
-        addSegment(renderArrays,
-            xyz1.map((coord, iCoord) => coord + xyzOff[iCoord]),
-            xyz2.map((coord, iCoord) => coord + xyzOff[iCoord]),
-            [0., 0., 1., 1.],
-            [0., 0., 1., 1.],
-        )
-
-        //Arrow heads
-        xyz1 = [2.0 * this.zoom, 0.5 * this.zoom, 0.0]
-        xyz2 = [this.zoom * 3.0, 0.0, 0.0]
-        addSegment(renderArrays,
-            xyz1.map((coord, iCoord) => coord + xyzOff[iCoord]),
-            xyz2.map((coord, iCoord) => coord + xyzOff[iCoord]),
-            [1., 0., 0., 1.],
-            [1., 0., 0., 1.],
-        )
-
-        xyz1 = [2.0 * this.zoom, -0.5 * this.zoom, 0.0]
-        xyz2 = [this.zoom * 3.0, 0.0, 0.0]
-        addSegment(renderArrays,
-            xyz1.map((coord, iCoord) => coord + xyzOff[iCoord]),
-            xyz2.map((coord, iCoord) => coord + xyzOff[iCoord]),
-            [1., 0., 0., 1.],
-            [1., 0., 0., 1.],
-        )
-
-        xyz1 = [0.0, 2.0 * this.zoom, 0.5 * this.zoom]
-        xyz2 = [0.0, this.zoom * 3.0, 0.0]
-        addSegment(renderArrays,
-            xyz1.map((coord, iCoord) => coord + xyzOff[iCoord]),
-            xyz2.map((coord, iCoord) => coord + xyzOff[iCoord]),
-            [0., 1., 0., 1.],
-            [0., 1., 0., 1.],
-        )
-
-        xyz1 = [0.0, 2.0 * this.zoom, -0.5 * this.zoom]
-        xyz2 = [0.0, this.zoom * 3.0, 0.0]
-        addSegment(renderArrays,
-            xyz1.map((coord, iCoord) => coord + xyzOff[iCoord]),
-            xyz2.map((coord, iCoord) => coord + xyzOff[iCoord]),
-            [0., 1., 0., 1.],
-            [0., 1., 0., 1.],
-        )
-
-        xyz1 = [0.5 * this.zoom, 0.0, 2.0 * this.zoom]
-        xyz2 = [0.0, 0.0, this.zoom * 3.0]
-        addSegment(renderArrays,
-            xyz1.map((coord, iCoord) => coord + xyzOff[iCoord]),
-            xyz2.map((coord, iCoord) => coord + xyzOff[iCoord]),
-            [0., 0., 1., 1.],
-            [0., 0., 1., 1.],
-        )
-
-        xyz1 = [-0.5 * this.zoom, 0.0, 2.0 * this.zoom]
-        xyz2 = [0.0, 0.0, this.zoom * 3.0]
-        addSegment(renderArrays,
-            xyz1.map((coord, iCoord) => coord + xyzOff[iCoord]),
-            xyz2.map((coord, iCoord) => coord + xyzOff[iCoord]),
-            [0., 0., 1., 1.],
-            [0., 0., 1., 1.],
-        )
-
-        let size = 1.5;
-        let thickLines = linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
-        let axesNormals = thickLines["normals"];
-        let axesVertices_new = thickLines["vertices"];
-        let axesColours_new = thickLines["colours"];
-        let axesIndexs_new = thickLines["indices"];
-
-        //console.log("thickLines",thickLines);
-        this.gl.depthFunc(this.gl.ALWAYS);
-
-        this.gl.uniform4fv(this.shaderProgramThickLines.clipPlane0, [0, 0, -1, 1000]);
-        this.gl.uniform4fv(this.shaderProgramThickLines.clipPlane1, [0, 0, 1, 1000]);
-        this.gl.uniform1f(this.shaderProgramThickLines.fog_start, 1000.0);
-        this.gl.uniform1f(this.shaderProgramThickLines.fog_end, 1000.0);
-        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexNormalAttribute);
-        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexPositionAttribute);
-        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexColourAttribute);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesNormalBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesNormals), this.gl.DYNAMIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesPositionBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesVertices_new), this.gl.DYNAMIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesColourBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesColours_new), this.gl.DYNAMIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.axesIndexBuffer);
-        if (this.ext) {
-            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(axesIndexs_new), this.gl.DYNAMIC_DRAW);
-            this.gl.drawElements(this.gl.TRIANGLES, axesIndexs_new.length, this.gl.UNSIGNED_INT, 0);
-        } else {
-            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(axesIndexs_new), this.gl.DYNAMIC_DRAW);
-            this.gl.drawElements(this.gl.TRIANGLES, axesIndexs_new.length, this.gl.UNSIGNED_SHORT, 0);
-        }
-
-        this.gl.useProgram(this.shaderProgramTextBackground);
-
-        for(let i = 0; i<16; i++)
-            this.gl.disableVertexAttribArray(i);
-
-        this.gl.useProgram(this.shaderProgramTextBackground);
-        this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
-        this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
-        this.gl.uniform3fv(this.shaderProgramTextBackground.screenZ, this.screenZ);
-        this.gl.uniform1f(this.shaderProgramTextBackground.pixelZoom, 0.04 * this.zoom);
-
-        this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexNormalAttribute);
-        this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexPositionAttribute);
-        this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexColourAttribute);
-
-        this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
-        this.setMatrixUniforms(this.shaderProgramTextBackground);
-        this.gl.uniformMatrix4fv(this.shaderProgramTextBackground.pMatrixUniform, false, pMatrix);
-        this.gl.uniform4fv(this.shaderProgramTextBackground.clipPlane0, [0, 0, -1, 1000]);
-        this.gl.uniform4fv(this.shaderProgramTextBackground.clipPlane1, [0, 0, 1, 1000]);
-        this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
-        this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextNormalBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]), this.gl.STATIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextColourBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1]), this.gl.STATIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextTexCoordBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0]), this.gl.STATIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexTextureAttribute, 2, this.gl.FLOAT, false, 0, 0);
-
-        let textColour = "black";
-        const y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
-        if (y < 0.5) {
-            textColour = "white";
-        }
-
-        const drawStringAt = (string, colour, location, up, right) => {
-
-            if(!this.axesTexture[colour][string]){
-                const [maxS,ctx] = this.makeTextCanvas(string, 64, 32, colour, "20px Arial");
-                const data = ctx.getImageData(0, 0, 64, 32);
-                this.axesTexture[colour][string] = data;
-            }
-
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.axesTexture[colour][string]);
-            this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.axesTexture[colour][string]);
-            const tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
-            const tSizeY = 2.0 * this.zoom;
-
-            const [base_x, base_y, base_z] = location
-            let textPositions = [base_x, base_y, base_z, base_x + tSizeX * right[0], base_y + tSizeX * right[1], base_z + tSizeX * right[2], base_x + tSizeY * up[0] + tSizeX * right[0], base_y + tSizeY * up[1] + tSizeX * right[1], base_z + tSizeY * up[2] + tSizeX * right[2]];
-            textPositions = textPositions.concat([base_x, base_y, base_z, base_x + tSizeY * up[0] + tSizeX * right[0], base_y + tSizeY * up[1] + tSizeX * right[1], base_z + tSizeY * up[2] + tSizeX * right[2], base_x + tSizeY * up[0], base_y + tSizeY * up[1], base_z + tSizeY * up[2]]);
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextPositionBuffer);
-            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(textPositions), this.gl.DYNAMIC_DRAW);
-            this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
-            this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.axesTextIndexesBuffer);
-            if (this.ext) {
-                this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array([0, 1, 2, 3, 4, 5]), this.gl.STATIC_DRAW);
-                this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0);
-            } else {
-                this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 2, 3, 4, 5]), this.gl.STATIC_DRAW);
-                this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
-            }
-                //this.gl.bindTexture(this.gl.TEXTURE_2D, null);
-        }
-
-        let base_x = xyzOff[0] + 3.0 * this.zoom;
-        let base_y = xyzOff[1];
-        let base_z = xyzOff[2];
-        drawStringAt("x", textColour, [base_x, base_y, base_z], up, right)
-        base_x = xyzOff[0];
-        base_y = xyzOff[1] + 3.0 * this.zoom;
-        base_z = xyzOff[2];
-        drawStringAt("y", textColour, [base_x, base_y, base_z], up, right)
-        base_x = xyzOff[0];
-        base_y = xyzOff[1];
-        base_z = xyzOff[2] + 3.0 * this.zoom;
-        drawStringAt("z", textColour, [base_x, base_y, base_z], up, right)
-
-        this.gl.disableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
-        this.gl.depthFunc(this.gl.LESS)
-
     }
 
     drawTextOverlays(invMat,ratioMult=1.0,font_scale=1.0) {

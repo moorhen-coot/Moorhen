@@ -11,6 +11,7 @@ import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
 import { useSnackbar } from 'notistack';
 import { setQuat, setOrigin, setRequestDrawScene, setZoom,
          setClipStart, setClipEnd, setFogStart, setFogEnd, setCursorPosition } from "../../store/glRefSlice"
+import * as quat4 from 'gl-matrix/quat';
 
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
@@ -123,6 +124,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     const GLLabelsFontFamily = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontFamily)
     const GLLabelsFontSize = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontSize)
+    const [drawQuat,setDrawQuat] = useState<quat4>([0, 0, 0, -1])
 
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
@@ -646,6 +648,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             if(Math.abs(quat[0]-glRef.current.myQuat[0])>1e-5||Math.abs(quat[1]-glRef.current.myQuat[1])>1e-5||Math.abs(quat[2]-glRef.current.myQuat[2])>1e-5||Math.abs(quat[3]-glRef.current.myQuat[3])>1e-5){
                 doQuat = true
             }
+            //if(glRef.current.animating) doQuat = false
             if(Math.abs(zoom-glRef.current.zoom)>1e-5){
                 doZoom = true
             }
@@ -656,12 +659,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             }
             if(doOrigin||doQuat||doZoom){
                 glRef.current.setOriginOrientationAndZoomAnimated(originState,quat,zoom)
-                /*
-                glRef.current.origin = originState
-                glRef.current.zoom = zoom
-                glRef.current.myQuat = quat
-                glRef.current.drawScene()
-                */
             }
         }
     }, [zoom,quat,originState])
@@ -685,8 +682,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     showAxes={drawAxes}
                     showFPS={drawFPS}
                     mapLineWidth={innerMapLineWidth}
-                    reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp}/>
-                    <Moorhen2DOverlay canvasRef={canvas2DRef}/>;
+                    reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp} setDrawQuat={setDrawQuat}/>
+                    <Moorhen2DOverlay canvasRef={canvas2DRef} drawQuat={drawQuat}/>;
                 </figure>
 
                 {showContextMenu &&

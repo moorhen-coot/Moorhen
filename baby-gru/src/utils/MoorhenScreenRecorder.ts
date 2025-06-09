@@ -96,6 +96,8 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
         const isWebGL2 = store.getState().glRef.isWebGL2
 
         const canvasSize = store.getState().glRef.canvasSize
+        const quat = store.getState().glRef.quat
+
         const canvasWidth = canvasSize[0]
         const canvasHeight = canvasSize[1]
 
@@ -162,7 +164,7 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
                 imgFracs.push(img_frac)
             }
 
-            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs)
+            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat)
 
             let link: any = document.getElementById('download_image_link');
             if (!link) {

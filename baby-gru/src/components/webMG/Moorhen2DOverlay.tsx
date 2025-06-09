@@ -4,6 +4,10 @@ import { get_grid } from "../../utils/utils"
 import store from '../../store/MoorhenReduxStore'
 import { useDispatch, useSelector } from 'react-redux'
 import { addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays } from "../../store/overlaysSlice"
+import { quatToMat4, quat4Inverse } from '../../WebGLgComponents/quatToMat4.js';
+import * as quat4 from 'gl-matrix/quat';
+import * as vec3 from 'gl-matrix/vec3';
+
 
 interface ImageFrac2D {
     x: number
@@ -13,7 +17,114 @@ interface ImageFrac2D {
     img: HTMLImageElement
 }
 
-export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: number, height: number, scale: number, helpText: string[], images: ImageFrac2D[]) => {
+let stereoQuats = []
+let yForward = null
+let xForward = null
+let zForward = null
+
+const createStereoQuats = () => {
+        const yaxis = vec3.create();
+        vec3.set(yaxis, 0.0, -1.0, 0.0)
+
+        const angle = 3./180.*Math.PI;
+
+        const dval3_p = Math.cos(angle / 2.0);
+        const dval0_y_p = yaxis[0] * Math.sin(angle / 2.0);
+        const dval1_y_p = yaxis[1] * Math.sin(angle / 2.0);
+        const dval2_y_p = yaxis[2] * Math.sin(angle / 2.0);
+
+        const dval3_m = Math.cos(-angle / 2.0);
+        const dval0_y_m = yaxis[0] * Math.sin(-angle / 2.0);
+        const dval1_y_m = yaxis[1] * Math.sin(-angle / 2.0);
+        const dval2_y_m = yaxis[2] * Math.sin(-angle / 2.0);
+
+        const rotY_p = quat4.create();
+        const rotY_m = quat4.create();
+
+        quat4.set(rotY_p, dval0_y_p, dval1_y_p, dval2_y_p, dval3_p);
+        quat4.set(rotY_m, dval0_y_m, dval1_y_m, dval2_y_m, dval3_m);
+
+        stereoQuats.push(rotY_p)
+        stereoQuats.push(rotY_m)
+}
+
+const createThreeWayQuats = () => {
+        const xaxis = vec3.create();
+        vec3.set(xaxis, 1.0, 0.0, 0.0)
+        const yaxis = vec3.create();
+        vec3.set(yaxis, 0.0, -1.0, 0.0)
+
+        const zaxis = vec3.create();
+        vec3.set(zaxis, 0.0, 0.0, 1.0)
+
+        const angle = -Math.PI/2.;
+
+        const dval3 = Math.cos(angle / 2.0);
+
+        const dval0_x = xaxis[0] * Math.sin(angle / 2.0);
+        const dval1_x = xaxis[1] * Math.sin(angle / 2.0);
+        const dval2_x = xaxis[2] * Math.sin(angle / 2.0);
+
+        const dval0_y = yaxis[0] * Math.sin(angle / 2.0);
+        const dval1_y = yaxis[1] * Math.sin(angle / 2.0);
+        const dval2_y = yaxis[2] * Math.sin(angle / 2.0);
+
+        const dval0_z_p = zaxis[0] * Math.sin(angle / 2.0);
+        const dval1_z_p = zaxis[1] * Math.sin(angle / 2.0);
+        const dval2_z_p = zaxis[2] * Math.sin(angle / 2.0);
+        const dval3_z_p = Math.cos(angle / 2.0);
+
+        const dval0_z_m = zaxis[0] * Math.sin(-angle / 2.0);
+        const dval1_z_m = zaxis[1] * Math.sin(-angle / 2.0);
+        const dval2_z_m = zaxis[2] * Math.sin(-angle / 2.0);
+        const dval3_z_m = Math.cos(-angle / 2.0);
+
+        yForward = quat4.create();
+        xForward = quat4.create();
+        zForward = quat4.create();
+
+        const zPlus = quat4.create();
+        const zMinus = quat4.create();
+
+        quat4.set(zForward, 0, 0, 0, -1);
+        quat4.set(yForward, dval0_x, dval1_x, dval2_x, dval3);
+        quat4.set(xForward, dval0_y, dval1_y, dval2_y, dval3);
+
+        quat4.set(zPlus, dval0_z_p, dval1_z_p, dval2_z_p, dval3_z_p);
+        quat4.set(zMinus, dval0_z_m, dval1_z_m, dval2_z_m, dval3_z_p);
+
+        quat4.multiply(xForward, xForward, zMinus);
+        quat4.multiply(yForward, yForward, zPlus);
+
+
+}
+
+function drawArrow(ctx, fromx, fromy, tox, toy, arrowWidth, color, scale){
+
+    var headLength = 10*scale;
+    var angle = Math.atan2(toy-fromy,tox-fromx);
+
+    ctx.save();
+    ctx.strokeStyle = color;
+
+    ctx.beginPath();
+    ctx.moveTo(fromx, fromy);
+    ctx.lineTo(tox, toy);
+    ctx.lineWidth = arrowWidth*scale;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(tox-headLength*Math.cos(angle-Math.PI/6),
+               toy-headLength*Math.sin(angle-Math.PI/6));
+    ctx.lineTo(tox, toy);
+    ctx.lineTo(tox-headLength*Math.cos(angle+Math.PI/6),
+               toy-headLength*Math.sin(angle+Math.PI/6));
+
+    ctx.stroke();
+    ctx.restore();
+}
+
+export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: number, height: number, scale: number, helpText: string[], images: ImageFrac2D[], drawQuat: quat4) => {
 
     if(!canvas2D_ctx) return
 
@@ -25,6 +136,8 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
     const fracPathOverlays = store.getState().overlays.fracPathOverlayList
     const callbacks = store.getState().overlays.callBacks
     const zoom = store.getState().glRef.zoom
+    const quat = drawQuat
+    const doDrawAxes = store.getState().sceneSettings.drawAxes
     const drawScaleBar = store.getState().sceneSettings.drawScaleBar
     const drawCrosshairs = store.getState().sceneSettings.drawCrosshairs
     const doSideBySideStereo = store.getState().sceneSettings.doSideBySideStereo
@@ -173,7 +286,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
         f(canvas2D_ctx,backgroundColor,width,height,scale)
     })
 
-    if(drawScaleBar||drawCrosshairs){
+    if(drawScaleBar||drawCrosshairs||doDrawAxes){
         if(bright_y<0.5) {
             canvas2D_ctx.strokeStyle = "white"
             canvas2D_ctx.fillStyle = "white"
@@ -342,6 +455,113 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
             }
         }
     }
+
+    if(doDrawAxes){
+        canvas2D_ctx.font =  Math.floor(22*scale) + "px helvetica"
+        const drawAxes = (theQuat,base_x,base_y,multiScale) => {
+            const theMatrix = quatToMat4(theQuat);
+            let x_axis = vec3.create();
+            let y_axis = vec3.create();
+            let z_axis = vec3.create();
+            vec3.set(x_axis, 1.0, 0.0, 0.0);
+            vec3.set(y_axis, 0.0, 1.0, 0.0);
+            vec3.set(z_axis, 0.0, 0.0, 1.0);
+            vec3.transformMat4(x_axis, x_axis, theMatrix);
+            vec3.transformMat4(y_axis, y_axis, theMatrix);
+            vec3.transformMat4(z_axis, z_axis, theMatrix);
+
+            const arrow_length = multiScale*scale*40
+
+            if(Math.abs(x_axis[0])>2e-1||Math.abs(x_axis[1])>2e-1)
+                drawArrow(canvas2D_ctx, base_x,base_y, base_x+x_axis[0]*arrow_length,base_y-x_axis[1]*arrow_length, 2.0, "red",multiScale*scale)
+            if(Math.abs(y_axis[0])>2e-1||Math.abs(y_axis[1])>2e-1)
+                drawArrow(canvas2D_ctx, base_x,base_y, base_x+y_axis[0]*arrow_length,base_y-y_axis[1]*arrow_length, 2.0, "#00ff00",multiScale*scale)
+            if(Math.abs(z_axis[0])>2e-1||Math.abs(z_axis[1])>2e-1)
+                 drawArrow(canvas2D_ctx, base_x,base_y, base_x+z_axis[0]*arrow_length,base_y-z_axis[1]*arrow_length, 2.0, "blue",multiScale*scale)
+
+            canvas2D_ctx.fillText("x",base_x+x_axis[0]*(arrow_length+5*multiScale*scale),base_y-x_axis[1]*(arrow_length+5*multiScale*scale))
+            canvas2D_ctx.fillText("y",base_x+y_axis[0]*(arrow_length+5*multiScale*scale),base_y-y_axis[1]*(arrow_length+5*multiScale*scale))
+            canvas2D_ctx.fillText("z",base_x+z_axis[0]*(arrow_length+5*multiScale*scale),base_y-z_axis[1]*(arrow_length+5*multiScale*scale))
+        }
+
+        if(doCrossEyedStereo||doSideBySideStereo){
+            if(stereoQuats.length===0) createStereoQuats()
+            const newQuat_p = quat4.clone(quat);
+            quat4.multiply(newQuat_p, newQuat_p, stereoQuats[0]);
+            let base_x = width*.46
+            let base_y = height*.125
+            drawAxes(newQuat_p,base_x,base_y,1.0)
+            const newQuat_m = quat4.clone(quat);
+            quat4.multiply(newQuat_m, newQuat_m, stereoQuats[1]);
+            base_x = width*.96
+            base_y = height*.125
+            drawAxes(newQuat_m,base_x,base_y,1.0)
+        } else if(doThreeWayView){
+            if(xForward===null) createThreeWayQuats()
+            const newQuat_x = quat4.clone(quat);
+            quat4.multiply(newQuat_x, newQuat_x, xForward);
+            const newQuat_y = quat4.clone(quat);
+            quat4.multiply(newQuat_y, newQuat_y, yForward);
+            if(threeWayViewOrder.length===0||threeWayViewOrder==="ZXY "){
+                let base_x = width*.46
+                let base_y = height*.075
+                drawAxes(quat,base_x,base_y,0.75)
+                base_x = width*.96
+                base_y = height*.075
+                drawAxes(newQuat_x,base_x,base_y,0.75)
+                base_x = width*.46
+                base_y = height*.575
+                drawAxes(newQuat_y,base_x,base_y,0.75)
+            } else {
+                if(threeWayViewOrder[0]!==" ") {
+                    let base_x = width*.46
+                    let base_y = height*.075
+                    const newQuat = quat4.clone(quat)
+                    if(threeWayViewOrder[0]==="Y")
+                        quat4.multiply(newQuat, newQuat, yForward);
+                    else if(threeWayViewOrder[0]==="X")
+                        quat4.multiply(newQuat, newQuat, xForward);
+                    drawAxes(newQuat,base_x,base_y,0.55)
+                }
+                if(threeWayViewOrder[1]!==" ") {
+                    console.log(threeWayViewOrder[1])
+                    let base_x = width*.96
+                    let base_y = height*.075
+                    const newQuat = quat4.clone(quat)
+                    if(threeWayViewOrder[1]==="Y")
+                        quat4.multiply(newQuat, newQuat, yForward);
+                    else if(threeWayViewOrder[1]==="X")
+                    quat4.multiply(newQuat, newQuat, xForward);
+                    drawAxes(newQuat,base_x,base_y,0.55)
+                }
+                if(threeWayViewOrder[2]!==" ") {
+                    let base_x = width*.46
+                    let base_y = height*.575
+                    const newQuat = quat4.clone(quat)
+                    if(threeWayViewOrder[2]==="Y")
+                        quat4.multiply(newQuat, newQuat, yForward);
+                    else if(threeWayViewOrder[2]==="X")
+                    quat4.multiply(newQuat, newQuat, xForward);
+                    drawAxes(newQuat,base_x,base_y,0.55)
+                }
+                if(threeWayViewOrder[3]!==" ") {
+                    let base_x = width*.96
+                    let base_y = height*.575
+                    const newQuat = quat4.clone(quat)
+                    if(threeWayViewOrder[3]==="Y")
+                        quat4.multiply(newQuat, newQuat, yForward);
+                    else if(threeWayViewOrder[3]==="X")
+                    quat4.multiply(newQuat, newQuat, xForward);
+                    drawAxes(newQuat,base_x,base_y,0.55)
+                }
+            }
+        } else {
+            const base_x = width*.92
+            const base_y = height*.125
+            drawAxes(quat,base_x,base_y,1.0)
+        }
+
+    }
 }
 
 export const Moorhen2DOverlay = ((props) => {
@@ -399,12 +619,12 @@ export const Moorhen2DOverlay = ((props) => {
         canvas2D_ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
         canvas2D_ctx.clearRect(0,0,width,height)
 
-        drawOn2DContext(canvas2D_ctx, width, height, 1.0, helpText, images)
+        drawOn2DContext(canvas2D_ctx, width, height, 1.0, helpText, images, props.drawQuat)
     }
 
     useEffect(() => {
         draw2D()
-    }, [draw2D,textOverlays,imageOverlays,svgPathOverlays,fracPathOverlays,callbacks])
+    }, [draw2D,textOverlays,imageOverlays,svgPathOverlays,fracPathOverlays,callbacks,props.drawQuat])
 
     return  <>
            <canvas style={{pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef} height={width} width={height} />
