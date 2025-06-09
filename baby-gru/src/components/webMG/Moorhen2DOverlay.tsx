@@ -169,6 +169,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
     })
 
     textOverlays.forEach(t => {
+        canvas2D_ctx.beginPath()
         if(t.lineWidth) canvas2D_ctx.lineWidth = t.lineWidth * scale
         canvas2D_ctx.font = Math.floor(t.fontPixelSize*scale) +"px "+t.fontFamily
         if(t.drawStyle==="stroke"){
@@ -199,6 +200,8 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
 
     svgPathOverlays.forEach(t => {
         let p = new Path2D(t.path)
+        if(t.lineWidth) canvas2D_ctx.lineWidth = t.lineWidth * scale
+        else canvas2D_ctx.lineWidth = 1.0
         if(t.drawStyle==="stroke"){
             if(t.strokeStyle){
                 canvas2D_ctx.strokeStyle = t.strokeStyle
@@ -243,6 +246,8 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
 
     fracPathOverlays.forEach(t => {
         canvas2D_ctx.beginPath()
+        if(t.lineWidth) canvas2D_ctx.lineWidth = t.lineWidth * scale
+        else canvas2D_ctx.lineWidth = scale
         if(t.drawStyle==="stroke"){
             if(t.strokeStyle){
                 canvas2D_ctx.strokeStyle = t.strokeStyle
@@ -282,6 +287,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
             canvas2D_ctx.fill()
         }
     })
+
     callbacks.forEach(f => {
         f(canvas2D_ctx,backgroundColor,width,height,scale)
     })

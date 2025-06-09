@@ -13,13 +13,12 @@ A JavaScript molecular graphics program
 ### For 0.22.0
 - [x] Fix multiview origins only sometimes correct.
 - [x] Fix multiview screenshots scaling.
-- [ ] Fix multiview with transparency.
+- [x] Fix multiview with transparency.
   - [x] Get multiview and transparent basic rendering correct.
   - [x] Fix transparency messing up one-view-per-molecule.
   - [x] Fix screenshots with transparent multiviews.
   - [x] Fix cross-hairs with transparent multiviews.
   - [x] Fix axes with transparent multiviews.
-  - [ ] Consider origin shift when doing transparent multiviews.
 - [x] Get scale bar useful with multiviews.
 - [x] Fix atom info toast gets rid of clipper points widget.
 - [x] Fix MrParse sequences not redrawing if component closed and re-opened.

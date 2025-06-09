@@ -55,6 +55,7 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
             dispatch(addTextOverlay({text:"Stroke text",x:0.65,y:0.75,fontFamily:"serif",fontPixelSize:48,drawStyle:"stroke",strokeStyle:"blue"}))
             dispatch(addSvgPathOverlay({path:"M10 10 h 80 v 80 h -80 Z",drawStyle:"stroke",strokeStyle:"magenta"}))
             dispatch(addSvgPathOverlay({path:"M100 10 h 80 v 80 h -80 Z",drawStyle:"fill",fillStyle:"orange"}))
+            dispatch(addSvgPathOverlay({path:"M610 300 h 80 v 80 h -80 Z",drawStyle:"stroke",strokeStyle:"green",lineWidth:6}))
             dispatch(addFracPathOverlay({path:[[0.7,0.5],[0.8,0.9],[0.6,0.7],[0.7,0.5]],drawStyle:"fill",fillStyle:"#00ffff77"}))
             const gradientStops = []
             gradientStops.push([0, "red"]);
@@ -66,6 +67,7 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
             dispatch(addSvgPathOverlay({path:"M190 10 h 480 v 80 h -480 Z",gradientStops,gradientBoundary:[190,0,670,0],drawStyle:"gradient"}))
             dispatch(addSvgPathOverlay({path:"M10 100 v 480 h 80 v -480 Z",gradientStops,gradientBoundary:[0,100,0,580],drawStyle:"gradient"}))
             dispatch(addFracPathOverlay({path:[[0.0,0.0],[1.0,1.0]],drawStyle:"stroke"}))
+            dispatch(addFracPathOverlay({path:[[0.4,0.2],[0.8,0.6]],drawStyle:"stroke",strokeStyle:"red",lineWidth:8}))
             dispatch(addFracPathOverlay({path:[[0.2,0.5],[0.3,0.9],[0.1,0.7],[0.2,0.5]],gradientStops,gradientBoundary:[0.1,0,0.3,0],drawStyle:"gradient"}))
             dispatch(addCallback(exampleCallBack))
         }
