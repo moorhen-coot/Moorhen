@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { Row, Col } from "react-bootstrap";
 import { MoorhenSequenceViewer } from "../sequence-viewer/MoorhenSequenceViewer";
 import { convertViewtoPx, sequenceIsValid } from '../../utils/utils';
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch} from "react-redux";
+import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 
 export const MoorhenSequenceList = (props: { 
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
@@ -25,10 +26,10 @@ export const MoorhenSequenceList = (props: {
         seqNum: number;
     }>>;
 }) => {
-    
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
-    const [sequenceList, setSequenceList] = useState<null | { chain: string; sequence: (moorhen.Sequence | null) }[]>(null)
+    const dispatch = useDispatch();
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const [sequenceList, setSequenceList] = useState<null | {sequence: (moorhen.Sequence | null), molName }[]>(null)
 
     useEffect(() => {
         props.setBusy(true)
@@ -36,48 +37,34 @@ export const MoorhenSequenceList = (props: {
         const newSequenceList = props.molecule.sequences.map(
             sequence => {
                 if (!sequenceIsValid(sequence.sequence)) {
-                    return { chain: sequence.chain, sequence: null }
+                    return {sequence: null, molName: props.molecule.name}
                 }
-                return { chain: sequence.chain, sequence: sequence }
+                return { sequence: sequence, molName: props.molecule.name}
             }
-        )
-        
+        )      
         setSequenceList(newSequenceList)
         props.setBusy(false)
 
-    }, [props.molecule.sequences])
+    }, [props.molecule.sequences]);
 
-    return sequenceList !== null && sequenceList.length > 0 ?
-        <>
-            <Row style={{ maxHeight: convertViewtoPx(30, height), overflowY: 'auto' }}>
-                <Col>
-                    {props.molecule.sequences.map(
-                        sequence => {
-                            if (!sequenceIsValid(sequence.sequence)) {
-                                return (
-                                    <div>
-                                        <p>{`Unable to parse sequence data for chain ${sequence?.chain}`}</p>
-                                    </div>
-                                )
-                            }
-                            return (<MoorhenSequenceViewer
-                                key={`${props.molecule.molNo}-${sequence.chain}`}
-                                sequence={sequence}
-                                molecule={props.molecule}
-                                glRef={props.glRef}
-                                useMainStateResidueSelections={true}
-                                clickedResidue={props.clickedResidue}
-                                setClickedResidue={props.setClickedResidue}
-                                selectedResidues={props.selectedResidues}
-                                setSelectedResidues={props.setSelectedResidues}
-                            />)
-                        }
-                    )}
-                </Col>
-            </Row>
-        </>
-        :
+    const display = (sequenceList && sequenceList.length > 0) ? true : false;
+
+    return (
+        !display ? 
         <div>
             <b>No sequence data</b>
         </div>
-}
+        :
+        <MoorhenSequenceViewer
+            sequences={sequenceList}
+            glRef={props.glRef}
+            useMainStateResidueSelections={true}
+            clickedResidue={props.clickedResidue}
+            setClickedResidue={props.setClickedResidue}
+            selectedResidues={props.selectedResidues}
+            setSelectedResidues={props.setSelectedResidues}
+            onHoverResidue={(molName, chain, resNum, resCode, resCID) => {dispatch(setHoveredAtom({ molecule: props.molecule, cid: resCID }));}}
+            maxHeight={'16rem'}    
+        />
+);
+};

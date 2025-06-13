@@ -26,8 +26,7 @@ export const MoorhenSequenceRangeSelect = forwardRef<MoorhenSequenceRangeSelectT
 
     return <MoorhenSequenceViewer
                 key={`${props.molecule.molNo}-${props.sequence.chain}`}
-                sequence={props.sequence}
-                molecule={props.molecule}
+                sequences={[{ sequence: props.sequence, molName: props.molecule.name }]}
                 glRef={props.glRef}
                 clickedResidue={clickedResidue}
                 setClickedResidue={setClickedResidue}

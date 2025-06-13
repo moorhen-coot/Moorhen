@@ -1,0 +1,105 @@
+.residue-box {
+    cursor: pointer;
+    min-width: 1rem;
+    max-width: 1rem;
+    min-height: 1.5rem;
+    max-height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    font-size : 1rem;
+    margin-bottom: 2px;
+}
+
+.residue-box.even {
+    background-color: rgb(198, 205, 238);
+}
+.residue-box.odd {
+    background-color: rgb(199, 228, 244);
+}
+
+.residue-box.empty {
+    background-color: rgb(230, 230, 230);
+}
+
+.residue-box.empty:hover {                       
+    background-color: rgb(230, 230, 230);
+}
+
+.residue-box:hover {                       
+    background-color: rgb(230, 233, 166);
+}
+
+.tick-mark {
+    min-width: 5rem;
+    max-width: 5rem;
+    align-items: top;
+    display: flex;
+    justify-content: left;
+    padding-left: 2px;
+    border-bottom: 1px solid;
+    border-left: none;
+    margin-bottom: 2px;
+    font-size: small;
+    position: relative;
+}
+
+.tick-mark::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 50%;
+    border-left: 1px solid;
+}
+
+.sticky-tick-marks {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: white;
+    display: flex;
+    flex-direction: row;
+    width: fit-content;
+    left: 0;
+}
+
+.sticky-left-column {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: white;
+    min-width: 2rem;
+    max-width: 2rem;
+    border-right: 1px solid #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2px;
+}
+
+.scrollable-table {
+    z-index: 0;
+    scrollbar-width: thin; /* For Firefox */
+    scrollbar-color: rgb(198, 205, 238) #eee; /* For Firefox */
+    padding-bottom: 10px;
+    padding-right: 10px;
+}
+
+.scrollable-table::-webkit-scrollbar {
+    height: 12px;  /* Fixed height for horizontal scrollbar */
+    width: 12px;   /* Fixed width for vertical scrollbar */
+    background: #eee;
+}
+
+.scrollable-table::-wsebkit-scrollbar-thumb {
+    background: #bbb;
+    border-radius: 6px;
+    border: 2px solid #eee;
+}
+
+.scrollable-table::-webkit-scrollbar-thumb:hover {
+    background: #bbb; /* No size change on hover */
+}
