@@ -11,6 +11,7 @@ A JavaScript molecular graphics program
 - [ ] Remove glRef from all component props and class constructor args.
 
 ### For 0.22.0
+- [ ] Fix text labels being ugly when there is a transparent object.
 - [x] Fix multiview origins only sometimes correct.
 - [x] Fix multiview screenshots scaling.
 - [x] Fix multiview with transparency.
