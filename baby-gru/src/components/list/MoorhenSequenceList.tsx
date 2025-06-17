@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { MoorhenSequenceViewer, SequenceResiduesSelection } from "../sequence-viewer/MoorhenSequenceViewer";
-import { convertViewtoPx, sequenceIsValid } from '../../utils/utils';
+import { sequenceIsValid } from '../../utils/utils';
 import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { useSelector, useDispatch} from "react-redux";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
-import { cidToAtomInfo } from "../../utils/utils";
+import { setResidueSelection } from "../../store/generalStatesSlice";
+import { useSnackbar } from "notistack";
 
 export const MoorhenSequenceList = (props: { 
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
@@ -24,8 +24,9 @@ export const MoorhenSequenceList = (props: {
         seqNum: number;
     }>>;
 }) => {
-
     const dispatch = useDispatch();
+    const { enqueueSnackbar } = useSnackbar()
+
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const [sequenceList, setSequenceList] = useState<null | {sequence: (moorhen.Sequence | null), molName: string, molNo: number }[]>(null)
     const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch);
@@ -69,8 +70,22 @@ export const MoorhenSequenceList = (props: {
         props.setClickedResidue({modelIndex, molName, chain, seqNum})
     }
 
-    const handleResiduesSelection = () => {
-        props.setSelectedResidues
+    const handleResiduesSelection = (selection: SequenceResiduesSelection) => {
+        if (selection.molNo !== props.molecule.molNo) {return};
+        const first = selection.range[0] < selection.range[1] ? selection.range[0] : selection.range[1]
+        const second = selection.range[0] < selection.range[1] ? selection.range[1] : selection.range[0]
+        const newSelection: moorhen.ResidueSelection =
+        {
+            molecule: props.molecule,
+            first: '/1/'+ selection.chain +'/' +first +'/CA',
+            second: '/1/'+ selection.chain +'/' +second+'/CA',
+            cid: '/*/'+ selection.chain +'/' +first +'-' + second + '/*',
+            isMultiCid: false,
+            label: '/*/'+ selection.chain +'/' +first +'-' + second + '/*',
+        };
+        dispatch(setResidueSelection(newSelection))
+        props.molecule.drawResidueSelection(newSelection.cid as string)
+        enqueueSnackbar("residue-selection", {variant: "residueSelection", persist: true})
     }
 
     return (
@@ -83,7 +98,7 @@ export const MoorhenSequenceList = (props: {
             sequences={sequenceList}
             selectedResidues={sequenceSelection}
             onResidueClick={(modelIndex, molName, chain, seqNum) => handleClickResidue(modelIndex, molName, chain, seqNum )}
-            onResiduesSelect={handleResiduesSelection}
+            onResiduesSelect={(selection) => handleResiduesSelection(selection)}
             onHoverResidue={(molName, chain, resNum, resCode, resCID) => {dispatch(setHoveredAtom({ molecule: props.molecule, cid: resCID }));}}
             hoveredResidue={hoveredAtom ? { molNo: props.molecule.molNo, cid: hoveredAtom.cid } : { molNo: null, cid: null }}
             maxDisplayHigh={8}

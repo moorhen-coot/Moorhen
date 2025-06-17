@@ -19,7 +19,7 @@ type MoorhenSequenceViewerPropsType = {
     clickedResidue?: clickedResidueType;
     onResidueClick?: ( modelIndex: number, molName: string, chain: string, seqNum: number ) => void;
     selectedResidues?: SequenceResiduesSelection;
-    onResiduesSelect?: () => void;
+    onResiduesSelect?: (selection: SequenceResiduesSelection ) => void;
     useMainStateResidueSelections?: boolean;
     onHoverResidue?: (molName: string, chain: string, resNum: number, resCode: string, resCID: string) => void;
     hoveredResidue?: {molNo: number, cid: string};
@@ -36,20 +36,63 @@ type SequenceElementType = {
 
 export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => {
     const seqLenght = props.sequences.length
-    const [overedRes, setOveredRes] = useState<string>("Seq Viewer");
+    const [hoveredRes, setHoveredRes] = useState<string>("Seq Viewer");
     const [isScrolling, setIsScrolling] = useState<boolean>(false);
     const [displayHigh, setDisplayHigh] = useState<number>(props.maxDisplayHigh < seqLenght ? props.maxDisplayHigh : seqLenght );
     const [sequencesSlice, setSequencesSlices] = useState<[number, number]>([0, displayHigh]);
     const [sequencesToDisplay, setSeqToDisplay] = useState<SequenceElementType[]>(null)
     const [selectedResidues, setSelectedResidues] = useState<SequenceResiduesSelection>(props.selectedResidues? props.selectedResidues : null)
+    const [glideSelectStartRes, setGlideSelectStartRes] = useState<SequenceResiduesSelection>(null)
+    const [isGliding, setIsGliding] = useState<boolean>(false)
+    const clickTimer = useRef<NodeJS.Timeout | null>(null);
+
+    const handleMouseDown = (molNo, chain, resNum, resCode, resCID) => {
+        setGlideSelectStartRes({molNo: molNo, chain: chain, range: [resNum, null]})
+        clickTimer.current = setTimeout(() => {clearClickTimer()} , 300)
+    }
+
+    const clearClickTimer = () => {
+        if (clickTimer.current) {
+            clearTimeout(clickTimer.current);
+            clickTimer.current = null;
+            setIsGliding(true);
+        }
+    }
+
+    const handleMouseUp = (molNo, chain, resNum, resCode, resCID) => {
+        if (clickTimer.current) {
+            clearClickTimer();
+            if (props.onResidueClick)   {
+                props.onResidueClick(0, molNo, chain, resNum);
+            }
+        }
+        if (!isGliding) {
+            handleResidueClick(molNo, chain, resNum);
+        } else {
+            handleGlideSelect(molNo, chain, resNum);
+        }
+        setIsGliding(false);
+    }
+
+    const handleGlideSelect = (molNo, chain, resNum) => {
+        if ((molNo === glideSelectStartRes.molNo) && (chain === glideSelectStartRes.chain)) {
+            setSelectedResidues({molNo: molNo, chain: chain, range: [glideSelectStartRes.range[0], resNum]})
+            if (props.onResiduesSelect) {
+                props.onResiduesSelect({molNo: molNo, chain: chain, range: [glideSelectStartRes.range[0], resNum]});
+            }
+        } else {
+            setGlideSelectStartRes(null)
+        }
+    }
 
     const handleResidueClick = (molName, chain, resNum) => {
+        setIsGliding(false)
         props.onResidueClick(0, molName, chain, resNum );
     };
 
     const handleMouseOver = (molName, chain, resNum, resCode, resCID) => {
         if (!isScrolling) {
-            setOveredRes(chain + " " + resNum + " " + residueCodesOneToThree[resCode]);
+            setHoveredRes(chain + " " + resNum + " " + residueCodesOneToThree[resCode]);
             props.onHoverResidue(molName, chain, resNum, resCode, resCID);
         }
     };
@@ -136,10 +179,18 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                         }
                     }
 
+
                     let selected = false;
-                    if (selectedResidues && ((molNo === selectedResidues.molNo) && (sequence.chain === selectedResidues.chain))) {
-                        if (resi.resNum >= orderedSelectionRange[0] && resi.resNum <= orderedSelectionRange[1]) {
-                            selected = true;
+                    if (!isGliding) {
+                        if (selectedResidues && ((molNo === selectedResidues.molNo) && (sequence.chain === selectedResidues.chain))) {
+                            if (resi.resNum >= orderedSelectionRange[0] && resi.resNum <= orderedSelectionRange[1]) {
+                                selected = true;
+                            } }
+                        } else {
+                        if (glideSelectStartRes && ((molNo === glideSelectStartRes.molNo) && (sequence.chain === glideSelectStartRes.chain))) {
+                            if (glideSelectStartRes.range[0] === resi.resNum) {
+                                selected = true;
+                            }
                         }
                     }
                     residues.push({
@@ -211,7 +262,7 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                 }}
             >
                 <div>
-                    {overedRes}
+                    {hoveredRes}
                     <Stack
                         direction="column"
                         style={{
@@ -252,13 +303,14 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                                         residue ? (
                                             <div
                                                 key = {sequence.molNo + sequence.chain + residue.resNum}
-                                                className={`residue-box ${j % 2 === 0 ? "even" : "odd"} ${residue.selected ? 'selected' : ''} ${residue.hovered ? 'hover' : ''}`}
-                                                onClick={() => {
-                                                    handleResidueClick(sequence.molName, sequence.chain, residue.resNum);
-                                                }}
+                                                className={`residue-box ${j % 2 === 0 ? "even" : "odd"} ${residue.selected ? 'selected' : ''} ${residue.hovered ? 'hover' : ''} ${isGliding ? 'glideSelect' : ''}`}
                                                 onMouseOver={() => {
                                                     handleMouseOver(sequence.molName, sequence.chain, residue.resNum, residue.resCode, residue.resCID);
                                                 }}
+                                                onMouseDown= {() => handleMouseDown(sequence.molNo, sequence.chain, residue.resNum, residue.resCode, residue.resCID) 
+                                                }
+                                                onMouseUp = {() => handleMouseUp(sequence.molNo, sequence.chain, residue.resNum, residue.resCode, residue.resCID) 
+                                                }                                          
                                             >
                                                 {residue.resCode}
                                             </div>
