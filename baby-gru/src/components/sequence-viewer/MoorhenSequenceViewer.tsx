@@ -7,6 +7,7 @@ import { residueCodesOneToThree } from "../../utils/enums";
 import { CustomHorizontalScrollbar } from "./CustomHorizontalScrollbar";
 import { ExpandLessOutlined, ExpandMoreOutlined } from "@mui/icons-material";
 import { cidToAtomInfo } from "../../utils/utils";
+import { eventNames } from "process";
 
 export type SequenceResiduesSelection = {
     molNo: number;
@@ -44,11 +45,16 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
     const [selectedResidues, setSelectedResidues] = useState<SequenceResiduesSelection>(props.selectedResidues? props.selectedResidues : null)
     const [glideSelectStartRes, setGlideSelectStartRes] = useState<SequenceResiduesSelection>(null)
     const [isGliding, setIsGliding] = useState<boolean>(false)
+    const [shiftSelect, setShiftSelect] = useState<SequenceResiduesSelection>(null);
     const clickTimer = useRef<NodeJS.Timeout | null>(null);
 
-    const handleMouseDown = (molNo, chain, resNum, resCode, resCID) => {
-        setGlideSelectStartRes({molNo: molNo, chain: chain, range: [resNum, null]})
-        clickTimer.current = setTimeout(() => {clearClickTimer()} , 300)
+    const handleMouseDown = (molNo, chain, resNum, resCode, resCID, evt) => {
+        if (evt.shiftKey) {
+            return;
+        } else {
+            setGlideSelectStartRes({molNo: molNo, chain: chain, range: [resNum, null]})
+            clickTimer.current = setTimeout(() => {clearClickTimer()} , 300)
+        }
     }
 
     const clearClickTimer = () => {
@@ -59,7 +65,12 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
         }
     }
 
-    const handleMouseUp = (molNo, chain, resNum, resCode, resCID) => {
+    const handleMouseUp = (molNo, chain, resNum, resCode, resCID, evt) => {
+        if (evt.shiftKey) {
+            handleShiftSelect(molNo, chain, resNum);
+            return;
+        }
+        setShiftSelect(null)          
         if (clickTimer.current) {
             clearClickTimer();
             if (props.onResidueClick)   {
@@ -82,6 +93,32 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
             }
         } else {
             setGlideSelectStartRes(null)
+        }
+    }
+
+    const handleShiftSelect = (molNo, chain, resNum) => {
+        if (shiftSelect) {
+            if ((shiftSelect.molNo === molNo) && (shiftSelect.chain === chain)) {              
+                    setSelectedResidues({
+                        molNo: molNo,
+                        chain: chain,
+                        range: [shiftSelect.range[0], resNum],
+                    });
+                if (props.onResiduesSelect) {
+                            props.onResiduesSelect({
+                                molNo: molNo,
+                                chain: chain,
+                                range: [shiftSelect.range[0], resNum],
+                            });
+                        }
+                }
+            setShiftSelect(null) 
+        } else {
+            setShiftSelect({
+            molNo: molNo,
+            chain: chain,
+            range: [resNum, null],
+            })
         }
     }
 
@@ -179,20 +216,24 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                         }
                     }
 
-
                     let selected = false;
-                    if (!isGliding) {
-                        if (selectedResidues && ((molNo === selectedResidues.molNo) && (sequence.chain === selectedResidues.chain))) {
-                            if (resi.resNum >= orderedSelectionRange[0] && resi.resNum <= orderedSelectionRange[1]) {
-                                selected = true;
-                            } }
-                        } else {
+                    if (isGliding) {
                         if (glideSelectStartRes && ((molNo === glideSelectStartRes.molNo) && (sequence.chain === glideSelectStartRes.chain))) {
                             if (glideSelectStartRes.range[0] === resi.resNum) {
                                 selected = true;
-                            }
+                            }}
+                        } else if (shiftSelect) {
+                            if (shiftSelect && ((molNo === shiftSelect.molNo) && (sequence.chain === shiftSelect.chain))) {
+                                if (shiftSelect.range[0] === resi.resNum) {
+                                    selected = true;
+                            }}
+
+                    } else {
+                        if (selectedResidues && ((molNo === selectedResidues.molNo) && (sequence.chain === selectedResidues.chain))) {
+                            if (resi.resNum >= orderedSelectionRange[0] && resi.resNum <= orderedSelectionRange[1]) {
+                                selected = true;
                         }
-                    }
+                    }}
                     residues.push({
                         resNum: resi.resNum,
                         resCode: resi.resCode,
@@ -307,9 +348,9 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                                                 onMouseOver={() => {
                                                     handleMouseOver(sequence.molName, sequence.chain, residue.resNum, residue.resCode, residue.resCID);
                                                 }}
-                                                onMouseDown= {() => handleMouseDown(sequence.molNo, sequence.chain, residue.resNum, residue.resCode, residue.resCID) 
+                                                onMouseDown= {(evt) => handleMouseDown(sequence.molNo, sequence.chain, residue.resNum, residue.resCode, residue.resCID, evt) 
                                                 }
-                                                onMouseUp = {() => handleMouseUp(sequence.molNo, sequence.chain, residue.resNum, residue.resCode, residue.resCID) 
+                                                onMouseUp = {(evt) => handleMouseUp(sequence.molNo, sequence.chain, residue.resNum, residue.resCode, residue.resCID, evt) 
                                                 }                                          
                                             >
                                                 {residue.resCode}
