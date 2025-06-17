@@ -31,6 +31,10 @@
     background-color: rgb(230, 230, 230);
 }
 
+.residue-box.selected {                       
+    background-color: rgb(127, 224, 160);
+}
+
 .residue-box:hover {                       
     background-color: rgb(230, 233, 166);
 }
