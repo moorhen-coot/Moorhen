@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState, useReducer } from "react";
 import { Button, Stack, Form, FormSelect } from "react-bootstrap";
-import { CirclePicker } from "react-color";
 import { HexColorInput, HexAlphaColorPicker } from "react-colorful";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenColourRuleCard } from "./MoorhenColourRuleCard"
@@ -12,6 +11,7 @@ import { webGL } from "../../types/mgWebGL";
 import { Popover } from "@mui/material";
 import { useSelector } from "react-redux";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
+import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
 
 type colourRuleChange = {
     action: "Add" | "Remove" | "Overwrite" | "MoveUp" | "MoveDown" | "Empty";
@@ -101,9 +101,9 @@ export const MoorhenModifyColourRulesCard = (props: {
         setCid(evt.target.value)
     }
     
-    const handleColourCircleClick = (color: { hex: string; }) => {
+    const handleColourCircleClick = (color:  string ) => {
         try {
-            setSelectedColour(color.hex)
+            setSelectedColour(color)
         }
         catch (err) {
             console.log('err', err)
@@ -233,6 +233,10 @@ export const MoorhenModifyColourRulesCard = (props: {
         return null
     }
 
+    const swatchCols = [
+    "#f44336","#e91e63","#9c27b0","#673ab7","#3f51b5","#2196f3","#03a9f4","#00bcd4","#009688",
+    "#4caf50","#8bc34a","#cddc39","#ffeb3b","#ffc107","#ff9800","#ff5722","#795548","#607d8b",
+    ]
     return <Popover
                 onClose={() => props.setShowColourRulesToast(false)}
                 open={props.showColourRulesToast}
@@ -279,7 +283,7 @@ export const MoorhenModifyColourRulesCard = (props: {
                         <HexAlphaColorPicker color={selectedColour} onChange={handleColorChange}/>
                     </div>
                     <div style={{padding: '0.5rem', margin: 0, justifyContent: 'center', display: 'flex', backgroundColor: '#e3e1e1', borderRadius: '8px'}}>
-                        <CirclePicker width={convertRemToPx(15)} circleSize={convertRemToPx(15)/20} color={selectedColour} onChange={handleColourCircleClick}/>
+                        <MoorhenColorSwatch cols={swatchCols}  size={13} columns={9} onClick={handleColourCircleClick}/>
                     </div>
                     <div style={{padding: 0, margin: 0, justifyContent: 'center', display: 'flex', }}>
                         <div className="moorhen-hex-input-decorator">#</div>
