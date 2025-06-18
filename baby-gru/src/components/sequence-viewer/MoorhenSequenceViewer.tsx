@@ -34,7 +34,6 @@ type SequenceElementType = {
     residues: { resNum: number; resCode: string; resCID: string; hovered: boolean; selected: boolean }[];
     };
 
-
 export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => {
     const seqLenght = props.sequences.length
     const [hoveredRes, setHoveredRes] = useState<string>("Seq Viewer");
@@ -184,8 +183,14 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
         const sequenceElements: SequenceElementType[] = []      
         const hoveredAtomInfo = props.hoveredResidue.cid ? cidToAtomInfo(props.hoveredResidue.cid) : null
         const orderedSelectionRange = selectedResidues?.range[0] < selectedResidues?.range[1] ? selectedResidues?.range : [selectedResidues?.range[1], selectedResidues?.range[0]];
-
-        props.sequences.forEach((seqObj) => {
+        const orderedSequences = props.sequences.slice().sort((a, b) => {
+            const chainA = a.sequence.chain.toUpperCase();
+            const chainB = b.sequence.chain.toUpperCase();
+            if (chainA < chainB) return -1;
+            if (chainA > chainB) return 1;
+            return 0;
+        });
+        orderedSequences.slice(sequencesSlice[0], sequencesSlice[1]).forEach((seqObj) => {
             const sequence = seqObj.sequence;
             const molName = seqObj.molName;
             const molNo = seqObj.molNo;
@@ -255,7 +260,7 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
    
     useEffect(() => {
         getSeqToDisplay()
-    }, [props.sequences, props.hoveredResidue, minVal, maxVal, selectedResidues]);
+    }, [props.sequences, props.hoveredResidue, minVal, maxVal, selectedResidues, sequencesSlice]);
 
     useEffect(() => {
         setSelectedResidues(props.selectedResidues)
@@ -335,7 +340,7 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                         </div>
 
                         <div style={{ display: "flex", flexDirection: "column", width: "fit-content" }}>
-                            {sequencesToDisplay?.slice(sequencesSlice[0], sequencesSlice[1]).map((sequence, i) => (
+                            {sequencesToDisplay?.map((sequence, i) => (
                                 <div
                                 key = {sequence.molNo + sequence.chain} 
                                 style={{ display: "flex", flexDirection: "row" }}>
