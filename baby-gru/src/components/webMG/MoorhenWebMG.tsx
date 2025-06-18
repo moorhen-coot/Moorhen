@@ -151,10 +151,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }, false) as moorhen.WorkerResponse<[number, number, number]>;
 
         let newOrigin = response.data.result.result;
-        if (newOrigin.length === 3 && glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setOriginAnimated([-newOrigin[0], -newOrigin[1], -newOrigin[2]])
-        }
-
+        dispatch(setOrigin([-newOrigin[0], -newOrigin[1], -newOrigin[2]]))
     }, [props.commandCentre, glRef])
 
     const handleMiddleClickGoToAtom = useCallback(evt => {
