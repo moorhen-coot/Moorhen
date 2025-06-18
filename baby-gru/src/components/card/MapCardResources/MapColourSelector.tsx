@@ -7,7 +7,7 @@ import {
     setPositiveMapColours,
 } from "../../../store/mapContourSettingsSlice";
 import MoorhenColourPicker from "../../inputs/MoorhenColourPicker";
-
+import { setRequestDrawScene } from "../../../store/glRefSlice";
 
 interface MoorhenMapColorSelector {
     map: moorhen.Map;
@@ -84,6 +84,7 @@ export const MapColourSelector = (props: MoorhenMapColorSelector) => {
                 })
             );
             props.map.fetchDiffMapColourAndRedraw("positiveDiffColour");
+            dispatch(setRequestDrawScene());
         } catch (err) {
             console.log("err", err);
         }
@@ -98,6 +99,7 @@ export const MapColourSelector = (props: MoorhenMapColorSelector) => {
                 })
             );
             props.map.fetchDiffMapColourAndRedraw("negativeDiffColour");
+            dispatch(setRequestDrawScene());
         } catch (err) {
             console.log("err", err);
         }
@@ -107,6 +109,7 @@ export const MapColourSelector = (props: MoorhenMapColorSelector) => {
         try {
             dispatch(setMapColours({ molNo: props.map.molNo, rgb: color }));
             props.map.fetchColourAndRedraw();
+            dispatch(setRequestDrawScene());
         } catch (err) {
             console.log("err", err);
         }
