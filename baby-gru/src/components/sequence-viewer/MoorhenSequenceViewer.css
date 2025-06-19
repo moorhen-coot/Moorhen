@@ -39,11 +39,6 @@
     background-color: rgb(127, 224, 160);
 }
 
-
-.residue-box:hover {                       
-    background-color: rgb(230, 233, 166);
-}
-
 .tick-mark {
     min-width: 5rem;
     max-width: 5rem;

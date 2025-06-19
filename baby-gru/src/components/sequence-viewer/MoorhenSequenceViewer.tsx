@@ -1,5 +1,5 @@
 import { moorhen } from "../../types/moorhen";
-import { useRef, useMemo, useEffect, useState } from "react";
+import { useRef, useMemo, useEffect, useState, use } from "react";
 import { clickedResidueType } from "../card/MoorhenMoleculeCard";
 import Stack from "@mui/material/Stack";
 import "./MoorhenSequenceViewer.css";
@@ -40,7 +40,7 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
     const [isScrolling, setIsScrolling] = useState<boolean>(false);
     const [displayHigh, setDisplayHigh] = useState<number>(props.maxDisplayHigh < seqLenght ? props.maxDisplayHigh : seqLenght );
     const [sequencesSlice, setSequencesSlices] = useState<[number, number]>([0, displayHigh]);
-    const [sequencesToDisplay, setSeqToDisplay] = useState<SequenceElementType[]>(null)
+    //const [sequencesToDisplay, setSeqToDisplay] = useState<SequenceElementType[]>(null)
     const [selectedResidues, setSelectedResidues] = useState<SequenceResiduesSelection>(props.selectedResidues? props.selectedResidues : null)
     const [glideSelectStartRes, setGlideSelectStartRes] = useState<SequenceResiduesSelection>(null)
     const [isGliding, setIsGliding] = useState<boolean>(false)
@@ -179,7 +179,7 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
         })
     );
 
-    const getSeqToDisplay = () => {
+    const sequencesToDisplay = useMemo(() => {
         const sequenceElements: SequenceElementType[] = []      
         const hoveredAtomInfo = props.hoveredResidue.cid ? cidToAtomInfo(props.hoveredResidue.cid) : null
         const orderedSelectionRange = selectedResidues?.range[0] < selectedResidues?.range[1] ? selectedResidues?.range : [selectedResidues?.range[1], selectedResidues?.range[0]];
@@ -213,14 +213,6 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                 } else {
                     const resi = sequence.sequence.find((residue) => residue.resNum === i);
 
-                    let hovered = false
-                    if (hoveredAtomInfo && (molNo === props.hoveredResidue.molNo)) {
-                        const resiInfo = cidToAtomInfo(resi.cid)
-                        if ((resiInfo.chain_id === hoveredAtomInfo.chain_id) && (resiInfo.res_no === hoveredAtomInfo.res_no)){
-                        hovered = true
-                        }
-                    }
-
                     let selected = false;
                     if (isGliding) {
                         if (glideSelectStartRes && ((molNo === glideSelectStartRes.molNo) && (sequence.chain === glideSelectStartRes.chain))) {
@@ -232,19 +224,19 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                                 if (shiftSelect.range[0] === resi.resNum) {
                                     selected = true;
                             }}
-
                     } else {
                         if (selectedResidues && ((molNo === selectedResidues.molNo) && (sequence.chain === selectedResidues.chain))) {
                             if (resi.resNum >= orderedSelectionRange[0] && resi.resNum <= orderedSelectionRange[1]) {
                                 selected = true;
                         }
                     }}
+                    
                     residues.push({
                         resNum: resi.resNum,
                         resCode: resi.resCode,
                         resCID: resi.cid,
                         selected: selected,
-                        hovered: hovered,
+                        hovered: false,
                     });
                 }
             }
@@ -255,12 +247,8 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                 residues: residues,
             });
         });
-        setSeqToDisplay(sequenceElements)
-    };
-   
-    useEffect(() => {
-        getSeqToDisplay()
-    }, [props.sequences, props.hoveredResidue, minVal, maxVal, selectedResidues, sequencesSlice]);
+        return sequenceElements;
+    }, [props.sequences, minVal, maxVal, sequencesSlice]);
 
     useEffect(() => {
         setSelectedResidues(props.selectedResidues)
@@ -295,6 +283,50 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
         }
         return ticks;
     }, [maxVal]);
+
+    const [hoveredKey, setHoveredKey] = useState<string | null>(null);
+    useEffect(() => {
+        if (props.hoveredResidue.cid) {
+            const hoveredAtomInfo = cidToAtomInfo(props.hoveredResidue.cid);
+            setHoveredKey(`${props.hoveredResidue.molNo}${hoveredAtomInfo.chain_id}${hoveredAtomInfo.res_no}`);
+        } else {
+            setHoveredKey(null);
+        }
+    }, [props.hoveredResidue]);
+
+    const listOfDivs = useMemo(() => {
+        return (       
+            sequencesToDisplay?.map((sequence, i) => (
+                <div style={{ display: "flex", flexDirection: "column", width: "fit-content" }}>
+                    <div
+                        key={sequence.molNo + sequence.chain}
+                        style={{ display: "flex", flexDirection: "row" }}>
+                        <div className="sticky-left-column">{sequence.chain}</div>
+                        <div className="residues-container" style={{ display: "flex", flexDirection: "row" }}>
+                    {sequence.residues.map((residue, j) => (
+                        <>
+                            {residue ? (
+                                <div
+                                    key={sequence.molNo + sequence.chain + residue.resNum}
+                                    className={`residue-box ${j % 2 === 0 ? "even" : "odd"} ${residue.selected ? 'selected' : ''} ${hoveredKey ===  `${sequence.molNo}` + `${sequence.chain}` + `${residue.resNum}` ? 'hover' : ''} ${isGliding ? 'glideSelect' : ''}`}
+                                    onMouseOver={() => {
+                                        handleMouseOver(sequence.molName, sequence.chain, residue.resNum, residue.resCode, residue.resCID);
+                                    }}
+                                    onMouseDown={(evt) => handleMouseDown(sequence.molNo, sequence.chain, residue.resNum, residue.resCode, residue.resCID, evt)}
+                                    onMouseUp={(evt) => handleMouseUp(sequence.molNo, sequence.chain, residue.resNum, residue.resCode, residue.resCID, evt)}
+                                >
+                                    {residue.resCode}
+                                </div>
+                            ) : (
+                                <div key={sequence.molNo + sequence.chain + 'empty' + j} className={`residue-box empty`}></div>
+                            )}
+                        </>
+                    ))}
+                </div>
+                </div>
+            </div>
+        )));
+    }, [sequencesToDisplay, hoveredKey]);
 
     return (
         <>
@@ -338,35 +370,7 @@ export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => 
                             <div style={{ minWidth: "2rem", maxWidth: "2rem" }}></div>
                             {tickMarks}
                         </div>
-
-                        <div style={{ display: "flex", flexDirection: "column", width: "fit-content" }}>
-                            {sequencesToDisplay?.map((sequence, i) => (
-                                <div
-                                key = {sequence.molNo + sequence.chain} 
-                                style={{ display: "flex", flexDirection: "row" }}>
-                                    <div className="sticky-left-column">{sequence.chain}</div>
-                                    {sequence.residues.map((residue, j) =>
-                                        residue ? (
-                                            <div
-                                                key = {sequence.molNo + sequence.chain + residue.resNum}
-                                                className={`residue-box ${j % 2 === 0 ? "even" : "odd"} ${residue.selected ? 'selected' : ''} ${residue.hovered ? 'hover' : ''} ${isGliding ? 'glideSelect' : ''}`}
-                                                onMouseOver={() => {
-                                                    handleMouseOver(sequence.molName, sequence.chain, residue.resNum, residue.resCode, residue.resCID);
-                                                }}
-                                                onMouseDown= {(evt) => handleMouseDown(sequence.molNo, sequence.chain, residue.resNum, residue.resCode, residue.resCID, evt) 
-                                                }
-                                                onMouseUp = {(evt) => handleMouseUp(sequence.molNo, sequence.chain, residue.resNum, residue.resCode, residue.resCID, evt) 
-                                                }                                          
-                                            >
-                                                {residue.resCode}
-                                            </div>
-                                        ) : (
-                                            <div key={sequence.molNo + sequence.chain + 'empty' + j} className={`residue-box empty`}></div>
-                                        )
-                                    )}
-                                </div>
-                            ))}
-                        </div>
+                            {listOfDivs}                        
                     </CustomHorizontalScrollbar>
                 </div>
         </>
