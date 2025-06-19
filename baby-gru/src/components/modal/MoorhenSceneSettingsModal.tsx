@@ -11,17 +11,20 @@ import {
     setEdgeDetectDepthScale, setEdgeDetectNormalScale, setDoShadow
 } from "../../store/sceneSettingsSlice";
 import { HexColorInput, RgbColorPicker } from "react-colorful";
-import { CirclePicker } from "react-color"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { Tooltip } from "@mui/material";
+import Brightness1Icon from '@mui/icons-material/Brightness1';
+import IconButton from '@mui/material/IconButton';
 import { useSnackbar } from "notistack";
 import { LastPageOutlined } from "@mui/icons-material";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
+import { hexToRGB } from "../../utils/utils";
 import { hideModal } from "../../store/modalsSlice";
 import { setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower,
          setFogStart, setFogEnd, setClipStart, setClipEnd } from "../../store/glRefSlice"
+import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
 
 const EdgeDetectPanel = (props: {}) => {
 
@@ -148,9 +151,10 @@ const BackgroundColorPanel = (props: {}) => {
         }    
     }, [innerBackgroundColor])
 
-    const handleCircleClick = (color: { rgb: { r: number; g: number; b: number; a: number; } }) => {
+    const handleCircleClick = (col: string ) => {
         try {
-            setInnerBackgroundColor(color.rgb)
+            const color = hexToRGB(col)
+            setInnerBackgroundColor({r:color[0],g:color[1],b:color[2]})
         }
         catch (err) {
             console.log('err', err)
@@ -166,6 +170,7 @@ const BackgroundColorPanel = (props: {}) => {
         }
     }
 
+    const swatchCols = ["#000000","#5c5c5c","#8a8a8a","#cccccc","#ffffff"]
     return <Stack gap={1} direction="vertical" className="scene-settings-panel-flex-center">
         <span>Background Colour</span>
         <div style={{padding: 0, margin: 0, justifyContent: 'center', display: 'flex'}}>
@@ -173,7 +178,7 @@ const BackgroundColorPanel = (props: {}) => {
         </div>
         <div style={{display: 'flex', justifyContent: 'center'}}>
             <div style={{width: '11rem', padding: '0.5rem', margin: '0.15rem', justifyContent: 'center', display: 'flex', backgroundColor: '#e3e1e1', borderRadius: '8px'}}>
-                <CirclePicker onChange={handleCircleClick} width='10rem' circleSize={convertRemToPx(10)/9} color={innerBackgroundColor} colors={['#000000', '#5c5c5c', '#8a8a8a', '#cccccc', '#ffffff']}/>
+                <MoorhenColorSwatch cols={swatchCols} size={20} columns={5} onClick={handleCircleClick}/>
             </div>
         </div>
         <div style={{padding: 0, margin: 0, justifyContent: 'center', display: 'flex' }}>
