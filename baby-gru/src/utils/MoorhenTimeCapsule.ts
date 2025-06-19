@@ -55,9 +55,9 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         monomerLibraryPath: string,
         molecules: moorhen.Molecule[],
         maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-        glRef: React.RefObject<webGL.MGWebGL>,
+        commandCentre: React.RefObject<moorhen.CommandCentre|null>,
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule|null>,
+        glRef: React.RefObject<webGL.MGWebGL|null>,
         store: Store,
         dispatch: Dispatch<AnyAction>
     ) => Promise<number>;
@@ -66,9 +66,9 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         monomerLibraryPath: string,
         molecules: moorhen.Molecule[],
         maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-        glRef: React.RefObject<webGL.MGWebGL>,
+        commandCentre: React.RefObject<moorhen.CommandCentre|null>,
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule|null>,
+        glRef: React.RefObject<webGL.MGWebGL|null>,
         store: Store,
         dispatch: Dispatch<AnyAction>
     ) => Promise<number>;
@@ -77,9 +77,9 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         monomerLibraryPath: string,
         molecules: moorhen.Molecule[],
         maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-        glRef: React.RefObject<webGL.MGWebGL>,
+        commandCentre: React.RefObject<moorhen.CommandCentre|null>,
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule|null>,
+        glRef: React.RefObject<webGL.MGWebGL|null>,
         store: Store,
         dispatch: Dispatch<AnyAction>
     ) => Promise<number>;
@@ -88,9 +88,9 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         monomerLibraryPath: string,
         molecules: moorhen.Molecule[],
         maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-        glRef: React.RefObject<webGL.MGWebGL>,
+        commandCentre: React.RefObject<moorhen.CommandCentre|null>,
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule|null>,
+        glRef: React.RefObject<webGL.MGWebGL|null>,
         store: Store,
         dispatch: Dispatch<AnyAction>
     ) => Promise<number>;
@@ -549,8 +549,8 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         monomerLibraryPath: string,
         molecules: moorhen.Molecule[],
         maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
+        commandCentre: React.RefObject<moorhen.CommandCentre|null>,
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule|null>,
         glRef: React.RefObject<webGL.MGWebGL>,
         store: Store,
         dispatch: Dispatch<AnyAction>,

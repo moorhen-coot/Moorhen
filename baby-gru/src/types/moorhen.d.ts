@@ -263,8 +263,8 @@ export namespace moorhen {
         isLigand: boolean;
         isMRSearchModel: boolean;
         excludedCids: string[];
-        commandCentre: React.RefObject<CommandCentre>;
-        glRef: React.RefObject<webGL.MGWebGL>;
+        commandCentre: React.RefObject<CommandCentre|null>;
+        glRef: React.RefObject<webGL.MGWebGL|null>;
         store: Store;
         atomsDirty: boolean;
         name: string;
@@ -544,7 +544,7 @@ export namespace moorhen {
         setupContourBuffers(objects: any[], keepCootColours?: boolean): void;
         setOtherMapForColouring(molNo: number, min?: number, max?: number): void;
         exportAsGltf(): Promise<ArrayBuffer>;
-        static autoReadMtz(source: File, commandCentre: React.RefObject<CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: Store): Promise<Map[]>;
+        static autoReadMtz(source: File, commandCentre: React.RefObject<CommandCentre|null>, glRef: React.RefObject<webGL.MGWebGL|null>, store: Store): Promise<Map[]>;
         store: Store;
         isEM: boolean;
         suggestedContourLevel: number;
@@ -692,9 +692,9 @@ export namespace moorhen {
             monomerLibraryPath: string,
             molecules: Molecule[],
             maps: Map[],
-            commandCentre: React.RefObject<CommandCentre>,
-            timeCapsuleRef: React.RefObject<TimeCapsule>,
-            glRef: React.RefObject<webGL.MGWebGL>,
+            commandCentre: React.RefObject<CommandCentre|null>,
+            timeCapsuleRef: React.RefObject<TimeCapsule|null>,
+            glRef: React.RefObject<webGL.MGWebGL|null>,
             store: Store,
             dispatch: Dispatch<AnyAction>,
             fetchExternalUrl?: (uniqueId: string) => Promise<string>
@@ -704,9 +704,9 @@ export namespace moorhen {
             monomerLibraryPath: string,
             molecules: Molecule[],
             maps: Map[],
-            commandCentre: React.RefObject<CommandCentre>,
-            timeCapsuleRef: React.RefObject<TimeCapsule>,
-            glRef: React.RefObject<webGL.MGWebGL>,
+            commandCentre: React.RefObject<CommandCentre|null>,
+            timeCapsuleRef: React.RefObject<TimeCapsule|null>,
+            glRef: React.RefObject<webGL.MGWebGL|null>,
             store: Store,
             dispatch: Dispatch<AnyAction>
         ): Promise<number>;
@@ -715,9 +715,9 @@ export namespace moorhen {
             monomerLibraryPath: string,
             molecules: Molecule[],
             maps: Map[],
-            commandCentre: React.RefObject<CommandCentre>,
-            timeCapsuleRef: React.RefObject<TimeCapsule>,
-            glRef: React.RefObject<webGL.MGWebGL>,
+            commandCentre: React.RefObject<CommandCentre|null>,
+            timeCapsuleRef: React.RefObject<TimeCapsule|null>,
+            glRef: React.RefObject<webGL.MGWebGL|null>,
             store: Store,
             dispatch: Dispatch<AnyAction>
         ): Promise<number>;
@@ -726,9 +726,9 @@ export namespace moorhen {
             monomerLibraryPath: string,
             molecules: Molecule[],
             maps: Map[],
-            commandCentre: React.RefObject<CommandCentre>,
-            timeCapsuleRef: React.RefObject<TimeCapsule>,
-            glRef: React.RefObject<webGL.MGWebGL>,
+            commandCentre: React.RefObject<CommandCentre|null>,
+            timeCapsuleRef: React.RefObject<TimeCapsule|null>,
+            glRef: React.RefObject<webGL.MGWebGL|null>,
             store: Store,
             dispatch: Dispatch<AnyAction>
         ): Promise<number>;

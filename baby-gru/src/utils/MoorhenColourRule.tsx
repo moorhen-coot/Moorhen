@@ -42,16 +42,16 @@ export class MoorhenColourRule implements moorhen.ColourRule {
     args: (string | number)[];
     label: string;
     isMultiColourRule: boolean;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
+    commandCentre: React.RefObject<moorhen.CommandCentre|null>;
     parentMolecule: moorhen.Molecule;
     parentRepresentation: moorhen.MoleculeRepresentation;
     applyColourToNonCarbonAtoms: boolean;
     uniqueId: string;
-    initFromString: (stringifiedObject: string, commandCentre: React.RefObject<moorhen.CommandCentre>, molecule: moorhen.Molecule) => moorhen.ColourRule;
-    initFromDataObject: (data: moorhen.ColourRuleObject, commandCentre: React.RefObject<moorhen.CommandCentre>, molecule: moorhen.Molecule) => moorhen.ColourRule;
+    initFromString: (stringifiedObject: string, commandCentre: React.RefObject<moorhen.CommandCentre|null>, molecule: moorhen.Molecule) => moorhen.ColourRule;
+    initFromDataObject: (data: moorhen.ColourRuleObject, commandCentre: React.RefObject<moorhen.CommandCentre|null>, molecule: moorhen.Molecule) => moorhen.ColourRule;
     parseHexToRgba: (hex: string) => [number, number, number, number];
 
-    constructor(ruleType: string, cid: string, color: string, commandCentre: React.RefObject<moorhen.CommandCentre>, isMultiColourRule: boolean = false, applyColourToNonCarbonAtoms: boolean = false) {
+    constructor(ruleType: string, cid: string, color: string, commandCentre: React.RefObject<moorhen.CommandCentre|null>, isMultiColourRule: boolean = false, applyColourToNonCarbonAtoms: boolean = false) {
         this.cid = cid
         this.color = color
         this.commandCentre = commandCentre
@@ -70,7 +70,7 @@ export class MoorhenColourRule implements moorhen.ColourRule {
      * @param {moorhen.Molecule} molecule - The molecule that will be associated to this colour rule
      * @returns {moorhen.ColourRule} The new colour rule
      */
-    static initFromString(stringifiedObject: string, commandCentre: React.RefObject<moorhen.CommandCentre>, molecule: moorhen.Molecule) {
+    static initFromString(stringifiedObject: string, commandCentre: React.RefObject<moorhen.CommandCentre|null>, molecule: moorhen.Molecule) {
         const data = JSON.parse(stringifiedObject)
         return MoorhenColourRule.initFromDataObject(data, commandCentre, molecule)
     }
@@ -82,7 +82,7 @@ export class MoorhenColourRule implements moorhen.ColourRule {
      * @param {moorhen.Molecule} molecule - The molecule that will be associated to this colour rule
      * @returns {moorhen.ColourRule} The new colour rule
      */
-    static initFromDataObject(data: moorhen.ColourRuleObject, commandCentre: React.RefObject<moorhen.CommandCentre>, molecule: moorhen.Molecule) {
+    static initFromDataObject(data: moorhen.ColourRuleObject, commandCentre: React.RefObject<moorhen.CommandCentre|null>, molecule: moorhen.Molecule) {
         const colourRule = new MoorhenColourRule(data.ruleType, data.cid, data.color, commandCentre, data.isMultiColourRule, data.applyColourToNonCarbonAtoms)
         colourRule.setArgs(data.args)
         colourRule.setLabel(data.label)

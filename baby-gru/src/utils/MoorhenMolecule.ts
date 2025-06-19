@@ -63,8 +63,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     type: string;
     atomCount: number;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
+    commandCentre: React.RefObject<moorhen.CommandCentre|null>;
+    glRef: React.RefObject<webGL.MGWebGL|null>;
     atomsDirty: boolean;
     name: string;
     molNo: number | null
@@ -109,7 +109,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     headerInfo: libcootApi.headerInfoJS;
     isMRSearchModel: boolean;
 
-    constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: Store = MoorhenReduxStore, monomerLibraryPath = "./monomers") {
+    constructor(commandCentre: React.RefObject<moorhen.CommandCentre|null>, glRef: React.RefObject<webGL.MGWebGL|null>, store: Store = MoorhenReduxStore, monomerLibraryPath = "./monomers") {
         this.type = 'molecule'
         this.commandCentre = commandCentre
         this.glRef = glRef
@@ -906,8 +906,17 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {number} attachToMolecule - Molecule number for which the dicitonary will be associated
      */
     async loadMissingMonomer(newTlc: string, attachToMolecule: number): Promise<string> {
-        let response: Response = await fetch(`${this.monomerLibraryPath}/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
-        const fileContent = await response.text()
+        let fileContent =  ""
+        let response : Response | null
+        try {
+            response = await fetch(`${this.monomerLibraryPath}/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
+            if (response.ok) {
+            fileContent = await response.text()
+            }
+        } catch(err) {
+                console.log(err)
+                console.log(`Unable to fetch ligand dictionary ${newTlc} from local url`)
+        }
         let dictContent: string
 
         if (!fileContent.includes('data_')) {

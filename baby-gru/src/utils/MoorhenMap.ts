@@ -54,8 +54,8 @@ export class MoorhenMap implements moorhen.Map {
     isEM: boolean
     molNo: number
     store: Store
-    commandCentre: React.RefObject<moorhen.CommandCentre>
-    glRef: React.RefObject<webGL.MGWebGL>
+    commandCentre: React.RefObject<moorhen.CommandCentre|null>
+    glRef: React.RefObject<webGL.MGWebGL|null>
     isOriginLocked: boolean
     mapCentre: [number, number, number]
     suggestedContourLevel: number
@@ -77,9 +77,9 @@ export class MoorhenMap implements moorhen.Map {
     defaultMapColour: {r: number, g: number, b: number};
     defaultPositiveMapColour: {r: number, g: number, b: number};
     defaultNegativeMapColour: {r: number, g: number, b: number};
-    autoReadMtz: (source: File, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: Store) => Promise<moorhen.Map[]>;
+    autoReadMtz: (source: File, commandCentre: React.RefObject<moorhen.CommandCentre|null>, glRef: React.RefObject<webGL.MGWebGL|null>, store: Store) => Promise<moorhen.Map[]>;
 
-    constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: Store = MoorhenReduxStore) {
+    constructor(commandCentre: React.RefObject<moorhen.CommandCentre|null>, glRef: React.RefObject<webGL.MGWebGL|null>, store: Store = MoorhenReduxStore) {
         this.type = 'map'
         this.name = "unnamed"
         this.headerInfo = null
@@ -356,7 +356,7 @@ export class MoorhenMap implements moorhen.Map {
      * @param {Store} store - The redux store
      * @returns {moorhen.Map[]} A list of maps resulting from reading the mtz file
      */
-    static async autoReadMtz(source: File, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: Store): Promise<moorhen.Map[]> {
+    static async autoReadMtz(source: File, commandCentre: React.RefObject<moorhen.CommandCentre|null>, glRef: React.RefObject<webGL.MGWebGL|null>, store: Store): Promise<moorhen.Map[]> {
         const mtzWrapper = new MoorhenMtzWrapper()
         await mtzWrapper.loadHeaderFromFile(source)
 
