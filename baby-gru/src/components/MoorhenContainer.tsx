@@ -5,7 +5,7 @@ import { createLocalStorageInstance, parseAtomInfoLabel } from '../utils/utils';
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre";
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
 import { Backdrop } from "@mui/material";
-import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
+import { isDarkBackground } from '../WebGLgComponents/webGLUtils'
 import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
 import { MoorhenModalsContainer } from './misc/MoorhenModalsContainer';
 import { moorhen } from '../types/moorhen';
@@ -36,6 +36,7 @@ import { MoorhenScreenshotSnackBar } from './snack-bar/MoorhenScreenshotSnackBar
 import { MoorhenSideBar } from './snack-bar/MoorhenSideBar';
 import { MoorhenAtomInfoSnackBar } from './snack-bar/MoorhenAtomInfoSnackBar';
 import { MoorhenDroppable } from './MoorhenDroppable';
+import { setRequestDrawScene } from "../store/glRefSlice"
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -468,8 +469,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     }, [hoveredAtom])
 
     useEffect(() => {
-        glRef.current.resize(width, height)
-        glRef.current.drawScene()
+        dispatch(setRequestDrawScene(true))
     }, [width, height])
 
     useEffect(() => {

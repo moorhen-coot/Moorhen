@@ -1,8 +1,46 @@
 # Moorhen
 A JavaScript molecular graphics program
 
-### For 0.21.1
+### For 0.23.0
+- [ ] Fix SSAO.
+- [ ] Load dictionary without creating molecule.
+- [ ] Fix multiview with depth blur.
+- [ ] Fix multiview with SSAO.
+- [ ] Fix multiview with edge detect.
 - [ ] Ability to set origin/zoom/individual rotation in "Multiple views for different molecules".
+- [ ] Remove glRef from all component props and class constructor args.
+
+### For 0.22.0
+- [ ] Fix text labels being ugly when there is a transparent object.
+- [x] Fix multiview origins only sometimes correct.
+- [x] Fix multiview screenshots scaling.
+- [x] Fix multiview with transparency.
+  - [x] Get multiview and transparent basic rendering correct.
+  - [x] Fix transparency messing up one-view-per-molecule.
+  - [x] Fix screenshots with transparent multiviews.
+  - [x] Fix cross-hairs with transparent multiviews.
+  - [x] Fix axes with transparent multiviews.
+- [x] Get scale bar useful with multiviews.
+- [x] Fix atom info toast gets rid of clipper points widget.
+- [x] Fix MrParse sequences not redrawing if component closed and re-opened.
+- [x] Deprecate glRef method usage.
+   - [x] Eliminate glRef usage outside of MoorhenWebMG.
+   - [x] Fix custom object opacity not working.
+   - [x] Fix env. labels flickering.
+   - [x] Fix orientation not being correct if doing fast repeat of "space" next residue.
+   - [x] Fix no text on WebGL1.
+   - [x] Fix lines (maps) drawing broken on WebGL1.
+   - [x] Fix maps surface drawing broken on WebGL1 and WebGL2.
+   - [x] Fix completely broken rendering on WebGL1.
+   - [x] Add a getPixels method to gl widget and use this in screenshot.
+   - [x] Restore animated zooming.
+   - [x] Fix map recontouring when alt-click centering.
+   - [x] Fix atom dragging not being animated.
+   - [x] Fix wrong size spheres when atom hovering.
+   - [x] Fix env. labels not being drawn.
+   - [x] Fix completely broken atom hovering.
+   - [x] Fix spheres being flat and not facing camera properly.
+   - [x] Fix distance lines not being drawn.
 
 ### For 0.21.0
 - [x] Fix 64-bit test in CootWorker, it looks a bit dodgy.

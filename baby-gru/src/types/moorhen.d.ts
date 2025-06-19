@@ -1140,6 +1140,36 @@ export namespace moorhen {
             AFDisplaySettings: any;
             HomologsDisplaySettings: any;
         };
+        glRef: {
+            origin: [number,number,number];
+            isWebGL2: boolean;
+            glCtx: any;
+            displayBuffers: DisplayBuffer[];
+            activeMolecule: Molecule;
+            draggableMolecule: Molecule;
+            lightPosition: [number,number,number,number],
+            ambient: [number,number,number,number],
+            specular: [number,number,number,number],
+            diffuse: [number,number,number,number],
+            specularPower: number,
+            zoom: number,
+            quat: any[],
+            fogClipOffset: number,
+            fogStart: number,
+            fogEnd: number,
+            clipStart: number,
+            clipEnd: number,
+            cursorPosition: [number,number],
+            shortCutHelp: string[],
+            requestDrawScene:  {switch: boolean },
+            envUpdate: {switch: boolean },
+            clearLabels: {switch: boolean },
+            hoverSize: number,
+            labelBuffers: any[],
+            texturedShapes: any[],
+            canvasSize: [number,number],
+            rttFramebufferSize: [number,number],
+        };
         overlays: {
             imageOverlayList: any[]
             textOverlayList: any[]
@@ -1149,6 +1179,9 @@ export namespace moorhen {
         }
         menus: {
             settings: Record<string, Record<string, any>>
+        }
+        atomInfoCards: {
+            atomInfoIds: any[]
         }
     }
 

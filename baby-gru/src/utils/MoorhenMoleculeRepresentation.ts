@@ -4,6 +4,9 @@ import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInf
 import { libcootApi } from '../types/libcoot';
 import { MoorhenColourRule } from './MoorhenColourRule';
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums"
+import { setOrigin, setDisplayBuffers, setLabelBuffers, setRequestDrawScene } from "../store/glRefSlice"
+import { buildBuffers, appendOtherData } from '../WebGLgComponents/buildBuffers'
+import { batch } from 'react-redux'
 
 /**
  * Represents a molecule representation
@@ -36,7 +39,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     uniqueId: string;
     style: moorhen.RepresentationStyles;
     cid: string;
-    buffers: moorhen.DisplayObject[];
+    buffers: any;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>
     parentMolecule: moorhen.Molecule;
@@ -149,9 +152,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 buffer.isDirty = true;
                 buffer.alphaChanged = true;
             })
-            this.glRef.current.buildBuffers();
-            this.glRef.current.drawScene();
+            buildBuffers(this.buffers)
         }
+        this.parentMolecule.store.dispatch(setRequestDrawScene(true))
     }
 
     /**
@@ -294,21 +297,24 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
      * @param {moorhen.DisplayObject[]} objects - The display objects for this representation
      */
     buildBuffers(objects: moorhen.DisplayObject[]) {
+        const displayBuffers = this.parentMolecule.store.getState().glRef.displayBuffers
+        let newBuffers = []
         if (objects.length > 0 && !this.parentMolecule.gemmiStructure?.isDeleted()) {
             objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
-                const a = this.glRef.current.appendOtherData(object, true)
+                const a = appendOtherData(object, true)
+                newBuffers = [...newBuffers,...a]
+                buildBuffers(a)
                 if (this.buffers) {
                     this.buffers = this.buffers.concat(a)
                 } else {
                     this.buffers = a
                 }
             })
-            this.glRef.current.buildBuffers()
         }
         this.buffers.forEach(buf => {
             buf.multiViewGroup = this.parentMolecule.molNo
         })
-        this.glRef.current.drawScene()
+        this.parentMolecule.store.dispatch(setDisplayBuffers([...displayBuffers,...newBuffers]))
     }
 
     /**
@@ -344,7 +350,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         }
         let selectionCentre = centreOnGemmiAtoms(atomBuffers)
         this.buffers.forEach(buf => {
-            buf.origin = selectionCentre
+            if (buf.hasOwnProperty("origin")) {
+                buf.origin = selectionCentre
+            }
         })
     }
 
@@ -352,27 +360,35 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
      * Delete the current representation buffers
      */
     deleteBuffers() {
+        const labelBuffers = this.parentMolecule.store.getState().glRef.labelBuffers
+        let newLabelBuffers = labelBuffers
+        const displayBuffers = this.parentMolecule.store.getState().glRef.displayBuffers
+        let newBuffers = displayBuffers
+        if(displayBuffers){
+            newBuffers = displayBuffers
+        }
         if (this.buffers?.length > 0) {
             this.buffers.forEach(buffer => {
                 if ("clearBuffers" in buffer) {
-                    buffer.clearBuffers()
-                    if (this.glRef.current.displayBuffers) {
-                        this.glRef.current.displayBuffers = this.glRef.current.displayBuffers.filter(glBuffer => glBuffer !== buffer)
-                    }
+                    newBuffers = newBuffers.filter(glBuffer => glBuffer !== buffer)
                 } else if ("labels" in buffer) {
-                    this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels, buffer.uuid)
+                    newLabelBuffers = newLabelBuffers.filter(buf => buf.uuid !== buffer.uuid)
                 }
             })
-            this.glRef.current.buildBuffers()
-            this.glRef.current.drawScene()
             this.buffers = []
         }
+        batch(() => {
+            this.parentMolecule.store.dispatch(setDisplayBuffers(newBuffers))
+            this.parentMolecule.store.dispatch(setLabelBuffers(newLabelBuffers))
+        })
     }
 
     /**
      * Make the representation visible
      */
     async show() {
+        const labelBuffers = this.parentMolecule.store.getState().glRef.labelBuffers
+        let newLabelBuffers = []
         try {
             this.visible = true
             if (this.buffers && this.buffers.length > 0) {
@@ -380,37 +396,39 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                     buffer.visible = true
                     if ("labels" in buffer) {
                         buffer.labels.forEach(label => {
-                            this.glRef.current.labelsTextCanvasTexture.addBigTextureTextImage(label, buffer.uuid)
+                            newLabelBuffers.push({label:label,uuid:buffer.uuid})
                         })
-                        this.glRef.current.labelsTextCanvasTexture.recreateBigTextureBuffers()
                     }
                 })
-                this.glRef.current.drawScene()
             } else {
                 await this.draw()
             }
         } catch (err) {
             console.log(err)
         }
+        this.parentMolecule.store.dispatch(setLabelBuffers([...labelBuffers,...newLabelBuffers]))
     }
 
     /**
      * Make the representation not visible
      */
     hide() {
+        const labelBuffers = this.parentMolecule.store.getState().glRef.labelBuffers
+        let newLabelBuffers = labelBuffers
         try {
             this.visible = false
             this.buffers.forEach(buffer => {
-                 buffer.visible = false
-                 if ("labels" in buffer) {
-                    this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels, buffer.uuid)
+                 if (buffer.hasOwnProperty("visible")) {
+                     buffer.visible = false
                  }
-                 this.glRef.current.labelsTextCanvasTexture.recreateBigTextureBuffers()
+                 if ("labels" in buffer) {
+                    newLabelBuffers = newLabelBuffers.filter(buf => buf.uuid !== buffer.uuid)
+                 }
             })
-            this.glRef.current.drawScene()
         } catch (err) {
             console.log(err)
         }
+        this.parentMolecule.store.dispatch(setLabelBuffers([...newLabelBuffers]))
     }
 
     /**
@@ -907,14 +925,14 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         if (this.useDefaultBondOptions) {
             bondSettings.push(
                 (name === 'ligands' || name === 'CAs') ? this.parentMolecule.defaultBondOptions.width * 1.5 : this.parentMolecule.defaultBondOptions.width,
-                (name === 'ligands' || name === 'CAs') ? this.parentMolecule.defaultBondOptions.atomRadiusBondRatio * 1.5 : this.parentMolecule.defaultBondOptions.atomRadiusBondRatio, 
+                (name === 'ligands' || name === 'CAs') ? this.parentMolecule.defaultBondOptions.atomRadiusBondRatio * 1.5 : this.parentMolecule.defaultBondOptions.atomRadiusBondRatio,
                 this.parentMolecule.defaultBondOptions.showAniso, this.parentMolecule.defaultBondOptions.showOrtep, this.parentMolecule.defaultBondOptions.showHs,
                 this.parentMolecule.defaultBondOptions.smoothness
             )
         } else {
             bondSettings.push(
                 (name === 'ligands' || name === 'CAs') ? this.bondOptions.width * 1.5 : this.bondOptions.width,
-                (name === 'ligands' || name === 'CAs') ? this.bondOptions.atomRadiusBondRatio * 1.5 : this.bondOptions.atomRadiusBondRatio, 
+                (name === 'ligands' || name === 'CAs') ? this.bondOptions.atomRadiusBondRatio * 1.5 : this.bondOptions.atomRadiusBondRatio,
                 this.bondOptions.showAniso, this.bondOptions.showOrtep, this.bondOptions.showHs,
                 this.bondOptions.smoothness
             )

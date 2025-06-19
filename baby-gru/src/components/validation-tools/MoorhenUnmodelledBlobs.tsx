@@ -2,8 +2,12 @@ import { Col, Row, Card, Button } from 'react-bootstrap';
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 import { libcootApi } from '../../types/libcoot';
 import { moorhen } from '../../types/moorhen';
+import { useDispatch } from 'react-redux';
+import { setOrigin } from "../../store/glRefSlice"
 
 export const MoorhenUnmodelledBlobs = (props: moorhen.CollectedProps) => {
+
+    const dispatch = useDispatch()
 
     //FIXME - RMSD cutoff should be user settable.
     async function fetchCardData(selectedModel: number, selectedMap: number): Promise<libcootApi.InterestingPlaceDataJS[]> {
@@ -29,7 +33,7 @@ export const MoorhenUnmodelledBlobs = (props: moorhen.CollectedProps) => {
                             </Col>
                             <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
                                 <Button style={{marginRight:'0.5rem'}} onClick={() => {
-                                            props.glRef.current.setOriginAnimated([-blob.coordX, -blob.coordY, -blob.coordZ])
+                                            dispatch(setOrigin([-blob.coordX, -blob.coordY, -blob.coordZ]))
                                 }}>
                                     View
                                 </Button>

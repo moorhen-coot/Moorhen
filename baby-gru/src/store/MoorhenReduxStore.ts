@@ -17,8 +17,10 @@ import sliceNDiceReducer from './sliceNDiceSlice'
 import lhasaReducer from './lhasaSlice'
 import jsonValidationReducer from './jsonValidation'
 import mrParseSliceReducer from './mrParseSlice'
+import glRefSliceReducer from './glRefSlice'
 import overlaysSliceReducer from './overlaysSlice'
 import menusReducer from './menusSlice'
+import atomInfoCardsReducer from './atomInfoCardsSlice'
 
 export default configureStore({
     reducer: {
@@ -40,8 +42,10 @@ export default configureStore({
         sliceNDice: sliceNDiceReducer,
         jsonValidation: jsonValidationReducer,
         mrParse: mrParseSliceReducer,
+        glRef: glRefSliceReducer,
         overlays: overlaysSliceReducer,
         menus: menusReducer,
+        atomInfoCards: atomInfoCardsReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

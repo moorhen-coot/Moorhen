@@ -6,6 +6,8 @@ import pako from "pako"
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
+import { setOrigin, setRequestDrawScene, setDisplayBuffers } from "../store/glRefSlice"
+import { buildBuffers, appendOtherData } from '../WebGLgComponents/buildBuffers'
 
 const _DEFAULT_CONTOUR_LEVEL = 0.8
 const _DEFAULT_RADIUS = 13
@@ -30,24 +32,24 @@ const _DEFAULT_NEGATIVE_MAP_COLOUR = {r: 0.800000011920929, g: 0.400000005960464
  * @param {ToolkitStore} [store=undefined] - A Redux store. By default Moorhen Redux store will be used
  * @example
  * import { MoorhenMap } from "moorhen";
- * 
+ *
  * // Create a new map
  * const map = new MoorhenMap(commandCentre, glRef);
- * 
+ *
  * // Load file from a URL
  * const selectedColumns = { F: "FWT", PHI: "PHWT", Fobs: "FP", SigFobs: "SIGFP", FreeR: "FREE", isDifference: false, useWeight: false, calcStructFact: true }
  * map.loadToCootFromMtzURL("/uri/to/file.mtz", "map-1", selectedColumns);
- * 
+ *
  * // Draw map and set view on map centre
  * map.drawMapContour();
  * map.centreOnMap();
- * 
+ *
  * // Delete map
  * map.delete();
 */
 
 export class MoorhenMap implements moorhen.Map {
-    
+
     type: string
     name: string
     headerInfo: moorhen.mapHeaderInfo
@@ -88,7 +90,7 @@ export class MoorhenMap implements moorhen.Map {
         this.commandCentre = commandCentre
         this.glRef = glRef
         this.store = store
-        this.levelRange = null 
+        this.levelRange = null
         this.webMGContour = false
         this.showOnLoad = true
         this.displayObjects = { Coot: [] }
@@ -131,10 +133,13 @@ export class MoorhenMap implements moorhen.Map {
      * Delete the map instance
      */
     async delete(): Promise<void> {
+        const displayBuffers = this.store.getState().glRef.displayBuffers
+        let newBuffers = displayBuffers
         Object.getOwnPropertyNames(this.displayObjects).forEach(displayObject => {
-            if (this.displayObjects[displayObject].length > 0) { this.clearBuffersOfStyle(displayObject) }
+            if (this.displayObjects[displayObject].length > 0) {
+                newBuffers = this.clearBuffersOfStyle(displayObject,newBuffers)
+            }
         })
-        this.glRef.current.drawScene()
         const promises = [
             this.commandCentre.current.cootCommand({
                 returnType: "status",
@@ -148,6 +153,7 @@ export class MoorhenMap implements moorhen.Map {
                 :
                 Promise.resolve(true)
         ]
+        this.store.dispatch(setDisplayBuffers([...newBuffers]))
         await Promise.all(promises)
     }
 
@@ -242,7 +248,7 @@ export class MoorhenMap implements moorhen.Map {
                 this.isDifference = selectedColumns.isDifference
             }
             await this.getSuggestedSettings()
-            return this    
+            return this
         } catch(err) {
             return Promise.reject(err)
         }
@@ -286,7 +292,7 @@ export class MoorhenMap implements moorhen.Map {
                 } else {
                     mapData = new Uint8Array(arrayBuffer)
                 }
-                return await this.loadToCootFromMapData(mapData, name, isDiffMap);    
+                return await this.loadToCootFromMapData(mapData, name, isDiffMap);
             } else {
                 return Promise.reject(`Requested ${url} and response was not OK...`)
             }
@@ -320,7 +326,7 @@ export class MoorhenMap implements moorhen.Map {
             this.molNo = reply.data.result.result
             this.isDifference = isDiffMap
             await this.getSuggestedSettings()
-            return this    
+            return this
         } catch(err) {
             console.warn(err)
             return Promise.reject(err)
@@ -351,8 +357,8 @@ export class MoorhenMap implements moorhen.Map {
     /**
      * Static method used to automatically read multiple maps from a single mtz file
      * @param {File} source - The mtz file
-     * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance 
-     * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance 
+     * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
+     * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance
      * @param {ToolkitStore} store - The redux store
      * @returns {moorhen.Map[]} A list of maps resulting from reading the mtz file
      */
@@ -365,7 +371,7 @@ export class MoorhenMap implements moorhen.Map {
             command: "shim_auto_read_mtz",
             commandArgs: [mtzWrapper.reflectionData]
         }, true) as moorhen.WorkerResponse<libcootApi.AutoReadMtzInfoJS[]>
-        
+
         if (response.data.result.status === "Exception" || response.data.result.result.length === 0) {
             console.log(response.data.consoleMessage)
             console.warn('There was a problem with auto-open mtz...')
@@ -472,13 +478,13 @@ export class MoorhenMap implements moorhen.Map {
      * Get map contour parameters from the redux store
      * @returns {object} A description of map contour parameters as described in the redux store
      */
-    getMapContourParams(): { 
-        mapRadius: number; 
-        contourLevel: number; 
-        mapAlpha: number; 
-        mapStyle: "lines" | "solid" | "lit-lines"; 
-        mapColour: {r: number; g: number; b: number}; 
-        positiveMapColour: {r: number; g: number; b: number}; 
+    getMapContourParams(): {
+        mapRadius: number;
+        contourLevel: number;
+        mapAlpha: number;
+        mapStyle: "lines" | "solid" | "lit-lines";
+        mapColour: {r: number; g: number; b: number};
+        positiveMapColour: {r: number; g: number; b: number};
         negativeMapColour: {r: number; g: number; b: number}
     } {
         const state = this.store.getState()
@@ -490,13 +496,13 @@ export class MoorhenMap implements moorhen.Map {
         const negativeMapColour = state.mapContourSettings.negativeMapColours.find(item => item.molNo === this.molNo)?.rgb
         const positiveMapColour = state.mapContourSettings.positiveMapColours.find(item => item.molNo === this.molNo)?.rgb
         return {
-            mapRadius: radius ? radius : _DEFAULT_RADIUS, 
+            mapRadius: radius ? radius : _DEFAULT_RADIUS,
             contourLevel: level ? level : _DEFAULT_CONTOUR_LEVEL,
             mapAlpha: alpha ? alpha : _DEFAULT_ALPHA,
             mapStyle: style ? style : _DEFAULT_STYLE,
             mapColour: mapColour ? {r: mapColour.r / 255., g: mapColour.g / 255., b: mapColour.b / 255.} : this.defaultMapColour,
             negativeMapColour: negativeMapColour ? {r: negativeMapColour.r / 255., g: negativeMapColour.g / 255., b: negativeMapColour.b / 255.} : this.defaultNegativeMapColour,
-            positiveMapColour: positiveMapColour ? {r: positiveMapColour.r / 255., g: positiveMapColour.g / 255., b: positiveMapColour.b / 255.} : this.defaultPositiveMapColour  
+            positiveMapColour: positiveMapColour ? {r: positiveMapColour.r / 255., g: positiveMapColour.g / 255., b: positiveMapColour.b / 255.} : this.defaultPositiveMapColour
         }
     }
 
@@ -504,36 +510,43 @@ export class MoorhenMap implements moorhen.Map {
      * Contour the map with parameters from the redux store
      */
     drawMapContour(): Promise<void> {
+        const originState = this.store.getState().glRef.origin
         const { mapRadius, contourLevel, mapStyle } = this.getMapContourParams()
-        return this.doCootContour(...this.glRef.current.origin.map(coord => -coord) as [number, number, number], mapRadius, contourLevel, mapStyle)
+        return this.doCootContour(...originState.map(coord => -coord) as [number, number, number], mapRadius, contourLevel, mapStyle)
     }
 
     /**
      * Hide the map contour
      */
     hideMapContour(): void {
-        this.clearBuffersOfStyle('Coot')
-        this.glRef.current.buildBuffers();
-        this.glRef.current.drawScene();
+        const displayBuffers = this.store.getState().glRef.displayBuffers
+        const oldBuffers = this.clearBuffersOfStyle("Coot",displayBuffers)
+        this.store.dispatch(setDisplayBuffers([...oldBuffers]))
     }
 
     /**
      * Clear MGWebGL buffers of a given style for this map
      * @param {string} style - The map style that will be cleared
      */
-    clearBuffersOfStyle(style: string): void {
+    clearBuffersOfStyle(style: string, displayBuffers: any[]): any[] {
         //Empty existing buffers of this type
+        let newBuffers = displayBuffers
         this.displayObjects[style].forEach((buffer) => {
             buffer.clearBuffers()
-            this.glRef.current.displayBuffers = this.glRef.current.displayBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
+            newBuffers = newBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
         })
         this.displayObjects[style] = []
+        return newBuffers
     }
 
     setupContourBuffers(objects: any[], keepCootColours: boolean = false) {
+        const displayBuffers = this.store.getState().glRef.displayBuffers
         const { mapAlpha, mapColour, positiveMapColour, negativeMapColour } = this.getMapContourParams()
         const print_timing = false;
         const t1 = performance.now();
+        const oldBuffers = this.clearBuffersOfStyle("Coot",displayBuffers)
+        let newBuffers = []
+
         try {
             const diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] }
             objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
@@ -599,15 +612,17 @@ export class MoorhenMap implements moorhen.Map {
                     if(print_timing) console.log("End loop",tl-t1)
                 }
                 if (this.isDifference) {
-                    this.clearBuffersOfStyle("Coot")
-                    let a = this.glRef.current.appendOtherData(object_positive, true);
-                    let b = this.glRef.current.appendOtherData(object_negative, true);
+                    let a = appendOtherData(object_positive, true);
+                    let b = appendOtherData(object_negative, true);
                     if(mapAlpha<0.99){
                         a[0].transparent = true;
                         b[0].transparent = true;
                     }
+                    buildBuffers(a)
+                    buildBuffers(b)
+                    newBuffers = [...newBuffers,...a,...b]
                     const ta = performance.now();
-                    if(print_timing) console.log("End appendOtherData",ta-t1);
+                    if(print_timing) console.log("End _appendOtherData",ta-t1);
                     this.diffMapColourBuffers.positiveDiffColour = this.diffMapColourBuffers.positiveDiffColour.concat(diffMapColourBuffers.positiveDiffColour);
                     this.diffMapColourBuffers.negativeDiffColour = this.diffMapColourBuffers.negativeDiffColour.concat(diffMapColourBuffers.negativeDiffColour);
                     this.displayObjects['Coot'] = this.displayObjects['Coot'].concat(a);
@@ -615,6 +630,7 @@ export class MoorhenMap implements moorhen.Map {
                 } else if (!keepCootColours) {
                     //console.log("DEBUG: Old buffers?", object.vert_tri[0][0],object.norm_tri[0][0])
                     if(this.displayObjects["Coot"].length>0 && (object.prim_types[0][0]===this.displayObjects["Coot"][0].bufferTypes[0])){
+                        //This may be broken!!!
                         this.displayObjects["Coot"][0].triangleVertices[0] = object.vert_tri[0][0]
                         this.displayObjects["Coot"][0].triangleNormals[0] = object.norm_tri[0][0]
                         if(mapAlpha>0.98){
@@ -625,38 +641,38 @@ export class MoorhenMap implements moorhen.Map {
                         }
                         this.displayObjects["Coot"][0].triangleIndexs[0] = object.idx_tri[0][0]
                         this.displayObjects["Coot"][0].isDirty = true
+                        buildBuffers(this.displayObjects["Coot"])
+                        newBuffers = [...newBuffers,...this.displayObjects["Coot"]]
                     } else {
-                       this.clearBuffersOfStyle("Coot")
-                       let a = this.glRef.current.appendOtherData(object, true);
+                       let a = appendOtherData(object, true);
                        if(mapAlpha>0.98){
                            a[0].setCustomColour([mapColour.r,mapColour.g,mapColour.b,1.0])
                        }
                        this.displayObjects['Coot'] = this.displayObjects['Coot'].concat(a);
+                       buildBuffers(a)
+                       newBuffers = [...newBuffers,...a]
                     }
 
                     const ta = performance.now();
-                    if(print_timing) console.log("End appendOtherData",ta-t1);
+                    if(print_timing) console.log("End _appendOtherData",ta-t1);
                     this.diffMapColourBuffers.positiveDiffColour = this.diffMapColourBuffers.positiveDiffColour.concat(diffMapColourBuffers.positiveDiffColour);
                     this.diffMapColourBuffers.negativeDiffColour = this.diffMapColourBuffers.negativeDiffColour.concat(diffMapColourBuffers.negativeDiffColour);
                 } else {
                     //console.log("MOORHEN MAP do what keepCootColours wants")
-                    this.clearBuffersOfStyle("Coot")
-                    let a = this.glRef.current.appendOtherData(object, true);
+                    let a = appendOtherData(object, true);
                     this.displayObjects['Coot'] = this.displayObjects['Coot'].concat(a);
+                    buildBuffers(a)
+                    newBuffers = [...newBuffers,...a]
                 }
             })
-            if(print_timing) console.log("Start buildBuffers");
-            this.glRef.current.buildBuffers();
-            const tb = performance.now();
-            if(print_timing) console.log("End buildBuffers",tb-t1);
-            this.glRef.current.drawScene();
             const ts = performance.now();
-            if(print_timing) console.log("After drawScene",ts-t1);
+            if(print_timing) console.log("After _drawScene",ts-t1);
         } catch(err) {
-            //console.log(err)
-        } 
+            console.log(err)
+        }
         const t2 = performance.now();
         if(print_timing) console.log("Finished setupContourBuffers",t2-t1)
+        this.store.dispatch(setDisplayBuffers([...oldBuffers,...newBuffers]))
     }
 
     /**
@@ -731,10 +747,10 @@ export class MoorhenMap implements moorhen.Map {
             console.error('Cannot use moorhen.Map.fetchDiffMapColourAndRedraw to change non-diff map colour. Use moorhen.Map.fetchColourAndRedraw instead...')
             return
         }
-        
+
         const { mapAlpha, positiveMapColour, negativeMapColour } = this.getMapContourParams()
         const mapColour = type === 'positiveDiffColour' ? positiveMapColour : negativeMapColour
-       
+
         if (mapAlpha < 0.99) {
             this.displayObjects['Coot'].forEach((buffer, bufferIdx) => {
                 buffer.customColour = null;
@@ -760,12 +776,6 @@ export class MoorhenMap implements moorhen.Map {
                 }
             }
         }
-        
-        if (mapAlpha < 0.99) {
-            this.glRef.current.buildBuffers();
-        }
-
-        this.glRef.current.drawScene();
     }
 
     /**
@@ -780,9 +790,9 @@ export class MoorhenMap implements moorhen.Map {
         if (this.otherMapForColouring !== null) {
             this.otherMapForColouring = null
         }
-        
+
         const { mapAlpha, mapColour } = this.getMapContourParams()
-        
+
         this.displayObjects['Coot'].forEach(buffer => {
             if (mapAlpha < 0.99) {
                 buffer.customColour = null;
@@ -801,12 +811,6 @@ export class MoorhenMap implements moorhen.Map {
                 buffer.transparent = false
             }
         })
-
-        if (mapAlpha < 0.99) {
-            this.glRef.current.buildBuffers();
-        }
-
-        this.glRef.current.drawScene();
     }
 
     /**
@@ -847,8 +851,8 @@ export class MoorhenMap implements moorhen.Map {
                 }
             }
         })
-        this.glRef.current.buildBuffers();
-        this.glRef.current.drawScene();
+        buildBuffers(this.displayObjects['Coot'])
+        this.store.dispatch(setRequestDrawScene(true))
     }
 
     /**
@@ -953,18 +957,18 @@ export class MoorhenMap implements moorhen.Map {
             commandArgs: [this.molNo],
             returnType: 'float'
         }, false) as moorhen.WorkerResponse<number>
-        
+
         if (result.data.result.result !== -1) {
             this.suggestedContourLevel = result.data.result.result
         } else {
             console.log('Problem getting suggested intial map level')
-            this.suggestedContourLevel = null 
+            this.suggestedContourLevel = null
         }
-        
+
         return result.data.result.result
     }
 
-    async guessMapRange(): Promise<[number, number]> 
+    async guessMapRange(): Promise<[number, number]>
     {
         const n_bins = 400
         const histogram = await this.getHistogram(n_bins, 1)
@@ -984,7 +988,7 @@ export class MoorhenMap implements moorhen.Map {
             commandArgs: [this.molNo],
             returnType: "map_molecule_centre_info_t"
         }, false) as moorhen.WorkerResponse<libcootApi.MapMoleculeCentreInfoJS>
-        
+
         if (response.data.result.result.success) {
             this.mapCentre = response.data.result.result.updated_centre.map(coord => -coord) as [number, number, number]
             if (this.isEM) {
@@ -996,7 +1000,7 @@ export class MoorhenMap implements moorhen.Map {
             console.log('Problem finding map centre')
             this.mapCentre = null
         }
-        
+
         return this.mapCentre
     }
 
@@ -1009,7 +1013,7 @@ export class MoorhenMap implements moorhen.Map {
         }
         this.suggestedMapWeight = 50 * 0.3 / this.mapRmsd
     }
-    
+
     /**
      * Get suggested contour level, radius and map centre for this map instance
      */
@@ -1020,9 +1024,9 @@ export class MoorhenMap implements moorhen.Map {
             commandArgs: [this.molNo],
             returnType: "boolean"
         }, false) as moorhen.WorkerResponse<boolean>
-        
+
         this.isEM = response.data.result.result
-       
+
         await Promise.all([
             this.fetchMapRmsd().then(_ => this.estimateMapWeight()),
             this.fetchMapCentre(),
@@ -1040,7 +1044,7 @@ export class MoorhenMap implements moorhen.Map {
             commandArgs: [this.molNo],
             returnType: "float"
         }, false)
-        
+
         if (result.data.result.status !== "Exception") {
             this.mapMean = result.data.result.result
         } else {
@@ -1060,7 +1064,7 @@ export class MoorhenMap implements moorhen.Map {
                 return
             }
         }
-        this.glRef.current.setOriginAnimated(this.mapCentre)
+        this.store.dispatch(setOrigin(this.mapCentre))
     }
 
     /**
@@ -1117,7 +1121,7 @@ export class MoorhenMap implements moorhen.Map {
         if (this.isDifference) {
             return
         }
-        
+
         const validMapMolNos = await Promise.all([...Array(this.molNo).keys()].map(async (molNo) => {
             if (molNo === this.molNo) {
                 return false
@@ -1155,11 +1159,12 @@ export class MoorhenMap implements moorhen.Map {
      * @returns {ArrayBuffer} - The contents of the gltf file (binary format)
      */
     async exportAsGltf(): Promise<ArrayBuffer> {
+        const originState = this.store.getState().glRef.origin
         const { mapRadius, contourLevel } = this.getMapContourParams()
         const result = await this.commandCentre.current.cootCommand({
             returnType: "arrayBuffer",
             command: 'shim_export_map_as_gltf',
-            commandArgs: [ this.molNo, ...this.glRef.current.origin.map(coord => -coord), mapRadius, contourLevel ],
+            commandArgs: [ this.molNo, ...originState.map(coord => -coord), mapRadius, contourLevel ],
             changesMolecules: [ ]
         }, false) as moorhen.WorkerResponse<ArrayBuffer>
         return result.data.result.result
@@ -1191,7 +1196,7 @@ export class MoorhenMap implements moorhen.Map {
             returnType: 'clipper_spacegroup',
         }, false) as moorhen.WorkerResponse<string>
         headerInfo.spacegroup = sg.data.result.result
-        
+
         const resol = await this.commandCentre.current.cootCommand({
             command: 'get_map_data_resolution',
             commandArgs: [ this.molNo ],
@@ -1222,7 +1227,7 @@ export class MoorhenMap implements moorhen.Map {
         headerInfo.cell.alpha = cell.data.result.result.alpha
         headerInfo.cell.beta = cell.data.result.result.beta
         headerInfo.cell.gamma = cell.data.result.result.gamma
-        
+
         this.headerInfo = headerInfo
 
         return headerInfo
@@ -1231,5 +1236,5 @@ export class MoorhenMap implements moorhen.Map {
     toggleOriginLock(val: boolean = !this.isOriginLocked): void {
         this.isOriginLocked = val
     }
-    
+
 }

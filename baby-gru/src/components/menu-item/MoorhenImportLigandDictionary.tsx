@@ -50,6 +50,8 @@ const MoorhenImportLigandDictionary = (props: {
         monomerLibraryPath, id, store
     } = props
 
+    const originState = useSelector((state: moorhen.State) => state.glRef.origin)
+
     const handleFileContent = useCallback(async (fileContent: string) => {
         let newMolecule: moorhen.Molecule
         let selectedMoleculeIndex: number
@@ -85,7 +87,7 @@ const MoorhenImportLigandDictionary = (props: {
                 command: 'get_monomer_and_position_at',
                 commandArgs: [instanceName,
                     selectedMoleculeIndex,
-                    ...glRef.current.origin.map(coord => -coord)]
+                    ...originState.map(coord => -coord)]
             }, true) as moorhen.WorkerResponse<number>
             if (result.data.result.status === "Completed") {
                 newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)

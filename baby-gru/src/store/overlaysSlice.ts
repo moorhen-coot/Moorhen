@@ -7,6 +7,7 @@ interface FracPath {
     drawStyle?: string
     gradientBoundary?: [number,number,number,number]
     gradientStops?: [number,string][]
+    lineWidth?: number
 }
 
 interface SvgPath {
@@ -16,16 +17,19 @@ interface SvgPath {
     drawStyle?: string
     gradientBoundary?: [number,number,number,number]
     gradientStops?: [number,string][]
+    lineWidth?: number
 }
 
 interface TextFrac {
     x: number
     y: number
     text: string
-    font: string
+    fontFamily: string
+    fontPixelSize: number
     fillStyle?: string
     strokeStyle?: string
     drawStyle?: string
+    lineWidth?: number
 }
 
 interface ImageSrcFrac {

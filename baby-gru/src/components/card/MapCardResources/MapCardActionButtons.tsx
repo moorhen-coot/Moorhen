@@ -24,6 +24,7 @@ import { convertRemToPx } from "../../../utils/utils";
 import { moorhen } from "../../../types/moorhen";
 import { webGL } from "../../../types/mgWebGL";
 import Tooltip from "@mui/material/Tooltip";
+import { setRequestDrawScene } from "../../../store/glRefSlice";
 
 interface ActionButtonPropsType {
     map: moorhen.Map;
@@ -59,6 +60,7 @@ export const MapCardActionButtons = (props: ActionButtonPropsType) => {
 
     const handleVisibility = useCallback(() => {
         dispatch(props.mapIsVisible ? hideMap(props.map) : showMap(props.map));
+        dispatch(setRequestDrawScene());
     }, [props.mapIsVisible]);
 
     const handleCopyMap = async () => {

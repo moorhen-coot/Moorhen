@@ -3,7 +3,7 @@ import { Card, Row, Col, Stack, Button, Spinner } from "react-bootstrap";
 import { Accordion, AccordionDetails, AccordionSummary, Box, CircularProgress, LinearProgress } from '@mui/material';
 import { convertRemToPx, convertViewtoPx, getCentreAtom } from '../../utils/utils';
 import { representationLabelMapping } from '../../utils/enums';
-import { isDarkBackground } from '../../WebGLgComponents/mgWebGL';
+import { isDarkBackground } from '../../WebGLgComponents/webGLUtils';
 import { MoorhenSequenceList } from "../list/MoorhenSequenceList";
 import { MoorhenMoleculeCardButtonBar } from "../button-bar/MoorhenMoleculeCardButtonBar";
 import { MoorhenLigandList } from "../list/MoorhenLigandList";
@@ -56,8 +56,6 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const isVisible = useSelector((state: moorhen.State) => state.molecules.visibleMolecules.includes(props.molecule.molNo))
     const drawInteractions = useSelector((state: moorhen.State) => state.molecules.generalRepresentations.some(item => item.parentMolecule?.molNo === props.molecule.molNo && item.style === "environment" && !item.isCustom))
-    const GLLabelsFontFamily = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontFamily)
-    const GLLabelsFontSize = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontSize)
     const customRepresentationsString = useSelector((state: moorhen.State) => {
         return JSON.stringify(
             state.molecules.customRepresentations.filter(item => item.parentMolecule?.molNo === props.molecule.molNo).map(item => item.uniqueId)
@@ -222,7 +220,6 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                     if (props.molecule.adaptativeBondsEnabled) {
                         await props.molecule.redrawAdaptativeBonds(cid)
                     }
-                    props.molecule.clearBuffersOfStyle('environment')
                     if (drawInteractions) {
                         await props.molecule.drawEnvironment(cid)
                     }
@@ -283,10 +280,6 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
         }
 
     }, [backgroundColor, generalRepresentationString]);
-
-    useEffect(() => {
-        props.glRef.current.setTextFont(GLLabelsFontFamily, GLLabelsFontSize)
-    }, [GLLabelsFontSize, GLLabelsFontFamily])
 
     useEffect(() => {
         const handleEnvSettingsChange = async () => {

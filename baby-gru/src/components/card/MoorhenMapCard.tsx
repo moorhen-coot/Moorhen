@@ -27,6 +27,7 @@ interface MoorhenMapCardPropsInterface extends moorhen.CollectedProps {
 
 export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     const { initialContour = 0.8, initialRadius = 13 } = props;
+    const originState = useSelector((state: moorhen.State) => state.glRef.origin)
 
     const mapRadius = useSelector((state: moorhen.State) => {
         const map = state.mapContourSettings.mapRadii.find((item) => item.molNo === props.map.molNo);
@@ -108,7 +109,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
 
     useEffect(() => {
         if (mapIsVisible) {
-            nextOrigin.current = props.glRef.current.origin.map((coord) => -coord);
+            nextOrigin.current = originState.map((coord) => -coord);
             isDirty.current = true;
             if (!busyContouring.current) {
                 doContourIfDirty();

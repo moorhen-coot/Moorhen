@@ -290,8 +290,8 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 representation.setBondOptions(bondOptions)
                 representation.setM2tParams(m2tParams)
                 representation.setResidueEnvOptions(residueEnvSettings)
-                representation.setNonCustomOpacity(nonCustomOpacitySliderRef.current)
                 await representation.redraw()
+                representation.setNonCustomOpacity(nonCustomOpacitySliderRef.current)
             }
         }
 

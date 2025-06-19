@@ -18,6 +18,8 @@ import {
 } from "../store/sceneSettingsSlice";
 import { moorhensession } from "../protobuf/MoorhenSession";
 import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { setOrigin, setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setZoom,
+     setQuat, setFogStart, setFogEnd, setClipStart, setClipEnd } from "../store/glRefSlice"
 
 /**
  * Represents a time capsule with session backups
@@ -320,39 +322,67 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             }
         })
 
+        const lightPosition = this.store.getState().glRef.lightPosition
+        const ambient = this.store.getState().glRef.ambient
+        const specular = this.store.getState().glRef.specular
+        const diffuse = this.store.getState().glRef.diffuse
+        const specularPower = this.store.getState().glRef.specularPower
+        const zoom = this.store.getState().glRef.zoom
+        const quat = this.store.getState().glRef.quat
+        const fogClipOffset = this.store.getState().glRef.fogClipOffset
+        const fogStart = this.store.getState().glRef.fogStart
+        const fogEnd = this.store.getState().glRef.fogEnd
+        const clipStart = this.store.getState().glRef.clipStart
+        const clipEnd = this.store.getState().glRef.clipEnd
+
+        const doShadow = this.store.getState().sceneSettings.doShadow
+        const doSSAO = this.store.getState().sceneSettings.doSSAO
+        const depthBlurRadius = this.store.getState().sceneSettings.depthBlurRadius
+        const depthBlurDepth = this.store.getState().sceneSettings.depthBlurDepth
+        const ssaoRadius = this.store.getState().sceneSettings.ssaoRadius
+        const ssaoBias = this.store.getState().sceneSettings.ssaoBias
+        const useOffScreenBuffers = this.store.getState().sceneSettings.useOffScreenBuffers
+        const doEdgeDetect = this.store.getState().sceneSettings.doEdgeDetect
+        const depthScale = this.store.getState().sceneSettings.depthScale
+        const depthThreshold = this.store.getState().sceneSettings.depthThreshold
+        const normalScale = this.store.getState().sceneSettings.normalScale
+        const normalThreshold = this.store.getState().sceneSettings.normalThreshold
+        const doPerspectiveProjection = this.store.getState().sceneSettings.doPerspectiveProjection
+        const backgroundColor = this.store.getState().sceneSettings.backgroundColor
+
         const viewData: moorhen.viewDataSession = {
-            origin: this.glRef.current.origin,
-            backgroundColor: this.glRef.current.background_colour,
-            ambientLight: Array.from(this.glRef.current.light_colours_ambient) as [number, number, number, number],
-            diffuseLight: Array.from(this.glRef.current.light_colours_diffuse) as [number, number, number, number],
-            lightPosition: Array.from(this.glRef.current.light_positions) as [number, number, number, number],
-            specularLight: Array.from(this.glRef.current.light_colours_specular) as [number, number, number, number],
-            specularPower: this.glRef.current.specularPower,
-            fogStart: this.glRef.current.gl_fog_start,
-            fogEnd: this.glRef.current.gl_fog_end,
-            zoom: this.glRef.current.zoom,
-            doDrawClickedAtomLines: this.glRef.current.doDrawClickedAtomLines,
-            clipStart: (this.glRef.current.gl_clipPlane0[3] + this.glRef.current.fogClipOffset) * -1,
-            clipEnd: this.glRef.current.gl_clipPlane1[3] - this.glRef.current.fogClipOffset,
-            quat4: Array.from(this.glRef.current.myQuat),
-            doPerspectiveProjection: this.glRef.current.doPerspectiveProjection,
+            origin: this.store.getState().glRef.origin,
+            backgroundColor: backgroundColor,
+            ambientLight: ambient,
+            diffuseLight: diffuse,
+            lightPosition: lightPosition,
+            specularLight: specular,
+            specularPower: specularPower,
+            fogStart: fogStart,
+            fogEnd: fogEnd,
+            zoom: zoom,
+            doDrawClickedAtomLines: false, // This is unused as far as I can tell
+            clipStart: clipStart,
+            clipEnd: clipEnd,
+            quat4: [quat[0], quat[1], quat[2], quat[3]],
+            doPerspectiveProjection: doPerspectiveProjection,
             edgeDetection: {
-                enabled: this.glRef.current.doEdgeDetect,
-                depthScale: this.glRef.current.scaleDepth,
-                depthThreshold: this.glRef.current.depthThreshold,
-                normalScale: this.glRef.current.scaleNormal,
-                normalThreshold: this.glRef.current.normalThreshold
+                enabled: doEdgeDetect,
+                depthScale: depthScale,
+                depthThreshold: depthThreshold,
+                normalScale: normalScale,
+                normalThreshold: normalThreshold
             },
-            shadows: this.glRef.current.doShadow,
+            shadows: doShadow,
             ssao: {
-                enabled: this.glRef.current.doSSAO,
-                radius: this.glRef.current.ssaoRadius,
-                bias: this.glRef.current.ssaoBias
+                enabled: doSSAO,
+                radius: ssaoRadius,
+                bias: ssaoBias
             },
             blur: {
-                enabled: this.glRef.current.useOffScreenBuffers,
-                radius: this.glRef.current.blurSize,
-                depth: this.glRef.current.blurDepth
+                enabled: useOffScreenBuffers,
+                radius: depthBlurRadius,
+                depth: depthBlurDepth
             }
         }
 
@@ -742,17 +772,18 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         }
 
         // Set camera details
-        glRef.current.setAmbientLightNoUpdate(...Object.values(sessionData.viewData.ambientLight) as [number, number, number])
-        glRef.current.setSpecularLightNoUpdate(...Object.values(sessionData.viewData.specularLight) as [number, number, number])
-        glRef.current.setDiffuseLightNoUpdate(...Object.values(sessionData.viewData.diffuseLight) as [number, number, number])
-        glRef.current.setLightPositionNoUpdate(...Object.values(sessionData.viewData.lightPosition) as [number, number, number])
-        glRef.current.setZoom(sessionData.viewData.zoom, false)
-        glRef.current.set_fog_range(sessionData.viewData.fogStart, sessionData.viewData.fogEnd, false)
-        glRef.current.set_clip_range(sessionData.viewData.clipStart, sessionData.viewData.clipEnd, false)
-        glRef.current.doDrawClickedAtomLines = sessionData.viewData.doDrawClickedAtomLines
-        glRef.current.setOrigin(sessionData.viewData.origin, false)
-        glRef.current.setQuat(sessionData.viewData.quat4)
-        glRef.current.specularPower = sessionData.viewData.specularPower
+        dispatch(setOrigin(sessionData.viewData.origin))
+        dispatch(setAmbient(sessionData.viewData.ambientLight))
+        dispatch(setSpecular(sessionData.viewData.specularLight))
+        dispatch(setDiffuse(sessionData.viewData.diffuseLight))
+        dispatch(setLightPosition(sessionData.viewData.lightPosition))
+        dispatch(setSpecularPower(sessionData.viewData.specularPower))
+        dispatch(setZoom(sessionData.viewData.zoom))
+        dispatch(setFogStart(sessionData.viewData.fogStart))
+        dispatch(setFogEnd(sessionData.viewData.fogEnd))
+        dispatch(setClipStart(sessionData.viewData.clipStart))
+        dispatch(setClipEnd(sessionData.viewData.clipEnd))
+        dispatch(setQuat(sessionData.viewData.quat4))
         batch(() => {
             dispatch(setBackgroundColor(sessionData.viewData.backgroundColor))
             dispatch(setEdgeDetectDepthScale(sessionData.viewData.edgeDetection.depthScale))

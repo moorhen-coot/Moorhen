@@ -2,11 +2,13 @@ import * as Y from 'yjs'
 import { webGL } from "../types/mgWebGL";
 import { moorhen } from "../types/moorhen";
 import { WebsocketProvider } from 'y-websocket'
-import { guid, railSpecies } from './MoorhenUtils';
+import { railSpecies } from './enums';
+import { guid } from './utils';
 import { MoorhenMoleculeRepresentation } from './MoorhenMoleculeRepresentation';
 import { hexToRgb } from '@mui/material';
 import { setIsInSharedSession } from '../store/sharedSessionSlice';
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
+import { setOrigin, setZoom, setQuat } from "../store/glRefSlice";
 
 export class MoorhenFleetManager {
     
@@ -198,14 +200,16 @@ export class MoorhenFleetManager {
 
     setClientView(clientId: string) {
         const newView = this.view.get(clientId)
-        this.glRef.current.setViewAnimated(newView.origin as [number, number, number], newView.quat4, newView.zoom)
+        MoorhenReduxStore.dispatch(setOrigin(newView.origin as [number, number, number]))
+        MoorhenReduxStore.dispatch(setQuat(newView.quat4))
+        MoorhenReduxStore.dispatch(setZoom(newView.zoom))
     }
 
     pushViewUpdate() {
         this.view.set(this.clientId, {
-            zoom: this.glRef.current.zoom,
-            origin: this.glRef.current.origin,
-            quat4: this.glRef.current.myQuat
+            zoom: MoorhenReduxStore.getState().glRef.zoom,
+            origin: MoorhenReduxStore.getState().glRef.origin,
+            quat4: MoorhenReduxStore.getState().glRef.quat
         })
     }
 

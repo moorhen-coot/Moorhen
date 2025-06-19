@@ -1,4 +1,4 @@
-import { useEffect, useCallback, forwardRef, useState, useReducer } from 'react';
+import { useEffect, useCallback, forwardRef, useState, useReducer,useRef } from 'react';
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { Moorhen2DOverlay } from './Moorhen2DOverlay';
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
@@ -9,6 +9,9 @@ import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from 'react-redux';
 import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
 import { useSnackbar } from 'notistack';
+import { setQuat, setOrigin, setRequestDrawScene, setZoom,
+         setClipStart, setClipEnd, setFogStart, setFogEnd, setCursorPosition } from "../../store/glRefSlice"
+import * as quat4 from 'gl-matrix/quat';
 
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
@@ -34,7 +37,11 @@ const actionButtonSettingsReducer = (defaultSettings: moorhen.actionButtonSettin
     return defaultSettings
 }
 
-export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface>((props, glRef) => {
+export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface>((props, OldglRef) => {
+
+    const glRef = OldglRef as React.Ref<MGWebGL>
+    const canvas2DRef = useRef<HTMLCanvasElement>(null)
+
     const dispatch = useDispatch()
 
     const { enqueueSnackbar } = useSnackbar()
@@ -94,15 +101,39 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
+    const originState = useSelector((state: moorhen.State) => state.glRef.origin)
+    const activeMolecule = useSelector((state: moorhen.State) => state.glRef.activeMolecule)
+    const draggableMolecule = useSelector((state: moorhen.State) => state.glRef.draggableMolecule)
 
+    const lightPosition = useSelector((state: moorhen.State) => state.glRef.lightPosition)
+    const ambient = useSelector((state: moorhen.State) => state.glRef.ambient)
+    const specular = useSelector((state: moorhen.State) => state.glRef.specular)
+    const diffuse = useSelector((state: moorhen.State) => state.glRef.diffuse)
+    const specularPower = useSelector((state: moorhen.State) => state.glRef.specularPower)
+    const zoom = useSelector((state: moorhen.State) => state.glRef.zoom)
+    const quat = useSelector((state: moorhen.State) => state.glRef.quat)
+    const fogClipOffset = useSelector((state: moorhen.State) => state.glRef.fogClipOffset)
+    const fogStart = useSelector((state: moorhen.State) => state.glRef.fogStart)
+    const fogEnd = useSelector((state: moorhen.State) => state.glRef.fogEnd)
+    const clipStart = useSelector((state: moorhen.State) => state.glRef.clipStart)
+    const clipEnd = useSelector((state: moorhen.State) => state.glRef.clipEnd)
+    const updateSwitch = useSelector((state: moorhen.State) => state.glRef.envUpdate.switch)
+    const clearLabelsSwitch = useSelector((state: moorhen.State) => state.glRef.clearLabels.switch)
+    const requestDrawSceneSwitch = useSelector((state: moorhen.State) => state.glRef.requestDrawScene.switch)
+    const labelBuffers = useSelector((state: moorhen.State) => state.glRef.labelBuffers)
+
+    const GLLabelsFontFamily = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontFamily)
+    const GLLabelsFontSize = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontSize)
+    const [drawQuat,setDrawQuat] = useState<quat4>([0, 0, 0, -1])
 
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
         const fieldDepthBack: number = 21;
-        if (glRef !== null && typeof glRef !== 'function') {
-            glRef.current.set_fog_range(glRef.current.fogClipOffset - (glRef.current.zoom * fieldDepthFront), glRef.current.fogClipOffset + (glRef.current.zoom * fieldDepthBack))
-            glRef.current.set_clip_range(0 - (glRef.current.zoom * fieldDepthFront), 0 + (glRef.current.zoom * fieldDepthBack))
-            glRef.current.doDrawClickedAtomLines = false
+        if (glRef !== null && typeof glRef !== 'function') { 
+            dispatch(setFogStart(glRef.current.fogClipOffset - (glRef.current.zoom * fieldDepthFront)))
+            dispatch(setFogEnd(glRef.current.fogClipOffset + (glRef.current.zoom * fieldDepthBack)))
+            dispatch(setClipStart(glRef.current.zoom * fieldDepthFront))
+            dispatch(setClipEnd(glRef.current.zoom * fieldDepthBack))
         }
     }
 
@@ -120,10 +151,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }, false) as moorhen.WorkerResponse<[number, number, number]>;
 
         let newOrigin = response.data.result.result;
-        if (newOrigin.length === 3 && glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setOriginAnimated([-newOrigin[0], -newOrigin[1], -newOrigin[2]])
-        }
-
+        dispatch(setOrigin([-newOrigin[0], -newOrigin[1], -newOrigin[2]]))
     }, [props.commandCentre, glRef])
 
     const handleMiddleClickGoToAtom = useCallback(evt => {
@@ -141,7 +169,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function') {
-            props.videoRecorderRef.current = new MoorhenScreenRecorder(glRef)
+            props.videoRecorderRef.current = new MoorhenScreenRecorder(glRef, getCanvasRef())
         }
     }, [])
 
@@ -166,6 +194,34 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [doOutline])
+
+    /*
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            if(Math.abs(originState[0]-glRef.current.origin[0])>1e-5||Math.abs(originState[1]-glRef.current.origin[1])>1e-5||Math.abs(originState[2]-glRef.current.origin[2])>1e-5){
+                glRef.current.setOrigin(originState,false,true)
+            }
+        }
+    }, [originState])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            if(Math.abs(quat[0]-glRef.current.myQuat[0])>1e-5||Math.abs(quat[1]-glRef.current.myQuat[1])>1e-5||Math.abs(quat[2]-glRef.current.myQuat[2])>1e-5||Math.abs(quat[3]-glRef.current.myQuat[3])>1e-5){
+                glRef.current.setQuat(quat)
+                glRef.current.drawScene()
+            }
+        }
+    }, [quat])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            if(Math.abs(zoom-glRef.current.zoom)>1e-5){
+                glRef.current.setZoom(zoom)
+                glRef.current.drawScene()
+            }
+        }
+    }, [zoom])
+    */
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
@@ -335,15 +391,72 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setAmbientLightNoUpdate(0.2, 0.2, 0.2)
-            glRef.current.setSpecularLightNoUpdate(0.6, 0.6, 0.6)
-            glRef.current.setDiffuseLight(1., 1., 1.)
-            glRef.current.setLightPositionNoUpdate(10., 10., 60.)
+            glRef.current.setAmbientLightNoUpdate(ambient[0],ambient[1],ambient[2])
+            glRef.current.setSpecularLightNoUpdate(specular[0],specular[1],specular[2])
+            glRef.current.setDiffuseLightNoUpdate(diffuse[0],diffuse[1],diffuse[2])
+            glRef.current.setLightPositionNoUpdate(lightPosition[0],lightPosition[1],lightPosition[2])
+            glRef.current.setSpecularPowerNoUpdate(specularPower)
             setClipFogByZoom()
             glRef.current.resize(width, height)
             glRef.current.drawScene()
         }
     }, [])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setLightPositionNoUpdate(lightPosition[0],lightPosition[1],lightPosition[2])
+            glRef.current.drawScene()
+        }
+    }, [lightPosition])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setAmbientLightNoUpdate(ambient[0],ambient[1],ambient[2])
+            glRef.current.drawScene()
+        }
+    }, [ambient])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setSpecularLightNoUpdate(specular[0],specular[1],specular[2])
+            glRef.current.drawScene()
+        }
+    }, [specular])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setDiffuseLightNoUpdate(diffuse[0],diffuse[1],diffuse[2])
+            glRef.current.drawScene()
+        }
+    }, [diffuse])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setSpecularPowerNoUpdate(specularPower)
+            glRef.current.drawScene()
+        }
+    }, [specularPower])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setDraggableMolecule(draggableMolecule)
+            glRef.current.drawScene()
+        }
+    }, [draggableMolecule])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setActiveMolecule(activeMolecule)
+            glRef.current.drawScene()
+        }
+    }, [activeMolecule])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function') {
+            glRef.current.resize(width, height)
+            glRef.current.drawScene()
+        }
+    }, [width,height])
 
     useEffect(() => {
         document.addEventListener("goToBlobDoubleClick", handleGoToBlobDoubleClick);
@@ -392,9 +505,71 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.labelsTextCanvasTexture.clearBigTexture()
+            labelBuffers.forEach(lab => {
+                glRef.current.labelsTextCanvasTexture.addBigTextureTextImage(lab.label,lab.uuid)
+            })
+            glRef.current.labelsTextCanvasTexture.recreateBigTextureBuffers()
+            glRef.current.drawScene()
+        }
+    }, [labelBuffers, glRef])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.set_clip_range(-clipStart, clipEnd)
+            glRef.current.drawScene()
+        }
+    }, [clipStart, clipEnd, glRef])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.set_fog_range(fogStart, fogEnd)
+            glRef.current.drawScene()
+        }
+    }, [fogStart, fogEnd, glRef])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.setFogClipOffset(fogClipOffset)
+            glRef.current.drawScene()
+        }
+    }, [fogClipOffset, glRef])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
             glRef.current.setBackground(backgroundColor)
         }
     }, [backgroundColor, glRef])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.drawScene()
+        }
+    }, [requestDrawSceneSwitch])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.labelledAtoms = []
+            glRef.current.measuredAtoms = []
+            glRef.current.measurePointsArray = []
+            glRef.current.clearMeasureCylinderBuffers()
+            glRef.current.drawScene()
+        }
+    }, [clearLabelsSwitch])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.setTextFont(GLLabelsFontFamily, GLLabelsFontSize)
+            glRef.current.drawScene()
+        }
+    }, [GLLabelsFontSize, GLLabelsFontFamily])
+
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.handleOriginUpdated(false)
+            glRef.current.drawScene()
+        }
+    }, [updateSwitch])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
@@ -433,12 +608,68 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [molecules, activeMap, hoveredAtom, props.viewOnly, shortCuts, showShortcutToast, shortcutOnHoveredAtom, isChangingRotamers, isRotatingAtoms, isDraggingAtoms])
 
 
+    const getCanvasRef = (() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            return glRef.current.getCanvasRef()
+        }
+        return null
+    })
+
+    const onZoomChanged = (newZoom => {
+        dispatch(setZoom(newZoom))
+    })
+
+    const onOriginChanged = (newOrigin => {
+        dispatch(setOrigin(newOrigin))
+    })
+
+    const onQuatChanged = (newQuat => {
+        if(isNaN(newQuat[0])||isNaN(newQuat[1])||isNaN(newQuat[2])||isNaN(newQuat[3])){
+            console.log(newQuat)
+        }
+        dispatch(setQuat(newQuat))
+    })
+
+    const cursorPositionChanged = ((x,y) => {
+        dispatch(setCursorPosition([x,y]))
+    })
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            let doOrigin = false
+            let doQuat = false
+            let doZoom = false
+            if(Math.abs(originState[0]-glRef.current.origin[0])>1e-5||Math.abs(originState[1]-glRef.current.origin[1])>1e-5||Math.abs(originState[2]-glRef.current.origin[2])>1e-5){
+                doOrigin = true
+            }
+            if(Math.abs(quat[0]-glRef.current.myQuat[0])>1e-5||Math.abs(quat[1]-glRef.current.myQuat[1])>1e-5||Math.abs(quat[2]-glRef.current.myQuat[2])>1e-5||Math.abs(quat[3]-glRef.current.myQuat[3])>1e-5){
+                doQuat = true
+            }
+            //if(glRef.current.animating) doQuat = false
+            if(Math.abs(zoom-glRef.current.zoom)>1e-5){
+                doZoom = true
+            }
+            if(isNaN(quat[0])||isNaN(quat[1])||isNaN(quat[2])||isNaN(quat[3])){
+                console.log(quat)
+                console.log(originState)
+                console.log(zoom)
+            }
+            if(doOrigin||doQuat||doZoom){
+                glRef.current.setOriginOrientationAndZoomAnimated(originState,quat,zoom)
+            }
+        }
+    }, [zoom,quat,originState])
+
     return  <>
                 <figure style={{position: "relative"}}>
                 <MGWebGL
                     ref={glRef}
                     onAtomHovered={(enableAtomHovering && !isRotatingAtoms && !isDraggingAtoms && !isChangingRotamers) ? props.onAtomHovered : null}
                     onKeyPress={onKeyPress}
+                    onZoomChanged={onZoomChanged}
+                    onOriginChanged={onOriginChanged}
+                    onQuatChanged={onQuatChanged}
+                    cursorPositionChanged={cursorPositionChanged}
                     messageChanged={(d) => { }}
                     mouseSensitivityFactor={mouseSensitivity}
                     zoomWheelSensitivityFactor={zoomWheelSensitivityFactor}
@@ -448,8 +679,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     showAxes={drawAxes}
                     showFPS={drawFPS}
                     mapLineWidth={innerMapLineWidth}
-                    reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp}/>
-                    <Moorhen2DOverlay/>;
+                    reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp} setDrawQuat={setDrawQuat}/>
+                    <Moorhen2DOverlay canvasRef={canvas2DRef} drawQuat={drawQuat}/>;
                 </figure>
 
                 {showContextMenu &&

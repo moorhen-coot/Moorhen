@@ -64,7 +64,9 @@ import refinementSettingsReducer from './store/refinementSettingsSlice';
 import lhasaReducer from './store/lhasaSlice';
 import sliceNDiceReducer from './store/sliceNDiceSlice';
 import overlaysReducer from './store/overlaysSlice';
+import glRefSliceReducer from './store/glRefSlice';
 import menusReducer from './store/menusSlice';
+import atomInfoCardsReducer from './store/atomInfoCardsSlice';
 import MoorhenStore from './store/MoorhenReduxStore';
 
 export {
@@ -94,5 +96,5 @@ export {
     resetGeneralStates, resetHoveringStates, resetLabelSettings, resetMapContourSettings, resetMoleculeMapUpdates,
     resetRefinementSettings, resetShortcutSettings, resetActiveModals, focusOnModal, setBFactorThreshold, 
     setClusteringType, setMoleculeBfactors, setMoleculeMaxBfactor, resetSliceNDiceSlice, setMoleculeMinBfactor, 
-    setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType, setPAEFileContents, getMultiColourRuleArgs, setUseGemmi, setDoAnaglyphStereo, setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView, setDoMultiView, setMultiViewColumns, setMultiViewRows, setSpecifyMultiViewRowsColumns, setThreeWayViewOrder
+    setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType, setPAEFileContents, getMultiColourRuleArgs, setUseGemmi, setDoAnaglyphStereo, setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView, setDoMultiView, setMultiViewColumns, setMultiViewRows, setSpecifyMultiViewRowsColumns, setThreeWayViewOrder, glRefSliceReducer, atomInfoCardsReducer
 };

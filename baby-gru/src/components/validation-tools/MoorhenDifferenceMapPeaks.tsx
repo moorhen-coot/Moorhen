@@ -8,6 +8,8 @@ import { moorhen } from "../../types/moorhen";
 import { libcootApi } from "../../types/libcoot";
 import { MoorhenValidationChartWidgetBase } from "./MoorhenValidationChartWidgetBase";
 import { useSelector } from "react-redux";
+import { useDispatch } from 'react-redux';
+import { setOrigin } from "../../store/glRefSlice"
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
@@ -17,6 +19,8 @@ interface Props extends moorhen.CollectedProps {
 }
 
 export const MoorhenDifferenceMapPeaks = (props: Props) => {
+
+    const dispatch = useDispatch()
     const chartRef = useRef(null);
 
     const [selectedRmsd, setSelectedRmsd] = useState<number>(4.5);
@@ -116,7 +120,7 @@ export const MoorhenDifferenceMapPeaks = (props: Props) => {
                 }
 
                 const peakIndex = points[0].index;
-                props.glRef.current.setOriginAnimated([-plotData[peakIndex].coordX, -plotData[peakIndex].coordY, -plotData[peakIndex].coordZ]);
+                dispatch(setOrigin([-plotData[peakIndex].coordX, -plotData[peakIndex].coordY, -plotData[peakIndex].coordZ]))
             };
 
             const setTooltipTitle = (args: TooltipItem<ChartType>[]) => {

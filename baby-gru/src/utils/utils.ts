@@ -6,6 +6,7 @@ import { moorhen } from "../types/moorhen";
 import { gemmi } from "../types/gemmi";
 import { webGL } from "../types/mgWebGL";
 import { libcootApi } from "../types/libcoot";
+import store from '../store/MoorhenReduxStore'
 
 export const parseAtomInfoLabel = (atomInfo: moorhen.AtomInfo) => {
     return `/${atomInfo.mol_name}/${atomInfo.chain_id}/${atomInfo.res_no}(${atomInfo.res_name})/${atomInfo.name}${atomInfo.has_altloc ? `:${atomInfo.alt_loc}` : ""}`
@@ -13,13 +14,14 @@ export const parseAtomInfoLabel = (atomInfo: moorhen.AtomInfo) => {
 
 export const getCentreAtom = async (molecules: moorhen.Molecule[], commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>): Promise<[moorhen.Molecule, string]> => {
     const visibleMolecules: moorhen.Molecule[] = molecules.filter((molecule: moorhen.Molecule) => molecule.isVisible())
+    const originState = store.getState().glRef.origin
     if (visibleMolecules.length === 0) {
         return [null, null]
     }
     const response = await commandCentre.current.cootCommand({
         returnType: "int_string_pair",
         command: "get_active_atom",
-        commandArgs: [...glRef.current.origin.map(coord => coord * -1), visibleMolecules.map(molecule => molecule.molNo).join(':')]
+        commandArgs: [...originState.map(coord => coord * -1), visibleMolecules.map(molecule => molecule.molNo).join(':')]
     }, false) as moorhen.WorkerResponse<libcootApi.PairType<number, string>>
     const moleculeMolNo: number = response.data.result.result.first
     const residueCid: string = response.data.result.result.second
@@ -940,4 +942,53 @@ export const copyStructureSelection = (gemmiStructure: gemmi.Structure, cidSelec
     const newStruct = window.CCP4Module.remove_non_selected_atoms(gemmiStructure, selection)
     selection.delete()
     return newStruct
+}
+
+export const get_grid = (n,method="NEARSQUARE") => {
+    const f = Math.floor(Math.sqrt(n))
+    const c = Math.ceil(Math.sqrt(n))
+
+    if(method==="NEARSQUARE"){
+        if(f*c >= n)
+            return [f,c]
+        else
+            return [c,c]
+    }
+
+    let shapes = []
+
+    for(let i=1;i<=n;i++){
+        for(let j=1;j<=n;j++){
+            if(i*j >= n && i*j <= c*c && Math.abs(i-j)<=f){
+                if(i*j - n < n){
+                    let rem = i*j - n
+                    if(rem != i && rem != j){
+                        shapes.push([i,j,rem])
+                        break
+                    }
+                }
+            }
+        }
+    }
+
+    if(shapes.length===0){
+        if(f*c >= n)
+            return [f,c]
+        else
+            return [c,c]
+    }
+
+    let the_shape = shapes[0]
+    let minrem = n+1
+
+    shapes.forEach( (s) => {
+        if(s[2] < minrem){
+            the_shape = s
+            minrem = s[2]
+        } else if(s[2] == minrem && Math.abs(s[0]-s[1]) < Math.abs(the_shape[0]-the_shape[1])){
+            the_shape = s
+        }
+    })
+
+    return [the_shape[0],the_shape[1]]
 }

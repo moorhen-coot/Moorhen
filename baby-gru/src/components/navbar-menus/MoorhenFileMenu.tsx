@@ -161,6 +161,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
 
     const getSession = async () => {
         const sessionData = await props.timeCapsuleRef.current.fetchSession(true)
+        console.log(sessionData)
         const sessionMessage = moorhensession.Session.fromObject(sessionData)
         const sessionBytes = moorhensession.Session.encode(sessionMessage).finish()
         doDownload([sessionBytes], 'moorhen_session.pb')

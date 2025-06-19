@@ -22,15 +22,20 @@ import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { hexToRGB } from "../../utils/utils";
 import { hideModal } from "../../store/modalsSlice";
+import { setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower,
+         setFogStart, setFogEnd, setClipStart, setClipEnd } from "../../store/glRefSlice"
 import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
 
 const EdgeDetectPanel = (props: {}) => {
+
     const dispatch = useDispatch()
+
     const doEdgeDetect = useSelector((state: moorhen.State) => state.sceneSettings.doEdgeDetect)
     const edgeDetectDepthThreshold = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectDepthThreshold)
     const edgeDetectNormalThreshold = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectNormalThreshold)
     const edgeDetectDepthScale = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectDepthScale)
     const edgeDetectNormalScale = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectNormalScale)
+
     return <div className="scene-settings-panel-flex-between">
         <InputGroup className='moorhen-input-group-check'>
             <Form.Check 
@@ -237,60 +242,45 @@ const ClipFogPanel = (props: {
 }) => {
 
     const dispatch = useDispatch()
-    const [zclipFront, setZclipFront] = useState<number>(props.glRef.current.fogClipOffset + props.glRef.current.gl_clipPlane0[3])
-    const [zclipBack, setZclipBack] = useState<number>(props.glRef.current.gl_clipPlane1[3] - props.glRef.current.fogClipOffset)
-    const [zfogFront, setZfogFront] = useState<number>(props.glRef.current.fogClipOffset - props.glRef.current.gl_fog_start)
-    const [zfogBack, setZfogBack] = useState<number>(props.glRef.current.gl_fog_end - props.glRef.current.fogClipOffset)
+    const fogClipOffset = useSelector((state: moorhen.State) => state.glRef.fogClipOffset)
+    const gl_fog_start = useSelector((state: moorhen.State) => state.glRef.fogStart)
+    const gl_fog_end = useSelector((state: moorhen.State) => state.glRef.fogEnd)
+    const clipStart = useSelector((state: moorhen.State) => state.glRef.clipStart)
+    const clipEnd = useSelector((state: moorhen.State) => state.glRef.clipEnd)
+
     const clipCap = useSelector((state: moorhen.State) => state.sceneSettings.clipCap)
     const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging)
-
-    useEffect(() => {
-        if (props.glRef.current && props.glRef.current.gl_clipPlane0 && props.glRef.current.gl_clipPlane1) {
-            setZclipFront(props.glRef.current.fogClipOffset + props.glRef.current.gl_clipPlane0[3])
-            setZclipBack(props.glRef.current.gl_clipPlane1[3] - props.glRef.current.fogClipOffset)
-            setZfogFront(props.glRef.current.fogClipOffset - props.glRef.current.gl_fog_start)
-            setZfogBack(props.glRef.current.gl_fog_end - props.glRef.current.fogClipOffset)
-        }
-    }, [props.glRef.current.gl_clipPlane1[3], props.glRef.current.gl_clipPlane0[3], props.glRef.current.gl_fog_start, props.glRef.current.gl_fog_end])
 
     return <div className="scene-settings-panel-flex-between">
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Front clip"
-            externalValue={zclipFront}
+            externalValue={clipStart}
             setExternalValue={(newValue) => {
-                props.glRef.current.gl_clipPlane0[3] = newValue - props.glRef.current.fogClipOffset
-                props.glRef.current.drawScene()
-                setZclipFront(newValue)
+                dispatch(setClipStart(newValue))
             }}
             decimalPlaces={1}
             />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Back clip"
-            externalValue={zclipBack}
+            externalValue={clipEnd}
             setExternalValue={(newValue) => {
-                props.glRef.current.gl_clipPlane1[3] = props.glRef.current.fogClipOffset + newValue
-                props.glRef.current.drawScene()
-                setZclipBack(newValue)
+                dispatch(setClipEnd(newValue))
             }}
             decimalPlaces={1}
             />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Front zFog"
-            externalValue={zfogFront}
+            externalValue={fogClipOffset - gl_fog_start}
             setExternalValue={(newValue) => {
-                props.glRef.current.gl_fog_start = props.glRef.current.fogClipOffset - newValue
-                props.glRef.current.drawScene()
-                setZfogFront(newValue)
+                dispatch(setFogStart(fogClipOffset - newValue))
             }}
             decimalPlaces={1}
             />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Back zFog"
-            externalValue={zfogBack}
+            externalValue={gl_fog_end - fogClipOffset}
             setExternalValue={(newValue) => {
-                props.glRef.current.gl_fog_end = newValue + props.glRef.current.fogClipOffset
-                props.glRef.current.drawScene()
-                setZfogBack(newValue)
+                dispatch(setFogEnd(newValue + fogClipOffset))
             }}
             decimalPlaces={1}
             />
@@ -322,90 +312,58 @@ const LightingPanel = (props: {
     const busyLighting = useRef<boolean>(false)
     const newLightPosition = useRef<[number, number, number]>()
     const isSetLightPosIsDirty = useRef<boolean>(false)
-    const [diffuse, setDiffuse] = useState<[number, number, number, number]>(props.glRef.current.light_colours_diffuse)
-    const [specular, setSpecular] = useState<[number, number, number, number]>(props.glRef.current.light_colours_specular)
-    const [ambient, setAmbient] = useState<[number, number, number, number]>(props.glRef.current.light_colours_ambient)
-    const [specularPower, setSpecularPower] = useState<number>(props.glRef.current.specularPower)
-    const [position, setPosition] = useState<[number, number, number]>([props.glRef.current.light_positions[0], props.glRef.current.light_positions[1], props.glRef.current.light_positions[2]])
+
+    const lightPosition = useSelector((state: moorhen.State) => state.glRef.lightPosition)
+    const ambient = useSelector((state: moorhen.State) => state.glRef.ambient)
+    const specular = useSelector((state: moorhen.State) => state.glRef.specular)
+    const diffuse = useSelector((state: moorhen.State) => state.glRef.diffuse)
+    const specularPower = useSelector((state: moorhen.State) => state.glRef.specularPower)
+
     const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
 
     const dispatch = useDispatch()
 
-    const setLightingPositionIfDirty = () => {
-        if (isSetLightPosIsDirty.current) {
-            busyLighting.current = true
-            isSetLightPosIsDirty.current = false
-            props.glRef.current.setLightPosition(newLightPosition.current[0], -newLightPosition.current[1], newLightPosition.current[2])
-            props.glRef.current.drawScene()
-            busyLighting.current = false
-            setLightingPositionIfDirty()
-        }
-    }
-
-    useEffect(() => {
-        if (props.glRef.current && props.glRef.current.light_colours_diffuse) {
-            setDiffuse(props.glRef.current.light_colours_diffuse)
-            setSpecular(props.glRef.current.light_colours_specular)
-            setAmbient(props.glRef.current.light_colours_ambient)
-            setSpecularPower(props.glRef.current.specularPower)
-            setPosition([props.glRef.current.light_positions[0], props.glRef.current.light_positions[1], props.glRef.current.light_positions[2]])
-        }
-    }, [props.glRef.current.specularPower, props.glRef.current.light_positions, props.glRef.current.light_colours_diffuse, props.glRef.current.light_colours_specular, props.glRef.current.light_colours_ambient])
-
     return <div className="scene-settings-panel">
         <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
             sliderTitle="Diffuse"
-            externalValue={props.glRef.current.light_colours_diffuse[0]}
+            externalValue={diffuse[0]}
             setExternalValue={(newValue) => {
-                props.glRef.current.light_colours_diffuse = [newValue, newValue, newValue, 1.0]
-                props.glRef.current.drawScene()
-                setDiffuse([newValue, newValue, newValue, 1.0])
+                dispatch(setDiffuse([newValue, newValue, newValue, 1.0]))
             }}
             stepButtons={0.01}
             decimalPlaces={2}
             />
         <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
             sliderTitle="Specular"
-            externalValue={props.glRef.current.light_colours_specular[0]}
+            externalValue={specular[0]}
             setExternalValue={(newValue) => {
-                props.glRef.current.light_colours_specular = [newValue, newValue, newValue, 1.0]
-                props.glRef.current.drawScene()
-                setSpecular([newValue, newValue, newValue, 1.0])
+                dispatch(setSpecular([newValue, newValue, newValue, 1.0]))
             }}
             stepButtons={0.01}
             decimalPlaces={2}
             />
         <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
             sliderTitle="Ambient"
-            externalValue={props.glRef.current.light_colours_ambient[0]}
+            externalValue={ambient[0]}
             setExternalValue={(newValue) => {
-                props.glRef.current.light_colours_ambient = [newValue, newValue, newValue, 1.0]
-                props.glRef.current.drawScene()
-                setAmbient([newValue, newValue, newValue, 1.0])
+                dispatch(setAmbient([newValue, newValue, newValue, 1.0]))
             }}
             stepButtons={0.01}
             decimalPlaces={2}
             />
         <MoorhenSlider minVal={1.0} maxVal={600.0} logScale={false}
             sliderTitle="Specular power"
-            externalValue={props.glRef.current.specularPower}
+            externalValue={specularPower}
             setExternalValue={(newValue) => {
-                props.glRef.current.specularPower = newValue
-                props.glRef.current.drawScene()
-                setSpecularPower(newValue)
+                dispatch(setSpecularPower(newValue))
             }}
             stepButtons={1}
             decimalPlaces={0}
             />
         <MoorhenLightPosition
-            initialValue={props.glRef.current.light_positions}
-            externalValue={props.glRef.current.light_positions}
+            initialValue={lightPosition}
             setExternalValue={(newValues: [number, number, number]) => {
-                newLightPosition.current = newValues
-                isSetLightPosIsDirty.current = true
-                if (!busyLighting.current) {
-                    setLightingPositionIfDirty()
-                }
+                dispatch(setLightPosition([newValues[0], -newValues[1], newValues[2],1.0]))
             }}
         />
         <InputGroup className='moorhen-input-group-check'>
@@ -418,8 +376,9 @@ const LightingPanel = (props: {
     </div>
 }
 
-const MoorhenSeceneSettings = (props: { glRef: React.RefObject<webGL.MGWebGL>; stackDirection: "horizontal" | "vertical";}) => {
+const MoorhenSceneSettings = (props: { glRef: React.RefObject<webGL.MGWebGL>; stackDirection: "horizontal" | "vertical";}) => {
 
+    const isWebGL2 = useSelector((state: moorhen.State) => state.glRef.isWebGL2)
     return <Stack gap={2} direction={props.stackDirection} style={{display: 'flex', alignItems: 'start', width: '100%', height: "100%"}}>
         <Stack gap={2} direction="vertical">
             <ClipFogPanel glRef={props.glRef}/>
@@ -428,7 +387,7 @@ const MoorhenSeceneSettings = (props: { glRef: React.RefObject<webGL.MGWebGL>; s
         </Stack>
         <Stack gap={1} direction="vertical">
             <LightingPanel glRef={props.glRef}/>
-            {props.glRef.current.isWebGL2() && <DepthBlurPanel/>}
+            {isWebGL2 && <DepthBlurPanel/>}
             <OcclusionPanel/>
         </Stack>
     </Stack>
@@ -456,7 +415,7 @@ export const MoorhenSceneSettingsModal = (props: {
                 maxWidth={convertRemToPx(60)}
                 enforceMaxBodyDimensions={true}
                 body={
-                    <MoorhenSeceneSettings glRef={props.glRef} stackDirection="horizontal" />
+                    <MoorhenSceneSettings glRef={props.glRef} stackDirection="horizontal" />
                 }
                 footer={null}
                 additionalHeaderButtons={[
@@ -470,7 +429,7 @@ export const MoorhenSceneSettingsModal = (props: {
                                 title: "Scene settings",
                                 modalId: modalKeys.SCENE_SETTINGS,
                                 children: <div style={{ overflowY: 'scroll', overflowX: "hidden", maxHeight: '50vh' }}>
-                                    <MoorhenSeceneSettings glRef={props.glRef} stackDirection="vertical" />
+                                    <MoorhenSceneSettings glRef={props.glRef} stackDirection="vertical" />
                                 </div>
                             })                
                         }}>
