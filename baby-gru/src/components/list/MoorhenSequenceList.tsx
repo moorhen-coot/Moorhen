@@ -45,7 +45,6 @@ export const MoorhenSequenceList = (props: {
         } : null;
 
         setSequenceSelection(selection)
-        console.log(selection)
     }, [residueSelection]);
 
     useEffect(() => {
