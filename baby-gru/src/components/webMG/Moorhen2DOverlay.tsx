@@ -199,8 +199,9 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
     canvas2D_ctx.scale(scale, scale);
 
     svgPathOverlays.forEach(t => {
+        canvas2D_ctx.save()
         let p = new Path2D(t.path)
-        if(t.lineWidth) canvas2D_ctx.lineWidth = t.lineWidth * scale
+        if(t.lineWidth) canvas2D_ctx.lineWidth = t.lineWidth
         else canvas2D_ctx.lineWidth = 1.0
         if(t.drawStyle==="stroke"){
             if(t.strokeStyle){
@@ -233,6 +234,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
             }
             canvas2D_ctx.fill(p)
         }
+        canvas2D_ctx.restore()
     })
     canvas2D_ctx.scale(1.0/scale, 1.0/scale);
 
