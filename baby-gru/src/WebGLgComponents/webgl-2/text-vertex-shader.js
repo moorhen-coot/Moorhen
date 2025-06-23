@@ -13,6 +13,8 @@ var text_instanced_vertex_shader_source = `#version 300 es\n
 
     uniform float pixelZoom;
 
+    uniform bool atomLabelIgnoreDepth;
+
     out lowp vec2 vTexture;
     out lowp vec4 eyePos;
 
@@ -22,6 +24,7 @@ var text_instanced_vertex_shader_source = `#version 300 es\n
       theVert.a = 1.0;
 
       gl_Position = uPMatrix * uMVMatrix * theVert;
+      if(atomLabelIgnoreDepth) gl_Position.z = 0.0;
 
       eyePos = uMVMatrix * theVert;
 

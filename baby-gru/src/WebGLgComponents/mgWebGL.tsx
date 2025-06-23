@@ -3519,8 +3519,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         if(!calculatingShadowMap){
             this.drawImagesAndText(invMat);
-            this.drawDistancesAndLabels(up, right);
-            this.drawTextLabels(up, right);
+            if(!this.doPeel) this.drawDistancesAndLabels(up, right);
             if(this.WEBGL2){
                 this.drawTexturedShapes(theMatrix);
             }
@@ -3580,6 +3579,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             this.gl.uniform1i(shader.peelNumber,ipeel);
                             })
                     invMat = this.GLrender(false,doClear,ratioMult);
+                    if(ipeel===0){
+                        const right = vec3.create();
+                        vec3.set(right, 1.0, 0.0, 0.0);
+                        const up = vec3.create();
+                        vec3.set(up, 0.0, 1.0, 0.0);
+                        vec3.transformMat4(up, up, invMat);
+                        vec3.transformMat4(right, right, invMat);
+                        this.drawDistancesAndLabels(up, right)
+                    }
                     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
                 }
 
@@ -5469,11 +5477,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if (this.atomLabelDepthMode) {
             //If we want to fog them
             this.gl.depthFunc(this.gl.LESS);
+            this.gl.uniform1i(this.shaderProgramTextInstanced.atomLabelIgnoreDepth, 0);
         } else {
             //If we want them to be on top
             this.gl.depthFunc(this.gl.ALWAYS);
             this.gl.uniform1f(this.shaderProgramTextInstanced.fog_start, 1000.0);
             this.gl.uniform1f(this.shaderProgramTextInstanced.fog_end, 1000.0);
+            console.log("this.shaderProgramTextInstanced.atomLabelIgnoreDepth",this.shaderProgramTextInstanced.atomLabelIgnoreDepth)
+            this.gl.uniform1i(this.shaderProgramTextInstanced.atomLabelIgnoreDepth, 1);
         }
 
         for(let i = 0; i<16; i++)
@@ -6532,6 +6543,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.depthFunc(this.gl.ALWAYS);
         this.gl.uniform1f(this.shaderProgramTextInstanced.fog_start, 1000.0);
         this.gl.uniform1f(this.shaderProgramTextInstanced.fog_end, 1000.0);
+        this.gl.uniform1i(this.shaderProgramTextInstanced.atomLabelIgnoreDepth, 1);
 
         for(let i = 0; i<16; i++)
             this.gl.disableVertexAttribArray(i);

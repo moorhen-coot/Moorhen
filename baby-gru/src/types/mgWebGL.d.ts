@@ -147,6 +147,7 @@ export namespace webGL {
         pixelZoom: WebGLUniformLocation;
         vertexTextureAttribute: GLint;
         textureMatrixUniform: WebGLUniformLocation;
+        atomLabelIgnoreDepth: WebGLUniformLocation;
     }
 
     interface ShaderTextBackground extends MGWebGLShader {

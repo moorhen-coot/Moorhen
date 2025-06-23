@@ -583,6 +583,8 @@ export function initTextInstancedShaders(vertexShader, fragmentShader, gl) {
 
     shaderProgramTextInstanced.pixelZoom = gl.getUniformLocation(shaderProgramTextInstanced, "pixelZoom");
 
+    shaderProgramTextInstanced.atomLabelIgnoreDepth = gl.getUniformLocation(shaderProgramTextInstanced, "atomLabelIgnoreDepth");
+
     return shaderProgramTextInstanced
 
 }
