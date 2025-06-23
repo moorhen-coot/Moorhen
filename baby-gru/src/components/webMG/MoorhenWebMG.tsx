@@ -449,9 +449,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     showFPS={drawFPS}
                     mapLineWidth={innerMapLineWidth}
                     reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp}/>
-                    <Moorhen2DOverlay/>;
+                    <Moorhen2DOverlay/>
                 </figure>
-
                 {showContextMenu &&
                 <MoorhenContextMenu
                     glRef={glRef as React.RefObject<webGL.MGWebGL>}
