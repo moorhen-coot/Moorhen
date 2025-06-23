@@ -39,6 +39,10 @@
     background-color: rgb(127, 224, 160);
 }
 
+.residue-box.selected:hover {                       
+    background-color: rgb(230, 233, 166);
+}
+
 .residue-box.glideSelect:hover {                       
     background-color: rgb(127, 224, 160);
 }

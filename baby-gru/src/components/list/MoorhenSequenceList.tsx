@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { MoorhenSequenceViewer, SequenceResiduesSelection } from "../sequence-viewer/MoorhenSequenceViewer";
-import { sequenceIsValid } from '../../utils/utils';
+import { cidToSpec, sequenceIsValid } from '../../utils/utils';
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch} from "react-redux";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
@@ -57,7 +57,8 @@ export const MoorhenSequenceList = (props: {
                 }
                 return { sequence: sequence, molName: props.molecule.name, molNo: props.molecule.molNo}
             }
-        )      
+        )
+        console.log(props.molecule.molNo) 
         setSequenceList(newSequenceList)
         props.setBusy(false)
 
@@ -87,6 +88,18 @@ export const MoorhenSequenceList = (props: {
         enqueueSnackbar("residue-selection", {variant: "residueSelection", persist: true})
     }
 
+    const hoveredResidue = useMemo (() => {
+        if (hoveredAtom.cid) {
+            const resInfo = cidToSpec(hoveredAtom.cid) 
+            return {molNo: hoveredAtom.molecule.molNo, chain: resInfo.chain_id, resNum: resInfo.res_no}
+        }
+        else { return null}
+
+    },[hoveredAtom])
+
+    //console.log("props.molecule.representations", props.molecule.representations)
+
+    
     return (
         !display ? 
         <div>
@@ -99,7 +112,7 @@ export const MoorhenSequenceList = (props: {
             onResidueClick={(modelIndex, molName, chain, seqNum) => handleClickResidue(modelIndex, molName, chain, seqNum )}
             onResiduesSelect={(selection) => handleResiduesSelection(selection)}
             onHoverResidue={(molName, chain, resNum, resCode, resCID) => {dispatch(setHoveredAtom({ molecule: props.molecule, cid: resCID }));}}
-            hoveredResidue={hoveredAtom ? { molNo: props.molecule.molNo, cid: hoveredAtom.cid } : { molNo: null, cid: null }}
+            hoveredResidue={hoveredResidue}
             maxDisplayHigh={8}
         />
 );
