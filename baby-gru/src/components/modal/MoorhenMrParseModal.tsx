@@ -1,6 +1,6 @@
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen"
-import { useEffect, useRef, createRef, useCallback } from "react"
+import { useEffect, useRef, createRef, useCallback, useMemo } from "react"
 import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Table } from "react-bootstrap"
 import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
 import { convertRemToPx, convertViewtoPx} from '../../utils/utils'
@@ -14,10 +14,7 @@ import { Slider,Typography } from '@mui/material'
 import { hideMolecule, showMolecule, removeMolecule, addMoleculeList } from "../../store/moleculesSlice"
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import Fasta from "biojs-io-fasta"
-import ProtvistaManager from "protvista-manager"
-import ProtvistaSequence from "protvista-sequence"
-import ProtvistaNavigation from "protvista-navigation"
-import ProtvistaTrack from "protvista-track"
+
 import {
     setMrParseModels, setTargetSequence, setAfJson, setEsmJson,
     setHomologsJson, setAfSortField, setHomologsSortField, setAfSortReversed,
@@ -25,21 +22,8 @@ import {
  } from "../../store/mrParseSlice"
 import { loadMrParseFiles, loadMrParseUrl } from "../../utils/MoorhenFileLoading"
 
-
-declare module "react" {
-    namespace JSX {
-        interface IntrinsicElements {
-            'protvista-manager': any;
-            'protvista-sequence': any;
-            'protvista-track': any;
-        }
-    }
-}
-
-!window.customElements.get('protvista-navigation') && window.customElements.define("protvista-navigation", ProtvistaNavigation)
-!window.customElements.get('protvista-sequence') && window.customElements.define("protvista-sequence", ProtvistaSequence)
-!window.customElements.get('protvista-track') && window.customElements.define("protvista-track", ProtvistaTrack)
-!window.customElements.get('protvista-manager') && window.customElements.define("protvista-manager", ProtvistaManager)
+import { MoorhenSequenceViewer, stringToSeqViewer, MoorhenSeqViewTypes, moorhenSequenceToSeqViewer } from "../sequence-viewer/MoorhenSequenceViewer";
+import { setsEqual } from "chart.js/dist/helpers/helpers.core";
 
 interface MrParsePDBModelJson  {
     chain_id : string;
@@ -183,6 +167,43 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
     const homologsSortReversed = useSelector((state: moorhen.State) => state.mrParse.homologsSortReversed)
     const AFDisplaySettings = useSelector((state: moorhen.State) => state.mrParse.AFDisplaySettings)
     const HomologsDisplaySettings = useSelector((state: moorhen.State) => state.mrParse.HomologsDisplaySettings)
+
+    
+    const homologsSequencesLists = useMemo(() => { 
+        const homologDisplaySequence = stringToSeqViewer(HomologsDisplaySettings.displaySequence, HomologsDisplaySettings.start)
+        homologDisplaySequence.displayName = "Query"
+        const list: MoorhenSeqViewTypes.SeqElement[] = []
+        list.push(homologDisplaySequence)
+
+            homologsJson?.forEach((el,i) => {
+                console.log("el", el)
+                const foundModel = mrParseModels.find(mod => (("models/"+mod.name+".pdb" === el.pdb_file)||"homologs/"+mod.name+".pdb" === el.pdb_file))
+                if( foundModel) {
+                    const seq = foundModel ? foundModel.sequences[0] : null
+                    const offset = foundModel.name.split('_')[2].match(/-?\d+/)[0]
+                    const seqElement = moorhenSequenceToSeqViewer(seq)
+                    seqElement.residuesDisplayOffset = Number(-offset) + el.query_start + 1
+                    seqElement.molName = el.pdb_file
+                    seqElement.displayName = el.pdb_id
+                    seqElement.colour = 'rgb(205, 128, 100)'
+                    seqElement.residues.forEach(residue => {
+                        if (homologDisplaySequence.residues[residue.resNum + seqElement.residuesDisplayOffset]) {
+                            if (residue.resCode === homologDisplaySequence.residues.find(r => r.resNum === residue.resNum + seqElement.residuesDisplayOffset).resCode) {
+                                residue.colour = 'rgb(205, 0, 0)'
+                            }
+                        }
+                    });
+                    list.push(seqElement)
+            }
+            });
+        return list;
+    }, [HomologsDisplaySettings, homologsJson, mrParseModels])
+
+    const handleClickResidue = (clickedResidue: {molIndex: number, molName: string, chain: string, resNum: number}) => {
+        const pdbFileName: string = clickedResidue.molName
+        const foundModel = mrParseModels.find(mod => (("models/"+mod.name+".pdb" === pdbFileName)||"homologs/"+mod.name+".pdb" === pdbFileName))
+        foundModel?.centreOn(`/*/${clickedResidue.chain}/${clickedResidue.resNum}-${clickedResidue.resNum}/*`)
+    }
 
     const tableSort = ((a,b,key,isString,reversed) => {
         if(isString){
@@ -508,7 +529,6 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             for(const iter of Object.entries(json)){
                 const key: string = iter[0]
                 const value: any = iter[1]
-                //console.log(value)
             }
         }
         if(homologsContents){
@@ -667,7 +687,15 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                     <Container
                         style={{backgroundColor: isDark ? '#7d7d7d' : 'white',color: isDark ? 'white' : 'black'}}
                         >
-                    <protvista-manager ref={HomologsManagerRef}>
+                    <MoorhenSequenceViewer
+                        sequences={homologsSequencesLists}
+                        onResidueClick={(modelIndex, molName, chain, seqNum) => handleClickResidue({ molIndex: modelIndex, molName, chain, resNum: seqNum })}
+                        nameColumnWidth={4}
+                        columnWidth={0.5}
+                        reOrder={false}
+                    ></MoorhenSequenceViewer>
+
+                    {/**<protvista-manager ref={HomologsManagerRef}>
                         <Row>
                        <Col md={3}>
                        </Col>
@@ -705,7 +733,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                        </Col>
                        </Row>
                         ))}
-                    </protvista-manager>
+                    </protvista-manager> */}
                     </Container>
                     </AccordionDetails>
                     </Accordion>
@@ -774,7 +802,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                     <Container
                         style={{backgroundColor: isDark ? '#7d7d7d' : 'white',color: isDark ? 'white' : 'black'}}
                         >
-                    <protvista-manager ref={AFManagerRef}>
+                    {/** <protvista-manager ref={AFManagerRef}>
                        <Row>
                        <Col md={3}>
                        </Col>
@@ -812,7 +840,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                        </Col>
                        </Row>
                         ))}
-                        </protvista-manager>
+                        </protvista-manager> */}
                         </Container>
                     </AccordionDetails>
                     </Accordion>
