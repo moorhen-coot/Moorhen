@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, memo } from 'react';
 import { Stack, Button, FormSelect, Form, InputGroup, Row } from "react-bootstrap";
 import { getMultiColourRuleArgs } from '../../utils/utils';
 import { representationLabelMapping } from '../../utils/enums';
-import { MoorhenSequenceViewer } from '../sequence-viewer/MoorhenSequenceViewer';
+import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from '../sequence-viewer/MoorhenSequenceViewer';
 import { moorhen } from "../../types/moorhen";
 import { Popover } from '@mui/material';
 import { MoorhenChainSelect } from '../select/MoorhenChainSelect';
@@ -374,7 +374,7 @@ export const MoorhenAddCustomRepresentationCard = memo((props: {
                 {ruleType === 'residue-range' ? (
                     <div style={{width: '100%'}}>
                         <MoorhenSequenceViewer
-                            sequences={[{sequence: selectedSequence, molName: props.molecule.name, molNo: props.molecule.molNo}]}
+                            sequences={moorhenSequenceToSeqViewer(selectedSequence)}
                             onResiduesSelect={(selection) => {handleResiduesRangeSelection(selection)}}
                         />
                     </div>

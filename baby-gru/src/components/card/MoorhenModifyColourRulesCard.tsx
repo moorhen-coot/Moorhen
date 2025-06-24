@@ -11,7 +11,7 @@ import { webGL } from "../../types/mgWebGL";
 import { Popover } from "@mui/material";
 import { useSelector } from "react-redux";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
-import { MoorhenSequenceViewer } from "../sequence-viewer/MoorhenSequenceViewer";
+import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../sequence-viewer/MoorhenSequenceViewer";
 
 type colourRuleChange = {
     action: "Add" | "Remove" | "Overwrite" | "MoveUp" | "MoveDown" | "Empty";
@@ -280,9 +280,9 @@ export const MoorhenModifyColourRulesCard = memo((props: {
             {ruleType === 'residue-range' && 
             <div style={{width: `${convertRemToPx(15)*2}px`, padding: '0.5rem', textAlign: 'center'}}>
                 <MoorhenSequenceViewer
-                    sequences={[{sequence: selectedSequence, molName: props.molecule.name, molNo: props.molecule.molNo}]}
+                    sequences={moorhenSequenceToSeqViewer(selectedSequence)}
                     onResiduesSelect={(selection) => handleResiduesSelection(selection)}
-                    maxDisplayHigh={1}
+                    maxDisplayHeight={1}
                 />
             </div>
             }

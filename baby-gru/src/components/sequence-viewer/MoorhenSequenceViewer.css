@@ -1,7 +1,7 @@
 .residue-box {
     cursor: pointer;
-    min-width: 1rem;
-    max-width: 1rem;
+    min-width: var(--column-width, 1rem) ;
+    max-width: var(--column-width, 1rem);
     min-height: 1.5rem;
     max-height: 1.5rem;
     display: flex;
@@ -13,10 +13,11 @@
 }
 
 .residue-box.even {
-    background-color: rgb(198, 205, 238);
+    background-color: var(--overlay-color, rgb(198, 205, 238));
 }
+
 .residue-box.odd {
-    background-color: rgb(199, 228, 244);
+    background-color: color-mix(in srgb, var(--overlay-color, rgb(198, 205, 238)), rgb(256, 256, 256) 30%);
 }
 
 .residue-box.empty {
@@ -32,7 +33,7 @@
 }
 
 .residue-box.empty:hover {                       
-    background-color: rgb(230, 230, 230);
+    background-color: rgba(230, 230, 230, 0.5);
 }
 
 .residue-box.selected {                       
@@ -48,8 +49,6 @@
 }
 
 .tick-mark {
-    min-width: 5rem;
-    max-width: 5rem;
     align-items: top;
     display: flex;
     justify-content: left;
@@ -87,8 +86,8 @@
     left: 0;
     z-index: 1;
     background: white;
-    min-width: 2rem;
-    max-width: 2rem;
+    min-width: rem;
+    max-width: 4rem;
     border-right: 1px solid #ccc;
     display: flex;
     align-items: center;
