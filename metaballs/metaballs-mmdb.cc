@@ -171,7 +171,7 @@ std::map<std::string,float> multLookup = {
 {"AS", 1.85},
 {"AT", 1.80},
 {"AU", 1.66},
-{"B", 0.85},
+{"B", 1.9},
 {"BA", 2.53},
 {"BE", 1.12},
 {"BH", 2.0},//UNK
