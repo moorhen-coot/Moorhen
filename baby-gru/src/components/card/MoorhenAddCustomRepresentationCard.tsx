@@ -23,7 +23,7 @@ const customRepresentations = [ 'CBs', 'CAs', 'CRs', 'gaussian', 'MolecularSurfa
 
 export const MoorhenAddCustomRepresentationCard = (props: {
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
-    show: boolean; 
+    show: boolean;
     anchorEl: React.RefObject<HTMLDivElement>;
     molecule: moorhen.Molecule;
     urlPrefix: string;
@@ -221,6 +221,9 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                     colourRule.setArgs([ ruleArgs ])
                     colourRule.setParentMolecule(props.molecule)
                     break
+                case "metaballs":
+                    //I do not think we have to do anything as there is no way to change colours for metaballs at present.
+                    break
                 default:
                     console.log('Unrecognised colour mode')
                     break
@@ -268,6 +271,11 @@ export const MoorhenAddCustomRepresentationCard = (props: {
             }
         }
 
+        const nonCustomAlpha = (
+            colourMode === 'b-factor' || colourMode === 'b-factor-norm' || colourMode === "secondary-structure" ||
+            colourMode ==="af2-plddt" ||  colourMode === 'electrostatics' || colourMode === 'jones-rainbow' ||
+            representationStyle === "MetaBalls"
+        ) ? nonCustomOpacity : null
         if (mode === 'add') {
             const representation = await props.molecule.addRepresentation(
                 styleSelectRef.current.value,
@@ -277,7 +285,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 bondOptions,
                 m2tParams,
                 residueEnvSettings,
-                nonCustomOpacitySliderRef.current
+                nonCustomAlpha
             )
             dispatch( addCustomRepresentation(representation) )
         } else if (mode === 'edit' && props.representation.uniqueId) {
@@ -291,7 +299,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 representation.setM2tParams(m2tParams)
                 representation.setResidueEnvOptions(residueEnvSettings)
                 await representation.redraw()
-                representation.setNonCustomOpacity(nonCustomOpacitySliderRef.current)
+                representation.setNonCustomOpacity(nonCustomAlpha)
             }
         }
 
@@ -301,7 +309,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
         colour, props.molecule, props.representation, mode, bondWidth, atomRadiusBondRatio, bondSmoothness,
         nucleotideRibbonStyle, ribbonArrowWidth, ribbonAxialSampling, ribbonCoilThickness, ribbonDNARNAWidth,
         ribbonHelixWidth, ribbonStrandWidth, maxEnvDist, labelledEnv, showEnvContacts, showEnvHBonds,
-        showAniso, showOrtep, showHs
+        showAniso, showOrtep, showHs, nonCustomOpacity
     ])
 
     const handleCreateRepresentation = useCallback(async () => {
@@ -453,7 +461,9 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 {!useDefaultColours &&
                 <>
                 <Row style={{paddingLeft: '1rem'}}>
-                    <FormSelect style={{ width: '50%', marginRight: '0.5rem' }} size="sm" ref={colourModeSelectRef} defaultValue={colourMode} onChange={handleColourModeChange}>
+                        <FormSelect style={{ width: '50%', marginRight: '0.5rem' }} size="sm" ref={colourModeSelectRef} defaultValue={colourMode} onChange={handleColourModeChange}>
+                        {representationStyle !== "MetaBalls" &&
+                        <>
                         <option value={'custom'} key={'custom'}>User defined colour</option>
                         <option value={'secondary-structure'} key={'secondary-structure'}>Secondary structure</option>
                         <option value={'jones-rainbow'} key={'jones-rainbow'}>Jones' rainbow</option>
@@ -461,10 +471,17 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                         <option value={'b-factor-norm'} key={'b-factor-norm'}>B-Factor (normalised)</option>
                         <option value={'af2-plddt'} key={'af2-plddt'}>AF2 PLDDT</option>
                         <option value={'mol-symm'} key={'mol-symm'}>Mol. Symmetry</option>
+                        </>
+                        }
                         {representationStyle === "MolecularSurface" &&
                         <option value={'electrostatics'} key={'electrostatics'}>Electrostatics</option>
                         }
+                        {representationStyle === "MetaBalls" &&
+                        <option value={'metaballs'} key={'metaballs'}>Metaballs colours</option>
+                        }
                     </FormSelect>
+                    {representationStyle !== "MetaBalls" &&
+                    <>
                     {(colourMode === 'b-factor' || colourMode === 'b-factor-norm') ?
                         <img className="colour-rule-icon" src={`${props.urlPrefix}/pixmaps/temperature.svg`} alt='b-factor' style={{ width: '30px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}} ref={alphaSwatchRef} onClick={() => setShowAlphaSlider(true)}/>
                     : colourMode === "secondary-structure" ?
@@ -487,6 +504,11 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                     />
                     :
                         <img className='colour-rule-icon' src={`${props.urlPrefix}/pixmaps/alphafold_rainbow.svg`} alt='ss2' style={{ width: '30px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}} ref={alphaSwatchRef} onClick={() => setShowAlphaSlider(true)}/>
+                    }
+                    </>
+                    }
+                    {representationStyle === "MetaBalls" &&
+                        <img className='colour-rule-icon' src={`${props.urlPrefix}/pixmaps/metaballscolour.svg`} alt='ss2' style={{ width: '30px', height: '30px', borderRadius: '3px', border: '1px solid #c9c9c9', padding: 0}} ref={alphaSwatchRef} onClick={() => setShowAlphaSlider(true)}/>
                     }
                 </Row>
                 <Popover

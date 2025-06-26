@@ -1190,20 +1190,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 commandArgs: [this.parentMolecule.molNo, cid, 0.2, 0.67, 1.8]
         }, false) as moorhen.WorkerResponse<libcootApi.SimpleMeshJS>;
         const objects = [response.data.result.result];
-        if(this.colourRules.length>0){
-            if(this.colourRules[0].color&&this.colourRules[0].color.length===9){
-                const thisAlpha = Number("0x"+this.colourRules[0].color.substring(7))/255.
-                objects.forEach((buffer) => {
-                    buffer.col_tri.forEach((arrs) => {
-                        arrs.forEach((cols) => {
-                            for (let idx = 0; idx < cols.length; idx += 4) {
-                                cols[idx+3] = thisAlpha
-                            }
-                        })
-                    })
-                })
-            }
-        }
         return objects
     }
 
