@@ -58,6 +58,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const showHoverInfo = useSelector((state: moorhen.State) => state.generalStates.showHoverInfo)
 
     useEffect(() => {
         if (props.commandCentre.current) {
@@ -232,7 +233,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
 
         { props.extraNavBarModals && props.extraNavBarModals.filter(modal => modal.show).map(modal => modal.JSXElement) }
 
-        <Fab
+        {showHoverInfo && <Fab
             variant='extended'
             size="large"
             sx={{
@@ -265,5 +266,6 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
                 style={{ padding: 0, margin: 0, color: 'black' }}
             />}
         </Fab>
+        }
     </>
 })

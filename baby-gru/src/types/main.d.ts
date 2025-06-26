@@ -364,6 +364,9 @@ declare module 'moorhen' {
     function setViewOnly(arg0: boolean): any;
     module.exports = setViewOnly;
 
+    function setShowBackDropNavBar(arg0: boolean): any;
+    module.exports = setShowBackDropNavBar;
+
     function setCursorStyle(arg0: string): any;
     module.exports = setCursorStyle;
 

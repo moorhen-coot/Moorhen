@@ -1058,6 +1058,7 @@ export namespace moorhen {
             showResidueSelection: boolean;
             defaultExpandDisplayCards: boolean;
             transparentModalsOnMouseOut: boolean;
+            showHoverInfo: boolean;
         };
         sharedSession: {
             isInSharedSession: boolean;
