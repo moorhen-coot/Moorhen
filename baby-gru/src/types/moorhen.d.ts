@@ -829,6 +829,7 @@ export namespace moorhen {
         setAtomLabelDepthMode: React.Dispatch<React.SetStateAction<boolean>>;
         setMouseSensitivity: React.Dispatch<React.SetStateAction<number>>;
         setShowShortcutToast: React.Dispatch<React.SetStateAction<boolean>>;
+        setShowHoverInfo: React.Dispatch<React.SetStateAction<boolean>>;
         setMakeBackups: React.Dispatch<React.SetStateAction<boolean>>;
         setContourWheelSensitivityFactor: React.Dispatch<React.SetStateAction<number>>;
         setDevMode: React.Dispatch<React.SetStateAction<boolean>>;

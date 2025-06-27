@@ -1,6 +1,6 @@
 {
   "name": "moorhen",
-  "version": "0.21.2-react19.3",
+  "version": "0.21.2-react19.4",
   "private": false,
   "main": "moorhen.js",
   "types": "./types/main.d.ts",

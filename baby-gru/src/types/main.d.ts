@@ -71,7 +71,6 @@ declare module 'moorhen' {
     let MoorhenDraggableModalBase: any;
     module.exports = MoorhenDraggableModalBase;
 
-
     let MoorhenMoleculeSelect: any;
     module.exports = MoorhenMoleculeSelect;
 
@@ -432,6 +431,9 @@ declare module 'moorhen' {
 
     function setShowShortcutToast(arg0: boolean): any;
     module.exports = setShowShortcutToast;
+
+    function setShowHoverInfo(arg0: boolean): any;
+    module.exports = setShowHoverInfo;
 
     function setShortcutOnHoveredAtom(arg0: boolean): any;
     module.exports = setShortcutOnHoveredAtom;
