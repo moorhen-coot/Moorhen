@@ -1394,11 +1394,12 @@ onmessage = function (e) {
         const isChromeLinux = (navigator.appVersion.indexOf("Linux") != -1) && (navigator.appVersion.indexOf("Chrome") != -1)
         if (memory64&&!isChromeLinux) {
             try {
+                // @ts-ignore
                 importScripts('./moorhen64.js')
                 mod = createCoot64Module
                 scriptName = "moorhen64.js"
                 console.log("Successfully loaded 64-bit libcoot in worker thread")
-            } catch (e) {
+            } catch (e: any) {
                 if(e.name === 'NetworkError'){
                    console.log('There was a NetworkError loading 64-bit WebAssembly module.')
                    console.log('A retry *should* be attempted, errors below may not be real.');
@@ -1406,12 +1407,14 @@ onmessage = function (e) {
                 console.error(e)
                 console.log("Failed to load 64-bit libcoot in worker thread. Falling back to 32-bit.")
                 memory64 = false
+                // @ts-ignore
                 importScripts('./moorhen.js')
                 mod = createCootModule
                 scriptName = "moorhen.js"
                 console.log("Successfully loaded 32-bit libcoot in worker thread")
             }
         } else {
+            // @ts-ignore
             importScripts('./moorhen.js')
             mod = createCootModule
             scriptName = "moorhen.js"
@@ -1512,7 +1515,7 @@ onmessage = function (e) {
         })
 
     } else if (e.data.message === 'coot_command_list') {
-        const resultList = e.data.commandList.map(command => doCootCommand({ ...e.data, ...command }))
+        const resultList = e.data.commandList.map((command: any) => doCootCommand({ ...e.data, ...command }))
         postMessage({
             messageId: e.data.messageId, resultList
         })
