@@ -9,8 +9,8 @@ A JavaScript molecular graphics program
 - [ ] Fix multiview with edge detect.
 - [ ] Ability to set origin/zoom/individual rotation in "Multiple views for different molecules".
 - [ ] Remove glRef from all component props and class constructor args.
-- [ ] Metaballs transparency.
-- [ ] Metaballs colouring options.
+- [x] Metaballs transparency.
+- [x] Metaballs colouring options.
 
 ### For 0.22.0
 - [ ] Fix text labels being ugly when there is a transparent object.
