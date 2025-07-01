@@ -1,20 +1,6 @@
 import { ErrorBoundary } from "./ErrorBoundary";
 import { MoorhenApp } from './components/MoorhenApp';
 import { MoorhenContainer } from './components/MoorhenContainer';
-import { MoorhenRamachandran } from './components/validation-tools/MoorhenRamachandran';
-import { MoorhenLigandValidation } from './components/validation-tools/MoorhenLigandValidation';
-
-import { MoorhenCarbohydrateValidation } from './components/validation-tools/MoorhenCarbohydrateValidation';
-import { MoorhenDifferenceMapPeaks } from './components/validation-tools/MoorhenDifferenceMapPeaks';
-import { MoorhenFillMissingAtoms } from './components/validation-tools/MoorhenFillMissingAtoms';
-import { MoorhenJsonValidation } from './components/validation-tools/MoorhenJsonValidation';
-import { MoorhenMMRRCCPlot } from './components/validation-tools/MoorhenMMRRCCPlot';
-import { MoorhenPepflipsDifferenceMap } from './components/validation-tools/MoorhenPepflipsDifferenceMap';
-import { MoorhenQScore } from './components/validation-tools/MoorhenQScore';
-import { MoorhenUnmodelledBlobs } from './components/validation-tools/MoorhenUnmodelledBlobs';
-import { MoorhenValidation } from './components/validation-tools/MoorhenValidation';
-import { MoorhenWaterValidation } from './components/validation-tools/MoorhenWaterValidation';
-
 import { MoorhenDraggableModalBase } from "./components/modal/MoorhenDraggableModalBase";
 import { MoorhenQuerySequenceModal } from "./components/modal/MoorhenQuerySequenceModal";
 import { MoorhenColourRule } from './utils/MoorhenColourRule';
@@ -29,7 +15,22 @@ import { MoorhenMoleculeSelect } from "./components/select/MoorhenMoleculeSelect
 import { MoorhenMapSelect } from "./components/select/MoorhenMapSelect";
 import { MoorhenSlider } from "./components/inputs/MoorhenSlider";
 import { MoorhenFetchOnlineSourcesForm } from "./components/form/MoorhenFetchOnlineSourcesForm";
+
+import { MoorhenRamachandran } from './components/validation-tools/MoorhenRamachandran';
+import { MoorhenLigandValidation } from './components/validation-tools/MoorhenLigandValidation';
+import { MoorhenCarbohydrateValidation } from './components/validation-tools/MoorhenCarbohydrateValidation';
+import { MoorhenDifferenceMapPeaks } from './components/validation-tools/MoorhenDifferenceMapPeaks';
+import { MoorhenFillMissingAtoms } from './components/validation-tools/MoorhenFillMissingAtoms';
+import { MoorhenJsonValidation } from './components/validation-tools/MoorhenJsonValidation';
+import { MoorhenMMRRCCPlot } from './components/validation-tools/MoorhenMMRRCCPlot';
+import { MoorhenPepflipsDifferenceMap } from './components/validation-tools/MoorhenPepflipsDifferenceMap';
+import { MoorhenQScore } from './components/validation-tools/MoorhenQScore';
+import { MoorhenUnmodelledBlobs } from './components/validation-tools/MoorhenUnmodelledBlobs';
+import { MoorhenValidation } from './components/validation-tools/MoorhenValidation';
+import { MoorhenWaterValidation } from './components/validation-tools/MoorhenWaterValidation';
+
 import MoorhenReduxStore from "./store/MoorhenReduxStore";
+
 import { setDefaultBackgroundColor, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
     setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap, setEdgeDetectNormalScale, resetSceneSettings,
     setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius, setDrawScaleBar,
@@ -61,6 +62,7 @@ import { setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwr
 import { resetLhasaSettings, addRdkitMoleculePickle, removeRdkitMoleculePickle, emptyRdkitMoleculePickleList }  from './store/lhasaSlice';
 import { resetActiveModals, focusOnModal, unFocusModal } from './store/modalsSlice';
 import { resetSharedSession } from './store/sharedSessionSlice';
+
 import moleculesReducer from './store/moleculesSlice';
 import mapsReducer from './store/mapsSlice';
 import mouseSettingsReducer from './store/mouseSettings';
@@ -103,10 +105,15 @@ export {
     moleculesReducer, mapsReducer, mouseSettingsReducer, backupSettingsReducer, unFocusModal, resetSharedSession,
     shortcutSettingsReducer, labelSettingsReducer, sceneSettingsReducer, generalStatesReducer, removeGeneralRepresentation,
     modalsReducer, hoveringStatesReducer, mapContourSettingsReducer, moleculeMapUpdateReducer, addGeneralRepresentation,
-    sharedSessionReducer, refinementSettingsReducer, sliceNDiceReducer, overlaysReducer, lhasaReducer, resetSceneSettings, resetBackupSettings, resetDefaultMouseSettings,
+    sharedSessionReducer, refinementSettingsReducer, sliceNDiceReducer, overlaysReducer, lhasaReducer, resetSceneSettings,
+    resetBackupSettings, resetDefaultMouseSettings,
     resetGeneralStates, resetHoveringStates, resetLabelSettings, resetMapContourSettings, resetMoleculeMapUpdates,
     resetRefinementSettings, resetShortcutSettings, resetActiveModals, focusOnModal, setBFactorThreshold, 
     setClusteringType, setMoleculeBfactors, setMoleculeMaxBfactor, resetSliceNDiceSlice, setMoleculeMinBfactor, 
-    setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType, setPAEFileContents, getMultiColourRuleArgs, setUseGemmi, setDoAnaglyphStereo, setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView, setDoMultiView, setMultiViewColumns, setMultiViewRows, setSpecifyMultiViewRowsColumns, setThreeWayViewOrder, setShowHoverInfo, MoorhenRamachandran, MoorhenLigandValidation,
-    MoorhenCarbohydrateValidation,MoorhenDifferenceMapPeaks,MoorhenFillMissingAtoms,MoorhenJsonValidation,MoorhenMMRRCCPlot,MoorhenPepflipsDifferenceMap,MoorhenQScore,MoorhenUnmodelledBlobs,MoorhenValidation,MoorhenWaterValidation
+    setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType, setPAEFileContents, getMultiColourRuleArgs,
+    setUseGemmi, setDoAnaglyphStereo, setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView, setDoMultiView,
+    setMultiViewColumns, setMultiViewRows, setSpecifyMultiViewRowsColumns, setThreeWayViewOrder, setShowHoverInfo,
+    MoorhenRamachandran, MoorhenLigandValidation, MoorhenCarbohydrateValidation, MoorhenDifferenceMapPeaks,
+    MoorhenFillMissingAtoms, MoorhenJsonValidation, MoorhenMMRRCCPlot, MoorhenPepflipsDifferenceMap, MoorhenQScore,
+    MoorhenUnmodelledBlobs, MoorhenValidation, MoorhenWaterValidation
 };
