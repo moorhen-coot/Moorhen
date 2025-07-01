@@ -65,8 +65,41 @@ declare module 'moorhen' {
     let MoorhenContainer: any;
     module.exports = MoorhenContainer;
 
+    let MoorhenCarbohydrateValidation: any;
+    module.exports = MoorhenCarbohydrateValidation;
+
+    let MoorhenDifferenceMapPeaks: any;
+    module.exports = MoorhenDifferenceMapPeaks;
+
+    let MoorhenFillMissingAtoms: any;
+    module.exports = MoorhenFillMissingAtoms;
+
+    let MoorhenJsonValidation: any;
+    module.exports = MoorhenJsonValidation;
+
+    let MoorhenLigandValidation: any;
+    module.exports = MoorhenLigandValidation;
+
+    let MoorhenMMRRCCPlot: any;
+    module.exports = MoorhenMMRRCCPlot;
+
+    let MoorhenPepflipsDifferenceMap: any;
+    module.exports = MoorhenPepflipsDifferenceMap;
+
+    let MoorhenQScore: any;
+    module.exports = MoorhenQScore;
+
     let MoorhenRamachandran: any;
     module.exports = MoorhenRamachandran;
+
+    let MoorhenUnmodelledBlobs: any;
+    module.exports = MoorhenUnmodelledBlobs;
+
+    let MoorhenValidation: any;
+    module.exports = MoorhenValidation;
+
+    let MoorhenWaterValidation: any;
+    module.exports = MoorhenWaterValidation;
 
     let ErrorBoundary: any;
     module.exports = ErrorBoundary;
