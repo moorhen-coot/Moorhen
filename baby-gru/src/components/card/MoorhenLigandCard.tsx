@@ -88,7 +88,9 @@ export const MoorhenLigandCard = (props: {
         </ToggleButton>
     }
 
-    const flev_placeholder = ligand.flev_svg.includes("You must add hydrogen atoms to the model")
+    let flev_placeholder = true
+    if(ligand&&ligand.flev_svg)
+        flev_placeholder = ligand.flev_svg.includes("You must add hydrogen atoms to the model")
 
     // For some reason a random key needs to be used here otherwise the scroll of the card list gets reset with every re-render
     return <Card key={guid()} style={{marginTop: '0.5rem'}}>

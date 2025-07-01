@@ -2,6 +2,7 @@
 A JavaScript molecular graphics program
 
 ### For 0.23.0
+- [ ] Fix Ligand validation crash.
 - [ ] Fix SSAO.
 - [ ] Load dictionary without creating molecule.
 - [ ] Fix multiview with depth blur.
