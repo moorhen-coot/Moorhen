@@ -1,6 +1,7 @@
 import { ErrorBoundary } from "./ErrorBoundary";
 import { MoorhenApp } from './components/MoorhenApp';
 import { MoorhenContainer } from './components/MoorhenContainer';
+import { MoorhenRamachandran } from './components/validation-tools/MoorhenRamachandran';
 import { MoorhenDraggableModalBase } from "./components/modal/MoorhenDraggableModalBase";
 import { MoorhenQuerySequenceModal } from "./components/modal/MoorhenQuerySequenceModal";
 import { MoorhenColourRule } from './utils/MoorhenColourRule';
@@ -93,5 +94,5 @@ export {
     resetGeneralStates, resetHoveringStates, resetLabelSettings, resetMapContourSettings, resetMoleculeMapUpdates,
     resetRefinementSettings, resetShortcutSettings, resetActiveModals, focusOnModal, setBFactorThreshold, 
     setClusteringType, setMoleculeBfactors, setMoleculeMaxBfactor, resetSliceNDiceSlice, setMoleculeMinBfactor, 
-    setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType, setPAEFileContents, getMultiColourRuleArgs, setUseGemmi, setDoAnaglyphStereo, setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView, setDoMultiView, setMultiViewColumns, setMultiViewRows, setSpecifyMultiViewRowsColumns, setThreeWayViewOrder, setShowHoverInfo
+    setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType, setPAEFileContents, getMultiColourRuleArgs, setUseGemmi, setDoAnaglyphStereo, setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView, setDoMultiView, setMultiViewColumns, setMultiViewRows, setSpecifyMultiViewRowsColumns, setThreeWayViewOrder, setShowHoverInfo, MoorhenRamachandran
 };

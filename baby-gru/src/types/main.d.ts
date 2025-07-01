@@ -65,6 +65,9 @@ declare module 'moorhen' {
     let MoorhenContainer: any;
     module.exports = MoorhenContainer;
 
+    let MoorhenRamachandran: any;
+    module.exports = MoorhenRamachandran;
+
     let ErrorBoundary: any;
     module.exports = ErrorBoundary;
 
