@@ -1,6 +1,6 @@
 {
   "name": "moorhen",
-  "version": "0.21.2-react19.6",
+  "version": "0.21.2-react19.7",
   "private": false,
   "main": "moorhen.js",
   "types": "./types/main.d.ts",
@@ -228,5 +228,9 @@
     "worker-loader": "^3.0.8",
     "y-websocket": "^1.5.3",
     "yjs": "^13.6.12"
+  },
+  "devDependencies": {
+    "jsdoc-babel": "^0.5.0",
+    "@babel/plugin-proposal-object-rest-spread": "^7.20.7"
   }
 }
