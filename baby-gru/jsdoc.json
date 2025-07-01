@@ -4,8 +4,8 @@
       "dictionaries": ["jsdoc", "closure"]
     },
     "source": {
-      "include": ["./src/components"],
-      "excludePattern": "(src/__tests__/|src/WebGLgComponents/)",
+      "include": ["./src/"],
+      "excludePattern": "(src/__tests__/|src/WebGLgComponents/|src/utils/__graphql__/|src/types)",
       "includePattern": ".(jsx|js|ts|tsx)$"
     },
     "plugins": ["plugins/markdown", "node_modules/jsdoc-babel"],
@@ -17,7 +17,7 @@
         "monospaceLinks": false
     },
     "babel": {
-        "extensions": ["tsx"],
+        "extensions": ["tsx","ts"],
         "ignore": ["**/*.(test|spec).ts"],
         "babelrc": false,
         "presets": [["@babel/preset-env", { "targets": { "node": true } }], "@babel/preset-typescript"],
