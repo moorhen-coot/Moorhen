@@ -53,7 +53,7 @@ export const MoorhenMapSelect = forwardRef<HTMLSelectElement, MoorhenMapSelectPr
     };
 
     const getMapOptions = () => {
-        let mapOptions: JSX.Element[] = [];
+        let mapOptions:React.JSX.Element[] = [];
 
         if (maps) {
             maps.forEach((map) => {

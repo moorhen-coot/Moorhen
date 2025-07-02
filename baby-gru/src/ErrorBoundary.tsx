@@ -7,7 +7,7 @@ import { moorhen } from './types/moorhen';
 
 type ErrorBoundaryPropsType = {
     urlPrefix: string;
-    children: JSX.Element;
+    children: React.JSX.Element;
 }
 type ErrorBoundaryStateType = {
     hasError: boolean;

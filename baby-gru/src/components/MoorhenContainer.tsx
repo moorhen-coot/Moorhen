@@ -118,9 +118,9 @@ declare module "notistack" {
             glRef: React.RefObject<webGL.MGWebGL>;
         };
         sideBar: {
-            children: JSX.Element;
+            children: React.JSX.Element;
             modalId: string;
-            title: string | JSX.Element;
+            title: string | React.JSX.Element;
         }
     }
 }
@@ -140,10 +140,10 @@ declare module "notistack" {
  * @property {string[]} [includeNavBarMenuNames] - An array of menu names to include in the Moorhen navbar. If empty array then all menus will be included. It can also be used to set their order.
  * @property {object[]} extraNavBarModals - A list with additional draggable modals with buttons rendered under the navigation menu
  * @property {object[]} extraNavBarMenus - A list with additional menu items rendered under the navigation menu
- * @property {JSX.Element[]} extraFileMenuItems - A list with additional menu items rendered under the "File" menu
- * @property {JSX.Element[]} extraEditMenuItems - A list with additional menu items rendered under the "Edit" menu
- * @property {JSX.Element[]} extraCalculateMenuItems - A list with additional menu items rendered under the "Calculate" menu
- * @property {JSX.Element[]} extraDraggableModals - A list with additional draggable modals to be rendered
+ * @property {React.JSX.Element[]} extraFileMenuItems - A list with additional menu items rendered under the "File" menu
+ * @property {React.JSX.Element[]} extraEditMenuItems - A list with additional menu items rendered under the "Edit" menu
+ * @property {React.JSX.Element[]} extraCalculateMenuItems - A list with additional menu items rendered under the "Calculate" menu
+ * @property {React.JSX.Element[]} extraDraggableModals - A list with additional draggable modals to be rendered
  * @property {boolean} [viewOnly=false] - Indicates if Moorhen should work in view-only mode
  * @property {boolean} [allowScripting=true] - Indicates if the scrpting interface is enabled
  * @property {moorhen.LocalStorageInstance} backupStorageInstance - An interface used by the moorhen container to store session backups

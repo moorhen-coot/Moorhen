@@ -9,8 +9,8 @@ import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenDraggableModalBase } from "../modal/MoorhenDraggableModalBase";
 import { MoorhenSlider } from "../inputs/MoorhenSlider";
 import { webGL } from "../../types/mgWebGL";
-import { useSelector } from "react-redux";
-import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { useSelector } from 'react-redux';
+import { Store } from "@reduxjs/toolkit";
 import { modalKeys } from "../../utils/enums";
 import { ApolloClient, InMemoryCache, ApolloProvider, useLazyQuery } from "@apollo/client";
 import { gql } from "../../utils/__graphql__/gql";
@@ -44,7 +44,7 @@ export const MoorhenQuerySequenceModal = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     monomerLibraryPath: string;
-    store: ToolkitStore;
+    store: Store;
 }) => {
     const client = useRef(
         new ApolloClient({
@@ -64,7 +64,7 @@ const MoorhenQuerySequence = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     monomerLibraryPath: string;
-    store: ToolkitStore;
+    store: Store;
 }) => {
     const [selectedModel, setSelectedModel] = useState<null | number>(null);
     const [selectedChain, setSelectedChain] = useState<string | null>(null);
@@ -78,13 +78,13 @@ const MoorhenQuerySequence = (props: {
     const timerRef = useRef<any>(null);
     const cachedSeqIdCutoff = useRef<number | null>(null);
     const cachedEValCutoff = useRef<number | null>(null);
-    const moleculeSelectRef = useRef<HTMLSelectElement>();
-    const chainSelectRef = useRef<HTMLSelectElement>();
-    const sourceSelectRef = useRef<HTMLSelectElement>();
-
-    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
+    const moleculeSelectRef = useRef<HTMLSelectElement>(null);
+    const chainSelectRef = useRef<HTMLSelectElement>(null);
+    const sourceSelectRef =  useRef<HTMLSelectElement>(null);
+   
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
 
     const [getPolimerInfo, { loading, error, data }] = useLazyQuery(GET_POLYMER_INFO);
 

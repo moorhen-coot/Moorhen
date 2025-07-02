@@ -19,7 +19,7 @@ import { gemmi } from "../types/gemmi"
 import { libcootApi } from '../types/libcoot';
 import { privateer } from '../types/privateer';
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
-import { ToolkitStore } from '@reduxjs/toolkit/dist/configureStore';
+import { Store } from "@reduxjs/toolkit";
 import { setRequestDrawScene, setOrigin, setZoom, setQuat } from "../store/glRefSlice"
 
 /**
@@ -37,7 +37,7 @@ import { setRequestDrawScene, setOrigin, setZoom, setQuat } from "../store/glRef
  * @constructor
  * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
  * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance
- * @param {ToolkitStore} [store=undefined] - A Redux store. By default Moorhen Redux store will be used
+ * @param {Store} [store=undefined] - A Redux store. By default Moorhen Redux store will be used
  * @param {string} [monomerLibraryPath="./monomers"] - A string with the path to the monomer library, relative to the root of the app
  * @example
  * import { MoorhenMolecule } from 'moorhen';
@@ -64,8 +64,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     type: string;
     atomCount: number;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
+    commandCentre: React.RefObject<moorhen.CommandCentre|null>;
+    glRef: React.RefObject<webGL.MGWebGL|null>;
     atomsDirty: boolean;
     name: string;
     molNo: number | null
@@ -106,11 +106,11 @@ export class MoorhenMolecule implements moorhen.Molecule {
     cachedLigandSVGs: {[key: string]: string};
     moleculeDiameter: number;
     adaptativeBondsEnabled: boolean;
-    store: ToolkitStore;
+    store: Store;
     headerInfo: libcootApi.headerInfoJS;
     isMRSearchModel: boolean;
 
-    constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore = MoorhenReduxStore, monomerLibraryPath = "./monomers") {
+    constructor(commandCentre: React.RefObject<moorhen.CommandCentre|null>, glRef: React.RefObject<webGL.MGWebGL|null>, store: Store = MoorhenReduxStore, monomerLibraryPath = "./monomers") {
         this.type = 'molecule'
         this.commandCentre = commandCentre
         this.glRef = glRef
@@ -908,8 +908,17 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {number} attachToMolecule - Molecule number for which the dicitonary will be associated
      */
     async loadMissingMonomer(newTlc: string, attachToMolecule: number): Promise<string> {
-        let response: Response = await fetch(`${this.monomerLibraryPath}/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
-        const fileContent = await response.text()
+        let fileContent =  ""
+        let response : Response | null
+        try {
+            response = await fetch(`${this.monomerLibraryPath}/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
+            if (response.ok) {
+            fileContent = await response.text()
+            }
+        } catch(err) {
+                console.log(err)
+                console.log(`Unable to fetch ligand dictionary ${newTlc} from local url`)
+        }
         let dictContent: string
 
         if (!fileContent.includes('data_')) {

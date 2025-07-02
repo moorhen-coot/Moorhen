@@ -20,7 +20,7 @@ export const MoorhenLigandValidation = (props: moorhen.CollectedProps) => {
         return ligandInfo
     }
 
-    const getCards = (selectedModel: number, selectedMap: number, ligandInfo: moorhen.LigandInfo[]): JSX.Element[] => {
+    const getCards = (selectedModel: number, selectedMap: number, ligandInfo: moorhen.LigandInfo[]): React.JSX.Element[] => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel)
 
         if (!selectedMolecule) {

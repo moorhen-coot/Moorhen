@@ -8,7 +8,7 @@ import { useSelector } from "react-redux";
 import { modalKeys } from "../../utils/enums";
 
 export const MoorhenWaterValidationModal = (props: moorhen.CollectedProps) => {        
-    const resizeNodeRef = useRef<HTMLDivElement>();
+    const resizeNodeRef = useRef<HTMLDivElement>(null);
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)

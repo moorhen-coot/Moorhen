@@ -5,10 +5,10 @@ export {};
 declare global {
     namespace JSX {
         interface IntrinsicElements {
-          "protvista-manager": ProtvistaManager;
-          "protvista-sequence": ProtvistaSequence;
-          "protvista-navigation": ProtvistaNavigation;
-          "protvista-track": ProtvistaTrack;
+          "nightingale-manager": NightingaleManager;
+          "nightingale-sequence": NightingaleSequence;
+          "nightingale-navigation": NightingaleNavigation;
+          "nightingale-track": NightingaleTrack;
         }
     }    
     interface Window {

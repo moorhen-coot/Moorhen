@@ -74,12 +74,47 @@ declare module 'moorhen' {
     let MoorhenContainer: any;
     module.exports = MoorhenContainer;
 
+    let MoorhenCarbohydrateValidation: any;
+    module.exports = MoorhenCarbohydrateValidation;
+
+    let MoorhenDifferenceMapPeaks: any;
+    module.exports = MoorhenDifferenceMapPeaks;
+
+    let MoorhenFillMissingAtoms: any;
+    module.exports = MoorhenFillMissingAtoms;
+
+    let MoorhenJsonValidation: any;
+    module.exports = MoorhenJsonValidation;
+
+    let MoorhenLigandValidation: any;
+    module.exports = MoorhenLigandValidation;
+
+    let MoorhenMMRRCCPlot: any;
+    module.exports = MoorhenMMRRCCPlot;
+
+    let MoorhenPepflipsDifferenceMap: any;
+    module.exports = MoorhenPepflipsDifferenceMap;
+
+    let MoorhenQScore: any;
+    module.exports = MoorhenQScore;
+
+    let MoorhenRamachandran: any;
+    module.exports = MoorhenRamachandran;
+
+    let MoorhenUnmodelledBlobs: any;
+    module.exports = MoorhenUnmodelledBlobs;
+
+    let MoorhenValidation: any;
+    module.exports = MoorhenValidation;
+
+    let MoorhenWaterValidation: any;
+    module.exports = MoorhenWaterValidation;
+
     let ErrorBoundary: any;
     module.exports = ErrorBoundary;
 
     let MoorhenDraggableModalBase: any;
     module.exports = MoorhenDraggableModalBase;
-
 
     let MoorhenMoleculeSelect: any;
     module.exports = MoorhenMoleculeSelect;
@@ -106,16 +141,16 @@ declare module 'moorhen' {
 
     interface MoorhenColourRule extends _moorhen.ColourRule { }
     class MoorhenColourRule implements MoorhenColourRule {
-        constructor(ruleType: string, cid: string, color: string, commandCentre: React.RefObject<_moorhen.CommandCentre>, isMultiColourRule?: boolean, applyColourToNonCarbonAtoms?: boolean)
-        static initFromString: (stringifiedObject: string, commandCentre: React.RefObject<_moorhen.CommandCentre>, molecule: _moorhen.Molecule) => _moorhen.ColourRule;
-        static initFromDataObject: (data: _moorhen.ColourRuleObject, commandCentre: React.RefObject<_moorhen.CommandCentre>, molecule: _moorhen.Molecule) => _moorhen.ColourRule;
+        constructor(ruleType: string, cid: string, color: string, commandCentre: React.RefObject<_moorhen.CommandCentre|null>, isMultiColourRule?: boolean, applyColourToNonCarbonAtoms?: boolean)
+        static initFromString: (stringifiedObject: string, commandCentre: React.RefObject<_moorhen.CommandCentre|null>, molecule: _moorhen.Molecule) => _moorhen.ColourRule;
+        static initFromDataObject: (data: _moorhen.ColourRuleObject, commandCentre: React.RefObject<_moorhen.CommandCentre|null>, molecule: _moorhen.Molecule) => _moorhen.ColourRule;
         static parseHexToRgba: (hex: string) => [number, number, number, number];
     }
     module.exports.MoorhenColourRule = MoorhenColourRule
 
     interface MoorhenMoleculeRepresentation extends _moorhen.MoleculeRepresentation { }
     class MoorhenMoleculeRepresentation implements MoorhenMoleculeRepresentation {
-        constructor(style: _moorhen.RepresentationStyles, cid: string, commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>)
+        constructor(style: _moorhen.RepresentationStyles, cid: string, commandCentre: React.RefObject<_moorhen.CommandCentre|null>, glRef: React.RefObject<webGL.MGWebGL|null>)
     }
     module.exports.MoorhenMoleculeRepresentation = MoorhenMoleculeRepresentation
 
@@ -128,9 +163,9 @@ declare module 'moorhen' {
             monomerLibraryPath: string,
             molecules: _moorhen.Molecule[],
             maps: _moorhen.Map[],
-            commandCentre: React.RefObject<_moorhen.CommandCentre>,
-            timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule>,
-            glRef: React.RefObject<webGL.MGWebGL>,
+            commandCentre: React.RefObject<_moorhen.CommandCentre|null>,
+            timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule|null>,
+            glRef: React.RefObject<webGL.MGWebGL|null>,
             store: any,
             dispatch: any,
             fetchExternalUrl?: (uniqueId: string) => Promise<string>
@@ -140,9 +175,9 @@ declare module 'moorhen' {
             monomerLibraryPath: string,
             molecules: _moorhen.Molecule[],
             maps: _moorhen.Map[],
-            commandCentre: React.RefObject<_moorhen.CommandCentre>,
-            timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule>,
-            glRef: React.RefObject<webGL.MGWebGL>,
+            commandCentre: React.RefObject<_moorhen.CommandCentre|null>,
+            timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule|null>,
+            glRef: React.RefObject<webGL.MGWebGL|null>,
             store: any,
             dispatch: any
         ): Promise<number>;
@@ -151,9 +186,9 @@ declare module 'moorhen' {
             monomerLibraryPath: string,
             molecules: _moorhen.Molecule[],
             maps: _moorhen.Map[],
-            commandCentre: React.RefObject<_moorhen.CommandCentre>,
-            timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule>,
-            glRef: React.RefObject<webGL.MGWebGL>,
+            commandCentre: React.RefObject<_moorhen.CommandCentre|null>,
+            timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule|null>,
+            glRef: React.RefObject<webGL.MGWebGL|null>,
             store: any,
             dispatch: any
         ): Promise<number>;
@@ -162,9 +197,9 @@ declare module 'moorhen' {
             monomerLibraryPath: string,
             molecules: _moorhen.Molecule[],
             maps: _moorhen.Map[],
-            commandCentre: React.RefObject<_moorhen.CommandCentre>,
-            timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule>,
-            glRef: React.RefObject<webGL.MGWebGL>,
+            commandCentre: React.RefObject<_moorhen.CommandCentre|null>,
+            timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule|null>,
+            glRef: React.RefObject<webGL.MGWebGL|null>,
             store: any,
             dispatch: any
         ): Promise<number>;
@@ -173,14 +208,14 @@ declare module 'moorhen' {
 
     interface MoorhenMolecule extends _moorhen.Molecule { }
     class MoorhenMolecule implements MoorhenMolecule {
-        constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store?: any, monomerLibrary?: string)
+        constructor(commandCentre: React.RefObject<_moorhen.CommandCentre|null>, glRef: React.RefObject<webGL.MGWebGL|null>, store?: any, monomerLibrary?: string)
     }
     module.exports.MoorhenMolecule = MoorhenMolecule
 
     interface MoorhenMap extends _moorhen.Map { }
     class MoorhenMap implements MoorhenMap {
-        constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store?: any)
-        static autoReadMtz(source: File, commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: any): Promise<_moorhen.Map[]>;
+        constructor(commandCentre: React.RefObject<_moorhen.CommandCentre|null>, glRef: React.RefObject<webGL.MGWebGL|null>, store?: any)
+        static autoReadMtz(source: File, commandCentre: React.RefObject<_moorhen.CommandCentre|null>, glRef: React.RefObject<webGL.MGWebGL|null>, store: any): Promise<_moorhen.Map[]>;
     }
     module.exports.MoorhenMap = MoorhenMap
 
@@ -373,6 +408,9 @@ declare module 'moorhen' {
     function setViewOnly(arg0: boolean): any;
     module.exports = setViewOnly;
 
+    function setShowBackDropNavBar(arg0: boolean): any;
+    module.exports = setShowBackDropNavBar;
+
     function setCursorStyle(arg0: string): any;
     module.exports = setCursorStyle;
 
@@ -438,6 +476,9 @@ declare module 'moorhen' {
 
     function setShowShortcutToast(arg0: boolean): any;
     module.exports = setShowShortcutToast;
+
+    function setShowHoverInfo(arg0: boolean): any;
+    module.exports = setShowHoverInfo;
 
     function setShortcutOnHoveredAtom(arg0: boolean): any;
     module.exports = setShortcutOnHoveredAtom;

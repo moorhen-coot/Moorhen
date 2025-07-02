@@ -16,7 +16,7 @@ export const MoorhenCarbohydrateValidation = (props: moorhen.CollectedProps) => 
         }
     }
 
-    const getCards = (selectedModel: number, selectedMap: number, privateerResults: privateer.ResultsEntry[]): JSX.Element[] => {
+    const getCards = (selectedModel: number, selectedMap: number, privateerResults: privateer.ResultsEntry[]): React.JSX.Element[] => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel)
 
         if (!selectedMolecule) {

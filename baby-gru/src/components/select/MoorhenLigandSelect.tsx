@@ -26,7 +26,7 @@ export const MoorhenLigandSelect = forwardRef<HTMLSelectElement, MoorhenLigandSe
         }
     }
 
-    const getLigandOptions = (selectedCoordMolNo: number): JSX.Element[] => {
+    const getLigandOptions = (selectedCoordMolNo: number): React.JSX.Element[] => {
         let selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedCoordMolNo)
         if (selectedMolecule) {
             return selectedMolecule.ligands.map(ligand => {

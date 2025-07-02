@@ -692,10 +692,8 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                             <MoorhenSequenceList
                                 setBusy={setBusyLoadingSequences}
                                 molecule={props.molecule}
-                                glRef={props.glRef}
                                 clickedResidue={clickedResidue}
                                 setClickedResidue={setClickedResidue}
-                                selectedResidues={selectedResidues}
                                 setSelectedResidues={setSelectedResidues}
                             />
                         </AccordionDetails>

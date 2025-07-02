@@ -4,14 +4,14 @@ import { readTextFile } from "../../utils/utils";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { Store } from "@reduxjs/toolkit";
 import { MoorhenScriptApi } from "../../utils/MoorhenScriptAPI";
 import { useSelector } from "react-redux";
 
 export const MoorhenLoadScriptMenuItem = (props: {
      setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
      glRef: React.RefObject<webGL.MGWebGL>;
-     store: ToolkitStore;
+     store: Store;
      commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {
     

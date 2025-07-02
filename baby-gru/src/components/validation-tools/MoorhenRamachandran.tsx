@@ -16,9 +16,9 @@ interface Props extends moorhen.CollectedProps {
 
 export const MoorhenRamachandran = (props: Props) => {
     const canvasRef = useRef<null | HTMLCanvasElement>(null);
-    const ramaPlotDivRef = useRef<HTMLDivElement>();
-    const moleculeSelectRef = useRef<HTMLSelectElement>();
-    const chainSelectRef = useRef<HTMLSelectElement>();
+    const ramaPlotDivRef = useRef<HTMLDivElement>(null);
+    const moleculeSelectRef = useRef<HTMLSelectElement>(null);
+    const chainSelectRef = useRef<HTMLSelectElement>(null);
     const reqRef = useRef<number>(null)
     const hitRef = useRef<number>(-1)
     const imageRefAll = useRef<null | HTMLImageElement>(null);

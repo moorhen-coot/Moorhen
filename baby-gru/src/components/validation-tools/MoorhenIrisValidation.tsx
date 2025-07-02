@@ -32,8 +32,8 @@ export const MoorhenIrisValidation = (props: {
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
     const [selectedMap, setSelectedMap] = useState<null | number>(null)
 
-    const mapSelectRef = useRef<undefined | HTMLSelectElement>();
-    const moleculeSelectRef = useRef<undefined | HTMLSelectElement>();
+    const mapSelectRef = useRef<undefined | HTMLSelectElement>(null);
+    const moleculeSelectRef = useRef<undefined | HTMLSelectElement>(null);
 
     const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedModel(parseInt(evt.target.value))

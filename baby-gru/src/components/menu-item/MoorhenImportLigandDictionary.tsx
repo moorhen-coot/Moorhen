@@ -12,7 +12,7 @@ import { libcootApi } from "../../types/libcoot"
 import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
-import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore"
+import { Store } from "@reduxjs/toolkit";
 import { InfoOutlined } from "@mui/icons-material";
 import { useSnackbar } from "notistack"
 
@@ -24,8 +24,8 @@ const MoorhenImportLigandDictionary = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     monomerLibraryPath: string;
-    store: ToolkitStore;
-    panelContent: JSX.Element;
+    store: Store;
+    panelContent: React.JSX.Element;
     fetchLigandDict: () => Promise<string>;
     addToMoleculeValueRef: React.MutableRefObject<number>;
     addToMolecule: string;
@@ -177,7 +177,7 @@ export const MoorhenSMILESToLigandMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     monomerLibraryPath: string;
-    store: ToolkitStore;
+    store: Store;
 }) => {
 
     const [smile, setSmile] = useState<string>('')
@@ -336,7 +336,7 @@ export const MoorhenImportDictionaryMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     monomerLibraryPath: string;
-    store: ToolkitStore;
+    store: Store;
  }) => {
 
     const tlcsOfFileRef = useRef<{ comp_id: string; dict_contents: string }[]>([])

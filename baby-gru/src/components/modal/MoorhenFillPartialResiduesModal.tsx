@@ -12,7 +12,7 @@ import { modalKeys } from "../../utils/enums";
 import { hideModal } from "../../store/modalsSlice";
 
 export const MoorhenFillPartialResiduesModal = (props: moorhen.CollectedProps) => {        
-    const resizeNodeRef = useRef<HTMLDivElement>();
+    const resizeNodeRef = useRef<HTMLDivElement>(null);
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)

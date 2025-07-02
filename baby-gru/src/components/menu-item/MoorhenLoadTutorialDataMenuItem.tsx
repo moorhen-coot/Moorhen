@@ -9,14 +9,14 @@ import { useSelector, useDispatch, batch } from 'react-redux';
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMolecule } from "../../store/moleculesSlice";
 import { addMapList } from "../../store/mapsSlice";
-import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { Store } from "@reduxjs/toolkit";
 
 export const MoorhenLoadTutorialDataMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     monomerLibraryPath: string;
     urlPrefix: string;
     glRef: React.RefObject<webGL.MGWebGL>;
-    store: ToolkitStore;
+    store: Store;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 

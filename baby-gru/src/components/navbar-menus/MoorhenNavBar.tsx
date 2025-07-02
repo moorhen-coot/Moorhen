@@ -36,20 +36,20 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
     const [navBarActiveMenu, setNavBarActiveMenu] = useState<string>('-1')
     const [popoverTargetRef, setPopoverTargetRef] = useState()
 
-    const speedDialRef = useRef()
-    const fileSpeedDialActionRef = useRef()
-    const editSpeedDialActionRef = useRef()
-    const calcualteSpeedDialActionRef = useRef()
-    const ligandSpeedDialActionRef = useRef()
-    const validationSpeedDialActionRef = useRef()
-    const modelsSpeedDialActionRef = useRef()
-    const mapsSpeedDialActionRef = useRef()
-    const historyDialRef = useRef()
-    const viewDialActionRef = useRef()
-    const preferencesDialActionRef = useRef()
-    const mapToolsDialActionRef = useRef()
-    const helpDialActionRef = useRef()
-    const devDialActionRef = useRef()
+    const speedDialRef = useRef(null)
+    const fileSpeedDialActionRef = useRef(null)
+    const editSpeedDialActionRef = useRef(null)
+    const calcualteSpeedDialActionRef = useRef(null)
+    const ligandSpeedDialActionRef = useRef(null)
+    const validationSpeedDialActionRef = useRef(null)
+    const modelsSpeedDialActionRef = useRef(null)
+    const mapsSpeedDialActionRef = useRef(null)
+    const historyDialRef = useRef(null)
+    const viewDialActionRef = useRef(null)
+    const preferencesDialActionRef = useRef(null)
+    const mapToolsDialActionRef = useRef(null)
+    const helpDialActionRef = useRef(null)
+    const devDialActionRef = useRef(null)
 
     const dispatch = useDispatch()
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
@@ -58,6 +58,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const showHoverInfo = useSelector((state: moorhen.State) => state.generalStates.showHoverInfo)
 
     useEffect(() => {
         if (props.commandCentre.current) {
@@ -232,7 +233,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
 
         { props.extraNavBarModals && props.extraNavBarModals.filter(modal => modal.show).map(modal => modal.JSXElement) }
 
-        <Fab
+        {showHoverInfo && <Fab
             variant='extended'
             size="large"
             sx={{
@@ -265,5 +266,6 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
                 style={{ padding: 0, margin: 0, color: 'black' }}
             />}
         </Fab>
+        }
     </>
 })

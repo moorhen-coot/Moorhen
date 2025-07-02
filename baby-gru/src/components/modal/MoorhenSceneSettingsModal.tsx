@@ -220,8 +220,8 @@ const DepthBlurPanel = (props: {
                 sliderTitle="Blur depth"
                 externalValue={depthBlurDepth}
                 setExternalValue={(val) => dispatch(setDepthBlurDepth(val))}
-                stepButtons={0.01}
-                decimalPlaces={3}
+                stepButtons={0.0001}
+                decimalPlaces={4}
                 />
             <MoorhenSlider
                 isDisabled={!useOffScreenBuffers}
@@ -310,7 +310,7 @@ const LightingPanel = (props: {
 }) => {
 
     const busyLighting = useRef<boolean>(false)
-    const newLightPosition = useRef<[number, number, number]>()
+    const newLightPosition = useRef<[number, number, number]>(null)
     const isSetLightPosIsDirty = useRef<boolean>(false)
 
     const lightPosition = useSelector((state: moorhen.State) => state.glRef.lightPosition)

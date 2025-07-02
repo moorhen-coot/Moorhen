@@ -9,11 +9,11 @@ import { libcootApi } from "../../types/libcoot"
 import { useDispatch } from 'react-redux';
 import { setActiveMap } from "../../store/generalStatesSlice"
 import { addMap, addMapList } from "../../store/mapsSlice"
-import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore"
+import { Store } from "@reduxjs/toolkit";
 import { useSnackbar } from "notistack"
 
 export const MoorhenAutoOpenMtzMenuItem = (props: {
-    store: ToolkitStore;
+    store: Store;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;

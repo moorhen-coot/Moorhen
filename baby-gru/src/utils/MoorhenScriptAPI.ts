@@ -4,7 +4,7 @@ import { MoorhenMolecule } from "./MoorhenMolecule";
 import { MoorhenMap } from "./MoorhenMap";
 import { addMolecule } from "../store/moleculesSlice";
 import { addMap } from "../store/mapsSlice";
-import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { Store } from "@reduxjs/toolkit";
 import { MoorhenColourRule } from "./MoorhenColourRule";
 import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation";
 import { setOrigin, setZoom, setQuat, setRequestDrawScene, setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd, setActiveMolecule, setDraggableMolecule, setDisplayBuffers} from "../store/glRefSlice"
@@ -24,7 +24,7 @@ interface MoorhenScriptApiInterface {
     maps: moorhen.Map[];
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    store: ToolkitStore;
+    store: Store;
 }
 
 export class MoorhenScriptApi implements MoorhenScriptApiInterface {
@@ -33,9 +33,9 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
     maps: moorhen.Map[];
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    store: ToolkitStore;
+    store: Store;
 
-    constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore, molecules: moorhen.Molecule[], maps: moorhen.Map[]) {
+    constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: Store, molecules: moorhen.Molecule[], maps: moorhen.Map[]) {
         this.molecules = molecules
         this.maps = maps
         this.store = store

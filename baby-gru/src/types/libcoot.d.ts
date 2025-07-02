@@ -571,6 +571,7 @@ export namespace libcootApi {
       second: any;
     }
     interface MoleculesContainerJS {
+        [key: string]: any;
         delete(): void;
         set_colour_map_for_map_coloured_by_other_map(arg0: any): void;
         set_refinement_is_verbose(arg0: boolean): void;
@@ -588,6 +589,7 @@ export namespace libcootApi {
         writePDBASCII(molNo: number, tempFilename: string): void;
         set_map_sampling_rate(arg0: number): void;
         fill_rotamer_probability_tables(): void;
+        read_coords_string(pdb_string: string, molecule_name:string): PairType<number, string>;
         set_user_defined_atom_colour_by_selection(imol: number, indexedResiduesVec: emscriptem.vector<{ first: string; second: number; }>, nonCarbon: boolean): void;
         set_user_defined_bond_colours(imol: number, colourMap: emscriptem.map<[number, number, number, number], number>): void;
         read_ccp4_map(arg0: string, arg2: boolean): number;

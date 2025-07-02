@@ -4,7 +4,7 @@ import { MoorhenMolecule } from "./MoorhenMolecule"
 import { useSnackbar } from "notistack"
 import { hideMolecule, showMolecule, removeMolecule, addMoleculeList } from "../store/moleculesSlice"
 import { webGL } from "../types/mgWebGL"
-import { ToolkitStore } from '@reduxjs/toolkit/dist/configureStore';
+import { Store } from "redux"
 import { moorhensession } from "../protobuf/MoorhenSession";
 import { MoorhenTimeCapsule } from "../utils/MoorhenTimeCapsule"
 import { AnyAction, Dispatch } from "@reduxjs/toolkit";
@@ -64,7 +64,7 @@ interface MrParseAFModelJson  {
     total_frac_scat_known : null|number;
 }
 
-const readCoordsString = async (fileString: string, fileName: string, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore, monomerLibraryPath: string, backgroundColor: [number,number,number,number], defaultBondSmoothness: number|null): Promise<moorhen.Molecule> => {
+const readCoordsString = async (fileString: string, fileName: string, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: Store, monomerLibraryPath: string, backgroundColor: [number,number,number,number], defaultBondSmoothness: number|null): Promise<moorhen.Molecule> => {
     const newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)
     newMolecule.setBackgroundColour(backgroundColor)
     newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
@@ -85,7 +85,7 @@ export const drawModels = async (newMolecules: moorhen.Molecule[]) => {
 
 }
 
-export  const loadCoordFiles = async(files: File[], commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore, monomerLibraryPath: string, backgroundColor: [number,number,number,number], defaultBondSmoothness: number|null): Promise<Promise<moorhen.Molecule>[]> => {
+export  const loadCoordFiles = async(files: File[], commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: Store, monomerLibraryPath: string, backgroundColor: [number,number,number,number], defaultBondSmoothness: number|null): Promise<Promise<moorhen.Molecule>[]> => {
     const loadPromises: Promise<moorhen.Molecule>[] = []
     for(const file of files) {
         if(file.name.endsWith(".pdb")||file.name.endsWith(".ent")||file.name.endsWith(".cif")||file.name.endsWith(".mmcif")){
@@ -97,7 +97,7 @@ export  const loadCoordFiles = async(files: File[], commandCentre: React.RefObje
 
 }
 
-const loadSession = async (session: string | object, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore, monomerLibraryPath: string, molecules: moorhen.Molecule[], maps: moorhen.Map[], timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>, dispatch: Dispatch<AnyAction>) => {
+const loadSession = async (session: string | object, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: Store, monomerLibraryPath: string, molecules: moorhen.Molecule[], maps: moorhen.Map[], timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>, dispatch: Dispatch<AnyAction>) => {
     commandCentre.current.history.reset()
     let status = -1
     if (typeof session === 'string') {
@@ -130,7 +130,7 @@ const loadSession = async (session: string | object, commandCentre: React.RefObj
     }
 }
 
-export const handleSessionUpload = async (file: File, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore, monomerLibraryPath: string, molecules: moorhen.Molecule[], maps: moorhen.Map[], timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>, dispatch: Dispatch<AnyAction>) => {
+export const handleSessionUpload = async (file: File, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: Store, monomerLibraryPath: string, molecules: moorhen.Molecule[], maps: moorhen.Map[], timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>, dispatch: Dispatch<AnyAction>) => {
         const arrayBuffer = await readDataFile(file)
         const bytes = new Uint8Array(arrayBuffer)
         const sessionMessage = moorhensession.Session.decode(bytes,undefined,undefined)

@@ -27,7 +27,7 @@ export const MoorhenAcceptRejectRotateTranslateSnackBar = forwardRef<
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
 
-    const [tips, setTips] = useState<null | JSX.Element>(null)
+    const [tips, setTips] = useState<null | React.JSX.Element>(null)
 
     const fragmentMoleculeRef = useRef<null | moorhen.Molecule>(null)
 

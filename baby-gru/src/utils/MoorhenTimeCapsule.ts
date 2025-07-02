@@ -17,7 +17,7 @@ import {
     setSsaoRadius, setUseOffScreenBuffers
 } from "../store/sceneSettingsSlice";
 import { moorhensession } from "../protobuf/MoorhenSession";
-import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { Store } from "@reduxjs/toolkit";
 import { setOrigin, setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setZoom,
      setQuat, setFogStart, setFogEnd, setClipStart, setClipEnd } from "../store/glRefSlice"
 
@@ -28,7 +28,7 @@ import { setOrigin, setLightPosition, setAmbient, setSpecular, setDiffuse, setSp
  * @param {React.RefObject<moorhen.Map[]>} mapsRef - A react reference to the list of loaded maps
  * @param {React.RefObject<moorhen.Map>} activeMapRef - A react reference to the currently active map
  * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the molecular graphics renderer
- * @param {ToolkitStore} store - The Redux store
+ * @param {Store} store - The Redux store
  * @property {string} version - Version number of the current time capsule
  * @property {boolean} busy - Indicates if time capsule is busy loading from local storage
  * @property {boolean} disableBackups - Disable time capsule
@@ -49,7 +49,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
     version: string;
     disableBackups: boolean;
     storageInstance: moorhen.LocalStorageInstance;
-    store: ToolkitStore;
+    store: Store;
     onIsBusyChange: (arg0: boolean) => void;
     getBackupLabel: (key: moorhen.backupKey) => string;
     loadSessionData: (
@@ -57,10 +57,10 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         monomerLibraryPath: string,
         molecules: moorhen.Molecule[],
         maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-        glRef: React.RefObject<webGL.MGWebGL>,
-        store: ToolkitStore,
+        commandCentre: React.RefObject<moorhen.CommandCentre|null>,
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule|null>,
+        glRef: React.RefObject<webGL.MGWebGL|null>,
+        store: Store,
         dispatch: Dispatch<AnyAction>
     ) => Promise<number>;
     loadSessionFromArrayBuffer: (
@@ -68,10 +68,10 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         monomerLibraryPath: string,
         molecules: moorhen.Molecule[],
         maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-        glRef: React.RefObject<webGL.MGWebGL>,
-        store: ToolkitStore,
+        commandCentre: React.RefObject<moorhen.CommandCentre|null>,
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule|null>,
+        glRef: React.RefObject<webGL.MGWebGL|null>,
+        store: Store,
         dispatch: Dispatch<AnyAction>
     ) => Promise<number>;
     loadSessionFromProtoMessage: (
@@ -79,10 +79,10 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         monomerLibraryPath: string,
         molecules: moorhen.Molecule[],
         maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-        glRef: React.RefObject<webGL.MGWebGL>,
-        store: ToolkitStore,
+        commandCentre: React.RefObject<moorhen.CommandCentre|null>,
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule|null>,
+        glRef: React.RefObject<webGL.MGWebGL|null>,
+        store: Store,
         dispatch: Dispatch<AnyAction>
     ) => Promise<number>;
     loadSessionFromJsonString: (
@@ -90,14 +90,14 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         monomerLibraryPath: string,
         molecules: moorhen.Molecule[],
         maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-        glRef: React.RefObject<webGL.MGWebGL>,
-        store: ToolkitStore,
+        commandCentre: React.RefObject<moorhen.CommandCentre|null>,
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule|null>,
+        glRef: React.RefObject<webGL.MGWebGL|null>,
+        store: Store,
         dispatch: Dispatch<AnyAction>
     ) => Promise<number>;
 
-    constructor(moleculesRef: React.RefObject<moorhen.Molecule[]>, mapsRef: React.RefObject<moorhen.Map[]>, activeMapRef: React.RefObject<moorhen.Map>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore) {
+    constructor(moleculesRef: React.RefObject<moorhen.Molecule[]>, mapsRef: React.RefObject<moorhen.Map[]>, activeMapRef: React.RefObject<moorhen.Map>, glRef: React.RefObject<webGL.MGWebGL>, store: Store) {
         this.store = store
         this.moleculesRef = moleculesRef
         this.mapsRef = mapsRef
@@ -569,7 +569,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
      * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - React reference to the command centre
      * @param {React.RefObject<moorhen.TimeCapsule>} timeCapsuleRef - React reference to the time capsule
      * @param {React.RefObject<webGL.MGWebGL>} glRef - React reference to the webGL renderer
-     * @param {ToolkitStore} store - The Redux store
+     * @param {Store} store - The Redux store
      * @param {Dispatch<AnyAction>} dispatch - Dispatch method for the MoorhenReduxStore
      * @param {Promise<string>} fetchExternalUrl - Function to fetch external file URL for non embedded data
      * @returns {number} Returns -1 if there was an error loading the session otherwise 0
@@ -579,10 +579,10 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         monomerLibraryPath: string,
         molecules: moorhen.Molecule[],
         maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
+        commandCentre: React.RefObject<moorhen.CommandCentre|null>,
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule|null>,
         glRef: React.RefObject<webGL.MGWebGL>,
-        store: ToolkitStore,
+        store: Store,
         dispatch: Dispatch<AnyAction>,
         fetchExternalUrl?: (uniqueId: string) => Promise<string>
     ): Promise<number> {
@@ -844,7 +844,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
      * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - React reference to the command centre
      * @param {React.RefObject<moorhen.TimeCapsule>} timeCapsuleRef - React reference to the time capsule
      * @param {React.RefObject<webGL.MGWebGL>} glRef - React reference to the webGL renderer
-     * @param {ToolkitStore} store - The Redux store
+     * @param {Store} store - The Redux store
      * @param {Dispatch<AnyAction>} dispatch - Dispatch method for the MoorhenReduxStore
      * @returns {number} Returns -1 if there was an error loading the session otherwise 0
      */
@@ -856,7 +856,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         commandCentre: React.RefObject<moorhen.CommandCentre>,
         timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
         glRef: React.RefObject<webGL.MGWebGL>,
-        store: ToolkitStore,
+        store: Store,
         dispatch: Dispatch<AnyAction>
     ): Promise<number> {
         timeCapsuleRef.current.setBusy(true)
@@ -876,7 +876,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
      * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - React reference to the command centre
      * @param {React.RefObject<moorhen.TimeCapsule>} timeCapsuleRef - React reference to the time capsule
      * @param {React.RefObject<webGL.MGWebGL>} glRef - React reference to the webGL renderer
-     * @param {ToolkitStore} store - The Redux store
+     * @param {Store} store - The Redux store
      * @param {Dispatch<AnyAction>} dispatch - Dispatch method for the MoorhenReduxStore
      * @returns {number} Returns -1 if there was an error loading the session otherwise 0
      */
@@ -888,7 +888,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         commandCentre: React.RefObject<moorhen.CommandCentre>,
         timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
         glRef: React.RefObject<webGL.MGWebGL>,
-        store: ToolkitStore,
+        store: Store,
         dispatch: Dispatch<AnyAction>
     ): Promise<number> {
 
@@ -908,7 +908,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
      * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - React reference to the command centre
      * @param {React.RefObject<moorhen.TimeCapsule>} timeCapsuleRef - React reference to the time capsule
      * @param {React.RefObject<webGL.MGWebGL>} glRef - React reference to the webGL renderer
-     * @param {ToolkitStore} store - The Redux store
+     * @param {Store} store - The Redux store
      * @param {Dispatch<AnyAction>} dispatch - Dispatch method for the MoorhenReduxStore
      * @returns {number} Returns -1 if there was an error loading the session otherwise 0
      */
@@ -920,7 +920,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         commandCentre: React.RefObject<moorhen.CommandCentre>,
         timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
         glRef: React.RefObject<webGL.MGWebGL>,
-        store: ToolkitStore,
+        store: Store,
         dispatch: Dispatch<AnyAction>
     ): Promise<number> {
 

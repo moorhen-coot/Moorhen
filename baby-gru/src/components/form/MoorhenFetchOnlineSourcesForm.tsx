@@ -10,12 +10,12 @@ import { addMolecule } from "../../store/moleculesSlice";
 import { addMap } from "../../store/mapsSlice";
 import { webGL } from "../../types/mgWebGL";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
-import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { Store } from "@reduxjs/toolkit";
 import { useSnackbar } from "notistack";
 
 export const MoorhenFetchOnlineSourcesForm = (props: {
     monomerLibraryPath: string;
-    store: ToolkitStore;
+    store: Store;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
