@@ -1,0 +1,108 @@
+.residue-box {
+    cursor: pointer;
+    min-width: var(--column-width, 1rem) ;
+    max-width: var(--column-width, 1rem);
+    min-height: 1.5rem;
+    max-height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    font-size : 1rem;
+    margin-bottom: 2px;
+}
+
+.residue-box.even {
+    background-color: var(--overlay-color, rgb(198, 205, 238));
+}
+
+.residue-box.solid {
+    background-color: var(--overlay-color, rgb(198, 205, 238));
+    border-left: 1px solid rgba(0,0,0,0.25);
+}
+
+.residue-box.odd {
+    background-color: color-mix(in srgb, var(--overlay-color, rgb(198, 205, 238)), rgb(256, 256, 256) 30%);
+}
+
+.residue-box.empty {
+    background-color: rgb(230, 230, 230);
+}
+
+.residue-box.hover {
+    background-color: rgb(230, 233, 166);
+}
+
+.residue-box:hover {
+    background-color: rgb(230, 233, 166);
+}
+
+.residue-box.empty:hover {                       
+    background-color: rgba(230, 230, 230, 0.5);
+}
+
+.residue-box.selected {                       
+    background-color: rgb(127, 224, 160);
+}
+
+.residue-box.selected:hover {                       
+    background-color: rgb(230, 233, 166);
+}
+
+.residue-box.glideSelect:hover {                       
+    background-color: rgb(127, 224, 160);
+}
+
+.tick-mark {
+    align-items: top;
+    display: flex;
+    justify-content: left;
+    padding-left: 2px;
+    border-bottom: 1px solid;
+    border-left: none;
+    margin-bottom: 2px;
+    font-size: small;
+    position: relative;
+}
+
+.tick-mark::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 50%;
+    border-left: 1px solid;
+}
+
+.sticky-tick-marks {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: white;
+    display: flex;
+    flex-direction: row;
+    width: fit-content;
+    left: 0;
+}
+
+.sticky-left-column {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    overflow-x: hidden;
+    background: white;
+    border-right: 1px solid #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2px;
+    min-height: 1.5rem; 
+    max-height: 1.5rem;
+}
+
+.scrollable-table {
+    z-index: 0;
+    padding-bottom: 10px;
+    padding-right: 10px;
+}

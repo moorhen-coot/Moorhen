@@ -1,12 +1,12 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 import { Stack, Button, FormSelect, Form, InputGroup, Row } from "react-bootstrap";
 import { getMultiColourRuleArgs } from '../../utils/utils';
 import { representationLabelMapping } from '../../utils/enums';
+import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from '../sequence-viewer/MoorhenSequenceViewer';
 import { moorhen } from "../../types/moorhen";
 import { Popover } from '@mui/material';
 import { MoorhenChainSelect } from '../select/MoorhenChainSelect';
 import { HexAlphaColorPicker, HexColorInput } from "react-colorful";
-import { MoorhenSequenceRangeSelect } from '../sequence-viewer/MoorhenSequenceRangeSelect';
 import { webGL } from '../../types/mgWebGL';
 import { GrainOutlined } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
@@ -21,7 +21,7 @@ import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../../utils/enum
 
 const customRepresentations = [ 'CBs', 'CAs', 'CRs', 'gaussian', 'MolecularSurface', 'VdwSpheres', 'MetaBalls', 'residue_environment' ]
 
-export const MoorhenAddCustomRepresentationCard = (props: {
+export const MoorhenAddCustomRepresentationCard = memo((props: {
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
     show: boolean; 
     anchorEl: React.RefObject<HTMLDivElement>;
@@ -32,6 +32,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     representation?: moorhen.MoleculeRepresentation;
     setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
+    console.log('MoorhenAddCustomRepresentationCard', props.mode, props.representation?.style)
 
     const applyColourToNonCarbonAtomsSwitchRef = useRef<HTMLInputElement | null>(null)
     const useDefaultColoursSwitchRef = useRef<HTMLInputElement | null>(null)
@@ -46,7 +47,6 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const colourSwatchRef = useRef<HTMLDivElement | null>(null)
     const alphaSwatchRef = useRef<HTMLImageElement | null>(null)
     const nonCustomOpacitySliderRef = useRef<any>(null)
-    const residueRangeSelectRef = useRef<any>(null)
     const ncsColourRuleRef = useRef<null | moorhen.ColourRule>(null)
 
     const [ruleType, setRuleType] = useState<string>(props.representation ? "cid" : "molecule")
@@ -76,7 +76,8 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const [useDefaultColours, setUseDefaultColours] = useState<boolean>(props.representation?.useDefaultColourRules ?? true)
 
     const [sequenceRangeSelect, setSequenceRangeSelect] = useState(null)
-    const [selectedChain, setSelectedChain] = useState<string>(null)
+    const [selectedChain, setSelectedChain] = useState<string>(props.molecule.sequences[0].chain)
+    const [sequenceResidueRange, setSequenceResidueRange] = useState<[number, number] | null>(null)
 
     const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState<number>(props.representation?.bondOptions?.atomRadiusBondRatio ?? props.molecule.defaultBondOptions.atomRadiusBondRatio)
     const [showAniso, setShowAniso] = useState<boolean>(props.representation?.bondOptions?.showAniso ?? props.molecule.defaultBondOptions.showAniso)
@@ -137,22 +138,14 @@ export const MoorhenAddCustomRepresentationCard = (props: {
         setShowContacts: setShowEnvContacts
     }
 
-    useEffect(() => {
-        if (!ruleSelectRef.current || !chainSelectRef.current || ruleSelectRef.current?.value !== 'residue-range') {
-            return
-        }
-        const selectedSequence = props.molecule.sequences.find(sequence => sequence.chain === chainSelectRef.current.value)
-        setSequenceRangeSelect(
-            <MoorhenSequenceRangeSelect
-                ref={residueRangeSelectRef}
-                molecule={props.molecule}
-                sequence={selectedSequence}
-                glRef={props.glRef}
-            />
-        )
-    }, [selectedChain, ruleType])
+    const selectedSequence =  props.molecule.sequences.find(sequence => sequence.chain === selectedChain)
+ 
 
-    const createRepresentation = useCallback(async () => {
+    useEffect(() => {
+        console.log('selectedResidues', sequenceResidueRange)
+    }, [sequenceResidueRange])
+
+    const createRepresentation = async () => {
         props.setBusy?.(true)
 
         let cidSelection: string
@@ -164,7 +157,8 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 cidSelection = `//${chainSelectRef.current.value}`
                 break
             case "residue-range":
-                const selectedResidues = residueRangeSelectRef.current.getSelectedResidues()
+                const selectedResidues = sequenceResidueRange
+                console.log('selectedResidues', selectedResidues)
                 cidSelection = (selectedResidues && selectedResidues.length === 2) ? `//${chainSelectRef.current.value}/${selectedResidues[0]}-${selectedResidues[1]}` : null
                 break
             case "cid":
@@ -297,40 +291,40 @@ export const MoorhenAddCustomRepresentationCard = (props: {
 
         props.setShow(false)
         props.setBusy?.(false)
-    }, [
-        colour, props.molecule, props.representation, mode, bondWidth, atomRadiusBondRatio, bondSmoothness,
-        nucleotideRibbonStyle, ribbonArrowWidth, ribbonAxialSampling, ribbonCoilThickness, ribbonDNARNAWidth,
-        ribbonHelixWidth, ribbonStrandWidth, maxEnvDist, labelledEnv, showEnvContacts, showEnvHBonds,
-        showAniso, showOrtep, showHs
-    ])
+    }
 
-    const handleCreateRepresentation = useCallback(async () => {
+    const handleCreateRepresentation = async () => {
         try {
             await createRepresentation()
         } catch (err) {
             console.warn(err)
             enqueueSnackbar(`Something went wrong while ${mode === "edit" ? "editing" : "creating a new"} custom representation`, { variant: "error" })
         }
-    }, [createRepresentation])
+    }
 
-    const handleColourModeChange = useCallback((evt) => {
+    const handleColourModeChange = (evt) => {
         if (evt.target.value === "mol-symm" && !ncsColourRuleRef.current && mode === "edit") {
             const representation = props.molecule.representations.find(item => item.uniqueId === props.representation.uniqueId)
             if (representation?.colourRules?.length > 0) ncsColourRuleRef.current = representation.colourRules[0]
         }
         setColourMode(evt.target.value)
-    }, [props.molecule, mode, props.representation])
+    }
 
-    const applyNcsColourChange = useCallback(async () => {
+    const applyNcsColourChange = async () => {
         await props.molecule.redraw()
-    }, [props.molecule])
+    }
 
-    const handleOpacityChange = useCallback((newVal) => {
+    const handleOpacityChange = (newVal) => {
         setNonCustomOpacity(newVal)
         if(props.representation){
             props.representation.setNonCustomOpacity(newVal)
         }
-    }, [props.representation,props.molecule])
+    }
+
+    const handleResiduesRangeSelection = (selection) => {
+        setSequenceResidueRange(selection.range)
+        console.log('handleResiduesRangeSelection', selection.range)
+    }
 
     return <Popover
                 onClose={() => props.setShow(false)}
@@ -339,7 +333,6 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 anchorOrigin={{ vertical: 'center', horizontal: 'center' }}
                 transformOrigin={{ vertical: 'center', horizontal: 'center' }}
                 sx={{'& .MuiPaper-root': {backgroundColor: isDark ? 'grey' : 'white', marginTop: '0.1rem', borderRadius: '1rem', borderStyle: 'solid', borderColor: 'grey', borderWidth: '1px'}}}
-
             >
             <Stack gap={2} direction='vertical' style={{width: '25rem', margin: '0.5rem'}}>
                 <Form.Group style={{ margin: '0px', width: '100%' }}>
@@ -378,11 +371,14 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                     <MoorhenChainSelect molecules={molecules} onChange={(evt) => setSelectedChain(evt.target.value)} selectedCoordMolNo={props.molecule.molNo} ref={chainSelectRef} allowedTypes={[1, 2, 3, 4, 5]}/>
                 </div>
                 }
-                {ruleType === 'residue-range' &&
+                {ruleType === 'residue-range' ? (
                     <div style={{width: '100%'}}>
-                        {sequenceRangeSelect}
+                        <MoorhenSequenceViewer
+                            sequences={moorhenSequenceToSeqViewer(selectedSequence, props.molecule.name, props.molecule.molNo)}
+                            onResiduesSelect={(selection) => {handleResiduesRangeSelection(selection)}}
+                        />
                     </div>
-                }
+                ): null}
                 {['CBs', 'CAs', 'ligands', 'CRs', 'MolecularSurface', 'residue_environment'].includes(representationStyle) &&
                 <InputGroup className='moorhen-input-group-check'>
                     <Form.Check
@@ -542,4 +538,6 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                 </Button>
             </Stack>
         </Popover>
-}
+})
+
+MoorhenAddCustomRepresentationCard.displayName = "MoorhenAddCustomRepresentationCard"
