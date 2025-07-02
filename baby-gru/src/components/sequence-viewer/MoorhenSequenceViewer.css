@@ -16,6 +16,11 @@
     background-color: var(--overlay-color, rgb(198, 205, 238));
 }
 
+.residue-box.solid {
+    background-color: var(--overlay-color, rgb(198, 205, 238));
+    border-left: 1px solid rgba(0,0,0,0.25);
+}
+
 .residue-box.odd {
     background-color: color-mix(in srgb, var(--overlay-color, rgb(198, 205, 238)), rgb(256, 256, 256) 30%);
 }
@@ -85,14 +90,15 @@
     position: sticky;
     left: 0;
     z-index: 1;
+    overflow-x: hidden;
     background: white;
-    min-width: rem;
-    max-width: 4rem;
     border-right: 1px solid #ccc;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 2px;
+    min-height: 1.5rem; 
+    max-height: 1.5rem;
 }
 
 .scrollable-table {

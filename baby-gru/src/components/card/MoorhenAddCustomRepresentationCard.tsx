@@ -374,7 +374,7 @@ export const MoorhenAddCustomRepresentationCard = memo((props: {
                 {ruleType === 'residue-range' ? (
                     <div style={{width: '100%'}}>
                         <MoorhenSequenceViewer
-                            sequences={moorhenSequenceToSeqViewer(selectedSequence)}
+                            sequences={moorhenSequenceToSeqViewer(selectedSequence, props.molecule.name, props.molecule.molNo)}
                             onResiduesSelect={(selection) => {handleResiduesRangeSelection(selection)}}
                         />
                     </div>

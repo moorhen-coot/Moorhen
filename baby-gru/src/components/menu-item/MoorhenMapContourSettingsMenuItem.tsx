@@ -119,11 +119,11 @@ export const MapContourSettingsMenuItem = (props: {
             <MoorhenSlider
             minVal={0.1}
             maxVal={1.5}
-            logScale={true}
             sliderTitle="Map lines thickness"
             externalValue={mapLineWidth}
-            showMinMaxVal={false}
-            setExternalValue={(val: number) => dispatch(setMapLineWidth(val))}/>
+            setExternalValue={(val: number) => dispatch(setMapLineWidth(val))}
+            decimalPlaces={2}/>
+
         </Form.Group>
         <div style={{padding: '0.5rem'}}>
             <span>Map sampling rate</span>

@@ -1,12 +1,11 @@
 import React, { useMemo } from "react";
 import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer, MoorhenSeqViewTypes } from "../sequence-viewer/MoorhenSequenceViewer";
-import { cidToSpec, hexToRGB, sequenceIsValid } from '../../utils/utils';
+import { cidToSpec, sequenceIsValid } from '../../utils/utils';
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch} from "react-redux";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { setResidueSelection } from "../../store/generalStatesSlice";
 import { useSnackbar } from "notistack";
-import { hexToRgb } from "@mui/material";
 
 export const MoorhenSequenceList = (props: { 
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
@@ -49,21 +48,20 @@ export const MoorhenSequenceList = (props: {
         const newSequenceList = props.molecule.sequences.map(
             sequence => {            
                 if (!sequenceIsValid(sequence.sequence)) {
-                    return moorhenSequenceToSeqViewer(null)
+                    return null
                 }
-                const newSeq = moorhenSequenceToSeqViewer(sequence)
+                const newSeq = moorhenSequenceToSeqViewer(sequence, props.molecule.name, props.molecule.molNo)
                 newSeq.residues = newSeq.residues.map(res => ({
                     ...res,
                     colour: null
                 }))
-                const seqColour = hexToRgb(props.molecule.representations[0].colourRules.find(rule => rule.cid === '//' + newSeq.chain)?.color)
-                newSeq.colour = `color-mix(in srgb, ${seqColour}, rgb(255,255,255) 50%)`
-                console.log("representation", props.molecule.representations)
+                const seqColour = props.molecule.representations[0].colourRules.find(rule => rule.cid === '//' + newSeq.chain)?.color
+                newSeq.colour = seqColour ? `color-mix(in srgb, ${seqColour}, rgb(255,255,255) 50%)` : null
                 return newSeq
             }
         )
         return newSequenceList
-    }, [props.molecule.sequences, updateSwitch]);
+    }, [props.molecule.sequences]);
 
 
     const display = (sequenceList && sequenceList.length > 0) ? true : false;
@@ -98,7 +96,6 @@ export const MoorhenSequenceList = (props: {
         else { return null}
 
     },[hoveredAtom])
-    
     
     return (
         !display ? 

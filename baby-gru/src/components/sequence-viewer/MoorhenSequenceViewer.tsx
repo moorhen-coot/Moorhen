@@ -5,8 +5,6 @@ import Stack from "@mui/material/Stack";
 import "./MoorhenSequenceViewer.css";
 import { CustomHorizontalScrollbar } from "./CustomHorizontalScrollbar";
 import { AddOutlined, ExpandLessOutlined, ExpandMoreOutlined, RemoveOutlined } from "@mui/icons-material";
-import { moorhenKeyPress } from "../../utils/MoorhenKeyboardPress";
-import { cidToSpec } from "../../utils/utils";
 
 const defaultColour = 'rgb(198, 205, 238)';
 
@@ -29,10 +27,13 @@ export namespace MoorhenSeqViewTypes {
         molName: string;
         chain: string;
         molNo: number;
+        hideResCode?: boolean;
         displayName?: string;
         residuesDisplayOffset?: number;
-        residues: Residue[];
         colour?: string;
+        missingAs?: string;
+        blockAlternateColour?: boolean;
+        residues: Residue[];
     };
 }
 
@@ -64,13 +65,12 @@ export function stringToSeqViewer(seqAsString: string, start?: number, name?: st
     return sequence;
 }
 
-export function moorhenSequenceToSeqViewer(sequence: moorhen.Sequence): MoorhenSeqViewTypes.SeqElement  {
+export function moorhenSequenceToSeqViewer(sequence: moorhen.Sequence, molName: string, molNo: number): MoorhenSeqViewTypes.SeqElement  {
     if (sequence !== null && sequence.sequence.length > 0) {
-        const resZeroInfo = cidToSpec(sequence.sequence[0].cid);
         return {
-            molName: resZeroInfo.mol_name,
+            molName: molName,
             chain: sequence.chain,
-            molNo: Number(resZeroInfo.mol_no),
+            molNo: molNo,
             residues: sequence.sequence.map(residue => ({
                 resNum: residue.resNum,
                 resCode: residue.resCode,
@@ -78,7 +78,6 @@ export function moorhenSequenceToSeqViewer(sequence: moorhen.Sequence): MoorhenS
             }))
         };
     }
-
     return null;
 }
 
@@ -96,16 +95,18 @@ type MoorhenSequenceViewerPropsType = {
     columnWidth?: number;
     selectIsActive?: boolean;
     reOrder?: boolean;
+    fontSize?: number;
 };
-
 
 export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType) => {
     const { 
         nameColumnWidth = 2,
         columnWidth = 1,
         reOrder = true,   
+        fontSize = columnWidth
         } = props;
     const inputArray = Array.isArray(props.sequences) ? props.sequences : [props.sequences];
+
     if (inputArray.length === 0) {
         return <div>No sequences available</div>;
     }
@@ -297,7 +298,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
             setDisplayHeight((prev) => Math.max(prev - 1, 1));
         }
     };
-    useEffect(() => {
+    useMemo(() => {
         setSequencesSlices([sequencesSlice[0], sequencesSlice[0] + displayHeight]);
     },[displayHeight])
 
@@ -335,10 +336,8 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
 
         orderedSequences.slice(sequencesSlice[0], sequencesSlice[1]).forEach((seqObj) => {
             const sequence = seqObj.residues;
-            const molName = seqObj.molName;
             const molNo = seqObj.molNo;
             const chain = seqObj.chain;
-            const offset = seqObj.residuesDisplayOffset;
             const lastResi = sequence[sequence.length - 1].resNum;
             const firstResi = sequence[0].resNum;
             const residues = [];
@@ -348,13 +347,16 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
                     if (i < firstResi) {
                         residues.push(null);                   
                     } else if (i < lastResi) {
+                        if (seqObj.missingAs === 'none') {
+                            residues.push(null);
+                        } else {
                         residues.push({
                             resNum: i,
-                            resCode: "-",
+                            resCode: seqObj.missingAs ? seqObj.missingAs : "-",
                             resCID: "",
                             selected: false,
                             hovered: false,
-                        });
+                        });}
                     } else {
                         residues.push(null);
                     }
@@ -375,22 +377,14 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
                     }}
 
                     residues.push({
-                        resNum: resi.resNum,
-                        resCode: resi.resCode,
-                        resCID: resi.resCID,
-                        selected: selected,
-                        colour: resi.colour ? resi.colour : null,                       
+                        ...resi,
+                        selected: selected,                  
                     });
                 }
             }
             sequenceElements.push({
-                molName: molName,
-                molNo: molNo,
-                chain: chain,
+                ...seqObj,
                 residues: residues,
-                displayName: seqObj.displayName ? seqObj.displayName : null,
-                colour: seqObj.colour ? seqObj.colour : null,
-                residuesDisplayOffset: seqObj.residuesDisplayOffset ? seqObj.residuesDisplayOffset : 0
             });
         });
         return sequenceElements;
@@ -448,6 +442,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         }
     }, [props.hoveredResidue]);
 
+
     const renderResidueBox = (sequence: MoorhenSeqViewTypes.SeqElement, residue: MoorhenSeqViewTypes.Residue, j: number) => {
         if (!residue) {
             return (
@@ -458,13 +453,14 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
             if (hoveredKey ===  `${sequence.molNo}` + `${sequence.chain}` + `${residue.resNum}`) {
                 hover = true
             }
-            const colour = residue.colour ? residue.colour  : sequence.colour ? sequence.colour : defaultColour; 
-            const className = `residue-box ${j % 2 === 0 ? "even" : "odd"} ${residue.selected ? 'selected' : ''} ${hover ? 'hover' : ''} ${isGliding ? 'glideSelect' : ''}`;
+            const colour = residue.colour ? residue.colour  : sequence.colour ? sequence.colour : defaultColour;
+            const colorAlternate = !sequence.blockAlternateColour ? (j % 2 === 0 ? "even" : "odd") : "solid";
+            const className = `residue-box ${colorAlternate} ${residue.selected ? 'selected' : ''} ${hover ? 'hover' : ''} ${isGliding ? 'glideSelect' : ''}`;
             return (
                 <div
                     key={sequence.molNo + sequence.chain + residue.resNum}
                     className={className}
-                    style={{ "--overlay-color": colour, "--column-width": `${columnWidth}rem`, fontSize:  `${columnWidth}rem`} as React.CSSProperties}
+                    style={{ "--overlay-color": colour, "--column-width": `${columnWidth}rem`, fontSize:`${fontSize}rem`} as React.CSSProperties}
                     data-molname={sequence.molName}
                     data-molno={sequence.molNo}
                     data-chain={sequence.chain}
@@ -475,12 +471,11 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
                     onMouseDown={handleResidueMouseDown} 
                     onMouseUp={handleResidueMouseUp}
                 >
-                    {residue.resCode ? residue.resCode : " "}
+                    {!sequence.hideResCode ? (residue.resCode ? residue.resCode : " ") : " "}
                 </div>
             );
         }
     };
-
     const renderSequenceRow = (sequence: MoorhenSeqViewTypes.SeqElement, i) => {
         return (
             <div style={{ display: "flex", flexDirection: "column", width: "fit-content" }} key={sequence.molName + sequence.chain + "_row"}>
