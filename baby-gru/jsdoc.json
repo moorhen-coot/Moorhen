@@ -13,6 +13,15 @@
         "moduleRoot": "./src"
     },
     "templates": {
+        "search": true,
+        "default": {
+            "staticFiles": {
+                "include": [
+                    "./docs.styles.css",
+                    "./public/baby-gru/pixmaps/MoorhenLogo.png"
+                ]
+            }
+        },
         "cleverLinks": false,
         "monospaceLinks": false
     },
@@ -27,6 +36,14 @@
         "encoding": "utf8",
         "destination": "./docs/",
         "recurse": true,
-        "verbose": true
+        "verbose": true,
+        "template": "node_modules/docdash"
+    },
+    "docdash": {
+        "meta": {
+            "title": "Moorhen Developer Documentation",
+            "description": "Moorhen Developer Documentation",
+            "keyword": "Moorhen Developer Documentation"
+        }
     }
-  }
+}
