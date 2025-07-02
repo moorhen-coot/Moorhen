@@ -44,6 +44,18 @@
             "title": "Moorhen Developer Documentation",
             "description": "Moorhen Developer Documentation",
             "keyword": "Moorhen Developer Documentation"
-        }
+        },
+        "collapse":true,
+        "sectionOrder": [
+             "Classes",
+             "Modules",
+             "Global",
+             "Externals",
+             "Events",
+             "Namespaces",
+             "Mixins",
+             "Tutorials",
+             "Interfaces"
+        ]
     }
 }
