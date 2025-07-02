@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer, MoorhenSeqViewTypes } from "../sequence-viewer/MoorhenSequenceViewer";
 import { cidToSpec, sequenceIsValid } from '../../utils/utils';
 import { moorhen } from "../../types/moorhen";
@@ -27,8 +27,6 @@ export const MoorhenSequenceList = (props: {
     const dispatch = useDispatch();
     const { enqueueSnackbar } = useSnackbar()
 
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch);
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom);
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection);
 
@@ -66,27 +64,39 @@ export const MoorhenSequenceList = (props: {
 
     const display = (sequenceList && sequenceList.length > 0) ? true : false;
 
-    const handleClickResidue = (modelIndex: number, molName: string, chain: string, seqNum: number ) => {
-        props.setClickedResidue({modelIndex, molName, chain, seqNum})
-    }
+    const handleClickResidue = useCallback(
+        (modelIndex, molName, chain, seqNum) => {
+            props.setClickedResidue({ modelIndex, molName, chain, seqNum });
+        },
+        [props.setClickedResidue]
+    );
 
-    const handleResiduesSelection = (selection: MoorhenSeqViewTypes.ResiduesSelection) => {
-        if (selection.molNo !== props.molecule.molNo) {return};
-        const first = selection.range[0] < selection.range[1] ? selection.range[0] : selection.range[1]
-        const second = selection.range[0] < selection.range[1] ? selection.range[1] : selection.range[0]
-        const newSelection: moorhen.ResidueSelection =
-        {
-            molecule: props.molecule,
-            first: '/1/'+ selection.chain +'/' +first +'/CA',
-            second: '/1/'+ selection.chain +'/' +second+'/CA',
-            cid: '/*/'+ selection.chain +'/' +first +'-' + second + '/*',
-            isMultiCid: false,
-            label: '/*/'+ selection.chain +'/' +first +'-' + second + '/*',
-        };
-        dispatch(setResidueSelection(newSelection))
-        props.molecule.drawResidueSelection(newSelection.cid as string)
-        enqueueSnackbar("residue-selection", {variant: "residueSelection", persist: true})
-    }
+    const handleResiduesSelection = useCallback(
+        (selection: MoorhenSeqViewTypes.ResiduesSelection) => {
+            if (selection.molNo !== props.molecule.molNo) return;
+            const first = Math.min(selection.range[0], selection.range[1]);
+            const second = Math.max(selection.range[0], selection.range[1]);
+            const newSelection: moorhen.ResidueSelection = {
+                molecule: props.molecule,
+                first: '/1/' + selection.chain + '/' + first + '/CA',
+                second: '/1/' + selection.chain + '/' + second + '/CA',
+                cid: '/*/' + selection.chain + '/' + first + '-' + second + '/*',
+                isMultiCid: false,
+                label: '/*/' + selection.chain + '/' + first + '-' + second + '/*',
+            };
+            dispatch(setResidueSelection(newSelection));
+            props.molecule.drawResidueSelection(newSelection.cid as string);
+            enqueueSnackbar("residue-selection", { variant: "residueSelection", persist: true });
+        },
+        [props.molecule, dispatch, enqueueSnackbar]
+    );
+
+    const handleHoverResidue = useCallback(
+        (molName, chain, resNum, resCode, resCID) => {
+            dispatch(setHoveredAtom({ molecule: props.molecule, cid: resCID }));
+        },
+        [dispatch, props.molecule]
+    );
 
     const hoveredResidue = useMemo (() => {
         if (hoveredAtom.cid) {
@@ -106,9 +116,9 @@ export const MoorhenSequenceList = (props: {
         <MoorhenSequenceViewer
             sequences={sequenceList}
             selectedResidues={sequenceSelection}
-            onResidueClick={(modelIndex, molName, chain, seqNum) => handleClickResidue(modelIndex, molName, chain, seqNum )}
-            onResiduesSelect={(selection) => handleResiduesSelection(selection)}
-            onHoverResidue={(molName, chain, resNum, resCode, resCID) => {dispatch(setHoveredAtom({ molecule: props.molecule, cid: resCID }));}}
+            onResidueClick={handleClickResidue}
+            onResiduesSelect={handleResiduesSelection}
+            onHoverResidue={handleHoverResidue}
             hoveredResidue={hoveredResidue}
             maxDisplayHeight={8}
         />

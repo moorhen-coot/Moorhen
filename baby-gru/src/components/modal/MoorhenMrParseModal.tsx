@@ -251,10 +251,10 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         return list
     }, [AFDisplaySettings, afJson, mrParseModels])
 
-    const handleClickResidue = (clickedResidue: {molIndex: number, molName: string, chain: string, resNum: number}) => {
-        const foundModel = mrParseModels.find(mod => (mod.name === clickedResidue.molName))
-        foundModel?.centreOn(`/*/${clickedResidue.chain}/${clickedResidue.resNum}-${clickedResidue.resNum}/*`)
-    }
+    const handleClickResidue = useCallback((molIndex: number, molName: string, chain: string, resNum: number) => {
+        const foundModel = mrParseModels.find(mod => (mod.name === molName))
+        foundModel?.centreOn(`/*/${chain}/${resNum}-${resNum}/*`)
+    }, [mrParseModels])
 
     const tableSort = ((a,b,key,isString,reversed) => {
         if(isString){
@@ -740,7 +740,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                         >
                     <MoorhenSequenceViewer
                         sequences={homologsSequencesLists}
-                        onResidueClick={(modelIndex, molName, chain, seqNum) => handleClickResidue({ molIndex: modelIndex, molName, chain, resNum: seqNum })}
+                        onResidueClick={handleClickResidue}
                         nameColumnWidth={4}
                         columnWidth={0.45}
                         fontSize={0.5}
@@ -817,7 +817,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                         >
                     <MoorhenSequenceViewer
                         sequences={afSequencesLists}
-                        onResidueClick={(modelIndex, molName, chain, seqNum) => handleClickResidue({ molIndex: modelIndex, molName, chain, resNum: seqNum })}
+                        onResidueClick={handleClickResidue}
                         nameColumnWidth={5}
                         columnWidth={0.45}
                         fontSize={0.5}

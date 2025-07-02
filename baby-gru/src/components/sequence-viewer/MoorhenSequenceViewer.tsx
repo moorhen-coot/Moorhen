@@ -371,7 +371,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
             });
         });
         return sequenceElements;
-    }, [sequencesArray, minVal, maxVal, sequencesSlice, isGliding, glideSelectStartRes, props.selectedResidues]);
+    }, [sequencesArray, minVal, maxVal, sequencesSlice, isGliding, glideSelectStartRes, props.selectedResidues, internalSelectedResidues]);
     
     const tickMarks = useMemo(() => {
         const ticks = [];

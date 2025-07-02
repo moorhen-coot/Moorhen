@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, ReactNode } from "react";
+import React, { useRef, useState, useEffect, ReactNode, memo } from "react";
 
 interface CustomHorizontalScrollbarProps {
   children: ReactNode;
@@ -7,7 +7,7 @@ interface CustomHorizontalScrollbarProps {
   onDraggingChange?: (isDragging: boolean) => void;
 }
 
-export const CustomHorizontalScrollbar: React.FC<CustomHorizontalScrollbarProps> = ({ children, style, className, onDraggingChange }) => {
+export const CustomHorizontalScrollbar: React.FC<CustomHorizontalScrollbarProps> = memo(({ children, style, className, onDraggingChange }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [thumbWidth, setThumbWidth] = useState(40);
   const [thumbLeft, setThumbLeft] = useState(0);
@@ -132,4 +132,6 @@ export const CustomHorizontalScrollbar: React.FC<CustomHorizontalScrollbarProps>
       </div>
     </div>
   );
-};
+});
+
+CustomHorizontalScrollbar.displayName = "CustomHorizontalScrollbar"; // For better debugging in React DevTools
