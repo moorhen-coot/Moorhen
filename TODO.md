@@ -2,7 +2,6 @@
 A JavaScript molecular graphics program
 
 ### For 0.23.0
-- [x] Fix Ligand validation crash.
 - [ ] Fix SSAO.
 - [ ] Load dictionary without creating molecule.
 - [ ] Fix multiview with depth blur.
@@ -10,10 +9,9 @@ A JavaScript molecular graphics program
 - [ ] Fix multiview with edge detect.
 - [ ] Ability to set origin/zoom/individual rotation in "Multiple views for different molecules".
 - [ ] Remove glRef from all component props and class constructor args.
-- [x] Metaballs transparency.
-- [x] Metaballs colouring options.
 
 ### For 0.22.0
+- [ ] Fix video recordings being very stuttery.
 - [ ] Fix text labels being ugly when there is a transparent object.
 - [x] Fix multiview origins only sometimes correct.
 - [x] Fix multiview screenshots scaling.
@@ -23,6 +21,9 @@ A JavaScript molecular graphics program
   - [x] Fix screenshots with transparent multiviews.
   - [x] Fix cross-hairs with transparent multiviews.
   - [x] Fix axes with transparent multiviews.
+- [x] Fix Ligand validation crash.
+- [x] Metaballs transparency.
+- [x] Metaballs colouring options.
 - [x] Get scale bar useful with multiviews.
 - [x] Fix atom info toast gets rid of clipper points widget.
 - [x] Fix MrParse sequences not redrawing if component closed and re-opened.
