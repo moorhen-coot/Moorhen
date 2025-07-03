@@ -148,7 +148,7 @@
     "localforage": "^1.10.0",
     "mini-css-extract-plugin": "^2.9.2",
     "nested-worker": "git+https://github.com/johanholmerin/nested-worker.git#semver:^1.0.0",
-    "node-fetch": "^3.3.2",
+    "node-fetch": "^2.7.0",
     "node-gzip": "^1.1.2",
     "nodemon": "^3.1.10",
     "notistack": "^3.0.2",
