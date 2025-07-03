@@ -722,6 +722,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     </Card >
     </>
 })
+MoorhenMoleculeCard.displayName = "MoorhenMoleculeCard"
 
 const getChipStyle = (colourRules: moorhen.ColourRule[], repIsVisible: boolean, isDark: boolean, width?: string) => {
     const chipStyle = { }

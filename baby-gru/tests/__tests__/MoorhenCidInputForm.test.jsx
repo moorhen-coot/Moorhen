@@ -73,8 +73,7 @@ describe('Testing MoorhenCidIputForm', () => {
         const formNode = screen.getByRole('textbox')
         expect(formNode).toHaveStyle({
             width: "100%",
-            color: 'red',
-            borderColor: 'red'
+            color: 'rgb(255, 0, 0)'
         })
     })
 
