@@ -38,7 +38,7 @@ const itemReducer = (oldList: moorhen.ColourRule[], change: colourRuleChange) =>
         if (itemIndex === 0) {
             return oldList
         }
-        let newList = oldList.slice()
+        const newList = oldList.slice()
         newList[itemIndex] = oldList[itemIndex - 1]
         newList[itemIndex - 1] = change.item
         return newList
@@ -48,7 +48,7 @@ const itemReducer = (oldList: moorhen.ColourRule[], change: colourRuleChange) =>
         if (itemIndex === oldList.length - 1) {
             return oldList
         }
-        let newList = oldList.slice()
+        const newList = oldList.slice()
         newList[itemIndex] = oldList[itemIndex + 1]
         newList[itemIndex + 1] = change.item
         return newList
@@ -58,7 +58,7 @@ const itemReducer = (oldList: moorhen.ColourRule[], change: colourRuleChange) =>
         const newItem = {...oldList[itemIndex]}
         newItem.color = change.color
         if (!newItem.isMultiColourRule) newItem.args[1] = change.color
-        let newList = [...oldList]
+        const newList = [...oldList]
         newList[itemIndex] = newItem
         return newList
     }
@@ -81,7 +81,7 @@ export const MoorhenModifyColourRulesCard = memo((props: {
     const [ruleType, setRuleType] = useState<string>('molecule')
     const [colourProperty, setColourProperty] = useState<string>('b-factor')
     const [selectedColour, setSelectedColour] = useState<string>('#808080')
-    const [selectedChain, setSelectedChain] = useState<string>(props.molecule.sequences[0].chain)
+    const [selectedChain, setSelectedChain] = useState<string>(props.molecule.sequences[0]?.chain ||  '')
     const [residuesSelectionRange, setResidueSelectionRange] = useState<[number,number]>(null)
     
     const [cid, setCid] = useState<string>(null)
@@ -140,7 +140,7 @@ export const MoorhenModifyColourRulesCard = memo((props: {
             }
             props.molecule.defaultColourRules = ruleList
             const representations = props.molecule.representations.filter(representation => representation.useDefaultColourRules)
-            for (let representation of representations) {
+            for (const representation of representations) {
                 if (representation.visible) {
                     await representation.redraw()
                 } else {

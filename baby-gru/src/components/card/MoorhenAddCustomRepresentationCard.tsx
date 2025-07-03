@@ -46,7 +46,6 @@ export const MoorhenAddCustomRepresentationCard = memo((props: {
     const colourModeSelectRef = useRef<HTMLSelectElement | null>(null)
     const colourSwatchRef = useRef<HTMLDivElement | null>(null)
     const alphaSwatchRef = useRef<HTMLImageElement | null>(null)
-    const nonCustomOpacitySliderRef = useRef<any>(null)
     const ncsColourRuleRef = useRef<null | moorhen.ColourRule>(null)
 
     const [ruleType, setRuleType] = useState<string>(props.representation ? "cid" : "molecule")
@@ -75,8 +74,7 @@ export const MoorhenAddCustomRepresentationCard = memo((props: {
     const [applyColourToNonCarbonAtoms, setApplyColourToNonCarbonAtoms] = useState<boolean>((props.representation && !props.representation?.useDefaultColourRules && props.representation?.colourRules?.length !== 0) ? props.representation?.colourRules[0].applyColourToNonCarbonAtoms : false)
     const [useDefaultColours, setUseDefaultColours] = useState<boolean>(props.representation?.useDefaultColourRules ?? true)
 
-    const [sequenceRangeSelect, setSequenceRangeSelect] = useState(null)
-    const [selectedChain, setSelectedChain] = useState<string>(props.molecule.sequences[0].chain)
+    const [selectedChain, setSelectedChain] = useState<string>(props.molecule.sequences[0]?.chain ||  '')
     const [sequenceResidueRange, setSequenceResidueRange] = useState<[number, number] | null>(null)
 
     const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState<number>(props.representation?.bondOptions?.atomRadiusBondRatio ?? props.molecule.defaultBondOptions.atomRadiusBondRatio)
@@ -140,10 +138,6 @@ export const MoorhenAddCustomRepresentationCard = memo((props: {
 
     const selectedSequence =  props.molecule.sequences.find(sequence => sequence.chain === selectedChain)
  
-
-    useEffect(() => {
-        console.log('selectedResidues', sequenceResidueRange)
-    }, [sequenceResidueRange])
 
     const createRepresentation = async () => {
         props.setBusy?.(true)
