@@ -1,5 +1,4 @@
-import { useEffect, useState, useRef } from "react";
-import { Form } from "react-bootstrap";
+import { useRef, useState} from "react";
 import Stack from '@mui/material/Stack';
 import './inputs.css'
 
@@ -67,41 +66,18 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         type = "standard"
     } = props;
 
-    const [isValidInput, setIsValidInput] = useState<boolean>(true);
-    const [internalValue, setInternalValue] = useState<string>("");
     const [isUserInteracting, setIsUserInteracting] = useState<boolean>(false);
+    const [internalValue, setInternalValue] = useState<string>(props.value.toFixed(decimalDigits))
+    const isValidRef = useRef<boolean>(true)
 
-    useEffect(() => {
-        if (!isUserInteracting) {
-            if (props.value === undefined || props.value === null) {
-                setInternalValue("");
-                setIsValidInput(false);
-            } else {
-                setInternalValue(Number(props.value).toFixed(decimalDigits));
-                setIsValidInput(true);
-            }
-        }
-    }, [props.value, isUserInteracting]);
+    let displayValue: string = "" 
+    if (!isUserInteracting) {
+        displayValue  = props.value.toFixed(decimalDigits) 
+    } else {
+        displayValue = internalValue
+    }
 
-    const inputRef = useRef<HTMLInputElement>(null);
-
-    useEffect(() => {
-        if (type !== "number") {
-            return;
-        }
-        function handleClickOutside(event: MouseEvent) {
-            if (inputRef.current && !inputRef.current.contains(event.target as Node)) {
-                setIsUserInteracting(false);
-            }
-        }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, []);
-
-    const checkIsValidInput = (input: string) => {
-       
+    const checkIsValidInput = (input: string) => {       
         if (input === "") {
             return false;
         }
@@ -119,20 +95,21 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         return true;
     };
 
+    isValidRef.current = checkIsValidInput(displayValue)
+
     const handleChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
         setIsUserInteracting(true); 
-        setInternalValue(evt.target.value);
+        setInternalValue(evt.target.value)  
         const _isValid = checkIsValidInput(evt.target.value);
-        setIsValidInput(_isValid);
         if (_isValid && !waitReturn) {
             props.setValue?.(evt.target.value);
         }
-    };
+    }
 
     const handleReturn = (evt: React.KeyboardEvent<HTMLInputElement>) => {
         if (evt.key === "Enter") {
             evt.preventDefault();
-            if (isValidInput) {
+            if (checkIsValidInput(internalValue)) {
                 props.setValue?.(internalValue);
             }
             setIsUserInteracting(false); 
@@ -140,8 +117,9 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
     };
 
     const handleBlur = () => {
-        setIsUserInteracting(false); 
+        setIsUserInteracting(false);
     };
+
 
     const inputWidth = width ? width : `${2.5 + 0.6 * decimalDigits + (type === "text" ? 0 : 1.1)}rem`;
     const formType = type === "number" ? "number" 
@@ -154,14 +132,13 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
             style={{ alignItems: "center" }}
         >
             {label && label}
-            <Form.Control
-                ref={inputRef}
+            <input
                 type={formType}
                 step={Math.pow(10, -decimalDigits)}
                 disabled={disabled}
-                value={internalValue}
+                value={displayValue}
                 style={{ width: inputWidth, marginLeft: "0.2rem" }}
-                className={`precise-input ${type === "numberForm" ? "number-form" : "compact"} ${isValidInput ? "valid" : "invalid"} ${disabled ? "disabled" : ""}`}
+                className={`precise-input ${type === "numberForm" ? "number-form" : "compact"} ${isValidRef.current ? "valid" : "invalid"} ${disabled ? "disabled" : ""}`}
                 onChange={handleChange}
                 onKeyDown={handleReturn}
                 onBlur={handleBlur}               
