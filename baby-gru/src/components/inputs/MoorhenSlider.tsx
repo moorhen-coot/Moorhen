@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useMemo, useState, useRef} from "react";
 import { MoorhenPreciseInput } from "./MoorhenPreciseInput";
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
@@ -28,6 +28,22 @@ type MoorhenSliderProps<T extends number | [number, number]> = {
     piWaitReturn?: boolean;
     piMinMax?: [number, number]
 };
+
+function log10ofT<T extends number | [number, number]>(val: T): T {
+    if (Array.isArray(val)) {
+        return [Math.log10(val[0]), Math.log10(val[1])] as T;
+    } else {
+        return Math.log10(val) as T;
+    }
+}
+
+function pow10ofT<T extends number | [number, number]>(val: T): T { // pow 10 for value of type T
+    if (Array.isArray(val)) {
+        return [Math.pow(10, val[0]), Math.pow(10, val[1])] as T;
+    } else {
+        return Math.pow(10, val) as T;
+    }
+}
 
 /**
  * MoorhenSlider component props
@@ -104,7 +120,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
 
     const precision = Math.pow(10, - decimalPlaces);
     
-    const getStepButtons = () => {
+    const stepButtons = useMemo(function getStepButtons() {
         if (props.stepButtons) {
             if (logScale) {
                 return (Math.log10(maxVal) - Math.log10(minVal)) / props.stepButtons;
@@ -121,50 +137,23 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
 
             }
         }
-    }
-    const stepButtons = getStepButtons();
+    },[props.stepButtons]);
 
-    const log10ofT = (val: T) => { // log 10 for value of type T
-        if (Array.isArray(val)) {
-            return [Math.log10(val[0]), Math.log10(val[1])] as T;
-        } else {
-            return Math.log10(val) as T;
+    const isRange = Array.isArray(props.externalValue);
+    const [internalValue, setInternalValue] = useState<T>(props.externalValue); 
+    
+    const internalValueRef = useRef<T>(null); 
+    internalValueRef.current = internalValue;
+
+    const propagateChange = () => {
+        props.setExternalValue?.(internalValueRef.current as T);
         }
-    }
 
-    const pow10ofT = (val: T) => { // pow 10 for value of type T
-        if (Array.isArray(val)) {
-            return [Math.pow(10, val[0]), Math.pow(10, val[1])] as T;
-        } else {
-            return Math.pow(10, val) as T;
-        }
-    }
-
-    const [internalValue, setInternalValue] = useState<T>(logScale ? log10ofT(props.externalValue) : props.externalValue); // internal value
-    const [externalValue, setExternalValue] = useState<T>(props.externalValue); 
-    const isRange = Array.isArray(props.externalValue); 
-
-    useEffect(function propagateValueToParent(){
-        if (props.externalValue !== externalValue) {
-            if (Array.isArray(props.externalValue)) {
-                props.setExternalValue?.(externalValue as T);
-            }
-            else {
-                props.setExternalValue?.(externalValue as T);
-            }
-        }
-    }, [externalValue]);
-
-    useEffect(function propagateValueToSlider(){
-        if (logScale) {
-            setInternalValue(log10ofT(props.externalValue));
-        } else {
-            setInternalValue(props.externalValue);
-        }
-    }, [props.externalValue]);
+    const displayValue  = (logScale? log10ofT(props.externalValue) : props.externalValue) 
 
     const handleChange = (event: Event, newValue: T) => {
-        setExternalValue(logScale ? pow10ofT(newValue) : newValue ); // external value is changed by logscale
+        setInternalValue(logScale ? pow10ofT(newValue) : newValue ); // external value is changed by logscale
+        propagateChange();
     };
 
     const drawTitle = () => {
@@ -185,7 +174,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                         allowNegativeValues={minVal < 0}
                         label={sliderTitle}
                         value={props.externalValue as number}   
-                        setValue={(newVal) => setExternalValue((+newVal as T))}
+                        setValue={(newVal) => setInternalValue((+newVal as T))}
                         waitReturn={piWaitReturn}
                         decimalDigits={decimalPlaces}
                         width={piWidth?  piWidth : 2.5+ 0.6*decimalPlaces +"rem"}
@@ -206,7 +195,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                     <MoorhenPreciseInput
                         allowNegativeValues={minVal < 0}
                         value={props.externalValue[0]}   
-                        setValue={(newVal) => setExternalValue(([+newVal, externalValue[1]] as T))}
+                        setValue={(newVal) => props.setExternalValue(([+newVal, internalValue[1]] as T))}
                         waitReturn={piWaitReturn}
                         decimalDigits={decimalPlaces}
                         width={piWidth?  piWidth : 2.5+ 0.6*decimalPlaces +"rem"}
@@ -217,7 +206,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                     <MoorhenPreciseInput
                         allowNegativeValues={minVal < 0}
                         value={props.externalValue[1]}   
-                        setValue={(newVal) => setExternalValue(([externalValue[0], +newVal ] as T))}
+                        setValue={(newVal) => props.setExternalValue(([internalValue[0], +newVal ] as T))}
                         waitReturn={piWaitReturn}
                         decimalDigits={decimalPlaces}
                         width={piWidth?  piWidth : 2.5+ 0.6*decimalPlaces +"rem"}
@@ -252,7 +241,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
 
         const handleButton = (factor: number, currentValue: T, idx?:number): T => { 
             const linearValue = logScale ? log10ofT(currentValue) : currentValue;
-            
+           
             if (Array.isArray(linearValue)) {
                 if (idx === 0) {
                     return [clampValue( logScale ? Math.pow(10, linearValue[0] + factor) : linearValue[0] + factor, minVal, maxVal), currentValue[1]] as T
@@ -266,13 +255,14 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
         }}
         
         const buttonEffect = () => {
-            setExternalValue((current) => handleButton(factor, current, idx));
+            setInternalValue((current) => handleButton(factor, current, idx));
+            propagateChange();
         };
 
         const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
         const handleMouseDown = (): void => {
-            buttonEffect()               
+            buttonEffect()       
 
             intervalRef.current = setInterval(() => 
                 buttonEffect(), 100);
@@ -281,7 +271,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
         const handleMouseUp = () => {
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
-                intervalRef.current = null;
+                intervalRef.current = null;                
             }
         };
 
@@ -332,7 +322,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                 {drawTitle()}
                 <Slider
                     disabled={isDisabled}
-                    value={internalValue}
+                    value={displayValue}
                     onChange={handleChange}
                     min={logScale ? Math.log10(minVal) : minVal}
                     max={logScale ? Math.log10(maxVal) : maxVal}
@@ -359,4 +349,4 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
             {drawSidePanels("R")}
         </Stack>
     );
-};
+}
