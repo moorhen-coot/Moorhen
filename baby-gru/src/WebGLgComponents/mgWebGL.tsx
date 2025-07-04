@@ -883,6 +883,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.doSideBySideStereo = doSideBySideStereo;
     }
 
+    setDoRestrictDrawElements(elementsIndicesRestrict:boolean) {
+        if(this.WEBGL2&&!elementsIndicesRestrict){
+            this.max_elements_indices = this.gl.getParameter(this.gl.MAX_ELEMENTS_INDICES)
+        } else {
+            this.max_elements_indices = 65535;
+        }
+    }
+
     setDoMultiView(doMultiView) {
         this.doMultiView = doMultiView;
     }
@@ -1251,7 +1259,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         store.dispatch(setGLCtx(this.gl))
         this.currentViewport = [0,0, this.gl.viewportWidth, this.gl.viewportWidth];
         this.currentAnaglyphColor = [1.0,0.0,0.0,1.0]
-        if(this.WEBGL2){
+
+        const elementsIndicesRestrict = store.getState().glRef.elementsIndicesRestrict
+        if(this.WEBGL2&&!elementsIndicesRestrict){
             this.max_elements_indices = this.gl.getParameter(this.gl.MAX_ELEMENTS_INDICES)
         } else {
             this.max_elements_indices = 65535;
