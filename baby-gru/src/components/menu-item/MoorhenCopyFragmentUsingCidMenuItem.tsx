@@ -6,7 +6,7 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice";
-import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
+import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { clearResidueSelection } from "../../store/generalStatesSlice";
 
 export const MoorhenCopyFragmentUsingCidMenuItem = (props: {

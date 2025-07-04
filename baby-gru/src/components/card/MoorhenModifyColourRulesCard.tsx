@@ -4,7 +4,7 @@ import { HexColorInput, HexAlphaColorPicker } from "react-colorful";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenColourRuleCard } from "./MoorhenColourRuleCard"
 import { convertRemToPx, convertViewtoPx, getMultiColourRuleArgs } from "../../utils/utils";
-import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
+import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { Popover } from "@mui/material";

@@ -4,7 +4,7 @@ import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
+import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";

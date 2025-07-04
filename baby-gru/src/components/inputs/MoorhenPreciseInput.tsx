@@ -1,5 +1,4 @@
 import { useEffect, useState, useRef } from "react";
-import { Form } from "react-bootstrap";
 import Stack from '@mui/material/Stack';
 import './inputs.css'
 
@@ -154,14 +153,14 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
             style={{ alignItems: "center" }}
         >
             {label && label}
-            <Form.Control
+            <input
                 ref={inputRef}
                 type={formType}
                 step={Math.pow(10, -decimalDigits)}
                 disabled={disabled}
                 value={internalValue}
                 style={{ width: inputWidth, marginLeft: "0.2rem" }}
-                className={`precise-input ${type === "numberForm" ? "number-form" : "compact"} ${isValidInput ? "valid" : "invalid"} ${disabled ? "disabled" : ""}`}
+                className={`moorhen-input precise-input ${type === "numberForm" ? "number-form" : "compact"} ${isValidInput ? "valid" : "invalid"} ${disabled ? "disabled" : ""}`}
                 onChange={handleChange}
                 onKeyDown={handleReturn}
                 onBlur={handleBlur}               

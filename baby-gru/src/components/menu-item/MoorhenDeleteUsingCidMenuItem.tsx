@@ -5,7 +5,7 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from 'react-redux';
-import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
+import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { clearResidueSelection } from "../../store/generalStatesSlice";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { removeMolecule } from "../../store/moleculesSlice";
