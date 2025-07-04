@@ -114,6 +114,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             const arrayBuffer = await readDataFile(e.target.files[0])
             const bytes = new Uint8Array(arrayBuffer)
             const sessionMessage = moorhensession.Session.decode(bytes,undefined,undefined)
+            //console.log(JSON.stringify(sessionMessage, null, 4))
             await loadSession(sessionMessage)
         } catch (err) {
             console.log(err)
@@ -161,7 +162,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
 
     const getSession = async () => {
         const sessionData = await props.timeCapsuleRef.current.fetchSession(true)
-        console.log(sessionData)
+        //console.log(JSON.stringify(sessionData, null, 4))
         const sessionMessage = moorhensession.Session.fromObject(sessionData)
         const sessionBytes = moorhensession.Session.encode(sessionMessage).finish()
         doDownload([sessionBytes], 'moorhen_session.pb')

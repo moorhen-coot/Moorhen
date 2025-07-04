@@ -343,10 +343,10 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         const ssaoBias = this.store.getState().sceneSettings.ssaoBias
         const useOffScreenBuffers = this.store.getState().sceneSettings.useOffScreenBuffers
         const doEdgeDetect = this.store.getState().sceneSettings.doEdgeDetect
-        const depthScale = this.store.getState().sceneSettings.depthScale
-        const depthThreshold = this.store.getState().sceneSettings.depthThreshold
-        const normalScale = this.store.getState().sceneSettings.normalScale
-        const normalThreshold = this.store.getState().sceneSettings.normalThreshold
+        const depthScale = this.store.getState().sceneSettings.edgeDetectDepthScale
+        const depthThreshold = this.store.getState().sceneSettings.edgeDetectDepthThreshold
+        const normalScale = this.store.getState().sceneSettings.edgeDetectNormalScale
+        const normalThreshold = this.store.getState().sceneSettings.edgeDetectNormalThreshold
         const doPerspectiveProjection = this.store.getState().sceneSettings.doPerspectiveProjection
         const backgroundColor = this.store.getState().sceneSettings.backgroundColor
 

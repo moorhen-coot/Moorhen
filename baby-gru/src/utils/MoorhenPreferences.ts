@@ -83,6 +83,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
         animateRefine: true,
         devMode: false,
         useGemmi: false,
+        elementsIndicesRestrict: false,
         shortCuts: {
             "decrease_front_clip": {
                 modifiers: [],
