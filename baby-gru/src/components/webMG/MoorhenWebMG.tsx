@@ -126,6 +126,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const GLLabelsFontSize = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontSize)
     const [drawQuat,setDrawQuat] = useState<quat4>([0, 0, 0, -1])
 
+    const elementsIndicesRestrict = useSelector((state: moorhen.State) => state.glRef.elementsIndicesRestrict)
+
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
         const fieldDepthBack: number = 21;
@@ -222,6 +224,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }
     }, [zoom])
     */
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setDoRestrictDrawElements(elementsIndicesRestrict)
+            glRef.current.drawScene()
+        }
+    }, [elementsIndicesRestrict])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {

@@ -6,7 +6,7 @@ import { webGL } from "../../types/mgWebGL";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { useDispatch, useSelector } from 'react-redux';
 import { setResidueSelection } from "../../store/generalStatesSlice";
-import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
+import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { useSnackbar } from "notistack";
 
 export const MoorhenCreateSelectionMenuItem = (props: {

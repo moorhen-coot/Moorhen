@@ -10,7 +10,7 @@ import { HexAlphaColorPicker, HexColorInput } from "react-colorful";
 import { webGL } from '../../types/mgWebGL';
 import { GrainOutlined } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
-import { MoorhenCidInputForm } from '../form/MoorhenCidInputForm';
+import { MoorhenCidInputForm } from '../inputs/MoorhenCidInputForm';
 import { addCustomRepresentation } from '../../store/moleculesSlice';
 import { MoorhenColourRule } from '../../utils/MoorhenColourRule';
 import { NcsColourSwatch } from './MoorhenColourRuleCard';

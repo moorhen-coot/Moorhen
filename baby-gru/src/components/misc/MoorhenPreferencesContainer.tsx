@@ -17,6 +17,7 @@ import {
 import { setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut } from "../../store/generalStatesSlice";
 import { setAnimateRefine, setEnableRefineAfterMod } from '../../store/refinementSettingsSlice';
 import { setDevMode, setUserPreferencesMounted, setUseGemmi } from "../../store/generalStatesSlice";
+import { setElementsIndicesRestrict } from "../../store/glRefSlice";
 import { moorhen } from "../../types/moorhen"
 
 export const MoorhenPreferencesContainer = (props: {
@@ -29,6 +30,9 @@ export const MoorhenPreferencesContainer = (props: {
     // Some important general app states
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi)
+
+    // Whether or not to restrict maximum element indices draw to 65535, or to use what driver thinks is best.
+    const elementsIndicesRestrict = useSelector((state: moorhen.State) => state.glRef.elementsIndicesRestrict)
 
     // Map settings
     const defaultMapLitLines = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapLitLines)
@@ -146,6 +150,7 @@ export const MoorhenPreferencesContainer = (props: {
         48: { label: "edgeDetectNormalScale", value: edgeDetectNormalScale, valueSetter: setEdgeDetectNormalScale},
         49: { label: "reContourMapOnlyOnMouseUp", value: reContourMapOnlyOnMouseUp, valueSetter: setReContourMapOnlyOnMouseUp},
         50: { label: "useGemmi", value: useGemmi, valueSetter: setUseGemmi},
+        51: { label: "elementsIndicesRestrict", value: elementsIndicesRestrict, valueSetter: setElementsIndicesRestrict},
     }
 
     const restoreDefaults = (preferences: moorhen.Preferences, defaultValues: moorhen.PreferencesValues)=> {
@@ -264,6 +269,16 @@ export const MoorhenPreferencesContainer = (props: {
         localForageInstanceRef.current?.localStorageInstance.setItem('useGemmi', useGemmi)
         .then(_ => props.onUserPreferencesChange('useGemmi', useGemmi));
     }, [useGemmi]);
+
+    useMemo(() => {
+
+        if (elementsIndicesRestrict === null) {
+            return
+        }
+
+        localForageInstanceRef.current?.localStorageInstance.setItem('elementsIndicesRestrict', elementsIndicesRestrict)
+        .then(_ => props.onUserPreferencesChange('elementsIndicesRestrict', elementsIndicesRestrict));
+    }, [elementsIndicesRestrict]);
 
     useMemo(() => {
 

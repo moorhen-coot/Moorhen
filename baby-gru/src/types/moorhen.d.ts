@@ -909,6 +909,7 @@ export namespace moorhen {
         shortCuts: string | {
             [label: string]: Shortcut;
         };
+        elementsIndicesRestrict: boolean;
     }
 
     interface Context extends ContextSetters, PreferencesValues { }
@@ -1171,6 +1172,7 @@ export namespace moorhen {
             texturedShapes: any[],
             canvasSize: [number,number],
             rttFramebufferSize: [number,number],
+            elementsIndicesRestrict: boolean
         };
         overlays: {
             imageOverlayList: any[]

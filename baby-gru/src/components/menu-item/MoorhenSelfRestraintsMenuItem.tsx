@@ -4,7 +4,7 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
-import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
+import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenSlider } from "../inputs/MoorhenSlider";
 import { IconButton } from "@mui/material";
 import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";

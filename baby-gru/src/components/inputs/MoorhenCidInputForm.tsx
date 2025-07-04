@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
-import { Form } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
+import "./inputs.css";
 
 type MoorhenCidInputFormPropsType = {
     height?: string;
@@ -49,11 +49,27 @@ export const MoorhenCidInputForm = forwardRef<HTMLInputElement, MoorhenCidInputF
     }
 
     return  <>
-    <Form.Group style={{ width: width, margin: margin, height: height }}>
-        {label && <Form.Label>{label}</Form.Label>}
-        <Form.Control size="sm" type='text' placeholder={placeholder} defaultValue={defaultValue} style={{width: "100%", color: invalidCid ? 'red' : '', borderColor: invalidCid ? 'red' : ''}} onChange={handleChange} ref={cidFormRef}/>
-    </Form.Group>
-    {allowUseCurrentSelection && showResidueSelection && <Form.Check type="checkbox" label="Use current selection?" style={{width: width, margin: margin }} onChange={handleFillCurrentSelection}/>}
-    </>
+    <div style={{ width: width, margin: margin, height: height }}>
+        {label && <label style={{ display: 'block', marginBottom: '0.25rem' }}>{label}</label>}
+        <input 
+            type="text" 
+            className={`moorhen-input ${invalidCid ? 'invalid' : ''}`}
+            placeholder={placeholder} 
+            defaultValue={defaultValue}
+            onChange={handleChange} 
+            ref={cidFormRef}
+        />
+    </div>
+    {allowUseCurrentSelection && showResidueSelection && 
+        <div style={{ width: width, margin: margin, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <input 
+                type="checkbox" 
+                id="useCurrentSelection"
+                onChange={handleFillCurrentSelection}
+            />
+            <label htmlFor="useCurrentSelection">Use current selection?</label>
+        </div>
+    }
+</>
 })
 

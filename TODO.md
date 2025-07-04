@@ -9,10 +9,9 @@ A JavaScript molecular graphics program
 - [ ] Fix multiview with edge detect.
 - [ ] Ability to set origin/zoom/individual rotation in "Multiple views for different molecules".
 - [ ] Remove glRef from all component props and class constructor args.
+- [ ] Fix text labels being ugly when there is a transparent object.
 
 ### For 0.22.0
-- [ ] Fix video recordings being very stuttery.
-- [ ] Fix text labels being ugly when there is a transparent object.
 - [x] Fix multiview origins only sometimes correct.
 - [x] Fix multiview screenshots scaling.
 - [x] Fix multiview with transparency.

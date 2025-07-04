@@ -135,7 +135,7 @@ export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
             <MoorhenPreciseInput
                 label="B-Factor"
                 labelPosition="top"
-                value={60}
+                value={bFactorLim}
                 decimalDigits={1}
                 type='numberForm'
                 setValue={(newVal: string) => {
@@ -143,38 +143,35 @@ export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
                     isDirty.current = true
                     handleControlFormChange()
                 }}/>
-            <MoorhenNumberForm
-                label="B-Factor"
-                defaultValue={60}
-                ref={bFactorLimRef}
-                onChange={(newVal: string) => {
-                    setBFactorLim(parseFloat(newVal))
-                    isDirty.current = true
-                    handleControlFormChange()
-                }}/>
-            <MoorhenNumberForm
+            <MoorhenPreciseInput
                 label="Sigma"
-                defaultValue={0.8}
-                ref={sigmaLevelRef}
-                onChange={(newVal: string) => {
+                labelPosition="top"
+                value={sigmaLevel}
+                decimalDigits={1}
+                type='numberForm'
+                setValue={(newVal: string) => {
                     setSigmaLevel(parseFloat(newVal))
                     isDirty.current = true
                     handleControlFormChange()
                 }}/>
-            <MoorhenNumberForm
+            <MoorhenPreciseInput
                 label="Min. dist."
-                defaultValue={2.3}
-                ref={minDistRef}
-                onChange={(newVal: string) => {
+                labelPosition="top"
+                value={minDist}
+                decimalDigits={1}
+                type='numberForm'
+                setValue={(newVal: string) => {
                     setMinDist(parseFloat(newVal))
                     isDirty.current = true
                     handleControlFormChange()
                 }}/>
-            <MoorhenNumberForm
+            <MoorhenPreciseInput
                 label="Max. dist."
-                defaultValue={3.5}
-                ref={maxDistRef}
-                onChange={(newVal: string) => {
+                labelPosition="top"
+                value={maxDist}
+                decimalDigits={1}
+                type='numberForm'
+                setValue={(newVal: string) => {
                     setMaxDist(parseFloat(newVal))
                     isDirty.current = true
                     handleControlFormChange()

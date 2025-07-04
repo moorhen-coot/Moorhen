@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom'
 import { render, screen, cleanup, act }  from '@testing-library/react'
-import { MoorhenCidInputForm }  from '../../src/components/form/MoorhenCidInputForm'
+import { MoorhenCidInputForm }  from '../../src/components/inputs/MoorhenCidInputForm'
 import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
 import MoorhenStore from "../../src/store/MoorhenReduxStore"
@@ -58,25 +58,19 @@ describe('Testing MoorhenCidIputForm', () => {
         )
 
         const formNode = screen.getByRole('textbox')
-        expect(formNode).toHaveStyle({
-            width: "100%",
-        })
+        expect(formNode).toHaveClass('moorhen-input')
     })
 
-    test('Test MoorhenCidInputForm invalid cid', async () => {
-        render(
-            <Provider store={MoorhenStore}> 
-                <MoorhenCidInputForm invalidCid={true}/>
-            </Provider> 
-        )
+test('Test MoorhenCidInputForm invalid cid', async () => {
+    render(
+        <Provider store={MoorhenStore}> 
+            <MoorhenCidInputForm invalidCid={true}/>
+        </Provider> 
+    )
 
-        const formNode = screen.getByRole('textbox')
-        expect(formNode).toHaveStyle({
-            width: "100%",
-            color: 'rgb(255, 0, 0)'
-        })
-    })
-
+    const formNode = screen.getByRole('textbox')
+    expect(formNode).toHaveClass('moorhen-input invalid')
+})
     test('Test MoorhenCidInputForm residue selection', async () => {
         const cidRef = createRef(null)
         

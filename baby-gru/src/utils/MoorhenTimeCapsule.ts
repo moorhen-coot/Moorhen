@@ -332,7 +332,9 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         const fogClipOffset = this.store.getState().glRef.fogClipOffset
         const fogStart = this.store.getState().glRef.fogStart
         const fogEnd = this.store.getState().glRef.fogEnd
-        const clipStart = this.store.getState().glRef.clipStart
+        //For some reasons, old status files were saving this multiplied by -1 and magic jsut happened elsewhere.
+        //Now we multiply by -1 at save and restore for compatibility with old status files.
+        const clipStart = this.store.getState().glRef.clipStart * -1
         const clipEnd = this.store.getState().glRef.clipEnd
 
         const doShadow = this.store.getState().sceneSettings.doShadow
@@ -343,10 +345,10 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         const ssaoBias = this.store.getState().sceneSettings.ssaoBias
         const useOffScreenBuffers = this.store.getState().sceneSettings.useOffScreenBuffers
         const doEdgeDetect = this.store.getState().sceneSettings.doEdgeDetect
-        const depthScale = this.store.getState().sceneSettings.depthScale
-        const depthThreshold = this.store.getState().sceneSettings.depthThreshold
-        const normalScale = this.store.getState().sceneSettings.normalScale
-        const normalThreshold = this.store.getState().sceneSettings.normalThreshold
+        const depthScale = this.store.getState().sceneSettings.edgeDetectDepthScale
+        const depthThreshold = this.store.getState().sceneSettings.edgeDetectDepthThreshold
+        const normalScale = this.store.getState().sceneSettings.edgeDetectNormalScale
+        const normalThreshold = this.store.getState().sceneSettings.edgeDetectNormalThreshold
         const doPerspectiveProjection = this.store.getState().sceneSettings.doPerspectiveProjection
         const backgroundColor = this.store.getState().sceneSettings.backgroundColor
 
@@ -781,7 +783,9 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         dispatch(setZoom(sessionData.viewData.zoom))
         dispatch(setFogStart(sessionData.viewData.fogStart))
         dispatch(setFogEnd(sessionData.viewData.fogEnd))
-        dispatch(setClipStart(sessionData.viewData.clipStart))
+        //For some reasons, old status files were saving this multiplied by -1 and magic jsut happened elsewhere.
+        //Now we multiply by -1 at save and restore for compatibility with old status files.
+        dispatch(setClipStart(sessionData.viewData.clipStart*-1))
         dispatch(setClipEnd(sessionData.viewData.clipEnd))
         dispatch(setQuat(sessionData.viewData.quat4))
         batch(() => {

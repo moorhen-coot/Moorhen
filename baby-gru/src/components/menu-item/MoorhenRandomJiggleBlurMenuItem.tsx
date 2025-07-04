@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
-import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
+import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenSlider } from "../inputs/MoorhenSlider";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";

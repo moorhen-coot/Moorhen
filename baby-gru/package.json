@@ -22,45 +22,6 @@
     "ccp4",
     "interactive model building"
   ],
-  "config": {
-    "forge": {
-      "packagerConfig": {
-        "ignore": [
-          "^/public$",
-          "^/public/favicon.ico$",
-          "^/public/index.html",
-          "^/public/manifest.json",
-          "^/Dockerfile",
-          "^/README.md",
-          "^/SimpleCrossOriginServer.py",
-          "^/cloud",
-          "^/docker-compose.yml",
-          "^/forge.config.js",
-          "^/nginx",
-          "^/nodemon.json",
-          "^/out",
-          "^/src$"
-        ],
-        "icon": "src/icons/icon",
-        "name": "Moorhen"
-      },
-      "makers": [
-        {
-          "name": "@electron-forge/maker-squirrel",
-          "config": {
-            "name": "Moorhen"
-          }
-        },
-        {
-          "name": "@electron-forge/maker-zip",
-          "platforms": [
-            "darwin",
-            "linux"
-          ]
-        }
-      ]
-    }
-  },
   "scripts": {
     "transpile-graphql-codegen": "node -e \"if (process.env.NO_GRAPHQL_CODEGEN !== '1'){process.exit(1)} \" || npx graphql-codegen",
     "transpile-protobuf": "npx pbjs -t static-module -w es6 -o ./src/protobuf/MoorhenSession.js ./src/protobuf/MoorhenSession.proto",
@@ -75,15 +36,9 @@
     "lint:fix": "eslint src/ --fix",
     "build-release": "npm run prebuild && webpack --mode production --devtool inline-source-map",
     "build-release-dev": "npm run prebuild && webpack --mode development --devtool inline-source-map",
-    "dev": "concurrently -k \"BROWSER=none npm start\" \"npm:electron\"",
-    "electron": "wait-on tcp:3000 && electron-forge start",
-    "package": "npm run build && electron-forge package",
-    "make-mac": "npm run build && electron-forge make --platform darwin",
-    "make-linux": "npm run build && electron-forge make --platform linux",
-    "make-win32": "npm run build && electron-forge make --platform win32",
     "create-docs": "npm run create-version && npx jsdoc -c jsdoc.json ../README.md",
-    "test": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && npm run transpile-ts-worker-jest && ln -sf ./public/ ./baby-gru && node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit",
-    "test-react": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit --testPathIgnorePatterns=MoorhenContainer.test.jsx --testPathIgnorePatterns=MoorhenLigandMenu.test.jsx --testPathIgnorePatterns=MoorhenEditMenu.test.jsx --selectProjects react-components"
+    "test": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && npm run transpile-ts-worker-jest && ln -sf ./public/ ./baby-gru && node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --forceExit",
+    "test-react": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.js --detectOpenHandles --forceExit --testPathIgnorePatterns=MoorhenContainer.test.jsx --testPathIgnorePatterns=MoorhenLigandMenu.test.jsx --testPathIgnorePatterns=MoorhenEditMenu.test.jsx --selectProjects react-components"
   },
   "eslintConfig": {
     "extends": [
@@ -111,6 +66,8 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@graphql-codegen/cli": "^5.0.7",
     "@graphql-codegen/client-preset": "^4.8.3",
     "@graphql-typed-document-node/core": "^3.2.0",
@@ -199,12 +156,12 @@
     "@babel/plugin-transform-object-rest-spread": "^7.20.7",
     "@eslint/css": "^0.9.0",
     "@eslint/js": "^9.30.1",
+    "@typescript-eslint/eslint-plugin": "^8.35.1",
+    "@typescript-eslint/parser": "^8.35.1",
     "docdash": "^2.0.2",
     "eslint": "^9.30.1",
     "eslint-plugin-react": "^7.37.5",
     "globals": "^16.3.0",
-    "jsdoc-babel": "^0.5.0",
-    "@typescript-eslint/eslint-plugin": "^8.35.1",
-    "@typescript-eslint/parser": "^8.35.1"
+    "jsdoc-babel": "^0.5.0"
   }
 }

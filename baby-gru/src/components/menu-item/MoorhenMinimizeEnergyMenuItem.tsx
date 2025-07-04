@@ -4,7 +4,7 @@ import { moorhen } from "../../types/moorhen";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, Form, FormSelect, InputGroup } from "react-bootstrap";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
-import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
+import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect";
 import { MoorhenSlider } from "../inputs/MoorhenSlider";
