@@ -55,7 +55,7 @@ const MoorhenImportLigandDictionary = (props: {
     const handleFileContent = useCallback(async (fileContent: string) => {
         let newMolecule: moorhen.Molecule
         let selectedMoleculeIndex: number
-        let molNosToUpdate: number[] = []
+        const molNosToUpdate: number[] = []
 
         if (moleculeSelectValueRef.current) {
             selectedMoleculeIndex = parseInt(moleculeSelectValueRef.current)
@@ -364,7 +364,7 @@ export const MoorhenImportDictionaryMenuItem = (props: {
     }
 
     const parseCifDict = async (file: File) => {
-        let result: { comp_id: string; dict_contents: string }[] = []
+        const result: { comp_id: string; dict_contents: string }[] = []
         const fileContent = await readTextFile(file) as string
         const compIdsVector = window.CCP4Module.parse_ligand_dict_info(fileContent)
         const compIdsVectorSize = compIdsVector.size()

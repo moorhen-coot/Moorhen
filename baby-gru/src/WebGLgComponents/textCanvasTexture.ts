@@ -154,8 +154,8 @@ export class TextCanvasTexture {
     addImageToBigTexture(t : string, textColour : string, font : string) : number[] {
         this.contextBig.textBaseline = "alphabetic";
         this.contextBig.font = font;
-        let textMetric = this.contextBig.measureText(t);
-        let actualHeight = textMetric.actualBoundingBoxAscent + textMetric.actualBoundingBoxDescent + 2;
+        const textMetric = this.contextBig.measureText(t);
+        const actualHeight = textMetric.actualBoundingBoxAscent + textMetric.actualBoundingBoxDescent + 2;
         this.contextBig.fillStyle = textColour;
         if(!(textColour in this.textureCache)){
             this.textureCache[textColour] = {};

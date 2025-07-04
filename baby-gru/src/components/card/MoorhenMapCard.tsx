@@ -128,7 +128,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                     return;
                 }
 
-                let scaling = props.map.isEM ? props.map.levelRange[0] : 0.01;
+                const scaling = props.map.isEM ? props.map.levelRange[0] : 0.01;
                 if (evt.detail.factor > 1) {
                     newMapContourLevel = mapContourLevel + contourWheelSensitivityFactor * scaling;
                 } else {

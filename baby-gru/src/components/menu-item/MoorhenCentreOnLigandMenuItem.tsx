@@ -24,7 +24,7 @@ export const MoorhenCentreOnLigandMenuItem = (props: {
                 aria-label="file system navigator"
                 >
                     {molecules.filter(molecule => molecule.ligands.length > 0).map(molecule => {
-                        let uniqueChainNames: string[] = molecule.ligands.reduce((uniqueChains: string[], lig) => {
+                        const uniqueChainNames: string[] = molecule.ligands.reduce((uniqueChains: string[], lig) => {
                             if (!uniqueChains.includes(lig.chainName)) {
                                 uniqueChains.push(lig.chainName)
                             }

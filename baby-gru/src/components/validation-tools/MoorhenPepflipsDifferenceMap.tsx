@@ -70,8 +70,8 @@ export const MoorhenPepflipsDifferenceMap = (props: moorhen.CollectedProps) => {
             commandArgs: [selectedModel, selectedMap, selectedRmsd],
         };
 
-        let response = (await props.commandCentre.current.cootCommand(inputData, false)) as moorhen.WorkerResponse<libcootApi.InterestingPlaceDataJS[]>;
-        let newPepflips = response.data.result.result;
+        const response = (await props.commandCentre.current.cootCommand(inputData, false)) as moorhen.WorkerResponse<libcootApi.InterestingPlaceDataJS[]>;
+        const newPepflips = response.data.result.result;
 
         return newPepflips;
     };

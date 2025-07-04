@@ -27,7 +27,7 @@ export const MoorhenModelsModal = (props: moorhen.CollectedProps) => {
         })
     }, [cardListRef.current, cardListRef])
 
-    let displayData = molecules.map((molecule, index) => {
+    const displayData = molecules.map((molecule, index) => {
         return <MoorhenMoleculeCard
             ref={el => cardListRef.current[index] = el}
             showSideBar={true}

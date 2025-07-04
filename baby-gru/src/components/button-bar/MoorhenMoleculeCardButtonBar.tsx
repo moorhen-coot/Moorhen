@@ -129,8 +129,8 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
 
     const maximumAllowedWidth = props.sideBarWidth * 0.65
     let currentlyUsedWidth = 0
-    let expandedButtons: React.JSX.Element[] = []
-    let compressedButtons: React.JSX.Element[] = []
+    const expandedButtons: React.JSX.Element[] = []
+    const compressedButtons: React.JSX.Element[] = []
 
     Object.keys(actionButtons).forEach(key => {
         if (actionButtons[key].expanded === null) {

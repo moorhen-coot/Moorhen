@@ -106,7 +106,7 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
 
     exe(src: string) {
         // This env defines the variables accesible within the user-defined code
-        let env = {
+        const env = {
             molecules: this.molecules.reduce((obj, molecule) => {
                 obj[molecule.molNo] = molecule
                 return obj

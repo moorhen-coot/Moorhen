@@ -210,7 +210,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         lastHoveredAtomRef: innerlastHoveredAtomRef, videoRecorderRef: innerVideoRecorderRef,
     }
 
-    let refs = {} as moorhen.ContainerRefs
+    const refs = {} as moorhen.ContainerRefs
     Object.keys(innerRefsMap).forEach(key => {
         refs[key] = props[key] ? props[key] : innerRefsMap[key]
     })
@@ -262,8 +262,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     }
 
     useLayoutEffect(() => {
-        let head = document.head
-        let style: any = document.createElement("link")
+        const head = document.head
+        const style: any = document.createElement("link")
         style.href = `${urlPrefix}/moorhen.css`
         style.rel = "stylesheet"
         style.async = true
@@ -328,8 +328,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     }, [userPreferencesMounted])
 
     useLayoutEffect(() => {
-        let head = document.head;
-        let style: any = document.createElement("link");
+        const head = document.head;
+        const style: any = document.createElement("link");
 
         if (isDark) {
             style.href = `${urlPrefix}/darkly.css`

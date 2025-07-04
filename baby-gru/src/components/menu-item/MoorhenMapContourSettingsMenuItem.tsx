@@ -45,7 +45,7 @@ export const MapContourSettingsMenuItem = (props: {
 
     useEffect(() => {
         const setMapSamplingRate = async () => {
-            let newSamplingRate = convertPercentageToSamplingRate(mapSampling)
+            const newSamplingRate = convertPercentageToSamplingRate(mapSampling)
 
             if (newSamplingRate !== defaultMapSamplingRate) {
                 await props.commandCentre.current.cootCommand({

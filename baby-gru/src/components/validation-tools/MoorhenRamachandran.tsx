@@ -58,7 +58,7 @@ export const MoorhenRamachandran = (props: Props) => {
         }
         const coordMolNums = molecules.map(molecule => molecule.molNo);
         const molNames = molecules.map(molecule => molecule.name);
-        let moleculeIndex = coordMolNums.findIndex(num => num === selectedMolNo)
+        const moleculeIndex = coordMolNums.findIndex(num => num === selectedMolNo)
         return molNames[moleculeIndex];
     }, [molecules])
 
@@ -166,10 +166,10 @@ export const MoorhenRamachandran = (props: Props) => {
 
         if(ramaPlotData && ramaPlotOtherOutlierImageRef.current && ramaPlotOtherNormalImageRef.current && ramaPlotGlyOutlierImageRef.current && ramaPlotProOutlierImageRef.current){
             for (let ip=0; ip < ramaPlotData.length; ip++) {
-                let phitest = ramaPlotData[ip].phi;
-                let psitest = ramaPlotData[ip].psi;
-                let x = ((phitest /180.) * 0.5 + 0.5) * canvasRef.current.width;
-                let y = ((-psitest /180.) * 0.5 + 0.5) * canvasRef.current.height;
+                const phitest = ramaPlotData[ip].phi;
+                const psitest = ramaPlotData[ip].psi;
+                const x = ((phitest /180.) * 0.5 + 0.5) * canvasRef.current.width;
+                const y = ((-psitest /180.) * 0.5 + 0.5) * canvasRef.current.height;
 
                 if(ramaPlotData[ip].isOutlier){
                     if (ramaPlotData[ip].restype === "PRO") {
@@ -190,10 +190,10 @@ export const MoorhenRamachandran = (props: Props) => {
                 }
             }
             if (newHit > -1) {
-                let phitest = ramaPlotData[newHit].phi;
-                let psitest = ramaPlotData[newHit].psi;
-                let x = ((phitest /180.) * 0.5 + 0.5) * canvasRef.current.width;
-                let y = ((-psitest /180.) * 0.5 + 0.5) * canvasRef.current.height;
+                const phitest = ramaPlotData[newHit].phi;
+                const psitest = ramaPlotData[newHit].psi;
+                const x = ((phitest /180.) * 0.5 + 0.5) * canvasRef.current.width;
+                const y = ((-psitest /180.) * 0.5 + 0.5) * canvasRef.current.height;
 
                 if(ramaPlotData[newHit].isOutlier){
                     if(ramaPlotData[newHit].restype==="PRO"){
@@ -243,18 +243,18 @@ export const MoorhenRamachandran = (props: Props) => {
 
        
         if (ramaPlotData) {
-            let offset = getOffsetRect(canvasRef.current);
+            const offset = getOffsetRect(canvasRef.current);
             x -= offset.left;
             y -= offset.top;
             let ihit = -1;
             let mindist = 100000;
             for (let ip=0; ip < ramaPlotData.length; ip++) {
-                let phitest = ramaPlotData[ip].phi;
-                let psitest = ramaPlotData[ip].psi;
-                let xp = ((phitest /180.) * 0.5 + 0.5) * canvasRef.current.width;
-                let yp = ((-psitest /180.) * 0.5 + 0.5) * canvasRef.current.height;
+                const phitest = ramaPlotData[ip].phi;
+                const psitest = ramaPlotData[ip].psi;
+                const xp = ((phitest /180.) * 0.5 + 0.5) * canvasRef.current.width;
+                const yp = ((-psitest /180.) * 0.5 + 0.5) * canvasRef.current.height;
                 if( (Math.abs(xp-x) < 3) && (Math.abs(yp-y) < 3) ) {
-                    let dist = (xp-x)*(xp-x) + (yp-y)*(yp-y);
+                    const dist = (xp-x)*(xp-x) + (yp-y)*(yp-y);
                     if (dist < mindist) {
                         mindist = dist;
                         ihit = ip;
@@ -294,7 +294,7 @@ export const MoorhenRamachandran = (props: Props) => {
 
     const handleHoveredAtom = useCallback((cid: string) => {
         if (selectedModel !== null) {
-            let selectedMoleculeIndex = molecules.findIndex(molecule => molecule.molNo === selectedModel);
+            const selectedMoleculeIndex = molecules.findIndex(molecule => molecule.molNo === selectedModel);
             if (selectedMoleculeIndex !== -1 && molecules[selectedMoleculeIndex]) {
                 dispatch( setHoveredAtom({ molecule:molecules[selectedMoleculeIndex], cid: cid }) )
             }
@@ -405,8 +405,8 @@ export const MoorhenRamachandran = (props: Props) => {
 
     useEffect(() => {
         setTimeout(() => {
-            let plotHeigth = (props.size.height) - convertRemToPx(7)
-            let plotWidth = (props.size.width) - convertRemToPx(3)
+            const plotHeigth = (props.size.height) - convertRemToPx(7)
+            const plotWidth = (props.size.width) - convertRemToPx(3)
             if (plotHeigth > 0 && plotWidth > 0) {
                 plotHeigth > plotWidth ? setRamaPlotDimensions(plotWidth) : setRamaPlotDimensions(plotHeigth)
             }
@@ -420,7 +420,7 @@ export const MoorhenRamachandran = (props: Props) => {
             return
         }
         const inputData = {message:'coot_command', command:'ramachandran_validation', returnType:'ramachandran_data', commandArgs:[parseInt(moleculeSelectRef.current.value)], chainID: chainSelectRef.current.value}
-        let response = await props.commandCentre.current.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.RamaDataJS[]>
+        const response = await props.commandCentre.current.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.RamaDataJS[]>
         setRamaPlotData(response.data.result.result)
     }, [])
 
@@ -452,7 +452,7 @@ export const MoorhenRamachandran = (props: Props) => {
             return
         }
 
-        let selectedMoleculeIndex = molecules.findIndex(molecule => molecule.name === clickedResidue.molName);
+        const selectedMoleculeIndex = molecules.findIndex(molecule => molecule.name === clickedResidue.molName);
         if (selectedMoleculeIndex === -1) {
             console.log(`Cannot find molecule ${clickedResidue.molName}`)
             return

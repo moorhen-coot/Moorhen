@@ -218,7 +218,7 @@ export const MoorhenJsonValidation = (props: moorhen.CollectedProps) => {
 
         const startHSV = rgbToHsv(startRGB[0],startRGB[1],startRGB[2])
         const endHSV = rgbToHsv(endRGB[0],endRGB[1],endRGB[2])
-        let valHSV = [val*endHSV[0] + (1.0-val)*startHSV[0],
+        const valHSV = [val*endHSV[0] + (1.0-val)*startHSV[0],
                         val*endHSV[1] + (1.0-val)*startHSV[1],
                         val*endHSV[2] + (1.0-val)*startHSV[2]]
 
@@ -259,7 +259,7 @@ export const MoorhenJsonValidation = (props: moorhen.CollectedProps) => {
    })
 
     const fetchCardData = (() => {
-        let cards = []
+        const cards = []
         let title = ""
 
         let selectedMolecule

@@ -44,7 +44,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const mrBumpenuItemProps = { monomerLibraryPath, setPopoverIsShown, ...props }
 
     const loadPdbFiles = async (files: FileList) => {
-        let readPromises: Promise<moorhen.Molecule>[] = []
+        const readPromises: Promise<moorhen.Molecule>[] = []
         Array.from(files).forEach(file => {
             readPromises.push(readPdbFile(file))
         })
@@ -58,7 +58,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             }
         }
 
-        let drawPromises: Promise<void>[] = []
+        const drawPromises: Promise<void>[] = []
         for (const newMolecule of newMolecules) {
             drawPromises.push(
                 newMolecule.fetchIfDirtyAndDraw(newMolecule.atomCount >= 50000 ? 'CRs' : 'CBs')
@@ -89,15 +89,15 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     }
 
     const handleExportGltf = async () => {
-        for (let map of maps) {
+        for (const map of maps) {
             const gltfData = await map.exportAsGltf()
             if (gltfData) {
                 doDownload([gltfData], `${map.name}.glb`)
             }
         }
-        for (let molecule of molecules) {
+        for (const molecule of molecules) {
             let index = 0
-            for (let representation of molecule.representations) {
+            for (const representation of molecule.representations) {
                 if (representation.visible) {
                     const gltfData = await representation.exportAsGltf()
                     if (gltfData) {

@@ -35,7 +35,7 @@ const MoorhenSliceNDiceCard = (props: {
     const isDirty = useRef<boolean>(false)
 
     const [residueMap, maxFragmentSize, themeColor] = useMemo(() => {
-        let residueMap: {[chainID: string]: { size: number; cid: string; }[]} = {}
+        const residueMap: {[chainID: string]: { size: number; cid: string; }[]} = {}
         props.fragmentMolecule.sequences.forEach(sequence => {
             const currentChainId = sequence.chain
             residueMap[currentChainId] = []
@@ -58,8 +58,8 @@ const MoorhenSliceNDiceCard = (props: {
         if (isDirty.current) {
             isBusy.current = true
             isDirty.current = false
-            let toHideFragments = []
-            for (let chainId in residueMap) {
+            const toHideFragments = []
+            for (const chainId in residueMap) {
                 toHideFragments.push(...residueMap[chainId].filter(fragment => fragment.size < sizeThresholdRef.current))
             }
             if (toHideFragments.length > 0) {
@@ -375,7 +375,7 @@ export const MoorhenSliceNDiceModal = (props: {
         if (slicingResults?.length > 0) {
             if (saveToMoorhen) {
                 const sortedMolecules = [...slicingResults].sort((a, b) => { return  b.molNo - a.molNo })
-                for (let sliceMolecule of sortedMolecules) {
+                for (const sliceMolecule of sortedMolecules) {
                     sliceMolecule.isMRSearchModel = true
                     await deleteHiddenResidues(sliceMolecule)
                     dispatch( addMolecule(sliceMolecule) )

@@ -23,7 +23,7 @@ export const MoorhenRenameDisplayObjectMenuItem = (props: {
     </>
 
     const onCompleted = () => {
-        let newName = newNameInputRef.current.value
+        const newName = newNameInputRef.current.value
         if (newName === "") {
             return
         }

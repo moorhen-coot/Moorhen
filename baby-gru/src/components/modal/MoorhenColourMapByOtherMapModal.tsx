@@ -144,10 +144,10 @@ export const MoorhenColourMapByOtherMapModal = (props: {
         function movingAverage(data: number[], windowSize: number): number[] {
             const result = [];
             for (let i = 0; i < data.length; i++) {
-                let start = Math.max(0, i - Math.floor(windowSize / 2));
-                let end = Math.min(data.length, i + Math.ceil(windowSize / 2));
-                let window = data.slice(start, end);
-                let avg = window.reduce((sum, val) => sum + val, 0) / window.length;
+                const start = Math.max(0, i - Math.floor(windowSize / 2));
+                const end = Math.min(data.length, i + Math.ceil(windowSize / 2));
+                const window = data.slice(start, end);
+                const avg = window.reduce((sum, val) => sum + val, 0) / window.length;
                 result.push(avg);
             }
             return result;

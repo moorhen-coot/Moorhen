@@ -40,7 +40,7 @@ export const MoorhenShortcutConfigModal = (props: {
     }
     
     const handleKeyUp = (evt: KeyboardEvent): void => {
-        let modifiers: string[] = []
+        const modifiers: string[] = []
         if (evt.shiftKey) modifiers.push("shiftKey")
         if (evt.ctrlKey) modifiers.push("ctrlKey")
         if (evt.metaKey) modifiers.push("metaKey")
@@ -57,7 +57,7 @@ export const MoorhenShortcutConfigModal = (props: {
     }
     
     const handleKeyDown = (evt: KeyboardEvent): void => {
-        let modifiers: string[] = []
+        const modifiers: string[] = []
         if (evt.shiftKey) modifiers.push("<Shift>")
         if (evt.ctrlKey) modifiers.push("<Ctrl>")
         if (evt.metaKey) modifiers.push("<Meta>")
@@ -87,7 +87,7 @@ export const MoorhenShortcutConfigModal = (props: {
                     </Modal.Header>
                     <Modal.Body style={{height:'65vh', overflowY: 'scroll'}}>
                         {Object.keys(stagedShortCuts).map(key => {
-                            let modifiers = []
+                            const modifiers = []
                             if (stagedShortCuts[key].modifiers.includes('shiftKey')) modifiers.push("<Shift>")
                             if (stagedShortCuts[key].modifiers.includes('ctrlKey')) modifiers.push("<Ctrl>")
                             if (stagedShortCuts[key].modifiers.includes('metaKey')) modifiers.push("<Meta>")

@@ -28,7 +28,7 @@ export const MoorhenAssociateReflectionsToMap = (props: {
     const handleFileRead = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const babyGruMtzWrapper = new MoorhenMtzWrapper()
         try {
-            let allColumnNames = await babyGruMtzWrapper.loadHeaderFromFile(e.target.files[0])
+            const allColumnNames = await babyGruMtzWrapper.loadHeaderFromFile(e.target.files[0])
             setColumns(allColumnNames)
             reflectionDataRef.current = babyGruMtzWrapper.reflectionData   
         } catch (err) {

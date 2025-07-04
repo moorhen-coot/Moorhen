@@ -125,16 +125,16 @@ import { getDeviceScale} from './webGLUtils'
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShadowShaders, initPointSpheresShaders } from './mgWebGLShaders'
 
 function getOffsetRect(elem) {
-    let box = elem.getBoundingClientRect();
-    let body = document.body;
-    let docElem = document.documentElement;
+    const box = elem.getBoundingClientRect();
+    const body = document.body;
+    const docElem = document.documentElement;
 
-    let scrollTop = window.pageYOffset || docElem.scrollTop || body.scrollTop;
-    let scrollLeft = window.pageXOffset || docElem.scrollLeft || body.scrollLeft;
-    let clientTop = docElem.clientTop || body.clientTop || 0;
-    let clientLeft = docElem.clientLeft || body.clientLeft || 0;
-    let top = box.top + scrollTop - clientTop;
-    let left = box.left + scrollLeft - clientLeft;
+    const scrollTop = window.pageYOffset || docElem.scrollTop || body.scrollTop;
+    const scrollLeft = window.pageXOffset || docElem.scrollLeft || body.scrollLeft;
+    const clientTop = docElem.clientTop || body.clientTop || 0;
+    const clientLeft = docElem.clientLeft || body.clientLeft || 0;
+    const top = box.top + scrollTop - clientTop;
+    const left = box.left + scrollLeft - clientLeft;
     return { top: Math.round(top), left: Math.round(left) };
 }
 
@@ -633,7 +633,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             const top = this.threeWayViewOrder.substring(0,2)
             const bottom = this.threeWayViewOrder.substring(2,4)
 
-            for(let c of bottom.trim()) {
+            for(const c of bottom.trim()) {
                 if(c==="X")
                     this.threeWayQuats.push(xForward)
                 if(c==="Y")
@@ -641,7 +641,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 if(c==="Z")
                     this.threeWayQuats.push(zForward)
             }
-            for(let c of top.trim()) {
+            for(const c of top.trim()) {
                 if(c==="X")
                     this.threeWayQuats.push(xForward)
                 if(c==="Y")
@@ -659,8 +659,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     resize(width: number, height: number) : void {
 
-        let theWidth = width;
-        let theHeight = height;
+        const theWidth = width;
+        const theHeight = height;
 
         this.canvas.style.width = Math.floor(theWidth) + "px";
         this.canvas.style.height = Math.floor(theHeight) + "px";
@@ -810,7 +810,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
             // This might have to be done every frame if we ever have multiple UBOs.
             this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, this.blurUBOBuffer);
-            let bigBlurArray = new Array(36).fill(0);
+            const bigBlurArray = new Array(36).fill(0);
             for(let iblur=0;iblur<gaussianBlurs[this.blurSize];iblur++){
                 bigBlurArray[iblur] = gaussianBlurs[this.blurSize][iblur];
             }
@@ -841,8 +841,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     doSpinTestFrame() {
-        let xQ = createXQuatFromDX(0);
-        let yQ = createYQuatFromDY(1);
+        const xQ = createXQuatFromDX(0);
+        const yQ = createYQuatFromDY(1);
         quat4.multiply(xQ, xQ, yQ);
         quat4.multiply(this.myQuat, this.myQuat, xQ);
         this.drawScene()
@@ -986,7 +986,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.ssaoKernel = [];
         for (let i = 0; i < 16; ++i) {
 
-            let sample = vec3Create([Math.random() * 2.0 - 1.0, Math.random() * 2.0 - 1.0, Math.random()]);
+            const sample = vec3Create([Math.random() * 2.0 - 1.0, Math.random() * 2.0 - 1.0, Math.random()]);
 
             NormalizeVec3(sample);
             vec3.scale(sample,sample,Math.random());
@@ -1003,7 +1003,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         //console.log(this.ssaoKernel);
         //console.log(this.ssaoKernel.length);
 
-        let ssaoNoise = [];
+        const ssaoNoise = [];
         for (let i = 0; i < 16; i++) {
             ssaoNoise.push(Math.random() * 2.0 - 1.0);
             ssaoNoise.push(Math.random() * 2.0 - 1.0);
@@ -1047,7 +1047,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         });
 
         this.gl.useProgram(this.shaderProgramSSAO);
-        let index = this.gl.getUniformBlockIndex(this.shaderProgramSSAO, "sampleBuffer");
+        const index = this.gl.getUniformBlockIndex(this.shaderProgramSSAO, "sampleBuffer");
         this.gl.uniformBlockBinding(this.shaderProgramSSAO, index, 0);
 
         const bigFloatArray = new Float32Array(this.ssaoKernel);
@@ -1349,7 +1349,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             self.canvas.addEventListener('touchstart',
                 function (e) {
                     const touchobj = e.changedTouches[0];
-                    let evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
+                    const evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
                     //alert(e.changedTouches.length)
                     if (e.changedTouches.length === 1) {
                     }
@@ -1372,7 +1372,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             self.canvas.addEventListener('touchmove',
                 function (e) {
                     const touchobj = e.touches[0]; // reference first touch point for this event
-                    let evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, buttons: 1 };
+                    const evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, buttons: 1 };
                     if (e.touches.length === 1) {
                     }
                     else if (e.touches.length === 2) {
@@ -1386,15 +1386,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
             self.canvas.addEventListener('touchend',
                 function (e) {
-                    var touchobj = e.changedTouches[0]; // reference first touch point for this event
-                    var evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
+                    const touchobj = e.changedTouches[0]; // reference first touch point for this event
+                    const evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
                     if (e.changedTouches.length === 1) {
                     }
                     else if (e.changedTouches.length === 2) {
                         evt.shiftKey = true;
                         evt.altKey = true;
                     }
-                    var deltaTime = e.timeStamp - self.mouseDownedAt;
+                    const deltaTime = e.timeStamp - self.mouseDownedAt;
                     if (deltaTime < 300) {
                         self.doClick(evt, self);
                     }
@@ -1746,14 +1746,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     setFog(fog) {
-        var self = this;
+        const self = this;
         self.gl_fog_start = this.fogClipOffset + fog[0];
         self.gl_fog_end = this.fogClipOffset + fog[1];
         self.drawScene();
     }
 
     setSlab(slab) {
-        var self = this;
+        const self = this;
         self.gl_clipPlane0[3] = -this.fogClipOffset + slab[0] * 0.5 + slab[1];
         self.gl_clipPlane1[3] = this.fogClipOffset + slab[0] * 0.5 - slab[1];
         self.drawScene();
@@ -1802,8 +1802,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     setOrientationAndZoomAnimated(q,z) {
         this.nAnimationFrames = 15;
-        let oldQuat = quat4.create();
-        let oldZoom = this.zoom;
+        const oldQuat = quat4.create();
+        const oldZoom = this.zoom;
         const zoomDelta = (z - this.zoom) / this.nAnimationFrames
         quat4.set(oldQuat,this.myQuat[0],this.myQuat[1],this.myQuat[2],this.myQuat[3])
         requestAnimationFrame(this.setOrientationAndZoomFrame.bind(this,oldQuat,q,oldZoom,zoomDelta,1))
@@ -1811,7 +1811,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     setOrientationAnimated(q) {
         this.nAnimationFrames = 15;
-        let oldQuat = quat4.create()
+        const oldQuat = quat4.create()
         quat4.set(oldQuat,this.myQuat[0],this.myQuat[1],this.myQuat[2],this.myQuat[3])
         requestAnimationFrame(this.setOrientationFrame.bind(this,oldQuat,q,1))
     }
@@ -1824,7 +1824,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             document.dispatchEvent(originUpdateEvent);
         }
         if(this.drawEnvBOcc) {
-            let near_atoms = []
+            const near_atoms = []
             displayBuffers.forEach(buffer => {
                 if (buffer.visible) {
                     buffer.atoms.forEach(atom => {
@@ -1900,8 +1900,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const dx = DX/this.nAnimationFrames
         const dy = DY/this.nAnimationFrames
         const dz = DZ/this.nAnimationFrames
-        let oldQuat = quat4.create();
-        let oldZoom = this.zoom;
+        const oldQuat = quat4.create();
+        const oldZoom = this.zoom;
         const zoomDelta = (z - this.zoom) / this.nAnimationFrames
         quat4.set(oldQuat,this.myQuat[0],this.myQuat[1],this.myQuat[2],this.myQuat[3])
         this.animating = true
@@ -2340,7 +2340,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     }
                     this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.TEXTURE_2D, this.depthPeelDepthTextures[i], 0);
 
-                    let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
+                    const canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
                     console.log("Depth-peel buffer",i,"completeness",canRead);
                     if(!canRead){
                         if(this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT){
@@ -2485,7 +2485,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
 
         if (this.WEBGL2) {
-            let renderbufferDepth = this.gl.createRenderbuffer();
+            const renderbufferDepth = this.gl.createRenderbuffer();
             this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, renderbufferDepth);
             this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, renderbufferDepth);
             this.gl.renderbufferStorageMultisample(this.gl.RENDERBUFFER,
@@ -2493,7 +2493,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                                     this.gl.DEPTH_COMPONENT24,
                                     this.rttFramebuffer.width,
                                     this.rttFramebuffer.height);
-            let renderbuffer = this.gl.createRenderbuffer();
+            const renderbuffer = this.gl.createRenderbuffer();
             this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, renderbuffer);
             this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.RENDERBUFFER, renderbuffer);
             this.gl.renderbufferStorageMultisample(this.gl.RENDERBUFFER,
@@ -2508,7 +2508,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.TEXTURE_2D, this.rttDepthTexture, 0);
         } else {
             this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.rttTexture, 0);
-            let renderbuffer = this.gl.createRenderbuffer();
+            const renderbuffer = this.gl.createRenderbuffer();
             this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, renderbuffer);
             this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, renderbuffer);
             //Sigh. Maybe DEPTH_STENCIL? Is anyone actually stuck on WebGL1?
@@ -2537,7 +2537,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             } else {
                 this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT, this.rttFramebufferDepth.width, this.rttFramebufferDepth.height, 0, this.gl.DEPTH_COMPONENT, this.gl.UNSIGNED_SHORT, null);
             }
-            var renderbufferCol = this.gl.createRenderbuffer();
+            const renderbufferCol = this.gl.createRenderbuffer();
             this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, renderbufferCol);
             this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.RGBA4, this.rttFramebufferDepth.width, this.rttFramebufferDepth.height);
             this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.TEXTURE_2D, this.rttTextureDepth, 0);
@@ -2552,12 +2552,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     centreOn(idx) {
         const displayBuffers = store.getState().glRef.displayBuffers
-        var self = this;
+        const self = this;
         if (displayBuffers[idx].atoms.length > 0) {
-            var xtot = 0;
-            var ytot = 0;
-            var ztot = 0;
-            for (var j = 0; j < displayBuffers[idx].atoms.length; j++) {
+            let xtot = 0;
+            let ytot = 0;
+            let ztot = 0;
+            for (let j = 0; j < displayBuffers[idx].atoms.length; j++) {
                 xtot += displayBuffers[idx].atoms[j].x;
                 ytot += displayBuffers[idx].atoms[j].y;
                 ztot += displayBuffers[idx].atoms[j].z;
@@ -2566,13 +2566,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             ytot /= displayBuffers[idx].atoms.length;
             ztot /= displayBuffers[idx].atoms.length;
 
-            var new_origin = [-xtot, -ytot, -ztot];
-            var old_origin = [self.origin[0], self.origin[1], self.origin[2]];
+            const new_origin = [-xtot, -ytot, -ztot];
+            const old_origin = [self.origin[0], self.origin[1], self.origin[2]];
 
-            var myVar = setInterval(function () { myTimer() }, 10);
-            var frac = 0;
+            const myVar = setInterval(function () { myTimer() }, 10);
+            let frac = 0;
             function myTimer() {
-                var ffrac = 0.01 * frac;
+                const ffrac = 0.01 * frac;
                 self.origin = [ffrac * new_origin[0] + (1.0 - ffrac) * old_origin[0], ffrac * new_origin[1] + (1.0 - ffrac) * old_origin[1], ffrac * new_origin[2] + (1.0 - ffrac) * old_origin[2]];
                 self.drawScene();
                 if (frac > 99) {
@@ -2621,7 +2621,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     setLightUniforms(program,transform=true) {
         if(transform) {
-            let light_position = vec3.create();
+            const light_position = vec3.create();
             vec3.transformMat4(light_position, this.light_positions, this.mvInvMatrix);
             NormalizeVec3(light_position);
             this.gl.uniform4fv(program.light_positions, new Float32Array([light_position[0],light_position[1],light_position[2],1.0]));
@@ -2662,8 +2662,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     buildBuffers() : void {
         if (typeof (this.imageBuffer) === "undefined") {
-            let diskIndices = [];
-            let diskNormals = [];
+            const diskIndices = [];
+            const diskNormals = [];
             this.imageVertices = [];
             const accuStep = 90;
             let diskIdx = 0;
@@ -2675,9 +2675,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             diskNormals.push(-1.0);
             diskIndices.push(diskIdx++);
             for (let theta = 45; theta <= 405; theta += accuStep) {
-                let theta1 = Math.PI * (theta) / 180.0;
-                let x1 = Math.cos(theta1);
-                let y1 = Math.sin(theta1);
+                const theta1 = Math.PI * (theta) / 180.0;
+                const x1 = Math.cos(theta1);
+                const y1 = Math.sin(theta1);
                 this.imageVertices.push(x1);
                 this.imageVertices.push(-y1);
                 this.imageVertices.push(0.0);
@@ -2708,7 +2708,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.imageBuffer.triangleVertexPositionBuffer[0].numItems = this.imageVertices.length / 3;
             this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.imageVertices), this.gl.DYNAMIC_DRAW);
 
-            let imageTextures = [0.5, 0.5, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0];
+            const imageTextures = [0.5, 0.5, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0];
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.imageBuffer.triangleVertexTextureBuffer[0]);
             this.imageBuffer.triangleVertexTextureBuffer[0].itemSize = 2;
             this.imageBuffer.triangleVertexTextureBuffer[0].numItems = imageTextures.length / 2;
@@ -2728,8 +2728,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     applySymmetryMatrix(theShader,symmetryMatrix,tempMVMatrix,tempMVInvMatrix,doTransform=true){
-        let symt = mat4.create();
-        let invsymt = mat4.create();
+        const symt = mat4.create();
+        const invsymt = mat4.create();
         mat4.set(symt,
                 symmetryMatrix[0], symmetryMatrix[1], symmetryMatrix[2], symmetryMatrix[3],
                 symmetryMatrix[4], symmetryMatrix[5], symmetryMatrix[6], symmetryMatrix[7],
@@ -2749,13 +2749,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.uniformMatrix4fv(theShader.mvInvMatrixUniform, false, tempMVInvMatrix);// All else
 
         if(doTransform){
-            let light_position = vec3.create();
+            const light_position = vec3.create();
             vec3.transformMat4(light_position, this.light_positions, tempMVInvMatrix);
             NormalizeVec3(light_position);
             this.gl.uniform4fv(theShader.light_positions, new Float32Array([light_position[0],light_position[1],light_position[2],1.0]));
         }
 
-        let screenZ = vec3.create();
+        const screenZ = vec3.create();
         screenZ[0] = 0.0;
         screenZ[1] = 0.0;
         screenZ[2] = 1.0;
@@ -2857,8 +2857,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.5, 0.5, 0.5, 1.0);
                     }
 
-                    let tempMVMatrix = mat4.create();
-                    let tempMVInvMatrix = mat4.create();
+                    const tempMVMatrix = mat4.create();
+                    const tempMVInvMatrix = mat4.create();
                     for (let isym = 0; isym < theBuffer.symmetryMatrices.length; isym++) {
 
                         this.applySymmetryMatrix(theShader,theBuffer.symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix)
@@ -2910,8 +2910,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         else
                             this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.5, 0.5, 0.5, 1.0);
                     }
-                    let tempMVMatrix = mat4.create();
-                    let tempMVInvMatrix = mat4.create();
+                    const tempMVMatrix = mat4.create();
+                    const tempMVInvMatrix = mat4.create();
                     for (let isym = 0; isym < theBuffer.symmetryMatrices.length; isym++) {
 
                         this.applySymmetryMatrix(theShader,theBuffer.symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix)
@@ -2956,10 +2956,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     setupModelViewTransformMatrixInteractive(transformMatrix, transformOrigin, buffer, shader, vertexType, bufferIdx, specialDrawBuffer) {
 
-        let screenZ = vec3.create();
-        let tempMVMatrix = mat4.create();
-        let tempMVInvMatrix = mat4.create();
-        let symt = mat4.create();
+        const screenZ = vec3.create();
+        const tempMVMatrix = mat4.create();
+        const tempMVInvMatrix = mat4.create();
+        const symt = mat4.create();
         mat4.set(symt,
             transformMatrix[0],
             transformMatrix[1],
@@ -3000,20 +3000,20 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawTransformMatrix(transformMatrix:number[], buffer:any, shader:any, vertexType:number, bufferIdx:number, specialDrawBuffer?:any) : void {
-        var triangleVertexIndexBuffer = buffer.triangleVertexIndexBuffer;
+        const triangleVertexIndexBuffer = buffer.triangleVertexIndexBuffer;
 
-        var drawBuffer;
+        let drawBuffer;
         if (specialDrawBuffer) {
             drawBuffer = specialDrawBuffer;
         } else {
             drawBuffer = triangleVertexIndexBuffer[bufferIdx];
         }
 
-        var screenZ = vec3.create();
-        var tempMVMatrix = mat4.create();
-        var tempMVInvMatrix = mat4.create();
-        var symt_t = mat4.create();
-        var symt = mat4.create();
+        const screenZ = vec3.create();
+        const tempMVMatrix = mat4.create();
+        const tempMVInvMatrix = mat4.create();
+        const symt_t = mat4.create();
+        const symt = mat4.create();
         mat4.set(symt_t,
             transformMatrix[0],
             transformMatrix[1],
@@ -3057,15 +3057,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawTransformMatrixInteractivePMV(transformMatrix:number[], transformOrigin:number[], buffer:any, shader:any, vertexType:number, bufferIdx:number) {
-        var triangleVertexIndexBuffer = buffer.triangleVertexIndexBuffer;
+        const triangleVertexIndexBuffer = buffer.triangleVertexIndexBuffer;
 
-        var drawBuffer = triangleVertexIndexBuffer[bufferIdx];
+        const drawBuffer = triangleVertexIndexBuffer[bufferIdx];
 
-        var pmvMatrix = mat4.create();
-        var screenZ = vec3.create();
-        var tempMVMatrix = mat4.create();
-        var tempMVInvMatrix = mat4.create();
-        var symt = mat4.create();
+        const pmvMatrix = mat4.create();
+        const screenZ = vec3.create();
+        const tempMVMatrix = mat4.create();
+        const tempMVInvMatrix = mat4.create();
+        const symt = mat4.create();
         mat4.set(symt,
             transformMatrix[0],
             transformMatrix[1],
@@ -3116,16 +3116,16 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawTransformMatrixPMV(transformMatrix:number[], buffer:any, shader:any, vertexType:number, bufferIdx:number) {
-        var triangleVertexIndexBuffer = buffer.triangleVertexIndexBuffer;
+        const triangleVertexIndexBuffer = buffer.triangleVertexIndexBuffer;
 
-        var drawBuffer = triangleVertexIndexBuffer[bufferIdx];
+        const drawBuffer = triangleVertexIndexBuffer[bufferIdx];
 
-        var pmvMatrix = mat4.create();
-        var screenZ = vec3.create();
-        var tempMVMatrix = mat4.create();
-        var tempMVInvMatrix = mat4.create();
-        var symt_t = mat4.create();
-        var symt = mat4.create();
+        const pmvMatrix = mat4.create();
+        const screenZ = vec3.create();
+        const tempMVMatrix = mat4.create();
+        const tempMVInvMatrix = mat4.create();
+        const symt_t = mat4.create();
+        const symt = mat4.create();
         mat4.set(symt_t,
             transformMatrix[0],
             transformMatrix[1],
@@ -3171,7 +3171,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     GLrender(calculatingShadowMap,doClear=true,ratioMult=1.0) {
         const displayBuffers = store.getState().glRef.displayBuffers
-        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult;
+        const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult;
 
         let fb_scale = 1.0
 
@@ -3193,7 +3193,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             if(!this.silhouetteBufferReady)
                 this.recreateSilhouetteBuffers();
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.silhouetteFramebuffer);
-            let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
+            const canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
             this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
         } else if(this.doDepthPeelPass&&this.renderToTexture&&(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo)) {
             if(!this.screenshotBuffersReady)
@@ -3220,10 +3220,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
             this.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
         } else if(this.doDepthPeelPass) {
-            let viewport_start_x = Math.trunc(this.currentViewport[0] * this.depthPeelFramebuffers[0].width  / this.gl.viewportWidth)
-            let viewport_start_y = Math.trunc(this.currentViewport[1] * this.depthPeelFramebuffers[0].height / this.gl.viewportHeight)
-            let viewport_width =   Math.trunc(this.currentViewport[2] * this.depthPeelFramebuffers[0].width  / this.gl.viewportWidth)
-            let viewport_height =  Math.trunc(this.currentViewport[3] * this.depthPeelFramebuffers[0].height / this.gl.viewportHeight)
+            const viewport_start_x = Math.trunc(this.currentViewport[0] * this.depthPeelFramebuffers[0].width  / this.gl.viewportWidth)
+            const viewport_start_y = Math.trunc(this.currentViewport[1] * this.depthPeelFramebuffers[0].height / this.gl.viewportHeight)
+            const viewport_width =   Math.trunc(this.currentViewport[2] * this.depthPeelFramebuffers[0].width  / this.gl.viewportWidth)
+            const viewport_height =  Math.trunc(this.currentViewport[3] * this.depthPeelFramebuffers[0].height / this.gl.viewportHeight)
             this.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
         } else if(this.renderToTexture) {
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer);
@@ -3254,14 +3254,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             } else {
                 this.gl.viewport(0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height);
             }
-            let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
+            const canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
         } else {
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
             if(this.useOffScreenBuffers&&this.WEBGL2){
                 if(!this.offScreenReady)
                     this.recreateOffScreeenBuffers(this.canvas.width,this.canvas.height);
                 this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebuffer);
-                let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
+                const canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
             }
             this.gl.viewport(this.currentViewport[0], this.currentViewport[1], this.currentViewport[2], this.currentViewport[3]);
         }
@@ -3599,7 +3599,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.enableVertexAttribArray(theShader.vertexTextureAttribute);
                 this.bindFramebufferDrawBuffers();
 
-                let paintPMatrix = mat4.create();
+                const paintPMatrix = mat4.create();
                 if(this.renderToTexture) {
                     if(!this.screenshotBuffersReady)
                         this.initTextureFramebuffer();
@@ -3613,7 +3613,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         if(!this.offScreenReady)
                             this.recreateOffScreeenBuffers(this.canvas.width,this.canvas.height);
                         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebuffer);
-                        let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
+                        const canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
                     }
                     this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
                     this.gl.uniform1f(theShader.xSSAOScaling, 1.0/this.gl.viewportWidth );
@@ -3731,7 +3731,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if(this.doOrderIndependentTransparency){
             for (let idx = 0; idx < displayBuffers.length && !this.doPeel; idx++) {
                 if (displayBuffers[idx].visible) {
-                    let triangleVertexIndexBuffer = displayBuffers[idx].triangleVertexIndexBuffer;
+                    const triangleVertexIndexBuffer = displayBuffers[idx].triangleVertexIndexBuffer;
                     for (let j = 0; j < triangleVertexIndexBuffer.length&& !this.doPeel; j++) {
                         if (displayBuffers[idx].transparent&&!displayBuffers[idx].isHoverBuffer) {
                             this.doPeel = true;
@@ -3806,8 +3806,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.gl.viewport(0, 0, this.edgeDetectFramebufferSize*ratio, this.edgeDetectFramebufferSize);
             }
 
-            let paintMvMatrix = mat4.create();
-            let paintPMatrix = mat4.create();
+            const paintMvMatrix = mat4.create();
+            const paintPMatrix = mat4.create();
             mat4.identity(paintMvMatrix);
             mat4.ortho(paintPMatrix, -1 , 1 , -1, 1, 0.1, 1000.0);
             this.gl.uniformMatrix4fv(this.shaderProgramEdgeDetect.pMatrixUniform, false, paintPMatrix);
@@ -3858,8 +3858,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             //FIXME - Size
             this.gl.viewport(0, 0, 1024, 1024);
 
-            let paintMvMatrix = mat4.create();
-            let paintPMatrix = mat4.create();
+            const paintMvMatrix = mat4.create();
+            const paintPMatrix = mat4.create();
             mat4.identity(paintMvMatrix);
             if(this.doPerspectiveProjection){
                 mat4.ortho(paintPMatrix, -2.85 , 2.85 , -2.85, 2.85, 0.1, 1000.0);
@@ -3942,8 +3942,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
             this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
 
-            let paintMvMatrix = mat4.create();
-            let paintPMatrix = mat4.create();
+            const paintMvMatrix = mat4.create();
+            const paintPMatrix = mat4.create();
             mat4.identity(paintMvMatrix);
             mat4.ortho(paintPMatrix, -1 , 1 , -1, 1, 0.1, 1000.0);
 
@@ -3981,7 +3981,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         viewports = this.threeWayViewports
                     } else if(this.doMultiView) {
 
-                        let multiViewGroups = {}
+                        const multiViewGroups = {}
                         for (let idx = 0; idx < displayBuffers.length; idx++) {
                             if(displayBuffers[idx].multiViewGroup!==undefined&&displayBuffers[idx].origin&&displayBuffers[idx].origin.length===3){
                                 //console.log(idx,displayBuffers[idx].multiViewGroup)
@@ -4109,8 +4109,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.clearColor(1.0,1.0,0.0,1.0);
             this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-            let paintMvMatrix = mat4.create();
-            let paintPMatrix = mat4.create();
+            const paintMvMatrix = mat4.create();
+            const paintPMatrix = mat4.create();
             mat4.identity(paintMvMatrix);
             mat4.ortho(paintPMatrix, -1 , 1 , -1, 1, 0.1, 1000.0);
             this.gl.useProgram(this.shaderProgramRenderFrameBuffer);
@@ -4156,7 +4156,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         if (this.save_pixel_data) {
             console.log("Saving pixel data");
-            let pixels = new Uint8Array(this.canvas.width * this.canvas.height * 4);
+            const pixels = new Uint8Array(this.canvas.width * this.canvas.height * 4);
             this.gl.readPixels(0, 0, this.canvas.width, this.canvas.height, this.gl.RGBA, this.gl.UNSIGNED_BYTE, pixels);
             this.pixel_data = pixels;
         }
@@ -4175,7 +4175,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
                 this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.rttFramebufferColor);
             }
-            let pixels = new Uint8Array(this.gl.viewportWidth / width_ratio * this.gl.viewportHeight / height_ratio * 4);
+            const pixels = new Uint8Array(this.gl.viewportWidth / width_ratio * this.gl.viewportHeight / height_ratio * 4);
             this.gl.readPixels(0, 0, this.gl.viewportWidth / width_ratio, this.gl.viewportHeight / height_ratio, this.gl.RGBA, this.gl.UNSIGNED_BYTE, pixels);
             this.pixel_data = pixels;
         }
@@ -4217,8 +4217,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         //this.gl.clearColor(1.0,1.0,0.0,1.0);
         //this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
-        let paintMvMatrix = mat4.create();
-        let paintPMatrix = mat4.create();
+        const paintMvMatrix = mat4.create();
+        const paintPMatrix = mat4.create();
         mat4.identity(paintMvMatrix);
         mat4.ortho(paintPMatrix, -1 , 1 , -1, 1, 0.1, 1000.0);
 
@@ -4464,7 +4464,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.rttFramebufferColor);
             }
             this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.rttFramebufferColor);
-            let pixels = new Uint8Array(this.gl.viewportWidth / width_ratio * this.gl.viewportHeight / height_ratio * 4);
+            const pixels = new Uint8Array(this.gl.viewportWidth / width_ratio * this.gl.viewportHeight / height_ratio * 4);
             this.gl.readPixels(0, 0, this.gl.viewportWidth / width_ratio, this.gl.viewportHeight / height_ratio, this.gl.RGBA, this.gl.UNSIGNED_BYTE, pixels);
             this.pixel_data = pixels;
             this.recreateOffScreeenBuffers(this.canvas.width,this.canvas.height);
@@ -4484,8 +4484,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     textureBlur(width,height,inputTexture) {
 
-        let paintMvMatrix = mat4.create();
-        let paintPMatrix = mat4.create();
+        const paintMvMatrix = mat4.create();
+        const paintPMatrix = mat4.create();
         mat4.identity(paintMvMatrix);
         mat4.ortho(paintPMatrix, -1 , 1 , -1, 1, 0.1, 1000.0);
 
@@ -4604,8 +4604,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const displayBuffers = store.getState().glRef.displayBuffers
         const hoverSize = store.getState().glRef.hoverSize
 
-        let symmetries = [];
-        let symms = [];
+        const symmetries = [];
+        const symms = [];
         const bright_y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
 
         if(this.doShadow&&!calculatingShadowMap&&!this.drawingGBuffers){
@@ -4638,18 +4638,18 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 }
             }
 
-            let bufferTypes = displayBuffers[idx].bufferTypes;
+            const bufferTypes = displayBuffers[idx].bufferTypes;
 
-            let triangleVertexNormalBuffer = displayBuffers[idx].triangleVertexNormalBuffer;
-            let triangleVertexRealNormalBuffer = displayBuffers[idx].triangleVertexRealNormalBuffer;
-            let triangleVertexPositionBuffer = displayBuffers[idx].triangleVertexPositionBuffer;
-            let triangleVertexIndexBuffer = displayBuffers[idx].triangleVertexIndexBuffer;
-            let triangleColourBuffer = displayBuffers[idx].triangleColourBuffer;
+            const triangleVertexNormalBuffer = displayBuffers[idx].triangleVertexNormalBuffer;
+            const triangleVertexRealNormalBuffer = displayBuffers[idx].triangleVertexRealNormalBuffer;
+            const triangleVertexPositionBuffer = displayBuffers[idx].triangleVertexPositionBuffer;
+            const triangleVertexIndexBuffer = displayBuffers[idx].triangleVertexIndexBuffer;
+            const triangleColourBuffer = displayBuffers[idx].triangleColourBuffer;
 
-            let triangleVertices = displayBuffers[idx].triangleVertices;
-            let triangleColours = displayBuffers[idx].triangleColours;
+            const triangleVertices = displayBuffers[idx].triangleVertices;
+            const triangleColours = displayBuffers[idx].triangleColours;
 
-            let primitiveSizes = displayBuffers[idx].primitiveSizes;
+            const primitiveSizes = displayBuffers[idx].primitiveSizes;
 
             for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
                 if (displayBuffers[idx].transparent&&!this.drawingGBuffers) {
@@ -4748,14 +4748,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 1.0, 1.0, 1.0, 1.0);
                     else
                         this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.0, 0.0, 0.0, 1.0);
-                    let outlineSize = vec3.create();
+                    const outlineSize = vec3.create();
                     vec3.set(outlineSize, 0.1, 0.1, 0.0);
                     if(scaleZ)
                         vec3.set(outlineSize, 0.1, 0.1, 0.1);
                     this.gl.uniform3fv(theShader.outlineSize, outlineSize);
                 } else {
                     if(theShader.vertexColourAttribute>-1){
-                        let outlineSize = vec3.create();
+                        const outlineSize = vec3.create();
                         vec3.set(outlineSize, 0.0, 0.0, 0.0);
                         this.gl.uniform3fv(theShader.outlineSize, outlineSize);
                         if(displayBuffers[idx].customColour&&displayBuffers[idx].customColour.length==4){
@@ -4787,7 +4787,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     } else {
                         this.gl.uniform3fv(theShader.screenZ, this.screenZ);
                         if(this.stencilPass && scaleZ){
-                            let outlineSize = vec3.create();
+                            const outlineSize = vec3.create();
                             for(let i=0;i<10;i++){
                                 vec3.set(outlineSize, 0.01*i, 0.01*i, 0.01*i);
                                 this.gl.uniform3fv(theShader.outlineSize, outlineSize);
@@ -4822,7 +4822,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.disableVertexAttribArray(i);
 
             if (this.frag_depth_ext) {
-                let invsymt = mat4.create();
+                const invsymt = mat4.create();
                 let program = this.shaderProgramPerfectSpheres;
                 if (calculatingShadowMap) {
                     program = this.shaderDepthShadowProgramPerfectSpheres;
@@ -4896,11 +4896,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
                 if(this.stencilPass){
                     this.gl.disable(this.gl.DEPTH_TEST);
-                    let outlineSize = vec3.create();
+                    const outlineSize = vec3.create();
                     vec3.set(outlineSize, 0.1, 0.1, 0.0);
                     this.gl.uniform3fv(program.outlineSize, outlineSize);
                 } else {
-                    let outlineSize = vec3.create();
+                    const outlineSize = vec3.create();
                     vec3.set(outlineSize, 0.0, 0.0, 0.0);
                     if(program.outlineSize!=null) this.gl.uniform3fv(program.outlineSize, outlineSize);
                 }
@@ -4908,7 +4908,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
                     if (bufferTypes[j] === "PERFECT_SPHERES") {
 
-                        let buffer = this.imageBuffer;
+                        const buffer = this.imageBuffer;
 
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexTextureBuffer[0]);
                         this.gl.vertexAttribPointer(program.vertexTextureAttribute, buffer.triangleVertexTextureBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
@@ -4938,7 +4938,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             this.gl.uniform4fv(program.light_colours_ambient, [sfrac,sfrac,sfrac,1.0]);
                             //FIXME - Looks like several unused arguments in this function.
                             this.setupModelViewTransformMatrixInteractive(displayBuffers[idx].transformMatrixInteractive, displayBuffers[idx].transformOriginInteractive, null, program, null, null, null);
-                            let invsymt2 = mat4.create();
+                            const invsymt2 = mat4.create();
                             mat4.invert(invsymt2, displayBuffers[idx].transformMatrixInteractive);
                             invsymt2[12] = 0.0;
                             invsymt2[13] = 0.0;
@@ -5007,8 +5007,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                                     this.gl.vertexAttrib4f(program.vertexColourAttribute, 0.5, 0.5, 0.5, 1.0);
                             }
 
-                            let tempMVMatrix = mat4.create();
-                            let tempMVInvMatrix = mat4.create();
+                            const tempMVMatrix = mat4.create();
+                            const tempMVInvMatrix = mat4.create();
                             if (this.WEBGL2) {
                                 if(program.vertexColourAttribute!=null) this.gl.vertexAttribDivisor(program.vertexColourAttribute, 1);
                                 this.gl.vertexAttribDivisor(program.sizeAttribute, 1);
@@ -5154,7 +5154,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
             //vertex attribute settings are likely wrong from here on... (REALLY - I HOPE NOT! SJM 26/10/2023)
 
-            let sphereProgram = this.shaderProgramPointSpheres;
+            const sphereProgram = this.shaderProgramPointSpheres;
 
             this.gl.useProgram(sphereProgram);
 
@@ -5164,7 +5164,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.enableVertexAttribArray(sphereProgram.vertexPositionAttribute);
             this.gl.enableVertexAttribArray(sphereProgram.vertexNormalAttribute);
 
-            let scaleMatrices = displayBuffers[idx].supplementary["scale_matrices"];
+            const scaleMatrices = displayBuffers[idx].supplementary["scale_matrices"];
             this.gl.disableVertexAttribArray(sphereProgram.vertexColourAttribute);
 
             for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
@@ -5193,7 +5193,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 let scaleMatrix = mat3.clone([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]);
                 this.gl.uniformMatrix3fv(sphereProgram.scaleMatrix, false, scaleMatrix);
 
-                let theOffSet = new Float32Array(3);
+                const theOffSet = new Float32Array(3);
                 if (theseScaleMatrices.length === triangleVertices[j].length / 3) {
                     for (isphere = 0; isphere < triangleVertices[j].length / 3; isphere++) {
                         scaleMatrix = mat3.clone(theseScaleMatrices[isphere]);
@@ -5254,11 +5254,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.setMatrixUniforms(this.shaderProgramTwoDShapes);
             this.gl.disableVertexAttribArray(this.shaderProgramTwoDShapes.vertexColourAttribute);
             this.gl.vertexAttrib4f(this.shaderProgramTwoDShapes.vertexColourAttribute, 1.0, 1.0, 0.0, 1.0);
-            let diskVertices = [];
+            const diskVertices = [];
             if (typeof (this.diskVertices) !== "undefined") {
                 for (let iv = 0; iv < this.diskVertices.length; iv += 3) {
-                    let vold = vec3Create([this.diskVertices[iv], this.diskVertices[iv + 1], this.diskVertices[iv + 2]]);
-                    let vnew = vec3.create();
+                    const vold = vec3Create([this.diskVertices[iv], this.diskVertices[iv + 1], this.diskVertices[iv + 2]]);
+                    const vnew = vec3.create();
                     vec3.transformMat4(vnew, vold, invMat);
                     diskVertices[iv] = vnew[0];
                     diskVertices[iv + 1] = vnew[1];
@@ -5267,11 +5267,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.diskBuffer.triangleVertexPositionBuffer[0]);
                 this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(diskVertices), this.gl.DYNAMIC_DRAW);
             }
-            let imageVertices = [];
+            const imageVertices = [];
             if (typeof (this.imageVertices) !== "undefined") {
                 for (let iv = 0; iv < this.imageVertices.length; iv += 3) {
-                    let vold = vec3Create([this.imageVertices[iv], this.imageVertices[iv + 1], this.imageVertices[iv + 2]]);
-                    let vnew = vec3.create();
+                    const vold = vec3Create([this.imageVertices[iv], this.imageVertices[iv + 1], this.imageVertices[iv + 2]]);
+                    const vnew = vec3.create();
                     vec3.transformMat4(vnew, vold, invMat);
                     imageVertices[iv] = vnew[0];
                     imageVertices[iv + 1] = vnew[1];
@@ -5285,7 +5285,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     const buffer = this.diskBuffer;
                     let scaleImage = true;
                     if (typeof (this.gl, displayBuffers[idx].supplementary["vert_tri_2d"]) !== "undefined") {
-                        let tempMVMatrix = mat4.create();
+                        const tempMVMatrix = mat4.create();
                         mat4.set(tempMVMatrix, this.mvMatrix[0], this.mvMatrix[1], this.mvMatrix[2], this.mvMatrix[3], this.mvMatrix[4], this.mvMatrix[5], this.mvMatrix[6], this.mvMatrix[7], this.mvMatrix[8], this.mvMatrix[9], this.mvMatrix[10], this.mvMatrix[11], (-24.0 + displayBuffers[idx].supplementary["vert_tri_2d"][0][0] * 48.0) * this.zoom, (-24.0 + displayBuffers[idx].supplementary["vert_tri_2d"][0][1] * 48.0) * this.zoom, -this.fogClipOffset, 1.0);
                         this.gl.uniformMatrix4fv(this.shaderProgramTwoDShapes.mvMatrixUniform, false, tempMVMatrix);
                         scaleImage = false;
@@ -5297,7 +5297,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.gl.vertexAttribPointer(this.shaderProgramTwoDShapes.vertexPositionAttribute, buffer.triangleVertexPositionBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
                     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer.triangleVertexIndexBuffer[0]);
                     // FIXME - And loop here
-                    let theOffSet = new Float32Array(3);
+                    const theOffSet = new Float32Array(3);
                     for (let ishape = 0; ishape < triangleVertices[j].length / 3; ishape++) {
                         theOffSet[0] = triangleVertices[j][ishape * 3];
                         theOffSet[1] = triangleVertices[j][ishape * 3 + 1];
@@ -5504,9 +5504,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     getFrontAndBackPos(event: KeyboardEvent) : [number[], number[], number, number]  {
         const self = this;
-        let x = this.gl_cursorPos[0];
-        let y = this.canvas.height - this.gl_cursorPos[1];
-        let invQuat = quat4.create();
+        const x = this.gl_cursorPos[0];
+        const y = this.canvas.height - this.gl_cursorPos[1];
+        const invQuat = quat4.create();
         quat4Inverse(self.myQuat, invQuat);
         const theMatrix = quatToMat4(invQuat);
         const ratio = 1.0 * self.gl.viewportWidth / self.gl.viewportHeight;
@@ -5521,8 +5521,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         //let frontPos = vec3Create([theX,theY,-1000.0]);
         //let backPos  = vec3Create([theX,theY,1000.0]);
         //MN Changed to improve picking
-        let frontPos = vec3Create([theX, theY, -this.gl_clipPlane0[3] - this.fogClipOffset]);
-        let backPos = vec3Create([theX, theY, this.gl_clipPlane1[3] - this.fogClipOffset]);
+        const frontPos = vec3Create([theX, theY, -this.gl_clipPlane0[3] - this.fogClipOffset]);
+        const backPos = vec3Create([theX, theY, this.gl_clipPlane1[3] - this.fogClipOffset]);
         vec3.transformMat4(frontPos, frontPos, theMatrix);
         vec3.transformMat4(backPos, backPos, theMatrix);
         vec3.subtract(frontPos, frontPos, self.origin);
@@ -5535,7 +5535,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if (self.activeMolecule === null) {
 
             const [minidx,minj,mindist,minsym,minx,miny,minz] = self.getAtomFomMouseXY(event,self);
-            let rightClick: moorhen.AtomRightClickEvent = new CustomEvent("rightClick", {
+            const rightClick: moorhen.AtomRightClickEvent = new CustomEvent("rightClick", {
             "detail": {
                 atom: minidx > -1 ? displayBuffers[minidx].atoms[minj] : null,
                 buffer: minidx > -1 ? displayBuffers[minidx] : null,
@@ -5560,12 +5560,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             const [minidx,minj,mindist,minsym,minx,miny,minz] = self.getAtomFomMouseXY(event,self);
             if (minidx > -1) {
                 const atomLabel = parseAtomInfoLabel(displayBuffers[minidx].atoms[minj]);
-                let theAtom : webGL.clickAtom = {
+                const theAtom : webGL.clickAtom = {
                    ...displayBuffers[minidx].atoms[minj],
                    label: atomLabel,
                    displayBuffer: displayBuffers[minidx]
                 };
-                let atomClicked: moorhen.AtomClickedEvent = new CustomEvent("atomClicked", {
+                const atomClicked: moorhen.AtomClickedEvent = new CustomEvent("atomClicked", {
                     "detail": {
                         atom: displayBuffers[minidx].atoms[minj],
                         buffer: displayBuffers[minidx],
@@ -5604,7 +5604,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let newBuffers = []
         const self = this;
         self.clearMeasureCylinderBuffers()
-        let atomPairs = []
+        const atomPairs = []
         self.measuredAtoms.forEach(bump => {
             if(bump.length>1){
                 for(let ib=1;ib<bump.length;ib++){
@@ -5627,13 +5627,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     const pair = [firstAtomInfo, secondAtomInfo]
                     atomPairs.push(pair)
 
-                    let v1 = vec3Create([first.x, first.y, first.z]);
-                    let v2 = vec3Create([second.x, second.y, second.z]);
+                    const v1 = vec3Create([first.x, first.y, first.z]);
+                    const v2 = vec3Create([second.x, second.y, second.z]);
 
-                    let v1diffv2 = vec3.create();
+                    const v1diffv2 = vec3.create();
                     vec3Subtract(v1, v2, v1diffv2);
-                    let linesize = vec3.length(v1diffv2).toFixed(3);
-                    let mid = vec3.create();
+                    const linesize = vec3.length(v1diffv2).toFixed(3);
+                    const mid = vec3.create();
                     vec3Add(v1, v2, mid);
                     mid[0] *= 0.5;
                     mid[1] *= 0.5;
@@ -5641,37 +5641,37 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     self.measureTextCanvasTexture.addBigTextureTextImage({font:self.glTextFont,text:linesize,x:mid[0],y:mid[1],z:mid[2]})
                     if(bump.length>2&&ib>1){
                         const third = bump[ib-2];
-                        let v3 = vec3Create([third.x, third.y, third.z]);
-                        let v2diffv3 = vec3.create();
+                        const v3 = vec3Create([third.x, third.y, third.z]);
+                        const v2diffv3 = vec3.create();
                         vec3Subtract(v2, v3, v2diffv3);
                         NormalizeVec3(v2diffv3);
-                        let v2diffv1 = vec3.create();
+                        const v2diffv1 = vec3.create();
                         vec3Subtract(v2, v1, v2diffv1);
                         NormalizeVec3(v2diffv1);
 
-                        let v12plusv23 = vec3.create();
+                        const v12plusv23 = vec3.create();
                         vec3Add(v2diffv3, v2diffv1, v12plusv23);
                         NormalizeVec3(v12plusv23);
                         v12plusv23[0] *= -.5
                         v12plusv23[1] *= -.5
                         v12plusv23[2] *= -.5
 
-                        let angle = (Math.acos(vec3.dot(v2diffv1, v2diffv3)) * 180.0 / Math.PI).toFixed(1)+"˚";
+                        const angle = (Math.acos(vec3.dot(v2diffv1, v2diffv3)) * 180.0 / Math.PI).toFixed(1)+"˚";
                         self.measureTextCanvasTexture.addBigTextureTextImage({font:self.glTextFont,text:angle,x:second.x+v12plusv23[0],y:second.y+v12plusv23[1],z:second.z+v12plusv23[2]})
 
                         if(bump.length>3&&ib>2){
                             const fourth = bump[ib-3];
-                            let v4 = vec3Create([fourth.x, fourth.y, fourth.z]);
-                            let dihedral = (DihedralAngle(v1, v2, v3, v4) * 180.0 / Math.PI).toFixed(1)+"˚"
-                            let cross = vec3.create();
+                            const v4 = vec3Create([fourth.x, fourth.y, fourth.z]);
+                            const dihedral = (DihedralAngle(v1, v2, v3, v4) * 180.0 / Math.PI).toFixed(1)+"˚"
+                            const cross = vec3.create();
                             vec3Cross(v2diffv1, v2diffv3,cross)
                             NormalizeVec3(cross);
-                            let dihedralOffset = vec3.create();
+                            const dihedralOffset = vec3.create();
                             vec3Cross(v2diffv3, cross, dihedralOffset)
                             dihedralOffset[0] *= .25
                             dihedralOffset[1] *= .25
                             dihedralOffset[2] *= .25
-                            let mid23 = vec3.create();
+                            const mid23 = vec3.create();
                             vec3Add(v2, v3, mid23);
                             mid23[0] *= 0.5;
                             mid23[1] *= 0.5;
@@ -5686,7 +5686,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const atomColours = {}
         const colour = [1.0,0.0,0.0,1.0]
         atomPairs.forEach(atom => { atomColours[`${atom[0].serial}`] = colour; atomColours[`${atom[1].serial}`] = colour })
-        let objects = [
+        const objects = [
             gemmiAtomPairsToCylindersInfo(atomPairs, 0.07, atomColours, false, 0.01, 1000.)
         ]
         objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
@@ -5759,7 +5759,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const displayBuffers = store.getState().glRef.displayBuffers
         let x;
         let y;
-        let e = event;
+        const e = event;
         if (e.pageX || e.pageY) {
             x = e.pageX;
             y = e.pageY;
@@ -5769,8 +5769,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             y = e.clientY;
         }
 
-        let c = this.canvasRef.current;
-        let offset = getOffsetRect(c);
+        const c = this.canvasRef.current;
+        const offset = getOffsetRect(c);
 
         x -= offset.left;
         y -= offset.top;
@@ -5810,8 +5810,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         // The results of the operation will be stored in this array.
-        let modelPointArrayResultsFront = [];
-        let modelPointArrayResultsBack = [];
+        const modelPointArrayResultsFront = [];
+        const modelPointArrayResultsBack = [];
 
         //FIXME - This is hackery
         let factor = 999.9;
@@ -5848,17 +5848,17 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
             for (let j = 0; j < displayBuffers[idx].atoms.length; j++) {
 
-                let atx = displayBuffers[idx].atoms[j].x;
-                let aty = displayBuffers[idx].atoms[j].y;
-                let atz = displayBuffers[idx].atoms[j].z;
-                let p = vec3Create([atx, aty, atz]);
+                const atx = displayBuffers[idx].atoms[j].x;
+                const aty = displayBuffers[idx].atoms[j].y;
+                const atz = displayBuffers[idx].atoms[j].z;
+                const p = vec3Create([atx, aty, atz]);
 
-                let dpl = DistanceBetweenPointAndLine(modelPointArrayResultsFront, modelPointArrayResultsBack, p);
+                const dpl = DistanceBetweenPointAndLine(modelPointArrayResultsFront, modelPointArrayResultsBack, p);
 
-                let atPosTrans = vec3Create([0, 0, 0]);
+                const atPosTrans = vec3Create([0, 0, 0]);
                 vec3.transformMat4(atPosTrans, p, mvMatrix);
-                let azDot = this.gl_clipPlane0[3]-atPosTrans[2];
-                let bzDot = this.gl_clipPlane1[3]+atPosTrans[2];
+                const azDot = this.gl_clipPlane0[3]-atPosTrans[2];
+                const bzDot = this.gl_clipPlane1[3]+atPosTrans[2];
 
                 if (
                         dpl[0] < clickTol //* targetFactor //clickTol modified to reflect proximity to rptation origin
@@ -5877,10 +5877,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 symmats.forEach(symmat => {
                     const p = symmat.pos;
                     const dpl = DistanceBetweenPointAndLine(modelPointArrayResultsFront, modelPointArrayResultsBack, p);
-                    let atPosTrans = vec3Create([0, 0, 0]);
+                    const atPosTrans = vec3Create([0, 0, 0]);
                     vec3.transformMat4(atPosTrans, p, mvMatrix);
-                    let azDot = this.gl_clipPlane0[3]-atPosTrans[2];
-                    let bzDot = this.gl_clipPlane1[3]+atPosTrans[2];
+                    const azDot = this.gl_clipPlane0[3]-atPosTrans[2];
+                    const bzDot = this.gl_clipPlane1[3]+atPosTrans[2];
                     if (
                         dpl[0] < clickTol //* targetFactor //clickTol modified to reflect proximity to rptation origin
                         && dpl[0] < mindist //closest click seen
@@ -5945,21 +5945,21 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.gl.depthFunc(this.gl.ALWAYS);
         //Begin copy/paste from crosshairs
-        let axesOffset = vec3.create();
+        const axesOffset = vec3.create();
         vec3.set(axesOffset, 0, 0, 0);
         const xyzOff = this.origin.map((coord, iCoord) => -coord + this.zoom * axesOffset[iCoord])
 
         this.gl.useProgram(this.shaderProgramThickLines);
         this.setMatrixUniforms(this.shaderProgramThickLines);
-        let pmvMatrix = mat4.create();
-        let pMatrix = mat4.create();
-        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+        const pmvMatrix = mat4.create();
+        const pMatrix = mat4.create();
+        const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
 
-        let mat_width = 48;
-        let mat_height = 48;
+        const mat_width = 48;
+        const mat_height = 48;
         if(this.renderToTexture){
             if(this.gl.viewportWidth > this.gl.viewportHeight){
-                let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+                const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
                 mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.0);
             } else {
                 mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
@@ -6000,13 +6000,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         let hairColour = [0., 0., 0., 1.];
-        let y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
+        const y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
         if (y < 0.5) {
             hairColour = [1., 1., 1., 1.];
         }
 
-        let lineStart = vec3.create();
-        let lineEnd = vec3.create();
+        const lineStart = vec3.create();
+        const lineEnd = vec3.create();
 
         let lastPoint = null;
 
@@ -6040,12 +6040,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             lastPoint = point;
         })
 
-        let size = 1.5;
+        const size = 1.5;
         const thickLines = linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
-        let axesNormals = thickLines["normals"];
-        let axesVertices_new = thickLines["vertices"];
-        let axesColours_new = thickLines["colours"];
-        let axesIndexs_new = thickLines["indices"];
+        const axesNormals = thickLines["normals"];
+        const axesVertices_new = thickLines["vertices"];
+        const axesColours_new = thickLines["colours"];
+        const axesIndexs_new = thickLines["indices"];
 
         //console.log("thickLines",thickLines);
         this.gl.depthFunc(this.gl.ALWAYS);
@@ -6088,17 +6088,17 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.useProgram(this.shaderProgramTextBackground);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
-        let axesOffset = vec3.create();
+        const axesOffset = vec3.create();
         vec3.set(axesOffset, 0, 0, 0);
         const xyzOff = this.origin.map((coord, iCoord) => -coord + this.zoom * axesOffset[iCoord])
         this.gl.useProgram(this.shaderProgramThickLines);
         this.setMatrixUniforms(this.shaderProgramThickLines);
-        let pmvMatrix = mat4.create();
-        let pMatrix = mat4.create();
-        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult
+        const pmvMatrix = mat4.create();
+        const pMatrix = mat4.create();
+        const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult
         if(this.renderToTexture){
             if(this.gl.viewportWidth > this.gl.viewportHeight){
-                let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+                const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
                 mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.0);
             } else {
                 mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
@@ -6138,17 +6138,17 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         let hairColour = [0., 0., 0., 0.5];
-        let y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
+        const y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
         if (y < 0.5) {
             hairColour = [1., 1., 1., 0.5];
         }
 
         // Actual axes
-        let cross_hair_scale_factor = 0.3;
-        let horizontalHairStart = vec3.create();
+        const cross_hair_scale_factor = 0.3;
+        const horizontalHairStart = vec3.create();
         vec3.set(horizontalHairStart, -cross_hair_scale_factor * this.zoom, 0.0, 0.0);
         vec3.transformMat4(horizontalHairStart, horizontalHairStart, invMat);
-        let horizontalHairEnd = vec3.create();
+        const horizontalHairEnd = vec3.create();
         vec3.set(horizontalHairEnd, cross_hair_scale_factor * this.zoom, 0.0, 0.0);
         vec3.transformMat4(horizontalHairEnd, horizontalHairEnd, invMat);
 
@@ -6158,10 +6158,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             hairColour, hairColour
         )
 
-        let verticalHairStart = vec3.create();
+        const verticalHairStart = vec3.create();
         vec3.set(verticalHairStart, 0.0, -cross_hair_scale_factor * this.zoom, 0.0);
         vec3.transformMat4(verticalHairStart, verticalHairStart, invMat);
-        let verticalHairEnd = vec3.create();
+        const verticalHairEnd = vec3.create();
         vec3.set(verticalHairEnd, 0.0, cross_hair_scale_factor * this.zoom, 0.0);
         vec3.transformMat4(verticalHairEnd, verticalHairEnd, invMat);
 
@@ -6171,12 +6171,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             hairColour, hairColour
         )
 
-        let size = 1.0;
+        const size = 1.0;
         const thickLines = linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
-        let axesNormals = thickLines["normals"];
-        let axesVertices_new = thickLines["vertices"];
-        let axesColours_new = thickLines["colours"];
-        let axesIndexs_new = thickLines["indices"];
+        const axesNormals = thickLines["normals"];
+        const axesVertices_new = thickLines["vertices"];
+        const axesColours_new = thickLines["colours"];
+        const axesIndexs_new = thickLines["indices"];
 
         //console.log("thickLines",thickLines);
         this.gl.depthFunc(this.gl.ALWAYS);
@@ -6220,7 +6220,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const c = this.canvasRef.current;
         const offset = getOffsetRect(c);
 
-        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+        const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
         const frac_x = (getDeviceScale()*(this.init_x-offset.left)/this.gl.viewportWidth-0.5)  * 48.;
         const frac_y = -(getDeviceScale()*(this.init_y-offset.top)/this.gl.viewportHeight-0.5) * 48;
 
@@ -6247,7 +6247,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             0.0, 0.0, 1.0, 0.0,
             0.0, 0.0, 0.0, 1.0,
         )
-        let pMatrix = mat4.create();
+        const pMatrix = mat4.create();
         mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
         mat4.multiply(pmvMatrix, pMatrix, tempMVMatrix); // Lines
         this.gl.uniformMatrix4fv(this.shaderProgram.pMatrixUniform, false, pmvMatrix);
@@ -6354,7 +6354,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             0.0, 0.0, 1.0, 0.0,
             0.0, 0.0, -50.0, 1.0,
         )
-        let pMatrix = mat4.create();
+        const pMatrix = mat4.create();
         mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
         mat4.multiply(pmvMatrix, pMatrix, tempMVMatrix); // Lines
         this.gl.uniformMatrix4fv(this.shaderProgramThickLines.pMatrixUniform, false, pmvMatrix);
@@ -6367,7 +6367,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.hitchometerNormalBuffer = this.gl.createBuffer();
         }
 
-        let size = 1.0;
+        const size = 1.0;
 
         const screenZ = vec3.create()
         vec3.set(screenZ,0,0,1)
@@ -6413,10 +6413,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         const thickLines = linesToThickLines(hitchometerVertices, hitchometerColours, size);
-        let hitchometerNormals = thickLines["normals"];
-        let hitchometerVertices_new = thickLines["vertices"];
-        let hitchometerColours_new = thickLines["colours"];
-        let hitchometerIndexs_new = thickLines["indices"];
+        const hitchometerNormals = thickLines["normals"];
+        const hitchometerVertices_new = thickLines["vertices"];
+        const hitchometerColours_new = thickLines["colours"];
+        const hitchometerIndexs_new = thickLines["indices"];
 
         this.gl.depthFunc(this.gl.ALWAYS);
 
@@ -6453,7 +6453,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     drawTextOverlays(invMat,ratioMult=1.0,font_scale=1.0) {
 
-        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult
+        const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult
 
         let textColour = "black";
         const y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
@@ -6465,22 +6465,22 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         const drawString = (s, xpos, ypos, zpos, font, threeD) => {
             if(font) this.textCtx.font = font;
-            let axesOffset = vec3.create();
+            const axesOffset = vec3.create();
             vec3.set(axesOffset, xpos,ypos, 0);
             vec3.transformMat4(axesOffset, axesOffset, invMat);
 
             const xyzOff = this.origin.map((coord, iCoord) => -coord + this.zoom * axesOffset[iCoord]);
-            let base_x = xyzOff[0];
-            let base_y = xyzOff[1];
-            let base_z = xyzOff[2];
+            const base_x = xyzOff[0];
+            const base_y = xyzOff[1];
+            const base_z = xyzOff[2];
 
             this.measureText2DCanvasTexture.addBigTextureTextImage({font:font,text:s,x:base_x,y:base_y,z:base_z})
 
         }
 
         this.textLegends.forEach(label => {
-                let xpos = label.x * 48.0 -24.*ratio;
-                let ypos = label.y * 48.0 -24.;
+                const xpos = label.x * 48.0 -24.*ratio;
+                const ypos = label.y * 48.0 -24.;
                 drawString(label.text,xpos,ypos, 0.0, label.font, false);
         });
 
@@ -6497,11 +6497,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     const mid_point = {x:(point.x+lastPoint.x)/2,y:(point.y+lastPoint.y)/2}
                     drawString(dist.toFixed(1)+"Å", mid_point.x*ratio, -mid_point.y, 0.0, "22px helvetica", false);
                     if(lastLastPoint){
-                        let l1 = {x:(point.x-lastPoint.x),y:(point.y-lastPoint.y)}
+                        const l1 = {x:(point.x-lastPoint.x),y:(point.y-lastPoint.y)}
                         l1.x /= dist / this.zoom;
                         l1.y /= dist / this.zoom;
                         const dist2 = Math.sqrt(this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(lastLastPoint.x-lastPoint.x) * this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(lastLastPoint.x-lastPoint.x) + this.zoom*(lastLastPoint.y-lastPoint.y) * this.zoom*(lastLastPoint.y-lastPoint.y));
-                        let l2 = {x:(lastLastPoint.x-lastPoint.x),y:(lastLastPoint.y-lastPoint.y)}
+                        const l2 = {x:(lastLastPoint.x-lastPoint.x),y:(lastLastPoint.y-lastPoint.y)}
                         l2.x /= dist2 / this.zoom;
                         l2.y /= dist2 / this.zoom;
                         const l1_dot_l2 = this.gl.viewportWidth / this.gl.viewportHeight*this.gl.viewportWidth / this.gl.viewportHeight*l1.x*l2.x + l1.y*l2.y;
@@ -6543,8 +6543,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     canvasPointToGLPoint(point) {
-        let mat_width = 48;
-        let mat_height = 48;
+        const mat_width = 48;
+        const mat_height = 48;
         const x = ((point.x/this.gl.viewportWidth  * getDeviceScale())-0.5)*mat_width;
         const y = ((point.y/this.gl.viewportHeight * getDeviceScale())-0.5)*mat_height;
         return {x:x,y:y};
@@ -6553,7 +6553,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     getMouseXYGL(evt,canvas){
         let x;
         let y;
-        let e = evt;
+        const e = evt;
         if (e.pageX || e.pageY) {
             x = e.pageX;
             y = e.pageY;
@@ -6563,7 +6563,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             y = e.clientY;
         }
 
-        let offset = getOffsetRect(canvas);
+        const offset = getOffsetRect(canvas);
 
         x -= offset.left;
         y -= offset.top;
@@ -6653,9 +6653,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 if(displayBuffers.length>0){
                     const [minidx,minj,mindist,minsym,minx,miny,minz] = self.getAtomFomMouseXY(event,self);
                     if(displayBuffers[minidx] && displayBuffers[minidx].atoms) {
-                        let atx = displayBuffers[minidx].atoms[minj].x;
-                        let aty = displayBuffers[minidx].atoms[minj].y;
-                        let atz = displayBuffers[minidx].atoms[minj].z;
+                        const atx = displayBuffers[minidx].atoms[minj].x;
+                        const aty = displayBuffers[minidx].atoms[minj].y;
+                        const atz = displayBuffers[minidx].atoms[minj].z;
                         if(minsym>-1){
                             //self.setOriginAnimated([-minx, -miny, -minz], true);
                             self.props.onOriginChanged([-minx, -miny, -minz])
@@ -6783,7 +6783,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if (true) {
             let x;
             let y;
-            let e = event;
+            const e = event;
             if (e.pageX || e.pageY) {
                 x = e.pageX;
                 y = e.pageY;
@@ -6793,8 +6793,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 y = e.clientY;
             }
 
-            let c = this.canvasRef.current;
-            let offset = getOffsetRect(c);
+            const c = this.canvasRef.current;
+            const offset = getOffsetRect(c);
 
             x -= offset.left;
             y -= offset.top;
@@ -6816,15 +6816,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         self.init_x = event.pageX;
         self.init_y = event.pageY;
 
-        let moveFactor = getDeviceScale() * 400. / this.canvas.height * self.moveFactor / self.props.mouseSensitivityFactor;
+        const moveFactor = getDeviceScale() * 400. / this.canvas.height * self.moveFactor / self.props.mouseSensitivityFactor;
 
         if ((event.altKey && event.shiftKey) || (self.mouseDownButton === 1)) {
-            let invQuat = quat4.create();
+            const invQuat = quat4.create();
             quat4Inverse(self.myQuat, invQuat);
-            let theMatrix = quatToMat4(invQuat);
-            let xshift = vec3.create();
+            const theMatrix = quatToMat4(invQuat);
+            const xshift = vec3.create();
             vec3.set(xshift, moveFactor * self.dx, 0, 0);
-            let yshift = vec3.create();
+            const yshift = vec3.create();
             vec3.set(yshift, 0, moveFactor * self.dy, 0);
             vec3.transformMat4(xshift, xshift, theMatrix);
             vec3.transformMat4(yshift, yshift, theMatrix);
@@ -6860,7 +6860,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         if (event.altKey) {
-            let factor = 1. - self.dy / 50.;
+            const factor = 1. - self.dy / 50.;
             let newZoom = self.zoom * factor;
             if (newZoom < .01) {
                 newZoom = 0.01;
@@ -6898,20 +6898,20 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 }
             }
 
-            let xQ = createQuatFromAngle(-self.dy,rot_x_axis);
-            let yQ = createQuatFromAngle(-self.dx,rot_y_axis);
+            const xQ = createQuatFromAngle(-self.dy,rot_x_axis);
+            const yQ = createQuatFromAngle(-self.dx,rot_y_axis);
             quat4.multiply(xQ, xQ, yQ);
 
             if (this.currentlyDraggedAtom) {
 
                 // ###############
                 // FILO: COPY PASTED FROM ABOVE
-                let invQuat = quat4.create();
+                const invQuat = quat4.create();
                 quat4Inverse(self.myQuat, invQuat);
-                let theMatrix = quatToMat4(invQuat);
-                let xshift = vec3.create();
+                const theMatrix = quatToMat4(invQuat);
+                const xshift = vec3.create();
                 vec3.set(xshift, moveFactor * self.dx, 0, 0);
-                let yshift = vec3.create();
+                const yshift = vec3.create();
                 vec3.set(yshift, 0, moveFactor * self.dy, 0);
                 vec3.transformMat4(xshift, xshift, theMatrix);
                 vec3.transformMat4(yshift, yshift, theMatrix);
@@ -6938,18 +6938,18 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 // ###############
                 //TODO - Move all this somewhere else ...
 
-                let invQuat = quat4.create();
+                const invQuat = quat4.create();
                 quat4Inverse(this.myQuat, invQuat);
                 const invMat = quatToMat4(invQuat);
-                let x_rot = vec3.create();
-                let y_rot = vec3.create();
+                const x_rot = vec3.create();
+                const y_rot = vec3.create();
                 vec3.set(x_rot, 1.0, 0.0, 0.0);
                 vec3.set(y_rot, 0.0, 1.0, 0.0);
                 vec3.transformMat4(x_rot, x_rot, invMat);
                 vec3.transformMat4(y_rot, y_rot, invMat);
 
-                let xQp = createQuatFromDXAngle(-self.dy, x_rot);
-                let yQp = createQuatFromDXAngle(-self.dx, y_rot);
+                const xQp = createQuatFromDXAngle(-self.dy, x_rot);
+                const yQp = createQuatFromDXAngle(-self.dx, y_rot);
                 quat4.multiply(xQp, xQp, yQp);
 
                 if (!this.activeMolecule.displayObjectsTransformation.quat) {
@@ -6962,7 +6962,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 theMatrix[13] = this.activeMolecule.displayObjectsTransformation.origin[1];
                 theMatrix[14] = this.activeMolecule.displayObjectsTransformation.origin[2];
                 //Just consider one origin.
-                let diff = [0, 0, 0];
+                const diff = [0, 0, 0];
 
                 const dispObjs: moorhen.DisplayObject[][]  = this.activeMolecule.representations.filter(item => item.style !== 'transformation').map(item => item.buffers)
                 for (const value of dispObjs) {
@@ -7005,7 +7005,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     handleKeyDown(event, self) {
-        let eventModifiersCodes: string[] = []
+        const eventModifiersCodes: string[] = []
 
         if (event.shiftKey) eventModifiersCodes.push('shiftKey')
         if (event.ctrlKey) eventModifiersCodes.push('ctrlKey')
@@ -7057,7 +7057,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.circleCtx.lineWidth = width / 10;
         this.circleCtx.arc(width / 2, height / 2, width / 2 - width / 20 - 1, 0, 2 * Math.PI);
         this.circleCtx.stroke();
-        var tm = this.circleCtx.measureText(text);
+        const tm = this.circleCtx.measureText(text);
         this.circleCtx.fillText(text, width / 2 - tm.width / 2, height / 2 + 30);
     }
 

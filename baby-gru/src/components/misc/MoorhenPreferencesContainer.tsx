@@ -183,7 +183,7 @@ export const MoorhenPreferencesContainer = (props: {
                 }
 
                 const fetchPromises = Object.keys(preferencesMap).map(key => preferences.localStorageInstance.getItem(preferencesMap[key].label))
-                let responses = await Promise.all(fetchPromises)
+                const responses = await Promise.all(fetchPromises)
 
                 if(!responses.every(item => item !== null) || responses.length < Object.keys(preferencesMap).length) {
                     restoreDefaults(preferences, defaultValues)

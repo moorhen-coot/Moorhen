@@ -167,7 +167,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         const currentMtzFiles = allKeys.filter((key: moorhen.backupKey) => key.type === 'mtzData').map(key => key.name)
         const currentMapData = allKeys.filter((key: moorhen.backupKey) => key.type === 'mapData').map(key => key.name)
 
-        let promises: Promise<string | void>[] = []
+        const promises: Promise<string | void>[] = []
         this.mapsRef.current.map(async (map: moorhen.Map) => {
             const fileName = map.associatedReflectionFileName
             if (fileName && !currentMtzFiles.includes(fileName)) {
@@ -238,9 +238,9 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             })
         ])
 
-        let moleculeDataPromises: string[] = []
-        let mapDataPromises: Uint8Array[] = []
-        let reflectionDataPromises: Uint8Array[] = []
+        const moleculeDataPromises: string[] = []
+        const mapDataPromises: Uint8Array[] = []
+        const reflectionDataPromises: Uint8Array[] = []
         promises.forEach((promise: string | moorhen.WorkerResponse) => {
             if (typeof promise === "string" && promise === 'reflection_data') {
                 reflectionDataPromises.push(null)

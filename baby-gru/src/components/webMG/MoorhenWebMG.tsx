@@ -150,7 +150,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             commandArgs: [evt.detail.front[0], evt.detail.front[1], evt.detail.front[2], evt.detail.back[0], evt.detail.back[1], evt.detail.back[2], 0.5]
         }, false) as moorhen.WorkerResponse<[number, number, number]>;
 
-        let newOrigin = response.data.result.result;
+        const newOrigin = response.data.result.result;
         dispatch(setOrigin([-newOrigin[0], -newOrigin[1], -newOrigin[2]]))
     }, [props.commandCentre, glRef])
 
