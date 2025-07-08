@@ -510,17 +510,17 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
                                 ) : null}
                     </Stack>
                 </div>
-                    <CustomHorizontalScrollbar 
-                    style={{ height: "calc(100% - 1rem)", minHeight: "3rem", width: seqLength > displayHeight ? "calc(100% - 16px)" : "100%" }} 
-                    onDraggingChange={setIsScrolling}>
+                <CustomHorizontalScrollbar 
+                style={{ height: "calc(100% - 1rem)", minHeight: "3rem", width: seqLength > displayHeight ? "calc(100% - 16px)" : "100%" }} 
+                onDraggingChange={setIsScrolling}>
 
-                        <div className="sticky-tick-marks">
-                            <div style={{ minWidth: `${nameColumnWidth}rem`, maxWidth: `${nameColumnWidth}rem` }}></div>
-                            {tickMarks}
-                        </div>
-                            {listOfSeqs}                        
-                    </CustomHorizontalScrollbar>
-                </div>
+                    <div className="sticky-tick-marks">
+                        <div style={{ minWidth: `${nameColumnWidth}rem`, maxWidth: `${nameColumnWidth}rem` }}></div>
+                        {tickMarks}
+                    </div>
+                        {listOfSeqs}                        
+                </CustomHorizontalScrollbar>
+            </div>
         </>
     );
 });

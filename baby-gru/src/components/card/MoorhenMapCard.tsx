@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Card, Col, Stack, ToggleButton } from "react-bootstrap";
 import { convertRemToPx, convertPxToRem } from "../../utils/utils";
 import { getNameLabel } from "./cardUtils";
@@ -8,13 +8,13 @@ import { MoorhenSlider } from "../inputs/MoorhenSlider";
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch, batch } from "react-redux";
 import { setActiveMap } from "../../store/generalStatesSlice";
-import { setContourLevel, setMapAlpha, setMapRadius, setMapStyle, showMap } from "../../store/mapContourSettingsSlice";
+import { setContourLevel,  setMapRadius } from "../../store/mapContourSettingsSlice";
 import { useSnackbar } from "notistack";
 import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput";
 import { MapSettingsAccordion } from "./MapCardResources/MapSettingsAccordion";
 import { MapColourSelector } from "./MapCardResources/MapColourSelector";
 import { MapCardActionButtons } from "./MapCardResources/MapCardActionButtons";
-
+import { MoorhenMapManager } from "../managers/MoorhenMapManager"
 
 interface MoorhenMapCardPropsInterface extends moorhen.CollectedProps {
     map: moorhen.Map;
@@ -63,8 +63,6 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
             return 1.0;
         }
     });
-
-    const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.generalStates.defaultExpandDisplayCards);
     
 
     const handleCollapseToggle = () => {    
@@ -82,42 +80,6 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     const isDirty = useRef<boolean>(false);
     const dispatch = useDispatch();
     const { enqueueSnackbar } = useSnackbar();
-
-    const doContourIfDirty = useCallback(() => {
-        if (isDirty.current) {
-            busyContouring.current = true;
-            isDirty.current = false;
-            props.map.drawMapContour().then(() => {
-                busyContouring.current = false;
-                doContourIfDirty();
-            });
-        }
-    }, [mapRadius, mapContourLevel, mapIsVisible, mapStyle]);
-
-    const handleOriginUpdate = useCallback(
-        (evt: moorhen.OriginUpdateEvent) => {
-            nextOrigin.current = [...evt.detail.origin.map((coord: number) => -coord)];
-            if (!props.map.isOriginLocked) {
-                isDirty.current = true;
-                if (mapIsVisible && !busyContouring.current) {
-                    doContourIfDirty();
-                }
-            }
-        },
-        [doContourIfDirty]
-    );
-
-    useEffect(() => {
-        if (mapIsVisible) {
-            nextOrigin.current = originState.map((coord) => -coord);
-            isDirty.current = true;
-            if (!busyContouring.current) {
-                doContourIfDirty();
-            }
-        } else {
-            props.map.hideMapContour();
-        }
-    }, [doContourIfDirty]);
 
     const handleWheelContourLevelCallback = useCallback(
         (evt: moorhen.WheelContourLevelEvent) => {
@@ -151,46 +113,6 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
         [mapContourLevel, mapRadius, activeMap?.molNo, props.map.molNo, mapIsVisible]
     );
 
-    useEffect(() => {
-        document.addEventListener("originUpdate", handleOriginUpdate);
-        return () => {
-            document.removeEventListener("originUpdate", handleOriginUpdate);
-        };
-    }, [handleOriginUpdate]);
-
-    useEffect(() => {
-        document.addEventListener("wheelContourLevelChanged", handleWheelContourLevelCallback);
-        return () => {
-            document.removeEventListener("wheelContourLevelChanged", handleWheelContourLevelCallback);
-        };
-    }, [handleWheelContourLevelCallback]);
-
-    useEffect(() => {
-        props.map.fetchMapAlphaAndRedraw();
-    }, [mapOpacity]);
-
-    useEffect(() => {
-        // This looks stupid but it is important otherwise the map is first drawn with the default contour and radius. Probably there's a problem somewhere...
-        batch(() => {
-            dispatch(setMapAlpha({ molNo: props.map.molNo, alpha: mapOpacity }));
-            dispatch(setMapStyle({ molNo: props.map.molNo, style: mapStyle }));
-            dispatch(setMapRadius({ molNo: props.map.molNo, radius: mapRadius }));
-            dispatch(
-                setContourLevel({
-                    molNo: props.map.molNo,
-                    contourLevel: mapContourLevel,
-                })
-            );
-        });
-        // Show map only if specified
-        if (props.map.showOnLoad) {
-            dispatch(showMap(props.map));
-        }
-    }, []);
-
-    // Fast contour level:
-    // This work by delaying the initial contour draw if the radius is > thresolds,
-    // and then start the contour drawing with the small raidus routin
     const fastContourResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const fastContourInitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [lastRadius, setLastRadius] = useState<number>(25);
@@ -275,6 +197,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     const [labelSpace, actionButtonSpace] = getLabelAndActionButtonSpace();
     
     return (
+        <>
         <Card
             className="px-0"
             style={{
@@ -285,6 +208,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
             }}
             key={props.map.molNo}
         >
+            <MoorhenMapManager mapMolNo = {props.map.molNo}></MoorhenMapManager>
             <Card.Header style={{ padding: "0.1rem" }}>
                 <Stack gap={2} direction="horizontal">
                     <Col
@@ -393,6 +317,6 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                     <MapSettingsAccordion map={props.map} mapIsVisible={mapIsVisible} mapStyle={mapStyle} mapRadius={mapRadius} mapOpacity={mapOpacity} />
                 </Stack>
             </Card.Body>
-        </Card>
+        </Card> </>
     );
 };
