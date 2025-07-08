@@ -22,8 +22,8 @@ type MoorhenPreciseInputPropsType = {
  * @prop {number | null | undefined} value
  *   The current value of the input. Can be a number, null, or undefined.
  *
- * @prop {(newVal: string) => void} setValue
- *   Callback to update the value in the parent component. Receives the new value as a string.
+ * @prop {function} setValue
+ *   Callback to update the value in the parent component. Receives the new value as a string. Returns void.
  *
  * @prop {boolean} [waitReturn=false]
  *   If true, only updates value when the user presses Enter. Otherwise, updates on every valid change.
@@ -43,8 +43,8 @@ type MoorhenPreciseInputPropsType = {
  * @prop {string | number} [width]
  *   Width of the input field (e.g., "4rem" or 100).
  *
- * @prop {[number, number]} [minMax]
- *   Minimum and maximum allowed values for the input.
+ * @prop {number[]} [minMax]
+ *   Minimum and maximum [number,number] allowed values for the input.
  *
  * @prop {string} [type="standard" | "number" | "numberForm"]
  *   This is something of a misnomer, as it is always a number input, but it can be set to number to get the clicky arrows next to the input.

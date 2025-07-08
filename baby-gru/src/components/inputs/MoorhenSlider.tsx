@@ -37,8 +37,8 @@ type MoorhenSliderProps<T extends number | [number, number]> = {
  * @prop {T} externalValue
  *   The current value of the slider, controlled by the parent. Can be a single number or a tuple for range sliders.
  *
- * @prop {(arg0: T) => void} setExternalValue
- *   Callback to update the value in the parent component. Receives the new value as argument.
+ * @prop {function} setExternalValue
+ *   Callback to update the value in the parent component. Receives the new value as argument. Returns void.
  *
  * @prop {boolean} [logScale=false]
  *   If true, the slider operates on a logarithmic scale.
@@ -78,8 +78,8 @@ type MoorhenSliderProps<T extends number | [number, number]> = {
  * @prop {boolean} [piWaitReturn=false]
  *   If true, only updates value on pressing Enter in precise input.
  *
- * @prop {[number, number]} [piMinMax]
- *   Min and max values for the precise input field. Defaults to [minVal, maxVal].
+ * @prop {number[]} [piMinMax]
+ *   Min and max values [number,number] for the precise input field. Defaults to [minVal, maxVal].
  */
 
 export const MoorhenSlider = <T extends number | [number, number]>(props: MoorhenSliderProps<T>) => {
