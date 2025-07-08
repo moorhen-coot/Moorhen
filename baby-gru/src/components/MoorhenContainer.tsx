@@ -136,7 +136,7 @@ declare module "notistack" {
  * @property {string} [monomerLibraryPath='./monomers'] - A string with the path to the monomer library, relative to the root of the app
  * @property {function} setMoorhenDimensions - Callback executed on window resize. Return type is an array of two numbers [width, height]
  * @property {function} onUserPreferencesChange - Callback executed whenever a user-defined preference changes (key: string, value: any) => void.
- * @property {boolean} [disableFileUploads=false] - Indicates if file uploads should b disabled
+ * @property {boolean} [disableFileUploads=false] - Indicates if file uploads should be disabled
  * @property {string[]} [includeNavBarMenuNames] - An array of menu names to include in the Moorhen navbar. If empty array then all menus will be included. It can also be used to set their order.
  * @property {object[]} extraNavBarModals - A list with additional draggable modals with buttons rendered under the navigation menu
  * @property {object[]} extraNavBarMenus - A list with additional menu items rendered under the navigation menu
