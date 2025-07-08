@@ -5,53 +5,41 @@ import { useSnackbar } from "notistack";
 
 export const MoorhenMapManager = (props:{mapMolNo:number}) => {
     const lastTime = useRef<number>(Date.now())
+    const drawTiming = useRef<[number, number]>([0, 50])
     const mapMolNo = props.mapMolNo
     const dispatch = useDispatch()
-    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
-    const mapIsVisible = useSelector((state: moorhen.State) => state.mapContourSettings.visibleMaps.includes(mapMolNo));
-    const map = useSelector((state: moorhen.State) => state.maps.find((item) =>item.molNo === mapMolNo));
+    
     const contourWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.contourWheelSensitivityFactor);
     const { enqueueSnackbar } = useSnackbar();
-    console.log(lastTime)
-    
-    const mapRadius = useSelector((state: moorhen.State) => {
-        const _map = state.mapContourSettings.mapRadii.find((item) => item.molNo === mapMolNo);
-        if (_map) {
-            return _map.radius;
-        } else {
-            return 25;
-        }
-    });
 
-    const mapContourLevel = useSelector((state: moorhen.State) => {
-        const map = state.mapContourSettings.contourLevels.find((item) => item.molNo === mapMolNo);
-        if (map) {
-            return map.contourLevel;
-        } else {
-            return 1;
-        }
-    });
-    const mapStyle = useSelector((state: moorhen.State) => {
-        const map = state.mapContourSettings.mapStyles.find((item) => item.molNo === mapMolNo);
-        if (map) {
-            return map.style;
-        } else {
-            return state.mapContourSettings.defaultMapSurface ? "solid" : state.mapContourSettings.defaultMapLitLines ? "lit-lines" : "lines";
-        }
-    });
-
-    const mapOpacity = useSelector((state: moorhen.State) => {
-        const map = state.mapContourSettings.mapAlpha.find((item) => item.molNo === mapMolNo);
-        if (map) {
-            return map.alpha;
-        } else {
-            return 1.0;
-        }
-    });
+    const map = useSelector((state: moorhen.State) => state.maps.find((item) =>item.molNo === mapMolNo));
+    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
+    const mapIsVisible = useSelector((state: moorhen.State) => state.mapContourSettings.visibleMaps.includes(mapMolNo));
+    useSelector((state: moorhen.State) => {const _map = state.mapContourSettings.mapRadii.find((item) => item.molNo === mapMolNo);});
+    useSelector((state: moorhen.State) => {const map = state.mapContourSettings.contourLevels.find((item) => item.molNo === mapMolNo);});
+    useSelector((state: moorhen.State) => {const map = state.mapContourSettings.mapStyles.find((item) => item.molNo === mapMolNo);});
+    useSelector((state: moorhen.State) => {const map = state.mapContourSettings.mapAlpha.find((item) => item.molNo === mapMolNo);});
     
-    if (Date.now() - lastTime.current> 50) {
-        map?.drawMapContour()
+    const postDraw = useCallback(() => {
+        const now = Date.now()
+        drawTiming.current = [drawTiming.current[0], now]
+        console.log("Map manager draw time:", drawTiming.current[1] - drawTiming.current[0])
+        
+    },[])
+
+    function drawMap() {
+        if (!mapIsVisible) {
+            map.hideMapContour();
+            return;
+        }
+        const now = Date.now()
+        if (now - lastTime.current < 200) {
+            return}
+        drawTiming.current = [now, null]
+        map?.drawMapContour().then(postDraw)
         lastTime.current = Date.now() }
+    
+    drawMap()
     
 
     /*const handleWheelContourLevelCallback =
