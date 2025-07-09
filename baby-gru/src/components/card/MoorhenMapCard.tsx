@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import { Card, Col, Stack, ToggleButton } from "react-bootstrap";
 import { convertRemToPx, convertPxToRem } from "../../utils/utils";
 import { getNameLabel } from "./cardUtils";
@@ -9,12 +9,10 @@ import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch, batch } from "react-redux";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { setContourLevel,  setMapRadius } from "../../store/mapContourSettingsSlice";
-import { useSnackbar } from "notistack";
 import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput";
 import { MapSettingsAccordion } from "./MapCardResources/MapSettingsAccordion";
 import { MapColourSelector } from "./MapCardResources/MapColourSelector";
 import { MapCardActionButtons } from "./MapCardResources/MapCardActionButtons";
-import { MoorhenMapManager } from "../managers/MoorhenMapManager"
 
 interface MoorhenMapCardPropsInterface extends moorhen.CollectedProps {
     map: moorhen.Map;
@@ -27,7 +25,6 @@ interface MoorhenMapCardPropsInterface extends moorhen.CollectedProps {
 
 export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     const { initialContour = 0.8, initialRadius = 13 } = props;
-    const originState = useSelector((state: moorhen.State) => state.glRef.origin)
 
     const mapRadius = useSelector((state: moorhen.State) => {
         const map = state.mapContourSettings.mapRadii.find((item) => item.molNo === props.map.molNo);
@@ -64,7 +61,6 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
         }
     });
     
-
     const handleCollapseToggle = () => {    
         if (props.onCollapseToggle) {
             props.onCollapseToggle(props.map.molNo);
@@ -73,45 +69,8 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
 
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
-    const contourWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.contourWheelSensitivityFactor);
     const mapIsVisible = useSelector((state: moorhen.State) => state.mapContourSettings.visibleMaps.includes(props.map.molNo));
-    const nextOrigin = useRef<number[]>([]);
-    const busyContouring = useRef<boolean>(false);
-    const isDirty = useRef<boolean>(false);
     const dispatch = useDispatch();
-    const { enqueueSnackbar } = useSnackbar();
-
-    const handleWheelContourLevelCallback = useCallback(
-        (evt: moorhen.WheelContourLevelEvent) => {
-            let newMapContourLevel: number;
-            if (props.map.molNo === activeMap.molNo) {
-                if (!mapIsVisible) {
-                    enqueueSnackbar("Active map not displayed, cannot change contour lvl.", { variant: "warning" });
-                    return;
-                }
-
-                let scaling = props.map.isEM ? props.map.levelRange[0] : 0.01;
-                if (evt.detail.factor > 1) {
-                    newMapContourLevel = mapContourLevel + contourWheelSensitivityFactor * scaling;
-                } else {
-                    newMapContourLevel = mapContourLevel - contourWheelSensitivityFactor * scaling;
-                }
-            }
-            if (newMapContourLevel) {
-                batch(() => {
-                    //dispatch( setContourLevel({ molNo: props.map.molNo, contourLevel: newMapContourLevel }) )
-                    fastMapContourLevel(newMapContourLevel);
-                    enqueueSnackbar(`map-${props.map.molNo}-contour-lvl-change`, {
-                        variant: "mapContourLevel",
-                        persist: true,
-                        mapMolNo: props.map.molNo,
-                        mapPrecision: props.map.levelRange[0],
-                    });
-                });
-            }
-        },
-        [mapContourLevel, mapRadius, activeMap?.molNo, props.map.molNo, mapIsVisible]
-    );
 
     const fastContourResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const fastContourInitTimeoutRef = useRef<NodeJS.Timeout | null>(null);

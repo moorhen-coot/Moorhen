@@ -20,7 +20,6 @@ import {
     FileCopyOutlined,
     FilterTiltShiftOutlined,
 } from "@mui/icons-material";
-import { convertRemToPx } from "../../../utils/utils";
 import { moorhen } from "../../../types/moorhen";
 import { webGL } from "../../../types/mgWebGL";
 import Tooltip from "@mui/material/Tooltip";
