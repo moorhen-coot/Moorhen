@@ -208,7 +208,6 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
             }}
             key={props.map.molNo}
         >
-            <MoorhenMapManager mapMolNo = {props.map.molNo}></MoorhenMapManager>
             <Card.Header style={{ padding: "0.1rem" }}>
                 <Stack gap={2} direction="horizontal">
                     <Col

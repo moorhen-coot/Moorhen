@@ -44,7 +44,6 @@ export const MapScrollWheelHandeler = (props: { mapContourLevel: number; mapIsVi
         document.addEventListener("wheelContourLevelChanged", eventListener);
         return () => {
             document.removeEventListener("wheelContourLevelChanged", eventListener);
-            console.log("dismounted event listener", props.map.molNo)
         };
     }, [handleWheelContourLevel]);
 
