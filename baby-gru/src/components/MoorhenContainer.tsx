@@ -37,7 +37,7 @@ import { MoorhenSideBar } from './snack-bar/MoorhenSideBar';
 import { MoorhenAtomInfoSnackBar } from './snack-bar/MoorhenAtomInfoSnackBar';
 import { MoorhenDroppable } from './MoorhenDroppable';
 import { setRequestDrawScene } from "../store/glRefSlice"
-import {MoorhenMapsContainer} from './managers/MoorhenMapsContainer'
+import {MoorhenMapsHeadManager} from './managers/MoorhenMapsHeadManager'
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -525,7 +525,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     <MoorhenUpdatingMapsManager commandCentre={commandCentre} glRef={glRef}/>
 
-    <MoorhenMapsContainer/>
+    <MoorhenMapsHeadManager />
 
     {/**
     <MoorhenSharedSessionManager

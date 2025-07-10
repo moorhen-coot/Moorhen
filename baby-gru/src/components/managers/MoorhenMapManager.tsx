@@ -1,16 +1,17 @@
 import { useRef, memo, useEffect } from "react";
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
-import { MapScrollWheelHandeler } from "./MapScrollWheelHandeler";
-import { MapOriginHandeler } from './MapOriginHandeler'
+import { MapScrollWheelListener } from "./MapScrollWheelListener";
+import { MapOriginListener } from './MapOriginListener'
+import { MapAlphaListener } from "./MapAlphaListener";
 import { useDispatch } from "react-redux";
 import { showMap } from "../../moorhen";
 
 export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
+
     const dispatch = useDispatch();
     const lastTime = useRef<number>(Date.now());
     const debounceTime = useRef<number>(150);
-    const mapContourLevelRef = useRef<number>(null);
     const lastDrawTimeout = useRef<NodeJS.Timeout | null>(null);
     const isWorkingRef = useRef<boolean>(false);
     const mapMolNo = props.mapMolNo;
@@ -19,7 +20,12 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     const activeMapMolNo = useSelector((state: moorhen.State) => state.generalStates.activeMap.molNo);
     const isMapActive = activeMapMolNo === mapMolNo ? true : false;
     const mapIsVisible = useSelector((state: moorhen.State) => state.mapContourSettings.visibleMaps.includes(mapMolNo));
-    
+
+    const isOriginLocked = useSelector((state: moorhen.State) => {
+        const mapItem = state.maps.find((item) => item.molNo === mapMolNo);
+        return mapItem?.isOriginLocked || false;
+    });
+
     const mapRadius = useSelector((state: moorhen.State) => {
         const mapRadiusItem = state.mapContourSettings.mapRadii.find((item) => item.molNo === mapMolNo);
         return mapRadiusItem?.radius || 25;
@@ -29,10 +35,8 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         const mapContourItem = state.mapContourSettings.contourLevels.find((item) => item.molNo === mapMolNo);
         return mapContourItem?.contourLevel || 0.8;
     });
-    mapContourLevelRef.current = mapContourLevel;
 
     useSelector((state: moorhen.State) => state.mapContourSettings.mapStyles.find((item) => item.molNo === mapMolNo));
-    useSelector((state: moorhen.State) => state.mapContourSettings.mapAlpha.find((item) => item.molNo === mapMolNo));
 
     const _postDraw = (startTime: number) => {
         const now = Date.now();
@@ -88,16 +92,25 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
 
     return (
         <>
-            {isMapActive && (
-                <MapScrollWheelHandeler
-                    mapContourLevel={mapContourLevel}
-                    mapIsVisible={mapIsVisible}
-                    mapRadius={mapRadius}
-                    map={map}
-                />
+            {mapIsVisible && !isOriginLocked && (
+            <MapOriginListener 
+                drawMap={drawMap} 
+            />
             )}
-            {!map.isOriginLocked && (
-                <MapOriginHandeler drawMap={drawMap}/>
+
+            {isMapActive && !isOriginLocked && (
+            <MapScrollWheelListener
+                mapContourLevel={mapContourLevel}
+                mapIsVisible={mapIsVisible}
+                mapRadius={mapRadius}
+                map={map}
+            />
+            )}
+
+            {mapIsVisible && (
+            <MapAlphaListener
+                map={map}
+            />
             )}
         </>
     );

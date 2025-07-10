@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useSnackbar } from "notistack";
 import { setContourLevel, setMapRadius } from "../../moorhen";
 
-export const MapScrollWheelHandeler = (props: { mapContourLevel: number; mapIsVisible: boolean; mapRadius: number; map: moorhen.Map }) => {
+export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVisible: boolean; mapRadius: number; map: moorhen.Map }) => {
     const mapContourLevelRef = useRef<number>(1);
     mapContourLevelRef.current = props.mapContourLevel;
     const dispatch = useDispatch();
