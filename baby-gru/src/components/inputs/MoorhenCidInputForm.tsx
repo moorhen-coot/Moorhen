@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
-import "./inputs.css";
+import styles from "./Inputs.module.css";
 
 type MoorhenCidInputFormPropsType = {
     height?: string;
@@ -53,7 +53,7 @@ export const MoorhenCidInputForm = forwardRef<HTMLInputElement, MoorhenCidInputF
         {label && <label style={{ display: 'block', marginBottom: '0.25rem' }}>{label}</label>}
         <input 
             type="text" 
-            className={`moorhen-input ${invalidCid ? 'invalid' : ''}`}
+            className={`${styles.input} ${invalidCid ? styles.invalid : ''}`}
             placeholder={placeholder} 
             defaultValue={defaultValue}
             onChange={handleChange} 

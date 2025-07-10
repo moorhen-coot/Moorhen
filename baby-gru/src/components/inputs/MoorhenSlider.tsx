@@ -4,12 +4,10 @@ import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
 import { IconButton } from "@mui/material";
-import Box from "@mui/material/Box";
-import Stack from "@mui/material/Stack";
 import Slider from "@mui/material/Slider";
 import { clampValue } from "../misc/helpers";
 import { toFixedNoZero } from "../misc/helpers";
-import './inputs.css';
+import styles from './Slider.module.css'
 
 type MoorhenSliderProps<T extends number | [number, number]> = {
     externalValue: T;   // value passed from parent
@@ -163,23 +161,18 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
         }
     }, [props.externalValue]);
 
-    const handleChange = (event: Event, newValue: T) => {
+    const handleChange = (newValue: T) => {
         setExternalValue(logScale ? pow10ofT(newValue) : newValue ); // external value is changed by logscale
     };
 
     const drawTitle = () => {
         const drawPreciseInput = () => {
             if (!isRange) {
+                
+                    
                 return (
-                    <Box
-                    sx={{
-                        display: "flex",
-                        justifyContent: "center", // Center horizontally
-                        alignItems: "center", // Center vertically
-                        width: "100%", // Ensure it spans the full width of the container
-                        marginBottom: "0.5rem", // Adjust as needed
-                    }
-                }
+                <label className = {styles.label}
+                htmlFor = 'slider'
                 >
                     <MoorhenPreciseInput
                         allowNegativeValues={minVal < 0}
@@ -192,18 +185,15 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                         disabled={isDisabled}
                         minMax={piMinMax}
                     />
-                </Box>
+                </label>
                 );
 
             } else {
                 return (
-                    <Stack
-                    direction="row"
-                    spacing={1}
-                    justifyContent="space-between"
-
-                >
-                    <MoorhenPreciseInput
+                    <div
+                        className = {styles.container.row}
+                    >
+                        <MoorhenPreciseInput
                         allowNegativeValues={minVal < 0}
                         value={props.externalValue[0]}   
                         setValue={(newVal) => setExternalValue(([+newVal, externalValue[1]] as T))}
@@ -224,7 +214,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                         disabled={isDisabled}
                         minMax={piMinMax}
                     />
-                    </Stack>
+                    </div>
                 );
             }
         };
@@ -233,12 +223,14 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
         
         if (!usePreciseInput) {
             return (
-                <span>
+                <label className = {styles.label}
+                htmlFor = 'slider'
+                >
                     {sliderTitle}:{" "}
                     {isRange
                         ? `${props.externalValue[0].toFixed(decimalPlaces)} - ${props.externalValue[1].toFixed(decimalPlaces)}`
                         : typeof props.externalValue === 'number' ? props.externalValue.toFixed(decimalPlaces) : ''}
-                </span>
+                </label>
             );
         } else
             return ( drawPreciseInput() );
@@ -299,11 +291,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
 
     function drawSidePanels(side: string) {
         return (
-            <Stack
-                direction="column"
-                spacing={isRange ? 0 : 1}
-                sx={{ position: "relative", top: isRange ? "6px" : "-6px", left : side === "L" ? "0.5rem" : "-0.5rem", }}
-            >
+            <>
                 {isRange
                     ? (
                         <>
@@ -312,51 +300,44 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                         </>
                     )
                     : changeButton(side === "L" ? -stepButtons : +stepButtons)}
-            </Stack>
+            </>
         );
     }
 
     return (
-        <Stack
-            spacing={2}
-            direction="row"
-            alignItems="flex-end"
-            marginBottom="1rem"
-        >
-            {drawSidePanels("L")}         
-            <Stack
-                direction="column"
-                spacing={-0.2}
-                sx={{ width: "100%", }}
-            >
-                {drawTitle()}
-                <Slider
+        <>      
+        <div className={styles.container}>
+            {drawTitle()}
+        <div className={styles.leftPanel}>
+            {drawSidePanels("L")}
+        </div>         
+            <div className={styles.sliderCont}>
+                <input type="range"
+                    className={styles.slider}
                     disabled={isDisabled}
-                    value={internalValue}
-                    onChange={handleChange}
+                    value={Array.isArray(internalValue) ? internalValue[0] : internalValue}
+                    onChange={(evt) => handleChange(Array.isArray(internalValue) ? [+evt.target.value, internalValue[1]] as T : +evt.target.value as T)}
                     min={logScale ? Math.log10(minVal) : minVal}
                     max={logScale ? Math.log10(maxVal) : maxVal}
                     step={precision}
                 />
                 {showMinMaxVal ? (
-                    <Stack
-                        direction="row"
-                        justifyContent="space-between"
-                        sx={{position: "relative", top: "-0.4rem", fontSize: "0.8rem", color: isDark ? "white" : "black", 
-                            width: "100%", height: "0.2rem", }}
-                    >
+                    <div className={styles.minMaxVal}>
                         <span>
                             {toFixedNoZero(minVal, decimalPlaces)}
                         </span>
                         <span>
                             {toFixedNoZero(maxVal, decimalPlaces)}
                         </span>
-                    </Stack>
+                    </div>
                 ) : (
                     <></>
                 )}
-            </Stack>
+            </div>
+            <div className={styles.rightPanel}>
             {drawSidePanels("R")}
-        </Stack>
+            </div>
+        </div>
+        </>
     );
 };
