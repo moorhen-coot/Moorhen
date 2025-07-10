@@ -23,3 +23,20 @@
     --moorhen-focus-shadow: rgba(46, 112, 211, 0.25);
     --moorhen-error-shadow: rgba(161, 53, 98, 0.25);
 }
+
+[data-theme='dark'] {
+    
+    /* Moorhen specific colors for dark theme */
+    --moorhen-primary: var(--bs-light);
+    --moorhen-background: #2c2e30;
+    --moorhen-border: #495057;
+    --moorhen-focus: #0d6efd;
+    --moorhen-input-background: rgba(255, 255, 255, 0.1);
+    --moorhen-error: #dc3545;
+    --moorhen-disabled: #6c757d;
+    --moorhen-input-color: #f8f9fa;
+    
+    /* Shadow colors for dark theme */
+    --moorhen-focus-shadow: rgba(13, 110, 253, 0.25);
+    --moorhen-error-shadow: rgba(220, 53, 69, 0.25);
+}

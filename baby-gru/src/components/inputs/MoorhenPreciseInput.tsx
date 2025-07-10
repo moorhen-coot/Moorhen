@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
-import Stack from '@mui/material/Stack';
-import './inputs.css'
+import { useSelector } from "react-redux";
+import { moorhen } from "../../types/moorhen";
+import styles from "./Inputs.module.css";
 
 type MoorhenPreciseInputPropsType = {
     value: number | null | undefined;
@@ -13,7 +14,7 @@ type MoorhenPreciseInputPropsType = {
     width?: string | number;
     minMax?: [number, number];
     type?: string;
-    labelPosition?: string;
+    labelPosition?: 'top' | 'left';
 };
 
 /**
@@ -48,27 +49,18 @@ type MoorhenPreciseInputPropsType = {
  *
  * @prop {string} [type="standard" | "number" | "numberForm"]
  *   This is something of a misnomer, as it is always a number input, but it can be set to number to get the clicky arrows next to the input.
- *   this might be changed for a future version, with the same button as sliders and same step behaviour.  
- * 
+ *   this might be changed for a future version, with the same button as sliders and same step behaviour.
+ *
  * @returns {JSX.Element}
  *   A React component that renders a precise input field with validation and optional label.
  */
 export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
-
-    const {
-        allowNegativeValues = true,
-        decimalDigits = 2,
-        label = "",
-        disabled = false,
-        width,
-        waitReturn = false,
-        minMax = null,
-        type = "standard"
-    } = props;
+    const { allowNegativeValues = true, decimalDigits = 2, label = "", disabled = false, width, waitReturn = false, minMax = null, type = "standard" } = props;
 
     const [isValidInput, setIsValidInput] = useState<boolean>(true);
     const [internalValue, setInternalValue] = useState<string>("");
     const [isUserInteracting, setIsUserInteracting] = useState<boolean>(false);
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
 
     useEffect(() => {
         if (!isUserInteracting) {
@@ -100,12 +92,11 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
     }, []);
 
     const checkIsValidInput = (input: string) => {
-       
         if (input === "") {
             return false;
         }
         const value = Number(input);
-        if (isNaN(value)){
+        if (isNaN(value)) {
             return false;
         } else if (!isFinite(value)) {
             return false;
@@ -113,13 +104,14 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
             return false;
         } else if (minMax != null) {
             if (value < minMax[0] || value > minMax[1]) {
-                return false
-            }}   
+                return false;
+            }
+        }
         return true;
     };
 
     const handleChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
-        setIsUserInteracting(true); 
+        setIsUserInteracting(true);
         setInternalValue(evt.target.value);
         const _isValid = checkIsValidInput(evt.target.value);
         setIsValidInput(_isValid);
@@ -134,37 +126,41 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
             if (isValidInput) {
                 props.setValue?.(internalValue);
             }
-            setIsUserInteracting(false); 
+            setIsUserInteracting(false);
         }
     };
 
     const handleBlur = () => {
-        setIsUserInteracting(false); 
+        setIsUserInteracting(false);
     };
 
-    const inputWidth = width ? width : `${2.5 + 0.6 * decimalDigits + (type === "text" ? 0 : 1.1)}rem`;
-    const formType = type === "number" ? "number" 
-    : type === "numberForm" ? "number" 
-    : "text";
+    const inputWidth = width ? width : `${2 + 0.6 * decimalDigits + (type === "text" ? 0 : 1.1)}rem`;
+    const formType = type === "number" ? "number" : type === "numberForm" ? "number" : "text";
 
     return (
-        <Stack 
-            direction={props.labelPosition === "top" ? "column" : "row"} 
-            style={{ alignItems: "center" }}
+        <div className={props.labelPosition === "top" ? styles.container.column : styles.container}
+            data-theme={isDark ? "dark" : "light"}
         >
-            {label && label}
+            {label ? <label htmlFor='input'>
+                {label}&nbsp;
+                </label> 
+                : null}
             <input
                 ref={inputRef}
+                id='input'
                 type={formType}
                 step={Math.pow(10, -decimalDigits)}
                 disabled={disabled}
                 value={internalValue}
-                style={{ width: inputWidth, marginLeft: "0.2rem" }}
-                className={`moorhen-input precise-input ${type === "numberForm" ? "number-form" : "compact"} ${isValidInput ? "valid" : "invalid"} ${disabled ? "disabled" : ""}`}
+                style={{ width: inputWidth }}
+                className={`${styles.input} 
+                ${type === "numberForm" ? styles.number : styles.compact} 
+                ${isValidInput ? styles.valid : styles.invalid} 
+                ${disabled ? styles.disabled : ""}`}
                 onChange={handleChange}
                 onKeyDown={handleReturn}
-                onBlur={handleBlur}               
+                onBlur={handleBlur}
             />
-        </Stack>
+        </div>
     );
 };
