@@ -37,7 +37,9 @@ const _DEFAULT_NEGATIVE_MAP_COLOUR = {r: 0.800000011920929, g: 0.400000005960464
  * const map = new MoorhenMap(commandCentre, glRef);
  *
  * // Load file from a URL
- * const selectedColumns = { F: "FWT", PHI: "PHWT", Fobs: "FP", SigFobs: "SIGFP", FreeR: "FREE", isDifference: false, useWeight: false, calcStructFact: true }
+ * const selectedColumns = { F: "FWT", PHI: "PHWT", Fobs: "FP", SigFobs: "SIGFP",
+                            FreeR: "FREE", isDifference: false, useWeight: false,
+                            calcStructFact: true }
  * map.loadToCootFromMtzURL("/uri/to/file.mtz", "map-1", selectedColumns);
  *
  * // Draw map and set view on map centre

@@ -34,7 +34,8 @@ type MoorhenMapSelectPropsType = {
  * }
  *
  * return (
- *  <MoorhenMapSelect ref={mapSelectRef} filterFunction={(map) => !map.hasReflectionData} width='100%' label='Select a map' onChange={handleMapChange} />
+ *  <MoorhenMapSelect ref={mapSelectRef} filterFunction={(map) => !map.hasReflectionData}
+     width='100%' label='Select a map' onChange={handleMapChange} />
  * )
  */
 export const MoorhenMapSelect = forwardRef<HTMLSelectElement, MoorhenMapSelectPropsType>((props, selectRef) => {
