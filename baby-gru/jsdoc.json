@@ -5,7 +5,7 @@
     },
     "source": {
       "include": ["./src/"],
-      "excludePattern": "(src/__tests__/|src/WebGLgComponents/|src/utils/__graphql__/|src/types)",
+      "excludePattern": "(src/__tests__/|src/WebGLgComponents/|src/utils/__graphql__/|src/types|src/protobuf)",
       "includePattern": ".(jsx|js|ts|tsx)$"
     },
     "plugins": ["plugins/markdown", "node_modules/jsdoc-babel"],
