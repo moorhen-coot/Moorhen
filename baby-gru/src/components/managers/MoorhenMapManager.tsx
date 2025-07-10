@@ -2,7 +2,7 @@ import { useRef, memo, useEffect } from "react";
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
 import { MapScrollWheelListener } from "./MapScrollWheelListener";
-import { MapOriginListener } from './MapOriginListener'
+import { MapOriginListener, MapOriginListenerMousseUp  } from './MapOriginListener'
 import { MapAlphaListener } from "./MapAlphaListener";
 import { useDispatch } from "react-redux";
 import { showMap } from "../../moorhen";
@@ -20,6 +20,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     const activeMapMolNo = useSelector((state: moorhen.State) => state.generalStates.activeMap.molNo);
     const isMapActive = activeMapMolNo === mapMolNo ? true : false;
     const mapIsVisible = useSelector((state: moorhen.State) => state.mapContourSettings.visibleMaps.includes(mapMolNo));
+    const reContourMapOnlyOnMouseUp = useSelector((state: moorhen.State) => state.mapContourSettings.reContourMapOnlyOnMouseUp);
 
     const isOriginLocked = useSelector((state: moorhen.State) => {
         const mapItem = state.maps.find((item) => item.molNo === mapMolNo);
@@ -41,7 +42,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     const _postDraw = (startTime: number) => {
         const now = Date.now();
         isWorkingRef.current = false;
-        console.log(`Map manager draw time for map ${map.molNo}:`, now - startTime);
+        console.debug(`Map manager draw time for map ${map.molNo}:`, now - startTime);
     };
 
     const _drawMap = (now: number) => {
@@ -93,9 +94,13 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     return (
         <>
             {mapIsVisible && !isOriginLocked && (
-            <MapOriginListener 
-                drawMap={drawMap} 
-            />
+                !reContourMapOnlyOnMouseUp ? 
+                <MapOriginListener 
+                    drawMap={drawMap} 
+                /> :
+                <MapOriginListenerMousseUp
+                    drawMap={drawMap}
+                />
             )}
 
             {isMapActive && !isOriginLocked && (
