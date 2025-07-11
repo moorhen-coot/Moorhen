@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
-import styles from "./Inputs.module.css";
+import * as styles from "./Inputs.module.css";
 
 type MoorhenPreciseInputPropsType = {
     value: number | null | undefined;
@@ -14,7 +14,7 @@ type MoorhenPreciseInputPropsType = {
     width?: string | number;
     minMax?: [number, number];
     type?: string;
-    labelPosition?: 'top' | 'left';
+    labelPosition?: "top" | "left";
 };
 
 /**
@@ -138,16 +138,11 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
     const formType = type === "number" ? "number" : type === "numberForm" ? "number" : "text";
 
     return (
-        <div className={props.labelPosition === "top" ? styles.container.column : styles.container}
-            data-theme={isDark ? "dark" : "light"}
-        >
-            {label ? <label htmlFor='input'>
-                {label}&nbsp;
-                </label> 
-                : null}
+        <div className={`${styles.container} ${props.labelPosition === "top" ? styles.column : styles.row}`} data-theme={isDark ? "dark" : "light"}>
+            {label ? <label htmlFor="input">{label}&nbsp;</label> : null}
             <input
                 ref={inputRef}
-                id='input'
+                id="input"
                 type={formType}
                 step={Math.pow(10, -decimalDigits)}
                 disabled={disabled}

@@ -73,10 +73,10 @@
     align-items: center;
 }
 
-.container.row {
+.row {
     flex-direction: row;
 }
 
-.container.column {
+.column {
     flex-direction: column;
 }

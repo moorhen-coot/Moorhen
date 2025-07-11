@@ -6,7 +6,7 @@ import { AddCircleOutline, Cookie, RemoveCircleOutline } from "@mui/icons-materi
 import { IconButton } from "@mui/material";
 import { clampValue } from "../misc/helpers";
 import { toFixedNoZero } from "../misc/helpers";
-import styles from "./Slider.module.css";
+import * as styles from "./Slider.module.css";
 
 type MoorhenSliderProps<T extends number | [number, number]> = {
     externalValue: T; // value passed from parent
@@ -187,7 +187,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                 );
             } else {
                 return (
-                    <div className={styles.container.row}>
+                    <div className={`${styles.container} ${styles.row}`}>
                         <MoorhenPreciseInput
                             allowNegativeValues={minVal < 0}
                             value={props.externalValue[0]}

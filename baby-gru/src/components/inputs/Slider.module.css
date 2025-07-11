@@ -6,7 +6,6 @@
     grid-template-columns: 24px auto 24px;
     grid-template-rows: 0.2fr 1fr;
     margin-bottom: 0.5rem;
-
 }
 
 .label {
@@ -127,6 +126,10 @@
     cursor: default;
 }
 
-.container.column {
+.row {
+    flex-direction: row;
+}
+
+.column {
     flex-direction: column;
 }

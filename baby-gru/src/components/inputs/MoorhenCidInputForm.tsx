@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
-import styles from "./Inputs.module.css";
+import * as styles from "./Inputs.module.css";
 
 type MoorhenCidInputFormPropsType = {
     height?: string;
