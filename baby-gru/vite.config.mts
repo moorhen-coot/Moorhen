@@ -1,9 +1,10 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react-swc'
-import crossOriginIsolation from 'vite-plugin-cross-origin-isolation'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react-swc';
+import crossOriginIsolation from 'vite-plugin-cross-origin-isolation';
 import wasm from "vite-plugin-wasm";
 import topLevelAwait from "vite-plugin-top-level-await";
 import checker from 'vite-plugin-checker';
+import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
     css: {
@@ -23,6 +24,16 @@ export default defineConfig({
             tsconfigPath: 'tsconfig.json'
 
         }}),
+        VitePWA({
+            registerType: "autoUpdate",
+            workbox: {
+                maximumFileSizeToCacheInBytes: 20 * 1024 * 1024
+            },
+            devOptions: {
+                enabled: true,
+                type: "module"
+            }
+        }),
         {
             name: "configure-response-headers",
             configureServer: (server) => {
@@ -37,7 +48,7 @@ export default defineConfig({
     server: {
         headers: {
             "Cross-Origin-Opener-Policy": "same-origin",
-            "Cross-Origin-Embedder-Policy": "require-corp",
+            "Cross-Origin-Embedder-Policy": "require-corp"
         },
         watch: {
             ignored: [
