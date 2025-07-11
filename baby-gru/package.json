@@ -1,6 +1,6 @@
 {
   "name": "moorhen",
-  "version": "0.22.0-beta.4",
+  "version": "0.22.0-beta.5",
   "private": false,
   "main": "moorhen.js",
   "types": "./types/main.d.ts",
@@ -32,6 +32,7 @@
     "start": "vite",
     "prebuild": "npm run create-version && npm run transpile-ts-worker && npm run transpile-protobuf && npm run transpile-graphql-codegen",
     "build": "vite build",
+    "build-pwa": "npm run prebuild && vite build --config vite.pwa.config.mts",
     "build-release": "npm run prebuild && webpack --mode production --devtool inline-source-map",
     "build-release-dev": "npm run prebuild && webpack --mode development --devtool inline-source-map",
     "create-docs": "npm run create-version && npx jsdoc -c jsdoc.json ../README.md && mkdir -p docs/wasm_src_frontend && cp -a ../wasm_src_frontend/baby_gru.png docs/wasm_src_frontend",

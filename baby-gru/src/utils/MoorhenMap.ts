@@ -797,17 +797,9 @@ export class MoorhenMap implements moorhen.Map {
 
         this.displayObjects['Coot'].forEach(buffer => {
             if (mapAlpha < 0.99) {
-                buffer.customColour = null;
                 buffer.transparent = true
-                buffer.triangleColours.forEach(colbuffer => {
-                    for (let idx = 0; idx < colbuffer.length; idx += 4) {
-                        colbuffer[idx] = mapColour.r
-                        colbuffer[idx + 1] = mapColour.g
-                        colbuffer[idx + 2] = mapColour.b
-                    }
-                })
-                buffer.isDirty = true;
                 buffer.alphaChanged = true;
+                buffer.setCustomColour([mapColour.r,mapColour.g,mapColour.b,mapAlpha])
             } else {
                 buffer.setCustomColour([mapColour.r,mapColour.g,mapColour.b,1.0])
                 buffer.transparent = false

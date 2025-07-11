@@ -26,6 +26,8 @@ export const SequenceRow = memo((props: {
         handleResidueMouseUp 
     } = props;
 
+
+
      const renderResidueBox = (sequence: MoorhenSeqViewTypes.SeqElement, residue: MoorhenSeqViewTypes.Residue, j: number) => {
         if (!residue) {
             return (
@@ -57,16 +59,14 @@ export const SequenceRow = memo((props: {
     };
 
     return (
-        <div style={{ display: "flex", flexDirection: "column", width: "fit-content" }} key={sequence.molName + sequence.chain + "_row"}>
-            <div
-                style={{ display: "flex", flexDirection: "row" }}>
-                <div className="sticky-left-column"
-                    style={{ minWidth: `${nameColumnWidth}rem`, maxWidth: `${nameColumnWidth}rem` }}>
-                    {sequence.displayName ? sequence.displayName : `${sequence.chain}`}
-                </div>
-                <div className="residues-container" style={{ display: "flex", flexDirection: "row" }}>
-                    {sequence.residues.map((residue, j) => renderResidueBox(sequence, residue, j))}
-                </div>
+        <div
+            style={{ display: "flex", flexDirection: "row" }} key={sequence.molName + sequence.chain + "_row"}>
+            <div className="sticky-left-column"
+                style={{ minWidth: `${nameColumnWidth}rem`, maxWidth: `${nameColumnWidth}rem` }}>
+                {sequence.displayName ? sequence.displayName : `${sequence.chain}`}
+            </div>
+            <div className="residues-container" style={{ display: "flex", flexDirection: "row" }}>
+                {sequence.residues.map((residue, j) => renderResidueBox(sequence, residue, j))}
             </div>
         </div>
     );
