@@ -28,6 +28,7 @@ import { MoorhenQScore } from './components/validation-tools/MoorhenQScore';
 import { MoorhenUnmodelledBlobs } from './components/validation-tools/MoorhenUnmodelledBlobs';
 import { MoorhenValidation } from './components/validation-tools/MoorhenValidation';
 import { MoorhenWaterValidation } from './components/validation-tools/MoorhenWaterValidation';
+import { autoOpenFiles } from "./utils/MoorhenFileLoading"
 
 import MoorhenReduxStore from "./store/MoorhenReduxStore";
 
@@ -118,5 +119,5 @@ export {
     setMultiViewColumns, setMultiViewRows, setSpecifyMultiViewRowsColumns, setThreeWayViewOrder, glRefSliceReducer, atomInfoCardsReducer, setShowHoverInfo,
     MoorhenRamachandran, MoorhenLigandValidation, MoorhenCarbohydrateValidation, MoorhenDifferenceMapPeaks,
     MoorhenFillMissingAtoms, MoorhenJsonValidation, MoorhenMMRRCCPlot, MoorhenPepflipsDifferenceMap, MoorhenQScore,
-    MoorhenUnmodelledBlobs, MoorhenValidation, MoorhenWaterValidation
+    MoorhenUnmodelledBlobs, MoorhenValidation, MoorhenWaterValidation, autoOpenFiles
 };

@@ -110,6 +110,9 @@ declare module 'moorhen' {
     let MoorhenWaterValidation: any;
     module.exports = MoorhenWaterValidation;
 
+    let autoOpenFiles: any;
+    module.exports = autoOpenFiles;
+
     let ErrorBoundary: any;
     module.exports = ErrorBoundary;
 
