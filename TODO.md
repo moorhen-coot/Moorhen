@@ -1,5 +1,5 @@
-# Moorhen
-A JavaScript molecular graphics program
+# Moorhen TODO
+Planned features
 
 ### For 0.23.0
 - [ ] Fix SSAO.
@@ -10,6 +10,10 @@ A JavaScript molecular graphics program
 - [ ] Ability to set origin/zoom/individual rotation in "Multiple views for different molecules".
 - [ ] Remove glRef from all component props and class constructor args.
 - [ ] Fix text labels being ugly when there is a transparent object.
+- [ ] simplify File menu to have far fewer entries.
+- [ ] Fix strange superposition behaviour noticed with lots of molecules in one-view- per-molecule
+- [ ] Vectors UI. Drawing code should already be there, mostly.
+- [ ] Legends UI. Drawing code already in 2D overlay class.
 
 ### For 0.22.0
 - [x] Fix multiview origins only sometimes correct.
@@ -61,6 +65,8 @@ A JavaScript molecular graphics program
   - [x] Drag and drop MrParse results
 
 ### Todo
+- [ ] Picture wizards.
+- [ ] Story-boarded movies.
 - [ ] Do not pull whole monomer library - we never use it.
 - [ ] Fitting 5-letter ligand truncates name, e.g. A1LU6
 - [ ] Get Structure factors if no map download available.
