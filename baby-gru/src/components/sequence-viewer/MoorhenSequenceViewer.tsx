@@ -6,14 +6,14 @@ import "./MoorhenSequenceViewer.css";
 import { CustomHorizontalScrollbar } from "./CustomHorizontalScrollbar";
 import { AddOutlined, ExpandLessOutlined, ExpandMoreOutlined, RemoveOutlined } from "@mui/icons-material";
 import { SequenceRow } from "./SequenceRow";
-
+import { useStateWithRef } from "../../hooks/useStateWithRef";
 
 export namespace MoorhenSeqViewTypes {
     export type ResiduesSelection = {
         molNo: number;
         chain: string;
-        range: [number, number]
-    }
+        range: [number, number];
+    };
 
     export type Residue = {
         resNum: number;
@@ -35,15 +35,6 @@ export namespace MoorhenSeqViewTypes {
         blockAlternateColour?: boolean;
         residues: Residue[];
     };
-}
-
-
-// this return the normal hook with a mutable ref, that can be accesed within a callback
-function useStateWithRef<T>(defaultVal: T): [T, React.Dispatch<React.SetStateAction<T>>, React.RefObject<T>]{
-    const [state, setState] = useState<T>(defaultVal)
-    const ref = useRef<T>(null)
-    ref.current = state
-    return [state, setState, ref]
 }
 
 export function stringToSeqViewer(seqAsString: string, start?: number, name?: string, molName?: string, molNo?: number, chain?: string): MoorhenSeqViewTypes.SeqElement {
