@@ -602,3 +602,4 @@ baby-gru/src/utils/__graphql__/*
 baby-gru/public/moorhen64*
 CCP4_WASM_BUILD_64/*
 install64/*
+.github/copilot-instructions.md

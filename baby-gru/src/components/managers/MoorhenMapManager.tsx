@@ -2,20 +2,20 @@ import { useRef, memo, useEffect } from "react";
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
 import { MapScrollWheelListener } from "./MapScrollWheelListener";
-import { MapOriginListener, MapOriginListenerMousseUp  } from './MapOriginListener'
+import { MapOriginListener, MapOriginListenerMouseUp } from "./MapOriginListener";
 import { MapAlphaListener } from "./MapAlphaListener";
 import { useDispatch } from "react-redux";
+import { setMapRadius, setContourLevel } from "../../moorhen";
 import { showMap } from "../../moorhen";
 
 export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
-
     const dispatch = useDispatch();
     const lastTime = useRef<number>(Date.now());
     const debounceTime = useRef<number>(150);
     const lastDrawTimeout = useRef<NodeJS.Timeout | null>(null);
     const isWorkingRef = useRef<boolean>(false);
     const mapMolNo = props.mapMolNo;
-    
+
     const map = useSelector((state: moorhen.State) => state.maps.find((item) => item.molNo === mapMolNo));
     const activeMapMolNo = useSelector((state: moorhen.State) => state.generalStates.activeMap.molNo);
     const isMapActive = activeMapMolNo === mapMolNo ? true : false;
@@ -37,7 +37,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         return mapContourItem?.contourLevel || 0.8;
     });
 
-    useSelector((state: moorhen.State) => state.mapContourSettings.mapStyles.find((item) => item.molNo === mapMolNo));
+    const mapStyle = useSelector((state: moorhen.State) => state.mapContourSettings.mapStyles.find((item) => item.molNo === mapMolNo));
 
     const _postDraw = (startTime: number) => {
         const now = Date.now();
@@ -45,11 +45,10 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         console.debug(`Map manager draw time for map ${map.molNo}:`, now - startTime);
     };
 
-    const _drawMap = (now: number) => {
+    const _drawMap = async (now: number) => {
         isWorkingRef.current = true;
-        map.drawMapContour().then(() => {
-            _postDraw(now);
-        });
+        await map.drawMapContour();
+        _postDraw(now);
         lastTime.current = Date.now();
     };
 
@@ -80,6 +79,8 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     useEffect(() => {
         if (map.showOnLoad) {
             dispatch(showMap(map));
+            dispatch(setMapRadius({ molNo: map.molNo, radius: map.suggestedRadius || 15 }));
+            dispatch(setContourLevel({ molNo: map.molNo, contourLevel: map.suggestedContourLevel || 0.8 }));
         }
     }, []);
 
@@ -89,34 +90,17 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
 
     useEffect(() => {
         drawMap();
-    });
+    }, [mapIsVisible, mapContourLevel, mapRadius, isOriginLocked, mapStyle]);
 
     return (
         <>
-            {mapIsVisible && !isOriginLocked && (
-                !reContourMapOnlyOnMouseUp ? 
-                <MapOriginListener 
-                    drawMap={drawMap} 
-                /> :
-                <MapOriginListenerMousseUp
-                    drawMap={drawMap}
-                />
-            )}
+            {mapIsVisible &&
+                !isOriginLocked &&
+                (!reContourMapOnlyOnMouseUp ? <MapOriginListener drawMap={drawMap} /> : <MapOriginListenerMouseUp drawMap={drawMap} />)}
 
-            {isMapActive && !isOriginLocked && (
-            <MapScrollWheelListener
-                mapContourLevel={mapContourLevel}
-                mapIsVisible={mapIsVisible}
-                mapRadius={mapRadius}
-                map={map}
-            />
-            )}
+            {isMapActive && <MapScrollWheelListener mapContourLevel={mapContourLevel} mapIsVisible={mapIsVisible} map={map} />}
 
-            {mapIsVisible && (
-            <MapAlphaListener
-                map={map}
-            />
-            )}
+            {mapIsVisible && <MapAlphaListener map={map} />}
         </>
     );
 });

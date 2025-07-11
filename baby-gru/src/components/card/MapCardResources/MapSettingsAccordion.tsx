@@ -19,12 +19,17 @@ interface MoorhenMapCardSettings {
 export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const dispatch = useDispatch();
-    const [isOriginLocked, setIsOriginLocked] = useState<boolean>(props.map.isOriginLocked);
+    const isOriginLocked = useSelector((state: moorhen.State) => {
+        const mapItem = state.maps.find((item) => item.molNo === props.map.molNo);
+        return mapItem?.isOriginLocked || false;
+    });
+    
     const handleOriginLockClick = () => {
         const currentStatus = props.map.isOriginLocked;
         props.map.toggleOriginLock(!currentStatus);
-        setIsOriginLocked(!currentStatus);
-        props.map.drawMapContour(); };
+        //setIsOriginLocked(!currentStatus);
+        props.map.drawMapContour(); 
+    };
     
     const maxRadius = useMemo(() => {
         if (props.map.isEM) {

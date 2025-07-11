@@ -1,116 +1,82 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useRef } from "react";
 import { moorhen } from "../../types/moorhen";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { useSnackbar } from "notistack";
-import { setContourLevel, setMapRadius } from "../../moorhen";
+import { useFastContourMode } from "../../hooks/useFastContourMode";
+import { useDocumentEventListener } from "../../hooks/useDocumentEventListener";
 
-export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVisible: boolean; mapRadius: number; map: moorhen.Map }) => {
+export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVisible: boolean; map: moorhen.Map }) => {
     const mapContourLevelRef = useRef<number>(1);
     mapContourLevelRef.current = props.mapContourLevel;
-    const dispatch = useDispatch();
+
+    const mapRadius = useSelector((state: moorhen.State) => {
+        const mapRadiusItem = state.mapContourSettings.mapRadii.find((item) => item.molNo === props.map.molNo);
+        return mapRadiusItem?.radius || 25;
+    });
 
     const contourWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.contourWheelSensitivityFactor);
     const { enqueueSnackbar } = useSnackbar();
 
-    const handleWheelContourLevel = useCallback((evt: moorhen.WheelContourLevelEvent) => {
-        let newMapContourLevel: number;
+    // Use the fast contour mode hook
+    const { fastMapContourLevel } = useFastContourMode({
+        map: props.map,
+        mapRadius,
+        radiusThreshold: 25,
+        fastRadius: 20,
+        timeoutDelay: 1000,
+    });
+
+    // Debouncing refs for performance
+    const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const lastWheelTimeRef = useRef<number>(0);
+    const debounceDelayMs = 25; // Adjust this value as needed
+    const debounceRepeatTime = 50;
+
+    const handleWheelContourLevel = (evt: moorhen.WheelContourLevelEvent) => {
+        evt.preventDefault();
+
         if (!props.mapIsVisible) {
             enqueueSnackbar("Active map not displayed, cannot change contour lvl.", { variant: "warning" });
             return;
         }
 
+        // Prevent rapid-fire wheel events from causing performance issues
+        const now = Date.now();
+        if (now - lastWheelTimeRef.current < debounceRepeatTime) {
+            // Minimum 50ms between wheel events
+            return;
+        }
+        lastWheelTimeRef.current = now;
+
         let scaling = props.map.isEM ? props.map.levelRange[0] : 0.01;
+        let newMapContourLevel: number;
+
         if (evt.detail.factor > 1) {
             newMapContourLevel = mapContourLevelRef.current + contourWheelSensitivityFactor * scaling;
         } else {
             newMapContourLevel = mapContourLevelRef.current - contourWheelSensitivityFactor * scaling;
         }
 
-        if (newMapContourLevel) {
-            fastMapContourLevel(newMapContourLevel);
-            enqueueSnackbar(`map-${props.map.molNo}-contour-lvl-change`, {
-                variant: "mapContourLevel",
-                persist: true,
-                mapMolNo: props.map.molNo,
-                mapPrecision: props.map.levelRange[0],
-            });
-        }
-    }, [props.mapIsVisible]);
-
-    useEffect(() => {
-        const eventListener = (evt: Event) => {
-            handleWheelContourLevel(evt as unknown as moorhen.WheelContourLevelEvent);
-        };
-        document.addEventListener("wheelContourLevelChanged", eventListener);
-        return () => {
-            document.removeEventListener("wheelContourLevelChanged", eventListener);
-        };
-    }, [handleWheelContourLevel]);
-
-    // Fast contour level:
-    // This work by delaying the initial contour draw if the radius is > thresolds,
-    // and then start the contour drawing with the small raidus routin
-    const fastContourResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const fastContourInitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const [lastRadius, setLastRadius] = useState<number>(25);
-    const [wasOriginLocked, setWasOriginLocked] = useState<boolean>(false);
-
-    const startFinishTimeout = () => {
-        if (!props.map) return;
-        fastContourResetTimeoutRef.current = setTimeout(() => {
-            props.map.toggleOriginLock(wasOriginLocked);
-            fastContourInitTimeoutRef.current = null;
-            dispatch(setMapRadius({ molNo: props.map.molNo, radius: lastRadius }));
-        }, 500);
-    };
-
-    const fastContourInitTimeout = (contourLevel: number) => {
-        if (!props.map) return;
-        fastContourInitTimeoutRef.current = setTimeout(() => {
-            fastContourInitTimeoutRef.current = null;
-            dispatch(
-                setContourLevel({
-                    molNo: props.map.molNo,
-                    contourLevel: contourLevel,
-                })
-            );
-        }, 200);
-    };
-
-    function fastMapContourLevel(newContourLevel: number, radiusThresold: number = 25) {
-        if (!fastContourInitTimeoutRef.current) {
-            if (props.mapRadius > radiusThresold) {
-                fastContourInitTimeout(newContourLevel);
-                return;
-            }
-        } else {
-            clearTimeout(fastContourInitTimeoutRef.current);
-
-            if (props.mapRadius > radiusThresold) {
-                setWasOriginLocked(props.map.isOriginLocked);
-                props.map.toggleOriginLock(false);
-                setLastRadius(props.mapRadius);
-                dispatch(
-                    setMapRadius({
-                        molNo: props.map.molNo,
-                        radius: radiusThresold,
-                    })
-                );
-                startFinishTimeout();
-            }
-
-            if (fastContourResetTimeoutRef.current) {
-                clearTimeout(fastContourResetTimeoutRef.current);
-                startFinishTimeout();
-            }
+        // Clear existing timeout and set a new one for debounced update
+        if (debounceTimeoutRef.current) {
+            clearTimeout(debounceTimeoutRef.current);
         }
 
-        dispatch(
-            setContourLevel({
-                molNo: props.map.molNo,
-                contourLevel: newContourLevel,
-            })
-        );
-    }
+        debounceTimeoutRef.current = setTimeout(() => {
+            if (newMapContourLevel) {
+                fastMapContourLevel(newMapContourLevel);
+                enqueueSnackbar(`map-${props.map.molNo}-contour-lvl-change`, {
+                    variant: "mapContourLevel",
+                    persist: true,
+                    mapMolNo: props.map.molNo,
+                    mapPrecision: props.map.levelRange[0],
+                });
+            }
+            debounceTimeoutRef.current = null;
+        }, debounceDelayMs);
+    };
+
+    useDocumentEventListener("wheelContourLevelChanged", handleWheelContourLevel);
+
     return null;
 };
