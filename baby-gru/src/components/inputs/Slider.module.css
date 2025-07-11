@@ -1,4 +1,6 @@
 
+@import '../colors.css';
+
 .container {
     display: grid;
     grid-template-columns: 24px auto 24px;
@@ -41,17 +43,88 @@
     justify-content: space-between;
     align-items: center;
     position: relative;
-    top: -0.4rem;
+    top: 0.3rem;
     font-size: 0.8rem;
     width: 100%;
     height: 0.2rem;
+}
+
+:root {
+    --slider-thumb-size: 20px;
+    --slider-track-height: 8px;
 }
 
 .slider {
     -webkit-appearance: none;
     appearance: none;
     width: 100%;
-    background: transparent; 
+    height: var(--slider-track-height);
+    border-radius: var(--slider-track-height);  
+    background: #d3d3d3;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: 0.5s;
+    transition: opacity 0.5s;
+    cursor: pointer;  
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: var(--slider-thumb-size);
+    height: var(--slider-thumb-size);
+    border-radius: 50%; 
+    background: var(--moorhen-accent);
+    cursor: pointer;
+    border: 1px solid var(--moorhen-border);
+}
+
+.slider::-moz-range-thumb {
+    width: var(--slider-thumb-size);
+    height: var(--slider-thumb-size);
+    border-radius: 50%;
+    background: var(--moorhen-accent);
+    cursor: pointer;
+    border: 1px solid var(--moorhen-border);
+}
+
+.slider.disabled::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: var(--slider-thumb-size);
+    height:var(--slider-thumb-size);
+    border-radius: 50%; 
+    background: var(--moorhen-disabled);
+    cursor: default;
+}
+
+.slider.disabled::-moz-range-thumb {
+    width: var(--slider-thumb-size);
+    height: var(--slider-thumb-size);
+    border-radius: 50%;
+    background: var(--moorhen-disabled);
+    cursor: default;
+}
+
+.slider:hover {
+    opacity: 1;
+    border-color: var(--moorhen-focus);
+    outline: 0;
+    box-shadow: 2px 2px 4px 3px var(--moorhen-focus-shadow);
+}
+
+.slider.buttonIsDown {
+    opacity: 1;
+    border-color: var(--moorhen-focus);
+    outline: 0;
+    box-shadow: 2px 2px 4px 3px var(--moorhen-focus-shadow);
+}
+
+.slider:hover.disabled {
+    opacity: 0.7;
+    border-color: var(--moorhen-disabled);
+    box-shadow: none;
+    cursor: default;
 }
 
 .container.column {
